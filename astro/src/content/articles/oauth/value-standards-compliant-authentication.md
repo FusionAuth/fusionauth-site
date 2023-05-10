@@ -1,21 +1,21 @@
 ---
-layout: advice
 title: The Value of Standards-Compliant Authentication
 description: What are common auth standards and why should you consider using them in your application?
 author: James Hickey
 image: advice/value-standards/the-value-of-standards-compliant-authentication-header-image.png
-category: OAuth
+section: OAuth
 date: 2021-06-10
 dateModified: 2021-06-10
+icon: /img/icons/complete-list-oauth-2-grants.svg
 ---
 
-Software applications regularly need access to data from other services on behalf of their users. 
+Software applications regularly need access to data from other services on behalf of their users.
 
-For example, an application may need to grab a list of user's contacts from a third-party service, such as their Google contacts. Or it might need to access a user's calendar so the application can create calendar entries for the user. In addition, larger organizations often require employees to have passwordless access to all the applications and services needed to do their jobs. 
+For example, an application may need to grab a list of user's contacts from a third-party service, such as their Google contacts. Or it might need to access a user's calendar so the application can create calendar entries for the user. In addition, larger organizations often require employees to have passwordless access to all the applications and services needed to do their jobs.
 
-How can you make sure your systems are giving proper access to other systems and verifying access requests from other applications? Are there easy and trusted ways to build these integrations? 
+How can you make sure your systems are giving proper access to other systems and verifying access requests from other applications? Are there easy and trusted ways to build these integrations?
 
-In this article, you'll learn about why it's important to use a standards-compliant authentication protocol when integrating systems. 
+In this article, you'll learn about why it's important to use a standards-compliant authentication protocol when integrating systems.
 
 You'll also learn some specifics about a few of the most commonly used authentication protocols in modern software systems.
 
@@ -53,7 +53,7 @@ The same applies to external systems. If you have created an API that supports S
 
 ### Edge Cases
 
-Standards have been used by many different organizations and systems in many different ways. Often edge cases are either handled or explicitly ruled out. 
+Standards have been used by many different organizations and systems in many different ways. Often edge cases are either handled or explicitly ruled out.
 
 By leveraging a standard, you will gain the benefits of all that knowledge and experience.
 
@@ -67,9 +67,9 @@ More specifically, OAuth allows an application to securely gain an access token 
 
 Here's a diagram of the "implicit" OAuth flow. The official OAuth terms for different actors in the process are in purple:
 
-{% include _image.liquid src="/assets/img/advice/value-standards/oauth-flow.png" class="img-fluid" alt="The OAuth Implicit grant." figure=false %}
+![The OAuth Implicit grant.](/img/articles/value-standards/oauth-flow.png)
 
-It can be useful to look at the implicit flow to understand the concepts. However, please don't use the implicit grant, as it is extremely vulnerable to XSS attacks. You can learn more about that in [The Modern Guide to OAuth](/learn/expert-advice/oauth/modern-guide-to-oauth#implicit-grant-in-oauth-20).
+It can be useful to look at the implicit flow to understand the concepts. However, please don't use the implicit grant, as it is extremely vulnerable to XSS attacks. You can learn more about that in [The Modern Guide to OAuth](/articles/oauth/modern-guide-to-oauth#implicit-grant-in-oauth-20).
 
 Today, it's safer to go with a more secure update to OAuth called [PKCE](https://oauth.net/2/pkce/) (often pronounced "pixie") and the Authorization Code grant. Originally intended to enhance OAuth security for mobile applications, this combination provides extra security benefits to all clients using this updated protocol.
 
@@ -83,7 +83,7 @@ Authentication is about _proving you are you_. Authorization is about _delegatin
 
 Historically, OAuth has been used as both a way of dealing with both authentication and authorization. However, OAuth doesn't define a standard way to provide user information to the requester--so every auth implementation is a little bit different. This removes some of the benefits of using a standardized protocol.
 
-Many developers may also assume that obtaining an access token from a third-party service means that your user was authenticated. But that's not true. An access token _could_ be granted to your application even if your user was not authenticated (that's 100% up to the service you are requesting access to). 
+Many developers may also assume that obtaining an access token from a third-party service means that your user was authenticated. But that's not true. An access token _could_ be granted to your application even if your user was not authenticated (that's 100% up to the service you are requesting access to).
 
 Authentication features like getting identity information, session management, and user registration have to be handled some other way. OAuth servers often support OIDC, which we'll cover below.
 
@@ -97,17 +97,17 @@ While often misunderstood as an authentication protocol, OAuth is not a standard
 
 You've seen that OAuth is a great way to gain access to resources. But it doesn't define a standard way to authenticate your user. [OpenID Connect (OIDC)](https://openid.net/connect/) solves authentication by extending the OAuth 2.0 protocol, what is technically called a "profile" of OAuth.
 
-{% include _image.liquid src="/assets/img/advice/value-standards/oidc-extends-oauth.png" class="img-fluid" alt="OIDC tokens build on OAuth tokens." figure=false %}
+![OIDC tokens build on OAuth tokens.](/img/articles/value-standards/oidc-extends-oauth.png)
 
-OIDC adds an "ID token" to be returned from the final OAuth request in the flow. This confirms the user was in fact authenticated (unlike the access token, as discussed previously) and also gives you a way to access identity-specific information about the current user. 
+OIDC adds an "ID token" to be returned from the final OAuth request in the flow. This confirms the user was in fact authenticated (unlike the access token, as discussed previously) and also gives you a way to access identity-specific information about the current user.
 
-Beyond these basic features, OIDC can also enable more advanced features such as [session management](https://openid.net/specs/openid-connect-session-1_0.html), [log-out ability](https://openid.net/specs/openid-connect-rpinitiated-1_0.html), [user registration standard](https://openid.net/specs/openid-connect-prompt-create-1_0.html), and more. 
+Beyond these basic features, OIDC can also enable more advanced features such as [session management](https://openid.net/specs/openid-connect-session-1_0.html), [log-out ability](https://openid.net/specs/openid-connect-rpinitiated-1_0.html), [user registration standard](https://openid.net/specs/openid-connect-prompt-create-1_0.html), and more.
 
 #### When Is OpenID Connect a Good Choice?
 
 OIDC is a great choice when you want to allow your users to log into your applications via another service, such as Google, Facebook, Twitter, or other social providers.
 
-Historically, this was done using OAuth along with some customized extras. OIDC provides a solid standard for doing this in a secure and trusted manner. 
+Historically, this was done using OAuth along with some customized extras. OIDC provides a solid standard for doing this in a secure and trusted manner.
 
 As mentioned above, OIDC is very often supported by OAuth servers. If you have an OAuth server, check to see if it supports OIDC (FusionAuth does).
 

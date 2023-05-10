@@ -405,6 +405,83 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
+"oauth/complete-list-oauth-grants.md": {
+  id: "oauth/complete-list-oauth-grants.md",
+  slug: "oauth/complete-list-oauth-grants",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"oauth/differences-between-oauth-2-oauth-2-1.md": {
+  id: "oauth/differences-between-oauth-2-oauth-2-1.md",
+  slug: "oauth/differences-between-oauth-2-oauth-2-1",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"oauth/index.mdx": {
+  id: "oauth/index.mdx",
+  slug: "oauth",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"oauth/modern-guide-to-oauth.md": {
+  id: "oauth/modern-guide-to-oauth.md",
+  slug: "oauth/modern-guide-to-oauth",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"oauth/oauth-device-authorization.mdx": {
+  id: "oauth/oauth-device-authorization.mdx",
+  slug: "oauth/oauth-device-authorization",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"oauth/oauth-token-storage.mdx": {
+  id: "oauth/oauth-token-storage.mdx",
+  slug: "oauth/oauth-token-storage",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"oauth/oauth-v1-signed-requests.mdx": {
+  id: "oauth/oauth-v1-signed-requests.mdx",
+  slug: "oauth/oauth-v1-signed-requests",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"oauth/saml-vs-oauth.mdx": {
+  id: "oauth/saml-vs-oauth.mdx",
+  slug: "oauth/saml-vs-oauth",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"oauth/value-standards-compliant-authentication.md": {
+  id: "oauth/value-standards-compliant-authentication.md",
+  slug: "oauth/value-standards-compliant-authentication",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"oauth/what-is-oauth.mdx": {
+  id: "oauth/what-is-oauth.mdx",
+  slug: "oauth/what-is-oauth",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"oauth/why-no-authentication-in-oauth.md": {
+  id: "oauth/why-no-authentication-in-oauth.md",
+  slug: "oauth/why-no-authentication-in-oauth",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 },
 "dev-tools": {
 "base64-encoder-decoder.mdx": {

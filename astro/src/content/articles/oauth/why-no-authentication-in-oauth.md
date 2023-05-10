@@ -1,12 +1,12 @@
 ---
-layout: advice
 title: Why is There No Auth in OAuth?
 description: OAuth and OIDC are all about authentication, right? Why is there no process of authentication defined in the specifications?
 image: advice/no-auth-in-oauth/why-no-auth-in-oauth.png
 author: Dan Moore
-category: OAuth
+section: OAuth
 date: 2022-10-19
 dateModified: 2022-10-19
+icon: /img/icons/no-auth-oauth.svg
 ---
 
 OAuth, a standard for securely delegating authorization information, and OIDC, a profile written on top of it to securely transmit user profile data, both rely on proper user authentication. (A user is also known as the 'resource owner'.) An architectural component known as the authorization server issues tokens, which provide access to data or functionality, only *after* the user has been authenticated to its satisfaction.
@@ -15,7 +15,7 @@ However, there is little guidance about how to actually authenticate the user. S
 
 Why exactly is authentication undefined in OAuth/OIDC? Why is this critical process not precisely defined in these specifications?
 
-While OAuth grants differ slightly (see [The Complete List](/learn/expert-advice/oauth/complete-list-oauth-grants) for all the variations), the grant flow is basically:
+While OAuth grants differ slightly (see [The Complete List](/articles/oauth/complete-list-oauth-grants) for all the variations), the grant flow is basically:
 
 * The user (or, more precisely, some software acting on behalf of the user) tries to access a protected resource
 * The protected resource redirects the user to the authorization server
@@ -60,11 +60,11 @@ Well, OAuth is about authorization, not authentication. Perhaps OIDC spells out 
 
 This section begins:
 
-> OpenID Connect performs authentication to log in the End-User or to determine that the End-User is already logged in. OpenID Connect returns the result of the Authentication performed by the Server to the Client in a secure manner so that the Client can rely on it. For this reason, the Client is called Relying Party (RP) in this case. 
+> OpenID Connect performs authentication to log in the End-User or to determine that the End-User is already logged in. OpenID Connect returns the result of the Authentication performed by the Server to the Client in a secure manner so that the Client can rely on it. For this reason, the Client is called Relying Party (RP) in this case.
 
 and further on covers the authentication process briefly.
 
-> If the request is valid, the Authorization Server attempts to Authenticate the End-User or determines whether the End-User is Authenticated, depending upon the request parameter values used. The methods used by the Authorization Server to Authenticate the End-User (e.g. username and password, session cookies, etc.) are beyond the scope of this specification. An Authentication user interface MAY be displayed by the Authorization Server, depending upon the request parameter values used and the authentication methods used. 
+> If the request is valid, the Authorization Server attempts to Authenticate the End-User or determines whether the End-User is Authenticated, depending upon the request parameter values used. The methods used by the Authorization Server to Authenticate the End-User (e.g. username and password, session cookies, etc.) are beyond the scope of this specification. An Authentication user interface MAY be displayed by the Authorization Server, depending upon the request parameter values used and the authentication methods used.
 
 So not only is authentication not defined, it is *explicitly* declared out of scope:
 
@@ -102,7 +102,7 @@ Authentication is ignored in OAuth2 and OIDC because it is a separate concern. T
 
 ## Forward Compatibility
 
-By leaving the details of authentication methods to the authorization server, the OAuth and OIDC specifications remain relevant even if new methods of authentication are invented. For example, neither WebAuthn or FaceID existed when RFC 6749 was published, but either can be part of an Authorization Code grant in 2022. 
+By leaving the details of authentication methods to the authorization server, the OAuth and OIDC specifications remain relevant even if new methods of authentication are invented. For example, neither WebAuthn or FaceID existed when RFC 6749 was published, but either can be part of an Authorization Code grant in 2022.
 
 Because the precise method of authentication is out of scope, both WebAuthn and FaceID can both be used in the process of obtaining an access token, *if the authorization server requires it*. The determination of the appropriate level of assurance for the login process is entirely up to the authorization server.
 
@@ -127,7 +127,7 @@ Funnily enough, authentication isn't the only major topic skirted by OAuth and O
 
 Another question critical to identity not answered by these specifications is "How is the user provisioned in the authorization server?"
 
-While there are [specifications like SCIM](/learn/expert-advice/identity-basics/what-is-scim) that cover this, for OAuth and OIDC they are out of scope. 
+While there are [specifications like SCIM](/learn/expert-advice/identity-basics/what-is-scim) that cover this, for OAuth and OIDC they are out of scope.
 
 ## Conclusion
 

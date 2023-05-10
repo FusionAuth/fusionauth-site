@@ -1,23 +1,26 @@
 ---
-layout: advice
 title: OAuth Device Authorization
 description: How to implement OAuth Device Authorization for set-top devices like Roku, AppleTV, and XBox and more.
 image: advice/oauth-device-authorization-article.png
 author: Matthew Altman & Trevor Smith
-category: OAuth
+section: OAuth
 date: 2019-11-04
 dateModified: 2023-03-24
+icon: /img/icons/oauth-device-authorization.svg
 ---
+import AdviceGettingStarted from "../../../components/AdviceGetStarted.astro";
+import Diagram from "../../../diagrams/articles/oauth/oauth-device-authorization-workflow.astro";
 
-If you have a modern entertainment device like a Roku, AppleTV, XBox, Playstation, etc., there's a good chance that at some point you will connect it to subscription services such as Netflix, Amazon, Pandora, or HBO. In theory it should be easy. It's your device and you've already purchased a subscription to the service. So, just turn it on and go right? Sadly, no. 
+If you have a modern entertainment device like a Roku, AppleTV, XBox, Playstation, etc., there's a good chance that at some point you will connect it to subscription services such as Netflix, Amazon, Pandora, or HBO. In theory it should be easy. It's your device and you've already purchased a subscription to the service. So, just turn it on and go right? Sadly, no.
 
-We've all gone through it, and the reality is it's not the best way to start off an evening of relaxation. Depending on the device and the service, you're almost guaranteed to hit a broad range of usability issues. Most of these services require you to log into your account and this means typing in your username and password. TV remotes and game controllers were never designed to handle this kind of text input. However, there is a simpler and standard way to accomplish this task. It's called the OAuth Device Authorization Grant and we will cover it here.  
+We've all gone through it, and the reality is it's not the best way to start off an evening of relaxation. Depending on the device and the service, you're almost guaranteed to hit a broad range of usability issues. Most of these services require you to log into your account and this means typing in your username and password. TV remotes and game controllers were never designed to handle this kind of text input. However, there is a simpler and standard way to accomplish this task. It's called the OAuth Device Authorization Grant and we will cover it here.
 
-{% include _image.liquid src="/assets/img/blogs/roku_remote.png" class="img-fluid float-right mr-md-5" figure=false %}
+![A Roku remote controller](/img/blogs/roku_remote.png)
+
 ## The Problem
 
 We login to accounts all the time using our phones and computers, so it shouldn't be that difficult on another device, right? The problem is Internet connected boxes like XBox and AppleTV don't have a built-in keyboard or tap input system. Suddenly, usability becomes a big issue. Fumbling your way through an on-screen keyboard to enter your username and password using a D-pad on a game controller or the arrow keys on a remote control can be a nightmare. And since most services ask you to enter very long, complex keycodes with all sorts of special characters and mixed-case letters, it's highly likely you will accidentally enter it wrong and have to start all over again.
-<br/><br/><br/>
+<br/>
 
 ## The Solution
 
@@ -28,11 +31,11 @@ In order to address this issue there is a proposed standard for the [Oauth2 Devi
 1. The device is able to display to the user a URL and code sequence
 1. The user has a secondary device like a personal computer, tablet, or smartphone from which they can process the request
 
-{% include _image.liquid src="/assets/img/blogs/roku_activate.png" class="img-fluid mb-4 mt-2 mx-auto d-block" figure=false %}
+![Roku Activation Screen](/img/blogs/roku_activate.png)
 
 The specification is quite long and involved. To make life simpler, we distilled it down for you. For this example, we will connect a Roku device to a fictitious subscription called Nerd Stuff on Demand. We'll also be using FusionAuth for our identity provider, but this solution works with any identity provider that has implemented this OAuth workflow. Here is a sequence diagram that illustrates the process.
 
-{% plantuml source: _diagrams/learn/expert-advice/oauth/oauth-device-authorization-workflow.plantuml, alt: Diagram %}
+<Diagram alt={"Diagram"}/>
 
 Let's go over the steps in quickly as well.
 
@@ -52,7 +55,7 @@ Let's go over the steps in quickly as well.
 1. As mentioned above, the Nerd Stuff on Demand app on the Roku has been polling this entire time. Now that the user has completed the workflow, the next time the app polls FusionAuth's token endpoint, it will succeed
 1. FusionAuth returns a success result plus an `access_token` and a `refresh_token` that the Nerd Stuff on Demand app can now use
 
-That's the entire whole flow and overall, it's quite simple. The big benefit here is that the user no longer has to type in their username and password using a remote control. Instead, they are logging into their account on their smartphone. In many cases, their password for their Nerd Stuff on Demand account is already stored in the keychain on their smartphone. 
+That's the entire whole flow and overall, it's quite simple. The big benefit here is that the user no longer has to type in their username and password using a remote control. Instead, they are logging into their account on their smartphone. In many cases, their password for their Nerd Stuff on Demand account is already stored in the keychain on their smartphone.
 
 If you are integrating this into your application, make sure you understand all the details of the specification. It provides useful information on items like security and usability that will give your users a more secure and easy-to-follow experience.
 
@@ -60,9 +63,9 @@ Let's continue to break this down into more details so that you can see how the 
 
 ### Device Grant User Code
 
-The first piece of this workflow is when the app on the device requests a URL and a code. In FusionAuth, the code is generated using the `Device Grant User Code` generator. 
+The first piece of this workflow is when the app on the device requests a URL and a code. In FusionAuth, the code is generated using the `Device Grant User Code` generator.
 
-{% include _image.liquid src="/assets/img/advice/device-code-type.png" alt="Device Code Type" class="mw-100" %}
+![Device Code Type](/img/articles/device-code-type.png)
 
 The configuration for this component can modified to change the length and content of the codes. For example, you can specify that the code be all numbers, all alphabetical, both, or secure encoded bytes. In addition, you can also specify the length of the code to be generated. This option lets you adjust the balance between security and usability. While we don't recommend using the encoded-byte generator (which essentially generates a large hash) for user-interactive workflows, if you want to punish your users by forcing them to type in a long sequence of characters, we won't stop you.
 
@@ -70,7 +73,7 @@ Additionally, the FusionAuth code generator removes the numbers `0`, `1` and the
 
 Lastly, you will find the `Device Grant Code` duration configuration. This is the time in seconds that the code will remain valid. To reduce brute force hacking attempts, the duration should be as short as possible while still providing a good user experience. The default duration is 5 minutes, which is generally adequate for a user to complete the login procedure on a home computer or a mobile device.
 
-{% include _image.liquid src="/assets/img/advice/device-code-duration.png" alt="Device Code Duration" class="mw-100" %}
+![Device Code Duration](/img/articles/device-code-duration.png)
 
 ### How It Works
 
@@ -124,4 +127,5 @@ We're excited to offer this new feature in FusionAuth, and hope you take the tim
 - Check out the docs which explain the [OAuth2 Device Grant](/docs/v1/tech/oauth/endpoints) parameters in detail.
 - Download [fusionauth-example-device-grant](https://github.com/FusionAuth/fusionauth-example-device-grant) which is a toy example app that represents the device side of the workflow. With it and [FusionAuth](/) you can have a complete working Device Authorization grant.
 
-{% include _advice-get-started.liquid intro="If you are looking for a solution that provides full support for OAuth Device Authorization, FusionAuth has you covered." %}
+<AdviceGettingStarted intro={`If you are looking for a solution that provides full support for OAuth Device Authorization, FusionAuth has you covered.`}></AdviceGettingStarted>
+
