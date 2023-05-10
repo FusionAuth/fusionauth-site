@@ -44,7 +44,19 @@ Here are some guidelines to follow when writing documentation (everything under 
 egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /* <</'|sed 's/$/>>/'
 ```
 - We currently use [FontAwesome v5](https://fontawesome.com/v5/search?m=free) to render icons, so you can use them to refer to UI buttons, like this:
-  - ```asciidoc
+  - In Markdown:
+    ```markdown
+    <i/>{:.ui-button .green .fa .fa-plus}
+    <i/>{:.ui-button .green .fa .fa-search}
+    <i/>{:.ui-button .blue .fa .fa-edit}
+    <i/>{:.ui-button .blue .fa .fa-save}
+    <i/>{:.ui-button .purple .fas .fa-user}
+    <i/>{:.ui-button .purple .fa .fa-key}
+    <i/>{:.ui-button .gray .fa .fa-minus-circle}
+    <i/>{:.ui-button .red .fa .fa-trash-alt}
+    ```
+  - In AsciiDoc:
+    ```asciidoc
     icon:plus[role=ui-button green,type=fas]
     icon:search[role=ui-button green,type=fas]
     icon:edit[role=ui-button blue,type=fas]
@@ -55,7 +67,7 @@ egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /
     icon:trash-alt[role=ui-button red,type=fa]
     ```
 
-    ![icons](https://user-images.githubusercontent.com/1877191/235482795-fd00698a-96f1-45cc-aa75-873e9bd4f47a.png)
+    ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/9fd29e3d-c81a-498c-9b82-135f44a7c545)
 
 
 ### Including files
