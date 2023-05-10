@@ -37,7 +37,7 @@ touch requirements.txt setup.py
 Now, cut and paste the following requirements into `requirements.txt`:
 
 ```text
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-flask-guide/main/requirements.txt %}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/python/requirements.txt %}
 ```
 
 Then, copy and paste the following code into the `setup.py` file.
