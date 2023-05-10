@@ -139,9 +139,9 @@ For blog posts:
 - All references to `stackoverflow.com` should be updated and direct to the community forum at `https://fusionauth.io/community/forum/`
 - When writing blog posts, you have access to callouts.
 
-  ![important-call](https://user-images.githubusercontent.com/16090626/112875860-f75a4000-9081-11eb-8119-799db8cfc385.png)
-  ![note-call](https://user-images.githubusercontent.com/16090626/112875861-f7f2d680-9081-11eb-8fa7-360c0460618e.png)
-  ![tip-call](https://user-images.githubusercontent.com/16090626/112875862-f7f2d680-9081-11eb-845f-09c37a7bcf6d.png)
+  ![callout-important](https://github.com/FusionAuth/fusionauth-site/assets/1877191/a6735cb8-17b2-44ee-9dda-cf374a750f1d)
+  ![callout-note](https://github.com/FusionAuth/fusionauth-site/assets/1877191/24a47f1e-5d42-46f3-959c-606a02ae93dc)
+  ![callout-tip](https://github.com/FusionAuth/fusionauth-site/assets/1877191/bbc710e3-58c9-42fb-b5b3-23ce242d38f4)
 
   - There are three callout liquid files `_callout-tip`, `_callout-important`, `_callout-note`
   - They can be accessed as so:
