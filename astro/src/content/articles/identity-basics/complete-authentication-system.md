@@ -1,10 +1,9 @@
 ---
-layout: advice
 title: How Complete Does Your Authentication Provider Need to Be?
 description: Learn the various types of authentication systems, advantages and limitations of each, and which ones might suit your application.
 author: Cameron Pavey
-image: advice/how-complete-auth-provider/expert-advice-how-complete-does-your-authentication-provider-need-to-be-header-image.png
-category: Identity Basics
+icon: /img/icons/complete-auth-provider-needs.svg
+section: Identity Basics
 date: 2021-09-14
 dateModified: 2021-09-14
 ---
@@ -72,7 +71,7 @@ The effort to manually implement SAML (and OIDC, to a lesser extent) are quite h
 
 Which category of solution you should implement will have a lot to do with your specific requirements and what you expect out of an auth provider. That said, if you are expecting that you will need some of the more advanced functionality down the line, it is hard to go wrong with the full-featured approach. 
 
-Even if you start with a more straightforward system, like a DIY approach or a drop-in script, there is no reason why you cannot migrate to a more advanced system later. Migrating between auth systems naturally brings its own challenges, but there are steps you can take to [avoid vendor lock-in](/learn/expert-advice/authentication/avoid-lockin) to make the transition smoother when the time comes.
+Even if you start with a more straightforward system, like a DIY approach or a drop-in script, there is no reason why you cannot migrate to a more advanced system later. Migrating between auth systems naturally brings its own challenges, but there are steps you can take to [avoid vendor lock-in](/articles/authentication/avoid-lockin) to make the transition smoother when the time comes.
 
 Returning to the example of Cotter and FusionAuth, if you were graduating from one to the other, you would be able to export your users from Cotter in CSV format and then import them into FusionAuth. As with any migration, there is the potential for unexpected setbacks depending on your configuration, but generally speaking, it should be pretty manageable.
 

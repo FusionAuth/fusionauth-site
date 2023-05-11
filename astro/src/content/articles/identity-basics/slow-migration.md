@@ -1,10 +1,9 @@
 ---
-layout: advice
 title: Slow migration of user data
 description: What is a slow migration and when does it make sense to perform one?
 author: Dan Moore
-image: advice/slow-migration/slow-migration-of-user-data.png
-category: Identity Basics
+icon: /img/icons/slow-migration-user-data.svg
+section: Identity Basics
 date: 2020-10-30
 dateModified: 2020-10-30
 ---

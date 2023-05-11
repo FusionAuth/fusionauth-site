@@ -1,10 +1,9 @@
 ---
-layout: advice
 title: What is Identity Proofing?
 description: What is identity proofing and why might you need it?
 author: Deborah Ruck
-image: advice/identity-proofing/expert-advice-what-is-identity-proofing-header-image.png
-category: Identity Basics
+icon: /img/icons/identity-proofing.svg
+section: Identity Basics
 date: 2021-10-05
 dateModified: 2021-10-05
 ---

@@ -1,10 +1,9 @@
 ---
-layout: advice
 title: The Value of Trying Your Auth Provider Before You Commit
 description: What are the benefits of trying an auth system provider before you integrate?
 author: Keanan Koppenhaver
-image: advice/try-before-you-buy/expert-advice-the-value-of-trying-your-auth-provider-before-you-commit-header-image.png
-category: Identity Basics
+icon: /img/icons/value-auth-provider-commit.svg
+section: Identity Basics
 date: 2021-02-24
 dateModified: 2021-02-24
 ---

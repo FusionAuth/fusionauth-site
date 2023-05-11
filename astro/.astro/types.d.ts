@@ -209,6 +209,90 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
+"identity-basics/complete-authentication-system.md": {
+  id: "identity-basics/complete-authentication-system.md",
+  slug: "identity-basics/complete-authentication-system",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"identity-basics/due-diligence-authentication-vendors.md": {
+  id: "identity-basics/due-diligence-authentication-vendors.md",
+  slug: "identity-basics/due-diligence-authentication-vendors",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"identity-basics/index.mdx": {
+  id: "identity-basics/index.mdx",
+  slug: "identity-basics",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions.md": {
+  id: "identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions.md",
+  slug: "identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"identity-basics/open-source-vs-commercial.md": {
+  id: "identity-basics/open-source-vs-commercial.md",
+  slug: "identity-basics/open-source-vs-commercial",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"identity-basics/outsource-auth-system-blueprint.md": {
+  id: "identity-basics/outsource-auth-system-blueprint.md",
+  slug: "identity-basics/outsource-auth-system-blueprint",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"identity-basics/registration-best-practices.md": {
+  id: "identity-basics/registration-best-practices.md",
+  slug: "identity-basics/registration-best-practices",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"identity-basics/slow-migration.md": {
+  id: "identity-basics/slow-migration.md",
+  slug: "identity-basics/slow-migration",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"identity-basics/try-before-you-buy.md": {
+  id: "identity-basics/try-before-you-buy.md",
+  slug: "identity-basics/try-before-you-buy",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"identity-basics/what-is-identity-proofing.md": {
+  id: "identity-basics/what-is-identity-proofing.md",
+  slug: "identity-basics/what-is-identity-proofing",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"identity-basics/what-is-scim.md": {
+  id: "identity-basics/what-is-scim.md",
+  slug: "identity-basics/what-is-scim",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"identity-basics/what-to-do-when-auth-system-vendor-acquired.md": {
+  id: "identity-basics/what-to-do-when-auth-system-vendor-acquired.md",
+  slug: "identity-basics/what-to-do-when-auth-system-vendor-acquired",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 "login-authentication-workflows/index.md": {
   id: "login-authentication-workflows/index.md",
   slug: "login-authentication-workflows",

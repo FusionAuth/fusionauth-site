@@ -1,10 +1,9 @@
 ---
-layout: advice
 title: What is SCIM, the System for Cross-domain Identity Management?
 description: What is SCIM, why would you use it, and how does it work?
 author: Dan Moore
-image: advice/what-is-scim/what-is-scim.png
-category: Identity Basics
+icon: /img/icons/what-is-scim.svg
+section: Identity Basics
 date: 2022-10-10
 dateModified: 2022-10-10
 ---

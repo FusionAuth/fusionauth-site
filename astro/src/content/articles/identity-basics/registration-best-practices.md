@@ -1,10 +1,9 @@
 ---
-layout: advice
 title: Best practices for registration forms
 description: Users have to fill out registration forms to access applications. How can you make this as painless as possible?
 author: Dan Moore
-image: advice/registration-best-practices/expert-advice-best-practices-for-registration-forms.png
-category: Identity Basics
+icon: /img/icons/registration-best-practices.svg
+section: Identity Basics
 date: 2020-09-08
 dateModified: 2020-09-08
 ---
