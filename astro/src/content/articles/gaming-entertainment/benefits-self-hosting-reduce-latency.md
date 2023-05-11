@@ -1,12 +1,10 @@
 ---
-layout: advice
 title: The Benefits of Self-Hosting Critical Infrastructure to Reduce Latency in Gaming
 description: While esports competitions are high skill cap events, both hobby gamers and elite professionals alike expect optimal network conditions when they play games. A suboptimal network can turn an enjoyable event into an infuriating one that drives players away.
+section: Gaming & Entertainment
 author: Kealan Parr
-image: advice/self-hosting-latency/benefits-self-hosting-critical-infrastructure.png
-category: Gaming and Entertainment
-date: 2022-07-19
-dateModified: 2022-07-19
+# date: 2022-07-19
+# dateModified: 2022-07-19
 ---
 
 While esports competitions are high skill cap events, both hobby gamers and elite professionals alike expect optimal network conditions when they play games. A suboptimal network can turn an enjoyable event into an infuriating one that drives players away.

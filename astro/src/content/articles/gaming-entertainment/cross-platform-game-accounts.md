@@ -1,12 +1,10 @@
 ---
-layout: advice
 title: "Cross-Platform Gaming Accounts: Why and How?"
 description: You can build a game that deploys to multiple platforms using tools like Unity. But what about user accounts?
+section: Gaming & Entertainment
 author: Rabo James Bature
-image: advice/cross-platform-gaming-account/advice-header.png
-category: Gaming and Entertainment
-date: 2022-10-01
-dateModified: 2022-10-01
+# date: 2022-10-01
+# dateModified: 2022-10-01
 ---
 
 More and more games are launching across two or more platforms. One of the prime reasons why game developers go cross-platform is to leverage a larger market. Being able to sell products to a whole new set of users is an incredible win for game developers, and demand for cross-play from gamers is [increasing as well](https://blog.unity.com/games/why-demand-for-cross-platform-multiplayer-games-is-growing-2021).
@@ -160,7 +158,7 @@ FusionAuth supports single and multiple tenants. This enables you to host multip
 
 To create a tenant, open the "Tenants" tab on the side pane and click the plus button in the top right corner. Give the tenant a unique name, in this case `GameGuruTenant`, leaving the rest of the options as they are and saving the tenant.
 
-{% include _image.liquid src="/assets/img/advice/cross-platform-gaming-account/create-tenant.png" alt="Creating a tenant." class="img-fluid" figure=false %}
+![Creating a tenant.](/img/articles/cross-platform-gaming-account/create-tenant.png)
 
 ### Create an Application
 
@@ -173,7 +171,7 @@ You also need to add some roles for this apps use case:
 * `super-user`, with the Super Role checkbox ticked, and is used for admin users. 
 * `gamer`, which will be assigned to all players registering from the app
 
-{% include _image.liquid src="/assets/img/advice/cross-platform-gaming-account/create-application.png" alt="Creating an application." class="img-fluid" figure=false %}
+![Creating an application.](/img/articles/cross-platform-gaming-account/create-application.png)
  
 ### Create an API Key
 
@@ -183,13 +181,13 @@ On the side pane, click "Settings" and then "API Keys" and click the plus button
 
 This API key will only be associated with the above tenant `GameGuruTenant`.
 
-{% include _image.liquid src="/assets/img/advice/cross-platform-gaming-account/create-api-key.png" alt="Creating an API key." class="img-fluid" figure=false %}
+![Creating an API key.](/img/articles/cross-platform-gaming-account/create-api-key.png)
 
 To allow this API key to have access to all endpoints, do not select any in the list provided; to restrict access, enable only the ones you need.
 
 For the purposes of this article, those endpoints are `POST` for `/api/user/registration` and `POST` for `/api/login`. You can see the former selected below.
 
-{% include _image.liquid src="/assets/img/advice/cross-platform-gaming-account/create-api-key-2.png" alt="Limiting permissions for the API key." class="img-fluid" figure=false %}
+![Limiting permissions for the API key.](/img/articles/cross-platform-gaming-account/create-api-key-2.png)
 
 ### Building the Game
 
@@ -372,11 +370,12 @@ FusionAuth offers two ways to create and register a user:
 
 This application uses the first option, since it is simpler. Below is a video of how your application should be working when registering an account on Android.
 
-{% include _image.liquid src="/assets/img/advice/cross-platform-gaming-account/android-registration.gif" alt="Registering on an Android phone." class="img-fluid" figure=false %}
+![Registering on an Android phone.](/img/articles/cross-platform-gaming-account/android-registration.gif)
+
 
 Here's a video of the process for logging in from the Windows application.
 
-{% include _image.liquid src="/assets/img/advice/cross-platform-gaming-account/windows-login.gif" alt="Logging in on a Windows PC." class="img-fluid" figure=false %}
+![Logging in on a Windows PC.](/img/articles/cross-platform-gaming-account/windows-login.gif)
 
 Feel free to [grab the code](https://github.com/FusionAuth/fusionauth-example-cross-platform-game/) if you'd like to take a closer look.
 

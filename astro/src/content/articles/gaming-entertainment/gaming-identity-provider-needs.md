@@ -1,12 +1,10 @@
 ---
-layout: advice
 title: Identity Provider Needs for Gaming or Esports
 description: What are the specific features you need to look for in an identity provider if you’re in the gaming or esports industry?
 author: Deborah Ruck
-image: advice/gaming-esports-identity-provider/gaming-auth-expert-advice.png
-category: Gaming and Entertainment
-date: 2022-03-15
-dateModified: 2022-03-15
+section: Gaming & Entertainment
+# date: 2022-03-15
+# dateModified: 2022-03-15
 ---
 
 An **identity provider** is a trusted third-party service that offers user authentication as a service to create, manage, and verify digital identities on behalf of an affiliated (subscribing) website, application, or digital service provider. If you’ve used the sign-in with Google, Facebook, or Twitch option when registering for a service, you’ve used an identity provider. 

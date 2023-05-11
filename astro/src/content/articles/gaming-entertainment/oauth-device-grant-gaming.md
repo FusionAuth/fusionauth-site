@@ -1,10 +1,8 @@
 ---
-layout: advice
 title: How the OAuth Device Authorization grant Can Make Your Users’ Lives Easier
 description: The OAuth Device Authorization grant enables game users to authenticate using a device where they may already be authenticated, or which may have a far superior input user experience.
 author: Success Ologunsua
-image: advice/device-grant-gaming/device-grant-users-lives-easier.png
-category: Gaming and Entertainment
+section: Gaming & Entertainment
 date: 2022-09-01
 dateModified: 2022-09-01
 ---
@@ -71,7 +69,8 @@ The above commands will copy the docker-compose YAML file, copy the environment 
 
 Go to the Docker dashboard. You should see two containers running, one with FusionAuth and one for Postgres, the database that FusionAuth will be using to store information. 
 
-{% include _image.liquid src="/assets/img/advice/device-grant-gaming/docker-dashboard.png" alt="The Docker Dashboard when FusionAuth has been started." class="img-fluid" figure=false %}
+![The Docker Dashboard when FusionAuth has been started.](/img/articles/device-grant-gaming/docker-dashboard.png)
+
 
 ### Set Up FusionAuth for Device Authorization
 
@@ -82,7 +81,7 @@ Go to Applications on the navigation bar and click on "Create a new application"
 
 Click on **Edit** to edit the application you’ve just created. Go to the Enabled Grants section and enable the Device type from the list, and put as verification URL `https://example.com/device`.
 
-{% include _image.liquid src="/assets/img/advice/device-grant-gaming/adding-application.png" alt="Adding an application." class="img-fluid" figure=false %}
+![Adding an application.](/img/articles/device-grant-gaming/adding-application.png)
 
 In this demo we won't be using this verification URL in our flow, because we will direct users to the device authorization page, but in a normal flow this URL would be where the user would enter the code.
 
@@ -92,7 +91,7 @@ On the left navigation bar, go to "Settings", then "System". Enable the CORS fil
 
 This CORS configuration is only necessary because the game is running in the browser.
 
-{% include _image.liquid src="/assets/img/advice/device-grant-gaming/configuring-cors.png" alt="Configuring CORS." class="img-fluid" figure=false %}
+![Configuring CORS.](/img/articles/device-grant-gaming/configuring-cors.png)
 
 ### Demo App Configuration with FusionAuth
  
@@ -120,7 +119,7 @@ python3 -m http.server
 
 Now that the app is running, use your browser to go to [http://localhost:8000/](http://localhost:8000/) to check that the demo app is running.
 
-{% include _image.liquid src="/assets/img/advice/device-grant-gaming/app-running.png" alt="The running game." class="img-fluid" figure=false %}
+![The running game.](/img/articles/device-grant-gaming/app-running.png)
 
 ### Make a Request to the Device Verification Endpoint
 
@@ -154,7 +153,7 @@ Below is a sample of the JSON response:
 
 To start the authorization process, click on "Start" in the demo app. You should see a screen with the activation code and the URL.
 
-{% include _image.liquid src="/assets/img/advice/device-grant-gaming/app-authorization-prompt.png" alt="App authorization prompt." class="img-fluid" figure=false %}
+![App authorization prompt.](/img/articles/device-grant-gaming/app-authorization-prompt.png)
 
 The interface also includes a QR code that contains the URL and user code; however, since you’re running the app locally, you won’t be able to open the QR code from a phone. `localhost` can't be contacted over the cellular network, unfortunately.
 
@@ -168,15 +167,15 @@ Using a secondary device (a mobile phone or computer), the user visits the URL d
 
 Click on the URL to open it in your browser or a different one. All the pages shown in this tutorial are the stock FusionAuth theme, but you can [easily modify the look and feel of the theme](/docs/v1/tech/themes/). Verify the device by entering the code and clicking "Submit".
 
-{% include _image.liquid src="/assets/img/advice/device-grant-gaming/device-grant-code-entry.png" alt="Entering the device grant code." class="img-fluid" figure=false %}
+![Entering the device grant code.](/img/articles/device-grant-gaming/device-grant-code-entry.png)
 
 When you want to validate the code, you’re redirected to the FusionAuth URL to enter the code. Once the code is added, you click on "Submit" and a `GET` request is made to validate the user device on the URL [http://localhost:9011/oauth2/device/validate](http://localhost:9011/oauth2/device/validate) with the parameters of `client_id` and the `user_code`. If all goes well, you’ll be asked to authenticate on FusionAuth by entering your credentials.
 
-{% include _image.liquid src="/assets/img/advice/device-grant-gaming/login-screen.png" alt="The login screen." class="img-fluid" figure=false %}
+![The login screen.](/img/articles/device-grant-gaming/login-screen.png)
 
 After you enter your credentials and submit, you should see a success message:
 
-{% include _image.liquid src="/assets/img/advice/device-grant-gaming/device-grant-success.png" alt="The success screen." class="img-fluid" figure=false %}
+![The success screen.](/img/articles/device-grant-gaming/device-grant-success.png)
 
 ### Providing the Access Token
 
@@ -257,7 +256,7 @@ The JSON response should look like this:
 
 You have successfully logged in to the game without needing to enter a username or password on the demo application. Now, you can play the game or you can click on `Click to Reset` and start over. 
 
-{% include _image.liquid src="/assets/img/advice/device-grant-gaming/play-the-game.png" alt="Playing the game." class="img-fluid" figure=false %}
+![Playing the game.](/img/articles/device-grant-gaming/play-the-game.png)
 
 ## Conclusion
 

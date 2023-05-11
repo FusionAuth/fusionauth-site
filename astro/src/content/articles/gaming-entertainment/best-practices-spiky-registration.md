@@ -1,12 +1,10 @@
 ---
-layout: advice
 title: Best Practices for Handling Spiky Registration Traffic for Game Launches
 description: What are steps you can take to make sure your servers can handle any spikes in registration traffic?
+section: Gaming & Entertainment
 author: Muhammad Yasoob Ullah Khalid
-image: advice/spiky-game-day-launches/best-practices-handling-spiky-game-launches.png
-category: Gaming and Entertainment
-date: 2022-08-24
-dateModified: 2022-08-24
+# date: 2022-08-24
+# dateModified: 2022-08-24
 ---
 
 Congrats! Your new massively multiplayer online (MMO) game is ready and you’re all set to launch. However, you’re not sure whether your servers can handle the load or whether the registration will fail under extreme load on launch day. If things really go wrong, you might lose users and revenue, which could possibly even lead to the failure of your game.
@@ -57,7 +55,7 @@ It’s always better to be equipped for unexpected scenarios. If your server cod
 
 If you’re on AWS, you can use [EC2 Auto Scaling](https://aws.amazon.com/ec2/autoscaling/), which relies on machine learning to horizontally scale your EC2 instances. You can configure it based on multiple criteria to make sure the threshold value is optimized for your budget. The picture below (taken from [AWS](https://docs.aws.amazon.com/autoscaling/plans/userguide/gs-configure-scaling-plan.html)) shows the different available threshold options:
 
-{% include _image.liquid src="/assets/img/advice/spiky-game-day-launches/ec2-options.png" alt="Options for EC2 auto scaling" class="img-fluid" figure=false %}
+![Options for EC2 auto scaling](/img/articles/spiky-game-day-launches/ec2-options.png)
 
 Similar options are available for [Google Cloud Compute Engine](https://cloud.google.com/compute/docs/autoscaler) and [Microsoft Azure](https://azure.microsoft.com/en-us/features/autoscale/).
 
@@ -79,7 +77,7 @@ If you’re not a big fan of CAPTCHAs, you can also try adding a hidden field to
 
 ## Reduce Form Questions
 
-{% include _image.liquid src="/assets/img/advice/spiky-game-day-launches/progressive-registration-steps.png" alt="Common Categories of Progressive Registration" class="img-fluid" figure=false %}
+![Common Categories of Progressive Registration](/img/articles/spiky-game-day-launches/progressive-registration-steps.png)
 
 Try to reduce the number of form fields you ask the user to fill out on initial sign-up. Ask only questions that are crucial for user gameplay. Even then, try to split the form into multiple steps and get the user’s email first.
 
