@@ -62,13 +62,13 @@ pip install -r requirements.txt
 Now run the setup script, replacing `<your API key>` with the value of the API key noted earlier.
 
 ```shell
-fusionauth_api_key=<your API key> python setup.py
+fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE python setup.py
 ```
 
 If you are using PowerShell, you will need to set the environment variable in a separate command before executing the script.
 
 ```shell
-$env:fusionauth_api_key='<your API key>'
+$env:fusionauth_api_key='YOUR_API_KEY_FROM_ABOVE'
 python setup.py
 ```
 

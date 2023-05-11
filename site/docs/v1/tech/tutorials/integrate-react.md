@@ -60,6 +60,13 @@ Then, you can run the setup script.
 fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE npm run setup
 ```
 
+If you are using PowerShell, you will need to set the environment variable in a separate command before executing the script.
+
+```shell
+$env:fusionauth_api_key='YOUR_API_KEY_FROM_ABOVE'
+npm run setup
+```
+
 If you want, you can http://localhost:9011[login to your instance] and examine the new Application the script created for you.
 
 ## Create Your {{page.technology}} Application
