@@ -41,7 +41,7 @@ If you want, you can [login to your instance](http://localhost:9011) and examine
 Now, copy and paste the following code into `Program.cs`.
 
 ```csharp
-{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-integration/main/SetupFusionauth/Program.cs %}
+{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-example-client-libraries/main/dotnet/Program.cs %}
 ```
 
 Then, you’ll need to import a few NuGet packages:
@@ -50,6 +50,14 @@ Then, you’ll need to import a few NuGet packages:
 dotnet add package JSON.Net # for debugging
 dotnet add package FusionAuth.Client # for our client access
 ```
+
+You can then publish and run the application. Replace `<YOUR_API_KEY>` with the API key that you generated.
+
+```shell
+dotnet publish -r osx-x64
+fusionauth_api_key=<YOUR_API_KEY> bin/Debug/net7.0/osx-x64/publish/SetupFusionauth 
+```
+
 
 ## Create Your {{page.technology}} Application
 
@@ -79,70 +87,6 @@ ASPNETCORE_ENVIRONMENT=Development bin/Debug/net7.0/osx-x64/publish/SetupDotnet
 
 You can hit `control-C` to exit this application.
 
-You’ll also want to add a page to be secured, which you can aptly call "Secure". Add `Secure.cshtml` and `Secure.cshtml.cs` to the `SetupDotnet/Pages` directory.
-
-Copy the following code into `Secure.cshtml`:
-
-```html
-@page
-@model SecureModel
-@{
-    ViewData["Title"] = "I'm full of secure data";
-}
-<h1>@ViewData["Title"]</h1>
-
-<p>TBD</p>
-```
-
-`Secure.cshtml.cs` should contain this code:
-
-```csharp
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
-
-namespace SetupDotnet.Pages
-{
-    public class SecureModel : PageModel
-    {
-        private readonly ILogger<SecureModel> _logger;
-
-        public SecureModel(ILogger<SecureModel> logger)
-        {
-            _logger = logger;
-        }
-
-        public void OnGet()
-        {
-        }
-    }
-}
-```
-
-Don’t forget to add a navigation element to `Pages/Shared/_Layout.cshtml` after the "Privacy" list item:
-
-```html
-<li class="nav-item">
-    <a class="nav-link text-dark" asp-area="" asp-page="/Secure">Secure</a>
-</li>
-```
-
-Hit `control-C` to exit the application if you haven’t already. Then republish it and start it up again.
-
-```shell
-dotnet publish -r osx-x64 && ASPNETCORE_ENVIRONMENT=Development bin/Debug/net7.0/osx-x64/publish/SetupDotnet
-```
-
-Visit `http://localhost:5000` and view your new page. Click on <span class="uielement">Secure</span>.
-
-{% include _image.liquid src="/assets/img/docs/integrations/dotnet-integration/dotnet-secure-page.png" alt="Secure page for .Net app" class="img-fluid bottom-cropped" width="1200" figure=false %}
-
-You’ve added a page, but it isn’t secure yet. Let’s do that next.
-
 ## Handle login for your {{page.technology}} application
 
 It’s always smart to leverage existing libraries as they are likely to be more secure and better handle edge cases. You’re going to add two new libraries to the application. Make sure you’re in the `SetupDotnet` directory and run these commands to add them.
@@ -152,25 +96,24 @@ dotnet add package Microsoft.AspNetCore.Authentication.OpenIdConnect
 dotnet add package IdentityModel.AspNetCore
 ```
 
-You need to protect the "Secure" page. You do this using the [Authorize filter attribute](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/filter?view=aspnetcore-3.1#authorize-filter-attribute) on the backing class, from `Secure.cshtml.cs`:
+To add a page to be secured, which you can aptly call “Secure”, add `Secure.cshtml` and `Secure.cshtml.cs` to the `SetupDotnet/Pages` directory. To protect the "Secure" page you can use the [Authorize filter attribute](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/filter?view=aspnetcore-3.1#authorize-filter-attribute) on the backing class, from `Secure.cshtml.cs`.
+
+Copy the following code into `Secure.cshtml.cs`:
 
 ```csharp
-using Microsoft.AspNetCore.Authorization;
-
-namespace setup_dotnet.Pages
-{
-    [Authorize]
-    public class SecureModel : PageModel
-    {
-        // ...
-    }
-}
+{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-integration/main/SetupDotnet/Pages/Secure.cshtml.cs %}
 ```
 
-You’ll also display the claims contained in the JWT that FusionAuth creates upon authentication. Here `Secure.cshtml` iterates over the claims. Update that file with the following code. A claim is essentially the information the authentication server has shared about a subject in the JWT.
+You’ll also display the claims contained in the JWT that FusionAuth creates upon authentication. A claim is essentially the information the authentication server has shared about a subject in the JWT. Here `Secure.cshtml` iterates over the claims. Update that file with the following code. 
 
 ```html
 {% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-integration/main/SetupDotnet/Pages/Secure.cshtml %}
+```
+
+To add a navigation element to navigate to the secure page update `Pages/Shared/_Layout.cshtml` with the following:
+
+```html
+{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-integration/main/SetupDotnet/Pages/Shared/_Layout.cshtml %}
 ```
 
 You also need to set up some services to specify how this page is protected. Create a `Startup.cs` file and add the following code:
@@ -179,56 +122,35 @@ You also need to set up some services to specify how this page is protected. Cre
 {% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-integration/main/SetupDotnet/Startup.cs %}
 ```
 
-Let’s go through some of the more interesting parts. First, you’re setting up authentication including the scheme and challenge method. You’ll be using cookies to store the authentication information and `"oidc"` for the authentication provider, which is defined further below.
+Replace the code in the `Program.cs` file with the following:
 
 ```csharp
-services.AddAuthentication(options =>
-{
-    options.DefaultScheme = "cookie";
-    options.DefaultChallengeScheme = "oidc";
-})
+{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-integration/main/SetupDotnet/Program.cs %}
 ```
 
-Here you configure the cookie, including setting the cookie name:
+Currently, the app lets you log in but there’s no way to log out. Next, you’ll build the logout functionality and page. This will
+
+- Remove the session cookie.
+- Redirect to the FusionAuth OAuth logout endpoint.
+
+FusionAuth will then destroy its session and redirect the user back to the app’s configured logout URL.
+
+Add the following file to the `Pages` directory and call it `Logout.cshtml.cs`:
 
 ```csharp
-.AddCookie("cookie", options =>
-{
-    options.Cookie.Name = Configuration["SetupDotnet:CookieName"];
-    // ...
-}
+{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-integration/main/SetupDotnet/Pages/Logout.cshtml.cs %}
 ```
 
-Finally, you set up the previously referenced authentication provider, `"oidc"`. You could have multiple providers. You create an [OpenIdConnectOptions](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-7.0) object to fully configure this provider. Setting `ResponseType = "code"` is what forces the use of the Authorization Code grant. You pull configuration information like the client Id from either `appsettings.json` or the environment. These are the values you saved when you were configuring FusionAuth (you’ll add them to `appsettings.json` a bit later). You’ll create an [OpenIdConnectOptions](https://docs.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.openidconnect.openidconnectoptions?view=aspnetcore-7.0) object to configure your provider. PKCE is turned on by default, so you’re ready for [OAuth 2.1](/blog/2020/04/15/whats-new-in-oauth-2-1).
+`OnGet` is the important method. Here you sign out using a method of the authentication library, delete the JWT cookie, and send the user to the FusionAuth OAuth logout endpoint.
 
-```csharp
-.AddOpenIdConnect("oidc", options =>
-{
-    options.Authority = Configuration["SetupDotnet:Authority"];
+Now add `Logout.cshtml` to the `Pages` directory. No content is necessary. Just declare the page and model as shown below.
 
-    options.ClientId = Configuration["SetupDotnet:ClientId"];
-    options.ClientSecret = Configuration["SetupDotnet:ClientSecret"];
-    options.Scope.Add("openid");
-    options.ClaimActions.Remove("aud");
-
-    options.ResponseType = "code";
-    options.RequireHttpsMetadata = false;
-});
+```html
+{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-integration/main/SetupDotnet/Pages/Logout.cshtml %}
 ```
 
-You also need to turn on authentication for the application:
 
-```csharp
-app.UseAuthentication();
-```
-
-For debugging, add `IdentityModelEventSource.ShowPII = true;` to the very end of the `Configure` method. This makes it easier to see [errors in the OAuth flow](https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/wiki/PII). But in production code, it must be removed.
-
-```csharp
-IdentityModelEventSource.ShowPII = true;
-```
-
-Here’s the `appsettings.json` file. You need to add the entire <span class="field">SetupDotnet</span> object so that the code above can be configured correctly. <span class="field">Authority</span> is just the location of the user identity server, in this case, FusionAuth.
+Update the `appsettings.json` file. You need to add the entire <span class="field">SetupDotnet</span> object so that the code above can be configured correctly. <span class="field">Authority</span> is just the location of the user identity server, in this case, FusionAuth.
 
 ```json
 {% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-integration/main/SetupDotnet/appsettings.json %}
@@ -248,40 +170,6 @@ After you’ve signed in, you’ll end up at the "Secure" page and will see all 
 
 {% include _image.liquid src="/assets/img/docs/integrations/dotnet-integration/dotnet-secure-page-claims.png" alt="Logged in page with claims" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
-
-## Logout
-
-Currently, the app lets you log in but there’s no way to log out. Next, you’ll build the logout functionality and page. This will
-
-- Remove the session cookie
-- Redirect to the FusionAuth OAuth logout endpoint
-
- FusionAuth will then destroy its session and redirect the user back to the app’s configured logout URL.
-
-Add the following file to the `Pages` directory and call it `Logout.cshtml.cs`:
-
-```csharp
-{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-integration/main/SetupDotnet/Pages/Logout.cshtml.cs %}
-```
-
-`OnGet` is the important method. Here you sign out using a method of the authentication library, delete the JWT cookie, and send the user to the FusionAuth OAuth logout endpoint.
-
-Now add `Logout.cshtml`. No content is necessary. Just declare the page and model.
-
-```html
-{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-integration/main/SetupDotnet/Pages/Logout.cshtml %}
-```
-
-Don’t forget to add a `Logout` link to the navigation, but only if the user is signed in:
-
-```html
-@if (User.Identity.IsAuthenticated)
-{
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="" asp-page="/Logout">Logout</a>
-    </li>
-}
-```
 
 ## Conclusion
 
