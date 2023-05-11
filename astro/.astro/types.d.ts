@@ -426,13 +426,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
-"oauth/modern-guide-to-oauth.md": {
-  id: "oauth/modern-guide-to-oauth.md",
+"oauth/modern-guide-to-oauth.mdx": {
+  id: "oauth/modern-guide-to-oauth.mdx",
   slug: "oauth/modern-guide-to-oauth",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">
-} & { render(): Render[".md"] },
+} & { render(): Render[".mdx"] },
 "oauth/oauth-device-authorization.mdx": {
   id: "oauth/oauth-device-authorization.mdx",
   slug: "oauth/oauth-device-authorization",
