@@ -83,11 +83,11 @@ Then copy and paste the following file into `setup.js`. This file uses the [Fusi
 ```
 Then, you can run the setup script.
 ```shell
-npm run setup
+fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE npm run setup
 ```
 If you want, you can [login to your instance](http://localhost:9011) and examine the new Application the script created for you.
 
-## Create Your Flutter Application
+## Create Your {{technology}} Application
 
 In order to create and set up the new {{technology}} app, run the following command. You'll want to be in a directory where the project should live.
 
@@ -123,16 +123,16 @@ Now that you have a basic working application running, let's jump into the fun s
 Therefore, you need to install some dependencies to your project. For that, you need to open the `pubspec.yml` file in your project and add these dependencies:
 
 ```yaml
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-flutter-dart/main/pubspec.yml %}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-flutter-dart/main/pubspec.yaml %}
 ```
 
-## Setting up AppAuth
+## Setting Up AppAuth
 
 Now that you have installed your libraries, you need to configure and add your previously configured callback URL to native configuration in both the Android and iOS directories.
 
 Let's look at Android first.
 
-### Android setup
+### Android Setup
 
 In your editor, you need to go to the `android/app/build.gradle` file for your Android app to specify the custom scheme. There should be a section in the file that looks similar to the below code block, but you'll need to add the FusionAuth URL: `com.fusionauth.flutterdemo`.
 
@@ -142,7 +142,7 @@ At the end of your editing, make sure the `appAuthRedirectScheme` section looks 
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-flutter-dart/main/android/app/build.gradle %}
 ```
 
-### iOS setup
+### iOS Setup
 
 You need to edit the `ios/Runner/Info.plist` file in the iOS app to specify the custom scheme. There should be a section in it that looks similar to the following, but you'll need to add the FusionAuth URL: `com.fusionauth.flutterdemo://login-callback`.
 
