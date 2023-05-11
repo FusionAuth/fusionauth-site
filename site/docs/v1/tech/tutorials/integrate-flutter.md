@@ -3,11 +3,11 @@ layout: doc
 title: Integrate Your Flutter Application With FusionAuth
 description: Integrate your Flutter application with FusionAuth
 navcategory: getting-started
+language: JavaScript
+technology: Flutter
 ---
 
-{% assign language = "Dart" %}
-{% assign technology = "Flutter" %}
-{% include docs/v1/tech/tutorials/_integrate-intro.liquid technology=technology %}
+{% include docs/integration/_intro.md %}
 
 ## Prerequisites
 
@@ -23,7 +23,7 @@ For this tutorial, you’ll need to have some of these tools installed.
     - [Android development environment](https://docs.flutter.dev/get-started/install/linux#android-setup)
 - Familiarity with ngrok (optional, useful if you want to test on a device)
 
-{% include docs/v1/tech/tutorials/_integrate-prerequisites.liquid %}
+{% include docs/integration/_prerequisites.md %}
 
 To make sure your environment is working correctly, run the following command in your terminal window.
 
@@ -49,17 +49,17 @@ Doctor summary (to see all details, run flutter doctor -v):
 
 ## Download and Install FusionAuth
 
-{% include docs/v1/tech/tutorials/_integrate-install-fusionauth.liquid %}
+{% include docs/integration/_install-fusionauth.md %}
 
 ## Create a User and an API Key
 
-{% include docs/v1/tech/tutorials/_integrate-add-user.liquid language=language %}
+{% include docs/integration/_add-user.md language=page.language %}
 
 ## Configure FusionAuth
 
-Next, you need to set up FusionAuth.
-This can be done in different ways, but we’re going to use the {{language}} client library.
-The below instructions use `npm` from the command line, but you can use the client library with an IDE of your preference as well.
+Next, you need to set up FusionAuth. This can be done in different ways, but we’re going to use the {{page.language}} client library. The below instructions use `npm` on the command line, but you can use the client library with an IDE of your preference as well.
+
+First, make a directory:
 
 ```shell
 mkdir setup-fusionauth && cd setup-fusionauth
@@ -77,21 +77,26 @@ Now you need to install the dependencies in `package.json`.
 npm install
 ```
 
-Then copy and paste the following file into `setup.js`. This file uses the [FusionAuth API](/docs/v1/tech/apis/) to configure an Application, CORS and more to allow for easy integration.
+Then copy and paste the following file into `setup.js`. This file uses the [FusionAuth API](/docs/v1/tech/apis/) to configure your FusionAuth instance to allow for easy integration.
+
 ```javascript
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/setup.js %}
 ```
-Then, you can run the setup script.
+
+Then, you can run the setup script, replacing `YOUR_API_KEY_FROM_ABOVE` with the API Key you generated earlier.
+
 ```shell
 fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE npm run setup
 ```
-If you want, you can [login to your instance](http://localhost:9011) and examine the new Application the script created for you.
 
-## Create Your {{technology}} Application
+If you want, you can [log into your instance](http://localhost:9011){:target="_blank"} and examine the new Application the script created for you.
 
-In order to create and set up the new {{technology}} app, run the following command. You'll want to be in a directory where the project should live.
+## Create Your {{page.technology}} Application
+
+In order to create and set up the new {{page.technology}} app, run the following command. You'll want to be in a directory where the project should live.
 
 ```shell
+mkdir ../flutter-app && cd ../flutter-app
 flutter create fusionauth_demo
 ```
 
@@ -118,9 +123,9 @@ Now that you have a basic working application running, let's jump into the fun s
 
 ## Integrating AppAuth
 
-[AppAuth](https://appauth.io/) is a popular OAuth package that can be used in both native and cross-platform mobile applications. In this project, you will be storing the access token using the secure storage package. Since such tokens allow your application to access protected resources such as APIs, you need to take care they are stored as securely as possible.
+[AppAuth](https://appauth.io/){:target="_blank"} is a popular OAuth package that can be used in both native and cross-platform mobile applications. In this project, you will be storing the access token using the secure storage package. Since such tokens allow your application to access protected resources such as APIs, you need to take care they are stored as securely as possible.
 
-Therefore, you need to install some dependencies to your project. For that, you need to open the `pubspec.yml` file in your project and add these dependencies:
+Therefore, you need to install some dependencies to your project. For that, you need to replace the `pubspec.yaml` file in your project with the one below.
 
 ```yaml
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-flutter-dart/main/pubspec.yaml %}
@@ -134,9 +139,7 @@ Let's look at Android first.
 
 ### Android Setup
 
-In your editor, you need to go to the `android/app/build.gradle` file for your Android app to specify the custom scheme. There should be a section in the file that looks similar to the below code block, but you'll need to add the FusionAuth URL: `com.fusionauth.flutterdemo`.
-
-At the end of your editing, make sure the `appAuthRedirectScheme` section looks similar to the one shown below.
+In your editor, you need to go to the `android/app/build.gradle` file for your Android app to specify the custom scheme. There should be a part of the file that looks similar to the code block below, but you'll need to add the FusionAuth URL `com.fusionauth.flutterdemo` to the `appAuthRedirectScheme` section.
 
 ```gradle
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-flutter-dart/main/android/app/build.gradle %}
