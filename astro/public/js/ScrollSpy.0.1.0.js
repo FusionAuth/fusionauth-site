@@ -34,9 +34,9 @@ class ScrollSpy {
       }
     }
 
-    document.querySelectorAll('[data-widget="scroll-spy"] div[data-widget="scroll-spy-item"]').forEach(li => li.classList.remove('active', 'section-active'));
+    document.querySelectorAll('[data-widget="scroll-spy"] [data-widget="scroll-spy-item"]').forEach(li => li.classList.remove('active', 'section-active'));
 
-    const group = document.querySelector(`a[href="#${header.id}"]`).closest('div[data-widget="scroll-spy-item"]');
+    const group = document.querySelector(`[data-widget="scroll-spy"] a[href="#${header.id}"]`).closest('[data-widget="scroll-spy-item"]');
     group.classList.add('active');
   }
 }

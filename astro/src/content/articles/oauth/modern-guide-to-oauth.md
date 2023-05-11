@@ -15,37 +15,6 @@ Well, yes and no. This guide is different than most of the others out there beca
 
 If that sounds good to you, keep reading!
 
-We do cover a lot, so here's a handy table of contents to let you jump directly to a section if you'd like.
-
-* [OAuth overview](#oauth-overview)
-* [OAuth modes](#oauth-modes)
-  * [Local login and registration](#local-login-and-registration)
-  * [Third-party login and registration](#third-party-login-and-registration)
-  * [First-party login and registration](#first-party-login-and-registration)
-  * [Enterprise login and registration](#enterprise-login-and-registration)
-  * [Third-party service authorization](#third-party-service-authorization)
-  * [First-party service authorization](#first-party-service-authorization)
-  * [Machine-to-machine authorization](#machine-to-machine-authorization)
-  * [Device login and registration](#device-login-and-registration)
-  * [Which OAuth mode is right for you?](#which-oauth-mode-is-right-for-you)
-* [OAuth Grants](#oauth-grants)
-  * [Authorization Code grant](#authorization-code-grant)
-    * [Login/register buttons](#loginregister-buttons)
-    * [Authorize endpoint parameters](#authorize-endpoint-parameters)
-    * [Logging in](#logging-in)
-    * [Redirect and retrieve the tokens](#redirect-and-retrieve-the-tokens)
-    * [Tokens](#tokens)
-    * [User and token information](#user-and-token-information)
-    * [Local login and registration with the Authorization Code grant](#local-login-and-registration-with-the-authorization-code-grant)
-    * [Third-party login and registration (also Enterprise login and registration) with the Authorization Code grant](#third-party-login-and-registration-also-enterprise-login-and-registration-with-the-authorization-code-grant)
-    * [Third-party authorization with the Authorization Code grant](#third-party-authorization-with-the-authorization-code-grant)
-    * [First-party login and registration and first-party service authorization](#first-party-login-and-registration-and-first-party-service-authorization)
-  * [Implicit grant in OAuth 2.0](#implicit-grant-in-oauth-20)
-  * [Resource Owner's Password Credentials grant](#resource-owners-password-credentials-grant)
-  * [Client Credentials grant](#client-credentials-grant)
-  * [Device grant](#device-grant)
-* [Conclusion](#conclusion)
-
 ## OAuth overview
 
 OAuth 2.0 is a set of specifications that allow developers to easily delegate the authentication and authorization of their users to someone else. While the specifications don't specifically cover authentication, in practice this is a core piece of OAuth, so we will cover it in depth (because that's how we roll).
