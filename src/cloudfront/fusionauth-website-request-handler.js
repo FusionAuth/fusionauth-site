@@ -112,6 +112,7 @@ var redirects = {
   '/pricing/edition/': '/pricing',
   '/pricing/editions': '/pricing',
   '/pricing/editions/': '/pricing',
+  '/products/identity-user-management/ciam-vs-iam': '/learn/expert-advice/ciam/ciam-vs-iam',
   '/resources/auth0-migration': '/auth0-migration',
   '/resources/guide-to-user-data-security': '/learn/expert-advice/security/guide-to-user-data-security',
   '/upgrade/from-homegrown': '/compare',
