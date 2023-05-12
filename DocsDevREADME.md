@@ -487,6 +487,7 @@ Model this after the ruby on [rails quickstart](https://fusionauth.io/docs/v1/te
 * For the login integration, use a standard OIDC library, not the FusionAuth client library.
 * Build the application from scratch, using whatever codegen tools are standard for the tech stack.
 * Include an image at the end
+* Build in a logout link using /oauth2/logout endpoint
 * Use the includes under `site/_includes/docs/integration` for the first sections of the tutorial. Make sure you set the expected values in the front matter:
 
 <pre>
