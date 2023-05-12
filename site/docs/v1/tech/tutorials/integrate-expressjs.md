@@ -3,57 +3,73 @@ layout: doc
 title: Integrate Your Express.js Application With FusionAuth
 description: Integrate your Express.js application with FusionAuth
 navcategory: getting-started
+prerequisites: Node.JS
+language: JavaScript
+technology: Express.js
 ---
 
-{% assign language = "TypeScript" %}
-{% assign technology = "Express.js" %}
-{% include docs/v1/tech/tutorials/_integrate-intro.liquid technology=technology %}
+{% include docs/integration/_intro.md %}
 
 ## Prerequisites
 
-{% include docs/v1/tech/tutorials/_integrate-prerequisites.liquid prerequisites="Node.js" %}
+{% include docs/integration/_prerequisites.md %}
 
 ## Download and Install FusionAuth
 
-{% include docs/v1/tech/tutorials/_integrate-install-fusionauth.liquid %}
+{% include docs/integration/_install-fusionauth.md %}
 
 ## Create a User and an API Key
 
-{% include docs/v1/tech/tutorials/_integrate-add-user.liquid language=language %}
+{% include docs/integration/_add-user.md language=page.language %}
 
 ## Configure FusionAuth
 
-Next, you need to set up FusionAuth.
-This can be done in different ways, but we’re going to use the {{language}} client library.
-The below instructions use {{technology}} from the command line, but you can use the client library with an IDE of your preference as well.
+Next, you need to set up FusionAuth. This can be done in different ways, but we’re going to use the {{page.language}} client library. The below instructions use `npm` on the command line, but you can use the client library with an IDE of your preference as well.
+
+First, make a directory:
 
 ```shell
 mkdir setup-fusionauth && cd setup-fusionauth
 ```
 
-If you want, you can [login to your instance](http://localhost:9011) and examine the new application configuration the script created for you.
+Now, copy and paste the following file into `package.json`.
 
-Now, let's install the client library.
-
-```shell
-npm install @fusionauth/typescript-client
+```javascript
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/package.json %}
 ```
 
-Then copy and paste the following code into the `setup.js` file.
+Now you need to install the dependencies in `package.json`.
+
+```shell
+npm install
+```
+
+Then copy and paste the following file into `setup.js`. This file uses the [FusionAuth API](/docs/v1/tech/apis/) to configure an Application and more to allow for easy integration. 
 
 ```javascript
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/setup.js %}
 ```
 
-Then, you can run the setup class. This will create the FusionAuth configuration for your {{technology}} application.
+Then, you can run the setup script.
+
+{% include _callout-note.liquid content="The setup script is designed to run on a newly installed FusionAuth instance with only one user and no tenants other than `Default`. To follow this guide on a FusionAuth instance that does not meet these criteria, you may need to modify the above script. <br><br> Refer to the [Typescript client library](/docs/v1/tech/client-libraries/typescript) documentation for more information." %}
 
 ```shell
-node setup.js
+fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE npm run setup
 ```
 
-## Create Your {{technology}} Application
+If you are using PowerShell, you will need to set the environment variable in a separate command before executing the script.
 
-Now you are going to create an {{technology}} application. While this section uses a simple {{technology}} application, you can use the same configuration to integrate your {{technology}} application with FusionAuth.
+```shell
+$env:fusionauth_api_key='YOUR_API_KEY_FROM_ABOVE'
+npm run setup
+```
+
+If you want, you can [log into your instance](http://localhost:9011) and examine the new Application the script created for you.
+
+## Create Your {{page.technology}} Application
+
+Now you are going to create a {{page.technology}} application. While this section uses a simple {{page.technology}} application, you can use the same steps to integrate any {{page.technology}} application with FusionAuth.
 
 First, make a directory.
 
@@ -67,10 +83,10 @@ Create a `package.json` file with the following contents to set up the dependenc
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/package.json %}
 ```
 
-Install the dependencies.
+Now, change into the `setup-expressjs` directory and install the needed packages.
 
 ```shell
-npm install
+cd setup-expressjs && npm install
 ```
 
 You are going to create some files in different directories, so pay attention to the final directory structure that you should have after completing these steps. 
@@ -127,11 +143,11 @@ Stitch everything together by creating an `app.js` file that will be the main en
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/app.js %}
 ```
 
-Once you’ve created these files, start up the {{technology}} application using this command:
+Once you’ve created these files, start up the {{page.technology}} application using this command:
 
 ```shell
 npm start
 ```
 
-You can now open up an incognito window and visit [the {{technology}} app](http://localhost:3000).
+You can now open up an incognito window and visit [the {{page.technology}} app](http://localhost:3000).
 Log in with the user account you created when setting up FusionAuth, and you’ll see the email of the user next to a logout link.
