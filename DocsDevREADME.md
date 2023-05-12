@@ -190,7 +190,7 @@ For blog posts:
 - client-side
 - curl
 - self-service
-- WebView
+- webview
 
 ## Words to avoid
 
