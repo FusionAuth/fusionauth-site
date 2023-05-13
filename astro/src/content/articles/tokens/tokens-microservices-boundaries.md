@@ -1,19 +1,17 @@
 ---
-layout: advice
 title: Tokens at the Microservices Context Boundary
 description: How to handle tokens at the boundary of your microservices
 author: Dan Moore
-image: advice/tokens-microservices-boundaries/tokens-microservices-context-boundary.png
-category: Tokens
-date: 2022-05-02
-dateModified: 2022-05-02
+section: Tokens
+# date: 2022-05-02
+# dateModified: 2022-05-02
 ---
 
 When you are using JWTs as part of your authorization solution in a microservices or Kubernetes based environment, you need to determine where to process them and how fine grained to make them.
 
 Consider this simple microservices based system. 
 
-{% include _image.liquid src="/assets/img/advice/tokens-microservices-boundaries/system-diagram.png" alt="Simple microservices system architecture diagram." class="img-fluid" figure=false %}
+![Simple microservices system architecture diagram.](/img/articles/tokens-microservices-boundaries/system-diagram.png)
 
 We have three different services, all protected by an API gateway. This API gateway could be running NGINX, Apache, or some other open source system. It could be a commercial package such as HAProxy or Kong. It could also be a cloud vendor managed API gateway, such as an AWS Application Load Balancer or a Google Cloud Load Balancer. 
 
@@ -41,7 +39,7 @@ In this case, the API gateway's stamp of approval is enough for each microservic
 
 The token is provided to the microservice which can decode the payload and examine the claims without worrying about the signature.
 
-{% include _image.liquid src="/assets/img/advice/tokens-microservices-boundaries/no-microservice-validation.png" alt="No microservice validation." class="img-fluid" figure=false %}
+![No microservice validation.](/img/articles/tokens-microservices-boundaries/no-microservice-validation.png)
 
 The benefits of this approach are simplicity of microservices implementation. They don't have to worry about JWT validation at all. They may have to decode the payload, but that can be done with the [golang base64](https://pkg.go.dev/encoding/base64) package or other similar packages. In addition, no external network access is required (to retrieve the public keys for signature validation). Because there is no signature validation, processing will be faster.
 
@@ -51,7 +49,7 @@ However, this approach relies on lower layers of the authorization system being 
 
 Here the token is provided to the microservices and they each validate the signature and the claims independently of the API gateway.
 
-{% include _image.liquid src="/assets/img/advice/tokens-microservices-boundaries/passthrough.png" alt="Each service validates the full token." class="img-fluid" figure=false %}
+![Each service validates the full token.](/img/articles/tokens-microservices-boundaries/passthrough.png)
 
 You'll typically handle this with, in increasing order of effort and customizability: 
 
@@ -163,7 +161,7 @@ The API gateway remains relatively simple. It still performs validation, but doe
 
 In this case, the token is processed at the API gateway. With Kubernetes, you can add an adapter to your ingress, process the request and modify the token. 
 
-{% include _image.liquid src="/assets/img/advice/tokens-microservices-boundaries/reissue.png" alt="The gateway re-issues the token." class="img-fluid" figure=false %}
+![The gateway re-issues the token.](/img/articles/tokens-microservices-boundaries/reissue.png)
 
 Common ways to modify the token include:
 
@@ -240,7 +238,7 @@ While this requires more custom code, the benefits of re-issuing the token mean 
 
 Finally, the API gateway can extract the contents of the token entirely and turn it into a header or body parameter rather than re-issuing the token.
 
-{% include _image.liquid src="/assets/img/advice/tokens-microservices-boundaries/extraction.png" alt="The gateway extracts needed data from the token as passes it as a header or form parameter." class="img-fluid" figure=false %}
+![The gateway extracts needed data from the token as passes it as a header or form parameter.](/img/articles/tokens-microservices-boundaries/extraction.png)
 
 This is helpful for situations where you are bolting on token based authentication, but the service expects values to be in normal HTTP headers or the body and it isn't worth it to upgrade it to process tokens. This could happen either right after the API gateway forwards the request or right before the container receives it.
 
