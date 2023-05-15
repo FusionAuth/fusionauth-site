@@ -14,7 +14,10 @@ Previously, we used .NET Core to [build a command line tool](/blog/2020/04/28/do
 
 <!--more-->
 
-{% include _callout-tip.liquid content="This code and tutorial has been updated in October 2021."%}
+{% include _callout-tip.liquid
+content=
+"This blog post has been [superseded by this guide](/docs/v1/tech/tutorials/integrate-dotnet)."
+%}
 
 ## Configuring FusionAuth
 
