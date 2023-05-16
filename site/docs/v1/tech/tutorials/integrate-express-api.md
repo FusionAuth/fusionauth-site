@@ -8,7 +8,7 @@ language: JavaScript
 technology: Express.js
 ---
 
-{% include docs/integration/_intro.md %}
+{% include docs/integration/_intro_api.md %}
 
 ## Prerequisites
 
