@@ -615,6 +615,104 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
+"security/breached-password-detection.md": {
+  id: "security/breached-password-detection.md",
+  slug: "security/breached-password-detection",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"security/guide-to-user-data-security.mdx": {
+  id: "security/guide-to-user-data-security.mdx",
+  slug: "security/guide-to-user-data-security",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"security/index.mdx": {
+  id: "security/index.mdx",
+  slug: "security",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"security/math-of-password-hashing-algorithms-entropy.md": {
+  id: "security/math-of-password-hashing-algorithms-entropy.md",
+  slug: "security/math-of-password-hashing-algorithms-entropy",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"security/password-security-compliance-checklist.mdx": {
+  id: "security/password-security-compliance-checklist.mdx",
+  slug: "security/password-security-compliance-checklist",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"security/steps-secure-your-authentication-system.md": {
+  id: "security/steps-secure-your-authentication-system.md",
+  slug: "security/steps-secure-your-authentication-system",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"security/zero-trust-identity-provider.md": {
+  id: "security/zero-trust-identity-provider.md",
+  slug: "security/zero-trust-identity-provider",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"tokens/building-a-secure-jwt.md": {
+  id: "tokens/building-a-secure-jwt.md",
+  slug: "tokens/building-a-secure-jwt",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"tokens/index.mdx": {
+  id: "tokens/index.mdx",
+  slug: "tokens",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"tokens/jwt-components-explained.md": {
+  id: "tokens/jwt-components-explained.md",
+  slug: "tokens/jwt-components-explained",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"tokens/jwt-token-components-explained.md": {
+  id: "tokens/jwt-token-components-explained.md",
+  slug: "tokens/jwt-token-components-explained",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"tokens/pros-and-cons-of-jwts.md": {
+  id: "tokens/pros-and-cons-of-jwts.md",
+  slug: "tokens/pros-and-cons-of-jwts",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"tokens/revoking-jwts.md": {
+  id: "tokens/revoking-jwts.md",
+  slug: "tokens/revoking-jwts",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"tokens/tokens-microservices-boundaries.md": {
+  id: "tokens/tokens-microservices-boundaries.md",
+  slug: "tokens/tokens-microservices-boundaries",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 "tokens/building-a-secure-jwt.md": {
   id: "tokens/building-a-secure-jwt.md",
   slug: "tokens/building-a-secure-jwt",

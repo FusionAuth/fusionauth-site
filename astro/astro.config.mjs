@@ -4,6 +4,7 @@ import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwind from "@astrojs/tailwind";
 import indexPages from "astro-index-pages/index.js";
+import { rehypeTasklistEnhancer } from './src/plugins/rehype-tasklist-enhancer';
 
 export default defineConfig({
   build: {
@@ -20,5 +21,11 @@ export default defineConfig({
       }
     })
   ],
+  markdown: {
+    rehypePlugins: [
+        // Tweak GFM task list syntax
+        rehypeTasklistEnhancer()
+    ]
+  },
   site: 'https://webauthn.wtf'
 });

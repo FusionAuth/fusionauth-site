@@ -1,10 +1,9 @@
 ---
-layout: advice
 title: Auth Providers and Zero Trust Architecture
 description: Learn about the Zero Trust framework and how Identity Providers factor into it to protect your network and keep your resources secure.
 author: Cameron Pavey
-image: advice/zero-trust/expert-advice-auth-providers-and-zero-trust-architecture-header-image.png
-category: Security
+icon: /img/icons/auth-providers-zero-trust.svg
+section: Security
 date: 2022-01-05
 dateModified: 2022-01-05
 ---
@@ -27,7 +26,7 @@ Originating at Forrester Research ([original PDF here](https://media.paloaltonet
 
 In order to verify a user for a given operation, a number of factors can be taken into account, including their identity, location, device details, attempted operation, and any other anomalies. This data serves to create a snapshot of who the user is and what they are trying to do, which can then be used to help inform whether or not to permit the operation. 
 
-{% include _image.liquid src="/assets/img/advice/zero-trust/zero-trust-diagram.png" alt="Diagram of Zero Trust architecture." class="img-fluid" figure=false %}
+![Diagram of Zero Trust architecture.](/img/articles/zero-trust-diagram.png)
 
 Zero Trust also factors in “preparing for the worst” by recognizing that some breaches are inevitable and preparing for them by minimizing the potential blast radius, implementing segmented access, and making use of the principle of “least privileged access” so that if a breach does occur, the impact is minimized as much as possible. Using physical security as an analogy, it’s kind of like having a lock on every door, rather than just the exterior ones. Even if someone gets into your building, there generally isn’t a lot they can do when confined to the hallways.
 

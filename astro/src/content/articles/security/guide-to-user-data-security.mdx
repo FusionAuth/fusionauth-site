@@ -1,61 +1,16 @@
 ---
-layout: advice
 title: Guide to User Data Security
 subtitle: by Brian Pontarelli
 description: Protect your user data with this step-by-step guide to secure your servers and applications.
-image: advice/guide-user-data-security-article.png
+icon: /img/icons/guide-user-data-security.svg
 author: Brian Pontarelli
-category: Security
+section: Security
 date: 2019-11-04
 dateModified: 2019-11-04
 ---
+import GuidelineBox from '/src/components/GuidelineBox.astro';
 
-<div class="toc collapsible">
-  <header>
-    <h2>Table of Contents</h2>
-    <a href="#" class="collapse-button"><i class="fas fa-chevron-circle-up fa-2x"></i></a>
-  </header>
-  <div class="collapsible-content">
-    <ol class="numbered">
-      <li><a href="#overview">Overview</a></li>
-      <li><a href="#tldr">tldr</a></li>
-      <li><a href="#server-security">Server Security</a>
-        <ol class="numbered">
-          <li><a href="#server-architecture">Server Architecture</a></li>
-          <li><a href="#provisioning">Provisioning</a></li>
-          <li><a href="#logging-in-first-time">Logging in the First Time</a></li>
-          <li><a href="#securing-passwords">Securing Passwords</a></li>
-          <li><a href="#locking-sudo">Locking Sudo</a></li>
-          <li><a href="#setup-ordinary-user-account">Setup Ordinary User Account</a></li>
-          <li><a href="#locking-remote-access">Locking Remote Access</a></li>
-          <li><a href="#ssh-agents">SSH Agents</a></li>
-          <li><a href="#locking-root-account">Locking the Root Account</a></li>
-          <li><a href="#two-factor-authentication">Two-Factor Authentication</a></li>
-          <li><a href="#firewalling">Firewalling</a></li>
-          <li><a href="#intrusion-detection">Intrusion Detection</a></li>
-          <li><a href="#database-server-specific-security">Database Server Specific Security</a></li>
-        </ol>
-      </li>
-      <li><a href="#application-security">Application Security</a>
-        <ol class="numbered">
-          <li><a href="#application-user">Application User</a></li>
-          <li><a href="#ssl">SSL</a></li>
-          <li><a href="#password-security">Password Security</a></li>
-          <li><a href="#sql-injection">SQL Injections</a></li>
-          <li><a href="#configuration">Configuration</a></li>
-          <li><a href="#database-security">Database Security</a></li>
-          <li><a href="#user-data-hacks">User Data Hacks</a></li>
-          <li><a href="#cross-site-request-forgery">Cross-Site Request Forgery</a></li>
-          <li><a href="#social-hacks">Social Hacks</a></li>
-        </ol>
-      </li>
-      <li><a href="#summary">Summary</a></li>
-      <li><a href="#references">References</a></li>
-    </ol>
-  </div>
-</div>
-
-## 1. Overview {#overview}
+## Overview
 
 _"Facebook says new hack leaked data of 50 million users."_
 
@@ -81,13 +36,13 @@ This guide is for the software developer, architect or system administrator who 
 
 There are two parts to the guide: Server Security and Application Security. We don't see one as more important than the other, so we strongly encourage readers to digest both sections with equal attention. We provide a series of guidelines and steps to harden the servers/applications and protect against direct attacks. This isn't a "Why" kind of guide; this is a "How" guide. We trust that those interested in the "Why" will find plenty of other resources to satisfy their curiosity. For those of you interested in the "How", let's get started.
 
-## 2. TLDR {#tldr}
+## TLDR
 
 If you would rather not read our entire security guide (though we suggest you do), check out the Github project created around this guide. This project contains a set of scripts you can execute from your local computer to secure a remote server. The scripts perform most of the steps listed in this guide. The Github project also contains full configuration files based on the configuration detailed below that are deployed to the server by the scripts.
 
 In addition to setup scripts and configuration, we also added a Chef cookbook to the Github repository. Chef is a great way to provision new servers and ensure they are setup exactly how you want them. There are a number of other systems similar to Chef, but we use Chef for all of our servers and thought we would share our Chef recipe with everyone.
 
-Find our Github project here: <https://github.com/FusionAuth/security-scripts>
+Find our Github project here: https://github.com/FusionAuth/security-scripts
 
 **NOTE:** That is only half of the equation, so you will still want to read the Application Security section of the guide.
 
@@ -95,24 +50,23 @@ As you read through this guide, keep in mind that most of the instructions below
 
 We've also had a number of questions regarding which parts of this guide are not necessary for various cloud providers like AWS or GCP. Every cloud provider offers different levels of security, but primarily focus on network security. Therefore, if your cloud provider offers a comprehensive network security layer, you can probably skip the network pieces below. We still lock down our servers even though we use AWS, so you might want to do the same.
 
-## 3. Server Security {#server-security}
+## Server Security
 
 The first step to securing user data is to secure the servers you will be running your applications and/or databases on. The process of securing servers centers on a couple of core guidelines.
 
-<div class="guideline">
-<header>CORE GUIDELINES</header>
-<div class="body" markdown="1">
+<GuidelineBox header="CORE GUIDELINES">
+
 * Use the least privilege possible
 * Prevent direct access when it isn't required
 * Automate security checks and constraints
 * Send notifications for all activity
 * Identify users that can access the server
-</div>
-</div>
+
+</GuidelineBox>
 
 This section details a step-by-step process to secure your servers.
 
-### 3.1. Server Architecture {#server-architecture}
+### Server Architecture
 
 In order to illustrate our thinking around server security, we need to cover what type of servers we are talking about. Since this guide is specifically about user data security, we will focus on applications that use a server side component and a database to store and manage user data. This application will allow users to register, login and perform various functions. A few examples of this type of application are:
 
@@ -121,13 +75,17 @@ In order to illustrate our thinking around server security, we need to cover wha
 
 Now that we know what type of servers and applications we will be securing, let's take a look at the server architecture for a simple example of a fictional "To-do Application" and the server architecture we recommend you use for your applications.
 
-{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/server-architecture.png" alt="Server architecture" class="img-fluid text-center" figure=false %}
+<div class="bg-slate-200 flex justify-center p-4 not-prose">
+
+![Server architecture](/img/articles/guide-to-user-data-security/server-architecture.png)
+
+</div>
 
 In general, you will want to separate your Database Server from your Application Server. While securing two servers instead of one does require additional work, it will give you the flexibility to control access to each server separately. This also means that if a breach does occur, the hacker will have a couple more hoops to jump through in order to gain access to your user data (we'll discuss this later).
 
 On the Application Server you will install the server-side code for your application. On the Database Server you will install the database that you will be using (MySQL, PostgreSQL, Mongo, Reddis, etc). Depending on your needs, you can horizontally scale either of these servers. You will want to use the exact same configuration and access controls on each server to ensure consistency. DevOps is out of scope for this guide, however there are numerous tools available to create server images and deploy multiple instances of them. Similarly, there are many tools you can use to make a configuration change to all servers without having to log into each one separately.
 
-### 3.2.	Provisioning {#provisioning}
+### Provisioning
 
 In this guide, we will take you through the steps to create servers using Linode, a virtual server provider. Linode provisions stock versions of most operating systems and the server is open to the world. This would be the same setup if you were running your own servers. If you use Amazon, Google or other cloud providers instead, some of the security configurations below will be managed using the web based configuration systems of the hosting provider or their APIs. We'll try to indicate places where providers like Amazon provide tools to manage various security components.
 
@@ -137,38 +95,37 @@ Our examples will use two Linode 1024 instances hosted in California. Here are t
 
 #### Step 1: Select the server type
 
-{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/linode-setup-1.png" alt="Linode setup select server type" class="img-fluid text-center" figure=false %}
+![Linode setup select server type](/img/articles/guide-to-user-data-security/linode-setup-1.png)
 
 #### Step 2: Deploy the Linux Operating System
 
 In this step, be sure to select a long and secure root password. Later you will disable root passwords, but for the initial process you need to ensure the server is secure.
 
-{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/linode-setup-2.png" alt="Linode setup select operating system" class="img-fluid text-center" figure=false %}
+![Linode setup select operating system](/img/articles/guide-to-user-data-security/linode-setup-2.png)
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Prevent direct access when it isn't required
-</div>
-</div>
+
+</GuidelineBox>
 
 #### Step 3: Configure a private IP address
 
 You need to give both servers a private IP address that is not world accessible, but is accessible between Linode servers. This setting is on the Remote Access page.
 
-{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/linode-setup-3.png" alt="Linode setup private IP" class="img-fluid text-center" figure=false %}
+![Linode setup private IP](/img/articles/guide-to-user-data-security/linode-setup-3.png)
 
 Once you click the `Add a Private IP` button, you will be presented with this screen that allows you to create a private IP for the server.
 
-{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/linode-setup-4.png" alt="Linode setup private IP form" class="img-fluid text-center" figure=false %}
+![Linode setup private IP form](/img/articles/guide-to-user-data-security/linode-setup-4.png)
 
 After you add a private IP address, your configuration should look like this:
 
-{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/linode-setup-5.png" alt="Linode setup private IP assigned" class="img-fluid text-center" figure=false %}
+![Linode setup private IP assigned](/img/articles/guide-to-user-data-security/linode-setup-5.png)
 
 Before the private IP address will take effect, you need to enable the "Auto-configure Networking" setting. From the Dashboard click the "Edit" link to the right of your configuration at the top of the page. This will take you to the configuration options. At the bottom, enable the "Auto-configure networking setting". This option looks like this:
 
-{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/linode-setup-6.png" alt="Linode setup automatic networking" class="img-fluid text-center" figure=false %}
+![Linode setup automatic networking](/img/articles/guide-to-user-data-security/linode-setup-6.png)
 
 Then click "Save Changes".
 
@@ -176,13 +133,13 @@ Then click "Save Changes".
 
 Now, boot your Linode server by clicking the Boot button on the details page:
 
-{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/linode-setup-7.png" alt="Linode setup boot server" class="img-fluid text-center" figure=false %}
+![Linode setup boot server](/img/articles/guide-to-user-data-security/linode-setup-7.png)
 
 Both servers should now be running. The next step of the process is to lock down remote access to the servers and secure passwords and user accounts. You will need to perform all of these steps on each server to ensure they both are secure. There are numerous guides available to help you secure Linux servers, but we will cover the most common steps we use at FusionAuth.
 
 **NOTE:** We assume once a hacker has gained access to the server undetected, they will eventually succeed in gaining root access and will have access to everything. Therefore, we will cover some steps to secure user accounts and make the hacker's job harder, but we won't go into extreme detail here. Instead, we will focus primarily on preventing hackers from gaining access to the server in the first place.
 
-### 3.3. Logging in the First Time {#logging-in-first-time}
+### Logging in the First Time
 
 First, log into your server as the root user using the password you entered above. To log into the server, execute this command:
 
@@ -192,14 +149,13 @@ $ ssh root@192.81.133.144
 
 You can leave this terminal window open while you configure the server. This makes life simpler and will allow you to fix issues if something breaks along the way.
 
-### 3.4. Securing Passwords {#securing-passwords}
+### Securing Passwords
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Automate security checks and constraints
-</div>
-</div>
+
+</GuidelineBox>
 
 By forcing users to select secure passwords you will prevent users with accounts on your servers from using passwords like `"password"`.
 
@@ -241,7 +197,7 @@ The configuration options are as follows:
 
 You can change these values if you wish, but you should ensure users are selecting complex passwords that are hard to brute force attack.
 
-### 3.5. Locking Sudo {#locking-sudo}
+### Locking Sudo
 
 Some standard Linux installations allow passwordless sudo superuser access using the `sudo` command. Often this capability is provided to users in the `sudo` group. One potential issue with passwordless superuser access is that if a hacker gains access to a ordinary user account on your server, and that ordinary user account is in the correct group, then the hacker can become the root user without knowing the user's password.
 
@@ -267,14 +223,13 @@ If this line looks like this:
 
 You will want to remove the `"NOPASSWD":` part of the line.
 
-### 3.6. Setup Ordinary User Account {#setup-ordinary-user-account}
+### Setup Ordinary User Account
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Identify users that can access the server
-</div>
-</div>
+
+</GuidelineBox>
 
 Up to this point, we have been using the root user account for everything. This is fine when you are setting up a server but it is better to create an ordinary user account and start using that instead. This method provides better security because ordinary user accounts must use the `sudo` command in order to gain superuser privileges. Plus, we know that our configuration change above will require them to type in their password as well.  
 
@@ -314,7 +269,7 @@ You should see a directory listing of the server. However, if you see a message 
 
 You can logout of this terminal by typing `exit` or hitting `ctrl-d`.
 
-### 3.7. Locking Remote Access {#locking-remote-access}
+### Locking Remote Access
 
 Remote access is always through SSH on Linux servers. In most cases, SSH is setup to allow access to user accounts via passwords. By allowing users to log into your server using their passwords, you allow hackers to brute force attack your server from anywhere in the world. Instead, your servers should use RSA keys to allow users to login. This will only allow users to access the server from the computer that contains their private key. Since private keys will be password locked and never shared, this will ensure that only authorized users will be able to access the server.
 
@@ -376,7 +331,7 @@ You can verify that your server is now secure by attempting to SSH to it as the 
 Permission denied (publickey).
 ```
 
-### 3.8. SSH Agents {#ssh-agents}
+### SSH Agents
 
 You might be wondering what will happen if you SSH to the Application Server and then try to SSH from there to the Database Server. By default, you won't be able to do this because your private key won't be on the Application Server. However, SSH has a feature that allows you to accomplish this without copying your private key all over the place.
 
@@ -400,14 +355,13 @@ $ ssh -A -i server_rsa your-username@173.255.241.203
 
 You can also add an alias for the SSH command to automatically add the `-A` option in your shell's configuration file.
 
-### 3.9. Locking the Root Account {#locking-root-account}
+### 3.9. Locking the Root Account
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Prevent direct access when it isn't required
-</div>
-</div>
+
+</GuidelineBox>
 
 Next, we will disable the root user's login to prevent users from trying to brute force attack the root user if they ever gain access to the server. You might be concerned that if you lock the root account you won't be able to administer the server easily. Even if the root user account is locked, you'll still be able to use the root account via the command `sudo su -`, but you won't be able to log in directly to the root user's account. To lock the root user's login, type this command into the terminal window that is logged in as the root user:
 
@@ -415,14 +369,13 @@ Next, we will disable the root user's login to prevent users from trying to brut
 $ usermod -p '*' root
 ```
 
-### 3.10. Two-Factor Authentication {#two-factor-authentication}
+### Two-Factor Authentication
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Identify users that can access to the server
-</div>
-</div>
+
+</GuidelineBox>
 
 Since we are going for über security, let's get crazy and add one more layer of authentication to your remote access. We will add two-factor authentication to the server. This will require users to type in a 6-digit code from their mobile phone in order to log in. Even if a user's private key is compromised, two-factor authentication ensures a hacker would still need the user's mobile phone to log into the server.
 
@@ -483,14 +436,13 @@ Before logging out of this terminal, open a new terminal window and verify that 
 
 If you install the two-factor authentication as described above and a user doesn't enable it for their account, everything will still work fine. They will be able to log in using their SSH key but it will also prompt them for their password as their two-factor response.
 
-### 3.11. Firewalling {#firewalling}
+### Firewalling
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Prevent direct access when it isn't required
-</div>
-</div>
+
+</GuidelineBox>
 
 This section covers how to prevent access to the servers except on specific ports and from specific IP addresses.
 
@@ -756,14 +708,13 @@ It might seem like a pain to have to log into the Application Server in order to
 
 Both are challenging feats and it is likely the hacker will be discovered well before they accomplish either task.
 
-### 3.12. Intrusion Detection {#intrusion-detection}
+### Intrusion Detection
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Send notifications for all activity
-</div>
-</div>
+
+</GuidelineBox>
 
 Since most servers aren't actively logged into on a frequent basis, you should be notified when anyone logs into the server. There are many ways to handle this, but we will cover how to setup notifications using a tool called Monit. Monit allows you to watch log files for messages that contain certain text and generate alerts. To install Monit, execute this command in the root terminal window:
 
@@ -864,7 +815,7 @@ end
 
 You must configure the Pushover and Slack variables defined at the top of the file for the integrations to work properly. For the Pushover integration, create a Pushover account and a Pushover application. The Pushover application creation looks like this:
 
-{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/pushover-setup.png" alt="Pushover setup" class="img-fluid text-center" figure=false %}
+![Pushover setup](/img/articles/guide-to-user-data-security/pushover-setup.png)
 
 Give your Pushover application a name, description and URL. Select "Script" from the Type select box.
 
@@ -892,11 +843,11 @@ Finally, restart Monit again using this command:
 $ service monit restart
 ```
 
-### 3.11. Database Server Specific Security {#database-server-specific-security}
+### Database Server Specific Security
 
 This section will cover security measures that are specific to the Database Server using MySQL. You can translate these instructions for nearly any database solution you use.
 
-#### 3.11.1.	MySQL
+#### MySQL
 
 First, install MySQL. To install MySQL on the Database Server, execute this command in the root terminal window:
 
@@ -912,12 +863,11 @@ By default, MySQL only listens on the loopback interface. Change this configurat
 bind-address = 192.168.142.213
 ```
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Prevent direct access when it isn't required
-</div>
-</div>
+
+</GuidelineBox>
 
 This is the private IP address from our example above. You will need to change this to your private IP address. This will ensure that only servers on the same LAN will be able to connect to the database.
 
@@ -948,14 +898,13 @@ mysql:x:110:117:MySQL Server,,,:/nonexistent:/bin/false
 
 If the MySQL user's line doesn't end in `"/bin/false"`, you can edit this file manually and change it using `nano` or `vi`.
 
-#### 3.11.2. Backups
+#### Backups
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Automate security checks and constraints
-</div>
-</div>
+
+</GuidelineBox>
 
 You'll want to make backups of your Database Server and store them offsite in case of a server failure. One issue that arises with backups is that they are often not secured. The server they are stored on might have been built by a hosting provider or some other third party therefore, the Backup Server might not have the level of security you require. You should encrypt database backups before transferring them offsite. This reduces the likelihood that a Backup Server breach will allow the hacker to gain access to your data.
 
@@ -1048,33 +997,32 @@ $ openssl rsautl -decrypt -inkey private-key.pem < 20160502.passphrase.enc > 201
 $ openssl enc -aes-256-cbc -d -pass file:20160502.passphrase < 20160502.tar.gz.enc > 20160502.tar.gz
 ```
 
-## 4. Application Security {#application-security}
+## Application Security
 
 Now that your servers are nicely secured, let's take a look at securing the application. When we discuss application level security, we are talking about hacks and exploits that would allow hackers access to all or most of the user data. We won't be focusing on attacks that might allow a hacker access to a single user account.
 
 Application Security centers around a set of guidelines:
 
-<div class="guideline">
-<header>CORE GUIDELINES</header>
-<div class="body" markdown="1">
+<GuidelineBox>
+
 * Use the least privilege possible
 * Encrypt all communications
 * Automate security checks and constraints
 * Cleanse user input
 * Keep it on the server
-</div>
-</div>
+
+</GuidelineBox>
+
 
 This section will cover the different aspects of securing an application.
 
-### 4.1. Application User {#application-user}
+### Application User
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Use the least privilege possible
-</div>
-</div>
+
+</GuidelineBox>
 
 When you install and start your application on the Application Server you have a couple of options. You can run the application using root, the ordinary user you created above or a new user. We recommend that you create a new user to run your application for a couple of reasons:
 
@@ -1096,18 +1044,17 @@ This command creates a user named `application` that has no password and no home
 sudo -u application nodejs /usr/local/application/app.js
 ```
 
-### 4.2. SSL {#ssl}
+### SSL
 
 **NOTE:** We use the term SSL but in reality, we are talking specifically about TLS v1.2 or newer. SSL and earlier versions of TLS are no longer considered secure and many browsers will refuse to connect to websites and services that use them.
 
 The first level of defense for any application is to use SSL for all network traffic to the web server. Without SSL encryption, a hacker could intercept network traffic in and out of the server and store it. Since this network traffic would contain usernames, passwords and other user data this would generally be the same level of breach as a hacker gaining access to the user database.
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Encrypt all communications
-</div>
-</div>
+
+</GuidelineBox>
 
 Each web server will have a different mechanism for implementing SSL. In all cases, you will need to obtain a validated and signed SSL certificate from a known certificate authority (also known as a CA). Rather than cover all possible web servers and how you configure SSL, we'll cover the example application we built for this guide. You can translate these instructions for your application.
 
@@ -1182,14 +1129,13 @@ http.createServer(function (req, res) {
 
 You can also another CA like GoDaddy if you prefer. We don't cover the process of obtaining a certificate via CA, but most providers will step you through the process of generating a CSR (certificate signing request), creating the certificate and then downloading it to your dev box. Once you have the certificate and private key, you can copy it to the server (using SCP) and install it wherever you want. Once it is installed on the server, the code above would be updated to point to the certificate and private key file locations you used.   
 
-### 4.3. Password Security {#password-security}
+### Password Security
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Automate security checks and constraints
-</div>
-</div>
+
+</GuidelineBox>
 
 When a user registers, they will provide a password for their account. The application needs to ensure that all passwords provided by users are secure. This usually means that the password is sufficiently complex.
 
@@ -1295,7 +1241,7 @@ public class LoginHelper {
 
 There are two core concepts that impact the security of password hashing: salting and complexity. We will cover both of these in the sections below.
 
-#### 4.3.1. Password Salting
+#### Password Salting
 
 Salting of passwords is a measure that prevents a specific type of password attack. This attack is done by leveraging lookup tables. A lookup table attack is when all possible combinations of passwords are hashed and then stored in a massive reverse lookup table. Let's assume that we aren't salting our passwords but just hashing them directly. In this case, we could build a lookup table like this:
 
@@ -1325,11 +1271,11 @@ This value is then hashed with an algorithm like Bcrypt or PBKDF2. The result mi
 2206b1bbf30cf86bd1ecb952d1676aa3b9df45a9704e50e899d9615e20e53c2c
 ```
 
-#### 4.3.2. Complexity
+#### Complexity
 
 The second part of password security is using a complex hashing algorithm. As engineers, we are trained that performance is good. Things that run faster are better because the end-user doesn't have to wait. This is not the case for passwords. Instead, we actually want our password hashing algorithm to be as slow and complex as tolerable.
 
-{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/bitcoin-mining-farm.jpg" alt="Bitcoin Farm" class="img-thumbnail img-fluid" figure=false %}
+![Bitcoin Farm](/img/articles/guide-to-user-data-security/bitcoin-mining-farm.jpg)
 
 The reason that slow algorithms are better is that it takes the computer time to generate the hash. This time makes brute-force attacks nearly impossible. Here's why.
 
@@ -1383,18 +1329,17 @@ public class PBKDF2HMACSHA256PasswordEncryptor implements PasswordEncryptor {
 
 It is interesting to note that the PBKDF2 algorithm takes the salt as a parameter to the key specification rather than using it to modify the password String itself. Each algorithm works differently, so keep that in mind as you are writing your password hashing.
 
-### 4.4. SQL Injections {#sql-injection}
+### SQL Injections
 
 SQL injection is an application level vulnerability that is caused when an application builds SQL queries (or any type of database query) directly from user input. The XKCD comic strip illustrates this principle:
 
-{% include _image.liquid src="/assets/img/advice/guide-to-user-data-security/sql-injection.png" alt="SQL Injection" class="img-fluid text-center" figure=false %}
+![SQL Injection](/img/articles/guide-to-user-data-security/sql-injection.png)
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Cleanse user input
-</div>
-</div>
+
+</GuidelineBox>
 
 A classic example of a SQL injection is a set of search results or tabular data that can be sorted. Many applications put the sorting column and direction on the anchor tags or the select box used to select the sort. When a user selects the sort, the browser will make a request like this:
 
@@ -1466,14 +1411,13 @@ It is a good idea to centralize all of your database logic into a single module 
 
 Finally, you should evaluate the database table that is being accessed and select the solution from above that best fits your requirements and provides the best security. For example, a public facing form that accesses a table that contains sensitive information might use prepared statements and enumerations in order to reduce the possibility of an attacker exploiting a regular expression vulnerability. On the other hand, an admin interface that accesses a small table might prefer to use regular expressions for their flexibility. 
 
-### 4.5. Configuration {#configuration}
+### Configuration
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Keep it on the server
-</div>
-</div>
+
+</GuidelineBox>
 
 Server applications generally need access to a database in order to store and retrieve data. The credentials that the application uses to connect to the database should be stored in a configuration file. However, this configuration file should not be checked into source control. A development version of the configuration file can be checked in to make it simpler for developers to work. Therefore, a mechanism that determines which configuration file to load is required. Here's a simple code snippet from our Node.js application that determines if a production configuration file exists or if the development version should be used:
 
@@ -1511,16 +1455,15 @@ All sensitive configuration should be locked down in a similar manner. This incl
 * API keys and tokens for third-party software
 * Database usernames and passwords
 
-### 4.6. Database Security {#database-security}
+### Database Security
 
 We talked about securing the database at the server level in the previous section. Here we will cover securing the database at the application level. Since most applications connect to a database, these connections must be secured.
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Use the least privilege possible
-</div>
-</div>
+
+</GuidelineBox>
 
 The most important aspect of securing a database is the database user the application connects with. Never connect your application to your database as a superuser (AKA a root database user). Instead, create an application user and limit the privileges of this user to only those needed for the application.
 
@@ -1533,18 +1476,17 @@ mysql> grant insert, select, update, delete on users_todos.* to 'fusionauth'@'19
 
 This creates our user and then allows the user to perform the standard SQL data options (insert, select, update and delete) on our database only.
 
-### 4.7. User Data Hacks {#user-data-hacks}
+### User Data Hacks
 
 Most modern applications use a combination of server-side code and client-side code. These two layers of code communicate with each other via APIs. Often, JSON data is sent between the client and server using AJAX requests. This new model of application development adds a lot of flexibility, but also opens up a lot of security risks.
 
 After a user logs in, the application will need the user id in order to look up additional data for the user as well as ensure the user has the correct permissions to take actions. This user id will also be used when the user modifies, creates or deletes their data.
 
-<div class="floating guideline">
-<header>GUIDELINE</header>
-<div class="body">
+<GuidelineBox float={true}>
+
 Keep it on the server
-</div>
-</div>
+
+</GuidelineBox>
 
 Since the user id is such a powerful component of an application, it needs to be secured and validated. Applications can send the user id to the front-end but should do so in a secure and verifiable way. Leveraging JSON Web Tokens (JWTs) is a good way to send user data (including their id) to the front-end of an application. On the server side, the APIs that are open to the front-end should never take a user id as the way to identify a user. This would allow any hacker to send it arbitrary ids and exploit user accounts. Instead, a secure token should be sent to APIs from the front-end. If you are using JWTs, these should be signed using RSA key-pairs. The server can then verify that the JWT is valid (by checking the RSA signature) and extract the user id from the JWT. Other solutions to this include using session cookies as the token, OAuth access tokens or other types of tokens.
 
@@ -1629,7 +1571,7 @@ router.route("/todos").post(function (req, res) {
 
 The code that decodes and validates the JWT was left out because there are a number of libraries out there that provide this for you. A key benefit of using JWTs is that the server only needs the RSA public key that the identity provider used to sign the JWT with. This makes backends that use JWTs stateless since they don't require a session and decouples them from the identity provider since they don't need to call the identity provider to validate the JWT.
 
-### 4.8. Cross-Site Request Forgery (CSRF) {#cross-site-request-forgery}
+### Cross-Site Request Forgery (CSRF)
 
 Cross-site request forgery is a type of attack that hackers take on applications. It involves requests made to an application that a user cannot prevent or control but causes the application to perform some type of action for the user. The simplest form of CSRF is using an image tag to exploit an API that accepts GET requests. The attacker would put the URL they are trying to exploit in a forum or message board and anyone that is logged into the application would be immediately exploited.
 
@@ -1656,7 +1598,7 @@ You'll notice that the submit button is styled to look very similar to a standar
 
 CSRF attacks can be mitigated in a number of ways. We'll cover them below with examples:
 
-#### 4.8.1. Session Tokens
+#### Session Tokens
 
 First, you can generate a secure token that is put into the session on the server and output into the form. Tokens should be 256 or more bits of information and generated using a secure random number generator. Implementations can then Base64 encode the bits to get a secure token. The resulting form would look like this:
 
@@ -1671,7 +1613,7 @@ First, you can generate a secure token that is put into the session on the serve
 
 When the form is submitted, the server then checks that the value in the session is the same as the value on the form. This works well in most cases except it breaks if the user has multiple tabs open or uses the back-button in unexpected ways. In order to prevent issues with tabs and the back-button, you need to generate a CSRF token when the user logs in and store it in the session. This means that the user has the same token for their entire session, but this method will prevent most CSRF attacks. If you prefer to generate a new token for each request, then your best approach to invalid tokens is to redraw the form. If the token is missing completely, you should log the user out immediately.
 
-#### 4.8.2. Cookie
+#### Cookie
 
 This method uses a cookie that stores the CSRF token rather than writing it out to a form. This approach then uses JavaScript to read the value of the cookie and write it out to a form field or into a header value when making AJAX requests from a JavaScript application. This approach uses JavaScript like this:
 
@@ -1686,7 +1628,7 @@ var csrfToken = cookie.split("=")[1];
 
 The key security constraint for this approach is that the browser must conform to the same-origin policy. This policy ensures that JavaScript can only access cookies and documents from the same origin (i.e. only JavaScript from example.com can read cookies and documents from example.com). Most browsers enforce this so it is safe to use this technique.
 
-#### 4.8.3. Cookie and Form
+#### Cookie and Form
 
 This approach is similar to the previous example, except it writes out a cookie that contains the CSRF token and also writes it out to the form. The cookie that is written out for this should be an `httpOnly` cookie. This means that it is not readable by JavaScript. This approach also works because of the access controls enforced by the browser. Even though the user might have the CSRF token on the website where the hacker has injected the malicious code, the hackers code will not be able to access the CSRF cookie using JavaScript and therefore won't be able to craft a form that contains the same CSRF token.
 
@@ -1710,7 +1652,7 @@ Connection: Closed
 </html>
 ```
 
-#### 4.8.4. Referrer and Origin
+#### Referrer and Origin
 
 This approach verifies the HTTP `Referrer` and `Origin` headers are from the same domain your application is running on. While this seems like a simple task, it is often very challenging to implement and most people don't even bother with these checks. The issue is that your application code could be sitting behind a proxy, load-balancer or many other types of components that could strip or change these headers. Additionally, your application might be running under multiple domains and will need to configured to know the domains it should validate these headers against. Your best bet is to check these headers if they are present but do not rely sole on this approach.
 
@@ -1725,11 +1667,11 @@ if ((origin != null && !configuredDomains.contains(origin)) ||
 }
 ```
 
-#### 4.8.5. Others
+#### Others
 
 There are a few other approaches to mitigating CSRF including encrypted tokens, HMAC and others. You should review the resources at the bottom of this guide under CSRF to determine which method works best for your application.
 
-### 4.9. Social Hacks {#social-hacks}
+### Social Hacks
 
 Social hacking is another issue that your application could be subject to. An example of a classic social hack is when a user gets a support representative to change the password of someone else's account so that they can log into that account.
 
@@ -1743,7 +1685,7 @@ Of course, you'll want to ensure your "BLT drive" is secure, but in this case yo
 
 The best way to prevent social hacking is to ensure that employees, more specifically customer service representatives, don't have too much power. For example, customer service representatives should not be able to change user passwords. Instead, they should only be allowed to send password reset emails to users so that the user can change their own password. You can also use push services like Twilio to send a code (also known as a one-time password) to the user's mobile phone. The user then has to read the code back to the employee, who types it into your backend in order to be granted access to the user's account.
 
-## 5. Summary {#summary}
+## Summary
 
 This guide covers a set of best practices that will help you secure your user data. It is by no means exhaustive, but if you implement each of the concepts above your user data will be nicely secured.
 
@@ -1751,64 +1693,62 @@ We also would like to note that this guide is applicable for both large and smal
 
 If you find any errors in this guide, please let us know. Also, if you find any vulnerabilities in this guide, send us an email at dev@fusionauth.io so that we can investigate them and update the guide.
 
-## 6. References {#references}
+## References
 
 In addition to the experience and knowledge of our development team, we used additional resources to build this guide. Below is a non-exhaustive list of the references and resources we used:
 
 
 **General**
 
-* <https://www.owasp.org>
+* https://www.owasp.org
 
 **Password Complexity**
 
-* <http://xmodulo.com/set-password-policy-linux.html>
+* http://xmodulo.com/set-password-policy-linux.html
 
 **SSH**
 
-* <http://askubuntu.com/questions/20450/disable-root-account-in-ubuntu>
+* http://askubuntu.com/questions/20450/disable-root-account-in-ubuntu
 
 **IPTables**
 
-* <https://wiki.archlinux.org/index.php/iptables>
-* <https://www.digitalocean.com/community/tutorials/how-to-implement-a-basic-firewall-template-with-iptables-on-ubuntu-14-04>
-* <http://www.howtogeek.com/177621/the-beginners-guide-to-iptables-the-linux-firewall/>
-* <http://serverfault.com/questions/373871/dont-understand-00-iptable-syntax>
-* <http://serverfault.com/questions/157375/reject-vs-drop-when-using-iptables>
-* <https://www.thegeekstuff.com/2011/01/iptables-fundamentals/>
+* https://wiki.archlinux.org/index.php/iptables
+* https://www.digitalocean.com/community/tutorials/how-to-implement-a-basic-firewall-template-with-iptables-on-ubuntu-14-04
+* http://www.howtogeek.com/177621/the-beginners-guide-to-iptables-the-linux-firewall/
+* http://serverfault.com/questions/373871/dont-understand-00-iptable-syntax
+* http://serverfault.com/questions/157375/reject-vs-drop-when-using-iptables
+* https://www.thegeekstuff.com/2011/01/iptables-fundamentals/
 
 **Two-Factor Authentication**
 
-* <https://www.digitalocean.com/community/tutorials/how-to-protect-ssh-with-two-factor-authentication>
-* <http://serverfault.com/questions/629883/trying-to-get-ssh-with-public-key-no-password-google-authenticator-working-o>
-* <http://www.howtogeek.com/121650/how-to-secure-ssh-with-google-authenticators-two-factor-authentication/>
+* https://www.digitalocean.com/community/tutorials/how-to-protect-ssh-with-two-factor-authentication
+* http://serverfault.com/questions/629883/trying-to-get-ssh-with-public-key-no-password-google-authenticator-working-o
+* http://www.howtogeek.com/121650/how-to-secure-ssh-with-google-authenticators-two-factor-authentication/
 
 **Monit and Intrusion Detection**
 
-* <http://askubuntu.com/questions/179889/how-do-i-set-up-an-email-alert-when-a-ssh-login-is-successful>
-* <https://mmonit.com/wiki/MMonit/PushoverNotification>
-* <https://mmonit.com/wiki/MMonit/SlackNotification>
+* http://askubuntu.com/questions/179889/how-do-i-set-up-an-email-alert-when-a-ssh-login-is-successful
+* https://mmonit.com/wiki/MMonit/PushoverNotification
+* https://mmonit.com/wiki/MMonit/SlackNotification
 
 **Backup Encryption**
 
-* <http://askubuntu.com/questions/95920/encrypt-tar-gz-file-on-create>
+* http://askubuntu.com/questions/95920/encrypt-tar-gz-file-on-create
 
 **Node.js SSL**
 
-* <https://nodejs.org/api/https.html>
-* <http://stackoverflow.com/questions/22453782/nodejs-http-and-https-over-same-port>
-* <https://en.wikipedia.org/wiki/Transport_Layer_Security>
+* https://nodejs.org/api/https.html
+* http://stackoverflow.com/questions/22453782/nodejs-http-and-https-over-same-port
+* https://en.wikipedia.org/wiki/Transport_Layer_Security
 
 **Express**
 
-* <http://stackoverflow.com/questions/20938620/node-js-express-disable-automatic-session-creation>
-* <http://expressjs.com/en/advanced/best-practice-security.html>
+* http://stackoverflow.com/questions/20938620/node-js-express-disable-automatic-session-creation
+* http://expressjs.com/en/advanced/best-practice-security.html
 
 **CSRF**
 
-* <https://en.wikipedia.org/wiki/Cross-site_request_forgery>
-* <https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet#Token_Based_Mitigation>
-* <https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS>
-* <https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy>
-
-{% include _advice-get-started.liquid intro="If you are looking for a managed identity solution that is secured using these principles, FusionAuth has you covered." %}
+* https://en.wikipedia.org/wiki/Cross-site_request_forgery
+* https://www.owasp.org/index.php/Cross-Site_Request_Forgery_(CSRF)_Prevention_Cheat_Sheet#Token_Based_Mitigation
+* https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+* https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy

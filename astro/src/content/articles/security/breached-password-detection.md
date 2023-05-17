@@ -1,10 +1,9 @@
 ---
-layout: advice
 title: Breached Password Detection
 description: What is breached password detection and why should you implement it.
 author: Dan Moore
-image: advice/breached-password-detection/expert-advice-breached-password-detection.png
-category: Security
+icon: /img/icons/breached-password-detection.svg
+section: Security
 date: 2020-07-22
 dateModified: 2020-07-22
 ---
@@ -71,7 +70,7 @@ First, you need to find the plaintext passwords. There are lists on GitHub and e
 
 You can also include lists of common words and character sequences in your datasets. These may not be present in any public data breach, but are used often enough that they are easy for an attacker to guess, and so should be avoided. Feel free to augment your lists with any other dictionary lists you can put together. 
 
-{% include _image.liquid src="/assets/img/advice/breached-password-detection/password-strength.png" alt="Password strength" class="img-fluid text-center" figure=false %}
+![Password strength](/img/articles/breached-password-detection/password-strength.png)
 
 Whatever you do, please ensure you include 'correcthorsebatterystaple' ([image courtesy of xkcd](https://xkcd.com/license.html)).
 
@@ -132,7 +131,7 @@ Unfortunately, such datasets can only provide proof of hazard, not proof of safe
 
 There are a couple of reasons. First, if a data breach occurs and the passwords were properly encrypted and haven't been reverse engineered to plain text, the passwords aren't very useful to attackers.
 
-Second, and more importantly, I'll assume you are salting your passwords and hashing them in a computationally expensive way; if not, here's [some math reading to do](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy). In this case, to see if that password matched any on the list, you'd have to salt and hash all of the records on the list. Assume you could do that at a rate of 10,000 records a second, and you had a leaked password list of 500 million strings. This would take you approximately 14 hours to generate all the hashes. Generating the hashes to compare would take too long to do interactively or in a batch fashion. 
+Second, and more importantly, I'll assume you are salting your passwords and hashing them in a computationally expensive way; if not, here's [some math reading to do]( /articles/security/math-of-password-hashing-algorithms-entropy). In this case, to see if that password matched any on the list, you'd have to salt and hash all of the records on the list. Assume you could do that at a rate of 10,000 records a second, and you had a leaked password list of 500 million strings. This would take you approximately 14 hours to generate all the hashes. Generating the hashes to compare would take too long to do interactively or in a batch fashion. 
 
 ## Taking action when the breached password is found
 

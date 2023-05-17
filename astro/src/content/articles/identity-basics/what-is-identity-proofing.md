@@ -12,7 +12,7 @@ Identity theft is on the rise. In 2020, the [reported cases of identity theft](h
 
 An effective identity proofing solution is more critical to your business than ever before. As companies and users engage in more online transactions and digital services, businesses must take greater measures to confirm a person is who they say they are. Identity proofing verifies and authenticates the identity of legitimate customers to prevent fraudulent users from accessing your data. It is your first line of defense against data breaches and theft. 
 
-{% include _image.liquid src="/assets/img/advice/identity-proofing/identity-proofing-process.png" alt="The identity proofing process." class="img-fluid" figure=false %}
+![The identity proofing process.](/img/articles/identity-proofing-process.png)
 
 In this article, we’ll explain why identity proofing is important and look at how it works. 
 

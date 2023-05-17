@@ -1,10 +1,9 @@
 ---
-layout: advice
 title: 10 Steps to Secure Your Authentication System
 description: This article will break down some of the essential steps developers need to take to maintain a secure authentication system.
 author: Mihir Patel
-image: advice/steps-secure-auth-system/expert-advice-ten-steps-to-secure-your-authentication-system-header-image.png
-category: Security
+icon: /img/icons/steps-secure-auth-system.svg
+section: Security
 date: 2021-09-09
 dateModified: 2021-09-09
 ---
@@ -19,7 +18,7 @@ Regardless of industry, all organizations should take steps to protect their sys
 
 ## 1. DevSecOps (Shift Left)
 
-{% include _image.liquid src="/assets/img/advice/steps-secure-auth-system/devsecopsdiagram.png" alt="DevSecOps integration in your DevOps pipeline." class="img-fluid" figure=false %}
+![DevSecOps integration in your DevOps pipeline.](/img/articles/devsecopsdiagram.png)
 
 Ensure DevSecOps standards are set in place to allow for security testing during the early stages of development.
 

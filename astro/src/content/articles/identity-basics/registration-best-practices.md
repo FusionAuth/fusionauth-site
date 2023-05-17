@@ -10,7 +10,7 @@ dateModified: 2020-09-08
 
 Signing up for accounts is something we're all familiar with. It's a gateway to applications we want and need. But it's not really fun. Or even pleasant. After all, we're signing up to access the application, not because we want to set up another username and password and enter personal data into yet another system:
 
-{% include _image.liquid src="/assets/img/advice/registration-best-practices/long-registration-form.png" alt="A long registration form. Honestly? You need my full name and my middle name?" class="img-fluid" figure=false %}
+![A long registration form. Honestly? You need my full name and my middle name?](/img/articles/registration-best-practices/long-registration-form.png)
 
 You can make the registration form process simpler. And you should. 
 
@@ -103,7 +103,7 @@ If you need more than a few pieces of information on registration, consider spli
 
 Splitting up a registration form allows you to ask for more data, but avoid imposing a high initial cognitive cost on a potential user. It also allows you to track registration progress. Rather than a registration being an all or nothing proposition, you can see where people fall out of the registration funnel: is it because of step two or step three? It also may increase the conversion rate: Instapage saw an [18% increase in conversion rate](https://instapage.com/blog/multi-step-form-part-2) when they split their registration form into multiple steps.
 
-{% include _image.liquid src="/assets/img/advice/registration-best-practices/shorter-reg-form.png" alt="A multi-step registration form." class="img-fluid" figure=false %}
+![A multi-step registration form.](/img/articles/registration-best-practices/shorter-reg-form.png)
 
 When creating the pages, group fields logically, as per the Nielsen Norman Group recommendations which suggest grouping "related labels and fields." Separate pages allow you to provide a contextual explanation of how providing the data will be useful to the visitor at each step. If you can't come up with a reasonable one, consider removing the fields.
 
