@@ -109,7 +109,7 @@ You can now start writing the code for your Rails API. First, let's create a con
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-rails-api-guide/main/app/controllers/messages_controller.rb %}
 ```
 
-This controller returns a messages JSON array.
+This controller returns a JSON array with messages.
 
 Next, update the `config/routes.rb` file to look like this:
 
@@ -184,7 +184,7 @@ Here you are placing the token in a cookie named `app.at`. This is for compatibi
 
 If you want to store it in a different cookie or send it in the header, make sure you modify the `rack_jwt` initializer and restart the {{page.technology}} API.
 
-This will result in the JSON being delivered to your API requester.
+This will result in the JSON below.
 
 ```json
 {"messages":["Hello"]}
