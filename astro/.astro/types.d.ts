@@ -307,13 +307,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
-"identity-basics/slow-migration.md": {
-  id: "identity-basics/slow-migration.md",
+"identity-basics/slow-migration.mdx": {
+  id: "identity-basics/slow-migration.mdx",
   slug: "identity-basics/slow-migration",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">
-} & { render(): Render[".md"] },
+} & { render(): Render[".mdx"] },
 "identity-basics/try-before-you-buy.md": {
   id: "identity-basics/try-before-you-buy.md",
   slug: "identity-basics/try-before-you-buy",
@@ -328,13 +328,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
-"identity-basics/what-is-scim.md": {
-  id: "identity-basics/what-is-scim.md",
+"identity-basics/what-is-scim.mdx": {
+  id: "identity-basics/what-is-scim.mdx",
   slug: "identity-basics/what-is-scim",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">
-} & { render(): Render[".md"] },
+} & { render(): Render[".mdx"] },
 "identity-basics/what-to-do-when-auth-system-vendor-acquired.md": {
   id: "identity-basics/what-to-do-when-auth-system-vendor-acquired.md",
   slug: "identity-basics/what-to-do-when-auth-system-vendor-acquired",
@@ -660,55 +660,6 @@ declare module 'astro:content' {
 "security/zero-trust-identity-provider.md": {
   id: "security/zero-trust-identity-provider.md",
   slug: "security/zero-trust-identity-provider",
-  body: string,
-  collection: "articles",
-  data: InferEntrySchema<"articles">
-} & { render(): Render[".md"] },
-"tokens/building-a-secure-jwt.md": {
-  id: "tokens/building-a-secure-jwt.md",
-  slug: "tokens/building-a-secure-jwt",
-  body: string,
-  collection: "articles",
-  data: InferEntrySchema<"articles">
-} & { render(): Render[".md"] },
-"tokens/index.mdx": {
-  id: "tokens/index.mdx",
-  slug: "tokens",
-  body: string,
-  collection: "articles",
-  data: InferEntrySchema<"articles">
-} & { render(): Render[".mdx"] },
-"tokens/jwt-components-explained.md": {
-  id: "tokens/jwt-components-explained.md",
-  slug: "tokens/jwt-components-explained",
-  body: string,
-  collection: "articles",
-  data: InferEntrySchema<"articles">
-} & { render(): Render[".md"] },
-"tokens/jwt-token-components-explained.md": {
-  id: "tokens/jwt-token-components-explained.md",
-  slug: "tokens/jwt-token-components-explained",
-  body: string,
-  collection: "articles",
-  data: InferEntrySchema<"articles">
-} & { render(): Render[".md"] },
-"tokens/pros-and-cons-of-jwts.md": {
-  id: "tokens/pros-and-cons-of-jwts.md",
-  slug: "tokens/pros-and-cons-of-jwts",
-  body: string,
-  collection: "articles",
-  data: InferEntrySchema<"articles">
-} & { render(): Render[".md"] },
-"tokens/revoking-jwts.md": {
-  id: "tokens/revoking-jwts.md",
-  slug: "tokens/revoking-jwts",
-  body: string,
-  collection: "articles",
-  data: InferEntrySchema<"articles">
-} & { render(): Render[".md"] },
-"tokens/tokens-microservices-boundaries.md": {
-  id: "tokens/tokens-microservices-boundaries.md",
-  slug: "tokens/tokens-microservices-boundaries",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">
