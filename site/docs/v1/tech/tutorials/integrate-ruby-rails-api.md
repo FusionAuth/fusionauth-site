@@ -171,63 +171,7 @@ curl -H 'Authorization: YOUR_API_KEY_FROM_ABOVE' \
 This will return something like this:
 
 ```json
-{
-  "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Imx5d3VCTFgyaWczTG9QeHBxTVFWNDNUbVQ1YyJ9.eyJhdWQiOiJlOWZkYjk4NS05MTczLTRlMDEtOWQ3My1hYzJkNjBkMWRjOGUiLCJleHAiOjE2ODQyODAzMTcsImlhdCI6MTY4NDI3NjcxNywiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo5MDExIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAxIiwianRpIjoiZDdkOGMzYzMtM2U4OS00N2UwLWFmZTgtN2I5Y2YxNWY1MTkyIiwiYXV0aGVudGljYXRpb25UeXBlIjoiUEFTU1dPUkQiLCJlbWFpbCI6ImFkbWluQGV4YW1wbGUuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImFwcGxpY2F0aW9uSWQiOiJlOWZkYjk4NS05MTczLTRlMDEtOWQ3My1hYzJkNjBkMWRjOGUiLCJyb2xlcyI6W10sImF1dGhfdGltZSI6MTY4NDI3NjcxNywidGlkIjoiYWFkZGUyNzktYTVhNS1lYjA4LTQ4MGQtNjNhMWI2NTZiODY2In0.AvxFJcXSo-jUhBkMmO2A_nPU-SQe3O3w7P_HhI9wVBOnMMRVywTL__E_sTAD_TwLD5t-1g-pAysGcuqFRfThiu00QIh_fP0DJLHCBtZys7UNlbNVuZCEdNLzFeU9h3iwra1QIgEktZ3nIZinMlAlcUpY0BYU26Z0e1snvmsHzVPvlvv73jIjXNMHUf8yRPEZniFhsk1wyAYxOyDhwqfRWAiJ0TOG-gy0YTDuy-miu70wJWckQbk-6o7J6GgHGBhG-AWob2PRxYMzqBJy9PoSDwmmAgrQP3AXmNS10sL14V9MmwvF1n3YsO2TXtZgtnfwr8uGmAoFvLVA9Q5pMEhdNQ",
-  "tokenExpirationInstant": 1684280317345,
-  "user": {
-    "active": true,
-    "connectorId": "e3306678-a53a-4964-9040-1c96f36dda72",
-    "data": {},
-    "email": "admin@example.com",
-    "firstName": "Richard",
-    "id": "00000000-0000-0000-0000-000000000001",
-    "insertInstant": 1684272772584,
-    "lastLoginInstant": 1684276717343,
-    "lastName": "Hendricks",
-    "lastUpdateInstant": 1684272772584,
-    "memberships": [],
-    "passwordChangeRequired": false,
-    "passwordLastUpdateInstant": 1684272772681,
-    "preferredLanguages": [],
-    "registrations": [
-      {
-        "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
-        "data": {},
-        "id": "35deb641-88a2-4ddf-97a0-37dba513411b",
-        "insertInstant": 1684272782218,
-        "lastLoginInstant": 1684276717343,
-        "lastUpdateInstant": 1684272782218,
-        "preferredLanguages": [],
-        "roles": [],
-        "tokens": {},
-        "usernameStatus": "ACTIVE",
-        "verified": true
-      },
-      {
-        "applicationId": "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
-        "data": {},
-        "id": "0b45caa0-f3fa-4c12-a1ff-2a17f8dfc44c",
-        "insertInstant": 1684272772688,
-        "lastLoginInstant": 1684272772688,
-        "lastUpdateInstant": 1684272772688,
-        "preferredLanguages": [],
-        "roles": [
-          "admin"
-        ],
-        "tokens": {},
-        "usernameStatus": "ACTIVE",
-        "verified": true
-      }
-    ],
-    "tenantId": "aadde279-a5a5-eb08-480d-63a1b656b866",
-    "twoFactor": {
-      "methods": [],
-      "recoveryCodes": []
-    },
-    "usernameStatus": "ACTIVE",
-    "verified": true
-  }
-}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-site/master/site/docs/src/json/users/login-response.json %}
 ```
 
 Grab the `token` field (beginning with `ey`). Replace YOUR_TOKEN below with that value, and run this command:
