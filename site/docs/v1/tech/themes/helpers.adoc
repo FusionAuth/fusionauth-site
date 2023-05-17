@@ -161,3 +161,64 @@ The `_helpers.ftl` template provides a couple of macros that help render form el
 * `button`
 ** This macro renders a button that can be used to submit a form. The FusionAuth version of this macro includes an icon and the button text.
 
+== Captcha
+
+The `_helpers.ftl` template provides a macro to embed link:/docs/v1/tech/core-concepts/tenants#captcha-settings[captcha challenges] into your templates. This is
+
+* `captchaBadge`
+** Macro that adds a captcha badge to the template. See link:/docs/v1/tech/themes/template-variables/[template variables] for more information on the template variables. The macro's parameters are:
+
+=== Parameters
+[.api]
+[field]#showCaptcha# [type]#[Boolean]#::
+This determines whether or not to show the captcha badge. Typically supplied by the `tenant.captchaConfiguration.captchaMethod` template variable.
+
+[field]#captchaMethod# [type]#[String]#::
+This is the type of captcha to use. Typically supplied by the `showCaptcha` template variable. Valid values are:
++
+include::/docs/v1/tech/shared/_recaptcha-values.adoc[]
+
+[field]#siteKey# [type]#[String]#::
+The `data-sitekey` value to use for the captcha. Typically supplied by the `tenant.captchaConfiguration.siteKey` template variable. Required if not using `GoogleRecaptchaV3`.
+
+=== Invisible reCAPTCHA
+If you wish to enable an link:https://developers.google.com/recaptcha/docs/invisible[invisible reCAPTCHA] element you may do so by adding the `data-size` and `data-callback` attributes on the tag with the `g-recaptcha` class. In versions >= 1.46.0 these attributes will be present but commented out.
+
+[source,html]
+.Invisible tag
+----
+[#if captchaMethod == "GoogleRecaptchaV2"]
+      <div class="g-recaptcha" data-sitekey="${siteKey!''}"
+        data-size="invisible"
+        data-callback="reCaptchaV2InvisibleCallback"
+      ></div>
+ ...
+----
+
+[NOTE.since]
+====
+On versions of FusionAuth prior to 1.46 you will need to add the `reCaptchaV2InvisibleCallback` function in order to properly handle the callback on form submit from the captcha.
+====
+
+In the `captchaScripts` macro in the `_helpers.ftl` template find the following tag:
+
+[source,html]
+.Existing Captcha.js import
+----
+<script src="${request.contextPath}/js/oauth2/Captcha.js?version=${version}"></script>
+----
+
+and right below it add the following script tag (this is what is included in 1.46):
+
+[source,html]
+.Updated captcha tag handling
+----
+<script>
+  // This is only intended to be used with data-size="invisible"
+  function reCaptchaV2InvisibleCallback(token) {
+    const input = document.querySelector('input[name="captcha_token"]');
+    input.value = token;
+    input.closest('form').submit();
+  }
+</script>
+----
