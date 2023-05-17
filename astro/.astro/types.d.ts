@@ -209,6 +209,55 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
+"gaming-entertainment/benefits-self-hosting-reduce-latency.md": {
+  id: "gaming-entertainment/benefits-self-hosting-reduce-latency.md",
+  slug: "gaming-entertainment/benefits-self-hosting-reduce-latency",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"gaming-entertainment/best-practices-spiky-registration.md": {
+  id: "gaming-entertainment/best-practices-spiky-registration.md",
+  slug: "gaming-entertainment/best-practices-spiky-registration",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"gaming-entertainment/cross-platform-game-accounts.md": {
+  id: "gaming-entertainment/cross-platform-game-accounts.md",
+  slug: "gaming-entertainment/cross-platform-game-accounts",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"gaming-entertainment/gaming-identity-provider-needs.md": {
+  id: "gaming-entertainment/gaming-identity-provider-needs.md",
+  slug: "gaming-entertainment/gaming-identity-provider-needs",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"gaming-entertainment/index.mdx": {
+  id: "gaming-entertainment/index.mdx",
+  slug: "gaming-entertainment",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"gaming-entertainment/oauth-device-grant-gaming.md": {
+  id: "gaming-entertainment/oauth-device-grant-gaming.md",
+  slug: "gaming-entertainment/oauth-device-grant-gaming",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"gaming-entertainment/securing-game-account.md": {
+  id: "gaming-entertainment/securing-game-account.md",
+  slug: "gaming-entertainment/securing-game-account",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 "identity-basics/complete-authentication-system.md": {
   id: "identity-basics/complete-authentication-system.md",
   slug: "identity-basics/complete-authentication-system",
@@ -562,6 +611,55 @@ declare module 'astro:content' {
 "oauth/why-no-authentication-in-oauth.md": {
   id: "oauth/why-no-authentication-in-oauth.md",
   slug: "oauth/why-no-authentication-in-oauth",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"tokens/building-a-secure-jwt.md": {
+  id: "tokens/building-a-secure-jwt.md",
+  slug: "tokens/building-a-secure-jwt",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"tokens/index.mdx": {
+  id: "tokens/index.mdx",
+  slug: "tokens",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
+"tokens/jwt-components-explained.md": {
+  id: "tokens/jwt-components-explained.md",
+  slug: "tokens/jwt-components-explained",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"tokens/jwt-token-components-explained.md": {
+  id: "tokens/jwt-token-components-explained.md",
+  slug: "tokens/jwt-token-components-explained",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"tokens/pros-and-cons-of-jwts.md": {
+  id: "tokens/pros-and-cons-of-jwts.md",
+  slug: "tokens/pros-and-cons-of-jwts",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"tokens/revoking-jwts.md": {
+  id: "tokens/revoking-jwts.md",
+  slug: "tokens/revoking-jwts",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
+"tokens/tokens-microservices-boundaries.md": {
+  id: "tokens/tokens-microservices-boundaries.md",
+  slug: "tokens/tokens-microservices-boundaries",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">
