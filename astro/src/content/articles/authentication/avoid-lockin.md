@@ -4,7 +4,6 @@ description: What steps do you need to take to ensure your authentication system
 author: Cameron Pavey
 section: Authentication
 icon: /img/icons/avoiding-authentication-system-lock-in.svg
-sortOrder: 1
 ---
 
 Years ago your team decided to use a third-party authentication system to avoid the time and cost of building one in-house. But now a better option has hit the market and you're wanting to make the switch. Except, hold on, your old system is so deeply ingrained into your organization that you're practically locked-in to your current vendor.

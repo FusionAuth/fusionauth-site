@@ -7,7 +7,6 @@ section: OAuth
 date: 2021-06-10
 dateModified: 2021-06-10
 icon: /img/icons/complete-list-oauth-2-grants.svg
-sortOrder: 1
 ---
 
 Software applications regularly need access to data from other services on behalf of their users.

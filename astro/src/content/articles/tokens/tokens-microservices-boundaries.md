@@ -5,7 +5,6 @@ author: Dan Moore
 section: Tokens
 # date: 2022-05-02
 # dateModified: 2022-05-02
-sortOrder: 1
 ---
 
 When you are using JWTs as part of your authorization solution in a microservices or Kubernetes based environment, you need to determine where to process them and how fine grained to make them.

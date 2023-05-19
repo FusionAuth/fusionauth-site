@@ -6,7 +6,6 @@ icon: /img/icons/auth-providers-zero-trust.svg
 section: Security
 date: 2022-01-05
 dateModified: 2022-01-05
-sortOrder: 1
 ---
 
 Years ago, before the widespread adoption of cloud and SaaS-based offerings, IT security was arguably simpler.

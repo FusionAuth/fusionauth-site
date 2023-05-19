@@ -5,7 +5,6 @@ author: Success Ologunsua
 section: Gaming & Entertainment
 date: 2022-09-01
 dateModified: 2022-09-01
-sortOrder: 1
 ---
 
 OAuth (pronounced “oh-auth”) grants are various types of authorization methods that enable users to share information between services and across devices without entering or compromising their password or username.

@@ -6,7 +6,6 @@ icon: /img/icons/open-source-commercial-auth.svg
 section: Identity Basics
 date: 2021-04-15
 dateModified: 2021-04-15
-sortOrder: 1
 ---
 
 When it comes to building any web or mobile application, authentication is one of those areas where you generally don't want to take on the risk yourself. Third-party authentication providers have made this their entire business and dedicate lots of time and money to make sure their solutions are performant, easy to use, and most of all, secure. However, some of these providers make the source code for their solutions available and others keep their source code proprietary.

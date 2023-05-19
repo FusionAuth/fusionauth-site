@@ -5,7 +5,6 @@ section: Gaming & Entertainment
 author: Kealan Parr
 # date: 2022-07-19
 # dateModified: 2022-07-19
-sortOrder: 1
 ---
 
 While esports competitions are high skill cap events, both hobby gamers and elite professionals alike expect optimal network conditions when they play games. A suboptimal network can turn an enjoyable event into an infuriating one that drives players away.

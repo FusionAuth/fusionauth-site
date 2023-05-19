@@ -6,7 +6,6 @@ icon: /img/icons/outsource-auth-sell-decision-to-company.svg
 section: Identity Basics
 date: 2021-04-16
 dateModified: 2021-04-16
-sortOrder: 1
 ---
 
 You're a software engineering leader, and you're great at your job. You know that the optimal path for software development lies in figuring out which components of your design to implement from scratch and which have already been implemented by specialists and can be reused. 

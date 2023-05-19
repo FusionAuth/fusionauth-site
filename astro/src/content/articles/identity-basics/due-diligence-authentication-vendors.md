@@ -6,7 +6,6 @@ icon: /img/icons/diligence-auth-vendors.svg
 section: Identity Basics
 date: 2021-02-24
 dateModified: 2021-02-24
-sortOrder: 1
 ---
 
 Within today's software development ecosystem, third-party vendors are a common part of system architecture. Specifically, [Authentication-as-a-Service (AaaS) is growing fast](https://www.marketsandmarkets.com/Market-Reports/identity-access-management-iam-market-1168.html). Their out-of-the-box capabilities enable engineering teams to focus on building features valuable to business rather than spending time and resources on reinventing the wheel of securing application access.
