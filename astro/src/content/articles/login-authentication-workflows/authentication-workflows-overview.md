@@ -1,7 +1,6 @@
 ---
 title: Authentication Workflows Overview
 description: An overview of the various types of login & authentication workflows used by applications.
-icon: /img/icons/login-authentication-workflows.svg
 section: Login & Auth Workflows
 sortOrder: 1
 ---
