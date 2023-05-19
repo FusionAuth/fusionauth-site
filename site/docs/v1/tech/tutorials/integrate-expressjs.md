@@ -3,7 +3,7 @@ layout: doc
 title: Integrate Your Express.js Application With FusionAuth
 description: Integrate your Express.js application with FusionAuth
 navcategory: getting-started
-prerequisites: Node.JS
+prerequisites: Node.js
 language: JavaScript
 technology: Express.js
 ---
@@ -83,10 +83,10 @@ Create a `package.json` file with the following contents to set up the dependenc
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/package.json %}
 ```
 
-Now, change into the `setup-expressjs` directory and install the needed packages.
+Install the needed packages.
 
 ```shell
-cd setup-expressjs && npm install
+npm install
 ```
 
 You are going to create some files in different directories, so pay attention to the final directory structure that you should have after completing these steps. 
@@ -150,4 +150,14 @@ npm start
 ```
 
 You can now open up an incognito window and visit [the {{page.technology}} app](http://localhost:3000).
-Log in with the user account you created when setting up FusionAuth, and you’ll see the email of the user next to a logout link.
+
+{% include _image.liquid src="/assets/img/docs/integrations/expressjs-integration/expressjs-preview.png" alt="Express.js application home page." class="img-fluid bottom-cropped" width="1200" figure=false %}
+
+Log in with the user account you created when setting up FusionAuth, and you’ll see the name of the user next to a logout link.
+
+{% include _image.liquid src="/assets/img/docs/integrations/expressjs-integration/expressjs-login-preview.png" alt="Express.js application home page." class="img-fluid bottom-cropped" width="1200" figure=false %}
+
+Now, click <span>Logout</span>{:.uielement}. If successful, you should be brought back to the main homepage with the <span>Login</span>{:.uielement} button again.
+
+
+The full code for this guide can be found [here](https://github.com/FusionAuth/fusionauth-example-node).
