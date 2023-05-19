@@ -143,7 +143,11 @@ Stitch everything together by creating an `app.js` file that will be the main en
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/app.js %}
 ```
 
-Once you’ve created these files, start up the {{page.technology}} application using this command:
+Once you’ve created these files, you can test the application.
+
+## Testing the Authentication Flow
+
+Start up the {{page.technology}} application using this command:
 
 ```shell
 npm start
