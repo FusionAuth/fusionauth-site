@@ -3,6 +3,7 @@ title: Identity Provider Needs for Gaming or Esports
 description: What are the specific features you need to look for in an identity provider if you’re in the gaming or esports industry?
 author: Deborah Ruck
 section: Gaming & Entertainment
+icon: /img/icons/identity-provider-gaming-esports.svg
 # date: 2022-03-15
 # dateModified: 2022-03-15
 ---

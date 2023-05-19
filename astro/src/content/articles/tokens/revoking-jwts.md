@@ -2,6 +2,7 @@
 title: Revoking JWTs & JWT Expiration
 description: How to use and revoke JWTs for effective and efficient authorization management. Examples, diagrams & more.
 author: Brian Pontarelli
+icon: /img/icons/revoking-jwts.svg
 section: Tokens
 # date: 2019-11-04
 # dateModified: 2020-06-25

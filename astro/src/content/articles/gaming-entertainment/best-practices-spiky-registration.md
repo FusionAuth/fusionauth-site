@@ -3,6 +3,7 @@ title: Best Practices for Handling Spiky Registration Traffic for Game Launches
 description: What are steps you can take to make sure your servers can handle any spikes in registration traffic?
 section: Gaming & Entertainment
 author: Muhammad Yasoob Ullah Khalid
+icon: /img/icons/registration-traffic-game-launches.svg
 # date: 2022-08-24
 # dateModified: 2022-08-24
 ---
