@@ -5,7 +5,7 @@ section: Gaming & Entertainment
 author: Muhammad Yasoob Ullah Khalid
 # date: 2022-08-24
 # dateModified: 2022-08-24
-sortOrder: 10
+sortOrder: 1
 ---
 
 Congrats! Your new massively multiplayer online (MMO) game is ready and you’re all set to launch. However, you’re not sure whether your servers can handle the load or whether the registration will fail under extreme load on launch day. If things really go wrong, you might lose users and revenue, which could possibly even lead to the failure of your game.
