@@ -10,6 +10,7 @@ const articlesCollection = defineCollection({
     section: z.string(),
     title: z.string(),
     sortTitle: z.string().optional(),
+    featured: z.boolean().default(false),
   }),
 });
 
