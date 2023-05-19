@@ -44,6 +44,7 @@ Now, copy and paste the following file into `Gemfile`.
 
 ```ruby
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/ruby/Gemfile %}
+```
 
 Install the gems.
 
@@ -51,11 +52,12 @@ Install the gems.
 bundle install
 ```
 
-Then copy and paste the following code into the `setup.rb` file.
+Create a file called `setup.rb`. Then copy and paste the following code into it.
 
 ```ruby
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/ruby/setup-api.rb %}
 ```
+
 Then, you can run the setup script.
 
 {% include _callout-note.liquid content="The setup script is designed to run on a newly installed FusionAuth instance with only one user and no tenants other than `Default`. To follow this guide on a FusionAuth instance that does not meet these criteria, you may need to modify the above script. <br><br> Refer to the [Ruby client library](/docs/v1/tech/client-libraries/ruby) documentation for more information." %}
@@ -73,7 +75,7 @@ $env:fusionauth_api_key='YOUR_API_KEY_FROM_ABOVE'
 ruby setup.rb
 ```
 
-If you want, you can http://localhost:9011[login to your instance] and examine the new API configuration the script created for you. 
+If you want, you can http://localhost:9011[login to your instance] and examine the new API configuration the script created for you. You'd navigate to the <span class="breadcrumb">Applications</span> tab to do so.
 
 ## Create Your {{page.technology}} API
 
@@ -85,11 +87,13 @@ First, create the skeleton of the {{page.technology}} API. Rails has a nice gene
 rails new myapi --api && cd myapi
 ```
 
-Now, create a new `Gemfile` file.
+Now, update your `Gemfile` to look like this:
 
 ```text
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-rails-api-guide/main/Gemfile %}
 ```
+
+You may need to modify the version of ruby specified in the Gemfile. As long as Rails 7 is supported, you will be fine.
 
 Then, install these new gems.
 
@@ -150,7 +154,7 @@ bundle e rails s -p 4001
 Visit [http://localhost:4001/messages](http://localhost:4001/messages), you'll get an error:
 
 ```json
-{"error":"Invalid JWT token : Decode Error"}
+{"error":"Missing token cookie and Authorization header"}
 ```
 
 Your API is protected. Now, let's get an access token so authorized clients can get the API results.
@@ -164,17 +168,19 @@ Run this command in a terminal:
 ```shell
 curl -H 'Authorization: YOUR_API_KEY_FROM_ABOVE' \
      -H 'Content-type: application/json' \
-     -d '{"loginId": "admin@example.com", "password":"password","applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"} \
+     -d '{"loginId": "YOUR_EMAIL", "password":"YOUR_PASSWORD","applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"} \
     http://localhost:9011/api/login 
 ```
 
-This will return something like this:
+Replace `YOUR_EMAIL` and `YOUR_PASSWORD` with the username and password you set up previously.
+
+This request will return something like this:
 
 ```json
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-site/master/site/docs/src/json/users/login-response.json %}
 ```
 
-Grab the `token` field (beginning with `ey`). Replace YOUR_TOKEN below with that value, and run this command:
+Grab the `token` field (which begins with `ey`). Replace YOUR_TOKEN below with that value, and run this command:
 
 ```shell
 curl --cookie 'app.at=YOUR_TOKEN' http://localhost:4001/messages
