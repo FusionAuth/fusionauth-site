@@ -73,7 +73,7 @@ $env:fusionauth_api_key='YOUR_API_KEY_FROM_ABOVE'
 ruby setup.rb
 ```
 
-If you want, you can http://localhost:9011[login to your instance] and examine the new API configuration the script created for you. 
+If you want, you can [log into your instance](http://localhost:9011) and examine the new API configuration the script created for you.
 
 ## Create Your {{page.technology}} API
 
