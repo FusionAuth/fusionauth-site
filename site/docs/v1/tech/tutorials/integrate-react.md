@@ -67,7 +67,7 @@ $env:fusionauth_api_key='YOUR_API_KEY_FROM_ABOVE'
 npm run setup
 ```
 
-If you want, you can http://localhost:9011[login to your instance] and examine the new Application the script created for you.
+If you want, you can [log into your instance](http://localhost:9011) and examine the new Application the script created for you.
 
 ## Create Your {{page.technology}} Application
 
@@ -126,7 +126,7 @@ In this code, you are adding in the FusionAuth login and logout buttons, as well
 
 You can now open up an incognito window and visit [the {{page.technology}} app](http://localhost:5173). View the page and log in with the user you configured. If you used the setup script, it will be `richard@example.com`.
 
-{% include _image.liquid src="/assets/img/docs/quickstarts/react/react-app.png" alt="The sample React application." class="img-fluid" figure=true %}
+{% include docs/_image.liquid src="/assets/img/docs/quickstarts/react/react-app.png" alt="The sample React application." class="img-fluid" figure=true %}
 
 You've successfully added login and logout to a React application.
 
