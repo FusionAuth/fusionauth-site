@@ -6,6 +6,7 @@ icon: /img/icons/breached-password-detection.svg
 section: Security
 date: 2020-07-22
 dateModified: 2020-07-22
+sortOrder: 1
 ---
 
 There are a large and growing number of compromised passwords available on the Internet. For example, Have I Been Pwned, one of the biggest public datasets, has over 10 billion compromised accounts. These include millions of accounts from popular services like MySpace, LiveJournal and Mathway. No fun!

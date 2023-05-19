@@ -5,6 +5,7 @@ author: Brian Pontarelli
 section: Tokens
 # date: 2019-11-04
 # dateModified: 2020-06-25
+sortOrder: 1
 ---
 
 I have been talking with developers about JSON Web Tokens (JWTs) recently and one question keeps coming up: "How do I revoke a JWT?"

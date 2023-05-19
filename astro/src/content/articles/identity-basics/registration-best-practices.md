@@ -6,6 +6,7 @@ icon: /img/icons/registration-best-practices.svg
 section: Identity Basics
 date: 2020-09-08
 dateModified: 2020-09-08
+sortOrder: 1
 ---
 
 Signing up for accounts is something we're all familiar with. It's a gateway to applications we want and need. But it's not really fun. Or even pleasant. After all, we're signing up to access the application, not because we want to set up another username and password and enter personal data into yet another system:

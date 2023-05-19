@@ -4,6 +4,7 @@ description: What are risks of implementing authentication, authorization and us
 author: James Hickey
 section: Authentication
 icon: /img/icons/common-authentication-risks.svg
+sortOrder: 1
 ---
 
 Given the increase of [data beaches in the past few years](https://haveibeenpwned.com/PwnedWebsites), it's more important than ever for software engineering leaders to prioritize security, quality development practices, and robust governance controls. Your customers' trust is on the line—and that's the lifeblood of any business that wants to keep growing.

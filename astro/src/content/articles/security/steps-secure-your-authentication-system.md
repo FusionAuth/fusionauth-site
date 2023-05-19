@@ -6,6 +6,7 @@ icon: /img/icons/steps-secure-auth-system.svg
 section: Security
 date: 2021-09-09
 dateModified: 2021-09-09
+sortOrder: 1
 ---
 
 Building an authentication system can be both time and cost-intensive for system engineers. Traditionally, organizations have maintained servers dedicated to authentication. Nowadays, third-party authentication providers like [FusionAuth](https://fusionauth.io) help minimize internal maintenance costs and improve security by keeping up with modern best practices for their users.

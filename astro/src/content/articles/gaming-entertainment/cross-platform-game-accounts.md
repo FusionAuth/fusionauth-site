@@ -5,6 +5,7 @@ section: Gaming & Entertainment
 author: Rabo James Bature
 # date: 2022-10-01
 # dateModified: 2022-10-01
+sortOrder: 1
 ---
 
 More and more games are launching across two or more platforms. One of the prime reasons why game developers go cross-platform is to leverage a larger market. Being able to sell products to a whole new set of users is an incredible win for game developers, and demand for cross-play from gamers is [increasing as well](https://blog.unity.com/games/why-demand-for-cross-platform-multiplayer-games-is-growing-2021).

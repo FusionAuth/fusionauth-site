@@ -5,6 +5,7 @@ author: Rabo James Bature
 section: Gaming & Entertainment
 # date: 2022-06-01
 # dateModified: 2022-06-01
+sortOrder: 1
 ---
 
 As the industry continues to grow, gaming is becoming a [way for users to make money](https://www.teknosassociates.com/how-do-professional-gamers-make-money/) in addition to being a form of entertainment. Gamers need to be able to track and save their progress to qualify for prize money, esports league salaries, or sponsorships, as well as add to their streaming content or videos on demand. Their unique user accounts are vital to their success.

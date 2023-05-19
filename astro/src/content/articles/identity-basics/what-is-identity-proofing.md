@@ -6,6 +6,7 @@ icon: /img/icons/identity-proofing.svg
 section: Identity Basics
 date: 2021-10-05
 dateModified: 2021-10-05
+sortOrder: 1
 ---
 
 Identity theft is on the rise. In 2020, the [reported cases of identity theft](https://www.ftc.gov/reports/consumer-sentinel-network-data-book-2020) rose to 1,387,615, more than double the 650,572 cases reported in 2019. The COVID-19 pandemic accelerated the use of online transactions as businesses leveraged digital technologies to take advantage of new business opportunities. This resulted in the increase of sensitive information stored in the cloud and an elevated risk of identity theft. 

@@ -4,6 +4,7 @@ description: A complete guide for developers to ensure their applications are GD
 section: CIAM
 author: Brian Pontarelli
 icon: /img/icons/developer-guide-gdpr.svg
+sortOrder: 1
 ---
 
 ## The who, what, when, where, and why of the GDPR for developers

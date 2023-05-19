@@ -6,6 +6,7 @@ icon: /img/icons/value-auth-provider-commit.svg
 section: Identity Basics
 date: 2021-02-24
 dateModified: 2021-02-24
+sortOrder: 1
 ---
 
 Sometimes, despite a salesperson overcoming all your concerns or a landing page perfectly crafted to speak your language in every bullet point, there's a lingering fear that the product you're looking at just might not be what you're looking for. Everyone has experienced buyer's remorse at some point in their life, and most people I know don't want to go through it again.

@@ -5,6 +5,7 @@ author: Dan Moore
 section: Tokens
 # date: 2020-06-04
 # dateModified: 2020-06-25
+sortOrder: 1
 ---
 
 JSON Web Tokens (JWTs) get a lot of hate online for being insecure. Tom Ptacek, founder of [Latacora](https://latacora.com/), a security consultancy, had this to say about [JWTs in 2017](https://news.ycombinator.com/item?id=14292223):

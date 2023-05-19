@@ -5,6 +5,7 @@ author: Deborah Ruck
 section: Gaming & Entertainment
 # date: 2022-03-15
 # dateModified: 2022-03-15
+sortOrder: 1
 ---
 
 An **identity provider** is a trusted third-party service that offers user authentication as a service to create, manage, and verify digital identities on behalf of an affiliated (subscribing) website, application, or digital service provider. If you’ve used the sign-in with Google, Facebook, or Twitch option when registering for a service, you’ve used an identity provider. 

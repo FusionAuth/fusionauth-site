@@ -6,6 +6,7 @@ icon: /img/icons/auth-system-acquired.svg
 section: Identity Basics
 date: 2021-06-22
 dateModified: 2021-06-22
+sortOrder: 1
 ---
 
 Authentication is an integral part of your application, and as such the acquisition of your auth vendor isn't like other acquisitions. It could mean many things for your business, and you'll have to decide how to respond accordingly.

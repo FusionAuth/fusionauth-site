@@ -6,6 +6,7 @@ icon: /img/icons/complete-auth-provider-needs.svg
 section: Identity Basics
 date: 2021-09-14
 dateModified: 2021-09-14
+sortOrder: 1
 ---
 
 Many applications start with rudimentary authentication systems. It might just be a table of users in your database, with hashed and salted passwords and a simple exchange of a valid password for a token or session. This is simple, and many web apps have worked like this for a long time—even now. As your application grows in complexity and user base size, you might find that your old DIY auth system isn't quite meeting your product's ever-changing needs. This is where Authentication Providers and Authentication-as-a-Service come in.

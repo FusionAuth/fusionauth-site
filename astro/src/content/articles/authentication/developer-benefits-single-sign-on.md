@@ -4,6 +4,7 @@ description: What is Single Sign-On and how can it help developers build success
 author: Kasper Siig
 section: Authentication
 icon: /img/icons/developer-benefits-single-sign-on.svg
+sortOrder: 1
 ---
 
 Making the sign-up process simpler is the first place to start if you want more people to use your product. It can significantly help you improve your application conversion.
