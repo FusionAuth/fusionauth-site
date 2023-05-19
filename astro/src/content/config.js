@@ -9,6 +9,8 @@ const articlesCollection = defineCollection({
     icon: z.string().optional(),
     section: z.string(),
     title: z.string(),
+    sortTitle: z.string().optional(),
+    featured: z.boolean().default(false),
   }),
 });
 
