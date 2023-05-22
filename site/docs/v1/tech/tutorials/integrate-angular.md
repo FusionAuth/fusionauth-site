@@ -8,8 +8,6 @@ technology: Angular
 language: TypeScript
 ---
 
-## Integrate Your {{page.technology}} Application With FusionAuth
-
 {% include docs/integration/_intro.md %}
 
 ## Prerequisites
@@ -26,7 +24,7 @@ language: TypeScript
 
 ## Configure FusionAuth
 
-Next, you need to set up FusionAuth. This can be done in different ways, but we are going to use the Typescript client library. The below instructions use `npm` on the command line, but you can use the client library with an IDE of your preference as well.
+Next, you need to set up FusionAuth. This can be done in different ways, but we are going to use the {{page.language}} client library. The instructions below use `npm` on the command line, but you can use the client library with an IDE of your preference as well.
 
 First, make a directory:
 
@@ -34,7 +32,7 @@ First, make a directory:
 mkdir setup-fusionauth && cd setup-fusionauth
 ```
 
-Now, copy and paste the following file into `package.json`.
+Now, copy and paste the following code into `package.json`.
 
 ```javascript
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/package.json %}
@@ -46,7 +44,7 @@ Now you need to install the dependencies in `package.json`.
 npm install
 ```
 
-Then copy and paste the following file into `setup.js`. This file uses the [FusionAuth API](/docs/v1/tech/apis/) to configure an Application, CORS, and more to allow for easy integration.
+Then copy and paste the following code into `setup.js`. This file uses the [FusionAuth API](/docs/v1/tech/apis/) to configure an Application, CORS, and more to allow for easy integration.
 
 ```javascript
 {% remote_include https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-client-libraries/angular/typescript/setup-angular.js %}
@@ -54,11 +52,11 @@ Then copy and paste the following file into `setup.js`. This file uses the [Fusi
 
 Then, you can run the setup script.
 
-{% include _callout-note.liquid content="The setup script is designed to run on a newly installed FusionAuth instance with only one user and no tenants other than `Default`. To follow this guide on a FusionAuth instance that does not meet these criteria, you may need to modify the above script. <br><br> Refer to the [Typescript client library](/docs/v1/tech/client-libraries/typescript) documentation for more information." %}
-
 ```shell
 fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE npm run setup
 ```
+
+{% include _callout-note.liquid content="The setup script is designed to run on a newly installed FusionAuth instance with only one user and no tenants other than `Default`. To follow this guide on a FusionAuth instance that does not meet these criteria, you may need to modify the above script. <br><br> Refer to the [Typescript client library](/docs/v1/tech/client-libraries/typescript) documentation for more information." %}
 
 If you are using PowerShell, you will need to set the environment variable in a separate command before executing the script.
 
@@ -117,7 +115,7 @@ Then, replace the content of `src/app/app.component.ts` with the following code:
 
 In this code, you are adding in the FusionAuth login and logout buttons, as well as a welcome message which will only show up if the user is logged in.
 
-## Test It Out
+## Testing the Authentication Flow
 
 You can now open up an incognito window and visit [the {{page.technology}} app](http://localhost:4200). View the page and log in with the user you configured.
 
@@ -126,3 +124,5 @@ You can now open up an incognito window and visit [the {{page.technology}} app](
 You have successfully added login, register, and logout to an Angular application.
 
 You now have an access token safely stored as a cookie. Any requests you make to an API on the same domain will receive the access token. The API can then validate the token and return data or otherwise offer functionality.
+
+The full code for this guide can be found [here](https://github.com/sonderformat-llc/fusionauth-example-angular-guide).
