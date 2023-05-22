@@ -179,6 +179,8 @@ WARNING: This is a development server. Do not use it in a production deployment.
  * Running on http://localhost:5001
 ```
 
+## Testing the Authentication Flow
+
 Open an incognito window and navigate to `http://localhost:5001`.
 
 {% include docs/_image.liquid src="/assets/img/docs/integrations/flask-integration/flask-homepage.png" alt="Flask application home page." class="img-fluid bottom-cropped" width="1200" figure=false %}
