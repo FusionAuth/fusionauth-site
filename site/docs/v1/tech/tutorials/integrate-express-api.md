@@ -134,7 +134,11 @@ To test the {{page.technology}} API, we will use a small vanilla javascript appl
 {% remote_include https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-express-api/master/app/index.html %}
 ```
 
-Once you have created these files, start up the {{page.technology}} API using this command:
+Once you have created these files, you can test the API.
+
+## Testing the Authentication Flow
+
+Start up the {{page.technology}} API using this command:
 
 ```shell
 npm start
@@ -156,6 +160,8 @@ There are several buttons available to test the API and the FusionAuth integrati
 * Logout — Log out of FusionAuth
 
 If you use the <span>Call API</span>{:.uielement} button, before you log in, you will see an error message. After you log in, you will see the response from the {{page.technology}} API. When you are logged in, you can also use the <span>Retrieve FusionAuth user information</span>{:.uielement} button to see the user information returned from FusionAuth.
+
+The full code for this guide can be found [here](https://github.com/sonderformat-llc/fusionauth-example-express-api).
 
 ## Conclusion
 
