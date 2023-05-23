@@ -27,5 +27,5 @@ export default defineConfig({
         rehypeTasklistEnhancer()
     ]
   },
-  site: 'https://webauthn.wtf'
+  site: 'https://fusionauth.io/'
 });
