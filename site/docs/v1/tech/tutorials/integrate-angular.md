@@ -74,7 +74,7 @@ Now you are going to create a {{page.technology}} application. While this sectio
 First, create a simple {{page.technology}} template using `@angular/cli`. Using this lets you easily integrate FusionAuth.
 
 ```shell
-npx ng new setup-angular --defaults
+npx -p @angular/cli ng new setup-angular --defaults
 ```
 
 You can start up the server and visit the URL displayed to ensure the default application works.
