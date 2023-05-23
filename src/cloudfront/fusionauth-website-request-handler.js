@@ -1,5 +1,14 @@
 var indexPages = {
   '/': true,
+  '/articles/': true,
+  '/articles/authentication/': true,
+  '/articles/ciam/': true,
+  '/articles/gaming-entertainment/': true,
+  '/articles/identity-basics/': true,
+  '/articles/login-authentication-workflows/': true,
+  '/articles/oauth/': true,
+  '/articles/security/': true,
+  '/articles/tokens/': true,
   '/blog/': true,
   '/community/forum/': true,
   '/docs/': true,
@@ -47,16 +56,7 @@ var indexPages = {
   '/docs/v1/tech/tutorials/': true,
   '/docs/v1/tech/tutorials/gating/': true,
   '/docs/v1/tech/tutorials/two-factor/': true,
-  '/how-to/': true,
-  '/learn/expert-advice/': true,
-  '/learn/expert-advice/authentication/': true,
-  '/learn/expert-advice/ciam/': true,
-  '/learn/expert-advice/dev-tools/': true,
-  '/learn/expert-advice/gaming-entertainment/': true,
-  '/learn/expert-advice/identity-basics/': true,
-  '/learn/expert-advice/oauth/': true,
-  '/learn/expert-advice/security/': true,
-  '/learn/expert-advice/tokens/': true
+  '/how-to/': true
 };
 var redirects = {
   '/blog': '/blog/',
@@ -98,14 +98,14 @@ var redirects = {
   '/gaming': '/industries/gaming-entertainment',
   '/gaming/': '/industries/gaming-entertainment',
   '/kubernetes': '/docs/v1/tech/installation-guide/kubernetes/',
-  '/learn/expert-advice/authentication/gaming-identity-provider-needs': '/learn/expert-advice/gaming-entertainment/gaming-identity-provider-needs',
-  '/learn/expert-advice/dev-tools/jwt-debugger': '/learn/expert-advice/dev-tools/jwt-decoder',
-  '/learn/expert-advice/identity-basics/avoid-lockin': '/learn/expert-advice/authentication/avoid-lockin',
-  '/learn/expert-advice/identity-basics/common-authentication-implementation-risks': '/learn/expert-advice/authentication/common-authentication-implementation-risks',
-  '/learn/expert-advice/identity-basics/making-sure-your-auth-system-scales': '/learn/expert-advice/ciam/making-sure-your-auth-system-scales',
-  '/learn/expert-advice/identity-basics/value-standards-compliant-authentication': '/learn/expert-advice/oauth/value-standards-compliant-authentication',
-  '/learn/expert-advice/tokens/anatomy-of-jwt': '/learn/expert-advice/tokens/jwt-components-explained',
-  '/learn/expert-advice/tokens/jwt-authentication-token-components-explained': '/learn/expert-advice/tokens/jwt-components-explained',
+  '/learn/expert-advice/authentication/gaming-identity-provider-needs': '/articles/gaming-entertainment/gaming-identity-provider-needs',
+  '/learn/expert-advice/dev-tools/jwt-debugger': '/dev-tools/jwt-decoder',
+  '/learn/expert-advice/identity-basics/avoid-lockin': '/articles/authentication/avoid-lockin',
+  '/learn/expert-advice/identity-basics/common-authentication-implementation-risks': '/articles/authentication/common-authentication-implementation-risks',
+  '/learn/expert-advice/identity-basics/making-sure-your-auth-system-scales': '/articles/ciam/making-sure-your-auth-system-scales',
+  '/learn/expert-advice/identity-basics/value-standards-compliant-authentication': '/articles/oauth/value-standards-compliant-authentication',
+  '/learn/expert-advice/tokens/anatomy-of-jwt': '/articles/tokens/jwt-components-explained',
+  '/learn/expert-advice/tokens/jwt-authentication-token-components-explained': '/articles/tokens/jwt-components-explained',
   '/podcast': '/',
   '/pricing/cloud/': '/pricing',
   '/pricing/edition': '/pricing',
@@ -119,8 +119,13 @@ var redirects = {
   '/upgrade/from-open-source': '/compare',
   '/upgrade/from-saas': '/compare'
 };
+
+var redirectsByPrefix = [
+  ['/learn/expert-advice', '/articles']
+]
+
 var s3Paths = ['/direct-download', '/license'];
-var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/', '/how-to/'];
+var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/', '/how-to/', '/articles/', '/dev-tools/'];
 
 function handler(event) {
   var request = event.request;
@@ -189,7 +194,17 @@ function removeSlash(uri) {
 }
 
 function calculateRedirect(uri) {
-  return redirects.hasOwnProperty(uri) ? redirects[uri] : null;
+  var result = redirects.hasOwnProperty(uri) ? redirects[uri] : null;
+
+  if (result === null) {
+    var prefix_replacement = redirectsByPrefix.find(e => uri.startsWith(e[0]));
+
+    if (prefix_replacement !== undefined) {
+      result = uri.replace(prefix_replacement[0], prefix_replacement[1]);
+    }
+  }
+
+  return result;
 }
 
 function appendHTML(uri) {
