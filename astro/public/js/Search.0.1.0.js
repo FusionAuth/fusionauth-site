@@ -47,6 +47,11 @@ class Search {
     if (button) {
       this.closeSearch();
     }
+
+    //close if background clicked
+    if (event.target === this.#searchModal) {
+      this.closeSearch();
+    }
   }
 
   #handleKeyDown(event) {
