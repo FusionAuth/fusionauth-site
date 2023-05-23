@@ -41,7 +41,7 @@ I’m also responsible for performing in-depth research around a problem (such a
 
 **Dan:** What problems did we solve for you?
 
-**Theo:** As a SasS company, we want to be able to support any kind of auth that a user might be using along with integrating SSO when working with enterprise customers. 
+**Theo:** As a SaaS company, we want to be able to support any kind of auth that a user might be using along with integrating SSO when working with enterprise customers. 
 
 FusionAuth’s list of native support for 3rd party identity providers is really extensive compared to competitors we’ve evaluated, and getting up and running with a supported provider was simple to do. In the rare case that there isn’t any native support, we’ve found that FusionAuth supports the provider with a little additional work on our end as long as the identity provider we’re integrating with supports OAuth2 + OIDC or SAML.
 
