@@ -163,7 +163,6 @@ This equation shows that as the password length increases, the number of seconds
 
 Great question. Here's the answer:
 
-{:.tight}
 > If you allow the use of short passwords, which makes them easy to remember, you need to decrease the value of `computeSpeed` in order to maintain a level of security.
 >
 > If you require longer randomized passwords, such as those created by a password generator, you don't need to change anything because the value of `computeSpeed` becomes much less relevant.

@@ -247,7 +247,7 @@ In this case, make sure you don't just pass the extracted headers, but that you 
 
 You might append the following values to the forwarded request using something like the [ReverseProxy](https://pkg.go.dev/net/http/httputil#ReverseProxy) or other proxy middleware.
 
-```golang
+```go
 http.Handle("/", &httputil.ReverseProxy{
     Director: func(r *http.Request) {
         r.URL.Scheme = "https"
