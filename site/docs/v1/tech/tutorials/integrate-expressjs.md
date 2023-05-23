@@ -137,7 +137,7 @@ Finally, add an `error.pug` file to render error messages.
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/views/error.pug %}
 ```
 
-Stitch everything together by creating an `app.js` file that will be the main entrypoint for your application.
+Stitch everything together by creating an `app.js` file that will be the main entry point for your application.
 
 ```javascript
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/app.js %}
