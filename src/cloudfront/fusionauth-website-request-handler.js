@@ -11,6 +11,7 @@ var indexPages = {
   '/articles/tokens/': true,
   '/blog/': true,
   '/community/forum/': true,
+  '/dev-tools/': true,
   '/docs/': true,
   '/docs/quickstarts/': true,
   '/docs/v1/tech/': true,
