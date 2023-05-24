@@ -1,5 +1,5 @@
 ---
-title: How Complete Does Your Authentication Provider Need to Be?
+title: How Complete Does Your Authentication Provider Need To Be?
 description: Learn the various types of authentication systems, advantages and limitations of each, and which ones might suit your application.
 author: Cameron Pavey
 icon: /img/icons/complete-auth-provider-needs.svg
