@@ -4,10 +4,13 @@
 'use strict';
 
 class Search {
+  #altKey;
+  #isMac;
   #moveX;
   #moveY;
   #pagefind;
   #searchInput;
+  #searchKeyHint;
   #searchModal;
   #searchResults;
 
@@ -18,12 +21,16 @@ class Search {
     this.#searchResults = document.querySelector('[data-widget="search-results"] ul');
     this.#searchInput = document.querySelector('[data-widget="search-input"]');
     this.#searchInput.addEventListener('input', event => this.#handleSearch(event));
+    this.#searchKeyHint = document.querySelector('[data-widget="search-key-hint"]');
 
     document.addEventListener('click', event => this.#handleClick(event));
     document.addEventListener('keydown', event => this.#handleKeyDown(event));
     document.addEventListener('keyup', event => this.#handleKeyUp(event));
 
     this.#handleResults({});
+    this.#isMac = window.navigator.platform === 'MacIntel';
+    this.#altKey = this.#isMac ? 'Meta' : 'Alt';
+    this.#searchKeyHint.innerText = this.#isMac ? '⌘K' : 'Alt+K';
   }
 
   closeSearch() {
@@ -55,10 +62,11 @@ class Search {
   }
 
   #handleKeyDown(event) {
-    if (event.key === 'Meta') {
-      this.meta = true;
+    console.log(event.key);
+    if (event.key === this.#altKey) {
+      this.alt = true;
       return;
-    } else if (event.key === 'k' && this.meta) {
+    } else if (event.key === 'k' && this.alt) {
       this.toggleSearch();
     }
 
@@ -89,8 +97,8 @@ class Search {
   }
 
   #handleKeyUp(event) {
-    if (event.key === 'Meta') {
-      this.meta = false;
+    if (event.key === this.#altKey) {
+      this.alt = false;
     }
   }
 
