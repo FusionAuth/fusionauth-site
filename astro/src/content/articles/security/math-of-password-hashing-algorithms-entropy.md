@@ -1,5 +1,5 @@
 ---
-title: The Math of Password Hashing Algorithms and Entropy
+title: The Math Of Password Hashing Algorithms And Entropy
 description: Long passwords and one-way password hashing are standard strategies used to increase security and protect your user's passwords. Let's take a look at how they work and some new ideas to improve it.
 author: Brian Pontarelli
 icon: /img/icons/math-password-hashing.svg
@@ -163,7 +163,6 @@ This equation shows that as the password length increases, the number of seconds
 
 Great question. Here's the answer:
 
-{:.tight}
 > If you allow the use of short passwords, which makes them easy to remember, you need to decrease the value of `computeSpeed` in order to maintain a level of security.
 >
 > If you require longer randomized passwords, such as those created by a password generator, you don't need to change anything because the value of `computeSpeed` becomes much less relevant.

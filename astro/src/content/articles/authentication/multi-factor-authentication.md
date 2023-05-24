@@ -1,5 +1,5 @@
 ---
-title: Multi-factor Authentication for Developers
+title: Multi-Factor Authentication For Developers
 description: What is multi-factor authentication and why is it important?
 author: Dan Moore
 section: Authentication

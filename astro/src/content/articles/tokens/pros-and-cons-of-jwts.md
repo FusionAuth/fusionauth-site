@@ -1,5 +1,5 @@
 ---
-title: Pros and Cons of JWTs
+title: Pros And Cons Of JWTs
 description: The pros and cons of JWTs and why you should (or shouldn't) use them.
 author: Brian Pontarelli
 icon: /img/icons/pros-cons-jwts.svg
@@ -16,13 +16,21 @@ One way to describe JWTs is that they are portable units of identity. That means
 
 Here's a diagram that illustrates how the identity provider creates a JWT and how a service can use the JWT without calling back to the identity provider: (yes that is a Palm Pilot in the diagram)
 
+<div class="bg-slate-200 flex justify-center p-4 not-prose">
+
 ![JWT example](/img/articles/pros-and-cons-of-jwts/Lets-talk-about-JWTs-Diagram-1.png)
+
+</div>
 
 When you contrast this with an opaque token, you'll see why so many developers are using JWTs. Opaque tokens are just a large string of characters that don't contain any data. A token must be verified by asking the identity provider if it is still valid and returning the user data the service needs.
 
 Here's a diagram that illustrates how the identity provider is called to verify the opaque token and fetch the user data:
 
+<div class="bg-slate-200 flex justify-center p-4 not-prose">
+
 ![Opaque token example](/img/articles/pros-and-cons-of-jwts/Lets-talk-about-JWTs-Diagram-2-1.png)
+
+</div>
 
 This method of verifying and exchanging tokens can be very "chatty" and it also requires a method of persisting and loading the tokens inside the identity provider. JWTs on the other hand don't require any persistence or logic in the identity provider since they are portable.
 
@@ -55,7 +63,7 @@ Base64 Decoding + JSON Parsing + RSA Verification | | 6,000/s
 
 ## JWTs aren't easily revocable
 
-This means that a JWT could be valid even though the user's account has been suspended or deleted. There are a couple of ways around this including the "refresh token revoke event" combined with a webhook. This solution is available in FusionAuth. You can check out the blog post I wrote on this topic here: [Revoking JWTS](/learn/expert-advice/tokens/revoking-jwts "Learn about Revoking JWTs").
+This means that a JWT could be valid even though the user's account has been suspended or deleted. There are a couple of ways around this including the "refresh token revoke event" combined with a webhook. This solution is available in FusionAuth. You can check out the blog post I wrote on this topic here: [Revoking JWTs](/learn/expert-advice/tokens/revoking-jwts "Learn about Revoking JWTs").
 
 ## JWTs have exploits
 
@@ -70,11 +78,20 @@ Instead of using JWTs or opaque tokens, you always have the option of using sess
 When a user logs in, the user object is stored in the session and the server sends back a session cookie that contains the session id. Each subsequent request to the server includes the session cookie. The server uses the session cookie to load the user object out of the session Hash. The user object is then used to identify the user making the request. Here are two diagrams that illustrate this concept:
 
 ### Login
+
+<div class="bg-slate-200 flex justify-center p-4 not-prose">
+
 ![login example for sessions](/img/articles/pros-and-cons-of-jwts/Lets-talk-about-JWTs-Diagram-3-1.png)
 
+</div>
+
 ### Second request
+
+<div class="bg-slate-200 flex justify-center p-4 not-prose">
+
 ![API call with session example](/img/articles/pros-and-cons-of-jwts/Lets-talk-about-JWTs-Diagram-4-2.png)
 
+</div>
 
 If you have a smaller application that uses a single backend, sessions work well. Once you start scaling or using microservices, sessions can be more challenging. Larger architectures require load-balancing and session pinning, where each client is pinned to the specific server where their session is stored. Session replication or a distributed cache might be needed to ensure fault tolerance or allow for zero-downtime upgrades. Even with this added complexity, sessions might still be a good option.
 

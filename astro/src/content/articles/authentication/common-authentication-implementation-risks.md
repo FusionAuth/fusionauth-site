@@ -1,5 +1,5 @@
 ---
-title: Common Authentication Implementation Risks and How to Mitigate Them
+title: Common Authentication Implementation Risks And How To Mitigate Them
 description: What are risks of implementing authentication, authorization and user management, and how can you mitigate them?
 author: James Hickey
 section: Authentication

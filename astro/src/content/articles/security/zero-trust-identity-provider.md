@@ -1,5 +1,5 @@
 ---
-title: Auth Providers and Zero Trust Architecture
+title: Auth Providers And The Zero Trust Architecture
 description: Learn about the Zero Trust framework and how Identity Providers factor into it to protect your network and keep your resources secure.
 author: Cameron Pavey
 icon: /img/icons/auth-providers-zero-trust.svg

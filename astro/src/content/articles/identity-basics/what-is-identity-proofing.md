@@ -1,5 +1,5 @@
 ---
-title: What is Identity Proofing?
+title: What Is Identity Proofing?
 description: What is identity proofing and why might you need it?
 author: Deborah Ruck
 icon: /img/icons/identity-proofing.svg

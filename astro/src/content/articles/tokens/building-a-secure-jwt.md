@@ -1,5 +1,5 @@
 ---
-title: Building a Secure Signed JWT
+title: Building A Secure Signed JWT
 description: How to correctly build and use a signed JSON Web Token.
 author: Dan Moore
 icon: /img/icons/building-secure-signed-jwts.svg
