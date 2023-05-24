@@ -1,5 +1,5 @@
 ---
-title: How the OAuth Device Authorization grant Can Make Your Users’ Lives Easier
+title: How The OAuth Device Authorization Grant Can Make Your Users’ Lives Easier
 description: The OAuth Device Authorization grant enables game users to authenticate using a device where they may already be authenticated, or which may have a far superior input user experience.
 author: Success Ologunsua
 section: Gaming & Entertainment

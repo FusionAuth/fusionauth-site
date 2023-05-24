@@ -1,5 +1,5 @@
 ---
-title: Tokens at the Microservices Context Boundary
+title: Tokens At The Microservices Context Boundary
 description: How to handle tokens at the boundary of your microservices
 author: Dan Moore
 icon: /img/icons/tokens-microservices-context-boundary.svg

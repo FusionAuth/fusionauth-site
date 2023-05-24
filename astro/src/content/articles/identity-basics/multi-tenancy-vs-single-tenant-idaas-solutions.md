@@ -1,5 +1,5 @@
 ---
-title: Multi-Tenant vs. Single-Tenant IDaaS Solutions
+title: Multi-Tenant Vs. Single-Tenant IDaaS Solutions
 description: Choosing between multi-tenant and single-tenant IDaaS solutions comes down to an organization's business objectives and requirements. Which trade-offs are you willing to make?
 author: Daniel DeGroff
 icon: /img/icons/multi-tenancy-single-tenant-architecture.svg

@@ -1,5 +1,5 @@
 ---
-title: Avoiding Authentication System Lock-in
+title: Avoiding Authentication System Lock-In
 description: What steps do you need to take to ensure your authentication system can scale?
 author: Cameron Pavey
 section: Authentication

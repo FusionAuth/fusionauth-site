@@ -1,5 +1,5 @@
 ---
-title: Types of Kubernetes Auth
+title: Types Of Kubernetes Auth
 description: What are the three levels of Kubernetes authentication?
 author: Dan Moore
 section: Authentication
