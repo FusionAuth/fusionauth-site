@@ -14,15 +14,15 @@ In this tutorial, you'll build a basic Node.js + [Express](http://expressjs.com)
 
 The application itself is very simple: It will let a user sign up via FusionAuth, allow them to grant consent for children in their family to access certain features of an application, and allow them to update those consents at any time. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can also [skip ahead and view the code](https://github.com/ritza-co/fusionauth-family-api-example/tree/main/app). Note that some configuration of FusionAuth is needed, as detailed in this guide, so you will need to complete that before running the code.
 
-You can also use [these kickstart files](https://github.com/ritza-co/fusionauth-family-api-example/tree/main/kickstart) to automatically handle the configuration of FusionAuth. You can find more information regarding kickstart files [here](https://fusionauth.io/docs/v1/tech/installation-guide/docker#kickstart).
+You can also use [these kickstart files](https://github.com/ritza-co/fusionauth-family-api-example/tree/main/kickstart) to automatically handle the configuration of FusionAuth. You can find more information regarding kickstart files [here](/docs/v1/tech/installation-guide/docker#kickstart).
 
 ### An Overview of the Family and Consent APIs
 
 You will use three main FusionAuth APIs in this tutorial:
 
-- The [Family API](https://fusionauth.io/docs/v1/tech/apis/families) lets you create and manage families, and assign users to them.
-- The [Consent API](https://fusionauth.io/docs/v1/tech/apis/consents) lets you manage the types of consents available in your application.
-- The [UserConsent API](https://fusionauth.io/docs/v1/tech/apis/consents#grant-a-user-consent) lets you manage consents for a specific user.
+- The [Family API](/docs/v1/tech/apis/families) lets you create and manage families, and assign users to them.
+- The [Consent API](/docs/v1/tech/apis/consents) lets you manage the types of consents available in your application.
+- The [UserConsent API](/docs/v1/tech/apis/consents#grant-a-user-consent) lets you manage consents for a specific user.
 
 Families are a way to group users into a family and assign the family members roles within that family. There are three main roles: Adult, Teen, and Child.
 
@@ -69,7 +69,7 @@ You can skip step **#3** in this tutorial, but sending emails (to verify email a
 Click "Setup" under "Missing Application" and call your new app "Family-Api-App", or another name of your choice. Click on the "OAuth" tab. It'll get a "Client Id" and "Client Secret" automatically - save these, as you'll use them in the code. Later, you'll set up a Node.js + Express application which will run on `http://localhost:3000`, so configure the Authorized URLs accordingly. You should add:
 
 - `http://localhost:3000/oauth-redirect` to the "Authorized redirect URLs".
-- `http://localhost:3000/` to the "Authorized request origin URLs".
+- `http://localhost:3000` to the "Authorized request origin URLs".
 - `http://localhost:3000/logout` to the "Logout URL".
 
 Make sure that "PKCE" is set to `Required.` Proof Key for Code Exchange (PKCE) was originally intended for public clients like native mobile or desktop apps that couldn’t safely store a client secret. Now it is recommended even on confidential clients like web apps where the client secret is under secure control to protect against authorization code injection attacks. Your application should look like this:
@@ -84,7 +84,7 @@ Once the user has logged in via the FusionAuth application, you can retrieve the
 
 Navigate to "Settings" and then "API Keys", then add a key. Add a name for the key and take note of the generated key value.
 
-Following the principle of least privilege, you can restrict the permissions for the key. For this app, you only need to enable the `GET` action for `api/user`, the `GET` and `PATCH` actions for `api/user/consent`, and the `GET`, `POST`, and `PUT` actions for `/api/user/family`. This will let the key get basic user information, grant or revoke consents to view the app, create a family, and assign users to it. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app. You should avoid doing this!
+Following the principle of least privilege, you can restrict the permissions for the key. For this app, you only need to enable the `GET` action for `api/user`, the `GET`, `POST` and `PATCH` actions for `api/user/consent`, and the `GET`, `POST`, and `PUT` actions for `/api/user/family`. This will let the key get basic user information, grant or revoke consents to view the app, create a family, and assign users to it. If you leave the key with no explicitly assigned permissions, it will be an all-powerful key that can control all aspects of your FusionAuth app. You should avoid doing this!
 
 {% include _image.liquid src="/assets/img/blogs/family-api/family-api-api-key.png" alt="Limiting the scope of the created API key." class="img-fluid" figure=false %}
 
@@ -92,7 +92,7 @@ Following the principle of least privilege, you can restrict the permissions for
 
 The application will have two users: a parent user and a child user. The parent user will be able to grant consent for the child user to access certain features of the application.
 
-Let's create the parent user first. Navigate to "Users" and click the "Add" button. Select a "Tenant" and supply an email address. Toggle the "Send email to set up password" switch to directly supply a password. For display purposes, provide a "First Name". A user must be at least 21 years old to be designated as a family owner, so supply an appropriate "Birthdate" as well. This requirement can be modified in the [tenant configuration](https://fusionauth.io/docs/v1/tech/core-concepts/tenants#family).
+Let's create the parent user first. Navigate to "Users" and click the "Add" button. Supply an email address. Toggle the "Send email to set up password" switch to directly supply a password. For display purposes, provide a "First Name". A user must be at least 21 years old to be designated as a family owner, so supply an appropriate "Birthdate" as well. This requirement can be modified in the [tenant configuration](/docs/v1/tech/core-concepts/tenants#family).
 
 {% include _image.liquid src="/assets/img/blogs/family-api/family-api-parent-user.png" alt="Creating the parent user." class="img-fluid" figure=false %}
 
@@ -106,7 +106,7 @@ Then, register both users to the application. Click the "Manage" button for each
 
 ## Adding users to a family
 
-Now that you've created your two users and registered them to your application, you can assign both users to their appropriate family roles via the [Family API](https://fusionauth.io/docs/v1/tech/apis/families). Execute the following command in your terminal.
+Now that you've created your two users and registered them to your application, you can assign both users to their appropriate family roles via the [Family API](/docs/v1/tech/apis/families). Execute the following command in your terminal.
 
 ```sh
 curl -X POST <YOUR_FUSIONAUTH_URL>/api/user/family \
@@ -142,7 +142,7 @@ curl -X PUT <YOUR_FUSIONAUTH_URL>/api/user/family/<YOUR_FAMILY_ID> \
 
 ## Creating a consent
 
-You are almost ready to build your custom application and leverage your FusionAuth configuration to enable permission-based access to your site. Now, you just have to add a [consent](https://fusionauth.io/docs/v1/tech/apis/consents#overview), which will enable the parent user to grant or revoke access to the child user.
+You are almost ready to build your custom application and leverage your FusionAuth configuration to enable permission-based access to your site. Now, you just have to add a [consent](/docs/v1/tech/apis/consents#overview), which will enable the parent user to grant or revoke access to the child user.
 
 Navigate to "Settings" then "Consents" and click the "Add" button. Supply a "Name" for the consent. By default, the minimum age of self-consent is `13`, meaning any user aged `13` or older can grant themselves the consent without needing permission from an adult user. You can modify this value if you wish. For the purposes of this guide, just make sure this number is higher than the age of your child user. If you did not supply a "Birthdate" for your child user, you can leave this value as-is, since a blank "Birthdate" will cause a user's age to be calculated as `-1`.
 
@@ -165,7 +165,7 @@ Here are the commands to perform the above steps:
 npx express-generator --view=pug fusionauth-example-family
 cd fusionauth-example-family
 npm install
-npm install @fusionauth/typescript-client pkce-challenge express-session
+npm install @fusionauth/typescript-client pkce-challenge@3 express-session
 npm start
 ```
 
@@ -254,7 +254,7 @@ const client = new FusionAuthClient('<YOUR_API_KEY>', '<YOUR_FUSIONAUTH_URL>');
 const consentId = '<YOUR_CONSENT_ID>';
 ```
 
-The `pkceChallenge` package enables your application to use a Proof Key for Code Exchange (PKCE). PKCE is a security layer that sits on top of the Authorization Code grant to ensure that authorization codes can’t be stolen or reused. Here, you are also importing the [FusionAuth Typescript client](https://fusionauth.io/docs/v1/tech/client-libraries/typescript), as well as several parameters that allow your application to communicate with your FusionAuth configuration. Find the values for `<YOUR_CLIENT_ID>` and `<YOUR_CLIENT_SECRET>` in FusionAuth under "Applications" then "Your Application". In a production environment, you should use environment variables here to prevent your client secret from leaking. Find `<YOUR_API_KEY>` under "Settings" then "API Keys" and `<YOUR_CONSENT_ID>` under "Settings" then "Consents".
+The `pkceChallenge` package enables your application to use a Proof Key for Code Exchange (PKCE). PKCE is a security layer that sits on top of the Authorization Code grant to ensure that authorization codes can’t be stolen or reused. Here, you are also importing the [FusionAuth Typescript client](/docs/v1/tech/client-libraries/typescript), as well as several parameters that allow your application to communicate with your FusionAuth configuration. Find the values for `<YOUR_CLIENT_ID>` and `<YOUR_CLIENT_SECRET>` in FusionAuth under "Applications" then "Your Application". In a production environment, you should use environment variables here to prevent your client secret from leaking. Find `<YOUR_API_KEY>` under "Settings" then "API Keys" and `<YOUR_CONSENT_ID>` under "Settings" then "Consents".
 
 ## Adding the OAuth Callback Route
 
@@ -339,9 +339,9 @@ router.get('/', async function (req, res, next) {
 });
 ```
 
-The `familyMembers` array is a filtered version of the entire family that only contains children and the currently logged-in adult. In other words, any other adults from the family are removed, as you won't need to set consents for them, but you do want to keep the family role information for the currently logged-in adult. Note that, when building the `familyMembers` array, the filter criterion is `!== 'Adult'`, not `=== 'Child'` as you might expect. This is because FusionAuth also allows users to be designated as [`Teen`](https://fusionauth.io/docs/v1/tech/apis/families#add-a-user-to-a-family) to allow for further granularity when assigning roles in a family.
+The `familyMembers` array is a filtered version of the entire family that only contains children and the currently logged-in adult. In other words, any other adults from the family are removed, as you won't need to set consents for them, but you do want to keep the family role information for the currently logged-in adult. Note that, when building the `familyMembers` array, the filter criterion is `!== 'Adult'`, not `=== 'Child'` as you might expect. This is because FusionAuth also allows users to be designated as [`Teen`](/docs/v1/tech/apis/families#add-a-user-to-a-family) to allow for further granularity when assigning roles in a family.
 
-The above code makes use of several named functions, which you now have to implement. The first function to implement is `getUserProfiles()`, which gathers all user profiles in the family. This is needed because the [Family API call](https://fusionauth.io/docs/v1/tech/apis/families#retrieve-a-family) only returns a subset of each family member's information. You need to get members' usernames or emails too, which are available through the `client.retrieveUser` function.
+The above code makes use of several named functions, which you now have to implement. The first function to implement is `getUserProfiles()`, which gathers all user profiles in the family. This is needed because the [Family API call](/docs/v1/tech/apis/families#retrieve-a-family) only returns a subset of each family member's information. You need to get members' usernames or emails too, which are available through the `client.retrieveUser` function.
 
 ```js
 async function getUserProfiles(familyUsers) {
@@ -420,10 +420,10 @@ router.post('/change-consent-status', async function (req, res, next) {
     if (response.response.families && response.response.families.length >= 1) {
       let self = response.response.families[0].members.filter(elem => elem.userId === req.session.user.id)[0];
       if (self.role !== 'Adult') {
-        res.send(403, 'Only Adult users can change consents');
+        res.status(403).send('Only Adult users can change consents');
       }
       if (response.response.families[0].members.filter(elem => elem.userId === req.body.userId).length < 1) {
-        res.send(403, 'You cannot access families you are not part of');
+        res.status(403).send('You cannot access families you are not part of');
       }
     }
 
