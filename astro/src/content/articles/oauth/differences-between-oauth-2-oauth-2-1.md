@@ -165,7 +165,7 @@ Make sure your OAuth server is doing to following:
 
 ## What's next for OAuth
 
-> Prediction is very difficult, especially if it's about the future. - Niehls Bohr
+> "Prediction is very difficult, especially if it's about the future." - Niehls Bohr
 
 OAuth 2.1 is still being discussed on the IETF OAuth mailing list. If you are interested in following or influencing this RFC, review the [discussion archives](https://mailarchive.ietf.org/arch/browse/oauth/) to get up to speed. You can also [join the mailing list](https://www.ietf.org/mailman/listinfo/oauth).
 
