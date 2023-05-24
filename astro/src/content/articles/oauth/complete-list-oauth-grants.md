@@ -17,7 +17,7 @@ OAuth 2.0 focuses on authorization. There are other protocols like [OpenID Conne
 
 This article will go through all the different OAuth 2 grant types and explain the flow for each so that you can determine which is the best fit and safely use it in your applications.
 
-If you aren't familiar with terms like Authorization Server and Resource Server, you might be interested in [What is OAuth](/learn/expert-advice/oauth/what-is-oauth/).
+If you aren't familiar with terms like Authorization Server and Resource Server, you might be interested in [What is OAuth](/articles/oauth/what-is-oauth/).
 
 ## Authorization Code Grant
 

@@ -63,7 +63,7 @@ Base64 Decoding + JSON Parsing + RSA Verification | | 6,000/s
 
 ## JWTs aren't easily revocable
 
-This means that a JWT could be valid even though the user's account has been suspended or deleted. There are a couple of ways around this including the "refresh token revoke event" combined with a webhook. This solution is available in FusionAuth. You can check out the blog post I wrote on this topic here: [Revoking JWTs](/learn/expert-advice/tokens/revoking-jwts "Learn about Revoking JWTs").
+This means that a JWT could be valid even though the user's account has been suspended or deleted. There are a couple of ways around this including the "refresh token revoke event" combined with a webhook. This solution is available in FusionAuth. You can check out the blog post I wrote on this topic here: [Revoking JWTs](/articles/tokens/revoking-jwts "Learn about Revoking JWTs").
 
 ## JWTs have exploits
 

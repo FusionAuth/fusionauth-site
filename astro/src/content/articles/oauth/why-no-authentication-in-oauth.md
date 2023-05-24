@@ -25,7 +25,7 @@ While OAuth grants differ slightly (see [The Complete List](/articles/oauth/comp
 * The protected resource validates the token
 * The user is granted access to a protected resource
 
-This is a high level, truncated version, and there's a lot more, but let's keep it simple here. If you'd like even more details about the OAuth process, please check out [the Modern Guide to OAuth](/learn/expert-advice/oauth/modern-guide-to-oauth).
+This is a high level, truncated version, and there's a lot more, but let's keep it simple here. If you'd like even more details about the OAuth process, please check out [the Modern Guide to OAuth](/articles/oauth/modern-guide-to-oauth).
 
 ## Looking At the Standards
 
@@ -127,7 +127,7 @@ Funnily enough, authentication isn't the only major topic skirted by OAuth and O
 
 Another question critical to identity not answered by these specifications is "How is the user provisioned in the authorization server?"
 
-While there are [specifications like SCIM](/learn/expert-advice/identity-basics/what-is-scim) that cover this, for OAuth and OIDC they are out of scope.
+While there are [specifications like SCIM](/articles/identity-basics/what-is-scim) that cover this, for OAuth and OIDC they are out of scope.
 
 ## Conclusion
 

@@ -54,7 +54,7 @@ Using MFA, you can request one of three types of additional information from use
 
 What kind of additional factor makes sense for your users depends on their demographic and device. You should also make varying kinds of factors available, as the casual game player might want something easy to use like SMS whereas the professional esport player, with a more valuable account, will want a more secure factor such as a biometric ID tied to their phone.
 
-Learn more about [Multi-Factor Authentication](/learn/expert-advice/authentication/multi-factor-authentication).
+Learn more about [Multi-Factor Authentication](/articles/authentication/multi-factor-authentication).
 
 ### Geographic Alerts
 

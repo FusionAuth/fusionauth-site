@@ -110,7 +110,7 @@ But there are times, such as a data breach or a user logging out of your applica
 
 * Let tokens expire. No effort required here.
 * Have the creator rotate the secret or private key. This invalidates all extant tokens.
-* Use a 'time window' solution in combination with webhooks. Read more about this option and [revoking JWTs](/learn/expert-advice/tokens/revoking-jwts) in general.
+* Use a 'time window' solution in combination with webhooks. Read more about this option and [revoking JWTs](/articles/tokens/revoking-jwts) in general.
 
 ### Keys
 

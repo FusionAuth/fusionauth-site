@@ -140,7 +140,7 @@ One of the challenges mentioned earlier in this article was around microservices
 
 The main issue is that your authorization service becomes a bottleneck. Everyone needs to send an HTTP request to this service to verify its own external requests coming in. What if there was a way you could verify that the request was authorized without having to make all those extra HTTP requests?
 
-Digitally signed tokens such as [JWTs](/learn/expert-advice/tokens/) can be verified by backend server code without communicating with the auth system. By using a private/public key or a secret, you can enable various services to verify a given token within the same process and avoid those extra network hops.
+Digitally signed tokens such as [JWTs](/articles/tokens/) can be verified by backend server code without communicating with the auth system. By using a private/public key or a secret, you can enable various services to verify a given token within the same process and avoid those extra network hops.
 
 One way to do this is to create a shared code library that can run in-process and verify incoming JWT tokens.
 

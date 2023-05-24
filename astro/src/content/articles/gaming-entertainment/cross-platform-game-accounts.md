@@ -99,7 +99,7 @@ When enabling cross-platform gaming, you first need to create a single account a
 
 Settling down with a cross-platform gaming auth server is tricky. Your auth server needs to allow your users to login via device grants since some consoles can be restricting when it comes to text input. Your auth server also needs to provide a reliable flow, so that your users can register in your app during peak traffic times without dealing with crashes.
 
-FusionAuth does that and more. Gaming accounts are valuable since players invest money into buying in-game merchandise and services. FusionAuth implements a powerful [hashing scheme](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy) to ensure that user accounts are secure. With its identity-linking strategies for a variety of identity providers, you can achieve seamless integration of your users’ accounts across multiple platforms.
+FusionAuth does that and more. Gaming accounts are valuable since players invest money into buying in-game merchandise and services. FusionAuth implements a powerful [hashing scheme](/articles/security/math-of-password-hashing-algorithms-entropy) to ensure that user accounts are secure. With its identity-linking strategies for a variety of identity providers, you can achieve seamless integration of your users’ accounts across multiple platforms.
 
 Installing FusionAuth is painless, and it can all be run from a simple cURL request (or PowerShell command in Windows). FusionAuth provides [multiple installation methods](/docs/v1/tech/installation-guide/).
 

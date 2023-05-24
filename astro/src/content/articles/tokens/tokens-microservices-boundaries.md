@@ -16,7 +16,7 @@ Consider this simple microservices based system.
 
 We have three different services, all protected by an API gateway. This API gateway could be running NGINX, Apache, or some other open source system. It could be a commercial package such as HAProxy or Kong. It could also be a cloud vendor managed API gateway, such as an AWS Application Load Balancer or a Google Cloud Load Balancer. 
 
-When a request comes in, it will contain an access token. Getting this access token is beyond the scope of this article, but is documented in the [Modern Guide to OAuth](/learn/expert-advice/oauth/modern-guide-to-oauth/). This access token is often a JSON Web Token (JWT), which has intrinsic structure and can be signed and validated.
+When a request comes in, it will contain an access token. Getting this access token is beyond the scope of this article, but is documented in the [Modern Guide to OAuth](/articles/oauth/modern-guide-to-oauth/). This access token is often a JSON Web Token (JWT), which has intrinsic structure and can be signed and validated.
 
 This article will assume that the access token is a JWT, but similar concepts apply to any kind of token. It further assumes that the token is signed by a private key and that the API gateway has access to the corresponding private key to verify the signature is valid.
 

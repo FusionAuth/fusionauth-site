@@ -86,7 +86,7 @@ This tip is just as important for better user experience as it is for preserving
 
 ## Use an External User Auth Service
 
-Implementing authentication and authorization can be tricky, and if it’s not handled properly, you could face an information leak or full-blown database hack. If you decide to implement your own authentication and authorization service, think carefully about how you store user details. You should also make sure you use appropriate hashing algorithms and that the passwords are effectively salted before being stored in the database. You can read a bit about the underlying math [in this article](/learn/expert-advice/security/math-of-password-hashing-algorithms-entropy).
+Implementing authentication and authorization can be tricky, and if it’s not handled properly, you could face an information leak or full-blown database hack. If you decide to implement your own authentication and authorization service, think carefully about how you store user details. You should also make sure you use appropriate hashing algorithms and that the passwords are effectively salted before being stored in the database. You can read a bit about the underlying math [in this article](/articles/security/math-of-password-hashing-algorithms-entropy).
 
 Explore using a third-party user authentication and authorization service. It helps you focus on what makes your game unique, and it’s especially useful when you want to implement SSO, and social auth. Depending on your platform, you may want to allow a user to log in with a gaming network login, such as the XBox or PlayStation Network. An auth server can help with this integration.
 
@@ -96,7 +96,7 @@ Using an external auth server ensures that if the gameplay code breaks, the regi
 
 If your game architecture allows, it’s worthwhile to explore serverless options like [AWS Lambda](https://aws.amazon.com/lambda/), [Azure Functions](https://azure.microsoft.com/en-us/services/functions/), or [similar services](https://www.netlify.com/products/functions/). They ensure you don’t have to worry about over- or under-provisioning server resources; you pay only for the time you’re servicing traffic. Such services can help you manage your site, whether you get no traffic at all (you won't pay a dime) or you get a large amount of unplanned traffic. The underlying resources are automatically managed by the serverless infrastructure provider, so you’re free to focus on your core service. This option is an alternative to the autoscaling mentioned above.
 
-There are [numerous guides](https://www.serverless.com/blog/strategies-implementing-user-authentication-serverless-applications/) to help you implement authentication and authorization in a serverless infrastructure. JWTs are commonly used in such services, and most third-party auth services like [FusionAuth](/learn/expert-advice/tokens/) support them.
+There are [numerous guides](https://www.serverless.com/blog/strategies-implementing-user-authentication-serverless-applications/) to help you implement authentication and authorization in a serverless infrastructure. JWTs are commonly used in such services, and most third-party auth services like [FusionAuth](/articles/tokens/) support them.
 
 ## Conclusion
 
