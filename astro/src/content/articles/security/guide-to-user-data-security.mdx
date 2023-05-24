@@ -211,13 +211,13 @@ $ nano /etc/sudoers
 
 This file should contain a line that looks like this:
 
-```config
+```ini
 %sudo   ALL=(ALL:ALL) ALL
 ```
 
 If this line looks like this:
 
-```config
+```ini
 %sudo   ALL=(ALL:ALL) NOPASSWD: ALL
 ```
 
@@ -263,7 +263,7 @@ $ sudo ls /
 
 You should see a directory listing of the server. However, if you see a message that says you aren't in the sudoers file, you will need to edit your `/etc/sudoers` file from the terminal that is logged in as root and add this line:
 
-```config
+```ini
 %sudo   ALL=(ALL:ALL) ALL
 ```
 
@@ -460,7 +460,7 @@ Now, setup the firewall on the Application Server. Your application isn't runnin
 
 Additionally, the Application Server will listen on port 22 for SSH requests. Since you installed the persistent IPTables package, you can simply edit the rules file to set your rules. Copy and paste the following content into the `/etc/iptables/rules.v4` file (via `nano` or any other editor):
 
-```config
+```ini
 *filter
 # Allow all outgoing, but drop incoming and forwarding packets by default
 :INPUT DROP [0:0]
@@ -537,7 +537,7 @@ A complete explanation of the IPTables rule file format is out of scope for this
 
 The `filter` table is the most important table above, but the nat table is also used and we'll cover that shortly. The filter table defined like this:
 
-```config
+```ini
 *filter
 ...
 COMMIT
@@ -554,7 +554,7 @@ A table can hold one or more chains. There are a number of predefined chains in 
 
 Chains are defined using a colon character followed by the name of the chain. Here's an example of defining a new chain called `FOOBAR`:
 
-```config
+```ini
 :FOOBAR [0:0]
 ```
 
@@ -566,7 +566,7 @@ When network packets arrive at the server, they are handled by one of these thre
 
 The `JUMP` rules are midway through the file and look like this:
 
-```config
+```ini
 -A INPUT -p udp -m conntrack --ctstate NEW -j UDP
 ```
 
@@ -582,7 +582,7 @@ In the configuration above, we initialize the `INPUT` and `FORWARD` chains to `D
 
 The file above sets up a few default rules for the predefined `INPUT` chain. These rules are:
 
-```config
+```ini
 # Boilerplate acceptance policy
 -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 -A INPUT -i lo -j ACCEPT
@@ -599,7 +599,7 @@ Here's a quick explanation of these rules:
 
 The final rules are setup for each of the protocols you are interested in. By default, UDP and ICMP traffic are completely ignored. The file above assumes that you will only be using TCP connections to the server, so it only defines rules for that filter chain. If you need to use UDP or ICMP, you can add additional rules for those protocols. Here are the rules for the `TCP` chain:
 
-```config
+```ini
 -A TCP -p tcp --dport 22 -j ACCEPT
 -A TCP -p tcp --dport 443 -j ACCEPT
 -A TCP -p tcp --dport 80 -j ACCEPT
@@ -613,7 +613,7 @@ In addition to the `filter` table, the configuration above also makes use of the
 
 Under the `nat` table, there are two rules defined:
 
-```config
+```ini
 -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3000
 -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 3003
 ```
@@ -622,13 +622,13 @@ These rules read like this, "append to the PREROUTING chain (`-A PREROUTING`) fo
 
 Now that the rules are setup, load this configuration by executing this command:
 
-```config
+```console
 $ service netfilter-persistent reload
 ```
 
 Next, configure the firewall on the Database Server. Each database will have different ports that it needs open. You will only allow connections from your Application Server's private IP address, which you will need to know and insert into the rules below. Here are the IPTable rules for the Database Server.
 
-```config
+```ini
 *filter
 # Allow all outgoing, but drop incoming and forwarding packets by default
 :INPUT DROP [0:0]
@@ -695,7 +695,7 @@ COMMIT
 
 The primary difference between the Application Server's and the Database Server's IPTables is that the Database Server only allows connections on port 22 for SSH and 3306 for MySQL. Plus, only connections that originate from the Application Server to the Database Server are allowed. The lines that setup this configuration are:
 
-```config
+```ini
 -A TCP -p tcp --dport 22 -s 192.81.133.144 -j ACCEPT
 -A TCP -p tcp --dport 3306 -s 192.81.133.144 -j ACCEPT
 ```
@@ -737,7 +737,7 @@ You can also whitelist certain IP addresses by uncommenting the ignore match lin
 
 The last step to configuring Monit is to edit the file `/etc/monit/monitrc`. Add the lines below to configure Monit to send email alerts to you. This configuration will vary depending on your SMTP mail server, the authentication required for your SMTP server and your email address. Our examples use Sendgrid for sending emails and my email address.
 
-```config
+```ini
 set mailserver smtp.sendgrid.net port 587 username "<sendgrid-username>" password "<sendgrid-password>" using tlsv12
 set alert  jared@piedpiper.com not on { instance, action }
 ```
@@ -746,7 +746,7 @@ The second line tells Monit to email me whenever alerts happen, but to ignore al
 
 You might want to receive Monit notifications quickly. By default, Monit runs checks every 2 minutes. Rather than wait two minutes, you can change this setting to something smaller like 5 seconds. This configuration parameter is near the top of the `/etc/monit/monitrc` file and looks like this:
 
-```config
+```ini
 set daemon 5
 ```
 
@@ -859,7 +859,7 @@ During this installation process you will be prompted to create a password for t
 
 By default, MySQL only listens on the loopback interface. Change this configuration so that it will listen on the private IP address you created for the Application Server above. Open the file `/etc/mysql/mysql.conf.d/mysqld.cnf` (**NOTE:** This is a Ubuntu/Debian specific location and your server might have this file in another directory with a different name) and find and edit the listen configuration setting to this value:
 
-```Ini
+```ini
 bind-address = 192.168.142.213
 ```
 
@@ -1245,7 +1245,7 @@ There are two core concepts that impact the security of password hashing: saltin
 
 Salting of passwords is a measure that prevents a specific type of password attack. This attack is done by leveraging lookup tables. A lookup table attack is when all possible combinations of passwords are hashed and then stored in a massive reverse lookup table. Let's assume that we aren't salting our passwords but just hashing them directly. In this case, we could build a lookup table like this:
 
-```config
+```ini
 2206b1bbf30cf86bd1ecb952d1676aa3b9df45a9704e50e899d9615e20e53c2c -> foobarbaz
 4206bfbbf20cfa6bdfeab9s2da676as319d54579804150a89ffdd62e20ed3cg7 -> barbazfoo
 ...
@@ -1255,19 +1255,19 @@ The attacker takes the hashes that they have stolen from your database and does 
 
 To prevent this type of attach, you salt your passwords before hashing them. Each user should have a different salt and it is safe to store the salt next to the password in the database. Your application can optionally perform in-memory salt modification as well. A salted, in-memory modified password prior to hashing might look something like this:
 
-```config
+```ini
 [{SALT}]PASSWORD
 ```
 
 If the salt is a UUID like `"16e49f4f-fd87-41b9-8013-57ed3b0403d8"` and the password is something complex like `"Ksie923kd-A291kndj"`, the initial value would look like this:
 
-```config
+```ini
 [{16e49f4f-fd87-41b9-8013-57ed3b0403d8}]Ksie923kd-A291kndj
 ```
 
 This value is then hashed with an algorithm like Bcrypt or PBKDF2. The result might be a hash that looks like this:
 
-```config
+```ini
 2206b1bbf30cf86bd1ecb952d1676aa3b9df45a9704e50e899d9615e20e53c2c
 ```
 
@@ -1355,7 +1355,7 @@ SELECT * FROM users ORDER BY first_name desc
 
 This works, but opens a massive security risk for the application. If a hacker changes the URL to this:
 
-```config
+```ini
 http://www.my-application.com/some-data?sort=(select%20CAST((select concat(email,':',password) from users limit 1) as date))+desc
 ```
 
