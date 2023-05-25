@@ -342,13 +342,20 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
-"login-authentication-workflows/index.md": {
-  id: "login-authentication-workflows/index.md",
-  slug: "login-authentication-workflows",
+"login-authentication-workflows/authentication-workflows-overview.md": {
+  id: "login-authentication-workflows/authentication-workflows-overview.md",
+  slug: "login-authentication-workflows/authentication-workflows-overview",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
+"login-authentication-workflows/index.mdx": {
+  id: "login-authentication-workflows/index.mdx",
+  slug: "login-authentication-workflows",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
 "login-authentication-workflows/mobile/native-login-form-to-application-backend-jwts-refresh-tokens.mdx": {
   id: "login-authentication-workflows/mobile/native-login-form-to-application-backend-jwts-refresh-tokens.mdx",
   slug: "login-authentication-workflows/mobile/native-login-form-to-application-backend-jwts-refresh-tokens",
@@ -681,13 +688,6 @@ declare module 'astro:content' {
 "tokens/jwt-components-explained.md": {
   id: "tokens/jwt-components-explained.md",
   slug: "tokens/jwt-components-explained",
-  body: string,
-  collection: "articles",
-  data: InferEntrySchema<"articles">
-} & { render(): Render[".md"] },
-"tokens/jwt-token-components-explained.md": {
-  id: "tokens/jwt-token-components-explained.md",
-  slug: "tokens/jwt-token-components-explained",
   body: string,
   collection: "articles",
   data: InferEntrySchema<"articles">
