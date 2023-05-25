@@ -112,7 +112,7 @@ Laravel uses something called [Guards](https://laravel.com/docs/10.x/authenticat
 To make the library available for use, publish its configuration by running the command below.
 
 ```shell
-./vendor/bin/sail artisan vendor:publish --provider="Tymon\\JWTAuth\\Providers\\LaravelServiceProvider"
+./vendor/bin/sail artisan vendor:publish --provider="Tymon\JWTAuth\Providers\LaravelServiceProvider"
 ```
 
 ### Editing Files
@@ -170,26 +170,20 @@ To override the existing classes when the ones you just added, you must create a
 Finally, expose your Service Provider by adding it to the `providers` array in `config/app.php`.
 
 ```diff
-{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/98942e64bc8296df905278633369d62f3b20f9a3.diff %}
+{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/b291247bc0373cffa4edc1a64a58e475f706ff40.diff %}
 ```
 
 ### Retrieving Public Key
 
 To make your API trust JWTs issued by FusionAuth, you must import the Public Key from your FusionAuth application into it.
 
-If you have [jq](https://stedolan.github.io/jq/download/) _(a script to parse JSON objects)_ installed, you can run the command below to fetch it directly.
+If you have [jq](https://stedolan.github.io/jq/download/) _(a script to parse JSON objects)_ installed, you can run the command below to fetch and save it to `storage/public-key.pem`.
 
 ```shell
-curl -H 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' http://localhost:9011/api/key/1afa4d7e-76f0-45e9-bb46-98be5329ef37 | jq -r '.key.publicKey'
+curl -H 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' http://localhost:9011/api/key/1afa4d7e-76f0-45e9-bb46-98be5329ef37 | jq -r '.key.publicKey' > storage/public-key.pem
 ```
 
-If you don't have it, log into the [FusionAuth admin screen](http://localhost:9011) using the admin user credentials ("admin@example.com"/"password"), navigate to <span>Settings -> Key Master</span>{:.breadcrumb}, locate the key named `For exampleapp` and click its download button. Inside the downloaded `.zip` file, go to the `keys` folder and open `public-key.pem`.
-
-Now that you have the Public Key, edit the `.env` file in your Laravel application and add these three lines, replacing the contents of `JWT_PUBLIC_KEY` with your Public Key.
-
-```diff
-{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/62d9a390b04e0f4dcb2954421c6116b0b8b96c22.diff %}
-```
+If you don't have it, log into the [FusionAuth admin screen](http://localhost:9011) using the admin user credentials ("admin@example.com"/"password"), navigate to <span>Settings -> Key Master</span>{:.breadcrumb}, locate the key named `For exampleapp` and click its download button. Inside the downloaded `.zip` file, go to the `keys` folder and extract `public-key.pem` to the `storage` folder in your Laravel app.
 
 ### Creating a Controller
 
