@@ -173,8 +173,13 @@ function handler(event) {
   }
 
   if (!uri.endsWith('/') && indexPages[uri + '/'] === true) {
-    request.uri = uri + '/';
-    return request;
+    return {
+      statusCode: 301,
+      statusDescription: 'Moved',
+      headers: {
+          'location': { value: uri + '/' }
+      }
+    };
   }
 
   var redirect = calculateRedirect(uri);
