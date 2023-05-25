@@ -68,7 +68,11 @@ Listen to your users when considering factors. You don't want them to circumvent
 
 As a developer, you need to balance between the user experience and the risk of account takeover. In some situations the call is easy. If your site lets users vote on cat pictures, MFA isn't really required. If your site transfers money to arbitrary people, on the other hand, it should require MFA. These scenarios are at opposite ends of the security and user experience spectrum:
 
+<div class="bg-slate-200 flex justify-center p-4 not-prose">
+
 ![More secure or easier to use?](/img/articles/mfa/security-ux-spectrum.svg)
+
+</div>
 
 The hard part is the situations where the answer isn't obvious. What are some situations where you should consider requiring multi-factor authentication?
 
