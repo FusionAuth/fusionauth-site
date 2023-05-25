@@ -60,22 +60,19 @@ var indexPages = {
   '/how-to/': true
 };
 var redirects = {
-  '/blog': '/blog/',
   '/cognito': '/docs/v1/tech/migration-guide/cognito',
   '/cognito/': '/docs/v1/tech/migration-guide/cognito',
-  '/docs': '/docs/',
-  '/docs/quickstarts': '/docs/quickstarts/',
   '/docs/v1/tech/admin-guide/release-notifications': '/docs/v1/tech/admin-guide/releases',
   '/docs/v1/tech/apis/consent': '/docs/v1/tech/apis/consents',
   '/docs/v1/tech/common-errors': '/docs/v1/tech/admin-guide/troubleshooting',
-  '/docs/v1/tech/installation-guide/configuration-management': '/docs/v1/tech/admin-guide/configuration-management',
-  '/docs/v1/tech/installation-guide/monitor': '/docs/v1/tech/admin-guide/monitor',
-  '/docs/v1/tech/installation-guide/securing': '/docs/v1/tech/admin-guide/securing',
-  '/docs/v1/tech/installation-guide/upgrade': '/docs/v1/tech/admin-guide/upgrade',
   '/docs/v1/tech/guides/auth0-migration': '/docs/v1/tech/migration-guide/auth0',
   '/docs/v1/tech/guides/migration': '/docs/v1/tech/migration-guide/general',
   '/docs/v1/tech/guides/passwordless': '/docs/v1/tech/passwordless/magic-links',
   '/docs/v1/tech/guides/webauthn': '/docs/v1/tech/passwordless/webauthn-passkeys',
+  '/docs/v1/tech/installation-guide/configuration-management': '/docs/v1/tech/admin-guide/configuration-management',
+  '/docs/v1/tech/installation-guide/monitor': '/docs/v1/tech/admin-guide/monitor',
+  '/docs/v1/tech/installation-guide/securing': '/docs/v1/tech/admin-guide/securing',
+  '/docs/v1/tech/installation-guide/upgrade': '/docs/v1/tech/admin-guide/upgrade',
   '/docs/v1/tech/passwordless/webauthn': '/docs/v1/tech/passwordless/webauthn-passkeys',
   '/docs/v1/tech/plugins/password-encryptors': '/docs/v1/tech/plugins/custom-password-hashing',
   '/docs/v1/tech/reference/password-encryptors': '/docs/v1/tech/reference/password-hashes',
@@ -173,6 +170,11 @@ function handler(event) {
         'location': { value: uri.substring(0, uri.length - 1) }
       }
     };
+  }
+
+  if (!uri.endsWith('/') && indexPages[uri + '/'] === true) {
+    request.uri = uri + '/';
+    return request;
   }
 
   var redirect = calculateRedirect(uri);
