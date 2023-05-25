@@ -82,7 +82,7 @@ curl -s "https://laravel.build/fusionauth-example-laravel-api?with=mariadb" | ba
 
 This can take several minutes to complete, so please be patient.
 
-### Adding JWT authentication
+### Adding JWT Authentication
 
 After it is done, change into the `fusionauth-example-laravel-api` directory and install [`tymon/jwt-auth`](https://github.com/tymondesigns/jwt-auth), a library that adds JWT capabilities to Laravel.
 
@@ -115,7 +115,7 @@ To make the library available for use, publish its configuration by running the 
 ./vendor/bin/sail artisan vendor:publish --provider="Tymon\\JWTAuth\\Providers\\LaravelServiceProvider"
 ```
 
-### Editing files
+### Editing Files
 
 The Laravel installer already brings some useful resources for many applications. We'll have to edit a few of them and add some more.
 
@@ -145,7 +145,7 @@ Run the remaining migrations to create the necessary tables in your database.
 ./vendor/bin/sail artisan migrate
 ```
 
-### Adding files
+### Adding Files
 
 By default, Laravel only allows JWTs that correspond to existing users in your database, but one of the greatest benefits of using FusionAuth is to have a single source of truth of user management. So, you would want your API to automatically provision new users when it receives a trusted JWT from FusionAuth. Even though [`tymon/jwt-auth`](https://github.com/tymondesigns/jwt-auth) is a great library, it doesn't provide an easy way of doing these kinds of customizations, so you'll have to create some classes to do them.
 
