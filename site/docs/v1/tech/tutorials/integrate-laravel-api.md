@@ -94,7 +94,7 @@ cd fusionauth-example-laravel-api
 Add some authentication routes to `routes/api.php`. 
 
 ```diff
-{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/0770f7d0dc4f20b5b96ac1beb25ce24e6fa4e1ed.diff %}
+{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/49a4e7c3e3610403c6a00246bf5b997bc44b5bd4.diff %}
 ```
 
 Create `app/Http/Controllers/AuthController.php` to hold the authentication process.
@@ -106,7 +106,7 @@ Create `app/Http/Controllers/AuthController.php` to hold the authentication proc
 Laravel uses something called [Guards](https://laravel.com/docs/10.x/authentication#adding-custom-guards) to protect your endpoints, so we need to tell it about the new Guard provided from that library.
 
 ```diff
-{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/dc737c76af3079e1e4979959d1f3cf540c691437.diff %}
+{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/5fb7134a70e1adee39f2d1d64ce4ed5ac7303a47.diff %}
 ```
 
 To make the library available for use, publish its configuration by running the command below.
@@ -122,13 +122,13 @@ The Laravel installer already brings some useful resources for many applications
 First, remove the need for users to have a password by editing `app/Models/User.php`.
 
 ```diff
-{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/e77d5b780bf1a083aa30ab8d3eeed6e2eda84cfa.diff %}
+{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/e4298a10437ff396fe3dfc02c3bcf85f310921a0.diff %}
 ```
 
 Change the created migration at `database/migrations/2014_10_12_000000_create_users_table.php`.
 
 ```diff
-{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/7dab24a119aca8ce241fadb0f7a681786f5ecc22.diff %}
+{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/9c670115fa991d2219120a88ccaaf94b9e5feab1.diff %}
 ```
 
 You may remove all other migrations, as you won't need them.
@@ -202,7 +202,7 @@ Create a controller in `app/Http/Controllers/MessagesController.php` which gives
 Add a route to `routes/api.php` so it can be possible to make a `GET` request to `/api/messages`.
 
 ```diff
-{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/18ed5f233ec54695586de1f50b2d1e89e9642cf3.diff %}
+{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/3fd47ffc4942190c7289e961133baf74c56b5e53.diff %}
 ```
 
 ### Testing the Authentication Flow
