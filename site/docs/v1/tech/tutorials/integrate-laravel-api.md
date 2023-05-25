@@ -91,12 +91,6 @@ cd fusionauth-example-laravel-api
 ./vendor/bin/sail composer require tymon/jwt-auth
 ```
 
-Expose the JWT configuration from a `config/jwt.php` file.
-
-```php
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/config/jwt.php %}
-```
-
 Add some authentication routes to `routes/api.php`. 
 
 ```diff
