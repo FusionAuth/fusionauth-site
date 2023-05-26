@@ -119,6 +119,7 @@ var redirects = {
 };
 
 var redirectsByPrefix = [
+  ['/learn/expert-advice/dev-tools', '/dev-tools'],
   ['/learn/expert-advice', '/articles']
 ]
 
