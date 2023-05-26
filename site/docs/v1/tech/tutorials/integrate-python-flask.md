@@ -179,18 +179,20 @@ WARNING: This is a development server. Do not use it in a production deployment.
  * Running on http://localhost:5001
 ```
 
+## Testing the Authentication Flow
+
 Open an incognito window and navigate to `http://localhost:5001`.
 
-{% include _image.liquid src="/assets/img/docs/integrations/flask-integration/flask-homepage.png" alt="Flask application home page." class="img-fluid bottom-cropped" width="1200" figure=false %}
+{% include docs/_image.liquid src="/assets/img/docs/integrations/flask-integration/flask-homepage.png" alt="Flask application home page." class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 
 Then click <span class="uielement">Login</span>.
 
-{% include _image.liquid src="/assets/img/docs/integrations/flask-integration/flask-login.png" alt="Flask application login page." class="img-fluid bottom-cropped" width="1200" figure=false %}
+{% include docs/_image.liquid src="/assets/img/docs/integrations/flask-integration/flask-login.png" alt="Flask application login page." class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 Enter the <span class="field">email</span> and <span class="field">password</span> that you assigned to your FusionAuth user. If login is successful, you should see your OpenID profile information.
 
-{% include _image.liquid src="/assets/img/docs/integrations/flask-integration/flask-profile.png" alt="Flask application profile page." class="img-fluid bottom-cropped" width="1200" figure=false %}
+{% include docs/_image.liquid src="/assets/img/docs/integrations/flask-integration/flask-profile.png" alt="Flask application profile page." class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 Now, click <span class="uielement">Logout</span>. If successful, you should be brought back to the `Hello Guest` homepage.
 
