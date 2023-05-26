@@ -45,16 +45,14 @@ jobs:
         run: npm ci
       - name: Build application
         run: npm run build
-# Don't enable the deployment until we merge.
-#      - name: Deploy to S3
-#        run: |
-#          aws s3 sync ./dist/ s3://${{ env.BUCKET_NAME }}
-# We may need to re-think when we do the cloudfront function push and the cache invalidation
-#      - name: CloudFront request handler and cache invalidation
-#        working-directory: .
-#        run: |
-#          CLOUDFRONT_FUNCTION_ETAG=$(aws cloudfront describe-function --name fusionauth-website-request-handler --query 'ETag' --output text)
-#          CLOUDFRONT_FUNCTION_ETAG=$(aws cloudfront update-function --name fusionauth-website-request-handler --function-code fileb://src/cloudfront/fusionauth-website-request-handler.js --function-config Comment="Request handler for the FusionAuth website",Runtime="cloudfront-js-1.0" --if-match ${CLOUDFRONT_FUNCTION_ETAG} --query 'ETag' --output text)
-#          aws cloudfront publish-function --name fusionauth-website-request-handler --if-match ${CLOUDFRONT_FUNCTION_ETAG}
-#          aws cloudfront create-invalidation --distribution-id ${{ secrets.DEV_DISTRIBUTION_ID }} --paths "/*"
+      - name: Deploy to S3
+        run: |
+          aws s3 sync ./dist/ s3://${{ env.BUCKET_NAME }}
+      - name: CloudFront request handler and cache invalidation
+        working-directory: .
+        run: |
+          CLOUDFRONT_FUNCTION_ETAG=$(aws cloudfront describe-function --name fusionauth-website-request-handler --query 'ETag' --output text)
+          CLOUDFRONT_FUNCTION_ETAG=$(aws cloudfront update-function --name fusionauth-website-request-handler --function-code fileb://src/cloudfront/fusionauth-website-request-handler.js --function-config Comment="Request handler for the FusionAuth website",Runtime="cloudfront-js-1.0" --if-match ${CLOUDFRONT_FUNCTION_ETAG} --query 'ETag' --output text)
+          aws cloudfront publish-function --name fusionauth-website-request-handler --if-match ${CLOUDFRONT_FUNCTION_ETAG}
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.DEV_DISTRIBUTION_ID }} --paths "/*"
 
