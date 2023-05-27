@@ -191,6 +191,8 @@ For blog posts:
 - curl
 - self-service
 - webview
+- CAPTCHA
+- Google reCAPTCHA
 
 ## Words to avoid
 
