@@ -133,7 +133,6 @@ It should return with a `401 Unauthorized` response, indicating that the route i
 
 To demonstrate how simple it is to use the Hosted Backend API, you are going to create a simple login page that redirects to the Hosted Backend API. This page will be a plain HTML page, with no special code or libraries. This page will manage the redirect to the FusionAuth Hosted Backend API login, which will handle the OAuth flow, and then have a button to call your API with the JWT cookie.
 
-
 Create a new directory for the login page:
 
 ```shell
@@ -145,9 +144,10 @@ Then, create 2 new files: `index.html` and `profile.html`. Add the following cod
 ```html
 {% remote_include link %}
 ```
+
 This page is the main page. It just has a link which redirects to FusionAuth's Hosted Backend API login route. Note the format of the URL in the anchor `href`: `GET /app/login/{clientId}?redirect_uri={redirectUri}&state={state}&scope={scope}`
 
-In this case, `clientId` is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`, as this is hardcoded in the setup script. For Applications added to FusionAuth through the UI, you can get the ClientId by browsing to the application in FusionAuth and viewing it. 
+In this case, `clientId` is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`, as this is hardcoded in the setup script. For Applications added to FusionAuth through the UI, you can get the ClientId by browsing to the application in FusionAuth and viewing it.
 
 The `redirect_uri` is the URL that the Hosted Backend API will redirect to after the login flow is complete. It will be redirected to the `profile.html` page in this case.
 
@@ -161,57 +161,36 @@ Now add the following to the `Profile.html` file:
 {% remote_include link %}
 ```
 
-This page is the page that the Hosted Backend API will redirect to after the login flow is complete. It has a button that calls the `identity` route of the {{page.technology}} API. Note that the `fetch` call for this button includes the `credentials: 'include'` option. This option tells the browser to include the cookies in the request, so that the {{page.technology}} API can read the `app.idt` cookie and extract the JWT.
+This page is the page that the Hosted Backend API will redirect to after the login flow is complete. 
 
-If the API call is successful, the `identity` route will return the identity and claims of the user. If the API call is not successful, the `identity` route will return a `401 Unauthorized` response. In this case, the code will try refreshing the access token using the refresh token in the `app.rt` cookie. To do this, the code makes a `fetch` request to the [refresh token route](https://fusionauth.io/docs/v1/tech/apis/hosted-backend#refresh) of the Hosted Backend API. If the refresh token is valid, the Hosted Backend API will return a new access token. The code then tries the `identity` route again with the new access token. If the refresh token is not valid, the Hosted Backend API will return a `401 Unauthorized` response. In this case, the code will redirect to the Hosted Backend API login page, and the user will have to log in again.
+The page first calls the [`/me` route](https://fusionauth.io/docs/v1/tech/apis/hosted-backend#me) which is part of FusionAuth Hosted Backend API. This route returns the identity of the currently logged in user.
 
-Here is the code: 
+
+The `Profile.html` page also has a button that calls the `identity` route of the {{page.technology}} API. Note that the `fetch` call for this button includes the `credentials: 'include'` option. This option tells the browser to include the cookies in the request, so that the {{page.technology}} API can read the `app.idt` cookie and extract the JWT.
+
+
+If the API call is successful, the `identity` route will return the identity and claims of the user. If the API call is not successful, the `identity` route will return a `401 Unauthorized` response. In this case, the code will try refreshing the access token using the refresh token in the `app.rt` cookie. To do this, the code makes a `fetch` request to the [refresh token route](https://fusionauth.io/docs/v1/tech/apis/hosted-backend#refresh) of the Hosted Backend API. If the refresh token is valid, FusionAuth's Hosted Backend API will return a new access token. The code then tries the `identity` route again with the new access token.
+
+Here is the code:
 
 ```javascript
 
 ```
-
-
-
-A note on CORS (Cross-Origin Resource Sharing): For this setup to work, all components, including the web page, the {{page.technology}} API, and FusionAuth, must be on the same domain. This is because the `app.idt` cookie is set to the same domain as the FusionAuth instance. Since everything runs on the same domain, CORS won't usually be an issue. However, you'll be running all of this on Localhost to test, with each component running on a different port. This will cause CORS issues. For this, we need to enable CORS on FusionAuth for the login webpage to access the FusionAuth Hosted Backend API. To do this, navigate to the "Settings" tab, and then the "CORS" tab. Turn on CORS, and check "GET", "POST" and "OPTIONS". Enable "Allow Credentials, and  add `http://localhost:3000` to the list of allowed origins.
+A note on CORS (Cross-Origin Resource Sharing): For this setup to work, all components, including the web page, the {{page.technology}} API, and FusionAuth, must be on the same domain. This is because the `app.idt` JWT cookie and `app.rt` refresh cookie are set to the same domain as the FusionAuth instance. Since everything runs on the same domain, CORS won't usually be an issue. However, you'll be running all of this on `localhost` to test, with each component running on a different port. This will cause CORS issues. For this, we need to enable CORS on FusionAuth for the login webpage to access the FusionAuth Hosted Backend API. To do this, navigate to the "Settings" tab, and then the "CORS" tab. Turn on CORS, and check "GET", "POST" and "OPTIONS". Enable "Allow Credentials, and  add `http://localhost:3000` to the list of allowed origins.
 
 <TODO: ADD CORS Setup Screenshot>
 
+You can now serve up the login and profile static pages. An easy way to do this is to use the [http-server](https://www.npmjs.com/package/http-server) package via `npx`. Change into the `LoginPage` directory and run the following command:
+
+```shell
+npx http-server -a localhost -p 3000
+```
+
+This will serve the website on `http://localhost:3000`
+
 ## Testing the API Flow
 
-There are a number of ways to get an access token, as mentioned, but for clarity, let's use the login API to mimic a client.
+Navigate to the login webpage at `http://localhost:3000`. Click the "Login" button. This will redirect you to FusionAuth's Hosted Backend API login page. Enter the email and password of the user created in the setup script earlier for your FusionAuth instance. You will be redirected back to the login webpage, and the results from the `/me` FusionAuth endpoint alongside the "Call the API" button will be shown. Click this button. This will call the `identity` route of the {{page.technology}} API, which will echo back the identity and claims of the user, from the JWT in the `app.idt` cookie. You should see something similar to the following output:
 
-Run this command in a terminal:
-
-```shell
-curl -H 'Authorization: YOUR_API_KEY_FROM_ABOVE' \
-     -H 'Content-type: application/json' \
-     -d '{"loginId": "YOUR_EMAIL", "password":"YOUR_PASSWORD","applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"} \
-    http://localhost:9011/api/login 
-```
-
-Replace `YOUR_EMAIL` and `YOUR_PASSWORD` with the username and password you set up previously.
-
-This request will return something like this:
-
-```json
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-site/master/site/docs/src/json/users/login-response.json %}
-```
-
-Grab the `token` field (which begins with `ey`). Replace YOUR_TOKEN below with that value, and run this command:
-
-```shell
-curl --cookie 'app.at=YOUR_TOKEN' http://localhost:4001/messages
-```
-
-Here you are placing the token in a cookie named `app.at`. This is for compatibility with the FusionAuth best practices and [the hosted backend](/docs/v1/tech/apis/hosted-backend).
-
-If you want to store it in a different cookie or send it in the header, make sure you modify the `rack_jwt` initializer and restart the {{page.technology}} API.
-
-This will result in the JSON below.
-
-```json
-{"messages":["Hello"]}
-```
-
+<insert screenshot>
 
