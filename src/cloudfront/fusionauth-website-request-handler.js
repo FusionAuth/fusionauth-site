@@ -118,6 +118,7 @@ var redirects = {
   '/upgrade/from-saas': '/compare'
 };
 
+// order is important, first prefix matched wins
 var redirectsByPrefix = [
   ['/learn/expert-advice/dev-tools', '/dev-tools'],
   ['/learn/expert-advice/authentication/spa', '/articles/login-authentication-workflows/spa'],
