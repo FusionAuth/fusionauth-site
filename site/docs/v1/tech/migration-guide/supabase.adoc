@@ -12,6 +12,8 @@ description: How to migrate your users to FusionAuth from Supabase.
 
 == Overview
 
+This document will help you migrate off of Supabase and onto FusionAuth.
+
 This guide assumes you have installed FusionAuth. If you have not, please link:/docs/v1/tech/installation-guide/[view our installation guides] and install FusionAuth before you begin. For more general migration information, please view the link:/docs/v1/tech/migration-guide/general[FusionAuth migration guide].
 
 * <<Planning Considerations>>
@@ -31,13 +33,13 @@ This guide assumes you have installed FusionAuth. If you have not, please link:/
 * <<Additional Support>>
 
 
-This guide mentions the typical parts of a bulk migration and focuses on migrating user data from a Supabase managed user database into FusionAuth.
+There are a number of different ways applications can be integrated with Supabase, and it would be difficult to cover them all. This guide mentions the typical parts of a bulk migration and focuses on migrating user data from a Supabase-managed user database into FusionAuth.
 
 == Planning Considerations
 
 === Obtaining User Data
 
-Supabase includes a Postgres database and authentication service, storage, and Edge functions (serverless functions for backend logic). You can write a custom psql script in the Supabase SQL Editor to export user data as JSON that you can import to FusionAuth. User data is stored in `auth.users` table in Supabase and you can join the query with data from other `auth` tables to pull specific attributes.
+You can write a custom psql script in the Supabase SQL Editor to export user data as JSON that you can import to FusionAuth. In Supabase, user data is stored in the `auth.users` table, and you can join the query with data from other `auth` tables to pull specific attributes.
 
 === Mapping User Attributes
 
@@ -57,8 +59,8 @@ include::docs/v1/tech/migration-guide/_other-entities-intro.adoc[]
 :other_migrated_entities!:
 
 * In Supabase, sign-in providers are a source of data for users. FusionAuth calls these Identity Providers.
-* Projects are a high level construct which groups entities such as users and applications together. FusionAuth calls these Tenants.
-* Supabase has other products your applications might be using like Edge functions. FusionAuth does not have equivalents for these products, and is focused only on authentication.
+* Projects are a high-level construct that groups entities such as users and applications together. FusionAuth calls these Tenants.
+* Supabase has other products your applications might be using, like Edge functions. FusionAuth does not have equivalents for these products, and is focused only on authentication.
 
 ==== Identifiers
 
@@ -72,24 +74,26 @@ If you have external dependencies on an Id stored in Supabase, you can add a new
 
 == Exporting Users
 
-The script for exporting user data is found below, it is a user defined psql function which generates a JSON array object:
+To export users from Supabase, you’ll perform the following steps:
+
+1. Access the Supabase SQL Editor and create a new query.
+2. Paste the `ufn_get_user_migration_data_json()` function code into the editor.
+3. Run the function in the editor and save the JSON data to a file, for example, `users.json`.
+
+The script below is a user-defined psql function for exporting user data from Supabase. The script will generate a JSON array object.
 
 [source,shell,title="Supabase user data export function"]
 ----
 include::https://raw.githubusercontent.com/ritza-co/fusionauth-import-scripts/supabase/supabase/supabase_user_migration_script.sql[]
 ----
 
-The function `ufn_get_user_migration_data_json()` returns a JSON array with formatted user data. Copy the generated JSON and save it to a file on your machine to upload later in FusionAuth.
-
-To export users from Supabase, you’ll perform the following steps:
-
-1. Access the Supabase SQL Editor and create a new query.
-2. Paste the `ufn_get_user_migration_data_json()` function code above, into the editor.
-3. Run the function in the editor and save the json data to a file for example, `users.json`.
+The function `ufn_get_user_migration_data_json()` returns a JSON array with formatted user data. Create a new file on your machine, for example, `users.json`, and copy the generated JSON to it. You'll upload this data to FusionAuth later.
 
 image::migration-guide/{migration_source_dir}/supabase-sql.png[Adding an API key,width=1200]
 
-The user data to be exported will be selected from the `auth` table unless there are other tables you have which may contain other user specific fields like usernames e.t.c, in which case you can edit the script above to cater for that. The JSON output produced by the script will look similar to the example below:
+The user data to be exported will be selected from the `auth` table. If you have other tables that contain user-specific fields (for example, usernames), you can edit the script above to cater to that.
+
+The JSON output produced by the script should look something like this:
 
 [source,json]
 ----
@@ -152,8 +156,8 @@ The user data to be exported will be selected from the `auth` table unless there
 Next up, import the user data. Here are the steps you need to take.
 
 1. Set Up FusionAuth
-2. Install Needed Gems
-3. Get the Script
+2. Get the Script
+3. Install Needed Gems
 4. Use the Script
 5. Verify the Import
 6. The Final Destination of Imported Users
