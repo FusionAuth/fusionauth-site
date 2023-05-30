@@ -21,7 +21,7 @@ For this tutorial, you’ll need to have some of these tools installed.
 - If you want to develop applications for Android:
     - Android emulator or real Android device
     - [Android development environment](https://docs.flutter.dev/get-started/install/linux#android-setup)
-- Familiarity with ngrok (optional, useful if you want to test on a device)
+- Familiarity with [ngrok](https://ngrok.com) (optional, useful if you want to test on a device)
 
 {% include docs/integration/_prerequisites.md %}
 
@@ -55,6 +55,20 @@ Doctor summary (to see all details, run flutter doctor -v):
 
 {% include docs/integration/_add-user.md language=page.language %}
 
+## Set up a Public URL for Fusionauth
+
+Your FusionAuth instance is now running on a different machine (your computer) than the mobile app will run (either a real device or an emulator), which means that it won't be able to access `localhost`.
+
+If the device (either real or emulator) and your computer are connected to the same network, you can use the local IP Address for your machine (e.g. `192.168.15.2`). Here are a few articles to help your find your IP Address depending on the Operational System you are running: 
+
+- [Linux](https://linuxize.com/post/how-to-find-ip-address-linux/#find-your-public-ip-address)
+- [Mac](https://support.apple.com/guide/mac-help/find-your-computers-name-and-network-address-mchlp1177/mac)
+- [Windows](https://support.microsoft.com/en-us/windows/find-your-ip-address-in-windows-f21a9bbc-c582-55cd-35e0-73431160a1b9)
+
+If they are not connected to the same network or if you have something that blocks connections (like a Firewall), you can use [ngrok](https://ngrok.com/docs/getting-started/) to expose your local FusionAuth instance running at port `9011` to the Internet.
+
+In either case, you'll have to use that address when configuring your instance and developing the app.
+
 ## Configure FusionAuth
 
 Next, you need to set up FusionAuth. This can be done in different ways, but we’re going to use the {{page.language}} client library. The below instructions use `npm` on the command line, but you can use the client library with an IDE of your preference as well.
@@ -71,7 +85,7 @@ Now, copy and paste the following file into `package.json`.
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/package.json %}
 ```
 
-Now you need to install the dependencies in `package.json`.
+Install the dependencies.
 
 ```shell
 npm install
@@ -80,13 +94,21 @@ npm install
 Then copy and paste the following file into `setup.js`. This file uses the [FusionAuth API](/docs/v1/tech/apis/) to configure your FusionAuth instance to allow for easy integration.
 
 ```javascript
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/setup.js %}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/setup-flutter.js %}
 ```
 
-Then, you can run the setup script, replacing `YOUR_API_KEY_FROM_ABOVE` with the API Key you generated earlier.
+Then, you can run the setup script, replacing `YOUR_API_KEY_FROM_ABOVE` with the API Key you generated earlier and `YOUR_PUBLIC_URL` with the public address for your instance (either `http://your-ip-address:9011` or the URL ngrok provided you).
 
 ```shell
-fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE npm run setup
+fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE fusionauth_domain=YOUR_PUBLIC_URL npm run setup-flutter
+```
+
+If you are using PowerShell, you will need to set the environment variables in a separate command before executing the script.
+
+```shell
+$env:fusionauth_api_key='YOUR_API_KEY_FROM_ABOVE'
+$env:fusionauth_domain='YOUR_PUBLIC_URL'
+npm run setup-flutter
 ```
 
 If you want, you can [log into your instance](http://localhost:9011){:target="_blank"} and examine the new Application the script created for you.
@@ -159,15 +181,17 @@ At the end of your editing, make sure the `CFBundleURLSchemes` section looks sim
 
 You need to open the `main.dart` file present inside the `lib` directory of your project and paste the contents below.
 
-> Note: putting all your logic in one file makes sense for a tutorial, but for a larger application you'll probably want to split it up.
+{% include _callout-tip.liquid content="Putting all your logic in one file makes sense for a tutorial, but for a larger application you'll probably want to split it up." %}
 
 ```dart
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-flutter-dart/main/lib/main.dart %}
 ```
 
+In the beginning of the file, change the `FUSIONAUTH_DOMAIN` constant to the public address for your instance (the same one you used when configuring it). If it is not running on HTTPS, you should also change `FUSIONAUTH_SCHEME` to `http`. 
+
 This code uses the system browser instead of an embedded webview due to security concerns. A webview is totally controlled by the native application displaying it, the [current mobile best practices](https://tools.ietf.org/html/rfc8252) for OAuth require you to use the system browser, which is not under that control. From section 8.12 of that document:
 
-> This best current practice requires that native apps MUST NOT use embedded user-agents to perform authorization requests and allows that authorization endpoints MAY take steps to detect and block authorization requests in embedded user-agents.
+{% include _callout-note.liquid content="This best current practice requires that native apps MUST NOT use embedded user-agents to perform authorization requests and allows that authorization endpoints MAY take steps to detect and block authorization requests in embedded user-agents." %}
 
 Now, start up your emulators or real devices again.
 
