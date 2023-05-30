@@ -12,7 +12,7 @@ language: .NET Core
 
 {% include docs/integration/_intro-api.md %}
 
-FusionAuth has a [Hosted Backend APIs feature](link) that can make it easier to integrate your API with FusionAuth. These APIs provide a pre-built solution for getting your app up and running using the OAuth2 Authorization Code grant with PKCE. We have in the past shown you how to create these endpoints yourself but this solution allows you to get going with your app without writing any backend code dealing with OAuth2. The Hosted Backend APIs deal with the OAuth2 flow and store the client tokens in cookies for you. Your service API can then check the cookies to verify the user is authenticated and authorized. For this to work, your FusionAuth instance and your API must be on the same domain.
+FusionAuth has a [Hosted Backend APIs feature](https://fusionauth.io/docs/v1/tech/apis/hosted-backend) that can make it easier to integrate your API with FusionAuth. These APIs provide a pre-built solution for getting your app up and running using the OAuth2 Authorization Code grant with PKCE. We have in the past shown you how to create these endpoints yourself but this solution allows you to get going with your app without writing any backend code dealing with OAuth2. The Hosted Backend APIs deal with the OAuth2 flow and store the client tokens in cookies for you. Your service API can then check the cookies to verify the user is authenticated and authorized. For this to work, your FusionAuth instance, frontend, and your API must all be hosted on the same domain.
 
 ## Prerequisites
 
@@ -57,6 +57,8 @@ Now, copy and paste the following code into `Program.cs`.
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/dotnet/Program.cs %}
 ```
 
+Update the `application.oauthConfiguration.authorizedRedirectURLs` value to `http://localhost:3000/profile.html`. Update the `application.oauthConfiguration.logoutURL` value to `http://localhost:3000`.
+
 You can then publish and run the application. Replace `<YOUR_API_KEY>` with the API key that you generated.
 
 {% include _callout-note.liquid content="The setup script is designed to run on a newly installed FusionAuth instance with only one user and no tenants other than `Default`. To follow this guide on a FusionAuth instance that does not meet these criteria, you may need to modify the above script. <br><br> Refer to the  [.NET Core client library](/docs/v1/tech/client-libraries/netcore) documentation for more information.<br><br>The path to the SetupFusionauth executable will be different depending on your platform." %}
@@ -94,7 +96,7 @@ dotnet add package System.IdentityModel.Tokens.Jwt
 You can now start writing the code for your Rails API. First, let's create a controller which gives back a JSON message. Create a file called `IdentityController.cs` in the `Controllers` folder, and add the following code to it.
 
 ```csharp
-{% remote_include link %}
+{% remote_include https://raw.githubusercontent.com/TheMiniDriver/fusionauth-c--api/main/MyAPI/Controllers/IdentityController.cs %}
 ```
 
 This controller returns a JSON object with identity and claims of the user accessing the service.
@@ -102,7 +104,7 @@ This controller returns a JSON object with identity and claims of the user acces
 Next, update the `Program.cs` file to look like this:
 
 ```csharp
-{% remote_include link %}
+{% remote_include https://raw.githubusercontent.com/TheMiniDriver/fusionauth-c--api/main/MyAPI/Program.cs %}
 ```
 
 This updates the authentication code to extract the JWT from the `app.idt` cookie. The `app.idt` cookie has an OpenID Connect JWT that contains the user's identity and claims. The `app.idt` cookie is set by the Hosted Backend APIs when the user logs in. The `app.idt` cookie is set to the same domain as the FusionAuth instance. This allows the {{page.technology}} API to read the cookie and extract the JWT.
@@ -121,7 +123,7 @@ Then run  the executable:
 ASPNETCORE_ENVIRONMENT=Development bin/Debug/net7.0/osx-x64/publish/MyAPI
 ```
 
-You can use [cURL](link) to see the output of the API: 
+You can use [cURL](https://curl.se) to see the output of the API: 
 
 ```shell
 curl -v http://localhost:5000/identity
@@ -142,7 +144,7 @@ mkdir LoginPage && cd LoginPage
 Then, create 2 new files: `index.html` and `profile.html`. Add the following code to the `index.html` file:
 
 ```html
-{% remote_include link %}
+{% remote_include https://raw.githubusercontent.com/TheMiniDriver/fusionauth-c--api/main/LoginPage/index.html %}
 ```
 
 This page is the main page. It just has a link which redirects to FusionAuth's Hosted Backend API login route. Note the format of the URL in the anchor `href`: `GET /app/login/{clientId}?redirect_uri={redirectUri}&state={state}&scope={scope}`
@@ -158,16 +160,14 @@ The `scope` is the OAuth scopes that you want to request. In this case, you are 
 Now add the following to the `Profile.html` file:
 
 ```html
-{% remote_include link %}
+{% remote_include https://raw.githubusercontent.com/TheMiniDriver/fusionauth-c--api/main/LoginPage/profile.html %}
 ```
 
 This page is the page that the Hosted Backend API will redirect to after the login flow is complete. 
 
 The page first calls the [`/me` route](https://fusionauth.io/docs/v1/tech/apis/hosted-backend#me) which is part of FusionAuth Hosted Backend API. This route returns the identity of the currently logged in user.
 
-
 The `Profile.html` page also has a button that calls the `identity` route of the {{page.technology}} API. Note that the `fetch` call for this button includes the `credentials: 'include'` option. This option tells the browser to include the cookies in the request, so that the {{page.technology}} API can read the `app.idt` cookie and extract the JWT.
-
 
 If the API call is successful, the `identity` route will return the identity and claims of the user. If the API call is not successful, the `identity` route will return a `401 Unauthorized` response. In this case, the code will try refreshing the access token using the refresh token in the `app.rt` cookie. To do this, the code makes a `fetch` request to the [refresh token route](https://fusionauth.io/docs/v1/tech/apis/hosted-backend#refresh) of the Hosted Backend API. If the refresh token is valid, FusionAuth's Hosted Backend API will return a new access token. The code then tries the `identity` route again with the new access token.
 
