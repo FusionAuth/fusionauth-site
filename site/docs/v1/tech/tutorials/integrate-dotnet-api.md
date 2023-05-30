@@ -12,7 +12,7 @@ language: .NET Core
 
 {% include docs/integration/_intro-api.md %}
 
-FusionAuth has a [Hosted Backend APIs feature](https://fusionauth.io/docs/v1/tech/apis/hosted-backend) that can make it easier to integrate your API with FusionAuth. These APIs provide a pre-built solution for getting your app up and running using the OAuth2 Authorization Code grant with PKCE. We have in the past shown you how to create these endpoints yourself but this solution allows you to get going with your app without writing any backend code dealing with OAuth2. The Hosted Backend APIs deal with the OAuth2 flow and store the client tokens in cookies for you. Your service API can then check the cookies to verify the user is authenticated and authorized. For this to work, your FusionAuth instance, frontend, and your API must all be hosted on the same domain.
+FusionAuth has a [Hosted Backend APIs feature](/docs/v1/tech/apis/hosted-backend) that can make it easier to integrate your API with FusionAuth. These APIs provide a pre-built solution for getting your app up and running using the OAuth2 Authorization Code grant with PKCE. We have in the past shown you how to create these endpoints yourself but this solution allows you to get going with your app without writing any backend code dealing with OAuth2. The Hosted Backend APIs deal with the OAuth2 flow and store the client tokens in cookies for you. Your service API can then check the cookies to verify the user is authenticated and authorized. For this to work, your FusionAuth instance, frontend, and your API must all be hosted on the same domain.
 
 ## Prerequisites
 
@@ -93,10 +93,10 @@ dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
 dotnet add package System.IdentityModel.Tokens.Jwt
 ```
 
-You can now start writing the code for your Rails API. First, let's create a controller which gives back a JSON message. Create a file called `IdentityController.cs` in the `Controllers` folder, and add the following code to it.
+You can now start writing the code for your {{page.technology}} API. First, let's create a controller which gives back a JSON message. Create a file called `IdentityController.cs` in the `Controllers` folder, and add the following code to it.
 
 ```csharp
-{% remote_include https://raw.githubusercontent.com/TheMiniDriver/fusionauth-c--api/main/MyAPI/Controllers/IdentityController.cs %}
+{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-api-example/main/MyAPI/Controllers/IdentityController.cs %}
 ```
 
 This controller returns a JSON object with identity and claims of the user accessing the service.
@@ -104,7 +104,7 @@ This controller returns a JSON object with identity and claims of the user acces
 Next, update the `Program.cs` file to look like this:
 
 ```csharp
-{% remote_include https://raw.githubusercontent.com/TheMiniDriver/fusionauth-c--api/main/MyAPI/Program.cs %}
+{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-api-example/main/MyAPI/Program.cs %}
 ```
 
 Note the changes in the `builder.Services.AddAuthentication()` section.This updates the authentication code to extract the JWT from the `app.idt` cookie. The `app.idt` cookie has an OpenID Connect JWT that contains the user's identity and claims. The `app.idt` cookie is set by the Hosted Backend APIs when the user logs in. The `app.idt` cookie is set to the same domain as the FusionAuth instance. This allows the {{page.technology}} API to read the cookie and extract the JWT. Also note that the issuer is set to `http://localhost:9011` which is the default FusionAuth URL. If you are using a different URL, you should update this value.  The dotnet authentication libraries will seamlessly validate the JWT, including the audience, and extract the identity and claims. There is no more you need to do on your part!
@@ -144,7 +144,7 @@ mkdir LoginPage && cd LoginPage
 Then, create 2 new files: `index.html` and `profile.html`. Add the following code to the `index.html` file:
 
 ```html
-{% remote_include https://raw.githubusercontent.com/TheMiniDriver/fusionauth-c--api/main/LoginPage/index.html %}
+{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-api-example/main/LoginPage/index.html %}
 ```
 
 This page is the main page. It just has a link which redirects to FusionAuth's Hosted Backend API login route. Note the format of the URL in the anchor `href`: `GET /app/login/{clientId}?redirect_uri={redirectUri}&state={state}&scope={scope}`
@@ -160,22 +160,21 @@ The `scope` is the OAuth scopes that you want to request. In this case, you are 
 Now add the following to the `Profile.html` file:
 
 ```html
-{% remote_include https://raw.githubusercontent.com/TheMiniDriver/fusionauth-c--api/main/LoginPage/profile.html %}
+{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-api-example/main/LoginPage/profile.html %}
 ```
 
 This page is the page that the Hosted Backend API will redirect to after the login flow is complete.
 
-The page first calls the [`/me` route](https://fusionauth.io/docs/v1/tech/apis/hosted-backend#me) which is part of FusionAuth Hosted Backend API. This route returns the identity of the currently logged in user.
+The page first calls the [`/me` route](/docs/v1/tech/apis/hosted-backend#me) which is part of FusionAuth Hosted Backend API. This route returns the identity of the currently logged in user.
 
 The `Profile.html` page also has a button that calls the `identity` route of the {{page.technology}} API. Note that the `fetch` call for this button includes the `credentials: 'include'` option. This option tells the browser to include the cookies in the request, so that the {{page.technology}} API can read the `app.idt` cookie and extract the JWT.
 
-If the API call is successful, the `identity` route will return the identity and claims of the user. If the API call is not successful, the `identity` route will return a `401 Unauthorized` response. In this case, the code will try refreshing the access token using the refresh token in the `app.rt` cookie. To do this, the code makes a `fetch` request to the [refresh token route](https://fusionauth.io/docs/v1/tech/apis/hosted-backend#refresh) of the Hosted Backend API. If the refresh token is valid, FusionAuth's Hosted Backend API will return a new access token. The code then tries the `identity` route again with the new access token.
+If the API call is successful, the `identity` route will return the identity and claims of the user. If the API call is not successful, the `identity` route will return a `401 Unauthorized` response. In this case, the code will try refreshing the access token using the refresh token in the `app.rt` cookie. To do this, the code makes a `fetch` request to the [refresh token route](/docs/v1/tech/apis/hosted-backend#refresh) of the Hosted Backend API. If the refresh token is valid, FusionAuth's Hosted Backend API will return a new access token. The code then tries the `identity` route again with the new access token.
 
 
-{% include _callout-note.liquid content="A note on CORS (Cross-Origin Resource Sharing): For this setup to work, all components, including the web page, the {{page.technology}} API, and FusionAuth, must be on the same domain. This is because the `app.idt` JWT cookie and `app.rt` refresh cookie are set to the same domain as the FusionAuth instance. Since everything runs on the same domain, CORS won't usually be an issue. However, you'll be running all of this on `localhost` to test, with each component running on a different port. This will cause CORS issues. For this, we need to enable CORS on FusionAuth for the login webpage to access the FusionAuth Hosted Backend API. To do this, navigate to the "Settings" tab, and then the "CORS" tab. Turn on CORS, and check "GET", "POST" and "OPTIONS". Enable "Allow Credentials, and  add `http://localhost:3000` to the list of allowed origins.
-" %}
+{% include _callout-note.liquid content="A note on CORS (Cross-Origin Resource Sharing): For this setup to work, all components, including the web page, the .NET Core API, and FusionAuth, must be on the same domain. This is because the `app.idt` JWT cookie and `app.rt` refresh cookie are set to the same domain as the FusionAuth instance. Since everything runs on the same domain, CORS won't usually be an issue. However, you'll be running all of this on `localhost` to test, with each component running on a different port. This will cause CORS issues. For this, we need to enable CORS on FusionAuth for the login webpage to access the FusionAuth Hosted Backend API. To do this, navigate to 'Settings', then 'System' on the sidebar, and then the 'CORS' tab. Enable CORS, and check 'GET', 'POST' and 'OPTIONS'. Enable 'Allow Credentials', and  add `http://localhost:3000` to the list of allowed origins." %}
 
-{% include _image.liquid src="/assets/img/docs/integrations/dotnet-hosted-api-integration/cors-settings.png" alt="CORS settings in FusionAuth for testing on Localhost" class="img-fluid bottom-cropped" width="1200" figure=false %}
+{% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-hosted-api-integration/cors-settings.png" alt="CORS settings in FusionAuth for testing on Localhost" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 You can now serve up the login and profile static pages. An easy way to do this is to use the [http-server](https://www.npmjs.com/package/http-server) package via `npx`. Change into the `LoginPage` directory and run the following command:
 
@@ -189,4 +188,4 @@ This will serve the website on `http://localhost:3000`
 
 Navigate to the login webpage at `http://localhost:3000`. Click the "Login" button. This will redirect you to FusionAuth's Hosted Backend API login page. Enter the email and password of the user created in the setup script earlier for your FusionAuth instance. You will be redirected back to the login webpage, and the results from the `/me` FusionAuth endpoint alongside the "Call the API" button will be shown. Click this button. This will call the `identity` route of the {{page.technology}} API, which will echo back the identity and claims of the user, from the JWT in the `app.idt` cookie. You should see something similar to the following output:
 
-{% include _image.liquid src="/assets/img/docs/integrations/dotnet-hosted-api-integration/profile-output.png" alt="Output of the /me call and the dotnet API call" class="img-fluid bottom-cropped" width="1200" figure=false %}
+{% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-hosted-api-integration/profile-output.png" alt="Output of the /me call and the dotnet API call" class="img-fluid bottom-cropped" width="1200" figure=false %}
