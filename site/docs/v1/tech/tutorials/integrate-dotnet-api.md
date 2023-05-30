@@ -176,9 +176,11 @@ Here is the code:
 ```javascript
 
 ```
-A note on CORS (Cross-Origin Resource Sharing): For this setup to work, all components, including the web page, the {{page.technology}} API, and FusionAuth, must be on the same domain. This is because the `app.idt` JWT cookie and `app.rt` refresh cookie are set to the same domain as the FusionAuth instance. Since everything runs on the same domain, CORS won't usually be an issue. However, you'll be running all of this on `localhost` to test, with each component running on a different port. This will cause CORS issues. For this, we need to enable CORS on FusionAuth for the login webpage to access the FusionAuth Hosted Backend API. To do this, navigate to the "Settings" tab, and then the "CORS" tab. Turn on CORS, and check "GET", "POST" and "OPTIONS". Enable "Allow Credentials, and  add `http://localhost:3000` to the list of allowed origins.
 
-<TODO: ADD CORS Setup Screenshot>
+{% include _callout-note.liquid content="A note on CORS (Cross-Origin Resource Sharing): For this setup to work, all components, including the web page, the {{page.technology}} API, and FusionAuth, must be on the same domain. This is because the `app.idt` JWT cookie and `app.rt` refresh cookie are set to the same domain as the FusionAuth instance. Since everything runs on the same domain, CORS won't usually be an issue. However, you'll be running all of this on `localhost` to test, with each component running on a different port. This will cause CORS issues. For this, we need to enable CORS on FusionAuth for the login webpage to access the FusionAuth Hosted Backend API. To do this, navigate to the "Settings" tab, and then the "CORS" tab. Turn on CORS, and check "GET", "POST" and "OPTIONS". Enable "Allow Credentials, and  add `http://localhost:3000` to the list of allowed origins.
+" %}
+
+{% include _image.liquid src="/assets/img/docs/integrations/dotnet-hosted-api-integration/cors-settings.png" alt="CORS settings in FusionAuth for testing on Localhost" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 You can now serve up the login and profile static pages. An easy way to do this is to use the [http-server](https://www.npmjs.com/package/http-server) package via `npx`. Change into the `LoginPage` directory and run the following command:
 
@@ -192,5 +194,5 @@ This will serve the website on `http://localhost:3000`
 
 Navigate to the login webpage at `http://localhost:3000`. Click the "Login" button. This will redirect you to FusionAuth's Hosted Backend API login page. Enter the email and password of the user created in the setup script earlier for your FusionAuth instance. You will be redirected back to the login webpage, and the results from the `/me` FusionAuth endpoint alongside the "Call the API" button will be shown. Click this button. This will call the `identity` route of the {{page.technology}} API, which will echo back the identity and claims of the user, from the JWT in the `app.idt` cookie. You should see something similar to the following output:
 
-<insert screenshot>
+{% include _image.liquid src="/assets/img/docs/integrations/dotnet-hosted-api-integration/profile-output.png" alt="Output of the /me call and the dotnet API call" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
