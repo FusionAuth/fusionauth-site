@@ -5,6 +5,7 @@ author: Dan Moore
 section: Authentication
 icon: /img/icons/sso-works-why-care.svg
 ---
+import ClientSideStorage from "../../../diagrams/articles/how-sso-works/sso-login.astro";
 
 Single sign-on (SSO) is a key part of any customer identity and access management (CIAM) strategy.
 
@@ -51,7 +52,8 @@ For the other applications in this example, the credential, which proves authent
 
 Here's an OIDC single sign-on flow. The home page of each application is unavailable to anonymous users. When a browser requests it, they are directed to the identity provider to authenticate. However, the authentication at the identity provider happens only once.
 
-{% plantuml source: _diagrams/learn/expert-advice/authentication/single-sign-on/sso-login.plantuml, alt: "Single sign-on request flow during login." %}
+
+<ClientSideStorage alt={"Single sign-on request flow during login."} />
 
 (If you are a stickler, you'll notice there is no request for a token from the apps to the identity provider after the user authenticates. That is implied and required.)
 
