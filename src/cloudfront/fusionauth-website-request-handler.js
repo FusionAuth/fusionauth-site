@@ -119,7 +119,7 @@ var redirects = {
   '/upgrade/from-saas': '/compare'
 };
 
-// order is important, first prefix matched wins
+// order matters
 var redirectsByPrefix = [
   ['/learn/expert-advice/dev-tools', '/dev-tools'],
   ['/learn/expert-advice/authentication/spa', '/articles/login-authentication-workflows/spa'],
@@ -132,22 +132,15 @@ var s3Paths = ['/direct-download', '/license'];
 var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/', '/how-to/', '/articles/', '/dev-tools/'];
 
 function handler(event) {
-  var request = event.request;
-  var headers = request.headers;
+  var req = event.request;
+  var hdrs = req.headers;
 
-  // Handle WWW redirect
-  if (headers.host && headers.host.value === 'www.fusionauth.io') {
-    return {
-      statusCode: 301,
-      statusDescription: 'Moved',
-      headers: {
-        'location': { value: 'https://fusionauth.io' }
-      }
-    };
+  if (hdrs.host && hdrs.host.value === 'www.fusionauth.io') {
+    return redir('https://fusionauth.io');
   }
 
-  // Basic fusionauth:rocks for dev-time to prevent bots from indexing
-  if (headers.host && headers.host.value !== 'fusionauth.io' && (!headers.authorization || headers.authorization.value !== 'Basic ZnVzaW9uYXV0aDpyb2Nrcw==')) {
+  // fusionauth:rocks
+  if (hdrs.host && hdrs.host.value !== 'fusionauth.io' && (!hdrs.authorization || hdrs.authorization.value !== 'Basic ZnVzaW9uYXV0aDpyb2Nrcw==')) {
     return {
       statusCode: 401,
       statusDescription: 'Unauthorized',
@@ -157,50 +150,26 @@ function handler(event) {
     };
   }
 
-  var uri = request.uri;
+  var uri = req.uri;
   if (uri.endsWith('.html')) {
-    return {
-      statusCode: 301,
-      statusDescription: 'Moved',
-      headers: {
-        'location': { value: uri.substring(0, uri.length - 5) }
-      }
-    };
+    return redir(uri.substring(0, uri.length - 5));
   }
 
   if (uri.endsWith('/') && !uri.startsWith('//') && removeSlash(uri)) {
-    return {
-      statusCode: 301,
-      statusDescription: 'Moved',
-      headers: {
-        'location': { value: uri.substring(0, uri.length - 1) }
-      }
-    };
+    return redir(uri.substring(0, uri.length - 1));
   }
 
   if (!uri.endsWith('/') && indexPages[uri + '/'] === true) {
-    return {
-      statusCode: 301,
-      statusDescription: 'Moved',
-      headers: {
-          'location': { value: uri + '/' }
-      }
-    };
+    return redir(uri + '/');
   }
 
   var redirect = calculateRedirect(uri);
   if (redirect !== null) {
-    return {
-      statusCode: 301,
-      statusDescription: 'Moved',
-      headers: {
-        'location': { value: redirect }
-      }
-    };
+    return redir(redirect);
   }
 
-  request.uri = calculateURI(uri);
-  return request;
+  req.uri = calculateURI(uri);
+  return req;
 }
 
 function removeSlash(uri) {
@@ -248,3 +217,6 @@ function calculateURI(uri) {
   return uri;
 }
 
+function redir(loc) {
+  return {statusCode:301,statusDescription:'Moved',headers:{'location':{value: loc}}}
+}
