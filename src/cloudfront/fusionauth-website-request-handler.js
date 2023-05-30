@@ -120,6 +120,9 @@ var redirects = {
 
 var redirectsByPrefix = [
   ['/learn/expert-advice/dev-tools', '/dev-tools'],
+  ['/learn/expert-advice/authentication/spa', '/articles/login-authentication-workflows/spa'],
+  ['/learn/expert-advice/authentication/mobile', '/articles/login-authentication-workflows/mobile'],
+  ['/learn/expert-advice/authentication/webapp', '/articles/login-authentication-workflows/webapp'],
   ['/learn/expert-advice', '/articles']
 ]
 
