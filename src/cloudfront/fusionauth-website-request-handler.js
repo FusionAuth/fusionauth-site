@@ -247,3 +247,4 @@ function calculateURI(uri) {
   return uri;
 }
 
+}
