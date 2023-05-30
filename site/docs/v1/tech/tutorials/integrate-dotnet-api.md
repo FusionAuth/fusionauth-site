@@ -107,7 +107,7 @@ Next, update the `Program.cs` file to look like this:
 {% remote_include https://raw.githubusercontent.com/TheMiniDriver/fusionauth-c--api/main/MyAPI/Program.cs %}
 ```
 
-This updates the authentication code to extract the JWT from the `app.idt` cookie. The `app.idt` cookie has an OpenID Connect JWT that contains the user's identity and claims. The `app.idt` cookie is set by the Hosted Backend APIs when the user logs in. The `app.idt` cookie is set to the same domain as the FusionAuth instance. This allows the {{page.technology}} API to read the cookie and extract the JWT.
+Note the changes in the `builder.Services.AddAuthentication()` section.This updates the authentication code to extract the JWT from the `app.idt` cookie. The `app.idt` cookie has an OpenID Connect JWT that contains the user's identity and claims. The `app.idt` cookie is set by the Hosted Backend APIs when the user logs in. The `app.idt` cookie is set to the same domain as the FusionAuth instance. This allows the {{page.technology}} API to read the cookie and extract the JWT. Also note that the issuer is set to `http://localhost:9011` which is the default FusionAuth URL. If you are using a different URL, you should update this value.  The dotnet authentication libraries will seamlessly validate the JWT, including the audience, and extract the identity and claims. There is no more you need to do on your part!
 
 You can now start up your server. You should do it in a new terminal window so that you can continue to edit the {{page.technology}} code.
 
