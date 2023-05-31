@@ -134,6 +134,7 @@ var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/lega
 function handler(event) {
   var req = event.request;
   var hdrs = req.headers;
+  var is_s3 = hdrs["x-fusionauth-origin-type"].value === "S3";
 
   if (hdrs.host && hdrs.host.value === 'www.fusionauth.io') {
     return redir('https://fusionauth.io');
@@ -168,7 +169,7 @@ function handler(event) {
     return redir(redirect);
   }
 
-  req.uri = calculateURI(uri);
+  req.uri = calculateURI(uri, is_s3);
   return req;
 }
 
@@ -200,11 +201,11 @@ function appendHTML(uri) {
   return uri;
 }
 
-function calculateURI(uri) {
+function calculateURI(uri, is_s3) {
   var i;
   for (i = 0; i < s3Prefixes.length; i++) {
     if (uri.startsWith(s3Prefixes[i])) {
-      return appendHTML(uri);
+      return (is_s3 && uri.endsWith('/')) ? uri + 'index.html' : appendHTML(uri);
     }
   }
 
