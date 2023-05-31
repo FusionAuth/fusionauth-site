@@ -16,7 +16,7 @@ Whenever you build a website that allows a user to create their own account, sec
 
 {% include _callout-tip.liquid
 content=
- "This blog post walks through low-level details of OAuth in React. If you want to add login, logout, and registration buttons to your React application, using pre-built buttons, hooks, or higher-order components, you should take a look at our [React SDK](/docs/v1/tech/client-libraries/react-sdk), currently in beta."
+ "This blog post walks through low-level details of OAuth in React. If you want to add login, logout, and registration buttons to your React application, using pre-built buttons, hooks, or higher-order components, you should take a look at our [React SDK](/docs/v1/tech/client-libraries/react-sdk). You can also work through a [tutorial using the SDK](/docs/v1/tech/tutorials/integrate-react)."
 %}
 
 In this tutorial, you will learn how to integrate a React app with FusionAuth to implement an OAuth 2.0 compliant Authorization Code grant.  This abstracts all of the problems of making and maintaining an auth solution away from you and onto FusionAuth.
@@ -44,8 +44,6 @@ While it is possible to write your own solution, it is often best to use an open
 This is the grant we are going to use to authenticate our users.  In this particular grant, FusionAuth generates and passes validated access tokens to the React app, which then presents those tokens to the Express backend to gain access to the requested resources. The tokens are never stored on the browser, but are instead stored on the server. This is called the "backend for frontend" pattern, or BFF. If you want to learn more, take a look at our [Modern Guide to OAuth](/learn/expert-advice/oauth/modern-guide-to-oauth)
 
 Using an Authorization Code grant has many advantages, including being more secure than alternatives such as the Implicit grant.  Whereas an Implicit grant authenticates against FusionAuth but exposes the resulting Access Token in the URL, the Authorization Code grant adds an extra layer of security by exchanging an Authorization Code for an Access Token before the user can gain access to their resources.  To see a deep dive into this grant that is language-agnostic, take a look at our [example Authorization Code grant](/docs/v1/tech/oauth/#example-authorization-code-grant).
-
-{% include marketing/_modern-guide.liquid %}
 
 ## What is FusionAuth?
 
@@ -634,8 +632,6 @@ app.use(cors({
 
 Awesome! So if you go to `localhost:3000`, you should see the user displayed! Now let's make it dynamic with an actual login/logout!
 
-{% include marketing/_login-authentication-flows.liquid %}
-
 ## Logging in
 
 User sign-in is one of the key features of FusionAuth. Let’s see how it works.
@@ -1183,5 +1179,3 @@ Some areas that you may want explore further::
 
 
 Now you know how to integrate a React application with an OAuth server like FusionAuth. By delegating authentication to such a server, your react application can focus on building features, not auth.
-
-{% include marketing/_fusionauth-penguin.liquid %}
