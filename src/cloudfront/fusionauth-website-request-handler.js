@@ -97,6 +97,7 @@ var redirects = {
   '/gaming/': '/industries/gaming-entertainment',
   '/kubernetes': '/docs/v1/tech/installation-guide/kubernetes/',
   '/learn/expert-advice/authentication/gaming-identity-provider-needs': '/articles/gaming-entertainment/gaming-identity-provider-needs',
+  '/learn/expert-advice/authentication/login-authentication-workflows': '/articles/login-authentication-workflows/authentication-workflows-overview',
   '/learn/expert-advice/authentication/login-authentication-workflows/': '/articles/login-authentication-workflows/authentication-workflows-overview',
   '/learn/expert-advice/dev-tools/jwt-debugger': '/dev-tools/jwt-decoder',
   '/learn/expert-advice/identity-basics/avoid-lockin': '/articles/authentication/avoid-lockin',
