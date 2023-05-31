@@ -7,7 +7,7 @@ navcategory: login-methods
 
 == Overview
 
-include::docs/v1/tech/samlv2/_saml_idp_note.adoc[]
+Aiven is a cloud-based Database-as-a-Service platform. This document covers the configuration necessary to get it working with FusionAuth as the Identity Provider using SAML v2, allowing users to log in to your Aiven account using their FusionAuth credentials.
 
 === Prerequisites
 
@@ -15,35 +15,29 @@ This document assumes you have a running instance of FusionAuth and a working Ai
 
 == Configure Aiven
 
-=== Create team
+=== Create Team
 
-First, we need to create a team where new users will be added to.
+First, you need to create a team where new users will be added to. In your https://console.aiven.io/[Aiven console], browse to [breadcrumb]#Admin -> Organization# and click [uielement]#Create team# in the organization details section. Set the [field]#Team name# as `Developers` and click [uielement]#Create team#.
 
-In your https://console.aiven.io/[Aiven console], browse to [breadcrumb]#Admin -> Organization# and click [uielement]#Create team# in the organization details section.
+When arriving back to the teams page, click on the newly created team and go to the [uielement]#Projects and Roles# tab. Click [uielement]#Add projects#, select the project, the desired [field]#Permission level# (e.g. `Developer`) and click [uielement]#Add project# to finish setting up the team.
 
-Set the [field]#Team name# as `Developers` and click [uielement]#Create team#. When arriving back to the teams page, click on the newly created team and go to the [uielement]#Projects and Roles# tab.
-
-Click [uielement]#Add projects#, select the project, the desired [field]#Permission level# (e.g. `Developer`) and click [uielement]#Add project# to finish setting up the team.
+image::samlv2/aiven/add-team-to-project.png[Adding team to a project.,width=1200]
 
 === Configure SSO
 
-Go to the [breadcrumb]#Admin# page if you aren't there yet and click [breadcrumb]#Authentication# in the sidebar.
+Click on [breadcrumb]#Authentication# in the sidebar and then on [uielement]#Add authentication method# to create one. Name it `FusionAuth`, select `SAML` as the [field]#Method Type# and choose the `Developers` team you just created in [field]#Team to autojoin on signup#. Click [uielement]#Add method# to save.
 
-Click on the [uielement]#Add authentication method# button, name it `FusionAuth`, select `SAML` as the [field]#Method Type# and choose the `Developers` team you just created in [field]#Team to autojoin on signup#.
+image::samlv2/aiven/add-authentication-method.png[Adding an authentication method.,width=1200]
 
-Click [uielement]#Add method# to save. Write down both [field]#Metadata URL# and [field]#ACS URL# values and click [uielement]#Finish#.
+In the next screen, write down both [field]#Metadata URL# and [field]#ACS URL# values and click [uielement]#Finish#.
 
 == Configure FusionAuth
 
-=== Generating certificate
+=== Generating Certificate
 
-We need to generate a custom RSA certificate and upload it to your FusionAuth instance's Key Master.
+You need to generate a custom RSA certificate and upload it to your FusionAuth instance's Key Master. To do so, there's a script in our https://github.com/FusionAuth/fusionauth-example-scripts[Example scripts GitHub repository] that can do all of this for you.
 
-To do so, there's a script in our https://github.com/FusionAuth/fusionauth-example-scripts[Example scripts GitHub repository] that can do all of this for you.
-
-Before running it, you need to create an API Key in your FusionAuth instance. Browse to [breadcrumb]#Settings -> API Keys# and click icon:plus[role=ui-button green,type=fas].
-
-Set the [field]#Description# as `Certificate generator` and locate `/api/key/import` in the [uielement]#Endpoints# section. Click the `POST` switch to enable it and confirm generating the key by clicking icon:save[role=ui-button blue,type=fas].
+Before running it, you need to create an API Key in your FusionAuth instance. Browse to [breadcrumb]#Settings -> API Keys# and click on icon:plus[role=ui-button green,type=fas]. Set the [field]#Description# as `Certificate generator` and locate `/api/key/import` in the [uielement]#Endpoints# section. Click the `POST` switch to enable it and confirm by clicking on icon:save[role=ui-button blue,type=fas].
 
 image::samlv2/aiven/create-api-key.png[Creating API Key.,width=1200]
 
@@ -51,25 +45,35 @@ After being redirected back to the [breadcrumb]#API Keys# page, click on the `Ke
 
 image::samlv2/aiven/grab-api-key.png[Grabbing API Key.,width=1200,role=bottom-cropped]
 
-Now that your application is ready, clone our https://github.com/FusionAuth/fusionauth-example-scripts[Example scripts GitHub repository] and execute the script located in `rsa-certificate`.
+Now that your application is ready, clone our https://github.com/FusionAuth/fusionauth-example-scripts[Example scripts GitHub repository] and execute the script located in `v3-certificate`.
 
 [source,shell]
----
-$ git clone git@github.com:FusionAuth/fusionauth-example-scripts.git
-$ cd fusionauth-example-scripts/rsa-certificate
-$ ./generate-certificate
----
+----
+git clone git@github.com:FusionAuth/fusionauth-example-scripts.git
+cd fusionauth-example-scripts/v3-certificate
+./generate-certificate
+----
 
-Answer the questions the script will ask you and make sure to give the key a meaningful name, like `Aiven key`. After finishing, you'll have a certificate in the Key Master in your FusionAuth instance ready to be used. The script will also print the generated certificate. Write it down.
+Answer the questions the script will ask you and make sure to give the key a meaningful name, like `Aiven key`.
 
-=== Creating application
+[source,shell]
+.Example response for the script
+----
+Your FusionAuth instance URL (with scheme): http://localhost:9011
+API Key with /api/key/import endpoint:      Dy9bphElA3L3_ayW86T5KvrZkyK1Gj5EDV_2NKU5Ypg
+Name for the generated key:                 Aiven key
+----
 
-You need to create an application in your FusionAuth instance. Navigate to [breadcrumb]#Applications# and click icon:plus[role=ui-button green,type=fas] and name it `Aiven`. Go to the [breadcrumb]#SAML# tab and toggle the [field]#Enabled# switch. Paste the [field]#Metadata URL# and [field]#ACS URL# you copied from Aiven to [field]#Issuer# and [field]#Authorized redirect URLs# fields in your FusionAuth application, respectively.
+After finishing, you'll have a certificate in the Key Master in your FusionAuth instance ready to be used. The script will also print the generated certificate, so make sure to write it down.
+
+=== Creating Application
+
+Create an application in your FusionAuth instance by navigating to [breadcrumb]#Applications# and clicking on icon:plus[role=ui-button green,type=fas]. Name it `Aiven` and go to the [breadcrumb]#SAML# tab. Toggle the [field]#Enabled# switch, paste the [field]#Metadata URL# and [field]#ACS URL# you copied from Aiven to [field]#Issuer# and [field]#Authorized redirect URLs# fields in your FusionAuth application, respectively.
 
 .Mapping fields
 [cols="1,1"]
 |===
-|Aiven|FusionAuth
+|Aiven field|FusionAuth field
 
 |[field]#Metadata URL#
 |[field]#Issuer#
@@ -78,15 +82,13 @@ You need to create an application in your FusionAuth instance. Navigate to [brea
 |[field]#Authorized redirect URLs#
 |===
 
-Scroll down to the [uielement]#Authentication response# section and change the [field]#Signing key# to the `Aiven key` you created above.
+Scroll down to the [uielement]#Authentication response# section and change the [field]#Signing key# to the `Aiven key` you created above. Click on icon:save[role=ui-button blue,type=fas] to save your application.
 
-Click icon:save[role=ui-button blue,type=fas] to save your application. When redirected to the [breadcrumb]#Applications# page, view your application details by clicking icon:search[role=ui-button green,type=fas].
+When redirected to the [breadcrumb]#Applications# page, view your application details by clicking on icon:search[role=ui-button green,type=fas]. In [uielement]#SAML v2 Integration details#, write down both [field]#Entity Id# and [field]#Login URL# fields.
 
-In [uielement]#SAML v2 Integration details#, write down both [field]#Entity Id# and [field]#Login URL# fields.
+== Finish Aiven Configuration
 
-== Finish Aiven configuration
-
-Go back to the authentication methods in your https://console.aiven.io/[Aiven console] and click on `FusionAuth`, which still has a `PENDING CONFIGURATION` state until we finish setting it up.
+Go back to your https://console.aiven.io/[Aiven console] and click [breadcrumb]#Admin# and then on [breadcrumb]#Authentication# in the sidebar to list the authentication methods again. Click on `FusionAuth`, which will still have a `PENDING CONFIGURATION` state until you finish setting it up.
 
 Scroll down to the [uielement]#SAML config# section and click the [uielement]#Edit# button and fill in the information below.
 
@@ -99,9 +101,11 @@ Scroll down to the [uielement]#SAML config# section and click the [uielement]#Ed
 
 Finally, click [uielement]#Edit method# to save the changes.
 
-Scroll to the beginning of the page and click the [field]#Enable authentication method# switch to enable it.
+image::samlv2/aiven/saml-configuration.png[Configuring SAML in Aiven.,width=1200]
 
-Copy the [uielement]#Signup URL# from the [uielement]#Signup and link accounts URLs# section in the `FusionAuth` authentication method you created. You'll use it to test the integration and, if succeeded, share it with others to sign up to your Aiven application.
+Go to the beginning of the page and click the [field]#Enable authentication method# switch to enable it. Now scroll down to [uielement]#Signup and link accounts URLs# and  copy the [uielement]#Signup URL#. You'll use it to test the integration and then share it with others to log into your Aiven application.
+
+image::samlv2/aiven/copy-signup-url.png[Copy Signup URL from Aiven.,width=1200]
 
 == Testing
 
