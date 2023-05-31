@@ -31,76 +31,13 @@ image::oauth/integrations/salesforce/apex-class-new.png[Create an Apex class.,wi
 
 In the editor, paste the following code as a starting point:
 
-[source,java]
+[source]
 ----
-global class FusionAuthRegHandler implements Auth.RegistrationHandler {
-    // This is the profile name that you want to create users
-    static final string STANDARD_PROFILE = 'Standard User';
-
-    // This will be appended to the username and it must be unique across all Salesforce organizations
-    static final string ORG_SUFFIX = '.your.fusionauth.application.url';
-
-    global User createUser(Id portalId, Auth.UserData data) {
-        User u = buildUser(
-                new User(),
-                data
-        );
-        return u;
-    }
-
-    global void updateUser(Id userId, Id portalId, Auth.UserData data) {
-        User u = buildUser(
-                new User(id = userId),
-                data
-        );
-        update (u);
-    }
-
-    private User buildUser(User u, Auth.UserData data) {
-        Profile p = [SELECT Id FROM profile WHERE name = :STANDARD_PROFILE];
-        u.profileId = p.Id;
-        u.username = data.email + ORG_SUFFIX;
-        u.email = data.email;
-        if (data.firstName != null && data.firstName != '') {
-            u.firstName = data.firstName;
-        } else {
-            String givenName = data.attributeMap.get('given_name');
-            if (givenName != null && givenName != '') {
-                u.firstName = givenName;
-            }
-        }
-        if (data.lastName != null && data.lastName != '') {
-            u.lastName = data.lastName;
-        } else {
-            String familyName = data.attributeMap.get('family_name');
-            if (familyName != null && familyName != '') {
-                u.lastName = familyName;
-            }
-        }
-        String alias;
-        if (data.userName != null && data.userName != '') {
-            alias = data.userName;
-        } else {
-            alias = data.email;
-        }
-        if (alias.length() > 8) {
-            alias = alias.substring(0, 8);
-        }
-        u.alias = alias;
-        u.languagelocalekey = UserInfo.getLocale();
-        u.localesidkey = UserInfo.getLocale();
-        u.emailEncodingKey = 'UTF-8';
-        u.timeZoneSidKey = data.attributeMap.get('timezone');
-        if (u.timeZoneSidKey == null || u.timeZoneSidKey == '') {
-            // @TODO change this to the default timezone for users
-            u.timeZoneSidKey = 'GMT';
-        }
-        return u;
-    }
-}
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-salesforce-oidc/main/RegistrationHandler.cls[]
 ----
 
 Complete the code above by making the following changes:
+
 - Update the `ORG_SUFFIX` to your actual FusionAuth instance URL
 - Set `STANDARD_PROFILE` to the profile name you want to add users to (you can find the available options by navigating to [breadcrumb]#ADMINISTRATION -> Users -> Profiles#)
 - Add a default time zone by setting `u.timeZoneSidKey` to a time zone code from link:https://help.salesforce.com/s/articleView?id=sf.admin_supported_timezone.htm&type=5[this list]. This will be used as a fallback when one is not received from FusionAuth.
@@ -205,7 +142,7 @@ After logging in with your FusionAuth credentials, you should be redirected to a
 If you are not seeing these values, click [uielement]#Edit# in the Salesforce [breadcrumb]#Auth. Providers# page and double-check the values.
 ====
 
-Now, go back to the [uielement]#Salesforce Configuration# section in Salesforce and write down both [field]#Callback URL# and [field]#Single Logout URL# values. In your FusionAuth instance, edit the `Salesforce` application you just created and paste [field]#Callback URL# in [field]#Authorized redirect URLs# and [field]#Single Logout URL# in [field]#Logout URL#.
+Now, go back to the [uielement]#Salesforce Configuration# section in Salesforce and write down [field]#Callback URL#, [field]#Single Sign-On Initialization URL# and [field]#Single Logout URL# values. In your FusionAuth instance, edit the `Salesforce` application you just created and paste [field]#Callback URL# in [field]#Authorized redirect URLs# and [field]#Single Logout URL# in [field]#Logout URL#.
 
 Click on icon:save[role=ui-button blue,type=fas] to save the changes.
 
@@ -213,9 +150,7 @@ image::oauth/integrations/salesforce/edit-application.png[Editing the Applicatio
 
 == Log in
 
-When browsing to your organization login page, users should see a [uielement]#Log in with FusionAuth# button. After clicking that, they should be redirected to the FusionAuth login page and after submitting their credentials, they should be brought back to your Salesforce account with a valid session.
-
-image::oauth/integrations/salesforce/salesforce-login.png[Salesforce login page.,width=635,role=box-shadow]
+Open the [field]#Single Sign-On Initialization URL# you copied from the [uielement]#Salesforce Configuration# in a new browser or an incognito window. You should be taken to the FusionAuth login page. Fill in your credentials and you should be redirected back to your Salesforce account already logged in.
 
 == Troubleshooting
 
