@@ -134,7 +134,7 @@ var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/lega
 function handler(event) {
   var req = event.request;
   var hdrs = req.headers;
-  var is_s3 = hdrs["x-fusionauth-origin-type"].value === "S3";
+  var is_s3 = hdrs["x-fusionauth-origin-type"] && hdrs["x-fusionauth-origin-type"].value === "S3";
 
   if (hdrs.host && hdrs.host.value === 'www.fusionauth.io') {
     return redir('https://fusionauth.io');
