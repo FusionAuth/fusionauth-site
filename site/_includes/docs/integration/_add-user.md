@@ -1,4 +1,4 @@
-Next, [log into your FusionAuth instance](http://localhost:9011).  You’ll need to set up a user and a password, as well as accept the terms and conditions.
+Next, [log into your FusionAuth instance](http://localhost:9011){:target="_blank"}. You’ll need to set up a user and a password, as well as accept the terms and conditions.
 
 Then, you’re at the FusionAuth admin UI.  This lets you configure FusionAuth manually.  But for this tutorial, you're going to create an API key and then you’ll configure FusionAuth using our {{include.language}} client library.
 
