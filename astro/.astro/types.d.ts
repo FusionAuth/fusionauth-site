@@ -118,6 +118,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
+"authentication/how-sso-works.mdx": {
+  id: "authentication/how-sso-works.mdx",
+  slug: "authentication/how-sso-works",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
 "authentication/index.mdx": {
   id: "authentication/index.mdx",
   slug: "authentication",
