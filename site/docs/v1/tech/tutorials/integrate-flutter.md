@@ -21,7 +21,6 @@ For this tutorial, you’ll need to have some of these tools installed.
 - If you want to develop applications for Android:
     - Android emulator or real Android device
     - [Android development environment](https://docs.flutter.dev/get-started/install/linux#android-setup)
-- Familiarity with [ngrok](https://ngrok.com) (optional, useful if you want to test on a device)
 
 {% include docs/integration/_prerequisites.md %}
 
@@ -65,7 +64,7 @@ If the device (either real or emulator) and your computer are connected to the s
 - [Mac](https://support.apple.com/guide/mac-help/find-your-computers-name-and-network-address-mchlp1177/mac)
 - [Windows](https://support.microsoft.com/en-us/windows/find-your-ip-address-in-windows-f21a9bbc-c582-55cd-35e0-73431160a1b9)
 
-If they are not connected to the same network or if you have something that blocks connections (like a Firewall), you can use [ngrok](https://ngrok.com/docs/getting-started/) to expose your local FusionAuth instance running at port `9011` to the Internet.
+If they are not connected to the same network or if you have something that blocks connections (like a Firewall), learn [how to expose a local instance to the Internet](/docs/v1/tech/developer-guide/exposing-instance).
 
 In either case, you'll have to use that address when configuring your instance and developing the app.
 
