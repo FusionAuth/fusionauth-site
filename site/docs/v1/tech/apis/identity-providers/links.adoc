@@ -20,12 +20,60 @@ This page contains the APIs that are used to manage Links that establish a relat
 
 == Link a User
 
-This API is used to create a link between a FusionAuth user and a user in a 3rd party identity provider. This API may be useful when you already know the unique Id of a user in a 3rd party identity provider and the corresponding FusionAuth user.
+This API is used to create a link between a FusionAuth User and a user in a 3rd party identity provider. This API may be useful when you already know the unique Id of a user in a 3rd party identity provider and the corresponding FusionAuth User.
 
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Link a User
+[.endpoint]
+
+[NOTE.since]
+====
+Available Since Version 1.43.0
+====
+
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/identity-provider/link#
+--
+
+==== Request Body
+
+[.api]
+[field]#identityProviderLink.displayName# [type]#[String]# [optional]#Optional#::
+A optional human readable name for this link such as an email address, username or given name. This value should be used to make it easier to identify the user this link represents in the remote identity provider.
++
+Please note, that this value will always be overwritten during login to reflect the most current information from the identity provider. In most cases this value will be an email address or username.
+
+[field]#identityProviderLink.identityProviderId# [type]#[UUID]# [required]#Required#::
+The Id of the identify provider that will be linked to the User.
+
+[field]#identityProviderLink.identityProviderUserId# [type]#[String]# [required]#Required#::
+The Id for the user that is provided by the upstream identity provider. This is the value that will allow FusionAuth to link this User on future logins. This value is expected to be immutable.
+
+[field]#identityProviderLink.userId# [type]#[UUID]# [required]#Required#::
+The unique Id of the FusionAuth User that is being linked to the identity provider.
+
+[field]#identityProviderLink.token# [type]#[String]# [optional]#Optional#::
+The token returned from the identity provider. This is treated as an opaque token as the type varies by identity provider, this value may not be returned by all identity providers. When provided, this token is typically a long lived access or refresh token, but consult individual identity provider documentation for specifics.
+
+[source,json]
+.Example Request JSON
+----
+include::docs/src/json/identity-providers/links/request.json[]
+----
 === Request
 
 [.api-authentication]
 link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Link a User
+
+[WARNING]
+====
+Deprecated in version 1.43.0.
+
+While this API is still functional, its usage is discouraged. When available please use the link:/docs/v1/tech/apis/identity-providers/links#link-a-user[Link a User endpoint] which takes a slightly different request body.
+====
+
 [.endpoint]
 .URI
 --
@@ -36,16 +84,15 @@ link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas
 
 [.api]
 [field]#displayName# [type]#[String]# [optional]#Optional# [since]#Available since 1.28.1#::
-A human readable name for this link. This value should be used to make it easier to identify the user this link represents in the remote identity provider.
+An optional human readable name for this link such as an email address, username or given name. This value should be used to make it easier to identify the user this link represents in the remote identity provider.
 +
-This value is optional and it will always be set by FusionAuth the next time this link is used to resolve the FusionAuth user during a login event for this IdP.
-
+Please note, that this value will always be overwritten during login to reflect the most current information from the identity provider. In most cases this value will be an email address or username.
 
 [field]#identityProviderId# [type]#[UUID]# [required]#Required#::
-The Id of the identity provider. This identity provider must exist.
+The Id of the identity provider.
 
 [field]#identityProviderUserId# [type]#[String]# [required]#Required#::
-The Id for the User that is provided by the identity provider. This is the value that will allow FusionAuth to link this user on future logins. It is expected to be immutable.
+The Id for the User that is provided by the identity provider. This is the value that will allow FusionAuth to link this user on future logins. This value is expected to be immutable.
 
 [field]#userId# [type]#[UUID]# [required]#Required#::
 The FusionAuth Id of the User that is being linked to the identity provider.
@@ -53,9 +100,8 @@ The FusionAuth Id of the User that is being linked to the identity provider.
 [source,json]
 .Example Request JSON
 ----
-include::docs/src/json/identity-providers/links/create-link-request.json[]
+include::docs/src/json/identity-providers/links/request-deprecated.json[]
 ----
-
 === Response
 
 :never_search_error:
@@ -74,6 +120,11 @@ This API is used complete a pending link. If an identity provider is configured 
 
 [.api-authentication]
 link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Complete a pending Link
+
+[NOTE.since]
+====
+Available Since Version 1.43.0
+====
 [.endpoint]
 .URI
 --
@@ -84,15 +135,48 @@ link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas
 
 [.api]
 [field]#pendingIdPLinkId# [type]#[String]# [required]#Required#::
-The pending identity provider link id.
+The pending identity provider link Id.
 
-[field]#userId# [type]#[String]# [required]#Required#::
-The Id of the User that is being linked to the identity provider
+[field]#identityProviderLink.userId# [type]#[String]# [required]#Required#::
+The unique Id of the FusionAuth User that is being linked to the identity provider.
 
 [source,json]
 .Example Request JSON
 ----
-include::docs/src/json/identity-providers/links/pending-link-request.json[]
+include::docs/src/json/identity-providers/links/pending-link-request-identityProviderLink-in-body.json[]
+----
+
+=== Request
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Complete a pending Link
+
+[WARNING]
+====
+Deprecated in version 1.43.0.
+
+While this API is still functional, its usage is discouraged. When available please use the link:/docs/v1/tech/apis/identity-providers/links#complete-a-pending-link[Complete a Pending Link] which takes a slightly different request body.
+====
+
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/api/identity-provider/link#
+--
+
+==== Request Body
+
+[.api]
+[field]#pendingIdPLinkId# [type]#[String]# [required]#Required#::
+The pending identity provider link Id.
+
+[field]#userId# [type]#[String]# [required]#Required#::
+The Id of the User that is being linked to the identity provider.
+
+[source,json]
+.Example Request JSON
+----
+include::docs/src/json/identity-providers/links/request-complete-a-pending-link-deprecated.json[]
 ----
 
 === Response
@@ -174,7 +258,7 @@ include::docs/v1/tech/apis/identity-providers/_links-response-body.adoc[]
 
 == Unlink a User
 
-This API is used to remove a link between a FusionAuth user and a 3rd party identity provider.
+This API is used to remove a link between a FusionAuth User and a 3rd party identity provider.
 
 === Request
 
@@ -193,7 +277,7 @@ link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas
 The unique Id of the identity provider.
 
 [field]#identityProviderUserId# [type]#[String]# [required]#Required#::
-The Id for the User that is provided by the identity provider. This is the value that will allow FusionAuth to link this user on future logins. It is expected to be immutable.
+The Id for the user that is provided by the upstream identity provider. This is the value that will allow FusionAuth to link this user on future logins. This value is expected to be immutable.
 
 [field]#userId# [type]#[UUID]# [required]#Required#::
 The FusionAuth User Id that is linked to the identity provider.
