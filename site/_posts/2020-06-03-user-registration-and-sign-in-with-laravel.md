@@ -14,6 +14,11 @@ Laravel is one of the most popular PHP application frameworks in the marketplace
 
 <!--more-->
 
+{% include _callout-tip.liquid
+content=
+"This blog post has been [superseded by a newer Laravel tutorial](/blog/2023/03/13/single-sign-on-laravel-fusionauth)."
+%}
+
 In this tutorial, we'll set up a new Laravel application that uses FusionAuth to register and login users. All the code used here is [available on Github](https://github.com/FusionAuth/fusionauth-example-laravel). This application will show just a tiny sample of what you can do with FusionAuth, so be sure to check out the [PHP Client Library](/docs/v1/tech/client-libraries/php) and [documentation](/docs/v1/tech/) for much more.
 
 ## What we'll cover

@@ -1,4 +1,0 @@
-1. The user inputs their credentials and clicks the submit button. The browser AJAX `POST`s the form data to the application backend
-1. The application backend calls the OAuth token endpoint in FusionAuth by passing in the credentials it received plus a `grant_type` of `password`, which indicates it is using the resource owner password credentials grant in FusionAuth's OAuth 2 backend 
-1. FusionAuth returns a 200 status code stating that the credentials were okay. It also returns a JWT and a refresh token in JSON
-1. The application backend returns the JWT and refresh token to the mobile application 

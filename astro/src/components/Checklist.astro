@@ -1,0 +1,54 @@
+---
+export interface Props {
+	name?: string;
+}
+
+const { name = "default"} = Astro.props as Props;
+
+// Modified version of:
+// https://github.com/withastro/docs/blob/main/src/components/Checklist.astro
+// removed styling, renamed 'key' property to 'name', removed UIString
+---
+<check-list data-name={name}>
+	<div class="checklist not-prose"><slot /></div>
+</check-list>
+
+
+<script>
+	import { ProgressStore, SubListType } from './tutorial/ProgressStore';
+
+	class CheckList extends HTMLElement {
+		private readonly name: string;
+
+		constructor() {
+			super();
+			this.name = this.dataset['name']!;
+			ProgressStore.initialiseList(this.name);
+			this.upgradeSubList(this.querySelector('.checklist ul'), 'primary');
+			this.upgradeSubList(this.querySelector('.checklist.alternative ul'), 'secondary');
+		}
+
+		/** Upgrade the primary or secondary check lists. */
+		upgradeSubList(ul: Element | null, type: SubListType) {
+			if (!ul) return;
+			const items = Array.from(ul.children);
+			ProgressStore.initaliseSubList(this.name, type, items.length);
+			items.forEach((li, index) => this.upgradeTaskItem(li, type, index));
+		}
+
+		/** Upgrade an item in a GitHub-Flavoured Markdown task list. */
+		upgradeTaskItem(li: Element, type: SubListType, index: number) {
+			// Re-enable checkboxes, hydrate state & listen for changes.
+			const checkbox = li.querySelector('input[type="checkbox"]') as HTMLInputElement;
+			checkbox.removeAttribute('disabled');
+			checkbox.checked = ProgressStore.getSubListItem(this.name, type, index);
+			checkbox.addEventListener('change', (e) => {
+				const input = e.currentTarget as HTMLInputElement;
+				const { checked } = input;
+				ProgressStore.setSubListItem(this.name, type, index, checked);
+			});
+		}
+	}
+
+	customElements.define('check-list', CheckList);
+</script>

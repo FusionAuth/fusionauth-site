@@ -1,6 +1,6 @@
 ---
 layout: doc
-title: FusionAuth Ruby Client
+title: FusionAuth Ruby Client Library
 description: The FusionAuth Ruby Client library allows you to call FusionAuth from Ruby applications.
 navcategory: developer
 ---
@@ -32,37 +32,50 @@ Here is an example of using the `register` and the `login` methods to create a n
 
 [source,ruby]
 ----
-# Construct the FusionAuth Client with the following values:
-#  - API Key: 6b87a398-39f2-4692-927b-13188a81a9a3
-#  - Host: http://localhost:9011
-client = FusionAuth::FusionAuthClient.new('6b87a398-39f2-4692-927b-13188a81a9a3', 'http://localhost:9011')
+
+require 'fusionauth/fusionauth_client'
+require 'securerandom'
+require 'pp'
+
+# Construct the FusionAuth Client
+client = FusionAuth::FusionAuthClient.new(
+    'REPLACE_ME',
+    'http://localhost:9011'
+)
+
+application_id = '85a03867-dccf-4882-adde-1a79aeec50df'
 
 # Create a user + registration
 id = SecureRandom.uuid
-client.register(id, {
-    :user => {
-        :firstName => 'Ruby',
-        :lastName => 'Client',
-        :email => 'ruby.client.test@fusionauth.io',
-        :password => 'password'
+response = client.register(id, {
+    user: {
+        firstName: 'Ruby',
+        lastName: 'User',
+        email: 'ruby_user@example.com',
+        password: 'password'
     },
-    :registration => {
-        :applicationId => application_id,
-        :data => {
-            :foo => 'bar'
+    registration: {
+        applicationId: application_id,
+        data: {
+            foo: 'bar'
         },
-        :preferredLanguages => %w(en fr),
-        :roles => %w(user)
+        preferredLanguages: %w(en fr),
+        roles: %w(dev)
     }
 })
 
-# Authenticate the user
-response = client.login({
-    :loginId => 'ruby.client.test@fusionauth.io',
-    :password => 'password',
-    :applicationId => application_id
-})
-user = response.user
+if response.success_response
+  pp response.success_response
+else
+  if response.exception
+    # if we can't connect
+    print response.exception
+  end
+  print "status: #{response.status}"
+  print response.error_response
+  exit
+end
+
 ----
 
 === Usage Suggestions

@@ -16,7 +16,7 @@ In this post, we'll walk step-by-step through implementing the OAuth Authorizati
 
 {% include _callout-tip.liquid
 content=
- "This blog post has been [superseded by a newer React/OAuth tutorial](/blog/2021/11/11/how-to-authenticate-your-react-app)."
+ "This blog post walks through low-level details of OAuth in React. If you want to add login, logout, and registration buttons to your React application, using pre-built buttons, hooks, or higher-order components, you should take a look at our [React SDK](/docs/v1/tech/client-libraries/react-sdk). You can also work through a [tutorial using the SDK](/docs/v1/tech/tutorials/integrate-react)."
 %}
 
 Our app will be able to:
@@ -27,6 +27,11 @@ Our app will be able to:
 - write user data to FusionAuth
 
 In addition to React, we'll use a NodeJS backend. One major benefit of using a backend server is that we can safely store and use a Client Secret, which is the most secure way to integrate OAuth 2.0 Authorization Code Flow with our React app.
+
+{% include _callout-tip.liquid
+content=
+ "This blog post has been [superseded by a newer React/OAuth tutorial](/blog/2021/11/11/how-to-authenticate-your-react-app)."
+%}
 
 If you're in-the-know on OAuth, you're probably aware that some people use PKCE or the rightfully deprecated Implicit Flow to get around the Client Secret constraint. We're sticking to Authorization Code Flow, because setting up a server is the most secure solution for the majority of cases and quite simple once you know how. Don't know what any of that means? Don't worry about it — you don't need to know anything about OAuth to follow this example. 
 
@@ -58,7 +63,7 @@ Literally, it might look something like this:
 
 If you want to peek at the source code for the exact app pictured above, you can grab it from [its GitHub respository](https://github.com/FusionAuth/fusionauth-example-react). You can follow along with that code or use it as a jumping-off point for your app.
 
-Also, we put together a [complete workflow diagram for the Authorization Code Grant with a single-page application](/learn/expert-advice/authentication/spa/oauth-authorization-code-grant-sessions) that can help further explain how this process works. You can review that workflow to get a better understanding of how SPAs can leverage OAuth.
+Also, we put together a [complete workflow diagram for the Authorization Code Grant with a single-page application](/articles/login-authentication-workflows/spa/oauth-authorization-code-grant-sessions) that can help further explain how this process works. You can review that workflow to get a better understanding of how SPAs can leverage OAuth.
 
 ---
 
