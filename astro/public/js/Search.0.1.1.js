@@ -62,7 +62,6 @@ class Search {
   }
 
   #handleKeyDown(event) {
-    console.log(event.key);
     if (event.key === this.#altKey) {
       this.alt = true;
       return;

@@ -55,8 +55,10 @@ class CopyToClipboard {
              .writeText(source.innerText)
              .then(() => {
                const i = copyButton.querySelector('i.fa-copy');
-               i.classList.replace('fa-copy', 'fa-check');
-               setTimeout(() => i.classList.replace('fa-check', 'fa-copy'), 1000);
+               if (i) {
+                 i.classList.replace('fa-copy', 'fa-check');
+                 setTimeout(() => i.classList.replace('fa-check', 'fa-copy'), 1000);
+               }
              });
   }
 }
