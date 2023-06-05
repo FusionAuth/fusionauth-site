@@ -28,7 +28,7 @@ Unlike traditional web and single-page applications, native mobile applications 
 
 ## Login and Authentication Workflows
 
-{% include _image.liquid src="/assets/img/advice/login-type-xmlhttprequest.png" alt="XMLHttpRequest example" class="float-left" figure=false %}
+{% include _image.liquid src="/img/articles/login-authentication-workflows/login-type-xmlhttprequest.png" alt="XMLHttpRequest example" class="float-left" figure=false %}
 
 Understanding the application type is important because it puts controls on the methods used to authenticate users and the workflows that you will need to build. Traditional apps can only use the two HTTP methods `GET` and `POST` that are supported by browsers. Single-page apps have more flexibility by using the `XMLHttpRequest` functionality of the browser's JavaScript, so they can invoke all of the standard HTTP methods including `GET`, `POST`, `PUT`, and `DELETE`. Native applications usually call APIs to handle user interaction and input and take advantage of various libraries and protocols that manage user access.
 

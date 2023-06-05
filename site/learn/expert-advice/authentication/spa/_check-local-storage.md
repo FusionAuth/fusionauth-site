@@ -1,1 +1,0 @@
-1. The browser loads the application and as part of the initialization process, it checks if there is a valid JWT in local storage. In this case, there isn't
