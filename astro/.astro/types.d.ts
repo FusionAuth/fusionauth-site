@@ -118,6 +118,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
+"authentication/how-sso-works.mdx": {
+  id: "authentication/how-sso-works.mdx",
+  slug: "authentication/how-sso-works",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".mdx"] },
 "authentication/index.mdx": {
   id: "authentication/index.mdx",
   slug: "authentication",
@@ -756,6 +763,22 @@ declare module 'astro:content' {
   body: string,
   collection: "dev-tools",
   data: InferEntrySchema<"dev-tools">
+} & { render(): Render[".mdx"] },
+},
+"quickstarts": {
+"index.mdx": {
+  id: "index.mdx",
+  slug: "index",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
+} & { render(): Render[".mdx"] },
+"quickstart-ruby-rails-web.mdx": {
+  id: "quickstart-ruby-rails-web.mdx",
+  slug: "quickstart-ruby-rails-web",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
 } & { render(): Render[".mdx"] },
 },
 
