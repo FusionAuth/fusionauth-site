@@ -6,7 +6,7 @@ section: Authentication
 icon: /img/icons/multi-factor-authentication.svg
 ---
 
-As more of our lives move online, multi-factor authentication (MFA) becomes increasingly important as a way of keeping our accounts secure. As a user, you know you should enable MFA on any accounts containing valuable data or which you want to keep safe. 
+As more of our lives move online, [multi-factor authentication (MFA)](/docs/v1/tech/guides/multi-factor-authentication) becomes increasingly important as a way of keeping our accounts secure. As a user, you know you should enable MFA on any accounts containing valuable data or which you want to keep safe. 
 
 As a developer or software engineer, MFA may seem a bit mysterious. This article will cover:
 

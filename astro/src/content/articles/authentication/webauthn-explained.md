@@ -19,31 +19,31 @@ Let's start off with an overview of the use cases, "ceremonies", and types of au
 There are three main use cases that WebAuthn works well for.
 
 1. Re-authentication, where the user has an account created in another way, but wants an easier way to login.
-1. First factor authentication, where the user has no account or is on a new device, but uses WebAuthn to login instead of a more typical first factor like a username/password combination.
-1. As an additional factor for multi-factor authentication (MFA).
+2. [First factor authentication](/blog/2022/11/01/authenticators-ceremonies-webauthn-oh-my#first-factor-vs-second-factor), where the user has no account or is on a new device, but uses WebAuthn to login instead of a more typical first factor like a username/password combination.
+3. As an additional factor for multi-factor authentication (MFA).
 
 The main focus of this article is re-authentication, though the other use cases will be covered briefly.
 
 WebAuthn has flows of data and interaction, termed "ceremonies". These extend a network protocol to include things in the real world, such as physical hardware or human beings. There are two main ceremonies:
 
 1. Authentication, where the user logs in, using WebAuthn
-1. Registration, where the user associates an authenticator with their account
+2. Registration, where the user associates an authenticator with their account
 
 What does an authentication ceremony look like? At a high level, the flow of interaction is:
 
 1. The user tries to login to a website
-1. The website prompts the user to authenticate
-1. The user authenticates against their authenticator
-1. The authenticator signs and passes a response back to the website through the browser
-1. The website verifies the authenticator response
-1. The user is logged in
+2. The website prompts the user to authenticate
+3. The user authenticates against their authenticator
+4. The authenticator signs and passes a response back to the website through the browser
+5. The website verifies the authenticator response
+6. The user is logged in
 
 Whenever the user authenticates against the relevant authenticator, that is an "authorization gesture". It's a gesture because it requires physical interaction. This could be biometric like Touch ID, using a PIN, or any other method that an authenticator offers. An authenticator requires a user to be present with the device.
 
 There are two types of authenticators:
 
 1. Cross-platform authenticators, such as YubiKeys, which can move between different devices
-1. Platform authenticators, built into the operating system, such as Apple's Face ID or Touch ID, which are tied to a given device
+2. Platform authenticators, built into the operating system, such as Apple's Face ID or Touch ID, which are tied to a given device
 
 Authenticators store public/private keypairs securely. The purpose of an authenticator is to create and hold such keypairs. It also needs to expose the public key. The entire credential, which includes the public key and associated metadata, is often called a "passkey". Further, the authenticator must be able to sign content with the private key.
 
@@ -167,13 +167,13 @@ WebAuthn is available on all modern browsers except for IE and Opera Mini. Sorry
 You've already seen the high-level authentication flow, but let's take a closer look. When a user logs in with WebAuthn, a typical flow is:
 
 1. The system may optionally prompt a user to begin the interaction. This could be done with a previously set cookie or some other way to know the user has registered WebAuthn credentials.
-1. The user signals they want to use WebAuthn with interaction, such as clicking a button.
-2. The web server sends a request to the browser.
-3. The browser sends a request to the authenticator.
-4. The authenticator asks the user for their permission.
-5. The user grants permission, and the authenticator generates a signature and a result and sends them back to the web browser.
-6. The web browser sends the data back to the server.
-7. The server verifies the data with the previously registered public key. If it checks out, the user is logged in.
+2. The user signals they want to use WebAuthn with interaction, such as clicking a button.
+3. The web server sends a request to the browser.
+4. The browser sends a request to the authenticator.
+5. The authenticator asks the user for their permission.
+6. The user grants permission, and the authenticator generates a signature and a result and sends them back to the web browser.
+7. The web browser sends the data back to the server.
+8. The server verifies the data with the previously registered public key. If it checks out, the user is logged in.
 
 Don't worry, you'll see some code in a minute.
 

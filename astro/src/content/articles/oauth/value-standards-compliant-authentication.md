@@ -1,5 +1,5 @@
 ---
-title: The Value Of Standards-Compliant Authentication
+title: The Value of Standards-Compliant Authentication
 description: What are common auth standards and why should you consider using them in your application?
 author: James Hickey
 image: advice/value-standards/the-value-of-standards-compliant-authentication-header-image.png
@@ -45,7 +45,7 @@ Imagine that you have an API with a bespoke authentication implementation. Would
 
 On the other hand, most modern programming languages have code libraries that integrate with standard auth protocols thereby accelerating your development work. By using a standardized auth protocol such as OAuth or SAML, your clients and API consumers can reuse common code libraries for their programming language of choice.
 
-### Interoperability With Other Systems
+### Interoperability with Other Systems
 
 Using an auth protocol such as OAuth makes your system more interoperable with others. If you are working with a larger enterprise organization, then you need to integrate with other systems all the time. Using a standardized way to do this saves time, mental overhead, and overall cost.
 
@@ -57,7 +57,7 @@ Standards have been used by many different organizations and systems in many dif
 
 By leveraging a standard, you will gain the benefits of all that knowledge and experience.
 
-## Survey Of Authentication Standards
+## Survey of Authentication Standards
 
 ### OAuth
 

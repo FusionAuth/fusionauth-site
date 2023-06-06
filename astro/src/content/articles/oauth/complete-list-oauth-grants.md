@@ -1,5 +1,5 @@
 ---
-title: The Complete List Of OAuth 2 Grants
+title: The Complete List of OAuth 2 Grants
 description: Sure, you know the Authorization Code grant and the Client Credentials grant, but what other OAuth grants are there?
 image: articles/complete-oauth-grants/complete-oauth-grants.png
 author: Ravgeet Dhillon
