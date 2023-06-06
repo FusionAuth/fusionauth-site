@@ -1,0 +1,221 @@
+---
+title: Quickstart Python Flask and FusionAuth
+description: Quickstart integration of Python Flask web application with FusionAuth
+navcategory: getting-started
+prerequisites: Python 3.8
+section: web
+technology: Flask
+language: Python
+---
+import Aside from '/src/components/Aside.astro';
+import RemoteCode from '/src/components/RemoteCode.astro';
+
+
+This Quickstart will take you through integrating a Python Flask application with FusionAuth, 
+setting up an OAuth authorization code grant flow and allowing users to log into your 
+application.
+
+In this Quickstart you'll create an application that has
+* A Home Page, which is where a logged-out user goes. It has a login button that allows a user to log in
+  using FusionAuth
+* An Account Page, which is where a user goes when they're logged in. It has a Logout button that allows
+  the user to log out with FusionAuth
+* The associated back end routes to accomplish all of this
+
+This quickstart will be referencing the example application in the [Flask Quickstart Repo](https://github.com/FusionAuth/fusionauth-example-python-flask-guide).
+You can build your Flask application from scratch, or you can start with the stub application that we've provided.
+
+#### Repository Contents
+| Item | Description |
+| --- | --- |
+| /docker-compose.yml | A docker-compose config file for standing up a FusionAuth server, a Postgres database, and an Elastic instance |
+| /kickstart/ | A directory containing a `kickstart` file, which is used to configure FusionAuth |
+| /stub-application/ | A base application that goes with this Quickstart. It runs, but doesn't integrate with FusionAutn (yet) |
+| /complete-application/ | A completed application, with a working integration with FusionAuth |
+
+## Prerequisites
+For this Quickstart, you'll need Python3.8 or later.
+
+You'll also need Docker, since that's how we'll be running FusionAuth.
+
+The commands below are for macOS, but are limited to basic *nix commands.
+
+## Run FusionAuth
+In the root directory of the repo you'll find a Docker compose file (docker-compose.yml) and an environment variables configuration file (.env). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
+
+```shell
+git clone https://github.com/FusionAuth/fusionauth-quickstart-python-flask-web
+cd fusionauth-quickstart-python-flask-web
+docker-compose up -d
+```
+
+This will start three containers, once each for FusionAuth, Postgres, and Elastic. 
+
+The FusionAuth configuration files also make use of a unique feature of FusionAuth, called Kickstart: 
+when FusionAuth comes up for the first time, it will look at the Kickstart file and mimic API calls to 
+configure FusionAuth for use when it is first run. The Kickstart will set up (among other things):
+* An Application and somme associated config including that for OAuth, user registration, and more
+* CORS configuration to allow requests from localhost:5000 (your app)
+* A couple of users: admin@example.com and richard@example.com
+
+<Aside type="note">
+If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by executing `docker-compose down -v`.
+</Aside>
+
+FusionAuth will be configured with these settings
+* Your client Id is: `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`
+* Your client secret is: `super-secret-secret-that-should-be-regenerated-for-production`
+* Your example username is `richard@example.com` and your password is `password`
+* Your admin username is `admin@example.com` and your password is `password`
+* The FusionAuth API is hosted at `http://localhost:9011/`
+
+You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don’t need to.
+
+## Create a Basic Flask Application
+In this section, you'll set up a basic Flask application with a single page.
+
+#### Setup Your Environment
+We recommend working in a virtual environment for this.
+
+```shell
+python3.8 -m venv venv && source venv/bin/activate
+```
+
+Next, create a requirements.txt file to name the project dependencies.
+
+`requirements.txt`
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-flask-guide/andrewpai/quickstart-update/complete-application/requirements.txt"
+ lang="python" />
+
+And then install the dependencies into your virtual env.
+
+```shell
+pip install -r requirements.txt
+```
+
+#### Create the Application
+Now create your Flask app, which for now will consist of an environment file named `.env` and a python file named `server.py`.
+
+Create the environment file with these contents:
+
+`.env`
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-flask-guide/andrewpai/quickstart-update/complete-application/.env"
+ lang="shell" />
+
+In server.py, you'll add all of the imports you'll need, declare some constants, and initialize the OAuth library.
+
+`server.py`
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-flask-guide/andrewpai/quickstart-update/complete-application/server.py"
+ lang="python"
+ tags="baseApplication"/>
+
+<Aside type="tip">
+You should be able to start your Flask application with `flask --app server.py --debug run`.
+Note that you won't be able to access it with a browser yet!
+</Aside>
+
+#### Create a Home Route and a Home Page
+The next step is to get a basic home page up and running. This will require a back end route to handle requests to `/` and a web page template.
+
+In the route function, you're going to look for an access token, which is created when a user is successfully authenticated. If the user
+is not authenticated, you'll just take them to the home page. However, if they _are_ authenticated, you'll redirect them to 
+an `/account` page. Since we haven't implemented login yet, the redirect to `/account` won't work.
+
+Add the route handling function to your server.py file.
+
+`server.py`
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-flask-guide/andrewpai/quickstart-update/complete-application/server.py"
+ lang="python"
+ tags="homeRoute"/>
+
+Next, create the home page in a `templates` directory. This page just has a login button, which won't do anything yet. These commands also 
+install a CSS file and an image to make your app look nicer.
+
+```shell
+mkdir -p templates static/css static/img && \
+wget -O templates/home.html https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-flask-guide/andrewpai/quickstart-update/complete-application/templates/home.html && \
+wget -O static/css/changebank.css https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-flask-guide/andrewpai/quickstart-update/complete-application/static/css/changebank.css && \
+wget -O static/img/money.jpg https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-flask-guide/andrewpai/quickstart-update/complete-application/static/css/money.jpg
+
+```
+
+<Aside type="tip">
+With the home page and route complete, you can view the home page in your brower at `http://localhost:5000`.
+</Aside>
+
+## Add OAuth Authentication Routes
+Next, you'll add a `/login` route that uses authlib to take the user to FusionAuth's OAuth2 `authorize` endpoint, 
+and a `/callback` route that FusionAuth will redirect the user back to after a successful login.
+
+FusionAuth will include an authorization code in the redirect to `/callback`, and the callback function will 
+make a server-to-server call to FusionAuth to exchange the authorization code for an access token, refresh token, 
+and userinfo object. All of this happens in `oauth.FusionAuth.authorize_access_token()`. This sequence of redirects and 
+back end calls is known as an OAuth Authorization Code Grant flow.
+
+After your app gets the information back from FusionAuth, you'll write these items to HTTP-only cookies, so that they will 
+be returned to the Flask application on subsequent requests, but are not readable by code running in the browser.
+
+We also set the userinfo object in the Flask session, to make it easy to use in rendered templates.
+
+Add the `/login` and `/callback` routes to your server code.
+
+`server.py`
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-flask-guide/andrewpai/quickstart-update/complete-application/server.py"
+ lang="python"
+ tags="loginRoute"/>
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-flask-guide/andrewpai/quickstart-update/complete-application/server.py"
+ lang="python"
+ tags="callbackRoute"/>
+
+<Aside type="tip">
+Once these steps are done, you should be able to successfully log into your application! Just note that after logging
+in, you're taking the user to `/account`, which doesn't exist yet.
+</Aside>
+
+### Add a Secured Page
+Remember that after logging in, the application redirects the user to `/`, which then redirects a 
+logged in user to '/account'. You going to add that route and page now.
+
+First, create the page template for a logged-in user. It's going to show a personalized header 
+and a logout button. 
+
+```shell
+wget -O templates/account.html https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-flask-guide/andrewpai/quickstart-update/complete-application/templates/account.html
+```
+
+Next, create a route to get to that page. This checks if an access token is present.
+If one isn't, it forces a logout at FusionAuth. If one is, it renders the `/account` page.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-flask-guide/andrewpai/quickstart-update/complete-application/server.py"
+ lang="python"
+ tags="accountRoute"/>
+
+<Aside type="tip">
+Now when you log in, you should see the `/account` page!
+</Aside>
+
+### Logout
+The last step is to implement logout. When you log a user out of an application, you'll take them to 
+FusionAuth's `/oauth2/logout` endpoint. After logging the user out, FusionAuth will redirect the user
+to your app's `/login` endpoint, which you'll create now. This endpoint deletes any cookies that your
+application created, and clears the Flask session.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-flask-guide/andrewpai/quickstart-update/complete-application/server.py"
+ lang="python"
+ tags="logoutRoute"/>
+
+<Aside type="tip">
+Click the `Logout` button and watch the browser first go to FusionAuth to log out the user, then return to your home page.
+</Aside>
+
+## Next Steps
+If you wanted to improve on this application
+* Try adding support for the `Make Change` menu item on the account page. You can look at the complete application in the repository for guidance.
+* Properly validate the user's loggined in state.
+  * Validate the access token's signature
+  * Check that it isn't expired
+* Add token refresh
+  * If a user has an expired token (or even if they don't), use their refresh token to acquire a new one. If refresh fails,
+    that means it's time for the user to log in again
+* Add token validation and refresh into a function  decorator that can be easily applied to any route
