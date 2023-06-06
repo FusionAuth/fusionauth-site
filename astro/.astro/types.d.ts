@@ -766,9 +766,23 @@ declare module 'astro:content' {
 } & { render(): Render[".mdx"] },
 },
 "quickstarts": {
+"index.mdx": {
+  id: "index.mdx",
+  slug: "index",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
+} & { render(): Render[".mdx"] },
 "quickstart-ruby-rails-web.mdx": {
   id: "quickstart-ruby-rails-web.mdx",
   slug: "quickstart-ruby-rails-web",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
+} & { render(): Render[".mdx"] },
+"quickstart-springboot-web.mdx": {
+  id: "quickstart-springboot-web.mdx",
+  slug: "quickstart-springboot-web",
   body: string,
   collection: "quickstarts",
   data: InferEntrySchema<"quickstarts">
