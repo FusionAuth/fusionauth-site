@@ -193,6 +193,7 @@ For blog posts:
 - webview
 - CAPTCHA
 - Google reCAPTCHA
+- Spring Boot
 
 ## Words to avoid
 
