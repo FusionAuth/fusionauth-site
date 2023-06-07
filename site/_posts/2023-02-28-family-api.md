@@ -420,10 +420,10 @@ router.post('/change-consent-status', async function (req, res, next) {
     if (response.response.families && response.response.families.length >= 1) {
       let self = response.response.families[0].members.filter(elem => elem.userId === req.session.user.id)[0];
       if (self.role !== 'Adult') {
-        res.status(403).send('Only Adult users can change consents');
+        return res.status(403).send('Only Adult users can change consents');
       }
       if (response.response.families[0].members.filter(elem => elem.userId === req.body.userId).length < 1) {
-        res.status(403).send('You cannot access families you are not part of');
+        return res.status(403).send('You cannot access families you are not part of');
       }
     }
 
