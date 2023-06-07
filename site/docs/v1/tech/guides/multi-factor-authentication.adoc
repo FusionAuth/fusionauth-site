@@ -11,6 +11,7 @@ This guide will illustrate multi-factor authentication features in FusionAuth, i
 
 * <<Types of MFA Supported>>
 * <<Tenant Set Up>>
+* <<Application Set Up>>
 * <<Enabling MFA on a User>>
 ** <<Directly Enabling MFA for a User>>
 ** <<Building Your Own Interface>>
@@ -56,7 +57,9 @@ include::docs/v1/tech/shared/_difference-two-factor-multi-factor.adoc[]
 
 == Tenant Set Up
 
-For each tenant, the MFA methods must be explicitly allowed in order for users within that tenant to be able to use it. This includes configuring email templates and SMS messengers. If you are using hosted login pages or the login API, you need to enable MFA methods on the tenant for users. If you are only using step up auth, on the other hand, you do not have to enable any tenant MFA methods. 
+For each tenant, the MFA methods must be explicitly allowed in order for users within that tenant to be able to use it. This includes configuring email templates and SMS messengers. If you are using hosted login pages or the login API, enable your preferred allowed MFA methods on the tenant. If you are only using step up auth, on the other hand, you do not have to enable any tenant MFA methods. 
+
+The tenant configuration also sets the default multi-factor policy. The policy controls when MFA is required
 
 In the image below, this tenant has all FusionAuth supported methods enabled:
 
@@ -64,13 +67,28 @@ image::guides/multi-factor-authentication/tenant-settings-mfa.png[Configuring al
 
 Please see the link:/docs/v1/tech/core-concepts/tenants#multi-factor[Tenant configuration documentation for more information].
 
+== Application Set Up
+
+include::docs/v1/tech/shared/_enterprise-edition-blurb.adoc[]
+
+You can override some MFA configuration settings at the application level.
+For instance, if you have one application that is used by your administrators, you might want to require MFA. For another application used by your customers, you might want to disable MFA.
+
+image::guides/multi-factor-authentication/application-settings-mfa.png[Configuring allowed MFA methods on the application.,width=1200,role=bottom-cropped]
+
+Please see the link:/docs/v1/tech/core-concepts/applications#multi-factor[Application configuration documentation for more information].
+
 == Enabling MFA on a User
 
 Once you've configured tenant settings, enable one or more MFA methods on a user. Doing this will require the user to present the additional factor of proof whenever they log in. 
 
-Since this involves sharing secrets and verifying possession of email accounts or mobile phones, you cannot enable MFA using the FusionAuth administrative user interface. 
+Since this involves sharing secrets and verifying possession of email accounts or mobile phones, you cannot enable MFA for a different user using the FusionAuth administrative user interface.
 
-You have three options:
+You can, however, enable MFA on your own account using the administrative user interface.
+
+image::guides/multi-factor-authentication/self-enable-mfa.png[Using the administrative user interface to enable MFA for your own account.,width=1200]
+
+There are three options to allow users to enable multi-factor authentication on their account:
 
 * If you have a paid edition, users may use the self service account management feature to enable MFA for their accounts. link:/docs/v1/tech/account-management/[Learn more about that option here].
 * You may enable MFA directly using the User API.
@@ -102,7 +120,7 @@ curl -XPATCH -H 'Content-type: application/json' -H "Authorization: $API_KEY" \
 }'
 ----
 
-You are `PATCH`ing the `twoFactor` array; doing so multiple times adds to the array each time (rather than setting it to exactly what you provided in the API call). https://github.com/FusionAuth/fusionauth-issues/issues/441[Read this tracking issue for more info.]
+You are using `PATCH` for `twoFactor` array; doing so multiple times adds to the array each time (rather than setting it to exactly what you provided in the API call). link:/docs/v1/tech/apis/#the-patch-http-method[Learn more about `PATCH` options.]
 
 If adding a TOTP factor, make sure you capture the secret and convey it to the user so they may enter it into their authenticator application.
 
@@ -195,7 +213,7 @@ include::docs/src/json/two-factor/enable-email-request.json[]
 
 If you view the user in the administrative user interface, you can see the user has an MFA method attached to their account:
 
-image::guides/multi-factor-authentication/enabled-mfa.png[The MFA settings in the user details view when the first MFA method has been enabled.,width=1200]
+image::guides/multi-factor-authentication/enabled-mfa.png[The MFA settings in the user details view when the first MFA method has been enabled.,width=1200,role=bottom-cropped]
 
 At this point, the user will be prompted to provide another factor of authentication whenever they login. This is the default screen displayed if you are using the hosted login pages:
 
@@ -227,7 +245,7 @@ image::guides/multi-factor-authentication/authentication-challenge-multiple-fact
 
 In the administrative user interface, the user has a second MFA method attached to their account:
 
-image::guides/multi-factor-authentication/enabled-second-factor.png[The MFA settings in the user details view when a second MFA method has been enabled.,width=1200]
+image::guides/multi-factor-authentication/enabled-second-factor.png[The MFA settings in the user details view when a second MFA method has been enabled.,width=1200,role=bottom-cropped]
 
 By repeating this process, users can attach as many MFA methods of each type to their account as they wish.
 
@@ -289,7 +307,7 @@ curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'ht
 include::docs/src/json/login/request.json[]
 ----
 
-If they have MFA enabled, your code will receive a `242` response status code. You'll also get JSON with a list of the user's methods:
+If they have MFA enabled or MFA is required, your code will receive a `242` response status code. You'll also get JSON with a list of the user's methods:
 
 [source,json]
 .Log the User In Response JSON When MFA Enabled
@@ -370,7 +388,7 @@ Kick off the process using the start endpoint:
 API_KEY=...
 REQUEST_PAYLOAD='{...}'
 
-curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/start' -d $REQUEST_PAYLOAD
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/start' -d "$REQUEST_PAYLOAD"
 ----
 
 [source,json]
@@ -411,7 +429,7 @@ API_KEY=...
 REQUEST_PAYLOAD='{...}'
 TWO_FACTOR_ID=... # from the /api/two-factor/start response
 
-curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/send?twoFactorId='$TWO_FACTOR_ID -d $REQUEST_PAYLOAD
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/send?twoFactorId='$TWO_FACTOR_ID -d "$REQUEST_PAYLOAD"
 ----
 
 [source,json]
@@ -433,7 +451,7 @@ Build a screen or page to collect the code. When you have it, complete the step 
 API_KEY=...
 REQUEST_PAYLOAD='{...}'
 
-curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/login' -d $REQUEST_PAYLOAD
+curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://local.fusionauth.io/api/two-factor/login' -d "$REQUEST_PAYLOAD"
 ----
 
 [source,json]
@@ -459,7 +477,7 @@ You have four options:
 
 Navigate to [breadcrumb]#Users -> The User# and manage the user. Then go to the [breadcrumb]#Multi-Factor# tab. Remove any of the MFA methods by clicking the red trash can icon and confirming the deletion:
 
-image::guides/multi-factor-authentication/delete-factor-admin-view.png[Delete an MFA method from the admin screen.,width=1200]
+image::guides/multi-factor-authentication/delete-factor-admin-view.png[Delete an MFA method from the admin screen.,width=1200,role=bottom-cropped]
 
 A user may also remove an MFA method by using the self service account management (if you have a paid edition) by clicking the `-` link. link:/docs/v1/tech/account-management/[Learn more about that here.]
 
@@ -648,7 +666,7 @@ To migrate this functionality:
 
 If you have other MFA methods that you'd like to use with FusionAuth, you have a few options:
 
-* link:https://fusionauth.io/docs/v1/tech/core-concepts/roadmap/[Check out the roadmap guidance] to see if your desired method is going to be added soon. If not, the roadmap documents various ways you can request a new feature.
+* link:/docs/v1/tech/core-concepts/roadmap/[Check out the roadmap guidance] to see if your desired method is going to be added soon. If not, the roadmap documents various ways you can request a new feature.
 * If you can identify a user using their phone number and can set up a small application to process JSON requests from FusionAuth, you may use a link:/docs/v1/tech/messengers/generic-messenger[custom Generic Messenger] to send a code as a second factor. This works well with transports like SMS or any other messaging protocol.
 * If you can send a code out of band, you may use step up auth to protect all the pages in your system. As soon as a user logs in, require step up auth. Users don't have to have MFA enabled to use step up.
 * If your additional factor can receive a webhook, configure your webhooks to be transactional and send one on login. The service can then perform the MFA check, perhaps doing something like fingerprint recognition. If any status other than `200` is returned, the login will fail. The downside of this approach is that the message to the end user won't be helpful, and that MFA will be required on every login. Here is an link:/blog/2020/08/13/locking-an-account-with-breached-password[example of a webhook stopping a login].
@@ -664,64 +682,23 @@ include::docs/v1/tech/guides/_mfa-migration.adoc[]
 There are times when you might want to force a user to provide an additional factor of authentication before they ever get access to your application.
 For example, you might require MFA when a user logs into an accounting application, but not when they log in to a customer support application.
 
-Or you might want to force every user with a certain role to provide an additional factor every time they log in.
-For example, super admins might need to provide a second factor every time they log in.
+In FusionAuth, this is controlled by the Login Policy setting. This can be configured at the tenant level, or, if you have the enterprise plan, at the application level. There are three values for any tenant login policy:
 
-In FusionAuth, if a user has one or more additional factors configured for their account, they will be forced to provide that second factor on login.
-Once someone has provided a second factor, they will not have to provide it again until a certain amount of time has passed.
-This duration is configurable at the tenant level, and is set by the `twoFactorTrustIdTimeToLiveInSeconds` setting.
+* Enabled
+* Disabled
+* Required
 
-=== Forcing a User to Provide an Additional Factor Before Accessing an Application
+When the login policy is `Enabled`, a two-factor challenge will be required during login when a user has configured one or more two-factor methods.
 
-You may want to force a user to perform MFA before they can access a sensitive application, such as the accounting application mentioned above.
+When the login policy is `Disabled`, even when a user has one or more two-factor methods configured, a two-factor challenge will not be required during login. 
 
-One way to do that is to add link:/docs/v1/tech/guides/multi-factor-authentication#step-up-auth[step up authentication] to your application.
-Each time the user accesses the application, perform a step up, which will force them to provide an additional factor.
+When the login policy is to `Required`, a two-factor challenge will be required during login. If a user does not have configured two-factor methods, they will not be able to log in.
 
-An alternate option is to deny access in the application by augmenting the JWT based on whether the user has any MFA methods:
+=== Alternate Methods
 
-* If the user has not configured an MFA method, you know they haven't provided an additional factor.
-* If the user has configured an MFA method, you know they have provided the additional factor when they logged in and the device was untrusted.
-
-If using this method to enforce MFA, configure the `twoFactorTrustIdTimeToLiveInSeconds` setting to a small value, as when that duration elapses, the device will become untrusted and MFA will be required at login.
-
-To check whether MFA is enabled, put a value in the JWT with a link:/docs/v1/tech/lambdas/jwt-populate[JWT Populate Lambda].
-
-[source,javascript]
-.Example lambda which adds MFA enabled claim
-----
-function populate(jwt, user, registration) {
-  jwt.hasMFAEnabled = user.twoFactor && user.twoFactor.methods && user.twoFactor.methods.length > 0;
-}
-----
-
-When your application receives the JWT, check the value of this claim.
-
-If the claim is missing or `false`, the application knows that the user has not completed an additional factor, and can deny access.
-Such a check can happen in the application or in a proxy.
-
-Having FusionAuth https://github.com/FusionAuth/fusionauth-issues/issues/763[manage this check is an open feature request].
-Please review the issue and comment on or upvote it if you'd like to see this handled by FusionAuth.
-
-=== Forcing a User to Provide an Additional Factor Every Time
-
-As mentioned above, you may want certain types of users to provide an additional factor every time they log in.
-
-You can use the same step up authentication method as mentioned above. Using the "super admin" example, if the application sees a user who has that role, it can force a step up.
-
-To avoid modifying your application, you can also examine the user during authentication and modify parameters sent to FusionAuth.
-
-If you are using the hosted login pages, you can set [field]#trustComputer# to `false` every time a user visits the link:/docs/v1/tech/themes/template-variables#oauth-two-factor[`/oauth2/two-factor` page] and has a role of "superadmin".
-You may also remove the theme code which sets that variable, in which case it will default to a value of `false`.
-
-If you are using the Login API, don't send the [field]#twoFactorTrustId# value returned link:/docs/v1/tech/apis/login#complete-multi-factor-authentication[after completing a multi-factor authentication].
+If login policies aren't flexible enough for you, you can add link:/docs/v1/tech/guides/multi-factor-authentication#step-up-auth[step up authentication] to your application.
+Each time the user accesses a sensitive part of an application, you can require a step up, which will force them to provide an additional factor.
 
 == Troubleshooting
 
-// TODO break out to an include for including into troubleshooting guide
-
-If using the email MFA method and your emails don't get sent, ensure you have configured your SMTP settings correctly. See the link:/docs/v1/tech/admin-guide/troubleshooting#troubleshooting-email[Email Troubleshooting] section for more.
-
-If using the SMS MFA method and your text messages don't get sent, ensure that you have tested the SMS messenger configuration, enabled debugging, and reviewed the event log.
-
-If you have enabled MFA on a user but are not prompted for MFA in the login process, ensure the MFA method associated with the user is enabled on the tenant.
+include::docs/v1/tech/guides/_mfa-troubleshooting.adoc[]

@@ -36,7 +36,7 @@ If you missed the this first one, **FusionAuth's Open Office Hours** are free se
 - API endpoint to create API keys & related security issues
 - OAuth Standards
 - Implicit grants and vulnerabilities
-- FusionAuth [Expert Advice](/learn/expert-advice) on website
+- FusionAuth [Expert Advice](/learn/expert-advice/) on website
 - Send us your dev tool suggestions
 - JWS and JWE support
 - Mutual TLS to protect JWTs

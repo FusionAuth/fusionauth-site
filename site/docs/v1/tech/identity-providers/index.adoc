@@ -9,12 +9,19 @@ navcategory: login-methods
 
 == Overview
 
-Identity Providers allow you to enable third-party login in FusionAuth.
+Identity Providers allow you to enable third-party login in FusionAuth. This includes social options such as Facebook and Google, and enterprise options such as OIDC and SAML.
 
+Find the FusionAuth Identity Providers in the UI by navigating to [breadcrumb]#Settings -> Identity Providers# or use the link:/docs/v1/tech/apis/identity-providers/[Identity Providers] APIs.
+
+image::identity-providers/identity-providers.png[Identity Providers,width=1200,role=bottom-cropped]
+
+* <<Social Identity Providers>>
+* <<Enterprise Identity Providers>>
 * <<Identity Providers and Tenants>>
 * <<Identity Providers and Applications>>
 * <<Overrides>>
 * <<Hints>>
+* <<Account Security>>
 * <<Linking Strategies>>
 * <<Linking and Create Registration>>
 * <<Linking Strategy Examples>>
@@ -23,38 +30,41 @@ Identity Providers allow you to enable third-party login in FusionAuth.
 ** <<Pending Link>>
 ** <<Anonymous Link>>
 
+== Social Identity Providers
+
 The following providers are available:
 
 * link:/docs/v1/tech/identity-providers/apple[Apple]
 * link:/docs/v1/tech/identity-providers/facebook[Facebook]
 * link:/docs/v1/tech/identity-providers/epic-games[Epic Games] - requires an Essentials or Enterprise plan.
-* link:/docs/v1/tech/identity-providers/external-jwt/[External JWT]
 * link:/docs/v1/tech/identity-providers/google[Google]
 * link:/docs/v1/tech/identity-providers/hypr[HYPR]
 * link:/docs/v1/tech/identity-providers/linkedin[LinkedIn]
 * link:/docs/v1/tech/identity-providers/nintendo[Nintendo] - requires an Essentials or Enterprise plan.
-* link:/docs/v1/tech/identity-providers/openid-connect/[OpenID Connect]
-* link:/docs/v1/tech/identity-providers/samlv2/[SAML v2]
-* link:/docs/v1/tech/identity-providers/samlv2-idp-initiated/[SAML v2 IdP Initiated] - requires an Essentials or Enterprise plan.
 * link:/docs/v1/tech/identity-providers/sony[Sony] - requires an Essentials or Enterprise plan.
 * link:/docs/v1/tech/identity-providers/steam[Steam] - requires an Essentials or Enterprise plan.
 * link:/docs/v1/tech/identity-providers/twitch[Twitch] - requires an Essentials or Enterprise plan.
 * link:/docs/v1/tech/identity-providers/twitter[Twitter]
 * link:/docs/v1/tech/identity-providers/xbox[Xbox] - requires an Essentials or Enterprise plan.
 
-{empty} +
-
 If you're looking for a provider that is not listed here, review the open features in https://github.com/FusionAuth/fusionauth-issues/issues[GitHub] and either vote or comment on an existing feature, or open a new feature request if you do not find an existing feature open.
 
-Find the FusionAuth Identity Providers in the UI by navigating to [breadcrumb]#Settings -> Identity Providers# or use the link:/docs/v1/tech/apis/identity-providers/[Identity Providers] APIs.
+== Enterprise Identity Providers
 
-image::identity-providers/identity-providers.png[Identity Providers,width=1200]
+The following providers are available:
+
+* link:/docs/v1/tech/identity-providers/external-jwt/[External JWT]
+* link:/docs/v1/tech/identity-providers/openid-connect/[OpenID Connect]
+* link:/docs/v1/tech/identity-providers/samlv2/[SAML v2]
+* link:/docs/v1/tech/identity-providers/samlv2-idp-initiated/[SAML v2 IdP Initiated] - requires an Essentials or Enterprise plan.
+
+If you're looking for a provider that is not listed here, review the open features in https://github.com/FusionAuth/fusionauth-issues/issues[GitHub] and either vote or comment on an existing feature, or open a new feature request if you do not find an existing feature open.
 
 == Identity Providers and Tenants
 
 Identity providers can be configured to set a limit on the number of links that may be established on a per tenant basis.
 
-In the following, we have enabled "Limit links per user" on the Default tenant and set a "Maximum link count" of `2`. With this configuration, a user will be only be able to establish at most two links for this IdP specifically.
+In the following, we have enabled "Limit links per user" on the Default tenant and set a "Maximum link count" of `2`. With this configuration, a user will only be able to establish at most two links for this IdP specifically.
 
 image::identity-providers/identity-provider-tenant-config.png[Identity Providers,width=1200,role=bottom-cropped]
 
@@ -101,6 +111,24 @@ An Identity Provider Id is appended to the Login URL for an application using th
 An email address or domain may be provided in the `login_hint` request parameter. For example, to send a user directly to the login page of an OIDC IdP configured with a domain of `example.com`, you'd append `&login_hint=example.com` to the application's Login URL. The use of this parameter is up to the Identity Provider, so adding this parameter may or may not be supported by the Identity Provider you are using.
 
 You can read more about the `login_hint` and `idp_hint` parameters in the link:/docs/v1/tech/oauth/endpoints[OAuth Endpoints documentation].
+
+== Account Security
+
+When you configure an Identity Provider, you are explicitly trusting this federated identity system to authenticate users. MFA requirements and configuration, roles and groups, email or phone verification, and account identifiers are controlled by the provider.
+
+[WARNING.warning]
+====
+Be careful who you allow to set up an Identity Provider. Your security is only as strong as the security of the platform to which you federate.
+====
+
+A malicious identity provider can negatively impact your system. For instance, it could create accounts with email addresses already in FusionAuth. This could lead to account takeover; the malicious user could log in to the identity provider, return to FusionAuth, and access user data.
+
+Such attacks can be mitigated by:
+
+* Not setting up an Identity Provider.
+* Limiting the applications for which an Identity Provider is configured.
+* Doing additional verification in a Reconcile Lambda to ensure that the email address or identifier provided by the Identity Provider is expected.
+* Using a `Disabled` linking strategy for an Identity Provider and managing links via the link:/docs/v1/tech/apis/identity-providers/links[Links API]. This allows business logic to execute before or during linking. Examples include disallowing any links to a certain domain or calling into another API for additional validation before creating a link.
 
 == Linking Strategies
 

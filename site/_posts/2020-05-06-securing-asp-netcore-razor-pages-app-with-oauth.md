@@ -375,7 +375,7 @@ Once you've updated all these files, you can publish and start the application. 
 
 After you've signed in, you'll end up at the "Secure" page and will see all claims encoded in the JWT.
 
-{% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net//successful-login-secure-page-display.png" alt="The secure page." class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/authorization-code-grant-asp-net/successful-login-secure-page-display.png" alt="The secure page." class="img-fluid" figure=false %}
 
 You can see the source of the application at this stage of development by looking at the [`add-authentication` branch](https://github.com/FusionAuth/fusionauth-example-asp-netcore/tree/add-authentication).
 

@@ -25,6 +25,22 @@ Determines if a UserRegistration is created for the User automatically or not. I
 Determines if this identity provider is enabled for the Application specified by the `applicationId` key.
 
 ifndef::samlv2_idp_initiated[]
+[field]#identityProvider.assertionConfiguration.destination.alternates# [type]#[Array]# [since]#Available since 1.43.0#::
+The array of URLs that FusionAuth will accept as SAML login destinations if the [field]#identityProvider.assertionConfiguration.destination.policy# setting is `AllowAlternates`.
+endif::[]
+
+ifndef::samlv2_idp_initiated[]
+[field]#identityProvider.assertionConfiguration.destination.policy# [type]#[String]# [since]#Available since 1.43.0#::
+The policy to use when performing a destination assertion on the SAML login request.
++
+The possible values are:
++
+* `Enabled` - Verifies the Destination attribute in the SAML response is equal to the expected Destination which is the FusionAuth ACS (Assertion Consumer Service) URL. This is the default and the recommended setting.
+* `Disabled` - Do not validate the Destination attribute. This is not recommended, please use with caution.
+* `AllowAlternates` - Verifies the Destination attribute is either the expected FusionAuth ACS, or one of the configured alternate values. This option is intended to assist with migrations from third-party IdPs and should be used with caution.
+endif::[]
+
+ifndef::samlv2_idp_initiated[]
 [field]#identityProvider.buttonImageURL# [type]#[String]#::
 The top-level button image (URL) to use on the FusionAuth login page for this Identity Provider.
 endif::[]
@@ -51,7 +67,7 @@ This is an optional list of domains that this SAML v2 provider should be used fo
 endif::[]
 
 [field]#identityProvider.emailClaim# [type]#[String]#::
-The name of the email claim (Attribute in the `Assertion` element) in the SAML response that FusionAuth uses to uniquely identity the user. If this is not set, the `useNameIdForEmail` flag must be true.
+The name of the email claim (attribute in the `Assertion` element) in the SAML response that FusionAuth uses to uniquely identity the user.
 
 [field]#identityProvider.enabled# [type]#[Boolean]#::
 Determines if this provider is enabled. If it is false then it will be disabled globally.
@@ -62,6 +78,16 @@ The Id of the provider.
 ifndef::samlv2_idp_initiated[]
 [field]#identityProvider.idpEndpoint# [type]#[String]#::
 The SAML v2 login page of the identity provider.
+endif::[]
+
+ifndef::samlv2_idp_initiated[]
+[field]#identityProvider.idpInitiatedConfiguration.enabled# [type]#[Boolean]# [since]#Available since 1.43.0#::
+Determines if FusionAuth will accept IDP-initiated login requests from this SAMLv2 Identity Provider. A valid license is required to use this feature.
+endif::[]
+
+ifndef::samlv2_idp_initiated[]
+[field]#identityProvider.idpInitiatedConfiguration.issuer# [type]#[String]# [since]#Available since 1.43.0#::
+The EntityId (unique identifier) of the SAML v2 identity provider. This value should be provided to you.
 endif::[]
 
 [field]#identityProvider.insertInstant# [type]#[Long]#::
@@ -83,8 +109,23 @@ The id of a SAML reconcile lambda that is applied when the identity provider sen
 
 include::_identity-provider-linking-strategy-response-parameter.adoc[]
 
+ifndef::samlv2_idp_initiated[]
+[field]#identityProvider.loginHintConfiguration.enabled# [type]#[Boolean]# [since]#Available since 1.43.0#::
+When enabled and HTTP-Redirect bindings are used, FusionAuth will provide the username or email address when available to the IdP as a login hint using the configured parameter name set by the [field]#identityProvider.loginHintConfiguration.parameterName# to initiate the AuthN request.
+endif::[]
+
+ifndef::samlv2_idp_initiated[]
+[field]#identityProvider.loginHintConfiguration.parameterName# [type]#[String]# [since]#Available since 1.43.0#::
+The name of the parameter used to pass the username or email as login hint to the IDP when enabled, and HTTP redirect bindings are used to initiate the AuthN request.
+endif::[]
+
 [field]#identityProvider.name# [type]#[String]#::
 The name of this SAML v2 identity provider. This is only used for display purposes.
+
+ifndef::samlv2_idp_initiated[]
+[field]#identityProvider.nameIdFormat# [type]#[String]#::
+The Name Id is used to facilitate communication about a user between a Service Provider (SP) and Identity Provider (IdP). The SP can specify the preferred format in the AuthN request regarding a user. The identity Provider will attempt to honor this format in the AuthN response.
+endif::[]
 
 ifndef::samlv2_idp_initiated[]
 [field]#identityProvider.postRequest# [type]#[Boolean]# [since]#Available since 1.20.0#::
@@ -107,13 +148,21 @@ ifndef::samlv2_idp_initiated[]
 [field]#identityProvider.type# [type]#[String]#::
 This field will be `SAMLv2`.
 endif::[]
+
 ifdef::samlv2_idp_initiated[]
 [field]#identityProvider.type# [type]#[String]#::
 This field will be `SAMLv2IdPInitiated`.
 endif::[]
 
+[field]#identityProvider.uniqueIdClaim# [type]#[String]#::
+The name of the unique claim in the SAML response that FusionAuth uses to uniquely link the user. If this is not set, the `emailClaim` will be used when linking user.
+
 [field]#identityProvider.useNameIdForEmail# [type]#[Boolean]#::
 Whether or not FusionAuth will use the `NameID` element value as the email address of the user for reconciliation processing.
+
+[field]#identityProvider.usernameClaim# [type]#[String]#::
+The name of the claim in the SAML response that FusionAuth uses to identity the username. If this is not set, the `NameId` value will be used to link a user. This property is required when [field]#identityProvider.linkingStrategy# is set to `LinkByUsername` or `LinkByUsernameForExistingUser`
+
 
 ifndef::samlv2_idp_initiated[]
 [field]#identityProvider.xmlSignatureC14nMethod# [type]#[String]# [since]#Available since 1.20.0#::
@@ -134,6 +183,6 @@ ifdef::samlv2_idp_initiated[]
 [source,json]
 .Example SAML v2 IdP Initiated Response JSON
 ----
-include::../../../../src/json/identity-providers/samlv2-idp-initiated-request.json[]
+include::../../../../src/json/identity-providers/samlv2-idp-initiated-response.json[]
 ----
 endif::[]
