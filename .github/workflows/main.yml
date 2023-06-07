@@ -12,6 +12,10 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+permissions:
+  id-token: write # Used to get an access token, which is then used to assume an AWS IAM role
+  contents: read
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "deploy_website"
@@ -24,10 +28,20 @@ jobs:
       ALGOLIA_API_KEY: ${{ secrets.ALGOLIA_API_KEY }}
       JEKYLL_ENV: production
 
+    permissions:
+      id-token: write
+
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Setup the system with the repository code, Java, and Ruby
       - uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ env.PUBLISHER_ROLE_ARN }}
+          role-session-name: site_publisher_session
+          aws-region: ${{ env.AWS_REGION }}
+
       - uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
@@ -37,13 +51,6 @@ jobs:
         with:
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
           ruby-version: '2.7.5'
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: ${{ env.PUBLISHER_ROLE_ARN }}
-          role-session-name: site_publisher_session
-          aws-region: ${{ env.AWS_REGION }}
 
       # Run the deployment
       - name: Deploy website
