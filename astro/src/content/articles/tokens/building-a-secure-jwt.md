@@ -8,7 +8,7 @@ section: Tokens
 # dateModified: 2020-06-25
 ---
 
-JSON Web Tokens (JWTs) get a lot of hate online for being insecure. Tom Ptacek, founder of [Latacora](https://latacora.com/), a security consultancy, had this to say about [JWTs in 2017](https://news.ycombinator.com/item?id=14292223):
+[JSON Web Tokens (JWTs)](/articles/tokens/jwt-components-explained)_ get a lot of hate online for being insecure. Tom Ptacek, founder of [Latacora](https://latacora.com/), a security consultancy, had this to say about [JWTs in 2017](https://news.ycombinator.com/item?id=14292223):
 
 > So, as someone who does some work in crypto engineering, arguments about JWT being problematic only if implementations are "bungled" or developers are "incompetent" are sort of an obvious "tell" that the people behind those arguments aren't really crypto people. In crypto, this debate is over.
 >
@@ -20,7 +20,7 @@ This article will help make sure your JWTs are unassailable. It'll cover how you
 
 However, every situation is different. You know your data and risk factors, so please learn these best practices and then apply them using judgement. A bank shouldn't follow the same security practices as a 'todo' SaaS application; take your needs into account when implementing these recommendations.
 
-One additional note regarding the security of JWTs is that they are similar in many respects to other signed data, such as SAML assertions. While JWTs are often stored in a wider range of locations than SAML tokens are, it is always recommended that you carefully protect any signed tokens.
+One additional note regarding the security of JWTs is that they are similar in many respects to other signed data, such as [SAML](/articles/oauth/saml-vs-oauth) assertions. While JWTs are often stored in a wider range of locations than SAML tokens are, it is always recommended that you carefully protect any signed tokens.
 
 ## Definitions
 
@@ -43,7 +43,7 @@ The first is that a signed JWT is like a postcard. Anyone who has access to it c
 eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJmdXNpb25hdXRoLmlvIiwiZXhwIjoxNTkwNzA4Mzg1LCJhdWQiOiIyMzhkNDc5My03MGRlLTQxODMtOTcwNy00OGVkOGVjZDE5ZDkiLCJzdWIiOiIxOTAxNmI3My0zZmZhLTRiMjYtODBkOC1hYTkyODc3Mzg2NzciLCJuYW1lIjoiRGFuIE1vb3JlIiwicm9sZXMiOlsiUkVUUklFVkVfVE9ET1MiXX0.8QfosnY2ZledxWajJJqFPdEvrtQtP_Y3g5Kqk8bvHjo
 ```
 
-You can decode it using [any number of online tools](/dev-tools/jwt-debugger), because it's just three base 64 encoded strings joined by periods.
+You can [decode it using any number of online tools](/dev-tools/jwt-decoder), because it's just three base 64 encoded strings joined by periods.
 
 Keep any data that you wouldn't want in the hands of someone else outside of your JWT. When you sign and send a token, or when you decode and receive it, you're guaranteed the contents didn't change. You're not guaranteed the contents are unseen.
 

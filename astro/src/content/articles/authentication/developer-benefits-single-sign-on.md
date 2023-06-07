@@ -1,5 +1,5 @@
 ---
-title: The Developer Benefits Of Single Sign-On
+title: The Developer Benefits of Single Sign-On
 description: What is Single Sign-On and how can it help developers build successful applications? 
 author: Kasper Siig
 section: Authentication
