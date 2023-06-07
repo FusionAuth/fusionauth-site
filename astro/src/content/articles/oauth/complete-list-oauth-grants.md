@@ -1,5 +1,5 @@
 ---
-title: The Complete List Of OAuth 2 Grants
+title: The Complete List of OAuth 2 Grants
 description: Sure, you know the Authorization Code grant and the Client Credentials grant, but what other OAuth grants are there?
 image: articles/complete-oauth-grants/complete-oauth-grants.png
 author: Ravgeet Dhillon
@@ -21,9 +21,7 @@ If you aren't familiar with terms like Authorization Server and Resource Server,
 
 ## Authorization Code Grant
 
-
 The authorization code grant is used to sign into applications by using third-party authentication providers like Google, Facebook, and GitHub or your own OAuth server like FusionAuth. It is one of the most common methods used on the web to authorize and authenticate the Client to access protected data from the Resource Server.
-
 
 ### Flow for Authorization Code Grant
 
@@ -63,9 +61,7 @@ This grant is no longer recommended for getting access tokens because it is less
 
 This grant is based on the functionality of the username and password credentials of a resource owner (user) to authorize and access protected data from a Resource Server. This kind of grant works well for trusted first-party clients on both web and platform applications. It is also useful as a stepping stone when porting applications using custom auth solutions over to OAuth-based solutions.
 
-
 ### Flow for Resource Owner Password Credentials Grant
-
 
 1. The Client asks the user for authorization credentials (generally a username and password).
 2. The Client sends a `POST` request with the following body parameters to the authorization endpoint on the Authorization Server:
@@ -98,11 +94,9 @@ The Client Credentials grant type uses the Id and secret credentials of a Client
 
 ## Refresh Token  Grant
 
-
 The Refresh Token grant type is used to gain a new access token from the Authorization Server by providing the refresh token to the token endpoint on the server.
 
 Every access token expires after a specific period in time, and a refresh token is sent to the Authorization Server to get a new access token.
-
 
 ### Flow for Refresh Token Grant
 

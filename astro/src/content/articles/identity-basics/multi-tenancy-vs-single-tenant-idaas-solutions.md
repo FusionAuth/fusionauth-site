@@ -1,5 +1,5 @@
 ---
-title: Multi-Tenant Vs. Single-Tenant IDaaS Solutions
+title: Multi-Tenant vs. Single-Tenant IDaaS Solutions
 description: Choosing between multi-tenant and single-tenant IDaaS solutions comes down to an organization's business objectives and requirements. Which trade-offs are you willing to make?
 author: Daniel DeGroff
 icon: /img/icons/multi-tenancy-single-tenant-architecture.svg
@@ -14,10 +14,8 @@ One important factor to consider when comparing identity platforms is whether yo
 
 ## Multi-Tenant
 
-<div class="bg-slate-200 flex justify-center p-4 not-prose">
-
-![Multi-tenant solutions](/img/articles/multi-tenant-diagram.png)
-
+<div class="bg-slate-200 flex justify-center p-4 w-full">
+<img src="/img/articles/multi-tenant-diagram.png" alt="Multi-tenant solutions">
 </div>
 
 Simply put, multi-tenant is an architecture where multiple companies store their data within the same infrastructure. The entire system can span multiple servers and data centers, but most commonly data is co-mingled in a single database. The tenants are logically isolated, but physically integrated.
@@ -40,10 +38,8 @@ Simply put, multi-tenant is an architecture where multiple companies store their
 
 ## Single-Tenant
 
-<div class="bg-slate-200 flex justify-center p-4 not-prose">
-
-![Single-tenant solutions](/img/articles/single-tenant-diagram.png)
-
+<div class="bg-slate-200 p-4 w-full">
+<img src="/img/articles/single-tenant-diagram.png" alt="Single-tenant solutions"/>
 </div>
 
 In a single-tenant architecture each company, or tenant, has their own instance, separate from any other customer. With a single-tenant solution the risk of another business accidentally receiving another customer's user data is eliminated.
@@ -83,10 +79,8 @@ Joe uses two different websites, `funnymugs.com` and `chucknorrisjokes.com`. Bot
 
 Joe will be very (unpleasantly) surprised if he changes his password on `chucknorrisjokes.com` and magically his password is updated on `funnymugs.com`. This diagram illustrates why this unexpected password change occurs when Acme Corp. is storing single user objects.
 
-<div class="bg-slate-200 flex justify-center p-4 not-prose">
-
-![Password Change](/img/blogs/password-change-tenants.png)
-
+<div class="bg-slate-200 flex justify-center p-4 w-full">
+<img src="/img/blogs/password-change-tenants.png" alt="Password Change">
 </div>
 
 This would be a poor user experience and not ideal for Acme Corp. While both users are technically Joe, he is not aware of this nuance in the method that Acme Corp. built their platform.
@@ -95,10 +89,8 @@ In most cases we want a user to be considered unique by their email address. You
 
 This is a one to many Applications model. A single user can register or be granted permissions to multiple Applications. This is also where single sign-on comes into play. You login once and then you can access each Application without the need to log into each one separately.
 
-<div class="bg-slate-200 flex justify-center p-4 not-prose">
-
-![Password Change w/ Tenants](/img/blogs/password-change-multi-tenant.png)
-
+<div class="bg-slate-200 flex justify-center p-4 w-full">
+<img src="/img/blogs/password-change-multi-tenant.png" alt="Password Change w/ Tenants"/>
 </div>
 
 However, as you just saw with Acme Corp., when the platform is opaque to the end user and there is only a single identity for a single email address, surprising side-effects start to occur. In this case, what Acme Corp. needs is a way to partition each of their clients into their own namespace. This is one of the main reasons to use multiple tenants within a single instance.

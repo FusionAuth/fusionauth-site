@@ -1,5 +1,5 @@
 ---
-title: The Value Of Trying Your Auth Provider Before You Commit
+title: The Value of Trying Your Auth Provider Before You Commit
 description: What are the benefits of trying an auth system provider before you integrate?
 author: Keanan Koppenhaver
 icon: /img/icons/value-auth-provider-commit.svg
