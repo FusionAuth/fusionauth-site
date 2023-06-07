@@ -3,7 +3,7 @@ layout: doc
 title: Integrate Your .NET Core API With FusionAuth
 description: Integrate Your .NET Core API With FusionAuth Using FusionAuth Hosted Backend
 navcategory: getting-started
-prerequisites: .NET Core, ASP.NET
+prerequisites: .NET Core, ASP.NET, npx
 technology: .NET Core
 language: .NET Core
 ---
@@ -172,7 +172,7 @@ The `profile.html` page also has a button that calls the `identity` route of the
 If the API call is successful, the `identity` route will return the identity and claims of the user. If the API call is not successful, the `identity` route will return a `401 Unauthorized` response. In this case, the code will try refreshing the access token using the refresh token in the `app.rt` cookie. To do this, the code makes a `fetch` request to the [refresh token route](/docs/v1/tech/apis/hosted-backend#refresh) of the Hosted Backend API. If the refresh token is valid, FusionAuth's Hosted Backend API will return a new access token. The code then tries the `identity` route again with the new access token.
 
 
-{% include _callout-note.liquid content="A note on CORS (Cross-Origin Resource Sharing): For this setup to work, all components, including the web page, the .NET Core API, and FusionAuth, must be on the same domain. This is because the `app.idt` JWT cookie and `app.rt` refresh cookie are set to the same domain as the FusionAuth instance. Since everything runs on the same domain, CORS won't usually be an issue. However, you'll be running all of this on `localhost` to test, with each component running on a different port, which will cause CORS issues. For this reason, we need to enable CORS on FusionAuth for the login webpage to access the FusionAuth Hosted Backend API. To do this, navigate to 'Settings', then 'System' on the sidebar, and then the 'CORS' tab. Enable CORS, and check 'GET', 'POST', and 'OPTIONS'. Enable 'Allow Credentials', and  add `http://localhost:3000` to the list of allowed origins." %}
+{% include _callout-note.liquid content="A note on CORS (Cross-Origin Resource Sharing): For this setup to work, all components, including the web page, the .NET Core API, and FusionAuth, must be on the same domain. This is because the `app.idt` JWT cookie and `app.rt` refresh cookie are set to the same domain as the FusionAuth instance. Since everything runs on the same domain, CORS won't usually be an issue. However, you'll be running all of this on `localhost` to test, with each component running on a different port, which will cause CORS issues. For this reason, we need to enable CORS on FusionAuth for the login webpage to access the FusionAuth Hosted Backend API. To do this, navigate to <span>Settings -> System </span>{:.breadcrumb} on the sidebar, and then select the <span>CORS</span>{:.breadcrumb} tab. Enable CORS, and check <span>GET</span>{:.uielement}, <span>POST</span>{:.uielement}, and <span>OPTIONS</span>{:.uielement}. Enable <span>Allow Credentials</span>{:.uielement}, and  add `http://localhost:3000` to the list of <span>Allowed origins</span>{:.field}." %}
 
 {% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-hosted-api-integration/cors-settings.png" alt="CORS settings in FusionAuth for testing on Localhost" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
