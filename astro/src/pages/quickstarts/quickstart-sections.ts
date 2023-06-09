@@ -43,7 +43,7 @@ const qsSections: QuickStartSection[] = [
         title: 'Express',
         icon: '/img/icons/javascript.svg',
         faIcon: 'fa-x',
-        navColor: 'gray'
+        navColor: 'fuchsia'
       },
       {
         href: '/blog/2023/03/13/single-sign-on-laravel-fusionauth',
@@ -57,7 +57,7 @@ const qsSections: QuickStartSection[] = [
         title: 'Wordpress',
         icon: '/img/icons/wordpress.svg',
         faIcon: 'fa-w',
-        navColor: 'slate',
+        navColor: 'fuchsia',
       },
       {
         title: '.NET',
