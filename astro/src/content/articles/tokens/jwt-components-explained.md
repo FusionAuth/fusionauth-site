@@ -146,7 +146,7 @@ Therefore, you shouldn't put anything that should remain secret into a JWT. This
 
 * private information such as government Ids
 * secrets like passwords
-* anything that would leak information like an integer id
+* anything that would leak information like an integer Id
 
 Another security concern is related to the verification of the `aud` claim. Since consuming code already possesses the token, isn't verifying the `aud` claim extra work? The `aud` claim indicates who should receive this JWT, but the code already has it. Nope, always verify this claim.
 

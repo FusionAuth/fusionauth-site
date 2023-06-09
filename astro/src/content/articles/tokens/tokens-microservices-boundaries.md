@@ -14,7 +14,7 @@ Consider this simple microservices based system.
 
 ![Simple microservices system architecture diagram.](/img/articles/tokens-microservices-boundaries/system-diagram.png)
 
-We have three different services, all protected by an API gateway. This API gateway could be running NGINX, Apache, or some other open source system. It could be a commercial package such as HAProxy or Kong. It could also be a cloud vendor managed API gateway, such as an AWS Application Load Balancer or a Google Cloud Load Balancer. 
+We have three different services, all protected by an API gateway. This API gateway could be running nginx, Apache, or some other open source system. It could be a commercial package such as HAProxy or Kong. It could also be a cloud vendor managed API gateway, such as an AWS Application Load Balancer or a Google Cloud Load Balancer. 
 
 When a request comes in, it will contain an access token. Getting this access token is beyond the scope of this article, but is documented in the [Modern Guide to OAuth](/articles/oauth/modern-guide-to-oauth/). This access token is often a JSON Web Token (JWT), which has intrinsic structure and can be signed and validated.
 
@@ -55,7 +55,7 @@ Here the token is provided to the microservices and they each validate the signa
 You'll typically handle this with, in increasing order of effort and customizability: 
 
 * a service mesh such as [Linkerd](https://linkerd.io/) or [Istio](https://istio.io/)
-* an ambassador container running NGINX plus an [token processing NGINX library](https://github.com/zmartzone/lua-resty-openidc) or a similar proxy like [airbag](https://github.com/Soluto/airbag)
+* an ambassador container running nginx plus an [token processing nginx library](https://github.com/zmartzone/lua-resty-openidc) or a similar proxy like [airbag](https://github.com/Soluto/airbag)
 * the code embedded in a library in your microservice which can then validate the signature and claims 
 
 For example, if using Istio, you'd apply this command to create a request authentication policy, which confirms information about who created the JWT and validates the signature of the JWT.

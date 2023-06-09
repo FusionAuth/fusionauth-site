@@ -9,9 +9,9 @@ dateModified: 2020-10-20
 icon: /img/icons/difference-oauth2-2.1.svg
 ---
 
-OAuth 2.1 is consolidating best practices learned over the eight years since Oauth 2 was published. The original OAuth 2.0 specification was released in October 2012 as [RFC 6749](https://tools.ietf.org/html/rfc6749) and [RFC 6750](https://tools.ietf.org/html/rfc6750). It replaced OAuth 1.0, released in April 2010. There have been a number of extensions and modifications to OAuth 2 over the subsequent years.
+OAuth 2.1 is consolidating best practices learned over the eight years since OAuth 2 was published. The original OAuth 2.0 specification was released in October 2012 as [RFC 6749](https://tools.ietf.org/html/rfc6749) and [RFC 6750](https://tools.ietf.org/html/rfc6750). It replaced OAuth 1.0, released in April 2010. There have been a number of extensions and modifications to OAuth 2 over the subsequent years.
 
-A new OAuth specification has been proposed and is currently under discussion. At this time, the specification was most recently updated on July 30, 2020. If approved, [OAuth 2.1](https://tools.ietf.org/html/draft-ietf-oauth-v2-1-00) will obsolete certain parts of Oauth 2.0 and mandate security best practices. The rest of the OAuth 2.0 specification will be retained.
+A new OAuth specification has been proposed and is currently under discussion. At this time, the specification was most recently updated on July 30, 2020. If approved, [OAuth 2.1](https://tools.ietf.org/html/draft-ietf-oauth-v2-1-00) will obsolete certain parts of OAuth 2.0 and mandate security best practices. The rest of the OAuth 2.0 specification will be retained.
 
 That bears repeating. Nothing new will be added. This is an explicit design goal of OAuth 2.1.
 
@@ -67,7 +67,7 @@ Whew, that's a lot. Let's examine each of these in turn. But before we do, let's
 
 * A `client` is a piece of code that the user is interacting with; browsers, native apps or single-page applications are all clients.
 * An `OAuth server` implements OAuth specifications. It has or can obtain information about which resources are available to clients. In the RFCs this application is called an Authorization Server. This is also known as an Identity Provider. Most users call it "the place I sign in".
-* An `application server` doesn’t have any authentication functionality but instead delegates login requests to an OAuth server. It has an id which allows the OAuth server to identify it.
+* An `application server` doesn’t have any authentication functionality but instead delegates login requests to an OAuth server. It has an Id which allows the OAuth server to identify it.
 
 ### OAuth 2.1 change: The Authorization Code grant requires PKCE
 
@@ -101,7 +101,7 @@ However, allowing wildcard matching for the redirect URI is a security risk. If 
 
 > The Implicit grant ("response_type=token") is omitted from this specification as per Section 2.1.2 of [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14)
 
-The Implicit grant is inherently insecure when used in a single-page application (SPA). If you use this grant, your access token is exposed to any JavaScript running in the browser alongside your SPA. If you aren't careful, you'll get an access token that is in the URL fragment, stored in localstorage, or put in a non HttpOnly cookie. In all cases, an attacker gaining an access token is allowed to access resources as if they were the original user. This is not a good situation.
+The Implicit grant is inherently insecure when used in a single-page application (SPA). If you use this grant, your access token is exposed to any JavaScript running in the browser alongside your SPA. If you aren't careful, you'll get an access token that is in the URL fragment, stored in `localStorage`, or put in a non `HttpOnly` cookie. In all cases, an attacker gaining an access token is allowed to access resources as if they were the original user. This is not a good situation.
 
 Access tokens are not necessarily one-time use, and can live from minutes to days depending on how the OAuth server is configured. If they are stolen, the resources they protect are no longer secure. You may think "well, I don’t have any malicious JavaScript on my site." Are you sure? Have you audited all your code, and its dependencies, and their dependencies, and their dependencies? Do you audit your code automatically? Extensive dependency trees can lead to unforeseen security issues: someone took over an [open source node library](https://snyk.io/blog/malicious-code-found-in-npm-package-event-stream/) and added malicious code that was downloaded millions of times.
 

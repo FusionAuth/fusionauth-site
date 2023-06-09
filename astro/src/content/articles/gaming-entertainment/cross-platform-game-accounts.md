@@ -348,7 +348,7 @@ Here is an explanation of some of the variables in the above code.
 - `apiKey` is the credential key required to authorize API requests from your app to FusionAuth.
 - `applicationId` is your Application Id, which is used to associate your API request to a specific FusionAuth application.
 > **Tips for Securing the API Key for Production**
-> - Use [flutter_dotenv](https://pub.dev/packages/flutter_dotenv) to secure and read the API keys from a .env file.
+> - Use [`flutter_dotenv`](https://pub.dev/packages/flutter_dotenv) to secure and read the API keys from a .env file.
 > - Store the keys in the backend and retrieve them when the app launches.
 
 

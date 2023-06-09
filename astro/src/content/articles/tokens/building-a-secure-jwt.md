@@ -47,7 +47,7 @@ You can [decode it using any number of online tools](/dev-tools/jwt-decoder), be
 
 Keep any data that you wouldn't want in the hands of someone else outside of your JWT. When you sign and send a token, or when you decode and receive it, you're guaranteed the contents didn't change. You're not guaranteed the contents are unseen.
 
-A corollary of that is that any information you do send should avoid unintentional data leakage. This would include information such as identifiers. If a JWT includes a value like `123` for an id, that means anyone viewing it has a pretty good idea that there is an entity with the id of `122`. Use a GUID or random string for identifiers instead. Likewise, because tokens are not encrypted, use TLS for transmitting them. 
+A corollary of that is that any information you do send should avoid unintentional data leakage. This would include information such as identifiers. If a JWT includes a value like `123` for an Id, that means anyone viewing it has a pretty good idea that there is an entity with the Id of `122`. Use a GUID or random string for identifiers instead. Likewise, because tokens are not encrypted, use TLS for transmitting them. 
 
 Don't send JWTs using an HTTP method that may be cached or logged. So don't append the token to a `GET` request as a parameter. If you must send it in a GET request, use an HTTP header. You can also use other HTTP methods such as `POST`, which sends the JWT as a part of a request body. Sending the token value as part of a `GET` URL might result in the JWT being stored in a proxy's memory or filesystem, a browser cache, or even in web server access logs. 
 
@@ -100,7 +100,7 @@ Therefore no claims are required by the RFC. But to maximize security, the follo
 
 * `iss` identifies the issuer of the JWT. It doesn't matter exactly what this string is as long as it is unique, doesn't leak information about the internals of the issuer, and is known by the consumer.
 * `aud` identifies the audience of the token. This can be a scalar or an array value, but in either case it should also be known by the consumer.
-* `nbf` and `exp` claims determine the timeframe that the token is valid. The `nbf` claim can be useful if you are issuing a token for future use. The `exp` claim, a time beyond which the JWT is no longer valid, should always be set.
+* `nbf` and `exp` claims determine the time frame that the token is valid. The `nbf` claim can be useful if you are issuing a token for future use. The `exp` claim, a time beyond which the JWT is no longer valid, should always be set.
 
 ### Revocation 
 
@@ -137,7 +137,7 @@ Clients request and hold tokens. A client can be a browser, a mobile phone or so
 
 Clients should deliver the JWT to consumers over a secure connection, typically TLS version 1.2 or later.
 
-The client must store the token securely as well. How to do that depends on what the client actually is. For a browser, you should avoid storing the JWT in localstorage or a JavaScript object. You should instead keep it in a cookie with the following flags:
+The client must store the token securely as well. How to do that depends on what the client actually is. For a browser, you should avoid storing the JWT in `localStorage` or a JavaScript object. You should instead keep it in a cookie with the following flags:
 
 * `Secure` to ensure the cookie is only sent over TLS.
 * `HttpOnly` so that no rogue JavaScript can access the cookie.
@@ -153,7 +153,7 @@ For other types of clients, use platform specific best practices for securing da
 
 Tokens must be examined as carefully as they are crafted. When you are consuming a JWT, verify the JWT to ensure it was signed correctly, and validate and sanitize the claims. Just like with token creation, don't roll your own implementation; use existing libraries.
 
-Verify that the JWT signature matches the content. Any library should be able to do this, but ensure that the algorithm that the token was signed with, based on the header, is used to decode it. In addition, verify the `kid` value in the header; make sure the key id matches the key you are using the validate the signature. It's worth mentioning again here that any JWTs using the `none` algorithm should be rejected immediately.
+Verify that the JWT signature matches the content. Any library should be able to do this, but ensure that the algorithm that the token was signed with, based on the header, is used to decode it. In addition, verify the `kid` value in the header; make sure the key Id matches the key you are using the validate the signature. It's worth mentioning again here that any JWTs using the `none` algorithm should be rejected immediately.
 
 Then you want to validate the claims are as expected. This includes any implementation specific registered claims set on creation, as well as the issuer (`iss`) and the audience (`aud`) claims. A consumer should know the issuer it expects, based on out of band information such as documentation. You should also ensure the JWT is meant for you.
 

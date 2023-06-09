@@ -15,7 +15,7 @@ This tutorial will lead you through SSO, including what it is, why it’s necess
 
 ## What Is SSO and How Does It Work?
 
-[Single sign-on](/features/single-sign-on) is an authentication method that enables users to log in to multiple linked applications or systems by using one ID and password. In the workplace, it is common for users to log onto their Microsoft Windows account and then have access to all the Microsoft Office products that their company uses (Outlook, Excel, etc.) as well as having access to their company’s HR portal without having to log in again. This creates a seamless experience for the user and also eliminates the need for remembering multiple passwords.
+[Single sign-on](/features/single-sign-on) is an authentication method that enables users to log in to multiple linked applications or systems by using one Id and password. In the workplace, it is common for users to log onto their Microsoft Windows account and then have access to all the Microsoft Office products that their company uses (Outlook, Excel, etc.) as well as having access to their company’s HR portal without having to log in again. This creates a seamless experience for the user and also eliminates the need for remembering multiple passwords.
 
 Another common occurrence of SSO that almost everyone has seen is when you try to create an account on a website. Most companies now allow you to create an account with a username and password or give you the option to create it using your credentials from Google, Facebook, or other SSO providers.
 

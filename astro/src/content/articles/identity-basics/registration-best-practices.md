@@ -91,7 +91,7 @@ Avoid complicated password validation rules. Allow users to use a password manag
 
 Obtain proper user consent. What this is depends on your plans for the requested information and what regulatory regime applies. Different levels of informed consent may be required. For example, if you are in the USA and are dealing with a child's personal information, you'll want to make sure you get parental consent because of COPPA. 
 
-Ensure new users enter sensitive data correctly. If there are any critical fields, such as a government ID, provide a confirmation field asking for the data to be re-entered to ensure the data is typed correctly. This is an exception to the rule of asking for less data. If the stakes of incorrect data entry are high, the additional work is worth the inconvenience.
+Ensure new users enter sensitive data correctly. If there are any critical fields, such as a government Id, provide a confirmation field asking for the data to be re-entered to ensure the data is typed correctly. This is an exception to the rule of asking for less data. If the stakes of incorrect data entry are high, the additional work is worth the inconvenience.
 
 If you need more than a few pieces of information on registration, consider splitting the sign up form into steps and using a registration stepper, also known as a multi-step form or a wizard. A stepper is a user interface element which shows how many steps are required to complete an action: 
 
@@ -125,13 +125,13 @@ When collecting sensitive data, keep it secure throughout the multi-page process
 
 * Don't ask for this information until the last step. Since the registration form will be sent over TLS, the sensitive data is then secure.
 * Once submitted on any step, keep it in the server side session until the form is complete.
-* Encrypt and store the form data in localstorage.
+* Encrypt and store the form data in `localStorage`.
 * After sensitive data submission, store it in a hidden form field, but encrypt it first.
 
 Each of these options has tradeoffs. If you wait to ask for any sensitive information until the last step, you are limiting the flexibility of your form design. If more than one piece of sensitive data is needed, you're forced to put all of them on the last page.
 
 Keeping the value in the session means increasing the size of your user sessions. You will also be forced to use sticky sessions, hindering the scalability of your application. 
 
-Storing the data in localstorage is risky, due to malicious code running in the browser. If you encrypt it, make sure the encryption happens on the server, otherwise the same code may be able to decrypt the data.
+Storing the data in `localStorage` is risky, due to malicious code running in the browser. If you encrypt it, make sure the encryption happens on the server, otherwise the same code may be able to decrypt the data.
 
 Encrypting the data and storing it in a hidden form field means additional processing. If you choose this, use a symmetric key stored only on the server side. Since you'll be decrypting the form field in the security of your server environment, the browser shouldn't need to read the data after the step on which it is submitted.

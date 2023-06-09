@@ -39,12 +39,12 @@ What does an authentication ceremony look like? At a high level, the flow of int
 5. The website verifies the authenticator response
 6. The user is logged in
 
-Whenever the user authenticates against the relevant authenticator, that is an "authorization gesture". It's a gesture because it requires physical interaction. This could be biometric like Touch ID, using a PIN, or any other method that an authenticator offers. An authenticator requires a user to be present with the device.
+Whenever the user authenticates against the relevant authenticator, that is an "authorization gesture". It's a gesture because it requires physical interaction. This could be biometric like Touch Id, using a PIN, or any other method that an authenticator offers. An authenticator requires a user to be present with the device.
 
 There are two types of authenticators:
 
 1. Cross-platform authenticators, such as YubiKeys, which can move between different devices
-2. Platform authenticators, built into the operating system, such as Apple's Face ID or Touch ID, which are tied to a given device
+2. Platform authenticators, built into the operating system, such as Apple's Face Id or Touch Id, which are tied to a given device
 
 Authenticators store public/private keypairs securely. The purpose of an authenticator is to create and hold such keypairs. It also needs to expose the public key. The entire credential, which includes the public key and associated metadata, is often called a "passkey". Further, the authenticator must be able to sign content with the private key.
 
@@ -470,7 +470,7 @@ If you are using an authenticator in this way, you want to distinguish between u
 
 User presence is when someone is there behind the authenticator who gave permission, but you don't know who. All it proves is that you have access to the authenticator. An example of this is when you press a button on a YubiKey. Every authenticator must support checking user presence, as it is part of the specification.
 
-User verification, on the other hand, is when the user provides proof that they are who they say they are. The authenticator could require a PIN, known only to the user. It could be a Face ID or Touch ID challenge. In any case, verification allows you to tie a specific user to the authentication ceremony.
+User verification, on the other hand, is when the user provides proof that they are who they say they are. The authenticator could require a PIN, known only to the user. It could be a Face Id or Touch Id challenge. In any case, verification allows you to tie a specific user to the authentication ceremony.
 
 Of the two types, user verification is more common with platform authenticators than with cross platform authenticators. And user presence is more useful as a second factor. When not used for MFA, you will typically want user verification.
 
@@ -506,7 +506,7 @@ To build a WebAuthn compatible server, you can use any server-side language you 
 
 ## Summing Up
 
-WebAuthn lets consumers have the security of biometric authentication methods, such as Touch ID and Face ID, without requiring additional expensive hardware.
+WebAuthn lets consumers have the security of biometric authentication methods, such as Touch Id and Face Id, without requiring additional expensive hardware.
 
 WebAuthn is supported by every browser and can bring a safer, more secure, more easily usable means of authentication to all your users.
 
