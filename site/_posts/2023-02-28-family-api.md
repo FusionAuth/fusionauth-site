@@ -12,9 +12,9 @@ In this tutorial, you'll build a basic Node.js + [Express](http://expressjs.com)
 
 <!--more-->
 
-The application itself is very simple: It will let a user sign up via FusionAuth, allow them to grant consent for children in their family to access certain features of an application, and allow them to update those consents at any time. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can also [skip ahead and view the code](https://github.com/ritza-co/fusionauth-family-api-example/tree/main/app). Note that some configuration of FusionAuth is needed, as detailed in this guide, so you will need to complete that before running the code.
+The application itself is very simple: It will let a user sign up via FusionAuth, allow them to grant consent for children in their family to access certain features of an application, and allow them to update those consents at any time. With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. You can also [skip ahead and view the code](https://github.com/FusionAuth/fusionauth-example-family-api/tree/main/app). Note that some configuration of FusionAuth is needed, as detailed in this guide, so you will need to complete that before running the code.
 
-You can also use [these kickstart files](https://github.com/ritza-co/fusionauth-family-api-example/tree/main/kickstart) to automatically handle the configuration of FusionAuth. You can find more information regarding kickstart files [here](/docs/v1/tech/installation-guide/docker#kickstart).
+You can also use [these kickstart files](https://github.com/FusionAuth/fusionauth-example-family-api/tree/main/kickstart) to automatically handle the configuration of FusionAuth. You can find more information regarding kickstart files [here](/docs/v1/tech/installation-guide/docker#kickstart).
 
 ### An Overview of the Family and Consent APIs
 
@@ -489,7 +489,7 @@ Close the private window and open a new one. Log in as the child user again. Thi
 
 ## Where to next with Family API and Consents?
 
-That’s the basics of this Express Family API example app. The app has a fully featured authentication system with parental controls, without the hassle and possible risks of implementing all of that code yourself. The complete code is hosted on GitHub [here](https://github.com/ritza-co/fusionauth-family-api-example).
+That’s the basics of this Express Family API example app. The app has a fully featured authentication system with parental controls, without the hassle and possible risks of implementing all of that code yourself. The complete code is hosted on GitHub [here](https://github.com/FusionAuth/fusionauth-example-family-api).
 
 Of course, you would need to add more interesting features to this app for it to be useful. But being able to take care of the authentication, parental controls, consents, and general security with just a little configuration code leaves a lot more time for your application's more useful and critical features.
 
