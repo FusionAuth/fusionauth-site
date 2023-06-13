@@ -5,7 +5,7 @@ description: FusionAuth 1.7 provides advanced consent management and family rela
 author: Bryan Giese
 image: blogs/fusionauth-1-7-consent-family-model.png
 category: announcement
-tags: family consent release-announcement api-consents
+tags: family consent release-announcement api-consents api-families
 excerpt_separator: "<!--more-->"
 ---
 
