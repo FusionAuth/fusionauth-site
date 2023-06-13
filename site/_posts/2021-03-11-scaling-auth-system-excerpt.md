@@ -33,7 +33,7 @@ As modern computers quickly increase in power, so must your authentication solut
 
 Do you know how well your application is balancing its work factor versus performance?
 
-{% include _image.liquid src="/assets/img/advice/auth-system-scale/work-factor-performance-spectrum.png" alt="The balance between the work factor and system performance." class="img-fluid" figure=false %}
+{% include _image.liquid src="/img/articles/auth-system-scale/work-factor-performance-spectrum.png" alt="The balance between the work factor and system performance." class="img-fluid" figure=false %}
 
 ### Chattiness
 
@@ -43,7 +43,7 @@ Well, without having a grasp of the pitfalls of common issues with distributed s
 
 Imagine an HTTP request or asynchronous process where multiple distributed services need to collaborate. Each service needs to make sure the user is authenticated, right?
 
-{% include _image.liquid src="/assets/img/advice/auth-system-scale/auth-chattiness.png" alt="Auth microservice used by other services" class="img-fluid" figure=false %}
+{% include _image.liquid src="/img/articles/auth-system-scale/auth-chattiness.png" alt="Auth microservice used by other services" class="img-fluid" figure=false %}
 
 A system where individual services each send an HTTP request to the auth service means a lot of extra network latency and CPU/memory usage. And don't forget the additional costs that come from needing more powerful hardware to handle the extra load.
 
@@ -53,7 +53,7 @@ While basic password-based authentication has its challenges, compliance with st
 
 In the scenario described earlier, adding some of these extra security features will degrade scalability even further. More network hops are involved, and more external clients are making requests to the authentication service.
 
-{% include _image.liquid src="/assets/img/advice/auth-system-scale/additional-security.png" alt="SSO auth with increased traffic" class="img-fluid" figure=false %}
+{% include _image.liquid src="/img/articles/auth-system-scale/additional-security.png" alt="SSO auth with increased traffic" class="img-fluid" figure=false %}
 
 Implementing performant systems takes more thought than simply throwing everything into a "microservice".
 

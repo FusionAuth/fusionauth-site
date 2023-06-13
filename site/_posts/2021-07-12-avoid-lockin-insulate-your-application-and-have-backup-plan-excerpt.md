@@ -30,7 +30,7 @@ It is usually a good idea to write this code so that the vendor is insulated awa
 
 If the vendor uses Open Standards as described above, this makes things easier. We can build an interface that describes how we would ideally like to interact with our authentication service and then implement this interface with a wrapper around the vendor's SDK. In the future, if things go south and we need to break away from the vendor, we can just re-implement this interface. We'll write an integration for a new provider, and with any luck (and plenty of testing), things will transition smoothly.
 
-{% include _image.liquid src="/assets/img/advice/avoid-lockin/facade-diagram.jpg" alt="Diagram of Authentication Interface example." class="img-fluid" figure=false %}
+{% include _image.liquid src="/img/articles/avoid-lockin/facade-diagram.jpg" alt="Diagram of Authentication Interface example." class="img-fluid" figure=false %}
 
 As you can see in this simple diagram, by having your core services rely on a generic abstraction of an authentication system rather than a concrete implementation of one, you can retain the freedom to reimplement the interface. This allows you to switch to whatever provider you like. If you built a concrete dependency on one particular provider instead, you would have lots of refactoring and retesting to do when switching implementations. Naturally, even with a well-abstracted interface, you will still need thorough testing.
 

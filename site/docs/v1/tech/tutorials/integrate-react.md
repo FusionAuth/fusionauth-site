@@ -46,10 +46,10 @@ Now you need to install the dependencies in `package.json`.
 npm install
 ```
 
-Then copy and paste the following file into `setup.js`. This file uses the [FusionAuth API](/docs/v1/tech/apis/) to configure an Application, CORS and more to allow for easy integration. 
+Then copy and paste the following file into `setup-react.js`. This file uses the [FusionAuth API](/docs/v1/tech/apis/) to configure an Application, CORS and more to allow for easy integration. 
 
 ```javascript
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/setup.js %}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/setup-react.js %}
 ```
 
 Then, you can run the setup script.
@@ -57,17 +57,17 @@ Then, you can run the setup script.
 {% include _callout-note.liquid content="The setup script is designed to run on a newly installed FusionAuth instance with only one user and no tenants other than `Default`. To follow this guide on a FusionAuth instance that does not meet these criteria, you may need to modify the above script. <br><br> Refer to the [Typescript client library](/docs/v1/tech/client-libraries/typescript) documentation for more information." %}
 
 ```shell
-fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE npm run setup
+fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE npm run setup-react
 ```
 
 If you are using PowerShell, you will need to set the environment variable in a separate command before executing the script.
 
 ```shell
 $env:fusionauth_api_key='YOUR_API_KEY_FROM_ABOVE'
-npm run setup
+npm run setup-react
 ```
 
-If you want, you can http://localhost:9011[login to your instance] and examine the new Application the script created for you.
+If you want, you can [log into your instance](http://localhost:9011){:target="_blank"} and examine the new Application the script created for you.
 
 ## Create Your {{page.technology}} Application
 
@@ -122,11 +122,11 @@ Now, let's add a login and logout button to your {{page.technology}} application
 
 In this code, you are adding in the FusionAuth login and logout buttons, as well as a welcome message which will only show up if the user is logged in.
 
-## Test It Out
+## Testing the Authentication Flow
 
 You can now open up an incognito window and visit [the {{page.technology}} app](http://localhost:5173). View the page and log in with the user you configured. If you used the setup script, it will be `richard@example.com`.
 
-{% include _image.liquid src="/assets/img/docs/quickstarts/react/react-app.png" alt="The sample React application." class="img-fluid" figure=true %}
+{% include docs/_image.liquid src="/assets/img/docs/quickstarts/react/react-app.png" alt="The sample React application." class="img-fluid" figure=true %}
 
 You've successfully added login and logout to a React application.
 
