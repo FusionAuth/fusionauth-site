@@ -209,28 +209,32 @@ There are three main routes needed:
 2. The OAuth callback route, which FusionAuth will call after a successful login.
 3. A route to update the consent of the chosen child.
 
-First, include the dependencies and credentials needed by all routes. Update the `routes/index.js` file to look like this:
+Update the `routes/index.js` file to look like this:
 
 ```js
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-family-api/main/app/routes/index.js %}
 ```
 
-Update the following:
+Each route will be reviewed in more detail below.
+
+Make sure to update the following at the top:
 
 * `clientId`
 * `clientSecret`
 * the parameters to `new FusionAuthClient` (the first parameter is the API key, the second is <YOUR_FUSIONAUTH_URL>)
 * `consentId`
 
-The `pkceChallenge` package enables your application to use a Proof Key for Code Exchange (PKCE). PKCE is a security layer that sits on top of the Authorization Code grant to ensure that authorization codes can’t be stolen or reused. Here, you are also importing the [FusionAuth Typescript client](/docs/v1/tech/client-libraries/typescript), as well as several parameters that allow your application to communicate with your FusionAuth configuration. Find the values for `clientId` and `clientSecret` in FusionAuth under "Applications" then "Your Application". In a production environment, you should use environment variables here to prevent your client secret from leaking. Find the API key under "Settings" then "API Keys" and the `consentId` under "Settings" then "Consents".
+The `pkceChallenge` package enables your application to use a Proof Key for Code Exchange (PKCE). PKCE is a security layer that sits on top of the Authorization Code grant to ensure that authorization codes can’t be stolen or reused. Here, you are also importing the [FusionAuth Typescript client](/docs/v1/tech/client-libraries/typescript), as well as several parameters that allow your application to communicate with your FusionAuth configuration.
 
-## Adding the OAuth Callback Route
+Find the values for `clientId` and `clientSecret` in FusionAuth under "Applications" then "Your Application". In a production environment, you should use environment variables here to prevent your client secret from leaking. Find the API key under "Settings" then "API Keys" and the `consentId` under "Settings" then "Consents".
+
+## The OAuth Callback Route
 
 After authentication, FusionAuth will redirect to the callback route you provided in the login link to FusionAuth, as well as in the authorized callback route set in the FusionAuth application earlier. You can see the route above. 
 
 This route exchanges the `Authentication Code` returned from FusionAuth and the PKCE verifier code for a JWT, which is used to get the user profile of the authenticated user. The user profile is then added to the session and the client is redirected to the home page.
 
-## Add Home Route
+## The Home Route
 
 The home route above has a bit of logic needed. Essentially, the logic required is:
 
@@ -301,7 +305,7 @@ function updateFamilyWithConsentStatus(family, consentsResponseArray) {
 }
 ```
 
-## Adding the Change Consent Route
+## The Change Consent Route
 
 The last piece of the puzzle is to handle the granting and revocation of consent by the adult user for the child user to access the site. When the grant or revoke button is clicked next to the child's name, the following route is called. The payload is set in the hidden `input` fields in the `index.pug` view created earlier. Let's look at the route in more detail here:
 
