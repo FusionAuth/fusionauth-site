@@ -149,7 +149,7 @@ Then, create two new files: `index.html` and `profile.html`. Add the following c
 
 This page is the main page, which has a link that redirects to the FusionAuth Hosted Backend API login route. Note the format of the URL in the anchor `href`: `GET /app/login/{clientId}?redirect_uri={redirectUri}&state={state}&scope={scope}`.
 
-In this case, `clientId` is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`, as this is hardcoded in the setup script. For applications added to FusionAuth through the UI, you can get the client Id by browsing to the application in FusionAuth and viewing it.
+In this case, `clientId` is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`, as this is hardcoded in the setup script.
 
 The `redirect_uri` is the URL the Hosted Backend API will redirect to when the login flow is complete, in this case, the `profile.html` page.
 
@@ -176,7 +176,7 @@ If the API call is successful, the `identity` route will return the identity and
 
 {% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-hosted-api-integration/cors-settings.png" alt="CORS settings in FusionAuth for testing on Localhost" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
-You can now serve up the login and profile static pages. An easy way to do this is to use the [http-server](https://www.npmjs.com/package/http-server) package via `npx`. Change to the `LoginPage` directory and run the following command:
+You can now serve up the login and profile static pages. An easy way to do this is to use the [http-server](https://www.npmjs.com/package/http-server) package via `npx`. You can use any other web server to serve the files, but accessing them directly from the filesystem won't work. Change to the `LoginPage` directory and run the following command:
 
 ```shell
 npx http-server -a localhost -p 3000
