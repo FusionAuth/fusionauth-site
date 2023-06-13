@@ -180,46 +180,12 @@ The application will have only one page apart from the FusionAuth login page. Th
 For the landing page view, add the following to `views/index.pug`. Note that the page uses data from a view model, which you will populate in the home route later.
 
 ```js
-extends layout
-
-block content
-  h1= title
-  p Welcome to #{title}
-
-  - var clientId = '<YOUR_CLIENT_ID>'
-  if user
-    p Hello #{user.firstName}
-    if family
-      - var self = family.filter(elem => elem.id == user.id)[0]
-      - family = family.filter(elem => elem.id != user.id)
-      if family.length > 0 && self.role == "Adult"
-        p Confirmed children
-        ul
-          each child in family
-             form(action='/change-consent-status', method='POST')
-                p #{child.email}
-                  |
-                  Consent #{child.consentstatus}
-                  input(type='hidden', name='userConsentId', value=child.userConsentId)
-                  |
-                  if child.status == "Active"
-                    input(type='submit', value='Revoke Consent')
-                    input(type='hidden', name='desiredStatus', value='Revoked')
-                    input(type='hidden', name='userId', value=child.id)
-                  else
-                    input(type='hidden', name='desiredStatus', value='Active')
-                    input(type='submit', value='Grant Consent')
-                    input(type='hidden', name='userId', value=child.id)
-    if self.role == "Adult" || self.status == "Active"
-      h2 Restricted Section
-      p This is a restricted section. Only adults and children granted consent by an adult can view it.
-  else
-    a(href='<YOUR_FUSIONAUTH_URL>/oauth2/authorize?client_id='+clientId+'&response_type=code&redirect_uri=<REDIRECT_URL>&scope=offline_access&code_challenge='+challenge+'&code_challenge_method=S256') Login
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-family-api/main/app/views/index.pug %}
 ```
 
-Replace `<YOUR_CLIENT_ID>` with the Id of your FusionAuth application and `<YOUR_FUSIONAUTH_URL>` with the fully qualified URL of your FusionAuth instance, including the protocol. For example, `<YOUR_CLIENT_ID>` might look like `7d31ada6-27b4-461e-bf8a-f642aacf5775` and `<YOUR_FUSIONAUTH_URL>` might look like `https://local.fusionauth.io`.
+Replace `clientId` with the Id of your FusionAuth application and `http://localhost:9011` with the fully qualified URL of your FusionAuth instance, including the protocol. For example, `clientId` might look like `7d31ada6-27b4-461e-bf8a-f642aacf5775` and your FusionAuth URL might look like `https://local.fusionauth.io`.
 
-Replace the placeholder `<REDIRECT_URL>` with the URL encoded redirect URL of your application, with `/oauth-redirect` appended. For example, if your application is running on `http://localhost:3000`, then the redirect URL should be `http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect`.
+Replace the value after `redirect_uri` with the URL encoded redirect URL of your application, with `/oauth-redirect` appended. For example, if your application is running on `http://localhost:3000`, then the redirect URL should be `http%3A%2F%2Flocalhost%3A3000%2Foauth-redirect`.
 
 You can use the `express-session` middleware package to facilitate the storage and usage of session information in your app. In particular, you'll store the Proof Key for Code Exchange (PKCE) data needed to securely exchange FusionAuth-generated Authentication Codes for a JWT. In the `app.js` file, add the following line at the top:
 
@@ -243,55 +209,30 @@ There are three main routes needed:
 2. The OAuth callback route, which FusionAuth will call after a successful login.
 3. A route to update the consent of the chosen child.
 
-First, include the dependencies and credentials needed by all routes. In the `routes/index.js` file, add the following code under the `var router = express.Router();` line:
+First, include the dependencies and credentials needed by all routes. Update the `routes/index.js` file to look like this:
 
 ```js
-const pkceChallenge = require('pkce-challenge').default;
-const {FusionAuthClient} = require('@fusionauth/typescript-client');
-const clientId = '<YOUR_CLIENT_ID>';
-const clientSecret = '<YOUR_CLIENT_SECRET>';
-const client = new FusionAuthClient('<YOUR_API_KEY>', '<YOUR_FUSIONAUTH_URL>');
-const consentId = '<YOUR_CONSENT_ID>';
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-family-api/main/app/routes/index.js %}
 ```
 
-The `pkceChallenge` package enables your application to use a Proof Key for Code Exchange (PKCE). PKCE is a security layer that sits on top of the Authorization Code grant to ensure that authorization codes can’t be stolen or reused. Here, you are also importing the [FusionAuth Typescript client](/docs/v1/tech/client-libraries/typescript), as well as several parameters that allow your application to communicate with your FusionAuth configuration. Find the values for `<YOUR_CLIENT_ID>` and `<YOUR_CLIENT_SECRET>` in FusionAuth under "Applications" then "Your Application". In a production environment, you should use environment variables here to prevent your client secret from leaking. Find `<YOUR_API_KEY>` under "Settings" then "API Keys" and `<YOUR_CONSENT_ID>` under "Settings" then "Consents".
+Update the following:
+
+* `clientId`
+* `clientSecret`
+* the parameters to `new FusionAuthClient` (the first parameter is the API key, the second is <YOUR_FUSIONAUTH_URL>)
+* `consentId`
+
+The `pkceChallenge` package enables your application to use a Proof Key for Code Exchange (PKCE). PKCE is a security layer that sits on top of the Authorization Code grant to ensure that authorization codes can’t be stolen or reused. Here, you are also importing the [FusionAuth Typescript client](/docs/v1/tech/client-libraries/typescript), as well as several parameters that allow your application to communicate with your FusionAuth configuration. Find the values for `clientId` and `clientSecret` in FusionAuth under "Applications" then "Your Application". In a production environment, you should use environment variables here to prevent your client secret from leaking. Find the API key under "Settings" then "API Keys" and the `consentId` under "Settings" then "Consents".
 
 ## Adding the OAuth Callback Route
 
-After authentication, FusionAuth will redirect to the callback route you provided in the login link to FusionAuth, as well as in the authorized callback route set in the FusionAuth application earlier. You can add this route now. Add the following route to the `routes/index.js` file.
-
-```js
-router.get('/oauth-redirect', async function (req, res, next) {
-  try {
-    const response = await client.exchangeOAuthCodeForAccessTokenUsingPKCE(
-      req.query.code,
-      clientId,
-      clientSecret,
-      'http://localhost:3000/oauth-redirect',
-      req.session.verifier
-    );
-
-    req.session.state = req.query.state;
-
-    const userResponse = await client.retrieveUserUsingJWT(
-      response.response.access_token
-    );
-
-    req.session.user = userResponse.response.user;
-
-    res.redirect(302, '/');
-  } catch (err) {
-    console.log('in error');
-    console.error(JSON.stringify(err));
-  }
-});
-```
+After authentication, FusionAuth will redirect to the callback route you provided in the login link to FusionAuth, as well as in the authorized callback route set in the FusionAuth application earlier. You can see the route above. 
 
 This route exchanges the `Authentication Code` returned from FusionAuth and the PKCE verifier code for a JWT, which is used to get the user profile of the authenticated user. The user profile is then added to the session and the client is redirected to the home page.
 
 ## Add Home Route
 
-The home route has a bit of logic needed. Essentially, the logic required is:
+The home route above has a bit of logic needed. Essentially, the logic required is:
 
 1. Get the family of the logged-in user.
 2. Find all the child members of the family.
@@ -302,46 +243,9 @@ The home route has a bit of logic needed. Essentially, the logic required is:
 
 Since this is a lot of logic and API calls, the route will call out to helper functions to gather all the information.
 
-In the `index.js` file, replace the route that renders the home page `router.get('/', function(req, res, next)` with the following:
-
-```js
-router.get('/', async function (req, res, next) {
-  try {
-    let familyProfiles = [];
-    const pkce_pair = pkceChallenge();
-    req.session.verifier = pkce_pair['code_verifier'];
-    req.session.challenge = pkce_pair['code_challenge'];
-    if (req.session.user && req.session.user.id) {
-      const response = await client.retrieveFamilies(req.session.user.id);
-      if (response.response.families && response.response.families.length >= 1) {
-        let familyMembers = response.response.families[0].members.filter(elem => elem.role !== 'Adult' || elem.userId === req.session.user.id);
-        const userProfiles = await getUserProfiles(familyMembers);
-        userProfiles.forEach(user => {
-          let self = familyMembers.filter(elem => elem.userId === user.response.user.id)[0];
-          user.response.user.role = self.role;
-        });
-        familyProfiles = buildFamilyArray(userProfiles);
-        const consentsResponseArray = await getUserConsentStatuses(familyMembers);
-        familyProfiles = updateFamilyWithConsentStatus(familyProfiles, consentsResponseArray);
-      }
-    }
-    res.render('index', {
-      family: familyProfiles,
-      user: req.session.user,
-      title: 'Family Example',
-      challenge: pkce_pair['code_challenge']
-    });
-  } catch (error) {
-    console.error("in error");
-    console.error(JSON.stringify(error));
-    next(error);
-  }
-});
-```
-
 The `familyMembers` array is a filtered version of the entire family that only contains children and the currently logged-in adult. In other words, any other adults from the family are removed, as you won't need to set consents for them, but you do want to keep the family role information for the currently logged-in adult. Note that, when building the `familyMembers` array, the filter criterion is `!== 'Adult'`, not `=== 'Child'` as you might expect. This is because FusionAuth also allows users to be designated as [`Teen`](/docs/v1/tech/apis/families#add-a-user-to-a-family) to allow for further granularity when assigning roles in a family.
 
-The above code makes use of several named functions, which you now have to implement. The first function to implement is `getUserProfiles()`, which gathers all user profiles in the family. This is needed because the [Family API call](/docs/v1/tech/apis/families#retrieve-a-family) only returns a subset of each family member's information. You need to get members' usernames or emails too, which are available through the `client.retrieveUser` function.
+The above code makes use of several named functions. The first function is `getUserProfiles()`, which gathers all user profiles in the family. This is needed because the [Family API call](/docs/v1/tech/apis/families#retrieve-a-family) only returns a subset of each family member's information. You need to get members' usernames or emails too, which are available through the `client.retrieveUser` function.
 
 ```js
 async function getUserProfiles(familyUsers) {
@@ -361,7 +265,7 @@ async function getUserConsentStatuses(users) {
 }
 ```
 
-Each of the above two functions asynchronously processes the `familyMembers` array into new objects that contain key information. Now you can implement the functions that make use of those objects.
+Each of the above two functions asynchronously processes the `familyMembers` array into new objects that contain key information. Here's the functions that make use of those objects.
 
 First is `buildFamilyArray()`, which filters key information from the object returned from `getUserProfiles` to build a view model to display.
 
@@ -399,7 +303,7 @@ function updateFamilyWithConsentStatus(family, consentsResponseArray) {
 
 ## Adding the Change Consent Route
 
-The last piece of the puzzle is to handle the granting and revocation of consent by the adult user for the child user to access the site. When the grant or revoke button is clicked next to the child's name, the following route is called. The payload is set in the hidden `input` fields in the `index.pug` view created earlier. Paste the following route underneath the previous one added:
+The last piece of the puzzle is to handle the granting and revocation of consent by the adult user for the child user to access the site. When the grant or revoke button is clicked next to the child's name, the following route is called. The payload is set in the hidden `input` fields in the `index.pug` view created earlier. Let's look at the route in more detail here:
 
 ```js
 /* Change consent */
