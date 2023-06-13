@@ -72,6 +72,7 @@ If you are using PowerShell, you will need to set the environment variable in a 
 
 ```shell
 $env:fusionauth_api_key='<your API key>'
+bin\Debug\net7.0\win-x64\publish\SetupFusionauth.exe
 ```
 
 If you want to, you can [log in to your instance](http://localhost:9011) and examine the new API configuration the script created for you. Navigate to the <span class="breadcrumb">Applications</span> tab to do so.
@@ -93,13 +94,13 @@ dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
 dotnet add package System.IdentityModel.Tokens.Jwt
 ```
 
-You can now start writing the code for your {{page.technology}} API. First, let's create a controller that gives back a JSON message. Create a file called `IdentityController.cs` in the `Controllers` folder, and add the following code to it.
+You can now start writing the code for your {{page.technology}} API. First, let's create a controller that gives back a JSON message. Create a file called `MessageController.cs` in the `Controllers` folder, and add the following code to it.
 
 ```csharp
-{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-api-example/main/MyAPI/Controllers/IdentityController.cs %}
+{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-api-example/main/MyAPI/Controllers/MessageController.cs %}
 ```
 
-This controller returns a JSON object with the identity and claims of the user accessing the service.
+This controller returns a JSON object with a simple "Hello" message.
 
 Next, update the `Program.cs` file to look like this:
 
@@ -117,7 +118,7 @@ To see the results, publish this application and run it. There are [multiple way
 dotnet publish -r osx-x64
 ```
 
-Then run  the executable:
+Then run the executable:
 
 ```shell
 ASPNETCORE_ENVIRONMENT=Development bin/Debug/net7.0/osx-x64/publish/MyAPI
@@ -126,7 +127,7 @@ ASPNETCORE_ENVIRONMENT=Development bin/Debug/net7.0/osx-x64/publish/MyAPI
 You can use [curl](https://curl.se) to see the output of the API: 
 
 ```shell
-curl -v http://localhost:5000/identity
+curl -v http://localhost:5000/message
 ```
 
 This command should return a `401 Unauthorized` response, indicating that the route is secure. The next step is to set up the FusionAuth Hosted Backend API and log in to get a JWT in a cookie that your API can read.
@@ -167,9 +168,9 @@ This page is the page that the Hosted Backend API will redirect to after the log
 
 The page first calls the [`/me` route](/docs/v1/tech/apis/hosted-backend#me), which is part of the FusionAuth Hosted Backend API and returns the identity of the currently logged-in user.
 
-The `profile.html` page also has a button that calls the `identity` route of the {{page.technology}} API. Note that the `fetch` call for this button includes the `credentials: 'include'` option. This option tells the browser to include the cookies in the request so that the {{page.technology}} API can read the `app.idt` cookie and extract the JWT.
+The `profile.html` page also has a button that calls the `message` route of the {{page.technology}} API. Note that the `fetch` call for this button includes the `credentials: 'include'` option. This option tells the browser to include the cookies in the request so that the {{page.technology}} API can read the `app.idt` cookie and extract the JWT.
 
-If the API call is successful, the `identity` route will return the identity and claims of the user. If the API call is not successful, the `identity` route will return a `401 Unauthorized` response. In this case, the code will try refreshing the access token using the refresh token in the `app.rt` cookie. To do this, the code makes a `fetch` request to the [refresh token route](/docs/v1/tech/apis/hosted-backend#refresh) of the Hosted Backend API. If the refresh token is valid, FusionAuth's Hosted Backend API will return a new access token. The code then tries the `identity` route again with the new access token.
+If the API call is successful, the `message` route will return a "Hello" message. If the API call is not successful, the `message` route will return a `401 Unauthorized` response. In this case, the code will try refreshing the access token using the refresh token in the `app.rt` cookie. To do this, the code makes a `fetch` request to the [refresh token route](/docs/v1/tech/apis/hosted-backend#refresh) of the Hosted Backend API. If the refresh token is valid, FusionAuth's Hosted Backend API will return a new access token. The code then tries the `message` route again with the new access token.
 
 
 {% include _callout-note.liquid content="A note on CORS (Cross-Origin Resource Sharing): For this setup to work, all components, including the web page, the .NET Core API, and FusionAuth, must be on the same domain. This is because the `app.idt` JWT cookie and `app.rt` refresh cookie are set to the same domain as the FusionAuth instance. Since everything runs on the same domain, CORS won't usually be an issue. However, you'll be running all of this on `localhost` to test, with each component running on a different port, which will cause CORS issues. For this reason, we need to enable CORS on FusionAuth for the login webpage to access the FusionAuth Hosted Backend API. To do this, navigate to <span>Settings -> System </span>{:.breadcrumb} on the sidebar, and then select the <span>CORS</span>{:.breadcrumb} tab. Enable CORS, and check <span>GET</span>{:.uielement}, <span>POST</span>{:.uielement}, and <span>OPTIONS</span>{:.uielement}. Enable <span>Allow Credentials</span>{:.uielement}, and  add `http://localhost:3000` to the list of <span>Allowed origins</span>{:.field}." %}
@@ -186,6 +187,6 @@ This will serve the website on `http://localhost:3000`
 
 ## Testing the API Flow
 
-Navigate to the login webpage at `http://localhost:3000`. Click the <span>Login</span>{:.uielement} button. This will redirect you to the FusionAuth Hosted Backend API login page. Enter the email and password of the user created in the setup script earlier for your FusionAuth instance. You will be redirected to the login webpage, and the results from the `/me` FusionAuth endpoint alongside the <span>Call the API</span>{:.uielement} button will be shown. Click this button to call the `identity` route of the {{page.technology}} API, which will echo back the identity and claims of the user, from the JWT in the `app.idt` cookie. You should see something similar to the following output:
+Navigate to the login webpage at `http://localhost:3000`. Click the <span>Login</span>{:.uielement} button. This will redirect you to the FusionAuth Hosted Backend API login page. Enter the email and password of the user created in the setup script earlier for your FusionAuth instance. You will be redirected to the login webpage, and the results from the `/me` FusionAuth endpoint alongside the <span>Call the API</span>{:.uielement} button will be shown. Click this button to call the `message` route of the {{page.technology}} API, which will echo back a "Hello" message. You should see something similar to the following output:
 
 {% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-hosted-api-integration/profile-output.png" alt="Output of the /me call and the dotnet API call" class="img-fluid bottom-cropped" width="1200" figure=false %}
