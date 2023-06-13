@@ -4,6 +4,7 @@ title: Using the Family API with Consents
 description: Using the Family API and Consents to control access to minors
 author: Dean Rodman
 category: blog
+image: blogs/family-api/family-consents-header.png
 tags: client-node tutorial tutorial-express tutorial-node api-families api-consents
 excerpt_separator: "<!--more-->"
 ---
