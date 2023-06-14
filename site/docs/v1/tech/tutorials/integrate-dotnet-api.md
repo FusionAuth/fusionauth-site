@@ -97,7 +97,7 @@ dotnet add package System.IdentityModel.Tokens.Jwt
 You can now start writing the code for your {{page.technology}} API. First, let's create a controller that gives back a JSON message. Create a file called `MessageController.cs` in the `Controllers` folder, and add the following code to it.
 
 ```csharp
-{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-api-example/main/MyAPI/Controllers/MessageController.cs %}
+{% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-dotnet-api/main/MyAPI/Controllers/MessageController.cs %}
 ```
 
 This controller returns a JSON object with a simple "Hello" message.
@@ -105,7 +105,7 @@ This controller returns a JSON object with a simple "Hello" message.
 Next, update the `Program.cs` file to look like this:
 
 ```csharp
-{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-api-example/main/MyAPI/Program.cs %}
+{% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-dotnet-api/main/MyAPI/Program.cs %}
 ```
 
 Note the changes in the `builder.Services.AddAuthentication()` section. This updates the authentication code to extract the JWT from the `app.idt` cookie. The `app.idt` cookie has an OpenID Connect JWT that contains the user's identity and claims. The `app.idt` cookie is set by the Hosted Backend APIs when the user logs in. The `app.idt` cookie is set to the same domain as the FusionAuth instance. This allows the {{page.technology}} API to read the cookie and extract the JWT. Also note that the issuer is set to `http://localhost:9011` which is the default FusionAuth URL. If you are using a different URL, you should update this value. The .NET authentication libraries will seamlessly validate the JWT, including the audience, and extract the identity and claims. There is no more you need to do on your part!
@@ -145,7 +145,7 @@ mkdir LoginPage && cd LoginPage
 Then, create two new files: `index.html` and `profile.html`. Add the following code to the `index.html` file:
 
 ```html
-{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-api-example/main/LoginPage/index.html %}
+{% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-dotnet-api/main/LoginPage/index.html %}
 ```
 
 This page is the main page, which has a link that redirects to the FusionAuth Hosted Backend API login route. Note the format of the URL in the anchor `href`: `GET /app/login/{clientId}?redirect_uri={redirectUri}&state={state}&scope={scope}`.
@@ -161,7 +161,7 @@ The `scope` is the OAuth scopes you want to request. In this example, the `openi
 Now add the following to the `profile.html` file:
 
 ```html
-{% remote_include https://raw.githubusercontent.com/ritza-co/fusionauth-dotnet-api-example/main/LoginPage/profile.html %}
+{% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-dotnet-api/main/LoginPage/profile.html %}
 ```
 
 This page is the page that the Hosted Backend API will redirect to after the login flow is complete.
