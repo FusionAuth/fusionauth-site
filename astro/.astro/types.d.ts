@@ -765,6 +765,15 @@ declare module 'astro:content' {
   data: InferEntrySchema<"dev-tools">
 } & { render(): Render[".mdx"] },
 },
+"quickstarts": {
+"quickstart-ruby-rails-web.mdx": {
+  id: "quickstart-ruby-rails-web.mdx",
+  slug: "quickstart-ruby-rails-web",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
+} & { render(): Render[".mdx"] },
+},
 
 	};
 

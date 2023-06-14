@@ -1,5 +1,5 @@
 ---
-title: Components Of JWTs Explained
+title: Components of JWTs Explained
 description: Technical article explains JSON Web Tokens (JWT), their component parts, and how they are used for authentication. 
 author: Dan Moore
 icon: /img/icons/components-jwt-explained.svg
@@ -9,9 +9,9 @@ section: Tokens
 ---
 
 
-A JSON Web Token (commonly shortened to JWT), is a token typically used with standard protocols such as OAuth2. This article explains the component parts of a JWT, and helps explain how the JWT works.
+A JSON Web Token (commonly shortened to JWT), is a token typically used with standard protocols such as [OAuth2](/articles/oauth/modern-guide-to-oauth). This article explains the component parts of a JWT, and helps explain how the JWT works.
 
-Before we continue, it's important to note that JWTs are often mistakenly referred to as `JWT Tokens`. Adding the `Token` on the end would expand to `JSON Web Token Token`. Therefore, we leave off the trailing `Token` and simply use `JWT` in this article as it is the more correct name. Likewise, because JWTs are often used as part of an authentication and authorization process, some people refer to them as `Authentication Tokens` or `JWT Authentication Tokens`. Technically, a JWT is merely a token that contains Base64 encoded JSON. It can be used in many different use cases _including_ authentication and authorization. Therefore, we don't use this term in this article either, but we discuss how JWTs are used during the authentication process. 
+Before we continue, it's important to note that JWTs are often mistakenly referred to as `JWT Tokens`. Adding the `Token` on the end would expand to `JSON Web Token Token`. Therefore, we leave off the trailing `Token` and simply use `JWT` in this article as it is the more correct name. Likewise, because JWTs are often used as part of an authentication and authorization process, some people refer to them as `Authentication Tokens` or `JWT Authentication Tokens`. Technically, a JWT is merely a token that contains [base64 encoded JSON](/dev-tools/base64-encoder-decoder). It can be used in many different use cases _including_ authentication and authorization. Therefore, we don't use this term in this article either, but we discuss how JWTs are used during the authentication process. 
 
 Let's dig in! Here’s a freshly minted JWT. Newlines have been added for clarity, but they are typically not present.
 
@@ -38,7 +38,7 @@ How does a JWT work? Let’s break this example JWT apart and dig a bit deeper.
 
 `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImY1ODg5MGQxOSJ9` is the header of the JWT. The JWT header contains metadata about a JWT, including the key identifier, what algorithm was used to sign in and other information.
 
-If you run the above header through a base64 decoder:
+If you run the above header through a [base64 decoder](/dev-tools/base64-encoder-decoder):
 
 ```bash
 echo 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImY1ODg5MGQxOSJ9'|base64 -d
@@ -88,7 +88,7 @@ Here's the payload from the example JWT:
 eyJhdWQiOiI4NWEwMzg2Ny1kY2NmLTQ4ODItYWRkZS0xYTc5YWVlYzUwZGYiLCJleHAiOjE2NDQ4ODQxODUsImlhdCI6MTY0NDg4MDU4NSwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJqdGkiOiIzZGQ2NDM0ZC03OWE5LTRkMTUtOThiNS03YjUxZGJiMmNkMzEiLCJhdXRoZW50aWNhdGlvblR5cGUiOiJQQVNTV09SRCIsImVtYWlsIjoiYWRtaW5AZnVzaW9uYXV0aC5pbyIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhcHBsaWNhdGlvbklkIjoiODVhMDM4NjctZGNjZi00ODgyLWFkZGUtMWE3OWFlZWM1MGRmIiwicm9sZXMiOlsiY2VvIl19
 ```
 
-If you run the sample payload through a base64 decoder:
+If you run the sample payload through a [base64 decoder](/dev-tools/base64-encoder-decoder):
 
 ```bash
 echo 'eyJhdWQiOiI4NWEwMzg2Ny1kY2NmLTQ4ODItYWRkZS0xYTc5YWVlYzUwZGYiLCJleHAiOjE2NDQ4ODQxODUsImlhdCI6MTY0NDg4MDU4NSwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJqdGkiOiIzZGQ2NDM0ZC03OWE5LTRkMTUtOThiNS03YjUxZGJiMmNkMzEiLCJhdXRoZW50aWNhdGlvblR5cGUiOiJQQVNTV09SRCIsImVtYWlsIjoiYWRtaW5AZnVzaW9uYXV0aC5pbyIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhcHBsaWNhdGlvbklkIjoiODVhMDM4NjctZGNjZi00ODgyLWFkZGUtMWE3OWFlZWM1MGRmIiwicm9sZXMiOlsiY2VvIl19' |base64 -d
@@ -140,7 +140,7 @@ Avoid putting unused claims into a JWT. While there is no limit to the size of a
 
 The claims of a signed JWT are visible to anyone who possesses the token.
 
-As you saw above, all you need to view the claims in plaintext is a base64 decoder, which is available at every command line and everywhere in the internet.
+As you saw above, all you need to view the claims in plaintext is a [base64 decoder](/dev-tools/base64-encoder-decoder), which is available at every command line and everywhere in the internet.
 
 Therefore, you shouldn't put anything that should remain secret into a JWT. This includes:
 

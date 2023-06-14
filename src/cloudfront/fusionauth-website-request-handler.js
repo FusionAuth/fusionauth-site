@@ -57,7 +57,8 @@ var indexPages = {
   '/docs/v1/tech/tutorials/': true,
   '/docs/v1/tech/tutorials/gating/': true,
   '/docs/v1/tech/tutorials/two-factor/': true,
-  '/how-to/': true
+  '/how-to/': true,
+  '/quickstarts/': true
 };
 var redirects = {
   '/cognito': '/docs/v1/tech/migration-guide/cognito',
@@ -130,7 +131,7 @@ var redirectsByPrefix = [
 ]
 
 var s3Paths = ['/direct-download', '/license'];
-var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/', '/how-to/', '/articles/', '/dev-tools/'];
+var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/', '/how-to/', '/articles/', '/dev-tools/', '/quickstarts/'];
 
 function handler(event) {
   var req = event.request;
@@ -205,7 +206,7 @@ function calculateURI(uri) {
   var i;
   for (i = 0; i < s3Prefixes.length; i++) {
     if (uri.startsWith(s3Prefixes[i])) {
-      return appendHTML(uri);
+      return uri.endsWith('/') ? uri + 'index.html' : appendHTML(uri);
     }
   }
 
