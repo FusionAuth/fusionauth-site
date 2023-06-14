@@ -66,6 +66,7 @@ If you are using PowerShell, you will need to set the environment variable in a 
 
 ```shell
 $env:fusionauth_api_key='<your API key>'
+bin\Debug\net7.0\win-x64\publish\SetupFusionauth.exe
 ```
 
 
@@ -95,7 +96,7 @@ bin/Debug/net7.0/osx-x64/publish/SetupDotnet
 
 The application will be accessible at `http://localhost:5000`.
 
-{% include _image.liquid src="/assets/img/docs/integrations/dotnet-integration/dotnet-welcome-page.png" alt="Home page for .Net app" class="img-fluid bottom-cropped" width="1200" figure=false %}
+{% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-integration/dotnet-welcome-page.png" alt="Home page for .Net app" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 You can hit `control-C` to exit this application.
 
@@ -161,7 +162,7 @@ Now add `Logout.cshtml` to the `Pages` directory. No content is necessary. Just 
 ```
 
 
-Update the `appsettings.json` file. You need to add the entire <span class="field">SetupDotnet</span> object so that the code above can be configured correctly. <span class="field">Authority</span> is just the location of the user identity server, in this case, FusionAuth.
+Update the `appsettings.json` file. You need to add the entire <span>SetupDotnet</span>{:.field} object so that the code above can be configured correctly. <span>Authority</span>{:.field} is just the location of the user identity server, in this case, FusionAuth.
 
 ```json
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-guide/main/SetupDotnet/appsettings.json %}
@@ -173,13 +174,13 @@ Wait, where’s the client secret? This file is in Git, but you should not put s
 dotnet publish -r osx-x64 && SetupDotnet__ClientSecret=<YOUR_CLIENT_SECRET> bin/Debug/net7.0/osx-x64/publish/SetupDotnet
 ```
 
-Once you’ve updated all these files, you can publish and start the application. You should be able to log in with a previously created user and see the claims. Go to `http://localhost:5000` and click on the <span class="uielement">Secure</span> page. You’ll be prompted to log in using FusionAuth’s default login page. You can [theme the login screen of FusionAuth](/docs/v1/tech/themes/) if you want to make the login page look like your company’s brand.
+Once you’ve updated all these files, you can publish and start the application. You should be able to log in with a previously created user and see the claims. Go to `http://localhost:5000` and click on the <span>Secure</span>{:.uielement} page. You’ll be prompted to log in using FusionAuth’s default login page. You can [theme the login screen of FusionAuth](/docs/v1/tech/themes/) if you want to make the login page look like your company’s brand.
 
-{% include _image.liquid src="/assets/img/docs/integrations/dotnet-integration/dotnet-login-page.png" alt="FusionAuth login page" class="img-fluid bottom-cropped" width="1200" figure=false %}
+{% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-integration/dotnet-login-page.png" alt="FusionAuth login page" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 After you’ve signed in, you’ll end up at the "Secure" page and will see all claims encoded in the JWT.
 
-{% include _image.liquid src="/assets/img/docs/integrations/dotnet-integration/dotnet-secure-page-claims.png" alt="Logged in page with claims" class="img-fluid bottom-cropped" width="1200" figure=false %}
+{% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-integration/dotnet-secure-page-claims.png" alt="Logged in page with claims" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 
 ## Conclusion
@@ -234,10 +235,10 @@ The full code is available [here](https://github.com/fusionauth/fusionauth-examp
 
 ## Troubleshooting
 
-If you run into an issue with cookies on Chrome or other browsers, you might need to run the ASP.NET application under SSL.
+If you run into an issue with cookies on Safari or other browsers, you might need to run the ASP.NET application under SSL.
 
 You can follow [this guide](https://learn.microsoft.com/en-us/dotnet/core/additional-tools/self-signed-certificates-guide) to install development SSL certificates for your .NET environment.
 
 Alternatively, you can run the project using [Visual Studio](https://visualstudio.microsoft.com), which will run the project using SSL.
 
-If you do this, make sure to update the <span class="field">Authorized Redirect URL</span> to reflect the `https` protocol. Also note that the project will probably run on a different port when using SSL, so you must update that as well. To do so, log into the administrative user interface, navigate to <span class="breadcrumb">Applications</span>, then click the <span class="uielement">Edit</span> button on your application and navigate to the <span class="breadcrumb">OAuth</span> tab. You can have more than one URL.
+If you do this, make sure to update the <span>Authorized Redirect URL</span>{:.field} to reflect the `https` protocol. Also note that the project will probably run on a different port when using SSL, so you must update that as well. To do so, log into the administrative user interface, navigate to <span>Applications</span>{:.breadcrumb}, then click the <span>Edit</span>{:.uielement} button on your application and navigate to the <span>OAuth</span>{:.breadcrumb} tab. You can have more than one URL.
