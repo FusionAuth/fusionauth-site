@@ -28,7 +28,7 @@ Although this guide shows how to build the {{page.technology}} application using
 
 ## Configure FusionAuth
 
-Next, you need to set up FusionAuth. This can be done in different ways, but you’re going to use the {{page.language}} client library. The below instructions use `dotnet` from the command line, but you can use the client library with an IDE of your choice as well.
+Next, you need to set up FusionAuth. This can be done in different ways, but you're going to use the {{page.language}} client library. The below instructions use `dotnet` from the command line, but you can use the client library with an IDE of your choice as well.
 
 First, create a {{page.technology}} project in a new directory:
 
@@ -36,15 +36,13 @@ First, create a {{page.technology}} project in a new directory:
 dotnet new console --output SetupFusionauth && cd SetupFusionauth
 ```
 
-If you want, you can [login to your instance](http://localhost:9011) and examine the new application configuration the script created for you.
-
 Now, copy and paste the following code into `Program.cs`.
 
 ```csharp
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/dotnet/Program.cs %}
 ```
 
-Then, you’ll need to import a few NuGet packages:
+Then, you'll need to import a few NuGet packages:
 
 ```shell
 dotnet add package JSON.Net # for debugging
@@ -69,12 +67,13 @@ $env:fusionauth_api_key='<your API key>'
 bin\Debug\net7.0\win-x64\publish\SetupFusionauth.exe
 ```
 
+If you want, you can [login to your instance](http://localhost:9011) and examine the new application configuration the script created for you.
 
 ## Create Your {{page.technology}} Application
 
 Now you are going to create a {{page.technology}} application. While this section uses a simple {{page.technology}} application, you can use the same configuration to integrate your {{page.technology}} application with FusionAuth.
 
-You’ll use [Razor Pages](https://learn.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-7.0&tabs=visual-studio) and {{page.technology}}. This application will display common information to all users. There will also be a secured area, only available to an authenticated user. The [full source code](https://github.com/fusionauth/fusionauth-example-dotnet-guide) is available if you want to download it and take a look.
+You'll use [Razor Pages](https://learn.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-7.0&tabs=visual-studio) and {{page.technology}}. This application will display common information to all users. There will also be a secured area, only available to an authenticated user. The [full source code](https://github.com/fusionauth/fusionauth-example-dotnet-guide) is available if you want to download it and take a look.
 
 First, create a new web application using the `dotnet` CLI and go to that directory:
 
@@ -82,7 +81,7 @@ First, create a new web application using the `dotnet` CLI and go to that direct
 dotnet new webapp -o SetupDotnet && cd SetupDotnet
 ```
 
-To see the results, you should publish this application and run it. There are [multiple ways of deploying an application](https://docs.microsoft.com/en-us/dotnet/core/deploying/), but publishing ensures your deployment process is repeatable. You can use the [RID catalog](https://learn.microsoft.com/en-us/dotnet/core/rid-catalog) to build different versions of this application for different platforms. Here’s the command to publish a standalone executable you could deploy behind a proxy like Nginx:
+To see the results, you should publish this application and run it. There are [multiple ways of deploying an application](https://docs.microsoft.com/en-us/dotnet/core/deploying/), but publishing ensures your deployment process is repeatable. You can use the [RID catalog](https://learn.microsoft.com/en-us/dotnet/core/rid-catalog) to build different versions of this application for different platforms. Here's the command to publish a standalone executable you could deploy behind a proxy like Nginx:
 
 ```shell
 dotnet publish -r osx-x64
@@ -102,11 +101,13 @@ You can hit `control-C` to exit this application.
 
 ## Handle login for your {{page.technology}} application
 
-It’s always smart to leverage existing libraries as they are likely to be more secure and better handle edge cases. You’re going to add an OpenIdConnect library to the application. Make sure you’re in the `SetupDotnet` directory and run the command below to add the library.
+It's always smart to leverage existing libraries as they are likely to be more secure and better handle edge cases. You're going to add an `OpenIdConnect` library to the application. Make sure you're in the `SetupDotnet` directory and run the command below to add the library.
 
 ```shell
 dotnet add package Microsoft.AspNetCore.Authentication.OpenIdConnect
 ```
+
+> The script set up a `RS256` asymmetric signing key. FusionAuth supports this signing algorithm, but doesn't ship with a default key.
 
 To add a page to be secured, which you can aptly call “Secure”, add `Secure.cshtml` and `Secure.cshtml.cs` to the `SetupDotnet/Pages` directory. To protect the "Secure" page you can use the [Authorize filter attribute](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/filter?view=aspnetcore-3.1#authorize-filter-attribute) on the backing class, from `Secure.cshtml.cs`.
 
@@ -116,7 +117,7 @@ Copy the following code into `Secure.cshtml.cs`:
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-guide/main/SetupDotnet/Pages/Secure.cshtml.cs %}
 ```
 
-You’ll also display the claims contained in the JWT that FusionAuth creates upon authentication. A claim is essentially the information the authentication server has shared about a subject in the JWT. Here `Secure.cshtml` iterates over the claims. Update that file with the following code. 
+You'll also display the claims contained in the JWT that FusionAuth creates upon authentication. A claim is essentially the information the authentication server has shared about a subject in the JWT. Here `Secure.cshtml` iterates over the claims. Update that file with the following code. 
 
 ```html
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-guide/main/SetupDotnet/Pages/Secure.cshtml %}
@@ -140,12 +141,12 @@ Replace the code in the `Program.cs` file with the following:
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-guide/main/SetupDotnet/Program.cs %}
 ```
 
-Currently, the app lets you log in but there’s no way to log out. Next, you’ll build the logout functionality and page. This will
+Currently, the app lets you log in but there's no way to log out. Next, you'll build the logout functionality and page. This will:
 
 - Remove the session cookie.
 - Redirect to the FusionAuth OAuth logout endpoint.
 
-FusionAuth will then destroy its session and redirect the user back to the app’s configured logout URL.
+FusionAuth will then destroy its session and redirect the user back to the app's configured logout URL.
 
 Add the following file to the `Pages` directory and call it `Logout.cshtml.cs`:
 
@@ -161,24 +162,23 @@ Now add `Logout.cshtml` to the `Pages` directory. No content is necessary. Just 
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-guide/main/SetupDotnet/Pages/Logout.cshtml %}
 ```
 
-
 Update the `appsettings.json` file. You need to add the entire <span>SetupDotnet</span>{:.field} object so that the code above can be configured correctly. <span>Authority</span>{:.field} is just the location of the user identity server, in this case, FusionAuth.
 
 ```json
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-guide/main/SetupDotnet/appsettings.json %}
 ```
 
-Wait, where’s the client secret? This file is in Git, but you should not put secrets under version control. Instead, the client secret is provided on the command line via an environment variable. This change means the correct way to publish and start the web application is now as shown below (where you replace `<YOUR_CLIENT_SECRET>` with the client secret value, which for this example is `change-this-in-production-to-be-a-real-secret`):
+Wait, where's the client secret? This file is in Git, but you should not put secrets under version control. Instead, the client secret is provided on the command line via an environment variable. This change means the correct way to publish and start the web application is now as shown below (where you replace `<YOUR_CLIENT_SECRET>` with the client secret value, which for this example is `change-this-in-production-to-be-a-real-secret`):
 
 ```shell
 dotnet publish -r osx-x64 && SetupDotnet__ClientSecret=<YOUR_CLIENT_SECRET> bin/Debug/net7.0/osx-x64/publish/SetupDotnet
 ```
 
-Once you’ve updated all these files, you can publish and start the application. You should be able to log in with a previously created user and see the claims. Go to `http://localhost:5000` and click on the <span>Secure</span>{:.uielement} page. You’ll be prompted to log in using FusionAuth’s default login page. You can [theme the login screen of FusionAuth](/docs/v1/tech/themes/) if you want to make the login page look like your company’s brand.
+Once you've updated all these files, you can publish and start the application. You should be able to log in with a previously created user and see the claims. Go to `http://localhost:5000` and click on the <span>Secure</span>{:.uielement} page. You'll be prompted to log in using FusionAuth's default login page. You can [theme the login screen of FusionAuth](/docs/v1/tech/themes/) if you want to make the login page look like your company's brand.
 
 {% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-integration/dotnet-login-page.png" alt="FusionAuth login page" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
-After you’ve signed in, you’ll end up at the "Secure" page and will see all claims encoded in the JWT.
+After you've signed in, you'll end up at the "Secure" page and will see all claims encoded in the JWT.
 
 {% include docs/_image.liquid src="/assets/img/docs/integrations/dotnet-integration/dotnet-secure-page-claims.png" alt="Logged in page with claims" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
@@ -225,7 +225,7 @@ Your directory tree should look like this:
     └── wwwroot/
 ```
 
-Once you’ve created this directory structure, you can start up the {{page.technology}} application using this command:
+Once you've created this directory structure, you can start up the {{page.technology}} application using this command:
 
 ```shell
 dotnet publish -r osx-x64 && SetupDotnet__ClientSecret='change-this-in-production-to-be-a-real-secret' bin/Debug/net7.0/osx-x64/publish/SetupDotnet
