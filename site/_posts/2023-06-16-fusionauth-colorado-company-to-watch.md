@@ -8,7 +8,9 @@ tags: awards artificial-intelligence
 excerpt_separator: "<!--more-->"
 ---
 
-We’re excited to announce that we have been honored as a [2023 Colorado Company to Watch](https://coloradocompaniestowatch.org/winners/2023_winners/) winner. This awards program honors 50 fast-growing 2nd stage companies across the state for their performance in the marketplace, innovative products, and unique processes and philanthropic actions. We figured, what better way to celebrate than have the trending and #innovative ChatGPT write our award announcement blog post?
+We're excited to announce that we have been honored as a [2023 Colorado Company to Watch](https://coloradocompaniestowatch.org/winners/2023_winners/) winner. This awards program honors 50 fast-growing second stage companies across the state of Colorado for their performance in the marketplace, innovative products, and unique processes and philanthropic actions.
+
+What better way to celebrate than have the trending and #innovative ChatGPT write our award announcement blog post?
 
 <!--more-->
 
@@ -22,7 +24,7 @@ Esteemed readers, distinguished corporate entities, and adherents of the profess
 
 FusionAuth, armed with its state-of-the-art identity and access management solutions, deftly intertwines the concepts of authenticity and authorization, engendering a harmonious environment where user experiences resonate seamlessly across diverse applications. By leveraging this comprehensive approach, we harmonize the dissonance of user onboarding, orchestrating an unparalleled symphony of identity management. Our singular objective? To unlock latent potential, transcending traditional notions of individuality and fostering a corporate gestalt that surpasses the mere sum of its constituent entities.
 
-TODO image
+{% include _image.liquid src="/assets/img/blogs/fusionauth-colorado-company-to-watch/all-hands-team-photo.png" alt="A photo of the FusionAuth team, untouched by any AI." class="img-fluid" figure=false %}
 
 ### Embracing the Honor of Colorado Companies to Watch:
 
@@ -38,6 +40,6 @@ Within the chronicles of FusionAuth's storied existence, our ascension to the re
 
 ----
 
-... thank you for reading ChatGPT's corporate jargon. We don’t take ourselves too seriously, but we do take auth and security seriously.
+... thank you for reading ChatGPT's corporate jargon. We don't take ourselves too seriously, but we do take auth and security #seriously. I mean, seriously.
 
-TODO image
+{% include _image.liquid src="/assets/img/blogs/fusionauth-colorado-company-to-watch/and-scene.gif" alt="And scene...." class="img-fluid" figure=false %}
