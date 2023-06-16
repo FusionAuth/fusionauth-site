@@ -3,6 +3,7 @@ layout: blog-post
 title: FusionAuth Selected as Winner for Colorado Companies to Watch
 description: Using the Family API and Consents to control access to minors
 author: Blair Ewalt and ChatGPT
+image: blogs/fusionauth-colorado-company-to-watch/fusionauth-colorado-company-to-watch.png
 category: announcement
 tags: awards artificial-intelligence
 excerpt_separator: "<!--more-->"
