@@ -126,11 +126,7 @@ for await (const ticket of tickets) {
 
 The login / register view in FusionAuth can be themed using the FusionAuth theme editor. You can find more information about the theme editor in the [FusionAuth documentation](/docs/v1/tech/themes/).
 
-For this example application, we integrate Tailwind CSS and DaisyUI into the theme by automatically generating the css stylesheet based on the FusionAuth theme templates.
-
-{% comment %}
-Link to [Tailwind documentation](/docs/v1/tech/themes/tailwind)
-{% endcomment %}
+For this example application, we integrate Tailwind CSS and DaisyUI into the theme by automatically generating the css stylesheet based on the FusionAuth theme templates. See the [Tailwind CSS documentation](/docs/v1/tech/themes/tailwind) for more information.
 
 ## Benefits of the React SDK
 
