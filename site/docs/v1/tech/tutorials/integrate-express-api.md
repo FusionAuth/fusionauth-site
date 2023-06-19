@@ -3,12 +3,12 @@ layout: doc
 title: Integrate Your Express.js API With FusionAuth
 description: Integrate your Express.js API with FusionAuth
 navcategory: getting-started
-prerequisites: nodejs
+prerequisites: Node.js
 language: TypeScript
 technology: Express.js
 ---
 
-{% include docs/integration/_intro_api.md %}
+{% include docs/integration/_intro-api.md %}
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ technology: Express.js
 
 ## Create a User and an API Key
 
-{% include docs/integration/_add-user.md language=page.language %}
+{% include docs/integration/_add-user.md %}
 
 ## Configure FusionAuth
 
@@ -47,25 +47,25 @@ npm install
 Then copy and paste the following code into `setup.js`. This file uses the [FusionAuth API](/docs/v1/tech/apis/) to configure an Application and more to allow for easy integration.
 
 ```javascript
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/setup.js %}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/setup-express.js %}
 ```
 
 Then, you can run the setup script.
 
-```shell
-fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE npm run setup
-```
-
 {% include _callout-note.liquid content="The setup script is designed to run on a newly installed FusionAuth instance with only one user and no tenants other than `Default`. To follow this guide on a FusionAuth instance that does not meet these criteria, you may need to modify the script above. <br><br> Refer to the [Typescript client library](/docs/v1/tech/client-libraries/typescript) documentation for more information." %}
+
+```shell
+fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE npm run setup-express
+```
 
 If you are using PowerShell, you will need to set the environment variable in a separate command before executing the script.
 
 ```shell
 $env:fusionauth_api_key='YOUR_API_KEY_FROM_ABOVE'
-npm run setup
+npm run setup-express
 ```
 
-If you want, you can [log into your instance](http://localhost:9011) and examine the new "JSExampleApp" Application the script created for you.
+If you want, you can [log into your instance](http://localhost:9011) and examine the new Application the script created for you.
 
 ## Create Your {{page.technology}} API
 
@@ -92,8 +92,6 @@ npm install
 You are going to create some files in different directories, so pay attention to the final directory structure that you should have after completing these steps.
 ```
 ├── app.js
-├── app
-│   └── index.html
 ├── bin
 │   └── www
 ├── middlewares
@@ -128,41 +126,55 @@ To finish the API, create an `app.js` file in the root directory. This will be t
 {% remote_include https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-express-api/master/app.js %}
 ```
 
-To test the {{page.technology}} API, we will use a small vanilla javascript application. Create an `app` directory and an `index.html` file with the contents below.
-
-```javascript
-{% remote_include https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-express-api/master/app/index.html %}
-```
-
 Once you have created these files, you can test the API.
 
-## Testing the Authentication Flow
-
-Start up the {{page.technology}} API using this command:
+Now, open the terminal window and run:
 
 ```shell
 npm start
 ```
 
-And in a second terminal window, run the following command in the `setup-express-api` directory to start the test application:
+Visit [http://localhost:3000/messages](http://localhost:3000/messages), you'll get an error:
 
-```shell
-npx http-server app -p 5173
+```json
+{"error":"Missing token cookie and Authorization header"}
 ```
 
-Open [the test application](http://localhost:5173) in an incognito window.
+Your API is protected. Now, let's get an access token so authorized clients can get the API results.
 
-There are several buttons available to test the API and the FusionAuth integration:
-* Login — Log into FusionAuth
-* Call API — Make a request to the {{page.technology}} API
-* Refresh Token — Call the FusionAuth hosted backend API to refresh the access token.
-* Retrieve FusionAuth user information — Call the FusionAuth hosted backend API to retrieve the user information.
-* Logout — Log out of FusionAuth
+## Testing the API Flow
 
-If you use the <span>Call API</span>{:.uielement} button, before you log in, you will see an error message. After you log in, you will see the response from the {{page.technology}} API. When you are logged in, you can also use the <span>Retrieve FusionAuth user information</span>{:.uielement} button to see the user information returned from FusionAuth.
+There are a number of ways to get an access token, as mentioned, but for clarity, let's use the login API to mimic a client.
 
-The full code for this guide can be found [here](https://github.com/sonderformat-llc/fusionauth-example-express-api).
+Run this command in a terminal window:
 
-## Conclusion
+```shell
+curl -H 'Authorization: YOUR_API_KEY_FROM_ABOVE' \
+     -H 'Content-type: application/json' \
+     -d '{"loginId": "YOUR_EMAIL", "password":"YOUR_PASSWORD","applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"} \
+    http://localhost:9011/api/login 
+```
 
-You have successfully integrated your {{page.technology}} API with FusionAuth. You can now use FusionAuth to manage your users and secure your API.
+Replace `YOUR_EMAIL` and `YOUR_PASSWORD` with the username and password you set up previously.
+
+This request will return something like this:
+
+```json
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-site/master/site/docs/src/json/users/login-response.json %}
+```
+
+Grab the `token` field (which begins with `ey`). Replace YOUR_TOKEN below with that value, and run this command:
+
+```shell
+curl --cookie 'app.at=YOUR_TOKEN' http://localhost:4001/messages
+```
+
+Here you are placing the token in a cookie named `app.at`. This is for compatibility with the FusionAuth best practices and [the hosted backend](/docs/v1/tech/apis/hosted-backend).
+
+If you want to store it in a different cookie or send it in the header, make sure you modify the middleware and restart the {{page.technology}} API.
+
+This will result in the JSON below.
+
+```json
+{"messages":["Hello"]}
+```
