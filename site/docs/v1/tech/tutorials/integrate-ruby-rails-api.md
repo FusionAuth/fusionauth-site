@@ -168,7 +168,7 @@ Run this command in a terminal:
 ```shell
 curl -H 'Authorization: YOUR_API_KEY_FROM_ABOVE' \
      -H 'Content-type: application/json' \
-     -d '{"loginId": "YOUR_EMAIL", "password":"YOUR_PASSWORD","applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"} \
+     -d '{"loginId": "YOUR_EMAIL", "password":"YOUR_PASSWORD","applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"}' \
     http://localhost:9011/api/login 
 ```
 
