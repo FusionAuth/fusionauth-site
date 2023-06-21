@@ -20,6 +20,7 @@ In support of https://tools.ietf.org/html/rfc6749[OAuth 2.0 IETF RFC 6749], http
 ** <<Refresh Token Grant Request>>
 ** <<Client Credentials Grant Request>>
 * <<Device>>
+* <<Device User Code>>
 * <<Device Validate>>
 * <<Introspect>>
 
@@ -1135,9 +1136,6 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&scope=offline_access
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
-
-|503
-|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
 |===
 
 ==== Response Body
@@ -1175,6 +1173,161 @@ This can be used to build a QR code or provide a clickable link that may pre-pop
   "user_code": "FBGLLF",
   "verification_uri": "https://piedpiper.com/device",
   "verification_uri_complete": "https://piedpiper.com/device?user_code=FBGLLF"
+}
+----
+
+== Device User Code
+
+[NOTE.since]
+====
+This endpoint has been available since 1.46.0
+====
+
+This endpoint is intended to validate the end-user provided [field]#user_code# and return meta-data useful when building your own interactive workflow.
+
+This endpoint is equivalent to the <<Device Validate>> endpoint, but it will return meta-data for the [field]#user_code# in a JSON body.
+
+[.api-authentication]
+Validate and retrieve a user_code using client credentials
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/oauth2/device/user-code#
+--
+
+==== Request Headers
+
+[.api]
+include::docs/v1/tech/oauth/_authorization-header.adoc[]
+
+[field]#Content-Type# [type]#[String]# [required]#Required#::
+This value must be set to `application/x-www-form-urlencoded`.
+
+==== Request Parameters
+
+Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
+[.api]
+[field]#client_id# [type]#[String]# [optional]#Optional#::
+The unique client identifier.
+The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
++
+This parameter is optional when the `Authorization` header is provided.
+When the `Authorization` header is not provided, this parameter is then required.
+Prior to version `1.46.0` this parameter was always required.
+
+[field]#client_secret# [type]#[String]# [optional]#Optional#::
+The client secret.
+This parameter is optional when the `Authorization` header is provided.
+Please see the link:#client-secret-table[the Client Secret table] for more details.
+
+[field]#user_code# [type]#[String]# [required]#Required#::
+The end-user verification code.
+This is the code that a user entered during the Device Authorization grant which you are requesting to be validated.
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Validate and retrieve a user_code using an API key
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/oauth2/device/user-code#
+--
+
+==== Request Headers
+
+[.api]
+[field]#Content-Type# [type]#[String]# [required]#Required#::
+This value must be set to `application/x-www-form-urlencoded`.
+
+==== Request Parameters
+
+Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
+[.api]
+[field]#user_code# [type]#[String]# [required]#Required#::
+The end-user verification code.
+This is the code that a user entered during the Device Authorization grant which you are requesting to be validated.
+
+=== Response
+
+[cols="1a,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful. The response will contain a JSON body.
+
+|400
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuth Error section] of the API documentation.
+
+|500
+|There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
+|===
+
+==== Response Body
+
+[.api]
+[field]#client_id# [type]#[String]#::
+The unique client identifier provided on the Device Authorize request.
+
+[field]#deviceInfo.description# [type]#[String]#::
+The optional device description provided on the Device Authorize request.
+
+[field]#deviceInfo.name# [type]#[String]#::
+The optional device name provided on the Device Authorize request.
+
+[field]#deviceInfo.type# [type]#[String]#::
+The optional device type provided on the Device Authorize request.
+
+[field]#expires_in# [type]#[Integer]#::
+The number of seconds the [field]#device_code# and [field]#user_code# tokens will remain active.
++
+This is how long you have to complete the Device grant.
+
+[field]#pendingIdPLink.displayName# [type]#[String]#::
+The human readable name of the user represented by the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+
+[field]#pendingIdPLink.identityProviderId# [type]#[String]#::
+The unique Identity Provider Id associated with the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+
+[field]#pendingIdPLink.identityProviderName# [type]#[String]#::
+The name of the Identity Provider associated with the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+
+[field]#pendingIdPLink.identityProviderType# [type]#[String]#::
+The type of the Identity Provider associated with the the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+
+[field]#pendingIdPLink.identityProviderUserId# [type]#[String]#::
+The unique user Id of the user represented by the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
++
+This is the value that FusionAuth will use to uniquely link a FusionAuth User to a user in the 3rd party identity provider.
+
+[field]#tenantId# [type]#[UUID]#::
+The unique Id of the Tenant.
+
+[field]#user_code# [type]#[String]#::
+The end-user verification code. This is the same value that was provided in the request body.
+
+[source,json]
+.Example JSON Response
+----
+{
+  "client_id": "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
+  "deviceInfo": {
+    "description": "Johny's Xbox"
+    "name": "Xbox",
+    "type": "Console"
+  },
+  "expires_in": 600,
+  "pendingIdPLink": {
+    "displayName": "jmoney42",
+    "identityProviderId": "af53ab21-34c3-468a-8ba2-ecb3905f67f2",
+    "identityProviderName": "Xbox",
+    "identityProviderType": "Xbox",
+    "identityProviderUserId": "af53ab21-34c3-468a-8ba2-ecb3905f67f2"
+  },
+  "tenantId": "5f35237d-d036-4aaa-a917-17039d4697e6",
+  "user_code": "FBGLLF",
 }
 ----
 
@@ -1221,9 +1374,6 @@ This is the code that a user entered during the Device Authorization grant which
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
-
-|503
-|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
 |===
 
 == Introspect
