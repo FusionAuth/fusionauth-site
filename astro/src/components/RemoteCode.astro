@@ -29,19 +29,24 @@ export interface Props {
 
 const { url, lang = 'plaintext', tags} = Astro.props as Props;
 import { Code } from 'astro/components';
-const remoteResponse = await fetch(url);
-const remoteCode = await remoteResponse.text();
-let remoteSelectedCode;
+let remoteSelectedCode = "not available";
 
-if (tags) {
-  remoteSelectedCode = selectTagged(remoteCode, tags);
-} else {
-  const matchLines = url.match(/.*#L(\d+)(-L(\d+))?$/);
-  if (matchLines) {
-    remoteSelectedCode = selectLines(remoteCode, matchLines[1], matchLines[3]);
+try {
+  const remoteResponse = await fetch(url);
+  const remoteCode = await remoteResponse.text();
+
+  if (tags) {
+    remoteSelectedCode = selectTagged(remoteCode, tags);
   } else {
-    remoteSelectedCode = remoteCode.trim();
+    const matchLines = url.match(/.*#L(\d+)(-L(\d+))?$/);
+    if (matchLines) {
+      remoteSelectedCode = selectLines(remoteCode, matchLines[1], matchLines[3]);
+    } else {
+      remoteSelectedCode = remoteCode.trim();
+    }
   }
+} catch (e) {
+  console.log("Couldn't retrieve remote code",e);
 }
 
 function selectTagged(content: string, tags: string): string {
