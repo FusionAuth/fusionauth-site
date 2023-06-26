@@ -1,7 +1,7 @@
 ---
 layout: doc
 title: Users
-description: An overview of Users
+description: An overview of FusionAuth Users
 navcategory: getting-started
 ---
 
@@ -11,26 +11,409 @@ navcategory: getting-started
 
 FusionAuth is all about users, and it is helpful to fully understand how FusionAuth understands users to fully leverage all of the features FusionAuth offers.
 
-The User itself is easy enough to understand, it represents your end user, your employee, or your client.
+The User itself is easy enough to understand; it represents your end user, your employee, or your client.
 
+* <<Admin UI>>
 * <<User Scope>>
-* <<User Sessions>>
 * <<What Makes a User Active>>
 * <<User Search>>
-* <<Segmenting Users>>
 
 Here's a brief video covering some aspects of users:
 
 video::cXvvcOOAp6U[youtube,width=560,height=315]
 
 
-== User Scope
+== Admin UI
 
-A User is scoped to a Tenant.  A User existing within a Tenant can be registered to, and use the same credentials to authenticate to multiple applications within that Tenant.
+This page describes the Admin UI for creating and managing users.
 
-== User Sessions
+* <<Add a User>>
+* <<Registrations>>
+* <<Multi-Factor>>
+* <<Passkeys>>
+* <<Families>>
+* <<Linked accounts>>
+* <<Groups>>
+* <<Entity grants>>
+* <<Recent logins>>
+* <<Consent>>
+* <<Sessions>>
+* <<Current actions>>
+* <<History>>
+* <<User data>>
+* <<Source>>
 
-Users have sessions in FusionAuth. Sessions are equivalent to refresh tokens. Their lifetime is controlled by the Tenant or Application refresh token settings. 
+=== Add a User
+
+To create a new user, navigate to [breadcrumb]#Users#.
+
+==== Form Fields
+
+These are the default fields that are available when creating a user. You can add additional fields by creating custom forms and fields. See the link:/docs/v1/tech/guides/advanced-registration-forms#editing-user-data-in-the-admin-ui[Editing User Data In the Admin UI] documentation for more information.
+
+[.api]
+[field]#Tenant# [required]#Required#::
+The Tenant to which this User belongs. This field is only displayed once multiple tenants exist in FusionAuth. When only a single tenant exists, the User will always be created in the default tenant.
+
+[field]#Skip email verification# [optional]#Optional#::
+If this is checked, FusionAuth will not send an email asking the user to verify their email address. This is only available if the link:/docs/v1/tech/core-concepts/tenants#email[Email verification] in the tenant is set up.
+
+[field]#Email# [optional]#Optional#::
+The email address of the User. This is a required field if "Send email to set up password" is enabled. It must be unique across all Users in the Tenant.
+
+[field]#Username# [optional]#Optional#::
+The username of the User. The username is stored and returned as a case-sensitive value, however, a username is considered unique regardless of the case. This is a required field if no Email address is provided.
+
+[field]#Mobile phone# [optional]#Optional#::
+The mobile phone number of the User. This is useful for sending push notifications or SMS messages to the User.
+
+[field]#Send email to set up password# [optional]#Optional#::
+If this is checked, FusionAuth will send an email asking them to set their password.
+If you also have email verification enabled and do not skip verification with [field]#Skip email verification# setting, only the setup password email will be sent to the user. Setting up the password using the email sent during this user create operation will verify the User’s email if it is not already verified.
+This is only available if the link:/docs/v1/tech/core-concepts/tenants#email[Setup password in the tenant] is set up.
+
+[field]#Password# [required]#Required#::
+The password of the User. This field is only displayed if "Send email to set up password" is not enabled.
+
+[field]#Confirm password# [required]#Require#::
+Password confirmation field. This field is only displayed if "Send email to set up password" is not enabled.
+
+===== Options
+
+[.api]
+[field]#Birthdate# [optional]#Optional#::
+The birthdate of the User.
+
+[field]#First name# [optional]#Optional#::
+The first name of the User.
+
+[field]#Middle name# [optional]#Optional#::
+The middle name of the User.
+
+[field]#Last name# [optional]#Optional#::
+The last name of the User.
+
+[field]#Full name# [optional]#Optional#::
+The full name of the User as a separate field that is not calculated from firstName and lastName.
+
+[field]#Languages# [optional]#Optional#::
+The preferred languages of the User. These are important for email templates and other localizable text. See link:/docs/v1/tech/reference/data-types#locales[Locales].
+
+[field]#Timezone# [optional]#Optional#::
+The preferred timezone of the User.
+
+[field]#Image URL# [optional]#Optional#::
+The URL that points to an image file that is the User’s profile image.
+
+=== Registrations
+
+Applications in FusionAuth represent something you can log in to.
+They are tenant scoped.
+You associate a user with an application via a registration.
+You may also optionally associate one or more roles with each user's registration.
+
+An example use case is a single company, where you have a forum, a todo application, and an accounting application.
+If you have three users, Richard, Monica, and Jared, you can grant Richard access to all three applications, Monica access to the forum and todo applications, and Jared access to the accounting application.
+
+Prohibit a user from logging into an application for which they are not registered by checking the claims in the token or enabling the [field]#Require registration# setting for the application.
+
+Applications also may have associated Identity Providers, such as Google or OIDC providers.
+When so configured, a user may log in to an application with the Identity Provider.
+
+Every user object contains an array of application registrations.
+You can search for all users with a given registration.
+
+Learn more about link:/docs/v1/tech/core-concepts/applications[Applications].
+
+image::core-concepts/user-registrations.png[User registrations in the administrative user interface.,width=1200,role=bottom-cropped]
+
+==== Table Columns
+
+[.api]
+[field]#Application# [required]#Required#::
+The application to which this registration belongs.
+
+[field]#Username# [optional]#Optional#::
+The username of the User for this Application. This username cannot be used to log in. It is for display purposes only.
+
+[field]#Roles# [optional]#Optional#::
+The roles assigned to the User on the application.
+
+[field]#Created# [required]#Required#::
+The date and time this registration was created.
+
+[field]#Last updated# [optional]#Optional#::
+The date and time this registration was last updated.
+
+[field]#Last login# [optional]#Optional#::
+The date and time that the User last logged into the Application for this registration.
+
+=== Multi-Factor
+
+The multi-factor tab allows you to view and remove the multi-factor authentication settings for a user.
+
+Learn more about link:/docs/v1/tech/guides/multi-factor-authentication[Multi-Factor Authentication (MFA)].
+
+image::core-concepts/user-mfa.png[User multi-factor screen in the administrative user interface.,width=1200,role=bottom-cropped]
+
+==== Table Columns
+
+[.api]
+[field]#Method# [required]#Required#::
+The method of multi-factor authentication:
+* Authenticator App
+* Email
+* SMS
+
+[field]#Transport# [optional]#Optional#::
+The receiver address used for the multi-factor authentication method depending on the [field]#Method#:
+* Email address
+* Phone number
+
+[field]#Identifier# [optional]#Optional#::
+The Id of the multi-factor authentication method.
+
+[field]#Last used# [optional]#Optional#::
+Indicates which multi-factor authentication method was last used.
+
+=== Passkeys
+
+The passkeys tab allows you to manage the registered passkeys for a user.
+
+Learn more about link:/docs/v1/tech/premium-features/webauthn/[WebAuthn and passkeys].
+
+image::core-concepts/user-passkeys.png[User passkeys screen in the administrative user interface.,width=1200,role=bottom-cropped]
+
+==== Table Columns
+
+[.api]
+[field]#Display name# [required]#Required#::
+The display name for the passkey selected during registration. The user should have selected this value.
+
+[field]#Name# [required]#Required#::
+A unique name meant to disambiguate passkeys with the same [field]#Display name#.
+
+[field]#Id# [required]#Required#::
+The unique Id of the passkey.
+
+[field]#Created# [required]#Required#::
+The date and time when the passkey was created.
+
+[field]#Last used# [optional]#Optional#::
+The date and time when the passkey was last used.
+
+=== Families
+
+The families tab allows you to view the families to which a user belongs.
+
+A family is a collection of users that are related to each other. For example, a family may consist of a parent and their children.
+
+image::core-concepts/user-families.png[User families screen in the administrative user interface.,width=1200,role=bottom-cropped]
+
+==== Table Columns
+
+[.api]
+[field]#Name# [required]#Required#::
+The avatar and name of the User in the family.
+
+[field]#Role# [optional]#Optional#::
+The roles assigned to the User on the family. Possible values are:
+* Adult
+* Child
+* Teen
+
+[field]#Age# [required]#Required#::
+The age of the User.
+
+[field]#Family# [required]#Required#::
+The family Id to which this relationship belongs.
+
+[field]#Added on# [required]#Required#::
+The date and time when the User was added to the family.
+
+=== Linked accounts
+
+The linked accounts tab allows you to manage the linked accounts for a user.
+
+Learn more about link:/docs/v1/tech/core-concepts/identity-providers/[FusionAuth Identity Providers].
+
+image::core-concepts/user-identity-providers.png[User identity providers screen in the administrative user interface.,width=1200,role=bottom-cropped]
+
+==== Table Columns
+
+[.api]
+[field]#Display name# [required]#Required#::
+The display name of the linked account.
+
+[field]#Identity Provider# [required]#Required#::
+The identity provider to which this linked account belongs.
+
+[field]#Created# [required]#Required#::
+The date and time this linked account was created.
+
+[field]#Last login# [optional]#Optional#::
+The date and time this linked account was last used to log in.
+
+=== Groups
+
+The groups tab allows you to manage the groups for a user.
+
+Groups are a way to group users in FusionAuth.
+They are tenant scoped.
+They may have application roles associated with them.
+Users with a registration for an application as well as a group membership will assume those roles upon login.
+
+Group membership is boolean in nature.
+A user is either in a group or out of a group.
+
+An example use case is a forum moderators group.
+The forum application can get the group memberships of any user.
+If the user is a member of the moderators group, the application can provide a 'flag' button on the forum software.
+
+Every user object contains an array of group memberships.
+You can search for all users with a given group membership.
+
+One issue is that to get the group names of memberships for a user, you must use FusionAuth's proprietary APIs.
+Group names are not included in the user object.
+
+Learn more about link:/docs/v1/tech/core-concepts/groups[Groups].
+
+image::core-concepts/user-groups.png[User groups screen in the administrative user interface.,width=1200,role=bottom-cropped]
+
+==== Table Columns
+
+[.api]
+[field]#Group# [required]#Required#::
+The Group to which the User belongs.
+
+[field]#Member Id# [optional]#Optional#::
+The unique Id of this Group Member. This is not the User Id, but a unique Id for the membership.
+
+[field]#Created# [required]#Required#::
+The date and time this membership was created.
+
+=== Entity grants
+
+The entity grants tab allows you to manage the entity grants for a user.
+
+Entities and grants allow you to model fine-grained permissions in a flexible manner.
+Entities are things, while grants are expressions of permissions granted to a user or thing to another thing.
+Entities have configurable permissions.
+Entities are a good fit when you have users that may need access to different assets which can't be easily modeled as applications.
+
+An example use case which could be modeled using entities is GitHub organizations.
+A user can belong to zero or more GitHub organizations and have different access levels in each one.
+But a user logs in to GitHub, not to a GitHub organization.
+Additionally, permissions will vary between organizations.
+A user may be an admin in one GitHub organization and have read-only access in another one.
+To implement this, you'd represent each GitHub organization as an entity in FusionAuth, and grant users permissions to each organization of which they are a member.
+
+It is very common to have an interstitial page when using entities.
+(This page is custom-built and is not provided by FusionAuth.)
+The user logs in to an application, and is then presented with a list of entities to which they've been granted permissions.
+The user selects an entity and then acts within the confines of that entity.
+
+You can search for all users granted access to a given entity.
+You can search for all entities for which a user has a grant.
+
+One issue is that to search for grants on a user, you must use FusionAuth's proprietary APIs.
+Additionally, since entities cannot be 'logged into', they don't have any relationship with external Identity Providers.
+
+Learn more about link:/docs/v1/tech/core-concepts/entity-management[Entities and Grants].
+
+image::core-concepts/user-entity-grants.png[User entity grants screen in the administrative user interface.,width=1200]
+
+==== Table Columns
+
+[.api]
+[field]#Id# [required]#Required#::
+The Id of the Grant.
+
+[field]#Name# [required]#Required#::
+The name of the entity.
+
+[field]#Type# [required]#Required#::
+The type of the entity.
+
+[field]#Entity Id# [required]#Required#::
+The Id of the target entity.
+
+[field]#Permissions# [required]#Required#::
+The set of permissions of this Grant.
+
+[field]#Created# [required]#Required#::
+The date and time the Grant was created.
+
+==== Entities Compared to Applications
+
+Entities, grants, and permissions are analogous to applications, registrations, and roles, but you can't log into an entity.
+
+Entities may also be useful if you have two or more applications in FusionAuth, but you want to group access in an orthogonal way while still allowing users to assume different roles.
+
+Suppose you have a point of sales application and a scheduling application for your retail chain.
+You have ten stores.
+You want to allow employees to log in to each of these applications, but you want to limit them to access only stores where they are currently working.
+But if they move between stores to cover for a shift or because of a transfer, you want to handle that use case as well.
+This means you can't use tenants to model stores.
+
+You could model the point of sales and scheduling applications as applications.
+Each store would be an entity, and after the user has logged into an application, you'd show them the stores to which they'd have access.
+
+You could also provide different roles in different stores.
+The scheduling software could know that Richard would have access to the scheduling application as a manager for store A, but only as an employee for store B.
+
+If you were to model this using only applications, you'd have to have twenty applications in FusionAuth (two for each store) and keeping those configurations synchronized might be difficult.
+And if you added more applications or stores, you'd face a combinatorial explosion of applications.
+
+=== Recent logins
+
+The recent logins tab allows you to view the recent logins for a user. This includes when the user logged in, the IP address, and the application.
+
+image::core-concepts/user-recent-logins.png[User recent logins screen in the administrative user interface.,width=1200,role=bottom-cropped]
+
+==== Table Columns
+
+[.api]
+[field]#Application# [required]#Required#::
+The application the user logged in to.
+
+[field]#Time# [required]#Required#::
+The date and time when the login occurred.
+
+[field]#IP Address# [required]#Required#::
+The recorded IP address for this login record.
+
+=== Consent
+
+The consent tab allows you to manage the consent for a user.
+
+A FusionAuth Consent is a definition of a permission that can be given to a User. At a minimum a consent has a name, and defines the minimum age of self-consent. A consent can then be granted to a User from a family member, or optionally, a User may self-consent if they meet the minimum age defined by the consent.
+
+Learn more about link:/blog/2023/06/13/modeling-family-and-consents[Family API with Consents].
+
+image::core-concepts/user-consents.png[User consents screen in the administrative user interface.,width=1200,role=bottom-cropped]
+
+==== Table Columns
+
+[.api]
+[field]#Name# [required]#Required#::
+The name of the consent.
+
+[field]#Values# [required]#Required#::
+The values of the consent.
+
+[field]#Status# [required]#Required#::
+The status of the consent.
+
+[field]#Given on# [required]#Required#::
+The date and time this consent was given.
+
+[field]#Given by# [required]#Required#::
+The Id of the user who gave this consent.
+
+=== Sessions
+
+Users have sessions in FusionAuth. Sessions are equivalent to refresh tokens. Their lifetime is controlled by the Tenant or Application refresh token settings.
 
 These appear in the administrative user interface under the [breadcrumb]#Sessions# tab (you may need to scroll if your screen is small):
 
@@ -39,17 +422,17 @@ image::core-concepts/user-session.png[User session screen in the administrative 
 There are two primary types of sessions/tokens shown in this table:
 
 * Normal refresh tokens.
-* SSO token. While technically a refresh token, it is special, and fully managed by FusionAuth. You may safely ignore this.
+* SSO token. While technically a refresh token, it is special and fully managed by FusionAuth. You may safely ignore this.
 
-=== Session Details
+==== Session Details
 
-A session can be created by using the Login API, as long as [field]#link:/docs/v1/tech/core-concepts/applications#security[Generate refresh tokens]# is enabled, or by completing the link:/docs/v1/tech/oauth/#example-authorization-code-grant[OAuth Authorization Code grant] when the `offline_access` scope is requested. 
+A session can be created by using the Login API, as long as [field]#link:/docs/v1/tech/core-concepts/applications#security[Generate refresh tokens]# is enabled, or by completing the link:/docs/v1/tech/oauth/#example-authorization-code-grant[OAuth Authorization Code grant] when the `offline_access` scope is requested.
 
 A session will end when:
 
 * It expires.
 * It is deleted using the link:/docs/v1/tech/apis/jwt#revoke-refresh-tokens[JWT APIs].
-* Optionally, as a result of a user changing their password or having their account locked. 
+* Optionally, as a result of a user changing their password or having their account locked.
 
 These can be configured in the link:/docs/v1/tech/core-concepts/tenants#jwt[Tenant Refresh Token settings] or the link:/docs/v1/tech/core-concepts/applications#jwt[Application Refresh Token settings].
 
@@ -63,6 +446,118 @@ Normal sessions are not ended, nor are associated refresh tokens revoked, by lin
 When a session is no longer valid, the associated refresh token can't be used to create new JWTs.
 
 The JWTs themselves are valid until they expire.
+
+==== Table Columns
+
+[.api]
+[field]#Name# [required]#Required#::
+The name of the session.
+
+[field]#Type# [required]#Required#::
+The type of the session.
+
+[field]#IP address# [required]#Required#::
+The IP address of the client that initiated this session.
+
+[field]#Application# [required]#Required#::
+The application to which this session belongs.
+
+[field]#Created# [required]#Required#::
+The date and time this session was created.
+
+[field]#Last Accessed# [required]#Required#::
+The date and time this session was last accessed.
+
+[field]#Expiration# [required]#Required#::
+The date and time this session will expire.
+
+=== Current Actions
+
+The current actions tab allows you to view the current User Actions.
+
+See link:/blog/2023/04/20/using-user-actions[Using FusionAuth User Actions] for more information about User Actions.
+
+image::core-concepts/user-current-actions.png[User current actions screen in the administrative user interface.,width=1200]
+
+==== Table Columns
+
+[.api]
+[field]#Action# [required]#Required#::
+The action that is currently active.
+
+[field]#Comment# [required]#Required#::
+The comment for the action.
+
+[field]#Start# [required]#Required#::
+The date and time this action was started.
+
+[field]#Expiration# [required]#Required#::
+The date and time this action will expire.
+
+[field]#Actioning user# [required]#Required#::
+The user who created this action.
+
+[field]#Actioning user id# [required]#Required#::
+The Id of the user who created this action.
+
+=== History
+
+The history tab allows you to view expired User Actions for a user. Comments are also displayed here.
+
+image::core-concepts/user-history.png[User history screen in the administrative user interface.,width=1200]
+
+==== Table Columns
+
+[.api]
+[field]#Action# [required]#Required#::
+The action that was executed.
+
+[field]#Comment# [required]#Required#::
+The comment for the action.
+
+[field]#Start# [required]#Required#::
+The date and time this action was started.
+
+[field]#Expiration# [required]#Required#::
+The date and time this action will expire.
+
+[field]#Actioning user# [required]#Required#::
+The user who executed this action.
+
+[field]#Actioning user id# [required]#Required#::
+The Id of the user who executed this action.
+
+=== User data
+
+The user data tab allows you to view the user data for a user.
+
+User data is a key value store that allows you to store arbitrary data about a user. This data is not used by FusionAuth, it is simply stored and returned when the user is retrieved. FusionAuth does not provide a UI for managing user data. It is intended to be used by your application utilizing the API.
+
+image::core-concepts/user-data.png[User data screen in the administrative user interface.,width=1200]
+
+=== Source
+
+The source tab allows you to view the user in JSON format. This is useful for debugging and troubleshooting.
+
+image::core-concepts/user-source.png[User source screen in the administrative user interface.,width=1200]
+
+== User Scope
+
+A User is scoped to a Tenant.
+
+Each FusionAuth tenant is a logical grouping of users, configurations, and applications.
+This means a user with the same identifier (email, username, etc.) in two different tenants is a different user.
+They can have different passwords, different identity provider links, and different attributes.
+You can search for users across tenants using the User Search API.
+
+An example use case is a private label todo SaaS application, where you want a user to sign up for two or more different instances of your SaaS and not know that there is a shared identity store behind them.
+For example, richard@piedpiper.com can sign up for the Pied Piper Todo application and the Hooli Todo Application with the same email address, but different passwords, MFA methods, and more.
+
+One issue is that if you have admin users, such as customer support representatives, which need cross-tenant access, you can't keep their accounts in sync.
+One option is to set up an administrative identity server, whether that is a second instance of FusionAuth, Google GSuite, or Azure AD.
+Have the customer service representatives authenticate with it.
+
+Learn more about link:/docs/v1/tech/core-concepts/tenants[Tenants].
 
 == What Makes a User Active
 
@@ -107,7 +602,7 @@ Please see our link:/docs/v1/tech/core-concepts/search[search core concepts sect
 
 === Database Search Engine
 
-This configuration is lightweight, simplifies installation and system complexity, but comes with the trade offs of limited search capabilities and performance implications.
+This configuration is lightweight, simplifies installation and system complexity, but comes with the tradeoffs of limited search capabilities and performance implications.
 
 The database search engine enables fuzzy search against the following fields of the user:
 
@@ -148,124 +643,3 @@ To learn more about the Elasticsearch search engine in general, view the link:/d
 ==== Limitations On Changing Data Field Types
 
 include::docs/v1/tech/shared/_data-field-data-type-changes.adoc[]
-
-== Segmenting Users
-
-Often you want to segment or separate your users.
-You have four options to do so in FusionAuth.
-They each have different tradeoffs.
-The options are:
-
-* Tenants
-* Applications and Registrations
-* Groups
-* Entities and Grants
-
-//TODO table?
-
-=== Tenants
-
-Each FusionAuth tenant is a logical grouping of users, configuration and applications.
-Users are tenant scoped.
-This means a user with the same identifier (email, username, etc) in two different tenants is a different user.
-They can have different passwords, different identity provider links and different attributes.
-You can search for users across tenants using the User Search API.
-
-An example use case is a private label todo SaaS application, where you want a user to sign up for two or more different instances of your SaaS and not know that there is a shared identity store behind them.
-For example, richard@piedpiper.com can sign up for the Pied Piper Todo application and the Hooli Todo Application with the same email address, but different passwords, MFA methods and more.
-
-One issue is that if you have admin users, such as customer support representatives, which need cross-tenant access, you can't keep their accounts in sync.
-One option is to set up an administrative identity server, whether that is a second instance of FusionAuth, Google GSuite, or Azure AD.
-Have the customer service representatives authenticate with it.
-
-Learn more about link:/docs/v1/tech/core-concepts/tenants[Tenants].
-
-=== Applications and Registrations
-
-Applications in FusionAuth represent something you can log in to.
-They are tenant scoped.
-You associate a user with an application via a registration.
-You may also optionally associate one or more roles with each user's registration.
-
-An example use case is a single company, where you have a forum, a todo application and an accounting application.
-If you have three users, Richard, Monica and Jared, you can grant Richard access to all three applications, Monica access to the forum and todo applications, and Jared access to the accounting application.
-
-Prohibit a user from logging into an application for which they are not registered by checking the claims in the token or enabling the [field]#Require registration# setting for the application.
-
-Applications also may have associated Identity Providers, such as Google or OIDC providers.
-When so configured, a user may log in to an application with the Identity Provider.
-
-Every user object contains an array of application registrations.
-You can search for all users with a given registration.
-
-Learn more about link:/docs/v1/tech/core-concepts/applications[Applications].
-
-=== Groups
-
-Groups are a way to group users in FusionAuth.
-They are tenant scoped.
-They may have application roles associated with them.
-Users with a registration for an application as well as a group membership will assume those roles upon login.
-
-Group membership is boolean in nature.
-A user is either in a group or out of a group.
-
-An example use case is a forum moderators group.
-The forum application can get the group memberships of any user.
-If the user is a member of the moderators group, the application can provide a 'flag' button on the forum software.
-
-Every user object contains an array of group memberships.
-You can search for all users with a given group memberships.
-
-One issue is that to get the group names of memberships for a user, you must use FusionAuth's proprietary APIs.
-Group names are not included in the user object.
-
-Learn more about link:/docs/v1/tech/core-concepts/groups[Groups].
-
-=== Entities and Grants
-
-Entities and grants allow you to model fine grained permissions in a flexible manner.
-Entities are things, while grants are expressions of permissions granted to a user or thing to another thing.
-Entities have configurable permissions.
-Entities are a good fit when you have users that may need access to different assets which can't be easily modeled as applications.
-
-An example use case which could be modeled using entities is GitHub organizations.
-A user can belong to zero or more GitHub organizations and have different access levels in each one.
-But a user logs in to GitHub, not to a GitHub organization.
-Additionally, permissions will vary between organizations.
-A user may be an admin in one GitHub organization and have read-only access in another one.
-To implement this, you'd represent each GitHub organization as an entity in FusionAuth, and grant users permissions to each organization of which they are a member.
-
-It is very common to have an interstitial page when using entities.
-(This page is custom built and is not provided by FusionAuth.)
-The user logs in to an application, and is then presented with a list of entities to which they've been granted permissions.
-The user selects an entity and then acts within the confines of that entity.
-
-You can search for all users granted access to a given entity.
-You can search for all entities for which a user has a grant.
-
-One issue is that to search for grants on a user, you must use FusionAuth's proprietary APIs.
-Additionally, since entities cannot be 'logged into', they don't have any relationship with external Identity Providers.
-
-Learn more about link:/docs/v1/tech/core-concepts/entity-management[Entities and Grants].
-
-==== Entities Compared to Applications
-
-Entities, grants and permissions are analogous to applications, registrations and roles, but you can't log into an entity.
-
-Entities may also be useful if you have two or more applications in FusionAuth, but you want to group access in an orthogonal way while still allowing users to assume different roles.
-
-Suppose you have a point of sales application and a scheduling application for your retail chain.
-You have ten stores.
-You want to allow employees to log in to each of these applications, but you want to limit them to access only stores where they are currently working.
-But if they move between stores to cover for a shift or because of a transfer, you want to handle that use case as well.
-This means you can't use tenants to model stores.
-
-You could model the point of sales and scheduling applications as applications.
-Each store would be an entity, and after the user has logged into an application, you'd show them the stores to which they'd have access.
-
-You could also provide different roles in different stores. 
-The scheduling software could know that Richard would have access to the scheduling application as a manager for store A but only as an employee for store B.
-
-If you were to model this using only applications, you'd have to have twenty applications in FusionAuth (two for each store) and keeping those configurations synchronized might be difficult.
-And if you added more applications or stores, you'd face a combinatorial explosion of applications.
