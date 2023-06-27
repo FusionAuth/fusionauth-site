@@ -3,7 +3,7 @@ layout: blog-post
 title: Using the FusionAuth React SDK in a React application
 description: In this guide, we'll showcase how to use the FusionAuth React SDK to implement the login, logout, and registration flows in a React application.
 author: Colin Frick
-category: blog
+category: tutorial
 image: blogs/react-example-application/react-example-application.png
 tags: tutorial tutorial-react tutorial-typescript react typescript oauth javascript
 excerpt_separator: "<!--more-->"
@@ -11,13 +11,21 @@ excerpt_separator: "<!--more-->"
 
 The React SDK from FusionAuth enables developers to implement the login, logout, and registration flows in a React application with ease.
 
+
+To show the React SDK in action, we will be using the FusionDesk application. FusionDesk is a simple help desk example application that allows users to create tickets and view them. The application is built using React and Node.js.
+
+It uses a server backend built using Ts.Ed, Node.js, and Typescript.
+
 <!--more-->
 
-To show the React SDK in action, we will be using the FusionDesk application. FusionDesk is a simple help desk example application that allows users to create tickets and view them. The application is built using React and Node.js. It uses a server backend built using Ts.Ed, Node.js, and Typescript.
+Here's an example of the Fusiondesk application.
 
-{% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-tickets.png" alt="FusionDesk showing the main list of tickets" class="img-fluid" figure=false %}
+{% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-tickets.png" alt="FusionDesk showing a list of tickets." class="img-fluid" figure=false %}
+
+{% include _callout-warning.liquid content="Fusiondesk is an example application, please don't use it for any production ticketing needs." %}
 
 To get started with your own React application, install the FusionAuth React SDK and follow the [FusionAuth React SDK](/docs/v1/tech/client-libraries/react-sdk) documentation.
+
 
 ```bash
 npm install @fusionauth/react-sdk
@@ -239,3 +247,9 @@ The profile page displays the user information. The profile page is implemented 
 ## Conclusion
 
 In this article, we have shown how to use the FusionAuth React SDK in a React application. We have also shown how to use the FusionAuth OAuth 2.0 login flow in a React application and what the benefits are.
+
+Next steps:
+
+* Run through [this React quickstart](/docs/v1/tech/tutorials/integrate-react).
+* Explore the [Hosted Backend API](/docs/v1/tech/apis/hosted-backend).
+* Learn how to control the look and feel of the [FusionAuth login pages](/docs/v1/tech/themes/).
