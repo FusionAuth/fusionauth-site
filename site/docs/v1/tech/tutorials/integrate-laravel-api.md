@@ -10,7 +10,7 @@ language: PHP
 
 ## Integrate Your {{page.technology}} API With FusionAuth
 
-{% include docs/integration/_intro.md %}
+{% include docs/integration/_intro-api.md %}
 
 ## Prerequisites
 
@@ -84,35 +84,35 @@ This can take several minutes to complete, so please be patient.
 
 ### Adding JWT Authentication
 
-After it is done, change into the `fusionauth-example-laravel-api` directory and install [`tymon/jwt-auth`](https://github.com/tymondesigns/jwt-auth), a library that adds JWT capabilities to Laravel.
+After it is done, change into the `fusionauth-example-laravel-api` directory and install [`fusionauth/jwt-auth-webtoken-provider`](https://github.com/fusionauth/fusionauth-jwt-auth-webtoken-provider), a library created by FusionAuth to add JWT capabilities to Laravel, and [`web-token/jwt-signature-algorithm-rsa`](https://github.com/web-token/jwt-signature-algorithm-rsa), to handle RSA algorithms.
 
 ```shell
 cd fusionauth-example-laravel-api
-./vendor/bin/sail composer require tymon/jwt-auth
+./vendor/bin/sail composer require fusionauth/jwt-auth-webtoken-provider web-token/jwt-signature-algorithm-rsa
 ```
 
-Add some authentication routes to `routes/api.php`. 
-
-```diff
-{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/49a4e7c3e3610403c6a00246bf5b997bc44b5bd4.diff %}
-```
-
-Create `app/Http/Controllers/AuthController.php` to hold the authentication process.
+Add some authentication routes to `routes/api.php` and one to allow `GET` requests to `/api/messages`, which will create later. 
 
 ```php
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/Http/Controllers/AuthController.php %}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/routes/api.php %}
 ```
 
-Laravel uses something called [Guards](https://laravel.com/docs/10.x/authentication#adding-custom-guards) to protect your endpoints, so we need to tell it about the new Guard provided from that library.
+Create `app/Http/Controllers/Api/AuthController.php` for all authentication logic.
 
-```diff
-{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/5fb7134a70e1adee39f2d1d64ce4ed5ac7303a47.diff %}
+```php
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/Http/Controllers/Api/AuthController.php %}
+```
+
+Laravel uses something called [Guards](https://laravel.com/docs/10.x/authentication#adding-custom-guards) to protect your endpoints, so we need to tell it about the new Guard provided from that library by editing `config/auth.php`.
+
+```php
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/config/auth.php %}
 ```
 
 To make the library available for use, publish its configuration by running the command below.
 
 ```shell
-./vendor/bin/sail artisan vendor:publish --provider="Tymon\JWTAuth\Providers\LaravelServiceProvider"
+./vendor/bin/sail artisan vendor:publish --provider="FusionAuth\JWTAuth\WebTokenProvider\Providers\WebTokenServiceProvider"
 ```
 
 ### Editing Files
@@ -121,14 +121,14 @@ The Laravel installer already brings some useful resources for many applications
 
 First, remove the need for users to have a password by editing `app/Models/User.php`.
 
-```diff
-{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/e4298a10437ff396fe3dfc02c3bcf85f310921a0.diff %}
+```php
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/Models/User.php %}
 ```
 
 Change the created migration at `database/migrations/2014_10_12_000000_create_users_table.php`.
 
-```diff
-{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/9c670115fa991d2219120a88ccaaf94b9e5feab1.diff %}
+```php
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/database/migrations/2014_10_12_000000_create_users_table.php %}
 ```
 
 You may remove all other migrations, as you won't need them.
@@ -167,12 +167,6 @@ To override the existing classes when the ones you just added, you must create a
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/FusionAuth/Providers/FusionAuthServiceProvider.php %}
 ```
 
-Finally, expose your Service Provider by adding it to the `providers` array in `config/app.php`.
-
-```diff
-{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/b291247bc0373cffa4edc1a64a58e475f706ff40.diff %}
-```
-
 ### Retrieving Public Key
 
 To make your API trust JWTs issued by FusionAuth, you must import the Public Key from your FusionAuth application into it.
@@ -187,16 +181,10 @@ If you don't have it, log into the [FusionAuth admin screen](http://localhost:90
 
 ### Creating a Controller
 
-Create a controller in `app/Http/Controllers/MessagesController.php` which gives back a JSON message.
+Create a controller in `app/Http/Controllers/Api/MessagesController.php` which gives back a JSON message.
 
 ```php
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/Http/Controllers/MessagesController.php %}
-```
-
-Add a route to `routes/api.php` so it can be possible to make a `GET` request to `/api/messages`.
-
-```diff
-{% remote_include https://github.com/FusionAuth/fusionauth-example-laravel-api/commit/3fd47ffc4942190c7289e961133baf74c56b5e53.diff %}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/Http/Controllers/Api/MessagesController.php %}
 ```
 
 ### Testing the Authentication Flow
