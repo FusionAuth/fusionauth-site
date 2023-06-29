@@ -36,7 +36,6 @@ Topics covered in this document:
 ** <<ZIP Packages>>
 ** <<Linux Packages>>
 ** <<FastPath>>
-** <<Database>>
 
 == When to Upgrade
 
@@ -178,7 +177,13 @@ FusionAuth can handle database migrations automatically using link:/docs/v1/tech
 Note that Maintenance Mode should never be used in production.
 ====
 
-In production, you may want to perform the database upgrade manually. This is useful if you want to perform the database upgrade in a way that minimizes downtime or as part of a larger automated or coordinated deployment. Upgrading the database manually involves running SQL scripts directly on your database to update the database schema. 
+[NOTE]
+====
+You should always back up your database before upgrading regardless of the upgrade method you choose.
+====
+
+
+In production, you may want to perform the database upgrade manually, also known as an out-of-band upgrade. This is useful if you want to perform the database upgrade in a way that minimizes downtime or as part of a larger automated or coordinated deployment. Upgrading the database manually involves running SQL scripts directly on your database to update the database schema. 
 
 Depending on your current version and the new version you will be updating to, you might need to execute one or more SQL scripts to update your database. These scripts are located in the migrations folder in the Database Schema ZIP file, which you can download from the https://fusionauth.io/direct-download[Direct Downloads] page.
 
@@ -255,8 +260,6 @@ Q: What is runtime mode and how does it affect upgrades? +
 A: FusionAuth runtime mode can be either `production` or `development`. When in the `development` runtime mode, Maintenance Mode will interactively assist you to configure the database and connect to Elasticsearch, if configured. Once you move FusionAuth into production, it is recommended that you modify the runtime mode to `production`. When in `production` runtime mode, Maintenance Mode will no longer be available to you, which means you can be certain that your end users will not find themselves on the database upgrade panel during an upgrade. When in `production` mode, you will either need to leverage Silent Mode to automatically apply database migrations or you will need to apply the database migrations yourself (either by hand or via a script of some sort). For more on runtime modes, see the link:/docs/v1/tech/installation-guide/fusionauth-app#runtime-modes[FusionAuth Installation Guide].
 
 Q: What is Maintenance Mode? +
-A: Maintenance Mode is a special admin interface for development environment FusionAuth installations that helps you to interactively upgrade FusionAuth or set up database connections. You can switch to Maintenance Mode by switching to the `development` runtime mode and setting Silent Mode to false. Note that Maintenance Mode should never be used in production.
-
 A: Maintenance Mode is a special admin interface for FusionAuth installations in development environments. Maintenance Mode helps you to interactively upgrade FusionAuth or set up database connections. You can switch to Maintenance Mode by switching to the `development` runtime mode and setting Silent Mode to false. Note that Maintenance Mode should never be used in production.
 
 Q: What is Silent Mode? +
@@ -476,81 +479,3 @@ While FastPath is an option to perform an upgrade, the FastPath process limits t
 
 On Linux in a production environment, use `.deb` or `.rpm` packages. If your production platform is macOS or Windows, please manually manage the upgrade using the `.zip` bundles.
 
-=== Database
-
-If you want FusionAuth to upgrade the database automatically, use the link:/docs/v1/tech/guides/silent-mode[Silent Mode] process, which will perform an automated upgrade.
-
-If you want to upgrade the database manually, follow the instructions below.
-
-[NOTE]
-====
-You should always back up your database before upgrading using any method.
-====
-
-Depending on your current version and the new version you will be updating to, you might need to execute one or more SQL scripts to update your database. These scripts are located in the migrations folder in the Database Schema ZIP file, which you can download from the https://fusionauth.io/direct-download[Direct Downloads] page.
-
-[WARNING]
-====
-When upgrading your database from a previous version, be sure to only run the scripts located in the `migrations` folder. The base files
- `mysql.sql` and `postgresql.sql` should only be used during a clean installation when no database schema is present.
-====
-
-Find the FusionAuth migrations in the Database Schema ZIP file. Run them in order, starting with the first migration greater than the version you are coming from, and ending with the version that is less than or equal to the target upgrade version.
-
-For example, if upgrading from version `1.19.1` to `1.22.0`, run the following SQL migrations in this order:
-
-* `1.20.0.sql`
-* `1.21.0.sql`
-* `1.22.0.sql`
-
-[source]
-----
-fusionauth-database-schema/
-|-- migrations/
-    |--  [mysql | postgresql]/
-      |-- 1.1.0.sql
-      |-- 1.2.0.sql
-      |-- 1.3.0.sql
-      |-- 1.3.1.sql
-      |-- 1.5.0.sql
-      |-- 1.6.0.sql
-      |-- 1.7.0.sql
-      |-- 1.7.1.sql
-      |-- 1.8.0-RC.1.sql
-      |-- 1.8.1-RC.1.sql
-      |-- 1.11.0.sql
-      |-- 1.12.0.sql
-      |-- 1.13.0.sql
-      |-- 1.14.0.sql
-      |-- 1.15.0.sql
-      |-- 1.15.3.sql
-      |-- 1.16.0-RC.1.sql
-      |-- 1.16.0.sql
-      |-- 1.17.0.sql
-      |-- 1.17.3.sql
-      |-- 1.18.0.sql
-      |-- 1.18.2.sql
-      |-- 1.19.0.sql
-      |-- 1.20.0.sql
-      |-- 1.21.0.sql
-      |-- 1.22.0.sql
-      |-- 1.23.0.sql
-      |-- 1.25.0.sql
-      |-- 1.26.0.sql
-      |-- 1.27.0.sql
-      |-- 1.28.0.sql
-      |-- 1.28.1.sql
-      |-- 1.29.1.sql
-      |-- 1.30.0.sql
-      |-- 1.30.1.sql
-      |-- 1.30.2.sql
-      |-- 1.32.0.sql
-      |-- 1.33.0.sql
-      |-- 1.35.0.sql
-      |-- 1.36.0.sql
-      |-- 1.37.0.sql
-      |-- 1.40.1.sql
-      |-- 1.41.0.sql
-      |-- 1.43.0.sql
-      |-- 1.44.0.sql
-----
