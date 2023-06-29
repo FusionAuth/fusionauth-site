@@ -31,11 +31,12 @@ Topics covered in this document:
 ** <<Out-of-Band Database Upgrades>>
 * <<FAQs>>
 * <<Detailed Upgrade Instructions>>
-* <<ZIP Packages>>
-* <<Linux Packages>>
-** <<Troubleshooting Upgrade with RPMs>>
-* <<FastPath>>
-* <<Database>>
+** <<Docker>>
+** <<Homebrew>>
+** <<ZIP Packages>>
+** <<Linux Packages>>
+** <<FastPath>>
+** <<Database>>
 
 == When to Upgrade
 
@@ -93,7 +94,7 @@ If you want to run the migrations interactively, you can run any needed scripts 
 You should always back up your database before using Maintenance Mode or performing any database migrations by any method.
 ====
 
-The timing of the database upgrade is also important to note. When an upgraded node is added to a FusionAuth cluster, it will lock the database and perform the database upgrade if configured for Silent Mode and the database requires upgrading. This means that the database will be unavailable to other nodes in the cluster until the upgrade is complete. 
+The timing of the database upgrade is also important to note. When an upgraded node is started and connects to the database, it will lock the database immediately if configured for Silent Mode and the database requires upgrading. This means that the database will be unavailable to other nodes in the cluster until the upgrade is complete.
 
 === Connected Applications and Client Libraries
 
@@ -113,10 +114,10 @@ Whichever approach you take, you should always test the upgrade in a staging env
 
 There are a number of options for managing the configuration of your FusionAuth instance over time and promoting changes from one environment to another. These include:
 
-- Script the changes
-- Terraform
-- Pulumi
-- Manual configuration via the UI
+- Script the changes.
+- Terraform.
+- Pulumi.
+- Manual configuration via the UI.
 
 You can read more in link:/docs/v1/tech/admin-guide/configuration-management[the Configuration Management guide].
 
@@ -145,6 +146,7 @@ Because individual nodes are taken offline during the rolling update, the capaci
 You can choose to run in-place upgrades on each node or to replace each node with a new node running the latest version of FusionAuth. In-place upgrades are potentially faster, but if something goes wrong, you may need to roll back the upgrade. Replacing nodes may be slower, but if something goes wrong, you can simply revert to the previous version of FusionAuth by pointing the load balancer to the old nodes.
 
 A rolling upgrade procedure might look like this:
+
 - Stop the first node and remove it from the load balancer.
 - Upgrade FusionAuth on the first node. Once FusionAuth is updated, start it up so that it can perform the database migrations. FusionAuth will lock the database and own it while the database upgrade is completed. Note that there will be a schema mismatch between the first node and the other nodes, so the other nodes may give errors while the first node is being upgraded. The nature of these errors depends on the code paths being updated as well as how users interact with the system. They should be minimal.
 - Start the first node and add it back to the load balancer.
@@ -169,7 +171,12 @@ To perform a blue-green deployment with a three-node cluster, first create three
  
 === Out-of-Band Database Upgrades
 
-FusionAuth can handle database migrations automatically using link:/docs/v1/tech/guides/silent-mode[Silent Mode]. FusionAuth can also handle updates interactively on development environments using link:/docs/v1/tech/installation-guide/fusionauth-app#maintenance-mode[Maintenance Mode]. Note that Maintenance Mode should never be used in production.
+FusionAuth can handle database migrations automatically using link:/docs/v1/tech/guides/silent-mode[Silent Mode]. FusionAuth can also handle updates interactively on development environments using link:/docs/v1/tech/installation-guide/fusionauth-app#maintenance-mode[Maintenance Mode].
+
+[WARNING]
+====
+Note that Maintenance Mode should never be used in production.
+====
 
 In production, you may want to perform the database upgrade manually. This is useful if you want to perform the database upgrade in a way that minimizes downtime or as part of a larger automated or coordinated deployment. Upgrading the database manually involves running SQL scripts directly on your database to update the database schema. 
 
