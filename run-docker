@@ -9,6 +9,7 @@ if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
     echo "Commands:"
     echo "  -h, --help  Display this help and exit"
     echo "  --recreate  Rebuild docker image"
+    echo "  --force     Remove ruby cache volume and Rebuild docker image"
     echo "  --serve     Serve the website instead of building it"
     exit
 fi
@@ -19,8 +20,18 @@ SAVANT_CACHE_VOLUME_NAME="fusionauth-site-savant"
 
 # Building docker image
 if [ "$1" = "--recreate" ] || [ "$(docker images -q "${IMAGE_NAME}" 2> /dev/null)" = "" ]; then
+    docker volume rm $RUBY_CACHE_VOLUME_NAME
     docker build --no-cache --pull -t "${IMAGE_NAME}" .
     if [ "$1" = "--recreate" ]; then
+        shift
+    fi
+fi
+
+# Building docker image
+if [ "$1" = "--force" ] || [ "$(docker images -q "${IMAGE_NAME}" 2> /dev/null)" = "" ]; then
+    docker volume rm $RUBY_CACHE_VOLUME_NAME
+    docker build --no-cache --pull -t "${IMAGE_NAME}" .
+    if [ "$1" = "--force" ]; then
         shift
     fi
 fi
