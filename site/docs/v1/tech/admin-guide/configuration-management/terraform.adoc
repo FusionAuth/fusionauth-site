@@ -9,13 +9,15 @@ technology: Terraform
 
 == Overview
 
-In this section we dig deeper in the the community supported, open source https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/[FusionAuth Terraform provider] with which you will be able to manage FusionAuth using Terraform, an open source infrastructure as code automation tool.
+In this section we dig deeper in the the community supported, open source link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/[FusionAuth Terraform Provider] with which you will be able to manage FusionAuth using Terraform, an open source infrastructure as code automation tool.
 
 * <<Prerequisites>>
 * <<Initial Setup>>
 ** <<FusionAuth API Key>>
 ** <<Initializing Terraform Working Directory>>
 * <<Terraform Import>>
+** <<Importing The Default Tenant>>
+** <<Importing The FusionAuth Application>>
 ** <<Terraform Data Source Instead Of Import>>
 * <<Terraform Create>>
 * <<Terraform Update>>
@@ -23,22 +25,24 @@ In this section we dig deeper in the the community supported, open source https:
 
 == Prerequisites
 
-{% include docs/integration/_prerequisites.md %}
+In order for you to get the most value from this guide, you should have a FusionAuth instance set up for a user to log in with.
+
+If you don't have this set up yet, please review the following link:
+
+* link:/docs/v1/tech/5-minute-setup-guide[5 minute setup guide] - get a FusionAuth instance up and running with a simple application
 
 == Initial Setup
 
-ipsum
+In the initial setup we go through the initializing of the Terraform working directory with the FusionAuth API key.
 
 === FusionAuth API Key
 
-https://fusionauth.io/docs/v1/tech/apis/api-keys
-
-http://fusionauth-terraform:9011/admin/api-key/
-- Copy key (e.g. yqT4LSMCWDYgwbPBA_AxmXHm7_qNFT9jbOi3wL9Jr65ymNkNnFisAvjY)
-- Do Not select any endpoint methods to create a super user key. A super user API Key has access to all API endpoints.
-- Save
+Create an unlimited super user API Key as described in link:/docs/v1/tech/apis/authentication#managing-api-keys[Managing API Keys] by not selecting any endpoint methods to create a super user key. A super user API Key has access to all API endpoints. Copy the key before pressing the Save button.
+//TODO: screenshot http://fusionauth-terraform:9011/admin/api-key/
 
 === Initializing Terraform Working Directory
+
+With the copied API Key from your fusionauth environment we initialize the Terraform working directory. By creating a new directory.
 
 [source]
 ----
@@ -50,12 +54,13 @@ mkdir your.fusionauth.domain
 cd your.fusionauth.domain
 ----
 
-go to https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs
-Click USE PROVIDER
-Copy Information
-create `main.tf`
-Add the previously created key as api_key and host as configuration options.
-Make sure host is a URL including protocol
+And add the link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/[FusionAuth Terraform Provider] configuration in the directory by:
+
+* Open the link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs[FusionAuth Terraform Provider Documentation]
+* Click USE PROVIDER and Copy Information
+* Create the `main.tf` Terraform configuration with the copied information
+* Add the previously created key as api_key and add the host as configuration options
+* Make sure host is the full URL including protocol
 
 [source]
 ----
@@ -63,76 +68,149 @@ terraform {
   required_providers {
     fusionauth = {
       source = "gpsinsight/fusionauth"
-      version = "0.1.90"
+      version = "0.1.91"
     }
   }
 }
 
 provider "fusionauth" {
-  api_key = "yqT4LSMCWDYgwbPBA_AxmXHm7_qNFT9jbOi3wL9Jr65ymNkNnFisAvjY"
+  api_key = "yqTs2LSMd23DYgwbPBA_AxmXHm7_qNFT9jbi3wL9Jr65ymNkNnFisAvjY"
   host = "https://your.fusionauth.domain"
 }
 ----
 
+Finally, the following command performs several different initialization steps in order to prepare the current working directory for use with Terraform.
+
+[source]
+----
+terraform init
+----
+
+It is always safe to run link:https://developer.hashicorp.com/terraform/cli/commands/init[init] multiple times, to bring the working directory up to date with changes in the configuration. Though subsequent runs may give errors, this command will never delete your existing configuration or state.
+
 == Terraform Import
 
-If you have existing resources you want to manage via terraform you can import the current configuration via terraform import.
-(Additional input for documentation tbd. import cli https://developer.hashicorp.com/terraform/cli/import import config https://developer.hashicorp.com/terraform/language/import https://spacelift.io/blog/importing-exisiting-infrastructure-into-terraform  https://medium.com/swlh/importing-existing-infrastructure-into-terraform-a6ae168ad2bb https://stackoverflow.com/questions/47613926/import-all-resources-defined-in-tf-file https://www.bitslovers.com/terraform-import/)
+Before we go in to Creating, Updating and Removing of resources we first look in to the link:https://developer.hashicorp.com/terraform/language/import[Import] functionality. If you have existing resources you want to manage via terraform you need to import the current configuration via import to be able to manage it via Terraform.
+//Additional input for documentation tbd. import cli https://developer.hashicorp.com/terraform/cli/import import config https://developer.hashicorp.com/terraform/language/import https://spacelift.io/blog/importing-exisiting-infrastructure-into-terraform  https://medium.com/swlh/importing-existing-infrastructure-into-terraform-a6ae168ad2bb https://stackoverflow.com/questions/47613926/import-all-resources-defined-in-tf-file https://www.bitslovers.com/terraform-import/)
 
-- User
-https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/user
+=== Importing The Default Tenant
+We start by importing the default tenant based on the link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/tenant[Terraform Resource: Tenant] by adding the following code below.
 
-- Tenant
-https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/tenant
-why importing default tenant is good practice, to manage fusionauth application related topics it is always in the default tenant, there is not necessarily a need to create a different tenant as you create multiple applications: https://fusionauth.io/community/forum/topic/1725/what-are-the-pros-and-cons-of-using-the-default-tenant
+Why importing default tenant is good practice? Manage FusionAuth application related topics is always part of the default tenant, as well as there is not necessarily a need to create a different tenant as you create multiple applications.
+//knowledge source https://fusionauth.io/community/forum/topic/1725/what-are-the-pros-and-cons-of-using-the-default-tenant
 
-- Application
-https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application
+[source]
+----
+import "fusionauth_tenant" "default" {
+  name = "Default"
+}
+----
+
+=== Importing The FusionAuth Application
+And import the default FusionAuth application based on the link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application[Terraform Resource: Application] by adding the following code.
+
+[source]
+----
+import "fusionauth_application" "FusionAuth" {
+  tenant_id = fusionauth_tenant.default.id
+  name = "FusionAuth"
+}
+----
 
 === Terraform Data Source Instead Of Import
 
-Instead of importing a ressource you can use existing configuration as a Data Source
+Instead of importing a ressource you can use existing configuration as a Data Source instead, the list of all supported data sources you can find in the link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs[FusionAuth Terraform Provider Documentation]
 
-- Tenant
-https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/data-sources/tenant
+If you choose to manage the default Tenant and FusionAuth Application outside instead as shown previously inside the Terraform configuration. But still add Applications in to the default Tenant via Terraform, you can reference it in the configuration as a data source.
 
-- Application
-https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/data-sources/application
+* link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/data-sources/tenant[Terraform Data Source: Application]
+* link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/data-sources/application[Terraform Data Source: Application]
+
+[source]
+----
+data "fusionauth_tenant" "default" {
+  name = "Default"
+}
+
+data "fusionauth_application" "FusionAuth" {
+  tenant_id = fusionauth_tenant.default.id
+  name = "FusionAuth"
+}
+----
 
 == Terraform Create
 
-To create a new resource you can go through the list of ressources available to you in the provider https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs and pick the ressource you are interested in.
+To create a new resource you can go through the list of resources available to you in the link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs[FusionAuth Terraform Provider Documentation] and pick the ressource you are interested in. Each resource contains information about required and optional arguments.
 
-Each resource contains information about required and opitional arguments.
+In this example we create an Application called forum in the default Tenant with related Roles (admin and user), Users (forum-user1 and forum-admin1) and according Registrations:
 
-- Application
-https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application
+* link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application[Terraform Resource: Application]
+* link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application_role[Terraform Resource: Application Role]
+* link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/user[Terraform Resource: User]
+* link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/registration[Terraform Resource: Registration]
 
-- Application Role
-https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application_role
+[source]
+----
+resource "fusionauth_application" "forum" {
+  tenant_id = fusionauth_tenant.default.id
+  name = "forum"
+}
 
-- User
-https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/user
+resource "fusionauth_application_role" "forum_admin_role" {
+  application_id = fusionauth_application.forum.id
+  is_default     = false
+  is_super_role  = true
+  name           = "admin"
+}
 
-- Registration
-https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/registration
+resource "fusionauth_application_role" "forum_user_role" {
+  application_id = fusionauth_application.forum.id
+  is_default     = true
+  is_super_role  = false
+  name           = "user"
+}
+
+resource "fusionauth_user" "forum-user1" {
+  email                    = "forum-user1@email.internal"
+  first_name               = "John"
+  last_name                = "Doe"
+  middle_name              = "William"
+  password_change_required = false
+  username_status          = "ACTIVE"
+}
+
+resource "fusionauth_user" "forum-admin1" {
+  email                    = "forum-user1@email.internal"
+  first_name               = "John"
+  last_name                = "Doe"
+  middle_name              = "William"
+  password_change_required = false
+  username_status          = "ACTIVE"
+}
+
+resource "fusionauth_registration" "forum-admin1-admin-role" {
+  user_id        = fusionauth_user.forum-admin1.id
+  application_id = data.fusionauth_application.forum.id
+  roles          = ["admin"]
+}
+
+resource "fusionauth_registration" "forum-user1-user-role" {
+  user_id        = fusionauth_user.forum-user1.id
+  application_id = data.fusionauth_application.forum.id
+  roles          = ["user"]
+}
+----
 
 == Terraform Update
 
-- Tenant
-https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/tenant
+Once a resource is imported or created you can update it accordingly.
 
-- Application
-https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application
+* link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/tenant[Terraform Resource: Tenant]
+* link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application[Terraform Resource: Application]
+* link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application_role[Terraform Resource: Application Role]
+* link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/user[Terraform Resource: User]
+* link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/registration[Terraform Resource: Registration]
 
-- Application Role
-https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application_role
-
-- User
-https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/user
-
-- Registration
-https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/registration
 
 == Terraform Remove
 
