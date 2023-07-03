@@ -53,7 +53,7 @@ Then copy and paste the following code into `setup.js`. This file uses the [Fusi
 Then, you can run the setup script.
 
 ```shell
-fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE npm run setup
+fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE node setup.js
 ```
 
 {% include _callout-note.liquid content="The setup script is designed to run on a newly installed FusionAuth instance with only one user and no tenants other than `Default`. To follow this guide on a FusionAuth instance that does not meet these criteria, you may need to modify the above script. <br><br> Refer to the [Typescript client library](/docs/v1/tech/client-libraries/typescript) documentation for more information." %}
@@ -62,14 +62,14 @@ If you are using PowerShell, you will need to set the environment variable in a 
 
 ```shell
 $env:fusionauth_api_key='YOUR_API_KEY_FROM_ABOVE'
-npm run setup
+node setup.js
 ```
 
 If you want, you can [log into your instance](http://localhost:9011) and examine the new Application the script created for you.
 
 ## Create Your {{page.technology}} Application
 
-Now you are going to create a {{page.technology}} application. While this section uses a simple {{page.technology}} application, you can use the same steps to integrate any {{page.technology}} application with FusionAuth.
+Now you are going to create an {{page.technology}} application. While this section uses a simple {{page.technology}} application, you can use the same steps to integrate any {{page.technology}} application with FusionAuth.
 
 First, create a simple {{page.technology}} template using `@angular/cli`. Using this lets you easily integrate FusionAuth.
 
