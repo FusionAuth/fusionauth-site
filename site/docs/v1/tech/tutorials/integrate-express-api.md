@@ -1,11 +1,11 @@
 ---
 layout: doc
-title: Integrate Your Express.js API With FusionAuth
-description: Integrate your Express.js API with FusionAuth
+title: Integrate Your Express API With FusionAuth
+description: Integrate your Express API with FusionAuth
 navcategory: getting-started
 prerequisites: Node.js
 language: TypeScript
-technology: Express.js
+technology: Express
 ---
 
 {% include docs/integration/_intro-api.md %}
@@ -55,21 +55,21 @@ Then, you can run the setup script.
 {% include _callout-note.liquid content="The setup script is designed to run on a newly installed FusionAuth instance with only one user and no tenants other than `Default`. To follow this guide on a FusionAuth instance that does not meet these criteria, you may need to modify the script above. <br><br> Refer to the [Typescript client library](/docs/v1/tech/client-libraries/typescript) documentation for more information." %}
 
 ```shell
-fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE npm run setup-express
+fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE node setup.js
 ```
 
 If you are using PowerShell, you will need to set the environment variable in a separate command before executing the script.
 
 ```shell
 $env:fusionauth_api_key='YOUR_API_KEY_FROM_ABOVE'
-npm run setup-express
+node setup.js
 ```
 
 If you want, you can [log into your instance](http://localhost:9011) and examine the new Application the script created for you.
 
 ## Create Your {{page.technology}} API
 
-Now you are going to create a {{page.technology}} API. While this section uses a simple {{page.technology}} API, you can use the same steps to integrate any {{page.technology}} API with FusionAuth.
+Now you are going to create an {{page.technology}} API. While this section uses a simple {{page.technology}} API, you can use the same steps to integrate any {{page.technology}} API with FusionAuth.
 
 First, make a directory.
 
@@ -151,7 +151,7 @@ Run this command in a terminal window:
 ```shell
 curl -H 'Authorization: YOUR_API_KEY_FROM_ABOVE' \
      -H 'Content-type: application/json' \
-     -d '{"loginId": "YOUR_EMAIL", "password":"YOUR_PASSWORD","applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"} \
+     -d '{"loginId": "YOUR_EMAIL", "password":"YOUR_PASSWORD","applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"}' \
     http://localhost:9011/api/login 
 ```
 
@@ -166,7 +166,7 @@ This request will return something like this:
 Grab the `token` field (which begins with `ey`). Replace YOUR_TOKEN below with that value, and run this command:
 
 ```shell
-curl --cookie 'app.at=YOUR_TOKEN' http://localhost:4001/messages
+curl --cookie 'app.at=YOUR_TOKEN' http://localhost:3000/messages
 ```
 
 Here you are placing the token in a cookie named `app.at`. This is for compatibility with the FusionAuth best practices and [the hosted backend](/docs/v1/tech/apis/hosted-backend).
