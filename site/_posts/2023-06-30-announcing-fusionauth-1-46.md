@@ -51,13 +51,15 @@ Adding support lets you create your own custom login flows using the Device gran
 
 ## Tenants and the OIDC discovery endpoint 
 
-Oftentimes you can provide an OpenID Connect discovery endpoint to other software, such as [oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy/). This endpoint, [defined by the OpenID Connect specification](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfig) includes information about the OIDC server, including endpoints, supported claims, and supported signing algorithms.
+Oftentimes you can provide an OpenID Connect discovery endpoint to other software, such as [oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy/). This endpoint, [defined by the OpenID Connect specification](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfig), includes information about the OIDC server, including endpoints, supported claims, and supported signing algorithms.
 
-Until this release, when there was a single FusionAuth tenant, the endpoint path was `/.well-known/openid-configuration`. Once you had two or more tenants, the path was appended with the tenant Id, so might look something like: `/.well-known/openid-configuration/bafb4319-b7ca-ed27-fa2f-bbdba9d8ec06`.
+Until this release, when there was a single FusionAuth tenant, the endpoint path was `/.well-known/openid-configuration`. The full URL would be something like `https://local.fusionauth.io/.well-known/openid-configuration`.
+
+Once you had two or more tenants, the path was appended with the tenant Id, so the path would look something like: `/.well-known/openid-configuration/bafb4319-b7ca-ed27-fa2f-bbdba9d8ec06`.
 
 The tenant Id at the end of the path caused compatibility issues for some software. While you could work around this by not using discovery and instead manually entering the required metadata, automatic configurability is superior in the long-term.
 
-With this release, the tenant Id can now be placed at as a prefix for the discovery endpoint. So the example above would be `/bafb4319-b7ca-ed27-fa2f-bbdba9d8ec06/.well-known/openid-configuration`. Both locations for the tenant Id will continue to work, but you should prefer this one.
+With this release, the tenant Id can now be a prefix for the discovery endpoint, rather than a suffix as above. So the previous example OIDC discovery path would be `/bafb4319-b7ca-ed27-fa2f-bbdba9d8ec06/.well-known/openid-configuration`. Both locations for the tenant Id will continue to work, but you should prefer this one.
 
 ## The rest of it
 
