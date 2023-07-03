@@ -5,7 +5,7 @@ description: This release includes a number of security fixes, improvements to t
 author: Dan Moore
 image: blogs/release-1-46/fusionauth-1-46.png
 category: announcement
-tags: release-announcement pagination search react drupal password-hashes
+tags: release-announcement security device-grant oidc
 excerpt_separator: "<!--more-->"
 ---
 
@@ -19,11 +19,9 @@ All in all there are 26 issues, enhancements, and bug fixes included in the 1.46
 
 At FusionAuth, we take security very seriously. This release has a number of fixes, including a fix for CAPTCHA bypass, a potential directory traversal attack, and additional defensive validation on our self-service profile edit form.
 
-We regularly obtain professional penetration testing and offer a bug bounty. [Learn more about FusionAuth's security posture](https://fusionauth.io/security).
+We regularly obtain professional penetration testing and offer a bug bounty. [Learn more about FusionAuth's security programs](https://fusionauth.io/security).
 
-{% comment %}
 If you'd like to be on the security announcement list, please sign up for a [free FusionAuth account](https://account.fusionauth.io) and give yourself the security officer role. 
-{% endcomment %}
 
 ## Improvements to the OAuth2 Device grant
 
