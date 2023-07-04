@@ -48,7 +48,7 @@ composer install
 
 Then copy and paste the following file into `setup.php`.
 
-```javascript
+```php
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/php/setup.php %}
 ```
 
@@ -84,7 +84,7 @@ This can take several minutes to complete, so please be patient.
 
 ### Adding JWT Authentication
 
-After it is done, change into the `fusionauth-example-laravel-api` directory and install [`fusionauth/jwt-auth-webtoken-provider`](https://github.com/fusionauth/fusionauth-jwt-auth-webtoken-provider), a library created by FusionAuth to add JWT capabilities to Laravel, and [`web-token/jwt-signature-algorithm-rsa`](https://github.com/web-token/jwt-signature-algorithm-rsa), to handle RSA algorithms.
+After it is done, change into the `fusionauth-example-laravel-api` directory and install [`fusionauth/jwt-auth-webtoken-provider`](https://github.com/fusionauth/fusionauth-jwt-auth-webtoken-provider), a library created by FusionAuth to add JWT validation capabilities to Laravel, and [`web-token/jwt-signature-algorithm-rsa`](https://github.com/web-token/jwt-signature-algorithm-rsa), to handle RSA algorithms.
 
 ```shell
 cd fusionauth-example-laravel-api
