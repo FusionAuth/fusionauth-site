@@ -125,9 +125,9 @@ To make the library available for use, publish its configuration by running the 
 
 ### Editing Files
 
-The Laravel installer already brings some useful resources for many applications. We'll have to edit a few of them and add some more.
+The Laravel installer already brings some useful resources for many applications because it usually expects users to have a username and password for authentication, but APIs in general should only expect an API key or a token to authenticate a request. In this quickstart, we've disabled the typical authentication method and only allow JWTs as the authentication method.
 
-First, remove the need for users to have a password by editing `app/Models/User.php`.
+Start by removing the need for users to have a password by editing `app/Models/User.php`.
 
 ```php
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/Models/User.php %}
