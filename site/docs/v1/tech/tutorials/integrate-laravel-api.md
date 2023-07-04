@@ -62,7 +62,15 @@ This will create the FusionAuth configuration for your {{page.technology}} API.
 php setup.php "YOUR_API_KEY_FROM_ABOVE"
 ```
 
-If you want, you can [log into your instance](http://localhost:9011) and examine the new Application the script created for you.
+### Retrieve JWKS Endpoint
+
+Instead of manually storing the public key to verify JWTs, your application should automatically look it up using the [JWKS endpoint](/docs/v1/tech/oauth/endpoints#json-web-key-set-jwks).
+
+As both your Laravel application and FusionAuth instance are running in different Docker Compose projects, they can't reach each other. To do that, you need to expose your FusionAuth instance to the Web using [ngrok](/docs/v1/tech/developer-guide/exposing-instance).
+
+{% include _callout-note.liquid content="You could also add network connectivity between them by running [`docker network connect`](https://docs.docker.com/engine/reference/commandline/network_connect/)." %}
+
+Now, log into your instance using the address `ngrok` gave you and browse to <span>Applications</span>{:.breadcrumb}. Locate the `PHP Example App` application that the setup script created for you and click <i/>{:.ui-button .green .fa .fa-search} to view its details. In the <span>OAuth2 & OpenID Connect Integration details</span>{:.uielement} section, locate <span>JSON Web Key (JWK) Set</span>{:.uielement} and copy it. You'll need this value later.
 
 ## Create Your {{page.technology}} API
 
@@ -84,14 +92,14 @@ This can take several minutes to complete, so please be patient.
 
 ### Adding JWT Authentication
 
-After it is done, change into the `fusionauth-example-laravel-api` directory and install [`fusionauth/jwt-auth-webtoken-provider`](https://github.com/fusionauth/fusionauth-jwt-auth-webtoken-provider), a library created by FusionAuth to add JWT validation capabilities to Laravel, and [`web-token/jwt-signature-algorithm-rsa`](https://github.com/web-token/jwt-signature-algorithm-rsa), to handle RSA algorithms.
+After it is done, change into the `fusionauth-example-laravel-api` directory and install [`fusionauth/jwt-auth-webtoken-provider`](https://github.com/fusionauth/fusionauth-laravel-jwt-auth-webtoken-provider), a library created by FusionAuth to add JWT validation capabilities to Laravel, and [`web-token/jwt-signature-algorithm-rsa`](https://github.com/web-token/jwt-signature-algorithm-rsa), a package to handle RSA algorithms.
 
 ```shell
 cd fusionauth-example-laravel-api
 ./vendor/bin/sail composer require fusionauth/jwt-auth-webtoken-provider web-token/jwt-signature-algorithm-rsa
 ```
 
-Add some authentication routes to `routes/api.php` and one to allow `GET` requests to `/api/messages`, which will create later. 
+Add some authentication routes to `routes/api.php` and another endpoint to allow `GET` requests to `/api/messages`, which you'll create later. 
 
 ```php
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/routes/api.php %}
@@ -147,7 +155,7 @@ Run the remaining migrations to create the necessary tables in your database.
 
 ### Adding Files
 
-By default, Laravel only allows JWTs that correspond to existing users in your database, but one of the greatest benefits of using FusionAuth is to have a single source of truth of user management. So, you would want your API to automatically provision new users when it receives a trusted JWT from FusionAuth. Even though [`tymon/jwt-auth`](https://github.com/tymondesigns/jwt-auth) is a great library, it doesn't provide an easy way of doing these kinds of customizations, so you'll have to create some classes to do them.
+By default, Laravel only allows JWTs that correspond to existing users in your database, but one of the greatest benefits of using FusionAuth is to have a single source of truth of user management. So, you would want your API to automatically provision new users when it receives a trusted JWT from FusionAuth.
 
 First, extend the default [User Provider](https://laravel.com/docs/10.x/authentication#adding-custom-user-providers) to create new users when receiving valid JWTs from FusionAuth.
 
@@ -167,17 +175,17 @@ To override the existing classes when the ones you just added, you must create a
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/FusionAuth/Providers/FusionAuthServiceProvider.php %}
 ```
 
-### Retrieving Public Key
+Edit the `.env` file and add these lines there.
 
-To make your API trust JWTs issued by FusionAuth, you must import the Public Key from your FusionAuth application into it.
-
-If you have [jq](https://stedolan.github.io/jq/download/) _(a script to parse JSON objects)_ installed, you can run the command below to fetch and save it to `storage/public-key.pem`.
-
-```shell
-curl -H 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' http://localhost:9011/api/key/1afa4d7e-76f0-45e9-bb46-98be5329ef37 | jq -r '.key.publicKey' > storage/public-key.pem
+```ini
+FUSIONAUTH_CLIENT_ID=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
+FUSIONAUTH_URL=http://localhost:9011/
+JWT_ALGO=RS256
+JWT_JWKS_URL=https://address.that.ngrok.gave.you/.well-known/jwks.json
+JWT_JWKS_URL_CACHE=86400
 ```
 
-If you don't have it, log into the [FusionAuth admin screen](http://localhost:9011) using the admin user credentials ("admin@example.com"/"password"), navigate to <span>Settings -> Key Master</span>{:.breadcrumb}, locate the key named `For exampleapp` and click its download button. Inside the downloaded `.zip` file, go to the `keys` folder and extract `public-key.pem` to the `storage` folder in your Laravel app.
+You should change `JWT_JWKS_URL` to the [JWKS Endpoint you copied earlier](#retrieve-jwks-endpoint).
 
 ### Creating a Controller
 
@@ -185,6 +193,20 @@ Create a controller in `app/Http/Controllers/Api/MessagesController.php` which g
 
 ```php
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/Http/Controllers/Api/MessagesController.php %}
+```
+
+### Creating the View
+
+Change the view file located at `resources/views/welcome.blade.php` to add a <span>Log in with FusionAuth</span>{:.uielement} button when you are logged out and a container for the messages API response when you are logged in.
+
+```php
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/resources/views/welcome.blade.php %}
+```
+
+Create a file named `public/js/fusionauth.js` that will fetch both `/api/messages` from the Laravel API and your user details from FusionAuth.
+
+```javascript
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/public/js/fusionauth.js %}
 ```
 
 ### Testing the Authentication Flow
@@ -195,39 +217,12 @@ Finally, start your application.
 ./vendor/bin/sail up -d
 ```
 
-Make sure that everything is running fine by making a request to [localhost/api/auth/me](http://localhost/api/auth/me).
+Browse to [localhost](http://localhost/) and click the <span>Log in with FusionAuth</span>{:.uielement} button.
 
-```shell
-curl -X POST -H 'Accept: application/json' http://localhost/api/auth/me
-```
+{% include _image.liquid src="/assets/img/docs/tutorials/laravel-api/login.png" alt="Laravel application login screen." class="img-fluid" width="1200" figure=false %}
 
-You should see an error message because you're not providing any JWT to the request.
+Log in with username `richard@example.com` and password `password`. You should be redirected back to your Laravel application with both your user details and the result of the messages API call.
 
-```json
-{"message":"Unauthenticated."}
-```
-
-Now, you need to call FusionAuth to get an access token. For ease of use, these instructions will use the Login API, but you could also get the access token via the hosted login pages.
-
-```shell
-curl -H 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
-  -H 'Content-type: application/json' \
-  -d '{"loginId": "richard@example.com", "password": "password", "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"}' \
-  http://localhost:9011/api/login
-```
-
-Copy the `token` value and place it in the `Authorization` header when calling your Laravel API.
-
-```shell
-curl -H 'Accept: application/json' \
-  -H 'Authorization: Bearer <TOKEN_VALUE>' \
-  http://localhost/api/messages
-```
-
-You should get a success message.
-
-```json
-{"messages":["Hello, world!"]}
-```
+{% include _image.liquid src="/assets/img/docs/tutorials/laravel-api/logged-in.png" alt="Laravel application welcome screen." class="img-fluid" width="1200" figure=false %}
 
 The full code for this guide can be found [here](https://github.com/FusionAuth/fusionauth-example-laravel-api).
