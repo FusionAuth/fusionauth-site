@@ -82,7 +82,7 @@ First, make a directory:
 mkdir ../setup-laravel && cd ../setup-laravel
 ```
 
-Next, create a simple {{page.technology}} template using Laravel's build script.
+Next, create a simple {{page.technology}} template using Laravel's build script. For this API, you don't need all the tools that the script would normally install (like Redis and Selenium), so we are only requiring [MariaDB](https://mariadb.org/), one of the most popular relational database management systems used with Laravel.
 
 ```shell
 curl -s "https://laravel.build/fusionauth-example-laravel-api?with=mariadb" | bash
