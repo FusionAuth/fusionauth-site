@@ -13,7 +13,7 @@ import AuthorizationCodeGrant from "../../../diagrams/articles/oauth/what-is-oau
 
 I know what you are thinking, is this really another guide to OAuth 2.0?
 
-Well, yes and no. This guide is different than most of the others out there because it covers all of the ways that we actually use OAuth. It also covers all of the details you need to be an OAuth expert without reading all the specifications or writing your own OAuth server. This document is based on hundreds of conversations and client implementations as well as our experience building FusionAuth, an OAuth server which has been downloaded over a million times.
+Well, yes and no. This guide is different from most of the others out there because it covers all of the ways that we actually use OAuth. It also covers all of the details you need to be an OAuth expert without reading all the specifications or writing your own OAuth server. This document is based on hundreds of conversations and client implementations as well as our experience building FusionAuth, an OAuth server which has been downloaded over a million times.
 
 If that sounds good to you, keep reading!
 
@@ -27,7 +27,7 @@ Before authentication and authorization with OAuth was available, websites would
 
 When using OAuth, a token, which has a limited lifetime, provides that constrained access. Connecting multiple applications is easier for users. It is also more secure since [user credentials](/articles/ciam/challenges-of-ciam) are not shared. Auth is also easier for developers to manage because they only need to integrate OAuth 2.0 in their application instead of having their own database to store users' sensitive information.
 
-OAuth and SAML are sometimes confused. SAML is primarily an authentication system used for single sign-on, while OAuth is an authorization system that has an authentication layered on top of it (OpenID Connect, or OIDC). Authentication is about confirming the user’s identity. Authorization is about deciding what services, functionality or data they can access. A detailed comparison between [OAuth and SAML is found here](/articles/oauth/saml-vs-oauth) .
+OAuth and SAML are sometimes confused. SAML is primarily an authentication system used for single sign-on, while OAuth is an authorization system that has authentication layered on top of it (OpenID Connect, or OIDC). Authentication is about confirming the user’s identity. Authorization is about deciding what services, functionality or data they can access. A detailed comparison between [OAuth and SAML is found here](/articles/oauth/saml-vs-oauth) .
 
 What does the phrase used above, "delegate the authentication and authorization of their users to someone else", mean, really?
 
@@ -334,7 +334,7 @@ This code immediately redirects the browser to the OAuth server. However, if you
 
 * `client_id` - this identifies the application you are logging into. In OAuth, this is referred to as the `client`. This value will be provided to you by the OAuth server.
 * `redirect_uri` - this is the URL in your application to which the OAuth server will redirect the user to after they log in. This URL must be registered with the OAuth server and it must point to a controller in your app (rather than a static page), because your app must do additional work after this URL is called.
-* `state` - technically this parameter is optional, but it is useful for preventing various security issues. This parameter is echoed back to your application by the OAuth server. It can be anything you might need to be persisted across the OAuth workflow. If you have no other need for this parameter, I suggest setting it to a large random string. If you need to have data persisted across the workflow, I suggest setting URL encoding the data and appending a random string as well.
+* `state` - technically this parameter is optional, but it is useful for preventing various security issues. This parameter is echoed back to your application by the OAuth server. It can be anything you might need to be persisted across the OAuth workflow. If you have no other need for this parameter, I suggest setting it to a large random string. If you need to have data persisted across the workflow, I suggest URL encoding the data and appending a random string as well.
 * `response_type` - this should always be set to `code` for this grant. This tells the OAuth server you are using the Authorization Code grant.
 * `scope` - this is also an optional parameter, but in some of the above modes, this will be required by the OAuth server. This parameter is a space separated list of strings. You might also need to include the `offline` scope in this list if you plan on using refresh tokens in your application (we'll refresh tokens later).
 * `code_challenge` - this an optional parameter, but provides support for PKCE. This is useful when there is not a backend that can handle the final steps of the Authorization Code grant. This is known as a "public client". There aren't many cases of applications that don't have backends, but if you have something like a mobile application and you aren't able to leverage a server-side backend for OAuth, you must implement PKCE to protect your application from security issues. The security issues surrounding PKCE are out of the scope of this guide, but you can find numerous articles online about them. PKCE is also recommended by the [OAuth 2.1 draft](/articles/oauth/differences-between-oauth-2-oauth-2-1).
@@ -528,7 +528,7 @@ First, we need to know the location of the OAuth server's Token endpoint. The OA
 We will need to make an HTTP `POST` request to the Token endpoint using form encoded values for a number of parameters. Here are the parameters we need to send to the Token endpoint:
 
 * `code` - this is the authorization code we are exchanging for tokens.
-* `client_id` - this is client id that identifies our application.
+* `client_id` - this identifies our application. In FusionAuth it is a UUID, but it could be any URL safe string.
 * `client_secret` - this is a secret key that is provided by the OAuth server. This should never be made public and should only ever be stored in your application on the server.
 * `code_verifier` - this is the code verifier value we created above and either stored in the session or in a cookie.
 * `grant_type` - this will always be the value `authorization_code` to let the OAuth server know we are sending it an authorization code.
@@ -746,7 +746,7 @@ JWTs are JSON objects that contain information about users and can also be signe
 JWTs have other standard claims that you should be aware of. You can review these specifications for a list of additional standard claims:
 
 * [JWT Claims in the JSON Web Token RFC](https://tools.ietf.org/html/rfc7519#section-4)
-* [Claims in the Open ID Connect 1.0 spec](https://openid.net/specs/openid-connect-core-1_0.html#Claims)
+* [Claims in the OpenID Connect 1.0 spec](https://openid.net/specs/openid-connect-core-1_0.html#Claims)
 
 #### User and token information
 
@@ -994,7 +994,7 @@ module.exports = common;
 
 ##### Storing tokens in the session
 
-Next, let's look at the alternative implementation. We'll create a server-side session and store all of the tokens there. This method also writes a cookie back to the browser, but this cookie only stores the session id. Doing so allows our server-side code to lookup the user's session during each request. Sessions are generally handled by the framework you are using, so we won't go into many details here. You can read up more on server-side sessions on the web if you are interested.
+Next, let's look at the alternative implementation. We'll create a server-side session and store all of the tokens there. This method also writes a cookie back to the browser, but this cookie only stores the session id. Doing so allows our server-side code to look up the user's session during each request. Sessions are generally handled by the framework you are using, so we won't go into many details here. You can read up more on server-side sessions on the web if you are interested.
 
 Here's code that creates a server-side session and redirects the user to their ToDo list:
 
@@ -1152,7 +1152,7 @@ In the previous section we covered the **Local login and registration** process 
 
 > Some third-party providers have hidden some of the complexity from us by providing simple JavaScript libraries that handle the entire OAuth workflow (Facebook for example). We won't cover these types of third-party systems and instead focus on traditional OAuth workflows.
 
-In most cases, the third-party OAuth server is acting in the same way as our local OAuth server. In the end, the result is that we receive tokens that we can use to make API calls to the third party. Let's update our `handleTokens` code to call an fictitious API to retrieve the user's friend list from the third party. Here we are using sessions to store the access token and other tokens.
+In most cases, the third-party OAuth server is acting in the same way as our local OAuth server. In the end, the result is that we receive tokens that we can use to make API calls to the third party. Let's update our `handleTokens` code to call a fictitious API to retrieve the user's friend list from the third party. Here we are using sessions to store the access token and other tokens.
 
 ```javascript
 const axios = require('axios');
@@ -1350,7 +1350,7 @@ The Client Credentials grant provides the ability for one `client` to authorize 
 
 The Client Credentials grant leverages the Token endpoint of the OAuth server and sends in a couple of parameters as form data in order to generate access tokens. These access tokens are then used to call APIs. Here are the parameters needed for this grant:
 
-* `client_id` - this is client id that identifies the source application.
+* `client_id` - this identifies our application.
 * `client_secret` - this is a secret key that is provided by the OAuth server. This should never be made public and should only ever be stored on the source application server.
 * `grant_type` - this will always be the value `client_credentials` to let the OAuth server know we are using the Client Credentials grant.
 
@@ -1523,7 +1523,11 @@ If you read other guides to OAuth, or, heaven forbid, the RFCs, you'll discover 
 
 ### RFC entity names
 
-The RFC specifies certain entity names for certain actors in an OAuth grant. Let's examine the Authorization Code grant, but instead of using normal words like we did above, let's use the terms used in the standard. The grant helps a user (also called the Resource Owner) is providing a third-party application (called a Client) access to data in a different service (called the Resource Server) without sharing their credentials. Let’s make it more concrete with an example.
+The RFC specifies certain entity names for certain actors in an OAuth grant. In this section, we'll look at the Authorization Code grant, but instead of using normal words like we did above, we'll use the terms from the RFC.
+
+In RFC-ese, the Authorization Code grant helps a user (also called the Resource Owner) provide a third-party application (called a Client) access to data in a different service (called the Resource Server) without sharing their credentials.
+
+Let’s make it more concrete with an example.
 
 Say you wanted to print images from your Pinterest account. But:
 
