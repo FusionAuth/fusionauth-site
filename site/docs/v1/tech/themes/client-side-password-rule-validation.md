@@ -5,7 +5,7 @@ description: Configuring FusionAuth to check passwords client side
 navcategory: customization
 ---
 
-FusionAuth checks all password rules in serverside validation, but you can also check them client side.
+FusionAuth checks password rules in server-side validation, but you can also check them in your client. This page shows one method of doing so in JavaScript.
 
 {% comment %}
 This page is primarily pulled from a GH subdirectory, ensuring that the code can be ran and updated easily. The README is also in that repo to make sure it stays in sync with the code.
