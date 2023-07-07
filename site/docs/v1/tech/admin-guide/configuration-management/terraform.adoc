@@ -27,11 +27,12 @@ Since it is a community project, it is not as complete as the client libraries. 
 
 == Prerequisites
 
-In order for you to get the most value from this guide, you should have a FusionAuth instance set up for a user to log in with.
+In order for you to get the most value from this guide, you should have a FusionAuth instance set up and Terraform CLI ready in your runtime.
 
-If you don't have this set up yet, please review the following link:
+If you don't have this set up yet, please review the following links:
 
-* link:/docs/v1/tech/5-minute-setup-guide[5 minute setup guide] - get a FusionAuth instance up and running with a simple application
+* link:/docs/v1/tech/5-minute-setup-guide[5 minute setup guide] - get a FusionAuth instance up and running with a simple application.
+* To use Terraform CLI you will need to install it. The link:https://developer.hashicorp.com/terraform/tutorials/docker-get-started/install-cli[Install Terraform] part in the link:https://developer.hashicorp.com/terraform/tutorials/docker-get-started[Get Started - Docker] guide from Terraform will explain you how.
 
 == Initial Setup
 
@@ -44,12 +45,12 @@ Create an unlimited super user API Key as described in link:/docs/v1/tech/apis/a
 
 === Initializing Terraform Working Directory
 
-With the copied API Key from your fusionauth environment we initialize the Terraform working directory. By creating a new directory.
+With the copied API Key from your FusionAuth environment we initialize the Terraform working directory. By creating a new directory named after your FusionAuth instance domain name.
 
 [source]
 ----
-mkdir your.fusionauth.domain
-cd your.fusionauth.domain
+mkdir your.fusionauth.instance
+cd your.fusionauth.instance
 ----
 
 And add the link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/[FusionAuth Terraform Provider] configuration in the directory by:
@@ -88,50 +89,163 @@ It is always safe to run link:https://developer.hashicorp.com/terraform/cli/comm
 
 == Terraform Import
 
-Before we go in to Creating, Updating and Removing of resources we first look in to the link:https://developer.hashicorp.com/terraform/language/import[Import] functionality. If you have existing resources you want to manage via terraform you need to import the current configuration via import to be able to manage it via Terraform.
+Before we go in to Creating, Updating and Removing of resources we first look in to the link:https://developer.hashicorp.com/terraform/language/import[Import] functionality. If you have existing resources you want to manage via Terraform you need to import the current configuration to be able to manage it via Terraform.
+[NOTE.note]
+====
+The cleaner way is to create all resources through Terraform instead, but in certain scenarios you will have to use Import or Data Source and we go through a few examples in this ant the next section.
+====
 //Additional input for documentation tbd. import cli https://developer.hashicorp.com/terraform/cli/import import config https://developer.hashicorp.com/terraform/language/import https://spacelift.io/blog/importing-exisiting-infrastructure-into-terraform  https://medium.com/swlh/importing-existing-infrastructure-into-terraform-a6ae168ad2bb https://stackoverflow.com/questions/47613926/import-all-resources-defined-in-tf-file https://www.bitslovers.com/terraform-import/)
+// The import and generate config command works and i've tested it, but the import configuration has a issue https://github.com/gpsinsight/terraform-provider-fusionauth/issues/214
 
-// The import command works and i've tested it, but the import configuration has a issue https://github.com/gpsinsight/terraform-provider-fusionauth/issues/214
 === Importing The Default Tenant
-We start by importing the default tenant based on the link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/tenant[Terraform Resource: Tenant] by adding the following code below to `import.tf`.
-
-Why importing default tenant is good practice? Manage FusionAuth application related topics is always part of the default tenant, as well as there is not necessarily a need to create a different tenant as you create multiple applications.
+Importing the Default tenant is needed if you want to manage it through Terraform as it's created during the initial deployment of FusionAuth. In addition, if you are managing FusionAuth application, it will always be part of the Default tenant. As well as there is no need to create a different tenant for creating applications.
 //knowledge source https://fusionauth.io/community/forum/topic/1725/what-are-the-pros-and-cons-of-using-the-default-tenant
 
-Create an `import.tf` configuration file with the following content:
+[NOTE.note]
+====
+With the usage of Terraform we suggest you to create your now tenant and applications related to your tenant instead of importing.
+====
+
+Based on the link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/tenant[Terraform Resource: Tenant] append the `main.tf` configuration file with the following code and Replace-This-ID-With-Existing-ID with the related ID you can find in the FusionAuth Admin UI.
+//TODO: Screenshot Tenant ID
 
 [source]
 ----
 import {
-  to = fusionauth_tenant.default
-  id = "374eba67-12b0-4957-2a4e-a91a8c6f9bfb"
+  to = fusionauth_tenant.Default
+  id = "Replace-This-ID-With-Existing-ID"
+}
+
+resource "fusionauth_tenant" "Default" {
+  name = "Default"
+  issuer = "acme.com"
+  theme_id = "Replace-This-ID-With-Existing-ID"
+  external_identifier_configuration {
+    authorization_grant_id_time_to_live_in_seconds = 30
+    change_password_id_generator {
+      length = 32
+      type   = "randomBytes"
+    }
+    change_password_id_time_to_live_in_seconds = 600
+    device_code_time_to_live_in_seconds        = 300
+    device_user_code_id_generator {
+      length = 6
+      type   = "randomAlphaNumeric"
+    }
+    email_verification_id_generator {
+      length = 32
+      type   = "randomBytes"
+    }
+    email_verification_id_time_to_live_in_seconds      = 86400
+    email_verification_one_time_code_generator {
+      length = 6
+      type   = "randomAlphaNumeric"
+    }
+    external_authentication_id_time_to_live_in_seconds = 300
+    one_time_password_time_to_live_in_seconds          = 60
+    passwordless_login_generator {
+      length = 32
+      type   = "randomBytes"
+    }
+    passwordless_login_time_to_live_in_seconds = 180
+    registration_verification_id_generator {
+      length = 32
+      type   = "randomBytes"
+    }
+    registration_verification_id_time_to_live_in_seconds = 86400
+    registration_verification_one_time_code_generator {
+      length = 6
+      type   = "randomAlphaNumeric"
+    }
+    saml_v2_authn_request_id_ttl_seconds = 300
+    setup_password_id_generator {
+      length = 32
+      type   = "randomBytes"
+    }
+    setup_password_id_time_to_live_in_seconds   = 86400
+    two_factor_id_time_to_live_in_seconds       = 300
+    two_factor_one_time_code_id_generator {
+      length = 6
+      type   = "randomDigits"
+    }
+    two_factor_trust_id_time_to_live_in_seconds = 2592000
+  }
+  jwt_configuration {
+    refresh_token_time_to_live_in_minutes              = 43200
+    time_to_live_in_seconds                            = 3600
+    refresh_token_revocation_policy_on_login_prevented = true
+    refresh_token_revocation_policy_on_password_change = true
+    access_token_key_id                                = "Replace-This-ID-With-Existing-ID"
+    id_token_key_id                                    = "Replace-This-ID-With-Existing-ID"
+  }
+  login_configuration {
+    require_authentication = true
+  }
+  email_configuration {
+    default_from_email                  = "change-me@example.com"
+    default_from_name                   = "FusionAuth"
+    host                                = "localhost"
+    implicit_email_verification_allowed = true
+    port                                = 25
+    security                            = "NONE"
+    verification_strategy               = "ClickableLink"
+    verify_email                        = false
+    verify_email_when_changed           = false
+    forgot_password_email_template_id   = "Replace-This-ID-With-Existing-ID"
+    passwordless_email_template_id      = "Replace-This-ID-With-Existing-ID"
+    set_password_email_template_id      = "Replace-This-ID-With-Existing-ID"
+  }
 }
 ----
 
-And link:https://developer.hashicorp.com/terraform/language/import/generating-configuration[generate] a tenant configuration file from it with the following command which you then can apply:
+Once appended run link:https://developer.hashicorp.com/terraform/cli/commands/plan[terraform plan] to check the validity of your configuration.
+
+If the plan is valid and you are happy with the changes run link:https://developer.hashicorp.com/terraform/cli/commands/apply[terraform apply]
 
 [source]
 ----
-terraform plan -generate-config-out=generated_resources.tf
+terraform plan
 terraform apply
 ----
 
+Once imported, Terraform tracks the resource in your state file. You can then manage the imported resource like any other, updating its attributes. With the exception of destroying the default tenant, which normally works in Terraform lifecycle but as in FusionAuth this is a non-deletable tenant this wont work with Terraform either and will break your Terraform state.
+
+We suggest to leave the import block in your configuration a record of the resource's origin. The import block records that Terraform imported the resource and did not create it.
+
 === Importing The FusionAuth Application
-The same works with importing the default FusionAuth application based on the link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application[Terraform Resource: Application] by adding the following code to `import.tf`.
+The same works with importing the default FusionAuth application based on the link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application[Terraform Resource: Application] by appending the following code to `main.tf`.
 
 [source]
 ----
 import {
   to = fusionauth_application.FusionAuth
-  id = "3c219e58-ed0e-4b18-ad48-f4f92793ae32"
+  id = "Replace-This-ID-With-Existing-ID"
+}
+
+resource "fusionauth_application" "FusionAuth" {
+  tenant_id = fusionauth_tenant.Default.id
+  name = "FusionAuth"
 }
 ----
 
+Once appended run link:https://developer.hashicorp.com/terraform/cli/commands/plan[terraform plan] to check the validity of your configuration.
+
+If the plan is valid and you are happy with the changes run link:https://developer.hashicorp.com/terraform/cli/commands/apply[terraform apply]
+
+[source]
+----
+terraform plan
+terraform apply
+----
+Once imported, Terraform tracks the resource in your state file. You can then manage the imported resource like any other, updating its attributes. With the exception of destroying the FusionAuth application, which normally works in Terraform lifecycle but as in FusionAuth this is a non-deletable application this wont work with Terraform either and will break your Terraform state.
+
+We suggest to leave the import block in your configuration a record of the resource's origin. The import block records that Terraform imported the resource and did not create it.
+
 === Terraform Data Source Instead Of Import
 
-Instead of importing a ressource you can use existing configuration as a Data Source instead, the list of all supported data sources you can find in the link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs[FusionAuth Terraform Provider Documentation]
+Instead of importing a ressource you can use existing FusionAuth configuration as a Data Source instead, the list of all supported data sources you can find in the link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs[FusionAuth Terraform Provider Documentation]
 
-If you choose to manage the default Tenant and FusionAuth Application outside instead as shown previously inside the Terraform configuration. But still add Applications in to the default Tenant via Terraform, you can reference it in the configuration as a data source.
+In the scenario where you choose to manage the Default tenant and FusionAuth application outside Terraform. But still add Applications in to the default Tenant via Terraform, you can reference it in the configuration as a data source.
 
 * link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/data-sources/tenant[Terraform Data Source: Application]
 * link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/data-sources/application[Terraform Data Source: Application]
@@ -146,6 +260,14 @@ data "fusionauth_application" "FusionAuth" {
   name = "FusionAuth"
 }
 ----
+
+[NOTE.note]
+====
+If you manage the Default tenant and FusionAuth application outside of Terraform but want specific actions (scripts, API calls, etc.) still integrated and triggered by your Terraform configuration, you could make the use of link:https://developer.hashicorp.com/terraform/language/resources/provisioners/syntax[Provisioners].
+
+Terraform includes the concept of provisioners as a measure of pragmatism and last resort (Since provisioners are non-declarative and potentially unpredictable), knowing that there are always certain behaviors that cannot be directly represented in Terraform's declarative model.
+====
+//TODO Provisioner https://developer.hashicorp.com/terraform/language/resources/provisioners/syntax
 
 == Terraform Create
 
@@ -218,7 +340,7 @@ Once you are happy with your configuration run `terraform plan` and if you are n
 
 == Terraform Update
 
-Once a resource is either imported or created you can changing existing attributes accordingly in your existing `.tf` files or add additional ones according to the documentation.
+Once a resource is either created or imported you can change your main.tf according to the documentation.
 
 * link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/tenant[Terraform Resource: Tenant]
 * link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application[Terraform Resource: Application]
@@ -226,7 +348,9 @@ Once a resource is either imported or created you can changing existing attribut
 * link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/user[Terraform Resource: User]
 * link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/registration[Terraform Resource: Registration]
 
-If you want to know what already has been defined by terraform but not specified in your `.tf` files you can run `terraform show`.
+After you are done with your configuration changes, run `terraform plan` to check the planned changes and review potential errors. After that you can go ahead with `terraform apply`.
+
+If you want to know what already has been defined by Terraform but not specified in your `.tf` files you can run `terraform show`.
 
 The configuration can get very large and if you want to show only very specific resources you can list all resources with `terraform state list` and show the resource state with `terraform state show <resource-name>` accordingly.
 
