@@ -68,6 +68,7 @@ ip['/quickstarts/']=true;
 var rd = {};
 rd['/cognito']=d+'/migration-guide/cognito';
 rd['/cognito/']=d+'/migration-guide/cognito';
+rd[a+'/oauth/what-is-oauth']=a+'/oauth/modern-guide-to-oauth';
 rd[d+'/admin-guide/release-notifications']=d+'/admin-guide/releases';
 rd[d+'/apis/consent']=d+'/apis/consents';
 rd[d+'/common-errors']=d+'/admin-guide/troubleshooting';
