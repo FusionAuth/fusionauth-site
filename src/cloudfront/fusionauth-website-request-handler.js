@@ -1,65 +1,70 @@
-var indexPages = {
-  '/': true,
-  '/articles/': true,
-  '/articles/authentication/': true,
-  '/articles/ciam/': true,
-  '/articles/gaming-entertainment/': true,
-  '/articles/identity-basics/': true,
-  '/articles/login-authentication-workflows/': true,
-  '/articles/oauth/': true,
-  '/articles/security/': true,
-  '/articles/tokens/': true,
-  '/blog/': true,
-  '/community/forum/': true,
-  '/dev-tools/': true,
-  '/docs/': true,
-  '/docs/quickstarts/': true,
-  '/docs/v1/tech/': true,
-  '/docs/v1/tech/account-management/': true,
-  '/docs/v1/tech/admin-guide/': true,
-  '/docs/v1/tech/advanced-threat-detection/': true,
-  '/docs/v1/tech/apis/': true,
-  '/docs/v1/tech/apis/connectors/': true,
-  '/docs/v1/tech/apis/entity-management/': true,
-  '/docs/v1/tech/apis/identity-providers/': true,
-  '/docs/v1/tech/apis/messengers/': true,
-  '/docs/v1/tech/apis/scim/': true,
-  '/docs/v1/tech/client-libraries/': true,
-  '/docs/v1/tech/connectors/': true,
-  '/docs/v1/tech/core-concepts/': true,
-  '/docs/v1/tech/developer-guide/': true,
-  '/docs/v1/tech/developer-guide/api-gateways/': true,
-  '/docs/v1/tech/email-templates/': true,
-  '/docs/v1/tech/events-webhooks/': true,
-  '/docs/v1/tech/events-webhooks/events/': true,
-  '/docs/v1/tech/example-apps/': true,
-  '/docs/v1/tech/getting-started/': true,
-  '/docs/v1/tech/guides/': true,
-  '/docs/v1/tech/identity-providers/': true,
-  '/docs/v1/tech/identity-providers/external-jwt/': true,
-  '/docs/v1/tech/identity-providers/openid-connect/': true,
-  '/docs/v1/tech/identity-providers/samlv2-idp-initiated/': true,
-  '/docs/v1/tech/identity-providers/samlv2/': true,
-  '/docs/v1/tech/installation-guide/': true,
-  '/docs/v1/tech/installation-guide/kubernetes/': true,
-  '/docs/v1/tech/integrations/': true,
-  '/docs/v1/tech/lambdas/': true,
-  '/docs/v1/tech/messengers/': true,
-  '/docs/v1/tech/migration-guide/': true,
-  '/docs/v1/tech/oauth/': true,
-  '/docs/v1/tech/passwordless/': true,
-  '/docs/v1/tech/plugins/': true,
-  '/docs/v1/tech/premium-features/': true,
-  '/docs/v1/tech/premium-features/webauthn/': true,
-  '/docs/v1/tech/reference/': true,
-  '/docs/v1/tech/samlv2/': true,
-  '/docs/v1/tech/themes/': true,
-  '/docs/v1/tech/tutorials/': true,
-  '/docs/v1/tech/tutorials/gating/': true,
-  '/docs/v1/tech/tutorials/two-factor/': true,
-  '/how-to/': true,
-  '/quickstarts/': true
-};
+var d="/docs/v1/tech";
+var a="/articles";
+var idp="identity-providers";
+var ip = {};
+ip['/']=true;
+ip[a+'/']=true;
+ip[a+'/authentication/']=true;
+ip[a+'/ciam/']=true;
+ip[a+'/gaming-entertainment/']=true;
+ip[a+'/identity-basics/']=true;
+ip[a+'/login-authentication-workflows/']=true;
+ip[a+'/oauth/']=true;
+ip[a+'/security/']=true;
+ip[a+'/tokens/']=true;
+ip['/blog/']=true;
+ip['/community/forum/']=true;
+ip['/dev-tools/']=true;
+ip['/docs/']=true;
+ip['/docs/quickstarts/']=true;
+ip[d+'']=true;
+ip[d+'account-management/']=true;
+ip[d+'admin-guide/']=true;
+ip[d+'advanced-threat-detection/']=true;
+ip[d+'apis/']=true;
+ip[d+'apis/connectors/']=true;
+ip[d+'apis/entity-management/']=true;
+ip[d+'apis/identity-providers/']=true;
+ip[d+'apis/messengers/']=true;
+ip[d+'apis/scim/']=true;
+ip[d+'client-libraries/']=true;
+ip[d+'connectors/']=true;
+ip[d+'core-concepts/']=true;
+ip[d+'developer-guide/']=true;
+ip[d+'developer-guide/api-gateways/']=true;
+ip[d+'email-templates/']=true;
+ip[d+'events-webhooks/']=true;
+ip[d+'events-webhooks/events/']=true;
+ip[d+'example-apps/']=true;
+ip[d+'getting-started/']=true;
+ip[d+'guides/']=true;
+ip[d+idp+'/']=true;
+ip[d+idp+'/external-jwt/']=true;
+ip[d+idp+'/openid-connect/']=true;
+ip[d+idp+'/samlv2-idp-initiated/']=true;
+ip[d+idp+'/samlv2/']=true;
+ip[d+'installation-guide/']=true;
+ip[d+'installation-guide/kubernetes/']=true;
+ip[d+'integrations/']=true;
+ip[d+'lambdas/']=true;
+ip[d+'messengers/']=true;
+ip[d+'migration-guide/']=true;
+ip[d+'oauth/']=true;
+ip[d+'passwordless/']=true;
+ip[d+'plugins/']=true;
+ip[d+'premium-features/']=true;
+ip[d+'premium-features/webauthn/']=true;
+ip[d+'reference/']=true;
+ip[d+'samlv2/']=true;
+ip[d+'themes/']=true;
+ip[d+'tutorials/']=true;
+ip[d+'tutorials/gating/']=true;
+ip[d+'tutorials/two-factor/']=true;
+ip['/how-to/']=true;
+ip['/quickstarts/']=true;
+
+
+
 var redirects = {
   '/cognito': '/docs/v1/tech/migration-guide/cognito',
   '/cognito/': '/docs/v1/tech/migration-guide/cognito',
@@ -161,7 +166,7 @@ function handler(event) {
     return redir(uri.substring(0, uri.length - 1));
   }
 
-  if (!uri.endsWith('/') && indexPages[uri + '/'] === true) {
+  if (!uri.endsWith('/') && ip[uri + '/'] === true) {
     return redir(uri + '/');
   }
 
@@ -175,7 +180,7 @@ function handler(event) {
 }
 
 function removeSlash(uri) {
-  return indexPages[uri] !== true && !uri.startsWith('/blog/page') && !uri.startsWith('/blog/archive') &&
+  return ip[uri] !== true && !uri.startsWith('/blog/page') && !uri.startsWith('/blog/archive') &&
     redirectsByPrefix.find(e => uri.startsWith(e[0])) === undefined;
 }
 
