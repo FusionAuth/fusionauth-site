@@ -13,6 +13,11 @@ Previously, we used ASP.NET Core to [build a web application](/blog/2020/05/06/s
 
 <!--more-->
 
+{% include _callout-tip.liquid
+content=
+"This blog post has been [superseded by this guide](/docs/v1/tech/tutorials/integrate-dotnet)."
+%}
+
 If you haven't yet, please set up FusionAuth and the web application as specified in the [previous post](/blog/2020/05/06/securing-asp-netcore-razor-pages-app-with-oauth).
 
 ## Setting up roles and groups

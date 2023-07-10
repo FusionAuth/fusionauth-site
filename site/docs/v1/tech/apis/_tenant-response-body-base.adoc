@@ -323,10 +323,13 @@ The unique id of the signing key used to sign the access token.
 The unique id of the signing key used to sign the Id token.
 
 [field]#{base_field_name}.jwtConfiguration.refreshTokenExpirationPolicy# [type]#[String]# [since]#Available since 1.17.0#::
-The refresh token expiration policy. The following are valid values:
-
+The Refresh Token expiration policy.
++
+The possible values are:
++
 * `Fixed` - the expiration is calculated from the time the token is issued.
 * `SlidingWindow` - the expiration is calculated from the last time the token was used.
+* `SlidingWindowWithMaximumLifetime` - the expiration is calculated from the last time the token was used, or until the [field]#maximumTimeToLiveInMinutes# is reached. &nbsp; [since]#Available since 1.46.0#
 
 [field]#{base_field_name}.jwtConfiguration.refreshTokenRevocationPolicy.onLoginPrevented# [type]#[Boolean]# [since]#Available since 1.17.0#::
 When enabled, all refresh tokens will be revoked when a user action, such as locking an account based on a number of failed login attempts, prevents user login.
@@ -336,6 +339,9 @@ When enabled, all refresh tokens will be revoked when a user enables multi-facto
 
 [field]#{base_field_name}.jwtConfiguration.refreshTokenRevocationPolicy.onPasswordChanged# [type]#[Boolean]# [since]#Available since 1.17.0#::
 When enabled, all refresh tokens will be revoked when a user changes their password.
+
+[field]#{base_field_name}.jwtConfiguration.refreshTokenSlidingWindowConfiguration.maximumTimeToLiveInMinutes# [type]#[Integer]# [since]#Available since 1.46.0#::
+The maximum lifetime of a refresh token when using a [field]#refreshTokenExpirationPolicy# of `SlidingWindowWithMaximumLifetime`.
 
 [field]#{base_field_name}.jwtConfiguration.refreshTokenTimeToLiveInMinutes# [type]#[Integer]# [since]#Available since 1.8.0#::
 The length of time in minutes a Refresh Token is valid from the time it was issued. Value must be greater than 0.
@@ -430,6 +436,8 @@ The default method for encrypting the User's password. The following encryptors 
 * `link:/docs/v1/tech/reference/password-hashes#salted-pbkdf2-hmac-sha-256[salted-pbkdf2-hmac-sha256]`
 * `link:/docs/v1/tech/reference/password-hashes#salted-pbkdf2-hmac-sha-256[salted-pbkdf2-hmac-sha256-512]` &nbsp; [since]#Available since 1.34.0#
 * `link:/docs/v1/tech/reference/password-hashes#salted-bcrypt[bcrypt]`
+* `link:/docs/v1/tech/reference/password-hashes#phpass-md5[phpass-md5]` &nbsp; [since]#Available since 1.45.0#
+* `link:/docs/v1/tech/reference/password-hashes#phpass-sha-512[phpass-sha512]` &nbsp; [since]#Available since 1.45.0#
 
 [field]#{base_field_name}.passwordEncryptionConfiguration.encryptionSchemeFactor# [type]#[Integer]# [since]#Available since 1.8.0#::
 The factor used by the password encryption scheme. If not provided, the `PasswordEncryptor` provides a default value. Generally this will be used as an iteration count to generate the hash. The actual use of this value is up to the `PasswordEncryptor` implementation.
@@ -619,6 +627,11 @@ The Relying Party name the tenant will use in WebAuthn ceremonies. This value is
 +
 If no value is configured, the [field]#tenant.issuer# value will be used.
 
+ifdef::include_total[]
+[field]#total# [type]#[Integer]#::
+The total number of Tenants matching the search criteria. Use this value along with the [field]#numberOfResults# and [field]#startRow# in the Search request to perform pagination.
+endif::include_total[]
+
 ifeval::["{base_field_name}" == "tenant"]
 [source,json]
 .Example Response JSON
@@ -628,9 +641,19 @@ include::../../../src/json/tenants/response.json[]
 endif::[]
 
 ifeval::["{base_field_name}" != "tenant"]
+ifdef::include_total[]
+[source,json]
+.Example Response JSON for Tenant Search
+----
+include::../../../src/json/tenants/search-response.json[]
+----
+endif::include_total[]
+
+ifndef::include_total[]
 [source,json]
 .Example Response JSON for all the Tenants
 ----
 include::../../../src/json/tenants/responses.json[]
 ----
+endif::include_total[]
 endif::[]

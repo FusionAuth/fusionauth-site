@@ -38,6 +38,9 @@ include::_tenant-application-email-configuration.adoc[]
 [field]#{base_field_name}.formConfiguration.adminRegistrationFormId# [type]#[UUID]# [since]#Available since 1.20.0#::
 The unique Id of the form to use for the Add and Edit User Registration form when used in the FusionAuth admin UI.
 
+[field]#{base_field_name}.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange# [type]#[Boolean]# [since]#Available since 1.45.0#::
+When enabled a user will be required to provide their current password when changing their password on a self-service account form.
+
 [field]#{base_field_name}.formConfiguration.selfServiceFormId# [type]#[UUID]# [since]#Available since 1.26.0#::
 The unique Id of the form to to enable authenticated users to manage their profile on the account page.
 
@@ -76,6 +79,18 @@ The public key used when an `RSA` signing algorithms has been selected. The publ
 &nbsp;
 +
 [deprecated]#Removed in version 1.6.0# In version 1.6.0 and beyond, JWT configuration can be managed in the `link:/docs/v1/tech/apis/keys[Keys API]` and Keymaster.
+
+[field]#{base_field_name}.jwtConfiguration.refreshTokenExpirationPolicy# [type]#[String]# [since]#Available since 1.17.0#::
+The Refresh Token expiration policy.
++
+The possible values are:
++
+* `Fixed` - the expiration is calculated from the time the token is issued.
+* `SlidingWindow` - the expiration is calculated from the last time the token was used.
+* `SlidingWindowWithMaximumLifetime` - the expiration is calculated from the last time the token was used, or until the [field]#maximumTimeToLiveInMinutes# is reached. &nbsp; [since]#Available since 1.46.0#
+
+[field]#{base_field_name}.jwtConfiguration.refreshTokenSlidingWindowConfiguration.maximumTimeToLiveInMinutes# [type]#[Integer]# [since]#Available since 1.46.0#::
+The maximum lifetime of a refresh token when using a [field]#refreshTokenExpirationPolicy# of `SlidingWindowWithMaximumLifetime`.
 
 [field]#{base_field_name}.jwtConfiguration.refreshTokenTimeToLiveInMinutes# [type]#[Integer]# [since]#Available since 1.2.0#::
 The length of time in minutes the JWT refresh token will live before it is expired and is not able to be exchanged for a JWT.
@@ -382,8 +397,11 @@ The possible values are:
 [field]#{base_field_name}.state# [type]#[String]# [since]#Available since 1.22.0#::
 The current state of the application. The following are valid values:
 +
-* `Active` - The tenant is active.
-* `Inactive` - The application is not active. An application can not be modified or authenticated against when inactive.
+* `Active` - The Application is active.
+* `Inactive` - The Application is not active. An Application can not be modified or authenticated against when inactive.
+
+[field]#{base_field_name}.tenantId# [type]#[UUID]#::
+The unique Id of the Tenant.
 
 [field]#{base_field_name}.themeId# [type]#[UUID]# [since]#Available since 1.27.0#::
 The unique Id of the theme to be used to style the login page and other end user templates.
@@ -403,6 +421,12 @@ Indicates if this application enables WebAuthn workflows based on the configurat
 [field]#{base_field_name}.webAuthnConfiguration.reauthenticationWorkflow.enabled# [type]#[Boolean]# [since]#Available since 1.41.0#::
 Whether the WebAuthn reauthentication workflow is enabled for this application. This overrides the tenant configuration. Has no effect if [field]#{base_field_name}.webAuthnConfiguration.enabled# is `false`.
 
+ifdef::include_total[]
+[field]#total# [type]#[Integer]#::
+The total number of Applications matching the search criteria. Use this value along with the [field]#numberOfResults# and [field]#startRow# in the Search request to perform pagination.
+endif::include_total[]
+
+// Single application result
 ifeval::["{base_field_name}" == "application"]
 [source,json]
 .Example Response JSON for a Single Application
@@ -411,10 +435,25 @@ include::../../../src/json/applications/response.json[]
 ----
 endif::[]
 
+// Multiple applications result
 ifeval::["{base_field_name}" != "application"]
+
+// With "total" field
+ifdef::include_total[]
+[source,json]
+.Example Response JSON for Application Search
+----
+include::../../../src/json/applications/search-response.json[]
+----
+endif::include_total[]
+
+// Without "total" field
+ifndef::include_total[]
 [source,json]
 .Example Response JSON for all the Applications
 ----
 include::../../../src/json/applications/responses.json[]
 ----
+endif::include_total[]
+
 endif::[]

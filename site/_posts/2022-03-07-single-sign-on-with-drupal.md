@@ -5,7 +5,7 @@ description: This tutorial demonstrates how to integrate SSO to a Drupal site us
 author: Aniket Bhattacharyea
 image: blogs/single-sign-on-drupal/how-to-set-up-single-sign-on-sso-between-fusionauth-and-drupal.png
 category: tutorial
-tags: tutorial tutorial-integration client-php php integration
+tags: tutorial tutorial-integration client-php php integration drupal
 excerpt_separator: "<!--more-->"
 ---
 
