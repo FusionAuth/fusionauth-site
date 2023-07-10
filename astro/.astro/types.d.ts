@@ -615,13 +615,6 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
-"oauth/what-is-oauth.mdx": {
-  id: "oauth/what-is-oauth.mdx",
-  slug: "oauth/what-is-oauth",
-  body: string,
-  collection: "articles",
-  data: InferEntrySchema<"articles">
-} & { render(): Render[".mdx"] },
 "oauth/why-no-authentication-in-oauth.md": {
   id: "oauth/why-no-authentication-in-oauth.md",
   slug: "oauth/why-no-authentication-in-oauth",
