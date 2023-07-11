@@ -313,7 +313,7 @@ These are a few simple examples of how to use the FusionAuth APIs to get more va
 
 #### Sample Application Source
 
-* [FusionAuth API Demo](https://github.com/mrobustelli/FusionAuthDemo)
+* [FusionAuth API Demo](hhttps://github.com/FusionAuth/fusionauth-example-dotnet-windowsform-api)
 
 #### General
 
