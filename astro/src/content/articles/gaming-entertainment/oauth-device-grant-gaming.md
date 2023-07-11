@@ -63,7 +63,7 @@ Once Docker Desktop is running, open your terminal and type the following comman
 ```
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up
+docker compose up
 ```
 
 The above commands will copy the docker-compose.yml file, copy the environment file for FusionAuth, then run the authorization server locally. 
