@@ -25,27 +25,11 @@ If you'd like to be on the security announcement list, please sign up for a [fre
 
 ## Improvements to the OAuth2 Device grant
 
-The Device grant allows you to authorize a device like a TV or a gaming console while entering credentials on a different device, such as a computer or phone. [Learn more about the OAuth Device grant](/articles/oauth/oauth-device-authorization).
+The [Device grant](https://datatracker.ietf.org/doc/html/rfc8628) allows you to authorize a device like a TV or a gaming console while entering credentials on a different device, such as a computer or phone. [Learn more about the OAuth Device grant](/articles/oauth/oauth-device-authorization).
 
-While FusionAuth has supported the Device grant since version 1.11.0, released on October 29th, 2019, this release updates and improves the functionality. In particular, you can bail out of our OAuth login flow when you are linking an external account (such as with Nintendo or XBox) and completing a Device grant later.
+While FusionAuth has supported the Device grant since version 1.11.0, released on October 29th, 2019, this release improves the grant. In particular, you can bail out of our OAuth login flow when you are linking an external account (such as with Nintendo or XBox) and completing a Device grant later.
 
-There are a few new workflows supported. First, FusionAuth now supports completing the grant via API after the user code is displayed.
-
-The steps here are:
-
-* Start a Device grant with an Identity Provider link.
-* Enter the `user_code` on a FusionAuth page and bail sometime before providing credentials and completing a login. This means no auth code is generated.
-* Complete the Device grant with a new API which will complete the Identity Provider link associated with a `user_code`.
-
-FusionAuth also supports completing the grant when collecting the code outside of the FusionAuth hosted login pages.
-
-* Start a Device grant with an Identity Provider link.
-* Collect the code on an externally hosted page, not using a themed FusionAuth page.
-* Validate the `user_code` using a new API `/oauth2/device/approve` to validate and get information about the `user_code`.
-* Begin an Authorization Code grant with the collected user_code.
-* Complete Authorization Code grant. In this case, the link is completed.
-
-Adding support lets you create your own custom login flows using the Device grant. If you want to learn more about these new endpoints, please check out the [Device grant documentation](/docs/v1/tech/oauth/endpoints#device).
+You now have more flexibility to create custom login flows but still complete a Device grant. If you want to learn more about these new endpoints, please check out the [Device grant documentation](/docs/v1/tech/oauth/endpoints#device).
 
 ## Tenants and the OIDC discovery endpoint 
 
