@@ -1,7 +1,7 @@
 ---
 layout: doc
-title: User Actions
-description: Using user actions
+title: How to use User Actions
+description: How you can use user actions to apply temporary or time based attributes to your users.
 navcategory: developer
 ---
 :page-liquid:
@@ -54,13 +54,11 @@ You can create and execute a User Action with API calls. To set up an API Key, n
 
 image::tutorials/user-actions/user-actions-create-api-key.png[Creating an API Key in FusionAuth,width=1200px]
 
-Be sure to record the value of your API Key.
 
-image::tutorials/user-actions/user-actions-api-key-created.png[Recording the value of the API Key,width=1200px, role=bottom-cropped]
 
 == Creating a User Action via the API
 
-You can create a link:/docs/v1/tech/apis/user-actions[User Action definition] by sending a `POST` request to the `/api/user-action` route. For example, the following code defines a User Action that sends automatic emails to a user who has purchased a temporary subscription to a news site.
+You can create a link:/docs/v1/tech/apis/user-actions[User Action] by sending a `POST` request to the `/api/user-action` route. For example, the following code defines a User Action that sends automatic emails to a user who has purchased a temporary subscription to a news site.
 
 [source,shell,title="User action creation API call"]
 ----
@@ -81,9 +79,10 @@ curl --location --request POST '<YOUR_FUSIONAUTH_BASE_URL>/api/user-action' \
   }'
 ----
 
-Here, `<YOUR_FUSIONAUTH_BASE_URL>` would be the URL of the FusionAuth instance and `<YOUR API KEY>` would be the API key noted earlier. Note that the email template Ids are included in the command. Read more about link:/docs/v1/tech/email-templates/configure-email[setting up email in FusionAuth here] and link:/docs/v1/tech/email-templates/email-templates[email templates in FusionAuth here].
+Here, `<YOUR_FUSIONAUTH_BASE_URL>` would be the URL of the FusionAuth instance and `<YOUR API KEY>` would be the API key. Note that the email template Ids are included in the command. Read more about link:/docs/v1/tech/email-templates/configure-email[setting up email in FusionAuth] and link:/docs/v1/tech/email-templates/email-templates[email templates in FusionAuth].
 
 If you set the [field]#temporal# attribute to `true`, you can set an [field]#expiry# time for an action. This means that the action will automatically be removed from the user after the set expiry time. In this example, the [field]#sendEndEvent# field is set to `true` so that the user is notified via webhook when the access period has expired.
+You can also use any of our link:/docs/v1/tech/client-libraries/[client libraries] to make these API calls, but to keep this guide general, we'll use the API and curl.
 
 FusionAuth should return something similar to the following:
 
@@ -140,9 +139,12 @@ Scroll down and make sure the [uielement]#user.action# event is enabled here too
 
 image::tutorials/user-actions/user-actions-tenants-switch.png[Ensuring that the user.action Webhook event switch is enabled,width=1200px]
 
-== Executing the User Action
+Yes, it's kinda weird you have to configure a webhook to listen for events in two places, but this gives you fine grained control across tenants.
 
-Now you can link:/docs/v1/tech/apis/actioning-users[apply the action] to a specific user with the `api/user/action` endpoint.
+
+== Actioning the User
+
+Now you can link:/docs/v1/tech/apis/actioning-users[apply the action] to a specific user with the `/api/user/action` endpoint.
 
 [source,shell,title="User Action execution command"]
 ----
@@ -164,13 +166,15 @@ curl --location --request POST '<YOUR_FUSIONAUTH_BASE_URL>/api/user/action' \
 
 The [field]#broadcast# field is optional and specifies whether or not FusionAuth will broadcast the User Action to any registered Webhooks. The default is `false`.
 
-The [field]#actioneeUserId# specifies the unique identifier of the user the action is being performed on. The [field]#actionerUserId# specifies the Id of the User that performed the action. If the action was initiated by FusionAuth, this value will not be provided.
+The [field]#actioneeUserId# specifies the unique identifier of the user the action is being performed on. 
+
+The [field]#actionerUserId# specifies the Id of the User that performed the action. If the action was initiated by FusionAuth, this value will not be provided.
 
 The [field]#expiry# time follows the UNIX epoch format in milliseconds. 
 
 The [field]#userActionId# value is the Id you provided or the randomly generated one you recorded when creating the User Action. 
 
-FusionAuth will reply with `200 OK`:
+If successful, FusionAuth will reply with `200 OK`status code.
 
 [source,json,title="Response after executing User Action"]
 ----
@@ -233,6 +237,6 @@ FusionAuth will return an object with an array of all actions currently active o
 }
 ----
 
-== Further reading
+== Next Steps
 
 For more information on FusionAuth User Actions, see link:/docs/v1/tech/apis/user-actions#overview[this overview] and link:/docs/v1/tech/apis/actioning-users[this reference on actioning users]. You can also follow this tutorial for a practical example of how to link:/blog/2023/04/20/using-user-actions[coordinate events around a customer purchase].
