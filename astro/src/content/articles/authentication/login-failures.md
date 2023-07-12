@@ -20,13 +20,13 @@ Tracking login failure rates is just as important, if not more important, than t
 
 ## Define Login Failures
 
-Before you can measure, you have to decide on what you will consider a failure in the login process. A safe assumption is that any failed authentication event should be counted. Authentication is not as simple as a username and password pair, and scenarios around passwordless authentication and MFA need to be considered as well. If a user attempts to log in, uses their username/password pair successfully, but never completes MFA, this is considered a failure.
+Before you can measure, you have to decide on what you will consider a failure in the login process. A safe assumption is that any failed authentication event should be counted. Authentication is not as simple as a username and password pair, and scenarios around passwordless authentication and multi-factor authentication (MFA) need to be considered as well. If a user attempts to log in, uses their username/password pair successfully, but never completes MFA, this is considered a failure.
 
 There are some scenarios that are not quite failures, and not quite successes. These are also worth tracking, but require some nuance in instrumentation and reporting. Some examples:
 
-* User initiates an account recovery flow, but never completes it
-* A magic link email or SMS is sent, but never completed
-* If MFA is required, and user removes the current factor, but never adds another factor
+* User initiates an account recovery flow, but never completes it.
+* A magic link email or SMS is sent, but never completed.
+* If MFA is required, and user removes the current factor, but never adds another factor.
 * A user was rate limited after suspicious behavior or for entering their credentials incorrectly.
 
 In all cases, the user is denied access to the application, but not in a typical manner. If you aren’t tracking login failures at all, don’t worry about these edge cases. But if you are and want to take the next step in terms of understanding your user’s experience, track these and think about your user might perceive them.
@@ -51,11 +51,11 @@ Next, walk through what you should be doing::
 * System level events: application version, client version, external factor such as a new source of traffic or promotion
 * Remember that an incomplete login should also count as a failure - track these too!
 
-3. **Patience is key. **You’ll need at least 3 months of solid data before you can start to zoom in to identify meaningful trends.
+3. **Patience is key.** You’ll need at least 3 months of solid data before you can start to zoom in to identify meaningful trends.
 
-4.** Adjust your expectations based on your industry. **While it is difficult to find login failure rates based on your specific industry, they can range between 15-40%, based on the average of the stats between [this](https://jsoverson.medium.com/what-your-login-success-rate-says-about-your-credential-stuffing-threat-1f10bc20eaee) article and [this](https://learn.fastly.com/rs/025-XKO-469/images/Detecting-Account-Takeovers-and-Defending-Your-Users-Signal-Sciences-2017.pdf) one. After tracking these numbers for a while, you’ll get a feel for when changes to your applications cause failure rates to change.
+4. **Adjust your expectations based on your industry.** While it is difficult to find login failure rates based on your specific industry, they can range between 15-40%, based on the average of the stats between [this article](https://jsoverson.medium.com/what-your-login-success-rate-says-about-your-credential-stuffing-threat-1f10bc20eaee) and [this one](https://learn.fastly.com/rs/025-XKO-469/images/Detecting-Account-Takeovers-and-Defending-Your-Users-Signal-Sciences-2017.pdf). After tracking these numbers for a while, you’ll get a feel for when changes to your applications cause failure rates to change.
 
-5. **Pass it on. **When building your application, empower application administrators to monitor failure rates themselves. For example, Okta gives admins a report where they can view failures and successes. Most authentication as a service providers offer detailed log events that can be built as a dashboard or report for administrator consumption. 
+5. **Pass it on.** When building your application, empower application administrators to monitor failure rates themselves. For example, Okta gives admins a report where they can view failures and successes. Most authentication as a service providers offer detailed log events that can be built as a dashboard or report for administrator consumption. 
 
 Now that you know what you should be doing to track failures, let’s talk about why user authentication events fail.
 
@@ -89,13 +89,9 @@ An additional benefit of taking a baseline measurement as this article suggests 
 
 ### User Problems
 
-You may do all you can to make the login process seamless for users, but failed attempts are a part of life.
+You may do all you can to make the login process seamless for users, but failed attempts are a part of life. Why is that? 
 
-Why is that? 
-
-On the other end of your shiny, awesome login form, is a flawed human being. 
-
-We forget our credentials. We forget if we used Google, Facebook, or LinkedIn to sign in. We entered our username, then got distracted and forgot to come back to the tab.
+On the other end of your shiny, awesome login form, is a flawed human being. We forget our credentials. We forget if we used Google, Facebook, or LinkedIn to sign in. We entered our username, then got distracted and forgot to come back to the tab.
 
 I could go on and on. Ultimately, expect that no matter how optimized your login process, there will be some percentage of failure due to the human condition. 
 
@@ -127,17 +123,13 @@ All things in software (and life) have  tradeoffs, and tracking login failures i
 
 Once you implement tracking, you may determine that you want to do something to improve your login failure rates. Here are some ideas for how to increase successful logins.
 
-1. **Provide automated help to anyone struggling to log in. **Present tailored advice or reminders in the user experience based on the problem they’re experiencing. An example of this is offering to send a password reset email with one click after a certain number of failed login attempts. Or, if you’re noticing that legitimate-looking users are failing at the captcha step frequently, consider a [CAPTCHA alternative](https://www.w3.org/WAI/GL/wiki/Captcha_Alternatives_and_thoughts).
+1. **Provide automated help to anyone struggling to log in.** Present tailored advice or reminders in the user experience based on the problem they’re experiencing. An example of this is offering to send a password reset email with one click after a certain number of failed login attempts. Or, if you’re noticing that legitimate-looking users are failing at the captcha step frequently, consider a [CAPTCHA alternative](https://www.w3.org/WAI/GL/wiki/Captcha_Alternatives_and_thoughts).
 
-2.** Give secure options for account credentials reset.** Once a problem has been detected, offer a login with a security code. Once the user is authenticated, allow them to modify their credentials so that they can remember them. 
+2. **Give secure options for account credentials reset.** Once a problem has been detected, offer a login with a security code. Once the user is authenticated, allow them to modify their credentials so that they can remember them. For an added layer of security, send the user an email any time their username or password changes. In case it wasn’t them, they can be alerted of a possible malicious actor and take further steps such as changing their credentials or locking their account. 
 
-For an added layer of security, send the user an email any time their username or password changes. In case it wasn’t them, they can be alerted of a possible malicious actor and take further steps such as changing their credentials or locking their account. 
+3. **Give users options.** Passwordless options, like passkeys and magic links, can replace username and password combinations. You can also provide the ability for users to authenticate with pre-existing accounts using social sign in, SAML, and OAuth2. Since you have metrics captured, you can determine which of these is most effective for your userbase.
 
-3.** Give users options.** Passwordless options, like passkeys and magic links, can replace username and password combinations. You can also provide the ability for users to authenticate with pre-existing accounts using social sign in, SAML, and OAuth2. Since you have metrics captured, you can determine which of these is most effective for your userbase
-
-4.** Keep users logged in if they choose.** Ensure your authentication system provides the ability for users to select “Remember me”. Long lived sessions reduce the need to log in, sometimes at the expense of security (tradeoffs, remember!).
-
-Administrators choose the maximum length of valid sessions before a user is forced to authenticate again. Here you’ll want to again balance between ease of use and security.
+4. **Keep users logged in if they choose.** Ensure your authentication system provides the ability for users to select “Remember me”. Long lived sessions reduce the need to log in, sometimes at the expense of security (tradeoffs, remember!). Administrators choose the maximum length of valid sessions before a user is forced to authenticate again. Here you’ll want to again balance between ease of use and security.
 
 ## Conclusion
 
