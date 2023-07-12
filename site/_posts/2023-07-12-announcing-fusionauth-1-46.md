@@ -41,7 +41,11 @@ Once you had two or more tenants, the path was appended with the tenant Id, so t
 
 The tenant Id at the end of the path caused compatibility issues for some software. While you could work around this by not using discovery and instead manually entering the required metadata, automatic configurability is superior in the long-term.
 
-With this release, the tenant Id can now be a prefix for the discovery endpoint, rather than a suffix as above. So the previous example OIDC discovery path would be `/bafb4319-b7ca-ed27-fa2f-bbdba9d8ec06/.well-known/openid-configuration`. Both locations for the tenant Id will continue to work, but you should prefer this one.
+With this release, the tenant Id can now be a prefix for the discovery endpoint, rather than a suffix as above. So the previous example, the OIDC discovery path would be `/bafb4319-b7ca-ed27-fa2f-bbdba9d8ec06/.well-known/openid-configuration`. Both locations for the tenant Id will continue to work, but you should prefer this one.
+
+Each of the tenants listed below now has an improved OIDC endpoint:
+
+{% include _image.liquid src="/assets/img/blogs/release-1-46/list-of-tenants.png" alt="Unlimited tenants for free! Now with improved OIDC endpoints.." class="img-fluid" figure=false %}
 
 ## The rest of it
 
