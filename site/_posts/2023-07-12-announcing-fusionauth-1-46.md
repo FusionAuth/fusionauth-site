@@ -17,7 +17,7 @@ All in all there are 26 issues, enhancements, and bug fixes included in the 1.46
 
 ## Security fixes
 
-At FusionAuth, we take security very seriously. This release has a number of fixes, including a fix for CAPTCHA bypass, a potential directory traversal attack, and additional defensive validation on our self-service profile edit form.
+At FusionAuth, we take security very seriously. This release has a number of security improvements, including a fix for CAPTCHA bypass, mitigation of a potential directory traversal attack, and additional defensive validation on our self-service profile edit form.
 
 We regularly obtain professional penetration testing and offer a bug bounty. [Learn more about FusionAuth's security programs](https://fusionauth.io/security).
 
