@@ -27,15 +27,15 @@ FusionAuth discloses security findings to customers and users via email outreach
 
 The [Device grant](https://datatracker.ietf.org/doc/html/rfc8628) allows you to authorize a device like a TV or a gaming console while entering credentials on a different device, such as a computer or phone. [Learn more about the OAuth Device grant](/articles/oauth/oauth-device-authorization).
 
-While FusionAuth has supported the Device grant since version 1.11.0, released on October 29th, 2019, this release improves the grant. In particular, you can bail out of our OAuth login flow when you are linking an external account (such as with Nintendo or XBox) and completing a Device grant later.
+While FusionAuth has supported the Device grant since version 1.11.0, released on October 29th, 2019, this release improves the grant. In particular, you can bail out of our OAuth login flow and complete the grant later.
 
-You now have more flexibility to create custom login flows but still complete a Device grant. If you want to learn more about these new endpoints, please check out the [Device grant documentation](/docs/v1/tech/oauth/endpoints#device).
+You now have more flexibility to create custom login flows but still use the Device grant. If you want to learn more about these new endpoints, please check out the [Device grant documentation](/docs/v1/tech/oauth/endpoints#device).
 
 ## Tenants and the OIDC discovery endpoint 
 
 Oftentimes you can provide an OpenID Connect discovery endpoint to other software, such as [oauth2-proxy](https://github.com/oauth2-proxy/oauth2-proxy/). This endpoint, [defined by the OpenID Connect specification](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfig), includes information about the OIDC server, including endpoints, supported claims, and supported signing algorithms.
 
-Until this release, when there was a single FusionAuth tenant, the endpoint path was `/.well-known/openid-configuration`. The full URL would be something like `https://local.fusionauth.io/.well-known/openid-configuration`.
+Until this release, when there was a single FusionAuth tenant, the endpoint path was `/.well-known/openid-configuration`. The full URL would be something like `https://auth.example.com/.well-known/openid-configuration`.
 
 Once you had two or more tenants, the path was appended with the tenant Id, so the path would look something like: `/.well-known/openid-configuration/bafb4319-b7ca-ed27-fa2f-bbdba9d8ec06`.
 
