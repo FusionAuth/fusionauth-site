@@ -21,7 +21,7 @@ At FusionAuth, we take security very seriously. This release has a number of sec
 
 We regularly obtain professional penetration testing and offer a bug bounty. [Learn more about FusionAuth's security programs](https://fusionauth.io/security).
 
-If you'd like to be on the security announcement list, please sign up for a [free FusionAuth account](https://account.fusionauth.io) and give yourself the security officer role. 
+FusionAuth discloses security findings to customers and users via email outreach with workarounds before publicizing the issue, as well as in our release notes. If you'd like to be on the security announcement email list, please sign up for a [free FusionAuth account](https://account.fusionauth.io) and give yourself the security officer role. 
 
 ## Improvements to the OAuth2 Device grant
 
