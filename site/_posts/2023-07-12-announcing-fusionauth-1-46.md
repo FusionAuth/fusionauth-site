@@ -13,7 +13,7 @@ FusionAuth version 1.46 shipped on June 19, 2023. This release improves the OIDC
 
 <!--more-->
 
-All in all there are 26 issues, enhancements, and bug fixes included in the 1.46 release. As always, please see the [release notes](/docs/v1/tech/release-notes#version-1-46-0) for a full breakdown of the changes between 1.45 and 1.46.
+All in all there are 26 issues, enhancements, and bug fixes included in the 1.46.0 release. As always, please see the [release notes](/docs/v1/tech/release-notes#version-1-46-0) for a full breakdown of the changes between 1.45.3 and 1.46.0.
 
 ## Security fixes
 
