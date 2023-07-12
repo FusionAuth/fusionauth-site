@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.46
-description: This release includes a number of security fixes, improvements to the device grant, and improves the OIDC discovery endpoint. 
+description: This release improves the OIDC discovery endpoint when you have multiple tenants, enhances the Device grant, and includes a number of security fixes.
 author: Dan Moore
 image: blogs/release-1-46/fusionauth-1-46.png
 category: announcement
@@ -9,11 +9,11 @@ tags: release-announcement security device-grant oidc
 excerpt_separator: "<!--more-->"
 ---
 
-FusionAuth version 1.46 shipped on June 19, 2023. This release includes a number of security fixes, improvements to the device grant, and improves the OIDC discovery endpoint. And more!
+FusionAuth version 1.46 shipped on June 19, 2023. This release improves the OIDC discovery endpoint when you have multiple tenants, enhances the Device grant, and includes a number of security fixes. And more!
 
 <!--more-->
 
-All in all there are 26 issues, enhancements, and bug fixes included in the 1.46 releases. As always, please see the [release notes](/docs/v1/tech/release-notes#version-1-46-0) for a full breakdown of the changes between 1.45 and 1.46.
+All in all there are 26 issues, enhancements, and bug fixes included in the 1.46 release. As always, please see the [release notes](/docs/v1/tech/release-notes#version-1-46-0) for a full breakdown of the changes between 1.45 and 1.46.
 
 ## Security fixes
 
@@ -27,7 +27,7 @@ If you'd like to be on the security announcement list, please sign up for a [fre
 
 The Device grant allows you to authorize a device like a TV or a gaming console while entering credentials on a different device, such as a computer or phone. [Learn more about the OAuth Device grant](/articles/oauth/oauth-device-authorization).
 
-While FusionAuth has supported the device grant since version 1.11.0, released on October 29th, 2019, this release updates and improves the functionality. In particular, you can bail out of our OAuth login flow when you are linking an external account (such as with Nintendo or XBox) and completing a Device grant later.
+While FusionAuth has supported the Device grant since version 1.11.0, released on October 29th, 2019, this release updates and improves the functionality. In particular, you can bail out of our OAuth login flow when you are linking an external account (such as with Nintendo or XBox) and completing a Device grant later.
 
 There are a few new workflows supported. First, FusionAuth now supports completing the grant via API after the user code is displayed.
 
