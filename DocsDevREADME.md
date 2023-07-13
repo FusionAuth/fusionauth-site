@@ -194,6 +194,7 @@ For blog posts:
 - CAPTCHA
 - Google reCAPTCHA
 - Spring Boot
+- FusionAuth Cloud
 
 ## Words to avoid
 

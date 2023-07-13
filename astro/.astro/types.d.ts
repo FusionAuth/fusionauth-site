@@ -766,6 +766,13 @@ declare module 'astro:content' {
 } & { render(): Render[".mdx"] },
 },
 "quickstarts": {
+"index.mdx": {
+  id: "index.mdx",
+  slug: "index",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
+} & { render(): Render[".mdx"] },
 "quickstart-python-flask-web.mdx": {
   id: "quickstart-python-flask-web.mdx",
   slug: "quickstart-python-flask-web",

@@ -12,6 +12,10 @@ language: JavaScript
 
 {% include docs/integration/_intro.md %}
 
+This tutorial uses the hosted backend. 
+
+{% include docs/_hosted-backend-warning.md %}
+
 ## Prerequisites
 
 {% include docs/integration/_prerequisites.md %}

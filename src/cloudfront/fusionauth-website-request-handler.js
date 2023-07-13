@@ -61,6 +61,7 @@ var indexPages = {
   '/quickstarts/': true
 };
 var redirects = {
+  '/articles/oauth/what-is-oauth' : '/articles/oauth/modern-guide-to-oauth',
   '/cognito': '/docs/v1/tech/migration-guide/cognito',
   '/cognito/': '/docs/v1/tech/migration-guide/cognito',
   '/docs/v1/tech/admin-guide/release-notifications': '/docs/v1/tech/admin-guide/releases',
