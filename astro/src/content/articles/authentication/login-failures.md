@@ -10,7 +10,7 @@ Picture a chart representing user logins. It has a line, trending upwards and to
 
 TODO image
 
-When you care about providing great authentication experiences, like us (the few, the proud), there is nothing better than this chart - undeniable proof that our users are successfully logging in. And, more importantly, getting access to the features or data which that login process protects. That’s what most users are looking for, after all.
+When you care about providing great [authentication](/docs/v1/tech/core-concepts/authentication-authorization) experiences, like us (the few, the proud), there is nothing better than this chart - undeniable proof that our users are successfully logging in. And, more importantly, getting access to the features or data which that login process protects. That’s what most users are looking for, after all.
 
 The more people who successfully log in, the more sure we are that our solution scales and that users are entering the application smoothly.
 
@@ -47,7 +47,7 @@ Next, walk through what you should be doing::
 
 2. **Be granular.** When a failure occurs, log the reason for the failure and metadata around the event. If you can’t piece together a hypothesis about the failure, you can’t fix it, so this part is really important. Some ideas for attributes to track:
 
-* User attributes: IP address, user agent/OS, the mapped location of the IP address, time of day, type of login (social sign on, WebAuthn, magic link), which factor failed (if using multi-factor authentication aka MFA)
+* User attributes: IP address, user agent/OS, the mapped location of the IP address, time of day, type of login (social sign on, [WebAuthn](/blog/2022/09/13/what-is-webauthn-why-do-you-care), magic link), which factor failed (if using [multi-factor authentication aka MFA](/glossary/multi-factor-authentication))
 * System level events: application version, client version, external factor such as a new source of traffic or promotion
 * Remember that an incomplete login should also count as a failure - track these too!
 
