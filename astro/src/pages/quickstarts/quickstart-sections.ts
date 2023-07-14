@@ -168,6 +168,7 @@ const qsSections: QuickStartSection[] = [
   },
 ];
 
+// merge in quickstarts managed by astro to the list of quickstart links we have above
 const quickstarts = await getCollection("quickstarts");
 
 quickstarts.filter(quickstart => quickstart.id.indexOf("index.md") === -1)
