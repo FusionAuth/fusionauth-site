@@ -74,13 +74,6 @@ const qsSections: QuickStartSection[] = [
         navColor: 'green',
       },
       {
-        title: 'Go',
-        icon: '/img/icons/golang.svg',
-        faIcon: 'fa-g',
-        comingSoon: true,
-        navColor: 'blue',
-      },
-      {
         title: 'PHP',
         icon: '/img/icons/php.svg',
         faIcon: 'fa-php',
