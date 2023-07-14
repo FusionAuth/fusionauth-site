@@ -60,10 +60,10 @@ const qsSections: QuickStartSection[] = [
         navColor: 'fuchsia',
       },
       {
+        href: '/docs/v1/tech/tutorials/integrate-dotnet',
         title: '.NET',
         icon: '/img/icons/dotnet-c.svg',
         faIcon: 'fa-hashtag',
-        comingSoon: true,
         navColor: 'blue'
       },
       {
@@ -72,13 +72,6 @@ const qsSections: QuickStartSection[] = [
         icon: '/img/icons/nextjs.svg',
         faIcon: 'fa-n',
         navColor: 'green',
-      },
-      {
-        title: 'Go',
-        icon: '/img/icons/golang.svg',
-        faIcon: 'fa-g',
-        comingSoon: true,
-        navColor: 'blue',
       },
       {
         title: 'PHP',
@@ -130,10 +123,11 @@ const qsSections: QuickStartSection[] = [
     desc: 'Mobile application that runs natively on a device',
     articles: [
       {
+        href: '/docs/v1/tech/tutorials/integrate-flutter',
         title: 'Flutter',
         icon: '/img/icons/flutter.svg',
         faIcon: 'fa-snake',
-        comingSoon: true,
+        navColor: 'indigo'
       },
       {
         href: '/blog/2020/08/19/securing-react-native-with-oauth',
@@ -150,6 +144,13 @@ const qsSections: QuickStartSection[] = [
     title: 'Backend/API',
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
+      {
+        href: '/docs/v1/tech/tutorials/integrate-dotnet-api',
+        title: '.NET Core',
+        icon: '/img/icons/dotnet-c.svg',
+        faIcon: 'fa-hashtag',
+        navColor: 'blue',
+      },
       {
         href: '/docs/v1/tech/tutorials/integrate-ruby-rails-api',
         title: 'Ruby on Rails',
@@ -168,6 +169,7 @@ const qsSections: QuickStartSection[] = [
   },
 ];
 
+// merge in quickstarts managed by astro to the list of quickstart links we have above
 const quickstarts = await getCollection("quickstarts");
 
 quickstarts.filter(quickstart => quickstart.id.indexOf("index.md") === -1)
