@@ -126,7 +126,8 @@ const qsSections: QuickStartSection[] = [
         href: '/docs/v1/tech/tutorials/integrate-flutter',
         title: 'Flutter',
         icon: '/img/icons/flutter.svg',
-        faIcon: 'fa-snake'
+        faIcon: 'fa-snake',
+        navColor: 'indigo'
       },
       {
         href: '/blog/2020/08/19/securing-react-native-with-oauth',
