@@ -615,13 +615,6 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
-"oauth/what-is-oauth.mdx": {
-  id: "oauth/what-is-oauth.mdx",
-  slug: "oauth/what-is-oauth",
-  body: string,
-  collection: "articles",
-  data: InferEntrySchema<"articles">
-} & { render(): Render[".mdx"] },
 "oauth/why-no-authentication-in-oauth.md": {
   id: "oauth/why-no-authentication-in-oauth.md",
   slug: "oauth/why-no-authentication-in-oauth",
@@ -766,9 +759,9 @@ declare module 'astro:content' {
 } & { render(): Render[".mdx"] },
 },
 "quickstarts": {
-"index.mdx": {
-  id: "index.mdx",
-  slug: "index",
+"quickstart-golang-web.mdx": {
+  id: "quickstart-golang-web.mdx",
+  slug: "quickstart-golang-web",
   body: string,
   collection: "quickstarts",
   data: InferEntrySchema<"quickstarts">
@@ -783,6 +776,13 @@ declare module 'astro:content' {
 "quickstart-ruby-rails-web.mdx": {
   id: "quickstart-ruby-rails-web.mdx",
   slug: "quickstart-ruby-rails-web",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
+} & { render(): Render[".mdx"] },
+"quickstart-springboot-api.mdx": {
+  id: "quickstart-springboot-api.mdx",
+  slug: "quickstart-springboot-api",
   body: string,
   collection: "quickstarts",
   data: InferEntrySchema<"quickstarts">
