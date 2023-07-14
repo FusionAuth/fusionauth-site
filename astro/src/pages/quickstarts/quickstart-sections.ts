@@ -60,10 +60,10 @@ const qsSections: QuickStartSection[] = [
         navColor: 'fuchsia',
       },
       {
+        href: '/docs/v1/tech/tutorials/integrate-dotnet',
         title: '.NET',
         icon: '/img/icons/dotnet-c.svg',
         faIcon: 'fa-hashtag',
-        comingSoon: true,
         navColor: 'blue'
       },
       {
@@ -130,10 +130,10 @@ const qsSections: QuickStartSection[] = [
     desc: 'Mobile application that runs natively on a device',
     articles: [
       {
+        href: '/docs/v1/tech/tutorials/integrate-flutter',
         title: 'Flutter',
         icon: '/img/icons/flutter.svg',
-        faIcon: 'fa-snake',
-        comingSoon: true,
+        faIcon: 'fa-snake'
       },
       {
         href: '/blog/2020/08/19/securing-react-native-with-oauth',
@@ -150,6 +150,13 @@ const qsSections: QuickStartSection[] = [
     title: 'Backend/API',
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
+      {
+        href: '/docs/v1/tech/tutorials/integrate-dotnet-api',
+        title: '.NET Core',
+        icon: '/img/icons/dotnet-c.svg',
+        faIcon: 'fa-hashtag',
+        navColor: 'blue',
+      },
       {
         href: '/docs/v1/tech/tutorials/integrate-ruby-rails-api',
         title: 'Ruby on Rails',
