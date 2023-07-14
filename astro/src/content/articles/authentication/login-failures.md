@@ -8,7 +8,7 @@ icon: /img/icons/multi-factor-authentication.svg
 
 Picture a chart representing user logins. It has a line, trending upwards and to the right. Growing over time, never dipping. 
 
-TODO image
+![No dips here!.](/img/articles/login-failure/login-success-graph.png)
 
 When you care about providing great [authentication](/docs/v1/tech/core-concepts/authentication-authorization) experiences, like us (the few, the proud), there is nothing better than this chart - undeniable proof that our users are successfully logging in. And, more importantly, getting access to the features or data which that login process protects. That’s what most users are looking for, after all.
 
