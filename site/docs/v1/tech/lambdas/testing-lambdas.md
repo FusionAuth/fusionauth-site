@@ -19,7 +19,6 @@ You will log into FusionAuth at `http://localhost:9011/admin` with your [`fusion
 Let's start by making a simple lambda to test that it works on your machine:
 
 
-
 - Log in to [FusionAuth admin](`http://localhost:9011/admin).
 - <p>Navigate to <span class="breadcrumb">Customizations -> Lambdas</span>.</p>
 - Click the <i/>{:.ui-button .green .fa .fa-plus} button at the top right to add a new lambda.
@@ -40,6 +39,8 @@ function populate(jwt, user, registration)
 }
 ```
 
+{% include docs/_image.liquid src="/assets/img/docs/customization/lambdas/testing-lambdas/populate-lambda.png" alt="Creating a JWT populate lambda" class="img-fluid bottom-cropped" width="1200" figure=false %}
+
 Save the lambda and note the lambda <span>Id</span>{:.field}. We'll use it later when testing.
 
 Now activate the lambda for the test app:
@@ -48,7 +49,9 @@ Now activate the lambda for the test app:
 - Click on the <span>JWT</span>{:.breadcrumb} tab.
 - <p>Enable <span class="uielement">Enabled</span> toggle.</p>
 - <p>Under <span class="breadcrumb">Lambda Settings</span>  select the lambda you created, called "[ATest]" for the <span class="field">Access Token populate lambda</span>.</p>
-- Save.
+- Click the <i/>{:.ui-button .blue .fa .fa-save} button to save the changes.
+
+{% include docs/_image.liquid src="/assets/img/docs/customization/lambdas/testing-lambdas/edit-application.png" alt="Enabling the lambda in an application" class="img-fluid" width="1200" figure=false %}
 
 You can now test that the new lambda writes to the event log and returns extra data in the JWT. You need to open the `routes/index.js` file in the [fusionauth-example-5-minute-guide test app code](https://github.com/FusionAuth/fusionauth-example-5-minute-guide) that you cloned from GitHub:
 
@@ -88,7 +91,6 @@ There are three very similar libraries, so let's differentiate them:
 
 Before you can use any of the API, CLI, or Client Library functionality you need to create an API key to allow you to access FusionAuth:
 
-- Log in to [FusionAuth](http://localhost:9011/admin).
 - Navigate to  <span>Settings -> API Keys</span>{:.breadcrumb} and click the <i/>{:.ui-button .green .fa .fa-plus} button at the top right.
 - <p>In the <span class="field">Key</span> field enter "lambda_testing_key".</p>
 - You can either leave all the toggle buttons for the Endpoints blank to give this key all permissions, or enable the buttons only for the following endpoints:
@@ -130,7 +132,9 @@ Save the file and upload the lambda with this command:
 npx fusionauth lambda:update 1760a1c3-742a-4b74-b3e6-6ef1676ad77c --key lambda_testing_key;
 ```
 
-You can check that the lambda in FusionAuth now says "Goodbye World" by viewing the ["[ATest]" lambda details](http://localhost:9011/admin/lambda) .
+You can check that the lambda in FusionAuth now says "Goodbye World" by viewing the ["[ATest]" lambda details](http://localhost:9011/admin/lambda).
+
+{% include docs/_image.liquid src="/assets/img/docs/customization/lambdas/testing-lambdas/updated-lambda.png" alt="Update lambda" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 ## API limitations
 
