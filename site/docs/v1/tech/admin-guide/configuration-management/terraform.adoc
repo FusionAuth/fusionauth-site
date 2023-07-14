@@ -25,6 +25,7 @@ Since it is a community project, it is not as complete as the client libraries. 
 * <<Terraform Update>>
 ** <<Ignore Lifecycle Changes>>
 * <<Terraform Remove>>
+** <<Prevent Destroy>>
 
 == Prerequisites
 
@@ -65,17 +66,17 @@ And add the link:https://registry.terraform.io/providers/gpsinsight/fusionauth/l
 [source]
 ----
 terraform {
-    required_providers {
-        fusionauth = {
-            source = "gpsinsight/fusionauth"
-            version = "0.1.91"
-        }
+  required_providers {
+    fusionauth = {
+      source = "gpsinsight/fusionauth"
+      version = "0.1.94"
     }
+  }
 }
 
 provider "fusionauth" {
-    api_key = "yqTs2LSMd23DYgwbPBA_AxmXHm7_qNFT9jbi3wL9Jr65ymNkNnFisAvjY"
-    host = "https://your.fusionauth.domain"
+  api_key = "yqTs2LSMd23DYgwbPBA_AxmXHm7_qNFT9jbi3wL9Jr65ymNkNnFisAvjY"
+  host = "https://your.fusionauth.domain"
 }
 ----
 
@@ -90,15 +91,15 @@ It is always safe to run link:https://developer.hashicorp.com/terraform/cli/comm
 
 === Configuration Strategy
 
-Once we initialized the terraform working directory we need to understand the different strategies to handle the configuration which we describe in detail in the following sections.
+Once we initialized the Terraform working directory we need to understand the different strategies to handle the configuration which we describe in detail in the following sections.
 
 [cols="2,4,4"]
 |===
 | Strategy | Advantages | Disadvantages
 
-| import | manage existing resources | some resources dont fully support the terraform lifecycle
+| import | manage existing resources | some resources dont fully support the Terraform lifecycle
 | data source  | reference existing resources without having to manage them | requires a external process to manage these resources
-| create | create and then manage all resources through terraform | bigger initial effort
+| create | create and then manage all resources through Terraform | bigger initial effort
 |===
 
 == Terraform Import
@@ -131,99 +132,103 @@ To make things easier, we only replace the first Id in the import section with t
 [source]
 ----
 import {
-    to = fusionauth_tenant.Default
-    id = "Replace-This-With-The-Existing-Default-Tenant-Id"
+  to = fusionauth_tenant.Default
+  id = "Replace-This-With-The-Existing-Default-Tenant-Id"
 }
 
 resource "fusionauth_tenant" "Default" {
-    name = "Default"
-    issuer = "acme.com"
-    theme_id = "00000000-0000-0000-0000-000000000000"
-    external_identifier_configuration {
-        authorization_grant_id_time_to_live_in_seconds = 30
-        change_password_id_generator {
-            length = 32
-            type   = "randomBytes"
-        }
-        change_password_id_time_to_live_in_seconds = 600
-        device_code_time_to_live_in_seconds        = 300
-        device_user_code_id_generator {
-            length = 6
-            type   = "randomAlphaNumeric"
-        }
-        email_verification_id_generator {
-            length = 32
-            type   = "randomBytes"
-        }
-        email_verification_id_time_to_live_in_seconds      = 86400
-        email_verification_one_time_code_generator {
-            length = 6
-            type   = "randomAlphaNumeric"
-        }
-        external_authentication_id_time_to_live_in_seconds = 300
-        one_time_password_time_to_live_in_seconds          = 60
-        passwordless_login_generator {
-            length = 32
-            type   = "randomBytes"
-        }
-        passwordless_login_time_to_live_in_seconds = 180
-        registration_verification_id_generator {
-            length = 32
-            type   = "randomBytes"
-        }
-        registration_verification_id_time_to_live_in_seconds = 86400
-        registration_verification_one_time_code_generator {
-            length = 6
-            type   = "randomAlphaNumeric"
-        }
-        saml_v2_authn_request_id_ttl_seconds = 300
-        setup_password_id_generator {
-            length = 32
-            type   = "randomBytes"
-        }
-        setup_password_id_time_to_live_in_seconds   = 86400
-        two_factor_id_time_to_live_in_seconds       = 300
-        two_factor_one_time_code_id_generator {
-            length = 6
-            type   = "randomDigits"
-        }
-        two_factor_trust_id_time_to_live_in_seconds = 2592000
+  name = "Default"
+  issuer = "acme.com"
+  theme_id = "00000000-0000-0000-0000-000000000000"
+  external_identifier_configuration {
+    authorization_grant_id_time_to_live_in_seconds = 30
+    change_password_id_generator {
+      length = 32
+      type   = "randomBytes"
     }
-    jwt_configuration {
-        refresh_token_time_to_live_in_minutes              = 43200
-        time_to_live_in_seconds                            = 3600
-        refresh_token_revocation_policy_on_login_prevented = true
-        refresh_token_revocation_policy_on_password_change = true
-        access_token_key_id                                = "00000000-0000-0000-0000-000000000000"
-        id_token_key_id                                    = "00000000-0000-0000-0000-000000000000"
+    change_password_id_time_to_live_in_seconds = 600
+    device_code_time_to_live_in_seconds        = 300
+    device_user_code_id_generator {
+      length = 6
+      type   = "randomAlphaNumeric"
     }
-    login_configuration {
-        require_authentication = true
+    email_verification_id_generator {
+      length = 32
+      type   = "randomBytes"
     }
-    email_configuration {
-        default_from_email                  = "change-me@example.com"
-        default_from_name                   = "FusionAuth"
-        host                                = "localhost"
-        implicit_email_verification_allowed = true
-        port                                = 25
-        security                            = "NONE"
-        verification_strategy               = "ClickableLink"
-        verify_email                        = false
-        verify_email_when_changed           = false
-        forgot_password_email_template_id   = "00000000-0000-0000-0000-000000000000"
-        passwordless_email_template_id      = "00000000-0000-0000-0000-000000000000"
-        set_password_email_template_id      = "00000000-0000-0000-0000-000000000000"
+    email_verification_id_time_to_live_in_seconds      = 86400
+    email_verification_one_time_code_generator {
+      length = 6
+      type   = "randomAlphaNumeric"
     }
+    external_authentication_id_time_to_live_in_seconds = 300
+    one_time_password_time_to_live_in_seconds          = 60
+    passwordless_login_generator {
+      length = 32
+      type   = "randomBytes"
+    }
+    passwordless_login_time_to_live_in_seconds = 180
+    registration_verification_id_generator {
+      length = 32
+      type   = "randomBytes"
+    }
+    registration_verification_id_time_to_live_in_seconds = 86400
+    registration_verification_one_time_code_generator {
+      length = 6
+      type   = "randomAlphaNumeric"
+    }
+    saml_v2_authn_request_id_ttl_seconds = 300
+    setup_password_id_generator {
+      length = 32
+      type   = "randomBytes"
+    }
+    setup_password_id_time_to_live_in_seconds   = 86400
+    two_factor_id_time_to_live_in_seconds       = 300
+    two_factor_one_time_code_id_generator {
+      length = 6
+      type   = "randomDigits"
+    }
+    two_factor_trust_id_time_to_live_in_seconds = 2592000
+  }
+  jwt_configuration {
+    refresh_token_time_to_live_in_minutes              = 43200
+    time_to_live_in_seconds                            = 3600
+    refresh_token_revocation_policy_on_login_prevented = true
+    refresh_token_revocation_policy_on_password_change = true
+    access_token_key_id                                = "00000000-0000-0000-0000-000000000000"
+    id_token_key_id                                    = "00000000-0000-0000-0000-000000000000"
+  }
+  login_configuration {
+    require_authentication = true
+  }
+  email_configuration {
+    default_from_email                  = "change-me@example.com"
+    default_from_name                   = "FusionAuth"
+    host                                = "localhost"
+    implicit_email_verification_allowed = true
+    port                                = 25
+    security                            = "NONE"
+    verification_strategy               = "ClickableLink"
+    verify_email                        = false
+    verify_email_when_changed           = false
+    forgot_password_email_template_id   = "00000000-0000-0000-0000-000000000000"
+    passwordless_email_template_id      = "00000000-0000-0000-0000-000000000000"
+    set_password_email_template_id      = "00000000-0000-0000-0000-000000000000"
+  }
 }
 ----
-Now as we provided our `Tenant Id` we let terraform find our other Ids which we have to replace in the `main.tf` file.
+
+Now as we provided our `Tenant Id` we let Terraform find our other Ids which we have to replace in the `main.tf` file.
+
 [source]
 ----
 terraform plan | grep 0000
 ----
+
 It wants to replace several UUID definitions with 00000000-0000-0000-0000-000000000000, but we don't want to do that, instead we will copy the UUID's to our `main.tf` file and replace the defined UUID's with them.
 
 Here is how the output should look like:
+
 [source]
 ----
 ~ theme_id                           = "75a068fd-e94b-451a-9aeb-3ddb9a3b5987" -> "00000000-0000-0000-0000-000000000000"
@@ -233,6 +238,7 @@ Here is how the output should look like:
 ~ access_token_key_id                = "12c6b146-89cf-9473-490b-1c97e4e68674" -> "00000000-0000-0000-0000-000000000000"
 ~ id_token_key_id                    = "092dbedc-30af-4149-9c61-b578f2c72f59" -> "00000000-0000-0000-0000-000000000000"
 ----
+
 Make sure you copy all those Id's from your output to the `main.tf` file.
 
 Once appended run link:https://developer.hashicorp.com/terraform/cli/commands/plan[terraform plan] to check the validity of your configuration.
@@ -252,7 +258,9 @@ terraform apply
 
 [WARNING]
 ====
-Once imported, Terraform tracks the resource in your state file. You can then manage the imported resource similar to any other, updating its attributes. With the exception of destroying the default tenant, which normally works in Terraform lifecycle but as in FusionAuth this is a non-deletable tenant this wont work with Terraform either and will break your Terraform state.
+Once imported, Terraform tracks the resource in your state file. You can then manage the imported resource similar to any other, updating its attributes.
+
+With the exception of destroying the default tenant, which normally works in Terraform lifecycle but as in FusionAuth this is a non-deletable tenant this wont work with Terraform either and will break your Terraform state. See <<Terraform Remove>> for more details.
 ====
 
 We suggest to leave the import block in your configuration a record of the resource's origin. The import block records that Terraform imported the resource and did not create it.
@@ -263,13 +271,13 @@ The same works with importing the default FusionAuth application based on the li
 [source]
 ----
 import {
-    to = fusionauth_application.FusionAuth
-    id = "00000000-0000-0000-0000-000000000000"
+  to = fusionauth_application.FusionAuth
+  id = "00000000-0000-0000-0000-000000000000"
 }
 
 resource "fusionauth_application" "FusionAuth" {
-    tenant_id = fusionauth_tenant.Default.id
-    name = "FusionAuth"
+  tenant_id = fusionauth_tenant.Default.id
+  name = "FusionAuth"
 }
 ----
 Replace the 00000000-0000-0000-0000-000000000000 with your `FusionAuth Application Id`, you can find it in the `FusionAuth Admin UI` under `Applications`.
@@ -286,7 +294,9 @@ terraform apply
 
 [WARNING]
 ====
-Once imported, Terraform tracks the resource in your state file. You can then manage the imported resource similar to any other, updating its attributes. With the exception of destroying the FusionAuth application, which normally works in Terraform lifecycle but as in FusionAuth this is a non-deletable application this wont work with Terraform either and will break your Terraform state.
+Once imported, Terraform tracks the resource in your state file. You can then manage the imported resource similar to any other, updating its attributes.
+
+With the exception of destroying the FusionAuth application, which normally works in Terraform lifecycle but as in FusionAuth this is a non-deletable application this wont work with Terraform either and will break your Terraform state. See <<Terraform Remove>> for more details.
 ====
 
 We suggest to leave the import block in your configuration a record of the resource's origin. The import block records that Terraform imported the resource and did not create it.
@@ -303,11 +313,11 @@ In the scenario where you choose to manage the Default tenant and FusionAuth app
 [source]
 ----
 data "fusionauth_tenant" "Default" {
-    name = "Default"
+  name = "Default"
 }
 
 data "fusionauth_application" "FusionAuth" {
-    name = "FusionAuth"
+  name = "FusionAuth"
 }
 ----
 
@@ -330,59 +340,59 @@ In this example we create an application called forum in the Default tenant with
 * link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/user[Terraform Resource: User]
 * link:https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/registration[Terraform Resource: Registration]
 
-For referenced Ids which are `Data Sources` use a leading `data.` for the specification e.g. `tenant_id = data.fusionauth_tenant.Default.id`, if you used the import without using `Data Sources` you have to remove the leading `data.` from the following resource definitions, otherwise it terraform plan will throw an error.
+For referenced Ids which are `Data Sources` use a leading `data.` for the specification e.g. `tenant_id = data.fusionauth_tenant.Default.id`, if you used the import without using `Data Sources` you have to remove the leading `data.` from the following resource definitions, otherwise `terraform plan` will throw an error.
 
 [source]
 ----
 resource "fusionauth_application" "forum" {
-    tenant_id = data.fusionauth_tenant.Default.id
-    name = "forum"
+  tenant_id = data.fusionauth_tenant.Default.id
+  name = "forum"
 }
 
 resource "fusionauth_application_role" "forum_admin_role" {
-    application_id = fusionauth_application.forum.id
-    is_default     = false
-    is_super_role  = true
-    name           = "admin"
+  application_id = fusionauth_application.forum.id
+  is_default     = false
+  is_super_role  = true
+  name           = "admin"
 }
 
 resource "fusionauth_application_role" "forum_user_role" {
-    application_id = fusionauth_application.forum.id
-    is_default     = true
-    is_super_role  = false
-    name           = "user"
+  application_id = fusionauth_application.forum.id
+  is_default     = true
+  is_super_role  = false
+  name           = "user"
 }
 
 resource "fusionauth_user" "forum-user1" {
-    email                    = "forum-user1@email.internal"
-    first_name               = "John"
-    last_name                = "Doe"
-    middle_name              = "William"
-    password_change_required = true
-    password                 = "%WLTvrsYELsyPqC^R7FMUNxt##VyDf6XaWk2R7!gS$oL76Ww"
-    username_status          = "ACTIVE"
+  email                    = "forum-user1@email.internal"
+  first_name               = "John"
+  last_name                = "Doe"
+  middle_name              = "William"
+  password_change_required = true
+  password                 = "%WLTvrsYELsyPqC^R7FMUNxt##VyDf6XaWk2R7!gS$oL76Ww"
+  username_status          = "ACTIVE"
 }
 
 resource "fusionauth_user" "forum-admin1" {
-    email                    = "forum-admin1@email.internal"
-    first_name               = "John"
-    last_name                = "Doe"
-    middle_name              = "William"
-    password_change_required = true
-    password                 = "@CfosPAVT3&hCzz5c^&#2F5BxNUY$X!@s!7Wx9bd6Yon54e3"
-    username_status          = "ACTIVE"
+  email                    = "forum-admin1@email.internal"
+  first_name               = "John"
+  last_name                = "Doe"
+  middle_name              = "William"
+  password_change_required = true
+  password                 = "@CfosPAVT3&hCzz5c^&#2F5BxNUY$X!@s!7Wx9bd6Yon54e3"
+  username_status          = "ACTIVE"
 }
 
 resource "fusionauth_registration" "forum-admin1-admin-role" {
-    user_id        = fusionauth_user.forum-admin1.id
-    application_id = fusionauth_application.forum.id
-    roles          = ["admin"]
+  user_id        = fusionauth_user.forum-admin1.id
+  application_id = fusionauth_application.forum.id
+  roles          = ["admin"]
 }
 
 resource "fusionauth_registration" "forum-user1-user-role" {
-    user_id        = fusionauth_user.forum-user1.id
-    application_id = fusionauth_application.forum.id
-    roles          = ["user"]
+  user_id        = fusionauth_user.forum-user1.id
+  application_id = fusionauth_application.forum.id
+  roles          = ["user"]
 }
 ----
 
@@ -413,37 +423,37 @@ There are two very common examples in FusionAuth resources. One if you manage us
 [source]
 ----
 resource "fusionauth_user" "forum-user1" {
-    email                    = "forum-user1@email.internal"
-    first_name               = "John"
-    last_name                = "Doe"
-    middle_name              = "William"
-    password_change_required = true
-    password                 = "%WLTvrsYELsyPqC^R7FMUNxt##VyDf6XaWk2R7!gS$oL76Ww"
-    username_status          = "ACTIVE"
-    lifecycle {
-        ignore_changes = [
-            data,
-            image_url,
-            password
-        ]
-    }
+  email                    = "forum-user1@email.internal"
+  first_name               = "John"
+  last_name                = "Doe"
+  middle_name              = "William"
+  password_change_required = true
+  password                 = "%WLTvrsYELsyPqC^R7FMUNxt##VyDf6XaWk2R7!gS$oL76Ww"
+  username_status          = "ACTIVE"
+  lifecycle {
+    ignore_changes = [
+      data,
+      image_url,
+      password
+    ]
+  }
 }
 
 resource "fusionauth_user" "forum-admin1" {
-    email                    = "forum-admin1@email.internal"
-    first_name               = "John"
-    last_name                = "Doe"
-    middle_name              = "William"
-    password_change_required = true
-    password                 = "@CfosPAVT3&hCzz5c^&#2F5BxNUY$X!@s!7Wx9bd6Yon54e3"
-    username_status          = "ACTIVE"
-    lifecycle {
-        ignore_changes = [
-            data,
-            image_url,
-            password
-        ]
-    }
+  email                    = "forum-admin1@email.internal"
+  first_name               = "John"
+  last_name                = "Doe"
+  middle_name              = "William"
+  password_change_required = true
+  password                 = "@CfosPAVT3&hCzz5c^&#2F5BxNUY$X!@s!7Wx9bd6Yon54e3"
+  username_status          = "ACTIVE"
+  lifecycle {
+    ignore_changes = [
+      data,
+      image_url,
+      password
+    ]
+  }
 }
 ----
 
@@ -452,13 +462,13 @@ Another example is where your e.g. business application adds user driven data to
 [source]
 ----
 resource "fusionauth_application" "forum" {
-    tenant_id = data.fusionauth_tenant.Default.id
-    name = "forum"
-    lifecycle {
-        ignore_changes = [
-            data
-        ]
-    }
+  tenant_id = data.fusionauth_tenant.Default.id
+  name = "forum"
+  lifecycle {
+    ignore_changes = [
+      data
+    ]
+  }
 }
 ----
 
@@ -467,14 +477,26 @@ If you are only interested in initially creating and destroying resources you ca
 [source]
 ----
 lifecycle {
-    ignore_changes = all
+  ignore_changes = all
 }
 ----
 
 == Terraform Remove
 
-If you want to remove a resource you can comment or delete the lines accordingly. Run `terraform plan` and `terraform apply` once modified.
+If you want to remove a resource you can comment or delete the lines accordingly. Run `terraform plan` and `terraform apply` once modified which will then destroy the commented or deleted ressource.
 
-//TODO: lifecycle management for non-deletable resources
+If you run link:https://developer.hashicorp.com/terraform/cli/commands/destroy[terraform destroy] you need to be aware that all Terraform managed resources will be destroyed.
 
-https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#prevent_destroy
+=== Prevent Destroy
+If you still want to make sure that certain resources arent destroyed, you can specify the link:https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#prevent_destroy[prevent_destroy] lifecycle meta-argument as a measure of safety against the accidental replacement of objects that may be costly to reproduce. However, it will make certain configuration changes impossible to apply, and will prevent the use of the `terraform destroy` command once such objects are created, and so this option should be used sparingly.
+
+[source]
+----
+lifecycle {
+  prevent_destroy = true
+}
+----
+
+A good example would be a productive FusionAuth tenant, as deleting a tenant removes all of the associated applications, groups and users.
+
+The same meta-argument you can use for Terraform managed non-deletable resources like Default tenant and FusionAuth application as Terraform would not be able to anyway.
