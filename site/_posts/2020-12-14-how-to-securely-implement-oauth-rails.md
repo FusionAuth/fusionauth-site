@@ -44,7 +44,7 @@ In this tutorial we will use Docker for quick setup:
 ```bash
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up
+docker compose up
 ```
 
 If you prefer to install FusionAuth locally, see the [5-Minute Setup Guide](/docs/v1/tech/5-minute-setup-guide) to get up and running.  

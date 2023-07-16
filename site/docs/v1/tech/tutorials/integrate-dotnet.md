@@ -242,3 +242,5 @@ You can follow [this guide](https://learn.microsoft.com/en-us/dotnet/core/additi
 Alternatively, you can run the project using [Visual Studio](https://visualstudio.microsoft.com), which will run the project using SSL.
 
 If you do this, make sure to update the <span>Authorized Redirect URL</span>{:.field} to reflect the `https` protocol. Also note that the project will probably run on a different port when using SSL, so you must update that as well. To do so, log into the administrative user interface, navigate to <span>Applications</span>{:.breadcrumb}, then click the <span>Edit</span>{:.uielement} button on your application and navigate to the <span>OAuth</span>{:.breadcrumb} tab. You can have more than one URL.
+
+If you encounter a `SecurityTokenSignatureKeyNotFoundException` error when running the application, you may need to add an RSA key using <span>Key Master</span>{:.breadcrumb} and sign the tokens with that key. More [info here](https://fusionauth.io/community/forum/topic/2419/security-token-signature-key-not-found-exception-idx10501-signature-validation-failed-unable-to-match-key).
