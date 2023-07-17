@@ -1,125 +1,133 @@
-var indexPages = {
-  '/': true,
-  '/articles/': true,
-  '/articles/authentication/': true,
-  '/articles/ciam/': true,
-  '/articles/gaming-entertainment/': true,
-  '/articles/identity-basics/': true,
-  '/articles/login-authentication-workflows/': true,
-  '/articles/oauth/': true,
-  '/articles/security/': true,
-  '/articles/tokens/': true,
-  '/blog/': true,
-  '/community/forum/': true,
-  '/dev-tools/': true,
-  '/docs/': true,
-  '/docs/quickstarts/': true,
-  '/docs/v1/tech/': true,
-  '/docs/v1/tech/account-management/': true,
-  '/docs/v1/tech/admin-guide/': true,
-  '/docs/v1/tech/advanced-threat-detection/': true,
-  '/docs/v1/tech/apis/': true,
-  '/docs/v1/tech/apis/connectors/': true,
-  '/docs/v1/tech/apis/entity-management/': true,
-  '/docs/v1/tech/apis/identity-providers/': true,
-  '/docs/v1/tech/apis/messengers/': true,
-  '/docs/v1/tech/apis/scim/': true,
-  '/docs/v1/tech/client-libraries/': true,
-  '/docs/v1/tech/connectors/': true,
-  '/docs/v1/tech/core-concepts/': true,
-  '/docs/v1/tech/developer-guide/': true,
-  '/docs/v1/tech/developer-guide/api-gateways/': true,
-  '/docs/v1/tech/email-templates/': true,
-  '/docs/v1/tech/events-webhooks/': true,
-  '/docs/v1/tech/events-webhooks/events/': true,
-  '/docs/v1/tech/example-apps/': true,
-  '/docs/v1/tech/getting-started/': true,
-  '/docs/v1/tech/guides/': true,
-  '/docs/v1/tech/identity-providers/': true,
-  '/docs/v1/tech/identity-providers/external-jwt/': true,
-  '/docs/v1/tech/identity-providers/openid-connect/': true,
-  '/docs/v1/tech/identity-providers/samlv2-idp-initiated/': true,
-  '/docs/v1/tech/identity-providers/samlv2/': true,
-  '/docs/v1/tech/installation-guide/': true,
-  '/docs/v1/tech/installation-guide/kubernetes/': true,
-  '/docs/v1/tech/integrations/': true,
-  '/docs/v1/tech/lambdas/': true,
-  '/docs/v1/tech/messengers/': true,
-  '/docs/v1/tech/migration-guide/': true,
-  '/docs/v1/tech/oauth/': true,
-  '/docs/v1/tech/passwordless/': true,
-  '/docs/v1/tech/plugins/': true,
-  '/docs/v1/tech/premium-features/': true,
-  '/docs/v1/tech/premium-features/webauthn/': true,
-  '/docs/v1/tech/reference/': true,
-  '/docs/v1/tech/samlv2/': true,
-  '/docs/v1/tech/themes/': true,
-  '/docs/v1/tech/tutorials/': true,
-  '/docs/v1/tech/tutorials/gating/': true,
-  '/docs/v1/tech/tutorials/two-factor/': true,
-  '/how-to/': true,
-  '/quickstarts/': true
-};
-var redirects = {
-  '/cognito': '/docs/v1/tech/migration-guide/cognito',
-  '/cognito/': '/docs/v1/tech/migration-guide/cognito',
-  '/docs/v1/tech/admin-guide/release-notifications': '/docs/v1/tech/admin-guide/releases',
-  '/docs/v1/tech/apis/consent': '/docs/v1/tech/apis/consents',
-  '/docs/v1/tech/common-errors': '/docs/v1/tech/admin-guide/troubleshooting',
-  '/docs/v1/tech/guides/auth0-migration': '/docs/v1/tech/migration-guide/auth0',
-  '/docs/v1/tech/guides/migration': '/docs/v1/tech/migration-guide/general',
-  '/docs/v1/tech/guides/passwordless': '/docs/v1/tech/passwordless/magic-links',
-  '/docs/v1/tech/guides/webauthn': '/docs/v1/tech/passwordless/webauthn-passkeys',
-  '/docs/v1/tech/installation-guide/configuration-management': '/docs/v1/tech/admin-guide/configuration-management',
-  '/docs/v1/tech/installation-guide/monitor': '/docs/v1/tech/admin-guide/monitor',
-  '/docs/v1/tech/installation-guide/securing': '/docs/v1/tech/admin-guide/securing',
-  '/docs/v1/tech/installation-guide/upgrade': '/docs/v1/tech/admin-guide/upgrade',
-  '/docs/v1/tech/passwordless/webauthn': '/docs/v1/tech/passwordless/webauthn-passkeys',
-  '/docs/v1/tech/plugins/password-encryptors': '/docs/v1/tech/plugins/custom-password-hashing',
-  '/docs/v1/tech/reference/password-encryptors': '/docs/v1/tech/reference/password-hashes',
-  '/docs/v1/tech/reactor': '/docs/v1/tech/admin-guide/licensing',
-  '/docs/v1/tech/reactor/': '/docs/v1/tech/admin-guide/licensing',
-  '/docs/v1/tech/troubleshooting': '/docs/v1/tech/admin-guide/troubleshooting',
-  '/docs/v1/tech/tutorials/gate-accounts-until-verified': '/docs/v1/tech/tutorials/gating/gate-accounts-until-user-email-verified',
-  '/docs/v1/tech/tutorials/migrate-users': '/docs/v1/tech/migration-guide/tutorial',
-  '/docs/v1/tech/tutorials/setting-up-user-account-lockout': '/docs/v1/tech/tutorials/gating/setting-up-user-account-lockout',
-  '/docs/v1/tech/tutorials/two-factor/authenticator-app': '/docs/v1/tech/tutorials/two-factor/authenticator-app-pre-1-26',
-  '/docs/v1/tech/tutorials/two-factor/twilio-push': '/docs/v1/tech/tutorials/two-factor/twilio-push-pre-1-26',
-  '/features/architecture': '/platform/built-for-developers',
-  '/features/advanced-registration-forms': '/platform/registration-forms',
-  '/features/breached-password-detection': '/features/authentication',
-  '/features/built-for-developers': '/platform/built-for-developers',
-  '/features/connectors': '/features/authentication',
-  '/features/scalability': '/platform/scalable',
-  '/features/security-data-compliance': '/security-data-compliance',
-  '/features/user-experience': '/platform/customizable',
-  '/features/user-management-reporting': '/features/user-management',
-  '/gaming': '/industries/gaming-entertainment',
-  '/gaming/': '/industries/gaming-entertainment',
-  '/kubernetes': '/docs/v1/tech/installation-guide/kubernetes/',
-  '/learn/expert-advice/authentication/gaming-identity-provider-needs': '/articles/gaming-entertainment/gaming-identity-provider-needs',
-  '/learn/expert-advice/authentication/login-authentication-workflows': '/articles/login-authentication-workflows/authentication-workflows-overview',
-  '/learn/expert-advice/authentication/login-authentication-workflows/': '/articles/login-authentication-workflows/authentication-workflows-overview',
-  '/learn/expert-advice/dev-tools/jwt-debugger': '/dev-tools/jwt-decoder',
-  '/learn/expert-advice/identity-basics/avoid-lockin': '/articles/authentication/avoid-lockin',
-  '/learn/expert-advice/identity-basics/common-authentication-implementation-risks': '/articles/authentication/common-authentication-implementation-risks',
-  '/learn/expert-advice/identity-basics/making-sure-your-auth-system-scales': '/articles/ciam/making-sure-your-auth-system-scales',
-  '/learn/expert-advice/identity-basics/value-standards-compliant-authentication': '/articles/oauth/value-standards-compliant-authentication',
-  '/learn/expert-advice/tokens/anatomy-of-jwt': '/articles/tokens/jwt-components-explained',
-  '/learn/expert-advice/tokens/jwt-authentication-token-components-explained': '/articles/tokens/jwt-components-explained',
-  '/podcast': '/',
-  '/pricing/cloud/': '/pricing',
-  '/pricing/edition': '/pricing',
-  '/pricing/edition/': '/pricing',
-  '/pricing/editions': '/pricing',
-  '/pricing/editions/': '/pricing',
-  '/products/identity-user-management/ciam-vs-iam': '/learn/expert-advice/ciam/ciam-vs-iam',
-  '/resources/auth0-migration': '/auth0-migration',
-  '/resources/guide-to-user-data-security': '/learn/expert-advice/security/guide-to-user-data-security',
-  '/upgrade/from-homegrown': '/compare',
-  '/upgrade/from-open-source': '/compare',
-  '/upgrade/from-saas': '/compare'
-};
+var d="/docs/v1/tech";
+var a="/articles";
+var ex="/learn/expert-advice";
+var idp="identity-providers";
+
+var ip = {};
+ip['/']=true;
+ip[a+'/']=true;
+ip[a+'/authentication/']=true;
+ip[a+'/ciam/']=true;
+ip[a+'/gaming-entertainment/']=true;
+ip[a+'/identity-basics/']=true;
+ip[a+'/login-authentication-workflows/']=true;
+ip[a+'/oauth/']=true;
+ip[a+'/security/']=true;
+ip[a+'/tokens/']=true;
+ip['/blog/']=true;
+ip['/community/forum/']=true;
+ip['/dev-tools/']=true;
+ip['/docs/']=true;
+ip['/docs/quickstarts/']=true;
+ip[d+'']=true;
+ip[d+'/account-management/']=true;
+ip[d+'/admin-guide/']=true;
+ip[d+'/advanced-threat-detection/']=true;
+ip[d+'/apis/']=true;
+ip[d+'/apis/connectors/']=true;
+ip[d+'/apis/entity-management/']=true;
+ip[d+'/apis/identity-providers/']=true;
+ip[d+'/apis/messengers/']=true;
+ip[d+'/apis/scim/']=true;
+ip[d+'/client-libraries/']=true;
+ip[d+'/connectors/']=true;
+ip[d+'/core-concepts/']=true;
+ip[d+'/developer-guide/']=true;
+ip[d+'/developer-guide/api-gateways/']=true;
+ip[d+'/email-templates/']=true;
+ip[d+'/events-webhooks/']=true;
+ip[d+'/events-webhooks/events/']=true;
+ip[d+'/example-apps/']=true;
+ip[d+'/getting-started/']=true;
+ip[d+'/guides/']=true;
+ip[d+idp+'/']=true;
+ip[d+idp+'/external-jwt/']=true;
+ip[d+idp+'/openid-connect/']=true;
+ip[d+idp+'/samlv2-idp-initiated/']=true;
+ip[d+idp+'/samlv2/']=true;
+ip[d+'/installation-guide/']=true;
+ip[d+'/installation-guide/kubernetes/']=true;
+ip[d+'/integrations/']=true;
+ip[d+'/lambdas/']=true;
+ip[d+'/messengers/']=true;
+ip[d+'/migration-guide/']=true;
+ip[d+'/oauth/']=true;
+ip[d+'/passwordless/']=true;
+ip[d+'/plugins/']=true;
+ip[d+'/premium-features/']=true;
+ip[d+'/premium-features/webauthn/']=true;
+ip[d+'/reference/']=true;
+ip[d+'/samlv2/']=true;
+ip[d+'/themes/']=true;
+ip[d+'/tutorials/']=true;
+ip[d+'/tutorials/gating/']=true;
+ip[d+'/tutorials/two-factor/']=true;
+ip['/how-to/']=true;
+ip['/quickstarts/']=true;
+
+var rd = {};
+rd['/cognito']=d+'/migration-guide/cognito';
+rd['/cognito/']=d+'/migration-guide/cognito';
+rd[a+'/oauth/what-is-oauth']=a+'/oauth/modern-guide-to-oauth';
+rd[d+'/admin-guide/release-notifications']=d+'/admin-guide/releases';
+rd[d+'/apis/consent']=d+'/apis/consents';
+rd[d+'/common-errors']=d+'/admin-guide/troubleshooting';
+rd[d+'/guides/auth0-migration']=d+'/migration-guide/auth0';
+rd[d+'/guides/migration']=d+'/migration-guide/general';
+rd[d+'/guides/passwordless']=d+'/passwordless/magic-links';
+rd[d+'/guides/webauthn']=d+'/passwordless/webauthn-passkeys';
+rd[d+'/installation-guide/configuration-management']=d+'/admin-guide/configuration-management';
+rd[d+'/installation-guide/monitor']=d+'/admin-guide/monitor';
+rd[d+'/installation-guide/securing']=d+'/admin-guide/securing';
+rd[d+'/installation-guide/upgrade']=d+'/admin-guide/upgrade';
+rd[d+'/passwordless/webauthn']=d+'/passwordless/webauthn-passkeys';
+rd[d+'/plugins/password-encryptors']=d+'/plugins/custom-password-hashing';
+rd[d+'/reference/password-encryptors']=d+'/reference/password-hashes';
+rd[d+'/reactor']=d+'/admin-guide/licensing';
+rd[d+'/reactor/']=d+'/admin-guide/licensing';
+rd[d+'/troubleshooting']=d+'/admin-guide/troubleshooting';
+rd[d+'/tutorials/gate-accounts-until-verified']=d+'/tutorials/gating/gate-accounts-until-user-email-verified';
+rd[d+'/tutorials/migrate-users']=d+'/migration-guide/tutorial';
+rd[d+'/tutorials/setting-up-user-account-lockout']=d+'/tutorials/gating/setting-up-user-account-lockout';
+rd[d+'/tutorials/two-factor/authenticator-app']=d+'/tutorials/two-factor/authenticator-app-pre-1-26';
+rd[d+'/tutorials/two-factor/twilio-push']=d+'/tutorials/two-factor/twilio-push-pre-1-26';
+rd[d+'/tutorials/integrate-python-flask']= '/docs/quickstarts/quickstart-python-flask-web';
+rd[d+'/tutorials/integrate-ruby-rails']= '/docs/quickstarts/quickstart-ruby-rails-web';
+rd[d+'/tutorials/integrate-java-spring']= '/docs/quickstarts/quickstart-springboot-web';
+rd['/features/architecture']='/platform/built-for-developers';
+rd['/features/advanced-registration-forms']='/platform/registration-forms';
+rd['/features/breached-password-detection']='/features/authentication';
+rd['/features/built-for-developers']='/platform/built-for-developers';
+rd['/features/connectors']='/features/authentication';
+rd['/features/scalability']='/platform/scalable';
+rd['/features/security-data-compliance']='/security-data-compliance';
+rd['/features/user-experience']='/platform/customizable';
+rd['/features/user-management-reporting']='/features/user-management';
+rd['/gaming']='/industries/gaming-entertainment';
+rd['/gaming/']='/industries/gaming-entertainment';
+rd['/kubernetes']=d+'/installation-guide/kubernetes/';
+rd[ex+'/authentication/gaming-identity-provider-needs']=a+'/gaming-entertainment/gaming-identity-provider-needs';
+rd[ex+'/authentication/login-authentication-workflows']=a+'/login-authentication-workflows/authentication-workflows-overview';
+rd[ex+'/authentication/login-authentication-workflows/']=a+'/login-authentication-workflows/authentication-workflows-overview';
+rd[ex+'/dev-tools/jwt-debugger']='/dev-tools/jwt-decoder';
+rd[ex+'/identity-basics/avoid-lockin']=a+'/authentication/avoid-lockin';
+rd[ex+'/identity-basics/common-authentication-implementation-risks']=a+'/authentication/common-authentication-implementation-risks';
+rd[ex+'/identity-basics/making-sure-your-auth-system-scales']=a+'/ciam/making-sure-your-auth-system-scales';
+rd[ex+'/identity-basics/value-standards-compliant-authentication']=a+'/oauth/value-standards-compliant-authentication';
+rd[ex+'/tokens/anatomy-of-jwt']=a+'/tokens/jwt-components-explained';
+rd[ex+'/tokens/jwt-authentication-token-components-explained']=a+'/tokens/jwt-components-explained';
+rd['/podcast']='/';
+rd['/pricing/cloud/']='/pricing';
+rd['/pricing/edition']='/pricing';
+rd['/pricing/edition/']='/pricing';
+rd['/pricing/editions']='/pricing';
+rd['/pricing/editions/']='/pricing';
+rd['/products/identity-user-management/ciam-vs-iam']=ex+'/ciam/ciam-vs-iam';
+rd['/resources/auth0-migration']='/auth0-migration';
+rd['/resources/guide-to-user-data-security']=ex+'/security/guide-to-user-data-security';
+rd['/upgrade/from-homegrown']='/compare';
+rd['/upgrade/from-open-source']='/compare';
+rd['/upgrade/from-saas']='/compare';
 
 // order matters
 var redirectsByPrefix = [
@@ -161,7 +169,7 @@ function handler(event) {
     return redir(uri.substring(0, uri.length - 1));
   }
 
-  if (!uri.endsWith('/') && indexPages[uri + '/'] === true) {
+  if (!uri.endsWith('/') && ip[uri + '/'] === true) {
     return redir(uri + '/');
   }
 
@@ -175,12 +183,12 @@ function handler(event) {
 }
 
 function removeSlash(uri) {
-  return indexPages[uri] !== true && !uri.startsWith('/blog/page') && !uri.startsWith('/blog/archive') &&
+  return ip[uri] !== true && !uri.startsWith('/blog/page') && !uri.startsWith('/blog/archive') &&
     redirectsByPrefix.find(e => uri.startsWith(e[0])) === undefined;
 }
 
 function calculateRedirect(uri) {
-  var result = redirects.hasOwnProperty(uri) ? redirects[uri] : null;
+  var result = rd.hasOwnProperty(uri) ? rd[uri] : null;
 
   if (result === null) {
     var prefix_replacement = redirectsByPrefix.find(e => uri.startsWith(e[0]));

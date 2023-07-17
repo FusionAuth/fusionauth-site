@@ -31,3 +31,7 @@ However, you must define `idp_display_name` for these providers.
 ### Available Since
 
 This is the only attribute `idp_since` that is set for every IdP.  Since it is used various places it is set before any includes and unset at the bottom of the `adoc` file.
+
+### Token Storage
+
+Each Identity Provider stores a token at the end of the authentication process. This is often a refresh token, but may vary. See `_token-storage-note.adoc` for more details about this.
