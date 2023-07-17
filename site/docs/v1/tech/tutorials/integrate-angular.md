@@ -121,7 +121,7 @@ You can now open up an incognito window and visit [the {{page.technology}} app](
 
 {% include _image.liquid src="/assets/img/docs/quickstarts/angular/angular-app.png" alt="The sample Angular application." class="img-fluid" figure=true %}
 
-You have successfully added login, register, and logout to an Angular application.
+You have successfully added login, registration, and logout to an Angular application.
 
 You now have an access token safely stored as a cookie. Any requests you make to an API on the same domain will receive the access token. The API can then validate the token and return data or otherwise offer functionality.
 
