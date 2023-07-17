@@ -123,7 +123,7 @@ To make the library available for use, publish its configuration by running the 
 ./vendor/bin/sail artisan vendor:publish --provider="FusionAuth\JWTAuth\WebTokenProvider\Providers\WebTokenServiceProvider"
 ```
 
-### Editing Files
+### Disabling Username/Password Authentication
 
 The Laravel installer already brings some useful resources for many applications because it usually expects users to have a username and password for authentication. APIs in general should only expect an API key or a token to authenticate a request.
 
@@ -153,7 +153,7 @@ Run the remaining migrations to create the necessary tables in your database.
 ./vendor/bin/sail artisan migrate
 ```
 
-### Adding Files
+### Provisioning New Users
 
 By default, Laravel only allows JWTs that correspond to users in your database, but one of the greatest benefits of using FusionAuth is to have a single source of truth of user management. So, you want your API to automatically provision new users when it receives a trusted JWT from FusionAuth.
 
@@ -197,7 +197,7 @@ Create a controller in `app/Http/Controllers/Api/MessagesController.php` to retu
 
 ### Creating the View
 
-Change the view file located at `resources/views/welcome.blade.php` to add a <span>Log in with FusionAuth</span>{:.uielement} button when you are logged out and a container for the messages API response when you are logged in.
+Change the view file located at `resources/views/welcome.blade.php` to add a <span>Log in with FusionAuth</span>{:.uielement} button when you are logged out and a container for the messages API response when you are logged in. This is of course not really all that typical; usually you'd have the user log into FusionAuth, store the token in the browser or mobile app, and then call the API. But since this is a quickstart to show you how to validate the 
 
 ```php
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/resources/views/welcome.blade.php %}
