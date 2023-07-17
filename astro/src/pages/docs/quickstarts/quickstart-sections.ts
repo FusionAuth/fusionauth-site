@@ -188,7 +188,7 @@ const quickstarts = await getCollection("quickstarts");
 quickstarts.filter(quickstart => quickstart.id.indexOf("index.md") === -1)
   .map(qs => (
     {
-      href: `/quickstarts/${qs.slug}/`,
+      href: `/docs/quickstarts/${qs.slug}/`,
       title: qs.data.title,
       icon: qs.data.icon,
       faIcon: qs.data.faIcon,
