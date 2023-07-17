@@ -4,6 +4,7 @@ interface QuickStartSection {
   key: string;
   icon?: string;
   title: string;
+  anchorTag: string;
   desc?: string;
   articles: {
     href?: string;
@@ -21,7 +22,10 @@ const qsSections: QuickStartSection[] = [
   {
     key: 'web',
     icon: '/img/icons/web-application.svg',
+    faIcon: 'fa-code-simple',
+    color: 'indigo',
     title: 'Web Application',
+    anchorTag: 'web-application',
     desc: 'Traditional web applications that run on servers',
     articles: [
       {
@@ -85,7 +89,10 @@ const qsSections: QuickStartSection[] = [
   {
     key: 'spa',
     icon: '/img/icons/single-page-app.svg',
+    faIcon: 'fa-laptop-code',
+    color: 'orange',
     title: 'Single-Page App (SPA)',
+    anchorTag: 'spa',
     desc: 'JavaScript app that runs in the browser',
     articles: [
       {
@@ -119,7 +126,10 @@ const qsSections: QuickStartSection[] = [
   {
     key: 'native',
     icon: '/img/icons/native-mobile-app.svg',
+    faIcon: 'fa-mobile-screen',
+    color: 'blue',
     title: 'Native/Mobile App',
+    anchorTag: 'mobile-app',
     desc: 'Mobile application that runs natively on a device',
     articles: [
       {
@@ -141,7 +151,10 @@ const qsSections: QuickStartSection[] = [
   {
     key: 'api',
     icon: '/img/icons/backend-api.svg',
+    faIcon: 'fa-binary',
+    color: 'green',
     title: 'Backend/API',
+    anchorTag: 'api',
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
       {
