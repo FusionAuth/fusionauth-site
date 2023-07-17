@@ -3,7 +3,7 @@ layout: blog-post
 title: Contenda used FusionAuth instead of rolling their own auth stack and saved "a lot" of time
 description: Contenda, a tool to democratize and increase quality written content, used FusionAuth instead of rolling their own auth stack. 
 author: Dan Moore
-image: blogs/switchboard-fusionauth/switchboard-migrated-fusionauth-header.png
+image: blogs/fusionauth-contenda/fusionauth-contenda-header-image.png
 category: community-story
 tags: topic-community-story topic-upgrade upgrade community-story saas content developer-relations topic-upgrade-homegrown homegrown
 excerpt_separator: "<!--more-->"
