@@ -47,7 +47,7 @@ npm install
 Then copy and paste the following code into `setup.js`. This file uses the [FusionAuth API](/docs/v1/tech/apis/) to configure an Application, CORS, and more to allow for easy integration.
 
 ```javascript
-{% remote_include https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-client-libraries/angular/typescript/setup-angular.js %}
+{% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-client-libraries/angular/typescript/setup-angular.js %}
 ```
 
 Then, you can run the setup script.
@@ -98,19 +98,19 @@ npm install @fusionauth/angular-sdk
 Add the following to `src/app/app.module.ts` to import the FusionAuth Angular SDK. This file should look similar to this, but make sure you update the attributes of the provider if you modify the port:
 
 ```typescript
-{% remote_include https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-angular-guide/main/src/app/app.module.ts %}
+{% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-angular-guide/main/src/app/app.module.ts %}
 ```
 
 Now, let us add a login, register, and logout button to your {{page.technology}} application. Open up `src/app/app.component.html` and replace the content with the following:
 
 ```html
-{% remote_include https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-angular-guide/main/src/app/app.component.html %}
+{% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-angular-guide/main/src/app/app.component.html %}
 ```
 
 Then, replace the content of `src/app/app.component.ts` with the following code:
 
 ```typescript
-{% remote_include https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-angular-guide/main/src/app/app.component.ts %}
+{% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-angular-guide/main/src/app/app.component.ts %}
 ```
 
 In this code, you are adding in the FusionAuth login and logout buttons, as well as a welcome message which will only show up if the user is logged in.
@@ -125,4 +125,4 @@ You have successfully added login, registration, and logout to an Angular applic
 
 You now have an access token safely stored as a cookie. Any requests you make to an API on the same domain will receive the access token. The API can then validate the token and return data or otherwise offer functionality.
 
-The full code for this guide can be found [here](https://github.com/sonderformat-llc/fusionauth-example-angular-guide).
+The full code for this guide can be found [here](https://github.com/fusionauth/fusionauth-example-angular-guide).
