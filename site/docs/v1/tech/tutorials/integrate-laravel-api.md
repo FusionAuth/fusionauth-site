@@ -66,7 +66,7 @@ php setup.php "YOUR_API_KEY_FROM_ABOVE"
 
 Instead of manually storing the public key to verify JWTs, your application should automatically look it up using the [JWKS endpoint](/docs/v1/tech/oauth/endpoints#json-web-key-set-jwks).
 
-As both your Laravel application and FusionAuth instance are running in different Docker Compose projects, they can't reach each other. To do that, you need to expose your FusionAuth instance to the Web using [ngrok](/docs/v1/tech/developer-guide/exposing-instance).
+As both the Laravel application, which you are going to create in the next step, and FusionAuth instance are running in different Docker Compose projects, they can't reach each other. To allow that, expose your FusionAuth instance to the Web using [ngrok](/docs/v1/tech/developer-guide/exposing-instance).
 
 {% include _callout-note.liquid content="You could also add network connectivity between them by running [`docker network connect`](https://docs.docker.com/engine/reference/commandline/network_connect/)." %}
 
@@ -125,9 +125,9 @@ To make the library available for use, publish its configuration by running the 
 
 ### Editing Files
 
-The Laravel installer already brings some useful resources for many applications because it usually expects users to have a username and password for authentication, but APIs in general should only expect an API key or a token to authenticate a request. In this quickstart, we've disabled the typical authentication method and only allow JWTs as the authentication method.
+The Laravel installer already brings some useful resources for many applications because it usually expects users to have a username and password for authentication. APIs in general should only expect an API key or a token to authenticate a request.
 
-Start by removing the need for users to have a password by editing `app/Models/User.php`.
+In this quickstart, disable the typical username/password authentication method and only allow JWTs as an authentication method. Start by removing the need for users to have a password by editing `app/Models/User.php`.
 
 ```php
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/Models/User.php %}
@@ -155,9 +155,9 @@ Run the remaining migrations to create the necessary tables in your database.
 
 ### Adding Files
 
-By default, Laravel only allows JWTs that correspond to existing users in your database, but one of the greatest benefits of using FusionAuth is to have a single source of truth of user management. So, you would want your API to automatically provision new users when it receives a trusted JWT from FusionAuth.
+By default, Laravel only allows JWTs that correspond to users in your database, but one of the greatest benefits of using FusionAuth is to have a single source of truth of user management. So, you want your API to automatically provision new users when it receives a trusted JWT from FusionAuth.
 
-First, extend the default [User Provider](https://laravel.com/docs/10.x/authentication#adding-custom-user-providers) to create new users when receiving valid JWTs from FusionAuth.
+To do so, extend the default [User Provider](https://laravel.com/docs/10.x/authentication#adding-custom-user-providers) to create new users when receiving valid JWTs from FusionAuth.
 
 ```php
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/FusionAuth/Providers/FusionAuthEloquentUserProvider.php %}
@@ -169,7 +169,7 @@ Now, add an [Authentication Guard](https://laravel.com/docs/10.x/authentication#
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/FusionAuth/FusionAuthJWTGuard.php %}
 ```
 
-To override the existing classes when the ones you just added, you must create a [Service Provider](https://laravel.com/docs/10.x/providers) in `app/FusionAuth/Providers/FusionAuthServiceProvider.php`.
+To override the existing classes with the ones you just added, you must create a [Service Provider](https://laravel.com/docs/10.x/providers) in `app/FusionAuth/Providers/FusionAuthServiceProvider.php`.
 
 ```php
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/FusionAuth/Providers/FusionAuthServiceProvider.php %}
@@ -185,11 +185,11 @@ JWT_JWKS_URL=https://address.that.ngrok.gave.you/.well-known/jwks.json
 JWT_JWKS_URL_CACHE=86400
 ```
 
-You should change `JWT_JWKS_URL` to the [JWKS Endpoint you copied earlier](#retrieve-jwks-endpoint).
+You should change the `JWT_JWKS_URL` value to the [JWKS Endpoint you copied earlier](#retrieve-jwks-endpoint).
 
 ### Creating a Controller
 
-Create a controller in `app/Http/Controllers/Api/MessagesController.php` which gives back a JSON message.
+Create a controller in `app/Http/Controllers/Api/MessagesController.php` to return a JSON message. This is going to be the protected API.
 
 ```php
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/Http/Controllers/Api/MessagesController.php %}
