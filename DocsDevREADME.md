@@ -191,6 +191,10 @@ For blog posts:
 - curl
 - self-service
 - webview
+- CAPTCHA
+- Google reCAPTCHA
+- Spring Boot
+- FusionAuth Cloud
 
 ## Words to avoid
 

@@ -22,7 +22,7 @@ But first, let me set the scene. FusionAuth is [downloadable software](/download
 ```bash
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up
+docker compose up
 ```
 
 If you have Docker installed, that's all you have to do to get a FusionAuth instance up and running.
@@ -35,7 +35,7 @@ With these steps, you get a full featured auth server, available on your laptop,
 
 ### What about production?
 
-`docker-compose up` is great for development.
+`docker compose up` is great for development.
 
 But auth is the front door to your application, and should be highly available in production. Some of the considerations when running a FusionAuth production deployment include:
 
