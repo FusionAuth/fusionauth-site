@@ -112,8 +112,8 @@ const qsSections: QuickStartSection[] = [
       {
         title: 'Angular',
         icon: '/img/icons/angular-spa.svg',
-        faIcon: 'fa-snake',
-        comingSoon: true,
+        faIcon: 'fa-j',
+        href: '/docs/v1/tech/tutorials/integrate-angular',
       },
       {
         title: 'Vue.js',
