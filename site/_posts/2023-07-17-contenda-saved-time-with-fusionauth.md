@@ -9,7 +9,7 @@ tags: topic-community-story topic-upgrade upgrade community-story saas content d
 excerpt_separator: "<!--more-->"
 ---
 
-Tamás Deme is a FusionAuth community member and engineering lead at Contenda. Grady Salzman is a FusionAuth community member and software engineer. They chatted with us over email about how they and their team are using FusionAuth to meet their auth needs. 
+Tamás Deme is a FusionAuth community member and engineering lead at Contenda. Grady Salzman is a FusionAuth community member and software engineer at Contenda. They chatted with us over email about how they and their team are using FusionAuth to meet their auth needs. 
 
 <!--more-->
 
