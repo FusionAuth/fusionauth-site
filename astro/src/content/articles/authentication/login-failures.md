@@ -3,7 +3,7 @@ title: Why Login Failures Matter
 description: Are you tracking your login failures? Learn about how to track them, why it matters, and what you should do to avoid login failure.
 author: Hannah Sutor
 section: Authentication
-icon: /img/icons/multi-factor-authentication.svg
+icon: /img/icons/login-failures.svg
 ---
 
 Picture a chart representing user logins. It has a line, trending upwards and to the right. Growing over time, never dipping. 
