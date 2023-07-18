@@ -21,7 +21,7 @@ Tamás Deme is a FusionAuth community member and engineering lead at Contenda. G
 
 **Tamás and Grady:** Contenda is a content creation tool designed to enable anyone on a team to take any video, such as a conference talk, interview, or demo, and turn it into effective written content. It features an easy-to-use upload, transformation, and customization system, a powerful API to automate content production pipelines, and is built specifically for developer advocates.
 
-**Dan:** What are some examples of features/functionality that is useful specifically for developer advocates?
+**Dan:** What are some examples of features/functionality that are useful specifically for developer advocates?
 
 **Tamás and Grady:** Our platform is capable of grabbing and re-formatting code-snippets from videos, and we made sure our editor uses and works well with Markdown, which is generally preferred by the dev advocate community.
 
@@ -39,7 +39,7 @@ When we talk about quality we think about how accurately we can represent the or
 
 **Dan:** Tell me about your work as engineers at Contenda.
 
-**Grady:**  I am the front end engineer and I am responsible for building out our web app. For this integration, I did anything that wasn't backend. This included implementing the FusionAuth themes and hooking FusionAuth up to our web app.
+**Grady:**  I am the front end engineer, and I am responsible for building out our web app. For this integration, I did anything that wasn't backend. This included implementing the FusionAuth themes and hooking FusionAuth up to our web app.
 
 **Tamás:** My job as the engineering lead is to drive the architectural, infrastructure and backend efforts at the company, and generally help the other engineers grow as the company grows.
 
@@ -47,7 +47,7 @@ Specifically for this integration process, I've mostly done everything that wasn
 
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
 
-**Tamás and Grady:** We use FusionAuth for almost all of our user management needs, except maybe for our workspace management. This includes doing authentication for our web app and our API. FusionAuth handles standard email/password signups and social signups as well.
+**Tamás and Grady:** We use FusionAuth for almost all of our user management needs, except maybe for our workspace management. This includes doing authentication for our web app and our API. FusionAuth handles standard email/password sign ups and social sign ups as well.
 
 **Dan:** For your API, are you using the client credentials grant, or a JWT from the authorization code grant or something else?
 
@@ -65,9 +65,9 @@ Specifically for this integration process, I've mostly done everything that wasn
 
 **Dan:** How were you solving them before FusionAuth?
 
-**Tamás and Grady:** In the past we've used a very barebones, API key only sign-up system we put together in under a week.
+**Tamás and Grady:** In the past we've used a very bare bones, API key only sign-up system we put together in under a week.
 
-While it served us getting our first 1000 users, we definitely needed something more robust, secure and user-friendly to get to the next magnitudes of users.
+While it served us getting our first 1000 users, we definitely needed something more robust, secure and user-friendly to get to the next magnitude of users.
 
 **Dan:** What did you use for the first system? Was it framework based, a library, or something else?
 
@@ -77,15 +77,15 @@ While it served us getting our first 1000 users, we definitely needed something 
 
 **Dan:** Why did you choose FusionAuth over the alternatives?
 
-**Tamás and Grady:** After we eliminated all the options we had to rule out due to technical limitations, the two main reasons were cost and "friendlyness".
+**Tamás and Grady:** After we eliminated all the options we had to rule out due to technical limitations, the two main reasons were cost and "friendliness".
 
-While the price itself is one thing, by "friendlyness" I mean both support and the pricing strategies down the line. We appreciate that FusionAuth doesn't have any "trap-like" pricing practices that could bite us when we happen to approach an arbitrary number of users.
+While the price itself is one thing, by "friendliness" I mean both support and the pricing strategies down the line. We appreciate that FusionAuth doesn't have any "trap-like" pricing practices that could bite us when we happen to approach an arbitrary number of users.
 
 **Dan:** What were some of the technical limitations you had that disqualified folks initially?
 
 **Tamás and Grady:** It was mostly due to them not having react and/or python clients/SDKs.
 
-**Dan:** I love the term friendlyness. Are there any other software packages you use that feel like they win in that category (other than FusionAuth and Contenda, of course)?
+**Dan:** I love the term "friendliness". Are there any other software packages you use that feel like they win in that category (other than FusionAuth and Contenda, of course)?
 
 **Tamás and Grady:** On our frontend, we use Netlify and Pendo, and I think we could put them in this bucket as well. Generally smaller companies tend to care more about their customers, so it's not always the best idea to go with the biggest player out there.
 
@@ -93,17 +93,17 @@ While the price itself is one thing, by "friendlyness" I mean both support and t
 
 **Tamás:** While I don't think I can come up with an exact number for either of those, I can confidently say: a lot. We could've spent months working on a complex system, and any FusionAuth employee could still say "Look what they need to mimic a fraction of our power" after that.
 
-> [After building our own auth system in under week] we definitely need something more robust, secure and user-friendly to get to the next magnitudes of users.
+> [After building our own auth system in under a week] we definitely need something more robust, secure and user-friendly to get to the next magnitude of users.
 
 **Dan:** How do you run FusionAuth (kubernetes, standalone server, behind a proxy, etc)?
 
 **Tamás and Grady:** We don't actually; you do!
 
-This was also an important point for us: engineering-hours are always the limiting factor, so if we can find a provider that also handles the infrastructure for us, that's less hours we waste on managing something we don't necessarily have to.
+This was also an important point for us: engineering-hours are always the limiting factor, so if we can find a provider that also handles the infrastructure for us, that's fewer hours we waste on managing something we don't have to.
 
 **Dan:** Any general feedback/areas to improve?
 
-**Tamás:** I'd love if more things would be "easy" on the "easy <-> possible" scale. FusionAuth is extremely customizable, which is great, and makes a lot of things possible.
+**Tamás:** I'd love it if more things were "easy" on the "easy <-> possible" scale. FusionAuth is extremely customizable, which is great, and makes a lot of things possible.
 
 But it'd be nice if the configuration interface would self-document itself more, and make a lot of the typical use-cases easy and simpler to do.
 
