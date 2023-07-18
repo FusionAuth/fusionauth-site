@@ -5,15 +5,27 @@ import type { AstroGlobal } from "astro";
 
 export function getGithubEditUrl(Astro: Readonly<AstroGlobal>) {
   const slug = Astro.params?.slug;
+  const path = Astro.url.pathname;
   const splitSlug = slug?.split("/");
-  const appendFile = splitSlug?.length
-    ? splitSlug?.length > 1
-      ? `/${slug}.md`
-      : `/${splitSlug.at(0)}/index.mdx`
-    : "";
-  const githubEditUrl = `https://github.com/FusionAuth/fusionauth-site/blob/master/astro/src/content/articles${appendFile}`;
 
-  return githubEditUrl;
+  // Each file layout is unique
+  let appendFile = "";
+  if (path.includes("/articles/")) {
+    appendFile = splitSlug?.length
+      ? splitSlug?.length > 1
+        ? path.replace(`${slug}`, "") + `${slug}.md`
+        : path + `index.mdx`
+      : path;
+  } else if (path.includes("/dev-tools/")) {
+    appendFile = splitSlug?.length
+      ? path.replace(/.$/, `.mdx`)
+      : path + `index.mdx`;
+  } else if (path.includes("/quickstarts/")) {
+    appendFile = splitSlug?.length
+      ? path.replace("/docs", "").replace(/.$/, `.mdx`)
+      : path.replace("/docs", "");
+  }
+  return `https://github.com/FusionAuth/fusionauth-site/blob/master/astro/src/content${appendFile}`;
 }
 ---
 
