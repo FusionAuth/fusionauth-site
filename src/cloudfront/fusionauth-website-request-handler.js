@@ -1,7 +1,7 @@
 var d="/docs/v1/tech";
 var a="/articles";
 var ex="/learn/expert-advice";
-var idp="identity-providers";
+var idp="/identity-providers";
 
 var ip = {};
 ip['/']=true;
