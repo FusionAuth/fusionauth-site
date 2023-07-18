@@ -463,7 +463,7 @@ This is for substantial content.
 1. Create a PR. Add the `content` label.
 1. Ask another devrel to review it. Add them as a reviewer.  If they don't review it in a timely fashion, ping them on slack.
 1. Once it has been through tech review, send it through SEO review. Add an asana task, assign it to Brad, and put it under the SEO section in Asana. Put a due date of a week out.
-1. Once it has been through SEO review, make any needed changes and then add it to the content calendar asana board. Assign it to Emily so she can pick a date.
+1. Once it has been through SEO review, make any needed changes and then add it to the 'content calendar' asana board. Assign it to Emily so she can pick a publish date.
 1. After a publish date has been set, she'll assign it back to you.
 1. Publish it on that date.
 
@@ -473,105 +473,4 @@ If the content is timely, you can skip some of these steps. Check with Dan or Em
 
 Quickstarts are any pages that are going under /docs/quickstarts that are not on the blog.
 
-For blog posts that are updated and linked under /docs/quickstarts, see `Blog post review checklist`.
-
-### Webapps
-
-Webapps are web applications that the user will log into.
-
-Model this after the ruby on [rails quickstart](https://fusionauth.io/docs/v1/tech/tutorials/integrate-ruby-rails).
-
-* Use markdown instead of asciidoc (the ruby quickstart needs to be ported over).
-* Use a client library to configure the project; don't use the admin ui. Add any setup scripts (or reuse them if needed) to https://github.com/FusionAuth/fusionauth-example-client-libraries
-* Make sure you create a sample project and include files from it (using `remote_include`) rather than inline the code.
-* For the login integration, use a standard OIDC library, not the FusionAuth client library.
-* Build the application from scratch, using whatever codegen tools are standard for the tech stack.
-* Put a link to the GitHub example app repo
-* Include an image at the end
-* Build in a logout link using /oauth2/logout endpoint
-* Use the includes under `site/_includes/docs/integration` for the first sections of the tutorial. Make sure you set the expected values in the front matter:
-
-<pre>
-... other front matter
-prerequisites: nodejs
-technology: react
-language: javascript
----
-
-## Integrate Your {{page.technology}} Application With FusionAuth
-
-{% include docs/integration/_intro.md %}
-
-## Prerequisites
-
-{% include docs/integration/_prerequisites.md %}
-
-## Download and Install FusionAuth
-
-{% include docs/integration/_install-fusionauth.md %}
-
-## Create a User and an API Key
-
-{% include docs/integration/_add-user.md %}
-</pre>
-
-
-### APIs
-
-APIS are JSON HTTP APIs that will validate a JWT and return a value. 
-
-If you are doing a quickstart for an API, rather than for a web application, follow these guidelines:
-
-* Set up FusionAuth to set access token and refresh tokens as cookies using new hosted backend (full docs incoming, but you can see the PR here: https://github.com/FusionAuth/fusionauth-site/pull/2115
-* Make sure jwt is signed with rs256 key
-* Write standalone service which returns 401 if user doesn't present a correct access token.
-* Service should return JSON if jwt is valid. Check signature using lib and JWKS, not using validate endpoint. Also check audience, exp and issuer claims
-* Add a small bit of js on the browser to call the API, if it gets a 401, should call the refresh endpoint.
-* Put a link to the GitHub example app repo
-
-## Example apps
-
-Example apps should meet the following criteria:
-
-* Licensed under apache 2
-* use docker compose to install FusionAuth
-* use kickstart to set up FusionAuth
-* use a standard user, API key and application id
-* use an RSA key
-* document how to set things up in as few steps as possible in the readme
-* link back to FusionAuth documentation for more details/context if needed
-
-The goal is to have someone:
-
-* find the repo
-* clone it
-* run `docker compose up` to get FusionAuth running
-* use a native package manager (npm, bundler, etc, etc) to start up the application
-* visit it in the browser or using curl as appropriate
-
-as soon as possible.
-
-### Kickstart
-
-Here's an example kickstart variables section:
-
-```
-{
-        "applicationId": "E9FDB985-9173-4E01-9D73-AC2D60D1DC8E",
-        "apiKey": "this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works",
-        "asymmetricKeyId": "#{UUID()}",
-        "defaultTenantId": "d7d09513-a3f5-401c-9685-34ab6c552453",
-        "adminEmail": "admin@example.com",
-        "adminPassword": "password",
-        "userEmail": "richard@example.com",
-        "userPassword": "password",
-        "userUserId":  "00000000-0000-0000-0000-111111111111"
-}
-```
-
-Here's a link to an example kickstart: https://github.com/FusionAuth/fusionauth-example-python-flask/blob/master/kickstart/kickstart.json
-
-You'll need to change the redirect URLs at a minimum.
-
-
-
+See https://github.com/FusionAuth/fusionauth-example-template/blob/master/QUICKSTART-INSTRUCTIONS.md for instructions on building out a quickstart.
