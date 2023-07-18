@@ -453,25 +453,21 @@ Prior to requesting review on a PR, please complete the following checklist.
 4. If you are referring to any other UI element, such as a submit button or read-only name, use `[uielement]#Submit#` or (on the application view screen) `[uielement]#Introspect endpoint#`.
 
 
-## Blog post review checklist
+## Content checklist
 
-1. Assign the relevant issue to yourself.
-1. Work through the blog post as is. Make any updates you need to ensure the instructions work. **Test every instruction, please.**
-1. Do not create a new blog post. Update the existing blog post. If you feel like the code and structure has changed radically enough that a new blog post is better, please contact Dan and discuss.
-1. Update the install instructions to use the docker install. You can use `{% include posts/install-fusionauth.md %}` to do this easily.
-1. If there are any remote code blocks, pull them in with the `remote_include` plugin from the example app.
-1. Use the latest released, supported versions of the technology and underlying technologies.
-1. Update any screenshots of the FusionAuth admin UI or resulting technology.
-1. If there are any videos, remove those from the blog post if the UX has changed as a result of this review.
-1. Update the example app in GitHub, if needed. If the technology is on an entirely different version, create a new example app. For instance, if the example uses React 16, and the latest version of React is React 18, don't try to update the existing example app. Instead, create a new repo with the name suffix `fusionauth-example-react-18`.
-1. If the existing example app uses a technology that is no longer supported, note that so it can be removed from the FusionAuth site, a link in the repo to the supported example app can be added, and the old repo archived.
-1. Update the example app URL and/or description in `site/_data/exampleapps.yaml`. If you created a new example app in GitHub, update the README of the old one to point to the new one, and archive the old one.
-1. Add an updated_date to the blog posts front matter: `updated_date: 2023-03-16`
-1. If there is an old blog post, add a link to the new blog post or docs page. See https://fusionauth.io/blog/2020/12/14/how-to-securely-implement-oauth-rails for an example of the callout which points to new doc. This is only applicable if there is an old blog post that uses radically different technology. For example, the rails posts used omniauth and the oauth2 gem, two radically different technologies.
-1. Run the blog post through a spell and grammar checker. I like to use Google docs (just copy and paste the entire contents of the blog post into a google doc and then use "Tools" -> "Spelling and Grammar" -> "Spelling and Grammar Check". But other spell checks work too.
-1. Update the quickstart page (`/docs/quickstarts/index.html`) to point to the updated blog post and remove the `coming-soon` class.
-1. Ask for review.
-1. Close out the issue after merging.
+This is for substantial content.
+
+1. Create an issue in fusionauth-site
+1. Write the piece.
+1. Any screenshots should conform to screenshots standards outlined above.
+1. Create a PR. Add the `content` label.
+1. Ask another devrel to review it. Add them as a reviewer.  If they don't review it in a timely fashion, ping them on slack.
+1. Once it has been through tech review, send it through SEO review. Add an asana task, assign it to Brad, and put it under the SEO section in Asana. Put a due date of a week out.
+1. Once it has been through SEO review, make any needed changes and then add it to the content calendar asana board. Assign it to Emily so she can pick a date.
+1. After a publish date has been set, she'll assign it back to you.
+1. Publish it on that date.
+
+If the content is timely, you can skip some of these steps. Check with Dan or Emily about whether your content is timely.
 
 ## Quickstarts
 
@@ -576,4 +572,6 @@ Here's an example kickstart variables section:
 Here's a link to an example kickstart: https://github.com/FusionAuth/fusionauth-example-python-flask/blob/master/kickstart/kickstart.json
 
 You'll need to change the redirect URLs at a minimum.
+
+
 
