@@ -20,7 +20,7 @@ Let's start by making a simple lambda to test that it works on your machine.
 
 
 - Log in to [FusionAuth admin](`http://localhost:9011/admin).
-- Navigate to Customizations -> Lambdas
+- <p>Navigate to <span class="breadcrumb">Customizations -> Lambdas</span>.</p>
 - Click the <i/>{:.ui-button .green .fa .fa-plus} button at the top right to add a new lambda.
 - <p>Leave the <span class="field">Id</span> blank.</p>
 - <p>Enter the <span class="field">Name</span> "[ATest]" (to put it at the top of the list of lambdas alphabetically).</p>
@@ -47,7 +47,7 @@ Now activate the lambda for the test app.
 
 - Navigate to <span>Applications</span>{:.breadcrumb} and click the <i/>{:.ui-button .blue .fa .fa-edit} button on your app.
 - Click on the <span>JWT</span>{:.breadcrumb} tab.
-- Toggle "Enabled" to on.
+- <p>Toggle <span class="uielement">Enabled</span> to on.</p>
 - <p>Under <span class="breadcrumb">Lambda Settings</span>, select the lambda you created, called "[ATest]" for the <span class="field">Access Token populate lambda</span>.</p>
 - Click the <i/>{:.ui-button .blue .fa .fa-save} button to save the changes.
 
