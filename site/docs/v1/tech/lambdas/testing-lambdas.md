@@ -5,14 +5,29 @@ description: Testing lambdas with FusionAuth
 navcategory: customization
 ---
 
+## Overview
 
 This guide shows you how to create a simple lambda manually and programmatically, and how to test it with unit and integration tests. You can familiarize yourself with lambdas by reading the [FusionAuth lambda documentation](/docs/v1/tech/lambdas).
+
+- [Prerequisites](#prerequisites) 
+- [Manually Creating a Simple Lambda](#manually-creating-a-simple-lambda) 
+- [Programmatically Updating a Lambda](#programmatically-updating-a-lambda) 
+  - [Understanding the Client Libraries](#understanding-the-client-libraries) 
+  - [Creating an API Key](#creating-an-api-key) 
+  - [Using the Lambda CLI](#using-the-lambda-cli) 
+  - [API limitations](#api-limitations) 
+- [Testing Overview](#testing-overview)
+  - [Lambda Limitations](#lambda-limitations) 
+  - [Test Library](#test-library) 
+  - [Integration Test: Verify JWT population](#integration-test-verify-jwt-population) 
+  - [Unit Test: Calling an External Service](#unit-test-calling-an-external-service)
+- [Addendum - test.js](#addendum---testjs)
 
 ## Prerequisites
 
 To follow this guide, you will need a test instance of FusionAuth. For FusionAuth installation instructions, please visit [the 5-minute setup guide](/docs/v1/tech/5-minute-setup-guide). 
 
-Log in to FusionAuth at `http://localhost:9011/admin` with your [FusionAuth example test app](/docs/v1/tech/getting-started/5-minute-docker#5-configure-the-backend-to-complete-the-login) at `http://localhost:3000`.
+This guide assumes FusionAuth can be accessed at `http://localhost:9011/admin` with your [FusionAuth example test app](/docs/v1/tech/getting-started/5-minute-docker#5-configure-the-backend-to-complete-the-login) at `http://localhost:3000`.
 
 ## Manually Creating a Simple Lambda
 
@@ -32,16 +47,15 @@ Let's start by making a simple lambda to test that it works on your machine.
 The body should now be similar to below.
 
 ```js
-function populate(jwt, user, registration)
-{
-    jwt.message = 'Hello World!';
-    console.info('Hello World!');
+function populate(jwt, user, registration) {
+  jwt.message = 'Hello World!';
+  console.info('Hello World!');
 }
 ```
 
 {% include docs/_image.liquid src="/assets/img/docs/customization/lambdas/testing-lambdas/populate-lambda.png" alt="Creating a JWT populate lambda" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
-Save the lambda and note the lambda <span>Id</span>{:.field}. We'll use it later when testing.
+Save the lambda and note the lambda <span>Id</span>{:.field}. You'll use it later when testing.
 
 Now activate the lambda for the test app.
 
@@ -59,7 +73,7 @@ Add a line in the OAuth redirect route handler `routes/index.js` to write the JW
 
 ```js
 router.get('/oauth-redirect', function (req, res, next) {
-    console.dir(res);
+  console.dir(res);
 ```
 
 Save the file and start the test app with the following command.
@@ -156,7 +170,7 @@ In both these cases, there are two types of tests you can perform:
 
 Each of these types of lambda tests are outlined below.
 
-## Lambda Limitations
+### Lambda Limitations
 
 Remember the following limitations of lambdas when planning what they'll do:
 
@@ -168,7 +182,7 @@ Remember the following limitations of lambdas when planning what they'll do:
 
 ### Test Library
 
-There are many JavaScript test libraries available and everyone has their preference. Here we'll use a simple library so that you can generalize the tests to your favorite. The tests below use [`tape`](https://github.com/ljharb/tape), which implements the [Test Anything Protocl (TAP)](https://en.wikipedia.org/wiki/Test_Anything_Protocol), a language-agnostic specification for running tests that's been in use since 1987. You also need to use [fetch-mock](https://www.wheresrhys.co.uk/fetch-mock/) to mock `fetch` calls from your lambda.
+There are many JavaScript test libraries available and everyone has their preference. Here we'll use a simple library so that you can generalize the tests to your favorite. The tests below use [`tape`](https://github.com/ljharb/tape), which implements the [Test Anything Protocol (TAP)](https://en.wikipedia.org/wiki/Test_Anything_Protocol), a language-agnostic specification for running tests that's been in use since 1987. You also need to use [fetch-mock](https://www.wheresrhys.co.uk/fetch-mock/) to mock `fetch` calls from your lambda.
 
 Install the following in your test app terminal.
 
@@ -197,7 +211,7 @@ const jwt = require('jsonwebtoken');
 const test = require('tape');
 const fetchMock = require('fetch-mock');
 
-const applicationId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e';
+const applicationId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e'; // REPLACE THIS WITH YOURS
 const fusionUrl = 'http://localhost:9011';
 const userId = 'c924cd34-879a-430d-a0ac-87a3f98df2dd';
 const userPassword = 'password';
@@ -207,36 +221,35 @@ const username = 'lambdatestuser';
 createUser();
 
 async function createUser() {
-    try {
-        const request = {
-            registration:  {
-                applicationId: applicationId,
-                username: username,
-            },
-            sendSetPasswordEmail: false,
-            skipRegistrationVerification: true,
-            skipVerification: true,
-            user: {
-                active: true,
-                email: userEmail,
-                password: userPassword,
-                username: username,
-                registrations: [{
-                    applicationId: applicationId
-                }]
-            }
-        };
-        const fusion = new client.FusionAuthClient('lambda_testing_key', fusionUrl);
-        const clientResponse = await fusion.register(userId, request);
-        if (!clientResponse.wasSuccessful)
-            throw Error(clientResponse);
-        console.info('User created succesfully');
-    }
-    catch (e) {
-        console.error('Error creating user: ');
-        console.dir(e, { depth: null });
-        process.exit(1);
-    }
+  try {
+    const request = {
+      registration: {
+        applicationId: applicationId,
+        username: username,
+      },
+      sendSetPasswordEmail: false,
+      skipRegistrationVerification: true,
+      skipVerification: true,
+      user: {
+        active: true,
+        email: userEmail,
+        password: userPassword,
+        username: username,
+        registrations: [{
+          applicationId: applicationId
+        }]
+      }
+    };
+    const fusion = new client.FusionAuthClient('lambda_testing_key', fusionUrl);
+    const clientResponse = await fusion.register(userId, request);
+    if (!clientResponse.wasSuccessful)
+      throw Error(clientResponse);
+    console.info('User created succesfully');
+  } catch (e) {
+    console.error('Error creating user: ');
+    console.dir(e, { depth: null });
+    process.exit(1);
+  }
 }
 ```
 
@@ -262,33 +275,33 @@ Add this code to the `test.js` file.
 
 ```js
 test('test login returns JWT with "Goodbye World"', async function (t) {
-    t.plan(1);
-    const result = await login();
-    t.ok(result.toLowerCase().includes('goodbye world'));
-    t.end();
+  t.plan(1);
+  const result = await login();
+  t.ok(result.toLowerCase().includes('goodbye world'));
+  t.end();
 });
 
 async function login() {
-    try {
-        const request  = {
-            applicationId: applicationId,
-            loginId: userEmail,
-            password: userPassword,
-        };
-        const fusion = new client.FusionAuthClient('lambda_testing_key', fusionUrl);
-        const clientResponse = await fusion.login(request);
-        if (!clientResponse.wasSuccessful)
-            throw Error(clientResponse);
-        const jwtToken = clientResponse.response.token;
-        const decodedToken = jwt.decode(jwtToken);
-        const message = decodedToken.message;
-        return message;
-    }
-    catch (e) {
-        console.error('Error: ');
-        console.dir(e, { depth: null });
-        process.exit(1);
-    }
+  try {
+    const request  = {
+      applicationId: applicationId,
+      loginId: userEmail,
+      password: userPassword,
+    };
+    const fusion = new client.FusionAuthClient('lambda_testing_key', fusionUrl);
+    const clientResponse = await fusion.login(request);
+    if (!clientResponse.wasSuccessful)
+      throw Error(clientResponse);
+    const jwtToken = clientResponse.response.token;
+    const decodedToken = jwt.decode(jwtToken);
+    const message = decodedToken.message;
+    return message;
+  }
+  catch (e) {
+    console.error('Error: ');
+    console.dir(e, { depth: null });
+    process.exit(1);
+  }
 }
 ```
 
@@ -310,7 +323,7 @@ node test.js | npx faucet
 
 In reality, you'll want to create a random user at the beginning of each login test and remove it at the end. This will allow you to add multiple lambda tests while avoiding potential conflicts between test users and permissions.
 
-## Unit Test: Calling an External Service
+### Unit Test: Calling an External Service
 
 The next test you'll write is a unit test that verifies your lambda locally using a fake mock service and not in FusionAuth. The benefit of this test is that you can test your logic works without needing an external service to be reliable at the time of testing. The danger is that your test might pass locally, but the lambda might fail on FusionAuth due to it running on a different JavaScript environment with different restrictions and configuration.
 
@@ -320,16 +333,16 @@ Add this new function to `test.js`:
 
 ```js
 async function populate(jwt, user, registration) {
-    const response = await fetch("https://issanctioned.example.com/api/banned?email=" + encodeURIComponent(user.email), {
-        method: "GET",
-        headers: { "Content-Type": "application/json" }
-    });
-    if (response.status === 200) {
-        const jsonResponse = await response.json();
-        jwt.isBanned = jsonResponse.isBanned;
-    }
-    else
-        jwt.isBanned = false;
+  const response = await fetch("https://issanctioned.example.com/api/banned?email=" + encodeURIComponent(user.email), {
+    method: "GET",
+    headers: { "Content-Type": "application/json" }
+  });
+  if (response.status === 200) {
+    const jsonResponse = await response.json();
+    jwt.isBanned = jsonResponse.isBanned;
+  }
+  else
+    jwt.isBanned = false;
 }
 ```
 
@@ -337,24 +350,24 @@ Now add the two tests below. The first checks that North Korea (`.kp`) is banned
 
 ```js
 test('test lambda rejects sanctioned emails and accepts others', async function (t) {
-    t.plan(2);
+  t.plan(2);
 
-    fetchMock.get('https://issanctioned.example.com/api/banned?email=kim%40company.kp', { isBanned: true });
-    const jwt1 = {};
-    await populate(jwt1, {email: 'kim@company.kp'}, {});
-    t.true(jwt1.isBanned, 'Check North Korea email banned');
+  fetchMock.get('https://issanctioned.example.com/api/banned?email=kim%40company.kp', { isBanned: true });
+  const jwt1 = {};
+  await populate(jwt1, {email: 'kim@company.kp'}, {});
+  t.true(jwt1.isBanned, 'Check North Korea email banned');
 
-    fetchMock.get('https://issanctioned.example.com/api/banned?email=kim%40company.ca', { isBanned: false });
-    const jwt2 = {};
-    await populate(jwt2, {email: 'kim@company.ca'}, {});
-    t.false(jwt2.isBanned, 'Check Canada email allowed');
+  fetchMock.get('https://issanctioned.example.com/api/banned?email=kim%40company.ca', { isBanned: false });
+  const jwt2 = {};
+  await populate(jwt2, {email: 'kim@company.ca'}, {});
+  t.false(jwt2.isBanned, 'Check Canada email allowed');
 
-    fetchMock.restore();
-    t.end();
+  fetchMock.restore();
+  t.end();
 });
 ```
 
-We used `fetchMock` to mock the external service that would be called from FusionAuth. The mocks for the JWT, user, and registration objects are all simple `{}` objects you can pass as parameters to the `populate()` lambda.
+You used `fetchMock` to mock the external service that would be called from FusionAuth. The mocks for the JWT, user, and registration objects are all simple `{}` objects you can pass as parameters to the `populate()` lambda.
 
 Finally, run the tests.
 
@@ -365,3 +378,129 @@ node test.js  | npx faucet
 If all your unit tests for a lambda pass, you can safely upload it to FusionAuth manually or with the CLI for further testing.
 
 If your HTTP Connect fetch request fails when deployed to FusionAuth please review the [documentation](/docs/v1/tech/lambdas/#using-lambda-http-connect).
+
+## Addendum - test.js
+
+Here is the full `test.js` file.
+
+```js
+const client = require('@fusionauth/typescript-client');
+const jwt = require('jsonwebtoken');
+const test = require('tape');
+const fetchMock = require('fetch-mock');
+
+const applicationId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e'; // REPLACE THIS WITH YOURS
+const fusionUrl = 'http://localhost:9011';
+const userId = 'c924cd34-879a-430d-a0ac-87a3f98df2dd';
+const userPassword = 'password';
+const userEmail = 'richard@example.com';
+const username = 'lambdatestuser';
+
+// createUser();
+
+test('test login returns JWT with "Goodbye World"', async function (t) {
+  t.plan(1);
+  const result = await login();
+  t.ok(result.toLowerCase().includes('goodbye world'));
+  t.end();
+});
+
+test('test lambda rejects sanctioned emails and accepts others', async function (t) {
+  t.plan(2);
+
+  fetchMock.get('https://issanctioned.example.com/api/banned?email=kim%40company.kp', { isBanned: true });
+  const jwt1 = {};
+  await populate(jwt1, {email: 'kim@company.kp'}, {});
+  t.true(jwt1.isBanned, 'Check North Korea email banned');
+
+  fetchMock.get('https://issanctioned.example.com/api/banned?email=kim%40company.ca', { isBanned: false });
+  const jwt2 = {};
+  await populate(jwt2, {email: 'kim@company.ca'}, {});
+  t.false(jwt2.isBanned, 'Check Canada email allowed');
+
+  fetchMock.restore();
+  t.end();
+});
+
+async function populate(jwt, user, registration) {
+  const response = await fetch("https://issanctioned.example.com/api/banned?email=" + encodeURIComponent(user.email), {
+    method: "GET",
+    headers: { "Content-Type": "application/json" }
+  });
+  if (response.status === 200) {
+    const jsonResponse = await response.json();
+    jwt.isBanned = jsonResponse.isBanned;
+  }
+  else
+    jwt.isBanned = false;
+}
+
+async function login() {
+  try {
+    const request  = {
+      applicationId: applicationId,
+      loginId: userEmail,
+      password: userPassword,
+    };
+    const fusion = new client.FusionAuthClient('lambda_testing_key', fusionUrl);
+    const clientResponse = await fusion.login(request);
+    if (!clientResponse.wasSuccessful)
+      throw Error(clientResponse);
+    const jwtToken = clientResponse.response.token;
+    const decodedToken = jwt.decode(jwtToken);
+    const message = decodedToken.message;
+    return message;
+  }
+  catch (e) {
+    console.error('Error: ');
+    console.dir(e, { depth: null });
+    process.exit(1);
+  }
+}
+
+async function populate(jwt, user, registration) {
+  const response = await fetch("https://issanctioned.example.com/api/banned?email=" + encodeURIComponent(user.email), {
+    method: "GET",
+    headers: { "Content-Type": "application/json" }
+  });
+  if (response.status === 200) {
+    const jsonResponse = await response.json();
+    jwt.isBanned = jsonResponse.isBanned;
+  }
+  else
+    jwt.isBanned = false;
+}
+
+
+async function createUser() {
+  try {
+    const request = {
+      registration: {
+        applicationId: applicationId,
+        username: username,
+      },
+      sendSetPasswordEmail: false,
+      skipRegistrationVerification: true,
+      skipVerification: true,
+      user: {
+        active: true,
+        email: userEmail,
+        password: userPassword,
+        username: username,
+        registrations: [{
+          applicationId: applicationId
+        }]
+      }
+    };
+    const fusion = new client.FusionAuthClient('lambda_testing_key', fusionUrl);
+    const clientResponse = await fusion.register(userId, request);
+    if (!clientResponse.wasSuccessful)
+      throw Error(clientResponse);
+    console.info('User created succesfully');
+  } catch (e) {
+    console.error('Error creating user: ');
+    console.dir(e, { depth: null });
+    process.exit(1);
+  }
+}
+```
