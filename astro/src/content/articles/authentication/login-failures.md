@@ -12,7 +12,7 @@ Picture a chart representing user logins. It has a line, trending upwards and to
 
 When you care about providing great [authentication](/docs/v1/tech/core-concepts/authentication-authorization) experiences, like us (the few, the proud), there is nothing better than this chart - undeniable proof that our users are successfully logging in. And, more importantly, getting access to the features or data which that login process protects. That’s what most users are looking for, after all.
 
-The more people who successfully log in, the more sure we are that our solution scales and that users are entering the application smoothly.
+The more people who successfully log in, the more confident we are that our solution can handle a large number of users and that users are able to enter the application smoothly.
 
 However, do you track login _failures_ as much as you pay attention to login _successes_? At first,it doesn’t sound as exciting. You definitely won’t be hoping for a line up and to the right. Instead, you'll be hoping for a line trending downwards. Or better yet, one never ascending in the first place. 
 
@@ -29,7 +29,7 @@ There are some scenarios that are not quite failures, and not quite successes. T
 * If MFA is required, and user removes the current factor, but never adds another factor.
 * A user was rate limited after suspicious behavior or for entering their credentials incorrectly.
 
-In all cases, the user is denied access to the application, but not in a typical manner. If you aren’t tracking login failures at all, don’t worry about these edge cases. But if you are and want to take the next step in terms of understanding your user’s experience, track these and think about your user might perceive them.
+In all cases, the user is denied access to the application, but not in a typical manner. If you aren’t tracking login failures at all, don’t worry about these edge cases. But if you are and want to take the next step in terms of understanding your user’s experience, track these and think about how your user might perceive them.
 
 ## Measuring Login Failure Rates
 
@@ -39,7 +39,7 @@ Next, walk through what you should be doing::
 
 1. **Begin logging login activity, if you aren’t already.** Both successes and failures must be measured to understand the average login success ratio and the trend over time. Here are some common ways to capture this data:
 
-* [FusionAuth’s login failure webhook ](https://fusionauth.io/docs/v1/tech/events-webhooks/events/user-login-failed)fires an event when a login fails due to invalid credentials
+* [FusionAuth’s login failure webhook](/docs/v1/tech/events-webhooks/events/user-login-failed) fires an event when a login fails due to invalid credentials
 * Okta gives admins access to a [report](https://support.okta.com/help/s/article/How-can-I-obtain-a-list-of-failed-login-attempts-or-other-potentially-malicious-sign-on-attempts?language=en_US) that contains failed login information
 * Auth0 provides [events](https://auth0.com/docs/secure/security-center/metrics) that give specific reasons why a login failed
 * If you are using another provider, consult the documentation
