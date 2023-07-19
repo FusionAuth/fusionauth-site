@@ -7,7 +7,7 @@ navcategory: customization
 
 ## Overview
 
-This guide shows you how to create a simple lambda manually and programmatically, and how to test it with unit and integration tests. You can familiarize yourself with lambdas by reading the [FusionAuth lambda documentation](/docs/v1/tech/lambdas).
+This guide shows you how to create a simple lambda manually, update it programmatically, and test it with unit and integration tests. You can familiarize yourself with lambdas by reading the [FusionAuth lambda documentation](/docs/v1/tech/lambdas).
 
 - [Prerequisites](#prerequisites) 
   - [Lambda Limitations](#lambda-limitations)
@@ -124,7 +124,7 @@ Before you can use any of the API, CLI, or Client Library functionality, you nee
 
 ### Using the Lambda CLI
 
-First install the Node CLI library. Open a terminal in your app folder and use the following commands.
+First, install the Node CLI library. Open a terminal in your app folder and use the following commands.
 
 ```bash
 npm install --save-dev @fusionauth/cli;
@@ -134,7 +134,7 @@ You should see the FusionAuth logo.
 
 The lambda commands that the CLI provides match the names in the underlying TypeScript client library: `create`, `delete`, and `retrieve`.
 
-First you are going to retrieve the "[ATest]" lambda you created earlier. This is a useful way to check that a lambda you've created has been successfully uploaded for your app. Replace the Id in the command below with the one you noted earlier for your lambda.
+Now you can retrieve the "[ATest]" lambda you created earlier. This is a useful way to check that a lambda you've created has been successfully uploaded for your app. Replace the Id in the command below with the one you noted earlier for your lambda.
 
 ```bash
 npx fusionauth lambda:retrieve 1760a1c3-742a-4b74-b3e6-6ef1676ad77c --key lambda_testing_key
@@ -171,9 +171,9 @@ Lambdas are used for two main purposes:
 In both these cases, there are two types of tests you can perform:
 
 - **Integration test**: Check if the lambda has uploaded and is running correctly by logging in and seeing if the expected output happens.
-- **Unit test:** You don't upload the lambda, but instead create a mock FusionAuth event that calls the lambda in your code and check that the lambda does what it is supposed to.
+- **Unit test:** You don't upload the lambda, but instead create a mock FusionAuth event that calls the lambda in your code and checks that the lambda does what it is supposed to.
 
-Each of these types of lambda tests are outlined below.
+Each of these types of lambda tests is outlined below.
 
 
 ### Test Library
@@ -189,17 +189,17 @@ npm install --save-dev fetch-mock;
 npm install --save-dev jsonwebtoken; # to decode the JWT
 ```
 
-{% include _callout-note.liquid content=" The `fetch()` method is available natively from Node LTS version 18. In earlier versions, `fetch` was provided by libraries. Many popular mocking libraries for `fetch` (such as [Nock](https://github.com/nock/nock)) won't work with modern Node in 2023." %}
+{% include _callout-note.liquid content=" The `fetch()` method is available natively from Node LTS version 18. In earlier versions, `fetch` was provided by libraries, so many popular mocking libraries for `fetch` (such as [Nock](https://github.com/nock/nock)) won't work with modern Node in 2023." %}
 
 ### Integration Test: Verify JWT population
 
-The first of the two tests you're going to write is an integration test. It will verify that your updated lambda is populating the JWT with "Goodbye World" message when you log in programmatically.
+The first of the two tests you're going to write is an integration test. It will verify that your updated lambda is populating the JWT with a "Goodbye World" message when you log in programmatically.
 
 #### Create a User
 
 Before you can write any tests you need a test user profile to log in with. The test app `package.json` includes a reference to the `@fusionauth/typescript-client` discussed earlier, so you can use that to create a test user programmatically.
 
-Make a new file in the app called `test.js` and paste in the following code.
+Make a new file in the app called `test.js` and paste the following code into it.
 
 ```js
 const client = require('@fusionauth/typescript-client');
@@ -240,7 +240,7 @@ async function createUser() {
     const clientResponse = await fusion.register(userId, request);
     if (!clientResponse.wasSuccessful)
       throw Error(clientResponse);
-    console.info('User created succesfully');
+    console.info('User created successfully');
   } catch (e) {
     console.error('Error creating user: ');
     console.dir(e, { depth: null });
@@ -492,7 +492,7 @@ async function createUser() {
     const clientResponse = await fusion.register(userId, request);
     if (!clientResponse.wasSuccessful)
       throw Error(clientResponse);
-    console.info('User created succesfully');
+    console.info('User created successfully');
   } catch (e) {
     console.error('Error creating user: ');
     console.dir(e, { depth: null });
