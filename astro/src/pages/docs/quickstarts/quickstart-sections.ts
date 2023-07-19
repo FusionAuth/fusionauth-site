@@ -3,6 +3,8 @@ import { getCollection } from "astro:content";
 interface QuickStartSection {
   key: string;
   icon?: string;
+  faIcon?: string;
+  color: string;
   title: string;
   anchorTag: string;
   desc?: string;
