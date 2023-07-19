@@ -10,6 +10,7 @@ navcategory: customization
 This guide shows you how to create a simple lambda manually and programmatically, and how to test it with unit and integration tests. You can familiarize yourself with lambdas by reading the [FusionAuth lambda documentation](/docs/v1/tech/lambdas).
 
 - [Prerequisites](#prerequisites) 
+  - [Lambda Limitations](#lambda-limitations)
 - [Manually Creating a Simple Lambda](#manually-creating-a-simple-lambda) 
 - [Programmatically Updating a Lambda](#programmatically-updating-a-lambda) 
   - [Understanding the Client Libraries](#understanding-the-client-libraries) 
@@ -17,7 +18,6 @@ This guide shows you how to create a simple lambda manually and programmatically
   - [Using the Lambda CLI](#using-the-lambda-cli) 
   - [API limitations](#api-limitations) 
 - [Testing Overview](#testing-overview)
-  - [Lambda Limitations](#lambda-limitations) 
   - [Test Library](#test-library) 
   - [Integration Test: Verify JWT population](#integration-test-verify-jwt-population) 
   - [Unit Test: Calling an External Service](#unit-test-calling-an-external-service)
@@ -28,6 +28,11 @@ This guide shows you how to create a simple lambda manually and programmatically
 To follow this guide, you will need a test instance of FusionAuth. For FusionAuth installation instructions, please visit [the 5-minute setup guide](/docs/v1/tech/5-minute-setup-guide). 
 
 This guide assumes FusionAuth can be accessed at `http://localhost:9011/admin` with your [FusionAuth example test app](/docs/v1/tech/getting-started/5-minute-docker#5-configure-the-backend-to-complete-the-login) at `http://localhost:3000`.
+
+### Lambda Limitations
+
+{% include _callout-note.liquid content="<p>Remember the following limitations of lambdas when planning what they'll do:<ul><li>Lambdas do not have full access to JavaScript libraries, nor can they load them currently.</li> <li>The console methods take only one argument.</li><li>HTTP requests are not available in the Community or Starter FusionAuth plans.</li><li>If you set the Identity Provider <a href='/docs/v1/tech/identity-providers/#linking-strategies'>linking strategy</a> to 'Link Anonymously', no lambdas will be used for external authentication.</li> </ul></p>"%}
+
 
 ## Manually Creating a Simple Lambda
 
@@ -169,15 +174,6 @@ In both these cases, there are two types of tests you can perform:
 - **Unit test:** You don't upload the lambda, but instead create a mock FusionAuth event that calls the lambda in your code and check that the lambda does what it is supposed to.
 
 Each of these types of lambda tests are outlined below.
-
-### Lambda Limitations
-
-Remember the following limitations of lambdas when planning what they'll do:
-
-- Lambdas do not have full access to JavaScript libraries, nor can they load them currently. 
-- The `console` methods take only one argument. 
-- HTTP requests are not available in the Community or Starter FusionAuth plans.
-- If you set the Identity Provider [linking strategy](/docs/v1/tech/identity-providers/#linking-strategies) to "Link Anonymously", no lambdas will be used for external authentication.
 
 
 ### Test Library
