@@ -42,13 +42,6 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-droplet',
         navColor: 'blue',
       },
-      // {
-      //   href: '/docs/v1/tech/tutorials/integrate-expressjs',
-      //   title: 'Express',
-      //   icon: '/img/icons/javascript.svg',
-      //   faIcon: 'fa-x',
-      //   navColor: 'fuchsia'
-      // },
       {
         href: '/blog/2023/03/13/single-sign-on-laravel-fusionauth',
         title: 'Laravel',
