@@ -85,7 +85,7 @@ FusionAuth will be configured with these settings
 
 You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don’t need to.
 
-### Create a Basic Express.js Application
+### Setup Application
 
 In this section, you'll set up a basic Golang application with a single page.
 
@@ -133,7 +133,7 @@ cd src
 #### Setup New Application via API
 
 <Aside type="tip">
- Although you could also do all of this in the kickstart, this example is meant to show off how to use the SDK on the server for administrative purposes. You can do this even after instance is running unlike with a kickstart that needs to happen on a fresh install.
+ Although you could also do all of this in the kickstart, this example is meant to show off how to use the SDK on the server for administrative purposes. You could also make any of these changes within the admin UI. You can do this even after instance is running unlike with a kickstart that needs to happen on a fresh install.
 </Aside>
 
 In this setup you will:
@@ -159,4 +159,163 @@ Execute this setup by calling an npm script.
 npm run setup
 ```
 
-#### Create the Application
+## Create the Express.js Application
+
+In order for our application to look good we have some files that are already made, copy `complete-application/static` and `complete-application/templates` to the `changebank` directory. These static files are used to create the "beautiful" Changebank application UI.
+
+<Aside type="note">
+You can choose to exam the full Example of the running code now, or skip below and walk through each step of the process.
+</Aside>
+
+### Full Example
+
+Make sure once again that you are in the directory `complete-application/src`.
+Create a file called `index.ts` with the below code.
+
+`index.ts`
+<RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
+  lang="ts" />
+
+#### Run the App!
+You should now be able to start your Express.js application with 
+
+```shell
+npm run dev
+```
+
+### Walkthrough Example
+
+Make sure once again that you are in the directory `complete-application/src`.
+Create a file called `index.ts` and start by settting up your imports and constants. These constants have already been defined by running the kickstart and `setup.js`.
+
+`index.ts`
+<RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="top"/>
+
+<Aside type="note">
+If you want to see where the FusionAuth values came from, they can be found in the 
+FusionAuth app (http://localhost:9011/admin). The tenant ID is found on the Tenants
+page. To see the client ID and client secret, go to the Applications page and 
+click the `View` icon under the actions for the Changebank application. You'll 
+find the client id and client secret values in the `OAuth configuration` section.
+</Aside>
+
+#### Static files
+
+We need a way to server our static files, luckily Express.js makes this easy with `express.static`. These files will include all of the CSS and images that are required for the UI of the ChangeBank application.
+
+`index.ts`
+<RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="static"/>
+
+#### Homepage
+
+In order to show off our homepage we need to create a route with the base url `/`. In this route check to see if `userDetails` cookie has any user values and correctly respond with either the `home.html` or `account.html` template. Also if the there is no user you can generate the PKCE challenge pair and store them into `userSession` cookie (take note this is an http-only cookie).
+
+<Aside type="note">
+In this file we will use the package [pkce-challenge](https://www.npmjs.com/package/pkce-challenge) to generate a Proof Key for Code Exchange (PKCE) challenge pair. Read more about [PKCE](https://www.oauth.com/oauth2-servers/pkce/authorization-request/).
+</Aside>
+
+`index.ts`
+<RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="homepage"/>
+
+#### Login Route
+
+In the Changebank application there is a `Login` button, when clicked will open the `/login` route (you can find this in `complete-application/templates/home.html`). Have this redirect them to FusionAuth so that FusionAuth can present them with a login page.
+
+`index.ts`
+<RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="login"/>
+
+You can always find this url if you view the details of your Application within FusionAuth, under "OAuth2 & OpenID Connect Integration details" you will find the property `OAuth IdP login URL`. The endpoint that you will hit on FusionAuth is `/oauth2/authorize` below you can find a list of the needed paramaters for FusionAuth's [OAuth Endpoints](https://fusionauth.io/docs/v1/tech/oauth/endpoints)
+
+- client_id: Your `applicationId`
+- response_type: `code` since we are using the code flow
+- redirect_uri: Where your FusionAuth will redirect back to during the Oauth flow, in our example this is our route `oauth-redirect`
+- state: Created in our hompage route using some crazy math and stored in our cookie as `stateValue`
+- code_challenge: Created in our homepage route using `pkce-challenge` stored in our cookie as `challenge`, this is one half of the PKCE 
+
+#### OAuth Redirect
+
+When FusionAuth redirects back to our Express.js application it will return to our `/oauth-redirect` route. In this response it wil have two query paramaters that we need to further examine `code` and `state`. 
+
+1. Make sure to check that the `stateValue` that we stored in our cookie matches the `state` query paramaters
+1. Request to the FusionAuth Token endpoint to exchange the authorization `code`returned from the Authorize endpoint and a `verifier` from our `userSession` cookie for an access token.
+1. Retrieves the user by passing the access token to FusionAuth. (This method does not use an API key, instead it uses a JSON Web Token (JWT) for authentication)
+1. Store access_token details in `userToken` cookie.
+1. Store retrieved user in `userDetails` cookie (note for our example this is not a secure cookie and JS can access).
+1. Redirect to `/account` route.
+
+`index.ts`
+<RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="oauth-redirect"/>
+
+#### Account Route (protected)
+
+The /account page represents what a user sees when they’re logged into their Changebank account. A user that isn’t logged in, who tries to access this page, should just be taken to the home page.
+
+<Aside type="note">
+In a production application, we would validate the token signature, make sure it wasn't expired, and attempt to refresh it if it were expired.
+</Aside>
+
+`index.ts`
+<RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="account"/>
+
+#### Logout Route
+
+<Aside type="tip">
+Click the `Logout` button and watch the browser first go to FusionAuth to log out the user, then return to your home page.
+</Aside>
+
+The last step is to implement logout. When you log a user out of an application, you'll take them to 
+FusionAuth's `/oauth2/logout` endpoint. After logging the user out, FusionAuth will redirect the user
+to your app's `/logout` endpoint, which you'll create now. This endpoint deletes any cookies that your
+application created, clearing the user's session.
+
+`index.ts`
+<RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="logout"/>
+
+In the below code we check to see if the current user session has any information about the user, if not we redirect to the FusionAuth server to initiate the logout on the server. When this returns the user session cookie will now be empty and we can therefore forward back to our homepage, if we didn't add this check we would be stuck in an infinite loop between our Express.js server and FusionAuth (luckily unlike other providers you won't get billed per all :D)
+
+```ts
+if (userSession) {
+    res.redirect(302, `${fusionAuthURL}/oauth2/logout?client_id=${clientId}`);
+} else {
+    res.redirect(302, '/')
+}
+```
+
+## Bonus
+<Aside type="tip">
+As a bonus, try implementing the `/make-change` route using the `complete-application/templates/make-change.html` template, implementing the same validation as `/account` route.
+</Aside>
+
+## Next Steps
+This quickstart is a great way to get a proof of concept up and running quickly, but to run
+you application in production, there are some things you're going to want to do.
+
+### FusionAuth Customization
+FusionAuth gives you the ability to customize just about everything with the user's experience and your application's integration. This includes
+* [Hosted pages](https://fusionauth.io/docs/v1/tech/themes/) such as login, registration, email verification, and many more
+* [Email templates](https://fusionauth.io/docs/v1/tech/email-templates/email-templates)
+* [User data and custom claims in access token JWTs](https://fusionauth.io/articles/tokens/jwt-components-explained)
+
+### Security
+* You may want to customize the [token expiration times and policies](https://fusionauth.io/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth
+* Choose [password rules](https://fusionauth.io/docs/v1/tech/core-concepts/tenants#password) and a [hashing algorithm](https://fusionauth.io/docs/v1/tech/reference/password-hashes) that meet your security needs
+
+### Tenant and Application Management
+* Model your application topology using [Applications](https://fusionauth.io/docs/v1/tech/core-concepts/applications), [Roles](https://fusionauth.io/docs/v1/tech/core-concepts/roles), [Groups](https://fusionauth.io/docs/v1/tech/core-concepts/groups), [Entities](https://fusionauth.io/docs/v1/tech/core-concepts/groups), and more
+* Set up [MFA](https://fusionauth.io/docs/v1/tech/guides/multi-factor-authentication), [Social login](https://fusionauth.io/docs/v1/tech/identity-providers/), and/or [SAML](https://fusionauth.io/docs/v1/tech/identity-providers/samlv2/) integrations
+* Integrate with external systems using [Webhooks](https://fusionauth.io/docs/v1/tech/events-webhooks/), [SCIM](https://fusionauth.io/docs/v1/tech/core-concepts/scim), and [Lambdas](https://fusionauth.io/docs/v1/tech/lambdas/)
+
