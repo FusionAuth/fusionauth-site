@@ -12,7 +12,7 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
   - [Instantaneous Actions](#instantaneous-actions)
     - [Survey Example](#survey-example)
 - [Applying an Action Automatically](#applying-an-action-automatically)
-- [PART 2 - A TUTORIAL EXAMPLE OF USING ACTIONS](#part-2---a-tutorial-example-of-using-actions)
+- [PART 2 - A TUTORIAL EXAMPLE USING ACTIONS](#part-2---a-tutorial-example-using-actions)
 - [The Action APIs](#the-action-apis)
   - [Action Parameters](#action-parameters)
   - [Action Reason Parameters](#action-reason-parameters)
@@ -23,14 +23,14 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
   - [Create an Administrative User (Actioner)](#create-an-administrative-user-actioner)
   - [Create an Subscriber User (Actionee)](#create-an-subscriber-user-actionee)
   - [Create an API key](#create-an-api-key)
-  - [Subscription Work:](#subscription-work)
+  - [Subscription Work](#subscription-work)
     - [Create Welcome Email Template](#create-welcome-email-template)
     - [Create Expiry Email Template](#create-expiry-email-template)
     - [Create Expired Reason](#create-expired-reason)
     - [Create Preventlogin Action](#create-preventlogin-action)
     - [Create Signup Webhook to Intercom](#create-signup-webhook-to-intercom)
     - [Create Subscription Action](#create-subscription-action)
-  - [Survey Work:](#survey-work)
+  - [Survey Work](#survey-work)
     - [Create Survey Webhook to Slack](#create-survey-webhook-to-slack)
     - [Create Survey Actions with Options](#create-survey-actions-with-options)
     - [Create Localization for Options](#create-localization-for-options)
@@ -149,7 +149,7 @@ At any point in the future you can use the API to retrieve this saved Action ins
 ## Applying an Action Automatically
 You have seen that you can apply an Action using the API. FusionAuth can also automatically apply a temporary `preventLogin` Action to a User in the case of repeatedly failing authentication. For more information see this [guide](https://fusionauth.io/docs/v1/tech/tutorials/gating/setting-up-user-account-lockout).
 
-## PART 2 - A TUTORIAL EXAMPLE OF USING ACTIONS
+## PART 2 - A TUTORIAL EXAMPLE USING ACTIONS
 The remainder of this guide will demonstrate a practical example of using Actions that you can follow. Let's start with a brief tour of the APIs that you'll use in the example.
 
 ## The Action APIs
@@ -327,7 +327,8 @@ In order to apply Actions using the API we need to create an API Key. In reality
 - (Leave all endpoints disabled to give the key super access.)
 - **Save**
 
-### Subscription Work:
+### Subscription Work
+The following steps will create all the parts need to handle subscriptions.
 
 #### Create Welcome Email Template
 You now create two email templates, one for an email sent to the user when they subscribe, and one for when their subscription ends.
@@ -359,7 +360,7 @@ But to apply an Action to a User you cannot use the website. It can be done only
 Show example of what webhook would look like when received and link to the webhook event documentation
 
 #### Create Subscription Action
-### Survey Work:
+### Survey Work
 #### Create Survey Webhook to Slack
 #### Create Survey Actions with Options
 #### Create Localization for Options
