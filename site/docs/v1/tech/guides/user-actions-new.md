@@ -4,6 +4,7 @@ User Actions in FusionAuth are ways to interact with, reward, and discipline use
 This guide refers to User Actions simply as Actions. In the first half you'll learn about all the parts of an Action and their sequences of events. In the second half you'll learn ways to create and apply Actions.
 
 - [Introduction](#introduction)
+- [PART 1 - THEORY OF FUSIONAUTH ACTIONS](#part-1---theory-of-fusionauth-actions)
 - [Definitions](#definitions)
 - [Types of Actions and Their Purpose](#types-of-actions-and-their-purpose)
   - [Temporal Actions](#temporal-actions)
@@ -11,28 +12,47 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
   - [Instantaneous Actions](#instantaneous-actions)
     - [Survey Example](#survey-example)
 - [Applying an Action Automatically](#applying-an-action-automatically)
-- [Creating Actions](#creating-actions)
-  - [APIs](#apis)
-    - [Action parameters](#action-parameters)
-    - [Action Reason parameters](#action-reason-parameters)
-    - [Action instance parameters](#action-instance-parameters)
-  - [Starting the PiedPiper newspaper company](#starting-the-piedpiper-newspaper-company)
-  - [Installing FusionAuth](#installing-fusionauth)
+- [PART 2 - A TUTORIAL EXAMPLE OF USING ACTIONS](#part-2---a-tutorial-example-of-using-actions)
+- [The Action APIs](#the-action-apis)
+  - [Action Parameters](#action-parameters)
+  - [Action Reason Parameters](#action-reason-parameters)
+  - [Action Instance Parameters](#action-instance-parameters)
+- [Starting the PiedPiper Newspaper Company](#starting-the-piedpiper-newspaper-company)
+- [FusionAuth Work](#fusionauth-work)
   - [Create PiedPiper Application](#create-piedpiper-application)
   - [Create an Administrative User (Actioner)](#create-an-administrative-user-actioner)
   - [Create an Subscriber User (Actionee)](#create-an-subscriber-user-actionee)
   - [Create an API key](#create-an-api-key)
-  - [Create welcome email template](#create-welcome-email-template)
-  - [Creating a User Action via the API (create both types)](#creating-a-user-action-via-the-api-create-both-types)
-  - [Creating a Webhook -- why? so we can feed the subscription and happiness info into our other systems? have an audit trail?](#creating-a-webhook----why-so-we-can-feed-the-subscription-and-happiness-info-into-our-other-systems-have-an-audit-trail)
-  - [Set up the Email](#set-up-the-email)
-  - [Executing the User Action (execute both)](#executing-the-user-action-execute-both)
-    - [Webhook Example](#webhook-example)
-    - [Show example of email](#show-example-of-email)
-  - [Querying Action Status on a User (query both) and explain why you'd do this](#querying-action-status-on-a-user-query-both-and-explain-why-youd-do-this)
-- [Localization -- extract all the localization stuff to here](#localization----extract-all-the-localization-stuff-to-here)
+  - [Subscription Work:](#subscription-work)
+    - [Create Welcome Email Template](#create-welcome-email-template)
+    - [Create Expiry Email Template](#create-expiry-email-template)
+    - [Create Expired Reason](#create-expired-reason)
+    - [Create Preventlogin Action](#create-preventlogin-action)
+    - [Create Signup Webhook to Intercom](#create-signup-webhook-to-intercom)
+    - [Create Subscription Action](#create-subscription-action)
+  - [Survey Work:](#survey-work)
+    - [Create Survey Webhook to Slack](#create-survey-webhook-to-slack)
+    - [Create Survey Actions with Options](#create-survey-actions-with-options)
+    - [Create Localization for Options](#create-localization-for-options)
+- [PiedPiper Work](#piedpiper-work)
+  - [Install Node.js](#install-nodejs)
+  - [Create App Folder with Typescript Client Library](#create-app-folder-with-typescript-client-library)
+  - [Create Mock Intercom API](#create-mock-intercom-api)
+  - [Create Mock Slack API](#create-mock-slack-api)
+  - [Create PiedPiper API to Listen for Expiry and Call PreventLogin Action](#create-piedpiper-api-to-listen-for-expiry-and-call-preventlogin-action)
+  - [Create Mock Email Service](#create-mock-email-service)
+- [Testing](#testing)
+  - [Call Subscription Action](#call-subscription-action)
+  - [Check Welcome and Expiry Emails Arrive](#check-welcome-and-expiry-emails-arrive)
+  - [Check Intercom Is Called](#check-intercom-is-called)
+  - [Check PreventLogin Action Was Created](#check-preventlogin-action-was-created)
+  - [Call Survey Action](#call-survey-action)
+  - [Check Negative Survey Response Was Sent to Slack](#check-negative-survey-response-was-sent-to-slack)
+  - [Retrieve All Survey Action Instances for This User](#retrieve-all-survey-action-instances-for-this-user)
 - [Further reading](#further-reading)
 - [Todos](#todos)
+
+## PART 1 - THEORY OF FUSIONAUTH ACTIONS
 
 ## Definitions
 Below are the terms you'll encounter when working with Actions. They are listed in order of increasing understanding, not alphabetically.
@@ -129,10 +149,10 @@ At any point in the future you can use the API to retrieve this saved Action ins
 ## Applying an Action Automatically
 You have seen that you can apply an Action using the API. FusionAuth can also automatically apply a temporary `preventLogin` Action to a User in the case of repeatedly failing authentication. For more information see this [guide](https://fusionauth.io/docs/v1/tech/tutorials/gating/setting-up-user-account-lockout).
 
-## Creating Actions
+## PART 2 - A TUTORIAL EXAMPLE OF USING ACTIONS
 The remainder of this guide will demonstrate a practical example of using Actions that you can follow. Let's start with a brief tour of the APIs that you'll use in the example.
 
-### APIs
+## The Action APIs
 Three separate APIs manage Actions. Each has its own documentation.
 - [Actions](https://fusionauth.io/docs/v1/tech/apis/user-actions) — Defines an Action, updates it, and deletes it. The API path is `/api/user-action`.
 - [Action Reasons](https://fusionauth.io/docs/v1/tech/apis/user-action-reasons) — Defies the reason an Action can be taken. The API path is `/api/user-action-reason`.
@@ -144,7 +164,7 @@ It is faster to use FusionAuth's API wrappers rather than make HTTP calls direct
 
 The Actions API reference documentation is long, and repeats the same parameters for each type of request. For easier understanding, the parameters listed there are grouped and summarized below for each API. Parameters, such as Ids and names, whose purpose is obvious from the earlier [Definitions](#definitions) section are not described here.
 
-#### Action parameters
+### Action Parameters
 These are used when creating an Action definition.
 - `userActionId`
 - `name`, `localizedNames`
@@ -156,13 +176,13 @@ These are used when creating an Action definition.
 - `temporal` — if the Action is temporal.
 - `userEmailingEnabled`, `userNotificationsEnabled` — notify doesn't contact the user, it just adds a `notifyUser` field to JSON sent to webhooks.
 
-#### Action Reason parameters
+### Action Reason Parameters
 These are used when creating an Action Reason.
 - `userActionReasonId`
 - `text`, `localizedTexts` — The description of the Reason that a human can understand, possibly in many languages.
 - `code` — A short text string to categorize the Reason for software to process.
 
-#### Action instance parameters
+### Action Instance Parameters
 These are used when applying an Action to a User, possibly with a Reason.
 - `userActionId`
 - `actioneeUserId`
@@ -176,7 +196,7 @@ These are used when applying an Action to a User, possibly with a Reason.
 - `option` — The option the Actioner chose for this instance of the Action.
 - `reasonId`
 
-### Starting the PiedPiper newspaper company
+## Starting the PiedPiper Newspaper Company
 You are now going to create the subscription and survey examples described earlier, for a paid newspaper website called _PiedPiper_.
 
 Below is a summary of the steps you'll be completing.
@@ -242,7 +262,7 @@ sequenceDiagram
     PP->>FA: Retrieve all Actions for the User
 ```
 
-### Installing FusionAuth
+## FusionAuth Work
 This guide assumes you have installed FusionAuth by following the [5 minute getting started guide](https://fusionauth.io/docs/v1/tech/getting-started/5-minute-docker). You should be able to log in to FusionAuth at http://localhost:9011/admin and your Node.js test app at http://localhost:3000.
 
 > You can't use the [online FusionAuth sandbox](https://sandbox.fusionauth.io/admin) for this tutorial because you need to point the webhooks and emails to fake localhost services.
@@ -307,71 +327,57 @@ In order to apply Actions using the API we need to create an API Key. In reality
 - (Leave all endpoints disabled to give the key super access.)
 - **Save**
 
-### Create welcome email template
+### Subscription Work:
+
+#### Create Welcome Email Template
 You now create two email templates, one for an email sent to the user when they subscribe, and one for when their subscription ends.
 
 TODO
 
-  - **** — ``
-  - **** — ``
-  - **** — ``
-  - **** — ``
-  - **** — ``
+Set up sending a thank you email to the user when their interaction has been recorded.
+
+An Email Template for Actions can be created in the FusionAuth website at **Customizations** - **Email Templates**.
+
+but note that the email template is pulled based on the users preferred email
+
   - **** — ``
   - **** — ``
   - **** — ``
   - **** — ``
   - **** — ``
 
-
-    - Create welcome email template
-    - Create expiry email template
-    - Create expired Reason
-    - Create preventlogin Action
-    - Create signup webhook to Intercom
-    - Create subscription Action
-  - Survey work:
-    - Create survey webhook to Slack
-    - Create survey Actions with options
-    - Create localization for options
-- PiedPiper work:
-  - Install Node.js
-  - Create app folder with Typescript client library
-  - Create mock Intercom API
-  - Create mock Slack API
-  - Create PiedPiper API to listen for expiry and call preventLogin Action
-  - Create mock email service
-
-
+#### Create Expiry Email Template
+#### Create Expired Reason
+#### Create Preventlogin Action
 
 You can create an Action on the website at **Settings** — **User Actions**.
 ![Creating an Action on the website](../../../../assets/img/docs/guides/user-actions/user-actions-edit-email.png)
 But to apply an Action to a User you cannot use the website. It can be done only using the APIs.
 
-### Creating a User Action via the API (create both types)
+#### Create Signup Webhook to Intercom
 
-### Creating a Webhook -- why? so we can feed the subscription and happiness info into our other systems? have an audit trail?
-
-### Set up the Email
-Set up sending a thank you email to the user when their interaction has been recorded.
-
-An Email Template for Actions can be created in the FusionAuth website at **Customizations** - **Email Templates**.
-
-### Executing the User Action (execute both)
-
-#### Webhook Example
 Show example of what webhook would look like when received and link to the webhook event documentation
 
-
-#### Show example of email
-
-### Querying Action Status on a User (query both) and explain why you'd do this
-
-## Localization -- extract all the localization stuff to here
-options
-name
-emails (point to email templates docs, no need to build this out entirely), but note that the email template is pulled based on the users preferred email
-anything else
+#### Create Subscription Action
+### Survey Work:
+#### Create Survey Webhook to Slack
+#### Create Survey Actions with Options
+#### Create Localization for Options
+## PiedPiper Work
+### Install Node.js
+### Create App Folder with Typescript Client Library
+### Create Mock Intercom API
+### Create Mock Slack API
+### Create PiedPiper API to Listen for Expiry and Call PreventLogin Action
+### Create Mock Email Service
+## Testing
+### Call Subscription Action
+### Check Welcome and Expiry Emails Arrive
+### Check Intercom Is Called
+### Check PreventLogin Action Was Created
+### Call Survey Action
+### Check Negative Survey Response Was Sent to Slack
+### Retrieve All Survey Action Instances for This User
 
 ## Further reading
 
@@ -380,5 +386,4 @@ anything else
 - diagrams
 - what does the json that gets sent to a webhook look like
 - add sections from last user actions doc
-- review the stylesheet readme
-
+- review the fusionauth stylesheet readme in this repo
