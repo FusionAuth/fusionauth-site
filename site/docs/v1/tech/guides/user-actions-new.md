@@ -199,41 +199,9 @@ These are used when applying an Action to a User, possibly with a Reason.
 ## Starting the PiedPiper Newspaper Company
 You are now going to create the subscription and survey examples described earlier, for a paid newspaper website called _PiedPiper_.
 
-Below is a summary of the steps you'll be completing.
-- FusionAuth work:
-  - Install FusionAuth
-  - Create PiedPiper Application
-  - Create administrative User (actioner)
-  - Create subscriber User (actionee)
-  - Create API key
-  - Subscription work:
-    - Create welcome email template
-    - Create expiry email template
-    - Create expired Reason
-    - Create preventlogin Action
-    - Create signup webhook to Intercom
-    - Create subscription Action
-  - Survey work:
-    - Create survey webhook to Slack
-    - Create survey Actions with options
-    - Create localization for options
-- PiedPiper work:
-  - Install Node.js
-  - Create app folder with Typescript client library
-  - Create mock Intercom API
-  - Create mock Slack API
-  - Create PiedPiper API to listen for expiry and call preventLogin Action
-  - Create mock email service
-- Testing:
-  - Call subscription Action
-  - Check welcome and expiry emails arrive
-  - Check Intercom is called
-  - Check preventLogin Action was created
-  - Call survey Action
-  - Check negative survey response was sent to Slack
-  - Retrieve all survey Action instances for this User
+The subscription Action will email the user and trigger a webhook to Intercom. Expiry will email again, and trigger a webhook to PiedPiper to create a `preventLogin` Action. The survey Action will trigger a webhook to Slack.
 
-Below is a diagram of how the system will be used.
+Below is a diagram of this process.
 
 ```mermaid
 sequenceDiagram
@@ -388,3 +356,37 @@ Show example of what webhook would look like when received and link to the webho
 - what does the json that gets sent to a webhook look like
 - add sections from last user actions doc
 - review the fusionauth stylesheet readme in this repo
+
+Below is a summary of the steps you'll be completing.
+- FusionAuth work:
+  - Install FusionAuth
+  - Create PiedPiper Application
+  - Create administrative User (actioner)
+  - Create subscriber User (actionee)
+  - Create API key
+  - Subscription work:
+    - Create welcome email template
+    - Create expiry email template
+    - Create expired Reason
+    - Create preventlogin Action
+    - Create signup webhook to Intercom
+    - Create subscription Action
+  - Survey work:
+    - Create survey webhook to Slack
+    - Create survey Actions with options
+    - Create localization for options
+- PiedPiper work:
+  - Install Node.js
+  - Create app folder with Typescript client library
+  - Create mock Intercom API
+  - Create mock Slack API
+  - Create PiedPiper API to listen for expiry and call preventLogin Action
+  - Create mock email service
+- Testing:
+  - Call subscription Action
+  - Check welcome and expiry emails arrive
+  - Check Intercom is called
+  - Check preventLogin Action was created
+  - Call survey Action
+  - Check negative survey response was sent to Slack
+  - Retrieve all survey Action instances for this User
