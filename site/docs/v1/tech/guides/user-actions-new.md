@@ -17,8 +17,12 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
     - [Action Reason parameters](#action-reason-parameters)
     - [Action instance parameters](#action-instance-parameters)
   - [Starting the PiedPiper newspaper company](#starting-the-piedpiper-newspaper-company)
-  - [Using the FusionAuth Administration Website](#using-the-fusionauth-administration-website)
-  - [Creating an API key](#creating-an-api-key)
+  - [Installing FusionAuth](#installing-fusionauth)
+  - [Create PiedPiper Application](#create-piedpiper-application)
+  - [Create an Administrative User (Actioner)](#create-an-administrative-user-actioner)
+  - [Create an Subscriber User (Actionee)](#create-an-subscriber-user-actionee)
+  - [Create an API key](#create-an-api-key)
+  - [Create welcome email template](#create-welcome-email-template)
   - [Creating a User Action via the API (create both types)](#creating-a-user-action-via-the-api-create-both-types)
   - [Creating a Webhook -- why? so we can feed the subscription and happiness info into our other systems? have an audit trail?](#creating-a-webhook----why-so-we-can-feed-the-subscription-and-happiness-info-into-our-other-systems-have-an-audit-trail)
   - [Set up the Email](#set-up-the-email)
@@ -47,7 +51,7 @@ Below are the terms you'll encounter when working with Actions. They are listed 
     A temporal Action may be cancelled or modified, unlike an instantaneous Action, which cannot be. An example of an instantaneous Action would be a reward, such as sending a user a discount coupon.
 - Active — An active Action can be applied to Users. In contrast, an inactive Action is like a deleted Action, meaning it cannot be applied, but it is still viewable in the list of inactive Actions in FusionAuth. An inactive Action can be reactivated if you want to use it again.
 
-    If a temporal Action instance has ended we do not say it is inactive. _Active_ relates to the Action definition, and _expiry_ relates to a particular instance of the Action.
+    If a temporal Action instance has ended we do not say that it is not active. _Active_ relates to the Action definition, and _expiry_ relates to a particular instance of the Action.
 - Option — A custom text field that you can add to an instantaneous Action, but not to temporal Actions. You can add multiple options to an Action definition, but choose only one for an instance of the Action. Options can be sent through emails and webhooks.
 - Localization — A text field with an associated language. It's a way of providing more information to users and administrators who speak different languages. Localizations can be added for an Action name, Reason, and Options.
 - Tenant — You can make an Action available to all Tenants or just a few. Below is a visual reminder of [Tenants, Groups, and Applications](https://fusionauth.io/docs/v1/tech/core-concepts/).
@@ -118,7 +122,7 @@ flowchart LR
 #### Survey Example
 Let's take an instantaneous Action example where a user gives feedback on their interaction with customer support by assigning a rating and giving a comment.
 
-Assume you have already created an instantaneous Action named "Feedback" in FusionAuth, with Options of "Bad", "Neutral", and "Good". Your user chooses "Good" in your application's form and enters the comment "Problem solved quickly". When saving the form your code will call the Action API and create an Action instance for the User with the option "High" and populate the `comment` field. The `actioner` of the instance will be set to the support User who helped the customer.
+Assume you have already created an instantaneous Action named "Feedback" in FusionAuth, with Options of "Bad", "Neutral", and "Good". Your user chooses "Good" in your application's form and enters the comment "Problem solved quickly". When saving the form your code will call the Action API and create an Action instance for the User with the option "Good" and populate the `comment` field. The `actioner` of the instance will be set to the support User who helped the customer.
 
 At any point in the future you can use the API to retrieve this saved Action instance and create a report of the customer support agent's performance, or your app's approval ratings in general. You could also use a webhook to send this data immediately to an external system when the Action was created.
 
@@ -238,18 +242,111 @@ sequenceDiagram
     PP->>FA: Retrieve all Actions for the User
 ```
 
-### Using the FusionAuth Administration Website
+### Installing FusionAuth
+This guide assumes you have installed FusionAuth by following the [5 minute getting started guide](https://fusionauth.io/docs/v1/tech/getting-started/5-minute-docker). You should be able to log in to FusionAuth at http://localhost:9011/admin and your Node.js test app at http://localhost:3000.
 
-TODO - continue writing from here
+> You can't use the [online FusionAuth sandbox](https://sandbox.fusionauth.io/admin) for this tutorial because you need to point the webhooks and emails to fake localhost services.
+
+### Create PiedPiper Application
+- Log into the FusionAuth website and perform the following steps.
+- **Applications** — **Add**
+- Enter the values:
+  - **Id** — `e26304d6-0f93-4648-bbb0-8840d016847d`
+  - **Name** — `PiedPiper`
+  - **Add Role**
+    - **Name** — `admin`
+    - **Super Role** — enable
+  - **Add Role**
+    - **Name** — `customer`
+- Switch to the **OAuth** tab
+- Add the following **Authorized redirect URLs**
+  - `http://localhost:3000/oauth-redirect`
+  - Note that you have to enter the text, wait for a popup to appear, then click it to confirm the entry.
+- Add the following **Logout URL**
+  - http://localhost:3000/logout
+  - You do not need to click a popup here as the field can take only one value.
+- Record the **Client secret** value for later use. TODO? - Client secret — `aX6vdOBA_rZxI49Lh0C2-5h71EdJJv2uG99XAZhPkew`
+- **Save** the new Application
+
+> You can leave the **Id**s of new objects in FusionAuth blank to have them autogenerated, but you'll need to know their values to call them in the API.
+
+### Create an Administrative User (Actioner)
+- **Users** — **Add**
+- Enter the values:
+  - **Email** — `admin@example.com`
+  - **Send email to set up password** — Disable
+  - **Password** — `password`
+  - **Confirm** — `password`
+- **Save**
+- **Add registration**
+  - **Application** — `PiedPiper`
+  - **Roles** — `admin`
+- **Save**
+
+### Create an Subscriber User (Actionee)
+- **Users** — **Add**
+- Enter the values:
+  - **Email** — `reader@example.com`
+  - **Send email to set up password** — Disable
+  - **Password** — `password`
+  - **Confirm** — `password`
+- **Save**
+- **Add registration**
+  - **Application** — `PiedPiper`
+  - **Roles** — `customer`
+- **Save**
+
+### Create an API key
+You now have an Application with two Users.
+
+In order to apply Actions using the API we need to create an API Key. In reality you should grant as few privileges to a Key as possible, but to save time in this long tutorial you'll make this key a skeleton key. For more information on keys, see their [documentation](https://fusionauth.io/docs/v1/tech/apis/authentication#managing-api-keys).
+
+- **Settings** — **API Keys** — **Add**
+- **Id** - `cbf34b5f-cb45-4c97-9b7c-5fda3ad8f08c`
+- **Key** - `FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh`
+- (Leave all endpoints disabled to give the key super access.)
+- **Save**
+
+### Create welcome email template
+You now create two email templates, one for an email sent to the user when they subscribe, and one for when their subscription ends.
+
+TODO
+
+  - **** — ``
+  - **** — ``
+  - **** — ``
+  - **** — ``
+  - **** — ``
+  - **** — ``
+  - **** — ``
+  - **** — ``
+  - **** — ``
+  - **** — ``
+
+
+    - Create welcome email template
+    - Create expiry email template
+    - Create expired Reason
+    - Create preventlogin Action
+    - Create signup webhook to Intercom
+    - Create subscription Action
+  - Survey work:
+    - Create survey webhook to Slack
+    - Create survey Actions with options
+    - Create localization for options
+- PiedPiper work:
+  - Install Node.js
+  - Create app folder with Typescript client library
+  - Create mock Intercom API
+  - Create mock Slack API
+  - Create PiedPiper API to listen for expiry and call preventLogin Action
+  - Create mock email service
+
+
 
 You can create an Action on the website at **Settings** — **User Actions**.
 ![Creating an Action on the website](../../../../assets/img/docs/guides/user-actions/user-actions-edit-email.png)
 But to apply an Action to a User you cannot use the website. It can be done only using the APIs.
-
-### Creating an API key
-https://fusionauth.io/docs/v1/tech/apis/authentication#managing-api-keys
-
-
 
 ### Creating a User Action via the API (create both types)
 
