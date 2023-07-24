@@ -71,13 +71,6 @@ const qsSections: QuickStartSection[] = [
         navColor: 'blue'
       },
       {
-        href: '/blog/2023/04/26/nextjs-single-sign-on',
-        title: '.Next.js',
-        icon: '/img/icons/nextjs.svg',
-        faIcon: 'fa-n',
-        navColor: 'green',
-      },
-      {
         title: 'PHP',
         icon: '/img/icons/php.svg',
         faIcon: 'fa-php',
