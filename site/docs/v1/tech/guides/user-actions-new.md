@@ -35,19 +35,19 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
   - [Survey Work](#survey-work)
     - [Create Thanks Email Template](#create-thanks-email-template)
     - [Create Survey Webhook to Slack](#create-survey-webhook-to-slack)
-    - [Create Survey Actions with Options with Localizations](#create-survey-actions-with-options-with-localizations)
+    - [Create Survey Action with Options with Localizations](#create-survey-action-with-options-with-localizations)
 - [PiedPiper Work](#piedpiper-work)
   - [Create Mock Intercom API](#create-mock-intercom-api)
   - [Create Mock Slack API](#create-mock-slack-api)
   - [Create PiedPiper API to Listen for Expiry and Call PreventLogin Action](#create-piedpiper-api-to-listen-for-expiry-and-call-preventlogin-action)
-  - [Create Mock Email Service](#create-mock-email-service)
 - [Testing](#testing)
+  - [Create Mock Email Service](#create-mock-email-service)
   - [Start PiedPiper](#start-piedpiper)
-  - [Call Subscription Action](#call-subscription-action)
+  - [Apply Subscription Action](#apply-subscription-action)
   - [Check Welcome and Expiry Emails Arrive](#check-welcome-and-expiry-emails-arrive)
   - [Check Intercom Is Called](#check-intercom-is-called)
   - [Check PreventLogin Action Was Created](#check-preventlogin-action-was-created)
-  - [Call Survey Action](#call-survey-action)
+  - [Apply Survey Action](#apply-survey-action)
   - [Check Slack Is Called](#check-slack-is-called)
   - [Check Negative Survey Response Was Sent to Slack](#check-negative-survey-response-was-sent-to-slack)
   - [Retrieve All Survey Action Instances for This User](#retrieve-all-survey-action-instances-for-this-user)
@@ -195,7 +195,7 @@ These are used when applying an Action to a User, possibly with a Reason.
 - `broadcast` — Should the Action trigger webhooks
 - `comment` — A note by the Actioner if they want to add information in addition to the Reason.
 - `emailUser` — Should the user be emailed at instance creation.
-- `expiry` — Time after which this temporal Action should end.
+- `expiry` — Time after which this temporal Action should end. This is not a duration, but a [moment in time](https://fusionauth.io/docs/v1/tech/reference/data-types#instants).
 - `notifyUser` — Should the literal text value, `notifyUser`, be sent to webhooks, for them to act on as they wish.
 - `option` — The option the Actioner chose for this instance of the Action.
 - `reasonId`
@@ -293,6 +293,8 @@ This guide assumes you have installed FusionAuth by following the [5 minute gett
   - **Roles** — `customer`
 - **Save**
 
+Return to both the users you just created and record their user Ids for use later. Unfortunately you cannot specify them when creating the users.
+
 ### Create an API key
 You now have an Application with two Users.
 
@@ -358,6 +360,8 @@ Since your Actions will rely on calling Webhooks, you're going to create the web
   - Scroll down and ensure that the **user.action** event is enabled.
 - **Save**
 
+> More information on webhooks is available [here](https://fusionauth.io/docs/v1/tech/events-webhooks/#overview).
+
 #### Create Expiry Webhook to PiedPiper
 The next webhook calls PiedPiper to notify it once the user's subscription expires.
 
@@ -375,6 +379,8 @@ The next webhook calls PiedPiper to notify it once the user's subscription expir
   - (Note that the two webhooks you just created are enabled in the checkbox list.)
   - Scroll down and enable **user.action**.
   - **Save**
+
+Enabling the webhooks in two places gives you fine-grained control across tenants.
 
 #### Create Subscription Action
 You're now ready to create the actual subscription and banning Actions that we'll apply to the user in our PiedPiper code. They're both temporal actions.
@@ -411,7 +417,7 @@ This next Action will prevent the User from logging in after the subscription ex
 This Action will not email or notify anyone. That was handled earlier.
 
 ### Survey Work
-You have now completed the FusionAuth work needed to manage subscriptions. Now you'll do similar work for the survey, but using Options Actions instead of temporal Actions.
+You have completed the FusionAuth work needed to manage subscriptions. Now you'll do similar work for the survey, but using Options Actions instead of temporal Actions.
 
 #### Create Thanks Email Template
 The final email template you'll create thanks the user for completing the survey.
@@ -433,7 +439,7 @@ The final email template you'll create thanks the user for completing the survey
   - Scroll down and ensure that the **user.action** event is enabled.
 - **Save**
 
-#### Create Survey Actions with Options with Localizations
+#### Create Survey Action with Options with Localizations
 In this last Action you are going to add Options that represent the response the user had to the survey. You are also going to add a translation (localization) to each Option so that administrators on Slack who don't speak English can understand the response.
 
 - **Settings** — **User Actions**
@@ -462,7 +468,7 @@ In this last Action you are going to add Options that represent the response the
 - **Save**
 
 ## PiedPiper Work
-You'll now write the Javascript code to act as PiedPiper, Intercom, and Slack, all in one. You'll use the `fusionauth-example-5-minute-guide` Node.js app as the base to start from. If you have not worked through [that guide](https://fusionauth.io/docs/v1/tech/getting-started/5-minute-docker) and have the code available, please do so before continuing.
+Your Javascript code will act as PiedPiper, Intercom, and Slack, all in one. You'll use the `fusionauth-example-5-minute-guide` Node.js app as the base to start from. If you have not worked through [that guide](https://fusionauth.io/docs/v1/tech/getting-started/5-minute-docker) and have the code available, please do so before continuing.
 
 - Set the `CLIENT_ID` and `CLIENT_SECRET` in your `.env` file to the values you recorded for the new PiedPiper Application in this [section](#create-piedpiper-application).
 - Note in the `package.json` file that the `@fusionauth/typescript-client` library is available for use. This is what will be calling the FusionAuth API to create Action instances.
@@ -475,10 +481,10 @@ Below the line `app.use('/', indexRouter);` add the following.
 
 ```js
 app.post('/intercom', function(req, res) {
-    console.log('Incoming Request to Intercom:');
-    console.log(req.body);
-    console.log('');
-    res.sendStatus(200);
+  console.log('Incoming Request to Intercom:');
+  console.log(req.body);
+  console.log('');
+  res.sendStatus(200);
 });
 ```
 
@@ -487,10 +493,10 @@ Now make a similar API to mock Slack by adding the following paragraph below the
 
 ```js
 app.post('/slack', function(req, res) {
-    console.log('Incoming Request to Slack:');
-    console.log(req.body);
-    console.log('');
-    res.sendStatus(200);
+  console.log('Incoming Request to Slack:');
+  console.log(req.body);
+  console.log('');
+  res.sendStatus(200);
 });
 ```
 
@@ -501,32 +507,93 @@ The final piece of code you'll add to `app.js` is a little more complex. The `ex
 
 ```js
 app.post('/expire', function(req, res) {
-    console.log('Incoming Request to PiedPiper Expiry:');
-    console.log(req.body);
-    console.log('');
-    TODO call action preventlogin
-    res.sendStatus(200);
+  console.log('Incoming Request to PiedPiper Expiry:');
+  console.log(req.body);
+  console.log('');
+  TODO call action preventlogin
+  res.sendStatus(200);
 });
 ```
 
-### Create Mock Email Service
-
 ## Testing
+You've finished all the configuration. In this last section you'll see how Actions work by applying them and watching the emails and webhooks get triggered.
+
+### Create Mock Email Service
+Open a new terminal window and start a mock email service through which FusionAuth can send emails.
+
+```bash
+npm install maildev &&
+npx maildev;
+```
+
+Leave this running until you have finished testing. If you want to see what the emails look like you can browse to http://localhost:1080/, but they will also display in the terminal.
 
 ### Start PiedPiper
-Start the PiedPiper Node.js app by typing in the console.
+Start the PiedPiper Node.js app by typing in another terminal.
 
 ```bash
 npm run start
 ```
 
-### Call Subscription Action
+### Apply Subscription Action
+Let's start by applying the subscription Action to the user. In reality, your app would do this in code once the user has paid, but for now we'll do it in a new terminal.
+
+In the following code you need to replace the values of `actioneeUserId` and `actionerUserId` with the values you recorded earlier for the reader and administrator users.
+
+You also aren't going to wait a month for the subscription to expire. Copy the **Milliseconds** value from the [FusionAuth Date-Time tool](https://fusionauth.io/dev-tools/date-time), add `30000` (30 seconds) to it, and paste it into the expiry field below. This will ensure the subscription action expires immediately.
+
+<!--
+for testing use this command:
+echo $(($(date +%s) * 1000 + 30000))
+-->
+
+
+```bash
+curl -i --location --request POST 'http://localhost:9011/api/user/action' \
+  --header 'Authorization: FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+  "broadcast": true,
+  "action": {
+    "actioneeUserId": "223515c6-6be5-4027-ac4f-4ebdcded2af9",
+    "actionerUserId": "a1b4962f-0480-437c-9bb1-856fa2acabed",
+    "comment": "Paid for the news",
+    "emailUser": true,
+    "expiry": 1690205462000,
+    "userActionId": "38bf18dd-6cbc-453d-a438-ddafe0daa1b0"
+  }
+ }'
+```
+
+You should receive a response that looks like the following.
+
+```json
+{
+  "action":
+  {
+    "actioneeUserId":"223515c6-6be5-4027-ac4f-4ebdcded2af9",
+    "actionerUserId":"a1b4962f-0480-437c-9bb1-856fa2acabed",
+    "applicationIds":[],
+    "comment":"Paid for the news",
+    "emailUserOnEnd":true,
+    "endEventSent":false,
+    "expiry":1690204666927,
+    "id":"ad07e697-1583-4c2e-922e-8038945b3c09",
+    "insertInstant":1690204662349,
+    "localizedName":"Subscribe",
+    "name":"Subscribe",
+    "notifyUserOnEnd":false,
+    "userActionId":"38bf18dd-6cbc-453d-a438-ddafe0daa1b"
+  }
+}
+```
+
 ### Check Welcome and Expiry Emails Arrive
 ### Check Intercom Is Called
 Show example of what webhook would look like when received
 
 ### Check PreventLogin Action Was Created
-### Call Survey Action
+### Apply Survey Action
 ### Check Slack Is Called
 ### Check Negative Survey Response Was Sent to Slack
 ### Retrieve All Survey Action Instances for This User
