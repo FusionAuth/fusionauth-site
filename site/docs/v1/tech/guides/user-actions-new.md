@@ -29,6 +29,7 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
     - [Create Reasons](#create-reasons)
     - [Create Signup Webhook to Intercom](#create-signup-webhook-to-intercom)
     - [Create Expiry Webhook to PiedPiper](#create-expiry-webhook-to-piedpiper)
+    - [Enable Webhooks in Tenants](#enable-webhooks-in-tenants)
     - [Create Subscription Action](#create-subscription-action)
     - [Create Preventlogin Action](#create-preventlogin-action)
   - [Survey Work](#survey-work)
@@ -346,7 +347,7 @@ Now create two Reasons for applying Actions to the subscriber. Remember that Rea
 - **Save**
 
 #### Create Signup Webhook to Intercom
-Since Actions rely on calling Webhooks, you're going to create the webhook first. Your first webhook will notify _Intercom.com_ that a new user has subscribed, and should be sent the onboarding series of emails that explain how to use all the paid features of PiedPiper. All our webhooks in this tutorial are sent to fake localhost versions of these real companies.
+Since your Actions will rely on calling Webhooks, you're going to create the webhooks first. Your first webhook will notify _Intercom_ that a new user has subscribed, and should be sent the onboarding series of emails that explain how to use all the paid features of PiedPiper. All our webhooks in this tutorial are sent to fake localhost versions of these real companies.
 
 - **Settings** — **Webhooks**
 - **Add**
@@ -354,11 +355,6 @@ Since Actions rely on calling Webhooks, you're going to create the webhook first
   - **URL** — `http://localhost:3000/intercom`
   - Scroll down and ensure that the **user.action** event is enabled.
 - **Save**
-- Navigate to **Tenants**
-- **Edit** the `Default` tenant.
-  - **Webhooks**
-  - Scroll down and enable **user.action**.
-  - **Save**
 
 #### Create Expiry Webhook to PiedPiper
 The next webhook calls PiedPiper to notify it once the user's subscription expires.
@@ -370,7 +366,18 @@ The next webhook calls PiedPiper to notify it once the user's subscription expir
   - Scroll down and ensure that the **user.action** event is enabled.
 - **Save**
 
+#### Enable Webhooks in Tenants
+- Navigate to **Tenants**
+- **Edit** the `Default` tenant.
+  - **Webhooks**
+  - (Note that the two webhooks you just created are enabled in the checkbox list.)
+  - Scroll down and enable **user.action**.
+  - **Save**
+
 #### Create Subscription Action
+You're now ready to create the actual subscription and banning Actions that we'll apply to the user in our PiedPiper code.
+
+
 
 #### Create Preventlogin Action
 
