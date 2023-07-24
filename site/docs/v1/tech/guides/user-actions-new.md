@@ -538,15 +538,16 @@ npm run start
 ### Apply Subscription Action
 Let's start by applying the subscription Action to the user. In reality, your app would do this in code once the user has paid, but for now we'll do it in a new terminal.
 
+> If you are using Windows you'll need to install `curl`
+
 In the following code you need to replace the values of `actioneeUserId` and `actionerUserId` with the values you recorded earlier for the reader and administrator users.
 
-You also aren't going to wait a month for the subscription to expire. Copy the **Milliseconds** value from the [FusionAuth Date-Time tool](https://fusionauth.io/dev-tools/date-time), add `30000` (30 seconds) to it, and paste it into the expiry field below. This will ensure the subscription action expires immediately.
+You also aren't going to wait a month for the subscription to expire. From the [FusionAuth Date-Time tool](https://fusionauth.io/dev-tools/date-time) copy the **Milliseconds** value, add `30000` (30 seconds) to it, and paste it into the expiry field below. This will ensure the subscription action expires immediately.
 
 <!--
 for testing use this command:
 echo $(($(date +%s) * 1000 + 30000))
 -->
-
 
 ```bash
 curl -i --location --request POST 'http://localhost:9011/api/user/action' \
