@@ -576,3 +576,103 @@ Here's a link to an example kickstart: https://github.com/FusionAuth/fusionauth-
 
 You'll need to change the redirect URLs at a minimum.
 
+
+
+
+
+
+
+# Video/Audio Recording Guidelines
+Here are some suggestions, tips and tricks to improve your recordings.
+
+## Audio
+__Room audio reflections__ can be difficult. Echo reflections get picked up by your microphone and will be irritating to the listener, therefore we should try to avoid empty rooms or big flat surfaces like sitting next to a big glas window (if you have curtains, good! close them.) 
+
+It may sound paradox but the more chaos you have in your room the better it is for your audio recording, of corse there is a professional solution for that by using `Audio absorber panels` in your room but they tend to be realy expensive.
+
+### Microphones
+A good mic reduced the efforts in post-productin and increases the quality for your audience.
+
+#### Professional microphones
+* Try to use a proper microphone like podcast or studio microphones with a popfilter (little round net thingy) if possible.
+* Try to be close to the microphone 1-2 inches (2-5cm) away with your mouth and speak directly into it, specialy if you have a popfilter.
+
+#### Headsets
+* Some headsets are OK but most of them e specially cheep or old `business headsets` sound unnatural or even have low bitrate, both we want to avoid.
+* If you use a headset with a cable, make sure to not hit the cable while moving your arms or other bodyparts, it may create unwanted knocks on your microphone, also the cable should not be under tention to make this less likely.
+
+#### Notebook microphones
+Do not use your built-in microphones, they never sound good, alone by the fact that they are too far away from your mouth, byside of picking up all sorts of noise like from your fan, keyboard and so on. they may work for video conferences but for highquality recordings they are an absolut no-go.
+
+#### Audio Recording Level
+* Try to not peak over 0db, most recording sofwares have color-indicators for your audio level, try to stay in the green/yellow area, if it goes to red its broken. An audio signal thats over 0db is taking damage that is very hard or almost impossible to fix afterwards in post-production.
+
+
+### Screen
+Use a 16:9 standard aspect ratio like `FullHD` or above on your Monitor.
+
+| Width | Height | Name    |
+|:-----|:-------|:--------|
+| 1920 | 1080   | Full HD |
+| 2560 | 1440   | QHD     |
+| 3200 | 1800   | QHD+    |
+| 3840 | 2160   | 4K UHD  |
+| 5120 | 2880   | 5K      |
+| 7680 | 4320   | 8K UHD  |
+
+### Browser
+* __Use a clean browser.__ Create a new `Browser Profile` for your recording session.  
+Try to avoid any unrelated bookmarks or history entrys, also have your browser updated to the latest build.
+
+
+* Use your browser in `Fullscreen Mode` when ever possible.
+
+
+#### Navigating
+
+
+* You can use `Browser Tabs` and switch between them by using the following shortcuts:  
+__Firefox/Chrome__ `Ctrl+Tab or Ctrl+PageUp/Down` or in __Safari__ `Shift + Command + left or right`
+
+
+* Sometimes you need more then one window, on __macOS__ you can put all window in fullscreen and use `pinch close` / `pinch open` to switch between them, on __Windows__ you may use `alt + tab`.
+
+
+* Some operating systems also support multiple desktops or workspaces where you can switch between.
+
+
+
+## Good practice
+
+* __Avoid distractions__ like overloaded taskbars or update notifications.
+
+
+* __Minimize the amount of motion__  
+  Use your mouse if needed try to avoid unnecessary movement and scrolling.
+
+* Turn off notifications like using "focus mode" on macOS
+
++ __Embrance silence:__ you don't need to speak all the time, go slow, take breaks between parts.
+* The system should not be under heavy load while recording, using too many VM's in combination with cheep audio hardware can be problematic and lead to unwanted noise.
+
+* Using visible clicks, one circle per click with a black color.
+
+### Mistakes durring recording
+
+#### Calp your hands
+If you make a mistake durring recording e.g. missspoken or clicked the wrong screen, clap your hands and do it again, then it will be very simple to cut out that part as you even see the peak on the audio level and nobody will ever notice.
+
+#### Note the current Timestamp
+Alternativly take your time, notice the timestamp where you are, and just start again, this is the other variant how you will find the part do cut out, if you are not cutting it yourself, provide those timestamps to your cutter.
+
+
+## Open questions
+ * What exact container format should be used and what codec with what settings so everything will be streamlined and look and feel the same.
+ * Fusionauth has diffrent `Intros` which of them should be added when? I think the first recording should be without an intro so it can be added later.
+ * What screenrecording sofware should be used and with what settings?
+
+
+
+
+
+
