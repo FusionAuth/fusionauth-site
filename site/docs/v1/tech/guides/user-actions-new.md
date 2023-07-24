@@ -42,6 +42,7 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
   - [Create PiedPiper API to Listen for Expiry and Call PreventLogin Action](#create-piedpiper-api-to-listen-for-expiry-and-call-preventlogin-action)
   - [Create Mock Email Service](#create-mock-email-service)
 - [Testing](#testing)
+  - [Start PiedPiper](#start-piedpiper)
   - [Call Subscription Action](#call-subscription-action)
   - [Check Welcome and Expiry Emails Arrive](#check-welcome-and-expiry-emails-arrive)
   - [Check Intercom Is Called](#check-intercom-is-called)
@@ -342,15 +343,26 @@ Now create two Reasons for applying Actions to the subscriber. Remember that Rea
 - **Save**
 
 #### Create Signup Webhook to Intercom
+Since Actions rely on calling Webhooks, you're going to create the webhook first. Your first webhook will notify _Intercom.com_ that a new user has subscribed, and should be sent the onboarding series of emails that explain how to use all the paid features of PiedPiper. All our webhooks in this tutorial are sent to fake localhost versions of these real companies.
 
-
+- **Settings** — **Webhooks**
+- **Add**
+  - **Id** — `365e4959-0d8e-493d-b427-04626d416bb5`
+  - **Text** — `Paid Subscription`
+  - **Code** — `PS`
+- **Save**
+- **Add**
+  - **Id** — `28b0dd40-3a65-48ae-8eb3-4d63d253180a`
+  - **Text** — `Expired Subscription`
+  - **Code** — `ES`
+- **Save**
   - **** — ``
   - **** — ``
   - **** — ``
   - **** — ``
   - **** — ``
 
-Show example of what webhook would look like when received and link to the webhook event documentation
+> More information on webhooks is available [here](https://fusionauth.io/docs/v1/tech/events-webhooks/#overview).
 
 #### Create Subscription Action
 
@@ -386,14 +398,67 @@ This final email template thanks the user for completing the survey.
 ## PiedPiper Work
 ### Install Node.js
 ### Create App Folder with Typescript Client Library
+
 ### Create Mock Intercom API
+In the `fusionauth-example-5-minute-guide` Node.js app, open `app.js`.
+You'll add a new route that pretends to be Intercom and will listen for new subscribers to start their onboarding process. In this tutorial the API will just print the webhook to the console so you can see what it looks like.
+
+Below the line `app.use('/', indexRouter);` add the following.
+
+```js
+app.post('/intercom', function(req, res) {
+    console.log('Incoming Request to Intercom:');
+    console.log(req.body);
+    console.log('');
+    res.sendStatus(200);
+});
+```
+
+The five minute guide app will act as our PiedPiper website, Intercom, and Slack, all in one.
+
 ### Create Mock Slack API
+Now make a similar API to mock Slack by adding the following paragraph below the one above.
+
+```js
+app.post('/slack', function(req, res) {
+    console.log('Incoming Request to Slack:');
+    console.log(req.body);
+    console.log('');
+    res.sendStatus(200);
+});
+```
+
+This will be called by FusionAuth in a webhook only if the user's survey response Option was `Negative`. In this case administrators monitoring PiedPiper on Slack can immediately contact the user to help them.
+
 ### Create PiedPiper API to Listen for Expiry and Call PreventLogin Action
+The final piece of code you'll add to `app.js` is a little more complex. The `expire` route below is called by FusionAuth when the user's subscription Action instance ends. To ban the user from logging in after this time PiedPiper applies the `preventLogin` Action to the user by calling FusionAuth's API.
+
+```js
+app.post('/expire', function(req, res) {
+    console.log('Incoming Request to PiedPiper Expiry:');
+    console.log(req.body);
+    console.log('');
+    TODO call action preventlogin
+    res.sendStatus(200);
+});
+```
+
 ### Create Mock Email Service
+
 ## Testing
+
+### Start PiedPiper
+Start the PiedPiper Node.js app by typing in the console.
+
+```bash
+npm run start
+```
+
 ### Call Subscription Action
 ### Check Welcome and Expiry Emails Arrive
 ### Check Intercom Is Called
+Show example of what webhook would look like when received
+
 ### Check PreventLogin Action Was Created
 ### Call Survey Action
 ### Check Slack Is Called
