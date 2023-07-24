@@ -101,14 +101,14 @@ There are two main types of Actions: temporal Actions and instantaneous Actions 
 
 You might be wondering why you cannot create a temporal Action that also has Options available. Unfortunately that isn't possible currently in FusionAuth.
 
-> FusionAuth's primary purpose is to simplify authentication (verifying a user's identity) and authorization (giving your app a user's roles). Actions are an additional feature that you might want to use in your app. Think of them as a premade way for you to store extra user fields in FusionAuth instead of your own database, at a specified time, and notify people or systems if these fields change. But FusionAuth has no way to receive payments, and no automated subscription features. So you need to decide carefully if you want to write the code you need to manage such features in FusionAuth using Actions, or in your own app with custom code, or using an external system that specializes in that process, if your needs are complex.
-
 The general process to use an Action is to
 - create the Action in the FusionAuth website,
 - create any Reasons that you might want to link to the Action instance on the website,
 - apply the Action to a User using the User Action API, possibly giving it an expiry date.
 
 You'll see some detailed examples of this process later in this guide.
+
+> FusionAuth's primary purpose is to simplify authentication (verifying a user's identity) and authorization (giving your app a user's roles). Actions are an additional feature that you might want to use in your app. Think of them as a premade way for you to store extra user fields in FusionAuth instead of your own database, at a specified time, and notify people or systems if these fields change. But FusionAuth has no way to receive payments, and no automated subscription features. So you need to decide carefully if you want to write the code you need to manage such features in FusionAuth using Actions, or in your own app with custom code, or using an external system that specializes in that process, if your needs are complex.
 
 ### Temporal Actions
 Temporal action instances have four states they can be in. Each state can trigger a webhook or an email to the user.
@@ -314,6 +314,7 @@ First create two email templates, one for an email sent to the user when they su
 
 - **Customizations** — **Email Templates** — **Add**
 - Enter the values:
+  - **Id** — `ae080fe4-5650-484f-807b-c692e218353d`
   - **Name** — `Welcome`
   - **Default Subject** — `Welcome`
   - **HTML Template** — **Default HTML** —
@@ -324,6 +325,7 @@ First create two email templates, one for an email sent to the user when they su
 #### Create Expiry Email Template
 - **Customizations** — **Email Templates** — **Add**
 - Enter the values:
+  - **Id** — `1671beff-78ed-420d-9e13-46b4d7d5c00d`
   - **Name** — `Goodbye`
   - **Default Subject** — `Goodbye`
   - **HTML Template** — **Default HTML** —
@@ -375,31 +377,48 @@ The next webhook calls PiedPiper to notify it once the user's subscription expir
   - **Save**
 
 #### Create Subscription Action
-You're now ready to create the actual subscription and banning Actions that we'll apply to the user in our PiedPiper code.
+You're now ready to create the actual subscription and banning Actions that we'll apply to the user in our PiedPiper code. They're both temporal actions.
 
+> You'll continue using the FusionAuth website to create objects in this tutorial. If you think it would be faster in future create Actions in code, see this previous [guide](https://fusionauth.io/blog/2023/04/20/using-user-actions#creating-the-user-action) demonstrating it in the terminal.
 
+- **Settings** — **User Actions**
+- **Add**
+  - **Id** — `38bf18dd-6cbc-453d-a438-ddafe0daa1b0`
+  - **Name** — `Subscribe`
+  - **Time-based** — **Enable**
+  - **Email** tab
+    - **Email user** — **Enable**
+    - **Send to Webhook** — **Enable**
+    - **Start template** — `Welcome`
+    - **Modify template** — `Goodbye`
+    - **Cancel template** — `Goodbye`
+    - **End template** — `Goodbye`
+- **Save**
+
+Note that our workflow never modifies nor cancels a user subscription, and these emails will never be sent. Nevertheless, FusionAuth requires a template to be chosen for every possibility if you enable **Email user**.
 
 #### Create Preventlogin Action
+This next Action will prevent the User from logging in after the subscription expires.
 
+- **Settings** — **User Actions**
+- **Add**
+  - **Id** — `b96a0548-e87c-42dd-887c-31294ca10c8b`
+  - **Name** — `Ban`
+  - **Time-based** — **Enable**
+  - **Prevent login** — **Enable**
+- **Save**
 
-
-  - **** — ``
-  - **** — ``
-  - **** — ``
-  - **** — ``
-  - **** — ``
-
-You can create an Action on the website at **Settings** — **User Actions**.
-<!-- ![Creating an Action on the website](../../../../assets/img/docs/guides/user-actions/user-actions-edit-email.png) -->
-But to apply an Action to a User you cannot use the website. It can be done only using the APIs.
-
+This Action will not email or notify anyone. That was handled earlier.
 
 ### Survey Work
+You have now completed the FusionAuth work needed to manage subscriptions. Now you'll do similar work for the survey, but using Options Actions instead of temporal Actions.
+
 #### Create Thanks Email Template
-This final email template thanks the user for completing the survey.
+The final email template you'll create thanks the user for completing the survey.
 
 - **Customizations** — **Email Templates** — **Add**
 - Enter the values:
+  - **Id** — `9006bb3c-b13b-4238-b858-d7a97e054a8d`
   - **Name** — `Thanks`
   - **Default Subject** — `Thanks`
   - **HTML Template** — **Default HTML** —
@@ -407,7 +426,40 @@ This final email template thanks the user for completing the survey.
   - **Text Template** — **Default Text** — Add the same text as the HTML.
 
 #### Create Survey Webhook to Slack
+- **Settings** — **Webhooks**
+- **Add**
+  - **Id** — `d86e097a-f23f-459b-80c5-8b47bae182ee`
+  - **URL** — `http://localhost:3000/slack`
+  - Scroll down and ensure that the **user.action** event is enabled.
+- **Save**
+
 #### Create Survey Actions with Options with Localizations
+In this last Action you are going to add Options that represent the response the user had to the survey. You are also going to add a translation (localization) to each Option so that administrators on Slack who don't speak English can understand the response.
+
+- **Settings** — **User Actions**
+- **Add**
+  - **Id** — `8e6d80df-74bb-4cb8-9caa-c9a2dafc6e57`
+  - **Name** — `Survey`
+  - Leave all temporal, email, and notification settings disabled
+  - **Options** — **Add option**
+    - **Name** — `Good`
+    - **Add localization**
+    - **Locale** — **Esperanto**
+    - **Text** — `Bona`
+    - **Submit**
+  - **Add option**
+    - **Name** — `Neutral`
+    - **Add localization**
+    - **Locale** — **Esperanto**
+    - **Text** — `Meza`
+    - **Submit**
+  - **Add option**
+    - **Name** — `Bad`
+    - **Add localization**
+    - **Locale** — **Esperanto**
+    - **Text** — `Malbona`
+    - **Submit**
+- **Save**
 
 ## PiedPiper Work
 You'll now write the Javascript code to act as PiedPiper, Intercom, and Slack, all in one. You'll use the `fusionauth-example-5-minute-guide` Node.js app as the base to start from. If you have not worked through [that guide](https://fusionauth.io/docs/v1/tech/getting-started/5-minute-docker) and have the code available, please do so before continuing.
@@ -483,9 +535,8 @@ Show example of what webhook would look like when received
 
 ## Todos
 - screenshots
-- diagrams
-- what does the json that gets sent to a webhook look like
+- how do we know which action triggers which webhook?? there's no link to configure. does every action trigger every webhook?
 - add sections from last user actions doc
 - review the fusionauth stylesheet readme in this repo
-
-TODO - what does Dan mean? "but note that the email template is pulled based on the users preferred email"
+- use chatgpt to format adoc/jekyll/fusion/plant/liquid
+- what does Dan mean? "but note that the email template is pulled based on the users preferred email"
