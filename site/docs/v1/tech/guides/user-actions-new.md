@@ -26,14 +26,14 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
   - [Subscription Work](#subscription-work)
     - [Create Welcome Email Template](#create-welcome-email-template)
     - [Create Expiry Email Template](#create-expiry-email-template)
-    - [Create Expired Reason](#create-expired-reason)
-    - [Create Preventlogin Action](#create-preventlogin-action)
+    - [Create Reasons](#create-reasons)
     - [Create Signup Webhook to Intercom](#create-signup-webhook-to-intercom)
     - [Create Subscription Action](#create-subscription-action)
+    - [Create Preventlogin Action](#create-preventlogin-action)
   - [Survey Work](#survey-work)
+    - [Create Thanks Email Template](#create-thanks-email-template)
     - [Create Survey Webhook to Slack](#create-survey-webhook-to-slack)
-    - [Create Survey Actions with Options](#create-survey-actions-with-options)
-    - [Create Localization for Options](#create-localization-for-options)
+    - [Create Survey Actions with Options with Localizations](#create-survey-actions-with-options-with-localizations)
 - [PiedPiper Work](#piedpiper-work)
   - [Install Node.js](#install-nodejs)
   - [Create App Folder with Typescript Client Library](#create-app-folder-with-typescript-client-library)
@@ -47,6 +47,7 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
   - [Check Intercom Is Called](#check-intercom-is-called)
   - [Check PreventLogin Action Was Created](#check-preventlogin-action-was-created)
   - [Call Survey Action](#call-survey-action)
+  - [Check Slack Is Called](#check-slack-is-called)
   - [Check Negative Survey Response Was Sent to Slack](#check-negative-survey-response-was-sent-to-slack)
   - [Retrieve All Survey Action Instances for This User](#retrieve-all-survey-action-instances-for-this-user)
 - [Further reading](#further-reading)
@@ -199,7 +200,7 @@ These are used when applying an Action to a User, possibly with a Reason.
 ## Starting the PiedPiper Newspaper Company
 You are now going to create the subscription and survey examples described earlier, for a paid newspaper website called _PiedPiper_.
 
-The subscription Action will email the user and trigger a webhook to Intercom. Expiry will email again, and trigger a webhook to PiedPiper to create a `preventLogin` Action. The survey Action will trigger a webhook to Slack.
+The subscription Action will email the user and trigger a webhook to Intercom. When the Action instance expires, FusionAuth will email the user goodbye, and trigger a webhook to PiedPiper to create a `preventLogin` Action. The survey Action will trigger a webhook to Slack.
 
 Below is a diagram of this process.
 
@@ -269,6 +270,11 @@ This guide assumes you have installed FusionAuth by following the [5 minute gett
 - **Add registration**
   - **Application** — `PiedPiper`
   - **Roles** — `admin`
+  - **Save**
+- **Add registration**
+  - **Application** — `FusionAuth`
+  - **Roles** — `GlobalAdmin`
+  - **Save**
 - **Save**
 
 ### Create an Subscriber User (Actionee)
@@ -287,7 +293,7 @@ This guide assumes you have installed FusionAuth by following the [5 minute gett
 ### Create an API key
 You now have an Application with two Users.
 
-In order to apply Actions using the API we need to create an API Key. In reality you should grant as few privileges to a Key as possible, but to save time in this long tutorial you'll make this key a skeleton key. For more information on keys, see their [documentation](https://fusionauth.io/docs/v1/tech/apis/authentication#managing-api-keys).
+In order to apply Actions using the API we need to create an API Key. In reality to be secure, you should grant as few privileges to a Key as possible. This is called the principle of least privilege. But to save time in this long tutorial you'll make this a skeleton key. For more information on keys, see their [documentation](https://fusionauth.io/docs/v1/tech/apis/authentication#managing-api-keys).
 
 - **Settings** — **API Keys** — **Add**
 - **Id** - `cbf34b5f-cb45-4c97-9b7c-5fda3ad8f08c`
@@ -296,42 +302,87 @@ In order to apply Actions using the API we need to create an API Key. In reality
 - **Save**
 
 ### Subscription Work
-The following steps will create all the parts need to handle subscriptions.
+The following steps will create the parts needed to handle subscriptions.
 
 #### Create Welcome Email Template
-You now create two email templates, one for an email sent to the user when they subscribe, and one for when their subscription ends.
+First create two email templates, one for an email sent to the user when they subscribe, and one for when their subscription ends. More information on email templates is available [here](https://fusionauth.io/docs/v1/tech/email-templates/email-templates#overview). (The templates in this tutorial do not use variables, such as the user's name, but you should in reality.)
 
-TODO
-
-Set up sending a thank you email to the user when their interaction has been recorded.
-
-An Email Template for Actions can be created in the FusionAuth website at **Customizations** - **Email Templates**.
-
-but note that the email template is pulled based on the users preferred email
-
-  - **** — ``
-  - **** — ``
-  - **** — ``
-  - **** — ``
-  - **** — ``
+- **Customizations** — **Email Templates** — **Add**
+- Enter the values:
+  - **Name** — `Welcome`
+  - **Default Subject** — `Welcome`
+  - **HTML Template** — **Default HTML** —
+    - `Welcome to PiedPiper. Your subscription is valid for one month of reading.`
+  - **Text Template** — **Default Text** — Add the same text as the HTML.
+- **Save**
 
 #### Create Expiry Email Template
-#### Create Expired Reason
-#### Create Preventlogin Action
+- **Customizations** — **Email Templates** — **Add**
+- Enter the values:
+  - **Name** — `Goodbye`
+  - **Default Subject** — `Goodbye`
+  - **HTML Template** — **Default HTML** —
+    - `Your subscription has expired and you may no longer read the news. Goodbye.`
+  - **Text Template** — **Default Text** — Add the same text as the HTML.
+- **Save**
 
-You can create an Action on the website at **Settings** — **User Actions**.
-![Creating an Action on the website](../../../../assets/img/docs/guides/user-actions/user-actions-edit-email.png)
-But to apply an Action to a User you cannot use the website. It can be done only using the APIs.
+#### Create Reasons
+Now create two Reasons for applying Actions to the subscriber. Remember that Reasons are optional. They are most useful in reality when a single Action could have multiple Reasons, such as a subscription given as a free trial, competition win, part of a bundle, or for normal payment.
+
+- **Settings** — **User Actions** — **Reasons**
+- **Add**
+  - **Id** — `ae080fe4-5650-484f-807b-c692e218353d`
+  - **Text** — `Paid Subscription`
+  - **Code** — `PS`
+- **Save**
+- **Add**
+  - **Id** — `28b0dd40-3a65-48ae-8eb3-4d63d253180a`
+  - **Text** — `Expired Subscription`
+  - **Code** — `ES`
+- **Save**
 
 #### Create Signup Webhook to Intercom
+
+
+  - **** — ``
+  - **** — ``
+  - **** — ``
+  - **** — ``
+  - **** — ``
 
 Show example of what webhook would look like when received and link to the webhook event documentation
 
 #### Create Subscription Action
+
+#### Create Preventlogin Action
+
+
+
+  - **** — ``
+  - **** — ``
+  - **** — ``
+  - **** — ``
+  - **** — ``
+
+You can create an Action on the website at **Settings** — **User Actions**.
+<!-- ![Creating an Action on the website](../../../../assets/img/docs/guides/user-actions/user-actions-edit-email.png) -->
+But to apply an Action to a User you cannot use the website. It can be done only using the APIs.
+
+
 ### Survey Work
+#### Create Thanks Email Template
+This final email template thanks the user for completing the survey.
+
+- **Customizations** — **Email Templates** — **Add**
+- Enter the values:
+  - **Name** — `Thanks`
+  - **Default Subject** — `Thanks`
+  - **HTML Template** — **Default HTML** —
+    - `Thank you for your survey feedback. It helps us improve. If your experience was negative we'll contact you shortly.`
+  - **Text Template** — **Default Text** — Add the same text as the HTML.
+
 #### Create Survey Webhook to Slack
-#### Create Survey Actions with Options
-#### Create Localization for Options
+#### Create Survey Actions with Options with Localizations
 ## PiedPiper Work
 ### Install Node.js
 ### Create App Folder with Typescript Client Library
@@ -345,6 +396,7 @@ Show example of what webhook would look like when received and link to the webho
 ### Check Intercom Is Called
 ### Check PreventLogin Action Was Created
 ### Call Survey Action
+### Check Slack Is Called
 ### Check Negative Survey Response Was Sent to Slack
 ### Retrieve All Survey Action Instances for This User
 
@@ -357,36 +409,4 @@ Show example of what webhook would look like when received and link to the webho
 - add sections from last user actions doc
 - review the fusionauth stylesheet readme in this repo
 
-Below is a summary of the steps you'll be completing.
-- FusionAuth work:
-  - Install FusionAuth
-  - Create PiedPiper Application
-  - Create administrative User (actioner)
-  - Create subscriber User (actionee)
-  - Create API key
-  - Subscription work:
-    - Create welcome email template
-    - Create expiry email template
-    - Create expired Reason
-    - Create preventlogin Action
-    - Create signup webhook to Intercom
-    - Create subscription Action
-  - Survey work:
-    - Create survey webhook to Slack
-    - Create survey Actions with options
-    - Create localization for options
-- PiedPiper work:
-  - Install Node.js
-  - Create app folder with Typescript client library
-  - Create mock Intercom API
-  - Create mock Slack API
-  - Create PiedPiper API to listen for expiry and call preventLogin Action
-  - Create mock email service
-- Testing:
-  - Call subscription Action
-  - Check welcome and expiry emails arrive
-  - Check Intercom is called
-  - Check preventLogin Action was created
-  - Call survey Action
-  - Check negative survey response was sent to Slack
-  - Retrieve all survey Action instances for this User
+TODO - what does Dan mean? "but note that the email template is pulled based on the users preferred email"
