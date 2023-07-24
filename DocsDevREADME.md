@@ -577,36 +577,44 @@ Here's a link to an example kickstart: https://github.com/FusionAuth/fusionauth-
 You'll need to change the redirect URLs at a minimum.
 
 
-
-
-
-
-
 # Video/Audio Recording Guidelines
-Here are some suggestions, tips and tricks to improve your recordings.
+Suggestions, tips and tricks to improve recordings and increase re-usability of content.
 
 ## Audio
+A clean audio recording from the start is key as in post-production it is almost impossible to fix. These are a few areas to improve the quality.
+
+### Room
 __Room audio reflections__ can be difficult. Echo reflections get picked up by your microphone and will be irritating to the listener, therefore we should try to avoid empty rooms or big flat surfaces like sitting next to a big glas window (if you have curtains, good! close them.) 
 
-It may sound paradox but the more chaos you have in your room the better it is for your audio recording, of corse there is a professional solution for that by using `Audio absorber panels` in your room but they tend to be realy expensive.
+It may sound paradox but the more clutter you have in your room the better it is for your audio recording. There is a professional solution for that by using `Audio absorber panels` in your room but they tend to be really expensive.
 
 ### Microphones
-A good mic reduced the efforts in post-productin and increases the quality for your audience.
+A good mic reduces also the efforts in post-production and increases the quality for your audience.
 
 #### Professional microphones
-* Try to use a proper microphone like podcast or studio microphones with a popfilter (little round net thingy) if possible.
-* Try to be close to the microphone 1-2 inches (2-5cm) away with your mouth and speak directly into it, specialy if you have a popfilter.
+Try to use a proper microphone like podcast or studio microphones with a popfilter (little round net) if possible.
+Try to be close to the microphone 1-2 inches (2-5cm) away with your mouth and speak directly into it, especially if you have a popfilter.
 
 #### Headsets
-* Some headsets are OK but most of them e specially cheep or old `business headsets` sound unnatural or even have low bitrate, both we want to avoid.
-* If you use a headset with a cable, make sure to not hit the cable while moving your arms or other bodyparts, it may create unwanted knocks on your microphone, also the cable should not be under tention to make this less likely.
+Some headsets are OK but most of them e specially cheep or old `business headsets` sound unnatural or even have low bitrate, both we want to avoid.
+If you use a headset with a cable, make sure to not hit the cable while moving your arms or generally other movements, it may create unwanted knocks on your microphone. Also the cable should not be under tension to less likely transfer noise to the microphone.
 
 #### Notebook microphones
-Do not use your built-in microphones, they never sound good, alone by the fact that they are too far away from your mouth, byside of picking up all sorts of noise like from your fan, keyboard and so on. they may work for video conferences but for highquality recordings they are an absolut no-go.
+Do not use your built-in microphones, they never sound good, alone by the fact that they are too far away from your mouth. Byside of that, picking up all sorts of noise like from your fan, keyboard and so on. They may work well for video conferences but for high-quality recordings they are an absolut no-go.
 
-#### Audio Recording Level
-* Try to not peak over 0db, most recording sofwares have color-indicators for your audio level, try to stay in the green/yellow area, if it goes to red its broken. An audio signal thats over 0db is taking damage that is very hard or almost impossible to fix afterwards in post-production.
+### Audio Recording Level
+Try to not peak over 0db, most recording software have color-indicators for your audio level, try to stay in the yellow area, but dont go into red. An audio signal that's over 0db is getting distorted which is very hard to impossible to fix afterwards in post-production.
 
+### Fixing Audio
+There are some simple fixes which can be done in post-production e.g. remove certain parts, level volume, apply filters. But what goes beyond that needs to be fixed by either by:
+
+* Re-Record the part of the video.
+* Record a voice over which replaces the original audio.
+
+Generally, fixing Audio in post is more time-consuming.
+
+## Video
+For a high-quality video we recommend to follow the following points.
 
 ### Screen
 Use a 16:9 standard aspect ratio like `FullHD` or above on your Monitor.
@@ -620,51 +628,50 @@ Use a 16:9 standard aspect ratio like `FullHD` or above on your Monitor.
 | 5120 | 2880   | 5K      |
 | 7680 | 4320   | 8K UHD  |
 
+### Desktop
+The desktop can be a mayor distraction from what you actually want to show, and because of that:
+* Keep your desktop clean.
+* Keep your dock / task bar clean.
+* Close everything you dont need.
+
+Alternatively use a separate user profile for recording.
+
 ### Browser
-* __Use a clean browser.__ Create a new `Browser Profile` for your recording session.  
-Try to avoid any unrelated bookmarks or history entrys, also have your browser updated to the latest build.
-
-
+The browser itself can be as well a mayor distraction from what you actually want to show, and because of that:
+* __Use a clean browser.__ Create a new `Browser Profile` for your recording session. 
+* Try to avoid any unrelated bookmarks, extensions or history entries.
+* Have your browser updated to the latest build.
 * Use your browser in `Fullscreen Mode` when ever possible.
-
+* Adjust the zoom level to have as little empty space but still have everything visible.
+* Less is more, only show whats relevant. 
 
 #### Navigating
+Navigate only when you have to. And to minimize the amount of mouse movement you can instead navigate in the following ways:
+* You can use `Browser Tabs` and switch between them by using the following shortcuts:  __Firefox/Chrome__ `Ctrl+Tab or Ctrl+PageUp/Down` or in __Safari__ `Shift + Command + left or right`
+* Sometimes you need more then one window, on __macOS__ you can put all window in fullscreen and use `three finger drag right` / `three finger drag left` to switch between them, on __Windows__ you may use `alt + tab` 
+* Or enable multi desktop on __Windows 11__ and enable `three finger drag` to switch between desktops.
+* Other advanced navigation would be to zoom in at areas of interest by e.g. `pinch close` / `pinch open` in __Chrome Browser__.
 
-
-* You can use `Browser Tabs` and switch between them by using the following shortcuts:  
-__Firefox/Chrome__ `Ctrl+Tab or Ctrl+PageUp/Down` or in __Safari__ `Shift + Command + left or right`
-
-
-* Sometimes you need more then one window, on __macOS__ you can put all window in fullscreen and use `pinch close` / `pinch open` to switch between them, on __Windows__ you may use `alt + tab`.
-
-
-* Some operating systems also support multiple desktops or workspaces where you can switch between.
-
-
-
-## Good practice
-
-* __Avoid distractions__ like overloaded taskbars or update notifications.
-
-
-* __Minimize the amount of motion__  
-  Use your mouse if needed try to avoid unnecessary movement and scrolling.
-
+## Best Practices
+For a good recording follow these general best practices:
+* Create a story board with what you want to show.
+* To increase overall flow and quality, record your dry runs and watch them.
+* Take your time, there is always the way to speed up, but it is difficult to slow down.
+* __Avoid distractions__ like overloaded taskbars or notifications.
+* __Minimize the amount of motion.__ Use your mouse if needed try to avoid unnecessary movement and scrolling.
 * Turn off notifications like using "focus mode" on macOS
-
-+ __Embrance silence:__ you don't need to speak all the time, go slow, take breaks between parts.
+* __Embrance silence:__ you don't need to speak all the time, take breaks between parts.
 * The system should not be under heavy load while recording, using too many VM's in combination with cheep audio hardware can be problematic and lead to unwanted noise.
-
 * Using visible clicks, one circle per click with a black color.
 
 ### Mistakes durring recording
+Mistakes happen, if you make a mistake durring recording e.g. miss-spoken or clicked the wrong screen.
 
 #### Calp your hands
-If you make a mistake durring recording e.g. missspoken or clicked the wrong screen, clap your hands and do it again, then it will be very simple to cut out that part as you even see the peak on the audio level and nobody will ever notice.
+Breath, clap your hands in front of the microphone and do it again. This will be very simple to cut as you can see the audio peak on the recording and nobody will ever notice.
 
 #### Note the current Timestamp
-Alternativly take your time, notice the timestamp where you are, and just start again, this is the other variant how you will find the part do cut out, if you are not cutting it yourself, provide those timestamps to your cutter.
-
+Alternatively take your time, note the timestamp of the recording time, and just start again. This is how someone else will find the part do cut, if you are not cutting it yourself.
 
 ## Open questions
  * What exact container format should be used and what codec with what settings so everything will be streamlined and look and feel the same.
