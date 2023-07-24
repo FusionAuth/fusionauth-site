@@ -565,7 +565,7 @@ curl -i --location --request POST 'http://localhost:9011/api/user/action' \
  }'
 ```
 
-You should receive a response that looks like the following.
+You should receive a 200 status code and a response that looks like the following.
 
 ```json
 {
@@ -587,6 +587,8 @@ You should receive a response that looks like the following.
   }
 }
 ```
+
+TODO setup email in system settings and check why it, nor webhooks, are being triggered
 
 ### Check Welcome and Expiry Emails Arrive
 ### Check Intercom Is Called
