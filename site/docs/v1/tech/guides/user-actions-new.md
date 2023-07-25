@@ -45,14 +45,13 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
 - [Testing](#testing)
   - [Start PiedPiper](#start-piedpiper)
   - [Apply Subscription Action](#apply-subscription-action)
+  - [Examine the Webhook Calls](#examine-the-webhook-calls)
   - [Check Welcome and Expiry Emails Arrive](#check-welcome-and-expiry-emails-arrive)
-  - [Check Intercom Is Called](#check-intercom-is-called)
   - [Check PreventLogin Action Was Created](#check-preventlogin-action-was-created)
   - [Apply Survey Action](#apply-survey-action)
   - [Check Slack Is Called](#check-slack-is-called)
   - [Check Negative Survey Response Was Sent to Slack](#check-negative-survey-response-was-sent-to-slack)
   - [Retrieve All Survey Action Instances for This User](#retrieve-all-survey-action-instances-for-this-user)
-- [Further reading](#further-reading)
 - [Todos](#todos)
 
 ## PART 1 - THEORY OF FUSIONAUTH ACTIONS
@@ -569,16 +568,13 @@ npm run start
 ### Apply Subscription Action
 Let's start testing by applying the subscription Action to the user. In reality, your app would do this in code once the user has paid, but for now we'll do it in a new terminal.
 
-> If you are using Windows you'll need to install `curl`
+> If you're on Windows you'll need to install `curl`.
 
 In the following code you need to replace the values of `actioneeUserId` and `actionerUserId` with the values you recorded earlier for the reader and administrator users.
 
-You also aren't going to wait a month for the subscription to expire. From the [FusionAuth Date-Time tool](https://fusionauth.io/dev-tools/date-time) copy the **Milliseconds** value, add `30000` (30 seconds) to it, and paste it into the expiry field below. This will ensure the subscription action expires immediately.
+You need not wait a month for the subscription to expire. From the [FusionAuth Date-Time tool](https://fusionauth.io/dev-tools/date-time) copy the **Milliseconds** value, add `60000` (60 seconds) to it, and paste it into the expiry field below. This will ensure the subscription action expires immediately. If you're on Linux, using this command is easier: `echo $(($(date +%s) * 1000 + 60000))`.
 
-<!--
-for testing use this command:
-echo $(($(date +%s) * 1000 + 30000))
--->
+TODO add user reason below
 
 ```bash
 curl -i --location --request POST 'http://localhost:9011/api/user/action' \
@@ -620,11 +616,36 @@ You should receive a 200 status code and a response that looks like the followin
 }
 ```
 
-TODO setup email in system settings and check why it, nor webhooks, are being triggered
+### Examine the Webhook Calls
+Open the terminal that the Node.js PiedPiper web app is running in. It has displayed the webhooks it received. You might expect to see only one at first, for the subscription webhook sent to Intercom. But at this time FusionAuth has no way of configuring an Action to trigger only one specific Webhook — instead every Action triggers every Webhook. You'll thus need to filter the JSON arriving at your webhook targets by `action` to decide whether to use it or not.
+
+Below is an example of the JSON sent.
+
+```json
+event: {
+    action: 'Subscribe',
+    actionId: '32754f74-d92c-4829-ab8b-704825baf1ef',
+    actioneeUserId: '9af67e9a-8332-4c06-971c-463b6710c340',
+    actionerUserId: 'ac2f073d-c063-4a7b-ab76-812f44ed7f55',
+    applicationIds: [],
+    comment: 'Paid for the news',
+    createInstant: 1690282558415,
+    emailedUser: true,
+    expiry: 1690282574000,
+    id: '5dba9944-ce71-4ce0-b18f-c44723e7394b',
+    info: { ipAddress: '172.28.0.1' },
+    localizedAction: 'Subscribe',
+    localizedDuration: '15 seconds',
+    notifyUser: false,
+    phase: 'start',
+    tenantId: '8891ecad-ae5c-3d5d-1f4e-3e95f8583b78',
+    type: 'user.action'
+  }
+```
+
+Check that at least two specific webhooks have been sent — one for the Subscribe Action to Intercom, and one for the Expiry Action to PiedPiper.
 
 ### Check Welcome and Expiry Emails Arrive
-### Check Intercom Is Called
-Show example of what webhook would look like when received
 
 ### Check PreventLogin Action Was Created
 ### Apply Survey Action
@@ -632,11 +653,8 @@ Show example of what webhook would look like when received
 ### Check Negative Survey Response Was Sent to Slack
 ### Retrieve All Survey Action Instances for This User
 
-## Further reading
-
 ## Todos
 - screenshots
-- how do we know which action triggers which webhook?? there's no link to configure. does every action trigger every webhook?
 - add sections from last user actions doc
 - review the fusionauth stylesheet readme in this repo
 - use chatgpt to format adoc/jekyll/fusion/plant/liquid
