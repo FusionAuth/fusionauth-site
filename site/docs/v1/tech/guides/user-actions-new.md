@@ -247,6 +247,12 @@ The first task is to configure a mock SMTP service for FusionAuth to send mail t
 
 Configuring email depends on if you are running FusionAuth through Docker or directly on your local machine. Both options are given below and both use _maildev_ — a Node.js mock SMTP server.
 
+You need to use Docker version 18 or greater on Mac or Windows. Version 20 is needed on Linux to support `host.docker.internal`.
+
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
 #### Option 1 — Docker
 - Open the `docker-compose.yml` file for FusionAuth and overwrite it with the following text. This will add a maildev service, and give it a network linked to FusionAuth.
     ```dockerfile
