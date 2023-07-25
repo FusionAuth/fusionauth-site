@@ -26,6 +26,7 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
   - [Subscription Work](#subscription-work)
     - [Create Welcome Email Template](#create-welcome-email-template)
     - [Create Expiry Email Template](#create-expiry-email-template)
+    - [Configure email server](#configure-email-server)
     - [Create Reasons](#create-reasons)
     - [Create Signup Webhook to Intercom](#create-signup-webhook-to-intercom)
     - [Create Expiry Webhook to PiedPiper](#create-expiry-webhook-to-piedpiper)
@@ -42,6 +43,8 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
   - [Create PiedPiper API to Listen for Expiry and Call PreventLogin Action](#create-piedpiper-api-to-listen-for-expiry-and-call-preventlogin-action)
 - [Testing](#testing)
   - [Create Mock Email Service](#create-mock-email-service)
+    - [Option 1 — Docker](#option-1--docker)
+    - [Option 2 — Local machine](#option-2--local-machine)
   - [Start PiedPiper](#start-piedpiper)
   - [Apply Subscription Action](#apply-subscription-action)
   - [Check Welcome and Expiry Emails Arrive](#check-welcome-and-expiry-emails-arrive)
@@ -335,6 +338,13 @@ First create two email templates, one for an email sent to the user when they su
   - **Text Template** — **Default Text** — Add the same text as the HTML.
 - **Save**
 
+#### Configure email server
+You're going to use a mock SMTP server.
+- **Tenants** — **Edit** `Default`
+- **Email** tab — Set the following values.
+  - **Port** — `1025`
+
+
 #### Create Reasons
 Now create two Reasons for applying Actions to the subscriber. Remember that Reasons are optional. They are most useful in reality when a single Action could have multiple Reasons, such as a subscription given as a free trial, competition win, part of a bundle, or for normal payment.
 
@@ -516,17 +526,36 @@ app.post('/expire', function(req, res) {
 ```
 
 ## Testing
-You've finished all the configuration. In this last section you'll see how Actions work by applying them and watching the emails and webhooks get triggered.
+In this last section you'll see how Actions work by applying them and watching the emails and webhooks get triggered. There is one final piece of configuration to be done first - configuring a mock SMTP service for FusionAuth to send mail through.
 
 ### Create Mock Email Service
-Open a new terminal window and start a mock email service through which FusionAuth can send emails.
+The way to configure this depends on if you are running FusionAuth through Docker or directly on your local machine. Both options are given below and both use _maildev_ — a Node.js mock SMTP server.
 
-```bash
-npm install maildev &&
-npx maildev;
-```
+#### Option 1 — Docker
+- Open the `docker-compose.yml` file for FusionAuth.
+- Inside the `services:` section add the maildev section.
+    ```dockerfile
+    maildev:
+        image: maildev/maildev:latest
+        ports:
+        - 1025:25
+        networks:
+        - fusionauth_net
+        restart: unless-stopped
+    ```
+- Now run the following code in a new terminal in your Fusionauth folder to restart it with mail capabilities.
+    ```bash
+    docker-compose down && docker-compose up
+    ```
 
-Leave this running until you have finished testing. If you want to see what the emails look like you can browse to http://localhost:1080/, but they will also display in the terminal.
+#### Option 2 — Local machine
+- Open a new terminal window. It doesn't matter where, but your test application folder is a neat place.
+    ```bash
+    npm install maildev &&
+    npx maildev -v;
+    ```
+- Leave it running until you have finished this tutorial.
+- You also need to go into FusionAuth — **Tenants** — **Edit** `Default` — **Email** tab and change the port to `1025`, to match _maildev_ and **Save**.
 
 ### Start PiedPiper
 Start the PiedPiper Node.js app by typing in another terminal.
