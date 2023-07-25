@@ -593,7 +593,7 @@ app.post('/expire', async function(req, res) {
 In this last section you'll see how Actions work by applying them and watching the emails and webhooks get triggered.
 
 ### Start PiedPiper
-Start the PiedPiper Node.js app by typing in a terminal.
+Run the PiedPiper Node.js app by typing in a terminal.
 
 ```bash
 npm run start
@@ -679,7 +679,7 @@ curl -i --location --request DELETE 'http://localhost:9011/api/user/action/3cc31
 ```
 
 ### Examine the Webhook Calls
-Open the terminal that the Node.js PiedPiper web app is running in. It has displayed the webhooks it received. You might expect to see only one at first, for the subscription webhook sent to Intercom. But at this time FusionAuth has no way of configuring an Action to trigger only one specific Webhook — instead every Action triggers every Webhook. You'll thus need to filter the JSON arriving at your webhook targets by `action`, `reason`, and `phase` to decide whether to use it or not.
+Open the terminal that the Node.js PiedPiper app is running in. It has displayed the webhooks it received. You might expect to see only one at first, for the subscription webhook sent to Intercom. But at this time FusionAuth has no way of configuring an Action to trigger only one specific Webhook — instead every Action triggers every Webhook. You'll thus need to filter the JSON arriving at your webhook targets by `action`, `reason`, and `phase` to decide whether to use it or not.
 
 Below is an example of the JSON sent to webhooks.
 
@@ -711,7 +711,7 @@ Check that at least two specific webhooks have been sent — one for the Subscri
 Check that welcome and goodbye email arrived in the maildev browser window. If you can't see them, go back into FusionAuth's Tenant email settings and verify that you're using port `1025` and host `host.docker.internal`.
 
 ### Check PreventLogin Action Was Created
-After a minute has passed more webhooks should fire and the terminal should display `User banned successfully`. This means that PiedPiper received the expired subscription webhook, test for `(req.body.event.action == 'Subscribe' && req.body.event.phase == 'end')`, and applied the `Ban` Action to the user.
+After a minute has passed more webhooks should fire and the terminal should display `User banned successfully`. This means that PiedPiper received the expired subscription webhook, tested for `(req.body.event.action == 'Subscribe' && req.body.event.phase == 'end')`, and applied the `Ban` Action to the user.
 
 To test that it indeed worked, try to log in to FusionAuth with the user `reader@example.com`. You should be prohibited.
 
