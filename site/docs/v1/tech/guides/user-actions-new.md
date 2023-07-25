@@ -19,7 +19,7 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
   - [Action Instance Parameters](#action-instance-parameters)
 - [Starting the PiedPiper Newspaper Company](#starting-the-piedpiper-newspaper-company)
 - [FusionAuth Work](#fusionauth-work)
-  - [Create Mock Email Service](#create-mock-email-service)
+  - [Create a Mock Email Service](#create-a-mock-email-service)
     - [Configuring localhost access on Docker](#configuring-localhost-access-on-docker)
   - [Create PiedPiper Application](#create-piedpiper-application)
   - [Create an Administrative User (Actioner)](#create-an-administrative-user-actioner)
@@ -241,7 +241,7 @@ This guide assumes you have installed FusionAuth by following the [5 minute gett
 
 > You can't use the [online FusionAuth sandbox](https://sandbox.fusionauth.io/admin) for this tutorial because you need to point the webhooks and emails to fake localhost services.
 
-### Create Mock Email Service
+### Create a Mock Email Service
 The first task is to configure email for FusionAuth. You'll use _maildev_ — a Node.js mock SMTP server.
 
 - Open a new terminal window. It doesn't matter where, but your test application folder is a neat place.
@@ -402,7 +402,7 @@ Since your Actions will rely on calling Webhooks, you're going to create the web
 - **Settings** — **Webhooks**
 - **Add**
   - **Id** — `55934340-3c92-410a-b361-40fb324ed412`
-  - **URL** — `http://localhost:3000/intercom`
+  - **URL** — `http://host.docker.internal:3000/intercom`
   - Scroll down and ensure that the **user.action** event is enabled.
 - **Save**
 
@@ -414,7 +414,7 @@ The next webhook calls PiedPiper to notify it once the user's subscription expir
 - **Settings** — **Webhooks**
 - **Add**
   - **Id** — `fa76b458-e0a0-438a-a5c8-26ca487e473e`
-  - **URL** — `http://localhost:3000/expire`
+  - **URL** — `http://host.docker.internal:3000/expire`
   - Scroll down and ensure that the **user.action** event is enabled.
 - **Save**
 
@@ -481,7 +481,7 @@ The final email template you'll create thanks the user for completing the survey
 - **Settings** — **Webhooks**
 - **Add**
   - **Id** — `d86e097a-f23f-459b-80c5-8b47bae182ee`
-  - **URL** — `http://localhost:3000/slack`
+  - **URL** — `http://host.docker.internal:3000/slack`
   - Scroll down and ensure that the **user.action** event is enabled.
 - **Save**
 
