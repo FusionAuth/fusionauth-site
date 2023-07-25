@@ -75,7 +75,7 @@ At its most simple, an Action is just a name, and an Action instance comprises: 
 * Actionee — The user on whom Action is taken.
 * Actioner — The user that applies the Action. Every Action has to have an Actioner, even if the instance is automatically applied, in which case the Actioner can be set to the Application's administrator.
 * Reason — A text description of why an Action was taken. You don't have to set a Reason when applying an Action, but it's useful for auditing and filtering Actions sent to webhooks.
-* Webhook — A webhook is another name for sending a single HTTP request to an API. It's used to inform an external system of some event, and can be triggered by an Action. An example is FusionAuth calling a customer-support service, like _Intercom.com_, to start the customer onboarding process when the user has verified their email in FusionAuth. Another example would be posting a message to a _Slack.com_ channel whenever a new customer signs up. Webhooks can be managed in FusionAuth at *Settings* — *Webhooks* and can be triggered by Actions.
+* Webhook — A webhook is another name for sending a single HTTP request to an API. It's used to inform an external system of some event, and can be triggered by an Action. An example is FusionAuth calling a customer-support service, like _Intercom.com_, to start the customer onboarding process when the user has verified their email in FusionAuth. Another example would be posting a message to a _Slack.com_ channel whenever a new customer signs up.
 +
 The webhook/API terminology can be confusing. Note that most web companies, including FusionAuth, call a trigger to _send_ data a _webhook_, but when they _receive_ data they call it an _API_. So if you're looking for a destination for a FusionAuth webhook in an external system, you won't find it under their webhook documentation; you'll find it under API documentation. This is why they are sometimes known as a _reverse API_. However, some companies, like _Slack_ in their documentation, also call incoming requests "incoming webhooks".
 * Temporal Actions — Temporal, or time-based, Actions have a duration, as opposed to instantaneous Actions, which have only a start time. Once a temporal Action expires, meaning that it ends automatically as opposed to being cancelled, it will no longer be considered active and will not affect the user. However, you can apply a temporal Action to a user indefinitely by setting a very distant end date. An Action that prevents login must be temporal.
@@ -129,9 +129,9 @@ Temporal action instances have four states they can be in. Each state can trigge
 
 Let's take a temporal Action example where a user purchases a month's subscription to a newspaper website that you manage. Assume you have already created a temporal Action named "Subscription" in FusionAuth. Once the user has made their purchase (either on your newspaper site or through some payment gateway) your code will call the FusionAuth API to apply the Action to the User, and give the Action instance an end-date one month from now. The user will now have access to read the newspaper when authenticated on your site with FusionAuth.
 
-The creation of this Action instance will be the *Started* event shown above. You can set it to trigger the welcome email template that is sent to the user, and a webhook that sends the user's information to another subscription site you manage. That site could then use that email address to advertise to the user, or for targeting Facebook adverts.
+The creation of this Action instance will be the [field]#Started# event shown above. You can set it to trigger the welcome email template that is sent to the user, and a webhook that sends the user's information to another subscription site you manage. That site could then use that email address to advertise to the user, or for targeting Facebook adverts.
 
-Once the Action instance expires (the *Ended* event) it will trigger a goodbye email to the user, and any webhooks that you configured. To prevent the user accessing your site after this date you could either
+Once the Action instance expires (the [field]#Ended# event) it will trigger a goodbye email to the user, and any webhooks that you configured. To prevent the user accessing your site after this date you could either
 
 * check the subscription state of the Action for the User in FusionAuth from your site's code when the user attempts to log in,
 * use a webhook at the end of the Action to change the User's Role in FusionAuth and disallow that role in your site,
@@ -240,7 +240,10 @@ ____
 The first task is to configure email for FusionAuth. You'll use _maildev_ — a Node.js mock SMTP server.
 
 * Open a new terminal window. It doesn't matter where, but your test application folder is a neat place.
-`+bash     npm install maildev &&     npx maildev -v;+`
+[source,shell]
+----
+npm install maildev && npx maildev -v;
+----
 * Leave it running until you have finished this tutorial. Run other commands in a different terminal.
 * Browse to http://localhost:1080/ so that you can see emails arrive as we test Actions.
 
@@ -261,36 +264,36 @@ This is the end of the Docker subsection. Continue below.
 
 '''''
 
-* Browse to FusionAuth — *Tenants* — *Edit* `+Default+`
-* *Email* tab and enter the values
-** *Host* — `+host.docker.internal+`
-** *Port* — `+1025+`
-* *Send test email* should now work and arrive in the maildev website.
-* *Save*
+* Browse to FusionAuth — [field]#Tenants# — [field]#Edit# `+Default+`
+* [field]#Email# tab and enter the values
+** [field]#Host# — `+host.docker.internal+`
+** [field]#Port# — `+1025+`
+* [field]#Send test email# should now work and arrive in the maildev website.
+* [field]#Save#
 
 TODO INSERT SCREENSHOT
 
 === Create PiedPiper Application
 
 * Continue on the FusionAuth website and perform the following steps.
-* *Applications* — *Add*
+* [field]#Applications# — [field]#Add#
 * Enter the values:
-** *Id* — `+e26304d6-0f93-4648-bbb0-8840d016847d+`
-** *Name* — `+PiedPiper+`
-** *Add Role*
-*** *Name* — `+admin+`
-*** *Super Role* — enable
-** *Add Role*
-*** *Name* — `+customer+`
-* Switch to the *OAuth* tab
-* Add the following *Authorized redirect URLs*
+** [field]#Id# — `+e26304d6-0f93-4648-bbb0-8840d016847d+`
+** [field]#Name# — `+PiedPiper+`
+** [field]#Add Role#
+*** [field]#Name# — `+admin+`
+*** [field]#Super Role# — enable
+** [field]#Add Role#
+*** [field]#Name# — `+customer+`
+* Switch to the [field]#OAuth# tab
+* Add the following [field]#Authorized redirect URLs#
 ** `+http://localhost:3000/oauth-redirect+`
 ** Note that you have to enter the text, wait for a popup to appear, then click it to confirm the entry.
-* Add the following *Logout URL*
+* Add the following [field]#Logout URL#
 ** http://localhost:3000/logout
 ** You do not need to click a popup here as the field can take only one value.
-* Record the *Client secret* value for later use.
-* *Save* the new Application
+* Record the [field]#Client secret# value for later use.
+* [field]#Save# the new Application
 
 ____
 In general you can leave the Ids of new objects in FusionAuth blank to have them autogenerated, but you'll need to know their values to call them in the API in this tutorial.
@@ -300,39 +303,39 @@ TODO INSERT SCREENSHOT
 
 === Create an Administrative User (Actioner)
 
-* *Users* — *Add*
+* [field]#Users# — [field]#Add#
 * Enter the values:
-** *Email* — `+admin@example.com+`
-** *Send email to set up password* — Disable
-** *Password* — `+password+`
-** *Confirm* — `+password+`
-* *Save*
-* *Add registration*
-** *Application* — `+PiedPiper+`
-** *Roles* — `+admin+`
-** *Save*
-* *Add registration*
-** *Application* — `+FusionAuth+`
-** *Roles* — `+GlobalAdmin+`
-** *Save*
-* *Save the user*
+** [field]#Email# — `+admin@example.com+`
+** [field]#Send email to set up password# — Disable
+** [field]#Password# — `+password+`
+** [field]#Confirm# — `+password+`
+* [field]#Save#
+* [field]#Add registration#
+** [field]#Application# — `+PiedPiper+`
+** [field]#Roles# — `+admin+`
+** [field]#Save#
+* [field]#Add registration#
+** [field]#Application# — `+FusionAuth+`
+** [field]#Roles# — `+GlobalAdmin+`
+** [field]#Save#
+* [field]#Save the user#
 
 TODO INSERT SCREENSHOT
 
 === Create a Subscriber User (Actionee)
 
-* *Users* — *Add*
+* [field]#Users# — [field]#Add#
 * Enter the values:
-** *Email* — `+reader@example.com+`
-** *Send email to set up password* — Disable
-** *Password* — `+password+`
-** *Confirm* — `+password+`
-** *Languages* — `+esperanto+` (Note that you have to enter the text, wait for a popup to appear, then click it to confirm the entry.)
-* *Save*
-* *Add registration*
-** *Application* — `+PiedPiper+`
-** *Roles* — `+customer+`
-* *Save*
+** [field]#Email# — `+reader@example.com+`
+** [field]#Send email to set up password# — Disable
+** [field]#Password# — `+password+`
+** [field]#Confirm# — `+password+`
+** [field]#Languages# — `+esperanto+` (Note that you have to enter the text, wait for a popup to appear, then click it to confirm the entry.)
+* [field]#Save#
+* [field]#Add registration#
+** [field]#Application# — `+PiedPiper+`
+** [field]#Roles# — `+customer+`
+* [field]#Save#
 
 Return to both the users you just created and record their user Ids for use later. Unfortunately you cannot specify them when creating the users.
 
@@ -342,11 +345,11 @@ You now have an Application with two Users.
 
 In order to apply Actions using the API we need to create an API Key. In reality to be secure, you should grant as few privileges to a Key as possible. This is called the principle of least privilege. But to save time in this long tutorial you'll make a skeleton key.
 
-* *Settings* — *API Keys* — *Add*
-* *Id* — `+cbf34b5f-cb45-4c97-9b7c-5fda3ad8f08c+`
-* *Key* — `+FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh+`
+* [field]#Settings# — [field]#API Keys# — [field]#Add#
+* [field]#Id# — `+cbf34b5f-cb45-4c97-9b7c-5fda3ad8f08c+`
+* [field]#Key# — `+FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh+`
 * (Leave all endpoints disabled to give the key super access.)
-* *Save*
+* [field]#Save#
 
 ____
 More information on keys is available https://fusionauth.io/docs/v1/tech/apis/authentication#managing-api-keys[here].
@@ -362,29 +365,29 @@ The following steps will create the parts needed to handle subscriptions.
 
 First create two email templates, one for an email sent to the user when they subscribe, and one for when their subscription ends. (The templates in this tutorial do not use variables, such as the user's name, but you should in reality.)
 
-* *Customizations* — *Email Templates* — *Add*
+* [field]#Customizations# — [field]#Email Templates# — [field]#Add#
 * Enter the values:
-** *Id* — `+ae080fe4-5650-484f-807b-c692e218353d+`
-** *Name* — `+Welcome+`
-** *Default Subject* — `+Welcome+`
-** *HTML Template* — *Default HTML* —
+** [field]#Id# — `+ae080fe4-5650-484f-807b-c692e218353d+`
+** [field]#Name# — `+Welcome+`
+** [field]#Default Subject# — `+Welcome+`
+** [field]#HTML Template# — [field]#Default HTML# —
 *** `+Welcome to PiedPiper. Your subscription is valid for one month of reading.+`
-** *Text Template* — *Default Text* — Add the same text as the HTML.
-* *Save*
+** [field]#Text Template# — [field]#Default Text# — Add the same text as the HTML.
+* [field]#Save#
 
 TODO INSERT SCREENSHOT
 
 ==== Create Expiry Email Template
 
-* *Customizations* — *Email Templates* — *Add*
+* [field]#Customizations# — [field]#Email Templates[field]# — [field]#Add#
 * Enter the values:
-** *Id* — `+1671beff-78ed-420d-9e13-46b4d7d5c00d+`
-** *Name* — `+Goodbye+`
-** *Default Subject* — `+Goodbye+`
-** *HTML Template* — *Default HTML* —
+** [field]#Id# — `+1671beff-78ed-420d-9e13-46b4d7d5c00d+`
+** [field]#Name# — `+Goodbye+`
+** [field]#Default Subject# — `+Goodbye+`
+** [field]#HTML Template# — [field]#Default HTML# —
 *** `+Your subscription has expired and you may no longer read the news. Goodbye.+`
-** *Text Template* — *Default Text* — Add the same text as the HTML.
-* *Save*
+** [field]#Text Template# — [field]#Default Text# — Add the same text as the HTML.
+* [field]#Save#
 
 ____
 More information on email templates is available https://fusionauth.io/docs/v1/tech/email-templates/email-templates#overview[here].
@@ -394,17 +397,17 @@ ____
 
 Now create two Reasons for applying Actions to the subscriber. Remember that Reasons are optional. They are most useful in reality when a single Action could have multiple Reasons, such as a subscription given as a free trial, competition win, part of a bundle, or for normal payment.
 
-* *Settings* — *User Actions* — *Reasons*
-* *Add*
-** *Id* — `+ae080fe4-5650-484f-807b-c692e218353d+`
-** *Text* — `+Paid Subscription+`
-** *Code* — `+PS+`
-* *Save*
-* *Add*
-** *Id* — `+28b0dd40-3a65-48ae-8eb3-4d63d253180a+`
-** *Text* — `+Expired Subscription+`
-** *Code* — `+ES+`
-* *Save*
+* [field]#Settings# — [field]#User Actions[field]# — [field]#Reasons#
+* [field]#Add#
+** [field]#Id# — `+ae080fe4-5650-484f-807b-c692e218353d+`
+** [field]#Text# — `+Paid Subscription+`
+** [field]#Code# — `+PS+`
+* [field]#Save#
+* [field]#Add#
+** [field]#Id# — `+28b0dd40-3a65-48ae-8eb3-4d63d253180a+`
+** [field]#Text# — `+Expired Subscription+`
+** [field]#Code# — `+ES+`
+* [field]#Save#
 
 TODO INSERT SCREENSHOT
 
@@ -412,12 +415,12 @@ TODO INSERT SCREENSHOT
 
 Since your Actions will rely on calling Webhooks, you're going to create the webhooks first. Your first webhook will notify _Intercom_ that a new user has subscribed, and should be sent the onboarding series of emails that explain how to use all the paid features of PiedPiper. All our webhooks in this tutorial are sent to fake localhost versions of these real companies.
 
-* *Settings* — *Webhooks*
-* *Add*
-** *Id* — `+55934340-3c92-410a-b361-40fb324ed412+`
-** *URL* — `+http://host.docker.internal:3000/intercom+`
-** Scroll down and ensure that the *user.action* event is enabled.
-* *Save*
+* [field]#Settings# — [field]#Webhooks#
+* [field]#Add#
+** [field]#Id# — `+55934340-3c92-410a-b361-40fb324ed412+`
+** [field]#URL# — `+http://host.docker.internal:3000/intercom+`
+** Scroll down and ensure that the [field]#user.action# event is enabled.
+* [field]#Save#
 
 TODO INSERT SCREENSHOT
 
@@ -425,21 +428,21 @@ TODO INSERT SCREENSHOT
 
 The next webhook calls PiedPiper to notify it once the user's subscription expires.
 
-* *Settings* — *Webhooks*
-* *Add*
-** *Id* — `+fa76b458-e0a0-438a-a5c8-26ca487e473e+`
-** *URL* — `+http://host.docker.internal:3000/expire+`
-** Scroll down and ensure that the *user.action* event is enabled.
-* *Save*
+* [field]#Settings# — [field]#Webhooks#
+* [field]#Add#
+** [field]#Id# — `+fa76b458-e0a0-438a-a5c8-26ca487e473e+`
+** [field]#URL# — `+http://host.docker.internal:3000/expire+`
+** Scroll down and ensure that the [field]#user.action# event is enabled.
+* [field]#Save#
 
 ==== Enable Webhooks in Tenants
 
-* Navigate to *Tenants*
-* *Edit* the `+Default+` tenant.
-** *Webhooks* tab
+* Navigate to [field]#Tenants#
+* [field]#Edit# the `+Default+` tenant.
+** [field]#Webhooks# tab
 ** (Note that the two webhooks you just created are enabled in the checkbox list.)
-** Scroll down and enable *user.action*.
-** *Save*
+** Scroll down and enable [field]#user.action#.
+** [field]#Save#
 
 ____
 Enabling the webhooks in two places gives you fine-grained control across tenants. More information on webhooks is available https://fusionauth.io/docs/v1/tech/events-webhooks/#overview[here].
@@ -455,21 +458,21 @@ ____
 You'll continue using the FusionAuth website to create objects in this tutorial. If you think it would be faster in future create Actions in code, see this previous https://fusionauth.io/blog/2023/04/20/using-user-actions#creating-the-user-action[guide] demonstrating it in the terminal.
 ____
 
-* *Settings* — *User Actions*
-* *Add*
-** *Id* — `+38bf18dd-6cbc-453d-a438-ddafe0daa1b0+`
-** *Name* — `+Subscribe+`
-** *Time-based* — *Enable*
-** *Email* tab
-*** *Email user* — *Enable*
-*** *Send to Webhook* — *Enable*
-*** *Start template* — `+Welcome+`
-*** *Modify template* — `+Goodbye+`
-*** *Cancel template* — `+Goodbye+`
-*** *End template* — `+Goodbye+`
-* *Save*
+* [field]#Settings# — [field]#User Actions#
+* [field]#Add#
+** [field]#Id# — `+38bf18dd-6cbc-453d-a438-ddafe0daa1b0+`
+** [field]#Name# — `+Subscribe+`
+** [field]#Time-based# — [field]#Enable#
+** [field]#Email# tab
+*** [field]#Email user# — [field]#Enable#
+*** [field]#Send to Webhook# — [field]#Enable#
+*** [field]#Start template# — `+Welcome+`
+*** [field]#Modify template# — `+Goodbye+`
+*** [field]#Cancel template# — `+Goodbye+`
+*** [field]#End template# — `+Goodbye+`
+* [field]#Save#
 
-Note that our workflow never modifies nor cancels a user subscription, and these emails will never be sent. Nevertheless, FusionAuth requires a template to be chosen for every possibility if you enable *Email user*.
+Note that our workflow never modifies nor cancels a user subscription, and these emails will never be sent. Nevertheless, FusionAuth requires a template to be chosen for every possibility if you enable [field]#Email user#.
 
 TODO INSERT SCREENSHOT
 
@@ -477,13 +480,13 @@ TODO INSERT SCREENSHOT
 
 This next Action will prevent the User from logging in after the subscription expires.
 
-* *Settings* — *User Actions*
-* *Add*
-** *Id* — `+b96a0548-e87c-42dd-887c-31294ca10c8b+`
-** *Name* — `+Ban+`
-** *Time-based* — *Enable*
-** *Prevent login* — *Enable*
-* *Save*
+* [field]#Settings# — [field]#User Actions#
+* [field]#Add#
+** [field]#Id# — `+b96a0548-e87c-42dd-887c-31294ca10c8b+`
+** [field]#Name# — `+Ban+`
+** [field]#Time-based# — [field]#Enable#
+** [field]#Prevent login# — [field]#Enable#
+* [field]#Save#
 
 This Action will not email or notify anyone. That was handled earlier.
 
@@ -495,53 +498,53 @@ You have completed the FusionAuth work needed to manage subscriptions. Now you'l
 
 The final email template you'll create thanks the user for completing the survey.
 
-* *Customizations* — *Email Templates* — *Add*
+* [field]#Customizations# — [field]#Email Templates# — [field]#Add#
 * Enter the values:
-** *Id* — `+9006bb3c-b13b-4238-b858-d7a97e054a8d+`
-** *Name* — `+Thanks+`
-** *Default Subject* — `+Thanks+`
-** *HTML Template* — *Default HTML* —
+** [field]#Id# — `+9006bb3c-b13b-4238-b858-d7a97e054a8d+`
+** [field]#Name# — `+Thanks+`
+** [field]#Default Subject# — `+Thanks+`
+** [field]#HTML Template# — [field]#Default HTML# —
 *** `+Thank you for your survey feedback. It helps us improve. If your experience was negative we'll contact you shortly.+`
-** *Text Template* — *Default Text* — Add the same text as the HTML.
-** *Save*
+** [field]#Text Template# — [field]#Default Text# — Add the same text as the HTML.
+** [field]#Save#
 
 ==== Create Survey Webhook to Slack
 
-* *Settings* — *Webhooks*
-* *Add*
-** *Id* — `+d86e097a-f23f-459b-80c5-8b47bae182ee+`
-** *URL* — `+http://host.docker.internal:3000/slack+`
-** Scroll down and ensure that the *user.action* event is enabled.
-* *Save*
+* [field]#Settings# — [field]#Webhooks#
+* [field]#Add#
+** [field]#Id# — `+d86e097a-f23f-459b-80c5-8b47bae182ee+`
+** [field]#URL# — `+http://host.docker.internal:3000/slack+`
+** Scroll down and ensure that the [field]#user.action# event is enabled.
+* [field]#Save#
 
 ==== Create Survey Action with Options with Localizations
 
 In this last Action you are going to add Options that represent the response the user had to the survey. You are also going to add a translation (localization) to each Option so that subscribers who don't speak English can respond in their own language.
 
-* *Settings* — *User Actions*
-* *Add*
-** *Id* — `+8e6d80df-74bb-4cb8-9caa-c9a2dafc6e57+`
-** *Name* — `+Survey+`
+* [field]#Settings# — [field]#User Actions#
+* [field]#Add#
+** [field]#Id# — `+8e6d80df-74bb-4cb8-9caa-c9a2dafc6e57+`
+** [field]#Name# — `+Survey+`
 ** Leave all temporal, email, and notification settings disabled
-** *Options* — *Add option*
-*** *Name* — `+Good+`
-*** *Add localization*
-*** *Locale* — *Esperanto*
-*** *Text* — `+Bona+`
-*** *Submit*
-** *Add option*
-*** *Name* — `+Neutral+`
-*** *Add localization*
-*** *Locale* — *Esperanto*
-*** *Text* — `+Meza+`
-*** *Submit*
-** *Add option*
-*** *Name* — `+Bad+`
-*** *Add localization*
-*** *Locale* — *Esperanto*
-*** *Text* — `+Malbona+`
-*** *Submit*
-* *Save*
+** [field]#Options# — [field]#Add option#
+*** [field]#Name# — `+Good+`
+*** [field]#Add localization#
+*** [field]#Locale# — [field]#Esperanto#
+*** [field]#Text# — `+Bona+`
+*** [field]#Submit#
+** [field]#Add option#
+*** [field]#Name# — `+Neutral+`
+*** [field]#Add localization#
+*** [field]#Locale# — [field]#Esperanto#
+*** [field]#Text# — `+Meza+`
+*** [field]#Submit#
+** [field]#Add option#
+*** [field]#Name# — `+Bad+`
+*** [field]#Add localization#
+*** [field]#Locale# — [field]#Esperanto#
+*** [field]#Text# — `+Malbona+`
+*** [field]#Submit#
+* [field]#Save#
 
 == PiedPiper Work
 
@@ -655,7 +658,7 @@ ____
 
 In the following code you need to replace the values of `+actioneeUserId+` and `+actionerUserId+` with the values you recorded earlier for the reader and administrator users.
 
-You need not wait a month for the subscription to expire. From the https://fusionauth.io/dev-tools/date-time[FusionAuth Date-Time tool] copy the *Milliseconds* value, add `+60000+` (60 seconds) to it, and paste it into the expiry field below. This will ensure the subscription action expires immediately. If you're on Linux it's much easier — you can use the command below this one instead, which sets the `+expiry+` value automatically.
+You need not wait a month for the subscription to expire. From the https://fusionauth.io/dev-tools/date-time[FusionAuth Date-Time tool] copy the [field]#Milliseconds# value, add `+60000+` (60 seconds) to it, and paste it into the expiry field below. This will ensure the subscription action expires immediately. If you're on Linux it's much easier — you can use the command below this one instead, which sets the `+expiry+` value automatically.
 
 Option 1: Set the expiry manually (remember to change the user Ids)
 
