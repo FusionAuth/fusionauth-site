@@ -517,6 +517,12 @@ Your Javascript code will act as PiedPiper, Intercom, and Slack, all in one. You
 In the `fusionauth-example-5-minute-guide` Node.js app, open `app.js`.
 You'll add a new route that pretends to be Intercom and will listen for new subscribers to start their onboarding process. In this tutorial the API will just print the webhook to the console so that you can see what it looks like.
 
+At the very top of the file add a reference to the API client.
+
+```js
+const client = require('@fusionauth/typescript-client');
+```
+
 Below the line `app.use('/', indexRouter);` add the following.
 
 ```js
@@ -546,13 +552,41 @@ Administrators monitoring PiedPiper on Slack can immediately contact the user to
 The final piece of code you'll add to `app.js` is a little more complex. The `expire` route below is called by FusionAuth when the user's subscription Action instance ends. To ban the user from logging in after this time PiedPiper applies the `preventLogin` Action to the user by calling FusionAuth's API.
 
 ```js
-app.post('/expire', function(req, res) {
+app.post('/expire', async function(req, res) {
   console.log('Incoming Request to PiedPiper Expiry:');
   console.log(req.body);
   console.log('');
-  TODO call action preventlogin
+  const json = JSON.parse(req.body);
+  if (json.event.action == 'Subscribe' && json.event.phase == 'end') {
+    try {
+      const actionRequest = {
+        action: {
+          actioneeUserId: json.actioneeUserId,
+          actionerUserId: json.actionerUserId,
+          applicationIds: ['e26304d6-0f93-4648-bbb0-8840d016847d'],
+          //comment?: string,
+          emailUser: false,
+          expiry: 9223372036854775807, // the end of time
+          notifyUser: false,
+          //option?: string,
+          reasonId: '28b0dd40-3a65-48ae-8eb3-4d63d253180a', // subscription expired reason
+          userActionId: 'b96a0548-e87c-42dd-887c-31294ca10c8b' //ban action
+        },
+        broadcast: false
+      };
+      const fusion = new client.FusionAuthClient('FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh', 'http://localhost:9011');
+      const clientResponse = await fusion.actionUser(request);
+      if (!clientResponse.wasSuccessful)
+        throw Error(clientResponse);
+      console.info('User banned successfully');
+    } catch (e) {
+      console.error('Error handling expiry: ');
+      console.dir(e, { depth: null });
+    }
+  }
   res.sendStatus(200);
 });
+
 ```
 
 ## Testing
@@ -574,8 +608,6 @@ In the following code you need to replace the values of `actioneeUserId` and `ac
 
 You need not wait a month for the subscription to expire. From the [FusionAuth Date-Time tool](https://fusionauth.io/dev-tools/date-time) copy the **Milliseconds** value, add `60000` (60 seconds) to it, and paste it into the expiry field below. This will ensure the subscription action expires immediately. If you're on Linux, using this command is easier: `echo $(($(date +%s) * 1000 + 60000))`.
 
-TODO add user reason below
-
 ```bash
 curl -i --location --request POST 'http://localhost:9011/api/user/action' \
   --header 'Authorization: FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh' \
@@ -583,12 +615,13 @@ curl -i --location --request POST 'http://localhost:9011/api/user/action' \
   --data-raw '{
   "broadcast": true,
   "action": {
-    "actioneeUserId": "223515c6-6be5-4027-ac4f-4ebdcded2af9",
-    "actionerUserId": "a1b4962f-0480-437c-9bb1-856fa2acabed",
+    "actioneeUserId": "9af67e9a-8332-4c06-971c-463b6710c340",
+    "actionerUserId": "ac2f073d-c063-4a7b-ab76-812f44ed7f55",
     "comment": "Paid for the news",
     "emailUser": true,
-    "expiry": 1690205462000,
-    "userActionId": "38bf18dd-6cbc-453d-a438-ddafe0daa1b0"
+    "expiry": 1690286790000,
+    "userActionId": "38bf18dd-6cbc-453d-a438-ddafe0daa1b0",
+    "reasonId": "ae080fe4-5650-484f-807b-c692e218353d"
   }
  }'
 ```
@@ -611,17 +644,20 @@ You should receive a 200 status code and a response that looks like the followin
     "localizedName":"Subscribe",
     "name":"Subscribe",
     "notifyUserOnEnd":false,
-    "userActionId":"38bf18dd-6cbc-453d-a438-ddafe0daa1b"
+    "userActionId":"38bf18dd-6cbc-453d-a438-ddafe0daa1b",
+    "reason":"Paid Subscription",
+    "localizedReason":"Paid Subscription",
+    "reasonCode":"PS"
   }
 }
 ```
 
 ### Examine the Webhook Calls
-Open the terminal that the Node.js PiedPiper web app is running in. It has displayed the webhooks it received. You might expect to see only one at first, for the subscription webhook sent to Intercom. But at this time FusionAuth has no way of configuring an Action to trigger only one specific Webhook — instead every Action triggers every Webhook. You'll thus need to filter the JSON arriving at your webhook targets by `action` to decide whether to use it or not.
+Open the terminal that the Node.js PiedPiper web app is running in. It has displayed the webhooks it received. You might expect to see only one at first, for the subscription webhook sent to Intercom. But at this time FusionAuth has no way of configuring an Action to trigger only one specific Webhook — instead every Action triggers every Webhook. You'll thus need to filter the JSON arriving at your webhook targets by `action`, `reason`, and `phase` to decide whether to use it or not.
 
-Below is an example of the JSON sent.
+Below is an example of the JSON sent to webhooks.
 
-```json
+```js
 event: {
     action: 'Subscribe',
     actionId: '32754f74-d92c-4829-ab8b-704825baf1ef',
@@ -646,16 +682,18 @@ event: {
 Check that at least two specific webhooks have been sent — one for the Subscribe Action to Intercom, and one for the Expiry Action to PiedPiper.
 
 ### Check Welcome and Expiry Emails Arrive
+Check that welcome and goodbye email arrived in the maildev browser window. If you can't see them, go back into FusionAuth's Tenant email settings and verify that you're using port `1025` and host `host.docker.internal`.
 
 ### Check PreventLogin Action Was Created
+
 ### Apply Survey Action
 ### Check Slack Is Called
 ### Check Negative Survey Response Was Sent to Slack
 ### Retrieve All Survey Action Instances for This User
 
 ## Todos
+- todo remove selectino webhook references hihger in the article becase htat's impossible
 - screenshots
 - add sections from last user actions doc
 - review the fusionauth stylesheet readme in this repo
 - use chatgpt to format adoc/jekyll/fusion/plant/liquid
-- what does Dan mean? "but note that the email template is pulled based on the users preferred email"
