@@ -51,22 +51,21 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
   - [Apply Survey Action](#apply-survey-action)
   - [Check Slack Is Called](#check-slack-is-called)
   - [Retrieve All Survey Action Instances for This User](#retrieve-all-survey-action-instances-for-this-user)
-- [Todos](#todos)
 
 ## PART 1 - THEORY OF FUSIONAUTH ACTIONS
 
 ## Definitions
 Below are the terms you'll encounter when working with Actions. They are listed in order of increasing understanding, not alphabetically.
 
-- Action — Can be created on FusionAuth at **Settings**—**User Actions**. An Action is a state or event that can be applied to User. It is reusable for many Users in many Applications. Actually applying Action to a specific User is called an Action instance. This is similar to programming, where you have classes (Actions) and objects (Action instances).
+- Action — An Action is a state or event that can be applied to User. It is reusable for many Users in many Applications. Actually applying Action to a specific User is called an Action instance. This is similar to programming, where you have classes (Actions) and objects (Action instances).
 
     At its most simple, an Action is just a name, and an Action instance comprises: one User applying the Action on another User, the time of the Action, and the name of the Action.
 - Actionee — The user on whom Action is taken.
 - Actioner — The user that applies the Action. Every Action has to have an Actioner, even if the instance is automatically applied, in which case the Actioner can be set to the Application's administrator.
-- Reason — A text description of why an Action was taken. You don't have to set a Reason when applying an Action, but it's useful for auditing. Reasons can be created on FusionAuth at **Settings**—**User Actions** by clicking the **Reasons** button at the top right.
+- Reason — A text description of why an Action was taken. You don't have to set a Reason when applying an Action, but it's useful for auditing and filtering Actions sent to webhooks.
 - Webhook — A webhook is another name for sending a single HTTP request to an API. It's used to inform an external system of some event, and can be triggered by an Action. An example is FusionAuth calling a customer-support service, like _Intercom.com_, to start the customer onboarding process when the user has verified their email in FusionAuth. Another example would be posting a message to a _Slack.com_ channel whenever a new customer signs up. Webhooks can be managed in FusionAuth at **Settings** — **Webhooks** and can be triggered by Actions.
 
-    The webhook/API terminology can be confusing. Note that most web companies, including FusionAuth, call a trigger to _send_ data a _webhook_, but when they _receive_ data they call it an _API_. So if you're looking for a destination for a FusionAuth webhook in an external system, you won't find it under their webhook documentation; you'll find it under API documentation. This is why they are sometimes known as a _reverse API_. However, some companies, like _Slack_, also call incoming requests "incoming webhooks".
+    The webhook/API terminology can be confusing. Note that most web companies, including FusionAuth, call a trigger to _send_ data a _webhook_, but when they _receive_ data they call it an _API_. So if you're looking for a destination for a FusionAuth webhook in an external system, you won't find it under their webhook documentation; you'll find it under API documentation. This is why they are sometimes known as a _reverse API_. However, some companies, like _Slack_ in their documentation, also call incoming requests "incoming webhooks".
 - Temporal Actions — Temporal, or time-based, Actions have a duration, as opposed to instantaneous Actions, which have only a start time. Once a temporal Action expires, meaning that it ends automatically as opposed to being cancelled, it will no longer be considered active and will not affect the user. However, you can apply a temporal Action to a user indefinitely by setting a very distant end date. An Action that prevents login must be temporal.
 
     A temporal Action may be cancelled or modified, unlike an instantaneous Action, which cannot be. An example of an instantaneous Action would be a reward, such as sending a user a discount coupon.
@@ -74,7 +73,7 @@ Below are the terms you'll encounter when working with Actions. They are listed 
 
     If a temporal Action instance has ended we do not say that it is not active. _Active_ relates to the Action definition, and _expiry_ relates to a particular instance of the Action.
 - Option — A custom text field that you can add to an instantaneous Action, but not to temporal Actions. You can add multiple options to an Action definition, but choose only one for an instance of the Action. Options can be sent through emails and webhooks.
-- Localization — A text field with an associated language. It's a way of providing more information to users and administrators who speak different languages. Localizations can be added for an Action name, Reason, and Options.
+- Localization — A text field with an associated language. It's a way of providing more information to users who speak different languages. Localizations can be added for an Action name, Reason, and Options.
 - Tenant — You can make an Action available to all Tenants or just a few. Below is a visual reminder of [Tenants, Groups, and Applications](https://fusionauth.io/docs/v1/tech/core-concepts/).
 
     ```mermaid
@@ -91,7 +90,7 @@ Below are the terms you'll encounter when working with Actions. They are listed 
     ```
 
 ## Types of Actions and Their Purpose
-There are two main types of Actions: temporal Actions and instantaneous Actions with options. They are summarized below.
+There are two main types of Actions: temporal Actions, and instantaneous Actions with options. They are summarized below.
 
 | Type | Purpose | Example of use
 | ----------- | ----------- | -----------
@@ -234,7 +233,7 @@ sequenceDiagram
 ```
 
 ## FusionAuth Work
-This guide assumes you have installed FusionAuth by following the [5 minute getting started guide](https://fusionauth.io/docs/v1/tech/getting-started/5-minute-docker). You should be able to log in to FusionAuth at http://localhost:9011/admin and your Node.js test app at http://localhost:3000.
+This guide assumes you have installed FusionAuth by following the [5 minute getting started guide](https://fusionauth.io/docs/v1/tech/getting-started/5-minute-docker), and have Node.js installed. You should be able to log in to FusionAuth at http://localhost:9011/admin and your Node.js test app at http://localhost:3000.
 
 > You can't use the [online FusionAuth sandbox](https://sandbox.fusionauth.io/admin) for this tutorial because you need to point the webhooks and emails to fake localhost services.
 
@@ -261,7 +260,7 @@ You need to use Docker version 18 or greater on Mac or Windows. Version 20 is ne
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ```
-- Run the following code in a new terminal in the folder to restart FusionAuth with mail capabilities. Be warned — this might delete your existing FusionAuth database.
+- Run the following code in a new terminal in the folder to restart FusionAuth with mail capabilities. Be warned — this might reset your existing FusionAuth database.
     ```bash
     docker-compose down && docker-compose up;
     ```
@@ -480,7 +479,7 @@ The final email template you'll create thanks the user for completing the survey
 - **Save**
 
 #### Create Survey Action with Options with Localizations
-In this last Action you are going to add Options that represent the response the user had to the survey. You are also going to add a translation (localization) to each Option so that administrators on Slack who don't speak English can understand the response.
+In this last Action you are going to add Options that represent the response the user had to the survey. You are also going to add a translation (localization) to each Option so that subscribers who don't speak English can respond in their own language.
 
 - **Settings** — **User Actions**
 - **Add**
@@ -608,7 +607,7 @@ In the following code you need to replace the values of `actioneeUserId` and `ac
 
 You need not wait a month for the subscription to expire. From the [FusionAuth Date-Time tool](https://fusionauth.io/dev-tools/date-time) copy the **Milliseconds** value, add `60000` (60 seconds) to it, and paste it into the expiry field below. This will ensure the subscription action expires immediately. If you're on Linux it's much easier — you can use the command below this one instead, which sets the `expiry` value automatically.
 
-Option 1: Set the expiry manually
+Option 1: Set the expiry manually (remember to change the user Ids)
 ```bash
 curl -i --location --request POST 'http://localhost:9011/api/user/action' \
   --header 'Authorization: FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh' \
@@ -627,7 +626,7 @@ curl -i --location --request POST 'http://localhost:9011/api/user/action' \
  }'
 ```
 
-Option 2: Set the expiry automatically
+Option 2: Set the expiry automatically (remember to change the user Ids)
 ```bash
 curl -i --location --request POST 'http://localhost:9011/api/user/action' \
   --header 'Authorization: FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh' \
@@ -672,7 +671,7 @@ You should receive a 200 status code and a response that looks like the followin
 }
 ```
 
-If you are experimenting with Action instances and wish to delete one you can use the following code, but change the UUID in the URL to match the instance that was returned by FusionAuth when you created it.
+If you are experimenting with Action instances and wish to delete one, you can use the following code, but change the UUID in the URL to match the instance that was returned by FusionAuth when you created it.
 
 ```bash
 curl -i --location --request DELETE 'http://localhost:9011/api/user/action/3cc31d87-25b9-4528-970a-2b177508afe1'   --header 'Authorization: FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh'  --header 'Content-Type: application/json'   --data-raw '{"action": {"actionerUserId": "ac2f073d-c063-4a7b-ab76-812f44ed7f55"}}'
@@ -705,18 +704,18 @@ event: {
   }
 ```
 
-Check that at least two specific webhooks have been sent — one for the Subscribe Action to Intercom, and one for the Expiry Action to PiedPiper.
+Check that at least two specific webhooks have been sent after one minute — one for the Subscribe Action to Intercom, and one for the Expiry Action to PiedPiper.
 
 ### Check Welcome and Expiry Emails Arrive
 Check that welcome and goodbye email arrived in the maildev browser window. If you can't see them, go back into FusionAuth's Tenant email settings and verify that you're using port `1025` and host `host.docker.internal`.
 
 ### Check PreventLogin Action Was Created
-After a minute has passed more webhooks should fire and the terminal should display `User banned successfully`. This means that PiedPiper received the expired subscription webhook, tested for `(req.body.event.action == 'Subscribe' && req.body.event.phase == 'end')`, and applied the `Ban` Action to the user.
+After a minute has passed the terminal should display `User banned successfully`. This means that PiedPiper received the expired subscription webhook, tested for `(req.body.event.action == 'Subscribe' && req.body.event.phase == 'end')`, and applied the `Ban` Action to the user.
 
 To test that it indeed worked, try to log in to FusionAuth with the user `reader@example.com`. You should be prohibited.
 
 ### Apply Survey Action
-Assume the user has now filled in a survey and sent his response to PiedPiper. You'll emulate the app applying the survey Action to the User with the chosen Option and given comment. There is no need to set an expiry value in this command because the Action is instantaneous, not temporal.
+Assume the user has now filled in a survey and sent his response to PiedPiper. You'll emulate the app applying the survey Action to the User with the chosen Option and given comment. There is no need to set an expiry value in this command because the Action is instantaneous, not temporal. You need to change the UserIds again.
 
 ```bash
 curl -i --location --request POST 'http://localhost:9011/api/user/action' \
@@ -736,7 +735,7 @@ curl -i --location --request POST 'http://localhost:9011/api/user/action' \
  }'
 ```
 
-Note that the `option` field is a string, not a UUID. Remember that if you ever change the wording of your options in FusionAuth you need to change them in every piece of code that uses them.
+Note that the `option` field is a string, not a UUID. Because of this if you ever change the wording of your options in FusionAuth you need to change them in every piece of code that uses them.
 
 ### Check Slack Is Called
 In the PiedPiper terminal you'll see JSON being sent to our mock Slack.
@@ -772,10 +771,3 @@ The last thing you might want to do with Actions is retrieve them all from Fusio
 ```bash
 curl -i --location --request GET 'http://localhost:9011/api/user/action?userId=9af67e9a-8332-4c06-971c-463b6710c340'   --header 'Authorization: FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh'
 ```
-
-## Todos
-- todo remove selectino webhook references hihger in the article becase htat's impossible
-- screenshots
-- add sections from last user actions doc
-- review the fusionauth stylesheet readme in this repo
-- use chatgpt to format adoc/jekyll/fusion/plant/liquid
