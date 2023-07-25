@@ -19,6 +19,9 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
   - [Action Instance Parameters](#action-instance-parameters)
 - [Starting the PiedPiper Newspaper Company](#starting-the-piedpiper-newspaper-company)
 - [FusionAuth Work](#fusionauth-work)
+  - [Create Mock Email Service](#create-mock-email-service)
+    - [Option 1 — Docker](#option-1--docker)
+    - [Option 2 — Local machine](#option-2--local-machine)
   - [Create PiedPiper Application](#create-piedpiper-application)
   - [Create an Administrative User (Actioner)](#create-an-administrative-user-actioner)
   - [Create an Subscriber User (Actionee)](#create-an-subscriber-user-actionee)
@@ -42,9 +45,6 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
   - [Create Mock Slack API](#create-mock-slack-api)
   - [Create PiedPiper API to Listen for Expiry and Call PreventLogin Action](#create-piedpiper-api-to-listen-for-expiry-and-call-preventlogin-action)
 - [Testing](#testing)
-  - [Create Mock Email Service](#create-mock-email-service)
-    - [Option 1 — Docker](#option-1--docker)
-    - [Option 2 — Local machine](#option-2--local-machine)
   - [Start PiedPiper](#start-piedpiper)
   - [Apply Subscription Action](#apply-subscription-action)
   - [Check Welcome and Expiry Emails Arrive](#check-welcome-and-expiry-emails-arrive)
@@ -241,6 +241,120 @@ sequenceDiagram
 This guide assumes you have installed FusionAuth by following the [5 minute getting started guide](https://fusionauth.io/docs/v1/tech/getting-started/5-minute-docker). You should be able to log in to FusionAuth at http://localhost:9011/admin and your Node.js test app at http://localhost:3000.
 
 > You can't use the [online FusionAuth sandbox](https://sandbox.fusionauth.io/admin) for this tutorial because you need to point the webhooks and emails to fake localhost services.
+
+### Create Mock Email Service
+The first task is to configure a mock SMTP service for FusionAuth to send mail through. If you do this later and restart Docker you might lose all your work.
+
+Configuring email depends on if you are running FusionAuth through Docker or directly on your local machine. Both options are given below and both use _maildev_ — a Node.js mock SMTP server.
+
+#### Option 1 — Docker
+- Open the `docker-compose.yml` file for FusionAuth and overwrite it with the following text. This will add a maildev service, and give it a network linked to FusionAuth.
+    ```dockerfile
+    version: '3'
+
+    services:
+    db:
+        image: postgres:12.9
+        environment:
+        PGDATA: /var/lib/postgresql/data/pgdata
+        POSTGRES_USER: ${POSTGRES_USER}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        healthcheck:
+        test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+        interval: 5s
+        timeout: 5s
+        retries: 5
+        networks:
+        - db_net
+        restart: unless-stopped
+        volumes:
+        - db_data:/var/lib/postgresql/data
+
+    search:
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+        environment:
+        cluster.name: fusionauth
+        bootstrap.memory_lock: "true"
+        discovery.type: single-node
+        ES_JAVA_OPTS: ${ES_JAVA_OPTS}
+        healthcheck:
+        test: [ "CMD", "curl",  "--fail" ,"--write-out", "'HTTP %{http_code}'", "--silent", "--output", "/dev/null", "http://localhost:9200/" ]
+        interval: 5s
+        timeout: 5s
+        retries: 5
+        networks:
+        - search_net
+        restart: unless-stopped
+        ulimits:
+        memlock:
+            soft: -1
+            hard: -1
+        volumes:
+        - search_data:/usr/share/elasticsearch/data
+
+    fusionauth:
+        image: fusionauth/fusionauth-app:latest
+        depends_on:
+        db:
+            condition: service_healthy
+        search:
+            condition: service_healthy
+        environment:
+        DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
+        DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
+        DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
+        DATABASE_USERNAME: ${DATABASE_USERNAME}
+        DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+        FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
+        FUSIONAUTH_APP_RUNTIME_MODE: development
+        FUSIONAUTH_APP_URL: http://fusionauth:9011
+        SEARCH_SERVERS: http://search:9200
+        SEARCH_TYPE: elasticsearch
+        networks:
+        - db_net
+        - search_net
+        - mail_net
+        restart: unless-stopped
+        ports:
+        - 9011:9011
+        volumes:
+        - fusionauth_config:/usr/local/fusionauth/config
+
+    maildev:
+        image: maildev/maildev:latest
+        ports:
+        - 1025:25
+        networks:
+        - mail_net
+        restart: unless-stopped
+
+    networks:
+    db_net:
+        driver: bridge
+    search_net:
+        driver: bridge
+    mail_net:
+        driver: bridge
+
+    volumes:
+    db_data:
+    fusionauth_config:
+    search_data:
+    ```
+- Run the following code in a new terminal in the folder to restart FusionAuth with mail capabilities.
+    ```bash
+    docker-compose down && docker-compose up;
+    ```
+
+#### Option 2 — Local machine
+You don't need to do this if you setup mail on Docker in the previous option.
+- Open a new terminal window. It doesn't matter where, but your test application folder is a neat place.
+    ```bash
+    npm install maildev &&
+    npx maildev -v;
+    ```
+- Leave it running until you have finished this tutorial.
+- You also need to go into FusionAuth — **Tenants** — **Edit** `Default` — **Email** tab and change the port to `1025`, to match _maildev_ and **Save**.
 
 ### Create PiedPiper Application
 - Log into the FusionAuth website and perform the following steps.
@@ -526,36 +640,7 @@ app.post('/expire', function(req, res) {
 ```
 
 ## Testing
-In this last section you'll see how Actions work by applying them and watching the emails and webhooks get triggered. There is one final piece of configuration to be done first - configuring a mock SMTP service for FusionAuth to send mail through.
-
-### Create Mock Email Service
-The way to configure this depends on if you are running FusionAuth through Docker or directly on your local machine. Both options are given below and both use _maildev_ — a Node.js mock SMTP server.
-
-#### Option 1 — Docker
-- Open the `docker-compose.yml` file for FusionAuth.
-- Inside the `services:` section add the maildev section.
-    ```dockerfile
-    maildev:
-        image: maildev/maildev:latest
-        ports:
-        - 1025:25
-        networks:
-        - fusionauth_net
-        restart: unless-stopped
-    ```
-- Now run the following code in a new terminal in your Fusionauth folder to restart it with mail capabilities.
-    ```bash
-    docker-compose down && docker-compose up
-    ```
-
-#### Option 2 — Local machine
-- Open a new terminal window. It doesn't matter where, but your test application folder is a neat place.
-    ```bash
-    npm install maildev &&
-    npx maildev -v;
-    ```
-- Leave it running until you have finished this tutorial.
-- You also need to go into FusionAuth — **Tenants** — **Edit** `Default` — **Email** tab and change the port to `1025`, to match _maildev_ and **Save**.
+In this last section you'll see how Actions work by applying them and watching the emails and webhooks get triggered.
 
 ### Start PiedPiper
 Start the PiedPiper Node.js app by typing in another terminal.
@@ -565,7 +650,7 @@ npm run start
 ```
 
 ### Apply Subscription Action
-Let's start by applying the subscription Action to the user. In reality, your app would do this in code once the user has paid, but for now we'll do it in a new terminal.
+Let's start testing by applying the subscription Action to the user. In reality, your app would do this in code once the user has paid, but for now we'll do it in a new terminal.
 
 > If you are using Windows you'll need to install `curl`
 
