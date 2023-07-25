@@ -1,7 +1,7 @@
 var d="/docs/v1/tech";
 var a="/articles";
 var ex="/learn/expert-advice";
-var idp="identity-providers";
+var idp="/identity-providers";
 
 var ip = {};
 ip['/']=true;
@@ -19,7 +19,7 @@ ip['/community/forum/']=true;
 ip['/dev-tools/']=true;
 ip['/docs/']=true;
 ip['/docs/quickstarts/']=true;
-ip[d+'']=true;
+ip[d+'/']=true;
 ip[d+'/account-management/']=true;
 ip[d+'/admin-guide/']=true;
 ip[d+'/advanced-threat-detection/']=true;
