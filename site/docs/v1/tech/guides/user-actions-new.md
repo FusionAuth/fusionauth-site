@@ -23,7 +23,7 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
     - [Configuring localhost access on Docker](#configuring-localhost-access-on-docker)
   - [Create PiedPiper Application](#create-piedpiper-application)
   - [Create an Administrative User (Actioner)](#create-an-administrative-user-actioner)
-  - [Create an Subscriber User (Actionee)](#create-an-subscriber-user-actionee)
+  - [Create a Subscriber User (Actionee)](#create-a-subscriber-user-actionee)
   - [Create an API key](#create-an-api-key)
   - [Subscription Work](#subscription-work)
     - [Create Welcome Email Template](#create-welcome-email-template)
@@ -50,7 +50,6 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
   - [Check PreventLogin Action Was Created](#check-preventlogin-action-was-created)
   - [Apply Survey Action](#apply-survey-action)
   - [Check Slack Is Called](#check-slack-is-called)
-  - [Check Negative Survey Response Was Sent to Slack](#check-negative-survey-response-was-sent-to-slack)
   - [Retrieve All Survey Action Instances for This User](#retrieve-all-survey-action-instances-for-this-user)
 - [Todos](#todos)
 
@@ -319,13 +318,14 @@ This is the end of the Docker subsection. Continue below.
   - **Save**
 - **Save the user**
 
-### Create an Subscriber User (Actionee)
+### Create a Subscriber User (Actionee)
 - **Users** — **Add**
 - Enter the values:
   - **Email** — `reader@example.com`
   - **Send email to set up password** — Disable
   - **Password** — `password`
   - **Confirm** — `password`
+  - **Languages** — `esperanto` (Note that you have to enter the text, wait for a popup to appear, then click it to confirm the entry.)
 - **Save**
 - **Add registration**
   - **Application** — `PiedPiper`
@@ -716,9 +716,62 @@ After a minute has passed more webhooks should fire and the terminal should disp
 To test that it indeed worked, try to log in to FusionAuth with the user `reader@example.com`. You should be prohibited.
 
 ### Apply Survey Action
+Assume the user has now filled in a survey and sent his response to PiedPiper. You'll emulate the app applying the survey Action to the User with the chosen Option and given comment. There is no need to set an expiry value in this command because the Action is instantaneous, not temporal.
+
+```bash
+curl -i --location --request POST 'http://localhost:9011/api/user/action' \
+  --header 'Authorization: FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+  "broadcast": true,
+  "action": {
+    "actioneeUserId": "9af67e9a-8332-4c06-971c-463b6710c340",
+    "actionerUserId": "ac2f073d-c063-4a7b-ab76-812f44ed7f55",
+    "applicationIds": ["e26304d6-0f93-4648-bbb0-8840d016847d"],
+    "comment": "Could not find my horoscope in the newspaper :( ",
+    "emailUser": false,
+    "userActionId": "8e6d80df-74bb-4cb8-9caa-c9a2dafc6e57",
+    "option": "Bad"
+  }
+ }'
+```
+
+Note that the `option` field is a string, not a UUID. Remember that if you ever change the wording of your options in FusionAuth you need to change them in every piece of code that uses them.
+
 ### Check Slack Is Called
-### Check Negative Survey Response Was Sent to Slack
+In the PiedPiper terminal you'll see JSON being sent to our mock Slack.
+
+```js
+{
+  event: {
+    action: 'Survey',
+    actionId: 'ef9e753f-ecc0-468b-8160-dcb25dbb4d91',
+    actioneeUserId: '9af67e9a-8332-4c06-971c-463b6710c340',
+    actionerUserId: 'ac2f073d-c063-4a7b-ab76-812f44ed7f55',
+    applicationIds: [ 'e26304d6-0f93-4648-bbb0-8840d016847d' ],
+    comment: 'Could not find my horoscope in the newspaper :(',
+    createInstant: 1690291936476,
+    emailedUser: false,
+    id: 'be3470aa-0dfd-408e-a286-6d3c16a9af1f',
+    info: { ipAddress: '172.28.0.1' },
+    localizedAction: 'Survey',
+    localizedOption: 'Malbona',
+    notifyUser: false,
+    option: 'Bad',
+    tenantId: '8891ecad-ae5c-3d5d-1f4e-3e95f8583b78',
+    type: 'user.action'
+  }
+}
+```
+
+The user's comment has been recorded as the survey response. The option they chose is also shown as `localizedOption: 'Malbona'`. Note that the translation is shown the for the preferred language of the _Actionee_, not the _Actioner_.
+
 ### Retrieve All Survey Action Instances for This User
+The last thing you might want to do with Actions is retrieve them all from FusionAuth to create an audit trail of PiedPiper's interactions with the subscriber. The [following command](https://fusionauth.io/docs/v1/tech/apis/actioning-users#retrieve-a-previously-taken-action) will do that. Remember to replace the subscriber's UUID with your one.
+
+```bash
+curl -i --location --request GET 'http://localhost:9011/api/user/action?userId=9af67e9a-8332-4c06-971c-463b6710c340'   --header 'Authorization: FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh'
+```
 
 ## Todos
 - todo remove selectino webhook references hihger in the article becase htat's impossible
