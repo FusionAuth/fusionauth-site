@@ -556,17 +556,16 @@ app.post('/expire', async function(req, res) {
   console.log('Incoming Request to PiedPiper Expiry:');
   console.log(req.body);
   console.log('');
-  const json = JSON.parse(req.body);
-  if (json.event.action == 'Subscribe' && json.event.phase == 'end') {
+  if (req.body.event.action == 'Subscribe' && req.body.event.phase == 'end') {
     try {
-      const actionRequest = {
+      const request = {
         action: {
-          actioneeUserId: json.actioneeUserId,
-          actionerUserId: json.actionerUserId,
+          actioneeUserId: req.body.event.actioneeUserId,
+          actionerUserId: req.body.event.actionerUserId,
           applicationIds: ['e26304d6-0f93-4648-bbb0-8840d016847d'],
           //comment?: string,
           emailUser: false,
-          expiry: 9223372036854775807, // the end of time
+          expiry: 8223372036854775806, // the end of time
           notifyUser: false,
           //option?: string,
           reasonId: '28b0dd40-3a65-48ae-8eb3-4d63d253180a', // subscription expired reason
@@ -579,7 +578,8 @@ app.post('/expire', async function(req, res) {
       if (!clientResponse.wasSuccessful)
         throw Error(clientResponse);
       console.info('User banned successfully');
-    } catch (e) {
+    }
+    catch (e) {
       console.error('Error handling expiry: ');
       console.dir(e, { depth: null });
     }
@@ -606,8 +606,9 @@ Let's start testing by applying the subscription Action to the user. In reality,
 
 In the following code you need to replace the values of `actioneeUserId` and `actionerUserId` with the values you recorded earlier for the reader and administrator users.
 
-You need not wait a month for the subscription to expire. From the [FusionAuth Date-Time tool](https://fusionauth.io/dev-tools/date-time) copy the **Milliseconds** value, add `60000` (60 seconds) to it, and paste it into the expiry field below. This will ensure the subscription action expires immediately. If you're on Linux, using this command is easier: `echo $(($(date +%s) * 1000 + 60000))`.
+You need not wait a month for the subscription to expire. From the [FusionAuth Date-Time tool](https://fusionauth.io/dev-tools/date-time) copy the **Milliseconds** value, add `60000` (60 seconds) to it, and paste it into the expiry field below. This will ensure the subscription action expires immediately. If you're on Linux it's much easier — you can use the command below this one instead, which sets the `expiry` value automatically.
 
+Option 1: Set the expiry manually
 ```bash
 curl -i --location --request POST 'http://localhost:9011/api/user/action' \
   --header 'Authorization: FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh' \
@@ -619,11 +620,30 @@ curl -i --location --request POST 'http://localhost:9011/api/user/action' \
     "actionerUserId": "ac2f073d-c063-4a7b-ab76-812f44ed7f55",
     "comment": "Paid for the news",
     "emailUser": true,
-    "expiry": 1690286790000,
+    "expiry": 1690288205000,
     "userActionId": "38bf18dd-6cbc-453d-a438-ddafe0daa1b0",
     "reasonId": "ae080fe4-5650-484f-807b-c692e218353d"
   }
  }'
+```
+
+Option 2: Set the expiry automatically
+```bash
+curl -i --location --request POST 'http://localhost:9011/api/user/action' \
+  --header 'Authorization: FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "broadcast": true,
+    "action": {
+      "actioneeUserId": "9af67e9a-8332-4c06-971c-463b6710c340",
+      "actionerUserId": "ac2f073d-c063-4a7b-ab76-812f44ed7f55",
+      "comment": "Paid for the news",
+      "emailUser": true,
+      "expiry": '"$(($(date +%s) * 1000 + 60000))"',
+      "userActionId": "38bf18dd-6cbc-453d-a438-ddafe0daa1b0",
+      "reasonId": "ae080fe4-5650-484f-807b-c692e218353d"
+    }
+  }'
 ```
 
 You should receive a 200 status code and a response that looks like the following.
@@ -650,6 +670,12 @@ You should receive a 200 status code and a response that looks like the followin
     "reasonCode":"PS"
   }
 }
+```
+
+If you are experimenting with Action instances and wish to delete one you can use the following code, but change the UUID in the URL to match the instance that was returned by FusionAuth when you created it.
+
+```bash
+curl -i --location --request DELETE 'http://localhost:9011/api/user/action/3cc31d87-25b9-4528-970a-2b177508afe1'   --header 'Authorization: FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh'  --header 'Content-Type: application/json'   --data-raw '{"action": {"actionerUserId": "ac2f073d-c063-4a7b-ab76-812f44ed7f55"}}'
 ```
 
 ### Examine the Webhook Calls
@@ -685,6 +711,9 @@ Check that at least two specific webhooks have been sent — one for the Subscri
 Check that welcome and goodbye email arrived in the maildev browser window. If you can't see them, go back into FusionAuth's Tenant email settings and verify that you're using port `1025` and host `host.docker.internal`.
 
 ### Check PreventLogin Action Was Created
+After a minute has passed more webhooks should fire and the terminal should display `User banned successfully`. This means that PiedPiper received the expired subscription webhook, test for `(req.body.event.action == 'Subscribe' && req.body.event.phase == 'end')`, and applied the `Ban` Action to the user.
+
+To test that it indeed worked, try to log in to FusionAuth with the user `reader@example.com`. You should be prohibited.
 
 ### Apply Survey Action
 ### Check Slack Is Called
