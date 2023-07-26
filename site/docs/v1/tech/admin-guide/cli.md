@@ -22,9 +22,11 @@ npm i -g @fusionauth/cli
 Then you can run commands.
 
 ```
-fusionauth -k <APIKEY> theme:download <themeid>
+fusionauth theme:download -k <APIKEY> <themeid>
+
 # modify your theme
-fusionauth -k <APIKEY> theme:upload <themeid>
+
+fusionauth theme:upload -k <APIKEY> <themeid>
 ```
 
 To learn more about the commands, use the `--help` switch.
