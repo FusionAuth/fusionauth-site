@@ -43,4 +43,4 @@ This includes:
 * emails (coming soon)
 * lambdas (coming soon)
 
-The CLI is designed to work with complex version controlled configuration.
+The CLI is designed to work with complex version controlled configuration and includes support for localized content.
