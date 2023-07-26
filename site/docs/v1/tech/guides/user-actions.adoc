@@ -88,9 +88,26 @@ If a temporal Action instance has ended we do not say that it is not active. _Ac
 * Localization — A text field with an associated language. It's a way of providing more information to users who speak different languages. Localizations can be added for an Action name, Reason, and Options.
 * Tenant — You can make an Action available to all Tenants or just a few. Below is a visual reminder of https://fusionauth.io/docs/v1/tech/core-concepts/[Tenants&#44; Groups&#44; and Applications].
 +
+////
 ++++
 {% plantuml source: _diagrams/docs/guides/user-actions_hierarchy.plantuml, alt: "FusionAuth object hierarchy" %}
 ++++
+////
+////
+    ```mermaid
+    flowchart BT
+        User-->Tenant
+        Application-->Tenant
+        Group-->Tenant
+        Role-->Application
+        User-->Group
+        Registration-->User
+        Registration-->Application
+        User-->Role
+        Entity-->Application
+    ```
+////
+image::guides/user-actions/user-actions-object-hierarchy.svg[FusionAuth objects.,width=400]
 
 == Types of Actions and Their Purpose
 
@@ -121,9 +138,23 @@ ____
 
 Temporal action instances have four states they can be in. Each state can trigger a webhook or an email to the user.
 
+////
 ++++
 {% plantuml source: _diagrams/docs/guides/user-actions_temporal-action-states.plantuml, alt: "Temporal action states" %}
 ++++
+////
+////
+```mermaid
+flowchart LR
+    Started-->Modified
+    Modified-->Ended["Ended (Expired)"]
+    Modified-->Cancelled
+    Started-->Cancelled
+    Started-->Ended
+    Modified-.->Modified
+```
+////
+image::guides/user-actions/user-actions-temporal-states.svg[States of temporal Actions.,width=400]
 
 ==== Subscription Example
 
@@ -143,9 +174,18 @@ The last option is probably the simplest and most idiomatic way to use FusionAut
 
 An instantaneous Action instance has an Option that can be chosen from a list, but no temporal states. Once you set the Action for a User it is either remains or is removed.
 
+////
 ++++
 {% plantuml source: _diagrams/docs/guides/user-actions_instantaneous-action-states.plantuml, alt: "Instantaneous action states" %}
 ++++
+////
+////
+```mermaid
+flowchart LR
+    Added-.->Removed
+```
+////
+image::guides/user-actions/user-actions-instantaneous-states.svg[States of instantaneous Actions.,width=400]
 
 ==== Survey Example
 
@@ -226,6 +266,34 @@ Below is a diagram of this process.
 ++++
 {% plantuml source: _diagrams/docs/guides/user-actions_sequence-diagram.plantuml, alt: "Using PiedPiper actions" %}
 ++++
+////
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant PP as PiedPiper
+    participant FA as FusionAuth
+    participant I as Intercom
+    participant S as Slack
+
+    U->>PP: Pay for a month subscription
+    PP->>FA: Apply subscription Action
+    FA->>U: Send welcome email
+    FA->>I: Send subscription notification
+
+    break One month passes
+        U-->PP: Subscription expires
+    end
+
+    FA->>U: Send goodbye email
+    FA->>PP: Send expiry notification
+    PP->>FA: Apply preventLogin Action
+
+    U->>PP: Complete customer survey form
+    PP->>FA: Apply survey Action
+    FA->>S: Send survey notification
+    PP->>FA: Retrieve all Actions for the User
+```
+////
 
 == FusionAuth Work
 
