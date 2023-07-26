@@ -80,7 +80,7 @@ mkdir ../setup-express-api && cd ../setup-express-api
 Create a `package.json` file with the following contents to set up the dependencies.
 
 ```json
-{% remote_include https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-express-api/master/package.json %}
+{% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-express-api/master/package.json %}
 ```
 
 Now, install the needed packages.
@@ -105,25 +105,25 @@ You are going to create some files in different directories, so pay attention to
 First, you need to set up the web server. Create a `bin` directory and a `www` file with the following content.
 
 ```javascript
-{% remote_include https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-express-api/master/bin/www %}
+{% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-express-api/master/bin/www %}
 ```
 
 Next, to define routes for your API, create a `routes` directory and an `index.js` file with the contents below.
 
 ```javascript
-{% remote_include https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-express-api/master/routes/index.js %}
+{% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-express-api/master/routes/index.js %}
 ```
 
 To validate the access token, create a `middlewares` directory and an `authentication.js` file with the contents below.
 
 ```javascript
-{% remote_include https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-express-api/master/middlewares/authentication.js %}
+{% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-express-api/master/middlewares/authentication.js %}
 ```
 
 To finish the API, create an `app.js` file in the root directory. This will be the main entrypoint for your API.
 
 ```javascript
-{% remote_include https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-express-api/master/app.js %}
+{% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-express-api/master/app.js %}
 ```
 
 Once you have created these files, you can test the API.
