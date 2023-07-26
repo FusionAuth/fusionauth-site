@@ -40,8 +40,8 @@ Next, walk through what you should be doing::
 1. **Begin logging login activity, if you aren’t already.** Both successes and failures must be measured to understand the average login success ratio and the trend over time. Here are some common ways to capture this data:
 
 * [FusionAuth’s login failure webhook](/docs/v1/tech/events-webhooks/events/user-login-failed) fires an event when a login fails due to invalid credentials
-* Okta gives admins access to a [report](https://support.okta.com/help/s/article/How-can-I-obtain-a-list-of-failed-login-attempts-or-other-potentially-malicious-sign-on-attempts?language=en_US) that contains failed login information
-* Auth0 provides [events](https://auth0.com/docs/secure/security-center/metrics) that give specific reasons why a login failed
+* Okta gives admins access to a report that contains failed login information
+* Auth0 provides events that give specific reasons why a login failed
 * If you are using another provider, consult the documentation
 * If you’re using a homegrown identity management system, make sure it includes login failure events and metadata around them
 
