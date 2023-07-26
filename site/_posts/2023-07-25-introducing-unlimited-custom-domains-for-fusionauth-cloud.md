@@ -28,7 +28,7 @@ That got us thinking… why limit it to 4? And how could we streamline the proce
 
 **So as of today, these changes are now in effect for FusionAuth Cloud:**
 
-* High Availability Hosting now can optionally include Unlimited Custom Domains.  Please ask your support and sales teams for more information about what is required to turn this on.
+* High Availability Hosting now includes Unlimited Custom Domains.
 * A streamlined user interface for managing custom domains within the FusionAuth admin portal.
 
 {% include _image.liquid src="/assets/img/blogs/unlimited-custom-domains/fusionauth-cloud-custom-domains.png" alt="Introducing Unlimited Custom Domains." class="img-fluid" figure=false %}
