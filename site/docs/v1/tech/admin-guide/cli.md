@@ -51,6 +51,6 @@ The CLI is designed to work with complex version controlled configuration and in
 
 The FusionAuth CLI is open source.
 
-You can view the source code here: https://github.com/FusionAuth/fusionauth-node-cli
+You can view the source code here: [https://github.com/FusionAuth/fusionauth-node-cli](https://github.com/FusionAuth/fusionauth-node-cli)
 
 You can view the npm package here: https://www.npmjs.com/package/@fusionauth/cli
