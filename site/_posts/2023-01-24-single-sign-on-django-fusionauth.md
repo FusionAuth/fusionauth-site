@@ -73,7 +73,7 @@ After you've installed the required dependencies, you need to start the FusionAu
 
 ```bash
 cd fusionauth && \
-docker-compose -f docker-compose.yaml up -d
+docker compose -f docker-compose.yaml up -d
 ```
 
 The `docker-compose.yaml` file holds all the service definitions required for FusionAuth to function. It refers to the .env file in the same directory for the following environment variables:

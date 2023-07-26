@@ -787,6 +787,13 @@ declare module 'astro:content' {
   collection: "quickstarts",
   data: InferEntrySchema<"quickstarts">
 } & { render(): Render[".mdx"] },
+"quickstart-springboot-web.mdx": {
+  id: "quickstart-springboot-web.mdx",
+  slug: "quickstart-springboot-web",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
+} & { render(): Render[".mdx"] },
 },
 
 	};

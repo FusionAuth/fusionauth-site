@@ -12,6 +12,10 @@ language: JavaScript
 
 {% include docs/integration/_intro.md %}
 
+This tutorial uses the hosted backend. 
+
+{% include docs/_hosted-backend-warning.md %}
+
 ## Prerequisites
 
 {% include docs/integration/_prerequisites.md %}
@@ -79,7 +83,7 @@ First, make a directory:
 mkdir ../setup-react && cd ../setup-react
 ```
 
-Next, create a simple {{page.technology}} template using vite. Using this lets you easily integrate FusionAuth. For a production application you'll probably use something like [NextJS or Remix](/docs/quickstarts/#single-page-app).
+Next, create a simple {{page.technology}} template using vite. Using this lets you easily integrate FusionAuth. For a production application you'll probably use something like [NextJS or Remix](/docs/quickstarts/#spa).
 
 ```shell
 npm create vite@latest react-app -- --template react
