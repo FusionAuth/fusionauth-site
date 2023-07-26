@@ -37,7 +37,7 @@ fusionauth --help
 
 ## Functionality
 
-This tool allows you to easily retrieve and publish FusionAuth configuration from the command line.
+This tool allows you to easily retrieve and publish FusionAuth configurations from the command line.
 
 This includes:
 
