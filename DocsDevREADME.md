@@ -457,7 +457,7 @@ Prior to requesting review on a PR, please complete the following checklist.
 
 This is for substantial content.
 
-1. Create an issue in fusionauth-site
+1. Create an [issue in fusionauth-site](https://github.com/FusionAuth/fusionauth-site/issues/new)
 1. Write the piece.
 1. Any screenshots should conform to screenshots standards outlined above.
 1. Create a PR. Add the `content` label.
