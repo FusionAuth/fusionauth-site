@@ -117,6 +117,12 @@ Laravel uses something called [Guards](https://laravel.com/docs/10.x/authenticat
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/config/auth.php %}
 ```
 
+Edit the `config/app.php` file to add some information about your FusionAuth instance.
+
+```php
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/config/app.php %}
+```
+
 To make the library available for use, publish its configuration by running the command below.
 
 ```shell
@@ -179,13 +185,29 @@ Edit the `.env` file and add these lines there.
 
 ```ini
 FUSIONAUTH_CLIENT_ID=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
-FUSIONAUTH_URL=http://localhost:9011/
+FUSIONAUTH_URL=http://localhost:9011
 JWT_ALGO=RS256
 JWT_JWKS_URL=https://address.that.ngrok.gave.you/.well-known/jwks.json
 JWT_JWKS_URL_CACHE=86400
 ```
 
 You should change the `JWT_JWKS_URL` value to the [JWKS Endpoint you copied earlier](#retrieve-jwks-endpoint).
+
+### Validating Issuer and Audience Claims
+
+Besides verifying the signature, it is also recommended to validate the issuer (`iss`) and audience (`aud`) claims when receiving a JWT. To do those checks, you need to create two files.
+
+First, create a file named `app/FusionAuth/Claims/Audience.php` that will check if the audience (`aud`) claim actually contains the Client Id for the application you created in FusionAuth.
+
+```php
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/FusionAuth/Claims/Audience.php %}
+```
+
+Now, create a file called `app/FusionAuth/Claims/Issuer.php` to check if the issuer (`iss`) is actually your FusionAuth instance address.
+
+```php
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-laravel-api/main/laravel/app/FusionAuth/Claims/Issuer.php %}
+```
 
 ### Creating a Controller
 
