@@ -7,7 +7,6 @@ module Jekyll
 
     def render(context)
       @config = context.registers[:site].config['mermaid']
-      "<script src=\"/assets/js/mermaid.min.js\"></script>"\
       "<div style=\"width: 100%;display: flex;justify-content: center;\"><div class=\"mermaid\">#{super}</div></div>"
     end
   end
