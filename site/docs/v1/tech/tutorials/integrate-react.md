@@ -12,6 +12,10 @@ language: JavaScript
 
 {% include docs/integration/_intro.md %}
 
+This tutorial uses the hosted backend. 
+
+{% include docs/_hosted-backend-warning.md %}
+
 ## Prerequisites
 
 {% include docs/integration/_prerequisites.md %}
@@ -67,7 +71,7 @@ $env:fusionauth_api_key='YOUR_API_KEY_FROM_ABOVE'
 npm run setup-react
 ```
 
-If you want, you can [log into your instance](http://localhost:9011) and examine the new Application the script created for you.
+If you want, you can [log into your instance](http://localhost:9011){:target="_blank"} and examine the new Application the script created for you.
 
 ## Create Your {{page.technology}} Application
 
@@ -79,7 +83,7 @@ First, make a directory:
 mkdir ../setup-react && cd ../setup-react
 ```
 
-Next, create a simple {{page.technology}} template using vite. Using this lets you easily integrate FusionAuth. For a production application you'll probably use something like [NextJS or Remix](/docs/quickstarts/#single-page-app).
+Next, create a simple {{page.technology}} template using vite. Using this lets you easily integrate FusionAuth. For a production application you'll probably use something like [NextJS or Remix](/docs/quickstarts/#spa).
 
 ```shell
 npm create vite@latest react-app -- --template react

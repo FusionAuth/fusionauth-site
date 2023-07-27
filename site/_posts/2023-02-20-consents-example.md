@@ -57,7 +57,7 @@ There are [various ways](/docs/v1/tech/installation-guide/fusionauth-app) to ins
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.override.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up
+docker compose up
 ```
 
 Note that this uses a public `.env` file containing hard-coded database passwords and is not suitable for production use.
