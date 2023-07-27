@@ -16,7 +16,7 @@ Customer Identity and Access Management (CIAM) is a set of processes and technol
 
 ## What is CIAM?
 
-CIAM is similar to Identity and Access Management (IAM) but is solves the problems of a different audience: customers rather than employees. CIAM solutions help organizations:
+CIAM is similar to Identity and Access Management (IAM) but it solves the problems of a different audience: customers rather than employees. CIAM solutions help organizations:
 
 * Secure customer identities. CIAM solutions protect customer identities from unauthorized access, use, or disclosure. This can be done through the use of strong authentication methods, such as multi-factor authentication (MFA), and other security measures, such as password policies and session management.
 * Provide a seamless customer experience. CIAM solutions improve the customer experience by making it easier for customers to sign up, log in, and access services. CIAM solutions provide a single sign-on (SSO) experience by allowing customers to register and log in using social or federated user accounts. CIAM systems also provide self-service tools for managing customer profiles.
@@ -35,7 +35,7 @@ There are a number of different CIAM solutions available on the market. These so
 
 * FusionAuth: FusionAuth is a cloud-native CIAM solution designed to be scalable, secure, and easy to use.
 * ForgeRock: ForgeRock is a leading provider of IAM solutions. ForgeRock's CIAM solution, Identity Cloud, offers a comprehensive set of features for managing customer identities.
-* Okta: Okta is another leading provider of IAM solutions. Okta's CIAM solution, Customer Identity Cloud, offers a flexible and scalable solution for managing customers identity needs.
+* Okta: Okta is another leading provider of IAM solutions. Okta's CIAM solution, Customer Identity Cloud, offers a flexible and scalable solution for managing customers' identity needs.
 * Ping Identity: Ping Identity is a provider of IAM solutions. Ping Identity's CIAM option, PingOne for Customers, offers a secure and user-friendly solution for managing customer and user identities.
 * OneLogin: OneLogin is a provider of IAM solutions. OneLogin's CIAM offering offers a simple and affordable solution for managing customer identities and access.
 
@@ -48,7 +48,7 @@ CIAM solutions can:
 * Offer a single sign-on (SSO) solution, which allows customers to sign in to multiple applications with a single set of credentials.
 * Allow customers to register and log in using social accounts, such as Facebook, Apple, or Google.
 * Provide self-service tools for managing profiles.
-* Let customers to undertake account security and recovery actions, such as adding MFA or resetting a password.
+* Let customers undertake account security and recovery actions, such as adding MFA or resetting a password.
 * Personalize the customer experience based on customer preferences.
 
 ### User experience
@@ -64,7 +64,7 @@ There are a number of factors that can affect the UX of a CIAM solution. These f
 
 ### Apps
 
-CIAM solutions can also be used to improve the security and usability of applciation. For example, CIAM solutions can be used to:
+CIAM solutions can also be used to improve the security and usability of applications. For example, CIAM solutions can be used to:
 
 * Implement MFA for app login without requiring changes to the application.
 * Restrict app access to authorized users.
@@ -111,7 +111,7 @@ One of the key components of a CIAM system is authentication. Authentication is 
 
 ### Multi-Factor Authentication
 
-Multi-factor authentication (MFA) is requires users to provide two or more pieces of evidence to authenticate themselves. This can include a password, a one-time code, or a biometric identifier. MFA is a more secure form of authentication than passwords alone because it makes it more difficult for attackers to gain access to user accounts.
+Multi-factor authentication (MFA) requires users to provide two or more pieces of evidence to authenticate themselves. This can include a password, a one-time code, or a biometric identifier. MFA is a more secure form of authentication than passwords alone because it makes it more difficult for attackers to gain access to user accounts.
 
 There are a number of different MFA methods that can be used, including:
 
@@ -120,7 +120,7 @@ There are a number of different MFA methods that can be used, including:
 * Push notification-based MFA: This method sends a notification to the user's mobile device.
 * Biometric MFA: This method requires users to provide a biometric identifier, such as a fingerprint or facial scan.
 
-See what [Muti-Factor Authentication](https://fusionauth.io/articles/authentication/multi-factor-authentication) FusionAuth offers.
+See what [Multi-Factor Authentication](https://fusionauth.io/articles/authentication/multi-factor-authentication) FusionAuth offers.
 
 ### Single Sign-On
 
