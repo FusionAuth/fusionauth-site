@@ -176,6 +176,7 @@ const qsSections: QuickStartSection[] = [
         title: 'Go',
         icon: '/img/icons/golang.svg',
         faIcon: 'fa-g',
+        navColor: 'blue',
       },
       {
         href: '/docs/v1/tech/tutorials/integrate-express-api',
