@@ -120,7 +120,7 @@ To validate the access token, create a `middlewares` directory and an `authentic
 {% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-express-api/master/middlewares/authentication.js %}
 ```
 
-To finish the API, create an `app.js` file in the root directory. This will be the main entrypoint for your API.
+To finish the API, create an `app.js` file in the root directory. This will be the main entry point for your API.
 
 ```javascript
 {% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-express-api/master/app.js %}
