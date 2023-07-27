@@ -14,6 +14,11 @@ In this tutorial, we will walk through setting up a basic Ruby on Rails app to s
 
 <!--more-->
 
+{% include _callout-tip.liquid
+content=
+"This blog post has been [superseded by a guide which uses omniauth](/docs/v1/tech/tutorials/integrate-ruby-rails)."
+%}
+
 Many Rails applications traditionally handle authentication, authorization, and user management within the framework itself. There are many strategies for implementing, including using a handy gem like [devise](https://github.com/heartcombo/devise). 
 With FusionAuth however, we are able to [separate our auth concerns](https://en.wikipedia.org/wiki/Separation_of_concerns) from our application. Right away, we can scale our user base independently of our main application. As we build new applications or integrate with other platforms, 
 we now have one centralized place to handle our authentication and authorization needs.
@@ -39,7 +44,7 @@ In this tutorial we will use Docker for quick setup:
 ```bash
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up
+docker compose up
 ```
 
 If you prefer to install FusionAuth locally, see the [5-Minute Setup Guide](/docs/v1/tech/5-minute-setup-guide) to get up and running.  

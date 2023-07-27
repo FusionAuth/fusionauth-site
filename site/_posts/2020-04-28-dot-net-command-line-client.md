@@ -13,6 +13,11 @@ In this post, we'll build a command line client for FusionAuth with C# and the .
 
 <!--more-->
 
+{% include _callout-tip.liquid
+content=
+"This blog post has been [superseded by this guide](/docs/v1/tech/tutorials/integrate-dotnet)."
+%}
+
 At the end of this tutorial, you will have a working .NET Core application which will allow you to add users to your FusionAuth user database. 
 
 This would be a useful tool if you had customer service folks, who were comfortable with the CLI, and needed to add users or otherwise update user information in the FusionAuth identity server.
@@ -58,7 +63,7 @@ If you don't already have FusionAuth installed, we recommend the Docker Compose 
 ```shell
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up
+docker compose up
 ```
 
 Now FusionAuth should be running at `http://localhost:9011`.

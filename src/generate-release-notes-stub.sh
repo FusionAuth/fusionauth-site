@@ -9,6 +9,21 @@ fi
 # for each section in the release notes - or get close.
 #
 milestone=$1
+date=$(date +"%B %-d, %Y" | sed 's/1,/1st,/;s/2,/2nd,/;s/3,/3rd,/;s/\([0-9]\),/\1th,/')
+
+echo "[role=release-note]"
+echo "" 
+echo "== Version ${milestone}"
+echo "_${date}_"
+echo ""
+echo "=== Known Issues"
+echo "=== Security"
+echo "=== Changed"
+echo "=== Fixed"
+echo "=== Enhancements"
+echo "=== New"
+echo "=== Internal"
+echo ""
 
 gh issue list --repo FusionAuth/fusionauth-issues -m $milestone -L 250 --search "sort:created-asc" --json number,title --jq ".[]|[.number,.title] | @tsv" |
 while IFS=$'\t' read -r number title; do
