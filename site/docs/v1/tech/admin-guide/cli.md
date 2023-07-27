@@ -18,7 +18,6 @@ You can install this using `npm`.
 npm i -g @fusionauth/cli
 ```
 
-
 Then you can run commands.
 
 ```
@@ -33,6 +32,14 @@ To learn more about the commands, use the `--help` switch.
 
 ```
 fusionauth --help
+```
+
+## Updating 
+
+To update to the most recent version, use `npm update`.
+
+```
+npm update -g @fusionauth/cli
 ```
 
 ## Functionality
