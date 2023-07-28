@@ -4,8 +4,6 @@ description: How to use and revoke JWTs for effective and efficient authorizatio
 author: Brian Pontarelli
 icon: /img/icons/revoking-jwts.svg
 section: Tokens
-# date: 2019-11-04
-# dateModified: 2020-06-25
 ---
 
 I have been talking with developers about JSON Web Tokens (JWTs) recently and one question keeps coming up: "How do I revoke a JWT?"
@@ -20,7 +18,9 @@ There is not a simple solution because JWTs are designed to be portable, decoupl
 
 Here's a diagram that illustrates this architecture:
 
-![Revoking JWTs](/img/articles/revoking-jwts/jwt-revoke_350.png)
+<div class="bg-slate-200 flex justify-center p-4 w-full">
+<img src="/img/articles/revoking-jwts/jwt-revoke_350.png" alt="Revoking JWTs"/>
+</div>
 
 The Todo Backend in the diagram can use the JWT and the public key to verify the JWT and then pull the user's id (in this case the subject) out of the JWT. The Todo Backend can then use the user's id to perform operations on that user's data. However, because the Todo Backend isn't verifying the JWT with the IdP, it has no idea if an administrator has logged into the IdP and locked or deleted that user's account.
 
@@ -129,7 +129,7 @@ router.get('/todo', function(req, res, next) {
 ```
 And finally we configure our Webhook in FusionAuth:
 
-![Set up a webhook in FusionAuth](/img/articles/revoking-jwts/webhooks-2019.jpg)
+![Set up a webhook in FusionAuth](/img/articles/revoking-jwts/webhooks.png)
 
 We can now revoke a user's refresh token and FusionAuth will broadcast the event to our Webhook. The Webhook then updates the JWTManager which will cause JWTs for that user to be revoked.
 

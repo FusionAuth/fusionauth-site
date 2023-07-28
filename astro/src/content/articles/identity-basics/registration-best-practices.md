@@ -4,8 +4,6 @@ description: Users have to fill out registration forms to access applications. H
 author: Dan Moore
 icon: /img/icons/registration-best-practices.svg
 section: Identity Basics
-date: 2020-09-08
-dateModified: 2020-09-08
 ---
 
 Signing up for accounts is something we're all familiar with. It's a gateway to applications we want and need. But it's not really fun. Or even pleasant. After all, we're signing up to access the application, not because we want to set up another username and password and enter personal data into yet another system:
@@ -18,7 +16,7 @@ You can make the registration form process simpler. And you should.
 
 Before you start, ask yourself a fundamental question: does your application require registration?
 
-While user registration to create an account is commonplace, every step required of a user before seeing the value of your application affects sign up rates. What can you do to avoid a typical registration process?
+While [user registration](/docs/v1/tech/tutorials/register-user-login-api) to create an account is commonplace, every step required of a user before seeing the value of your application affects sign up rates. What can you do to avoid a typical registration process?
 
 ### Let them try it first
 
@@ -38,11 +36,11 @@ Allowing visitors to use your application, even in a limited fashion, helps them
 
 ### Social or third party login
 
-You can also rely on a third party for account management. Would social login make for a smoother experience? If you are targeting enterprise users, can you integrate with internal identity providers such as ActiveDirectory? 
+You can also rely on a third party for account management. Would [social login](/articles/ciam/challenges-of-ciam) make for a smoother experience? If you are targeting enterprise users, can you integrate with internal identity providers such as [Active Directory](/articles/security/zero-trust-identity-provider#what-are-identity-providers)? 
 
 Different types of users will expect different third party auth providers. If you have a consumer focused application, almost everyone has a Facebook account, so offer that social identity provider. One less password for your potential users to remember and one less obstacle to them signing up. 
 
-If you are targeting enterprise customers, integrate with ActiveDirectory or similar corporate directory. If developers are your target market, GitHub authentication makes for a simple registration process and signals that you understand their needs.
+If you are targeting enterprise customers, integrate with Active Directory or similar corporate directory. If developers are your target market, GitHub authentication makes for a simple registration process and signals that you understand their needs.
 
 ### Passwordless
 
