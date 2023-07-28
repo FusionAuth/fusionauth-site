@@ -133,7 +133,6 @@ Once you implement tracking, you may determine that you want to do something to 
 
 ## Conclusion
 
-In the case of login failures, knowledge is power. Instrument your current login success and failure rates with granular data about each outcome. Understand why users are failing to authenticate, and take action accordingly. 
+In the case of login failures, knowledge is power. Instrument your current login success and failure rates with granular data about each outcome. Understand why users are failing to authenticate, and take action accordingly.
 
 Doing so  will lead to the positive business outcomes associated with authenticated users, and maybe some beautiful looking charts, too.
-
