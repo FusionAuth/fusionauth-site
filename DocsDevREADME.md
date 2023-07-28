@@ -591,6 +591,8 @@ There is a professional solution for that by using `acoustic absorber panels` in
 
 ### Microphones
 A good mic reduces the efforts in post-production and increases the quality for your audience.
+Make sure it runs with `16bit or 24bit` and have it set to `44100 Hz or 48000 Hz`,
+if you go below those values, it won't be suitable for recording professional videos.
 
 #### Professional Microphones
 Try to use a proper microphone like `podcast` or `studio microphones` with a `pop filter` (little round net) if possible.
@@ -607,7 +609,7 @@ Outside of that, picking up all sorts of noise like from your fan, keyboard and 
 They may work well for video conferences, but for high-quality recordings they are an absolut no-go.
 
 ### Audio Recording Level
-Try to not peak over 0db, most recording software have color-indicators for your audio level, try to stay in the yellow area, but don't go into red. An audio signal that's over 0db is getting distorted which is very hard to impossible to fix afterward in post-production.
+Try to not peak over -10db, most recording software have color-indicators for your audio level, try to stay in the yellow area, but don't go into red. An audio signal that's over -10db is getting distorted which is very hard to impossible to fix afterward in post-production.
 
 ### Fixing Audio
 There are some simple fixes which can be done in post-production, e.g. remove certain parts, level volume, apply filters. But what goes beyond that needs to be fixed either by:
@@ -638,7 +640,7 @@ The desktop can be a mayor distraction from what you actually want to show, and 
 * Keep your dock / task bar clean.
 * Close everything you don't need.
 
-Alternatively use a separate user profile for recording.
+Alternatively, use a separate user profile for recording.
 
 ### Browser
 The browser itself can be as well a major distraction from what you actually want to show, and because of that:
@@ -669,7 +671,7 @@ For a good recording, follow these general best practices:
 * Using visible clicks, one circle per click with a black color.
 
 ### Mistakes during recording
-Mistakes happen if you make a mistake during recording e.g. miss-spoken or clicked the wrong screen.
+Mistakes happen if you make a mistake during recording e.g., miss-spoken or clicked the wrong screen.
 
 #### Calp your hands
 Breathe, clap your hands in front of the microphone and do it again, this will be very simple to cut as you can see the audio peak on the recording and nobody will ever notice.
@@ -678,7 +680,15 @@ Breathe, clap your hands in front of the microphone and do it again, this will b
 Alternatively, take your time, note the timestamp of the recording time, and just start again.
 This is how someone else will find the part to cut, if you are not cutting it yourself.
 
+
+## Recording Software
+There are many recording programs you can use. What ever you chose make sure the recording Quality is set to High.
+
+If you are not sure what to use, consider taking 'OBS Studio'.
+OBS runs on Windows, macOS, Linux and it's free, it is often used for streaming but can also be used for recording. 
+Install it from https://obsproject.com, after installing click the `+` sign in the `Sources` section then select `Display Capture`, click `Ok` then you should be able to select your screen in case you have more than one, afer that click on `Settings`, and there you click on `Output` there are two sections, one of them is called `Recording` here you can choose your `Recording Path` where it should store the Video and also select the `Recording Quality`, set it to `High`. Recording format we recommend `MPEG-4` or `Quicktime MOV`. Under `Video Encoder`, (if you got a good graphics chip) you may be able to select Hardware encoding, like `Hardware (NVENC, H.264)`. Only use `Software (x264)` if you have no hardware encoding option, even then consider using another computer with better hardware. If you know what you do you can also select `Advanced` at the top and do some specific changes according to your system and requirements. Next click on the `Video` tab and make sure you selected the exact resolution like your screen is set to, click `Ok` and after that we are ready to go. On the bottom right you should see a button called `Start recording`. If it does not record your voice, have a look at the `Audio Mixer` section, you may need to add your microphone there, also you should see the volume levels (remember don't peak over -10db). In case you don't see any of the mentioned sections check `Docks` in the top menubar.
+
+
 ## Open questions
- * What exact container format should be used and what codec with what settings so everything will be streamlined and look and feel the same.
- * Fusionauth has different `Intros` which of them should be added when? I think the first recording should be without an intro, so it can be added later.
- * What screen-recording software should be used and with what settings?
+* Fusionauth has different `Intros` which of them should be added when? I think the first recording should be without an intro, so it can be added later.
+
