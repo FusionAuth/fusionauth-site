@@ -49,8 +49,8 @@ This tool allows you to easily retrieve and publish FusionAuth configurations fr
 This includes:
 
 * themes
+* lambdas
 * emails (coming soon)
-* lambdas (coming soon)
 
 The CLI is designed to work with complex version controlled configuration and includes support for localized content.
 
