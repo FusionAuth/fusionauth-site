@@ -1,4 +1,4 @@
-In this article, you are going to learn how to integrate a {{page.technology}} application with FusionAuth.
+In this article, you are going to learn how to integrate {%if page.technology == "Angular" %}an{%else%}a{%endif%} {{page.technology}} application with FusionAuth.
 
 Here’s a typical application login flow before integrating FusionAuth into your {{page.technology}} application.
 
