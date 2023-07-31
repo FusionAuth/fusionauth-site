@@ -156,6 +156,8 @@ content=
 
 ### Login Page
 
+For any application, you need to have a page where customers can log in.
+
 {% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-login.png" alt="Login / Register Prompt if the user is not authenticated" class="img-fluid" figure=false %}
 
 The login page allows the user to login or register using the FusionAuth login / register flow. The login page is implemented in the `LoginPage.tsx` file and displays the `login` and `register` buttons.
@@ -167,19 +169,21 @@ To use the button styling provided by DaisyUI instead of the one provided by Fus
 
 ### Tickets Page
 
+After a user is authenticated, you should show them their tickets. Otherwise, why bother?
+
 {% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-tickets.png" alt="Overview of the tickets when the user is authenticated" class="img-fluid" figure=false %}
 
 The tickets page displays the tickets of the user. The tickets are retrieved from the backend using the `/api/tickets` endpoint. The returned tickets depend on the role of the user. If the user is only a `customer`, only the tickets of the user are returned.
 
 We also embed the user information in the backend response. This allows us to display the creator information of the ticket (full name, picture).
 
-Backend `GET /` endpoint:
+Here's the backend `GET /` endpoint:
 
 ```typescript
 {% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/FindAllTicketsController.ts' %}
 ```
 
-Frontend `TicketsPage.tsx`:
+Here's the frontend `TicketsPage.tsx` which ingests the API response and builds a nice looking ticket list:
 
 ```tsx
 {% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/client/src/pages/TicketsPage.tsx' %}
@@ -187,46 +191,48 @@ Frontend `TicketsPage.tsx`:
 
 ### Ticket Details Page
 
+Along with a list page, you have a details page too. This page is useful when a user wants to dig in a bit more to the details of a ticket.
+
 {% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-ticket.png" alt="Ticket details" class="img-fluid" figure=false %}
 
 The ticket page allows the user to create or update a ticket. The ticket page is implemented in the `TicketPage.tsx` file.
 Depending on the state of the ticket and the role of the user, different actions are available.
 
-Currently, the following flow is implemented:
+Currently, the following ticket workflow is implemented:
 
 {% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-flow.png" alt="The ticket flow implemented in FusionDesk" class="img-fluid" figure=false %}
 
-If the ticket is open and the user is an `agent`, the user can mark the ticket as `solved`.
+If the ticket is open and the user is an `agent`, the user can mark the ticket as `solved`. The creator of the ticket then has the option to either close or reopen the ticket with `Accept solution` or `Reject solution`. After the ticket is closed, it cannot be edited anymore.
 
-The creator of the ticket then has the option to either close or reopen the ticket with `Accept solution` or `Reject solution`.
+Okay, it's not Zendesk, but this is a prototype application, not a multi-billion dollar SaaS unicorn.
 
-After the ticket is closed, it cannot be edited anymore.
-
-Backend `GET /:id`:
+This is the API to pull the details of a single ticket, using `GET` and passing the `id`:
 
 ```typescript
 {% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/FindTicketController.ts' %}
 ```
 
-Backend `POST /`:
+Here's the corresponding create API, using the `POST` method:
 
 ```typescript
 {% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/CreateTicketController.ts' %}
 ```
 
-Backend `PATCH /:id`:
+Here's the method to update a ticket with `PATCH`:
 
 ```typescript
 {% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/UpdateTicketController.ts' %}
 ```
 
-Frontend `TicketPage.tsx`:
+Finally, here's the front end code for building the display.
 
 ```tsx
 {% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/client/src/pages/TicketPage.tsx' %}
 ```
 
 ### Profile Page
+
+Users are important, so let's give them a profile page in FusionDesk as well.
 
 {% include _image.liquid src="/assets/img/blogs/react-example-application/fusiondesk-profile.png" alt="Profile screen with information about the logged in user" class="img-fluid" figure=false %}
 
@@ -236,6 +242,12 @@ The profile page displays the user information. The profile page is implemented 
 {% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/client/src/pages/ProfilePage.tsx' %}
 ```
 
+There's no way to edit or modify the user information in FusionDesk. You'd modify user data in the FusionAuth installation instead.
+
 ## Conclusion
 
-In this article, we have shown how to use the FusionAuth React SDK in a React application. We have also shown how to use the FusionAuth OAuth 2.0 login flow in a React application and what the benefits are.
+In this article, you have learned shown how to use the FusionAuth React SDK in a React application, including using middleware to protect various API endpoints. Hopefully you got to file some fun tickets as well.
+
+You have also learned how to use the FusionAuth OAuth 2.0 Authorization Code grant in a React application. While the FusionDesk application consists of a few screens, the principles can be applied to larger React applications.
+
+Happy coding!
