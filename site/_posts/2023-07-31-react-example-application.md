@@ -47,7 +47,7 @@ See the [Hosted Backend APIs documentation](/docs/v1/tech/apis/hosted-backend#pr
 To begin, clone the demo application from GitHub using the following command:
 
 ```bash
-git clone https://github.com/sonderformat-llc/fusionauth-example-react-fusiondesk
+git clone https://github.com/fusionauth/fusionauth-example-react-fusiondesk
 ```
 
 ### Set up the FusionAuth Application
@@ -88,7 +88,7 @@ This will log you in as an agent. You can also log in as a user by using the fol
 
 ### Set up the FusionAuth Instance manually
 
-If you do not want to use Docker, you can set up the FusionAuth instance manually. To do so, follow the steps detailed in the [FusionAuth documentation](/docs/v1/tech/installation-guide/fusionauth-app) and the [README.md](https://github.com/sonderformat-llc/fusionauth-example-react-fusiondesk/blob/main/README.md) of the example application.
+If you do not want to use Docker, you can set up the FusionAuth instance manually. To do so, follow the steps detailed in the [FusionAuth documentation](/docs/v1/tech/installation-guide/fusionauth-app) and the [README.md](https://github.com/fusionauth/fusionauth-example-react-fusiondesk/blob/main/README.md) of the example application.
 
 ## Using Hosted OAuth Service Provider Endpoints
 
@@ -102,7 +102,7 @@ As you can see - if you inspect the backend of the example application - we do n
 After the user has logged in to FusionAuth, the `app.at` is stored in a cookie. This cookie is then sent with every request to the backend, where we validate the token in a middleware. If the token is valid, we allow the request to continue. If the token is invalid, we return a `401` status code.
 
 ```typescript
-{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/server/src/middlewares/fusion-auth.middleware.ts' %}
+{% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/server/src/middlewares/fusion-auth.middleware.ts' %}
 ```
 
 We also use the FusionAuth API to retrieve user information for the creator of a ticket. This is done in the `FindAllTicketsController.ts` file using the `retrieveUser` method of the FusionAuth API client for typescript.
@@ -138,7 +138,7 @@ With `RequireAuth` you can wrap a component and require the user to be authentic
 `RequireAuth` is used in the `LoggedInMenu` component, which is used to display the user information, profile, and logout button if the user is authenticated.
 
 ```tsx
-{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/client/src/components/LoggedInMenu.tsx' %}
+{% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/client/src/components/LoggedInMenu.tsx' %}
 ```
 
 With the `FusionAuthConfig` you can configure the FusionAuth instance that is used by the React SDK. If you are using a different OAuth 2.0 backend, you will most likely have to configure the route props.
@@ -146,7 +146,7 @@ With the `FusionAuthConfig` you can configure the FusionAuth instance that is us
 We are using the React Router v6 in the example application. To protect routes, we are using a custom `ProtectedRoutes` component. This component uses the `useFusionAuth` hook to check if the user is authenticated. If the user is authenticated, the component renders the `Outlet` component. If the user is not authenticated, the component redirects the user to the `/` route.
 
 ```tsx
-{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/client/src/components/ProtectedRoutes.tsx' %}
+{% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/client/src/components/ProtectedRoutes.tsx' %}
 ```
 
 {% include _callout-note.liquid
@@ -162,7 +162,7 @@ The login page allows the user to login or register using the FusionAuth login /
 To use the button styling provided by DaisyUI instead of the one provided by FusionAuth, we are not using the pre-built buttons from the React SDK. Instead, we are using the `useFusionAuth` hook to get the `login` and `register` methods from the `FusionAuthContext`.
 
 ```tsx
-{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/client/src/pages/LoginPage.tsx' %}
+{% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/client/src/pages/LoginPage.tsx' %}
 ```
 
 ### Tickets Page
@@ -176,13 +176,13 @@ We also embed the user information in the backend response. This allows us to di
 Backend `GET /` endpoint:
 
 ```typescript
-{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/FindAllTicketsController.ts' %}
+{% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/FindAllTicketsController.ts' %}
 ```
 
 Frontend `TicketsPage.tsx`:
 
 ```tsx
-{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/client/src/pages/TicketsPage.tsx' %}
+{% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/client/src/pages/TicketsPage.tsx' %}
 ```
 
 ### Ticket Details Page
@@ -205,25 +205,25 @@ After the ticket is closed, it cannot be edited anymore.
 Backend `GET /:id`:
 
 ```typescript
-{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/FindTicketController.ts' %}
+{% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/FindTicketController.ts' %}
 ```
 
 Backend `POST /`:
 
 ```typescript
-{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/CreateTicketController.ts' %}
+{% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/CreateTicketController.ts' %}
 ```
 
 Backend `PATCH /:id`:
 
 ```typescript
-{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/UpdateTicketController.ts' %}
+{% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/server/src/controllers/rest/ticket/UpdateTicketController.ts' %}
 ```
 
 Frontend `TicketPage.tsx`:
 
 ```tsx
-{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/client/src/pages/TicketPage.tsx' %}
+{% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/client/src/pages/TicketPage.tsx' %}
 ```
 
 ### Profile Page
@@ -233,7 +233,7 @@ Frontend `TicketPage.tsx`:
 The profile page displays the user information. The profile page is implemented in the `ProfilePage.tsx` file and displays the information of the FusionAuth `user`.
 
 ```tsx
-{% remote_include 'https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-react-fusiondesk/main/client/src/pages/ProfilePage.tsx' %}
+{% remote_include 'https://raw.githubusercontent.com/fusionauth/fusionauth-example-react-fusiondesk/main/client/src/pages/ProfilePage.tsx' %}
 ```
 
 ## Conclusion
