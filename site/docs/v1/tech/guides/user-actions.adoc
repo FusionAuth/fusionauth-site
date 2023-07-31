@@ -41,7 +41,7 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
 *** <<Create Expiry Webhook to PiedPiper>>
 *** <<Enable Webhooks in Tenants>>
 *** <<Create Subscription Action>>
-*** <<Create Preventlogin Action>>
+*** <<Create Prevent Login Action>>
 ** <<Survey Work>>
 *** <<Create Thanks Email Template>>
 *** <<Create Survey Webhook to Slack>>
@@ -49,13 +49,13 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
 * <<PiedPiper Work>>
 ** <<Create Mock Intercom API>>
 ** <<Create Mock Slack API>>
-** <<Create PiedPiper API to Listen for Expiry and Call PreventLogin Action>>
+** <<Create PiedPiper API to Listen for Expiry and Call Prevent Login Action>>
 * <<Testing>>
 ** <<Start PiedPiper>>
 ** <<Apply Subscription Action>>
 ** <<Examine the Webhook Calls>>
 ** <<Check Welcome and Expiry Emails Arrive>>
-** <<Check PreventLogin Action Was Created>>
+** <<Check Prevent Login Action Was Created>>
 ** <<Apply Survey Action>>
 ** <<Check Slack Is Called>>
 ** <<Retrieve All Survey Action Instances for This User>>
@@ -185,7 +185,7 @@ At any point in the future you can use the link:/docs/v1/tech/apis/actioning-use
 
 == Applying an Action Automatically
 
-You have seen that you can apply an Action using the FusionAuth Actions API. FusionAuth can also automatically apply a temporary [field]#preventLogin# Action to a User in the case of repeatedly failing authentication. For more information see this link:/docs/v1/tech/tutorials/gating/setting-up-user-account-lockout[guide].
+You have seen that you can apply an Action using the FusionAuth Actions API. FusionAuth can also automatically apply a temporary [field]#Prevent Login# Action to a User in the case of repeatedly failing authentication. For more information see this link:/docs/v1/tech/tutorials/gating/setting-up-user-account-lockout[guide].
 
 == Part 2 - A Tutorial Example Using Actions
 
@@ -247,7 +247,7 @@ These are used when applying an Action to a User, possibly with a Reason.
 
 You are now going to create the subscription and survey examples described earlier, for a paid newspaper website called "PiedPiper".
 
-The subscription Action will email the user and trigger a webhook to Intercom. When the Action instance expires, FusionAuth will email the user goodbye, and trigger a webhook to PiedPiper to create a [field]#preventLogin# Action. The survey Action will trigger a webhook to Slack.
+The subscription Action will email the user and trigger a webhook to Intercom. When the Action instance expires, FusionAuth will email the user goodbye, and trigger a webhook to PiedPiper to create a [field]#Prevent Login# Action. The survey Action will trigger a webhook to Slack.
 
 Below is a diagram of this process.
 
@@ -530,7 +530,7 @@ Note that this example workflow never modifies nor cancels a user subscription, 
 image::guides/user-actions/subscribe-action.png[Create an action in FusionAuth,width=1200,role=bottom-cropped]
 
 
-==== Create Preventlogin Action
+==== Create Prevent Login Action
 
 This next Action will prevent the User from logging in after the subscription expires.
 
@@ -647,9 +647,9 @@ app.post('/slack', function(req, res) {
 
 Administrators monitoring PiedPiper on Slack can immediately contact the user to help them, if their survey response was `Bad`.
 
-=== Create PiedPiper API to Listen for Expiry and Call PreventLogin Action
+=== Create PiedPiper API to Listen for Expiry and Call Prevent Login Action
 
-The final piece of code you'll add to `app.js` is a little more complex. The `expire` route below is called by FusionAuth when the user's subscription Action instance ends. To ban the user from logging in after this time PiedPiper applies the [field]#preventLogin# Action to the user by calling FusionAuth's API.
+The final piece of code you'll add to `app.js` is a little more complex. The `expire` route below is called by FusionAuth when the user's subscription Action instance ends. To ban the user from logging in after this time PiedPiper applies the [field]#Prevent Login# Action to the user by calling FusionAuth's API.
 
 [source,js]
 ----
@@ -657,7 +657,7 @@ app.post('/expire', async function(req, res) {
   console.log('Incoming Request to PiedPiper Expiry:');
   console.log(req.body);
   console.log('');
-  if (req.body.event.action == 'Subscribe' && req.body.event.phase == 'end') {
+  if (req.body.event.action === 'Subscribe' && req.body.event.phase === 'end') {
     try {
       const request = {
         action: {
@@ -784,7 +784,7 @@ You should receive a 200 status code and a response that looks like the followin
 }
 ----
 
-If you are experimenting with Action instances and wish to delete one, you can use the following code, but change the UUID in the URL to match the instance that was returned by FusionAuth when you created it.
+If you are experimenting with Action instances and wish to delete one, you can use the following code, but change the UUID in the URL to match the instance Id that was returned by FusionAuth when you created it.
 
 [source,bash]
 ----
@@ -832,11 +832,11 @@ Check that welcome and goodbye email arrived in the maildev browser window. If y
 image::guides/user-actions/expiry-email.png[Received welcome and expiry emails,width=1200,role=bottom-cropped]
 
 
-=== Check PreventLogin Action Was Created
+=== Check Prevent Login Action Was Created
 
-After a minute has passed the terminal should display `User banned successfully`. This means that PiedPiper received the expired subscription webhook, tested for `(req.body.event.action == 'Subscribe' && req.body.event.phase == 'end')`, and applied the "Ban" Action to the user.
+After a minute has passed the terminal should display `User banned successfully`. This means that PiedPiper received the expired subscription webhook, tested for `(req.body.event.action === 'Subscribe' && req.body.event.phase === 'end')`, and applied the "Ban" Action to the user.
 
-To test that it indeed worked, try to log in to FusionAuth with the user `reader@example.com`. You should be prohibited.
+To test that it indeed worked, try to log in to to the test application at `\http://localhost:3000` with the user `reader@example.com`. You should be prohibited.
 
 image::guides/user-actions/locked-account.png[Locked account after prevent login action,width=1200,role=bottom-cropped]
 
