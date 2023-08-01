@@ -40,6 +40,14 @@ When this value is not defined, the value defined by [field]#tenant.externalIden
 +
 This configuration is only utilized when [field]#application.multiFactorConfiguration.loginPolicy# is enabled.
 
+[field]#application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available since 1.45.0#::
+When enabled a user will be required to provide their current password when changing their password on a self-service account form.
++
+:premium_feature: custom forms
+include::../shared/_premium-edition-blurb-api.adoc[]
++
+:premium_feature!:
+
 [field]#application.formConfiguration.selfServiceFormId# [type]#[UUID]# [optional]#Optional# [since]#Available since 1.26.0#::
 The unique Id of the form to to enable authenticated users to manage their profile on the account page.
 +
@@ -85,6 +93,20 @@ Required when `enabled` is set to `true` and `algorithm` is set to an `RSA` or `
 &nbsp;
 +
 [deprecated]#Removed in version 1.6.0# In version 1.6.0 and beyond, JWT configuration can be managed in the `link:/docs/v1/tech/apis/keys[Keys API]` and Keymaster.
+
+[field]#{base_field_name}.jwtConfiguration.refreshTokenExpirationPolicy# [type]#[String]# [optional]#Optional# [default]#defaults to `Fixed`# [since]#Available since 1.17.0#::
+The Refresh Token expiration policy.
++
+The possible values are:
++
+* `Fixed` - the expiration is calculated from the time the token is issued.
+* `SlidingWindow` - the expiration is calculated from the last time the token was used.
+* `SlidingWindowWithMaximumLifetime` - the expiration is calculated from the last time the token was used, or until the [field]#maximumTimeToLiveInMinutes# is reached. &nbsp; [since]#Available since 1.46.0#
+
+[field]#{base_field_name}.jwtConfiguration.refreshTokenSlidingWindowConfiguration.maximumTimeToLiveInMinutes# [type]#[Integer]# [optional]#Optional# [default]#defaults to `43,200`# [since]#Available since 1.46.0#::
+The maximum lifetime of a refresh token when using a [field]#refreshTokenExpirationPolicy# of `SlidingWindowWithMaximumLifetime`. Value must be greater than 0.
++
+When [field]#refreshTokenExpirationPolicy# is set to `SlidingWindowWithMaximumLifetime`, this value must be greater than or equal to [field]#refreshTokenTimeToLiveInMinutes#.
 
 [field]#application.jwtConfiguration.refreshTokenTimeToLiveInMinutes# [type]#[Integer]# [optional]#Optional# [since]#Available since 1.2.0#::
 The length of time in minutes the JWT refresh token will live before it is expired and is not able to be exchanged for a JWT.
@@ -339,6 +361,12 @@ Determines if the `mobilePhone` field will be included on the registration form.
 [field]#application.registrationConfiguration.mobilePhone.required# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available since 1.4.0#::
 Determines if the `mobilePhone` field is required when displayed on the registration form.
 
+[field]#application.registrationConfiguration.preferredLanguages.enabled# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available since 1.47.0#::
+Determines if the `preferredLanguages` field will be included on the registration form. The default form control will display all available link:/docs/v1/tech/reference/data-types#locales[locales].
+
+[field]#application.registrationConfiguration.preferredLanguages.required# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available since 1.47.0#::
+Determines if the `preferredLanguages` field is required when displayed on the registration form.
+
 [field]#application.registrationConfiguration.type# [type]#[String]# [optional]#Optional# [default]#Defaults to `basic`# [since]#Available since 1.18.0#::
 The type of registration flow.
 +
@@ -373,6 +401,65 @@ Whether or not the Role is a default role. A default role is automatically assig
 Whether or not the Role is a considered to be a super user role. This is a marker to indicate that it supersedes all other roles. FusionAuth will attempt to enforce this contract when using the web UI, it is not enforced programmatically when using the API.
 endif::includeRoles[]
 
+[field]#application.samlv2Configuration.assertionEncryptionConfiguration.digestAlgorithm# [type]#[String]# [optional]#Optional# [default]#Defaults to `SHA256`# [since]#Available since 1.47.0#::
+The message digest algorithm to use when encrypting the symmetric key for transport. The possible values are:
++
+ * `SHA1` - SHA-1 hashing algorithm
+ * `SHA256` - SHA-256 hashing algorithm
+ * `SHA384` - SHA-384 hashing algorithm
+ * `SHA512` - SHA-512 hashing algorithm
++
+Using `SHA256` or higher is recommended.
+
+[field]#application.samlv2Configuration.assertionEncryptionConfiguration.enabled# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available since 1.47.0#::
+Determines if SAML assertion encryption is enabled for this Application.
+
+[field]#application.samlv2Configuration.assertionEncryptionConfiguration.encryptionAlgorithm# [type]#[String]# [optional]#Optional# [default]#Defaults to `AES256GCM`# [since]#Available since 1.47.0#::
+The symmetric key encryption algorithm that will be used to encrypt SAML assertions. A new symmetric key will be generated every time an assertion is encrypted. AES ciphers can operate in Cipher Block Chaining (CBC) or Galois/Counter Mode (GCM). The possible values are:
++
+ * `AES128` - AES in CBC mode with a 128-bit key
+ * `AES192` - AES in CBC mode with a 192-bit key
+ * `AES256` - AES in CBC mode with a 256-bit key
+ * `AES128GCM` - AES using GCM with a 128-bit key
+ * `AES192GCM` - AES using GCM with a 192-bit key
+ * `AES256GCM` - AES using GCM with a 256-bit key
+ * `TripleDES` - Triple DES with a 192-bit key
++
+Cryptography experts _strongly_ recommend the use of AES using GCM if supported. Availability will depend on whether the SAML Service Provider (SP) supports those algorithms.
+
+[field]#application.samlv2Configuration.assertionEncryptionConfiguration.keyLocation# [type]#[String]# [optional]#Optional# [default]#Defaults to `Child`# [since]#Available since 1.47.0#::
+The location that the encrypted symmetric key information will be placed in the SAML response in relation to the `EncryptedData` element containing the encrypted assertion value. The possible values are:
++
+ * `Child` - The `EncryptedKey` element will be wrapped in a `KeyInfo` element and added inside the `EncryptedData`
+ * `Sibling` - The `EncryptedKey` element will be added to the document as a sibling of `EncryptedData`
++
+This value will be dictated by the SAML Service Provider (SP) and which options it supports.
+
+[field]#application.samlv2Configuration.assertionEncryptionConfiguration.keyTransportAlgorithm# [type]#[String]# [optional]#Optional# [default]#Defaults to `RSA_OAEP`# [since]#Available since 1.47.0#::
+The encryption algorithm used to encrypt the symmetric key for transport in the SAML response. The possible values are:
++
+ * `RSAv15` - RSA version 1.5
+ * `RSA_OAEP` - RSA encryption with Optimal Asymmetric Encryption Padding using the mask generation function and hash specified by [field]#application.samlv2Configuration.assertionEncryptionConfiguration.maskGenerationFunction#
+ * `RSA_OAEP_MGF1P` - RSA encryption with Optimal Asymmetric Encryption Padding using the MGF1 mask generation function and SHA-1 hash
++
+Use of `RSAv15` is not recommended but is available for backwards compatibility.
+
+[field]#application.samlv2Configuration.assertionEncryptionConfiguration.keyTransportEncryptionKeyId# [type]#[UUID]# [optional]#Optional# [since]#Available since 1.47.0#::
+The unique Id of the Key used to encrypt the symmetric key for transport in the SAML response. The selected Key must contain an RSA certificate.
++
+This parameter is required when [field]#application.samlv2Configuration.assertionEncryptionConfiguration.enabled# is set to `true`.
+
+[field]#application.samlv2Configuration.assertionEncryptionConfiguration.maskGenerationFunction# [type]#[String]# [optional]#Optional# [default]#Defaults to `MGF1_SHA1`# [since]#Available since 1.47.0#::
+The mask generation function and hash function to use for the Optimal Asymmetric Encryption Padding when encrypting a symmetric key for transport. The possible values are:
++
+ * `MGF1_SHA1` - MGF1 mask generation function with SHA-1 hash
+ * `MGF1_SHA224` - MGF1 mask generation function with SHA-224 hash
+ * `MGF1_SHA256` - MGF1 mask generation function with SHA-256 hash
+ * `MGF1_SHA384` - MGF1 mask generation function with SHA-384 hash
+ * `MGF1_SHA512` - MGF1 mask generation function with SHA-512 hash
++
+This value is only used when the [field]#application.samlv2Configuration.assertionEncryptionConfiguration.keyTransportAlgorithm# is set to `RSA_OAEP`. `RSAv15` does not require a message digest function, and `RSA_OAEP_MGF1P` will always use `MGF1_SHA1` regardless of this value.
+
 [field]#application.samlv2Configuration.audience# [type]#[String]# [optional]#Optional# [default]#Defaults to `issuer`# [since]#Available since 1.6.0#::
 The audience for the SAML response sent to back to the service provider from FusionAuth. Some service providers require different audience values than the `issuer` and this configuration option lets you change the `audience` in the response.
 
@@ -380,6 +467,8 @@ The audience for the SAML response sent to back to the service provider from Fus
 One or more authorized URLS that may be specified by the SAML v2 Service Provider in the Authentication request `<AssertionConsumerServiceURL>` element. If a requested URL is not in this list the request will be rejected by FusionAuth.
 +
 This is the URL that FusionAuth will send the SAML response during a SAML login request, this URL is also referred to as the Assertion Consumer Service or ACS). If the the Authentication request does not contain the `<AssertionConsumerServiceURL>` element, the first URL found in this list will be used to send the SAML response back to the Service Provider.
++
+If the [field]#application.samlv2Configuration.initiatedLogin.enabled# is `true`, the particular URL where the user will end up after successful login can be configured by appending a parameter to the `Initiate login URL`. The parameter must be either `redirect_uri` or `RelayState`. The value should be a URL encoded URL present in this field. If both `RelayState` and `redirect_uri` are present `redirect_uri` will be ignored in favor of `RelayState`.
 
 [field]#application.samlv2Configuration.callbackURL# [type]#[String]# [optional]#Optional# [since]#Available since 1.6.0# [deprecated]#Deprecated#::
 The URL of the callback (sometimes called the Assertion Consumer Service or ACS). This is where FusionAuth sends the browser after the user logs in via SAML.
@@ -404,13 +493,19 @@ Determines if the SAML IdP is enabled for this Application.
 An `issuer` identifies the service provider and allows FusionAuth to load the correct Application and SAML configuration. If you don't know the `issuer`, you can put anything in this field and FusionAuth will display an error message with the `issuer` from the service provider when you test the SAML login.
 
 [field]#application.samlv2Configuration.initiatedLogin.enabled# [type]#[Boolean]# [optional]#Optional# [default]#Defaults to `false`# [since]#Available since 1.41.0#::
-Determines if SAML v2 IdP initiated login is enabled for this application.
+Determines if SAML v2 IdP initiated login is enabled for this application. See [field]#application.samlv2Configuration.authorizedRedirectURLs# for information on which destination URLs are allowed.
 
 [field]#application.samlv2Configuration.initiatedLogin.nameIdFormat# [type]#[String]# [optional]#Optional# [default]#Defaults to `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent`# [since]#Available since 1.41.0#::
 The value sent in the AuthN response to the SAML v2 Service Provider in the NameID assertion.
 
 [field]#application.samlv2Configuration.keyId# [type]#[UUID]# [optional]#Optional# [default]#Defaults to a new key# [since]#Available since 1.6.0#::
 The unique Id of the Key used to sign the SAML response. If you do not specify this property, FusionAuth will create a new key and associate it with this Application.
+
+[field]#application.samlv2Configuration.loginHintConfiguration.enabled# [type]#[Boolean]# [since]#Available since 1.47.0#::
+When enabled, FusionAuth will accept a username or email address as a login hint on a custom HTTP request parameter.
+
+[field]#application.samlv2Configuration.loginHintConfiguration.parameterName# [type]#[String]# [optional]#Optional# [default]#Defaults to `login_hint`# [since]#Available since 1.47.0#::
+The name of the login hint parameter provided by the service provider on an AuthnRequest. If this parameter is present, its value will be used to pre-populate the username field on the FusionAuth login form.
 
 [field]#application.samlv2Configuration.logout.behavior# [type]#[String]# [optional]#Optional# [default]#Defaults to `AllParticipants`# [since]#Available since 1.25.0#::
 The possible values are:
@@ -535,13 +630,6 @@ Whether the WebAuthn reauthentication workflow is enabled for this application. 
 include::../shared/_advanced-edition-blurb-api.adoc[]
 +
 :advanced_feature!:
-
-[field]#sourceApplicationId# [type]#[UUID]# [optional]#Optional# [since]#Available since 1.43.0#::
-The optional Id of an existing Application from which a copy will be made.
-+
-A unique [field]#application.name# is required.
-+
-The `oauthConfiguration.clientSecret` and each role Id will be cleared so new values can be generated. All other values will be copied from the source Application.
 
 [field]#webhookIds# [type]#[Array<UUID>]# [optional]#Optional# [deprecated]#Deprecated#::
 An array of Webhook Ids. For Webhooks that are not already configured for All Applications, specifying an Id on this request will indicate the associated Webhook should handle events for this application.

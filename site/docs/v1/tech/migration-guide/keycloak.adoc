@@ -31,6 +31,9 @@ This guide was tested against Keycloak 15.
 ** <<Social Logins>>
 ** <<Other Entities>>
 * <<Exporting Users>>
+** <<Exporting From MySQL>>
+** <<Exporting From PostgreSQL>>
+** <<Export Result>>
 * <<Importing Users>>
 ** <<Set Up FusionAuth>>
 ** <<Get the Script>>
@@ -94,10 +97,14 @@ To import your users, you'll need their attributes, including their password has
 
 include::docs/v1/tech/migration-guide/_password-hash-note.adoc[]
 
-Here's a SQL script that will query the needed fields. Update `RealmID` with the name of the Keycloak realm to export, gathered from the <<Obtaining User Data>> step.
+Here are SQL scripts that will query the needed fields. Update `RealmID` with the name of the Keycloak realm to export, gathered from the <<Obtaining User Data>> step. The scripts are different depending on if you are exporting from MySQL or PostgreSQL.
+
+=== Exporting From MySQL
+
+Here's the SQL to export from MySQL.
 
 [source,sql]
-.Keycloak Export SQL
+.Keycloak Export MySQL SQL
 ----
 include::https://raw.githubusercontent.com/FusionAuth/fusionauth-import-scripts/master/keycloak/keycloak-export.sql[]
 ----
@@ -112,15 +119,27 @@ Here's how to generate CSV with MySQL, assuming the SQL above is in `keycloak-ex
 cat keycloak-export.sql | mysql -u USER -p keycloak| sed 's/\t/,/g' > out.csv
 ----
 
-Here's how to generate CSV with PostgreSQL. Replace `CONTENTS OF SQL FILE` with the SQL above.
+=== Exporting From PostgreSQL
+
+Here's the SQL to export from PostgreSQL.
+
+[source,sql]
+.Keycloak Export Postgres SQL
+----
+include::https://raw.githubusercontent.com/FusionAuth/fusionauth-import-scripts/master/keycloak/keycloak-export-postgres.sql[]
+----
+
+Here's how to generate CSV with PostgreSQL, assuming the SQL above is in `keycloak-export-postgres.sql`. You may have to remove the header line from the `out.csv` file.
 
 [source,shell]
 .Generate CSV with PostgreSQL
 ----
-psql -W -h localhost -p5433 -U USER -d fusionauth -c "Copy (CONTENTS OF SQL FILE) To STDOUT With CSV HEADER DELIMITER ',';" > out.csv
+psql -W -h localhost -p5433 -U USER -d keycloak -c "Copy (`cat keycloak-export-postgres.sql`) To STDOUT With CSV HEADER DELIMITER ',';" > out.csv
 ----
 
-At the end of this process, you'll have a file that looks like:
+=== Export Result
+
+Whichever database you are exporting from, at the end of the export process you'll have a file that looks like:
 
 [source,csv]
 .Sample User Export
@@ -147,17 +166,13 @@ Next up, import the user data. Here are the steps we need to take:
 
 include::docs/v1/tech/migration-guide/_set-up-fusionauth.adoc[]
 
-==== Install the Hashing Plugin
+==== Optionally Install a Hashing Plugin
 
-The default Keycloak configuration uses a different hashing algorithm than those which ship with FusionAuth.
+The FusionAuth team has written a Keycloak compatible password hashing plugin. The [field]#encryptionScheme# for this plugin is `salted-pbkdf2-hmac-sha256-512`. This plugin ships with versions of FusionAuth 1.34 and above. It is called the `Salted PBKDF2 with SHA-256 with 512-bit derived key` plugin.
 
-You need to install a custom password hashing plugin. The link:/docs/v1/tech/plugins/writing-a-plugin[documentation for doing so is here].
+If you have a version of FusionAuth below 1.34, the code is https://github.com/FusionAuth/fusionauth-contrib/blob/master/Password%20Hashing%20Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExamplePBDKF2HMACSHA256KeyLength512PasswordHasher.java[available for download]. If you use this, follow the link:/docs/v1/tech/plugins/writing-a-plugin#install-the-plugin[plugin installation steps].
 
-The FusionAuth team has written a Keycloak compatible plugin.
-This plugin ships with versions of FusionAuth 1.34 and above. It is called the `Salted PBKDF2 with SHA-256 with 512-bit derived key`.
-If you have a version of FusionAuth below 1.34, the code is https://github.com/FusionAuth/fusionauth-contrib/blob/master/Password%20Hashing%20Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExamplePBDKF2HMACSHA256KeyLength512PasswordHasher.java[available for download].
-
-If you have configured Keycloak to use a different hashing algorithm, you will need to write and install a plugin using that algorithm.
+If you have configured Keycloak to use a different hashing algorithm, you will need to link:/docs/v1/tech/plugins/writing-a-plugin[write and install a plugin] using that algorithm. You'll also need to update the `map_hashing_algorithm` method in the `import.rb` script.
 
 ==== Create a Test Tenant
 
@@ -227,9 +242,9 @@ When you run the script, you'll see output like:
 
 [source,shell,title=Import script output]
 ----
-$ ruby ./import.rb -f http://localhost:9011 -k '...' -u users.json
+$ ruby ./import.rb -f http://localhost:9011 -k '...' -u out.csv
 FusionAuth Importer : Keycloak
- > User file: users.json
+ > User file: out.csv
  > Call FusionAuth to import users
  > Import success
 Duplicate users 0

@@ -31,8 +31,6 @@ Below you will find each stock template that FusionAuth ships for reference. The
 ** <<Two Factor Authentication Method Added>>
 ** <<Two Factor Authentication Method Removed>>
 
-The following 
-
 [WARNING.warning]
 ====
 If you create a template with content and template variables for one type of email template (Forgot Password), but assign it to another type of email template (Passwordless Login, for example), the email will not be sent as expected.
@@ -145,6 +143,8 @@ Quantity: 12
 
 Below is an overview of each email template that ships with FusionAuth.
 
+include::docs/v1/tech/email-templates/_email-template-base-url-note.adoc[]
+
 == Breached Password
 
 .HTML
@@ -186,6 +186,9 @@ The breach result match type determined by the FusionAuth Reactor. Possible valu
 * `SubAddressMatch` The User's loginId and password were matched, but the email address was a sub-address match. For example, `joe+test@example.com` is a sub-address match for `joe@example.com`.
 * `PasswordOnly` Only the password found, the loginId and password combination were not matched.
 * `CommonPassword` The User's password was found to be one of the most commonly known breached passwords.
+
+[field]#tenant# [type]#[Tenant]#::
+The Tenant object, see the Tenant API for field definitions.
 
 [field]#user# [type]#[User]#::
 The User object, see the User API for field definitions.
@@ -698,8 +701,25 @@ ${code}
 === Replacement Variables
 
 [.api]
-[field]#application# [type]#[Application]# [since]#Available since 1.28.0#::
+[field]#application# [type]#[Application]# [since]#Available since 1.46.0#::
 The Application object, see the link:/docs/v1/tech/apis/applications[Application API] for field definitions.
++
+*Note*:
+This object may not be available depending upon when this template is constructed. If you utilize this object in your template, ensure you first check to see if it is defined. You can check for this variable safely in FreeMarker using the missing value test operator and an `if` statement:
++
+[source,text]
+.Example missing value test
+----
+[#if application??]
+  [#-- Use application here --]
+[/#if]
+----
++
+This object is not available on the email template when:
++
+ * The multi-factor workflow was link:/docs/v1/tech/apis/two-factor#start-multi-factor[started] without providing the `applicationId` on that request.
+ * Multi-factor authentication is required during a call to the link:/docs/v1/tech/apis/login#authenticate-a-user[login API] without providing the `applicationId` parameter. That documentation points out that there is likely no production use case where calling the API without the `applicationId` parameter is useful.
+ * The message is being sent to link:/docs/v1/tech/apis/two-factor#send-a-multi-factor-code-when-enabling-mfa[enable] or link:/docs/v1/tech/apis/two-factor#send-a-multi-factor-code-when-disabling-mfa[disable] a multi-factor method without providing the `applicationId` on the request.
 
 [field]#code# [type]#[String]#::
 A code that the user must provide to complete multi-factor authentication.

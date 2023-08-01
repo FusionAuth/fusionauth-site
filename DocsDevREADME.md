@@ -43,6 +43,32 @@ Here are some guidelines to follow when writing documentation (everything under 
 ```
 egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /* <</'|sed 's/$/>>/'
 ```
+- We currently use [FontAwesome v5](https://fontawesome.com/v5/search?m=free) to render icons, so you can use them to refer to UI buttons, like this:
+  - In Markdown:
+    ```markdown
+    <i/>{:.ui-button .green .fa .fa-plus}
+    <i/>{:.ui-button .green .fa .fa-search}
+    <i/>{:.ui-button .blue .fa .fa-edit}
+    <i/>{:.ui-button .blue .fa .fa-save}
+    <i/>{:.ui-button .purple .fas .fa-user}
+    <i/>{:.ui-button .purple .fa .fa-key}
+    <i/>{:.ui-button .gray .fa .fa-minus-circle}
+    <i/>{:.ui-button .red .fa .fa-trash-alt}
+    ```
+  - In AsciiDoc:
+    ```asciidoc
+    icon:plus[role=ui-button green,type=fas]
+    icon:search[role=ui-button green,type=fas]
+    icon:edit[role=ui-button blue,type=fas]
+    icon:save[role=ui-button blue,type=fas]
+    icon:user[role=ui-button purple,type=fas]
+    icon:key[role=ui-button purple,type=fa]
+    icon:minus-circle[role=ui-button gray,type=fa]
+    icon:trash-alt[role=ui-button red,type=fa]
+    ```
+
+    ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/9fd29e3d-c81a-498c-9b82-135f44a7c545)
+
 
 ### Including files
 
@@ -113,9 +139,9 @@ For blog posts:
 - All references to `stackoverflow.com` should be updated and direct to the community forum at `https://fusionauth.io/community/forum/`
 - When writing blog posts, you have access to callouts.
 
-  ![important-call](https://user-images.githubusercontent.com/16090626/112875860-f75a4000-9081-11eb-8119-799db8cfc385.png)
-  ![note-call](https://user-images.githubusercontent.com/16090626/112875861-f7f2d680-9081-11eb-8fa7-360c0460618e.png)
-  ![tip-call](https://user-images.githubusercontent.com/16090626/112875862-f7f2d680-9081-11eb-845f-09c37a7bcf6d.png)
+  ![callout-important](https://github.com/FusionAuth/fusionauth-site/assets/1877191/a6735cb8-17b2-44ee-9dda-cf374a750f1d)
+  ![callout-note](https://github.com/FusionAuth/fusionauth-site/assets/1877191/24a47f1e-5d42-46f3-959c-606a02ae93dc)
+  ![callout-tip](https://github.com/FusionAuth/fusionauth-site/assets/1877191/bbc710e3-58c9-42fb-b5b3-23ce242d38f4)
 
   - There are three callout liquid files `_callout-tip`, `_callout-important`, `_callout-note`
   - They can be accessed as so:
@@ -132,7 +158,7 @@ For blog posts:
 -- tutorial: a tutorial on how to do something
 -- announcement: a press release or release announcement
 -- feature: a post about a particular feature
-
+- All captions should be one or more complete sentences.
 
 ## Lists
 
@@ -164,6 +190,11 @@ For blog posts:
 - client-side
 - curl
 - self-service
+- webview
+- CAPTCHA
+- Google reCAPTCHA
+- Spring Boot
+- FusionAuth Cloud
 
 ## Words to avoid
 
@@ -420,3 +451,26 @@ Prior to requesting review on a PR, please complete the following checklist.
 2. If you are referring to a navigatable element, use `[breadcrumb]#Tenants#` or `[breadcrumb]#Tenants -> Your Tenant#`. In other words, use it even for singular elements.
 3. If you are referring to a field the user can fill out, use `[field]#Authorized Redirect URLs#`.
 4. If you are referring to any other UI element, such as a submit button or read-only name, use `[uielement]#Submit#` or (on the application view screen) `[uielement]#Introspect endpoint#`.
+
+
+## Content checklist
+
+This is for substantial content.
+
+1. Create an [issue in fusionauth-site](https://github.com/FusionAuth/fusionauth-site/issues/new)
+1. Write the piece.
+1. Any screenshots should conform to screenshots standards outlined above.
+1. Create a PR. Add the `content` label.
+1. Ask another devrel to review it. Add them as a reviewer.  If they don't review it in a timely fashion, ping them on slack.
+1. Once it has been through tech review, send it through SEO review. Add an asana task, assign it to Brad, and put it under the SEO section in Asana. Put a due date of a week out.
+1. Once it has been through SEO review, make any needed changes and then add it to the 'content calendar' asana board. Assign it to Emily so she can pick a publish date.
+1. After a publish date has been set, she'll assign it back to you.
+1. Publish it on that date.
+
+If the content is timely, you can skip some of these steps. Check with Dan or Emily about whether your content is timely.
+
+## Quickstarts
+
+Quickstarts are any pages that are going under /docs/quickstarts that are not on the blog.
+
+See https://github.com/FusionAuth/fusionauth-example-template/blob/master/QUICKSTART-INSTRUCTIONS.md for instructions on building out a quickstart.

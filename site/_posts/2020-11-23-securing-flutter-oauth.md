@@ -13,6 +13,9 @@ Today, Flutter has become one of the most talked about cross-platform mobile dev
 
 <!--more-->
 
+{% include _callout-tip.liquid content="This blog post has been [superseded by a newer Flutter tutorial](/docs/v1/tech/tutorials/integrate-flutter)." %}
+
+
 In this tutorial, we will implement one of the most essential features for any application: authentication. We'll use OAuth and OIDC. These standards let you interact with a wide variety of identity providers. In this case, we are going to use FusionAuth to run our own Auth server and develop this authentication integration.
 
 If you want to go straight to the code, check out the [GitHub repo](https://github.com/FusionAuth/fusionauth-example-flutter-dart/).
