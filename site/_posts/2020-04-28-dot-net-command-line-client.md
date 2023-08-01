@@ -63,7 +63,7 @@ If you don't already have FusionAuth installed, we recommend the Docker Compose 
 ```shell
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up
+docker compose up
 ```
 
 Now FusionAuth should be running at `http://localhost:9011`.
