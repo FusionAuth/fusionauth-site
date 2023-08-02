@@ -1,7 +1,7 @@
 ---
 layout: doc
 title: How to use User Actions
-description: How you can use user actions to apply attributes to your users.
+description: How you can use User Actions to apply attributes to your users
 navcategory: developer
 ---
 :page-liquid:
@@ -10,10 +10,10 @@ navcategory: developer
 
 User Actions in FusionAuth are ways to interact with, reward, and discipline users. For example, you could use them to email a user, call another application when a user does something, or temporarily disable a user's login.
 
-This guide refers to User Actions simply as Actions. In the first half you'll learn about all the parts of an Action and their sequences of events. In the second half you'll learn ways to create and apply Actions.
+This guide refers to User Actions simply as Actions. In the first part, you'll learn about the components of an Action and their sequences of events. In the second part, you'll learn ways to create and apply Actions.
 
 * <<Overview>>
-* <<Part 1 - Theory of Fusionauth Actions>>
+* <<Part 1: Theory of FusionAuth Actions>>
 * <<Definitions>>
 * <<Types of Actions and Their Purpose>>
 ** <<Temporal Actions>>
@@ -21,7 +21,7 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
 ** <<Instantaneous Actions>>
 *** <<Survey Example>>
 * <<Applying an Action Automatically>>
-* <<Part 2 - A Tutorial Example Using Actions>>
+* <<Part 2: A Tutorial Example Using Actions>>
 * <<The Action APIs>>
 ** <<Action Parameters>>
 ** <<Action Reason Parameters>>
@@ -45,7 +45,7 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
 ** <<Survey Work>>
 *** <<Create Thanks Email Template>>
 *** <<Create Survey Webhook to Slack>>
-*** <<Create Survey Action with Options with Localizations>>
+*** <<Create Survey Action With Options With Localizations>>
 * <<PiedPiper Work>>
 ** <<Create Mock Intercom API>>
 ** <<Create Mock Slack API>>
@@ -62,28 +62,26 @@ This guide refers to User Actions simply as Actions. In the first half you'll le
 
 
 
-== Part 1 - Theory of Fusionauth Actions
+== Part 1: Theory of FusionAuth Actions
 
 == Definitions
 
-Below are the terms you'll encounter when working with Actions. They are listed in order of increasing understanding, not alphabetically.
+Below are the terms you'll encounter when working with Actions.
 
-* **Action** — An Action is a state or event that can be applied to a User. It is reusable for many Users in many Applications. Actually applying an Action to a specific User is called an Action instance. This is similar to programming, where you have classes (Actions) and objects (Action instances).
+* **Action** — An Action is a state or event that can be applied to a User. It is reusable for many Users in many Applications. Applying an Action to a specific User is called an Action instance. This is similar to programming, where you have classes (Actions) and objects (Action instances). An Action instance consists of: one User applying the Action on another User, the time of the Action, and the name of the Action.
+* **Actionee** — The User an Action is applied to.
+* **Actioner** — The User that applies the Action. Every Action has an Actioner, even if the instance is automatically applied, in which case the Actioner can be set to the administrator of the Application.
+* **Reason** — A text description of why an Action is taken. A Reason is not required when you apply an Action, but it's useful for auditing and filtering Actions sent to webhooks.
+* **Webhook** — A webhook is not a specific technology but rather what web apps call a single HTTP request to an API. A webhook is used to inform an external system of some event and can be triggered by an Action. An example is FusionAuth calling a customer-support service like Intercom to start the customer onboarding process when the user has verified their email in FusionAuth. Another example would be posting a message to a Slack channel whenever a new customer signs up.
 +
-Simply put, an Action is just a name, and an Action instance comprises: one User applying the Action on another User, the time of the Action, and the name of the Action.
-* **Actionee** — The user on whom an Action is taken.
-* **Actioner** — The user that applies the Action. Every Action has to have an Actioner, even if the instance is automatically applied, in which case the Actioner can be set to the Application's administrator.
-* **Reason** — A text description of why an Action was taken. You don't have to set a Reason when applying an Action, but it's useful for auditing and filtering Actions sent to webhooks.
-* **Webhook** — A webhook is another name for sending a single HTTP request to an API. It's used to inform an external system of some event, and can be triggered by an Action. An example is FusionAuth calling a customer-support service, like Intercom, to start the customer onboarding process when the user has verified their email in FusionAuth. Another example would be posting a message to a Slack channel whenever a new customer signs up.
+The webhook/API terminology can be confusing. Note that most web companies, including FusionAuth, call a trigger to send data a "Webhook", but when they receive data they call it an "API". So if you're looking for a destination for a FusionAuth webhook in an external system, you won't find it under the webhook documentation; you'll find it under link:/docs/v1/tech/apis/webhooks[API documentation]. This is why webhooks are sometimes known as "reverse APIs". However, some companies, like Slack in their documentation, also call incoming requests "incoming webhooks".
+* **Temporal Actions** — Temporal (or time-based) Actions have a duration, as opposed to instantaneous Actions, which only have a start time. Once a temporal Action expires, meaning that it ends automatically as opposed to being cancelled, it will no longer be considered active and will not affect the user. However, you can apply a temporal Action to a user indefinitely by setting a very distant end date. An Action that prevents login must be temporal.
 +
-The webhook/API terminology can be confusing. Note that most web companies, including FusionAuth, call a trigger to send data a "Webhook", but when they receive data they call it an "API". So if you're looking for a destination for a FusionAuth webhook in an external system, you won't find it under the webhook documentation; you'll find it under link:/docs/v1/tech/apis/webhooks[API documentation]. This is why they are sometimes known as a "reverse APIs". However, some companies, like Slack in their documentation, also call incoming requests "incoming webhooks".
-* **Temporal Actions** — Temporal, or time-based, Actions have a duration, as opposed to instantaneous Actions, which only have a start time. Once a temporal Action expires, meaning that it ends automatically as opposed to being cancelled, it will no longer be considered active and will not affect the user. However, you can apply a temporal Action to a user indefinitely by setting a very distant end date. An Action that prevents login must be temporal.
-+
-A temporal Action may be cancelled or modified, unlike an instantaneous Action, which cannot be. An example of an instantaneous Action would be a reward, such as sending a user a discount coupon.
+Unlike an instantaneous Action, a temporal Action may be cancelled or modified. An example of an instantaneous Action would be a reward, such as sending a user a discount coupon.
 * **Active** — An active Action can be applied to Users. In contrast, an inactive Action is like a deleted Action, meaning it cannot be applied, but it is still viewable in the list of inactive Actions in FusionAuth. An inactive Action can be reactivated if you want to use it again.
 +
-If a temporal Action instance has ended we do not say that it is not active. Active relates to the Action definition, and expiry relates to a particular instance of the Action.
-* **Option** — A custom text field that you can add to an instantaneous Action, but not to temporal Actions. You can add multiple Options to an Action definition, but choose only one for an instance of the Action. Options can be sent through emails and webhooks.
+If a temporal Action instance has ended we do not say that it is not active. Active relates to the Action definition and expiry relates to a particular instance of the Action.
+* **Option** — A custom text field that you can add to an instantaneous Action but not to temporal Actions. You can add multiple Options to an Action definition, but choose only one for an instance of the Action. Options can be sent through emails and webhooks.
 * **Localization** — A text field with an associated language. It's a way of providing more information to users who speak different languages. Localizations can be added for an Action name, Reason, and Options.
 * **Tenant** — You can make an Action available to all Tenants or just a few. Below is a visual reminder of link:/docs/v1/tech/core-concepts/[Tenants&#44; Groups&#44; and Applications].
 +
@@ -106,33 +104,33 @@ flowchart BT
 
 == Types of Actions and Their Purpose
 
-There are two main types of Actions: "temporal Actions", and "instantaneous Actions (with Options)". They are summarized below.
+There are two main types of Actions: "temporal Actions" and "instantaneous Actions (with Options)". They are summarized below.
 
 [width="100%",cols="34%,33%,33%",options="header",]
 |===
 |Type |Purpose |Example of use
-|Temporal |When you want to apply a state to a user for a period of time. |Subscription access · Expiring software trial · Forum ban
-|Instantaneous (with options) |When you want to apply a state to a user at a single point in time, recording who did so, perhaps with comments. |User surveyed and was happy/indifferent/frustrated · User has earned a sufficient level of trust on your forum and been given an award (possibility increasing their access rights)
+|Temporal |To apply a state to a user for a period of time. |Subscription access · Expiring software trial · Forum ban
+|Instantaneous (with options) |To apply a state to a user at a single point in time, recording who did so, optionally with comments. |User surveyed and was happy/indifferent/frustrated · User has earned a sufficient level of trust on your forum and been given an award (possibly increasing their access rights)
 |===
 
-You might be wondering why you cannot create a temporal Action that also has Options available. Unfortunately that isn't possible currently in FusionAuth.
+You cannot create a temporal Action that also has options available in FusionAuth at this time.
 
 The general process to use an Action is to:
 
-* Create the Action in the FusionAuth admin UI,
-* Create any Reasons that you might want to link to the Action instance on the website,
-* Apply the Action to a User using the User Actions API, possibly giving it an expiry date.
+* Create the Action in the FusionAuth admin UI.
+* Optionally include Reasons for the Action to link it to the Action instance on the website.
+* Apply the Action to a User using the User Actions API, with an expiry date if appropriate.
 
 You'll see some detailed examples of this process later in this guide.
 
 [NOTE]
 ====
-FusionAuth's primary purpose is to simplify authentication (verifying a user's identity) and authorization (giving your app a user's roles). Actions are an additional feature that you might want to use in your app. Think of them as a premade way for you to store extra user fields in FusionAuth instead of your own database, at a specified time, and notify people or systems if these fields change. FusionAuth has no way to receive payments, and no automated subscription features. So you need to decide carefully if you want to write the code you need to manage such features in FusionAuth using Actions, or in your own app with custom code, or using an external system that specializes in that process, if your needs are complex.
+The primary purpose of FusionAuth is to simplify authentication (verifying a user's identity) and authorization (giving your app a user's roles). Actions are an additional feature that you might want to use in your app. Think of them as a premade way for you to store extra user fields in FusionAuth instead of your own database, at a specified time, and notify people or systems if these fields change. FusionAuth has no way to receive payments and no automated subscription features, so you need to decide carefully if you want to write the code you need to manage such features in FusionAuth using Actions or in your own app with custom code. If your needs are more complex, you may consider using an external system that specializes in this kind of process.
 ====
 
 === Temporal Actions
 
-Temporal Action instances have four states they can be in. Each state can trigger a webhook or an email to a user.
+Temporal Action instances can be in one of four states. Each state can trigger a webhook or an email to a user.
 
 
 ++++
@@ -150,21 +148,21 @@ flowchart LR
 
 ==== Subscription Example
 
-Let's take a temporal Action example where a user purchases a month's subscription to a newspaper website that you manage. Assume you have already created a temporal Action named "Subscription" in FusionAuth. Once the user has made their purchase (either on your newspaper site or through some payment gateway) your code will call the link:/docs/v1/tech/apis/actioning-users#take-an-action-on-a-user[FusionAuth API to apply the Action to the User], and give the Action instance an end-date one month from now. The user will now have access to read the newspaper when authenticated on your site with FusionAuth.
+Let's look at a temporal Action example where a user purchases a one-month subscription to a newspaper website that you manage. Assume you have already created a temporal Action named "Subscription" in FusionAuth. Once the user has made their purchase (either on your newspaper site or through some payment gateway), your code will call the link:/docs/v1/tech/apis/actioning-users#take-an-action-on-a-user[FusionAuth API to apply the Action to the User] and give the Action instance an end-date one month from now. The user will now have access to the newspaper when they are authenticated on your site with FusionAuth.
 
-The creation of this Action instance will be the `Started` event shown above. You can set it to trigger the welcome email template that is sent to the user, and a webhook that sends the user's information to another subscription site you manage. That site could then use the email address to advertise to the user, or for targeted advertising through for example Facebook adverts.
+On creation, this Action instance will be in the `Started` state shown above. You can set the Action to trigger a welcome email created from a template to be sent to the user and a webhook that sends the user's information to another subscription site you manage. The associated subscription site can then use the email address to advertise to the user or to target advertising to the user, for example, through Facebook adverts.
 
-Once the Action instance expires (the `Ended` event), it will trigger a goodbye email to the user, and any webhooks that you configured. To prevent the user accessing your site after this date you could either:
+Once the Action instance expires (the `Ended` event), it can trigger a goodbye email to the user and any webhooks you configure. To prevent the user accessing your site after this date, you could either:
 
-* Check the subscription state of the Action for the User in FusionAuth from your site's code when the user attempts to log in,
-* Use a webhook at the end of the Action to change the User's Role in FusionAuth and disallow that role in your site,
-* or use a webhook at the end of the Action to call your code to create another temporal Action in FusionAuth with an indefinite end date and [field]#preventLogin# set to true.
+* Check the subscription state of the Action for the User in FusionAuth from your site when the user attempts to log in.
+* Use a webhook at the end of the Action to change the User's Role in FusionAuth and disallow that role in your site.
+* Use a webhook at the end of the Action to call your code to create another temporal Action in FusionAuth with an indefinite end date and [field]#preventLogin# set to true.
 
 The last option is probably the simplest and most idiomatic way to use FusionAuth in most cases. In fact, using an Action to prevent login is the most common use case for Actions.
 
 === Instantaneous Actions
 
-An instantaneous Action instance has an Option that can be chosen from a list, but no temporal states. Once you set the Action for a User it is either remains or is removed.
+An instantaneous Action instance has an Option that can be chosen from a list but no temporal states. Once you set the Action for a User, it either remains or is removed.
 
 
 ++++
@@ -179,45 +177,45 @@ flowchart LR
 
 Let's take an instantaneous Action example where a user gives feedback on their interaction with customer support by assigning a rating and giving a comment.
 
-Assume you have already created an instantaneous Action named "Feedback" in FusionAuth, with Options of "Bad", "Neutral", and "Good". Your user chooses "Good" in your application's form and enters the comment "Problem solved quickly". When saving the form your code will call the Action API and create an Action instance for the User with the option "Good" and populate the [field]#comment# field. The [field]#actioner# of the instance will be set to the support User who helped the customer.
+Assume you have already created an instantaneous Action named "Feedback" in FusionAuth, with Options of "Bad", "Neutral", and "Good". Your user chooses "Good" in your feedback form and enters the comment "Problem solved quickly". When the form is saved, your code will call the Action API and create an Action instance for the User with the option "Good", and populate the [field]#comment# field. The [field]#actioner# of the instance will be set to the support User who helped the customer.
 
-At any point in the future you can use the link:/docs/v1/tech/apis/actioning-users#retrieve-a-previously-taken-action[Actions API] to retrieve this saved Action instance and create a report of the customer support agent's performance, or your app's approval ratings in general. You could also use a webhook to send this data immediately to an external system when the Action was created.
+At any point in the future, you can use the link:/docs/v1/tech/apis/actioning-users#retrieve-a-previously-taken-action[Actions API] to retrieve this saved Action instance and create a report of the customer support agent's performance or the approval ratings of your app. You can also use a webhook to immediately send this data to an external system when the Action is created.
 
 == Applying an Action Automatically
 
-You have seen that you can apply an Action using the FusionAuth Actions API. FusionAuth can also automatically apply a temporary [field]#Prevent Login# Action to a User in the case of repeatedly failing authentication. For more information see this link:/docs/v1/tech/tutorials/gating/setting-up-user-account-lockout[guide].
+In addition to applying an Action using the FusionAuth Actions API, FusionAuth can automatically apply a temporary [field]#Prevent Login# Action to a User in the case of repeatedly failing authentication. For more information, see this link:/docs/v1/tech/tutorials/gating/setting-up-user-account-lockout[guide to setting up user account lockout].
 
-== Part 2 - A Tutorial Example Using Actions
+== Part 2: A Tutorial Example Using Actions
 
 The remainder of this guide will demonstrate a practical example of using Actions that you can follow. Let's start with a brief tour of the APIs that you'll use in the example.
 
 == The Action APIs
 
-Three separate APIs manage Actions. Each has its own documentation.
+Three separate APIs manage Actions. Each API has its own documentation.
 
 * link:/docs/v1/tech/apis/user-actions[Actions] — Defines an Action, updates it, and deletes it. The API path is `/api/user-action`.
-* link:/docs/v1/tech/apis/user-action-reasons[Action Reasons] — Defines the reason an Action can be taken. The API path is `/api/user-action-reason`.
+* link:/docs/v1/tech/apis/user-action-reasons[Action Reasons] — Defines the reason an Action is taken. The API path is `/api/user-action-reason`.
 * link:/docs/v1/tech/apis/actioning-users[Action instances] — Applies an existing Action to a User, optionally with a Reason. Can also update or cancel the Action instance. The API path is `/api/user/action`.
 
-Actions and Action Reasons can be managed on the FusionAuth admin UI. Only Action instances require you to use their API — you cannot apply an Action to a User on the website.
+Actions and Action Reasons can be managed on the FusionAuth admin UI. Only Action instances require you to use the API: You cannot apply an Action to a User on the website.
 
-It is faster to use FusionAuth's API wrappers rather than make HTTP calls directly. You can read how to use them in the link:/docs/v1/tech/client-libraries/[client library guide] before continuing. This guide uses the Typescript client library.
+It is faster to use FusionAuth API wrappers rather than make HTTP calls directly. You can read how to use API wrappers in the link:/docs/v1/tech/client-libraries/[client library guide] before continuing. This guide uses the TypeScript client library.
 
-The Actions API reference documentation is long, and repeats the same parameters for each type of request. For easier understanding, the parameters listed there are grouped and summarized below for each API. Parameters, such as Ids and names, whose purpose is obvious from the earlier link:#definitions[definitions] section are not described here.
+The Actions API reference documentation is long and repeats the same parameters for each type of request. For easier understanding, the parameters listed there are grouped and summarized below for each API. Parameters such as Ids and names, whose purpose is obvious from the earlier link:#definitions[definitions] section, are not described here.
 
 === Action Parameters
 
-These are used when creating an Action definition.
+Action parameters are used when you create an Action definition.
 
 * [field]#userActionId#
 * [field]#name#, [field]#localizedNames#
-* [field]#startEmailTemplateId#, [field]#cancelEmailTemplateId#, [field]#modifyEmailTemplateId#, [field]#endEmailTemplateId#, — The Id of the email template that is used when the Action starts, is cancelled, is modified, or expires. Temporal Actions have all four events, whereas instantaneous Actions have only the start event.
-* [field]#includeEmailInEventJSON# — Whether to include the email information in the JSON that is sent to the webhook when an Action is taken.
+* [field]#startEmailTemplateId#, [field]#cancelEmailTemplateId#, [field]#modifyEmailTemplateId#, [field]#endEmailTemplateId# — The Id of the email templates to use when the Action starts, is cancelled, is modified, or expires. Temporal Actions have all four events, whereas instantaneous Actions have only the start event.
+* [field]#includeEmailInEventJSON# — Whether to include the email information in the JSON sent to the webhook when an Action is taken.
 * [field]#options#, [field]#options[x].name#, [field]#options[x].localizedNames#
 * [field]#preventLogin# — User may not log in if true until the Action expires.
 * [field]#sendEndEvent# — Whether to call webhooks when this Action instance expires.
-* [field]#temporal# — if the Action is temporal.
-* [field]#userEmailingEnabled#, [field]#userNotificationsEnabled# — notify doesn't contact the user, it just adds a [field]#notifyUser# field to JSON sent to webhooks.
+* [field]#temporal# — Whether the Action is temporal.
+* [field]#userEmailingEnabled#, [field]#userNotificationsEnabled# — Enabling user notifications for an Action doesn't contact the user, but adds a [field]#notifyUser# field to the JSON sent to webhooks.
 
 === Action Reason Parameters
 
@@ -573,7 +571,7 @@ The final email template you'll create thanks the user for completing the survey
 ** Scroll down and ensure that the [field]#user.action# event is enabled.
 * Save icon:save[role=ui-button blue,type=fas] the webhook.
 
-==== Create Survey Action with Options with Localizations
+==== Create Survey Action With Options With Localizations
 
 In this last Action you are going to add Options that represent the response the user had to the survey. You are also going to add a translation (localization) to each Option so that subscribers who don't speak English can respond in their own language.
 
