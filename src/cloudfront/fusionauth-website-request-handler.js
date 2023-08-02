@@ -140,7 +140,7 @@ var redirectsByPrefix = [
 
 // order matters
 var redirectsByRegex = [
-  ['/blog/\d\d\d\d/\d\d/\d\d/', '/blog/'],
+  ['/blog/\\d\\d\\d\\d/\\d\\d/\\d\\d/', '/blog/'],
 ]
 
 var s3Paths = ['/direct-download', '/license'];
