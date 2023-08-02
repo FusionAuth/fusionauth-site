@@ -138,6 +138,11 @@ var redirectsByPrefix = [
   ['/learn/expert-advice', '/articles']
 ]
 
+// order matters
+var redirectsByRegex = [
+  ['/blog/\d\d\d\d/\d\d/\d\d/', '/blog/'],
+]
+
 var s3Paths = ['/direct-download', '/license'];
 var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/', '/how-to/', '/articles/', '/dev-tools/', '/quickstarts/'];
 
@@ -196,6 +201,13 @@ function calculateRedirect(uri) {
     if (prefix_replacement !== undefined) {
       result = uri.replace(prefix_replacement[0], prefix_replacement[1]);
     }
+  }
+
+  if (result === null) {
+    redirectsByRegex.forEach(([regex, value]) => {
+      const regexObj = new RegExp(regex, "g");
+      result = uri.replace(regexObj, value);
+    });
   }
 
   return result;
