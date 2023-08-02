@@ -205,7 +205,7 @@ function calculateRedirect(uri) {
 
   if (result === null) {
     redirectsByRegex.forEach(([regex, value]) => {
-      const regexObj = new RegExp(regex, "g");
+      var regexObj = new RegExp(regex, "g");
       result = uri.replace(regexObj, value);
     });
   }
