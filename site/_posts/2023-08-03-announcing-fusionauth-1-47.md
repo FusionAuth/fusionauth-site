@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.47
-description: These releases include performance improvements, the ability to include preferred languages on the basic registration form, and SAMLv2 assertion encryption.
+description: This update includes performance improvements, the ability to include preferred languages on the basic registration form, and SAMLv2 assertion encryption.
 author: Dan Moore
 image: blogs/release-1-47/fusionauth-1-47.png
 category: announcement
@@ -9,27 +9,28 @@ tags: release-announcement localization registration performance lambda connecto
 excerpt_separator: "<!--more-->"
 ---
 
-FusionAuth version 1.47 shipped in late July, 2023. These releases include performance improvements, the ability to include preferred languages on the basic registration form, and SAMLv2 assertion encryption.
+FusionAuth version 1.47 shipped in late July, 2023. This version includes performance improvements, the ability to collect preferred languages on basic registration forms, and SAMLv2 assertion encryption.
 
 <!--more-->
 
-The focus of this release was improving performance. In fact, I hereby dub it the "Performance Panther" release.
+The focus of these updates is performance. In fact, I hereby dub 1.47 the "Performance Panther" release.
 
-All in all there are 21 issues, enhancements, and bug fixes included in the 1.47 releases. As always, please see the [release notes](/docs/v1/tech/release-notes#version-1-47-1) for a full breakdown of the changes between 1.46 and 1.47, including any schema changes.
+All in all there are 21 issues, enhancements, and bug fixes included in the 1.47.0 and 1.47.1 releases. As always, please see the [release notes](/docs/v1/tech/release-notes#version-1-47-1) for a full breakdown of the changes between 1.46.0 and 1.47.1, including any schema changes.
 
 ## Performance improvements
 
 {% include _image.liquid src="/assets/img/blogs/release-1-47/panther.png" alt="Performance panther is looking at you." class="img-fluid" figure=false %}
 
-There were a number of performance improvements in these releases. 
+There were a number of performance improvements in these releases, as the team focused on making FusionAuth even faster and more scalable. 
 
 Some improvements are only applicable for Enterprise clients. This included lowering the memory overhead when downloading and storing the IP location database. This IP data is used by [Advanced Threat Detection](/docs/v1/tech/advanced-threat-detection/).
 
-Other improvements apply to all users of FusionAuth. This includes reworking the internal caching system, which improves performance when creating or deleting hundreds or thousands of applications, keys or other configuration. Another performance improvement is capturing timing metrics around HTTP requests and Lambda and Connector invocations. These will be exposed in the [System Status API](https://fusionauth.io/docs/v1/tech/apis/system#retrieve-system-status) response. 
+Other improvements apply to all FusionAuth users. These include:
 
-There was also validation logic added which limits the number of languages a user can have. Sorry, you'll just have to make do with 20. In certain cases providing too many languages during registration caused performance impacts to the system.
-
-To assist with troubleshooting performance issues, garbage collection logging can be turned on in version 1.47.0. Reviewing garbage collection logs, while no fun, can help you understand how the JVM is impacting FusionAuth's abilities to authenticate your users.
+* Reworking the internal caching system, which improves performance when creating or deleting hundreds or thousands of applications, keys or other configuration. 
+* Capturing timing metrics around HTTP requests and Lambda and Connector invocations. These will be exposed in the [System Status API](https://fusionauth.io/docs/v1/tech/apis/system#retrieve-system-status) response.
+* Limiting the number of languages associated with a user. Sorry, you'll just have to make do with 20. In certain cases providing too many languages during registration caused performance impacts to the system.
+* Enabling JVM garbage collection logging. Reviewing garbage collection logs, while no fun, can help you understand how the JVM is impacting FusionAuth's abilities to authenticate your users.
 
 Happy tuning!
 
