@@ -1,0 +1,35 @@
+name: update_sitemap
+
+# this job pushes the sitemap to google search console.
+# loosely based on https://stateful.com/blog/google-search-console-github
+
+# only ping google at certain times
+on:
+  # run once a day at ~5am/5pm MT 
+  schedule:
+    - cron: '31 22,10 * * *'
+  #push:
+    #branches: [ master ]
+    #paths:
+      #- 'site/**'
+      #- 'astro/**'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  update_sitemap:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install googleapis google-auth-library
+      - name: Update sitemap
+        env: 
+          GOOGLE_SEARCH_CONSOLE_JSON_KEY: ${{ secrets.GOOGLE_SEARCH_CONSOLE_JSON_KEY }}
+        run: node .github/scripts/publish_sitemap.js
+        shell: bash
