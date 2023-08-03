@@ -9,7 +9,7 @@ dateModified: 2023-08-02
 ---
 If you're a developer, it's your responsibility to keep up with the ever-evolving landscape of internet security. Today, we're going to delve into an exciting facet of modern cybersecurity---magic links. Magic links are a method of passwordless authentication that has been gaining popularity. They allow users to access websites without typing a password or using an app, by simply clicking on a link sent directly to their email address.
 
-## What are Magic Links?
+## What Are Magic Links?
 
 In simplest terms, a magic link is a URL with an embedded unique token. They are sometimes included in a [multi-factor authentication (MFA)](https://fusionauth.io/features/multifactor-authentication) approach. Clicking on the link authenticates the user. They can then access a particular service or application. It is similar in function to a [one-time password (OTP)](https://fusionauth.io/articles/authentication/developer-benefits-single-sign-on) setup, but with less risk.
 
@@ -23,7 +23,7 @@ The process starts when a user inputs their email address into a login form. The
 
 By doing so, magic links leverage the security of the user's email provider. If someone can access the magic link, they already have access to the user's email. If the user's email account is compromised, then they likely have bigger problems than someone accessing your service. The magic link is a one-time URL that can only be used once. This means that if someone steals a magic link that has already been used once, they cannot use it again. This means that the user gets the ease of logging in to your system without having to present a credential. But they still benefit from the security around the email account, including any protections the email provider has put in place or MFA the user has added.
 
-## Benefits of Using Magic Links
+## Benefits Of Using Magic Links
 
 ### User Experience (UX):
 
@@ -37,7 +37,7 @@ Despite being the standard for years, passwords are a known security weak point.
 
 Implementing a secure password-based system can be a challenge. It involves creating secure password storage, implementing encryption, managing password resets, etc. In comparison, magic link systems can be simpler to implement and maintain.  They don't require any changes to existing infrastructure, which makes them a good choice for small and medium businesses. In addition, they can be implemented with fewer resources than other security solutions such as software-based two-factor authentication (2FA) systems or hardware tokens.
 
-## Considerations and Risks of Magic Links
+## Considerations And Risks Of Magic Links
 
 While magic links provide an attractive alternative to traditional passwords and forgot password links, it's crucial to consider potential drawbacks.
 
