@@ -294,7 +294,9 @@ You may ask yourself, “If I create a front end for user management in my appli
 <br>
 
 ## Conclusion
-These are a few simple examples of how to use the FusionAuth APIs to get more value out of FusionAuth.  Please take some time to explore the [FusionAuth API documentation](/docs/v1/tech/apis/) and get some more ideas of ways to use them to better serve your development.  For instance, we have used the APIs to create a user, but you can do the same thing when deleting users or removing them from an application.  You can do things like monitor an external application and remove the user from FusionAuth on a given event.  By integrating the FusionAuth APIs not only can you automate the validation process, setup users, and make it all look like your own, but you can add almost any ability within FusionAuth to your application.
+These are a few simple examples of how to use the FusionAuth APIs to get more value out of FusionAuth.  Please take some time to explore the [FusionAuth API documentation](/docs/v1/tech/apis/) and get some more ideas of ways to use them to better serve your development.  For instance, we have used the APIs to create a user, but you can use similar APIs to delete users or remove their application access. For example, you can monitor an external application and remove the user from FusionAuth on a given event.  
+
+By integrating the FusionAuth APIs not only can you automate the validation process, setup users, and make it all look like your own, but you can add almost any ability within FusionAuth to your application.
 
 <br>
 
