@@ -132,6 +132,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
+"authentication/login-failures.md": {
+  id: "authentication/login-failures.md",
+  slug: "authentication/login-failures",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 "authentication/multi-factor-authentication.md": {
   id: "authentication/multi-factor-authentication.md",
   slug: "authentication/multi-factor-authentication",
@@ -615,13 +622,6 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
-"oauth/what-is-oauth.mdx": {
-  id: "oauth/what-is-oauth.mdx",
-  slug: "oauth/what-is-oauth",
-  body: string,
-  collection: "articles",
-  data: InferEntrySchema<"articles">
-} & { render(): Render[".mdx"] },
 "oauth/why-no-authentication-in-oauth.md": {
   id: "oauth/why-no-authentication-in-oauth.md",
   slug: "oauth/why-no-authentication-in-oauth",
@@ -766,9 +766,16 @@ declare module 'astro:content' {
 } & { render(): Render[".mdx"] },
 },
 "quickstarts": {
-"index.mdx": {
-  id: "index.mdx",
-  slug: "index",
+"quickstart-golang-web.mdx": {
+  id: "quickstart-golang-web.mdx",
+  slug: "quickstart-golang-web",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
+} & { render(): Render[".mdx"] },
+"quickstart-python-django-web.mdx": {
+  id: "quickstart-python-django-web.mdx",
+  slug: "quickstart-python-django-web",
   body: string,
   collection: "quickstarts",
   data: InferEntrySchema<"quickstarts">
