@@ -2,7 +2,7 @@
 title: What is Customer Identity and Access Management (CIAM)?
 description: "CIAM solutions help organizations to securely authenticate and authorize customers, protect customer data, and provide a seamless customer experience"
 section: CIAM
-author: Mark Robustelli
+author: Alex Patterson
 icon: /img/icons/what-is-ciam.svg
 ---
 Customer Identity and Access Management (CIAM) is a set of processes and technologies that organizations use to manage the identities and access of their customers. CIAM solutions help organizations to securely authenticate and authorize customers, protect customer data, and provide a seamless customer experience.
@@ -15,14 +15,14 @@ Customer Identity and Access Management (CIAM) is a set of technologies and proc
 * Provide a seamless customer experience: CIAM solutions can help to improve the customer experience by making it easier for customers to sign up, log in, and access services. This can be done by providing a single sign-on (SSO) solution, by allowing customers to register and log in using social media accounts, and by providing self-service tools for managing customer profiles.
 * Gather customer data: CIAM solutions can help organizations to gather customer data, such as contact information, preferences, and purchase history. This data can be used to improve the customer experience, to target marketing campaigns, and to make better business decisions.
 
-### Benefits to using CIAM solutions
+### Benefits to Using CIAM Solutions
 
 * Improved security: CIAM solutions can help to protect customer identities and data from unauthorized access, use, or disclosure. This can help to reduce the risk of fraud, data breaches, and other security incidents.
 * Enhanced customer experience: CIAM solutions can help to improve the customer experience by making it easier for customers to sign up, log in, and access services. This can lead to increased customer satisfaction and loyalty.
 * Increased business agility: CIAM solutions can help organizations to be more agile by making it easier to onboard new customers, launch new products and services, and respond to changing customer demands.
 * Reduced costs: CIAM solutions can help to reduce costs by streamlining customer onboarding and support processes, and by reducing the need for manual intervention.
 
-## CIAM solutions
+## CIAM Solutions
 
 There are a number of different CIAM solutions available on the market. These solutions vary in terms of their features, functionality, and pricing. Some of the leading CIAM providers include:
 
@@ -31,7 +31,7 @@ There are a number of different CIAM solutions available on the market. These so
 * Ping Identity: Ping Identity is a provider of identity and access management solutions. Ping Identity's CIAM solution, PingOne, offers a secure and user-friendly solution for managing customer identities and access.
 * OneLogin: OneLogin is a provider of identity and access management solutions. OneLogin's CIAM solution, OneLogin, offers a simple and affordable solution for managing customer identities and access.
 
-### Customer experience
+### Customer Experience
 
 One of the key benefits of CIAM solutions is that they can help to improve the customer experience. CIAM solutions can make it easier for customers to sign up, log in, and access services. This can lead to increased customer satisfaction and loyalty.
 
@@ -42,7 +42,7 @@ There are a number of ways that CIAM solutions can improve the customer experien
 * Provide self-service tools for managing customer profiles.
 * Personalize the customer experience based on customer preferences.
 
-### User experience
+### User Experience
 
 The user experience (UX) of a CIAM solution is also important. A good UX will make it easy for customers to use the solution and will help to improve the overall customer experience.
 
@@ -62,7 +62,7 @@ CIAM solutions can also be used to improve the security and usability of apps. F
 * Collect user data for analytics purposes.
 * Personalize the app experience based on user preferences.
 
-## What is the difference between CIAM and IAM?
+## What is the Difference Between CIAM and IAM?
 
 Customer Identity and Access Management (CIAM) and Identity Access Management (IAM) are both related to identity and access management, but they have different focuses. CIAM focuses on managing the identities and access of customers, while IAM focuses on managing the identities and access of employees.
 
@@ -74,7 +74,7 @@ Differences:
 
 CIAM and IAM are both important aspects of identity and access management. However, they have different focuses and requirements. CIAM is focused on managing the identities and access of customers, while IAM is focused on managing the identities and access of employees.
 
-## What are the essential elements of CIAM?
+## What are the Essential Elements of CIAM?
 
 There are a number of essential elements that are needed for a successful CIAM solution. These elements include:
 
@@ -112,7 +112,6 @@ See what [Muti-Factor Authentication](https://fusionauth.io/articles/authenticat
 ### Single Sign-On
 
 Single sign-on (SSO) is a security feature that allows users to log in to multiple applications with a single set of credentials. SSO can help to simplify the login process and improve the user experience.
-
 
 ### Social Login
 
@@ -161,6 +160,6 @@ Here are some of the ways that magic link authentication works:
 2. The application sends a one-time link to the user's email address.
 3. The user clicks on the link and is automatically logged in to the application.
 
-## Why choose FusionAuth?
+## Why Choose FusionAuth?
 
 FusionAuth is a CIAM solution that is designed to be scalable, secure, and easy to use. It offers a wide range of features, including multi-factor authentication, single sign-on, and social login. FusionAuth is also extensible, so it can be customized to meet the specific needs of an organization.
