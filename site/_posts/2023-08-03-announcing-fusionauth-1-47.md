@@ -35,7 +35,7 @@ Happy tuning!
 
 ## Preferred languages on the basic registration form
 
-FusionAuth has self service registration. It comes in two flavors: 
+FusionAuth has self-service registration. It comes in two flavors: 
 
 * [Basic registration](/docs/v1/tech/guides/basic-registration-forms), which is available with all plans, including the forever free Community plan.
 * [Advanced registration](/docs/v1/tech/guides/advanced-registration-forms), which requires a paid plan.
