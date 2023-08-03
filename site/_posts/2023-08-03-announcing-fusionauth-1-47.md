@@ -13,7 +13,7 @@ FusionAuth version 1.47 shipped in late July, 2023. This release includes perfor
 
 <!--more-->
 
-The focus of this release was improving performance. In fact, I hereby dub it the "Performance panther" release.
+The focus of this release was improving performance. In fact, I hereby dub it the "Performance Panther" release.
 
 All in all there are 21 issues, enhancements, and bug fixes included in the 1.47 releases. As always, please see the [release notes](/docs/v1/tech/release-notes#version-1-47-1) for a full breakdown of the changes between 1.46 and 1.47, including any schema changes.
 
