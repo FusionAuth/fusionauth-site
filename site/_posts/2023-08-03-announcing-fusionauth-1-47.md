@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: Announcing FusionAuth 1.47
-description: This release includes performance improvements, the ability to include preferred languages on the basic registration form, and SAMLv2 assertion encryption.
+description: These releases include performance improvements, the ability to include preferred languages on the basic registration form, and SAMLv2 assertion encryption.
 author: Dan Moore
 image: blogs/release-1-47/fusionauth-1-47.png
 category: announcement
@@ -9,7 +9,7 @@ tags: release-announcement localization registration performance lambda connecto
 excerpt_separator: "<!--more-->"
 ---
 
-FusionAuth version 1.47 shipped in late July, 2023. This release includes performance improvements, the ability to include preferred languages on the basic registration form, and SAMLv2 assertion encryption.
+FusionAuth version 1.47 shipped in late July, 2023. These releases include performance improvements, the ability to include preferred languages on the basic registration form, and SAMLv2 assertion encryption.
 
 <!--more-->
 
@@ -21,7 +21,7 @@ All in all there are 21 issues, enhancements, and bug fixes included in the 1.47
 
 {% include _image.liquid src="/assets/img/blogs/release-1-47/panther.png" alt="Performance panther is looking at you." class="img-fluid" figure=false %}
 
-There were a number of performance improvements in this release. 
+There were a number of performance improvements in these releases. 
 
 Some improvements are only applicable for Enterprise clients. This included lowering the memory overhead when downloading and storing the IP location database. This IP data is used by [Advanced Threat Detection](/docs/v1/tech/advanced-threat-detection/).
 
@@ -35,9 +35,14 @@ Happy tuning!
 
 ## Preferred languages on the basic registration form
 
-FusionAuth has self service registration. It comes in two flavors. [Basic](/docs/v1/tech/guides/basic-registration-forms), which is available with all plans, including the forever free Community plan, and [advanced](/docs/v1/tech/guides/advanced-registration-forms), which requires a paid plan. In either case, when enabled, your users can self-register for your application by providing certain information.
+FusionAuth has self service registration. It comes in two flavors: 
 
-With basic, you are limited to a number of common registration fields, such as first name and last name. With this release, your users can now choose a preferred language when registering.
+* [Basic registration](/docs/v1/tech/guides/basic-registration-forms), which is available with all plans, including the forever free Community plan.
+* [Advanced registration](/docs/v1/tech/guides/advanced-registration-forms), which requires a paid plan.
+
+In either case, when enabled, your users can self-register for your application by providing certain information.
+
+With basic, you are limited to a number of common registration fields, such as first name and last name. With 1.47, your users can now choose a preferred language when registering.
 
 To set it up, you'd enable it in the basic registration configuration.
 
@@ -47,11 +52,11 @@ Then, the user will now see a dropdown when registering. This page [can be theme
 
 {% include _image.liquid src="/assets/img/blogs/release-1-47/preferred-languages-user.png" alt="The user's view of preferred languages." class="img-fluid" figure=false %}
 
-This feature is useful if your application supports multiple languages and you want to [send your welcome email](/docs/v1/tech/email-templates/templates-replacement-variables#setup-password) in the language your user prefers. Previous to this release, you had to use advanced registration forms to get this functionality.
+This feature is useful if your application supports multiple languages and you want to [send your welcome email](/docs/v1/tech/email-templates/templates-replacement-variables#setup-password) in the language your user prefers. Previous to 1.47, you had to use advanced registration forms to get this functionality.
 
 ## SAMLv2 assertion encryption
 
-As of this release, FusionAuth is compatible with a SAML v2 Service Provider (SP) that requires encrypted assertions. This functionality is only available when FusionAuth is acting as the SAMLv2 Identity Provider (IdP). You can enable and configure the behavior on the "SAML" tab of a given Application.
+As of version 1.47, FusionAuth is compatible with a SAML v2 Service Provider (SP) that requires encrypted assertions. This functionality is only available when FusionAuth is acting as the SAMLv2 Identity Provider (IdP). You can enable and configure the behavior on the "SAML" tab of a given Application.
 
 Reasons why SAML assertion encryption might be useful:
 
@@ -64,7 +69,7 @@ Learn more about [configuring SAML assertion encryption](/docs/v1/tech/core-conc
 
 ## The rest of it
 
-As mentioned above, there were 21 issues, enhancements, and bug fixes included in this release. A selection of the included changes not covered above includes:
+As mentioned above, there were 21 issues, enhancements, and bug fixes included in these releases. A selection of the included changes not covered above includes:
 
 * Updating third party dependencies such as Jackson and the PostgreSQL client library.
 * New configuration to accept any named parameter as a login hint coming from the SAML v2 SP when FusionAuth is acting as the SAML v2 IdP. 
