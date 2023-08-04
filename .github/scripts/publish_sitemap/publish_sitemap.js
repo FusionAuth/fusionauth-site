@@ -24,6 +24,9 @@ google.options({ auth: client });
     });
   } catch (e) {
     console.log(e);
-    process.exit()
+    process.exit(1);
   }
 })();
+
+console.log("all good");
+process.exit(0);
