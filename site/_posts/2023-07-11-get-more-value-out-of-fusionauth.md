@@ -271,16 +271,21 @@ public async Task<ReturnValue> AddUserToGroup(List<Group> groups)
 
 One of the best parts about using the APIs to allow application admins to manage their own users is they never have to leave your application. Users are accustomed to things such as Single Page Applications or at least applications that have a consistent look and feel. Depending on the use case, a user may feel uncomfortable switching to the FusionAuth front end to manage users. While FusionAuth has a well designed and functional front end, the look and feel will likely be different than your application. By using the APIs you can still use all of your own style sheets and design principles.
 
-You may ask yourself, “If I create a front end for user management in my application, shouldn’t I just create the authentication and authorization framework as well?” The answer to that question is a resounding “No!” The security, power and flexibility FusionAuth gives you has taken a long time to create and perfect. You should focus on providing the unique business value your application provides versus reinventing the authentication wheel. The best part is that you can ride on the shoulders of giants by creating a simple user management interface around the security and power of FusionAuth. You get the best of both worlds. You don’t even have to tell your users you are using FusionAuth. It’s Okay, we don’t mind. We hope we make you look good.
+You may ask yourself, “If I create a front end for user management in my application, shouldn’t I just create the authentication and authorization framework as well?” The answer to that question is a resounding “No!” The security, power and flexibility FusionAuth gives you has taken years to build. You should focus on providing the unique business value your application provides versus reinventing the authentication wheel. The best part is that you can leverage our investment by creating a simple user management interface around the security and power of FusionAuth. You get the best of both worlds.
+
+You don’t even have to tell your users you are using FusionAuth. It’s okay, we don’t mind. We want to make you look good, help you secure your users, and let you focus on building the features your users want.
 
 {% include _image.liquid src="/assets/img/blogs/get-more-value/one-does-not-simply.png" alt="One does not simply implement user access management" class="img-fluid" figure=false %}
 
 ## Conclusion
-These are a few simple examples of how to use the FusionAuth APIs to get more value out of FusionAuth. Please take some time to explore the [FusionAuth API documentation](/docs/v1/tech/apis/) and get some more ideas of ways to use them to better serve your development. For instance, you have used the APIs to create a user, but you can do the same thing when deleting users or removing them from an application. You can do things like monitor an external application and remove the user from FusionAuth on a given event. By integrating the FusionAuth APIs not only can you automate the validation process, setup users, and make it all look like your own, but you can add almost any ability within FusionAuth to your application.
+These are a few simple examples of how to use the FusionAuth APIs to get more value out of FusionAuth.  Please take some time to explore the [FusionAuth API documentation](/docs/v1/tech/apis/) and get some more ideas of ways to use them to better serve your development. For instance, you have used the APIs to create a user, but you can use similar APIs to delete users or remove their application access. For example, you can monitor an external application and remove the user from FusionAuth on a given event.
+ By integrating the FusionAuth APIs not only can you automate the validation process, setup users, and make it all look like your own, but you can add almost any ability within FusionAuth to your application.
 
 It is important to note that as an alternative, FusionAuth does allow the creation of [custom forms in the admin user interface](/docs/v1/tech/core-concepts/tenants#form-settings). This solution is only available for paid plans, may not support workflow you are trying to accomplish and would not work if you did not want to give users access to the FusionAuth admin interface.
 
-## Links
+## Next steps
+
+If you enjoyed this article, please check out some of the other links and resources about FusionAuth.
 
 ### FusionAuth APIs
 
