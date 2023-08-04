@@ -16,6 +16,10 @@ import LoginAfter from '../../diagrams/quickstarts/login-after.astro';
 import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
 import RemoteCode from '/src/components/RemoteCode.astro';
 
+<Aside type="note">
+TODO - Tatenda, please replace all `RichardJECooke` with `FusionAuth` when you're done testing this guide. It'll work when Dan adds my quickstart repo to their company.
+</Aside>
+
 In this quickstart you are going to build an application with Python and Django, and integrate it with FusionAuth.
 You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=pkH-kD73QUM), a global leader in converting dollars into coins.
 It'll have areas reserved for users who have logged in as well as public facing sections.
@@ -90,7 +94,7 @@ Python / Django application, you can use the same method to integrate your exist
 We recommend working in a virtual environment for this.
 
 ```shell
-python3.8 -m venv venv && source venv/bin/activate
+python3 -m venv venv && source venv/bin/activate
 ```
 
 Next, create a requirements.txt file to name the project dependencies. (All the files in this guide already exist in the `complete-application` folder if you want to copy them.)
@@ -102,17 +106,15 @@ Next, create a requirements.txt file to name the project dependencies. (All the 
 And then install the dependencies into your virtual env.
 
 ```shell
-pip install -r complete-application/requirements.txt
+pip install -r requirements.txt
 ```
 
 #### Create the Application
-Now create your Django app.{/*, which for now will consist of an environment file named `.env` and a python file named `server.py`. */}
-
-{/* Create the environment file with these contents:
+Now create your Django app. Create the environment file with these contents:
 
 `.env`
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-flask-web/main/complete-application/.env"
- lang="shell" /> */}
+<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/.env"
+ lang="shell" />
 
 ```shell
 django-admin startproject mysite
@@ -124,7 +126,7 @@ Then, start your server:
 python mysite/manage.py runserver
 ```
 
-You can [visit it](http://localhost:8000/app) to ensure it is running. If you need to stop it, hit `control-C` to do so. You can leave this running while you build your application so that you can see your progress.
+You can [visit it](http://localhost:8000/app) to ensure it is running, although it will not have content yet. If you need to stop it, hit `control-C` to do so. You can leave this running while you build your application so that you can see your progress.
 
 ### Create a View
 Open a new terminal. It is going to be easier to run commands from within your `mysite` directory, so `cd` into it:
@@ -140,7 +142,7 @@ Create an app within your `mysite` project:
 python manage.py startapp app
 ```
 
-If you visit [http://localhost:8000/app](http://localhost:8000/app) you'll see an error message because you need to create a view. Make a `templates` directory.
+The site will still error because you need to create a view. Make a `templates` directory.
 
 ```shell
 mkdir -p app/templates/app
@@ -165,23 +167,15 @@ Hello!
 
 Create a `urls.py` file for your application, at `app/urls.py`, and put the following text in it:
 
-{/* TODO RemoteCode */}
-```python
-from django.urls import path
-
-from . import views
-
-urlpatterns = [
-    path('', views.index, name='index'),
-]
-```
+`urls.py`
+<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/app/urls.py"
+ lang="shell" />
 
 Then you have to tie the view to the template you created above by modifying `app/views.py` to look like:
 
-{/* TODO RemoteCode */}
-```python
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-django-guide/add-first-page/mysite/app/views.py[]
-```
+`views.py`
+<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/app/views.py"
+ lang="shell" />
 
 Then, modify `mysite/settings.py`. First, import the `os` module, changing the imports at the top of `mysite/settings.py` to look like:
 
@@ -217,49 +211,91 @@ Finally you have to edit the `mysite/urls.py` file:
 
 Here's what `mysite/urls.py` should look like:
 
-{/* TODO RemoteCode */}
 ```python
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-django-guide/add-first-page/mysite/mysite/urls.py[]
+"""mysite URL Configuration
+
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/3.2/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+Including another URLconf
+    1. Import the include() function: from django.urls import include, path
+    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+"""
+from django.contrib import admin
+from django.urls import include, path
+
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('app/', include('app.urls')),
+]
 ```
 
 At this point, you can visit http://localhost:8000/app[http://localhost:8000/app] and you should be greeted with the contents of the `authentication.html` file you created above.
 
 
-=== Add Authentication
+### Add Authentication
 
 Now you are going to link up FusionAuth and add authentication to this project.
 
 First, modify `mysite/settings.py` and add `mozilla_django_oidc` to the list of applications. You installed this app in your environment when you updated `requirements.txt`.
 
-{/* TODO RemoteCode */}
 ```python
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-django-guide/main/mysite/mysite/settings.py[tags=installedApps]
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'app',
+    'mozilla_django_oidc',
+]
 ```
 
 You need to add some additional configuration for this app. Just below the `INSTALLED_APPS` array, add this:
 
-{/* TODO RemoteCode */}
 ```python
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-django-guide/main/mysite/mysite/settings.py[tags=oidcConfig]
+AUTHENTICATION_BACKENDS = (
+    'mozilla_django_oidc.auth.OIDCAuthenticationBackend',
+)
+
+# The below config is taken from fusionauth admin UI when you set up the Django application in it
+OIDC_RP_CLIENT_ID = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e'
+OIDC_RP_CLIENT_SECRET = 'super-secret-secret-that-should-be-regenerated-for-production'
+
+OIDC_OP_AUTHORIZATION_ENDPOINT = "http://localhost:9011/oauth2/authorize"
+OIDC_OP_TOKEN_ENDPOINT = "http://localhost:9011/oauth2/token"
+OIDC_OP_USER_ENDPOINT = "http://localhost:9011/oauth2/userinfo"
+
+OIDC_RP_SCOPES = "openid profile email"
+
+OIDC_RP_SIGN_ALGO = "RS256"
+OIDC_OP_JWKS_ENDPOINT = "http://localhost:9011/.well-known/jwks.json"
+
+LOGIN_REDIRECT_URL = "http://localhost:8000/app/"
+LOGOUT_REDIRECT_URL = "http://localhost:8000/app/"
 ```
 
 Save the `mysite/settings.py` file.
 
 Next, update the paths to include those provided by the mozilla_django_oidc code. Here's what `mysite/urls.py` should look like:
 
-{/* TODO RemoteCode */}
-```python
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-django-guide/main/mysite/mysite/urls.py[]
-```
+`urls.py`
+<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/mysite/urls.py"
+ lang="shell" />
 
 Then you want to update the `app/templates/app/authentication.html` file to have this content:
 
-{/* TODO RemoteCode */}
-```html
-{% raw %}
-include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-python-django-guide/main/mysite/app/templates/app/authentication.html[]
-{% endraw %}
-```
+`urls.py`
+<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/app/templates/app/authentication.html"
+ lang="shell" />
 
 Run all your migrations to make sure you have any needed database tables set up.
 
@@ -267,9 +303,9 @@ Run all your migrations to make sure you have any needed database tables set up.
 python manage.py migrate
 ```
 
-== Testing the Authentication Flow
+## Testing the Authentication Flow
 
-You can now open up an incognito window and visit http://localhost:8000/app[the Django app].
+You can now open up an incognito window and visit [the Django app](http://localhost:8000/app).
 Log in using the user you added in FusionAuth, and you'll see a welcoming message.
 
 {/* COPIED FLASK STUFF: */}
