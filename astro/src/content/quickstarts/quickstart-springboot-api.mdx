@@ -26,23 +26,38 @@ The docker compose file and source code for a complete application are available
 
 ## General Architecture
 
-An api client wants access to a resource at `/resource`. However, it is denied access until it requires an access token from FusionAuth
+An requester wants access to an API resource at `/resource`. However, it is denied this resource until it acquires an access token from FusionAuth.
 
 <Diagram />
 
-## FusionAuth Installation via Docker
+While the access token is acquired via the Login API above, this is for simplicity of illustration. The token can be, and typically is, acquired through one of the [OAuth grants](/docs/v1/tech/oauth/).
 
-The root of this project directory (next to this README) are two files [a Docker compose file](./docker-compose.yml) and an [environment variables configuration file](./.env). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
+## Getting Started
+
+In this section, you’ll get FusionAuth up and running and create a resource server (which will serve the API).
+
+### Clone the Code
+
+First off, grab the code from the repository and change into that directory.
 
 ```
-git clone https://github.com/FusionAuth/fusionauth-quickstart-springboot-web.git
-cd fusionauth-quickstart-springboot-web
-docker-compose up -d
+git clone https://github.com/FusionAuth/fusionauth-quickstart-springboot-api.git
+cd fusionauth-quickstart-springboot-api
 ```
 
-The FusionAuth configuration files also make use of a unique feature of FusionAuth, called [Kickstart](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart): when FusionAuth comes up for the first time, it will look at the [Kickstart file](./kickstart/kickstart.json) and mimic API calls to configure FusionAuth for use when it is first run.
+### Run FusionAuth via Docker
 
-> **NOTE**: If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by executing `docker-compose down -v`.
+In the root directory of the repo you’ll find a Docker compose file (docker-compose.yml) and an environment variables configuration file (.env). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
+
+```
+docker compose up -d
+```
+
+Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/v1/tech/installation-guide/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to a certain initial state.
+
+<Aside type="note">
+If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by executing `docker-compose down -v`, then re-run `docker-compose up -d`.
+</Aside>
 
 FusionAuth will be initially configured with these settings:
 
@@ -57,47 +72,74 @@ You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look
 
 ## Create your Spring Boot Resource Server Application
 
-### Overview of the Application
+Now you are going to create a Spring Boot API application. While this section builds a simple API, you can use the same configuration to integrate an existing API with FusionAuth.
 
 We are going to be building an API backend for a banking application called ChangeBank. This API will have two endpoints:
 - `make-change`: This endpoint will allow you to call GET with a `total` amount and receive a response indicating how many nickels and pennies are needed to make change. Valid roles are `customer` and `teller`.
 - `panic`: Tellers may call this endpoint to call the police in case of an incident. Valid roles are `teller`.
 
-Both endpoints will be protected such that a valid JSON web token (JWT) will be required in the Authorization header in order to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
+Both endpoints will be protected such that a valid JSON web token (JWT) will be required in the `Authorization` header in order to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
 
-### Downloading the template from Spring Initializr
+Make a directory for this API. 
 
-We have already done this for you in the example repository, but if you wish to do so yourself you can go to the Initializr site at https://start.spring.io/ and download your own starter package. We will rely on three dependencies for this project:
+```
+mkdir spring-api && cd spring-api
+```
+
+### Get the template
+
+<a href='https://start.spring.io/' target='_blank'>Go to the Initializr site</a> and download your own starter package. You will rely on two dependencies for this project:
 
 - OAuth2 Resource Server
 - Spring Web
 
-This example was made with `Maven`, Spring Boot version `3.1.1`, and Java 17. If you choose different options the configuration and code may be different.
+This example uses:
 
-If you choose you can download and unzip the package in any directory you wish and proceed to follow along with the rest of this guide. The directions will assume you have downloaded and unzipped the files into the directory `spring-api`.
+* Maven
+* Spring Boot version `3.1.1`
+* Java 17
+* A `Group` of `io.fusionauth.quickstart`.
+* A `Name` of `FusionAuthQuickstart`.
+* An `Artifact` of `springapi`.
 
-### Install the dependencies
+If you choose different options, the configuration and code may be different.
 
-Download and unzip the Spring Initializr zip file into `spring-api`. Then run
+Download and unzip the package into the `spring-api` directory. 
+
+```
+mv /path/to/downloads/springapi.zip .
+unzip springapi.zip
+mv springapi/* .
+mv springapi/.* .
+rm springapi.zip
+rmdir springapi
+```
+
+### Install the Dependencies
 
 ```shell
-cd spring-api
 ./mvnw package
 ```
 <Aside type="note">If you are on Windows substitute `./mvnw` with `.\mvnw.cmd`</Aside>
 
 ### Configure the Spring Application Properties
 
-From the `spring-api` directory open `src/main/resources/application.properties`.
+Open `src/main/resources/application.properties`.
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-springboot-api/main/complete-application/src/main/resources/application.properties"
             lang="ini"/>
 
 We need two properties here:
 - `spring.security.oauth2.resourceserver.jwt.issuer-uri` - This is set to the location of FusionAuth. Spring will call the `OpenID Connect Discovery` endpoint which can be found under the details view for the Example Application in the [Applications View](http://localhost:9011/admin/application/) in the FusionAuth admin app. This endpoint allows Spring to look up all the OAuth metadata that it needs to validate tokens created by FusionAuth.
-- `spring.security.oauth2.resourceserver.jwt.audiences` - This is a list of the application ids in FusionAuth allowed for this resource server. FusionAuth will populate this in the `aud` claim of the JWTs and we will use that claim to validate that the token is intended for this resource server.
+- `spring.security.oauth2.resourceserver.jwt.audiences` - This is a list of the application ids in FusionAuth allowed for this resource server. FusionAuth will populate this in the `aud` claim of the JWTs and you will use that claim to validate that the token is intended for this resource server.
 
-If you are using the kickstart it will be `http://localhost:9011/.well-known/openid-configuration/d7d09513-a3f5-401c-9685-34ab6c552453`
+If you are using the kickstart the OAuth metadata URL will be `http://localhost:9011/.well-known/openid-configuration/d7d09513-a3f5-401c-9685-34ab6c552453`.
+
+### Write the Java code
+
+Now you are going to write some Java code. You are going to write two API controllers, their corresponding model objects and some Spring configuration.
+
+This tutorial puts all these classes in the same package for simplicity, but for a production application, you'd separate these out.
 
 ### Add model objects
 
@@ -156,7 +198,7 @@ So far we have not done anything with auth, and our controllers are unaware of a
 }
 ```
 
-We need to tell Spring how to parse the `roles` out of the claim in the JWT, and for that we need a Converter. In the base package add a class `CustomJwtAuthenticationConverter.java`;
+We need to tell Spring how to parse the `roles` out of the claim in the JWT, and for that we need a `Converter`. In the base package add a class `CustomJwtAuthenticationConverter.java`:
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/CustomJwtAuthenticationConverter.java"
             lang="java" />
@@ -183,11 +225,20 @@ This class does a lot in a few lines of code. Let's break it down:
 
 <Aside type="note">The `NimbusJwtDecoder` will automatically check that the token is not expired based on the `exp` claim.</Aside>
 
-### Try it out
+## Run the API
 
-There are [several way to acquire a token](https://fusionauth.io/docs/v1/tech/oauth/) in FusionAuth, but for this example we will use the [Login API](https://fusionauth.io/docs/v1/tech/apis/login) to keep things simple.
 
-First lets try our requests as `teller@example.com`. Based on the configuration this user has the `teller` role and should be able to use both `/make-change` and `/panic`.
+Start the API resource server by running:
+
+```
+./mvnw spring-boot:run
+```
+
+### Get a token
+
+There are [several way to acquire a token](/docs/v1/tech/oauth/) in FusionAuth, but for this example we will use the [Login API](/docs/v1/tech/apis/login) to keep things simple.
+
+First lets try requests as the `teller@example.com` user. Based on the configuration this user has the `teller` role and should be able to use both `/make-change` and `/panic`.
 
 1. Acquire an access token for `teller@example` by making the following request
 
@@ -201,7 +252,7 @@ curl --location 'http://localhost:9011/api/login' \
   "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
 }'
 ```
-Copy the `token` from the response which should look like this:
+Copy the `token` from the response, which should look like this:
 
 ```json
 {
@@ -213,7 +264,9 @@ Copy the `token` from the response which should look like this:
 }
 ```
 
-Use that as a `Bearer` token in the `Authorization` header to make a request to `/make-change` with a query parameter `total=5.12`.
+### Make the request
+
+Use the `token` as a `Bearer` token in the `Authorization` header. Make a request to `/make-change` with a query parameter `total=5.12`.
 
 ```shell
 curl --location 'http://localhost:8080/make-change?total=5.12' \
@@ -230,7 +283,7 @@ Your response should look like this:
 }
 ```
 
-You were authorized, success!
+You were authorized, success! You can try making the request without the `Authorization` header or with a different string rather than a valid token, and see that you are denied access.
 
 Next call the `/panic` endpoint because you are in trouble!
 
@@ -238,6 +291,8 @@ Next call the `/panic` endpoint because you are in trouble!
 curl --location --request POST 'http://localhost:8080/panic' \
 --header 'Authorization: Bearer <your_token>'
 ```
+
+This is a `POST` not a get because you want all your emergency calls to be non-idempotent.
 
 Your response should look like this:
 
@@ -316,3 +371,66 @@ Date: Fri, 14 Jul 2023 16:59:28 GMT
 Uh oh, I guess we are not allowed to do that.
 
 Enjoy your secured resource server!
+
+## Next Steps
+
+This quickstart is a great way to get a proof of concept up and running quickly, but to run your API in production, there are some things you're going to want to do.
+
+### FusionAuth Integration
+
+* Rather than call the Login API, you're probably going to want to use the [Authorization Code grant](/docs/v1/tech/oauth/#example-authorization-code-grant), which keeps all sensitive credentials within the bounds of FusionAuth. You can customize the [hosted login pages](/docs/v1/tech/themes/).
+* You may want to generate a token using the [Client Credentials grant](/docs/v1/tech/oauth/#example-client-credentials-grant) if you are calling the API from another service.
+
+### Security
+* Customize the [token expiration times and policies](/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth
+* [Make sure you know how to securely consume a token](/articles/tokens/building-a-secure-jwt#consuming-a-jwt)
+
+### Tenant and Application Management
+* Model your application topology using [Applications](/docs/v1/tech/core-concepts/applications), [Roles](/docs/v1/tech/core-concepts/roles), [Groups](/docs/v1/tech/core-concepts/groups), [Entities](/docs/v1/tech/core-concepts/groups), and more
+* Set up [MFA](/docs/v1/tech/guides/multi-factor-authentication), [Social login](/docs/v1/tech/identity-providers/), and/or [SAML](/docs/v1/tech/identity-providers/samlv2/) integrations
+* Integrate with external systems using [Webhooks](/docs/v1/tech/events-webhooks/), [SCIM](/docs/v1/tech/core-concepts/scim), and [Lambdas](/docs/v1/tech/lambdas/)
+
+## Troubleshooting
+
+* I get `This site can’t be reached  localhost refused to connect.` when I call the Login API.
+
+Ensure FusionAuth is running in the Docker container.  You should be able to login as the admin user, `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
+
+* The `/panic` endpoint doesn't work when I call it.
+
+Make sure you are making a `POST` call and using a token with the `teller` role.
+
+* I'm getting an error when running `./mvnw spring-boot:run` like this:
+
+```
+org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'filterChain' defined in class path resource [io/fusionauth/quickstart/springapi/SecurityConfiguration.class]: Failed to instantiate [org.springframework.security.web.SecurityFilterChain]: Factory method 'filterChain' threw exception with message: Error creating bean with name 'jwtDecoder' defined in class path resource [io/fusionauth/quickstart/springapi/SecurityConfiguration.class]: Failed to instantiate [org.springframework.security.oauth2.jwt.JwtDecoder]: Factory method 'jwtDecoder' threw exception with message: Cannot invoke "String.length()" because "this.input" is null
+```
+
+Make sure you set up the `application.properties` file correctly.
+
+* I'm getting an error when running `./mvnw spring-boot:run` like this:
+
+```
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /path/fusionauth-quickstart-springboot-api/spring-api/src/main/java/io/fusionauth/quickstart/springapi/CustomJwtAuthenticationConverter.java:[4,51] package org.springframework.security.authentication does not exist
+[ERROR] /path/fusionauth-quickstart-springboot-api/spring-api/src/main/java/io/fusionauth/quickstart/springapi/CustomJwtAuthenticationConverter.java:[5,51] package org.springframework.security.authentication does not exist
+```
+
+Make sure you requested the two required dependencies when you used the initializer.
+
+* It still doesn't work
+
+You can always pull down a complete running application and compare what's different.
+
+```
+git clone https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web.git
+cd fusionauth-quickstart-ruby-on-rails-web
+docker-compose up -d
+cd complete-app
+bundle install
+OP_SECRET_KEY=super-secret-secret-that-should-be-regenerated-for-production bundle exec rails s
+```
+
+
