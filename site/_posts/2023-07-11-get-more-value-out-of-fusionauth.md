@@ -302,6 +302,8 @@ By integrating the FusionAuth APIs not only can you automate the validation proc
 
 ## Links
 
+If you enjoyed this article, please check out some of the other links and resources about FusionAuth.
+
 ### FusionAuth APIs
 
 * [General API Documentation](/docs/v1/tech/apis/)
