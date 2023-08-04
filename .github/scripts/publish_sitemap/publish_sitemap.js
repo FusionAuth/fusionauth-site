@@ -7,7 +7,7 @@ const keys = JSON.parse(
 
 const client = new JWT({
   email: keys.client_email,
-  key: keys.private_key+"a",
+  key: keys.private_key,
   scopes: [
     "https://www.googleapis.com/auth/webmasters",
     "https://www.googleapis.com/auth/webmasters.readonly",
