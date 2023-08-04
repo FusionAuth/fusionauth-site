@@ -26,7 +26,7 @@ The docker compose file and source code for a complete application are available
 
 ## General Architecture
 
-An requester wants access to an API resource at `/resource`. However, it is denied this resource until it acquires an access token from FusionAuth.
+A client wants access to an API resource at `/resource`. However, it is denied this resource until it acquires an access token from FusionAuth.
 
 <Diagram />
 
@@ -76,7 +76,7 @@ Now you are going to create a Spring Boot API application. While this section bu
 
 We are going to be building an API backend for a banking application called ChangeBank. This API will have two endpoints:
 - `make-change`: This endpoint will allow you to call GET with a `total` amount and receive a response indicating how many nickels and pennies are needed to make change. Valid roles are `customer` and `teller`.
-- `panic`: Tellers may call this endpoint to call the police in case of an incident. Valid roles are `teller`.
+- `panic`: Tellers may call this endpoint to call the police in case of an incident. The only valid role is `teller`.
 
 Both endpoints will be protected such that a valid JSON web token (JWT) will be required in the `Authorization` header in order to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
 
@@ -143,19 +143,19 @@ This tutorial puts all these classes in the same package for simplicity, but for
 
 ### Add Model Objects
 
-We will need to objects to use as response from the API. One is the PanicResponse which returns a message when a successful POST call is made to `/panic`. In the base package create a new class `PanicResponse.java`.
+We will need response objects for the API to return. One is the `PanicResponse` which returns a message when a successful `POST` call is made to `/panic`. In the base package create a new class `PanicResponse.java`.
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/PanicResponse.java"
             lang="java"/>
 
-Next we need an object to show the breakdown from making change. This object will hold a BigDecimal `total` and Integers `nickels` and `pennies`. In the base package create a new class `Change.java`.
+Next you need an object to show the breakdown from making change. This object will hold a BigDecimal `total` and Integers `nickels` and `pennies`. In the base package create a new class `Change.java`.
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/Change.java"
             lang="java"/>
 
 ### Add Controllers
 
-Next we need to add controllers to handle our api calls. In the base package add a new class `MakeChangeController.java`.
+Next you need to add controllers to handle API calls. In the base package add a new class `MakeChangeController.java`.
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/MakeChangeController.java"
             lang="java" />
@@ -167,7 +167,7 @@ There are three annotations that are important for the controller to work:
  - `@RequestMapping` tells Spring which path this controller responds to
  - `@GetMapping` tells Spring this method handles GET requests
 
-Next we need to add a controller for tellers to call in an emergency. In the base package add a class `PanicController.java`.
+Now, add a controller for tellers to call in an emergency. In the base package add a class `PanicController.java`.
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/PanicController.java"
             lang="java" />
@@ -176,7 +176,7 @@ This class listens on `/panic` for a POST request and returns a response indicat
 
 ### Add Security
 
-So far we have not done anything with auth, and our controllers are unaware of authentication at all. What we want to do is protect our endpoints based on the `roles` that encoded in the JWT we receive from FusionAuth. The decoded payload of a JWT for a `teller` might look like this:
+So far you have not done anything with auth, and the controllers are unaware of authentication at all. Now, you'll protect your endpoints based on the `roles` encoded in the JWT you receive from FusionAuth. The decoded payload of a JWT for a `teller` might look like this:
 
 ```json
 {
@@ -198,30 +198,30 @@ So far we have not done anything with auth, and our controllers are unaware of a
 }
 ```
 
-We need to tell Spring how to parse the `roles` out of the claim in the JWT, and for that we need a `Converter`. In the base package add a class `CustomJwtAuthenticationConverter.java`:
+You need to tell Spring how to parse the `roles` out of the claim in the JWT, and for that you need a `Converter`. In the base package add a class `CustomJwtAuthenticationConverter.java`:
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/CustomJwtAuthenticationConverter.java"
             lang="java" />
 
 This class implements the `Converter` interface and takes the `roles` claim and maps it to a `Collection<GrantedAuthority>` Spring will use to authorize the user. We set these as the `authorities` on the AuthenticationToken.
 
-Because we are using a custom converter we also need to check the audience here so we pull out the `aud` claim and validate that at least of them is in the list of configured audiences for this application.
+Because you are using a custom converter you also need to check the audience. Pull out the `aud` claim and validate that at least one of them is in the list of configured audiences for this application.
 
-Now we can add a security configuration. In the base package create a new class `SecurityConfiguration.java`.
+Now you can add a security configuration. In the base package create a new class `SecurityConfiguration.java`.
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/SecurityConfiguration.java"
             lang="java" />
 
 This class does a lot in a few lines of code. Let's break it down:
 - `@Configuration` tells spring to autowire this configuration class and `@Bean` wires the `SecurityFilterChain` which will add the rules for handling the security on http requests.
-- `OAuth2ResourceServerProperties` is injected into the configuration bean and holds the values we defined in the `application.properties` file.
-- In the `SecurityFilterChain` we do the following:
-  1. Get our `audiences` list from the `OAuth2ResourceServerProperties`
-  2. Create a new instance of our `CustomJwtAuthenticationConverter` and pass it the `audiences` list
-  3. Tell the filter chain that any requests to `/make-change` must have the `customer` or `teller` role defined in the `GrantedAuthority` list we extract from the JWT.
-  4. Tell the filter chain that any requests to `/panic` must have the `teller` role defined in the `GrantedAuthority` list we extract from the JWT.
-  5. Set the `oauth2ResourceServer` configuration to use the `CustomJwtAuthenticationConverter` we defined above.
-- `JwtDecoder` this bean tells spring to decode the JWT in the request using the information from `issuer` we defined in our properties file.
+- `OAuth2ResourceServerProperties` is injected into the configuration bean and holds the values you defined in the `application.properties` file.
+- In the `SecurityFilterChain` you do the following:
+  1. Get `audiences` list from the `OAuth2ResourceServerProperties`
+  2. Create a new instance of `CustomJwtAuthenticationConverter` and pass it the `audiences` list
+  3. Tell the filter chain that any requests to `/make-change` must have the `customer` or `teller` role defined in the `GrantedAuthority` list you extract from the JWT.
+  4. Tell the filter chain that any requests to `/panic` must have the `teller` role defined in the `GrantedAuthority` list you extract from the JWT.
+  5. Set the `oauth2ResourceServer` configuration to use the `CustomJwtAuthenticationConverter` you defined above.
+- `JwtDecoder` this bean tells spring to decode the JWT in the request using the information from the `issuer` you defined in the properties file.
 
 <Aside type="note">The `NimbusJwtDecoder` will automatically check that the token is not expired based on the `exp` claim.</Aside>
 
@@ -235,9 +235,9 @@ Start the API resource server by running:
 
 ### Get a Token
 
-There are [several way to acquire a token](/docs/v1/tech/oauth/) in FusionAuth, but for this example we will use the [Login API](/docs/v1/tech/apis/login) to keep things simple.
+There are [several ways to acquire a token](/docs/v1/tech/oauth/) in FusionAuth, but for this example you will use the [Login API](/docs/v1/tech/apis/login) to keep things simple.
 
-First lets try requests as the `teller@example.com` user. Based on the configuration this user has the `teller` role and should be able to use both `/make-change` and `/panic`.
+First let's try the requests as the `teller@example.com` user. Based on the configuration this user has the `teller` role and should be able to use both `/make-change` and `/panic`.
 
 1. Acquire an access token for `teller@example` by making the following request
 
@@ -367,7 +367,7 @@ Content-Length: 0
 Date: Fri, 14 Jul 2023 16:59:28 GMT
 ```
 
-Uh oh, I guess we are not allowed to do that.
+Uh oh, I guess you are not allowed to do that.
 
 Enjoy your secured resource server!
 
