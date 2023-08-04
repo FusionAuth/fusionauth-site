@@ -281,7 +281,7 @@ You don’t even have to tell your users you are using FusionAuth. It’s okay, 
 These are a few simple examples of how to use the FusionAuth APIs to get more value out of FusionAuth.  Please take some time to explore the [FusionAuth API documentation](/docs/v1/tech/apis/) and get some more ideas of ways to use them to better serve your development. For instance, you have used the APIs to create a user, but you can use similar APIs to delete users or remove their application access. For example, you can monitor an external application and remove the user from FusionAuth on a given event.
  By integrating the FusionAuth APIs not only can you automate the validation process, setup users, and make it all look like your own, but you can add almost any ability within FusionAuth to your application.
 
-It is important to note that as an alternative, FusionAuth does allow the creation of [custom forms in the admin user interface](/docs/v1/tech/core-concepts/tenants#form-settings). This solution is only available for paid plans, may not support workflow you are trying to accomplish and would not work if you did not want to give users access to the FusionAuth admin interface.
+It is important to note that as an alternative, FusionAuth does allow the creation of [custom forms](/docs/v1/tech/core-concepts/tenants#form-settings) in the admin user interface. This solution is only available for paid plans, may not support workflow you are trying to accomplish and would not work if you did not want to give users access to the FusionAuth admin interface.
 
 ## Next steps
 
