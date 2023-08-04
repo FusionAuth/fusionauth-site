@@ -302,7 +302,7 @@ By integrating the FusionAuth APIs not only can you automate the validation proc
 
 <br>
 
-## Links
+## Next steps
 
 If you enjoyed this article, please check out some of the other links and resources about FusionAuth.
 
