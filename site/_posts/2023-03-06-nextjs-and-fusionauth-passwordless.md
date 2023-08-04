@@ -44,7 +44,7 @@ If you already have Docker installed on your system, run the following command t
 ```bash
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up
+docker compose up
 ```
 
 This configuration uses a publicly available `.env` file containing hard-coded database passwords to configure FusionAuth. This is not recommended for production use.

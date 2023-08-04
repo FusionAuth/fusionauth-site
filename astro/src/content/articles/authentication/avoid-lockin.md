@@ -1,8 +1,9 @@
 ---
 title: Avoiding Authentication System Lock-In
-description: What steps do you need to take to ensure your authentication system can scale?
+description: "Steps you can take to avoid auth system lock-in include: considering portability, limiting usage, insulating your application with a facade, and having a backup plan."
 author: Cameron Pavey
 section: Authentication
+tags: lock-in architecture standards facade planning open-standards 
 icon: /img/icons/avoiding-authentication-system-lock-in.svg
 ---
 

@@ -1,4 +1,4 @@
-In this article, you are going to learn how to integrate a {{page.technology}} API with FusionAuth. This presupposes you've built an application that is going to retrieve an access token from FusionAuth via one of the OAuth grants. The grant will typically be the Authorization Code grant for users or the Client Credentials grant for programmatic access.
+In this article, you are going to learn how to integrate {%if page.technology == "Express" %}an{%else%}a{%endif%} {{page.technology}} API with FusionAuth. This presupposes you've built an application that is going to retrieve an access token from FusionAuth via one of the OAuth grants. The grant will typically be the Authorization Code grant for users or the Client Credentials grant for programmatic access.
 
 The token provided by FusionAuth can be stored by the client in a number of locations. For server side applications, it can be stored in a database or on the file system. In mobile applications, store them securely as files accessible only to your app. For a browser application like a SPA, use a [cookie if possible and server-side sessions if not](/learn/expert-advice/oauth/oauth-token-storage).
 

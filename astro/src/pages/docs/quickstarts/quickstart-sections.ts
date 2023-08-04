@@ -3,7 +3,10 @@ import { getCollection } from "astro:content";
 interface QuickStartSection {
   key: string;
   icon?: string;
+  faIcon?: string;
+  color: string;
   title: string;
+  anchorTag: string;
   desc?: string;
   articles: {
     href?: string;
@@ -21,7 +24,10 @@ const qsSections: QuickStartSection[] = [
   {
     key: 'web',
     icon: '/img/icons/web-application.svg',
+    faIcon: 'fa-code-simple',
+    color: 'indigo',
     title: 'Web Application',
+    anchorTag: 'web-application',
     desc: 'Traditional web applications that run on servers',
     articles: [
       {
@@ -60,10 +66,10 @@ const qsSections: QuickStartSection[] = [
         navColor: 'fuchsia',
       },
       {
+        href: '/docs/v1/tech/tutorials/integrate-dotnet',
         title: '.NET',
         icon: '/img/icons/dotnet-c.svg',
         faIcon: 'fa-hashtag',
-        comingSoon: true,
         navColor: 'blue'
       },
       {
@@ -72,13 +78,6 @@ const qsSections: QuickStartSection[] = [
         icon: '/img/icons/nextjs.svg',
         faIcon: 'fa-n',
         navColor: 'green',
-      },
-      {
-        title: 'Go',
-        icon: '/img/icons/golang.svg',
-        faIcon: 'fa-g',
-        comingSoon: true,
-        navColor: 'blue',
       },
       {
         title: 'PHP',
@@ -92,7 +91,10 @@ const qsSections: QuickStartSection[] = [
   {
     key: 'spa',
     icon: '/img/icons/single-page-app.svg',
+    faIcon: 'fa-laptop-code',
+    color: 'orange',
     title: 'Single-Page App (SPA)',
+    anchorTag: 'spa',
     desc: 'JavaScript app that runs in the browser',
     articles: [
       {
@@ -112,8 +114,8 @@ const qsSections: QuickStartSection[] = [
       {
         title: 'Angular',
         icon: '/img/icons/angular-spa.svg',
-        faIcon: 'fa-snake',
-        comingSoon: true,
+        faIcon: 'fa-j',
+        href: '/docs/v1/tech/tutorials/integrate-angular',
       },
       {
         title: 'Vue.js',
@@ -126,14 +128,18 @@ const qsSections: QuickStartSection[] = [
   {
     key: 'native',
     icon: '/img/icons/native-mobile-app.svg',
+    faIcon: 'fa-mobile-screen',
+    color: 'blue',
     title: 'Native/Mobile App',
+    anchorTag: 'mobile-app',
     desc: 'Mobile application that runs natively on a device',
     articles: [
       {
+        href: '/docs/v1/tech/tutorials/integrate-flutter',
         title: 'Flutter',
         icon: '/img/icons/flutter.svg',
         faIcon: 'fa-snake',
-        comingSoon: true,
+        navColor: 'indigo'
       },
       {
         href: '/blog/2020/08/19/securing-react-native-with-oauth',
@@ -147,9 +153,19 @@ const qsSections: QuickStartSection[] = [
   {
     key: 'api',
     icon: '/img/icons/backend-api.svg',
+    faIcon: 'fa-binary',
+    color: 'green',
     title: 'Backend/API',
+    anchorTag: 'api',
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
+      {
+        href: '/docs/v1/tech/tutorials/integrate-dotnet-api',
+        title: '.NET Core',
+        icon: '/img/icons/dotnet-c.svg',
+        faIcon: 'fa-hashtag',
+        navColor: 'blue',
+      },
       {
         href: '/docs/v1/tech/tutorials/integrate-ruby-rails-api',
         title: 'Ruby on Rails',
@@ -164,16 +180,31 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-g',
         navColor: 'blue',
       },
+      {
+        href: '/docs/v1/tech/tutorials/integrate-express-api',
+        title: 'Express',
+        icon: '/img/icons/javascript.svg',
+        faIcon: 'fa-x',
+        navColor: 'fuchsia',
+      },
+      {
+        href: '/docs/v1/tech/tutorials/integrate-laravel-api',
+        title: 'Laravel',
+        icon: '/img/icons/laravel.svg',
+        faIcon: 'fa-block',
+        navColor: 'rose',
+      },
     ],
   },
 ];
 
+// merge in quickstarts managed by astro to the list of quickstart links we have above
 const quickstarts = await getCollection("quickstarts");
 
 quickstarts.filter(quickstart => quickstart.id.indexOf("index.md") === -1)
   .map(qs => (
     {
-      href: `/quickstarts/${qs.slug}/`,
+      href: `/docs/quickstarts/${qs.slug}/`,
       title: qs.data.title,
       icon: qs.data.icon,
       faIcon: qs.data.faIcon,

@@ -132,7 +132,7 @@ Then create a file named `[...nextauth].js` in that directory.
 Next, you'll configure the [built-in support for FusionAuth](https://next-auth.js.org/providers/fusionauth). Doing so ensures every request to the `/api/auth/*` path is handled by NextAuth.js.
 
 ```jsx
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/main/src/pages/api/auth/%5B...nextauth%5D.js %}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/main/app/src/pages/api/auth/%5B...nextauth%5D.js %}
 ```
 
 ### Exposing session state
@@ -140,7 +140,7 @@ Next, you'll configure the [built-in support for FusionAuth](https://next-auth.j
 To allow components to check whether the current user is logged in, change `src/pages/_app.js` to have your application rendered inside a `<SessionProvider>` context, like shown below.
 
 ```jsx
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/main/src/pages/_app.js %}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/main/app/src/pages/_app.js %}
 ```
 
 This will make the [`useSession()`](https://next-auth.js.org/getting-started/client#usesession) React Hook accessible to your entire application.
@@ -148,13 +148,13 @@ This will make the [`useSession()`](https://next-auth.js.org/getting-started/cli
 Now, create a component that will either render a "Log in" or "Log out" button, depending on the session state, in a `src/components/login-button.jsx` file.
 
 ```jsx
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/main/src/components/login-button.jsx %}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/main/app/src/components/login-button.jsx %}
 ```
 
 Then, you change your home component located at `src/pages/index.js` to include the `<LoginButton />` component inside `<main>`.
 
 ```jsx
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/main/src/pages/index.js %}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/main/app/src/pages/index.js %}
 ```
 
 ## Environment variables
@@ -162,7 +162,7 @@ Then, you change your home component located at `src/pages/index.js` to include 
 If you cloned the demo repository, you can copy `.env.local.dist` to `.env.local` and change the values there. If not, create a `.env.local` file and fill in the details from your FusionAuth application.
 
 ```ini
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/main/.env.local.dist %}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-nextjs-single-sign-on/main/app/.env.local.dist %}
 ```
 
 ## Testing
