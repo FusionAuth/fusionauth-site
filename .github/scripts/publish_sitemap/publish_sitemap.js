@@ -22,11 +22,11 @@ google.options({ auth: client });
       feedpath: "https://fusionauth.io/sitemap.xml",
       siteUrl: "https://fusionauth.io/",
     });
+    console.log("all good");
+    process.exit(0);
   } catch (e) {
     console.log(e);
     process.exit(1);
   }
 })();
 
-console.log("all good");
-process.exit(0);
