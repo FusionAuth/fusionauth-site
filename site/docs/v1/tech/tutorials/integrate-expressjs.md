@@ -47,7 +47,7 @@ npm install
 Then copy and paste the following file into `setup.js`. This file uses the [FusionAuth API](/docs/v1/tech/apis/) to configure an Application and more to allow for easy integration. 
 
 ```javascript
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/setup.js %}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/setup-express.js %}
 ```
 
 Then, you can run the setup script.
@@ -55,14 +55,14 @@ Then, you can run the setup script.
 {% include _callout-note.liquid content="The setup script is designed to run on a newly installed FusionAuth instance with only one user and no tenants other than `Default`. To follow this guide on a FusionAuth instance that does not meet these criteria, you may need to modify the above script. <br><br> Refer to the [Typescript client library](/docs/v1/tech/client-libraries/typescript) documentation for more information." %}
 
 ```shell
-fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE npm run setup
+fusionauth_api_key=YOUR_API_KEY_FROM_ABOVE npm run setup-express
 ```
 
 If you are using PowerShell, you will need to set the environment variable in a separate command before executing the script.
 
 ```shell
 $env:fusionauth_api_key='YOUR_API_KEY_FROM_ABOVE'
-npm run setup
+npm run setup-express
 ```
 
 If you want, you can [log into your instance](http://localhost:9011) and examine the new Application the script created for you.
