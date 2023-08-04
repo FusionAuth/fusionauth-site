@@ -13,30 +13,26 @@ So, you have just set up FusionAuth and are excited to take your new [customer i
 
 <!--more-->
 
-<br>
-
 ## Introduction
 *“A new user with extra pickles, please.”*
 
 Customizing the order for your favorite food can make a good meal better. Customizing your end-users' experience with user maintenance can make their experience with your application even better.
 
-For any [secure application](/articles/security/steps-secure-your-authentication-system), user maintenance is a must. As developers, we can often overlook the time and effort it takes to maintain the users access and permissions for the shiny new application we created. In an ideal world, we do not want to be the ones to maintain the users. We want to give the task of user maintenance to the power users of the applications by making them application administrators. While those power users may be great at using the application, you don’t necessarily want to make them expert users of the FusionAuth front end. Well, we at FusionAuth would think it would be great if everyone was a master with our front end, but you may not share that same vision.
+For any [secure application](/articles/security/steps-secure-your-authentication-system), user maintenance is a must. As a developer, you can often overlook the time and effort it takes to maintain the users access and permissions for the shiny new application you created. In an ideal world, you do not want to be the ones to maintain the users. You want to give the task of user maintenance to the power users of the applications by making them application administrators. While those power users may be great at using the application, you don’t necessarily want to make them expert users of the FusionAuth front end. Well, we at FusionAuth would think it would be great if everyone was a master with our front end, but you may not share that same vision.
 
-We can harness the full power of FusionAuth in our application, hand off the user maintenance to the power users, and make it seamless for them. The application will need to ensure the user enters the correct information (**Validation**), guide them through setting up the new user correctly (**Workflow**), and we want to make the process feel like it is part of our application (**Branding**). We can accomplish all these through the use of the FusionAuth APIs.
+Imagine you have an applicaiton that controls a machine that applies the toppings to a burger.  Custom Buger, the popular new burger joint just bought your application.  The tech-savvy manger, Sally Power-User, has been given admin rights. Sally, just hired Joe Limited-Access to work the night shift.  She now needs to add Joe as a user of your application.  She needs to make sure Joe can add pickles to a burger order but make sure he does not have access to the apply the famous Flaming Carolina Reaper Sauce until he goes through training. Your application will have to support this.
 
-The examples below are written with the assumption that you are familiar with how to make REST calls using the [HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient?view=net-7.0) in C#, the use of [asynchronous](https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/) calls and Windows Forms applications.  In order for the sample application to run you must have a [working FusionAuth server](/docs/v1/tech/5-minute-setup-guide). Even if you are not totally familiar with these concepts, the snippets should be easy enough to follow with general programming knowledge. If you need a refresher on some of these topics, there are some links at the end.
+You can harness the full power of FusionAuth in your application, hand off the user maintenance to the power users, and make it seamless for them. The application will need to ensure that Sally Power-User enters the correct information (**Validation**), guide her through setting up the new Joe Limited-Access user correctly (**Workflow**), and you want to make the process feel like it is part of your application (**Branding**). You can accomplish all these through the use of the FusionAuth APIs.
 
-<br>
+Newer developers should be aware the examples below are written with the assumption that you are familiar with how to make REST calls using the [HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient?view=net-7.0) in C#, the use of [asynchronous](https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/) calls and Windows Forms applications. In order for the sample application to run you must have a [working FusionAuth server](/docs/v1/tech/5-minute-setup-guide). Even if you are not totally familiar with these concepts, the snippets should be easy enough to follow with general programming knowledge. If you need a refresher on some of these topics, there are some links at the end.
 
 ## Custom Validation with FusionAuth APIs
 *“With great power, comes great responsibility!”*
 
-One of FusionAuth’s strengths is its flexibility. However, with the flexibility comes some complexity. To create a user in the FusionAuth front-end, you only need one piece of information. You will need to supply either the username or the email. (If you are using multiple tenants, you will need the tenant ID as well.) The front end gives you other optional fields to fill in as well, however none are required. When using the [Create a User API](/docs/v1/tech/apis/users#create-a-user), only the username or email is still required but there are also over 30 additional request parameters available for customization. Creating a custom front end around the APIs will not only allow you to choose which of the username or email fields to use, but also what other meta-data is appropriate and required for your application. Below is sample code for creating a user using the FusionAuth API.
+One of FusionAuth’s strengths is its flexibility. However, with the flexibility comes some complexity. To create a user in the FusionAuth admin user interface, you only need two pieces of information. You will need to supply either the username or the email in addition to a password. (If you are using multiple tenants, you will need the tenant ID as well.) The FusionAuth admin user interface gives you other optional fields to fill in, however none are required. When using the [Create a User API](/docs/v1/tech/apis/users#create-a-user), only the username or email in addition to the password is still required but there are also over 30 additional request parameters available for customization. Creating a custom front end around the APIs will not only allow you to choose which of the username or email fields to use, but also what other meta-data is appropriate and required for your application. Below is sample code for creating a user using the FusionAuth API.
 
-<br>
-
-### **Setup**
-First, we need to create a few objects to hold some values. By constructing the classes and decorating properties with the proper attributes, we can still use the strongly typed objects and standard naming conventions in our C# application while also using the JSON Serializer to easily format the request body when it is time.
+### Setting Up the User Object
+First, you need to create a few objects to hold some values. By constructing the classes and decorating properties with the proper attributes, you can still use the strongly typed objects and standard naming conventions in our C# application while also using the JSON Serializer to easily format the request body when it is time.
 
 ```cs
 //For User object
@@ -59,10 +55,8 @@ public class UserProperties
 }
 ```
 
-<br>
-
-### **Input**
-Next, we need to take the input from the user and assign them to the values in our User object. In this case, I am performing those actions on a click event from a windows form. We can also take this chance to validate any information deemed relevant to your application. The logic in the IsUserValid function can be edited to suit your needs. Once the validation is successful, we will then pass the user object to the method that will submit our request to the FusionAuth server.
+### Taking Input from the User
+Next, you need to take the input from the user and assign them to the values in our User object. In this case, you are performing those actions on a click event from a windows form. You can also take this chance to validate any information deemed relevant to your application. The logic in the IsUserValid function can be edited to suit your needs. Once the validation is successful, you will then pass the user object to the method that will submit our request to the FusionAuth server.
 
 ```cs
 private async void btnCreateUser_Click(object sender, EventArgs e)
@@ -103,11 +97,10 @@ private async void btnCreateUser_Click(object sender, EventArgs e)
     }
 }
 ```
-<br>
 
-### **User Creation**
+### Creating the User
 
-Because we decorated our User objects correctly using the JSONProperty attribute, we can use the JSON Serializer to serialize the object with the simple JsonConvert.SerializeObject method. We also need to encode it properly before we submit it. Once that is complete, we can submit the request to the FusionAuth server. We do so here using the async pattern so as to not hold up the processing for a request that may take some time or give the application an unresponsive feel. Once we receive the return values, we can interrogate them and act accordingly.
+Because you decorated our User objects correctly using the JSONProperty attribute, you can use the JSON Serializer to serialize the object with the JsonConvert.SerializeObject method. You also need to encode it properly before you submit it. Once that is complete, you can submit the request to the FusionAuth server. You will do so here using the async pattern so as to not hold up the processing for a request that may take some time or give the application an unresponsive feel. Once you receive the return values, you can interrogate them and act accordingly.
 
 ```cs
 public async Task<ReturnValue> CreateUser(User userToCreate)
@@ -153,19 +146,15 @@ public async Task<ReturnValue> CreateUser(User userToCreate)
 }
 ```
 
-<br>
-
 ## User Workflow with FusionAuth APIs
 *“Amateurs do it till they get it right. Professionals do it until they can not get it wrong.”*
 
-You may have originally set up the users manually in the FusionAuth front end and that is fine to get started. However, as we add more steps and requirements to creating a user, the more likely something will be missed. There can be several steps required to set up a user correctly such as making sure they belong to the correct group(s). While we may be infallible as developers and get it right every time, most likely our users will not.
+You may have originally set up the users manually in the FusionAuth front end and that is fine to get started. However, as you add more steps and requirements to creating a user, the more likely something will be missed. There can be several steps required to set up a user correctly such as making sure they belong to the correct group(s). While you may be infallible as a developer and get it right every time, wink wink, most likely our users will not.
 
-We can use the FusionAuth APIs to ensure the user is added to the correct group or groups so their permissions will be set properly. After the user is created, we can take this opportunity to automatically assign the user to a specific group or present a front end to the administrator that will guide them in selecting the proper group(s).
+You can use the FusionAuth APIs to ensure the user is added to the correct group or groups so their permissions will be set properly. After the user is created, you can take this opportunity to automatically assign the user to a specific group or present a front end to the administrator that will guide them in selecting the proper group(s).
 
-<br>
-
-### **Setup**
-Once again we will need to create a few objects to help us organize our groups. The [Add Users to a Group API](/docs/v1/tech/apis/groups#add-users-to-a-group) call we are using requires a collection of groups that each contain an array of user information. In this case, we will only be using the user ID for the new GroupUser information.
+### Setting up the Group Object
+Once again you will need to create a few objects to help us organize our groups. The [Add Users to a Group API](/docs/v1/tech/apis/groups#add-users-to-a-group) call you are using requires a collection of groups that each contain an array of user information. In this case, you will only be using the user Id for the new GroupUser information.
 
 ```cs
 //For Group object
@@ -181,15 +170,14 @@ public class GroupUser
     public string UserID;
 }
 ```
-<br>
 
-### **Input**
-As with creating the user, we need to take the input from the application and assign the values to our Group objects. We can also validate any data we want before actually adding the user to the group. After we are satisfied the user should be added, we can submit the information to the method that will submit our request to the FusionAuth server.
+### Taking Input from the User
+As with creating the user, you need to take the input from the application and assign the values to our Group objects. You can also validate any data you want before actually adding the user to the group. After you are satisfied the user should be added, you can submit the information to the method that will submit our request to the FusionAuth server.
 
 ```cs
 private async void btnAddUserToGroup_Click(object sender, EventArgs e)
 {
-    //FusionAuthClient is a class that contains the logic to call  the FusionAuth APIs
+    //FusionAuthClient is a class that contains the logic to call the FusionAuth APIs
     var faClient = new FusionAuthClient();
 
     List<GroupUser> users = new List<GroupUser>()
@@ -228,10 +216,8 @@ private async void btnAddUserToGroup_Click(object sender, EventArgs e)
 }
 ```
 
-<br>
-
-### **Add the User to the Group**
-Because the JSON format expected in the request body is not readily serializable given the Group objects we have created, we will have to perform a little wizardry to manipulate the Group objects. While this does not have to do with FusionAuth specifically, I have abstracted the code for that in the FormatGroupUserJSON function. The code for that will be in the project. Once the API call has returned, you can retrieve whichever values you see as relevant and pass it back in the result object.
+### Adding the User to the Group
+Because the JSON format expected in the request body is not readily serializable given the Group objects you have created, you will have to perform a little wizardry to manipulate the Group objects. While this does not have to do with FusionAuth specifically, the code has been abstracted in the FormatGroupUserJSON function. The code for that will be in the project. Once the API call has returned, you can retrieve whichever values you see as relevant and pass it back in the result object.
 
 ```cs
 public async Task<ReturnValue> AddUserToGroup(List<Group> groups)
@@ -280,8 +266,6 @@ public async Task<ReturnValue> AddUserToGroup(List<Group> groups)
 }
 ```
 
-<br>
-
 ## Branding Your User Management with FusionAuth
 *“Design is the silent ambassador of your brand.”*
 
@@ -291,12 +275,10 @@ You may ask yourself, “If I create a front end for user management in my appli
 
 {% include _image.liquid src="/assets/img/blogs/get-more-value/one-does-not-simply.png" alt="One does not simply implement user access management" class="img-fluid" figure=false %}
 
-<br>
-
 ## Conclusion
-These are a few simple examples of how to use the FusionAuth APIs to get more value out of FusionAuth.  Please take some time to explore the [FusionAuth API documentation](/docs/v1/tech/apis/) and get some more ideas of ways to use them to better serve your development.  For instance, we have used the APIs to create a user, but you can do the same thing when deleting users or removing them from an application.  You can do things like monitor an external application and remove the user from FusionAuth on a given event.  By integrating the FusionAuth APIs not only can you automate the validation process, setup users, and make it all look like your own, but you can add almost any ability within FusionAuth to your application.
+These are a few simple examples of how to use the FusionAuth APIs to get more value out of FusionAuth. Please take some time to explore the [FusionAuth API documentation](/docs/v1/tech/apis/) and get some more ideas of ways to use them to better serve your development. For instance, you have used the APIs to create a user, but you can do the same thing when deleting users or removing them from an application. You can do things like monitor an external application and remove the user from FusionAuth on a given event. By integrating the FusionAuth APIs not only can you automate the validation process, setup users, and make it all look like your own, but you can add almost any ability within FusionAuth to your application.
 
-<br>
+It is important to note that as an alternative, FusionAuth does allow the creation of [custom forms in the admin user interface](/docs/v1/tech/core-concepts/tenants#form-settings). This solution is only available for paid plans, may not support workflow you are trying to accomplish and would not work if you did not want to give users access to the FusionAuth admin interface.
 
 ## Links
 
