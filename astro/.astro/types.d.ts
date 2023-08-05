@@ -132,6 +132,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
+"authentication/login-failures.md": {
+  id: "authentication/login-failures.md",
+  slug: "authentication/login-failures",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 "authentication/multi-factor-authentication.md": {
   id: "authentication/multi-factor-authentication.md",
   slug: "authentication/multi-factor-authentication",
@@ -615,13 +622,6 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
-"oauth/what-is-oauth.mdx": {
-  id: "oauth/what-is-oauth.mdx",
-  slug: "oauth/what-is-oauth",
-  body: string,
-  collection: "articles",
-  data: InferEntrySchema<"articles">
-} & { render(): Render[".mdx"] },
 "oauth/why-no-authentication-in-oauth.md": {
   id: "oauth/why-no-authentication-in-oauth.md",
   slug: "oauth/why-no-authentication-in-oauth",
@@ -721,6 +721,113 @@ declare module 'astro:content' {
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
 },
+"blog": {
+"another-day.mdx": {
+  id: "another-day.mdx",
+  slug: "another-day",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"dummy-1.mdx": {
+  id: "dummy-1.mdx",
+  slug: "dummy-1",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"dummy-10.mdx": {
+  id: "dummy-10.mdx",
+  slug: "dummy-10",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"dummy-11.mdx": {
+  id: "dummy-11.mdx",
+  slug: "dummy-11",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"dummy-2.mdx": {
+  id: "dummy-2.mdx",
+  slug: "dummy-2",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"dummy-3.mdx": {
+  id: "dummy-3.mdx",
+  slug: "dummy-3",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"dummy-4.mdx": {
+  id: "dummy-4.mdx",
+  slug: "dummy-4",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"dummy-5.mdx": {
+  id: "dummy-5.mdx",
+  slug: "dummy-5",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"dummy-6.mdx": {
+  id: "dummy-6.mdx",
+  slug: "dummy-6",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"dummy-7.mdx": {
+  id: "dummy-7.mdx",
+  slug: "dummy-7",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"dummy-8.mdx": {
+  id: "dummy-8.mdx",
+  slug: "dummy-8",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"dummy-9.mdx": {
+  id: "dummy-9.mdx",
+  slug: "dummy-9",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"modeling-family-and-consents.mdx": {
+  id: "modeling-family-and-consents.mdx",
+  slug: "modeling-family-and-consents",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"password-day.mdx": {
+  id: "password-day.mdx",
+  slug: "password-day",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"some-other-day.mdx": {
+  id: "some-other-day.mdx",
+  slug: "some-other-day",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+},
 "dev-tools": {
 "base64-encoder-decoder.mdx": {
   id: "base64-encoder-decoder.mdx",
@@ -766,9 +873,9 @@ declare module 'astro:content' {
 } & { render(): Render[".mdx"] },
 },
 "quickstarts": {
-"index.mdx": {
-  id: "index.mdx",
-  slug: "index",
+"quickstart-golang-web.mdx": {
+  id: "quickstart-golang-web.mdx",
+  slug: "quickstart-golang-web",
   body: string,
   collection: "quickstarts",
   data: InferEntrySchema<"quickstarts">
