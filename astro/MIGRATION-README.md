@@ -15,6 +15,7 @@ Steps:
   * Update the frontmatter.
     * Replace `excerpt_separator: "<!--more-->"` with `excerpt_separator: "{/* more */}"`
       * most anything could work here but astro will complain about the `<!--more-->` tag specifically, if you have a good reason you can use something else
+    * Remove `layout: blog-post`. This is not needed.
     * Add a `publish_date`. The value should be the date you removed from the filename.
       * Note: most places use this field to order the shown posts from newest to oldest (index pages, related posts, etc)
     * If needed, add a `updated_date`.
