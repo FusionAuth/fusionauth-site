@@ -1,0 +1,325 @@
+---
+title: .Net
+description: Quickstart integration of .Net web application with FusionAuth
+navcategory: getting-started
+prerequisites: .Net, Docker
+section: web
+technology: .Net 7
+language: c#,
+icon: /img/icons/dotnet-c.svg
+faIcon: fa-gem
+color: rose
+cta: EmailListCTA
+coderoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-web/main
+---
+import Aside from '../../components/Aside.astro';
+import LoginAfter from '../../diagrams/quickstarts/login-after.astro';
+import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
+import RemoteCode from '../../components/RemoteCode.astro';
+
+In this quickstart you are going to build an application with C# and .Net and integrate it with FusionAuth.
+You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=pkH-kD73QUM), a global leader in converting dollars into coins.
+It'll have areas reserved for users who have logged in as well as public facing sections.
+
+The docker compose file and source code for a complete application are available on github under [fusionauth-quickstart-dotnet-web](https://github.com/FusionAuth/fusionauth-quickstart-dotnet-web) project.
+
+## Prerequisites
+
+- [.Net](https://dotnet.microsoft.com/en-us/download): This in the needed framework to run .Net applications.
+- [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](https://fusionauth.io/docs/v1/tech/installation-guide/)).
+- [Visual Stuido Code](https://code.visualstudio.com/download): The editor for making changes to code.  (You can user other editors as well.)
+
+This app has been tested with .Net 7.0.7. This example should work with future compatible versions of .Net.
+
+## General Architecture
+
+While this sample application doesn't have login functionality without FusionAuth, a more typical integration will replace an existing login system with FusionAuth.
+
+In that case, the system might look like this before FusionAuth is introduced.
+
+<LoginBefore alt={"Request flow during login before FusionAuth"}/>
+
+The login flow will look like this after FusionAuth is introduced.
+
+<LoginAfter alt={"Request flow during login after FusionAuth"}/>
+
+In general, you are introducing FusionAuth in order to normalize and consolidate user data. This helps make sure it is consistent and up-to-date as well as offloading your login security and functionality to FusionAuth.
+
+## Getting Started
+
+In this section, you'll get FusionAuth up and running and use .Net to create a new application.
+
+### Clone the Code
+
+First off, grab the code from the repository and change into that directory.
+
+```
+git clone https://github.com/FusionAuth/fusionauth-quickstart-dotnet-web.git
+cd fusionauth-quickstart-dotnet-web
+```
+
+### Run FusionAuth via Docker
+
+In the root directory of the repo you'll find a Docker compose file (docker-compose.yml) and an environment variables configuration file (.env). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
+
+```
+docker-compose up -d
+```
+
+Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to a certain initial state.
+
+<Aside type="note">
+If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by executing `docker-compose down -v`, then re-run `docker-compose up -d`.
+</Aside>
+
+FusionAuth will be initially configured with these settings:
+
+* Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
+* Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
+* Your example username is `user@fusionauthexample.com` and the password is `userpassword`.
+* Your admin username is `admin@fusionauthexample.com` and the password is `adminpassword`.
+* The base URL of FusionAuth `http://localhost:9011/`.
+
+You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don't need to.
+
+### Create your .Net 7 Application
+
+Now you are going to create a .Net application using C#. While this section builds a simple .Net web application, you can use the same configuration to integrate your existing .net application with FusionAuth.
+
+You'll use [Razor Pages](https://learn.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-7.0&tabs=visual-studio) and .Net 7. This application will display common information to all users. There will also be a secured area, only available to an authenticated user. The [full source code](https://github.com/fusionauth/fusionauth-example-dotnet-guide) is available if you want to download it and take a look.
+
+<Aside type="note">
+If you simply want to run the application , there is a completed version in the 'complete-application' directory.  You can use the following commands to get it up and running if you do not want to create your own.
+
+```shell
+cd complete-application
+dotnet publish -r osx-x64
+dotnet run
+```
+
+Then view the website at the following location `http://localhost:5000`.
+</Aside>
+
+Since the complete application already exists in the `complete-application` directory, you will need to delete all files in the `compete-application` directory or choose a directory other than `fusionauth-quickstart-dotenet-web` to build the new application. 
+
+Next open your command-line shell (i.e. Terminal on a Mac or Powershell on Windows) and navigate to the directory of your choice.  Then create a new web application using the `dotnet` CLI and go to that directory:
+
+```shell
+dotnet new webapp -o complete-application
+cd complete-application
+```
+Creating a new application in Visual Studio will work as well.  You will use the command line here for the simplicity of the example.
+
+To see the results, you should publish this application and run it. There are [multiple ways of deploying an application](https://docs.microsoft.com/en-us/dotnet/core/deploying/), but publishing ensures your deployment process is repeatable. You can use the [RID catalog](https://learn.microsoft.com/en-us/dotnet/core/rid-catalog) to build different versions of this application for different platforms. Here's the command to publish a standalone executable you could deploy behind a proxy like Nginx:
+
+```shell
+dotnet publish -r osx-x64
+```
+
+Then start up the web application.
+
+```shell
+dotnet run
+```
+![Shell Showing Hosting Port](/img/articles/quickstart-dotnet-web/shell-window-showing-host-port.png)
+
+The application will be accessible at `http://localhost:{PortNumber}` where the port number will be displayed in your shell window.  I.E. `http://localhost:5178`
+
+![Base Application Home Page](/img/articles/quickstart-dotnet-web/dotnet-new-app-welcome-page.png)
+
+## Authentication
+
+It's always smart to leverage existing libraries as they are likely to be more secure and better handle edge cases. You're going to add an `OpenIdConnect` library to the application. Make sure you're in the `complete-application` directory and run the command below to add the library.
+
+```shell
+dotnet add package Microsoft.AspNetCore.Authentication.OpenIdConnect
+```
+
+This application will contain two pages that require authorization.  The `Account` page will display the users balance and the `MakeChange` page will make change for the user.  To protect these pages you can use the [Authorize filter attribute](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/filter?view=aspnetcore-3.1#authorize-filter-attribute) in the [page model](https://learn.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-7.0&tabs=visual-studio).
+
+Create `Account.cshtml` and `Account.cshtml.cs` in the `Pages` directory. To protect the "Account" page you can use the [Authorize filter attribute](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/filter?view=aspnetcore-3.1#authorize-filter-attribute) in the [page model](https://learn.microsoft.com/en-us/aspnet/core/razor-pages/?view=aspnetcore-7.0&tabs=visual-studio).
+
+Copy the following code into `Account.cshtml.cs`:
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/Pages/Account.cshtml.cs"}
+  lang="c#" />
+
+Copy the following code into `Account.cshtml`:
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/Pages/Account.cshtml"}
+  lang="razor" />
+
+Create `MakeChange.cshtml` and `MakeChange.cshtml.cs` in the `Pages` directory. You will use the same [Authorize filter attribute](https://docs.microsoft.com/en-us/aspnet/core/razor-pages/filter?view=aspnetcore-3.1#authorize-filter-attribute) to secure the page.
+
+Copy the following code into `MakeChange.cshtml.cs`:
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/Pages/MakeChange.cshtml.cs"}
+  lang="c#" />
+
+Copy the following code into `MakeChange.cshtml`:
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/Pages/MakeChange.cshtml"}
+  lang="razor" />
+
+You will need a way to allow the user to logout of the applicaiton as well. You'll build the logout functionality in the `Logout` page. This will:
+
+- Remove the session cookie.
+- Redirect to the FusionAuth OAuth logout endpoint.
+
+FusionAuth will then destroy its session and redirect the user back to the app's configured logout URL.
+
+Add the following file to the `Pages` directory and call it `Logout.cshtml.cs`:
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/Pages/Logout.cshtml.cs"}
+  lang="c#" />
+
+`OnGet` is the important method. Here you sign out using a method of the authentication library, delete the JWT cookie, and send the user to the FusionAuth OAuth logout endpoint.
+
+Now add `Logout.cshtml` to the `Pages` directory. No content is necessary. Just declare the page and model as shown below.
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/Pages/Logout.cshtml"}
+  lang="razor" />
+
+### Application Configuration
+You will need to do a little plumbing to ensure things like having the correct settings and configuring the cookies properly to work over http for the sample application.
+
+#### App Settings
+Update the `appsettings.json` file. You need to add the entire `complete-application` object so that the code above can be configured correctly. `Authority` is just the location of the user identity server, in this case, FusionAuth.  `Urls` ensures the applicartion runs on the specified port, 5000.
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/appsettings.json"}
+  lang="json" />
+
+#### Program Settings
+Update the `Program.cs` file. Since you are using unsecured cookies, you need to allow this in the configuration.  Safari and Chrome requre different settings and that is refelected in the code below.
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/Program.cs"}
+  lang="c#" />
+
+#### Startup Settings
+Add the `Startup.cs` file in the root directory of the application. This sets the correct port and manages unsecured cookies for the browsers.  The `CheckSameSite` and `DisallowsSameSiteNone` functions help manage the cookie settings for the different browsers.
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/Startup.cs"}
+  lang="c#" />
+
+<Aside type="note">
+There are a few settings applied to simplify the sample application. In a production applicaiton, do not allow cookies over `http` or keep the `ClientSecret` in a .json file for production application.  Get the `ClientSecret` from an environmental variable that has been set on a production machine or some other secure way.
+</Aside>
+
+#### Navigation
+This application will display different menu items for authenticated users and non authenticated users. To add a this type of navigation update `/Pages/Shared/_Layout.cshtml` with the following:
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/Pages/Shared/_Layout.cshtml"}
+  lang="razor" />
+
+#### Homepage
+Update the default page.
+
+Copy the following code into `Index.cshtml.cs`:
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/Pages/Index.cshtml.cs"}
+  lang="c#" />
+
+Copy the following code into `Index.cshtml` and notice the logic to show different view to users that have not logged in.
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/Pages/Index.cshtml"}
+  lang="razor" />
+
+#### Styling
+To give the pages the look and feel of an application, apply the following styling and images.
+
+Add the `changebank.css` file in the `wwwroot\css" directory of the application.
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/wwwroot/css/changebank.css"}
+  lang="css" />
+
+Add the Changebank logo to the application.
+
+Copy the money image for the `Index` page.
+
+```shell
+curl --create-dirs --output wwwroot/img/money.jpg  https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/app/assets/images/money.jpg
+```
+
+## Conclusion
+
+Your directory for the `complete-application` tree should look like this:
+
+```text
+└── complete-application
+    ├── appsettings.Development.json
+    ├── appsettings.json
+    ├── bin/
+        ├── ...
+    ├── obj/
+        ├── ...
+    ├── Pages/
+    │   ├── _ViewImports.cshtml
+    │   ├── _ViewStart.cshtml
+    |   |── Account.cshtml
+    |   |── Accuont.cshtml.cs
+    │   ├── Error.cshtml
+    │   ├── Error.cshtml.cs
+    │   ├── Index.cshtml
+    │   ├── Index.cshtml.cs
+    │   ├── Logout.cshtml
+    │   ├── Logout.cshtml.cs
+    |   |── MakeChange.cshtml
+    |   |── MakeChange.cshtml.cs
+    │   ├── Privacy.cshtml
+    │   ├── Privacy.cshtml.cs
+    │   └── Shared/
+    │       ├── _Layout.cshtml
+    │       ├── _Layout.cshtml.css
+    │       └── _ValidateScriptsPartial.cshtml
+    ├── Program.cs
+    ├── Properties/
+        ├── ...
+    ├── Startup.cs
+    └── wwwroot/
+        ├── ...
+```
+
+Once you've created this directory structure, you can start up the {frontmatter.technology} application using this command:
+
+```shell
+cd complete-application
+dotnet publish -r osx-x64
+dotnet run
+```
+
+The full code is available [here](https://github.com/FusionAuth/fusionauth-quickstart-dotnet-web).
+
+Copy the following code into `MakeChange.cshtml.cs`:
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/Pages/MakeChange.cshtml.cs"}
+  lang="c#" tags="authorize"/>
+
+## Troubleshooting
+
+If you run into an issue with cookies on Safari or other browsers, you might need to run the ASP.NET application under SSL.
+
+You can follow [this guide](https://learn.microsoft.com/en-us/dotnet/core/additional-tools/self-signed-certificates-guide) to install development SSL certificates for your .NET environment.
+
+Alternatively, you can run the project using [Visual Studio](https://visualstudio.microsoft.com), which will run the project using SSL.
+
+If you do this, make sure to update the `Authorized Redirect URL` to reflect the `https` protocol. Also note that the project will probably run on a different port when using SSL, so you must update that as well. To do so, log into the administrative user interface, navigate to `Applications`, then click the `Edit` button on your application and navigate to the `OAuth` tab. You can have more than one URL.
+
+## Next Steps
+This quickstart is a great way to get a proof of concept up and running quickly, but to run
+you application in production, there are some things you're going to want to do.
+
+### FusionAuth Customization
+FusionAuth gives you the ability to customize just about everything with the user's experience and your application's integration. This includes
+* [Hosted pages](https://fusionauth.io/docs/v1/tech/themes/) such as login, registration, email verification, and many more
+* [Email templates](https://fusionauth.io/docs/v1/tech/email-templates/email-templates)
+* [User data and custom claims in access token JWTs](https://fusionauth.io/articles/tokens/jwt-components-explained)
+
+### Security
+* [OmniAuth OpenIDConnect](https://github.com/omniauth/omniauth) handles token validation and refresh
+* You may want to customize the [token expiration times and policies](https://fusionauth.io/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth
+* Choose [password rules](https://fusionauth.io/docs/v1/tech/core-concepts/tenants#password) and a [hashing algorithm](https://fusionauth.io/docs/v1/tech/reference/password-hashes) that meet your security needs
+
+### Tenant and Application Management
+* Model your application topology using [Applications](https://fusionauth.io/docs/v1/tech/core-concepts/applications), [Roles](https://fusionauth.io/docs/v1/tech/core-concepts/roles), [Groups](https://fusionauth.io/docs/v1/tech/core-concepts/groups), [Entities](https://fusionauth.io/docs/v1/tech/core-concepts/groups), and more
+* Set up [MFA](https://fusionauth.io/docs/v1/tech/guides/multi-factor-authentication), [Social login](https://fusionauth.io/docs/v1/tech/identity-providers/), and/or [SAML](https://fusionauth.io/docs/v1/tech/identity-providers/samlv2/) integrations
+* Integrate with external systems using [Webhooks](https://fusionauth.io/docs/v1/tech/events-webhooks/), [SCIM](https://fusionauth.io/docs/v1/tech/core-concepts/scim), and [Lambdas](https://fusionauth.io/docs/v1/tech/lambdas/)

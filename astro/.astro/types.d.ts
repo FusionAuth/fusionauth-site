@@ -615,13 +615,6 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
-"oauth/what-is-oauth.mdx": {
-  id: "oauth/what-is-oauth.mdx",
-  slug: "oauth/what-is-oauth",
-  body: string,
-  collection: "articles",
-  data: InferEntrySchema<"articles">
-} & { render(): Render[".mdx"] },
 "oauth/why-no-authentication-in-oauth.md": {
   id: "oauth/why-no-authentication-in-oauth.md",
   slug: "oauth/why-no-authentication-in-oauth",
@@ -766,9 +759,16 @@ declare module 'astro:content' {
 } & { render(): Render[".mdx"] },
 },
 "quickstarts": {
-"index.mdx": {
-  id: "index.mdx",
-  slug: "index",
+"quickstart-dotnet-web.mdx": {
+  id: "quickstart-dotnet-web.mdx",
+  slug: "quickstart-dotnet-web",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
+} & { render(): Render[".mdx"] },
+"quickstart-golang-web.mdx": {
+  id: "quickstart-golang-web.mdx",
+  slug: "quickstart-golang-web",
   body: string,
   collection: "quickstarts",
   data: InferEntrySchema<"quickstarts">
