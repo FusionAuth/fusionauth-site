@@ -24,11 +24,11 @@ In this quickstart you are going to build an application with Python and Django,
 You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=pkH-kD73QUM), a global leader in converting dollars into coins.
 It'll have areas reserved for users who have logged in as well as public facing sections.
 
-The docker compose file and source code for a complete application are available at
+The Docker compose file and source code for a complete application are available at
 https://github.com/RichardJECooke/fusionauth-quickstart-python-django-web/.
 
 ## Prerequisites
-For this Quickstart, you'll need:
+For this Quickstart, you'll need
 * [Python3.8](https://www.python.org/downloads/) or later.
 * [Docker](https://www.docker.com): The quickest way to start FusionAuth. (There are [other ways](https://fusionauth.io/docs/v1/tech/installation-guide/)).
 
@@ -58,19 +58,19 @@ cd fusionauth-quickstart-python-django-web
 ```
 
 ### Run FusionAuth via Docker
-In the root directory of the repo you'll find a Docker compose file (docker-compose.yml) and an environment
-variables configuration file (.env). Assuming you have Docker installed on your machine, you can stand up
-FusionAuth up on your machine with:
+In the root directory of the repo you'll find a Docker compose file, `docker-compose.yml`, and an environment
+variables configuration file `.env`. Assuming you have Docker installed on your machine, you can start
+FusionAuth up on your machine.
 
 ```
 docker-compose up -d;
 ```
 
-This will start three containers, once each for FusionAuth, Postgres, and Elastic.
+This will start three containers, one each for FusionAuth, Postgres, and Elastic.
 
 Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/v1/tech/installation-guide/kickstart).
-When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and
-configure FusionAuth to a certain initial state.
+When FusionAuth starts for the first time, it will look at the `kickstart/kickstart.json` file and
+configure FusionAuth to your specified state.
 
 <Aside type="note">
 If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by
@@ -87,8 +87,8 @@ FusionAuth will be configured with these settings
 You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don't need to.
 
 ### Create a Basic Django Application
-In this section, you'll set up a basic Django application with a single page. While this section builds a simple
-Python / Django application, you can use the same method to integrate your existing application with FusionAuth.
+In this section, you'll set up a basic Django project with a single app. While this guide builds a new
+Django project, you can use the same method to integrate your existing project with FusionAuth.
 
 #### Setup Your Environment
 We recommend working in a virtual environment for this.
@@ -110,17 +110,17 @@ pip install -r requirements.txt
 ```
 
 #### Create the Application
-Now create your Django app. Create the environment file with these contents.
-
-`.env`
-<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/.env"
- lang="shell" />
-
-And then create a Django project.
+Create the default Django starter project.
 
 ```shell
 django-admin startproject mysite
 ```
+
+And now create the `.env` file with these contents in your `mysite` folder. (Note that this is a different environment file to the one in the root folder used by Docker for FusionAuth).
+
+`.env`
+<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/.env"
+ lang="python" />
 
 Start your server.
 
@@ -130,300 +130,106 @@ python mysite/manage.py runserver
 
 You can [visit it](http://localhost:8000/app) to ensure it is running, although it will not have content yet. If you need to stop it, hit `control-C` to do so. You can leave this running while you build your application so that you can see your progress.
 
-### Create a View
-Open a new terminal. It is going to be easier to run commands from within your `mysite` directory, so `cd` into it:
+## Authentication
+Open a new terminal. It is going to be easier to run commands from within your `mysite` directory, so `cd` into it.
 
 ```shell
 source venv/bin/activate;
 cd mysite
 ```
 
-Create an app within your `mysite` project:
+Create an app within your `mysite` project and make a `templates` directory to hold our HTML views.
 
 ```shell
-python manage.py startapp app
+python manage.py startapp app;
+mkdir app/templates
 ```
 
-The site will still error because you need to create a view. Make a `templates` directory.
+You are now going to work from the top down — setting up authentication URLs in the project's `settings.py`, then in the app's `urls.py`, then the `views.py`, and finally the HTML templates for the views.
 
-```shell
-mkdir -p app/templates/app
-```
 
-And paste this HTML into the `app/templates/app/authentication.html` file:
+### Project Settings
+Overwrite your `mysite/settings.py` contents with the following code.
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Django OAuth App</title>
-</head>
-<body>
-<div>
-Hello!
-</div>
-</body>
-</html>
-```
+`settings.py`
+<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/mysite/settings.py" lang="python" />
 
-Create a `urls.py` file for your application, at `app/urls.py`, and put the following text in it:
+All the code above related to `mozilla_django_oidc` and the `OIDC_OP_` constants imported from the `.env` file set up the authentication library from Mozilla. This automatically handles the interaction with FusionAuth on the endpoints configured in this file, and the matching ones configured in the `kickstart.json` file that you used to initialize FusionAuth. You have also added your `app` and `mozilla_django_oidc` to the list of `INSTALLED_APPS`.
+
+### Project URLs
+Overwrite the `mysite/urls.py` file with the following code.
+
+`urls.py`
+<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/mysite/urls.py"
+ lang="python" />
+
+ * The `admin` site is default Django.
+ * The `app` URLs are for the only app in your project, which you are about to create.
+ * The `oidc` URLs are automatically generated from the previous settings work you did.
+
+### App URLs
+You'll work from this point on in the app, not in the main project. First, set the `app/urls.py` to match the project's URLs.
 
 `urls.py`
 <RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/app/urls.py"
- lang="shell" />
+ lang="python" />
 
-Then you have to tie the view to the template you created above by modifying `app/views.py` to look like:
+### App Views
+And now overwrite the `app/views.py` file. There are three pages: the home page, the account page, and the make change page.
 
 `views.py`
 <RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/app/views.py"
  lang="shell" />
 
-Then, modify `mysite/settings.py`. First, import the `os` module, changing the imports at the top of `mysite/settings.py` to look like:
+Let's discuss what they are doing.
 
-```python
-import os
-from pathlib import Path
+* The `app` view, or home page, shows a log in button and redirects the user to the `account` view if they are already logged in.
+* The `account` view checks that the user is logged in and returns the template, passing in the user's email address returned from FusionAuth. If the user isn't logged in they are redirected to the login page. This also happens in the change page.
+* The `logout` view is necessary because after the user logs out of FusionAuth you still need to clear the session for the user in Django. FusionAuth sends the user to this view after logging them out, which then returns them to the home page.
+* The `change` view looks longer only because it is demonstrating how to do some calculations if the request is a POST instead of a GET. These calculations are then passed to the template in the `change` variable to display on screen.
+
+## Customization
+The final step is to create the HTML pages and style them with CSS. Copy the folders
+* `complete-application/mysite/app/static`
+* `complete-application/mysite/app/templates`
+
+into two folders with the same names in your `mysite/app` folder.
+
+There are only two lines in these templates related to authentication. In the home template there is a log in button.
+```html
+<a class="button-lg" href="{% url 'oidc_authentication_init' %}">Login</a>
 ```
+This URL is made available by the Mozilla plugin in the settings file. It directs the user to FusionAuth to log in, which then redirects back to your app's account page.
 
-Then, add `'app`' to your list of installed applications. Add it to the `INSTALLED_APPS` array.
-
-```python
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'app',
-]
+In the account and change pages there is a log out form.
+```html
+<form id="logoutForm" class="button-lg"  action="{% url 'oidc_logout' %}" method="post">
+  {% csrf_token %}
+  <a class="button-lg" href="#" onclick="document.getElementById('logoutForm').submit();">Log out</a>
+</form>
 ```
+Log out has to be a form that submits a POST request to FusionAuth. Here we are using an anchor element that is easy to style, but if your users might disable JavaScript you could use a traditional form `input` element.
 
-The last change with `mysite/settings.py` is to update the templates variable. Look for the `TEMPLATES` variable and replace the `DIRS` field with this:
-
-```python
-'DIRS': (os.path.join(BASE_DIR, 'polls/templates'),),
-```
-
-Finally you have to edit the `mysite/urls.py` file:
-
-* Add `path('app/', include('app.urls')),` to the `urlpatterns` variable in that file.
-* Change the import line: `from django.urls import path` to `from django.urls import include, path`.
-
-Here's what `mysite/urls.py` should look like:
-
-```python
-"""mysite URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/3.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-from django.contrib import admin
-from django.urls import include, path
-
-
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('app/', include('app.urls')),
-]
-```
-
-At this point, you can visit http://localhost:8000/app[http://localhost:8000/app] and you should be greeted with the contents of the `authentication.html` file you created above.
-
-
-### Add Authentication
-
-Now you are going to link up FusionAuth and add authentication to this project.
-
-First, modify `mysite/settings.py` and add `mozilla_django_oidc` to the list of applications. You installed this app in your environment when you updated `requirements.txt`.
-
-```python
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'app',
-    'mozilla_django_oidc',
-]
-```
-
-You need to add some additional configuration for this app. Just below the `INSTALLED_APPS` array, add this:
-
-```python
-AUTHENTICATION_BACKENDS = (
-    'mozilla_django_oidc.auth.OIDCAuthenticationBackend',
-)
-
-# The below config is taken from fusionauth admin UI when you set up the Django application in it
-OIDC_RP_CLIENT_ID = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e'
-OIDC_RP_CLIENT_SECRET = 'super-secret-secret-that-should-be-regenerated-for-production'
-
-OIDC_OP_AUTHORIZATION_ENDPOINT = "http://localhost:9011/oauth2/authorize"
-OIDC_OP_TOKEN_ENDPOINT = "http://localhost:9011/oauth2/token"
-OIDC_OP_USER_ENDPOINT = "http://localhost:9011/oauth2/userinfo"
-
-OIDC_RP_SCOPES = "openid profile email"
-
-OIDC_RP_SIGN_ALGO = "RS256"
-OIDC_OP_JWKS_ENDPOINT = "http://localhost:9011/.well-known/jwks.json"
-
-LOGIN_REDIRECT_URL = "http://localhost:8000/app/"
-LOGOUT_REDIRECT_URL = "http://localhost:8000/app/"
-```
-
-Save the `mysite/settings.py` file.
-
-Next, update the paths to include those provided by the mozilla_django_oidc code. Here's what `mysite/urls.py` should look like:
-
-`urls.py`
-<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/mysite/urls.py"
- lang="shell" />
-
-Then you want to update the `app/templates/app/authentication.html` file to have this content:
-
-`urls.py`
-<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/app/templates/app/authentication.html"
- lang="shell" />
-
-Run all your migrations to make sure you have any necessary database tables set up.
+## Run the Application
+Update the default SqlLite database before testing.
 
 ```bash
 python manage.py migrate
 ```
 
-## Testing the Authentication Flow
+You can now browse to [the Django app](http://localhost:8000/app).
 
-You can now browse to [the Django app](http://localhost:8000/app). Log in using `richard@example.com` and you'll see the welcome message.
+If it's not running you can use the following command.
 
-{/* COPIED FLASK STUFF: */}
-{/*
-In server.py, you'll add all of the imports you'll need, declare some constants, and initialize the OAuth library.
-
-`server.py`
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-flask-web/main/complete-application/server.py"
- lang="python"
- tags="baseApplication"/>
-
-<Aside type="tip">
-You should be able to start your Flask application with `flask --app server.py --debug run`.
-Note that you won't be able to access it with a browser yet!
-</Aside>
-
-#### Create a Home Route and a Home Page
-The next step is to get a basic home page up and running. This will require a back end route to handle requests to `/` and a web page template.
-
-In the route function, you're going to look for an access token, which is created when a user is successfully authenticated. If the user
-is not authenticated, you'll just take them to the home page. However, if they _are_ authenticated, you'll redirect them to
-an `/account` page. Since we haven't implemented login yet, the redirect to `/account` won't work.
-
-Add the route handling function to your server.py file.
-
-`server.py`
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-flask-web/main/complete-application/server.py"
- lang="python"
- tags="homeRoute"/>
-
-Next, create the home page in a `templates` directory. This page just has a login button, which won't do anything yet. These commands also
-install a CSS file and an image to make your app look nicer.
-
-```shell
-mkdir -p templates static/css static/img && \
-wget -O templates/home.html https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-flask-web/main/complete-application/templates/home.html && \
-wget -O static/css/changebank.css https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-flask-web/main/complete-application/static/css/changebank.css && \
-wget -O static/img/money.jpg https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-flask-web/main/complete-application/static/img/money.jpg
-
+```bash
+source venv/bin/activate && python mysite/manage.py runserver
 ```
 
-<Aside type="tip">
-With the home page and route complete, you can view the home page in your brower at `http://localhost:5000`.
-</Aside>
-
-## Authentication
-In this section you'll build the integration with FusionAuth, which will allow users to log in to your application.
-
-### Add OAuth Authentication Routes
-Next, you'll add a `/login` route that uses authlib to take the user to FusionAuth's OAuth2 `authorize` endpoint,
-and a `/callback` route that FusionAuth will redirect the user back to after a successful login.
-
-FusionAuth will include an authorization code in the redirect to `/callback`, and the callback function will
-make a server-to-server call to FusionAuth to exchange the authorization code for an access token, refresh token,
-and userinfo object. All of this happens in `oauth.FusionAuth.authorize_access_token()`. This sequence of redirects and
-back end calls is known as an OAuth Authorization Code Grant flow.
-
-After your app gets the information back from FusionAuth, you'll write these items to HTTP-only cookies, so that they will
-be returned to the Flask application on subsequent requests, but are not readable by code running in the browser.
-
-We also set the userinfo object in the Flask session, to make it easy to use in rendered templates.
-
-Add the `/login` and `/callback` routes to your server code.
-
-`server.py`
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-flask-web/main/complete-application/server.py"
- lang="python"
- tags="loginRoute"/>
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-flask-web/main/complete-application/server.py"
- lang="python"
- tags="callbackRoute"/>
-
-<Aside type="tip">
-Once these steps are done, you should be able to successfully log into your application! Just note that after logging
-in, you're taking the user to `/account`, which doesn't exist yet.
-</Aside>
-
-### Add a Secured Page
-Remember that after logging in, the application redirects the user to `/`, which then redirects a
-logged in user to '/account'. You going to add that route and page now.
-
-First, create the page template for a logged-in user. It's going to show a personalized header
-and a logout button.
-
-```shell
-wget -O templates/account.html https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-flask-web/main/complete-application/templates/account.html
-```
-
-Next, create a route to get to that page. This checks if an access token is present.
-If one isn't, it forces a logout at FusionAuth. If one is, it renders the `/account` page.
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-flask-web/main/complete-application/server.py"
- lang="python"
- tags="accountRoute"/>
-
-<Aside type="tip">
-Now when you log in, you should see the `/account` page!
-</Aside>
-
-### Add Logout Support
-The last step is to implement logout. When you log a user out of an application, you'll take them to
-FusionAuth's `/oauth2/logout` endpoint. After logging the user out, FusionAuth will redirect the user
-to your app's `/login` endpoint, which you'll create now. This endpoint deletes any cookies that your
-application created, and clears the Flask session.
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-flask-web/main/complete-application/server.py"
- lang="python"
- tags="logoutRoute"/>
-
-<Aside type="tip">
-Click the `Logout` button and watch the browser first go to FusionAuth to log out the user, then return to your home page.
-</Aside>
+Log in using `richard@example.com` and `password`. The change page will allow you to enter a number and see the result of the POST. Log out and verify that you can't browse to the [account page](http://localhost:8000/app/account) while logged out.
 
 ## Next Steps
 This quickstart is a great way to get a proof of concept up and running quickly, but to run
-you application in production, there are some things you're going to want to do.
+your application in production, there are some things you're going to want to do.
 
 ### FusionAuth Customization
 FusionAuth gives you the ability to customize just about everything with the user's experience and your application's integration. This includes
@@ -438,4 +244,4 @@ FusionAuth gives you the ability to customize just about everything with the use
 ### Tenant and Application Management
 * Model your application topology using [Applications](https://fusionauth.io/docs/v1/tech/core-concepts/applications), [Roles](https://fusionauth.io/docs/v1/tech/core-concepts/roles), [Groups](https://fusionauth.io/docs/v1/tech/core-concepts/groups), [Entities](https://fusionauth.io/docs/v1/tech/core-concepts/groups), and more
 * Set up [MFA](https://fusionauth.io/docs/v1/tech/guides/multi-factor-authentication), [Social login](https://fusionauth.io/docs/v1/tech/identity-providers/), and/or [SAML](https://fusionauth.io/docs/v1/tech/identity-providers/samlv2/) integrations
-* Integrate with external systems using [Webhooks](https://fusionauth.io/docs/v1/tech/events-webhooks/), [SCIM](https://fusionauth.io/docs/v1/tech/core-concepts/scim), and [Lambdas](https://fusionauth.io/docs/v1/tech/lambdas/) */}
+* Integrate with external systems using [Webhooks](https://fusionauth.io/docs/v1/tech/events-webhooks/), [SCIM](https://fusionauth.io/docs/v1/tech/core-concepts/scim), and [Lambdas](https://fusionauth.io/docs/v1/tech/lambdas/)
