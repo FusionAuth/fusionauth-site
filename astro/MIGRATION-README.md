@@ -15,6 +15,7 @@ Steps:
   * Update the frontmatter.
     * Replace `excerpt_separator: "<!--more-->"` with `excerpt_separator: "{/* more */}"`
       * most anything could work here but astro will complain about the `<!--more-->` tag specifically, if you have a good reason you can use something else
+    * Remove `layout: blog-post`. This is not needed.
     * Add a `publish_date`. The value should be the date you removed from the filename.
       * Note: most places use this field to order the shown posts from newest to oldest (index pages, related posts, etc)
     * If needed, add a `updated_date`.
@@ -47,3 +48,4 @@ Steps:
 ## Other notes
 
 * do not check in astro/.astro/types.d.ts
+* You can use `src/blog-migrate-firstpass.sh site/_posts/2018-09-18-amazon-cognito-and-fusionauth-comparison.md` to do a first pass of a move.
