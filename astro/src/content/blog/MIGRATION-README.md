@@ -24,13 +24,14 @@ Steps:
   * If there are any callouts, import and use the astro ones instead. More here: https://inversoft.slack.com/archives/C04DGBXKPGC/p1691171143090139
   * If there are any other liquid tags, you should remove them.
   * Remove references to adding a comment (usually at bottom of post)
-  * Check to see how it renders. 
+  * Check to see how it renders: http://localhost:3000/blog/fusionauth-website-how-we-do-it
+  * If there are any filename collisions, add a `-2` to the filename and note it in the `Notes` column.
 * If you discover any widespread issues, file them here: https://inversoft.slack.com/archives/C04DGBXKPGC/p1691424115389019
-* If you have any questions, ask in #documentation-project
+* If you have any questions, ask in #documentation-project or add it to the `Notes` column.
 * When you are done migrating the 5-10 posts, submit a PR. Open it against `development`.
 * Review the PR yourself to make sure you didn't make any errors.
 * Review by others TBD?
-* Merge it to `development`.
+* Merge the PR to `development`.
 * Mark all the posts `Done` in the `Done` column: https://docs.google.com/spreadsheets/d/1_0YX-uLRjGYFESBAZoPYeZ-iMKq4Bt7krywg0A1tTok/edit#gid=1303464598 
 
 ## Other notes
