@@ -31,7 +31,7 @@ There are [various ways](/docs/v1/tech/installation-guide/) to install FusionAut
 ```sh
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up
+docker compose up
 ```
 
 Note that here you use a public `.env` file containing hard-coded database passwords—this is not suitable for production use.

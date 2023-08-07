@@ -115,7 +115,7 @@ namespace HelloAuth.Controllers
 ```
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env 
-docker-compose up
+docker compose up
 ```
 
 "Once it's up and running, if we browse to localhost:9011, we'll see their admin setup. We just need to add an admin username and credentials, and the rest of the system comes up."

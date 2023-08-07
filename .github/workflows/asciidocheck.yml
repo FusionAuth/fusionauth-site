@@ -2,9 +2,9 @@
 name: asciidoc_check
 on: 
   pull_request:
-  # run once a day
-  schedule:
-    - cron: '31 19 * * *'
+    paths:
+      - 'site/docs/v1/**.adoc'
+      - '.github/workflows/asciidoccheck.yml'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -28,11 +28,19 @@ jobs:
         run: |
           exit `grep -c 'WARNING: include file is outside of jail' build.out`
         shell: bash
+      - name: Check for other warnings.
+        run: |
+          exit `grep -c 'WARNING: ' build.out`
+        shell: bash
       # invert the results of the find command. If we find anything, we want to fail. Otherwise succeed.
       # more here: https://stackoverflow.com/questions/367069/how-can-i-negate-the-return-value-of-a-process
       - name: Check for broken internal asciidoctor links in output
         run: |
           ! find _site/docs -type f|xargs grep -l 'BROKEN LINK'
+        shell: bash
+      - name: Check for broken includes or other directive issues
+        run: |
+          ! find _site/docs -type f|xargs grep -l 'Unresolved directive'
         shell: bash
       - name: Check for broken external asciidoctor links in source
         run: |
