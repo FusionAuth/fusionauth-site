@@ -11,8 +11,8 @@ Steps:
 * `git pull origin development` to get the latest code.
 * Branch it: `git checkout -b mooreds/migrating-blog-1`
 * For each of your posts:
-  * Copy the file, don't `git mv` it.
-  * Give it a new name with a `.mdx` suffix and no date. `2018-09-11-fusionauth-website-how-we-do-it.md` => `fusionauth-website-how-we-do-it.mdx`
+  * `git mv` the file from `site/_posts` to `astro/src/content/blog`
+    * Give it a new name with a `.mdx` suffix and no date. `2018-09-11-fusionauth-website-how-we-do-it.md` => `fusionauth-website-how-we-do-it.mdx`
   * Update the frontmatter.
     * Replace `excerpt_separator: "<!--more-->"` with `excerpt_separator: "{/* more */}"`
     * Add a `publish_date`. The value should be the date you removed from the filename.
