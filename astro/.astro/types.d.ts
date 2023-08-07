@@ -132,6 +132,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
+"authentication/login-failures.md": {
+  id: "authentication/login-failures.md",
+  slug: "authentication/login-failures",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 "authentication/multi-factor-authentication.md": {
   id: "authentication/multi-factor-authentication.md",
   slug: "authentication/multi-factor-authentication",
@@ -216,6 +223,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
+"ciam/what-is-ciam.md": {
+  id: "ciam/what-is-ciam.md",
+  slug: "ciam/what-is-ciam",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 "gaming-entertainment/benefits-self-hosting-reduce-latency.md": {
   id: "gaming-entertainment/benefits-self-hosting-reduce-latency.md",
   slug: "gaming-entertainment/benefits-self-hosting-reduce-latency",
@@ -286,6 +300,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
+"identity-basics/magic-links.md": {
+  id: "identity-basics/magic-links.md",
+  slug: "identity-basics/magic-links",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 "identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions.md": {
   id: "identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions.md",
   slug: "identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions",
@@ -759,6 +780,13 @@ declare module 'astro:content' {
 } & { render(): Render[".mdx"] },
 },
 "quickstarts": {
+"quickstart-dotnet-web.mdx": {
+  id: "quickstart-dotnet-web.mdx",
+  slug: "quickstart-dotnet-web",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
+} & { render(): Render[".mdx"] },
 "quickstart-golang-web.mdx": {
   id: "quickstart-golang-web.mdx",
   slug: "quickstart-golang-web",
