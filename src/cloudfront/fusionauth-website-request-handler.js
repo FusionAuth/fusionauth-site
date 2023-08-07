@@ -203,8 +203,6 @@ function calculateRedirect(uri) {
     }
   }
 
-/*
-  // uncomment this when the blog is ready to release
   if (result === null) {
     redirectsByRegex.forEach(function (regexValueArray) {
       var regex = new RegExp(regexValueArray[0], "g");
@@ -214,7 +212,6 @@ function calculateRedirect(uri) {
       }
     });
   }
-*/
 
   return result;
 }
