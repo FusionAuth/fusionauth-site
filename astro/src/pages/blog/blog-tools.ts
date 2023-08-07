@@ -17,6 +17,8 @@ const months = {
 
 export const getDateString = (date) => months[date.getUTCMonth()] + " " + date.getUTCDate() + ", " + date.getUTCFullYear();
 
+export const getAuthorHref = (author) => !!author ? '/blog/author/' + author.replace(' ', '-').toLowerCase() + '/' : '';
+
 export const parseContent = (blog) => {
   const blurbLines = [];
   const separator = blog.data.excerpt_separator;
@@ -85,10 +87,15 @@ export const getStaticIndexPaths = async (paginate, attribute, splitter, paramNa
     const filteredPosts = blogs.filter((post) => post.data[attribute].includes(target));
     // newest first
     filteredPosts.sort(sortByDate);
-    const params = {};
-    params[paramName] = target;
+    const params = {} as any;
+    params[paramName] = target.trim().replace(' ', '-').toLowerCase();
+    const props = {} as any;
+    if (attribute === 'authors') {
+      props.authorName = target;
+    }
     return paginate(filteredPosts, {
       params,
+      props,
       pageSize: 7
     });
   });

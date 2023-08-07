@@ -5,7 +5,7 @@ import Nav from '../components/nav/BlogNav.astro';
 import Footer from '../components/Footer.astro';
 import SubscribeFooter from '../components/SubscribeFooterCTA.astro';
 import Icon from '../components/icon/Icon.astro';
-import { getDateString, parseContent } from '../pages/blog/blog-tools';
+import { getAuthorHref, getDateString, parseContent } from '../pages/blog/blog-tools';
 
 const { section, sectionTitle, subject, page, showCategories, path, personalLink } = Astro.props;
 const blogs = page.data.map(parseContent);
@@ -28,6 +28,19 @@ for (let i = 1; i <= page.lastPage; i++) {
     paginationStops.push('ellipsis');
   } else if (i === page.currentPage + 2) {
     paginationStops.push('ellipsis');
+  }
+}
+
+const getPaginationRef = (stop) => {
+  if (stop === 1) {
+    stop = '';
+  }
+  if (section === 'latest') {
+    return "/blog/latest/" + stop;
+  } else if (section === 'author') {
+    return "/blog/author/" + subject.trim().replace(' ', '-').toLowerCase() + "/" + stop;
+  } else {
+    return "/blog/" + section + "/" + subject + "/" + stop;
   }
 }
 ---
@@ -68,7 +81,7 @@ for (let i = 1; i <= page.lastPage; i++) {
           <div class="flex flex-row justify-start mt-7">
             <div class="flex flex-col sm:flex-row">
               {first.authors.map(author =>
-                <a href={"/blog/author/" + author + "/"} class="font-bold text-base text-slate-800 2xl:hover:decoration-auto 2xl:hover:text-indigo-600 2xl:hover:underline 2xl:hover:underline-offset-2">
+                <a href={ getAuthorHref(author) } class="font-bold text-base text-slate-800 2xl:hover:decoration-auto 2xl:hover:text-indigo-600 2xl:hover:underline 2xl:hover:underline-offset-2">
                   <div class="leading-tight mr-4 sm:leading-tight">{ author }</div>
                 </a>
               )}
@@ -105,7 +118,7 @@ for (let i = 1; i <= page.lastPage; i++) {
             <div class="flex flex-row justify-between">
               <div class="flex flex-col sm:flex-row">
                 { blog.authors && blog.authors.map(author =>
-                  <a href={"/blog/author/" + author + "/"} class="font-bold text-base text-slate-800 2xl:hover:decoration-auto 2xl:hover:text-indigo-600 2xl:hover:underline 2xl:hover:underline-offset-2">
+                  <a href={ getAuthorHref(author) } class="font-bold text-base text-slate-800 2xl:hover:decoration-auto 2xl:hover:text-indigo-600 2xl:hover:underline 2xl:hover:underline-offset-2">
                     <div class="leading-tight mr-4 sm:leading-tight">{ author }</div>
                   </a>
                 )}
@@ -152,7 +165,7 @@ for (let i = 1; i <= page.lastPage; i++) {
           { paginationStops.map(stop =>
               stop === 'ellipsis'
                 ? <span class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0">...</span>
-                : <a href={section === 'latest' ? "/blog/" + section + "/page/" + stop : "/blog/" + section + "/" + subject + "/page/" + stop}
+                : <a href={ getPaginationRef(stop) }
                      aria-current={stop === page.currentPage ? "page" : ""}
                      class={stop === page.currentPage
                          ? "relative z-10 inline-flex items-center bg-indigo-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
