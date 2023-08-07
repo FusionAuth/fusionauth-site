@@ -1,4 +1,3 @@
-
 # Instructions for migrating blog content 
 
 We're migrating from site/_posts to astro/src/content/blog
@@ -30,13 +29,13 @@ Steps:
     * we exclude any line that starts with `import` at the top of the excerpt so you can add any components you need without worry
   * If there are any `{% raw %}` tags you should remove them, backticks are enough.
   * If there are any callouts, import and use the astro ones instead. More here: https://inversoft.slack.com/archives/C04DGBXKPGC/p1691171143090139
-  * If there are any blocks with `{% remote_include` replace them with the [Remote Code](../../components/RemoteCode.astro) component
+  * If there are any blocks with `{% remote_include` replace them with the [Remote Code](src/components/RemoteCode.astro) component
   * If there are any other liquid tags, you should remove them.
   * Remove references to adding a comment (usually at bottom of post)
   * Check to see how it renders: http://localhost:3000/blog/fusionauth-website-how-we-do-it
   * If there are any filename collisions, add a `-2` to the filename and note it in the `Notes` column.
-* On the blog landing page the category callouts and pinned posts are defined [near the top of the file](../../pages/blog/index.astro) (this may move)
-* You can add an author's link to personal site (such as Twitter) in the [mappings file](../../pages/blog/mappings.ts) (this may move)
+* On the blog landing page the category callouts and pinned posts are defined [near the top of the file](src/pages/blog/index.astro) (this may move)
+* You can add an author's link to personal site (such as Twitter) in the [mappings file](src/pages/blog/mappings.ts) (this may move)
 * If you discover any widespread issues, file them here: https://inversoft.slack.com/archives/C04DGBXKPGC/p1691424115389019
 * If you have any questions, ask in #documentation-project or add it to the `Notes` column.
 * When you are done migrating the 5-10 posts, submit a PR. Open it against `development`.
