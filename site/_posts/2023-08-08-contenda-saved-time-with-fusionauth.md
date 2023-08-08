@@ -37,7 +37,7 @@ Eliot Dickison is a FusionAuth community member and CEO and co-founder of Treefo
 
 **Dan:** How do you use FusionAuth? OAuth? User management? Social sign-on? Something else?
 
-**Eliot:** FusionAuth powers auth for everything we do: our admin portal, the media streaming apps that we deploy, our API, our internal chat service, etc. We use the OAuth authorization code grant (with pkce!) to authenticate users on the web, iOS, and Android. We add one-off applications to FusionAuth for our customers when they want to treat us as an SSO provider for their other properties (e.g. WordPress). In the future we’re planning to take advantage of the device code grant for TV apps.
+**Eliot:** FusionAuth powers auth for everything we do: our admin portal, the media streaming apps that we deploy, our API, our internal chat service, etc. We use the OAuth authorization code grant (with PKCE!) to authenticate users on the web, iOS, and Android. We add one-off applications to FusionAuth for our customers when they want to treat us as an SSO provider for their other properties (e.g. WordPress). In the future we’re planning to take advantage of the device code grant for TV apps.
 
 > FusionAuth powers auth for everything we do.
 
