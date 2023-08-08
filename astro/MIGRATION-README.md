@@ -31,7 +31,10 @@ Steps:
     * we have a hard-coded cap of 160 characters for the excerpt in most places it is used right now if you forget
     * we exclude any line that starts with `import` at the top of the excerpt so you can add any components you need without worry
   * If there are any `{% raw %}` tags you should remove them, backticks are enough.
-  * If there are any callouts, import and use the astro ones instead. More here: https://inversoft.slack.com/archives/C04DGBXKPGC/p1691171143090139
+  * If there are any callouts, import and use the astro ones instead.
+    * After your frontmatter: `import Aside from '/src/components/Aside.astro';`
+    * Then format the callout with `<Aside type="note">content</Aside>`
+    * More here: https://inversoft.slack.com/archives/C04DGBXKPGC/p1691171143090139
   * If there are any blocks with `{% remote_include` replace them with the [Remote Code](src/components/RemoteCode.astro) component
   * If there are any other liquid tags, you should remove them.
   * Update references to adding a comment (usually at bottom of post) to posting in the forum: "If you have any questions about this blog post, please post in the [forum](/community/forum)."
