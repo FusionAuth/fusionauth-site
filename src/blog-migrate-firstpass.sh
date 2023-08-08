@@ -15,9 +15,9 @@ pubdate=`echo $filename|sed 's!.*/!!'|sed 's!\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[
 echo "http://localhost:3000/blog/$dest"|sed 's/.mdx$//'
 #echo $pubdate
 
-git mv $filename $dest_dir/$dest
+git mv $src_dir/$filename $dest_dir/$dest
 
-cat $dest_dir/$dest | sed 's^<!--more-->^{/* more */}^' |sed 's/^category: /categories: /'|sed 's/^author: /authors: /'|sed "s/^layout: blog-post/publish_date: $pubdate /"  > t
+cat $dest_dir/$dest | sed 's^<!--more-->^{/* more */}^' |sed 's/^category: /categories: /'|sed 's/^author: /authors: /'|sed "s/^layout: blog-post/publish_date: $pubdate /" | sed 's/^image: blogs/image: \/img\/blogs/'  > t
 mv t $dest_dir/$dest
 
 # tbd

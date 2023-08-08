@@ -722,86 +722,128 @@ declare module 'astro:content' {
 } & { render(): Render[".md"] },
 },
 "blog": {
-"another-day.mdx": {
-  id: "another-day.mdx",
-  slug: "another-day",
+"8-things-to-know-about-okta-and-fusionauth.mdx": {
+  id: "8-things-to-know-about-okta-and-fusionauth.mdx",
+  slug: "8-things-to-know-about-okta-and-fusionauth",
   body: string,
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-"dummy-1.mdx": {
-  id: "dummy-1.mdx",
-  slug: "dummy-1",
+"active-directory-and-fusionauth-ciam-comparison.mdx": {
+  id: "active-directory-and-fusionauth-ciam-comparison.mdx",
+  slug: "active-directory-and-fusionauth-ciam-comparison",
   body: string,
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-"dummy-10.mdx": {
-  id: "dummy-10.mdx",
-  slug: "dummy-10",
+"amazon-cognito-and-fusionauth-comparison.mdx": {
+  id: "amazon-cognito-and-fusionauth-comparison.mdx",
+  slug: "amazon-cognito-and-fusionauth-comparison",
   body: string,
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-"dummy-11.mdx": {
-  id: "dummy-11.mdx",
-  slug: "dummy-11",
+"announcing-fusionauth-1-43.mdx": {
+  id: "announcing-fusionauth-1-43.mdx",
+  slug: "announcing-fusionauth-1-43",
   body: string,
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-"dummy-2.mdx": {
-  id: "dummy-2.mdx",
-  slug: "dummy-2",
+"announcing-fusionauth-1-45.mdx": {
+  id: "announcing-fusionauth-1-45.mdx",
+  slug: "announcing-fusionauth-1-45",
   body: string,
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-"dummy-3.mdx": {
-  id: "dummy-3.mdx",
-  slug: "dummy-3",
+"auth0-and-fusionauth-a-tale-of-two-solutions.mdx": {
+  id: "auth0-and-fusionauth-a-tale-of-two-solutions.mdx",
+  slug: "auth0-and-fusionauth-a-tale-of-two-solutions",
   body: string,
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-"dummy-4.mdx": {
-  id: "dummy-4.mdx",
-  slug: "dummy-4",
+"aws-savings-plans.mdx": {
+  id: "aws-savings-plans.mdx",
+  slug: "aws-savings-plans",
   body: string,
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-"dummy-5.mdx": {
-  id: "dummy-5.mdx",
-  slug: "dummy-5",
+"consents-example.mdx": {
+  id: "consents-example.mdx",
+  slug: "consents-example",
   body: string,
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-"dummy-6.mdx": {
-  id: "dummy-6.mdx",
-  slug: "dummy-6",
+"download-counts-from-google-cloud-storage.mdx": {
+  id: "download-counts-from-google-cloud-storage.mdx",
+  slug: "download-counts-from-google-cloud-storage",
   body: string,
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-"dummy-7.mdx": {
-  id: "dummy-7.mdx",
-  slug: "dummy-7",
+"download-install-mac-tutorial.mdx": {
+  id: "download-install-mac-tutorial.mdx",
+  slug: "download-install-mac-tutorial",
   body: string,
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-"dummy-8.mdx": {
-  id: "dummy-8.mdx",
-  slug: "dummy-8",
+"easy-integration-of-fusionauth-and-spring.mdx": {
+  id: "easy-integration-of-fusionauth-and-spring.mdx",
+  slug: "easy-integration-of-fusionauth-and-spring",
   body: string,
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-"dummy-9.mdx": {
-  id: "dummy-9.mdx",
-  slug: "dummy-9",
+"fusionauth-and-svb.mdx": {
+  id: "fusionauth-and-svb.mdx",
+  slug: "fusionauth-and-svb",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-colorado-company-to-watch.mdx": {
+  id: "fusionauth-colorado-company-to-watch.mdx",
+  slug: "fusionauth-colorado-company-to-watch",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-introduces-pass-wordle.mdx": {
+  id: "fusionauth-introduces-pass-wordle.mdx",
+  slug: "fusionauth-introduces-pass-wordle",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-learning-from-incidents.mdx": {
+  id: "fusionauth-learning-from-incidents.mdx",
+  slug: "fusionauth-learning-from-incidents",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-loves-open-source.mdx": {
+  id: "fusionauth-loves-open-source.mdx",
+  slug: "fusionauth-loves-open-source",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-on-digitalocean-marketplace.mdx": {
+  id: "fusionauth-on-digitalocean-marketplace.mdx",
+  slug: "fusionauth-on-digitalocean-marketplace",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-website-how-we-do-it.mdx": {
+  id: "fusionauth-website-how-we-do-it.mdx",
+  slug: "fusionauth-website-how-we-do-it",
   body: string,
   collection: "blog",
   data: any
@@ -813,16 +855,107 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-"password-day.mdx": {
-  id: "password-day.mdx",
-  slug: "password-day",
+"multi-tenancy-in-a-single-tenant-architecture.mdx": {
+  id: "multi-tenancy-in-a-single-tenant-architecture.mdx",
+  slug: "multi-tenancy-in-a-single-tenant-architecture",
   body: string,
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-"some-other-day.mdx": {
-  id: "some-other-day.mdx",
-  slug: "some-other-day",
+"new-feature-login-theme.mdx": {
+  id: "new-feature-login-theme.mdx",
+  slug: "new-feature-login-theme",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"new-feature-social-login-facebook-google-twitter.mdx": {
+  id: "new-feature-social-login-facebook-google-twitter.mdx",
+  slug: "new-feature-social-login-facebook-google-twitter",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"nextjs-and-fusionauth-passwordless.mdx": {
+  id: "nextjs-and-fusionauth-passwordless.mdx",
+  slug: "nextjs-and-fusionauth-passwordless",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"nextjs-single-sign-on.mdx": {
+  id: "nextjs-single-sign-on.mdx",
+  slug: "nextjs-single-sign-on",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"onelogin-and-fusionauth.mdx": {
+  id: "onelogin-and-fusionauth.mdx",
+  slug: "onelogin-and-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"password-history.mdx": {
+  id: "password-history.mdx",
+  slug: "password-history",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"quick-comparison-ping-identity-and-fusionauth.mdx": {
+  id: "quick-comparison-ping-identity-and-fusionauth.mdx",
+  slug: "quick-comparison-ping-identity-and-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"remix-demo.mdx": {
+  id: "remix-demo.mdx",
+  slug: "remix-demo",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"see-you-at-kcdc-2023.mdx": {
+  id: "see-you-at-kcdc-2023.mdx",
+  slug: "see-you-at-kcdc-2023",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"single-sign-on-laravel-fusionauth.mdx": {
+  id: "single-sign-on-laravel-fusionauth.mdx",
+  slug: "single-sign-on-laravel-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"switchboard-reduced-migration-time.mdx": {
+  id: "switchboard-reduced-migration-time.mdx",
+  slug: "switchboard-reduced-migration-time",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"using-the-setup-wizard.mdx": {
+  id: "using-the-setup-wizard.mdx",
+  slug: "using-the-setup-wizard",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"using-user-actions.mdx": {
+  id: "using-user-actions.mdx",
+  slug: "using-user-actions",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"winning-customer-auth-market.mdx": {
+  id: "winning-customer-auth-market.mdx",
+  slug: "winning-customer-auth-market",
   body: string,
   collection: "blog",
   data: any

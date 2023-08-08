@@ -12,6 +12,7 @@ Steps:
 * For each of your posts:
   * `git mv` the file from `site/_posts` to `astro/src/content/blog`
     * Give it a new name with a `.mdx` suffix and no date. `2018-09-11-fusionauth-website-how-we-do-it.md` => `fusionauth-website-how-we-do-it.mdx`
+      * For reference in this case `fusionauth-website-how-we-do-it` is the "slug".
   * Update the frontmatter.
     * Replace `excerpt_separator: "<!--more-->"` with `excerpt_separator: "{/* more */}"`
       * most anything could work here but astro will complain about the `<!--more-->` tag specifically, if you have a good reason you can use something else
@@ -50,3 +51,38 @@ Steps:
 
 * do not check in astro/.astro/types.d.ts
 * You can use `src/blog-migrate-firstpass.sh site/_posts/2018-09-18-amazon-cognito-and-fusionauth-comparison.md` to do a first pass of a move.
+* You can include other markdown pages if you need
+
+```jsx
+// Conent is the conent of the file https://docs.astro.build/en/guides/markdown-content/#the-content-component
+import { Content as Install } from '../../components/blog/install-fusionauth.md'; 
+...
+// use it
+<Install />
+```
+
+## Handy find-replace regex
+
+### Remote code (remember to import the RemoteCode component!)
+you'll need to add the lang after
+
+find:
+```regexp
+.*```.*\n.*remote_include (.*) %}.*\n```.*
+```
+
+replace:
+```regexp
+<RemoteCode url="$1" lang="" />
+```
+
+### Image (assuming you moved to the appropriate section from blogs to blogs)
+find:
+```regexp
+.*include \_image\.liquid src="\/assets\/(.*)" alt="(.*)" c.*
+```
+
+replace:
+```regexp
+![$2](/$1)
+```
