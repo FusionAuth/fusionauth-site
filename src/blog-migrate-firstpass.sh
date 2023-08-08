@@ -12,7 +12,7 @@ dest=`echo $filename|sed 's!.*/!!'|sed 's/.md$/.mdx/'|sed 's![0-9][0-9][0-9][0-9
 pubdate=`echo $filename|sed 's!.*/!!'|sed 's!\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)-.*!\1!'`
 
 #echo $filename 
-echo "http://localhost:3000/blog/$dest"
+echo "http://localhost:3000/blog/$dest"|sed 's/.mdx$//'
 #echo $pubdate
 
 git mv $filename $dest_dir/$dest
