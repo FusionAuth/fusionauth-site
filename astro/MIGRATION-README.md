@@ -33,7 +33,7 @@ Steps:
   * If there are any callouts, import and use the astro ones instead. More here: https://inversoft.slack.com/archives/C04DGBXKPGC/p1691171143090139
   * If there are any blocks with `{% remote_include` replace them with the [Remote Code](src/components/RemoteCode.astro) component
   * If there are any other liquid tags, you should remove them.
-  * Remove references to adding a comment (usually at bottom of post)
+  * Update references to adding a comment (usually at bottom of post) to posting in the forum: "If you have any questions about this blog post, please post in the [forum](/community/forum)."
   * Check to see how it renders: http://localhost:3000/blog/fusionauth-website-how-we-do-it
   * If there are any filename collisions, add a `-2` to the filename and note it in the `Notes` column.
 * On the blog landing page the category callouts and pinned posts are defined [near the top of the file](src/pages/blog/index.astro) (this may move)
