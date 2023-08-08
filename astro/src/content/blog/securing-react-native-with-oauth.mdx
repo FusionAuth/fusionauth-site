@@ -1,18 +1,20 @@
 ---
-layout: blog-post
+publish_date: 2020-08-19 
 title: Securing React Native with OAuth
 description: React Native lets you build mobile applications for iOS and Android using JavaScript. This tutorial will show you how to use OAuth to authenticate users in a React Native application.
-author: Krissanawat Kaewsanmuang and Colin Frick
-image: blogs/react-native-oauth/securing-react-native-with-oauth.png
-category: tutorial
+authors: Krissanawat Kaewsanmuang, Colin Frick
+image: /img/blogs/react-native-oauth/securing-react-native-with-oauth.png
+categories: tutorial
 tags: client-javascript tutorial tutorial-react-native tutorial-javascript react-native javascript
-excerpt_separator: "<!--more-->"
+excerpt_separator: "{/* more */}"
 updated_date: 2023-04-11
 ---
+import { Content as Install } from '../../components/blog/install-fusionauth.md';
+import RemoteCode from '../../components/RemoteCode.astro';
 
 In this tutorial, we will set up a React Native application to work with OAuth. We'll use FusionAuth for auth, but the React Native code should work with any OAuth compliant server.
 
-<!--more-->
+{/* more */}
 
 First, we'll be installing and configuring FusionAuth. Then we'll set up a React Native project. We'll then perform an Authorization Code grant from within the React Native app. Finally, we'll request information from an OIDC endpoint. With that data, we'll display the user's email in the React Native application.
 
@@ -47,13 +49,13 @@ The mobile device -> The server -> The OAuth server
 
 However, this architecture can be simplified. The server can be removed; the mobile device can handle the callbacks directly from the OAuth server. In this tutorial, we'll use the Authorization Code grant with the PKCE extension. Below is a suggested [flow from RFC 8252](https://tools.ietf.org/html/rfc8252#page-5), and this is what we'll be implementing.
 
-{% include _image.liquid src="/assets/img/blogs/react-native-oauth/oauth-authorization-code-flow.png" alt="The authorization code flow for native applications." class="img-fluid" figure=false %}
+![The authorization code flow for native applications.](/img/blogs/react-native-oauth/oauth-authorization-code-flow.png)
 
 Next up, let's configure the OAuth server and set up our coding environment.
 
 ## Setting up FusionAuth as your auth provider
 
-{% include posts/install-fusionauth.md %}
+<Install />
 
 ### Configure the FusionAuth application
 
@@ -69,11 +71,11 @@ Also, note the value of "Client Id"; we'll need that later too. Click "Save", th
 
 When properly configured, the application details screen should look like this:
 
-{% include _image.liquid src="/assets/img/blogs/react-native-oauth/fusionauth-dashboard.png" alt="Configuring the FusionAuth application." class="img-fluid" figure=false %}
+![Configuring the FusionAuth application.](/img/blogs/react-native-oauth/fusionauth-dashboard.png)
 
 Make sure to register your user to the new application. Doing so creates a relationship between a user and the newly created application.
 
-{% include _image.liquid src="/assets/img/blogs/react-native-oauth/fusionauth-dashboard-register-user.png" alt="Registering your user to the React Native FusionAuth application." class="img-fluid" figure=false %}
+![Registering your user to the React Native FusionAuth application.](/img/blogs/react-native-oauth/fusionauth-dashboard-register-user.png)
 
 If you want, you can add more users in the "Users" tab, but make sure to register them with your new application. Now, we move on to setting up the React Native project.
 
@@ -109,7 +111,7 @@ npm i react-native-app-auth
 
 Using this library will help us build the OAuth integration quickly and securely. It takes care of many of the steps specified by RFC 8252; we just have to make sure to kick off the process (step 1) and receive and store the access token (step 6). As a reminder, here's the diagram from the RFC:
 
-{% include _image.liquid src="/assets/img/blogs/react-native-oauth/oauth-authorization-code-flow.png" alt="The authorization code flow for native applications." class="img-fluid" figure=false %}
+![The authorization code flow for native applications.](/img/blogs/react-native-oauth/oauth-authorization-code-flow.png)
 
 ### Setting up iOS auth
 
@@ -123,23 +125,19 @@ cd ios ; pod install
 
 Then, we need to open the React Native project with Xcode. Edit the `ios/RNfusionauth/info.plist` file and register the redirect URL scheme as shown below:
 
-```xml
-{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-react-native-0-71/main/ios/RNfusionauth/Info.plist' %}
-```
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-react-native-0-71/main/ios/RNfusionauth/Info.plist" lang="xml" />
 
 Here, the `CFBundleURLSchemes` defines the URL schemes handled by this application. The scheme we are registering, `fusionauth.demo`, should look familiar, as we configured FusionAuth to redirect to a URL with that scheme in it. If you modify it here, you should modify it there as well.
 
 The last step is to change `ios/RNfusionauth/AppDelegate.h` and `ios/RNfusionauth/AppDelegate.mm` to include needed imports and properties:
 
 Here's the `AppDelegate.h` file contents:
-```objective_c
-{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-react-native-0-71/main/ios/RNfusionauth/AppDelegate.h' %}
-```
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-react-native-0-71/main/ios/RNfusionauth/AppDelegate.h" lang="objective-c" />
 
 Here's the `AppDelegate.mm` file contents:
-```objective_c
-{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-react-native-0-71/main/ios/RNfusionauth/AppDelegate.mm' %}
-```
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-react-native-0-71/main/ios/RNfusionauth/AppDelegate.mm" lang="objective-c" />
 
 The changes in `AppDelegate.mm` allows authentication with [Magic Links](/docs/v1/tech/passwordless/magic-links).
 
@@ -171,15 +169,11 @@ Big picture, we're going to be building out our logic and views in the `App.tsx`
 
 Here's what `App.tsx` will look like when we are done (don't worry, it looks like a lot, but we'll explain most of it):
 
-```tsx
-{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-react-native-0-71/main/App.tsx' %}
-```
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-react-native-0-71/main/App.tsx" lang="typescript" />
 
 First, we need to add necessary imports to `App.tsx`:
 
-{%comment%}
-TODO when we move to new blogging platform, have these fragments pulled out instead of hardcoded in here, because they'll decay if the content of `App.tsx` changes.
-{%endcomment%}
+[//]: # (TODO when we move to new blogging platform, have these fragments pulled out instead of hardcoded in here, because they'll decay if the content of `App.tsx` changes.)
 
 ```typescript
 //...
@@ -263,7 +257,6 @@ You can also provide the token to APIs that let the application send an email, r
 
 To set up the UI, add this to `App.tsx`:
 
-{% raw %}
 ```tsx
 //...
 function UserInfo({text, value,}: { text: string; value?: string | Date; }): JSX.Element {
@@ -330,7 +323,6 @@ return (
   </SafeAreaView>
 );
 ```
-{% endraw %}
 
 The app will display one of two states, depending on whether we have an `accessToken`. Now, we can run the app in the iOS simulator by typing `npx react-native run-ios` in your terminal.
 
@@ -447,7 +439,6 @@ const getUser = async () => {
 
 Of course, it's not much fun to get the data without displaying it. Let's update the UI to show what we've learned about our user:
 
-{% raw %}
 ```tsx
 //...
 {userInfo ? (
@@ -476,7 +467,6 @@ Of course, it's not much fun to get the data without displaying it. Let's update
 )}
 //...
 ```
-{% endraw %}
 
 In this UI snippet, we're checking if we have `userInfo`. If so, we'll display some of the user's information; this data is retrieved from FusionAuth.
 
@@ -491,7 +481,7 @@ npx react-native run-ios
 npx react-native run-android
 ```
 
-{% include _image.liquid src="/assets/img/blogs/react-native-oauth/react-native-ios-walkthrough.gif" alt="React Native Example App Walkthrough" class="img-fluid" figure=false %}
+![React Native Example App Walkthrough](/img/blogs/react-native-oauth/react-native-ios-walkthrough.gif)
 
 ## Conclusion
 

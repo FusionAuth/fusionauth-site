@@ -918,6 +918,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"securing-react-native-with-oauth.mdx": {
+  id: "securing-react-native-with-oauth.mdx",
+  slug: "securing-react-native-with-oauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "see-you-at-kcdc-2023.mdx": {
   id: "see-you-at-kcdc-2023.mdx",
   slug: "see-you-at-kcdc-2023",
