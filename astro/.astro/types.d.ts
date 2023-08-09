@@ -1191,6 +1191,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"dot-net-command-line-client.mdx": {
+  id: "dot-net-command-line-client.mdx",
+  slug: "dot-net-command-line-client",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "download-counts-from-google-cloud-storage.mdx": {
   id: "download-counts-from-google-cloud-storage.mdx",
   slug: "download-counts-from-google-cloud-storage",
@@ -1863,6 +1870,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"securing-asp-netcore-razor-pages-app-with-oauth.mdx": {
+  id: "securing-asp-netcore-razor-pages-app-with-oauth.mdx",
+  slug: "securing-asp-netcore-razor-pages-app-with-oauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "securing-flutter-oauth.mdx": {
   id: "securing-flutter-oauth.mdx",
   slug: "securing-flutter-oauth",
@@ -1922,6 +1936,20 @@ declare module 'astro:content' {
 "seegno-thousands-tenants.mdx": {
   id: "seegno-thousands-tenants.mdx",
   slug: "seegno-thousands-tenants",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"setting-up-single-sign-on-for-nodebb.mdx": {
+  id: "setting-up-single-sign-on-for-nodebb.mdx",
+  slug: "setting-up-single-sign-on-for-nodebb",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"sharing-custom-oauth-claims-with-a-asp-netcore-app.mdx": {
+  id: "sharing-custom-oauth-claims-with-a-asp-netcore-app.mdx",
+  slug: "sharing-custom-oauth-claims-with-a-asp-netcore-app",
   body: string,
   collection: "blog",
   data: any
@@ -2094,9 +2122,23 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"user-registration-and-sign-in-with-laravel.mdx": {
+  id: "user-registration-and-sign-in-with-laravel.mdx",
+  slug: "user-registration-and-sign-in-with-laravel",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "using-fusionauth-with-cockroachdb.mdx": {
   id: "using-fusionauth-with-cockroachdb.mdx",
   slug: "using-fusionauth-with-cockroachdb",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"using-java-to-manage-fusionauth.mdx": {
+  id: "using-java-to-manage-fusionauth.mdx",
+  slug: "using-java-to-manage-fusionauth",
   body: string,
   collection: "blog",
   data: any
@@ -2153,6 +2195,13 @@ declare module 'astro:content' {
 "what-is-webauthn-why-do-you-care.mdx": {
   id: "what-is-webauthn-why-do-you-care.mdx",
   slug: "what-is-webauthn-why-do-you-care",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"whats-new-in-oauth-2-1.mdx": {
+  id: "whats-new-in-oauth-2-1.mdx",
+  slug: "whats-new-in-oauth-2-1",
   body: string,
   collection: "blog",
   data: any
