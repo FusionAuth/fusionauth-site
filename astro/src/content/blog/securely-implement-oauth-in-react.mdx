@@ -1,23 +1,21 @@
 ---
-layout: blog-post
+publish_date: 2020-03-10 
 title: How to Securely Implement OAuth in React
 description: This post describes how to securely implement OAuth in a React application using the Authorization Code Grant (with FusionAuth as the IdP).
-author: Matt Boisseau
-excerpt_separator: "<!--more-->"
-image: blogs/oauth-react-fusionauth.png
+authors: Matt Boisseau
+excerpt_separator: "{/* more */}"
+image: /img/blogs/fusionauth-example-react/oauth-react-fusionauth.png
 tags: client-javascript tutorial tutorial-react tutorial-javascript javascript react
-category: tutorial
+categories: tutorial
 updated_date: 2022-11-11
 ---
+import Aside from '../../components/Aside.astro';
 
 In this post, we'll walk step-by-step through implementing the OAuth Authorization Code Grant in a React app. This is the most secure way to implement OAuth and often overlooked for single-page applications that use technologies like React. We'll use FusionAuth as the IdP and also show you how to configure FusionAuth for this workflow. 
 
-<!--more-->
+{/* more */}
 
-{% include _callout-tip.liquid
-content=
- "This blog post walks through low-level details of OAuth in React. If you want to add login, logout, and registration buttons to your React application, using pre-built buttons, hooks, or higher-order components, you should take a look at our [React SDK](/docs/v1/tech/client-libraries/react-sdk). You can also work through a [tutorial using the SDK](/docs/v1/tech/tutorials/integrate-react)."
-%}
+<Aside type="tip" nodark="true">This blog post walks through low-level details of OAuth in React. If you want to add login, logout, and registration buttons to your React application, using pre-built buttons, hooks, or higher-order components, you should take a look at our [React SDK](/docs/v1/tech/client-libraries/react-sdk). You can also work through a [tutorial using the SDK](/docs/v1/tech/tutorials/integrate-react).</Aside>
 
 Our app will be able to:
 
@@ -28,10 +26,7 @@ Our app will be able to:
 
 In addition to React, we'll use a NodeJS backend. One major benefit of using a backend server is that we can safely store and use a Client Secret, which is the most secure way to integrate OAuth 2.0 Authorization Code Flow with our React app.
 
-{% include _callout-tip.liquid
-content=
- "This blog post has been [superseded by a newer React/OAuth tutorial](/blog/2021/11/11/how-to-authenticate-your-react-app)."
-%}
+<Aside type="tip" nodark="true">This blog post has been [superseded by a newer React/OAuth tutorial](/blog/2021/11/11/how-to-authenticate-your-react-app).</Aside>
 
 If you're in-the-know on OAuth, you're probably aware that some people use PKCE or the rightfully deprecated Implicit Flow to get around the Client Secret constraint. We're sticking to Authorization Code Flow, because setting up a server is the most secure solution for the majority of cases and quite simple once you know how. Don't know what any of that means? Don't worry about it — you don't need to know anything about OAuth to follow this example. 
 
@@ -57,7 +52,7 @@ React client <-> Express server <-> FusionAuth
 
 Literally, it might look something like this:
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/app-finished.png" class="img-fluid" figure=false %}
+![finished app](/img/blogs/fusionauth-example-react/app-finished.png)
 
 (Although, you're on your own for CSS.)
 
@@ -85,13 +80,13 @@ docker compose up
 
 Once FusionAuth is running (by default at [localhost:9011](http://localhost:9011)), create a new Application. The only configurations you need to change are `Authorized redirect URLs` and `Logout URL` on the `OAuth` tab. These are basically links used by FusionAuth during the only two times we redirect off our app entirely: login and logout. After a user logs in, FusionAuth will redirect them back to our app on one of the `Authorized Redirect URLs`. After a user logs out, FusionAuth will redirect them to the `Logout URL`.
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/admin-edit-application.png" class="img-fluid" figure=false alt="FusionAuth application edit page" %}
+![FusionAuth application edit page](/img/blogs/fusionauth-example-react/admin-edit-application.png)
 
 We'll talk later about why we use these particular URLs. For now, enter `http://localhost:9000/oauth-callback` for the `Authorized Redirect URL` (a point on our Express server) and `http://localhost:8080` for the `Logout URL` (the only endpoint on our single page React client). Click the blue `Save` button in the top-right to finish the configuration.
 
 A login feature isn't very useful with zero users. It's possible to register users from your app or using FusionAuth's self-service registration feature, but we'll manually add a user for this example. Select `Users` from the menu. You should see your own account; it's already registered to FusionAuth, which is why you can use it to log into the admin panel.
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/admin-manage-user.png" class="img-fluid" figure=false %}
+![admin manage user](/img/blogs/fusionauth-example-react/admin-manage-user.png)
 
 Select `Manage` and go to the `Registrations` tab. Click on `Add Registration`, pick your new application, and then `Save` to register yourself.
 
@@ -169,14 +164,14 @@ module.exports = {
   fusionAuthPort: 9011
 };
 ```
-{: .legend}
-`File: config.js`
+
+> `File: config.js`
 
 Storing configuration this way saves us from a lot of `CMD-F` pain when changing things, especially if we're going to re-use this example as the base of a new single-page app.
 
 The OAuth and FusionAuth configuration above will not match your application. I copied it out of my FusionAuth admin panel. This is the only code in the whole article you can't just copy/paste, seriously. The best place to find your values is this `View` button in the Applications page:
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/admin-view-application.png" class="img-fluid" figure=false %}
+![admin view application](/img/blogs/fusionauth-example-react/admin-view-application.png)
 
 (Also, if you do want to copy/paste everything, just [clone the GitHub repo](https://github.com/FusionAuth/fusionauth-example-react) with everything already in it. You'll still have to change this config file, though. No way around that).
 
@@ -227,8 +222,8 @@ class App extends React.Component {
 
 ReactDOM.render(<App/>, document.querySelector('#Container'));
 ```
-{: .legend}
-`File: client/index.js`
+
+> `File: client/index.js`
 
 If you need a refresher on React basics, check out the [official docs](https://reactjs.org/docs/getting-started.html).
 
@@ -273,8 +268,8 @@ class App extends React.Component {
 
 // ...
 ```
-{: .legend}
-`File: client/index.js`
+
+> `File: client/index.js`
 
 The logic in `<Greeting>` doesn't need to be complicated: Is there an email address? Then there's a user logged in. Otherwise, there's not.
 
@@ -297,8 +292,8 @@ export default class Greeting extends React.Component {
   }
 }
 ```
-{: .legend}
-`File: client/components/greeting.js`
+
+> `File: client/components/greeting.js`
 
 Try it out. Load up `localhost:8080` and you should see `Welcome, dinesh@fusionauth.io` (or whatever email address you typed in `state`). Comment out the `email` object to simulate logging out:
 
@@ -307,8 +302,8 @@ this.state = {
   // email: 'dinesh@fusionauth.io'
 };
 ```
-{: .legend}
-`File: client/index.js`
+
+> `File: client/index.js`
 
 Next, we'll set `state` based on a call to our server.
 
@@ -341,8 +336,8 @@ app.use('/user', require('./routes/user'));
 // start server
 app.listen(config.serverPort, () => console.log(`FusionAuth example app listening on port ${config.serverPort}.`));
 ```
-{: .legend}
-`File: server/index.js`
+
+> `File: server/index.js`
 
 When our React client sends a request to `localhost:9000/user`, it will get a response based on whatever we send back in `server/routes/user.js`. We can move the pretend user email from React's `state` to the server code, like this:
 
@@ -361,8 +356,8 @@ router.get('/', (req, res) => {
 
 module.exports = router;
 ```
-{: .legend}
-`File: server/routes/user.js`
+
+> `File: server/routes/user.js`
 
 Note that I've wrapped `email` in a `user` object. That's because the User object is ultimately what we'll get back from FusionAuth when a user actually logs in. The `email` property is one of the User's included values (also known as claims), so we'll be good to go if we set it up like this ahead of time.
 
@@ -391,8 +386,8 @@ render() {
 
 // ...
 ```
-{: .legend}
-`File: client/index.js`
+
+> `File: client/index.js`
 
 ```jsx
 // ...
@@ -403,8 +398,8 @@ let message = (this.props.body.user)
 
 // ...
 ```
-{: .legend}
-`File: client/components/greeting.js`
+
+> `File: client/components/greeting.js`
 
 Note that we're now using the existence of `user` to determine whether or not a user is logged in. We can use this for every future component: send `body`, check for `user`, use the values inside `user`.
 
@@ -446,8 +441,8 @@ componentDidMount() {
 
 // ...
 ```
-{: .legend}
-`File: client/app/index.js`
+
+> `File: client/app/index.js`
 
 One thing to note about our code above is that we need to specify the `credentials: 'include'` option to the `fetch` function. This is required since eventually we will be hooking up to a server-side session and without this setting the browser won't send over the cookie that Express uses for server-side sessions.
 
@@ -470,8 +465,8 @@ app.use(cors({
 
 // ...
 ```
-{: .legend}
-`File: server/index.js`
+
+> `File: server/index.js`
 
 Boom. Goodbye, annoying CORS error.
 
@@ -484,8 +479,8 @@ res.send({
   // }
 });
 ```
-{: .legend}
-`File: server/routes/user.js`
+
+> `File: server/routes/user.js`
 
 Next, we'll replace that fake `user` with a real one from FusionAuth. Our React client will indirectly retrieve the information from FusionAuth by using Express as a middleman.
 
@@ -526,8 +521,8 @@ import LogInOut from './components/LogInOut.js';
 
 // ...
 ```
-{: .legend}
-`File: client/index.js`
+
+> `File: client/index.js`
 
 ```jsx
 import React from 'react';
@@ -552,8 +547,8 @@ export default class LogInOut extends React.Component {
   }
 }
 ```
-{: .legend}
-`File: client/app/components/LogInOut.js`
+
+> `File: client/app/components/LogInOut.js`
 
 Why am I using a normal `<a>` link here instead of a `fetch` request, like we did for `/user`? In order to leverage FusionAuth's OAuth system with the Authorization Code Grant, we have to redirect the browser over to FusionAuth. While you might want to avoid redirecting away from the React app, this workflow adds a lot of security and also provides an ideal separation of concerns. Plus, you can style the FusionAuth login page to look like your application, which means the user won't even realize they've been redirected.
 
@@ -585,8 +580,8 @@ app.use('/login', require('./routes/login'));
 
 // ...
 ```
-{: .legend}
-`File: server/index.js`
+
+> `File: server/index.js`
 
 When a user goes to `/login`, we actually want to redirect them off of the Express sever and onto FusionAuth's login page. Remember, we installed FusionAuth so that we don't have to handle the login process at all!
 
@@ -601,8 +596,8 @@ router.get('/', (req, res) => {
 
 module.exports = router;
 ```
-{: .legend}
-`File: server/routes/login.js`
+
+> `File: server/routes/login.js`
 
 If that URI looks a bit messy, it's because of the additional query parameters, which FusionAuth needs to process our request:
 
@@ -614,7 +609,7 @@ This is all standard OAuth flow but it is a little verbose.
 
 Try navigating to `localhost:9000/login`. You should see a FusionAuth login form:
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/app-login.png" class="img-fluid" figure=false %}
+![app login](/img/blogs/fusionauth-example-react/app-login.png)
 
 When you successfully authenticate, you'll just see `Cannot GET /oauth-callback`, because `/oauth-callback` doesn't exist, yet. Remember, we added that as an `Authorized redirect URL` in the FusionAuth admin panel and as our `redirectURI` in `config.js`. This is the location that where FusionAuth redirects the browser back to after authentication in order to complete the OAuth workflow.
 
@@ -641,8 +636,8 @@ app.use('/oauth-callback', require('./routes/oauth-callback'));
 
 // ...
 ```
-{: .legend}
-`File: server/index.js`
+
+> `File: server/index.js`
 
 
 `/oauth-callback` will receive an Authorization Code from FusionAuth as a URL parameter during the redirect. If you inspect your browser's location, you'll see that there's a `code` parameter in the URL:
@@ -692,8 +687,8 @@ router.get('/', (req, res) => {
 
 module.exports = router;
 ```
-{: .legend}
-`File: server/routes/oauth-callback.js`
+
+> `File: server/routes/oauth-callback.js`
 
 The most important parts of the request are `uri` (which is where the request will get sent to) and `form` (which is the set of parameters FusionAuth expects). The OAuth token endpoint only access form encoded data, which is why we are using the `form` option in our `request` call. You can check the FusionAuth docs to see what every endpoint expects to be sent, but here's the gist of this request:
 
@@ -731,8 +726,8 @@ app.use(session(
 
 // ...
 ```
-{: .legend}
-`File: server/index.js`
+
+> `File: server/index.js`
 
 ### Introspect and Registration
 
@@ -812,8 +807,8 @@ router.get('/', (req, res) => {
 
 module.exports = router;
 ```
-{: .legend}
-`File: server/routes/user.js`
+
+> `File: server/routes/user.js`
 
 First, the POST request to `/introspect`: this endpoint requires our Client ID and, of course, the Access Token we want to decode. Just like the `token` endpoint, this endpoint access form encoded data, so we are using the `form` option.
 
@@ -854,8 +849,8 @@ app.use('/logout', require('./routes/logout'));
 
 // ...
 ```
-{: .legend}
-`File: server/index.js`
+
+> `File: server/index.js`
 
 Our `/logout` route will wipe the user's saved login by deleting:
 
@@ -880,8 +875,8 @@ router.get('/', (req, res) => {
 
 module.exports = router;
 ```
-{: .legend}
-`File: server/routes/logout.js`
+
+> `File: server/routes/logout.js`
 
 After cleaning up, FusionAuth will redirect to the React app, because we configured the main entry point of our React app as the `Logout URL` in FusionAuth.
 
@@ -924,8 +919,8 @@ app.use('/set-user-data', require('./routes/set-user-data'));
 
 // ...
 ```
-{: .legend}
-`File: server/index.js`
+
+> `File: server/index.js`
 
 In this route, we'll send the `registration` JSON object back to FusionAuth. We'll use `PATCH` instead of `PUT`, which allows us to send only the parts we want to update, instead of the entire `registration` object.
 
@@ -974,8 +969,8 @@ router.post('/', (req, res) => {
 
 module.exports = router;
 ```
-{: .legend}
-`File: server/routes/set-user-data.js`
+
+> `File: server/routes/set-user-data.js`
 
 In order to ensure that we are updating the user that is currently logged in, we extract the `token` from the Express session and use it to lookup the User object from FusionAuth. This code is very similar to the code in our `/user` route. Once the call to the `/oauth2/introspect` endpoint in FusionAuth returns, we can call the `/api/user/registration` API to update the user's registration data.
  
@@ -1016,8 +1011,8 @@ render() {
 
 // ...
 ```
-{: .legend}
-`File: client/app/index.js`
+
+> `File: client/app/index.js`
 
 The method itself is simple: `event.target.value` will be the contents of the `<textarea>`. We apply that value to `registration.data` and use `setState` to update the value in React. We also have to update it on the FusionAuth side, so we can retrieve it with `/user`, hence our Express route at `/set-user-data`.
 
@@ -1050,8 +1045,8 @@ handleTextInput(event) {
 
 // ...
 ```
-{: .legend}
-`File: client/app/index.js`
+
+> `File: client/app/index.js`
 
 The last thing to do is add the `UserData` component, which will be a `<textarea>`. We can lock it using the `readonly` attribute when there's no user logged in, and we can apply our `handleTextInput` method to the `onChange` event.
 
@@ -1091,12 +1086,12 @@ export default class LogInOut extends React.Component {
   }
 }
 ```
-{: .legend}
-`File: client/app/components/UserData.js`
+
+> `File: client/app/components/UserData.js`
 
 Once everything is hooked up, you can test it out by typing something into the `<textarea>` in the React app and then verifying that the data is updated in FusionAuth. The user data is displayed in FusionAuth on the Manage page for the user under the `User data` tab:
 
-{% include _image.liquid src="/assets/img/blogs/fusionauth-example-react/admin-user-data.png" class="img-fluid" figure=false %}
+![admin user data](/assets/img/blogs/fusionauth-example-react/admin-user-data.png)
 
 However, it's a good idea to set the `<textarea>`'s `defaultValue` to the `userData`. This has two advantages: first, it allows us to inspect `userData` and confirm that it's maintained; second, it allows the user to edit the `userData`, rather than overwrite it each time.
 
@@ -1115,8 +1110,8 @@ let input = (this.props.body.user)
 
 // ...
 ```
-{: .legend}
-`File: client/app/components/UserData.js`
+
+> `File: client/app/components/UserData.js`
 
 Type in whatever you want and watch the value change. You can log in and out as much as you want, and FusionAuth will maintain the user's data.
 

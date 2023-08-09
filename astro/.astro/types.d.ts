@@ -1023,6 +1023,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"auth-and-the-bottleneck-architecture.mdx": {
+  id: "auth-and-the-bottleneck-architecture.mdx",
+  slug: "auth-and-the-bottleneck-architecture",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "auth-facade-pattern.mdx": {
   id: "auth-facade-pattern.mdx",
   slug: "auth-facade-pattern",
@@ -1079,6 +1086,20 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"breached-password-detection.mdx": {
+  id: "breached-password-detection.mdx",
+  slug: "breached-password-detection",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"building-cli-app-with-device-grant-and-golang.mdx": {
+  id: "building-cli-app-with-device-grant-and-golang.mdx",
+  slug: "building-cli-app-with-device-grant-and-golang",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "building-fusionauth-homebrew-formula.mdx": {
   id: "building-fusionauth-homebrew-formula.mdx",
   slug: "building-fusionauth-homebrew-formula",
@@ -1089,6 +1110,13 @@ declare module 'astro:content' {
 "building-profile-portal-with-flask-oauth-apis.mdx": {
   id: "building-profile-portal-with-flask-oauth-apis.mdx",
   slug: "building-profile-portal-with-flask-oauth-apis",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"building-protected-api-with-rails-and-jwt.mdx": {
+  id: "building-protected-api-with-rails-and-jwt.mdx",
+  slug: "building-protected-api-with-rails-and-jwt",
   body: string,
   collection: "blog",
   data: any
@@ -1180,6 +1208,13 @@ declare module 'astro:content' {
 "disclosure-conference-report.mdx": {
   id: "disclosure-conference-report.mdx",
   slug: "disclosure-conference-report",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"django-and-oauth.mdx": {
+  id: "django-and-oauth.mdx",
+  slug: "django-and-oauth",
   body: string,
   collection: "blog",
   data: any
@@ -1499,6 +1534,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"how-to-integrate-fusionauth-with-php.mdx": {
+  id: "how-to-integrate-fusionauth-with-php.mdx",
+  slug: "how-to-integrate-fusionauth-with-php",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "how-to-migrate-from-azure-ad-b2c.mdx": {
   id: "how-to-migrate-from-azure-ad-b2c.mdx",
   slug: "how-to-migrate-from-azure-ad-b2c",
@@ -1523,6 +1565,13 @@ declare module 'astro:content' {
 "how-to-migrate-user-data-centralized-auth-system.mdx": {
   id: "how-to-migrate-user-data-centralized-auth-system.mdx",
   slug: "how-to-migrate-user-data-centralized-auth-system",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"how-to-securely-implement-oauth-angular.mdx": {
+  id: "how-to-securely-implement-oauth-angular.mdx",
+  slug: "how-to-securely-implement-oauth-angular",
   body: string,
   collection: "blog",
   data: any
@@ -1642,6 +1691,13 @@ declare module 'astro:content' {
 "like-avatar-can-keep.mdx": {
   id: "like-avatar-can-keep.mdx",
   slug: "like-avatar-can-keep",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"locking-an-account-with-breached-password.mdx": {
+  id: "locking-an-account-with-breached-password.mdx",
+  slug: "locking-an-account-with-breached-password",
   body: string,
   collection: "blog",
   data: any
@@ -1814,6 +1870,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"private-labeling-with-multi-tenant.mdx": {
+  id: "private-labeling-with-multi-tenant.mdx",
+  slug: "private-labeling-with-multi-tenant",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "quick-comparison-ping-identity-and-fusionauth.mdx": {
   id: "quick-comparison-ping-identity-and-fusionauth.mdx",
   slug: "quick-comparison-ping-identity-and-fusionauth",
@@ -1859,6 +1922,20 @@ declare module 'astro:content' {
 "scaling-auth-system-excerpt.mdx": {
   id: "scaling-auth-system-excerpt.mdx",
   slug: "scaling-auth-system-excerpt",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"securely-implement-oauth-in-react.mdx": {
+  id: "securely-implement-oauth-in-react.mdx",
+  slug: "securely-implement-oauth-in-react",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"securely-implement-oauth-vuejs.mdx": {
+  id: "securely-implement-oauth-vuejs.mdx",
+  slug: "securely-implement-oauth-vuejs",
   body: string,
   collection: "blog",
   data: any
@@ -2286,6 +2363,13 @@ declare module 'astro:content' {
 "zanocloud-helps-companies-with-fusionauth.mdx": {
   id: "zanocloud-helps-companies-with-fusionauth.mdx",
   slug: "zanocloud-helps-companies-with-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"zendesk-sso-with-hypr.mdx": {
+  id: "zendesk-sso-with-hypr.mdx",
+  slug: "zendesk-sso-with-hypr",
   body: string,
   collection: "blog",
   data: any
