@@ -15,6 +15,22 @@ const months = {
   11: 'December'
 };
 
+function grabTextWithMarkdownLink(text, maxLength) {
+
+    if (text.length <= maxLength) {
+        return text;
+    }
+
+    const linkPattern = /\[([^\]]+)\]\(([^)]+)\)/;
+    const linkMatch = text.match(linkPattern);
+
+    if (linkMatch && linkMatch.index && linkMatch.index < maxLength) {
+        return text.slice(0, linkMatch.index + linkMatch[0].length) + "...";
+    }
+
+    return text.slice(0, maxLength)+ "...";
+}
+
 export const getDateString = (date) => months[date.getUTCMonth()] + " " + date.getUTCDate() + ", " + date.getUTCFullYear();
 
 export const getAuthorHref = (author) => !!author ? '/blog/author/' + author.replace(' ', '-').toLowerCase() + '/' : '';
@@ -31,10 +47,10 @@ export const parseContent = (blog) => {
       blurbLines.push(line);
     }
   }
+
   let blurb = blurbLines.join('\n');
-  if (blurb.length > 160) {
-    blurb = blurb.substring(0, 160) + '...';
-  }
+  blurb = grabTextWithMarkdownLink(blurb, 160);
+
   const categories = blog.data.categories.split(' ');
   const tags = blog.data.tags.split(' ');
   const authors = blog.data.authors.split(',').map(author => author.trim());
