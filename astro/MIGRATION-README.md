@@ -61,7 +61,7 @@ Steps:
 ## Other notes
 
 * do not check in astro/.astro/types.d.ts
-* You can use `src/blog-migrate-firstpass.sh site/_posts/2018-09-18-amazon-cognito-and-fusionauth-comparison.md` to do a first pass of a move.
+* You can use `src/blog-migrate-firstpass.sh 2018-09-18-amazon-cognito-and-fusionauth-comparison.md` to do a first pass of a move.
 * You can include other markdown pages if you need
 
 ```jsx
