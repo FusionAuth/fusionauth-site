@@ -13,15 +13,15 @@ I don't know about you, but when I first encountered ChatGPT, I was blown away. 
 
 <!--more-->
 
-But what I immediately started thinking about was what this would mean for technical documentation. See, tech documentation is critical as a developer. Have you ever fished through GitHub repositories, source code, discord or slack, or forums to find an solution to an obscure technical problem? I have, and it's no fun.
+But what I immediately started thinking about was what this would mean for technical documentation. See, tech documentation is critical as a developer. Have you ever fished through GitHub repositories, source code, discord or slack, or forums to find a solution to an obscure technical problem? I have, and it's no fun.
 
 So, seeing the ability of ChatGPT and the underlying large language model (LLM) to answer questions, I immediately wanted to see what it could do against the FusionAuth corpus of over 300 docs, thousands of issues across a number of GitHub repositories, and 2000-plus forum posts. While I still believe most developers use Google as their primary documentation interface (ht [Taylor Barnett](https://taylorbar.net/)) I was curious about how an LLM could expose documentation for devs.
 
 ## The Startups Cometh
 
-I initally looked to use a tool like [LangChain](https://python.langchain.com/docs/get_started/introduction.html) to build an interface to our documentation. But real life quickly intervened. I didn't think that spending a bunch of time getting up to speed on building an LLM, as fun as it would be, was a good use of my time.
+I initially looked to use a tool like [LangChain](https://python.langchain.com/docs/get_started/introduction.html) to build an interface to our documentation. But real life quickly intervened. I didn't think that spending a bunch of time getting up to speed on building an LLM, as fun as it would be, was a good use of my time.
 
-There were a number of startups that thought the same, and built products and companies around applying LLMs to technical documentation. I looked around at one or two startups earlier this year, but there were issues. One choked on the number and size of documents we had, for example. I recall the fact that some of our docs were in asciidoc, not markdown, being an issue as well. And so I set it aside for while. 
+There were a number of startups that thought the same, and built products and companies around applying LLMs to technical documentation. I looked around at one or two startups earlier this year, but there were issues. One choked on the number and size of documents we had, for example. I recall the fact that some of our docs were in asciidoc, not markdown, being an issue as well. And so I set it aside.
 
 Then, I ran across [Kapa, another startup](https://kapa.ai/) which promised they could train a model on any publicly available data and make it easy to access. They had integrations with websites and slack.
 
