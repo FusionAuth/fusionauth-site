@@ -46,6 +46,7 @@ Steps:
       * Change notes of the form `== ... ==` to `Note over Alias1, Alias2: ...` where `Alias1` and `Alias2` are the participants that you want the note to span
       * Remove any newlines from descriptions
   * If there are any other liquid tags, you should remove them.
+      * If there are attributes for a link such as '{:rel="nofollow"}', update to use an html anchor tag since there is not astro equivalent. <a href="https://fitsmallbusiness.com/reviews/single-sign-on-software-reviews/" title="Fit Small Business" rel="nofollow">Fit Small Business - Single Sign On Software</a>
   * Update references to adding a comment (usually at bottom of post) to posting in the forum: "If you have any questions about this blog post, please post in the [forum](/community/forum)."
   * Check to see how it renders: http://localhost:3000/blog/fusionauth-website-how-we-do-it
   * If there are any filename collisions, add a `-2` to the filename and note it in the `Notes` column.
