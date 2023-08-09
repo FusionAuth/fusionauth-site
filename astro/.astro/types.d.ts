@@ -722,6 +722,13 @@ declare module 'astro:content' {
 } & { render(): Render[".md"] },
 },
 "blog": {
+"6-ways-fusionauth-api-gdpr-ready.mdx": {
+  id: "6-ways-fusionauth-api-gdpr-ready.mdx",
+  slug: "6-ways-fusionauth-api-gdpr-ready",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "8-things-to-know-about-okta-and-fusionauth.mdx": {
   id: "8-things-to-know-about-okta-and-fusionauth.mdx",
   slug: "8-things-to-know-about-okta-and-fusionauth",
@@ -743,6 +750,27 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"announcing-early-access-program.mdx": {
+  id: "announcing-early-access-program.mdx",
+  slug: "announcing-early-access-program",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"announcing-fusionauth-1-41.mdx": {
+  id: "announcing-fusionauth-1-41.mdx",
+  slug: "announcing-fusionauth-1-41",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"announcing-fusionauth-1-42.mdx": {
+  id: "announcing-fusionauth-1-42.mdx",
+  slug: "announcing-fusionauth-1-42",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "announcing-fusionauth-1-43.mdx": {
   id: "announcing-fusionauth-1-43.mdx",
   slug: "announcing-fusionauth-1-43",
@@ -757,6 +785,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"asp-net-core-identity-considered-harmful.mdx": {
+  id: "asp-net-core-identity-considered-harmful.mdx",
+  slug: "asp-net-core-identity-considered-harmful",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "auth0-and-fusionauth-a-tale-of-two-solutions.mdx": {
   id: "auth0-and-fusionauth-a-tale-of-two-solutions.mdx",
   slug: "auth0-and-fusionauth-a-tale-of-two-solutions",
@@ -767,6 +802,13 @@ declare module 'astro:content' {
 "aws-savings-plans.mdx": {
   id: "aws-savings-plans.mdx",
   slug: "aws-savings-plans",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"best-places-to-work.mdx": {
+  id: "best-places-to-work.mdx",
+  slug: "best-places-to-work",
   body: string,
   collection: "blog",
   data: any
@@ -813,6 +855,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"fusionauth-g2-high-performer.mdx": {
+  id: "fusionauth-g2-high-performer.mdx",
+  slug: "fusionauth-g2-high-performer",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "fusionauth-introduces-pass-wordle.mdx": {
   id: "fusionauth-introduces-pass-wordle.mdx",
   slug: "fusionauth-introduces-pass-wordle",
@@ -841,9 +890,51 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"fusionauth-re-invent.mdx": {
+  id: "fusionauth-re-invent.mdx",
+  slug: "fusionauth-re-invent",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "fusionauth-website-how-we-do-it.mdx": {
   id: "fusionauth-website-how-we-do-it.mdx",
   slug: "fusionauth-website-how-we-do-it",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"getting-started-with-email-templates.mdx": {
+  id: "getting-started-with-email-templates.mdx",
+  slug: "getting-started-with-email-templates",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"got-users-100-million.mdx": {
+  id: "got-users-100-million.mdx",
+  slug: "got-users-100-million",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"how-sso-works.mdx": {
+  id: "how-sso-works.mdx",
+  slug: "how-sso-works",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"jwt-authorization-microservices-gateway.mdx": {
+  id: "jwt-authorization-microservices-gateway.mdx",
+  slug: "jwt-authorization-microservices-gateway",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"keycloak-fusionauth-comparison.mdx": {
+  id: "keycloak-fusionauth-comparison.mdx",
+  slug: "keycloak-fusionauth-comparison",
   body: string,
   collection: "blog",
   data: any
@@ -890,6 +981,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"nodejs-and-twitter-oauth.mdx": {
+  id: "nodejs-and-twitter-oauth.mdx",
+  slug: "nodejs-and-twitter-oauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "onelogin-and-fusionauth.mdx": {
   id: "onelogin-and-fusionauth.mdx",
   slug: "onelogin-and-fusionauth",
@@ -900,6 +998,13 @@ declare module 'astro:content' {
 "password-history.mdx": {
   id: "password-history.mdx",
   slug: "password-history",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"plaintext-passwords.mdx": {
+  id: "plaintext-passwords.mdx",
+  slug: "plaintext-passwords",
   body: string,
   collection: "blog",
   data: any
@@ -918,6 +1023,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"saml-and-oidc-difference.mdx": {
+  id: "saml-and-oidc-difference.mdx",
+  slug: "saml-and-oidc-difference",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "securing-react-native-with-oauth.mdx": {
   id: "securing-react-native-with-oauth.mdx",
   slug: "securing-react-native-with-oauth",
@@ -932,6 +1044,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"single-sign-on-django-fusionauth.mdx": {
+  id: "single-sign-on-django-fusionauth.mdx",
+  slug: "single-sign-on-django-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "single-sign-on-laravel-fusionauth.mdx": {
   id: "single-sign-on-laravel-fusionauth.mdx",
   slug: "single-sign-on-laravel-fusionauth",
@@ -939,9 +1058,37 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"single-sign-on-vs-single-log-out.mdx": {
+  id: "single-sign-on-vs-single-log-out.mdx",
+  slug: "single-sign-on-vs-single-log-out",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"spring-and-fusionauth.mdx": {
+  id: "spring-and-fusionauth.mdx",
+  slug: "spring-and-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "switchboard-reduced-migration-time.mdx": {
   id: "switchboard-reduced-migration-time.mdx",
   slug: "switchboard-reduced-migration-time",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"updating-crufty-php-application.mdx": {
+  id: "updating-crufty-php-application.mdx",
+  slug: "updating-crufty-php-application",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"using-oauth-and-pkce-to-add-authentication-to-your-gatsby-site.mdx": {
+  id: "using-oauth-and-pkce-to-add-authentication-to-your-gatsby-site.mdx",
+  slug: "using-oauth-and-pkce-to-add-authentication-to-your-gatsby-site",
   body: string,
   collection: "blog",
   data: any
@@ -956,6 +1103,20 @@ declare module 'astro:content' {
 "using-user-actions.mdx": {
   id: "using-user-actions.mdx",
   slug: "using-user-actions",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"what-happens-after-oauth-authentication-event.mdx": {
+  id: "what-happens-after-oauth-authentication-event.mdx",
+  slug: "what-happens-after-oauth-authentication-event",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"what-is-scim.mdx": {
+  id: "what-is-scim.mdx",
+  slug: "what-is-scim",
   body: string,
   collection: "blog",
   data: any
