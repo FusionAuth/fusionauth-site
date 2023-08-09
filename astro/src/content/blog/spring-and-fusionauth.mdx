@@ -1,17 +1,18 @@
 ---
-layout: blog-post
+publish_date: 2023-01-03 
 title: Adding sign in to your Spring web application using OIDC
 description: In this tutorial, we'll build a basic Spring web application using FusionAuth to handle login and registration.
-author: Bradley Van Aardt
-category: tutorial
+authors: Bradley Van Aardt
+categories: tutorial
 tags: tutorial tutorial-spring tutorial-java java spring oidc
-image: blogs/spring-fusionauth/authentication-spring-boot-oidc.png
-excerpt_separator: "<!--more-->"
+image: /img/blogs/spring-fusionauth/authentication-spring-boot-oidc.png
+excerpt_separator: "{/* more */}"
 ---
+import RemoteCode from "/src/components/RemoteCode.astro";
 
 In this tutorial, we'll build a basic Java and [Spring](https://spring.io) web application that does user registration and authentication. You'll use FusionAuth to provide this functionality.
 
-<!--more-->
+{/* more */}
 
 The application itself is very simple: It will let users sign up via FusionAuth and give them access to a "secret" area where their FusionAuth profile is displayed to them via OpenID Connect (OIDC). With these basics in place, you'll see how FusionAuth works and how it can extend the application to do whatever you need. Since we're using the OIDC standard, you can swap out any other OIDC compliant server, but this tutorial will use FusionAuth.
 
@@ -36,7 +37,7 @@ With this setup, authentication concerns are taken care of entirely by FusionAut
 
 The image below shows how this works.
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/architecture.png" alt="Important private data goes in FusionAuth. Everything else in Java & Spring. FusionAuth coordinates with other identity providers" class="img-fluid" figure=false %}
+![Important private data goes in FusionAuth. Everything else in Java & Spring. FusionAuth coordinates with other identity providers](/img/blogs/spring-fusionauth/architecture.png)
 
 Your application logic and all public information can be handled by Java and Spring. Anything sensitive, such as personally identifiable information (PII), is handled by FusionAuth.
 
@@ -62,7 +63,7 @@ Note that here we use a public `.env` file containing hard-coded database passwo
 
 FusionAuth should now be running and reachable on your chosen URL or `http://localhost:9011` if you've installed it locally. The first time you visit, you'll be prompted to set up an admin user and password. Once you've done this, you'll be prompted to complete three more set-up steps, as shown below.
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-setup1.png" alt="FusionAuth prompts us with the setup steps that we need to complete." class="img-fluid" figure=false %}
+![FusionAuth prompts us with the setup steps that we need to complete.](/img/blogs/spring-fusionauth/fusionauth-setup1.png)
 
 We'll skip step **#3** in this tutorial, but sending emails (to verify email addresses and do password resets) is a vital part of FusionAuth running in production, so you'll want to do that.
 
@@ -73,13 +74,13 @@ Click "Setup" under "Missing Application" and call your new app "Spring Example"
 - `http://localhost:8080/login/oauth2/code/fusionauth` to the Authorized redirect URLs.
 - `http://localhost:8080/logout` to the Logout URL.
   
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-urlconf.png" alt="Configuring the application URLs in FusionAuth." class="img-fluid" figure=false %}
+![Configuring the application URLs in FusionAuth.](/img/blogs/spring-fusionauth/fusionauth-urlconf.png)
 
 To enable self-service registrations, select the "Registration" tab. Scroll down to "Self-service registration", and switch "Enabled" on. Choose "Basic" as the registration type. You can choose the login type as either "Email" or "Username" - we've used "Email" for this tutorial. Ensure you enable "Full name". You may even want to require it, as the Spring code further on expects this field to be present on your user.
 
 You can also select any other fields you'd like to capture on registration - we've left them off. Your setup should look similar to this:
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-registration-settings.png" alt="Configuring the registration options in FusionAuth" class="img-fluid" figure=false %}
+![Configuring the registration options in FusionAuth](/img/blogs/spring-fusionauth/fusionauth-registration-settings.png)
 
 Click the "Save" button at the top right for your changes to take effect.
 
@@ -91,17 +92,17 @@ To configure this to work properly with Spring, we need to set a couple JWT para
 
 First, head to your Tenant configuration in FusionAuth. If you haven't made and linked a custom Tenant for your application, you can edit the default Tenant. Under the "General" tab in your Tenant settings, set the "Issuer" field to a URL representing your domain. Note that it must be a fully qualified URL for Spring to process it correctly (i.e. include the protocol). This issuer field is used in the JWT created by FusionAuth when logging in.
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-issuer-url.png" alt="Configuring the JWT issuer URL in FusionAuth." class="img-fluid" figure=false %}
+![Configuring the JWT issuer URL in FusionAuth.](/img/blogs/spring-fusionauth/fusionauth-issuer-url.png)
 
 Then head over to your FusionAuth application and edit it. Choose the "JWT" tab on the settings page, and enable JWT by setting the toggle to on. Then configure the JSON web tokens with the following values:
 
 - "JWT duration": 3600
-- "Access Token signing key": Access token signing key generated for application <name> (RS256)
-- "Id Token signing key": Access token signing key generated for application <name> (RS256)
+- "Access Token signing key": Access token signing key generated for application &lt;name> (RS256)
+- "Id Token signing key": Access token signing key generated for application &lt;name> (RS256)
 
 Click the "Save" button in the top right to save these changes. Your setup should look similar to this:
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-jwt-config.png" alt="Configuring the JWT algorithm settings." class="img-fluid" figure=false %}
+![Configuring the JWT algorithm settings.](/img/blogs/spring-fusionauth/fusionauth-jwt-config.png)
 
 ## Setting up PKCE
 
@@ -109,7 +110,7 @@ Click the "Save" button in the top right to save these changes. Your setup shoul
 
 PKCE is enabled by default in FusionAuth for public clients. To enable PKCE for your confidential app, set the PKCE dropdown in your app's settings to "Required".
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/fusionauth-pkce-required.png" alt="Enforcing PKCE for all client types." class="img-fluid" figure=false %}
+![Enforcing PKCE for all client types.](/img/blogs/spring-fusionauth/fusionauth-pkce-required.png)
 
 ## Setting up Spring
 
@@ -126,7 +127,7 @@ Navigate to [Spring Initialzr](https://start.spring.io), and create a new Spring
 - Java 17
 
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/spring-initializr.png" alt="Spring boot app initializr options" class="img-fluid" figure=false %}
+![Spring boot app initializr options](/img/blogs/spring-fusionauth/spring-initializr.png)
 
 Click "Generate". A zip file of the project should automatically be downloaded to your local machine. Copy and unzip it to a folder.
 
@@ -144,9 +145,9 @@ Spring Boot OAuth 2.0 Client has various configuration options through the `appl
 
 Update the `application.properties` file in the `resources` directory under the `main` source path to read as follows:
 
-```java
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/application.properties %}
-```
+{/*
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/application.properties" lang="java" />
+*/}
 
 Replace the values:
 
@@ -156,15 +157,15 @@ Replace the values:
 
 Most of the values can also be found by clicking on the "View" application settings button in FusionAuth:
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/show-application-settings.png" alt="View application page in FusionAuth" class="img-fluid" figure=false %}
+![View application page in FusionAuth](/img/blogs/spring-fusionauth/show-application-settings.png)
 
 ## Setting up Spring Boot OAuth 2.0 code configuration
 
 Create a `config` directory under the `src/main/java/io/fusionauth/example/spring` source directory. Create a new file named `SecurityConfiguration.java` with the following contents:
 
-```java
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/config/SecurityConfiguration.java %}
-```
+{/*
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/config/SecurityConfiguration.java" lang="java" />
+*/}
 
 This adds a [Bean](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html) to hook into the [Spring security filter chain](https://docs.spring.io/spring-security/site/docs/3.0.x/reference/security-filter-chain.html).
 
@@ -180,15 +181,15 @@ Then we add a few things to the HTTP request chain:
 
 In the `src/main/java/io/fusionauth/example/spring` source directory, create a new file named `HomeController.java`. Add the following contents to this file:
 
-```java
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/HomeController.java %}
-```
+{/*
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/HomeController.java" lang="java" />
+*/}
 
 Under the `src/main/resources/templates` directory, create a new file named `home.html`. Add the following contents to the file:
 
-```html
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/templates/home.html %}
-```
+{/*
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/templates/home.html" lang="html" />
+*/}
 
 ## Adding the user page and controller
 
@@ -196,15 +197,15 @@ We set the `user-info-uri` property in the `application.properties` file and add
 
 In the `src/main/java/io/fusionauth/example/spring` source directory, create a new file named `UserController.java`. Add the following contents to this file:
 
-```java
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/UserController.java %}
-```
+{/*
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/java/io/fusionauth/example/spring/UserController.java" lang="java" />
+*/}
 
 Under the `src/main/resources/templates` directory, create a new file named `user.html`. Add the following contents to the file:
 
-```html
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/templates/user.html %}
-```
+{/*
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-java-spring/main/src/main/resources/templates/user.html" lang="html" />
+*/}
 
 Replace the values in the logout link in the snippet above:
 
@@ -224,19 +225,19 @@ mvn spring-boot:run
 
 If all went well, the server should start successfully and you can visit `http://localhost:8080`.
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/not-logged-in.png" alt="The main page when logged out" class="img-fluid" figure=false %}
+![The main page when logged out](/img/blogs/spring-fusionauth/not-logged-in.png)
 
 Clicking on "You can view your profile here" should redirect you to your FusionAuth installation with an option to register.
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/login-page.png" alt="The FusionAuth login page, with registration as an option" class="img-fluid" figure=false %}
+![The FusionAuth login page, with registration as an option](/img/blogs/spring-fusionauth/login-page.png)
 
 Clicking the "Create an account" link should direct you to the register page to create an account.
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/registration-page.png" alt="The FusionAuth registration page" class="img-fluid" figure=false %}
+![The FusionAuth registration page](/img/blogs/spring-fusionauth/registration-page.png)
 
 After registering with your email, a password, and name, you should be redirected back to the app and your profile page. You should see a JSON object representing your profile on FusionAuth, fetched using OIDC.
 
-{% include _image.liquid src="/assets/img/blogs/spring-fusionauth/user.png" alt="The user page showing the user's FusionAuth profile" class="img-fluid" figure=false %}
+![The user page showing the user's FusionAuth profile](/img/blogs/spring-fusionauth/user.png)
 
 ## Where to next with Spring and FusionAuth?
 

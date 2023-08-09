@@ -1,17 +1,19 @@
 ---
-layout: blog-post
+publish_date: 2020-11-12 
 title: JWT authorization in a microservices gateway
 description: How would
-author: Tim Kleier and Matt Anderson
-image: blogs/microservices-jwt-auth/jwt-authorization-in-a-microservices-gateway.png
-category: tutorial
+authors: Tim Kleier and Matt Anderson
+image: /img/blogs/microservices-jwt-auth/jwt-authorization-in-a-microservices-gateway.png
+categories: tutorial
 tags: client-javascript tutorial tutorial-javascript microservices javascript nodejs
-excerpt_separator: "<!--more-->"
+excerpt_separator: "{/* more */}"
 ---
+import CatalogFlowDiagram from "../../diagrams/blog/jwt-authorization-microservices/catalog-flow.astro";
+import InventoryFlowDiagram from "../../diagrams/blog/jwt-authorization-microservices/inventory-flow.astro";
 
 In a recent article, we set up an API gateway with microservices for an eCommerce enterprise. FusionAuth handled our centralized authentication and then we passed user details for authorization to the microservices. 
 
-<!--more-->
+{/* more */}
 
 In this article, we'll build on the [example project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway) from that article, focusing on tightening up security by implementing [JSON Web Token](https://tools.ietf.org/html/rfc7519) (JWT) authorization. This is a critical security concern because we don't want to allow just any application to call our microservices. You may want to re-read the [Centralized Authentication with a Microservices Gateway](/blog/2020/09/15/microservices-gateway) post to refresh your memory. And we've created a new open source [sample project](https://github.com/FusionAuth/fusionauth-example-node-services-gateway-jwtauth) with updated javascript source code based on this article. (We're not going to implement authentication in this post, as it was handled in the previous one.)
 
@@ -51,7 +53,7 @@ Because we control all the microservices, we'll use a symmetric signing algorith
 
 To access your FusionAuth default signing key, go to **Settings > Key Master**, click on the magnifying glass next to the key with the name "Default signing key", then reveal it and copy the value of the "Secret".
 
-{% include _image.liquid src="/assets/img/blogs/microservices-jwt-auth/signing-key-secret.png" alt="Finding the JWT signing key value." class="img-fluid" figure=false %}
+![Finding the JWT signing key value.](/img/blogs/microservices-jwt-auth/signing-key-secret.png)
 
 Now we add this value as a variable to the gateway application (in `/routes/index.js`) and require the `jsonwebtoken` library.
 
@@ -118,7 +120,7 @@ You can see that this code is nearly identical to the code for `/products` above
 
 We're now ready for the microservices to handle the `Bearer` token passed in the header. As each microservice will need to handle the tokens in the same way, it makes sense to create a package utility that can be shared by each microservice. For example, here's the flow of a request to the Product Catalog:
 
-{% plantuml source: _diagrams/blogs/jwt-authorization-microservices/catalog-flow.plantuml, alt: "Retrieving the Product Catalog." %}
+<CatalogFlowDiagram alt="Retrieving the Product Catalog." />
 
 ### Authorization Middleware
 
@@ -215,7 +217,7 @@ Make sure you restart your microservices after you've set this environment varia
 ## Product Inventory Integration
 The Product Inventory service endpoint, `/branches/:id/product` has role-based access. Previously we were pulling that from a FusionAuth generated JWT, but let's pull it from the JWT created in the gateway now. Here's the flow of a request to the Product Inventory.
 
-{% plantuml source: _diagrams/blogs/jwt-authorization-microservices/inventory-flow.plantuml, alt: "Retrieving the Product Inventory." %}
+<InventoryFlowDiagram alt="Retrieving the Product Inventory." />
 
 ### Authorization Middleware
 
@@ -240,11 +242,11 @@ We're making this change, in getting roles from `req.headers.roles` to `req.role
 
 We'll need to complete one more step in order to allow admin access to the Product Inventory route. We need to modify the user information. In FusionAuth, click on "Applications", then the "Manage Roles" icon on the Gateway application. Add a new role called "admin".
 
-{% include _image.liquid src="/assets/img/blogs/microservices-jwt-auth/adding-role.png" alt="Adding a new role to an existing application." class="img-fluid" figure=false %}
+![Adding a new role to an existing application.](/img/blogs/microservices-jwt-auth/adding-role.png)
 
 Then click on "Users", find the user you created, and under the "Registrations" tab, click the "Edit" icon on the Gateway application. Check the box next to "admin" and save. This grants the "admin" role to this user.
 
-{% include _image.liquid src="/assets/img/blogs/microservices-jwt-auth/giving-user-admin-role.png" alt="Giving an existing user a new role." class="img-fluid" figure=false %}
+![Giving an existing user a new role.](/img/blogs/microservices-jwt-auth/giving-user-admin-role.png)
 
 The next time you log in to FusionAuth and access the `/branches/:id/products` route, you will be authorized and receive the expected response from the Product Inventory service.
 

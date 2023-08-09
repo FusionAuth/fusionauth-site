@@ -1,17 +1,18 @@
 ---
-layout: blog-post
+publish_date: 2020-10-07 
 title: Securing your legacy PHP business application with OAuth
 description: We all have them. Line of business applications that have their own user datastore. How can you update them to use a centralized user datastore?
-author: Dan Moore
-image: blogs/upgrade-php-application/securing-your-legacy-php-business-application-with-oauth.png
-category: tutorial
+authors: Dan Moore
+image: /img/blogs/upgrade-php-application/securing-your-legacy-php-business-application-with-oauth.png
+categories: tutorial
 tags: client-php tutorial tutorial-php php upgrade migration
-excerpt_separator: "<!--more-->"
+excerpt_separator: "{/* more */}"
 ---
+import Diagram from "../../diagrams/blog/update-php-application/authorization-code-grant.astro";
 
 Sometimes applications get written by interns. Sometimes prototypes get put into production. Sometimes crufty old apps, called "legacy" by some, are termed "money makers" by others. Once you introduce an auth system such as FusionAuth, you typically want to have all applications use it, even those not written with OIDC/OAuth in mind.
 
-<!--more-->
+{/* more */}
 
 In this two part series, you'll update a (fake) line of business PHP application with its own user data store to instead use a modern auth system. In the second part, you'll learn about two methods to migrate accounts and profile data from a legacy data store to FusionAuth.
 
@@ -107,11 +108,11 @@ php -S 0.0.0.0:8000
 
 Visit `http://localhost:8000` to see this application in action. Before you log in, you'll see something like this:
 
-{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/insecure-php-application-main-screen.png" alt="The login screen for the legacy PHP application." class="img-fluid" figure=false %}
+![The login screen for the legacy PHP application.](/img/blogs/upgrade-php-application/insecure-php-application-main-screen.png)
 
 After you login, you'll see a screen like this:
 
-{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/insecure-php-application-loggedin-screen.png" alt="The screen for authenticated users in the legacy PHP application." class="img-fluid" figure=false %}
+![The screen for authenticated users in the legacy PHP application.](/img/blogs/upgrade-php-application/insecure-php-application-loggedin-screen.png)
 
 Now that you've seen the basics, let's go ahead and start updating the application to use a modern auth protocol: OAuth.
 
@@ -121,15 +122,15 @@ You need to configure an application in FusionAuth to correspond to the legacy P
 
 Navigate to "Applications" in the administrative user interface and create a new one. Go to the OAuth tab and ensure that the "Authorization Code" grant is checked. Add a redirect URL of `http://localhost:8000/oauth-callback.php`. At the end, it should look like this:
 
-{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/the-atm-oauth-configuration.png" alt="Adding an application in FusionAuth." class="img-fluid" figure=false %}
+![Adding an application in FusionAuth.](/img/blogs/upgrade-php-application/the-atm-oauth-configuration.png)
 
 View the application using the green magnifying glass and scroll down to the "OAuth Configuration" section. Note the `Client ID` and `Client Secret` values, which you'll use below.
 
-{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/the-atm-oauth-configuration-display.png" alt="Finding the Client ID and Client Secret." class="img-fluid" figure=false %}
+![Finding the Client ID and Client Secret.](/img/blogs/upgrade-php-application/the-atm-oauth-configuration-display.png)
 
 Save the application, and then add a user who is registered to the application. Navigate to "Users" and add a user. Then go to the "Registrations" tab and register them to "The ATM" application so they can continue to log in and do their job.
 
-{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/user-added-to-application.png" alt="A user has been registered to the legacy application." class="img-fluid" figure=false %}
+![A user has been registered to the legacy application.](/img/blogs/upgrade-php-application/user-added-to-application.png)
 
 Finally, you need the tenant identifier. If you just installed FusionAuth there is only one tenant, but FusionAuth supports multiple tenants, as many as you want. Navigate to "Tenants" and copy the id of the "Default" tenant. 
 
@@ -139,7 +140,7 @@ That's all for FusionAuth configuration. Now let's look at the PHP application a
 
 To update the "The ATM" PHP application, you'll use composer to add a dependency on an OAuth library. Instead of using the `authenticate.php` logic, redirect to FusionAuth. Here's a diagram of the new flow:
 
-{% plantuml source: _diagrams/blogs/update-php-application/authorization-code-grant.plantuml, alt: "The Authorization Code grant data flow." %}
+<Diagram alt="The Authorization Code grant data flow." />
 
 This section will walk through the changes, but they can be viewed by checking out the `auth-with-oauth` branch in the repo. You can also [view it online](https://github.com/FusionAuth/fusionauth-example-php-connector/tree/auth-with-oauth). These changes use the Authorization Code grant to ensure that the user is authorized, then use an OIDC endpoint to retrieve user data.
 
@@ -215,7 +216,7 @@ Welcome to the application.
 
 With this change, you've updated this application to authenticate using OAuth and OIDC rather than a crufty local datastore. The entire `authenticate.php` file is now obsolete. Instead of posting to the internal datastore, the user is directed to the FusionAuth hosted login pages when they click "Login". This is what they'll see (this is the default look and feel, but [these pages can be themed](/docs/v1/tech/themes/)):
 
-{% include _image.liquid src="/assets/img/blogs/upgrade-php-application/user-login-screen.png" alt="The screen a user sees when logging in." class="img-fluid" figure=false %}
+![The screen a user sees when logging in.](/img/blogs/upgrade-php-application/user-login-screen.png)
 
 After they authenticate, the `oauth-callback.php` code will be executed. It looks like this:
 
