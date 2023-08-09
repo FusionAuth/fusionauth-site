@@ -897,6 +897,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"building-fusionauth-homebrew-formula.mdx": {
+  id: "building-fusionauth-homebrew-formula.mdx",
+  slug: "building-fusionauth-homebrew-formula",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "ciam-vs-iam.mdx": {
   id: "ciam-vs-iam.mdx",
   slug: "ciam-vs-iam",
@@ -1079,6 +1086,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"fusionauth-recognized-industry-distinctions-comparecamp.mdx": {
+  id: "fusionauth-recognized-industry-distinctions-comparecamp.mdx",
+  slug: "fusionauth-recognized-industry-distinctions-comparecamp",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "fusionauth-reviews-around-world.mdx": {
   id: "fusionauth-reviews-around-world.mdx",
   slug: "fusionauth-reviews-around-world",
@@ -1103,6 +1117,13 @@ declare module 'astro:content' {
 "fusionauth-soc2-type2-certification.mdx": {
   id: "fusionauth-soc2-type2-certification.mdx",
   slug: "fusionauth-soc2-type2-certification",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-update-saml.mdx": {
+  id: "fusionauth-update-saml.mdx",
+  slug: "fusionauth-update-saml",
   body: string,
   collection: "blog",
   data: any
@@ -1215,6 +1236,13 @@ declare module 'astro:content' {
 "is-fusionauth-gdpr-compliant.mdx": {
   id: "is-fusionauth-gdpr-compliant.mdx",
   slug: "is-fusionauth-gdpr-compliant",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"join-us-boulder-startup-week.mdx": {
+  id: "join-us-boulder-startup-week.mdx",
+  slug: "join-us-boulder-startup-week",
   body: string,
   collection: "blog",
   data: any
@@ -1460,6 +1488,13 @@ declare module 'astro:content' {
 "updating-crufty-php-application.mdx": {
   id: "updating-crufty-php-application.mdx",
   slug: "updating-crufty-php-application",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"user-data-security-is-a-breach.mdx": {
+  id: "user-data-security-is-a-breach.mdx",
+  slug: "user-data-security-is-a-breach",
   body: string,
   collection: "blog",
   data: any
