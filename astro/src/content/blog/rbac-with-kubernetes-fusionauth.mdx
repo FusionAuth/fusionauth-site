@@ -1,19 +1,20 @@
 ---
-layout: blog-post
+publish_date: 2022-02-24 
 title: Implementing RBAC in Kubernetes with FusionAuth
 description: If you want to restrict access to the various resources (pods, services, etc.) in your Kubernetes cluster, you can employ role based access control, along with an OIDC server such as FusionAuth. 
-author: Aniket Bhattacharyea
-image: blogs/rbac-kubernetes/implementing-rbac-in-kubernetes-with-fusionauth.png
-category: tutorial
+authors: Aniket Bhattacharyea
+image: /img/blogs/rbac-kubernetes/implementing-rbac-in-kubernetes-with-fusionauth.png
+categories: tutorial
 tags: tutorial tutorial-integration tutorial-kubernetes topic-kubernetes integration kubernetes
-excerpt_separator: "<!--more-->"
+excerpt_separator: "{/* more */}"
 ---
-
+import Aside from '/src/components/Aside.astro';
+import {Content as WhatIsFusionAuth} from "/src/components/blog/what-is-fusionauth.md";
 
 
 Role-based access control (RBAC) is an authorization protocol that restricts system access based on the roles of a user within an organization. In RBAC, permissions are assigned to roles and roles are assigned to users so that no user is directly assigned a permission. A user is then granted the permissions available to the role(s) they have been assigned.
 
-<!--more-->
+{/* more */}
 
 RBAC can also be applied in the context of Kubernetes. If you want to restrict access to the various resources (pods, services, etc.) in your Kubernetes cluster, you can employ RBAC. The Kubernetes API server [supports RBAC natively](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) by making use of Roles and ClusterRoles.
 
@@ -33,11 +34,11 @@ This article uses the [OpenID Connect](https://openid.net/connect/) (OIDC) proto
 
 When a client like `kubectl` wants to connect to the Kubernetes API, it will use the Authorization Code grant to get an access and refresh token from FusionAuth. This token will be used to authenticate with the Kubernetes API. Then the API server will talk to FusionAuth to verify that the client-provided token is valid. Finally, it will use the roles of the authenticated user to validate whether the client is allowed to perform the operation or not.
 
-{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/oauth-kubernetes-oidc.svg" alt="An architecture diagram of K8s when using OIDC for RBAC." class="img-fluid" figure=true %}
+![An architecture diagram of K8s when using OIDC for RBAC.](/img/blogs/rbac-kubernetes/oauth-kubernetes-oidc.svg)
 
 ## What is FusionAuth?
 
-{% include _what-is-fusionauth.liquid %}
+<WhatIsFusionAuth />
 
 ## Implementing RBAC in Kubernetes
 
@@ -49,7 +50,9 @@ If you are using minikube, you'll also need to install [VirtualBox](https://www.
 
 Finally, [Helm](https://helm.sh/) is required for installing the required software packages, such as FusionAuth, ElasticSearch and PostgreSQL.
 
-{% include _callout-tip.liquid content="This tutorial was tested with FusionAuth 1.32.1 and Kubernetes 1.23." %}
+<Aside type="note" nodark="true">
+This tutorial was tested with FusionAuth 1.32.1 and Kubernetes 1.23.
+</Aside>
 
 ## Deploying FusionAuth to Kubernetes
 
@@ -335,13 +338,13 @@ Before setting up OIDC with Kubernetes, you’ll need to change a few default se
 
 First, visit the "Tenants" page from the sidebar and edit the "Default" tenant. Change the "Issuer" field from the default value of `acme.com` to `https://fusionauth.local` and save the changes. Kubernetes will validate the Issuer field during authentication, so it's vital that this is the same as the FusionAuth domain.
 
-{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/modify-default-tenant.png" alt="Modifying the tenant settings to have a correct issuer." class="img-fluid" figure=false %}
+![Modifying the tenant settings to have a correct issuer.](/img/blogs/rbac-kubernetes/modify-default-tenant.png)
 
 The default JWT signing of FusionAuth uses the HS256 algorithm. However, the Kubernetes plugin you'll use to authenticate expects the RS256 algorithm. So let's create an RS256 key. Visit "Settings", then "Key Master" and select "Generate RSA" from the dropdown on the top-right.
 
 Give it a name such as `Kubernetes RSA Key`, and click "Submit". The other default settings can remain the same.
 
-{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/create-rsa-signing-key.png" alt="Creating an asymmetric signing key in FusionAuth." class="img-fluid" figure=false %}
+![Creating an asymmetric signing key in FusionAuth.](/img/blogs/rbac-kubernetes/create-rsa-signing-key.png)
 
 The Kubernetes API server uses the Id token to authenticate users, so you need to add the roles claim to the ID token using a [lambda](https://fusionauth.io/docs/v1/tech/lambdas/). Navigate to "Customizations" then "Lambdas" and create a new lambda. Give it a name, select `JWT populate` as the "Type", enter the following code in the "Body" field, then save it:
 
@@ -352,21 +355,21 @@ function populate(jwt, user, registration) {
 }
 ```
 
-{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/create-jwt-populate-lambda.png" alt="Creating a new lambda." class="img-fluid" figure=false %}
+![Creating a new lambda.](/img/blogs/rbac-kubernetes/create-jwt-populate-lambda.png)
 
 The final step in configuring FusionAuth is to create an application. Visit the "Applications" section and create a new application. Give it a descriptive name, for example `Kubernetes`.
 
 The "Roles" tab is where you can create new roles for this application. Go ahead and create two roles, `admin` and `viewer`. Later, you’ll map these roles to Kubernetes roles to enable RBAC.
 
-{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/application-roles-tab.png" alt="Adding roles to a new application." class="img-fluid" figure=false %}
+![Adding roles to a new application.](/img/blogs/rbac-kubernetes/application-roles-tab.png)
 
 In the "OAuth" tab, add `http://localhost:8000` and `http://localhost:18000` in the "Authorized redirect URLs" field. These URLs are used by the `oidc-login` Kubernetes plugin to redirect the user after authentication.
 
-{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/application-oauth-tab.png" alt="Configuring the OAuth settings for a new application." class="img-fluid" figure=false %}
+![Configuring the OAuth settings for a new application.](/img/blogs/rbac-kubernetes/application-oauth-tab.png)
 
 In the "JWT" tab, first enable JWT creation by toggling the switch. In the "Id Token signing key" dropdown, select the RS256 key you created above. In the "Id Token populate lambda" dropdown, select the lambda you created earlier.
 
-{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/application-jwt-tab.png" alt="Configuring the JWT settings for a new application." class="img-fluid" figure=false %}
+![Configuring the JWT settings for a new application.](/img/blogs/rbac-kubernetes/application-jwt-tab.png)
 
 Finally, save the application.
 
@@ -374,17 +377,17 @@ For demonstration, let's create two users. One will be given the `admin` role, a
 
 Visit the "Users" page, and add a new user. Enter `admin@fusionauth.local` in the email field and disable "Send email to setup password" Enter a password for this new user and save it.
 
-{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/create-admin-user.png" alt="Adding an admin user." class="img-fluid" figure=false %}
+![Adding an admin user.](/img/blogs/rbac-kubernetes/create-admin-user.png)
 
 Click the "Add registration" button, select the `Kubernetes` application and the `admin` role, and save the registration.
 
-{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/add-admin-user-registration.png" alt="Adding a registration for the Kubernetes application for the admin user." class="img-fluid" figure=false %}
+![Adding a registration for the Kubernetes application for the admin user.](/img/blogs/rbac-kubernetes/add-admin-user-registration.png)
 
 Repeat the above process to create another user. Use `viewer@fusionauth.local` as the email and assign this user the viewer role.
 
 Finally, click the view icon next to the `Kubernetes` application on the applications page and write down the Client Id and Client secret.
 
-{% include _image.liquid src="/assets/img/blogs/rbac-kubernetes/client-id-client-secret.png" alt="Getting the client Id and client secret." class="img-fluid" figure=false %}
+![Getting the client Id and client secret.](/img/blogs/rbac-kubernetes/client-id-client-secret.png)
 
 ## Setting up the OIDC mapping in Kubernetes 
 
