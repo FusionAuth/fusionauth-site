@@ -26,6 +26,7 @@ Steps:
     * (optional): add a `featured_category`. This will govern what is shown on the `Related Posts` section. If not provided the first of the `categories` will be used.
   * Copy any images, including the header, to a subdirectory under `astro/public/img/blogs`. For older posts you may need to update the references, for newer posts there should already be a subdirectory.
   * Update image reference. Change it from `{% include _image.liquid src="/assets/img/blogs/bootstrap-studio.png" alt="Bootstrap Studio screenshot" class="img-thumbnail float-left mr-md-4" figure=true %}` to `![Bootstrap Studio screenshot.](/img/blogs/fusionauth-website/bootstrap-studio.png)` 
+    * If the caption is not a sentence, make it one.
   * Update the "more excerpt" from `<!--more-->` to `{/* more */}`
     * Per Emily you should try to keep the break before 160 characters
     * we have a hard-coded cap of 160 characters for the excerpt in most places it is used right now if you forget
