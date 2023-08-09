@@ -1,23 +1,31 @@
 ---
-layout: blog-post
+publish_date: 2023-01-19
 title: What happens to the tokens after an OAuth Authorization Code grant?
 description: What should you do with tokens returned after an OAuth grant? How can they be used by your application to ensure that only the correct users get access to data and functionality?
-author: Dan Moore
-image: blogs/tokens-after-grant/tokens-oauth-authorization-code-grant.png
-category: article
+authors: Dan Moore
+image: /img/blogs/tokens-after-grant/tokens-oauth-authorization-code-grant.png
+categories: article
 tags: oauth authentication jwt cookie explainer mobile authorization-code-grant
-excerpt_separator: "<!--more-->"
+excerpt_separator: "{/* more */}"
 ---
+import TokenDiagram from "../../diagrams/blog/after-authorization-code-grant/oauth-up-to-token.astro";
+import ClientStorageDiagram from "../../diagrams/blog/after-authorization-code-grant/client-side-storage.astro";
+import ValidatingTokenDiagram from "../../diagrams/blog/after-authorization-code-grant/validating-tokens.astro";
+import TokenIntrospectionDiagram from "../../diagrams/blog/after-authorization-code-grant/client-side-storage-introspection.astro";
+import TokenRefreshDiagram from "../../diagrams/blog/after-authorization-code-grant/client-side-storage-refresh-token.astro";
+import ProxyDiagram from "../../diagrams/blog/after-authorization-code-grant/client-side-storage-with-proxy.astro";
+import SessionStorageDiagram from "../../diagrams/blog/after-authorization-code-grant/session-storage.astro";
+import SessionStorageApiDiagram from "../../diagrams/blog/after-authorization-code-grant/session-storage-api-calls.astro";
 
 At the end of the OAuth Authorization Code grant, after a user presents their credentials at login, a code is returned which can be exchanged for one or more tokens at the token endpoint.
 
 These tokens include an access token, an optional refresh token, and an optional id token. The access token is used to get access to different APIs and protected resources. The refresh token lets you mint new access tokens, and the id token is used by the client to display information about the user.
 
-<!--more-->
+{/* more */}
 
 What should you do with all of these tokens? How can they be used by your application to ensure that only the correct users get access to data and functionality?
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/oauth-up-to-token.plantuml, alt: "The Authorization Code grant up to the point where tokens are requested from the token endpoint." %}
+<TokenDiagram alt="The Authorization Code grant up to the point where tokens are requested from the token endpoint." />
 
 The FusionAuth team has helped hundreds of customers integrate our auth server into their applications. There are [many different ways you can choose to perform an integration](/learn/expert-advice/authentication/login-authentication-workflows), but the team recommends certain options that offer the best tradeoffs between functionality and security.
 
@@ -54,7 +62,7 @@ If you choose this option, the browser, whether a simple HTML page with some Jav
 
 As long as the APIs live on a common domain, or a parent domain, the access token cookie will be sent with requests. For example, the server which gets the tokens can live at `auth.example.com` and if you set the cookie domain to `.example.com`, APIs living at `api.example.com`, `todo.example.com`, or any other host under `.example.com`, will receive the token.
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage.plantuml, alt: "Storing the tokens as secure, HTTPOnly cookies." %}
+<ClientStorageDiagram alt="Storing the tokens as secure, HTTPOnly cookies." />
 
 When using a native app, store these tokens in a secure location, such as the [iOS Keychain](https://developer.apple.com/documentation/security/keychain_services) or [Android internal data](https://developer.android.com/topic/security/best-practices#safe-data). Retrieve them and append them to the proper header before making API requests.
 
@@ -68,7 +76,7 @@ One validation approach that works if the token is signed and has internal struc
 
 With a signed token, the API server can validate the access token without communicating with any other system, by checking the signature and the claims.
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/validating-tokens.plantuml, alt: "Zooming in on token validation." %}
+<ValidatingTokenDiagram alt="Zooming in on token validation." />
 
 The APIs must validate:
 
@@ -87,7 +95,7 @@ The signature and standard claims checks can and should be done with a language 
 
 If you don't have a token that has internal structure and a signature, another option is to introspect the token by presenting it to FusionAuth. Here the validity of the token is confirmed by FusionAuth.
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-introspection.plantuml, alt: "Storing the tokens as secure, HTTPOnly cookies and using introspection to validate them." %}
+<TokenIntrospectionDiagram alt="Storing the tokens as secure, HTTPOnly cookies and using introspection to validate them." />
 
 A successful introspection will return JSON. The claims in the JSON still need to be checked:
 
@@ -105,7 +113,7 @@ At some point the access token will expire. The client must handle any access de
 
 When you request a scope of `offline_access` in the initial authorization sequence, after successful authentication you will receive a refresh token as well as an access token.
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-refresh-token.plantuml, alt: "Using a refresh token." %}
+<TokenRefreshDiagram alt="Using a refresh token." />
 
 After the access token expires, the client presents the refresh token to the auth server, such as FusionAuth. That server validates the user's account is still active, that there is still an active session, and any other logic that may be required.
 
@@ -123,7 +131,7 @@ If APIs are on different domains, you have two options. You can use a proxy whic
 
 Below is a diagram of using the proxy approach, where an API from `todos.com` is called through a proxy living at `proxy.example.com`. This is needed because cookies set from the `.example.com` domain will never be sent to the `todos.com` domain due to browser rules.
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/client-side-storage-with-proxy.plantuml, alt: "Using a proxy to access APIs on different domains." %}
+<ProxyDiagram alt="Using a proxy to access APIs on different domains." />
 
 ### Alternatives to client stored tokens for the browser
 
@@ -143,7 +151,7 @@ But if client storage won't meet your needs, you can use tried and true web sess
 
 Another option is to store the access token and refresh token in the server-side session. The application uses web sessions to identify with the server, and the token is available for other requests originating server-side. This is also known as the backend for frontend (BFF) proxy.
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/session-storage.plantuml, alt: "Storing the tokens server-side in a session." %}
+<SessionStorageDiagram alt="Storing the tokens server-side in a session." />
 
 If you have a valid token from the OAuth token endpoint via the app, the user is authorized. Depending on your application and how you are validating the token, you might need additional information from the token, but you might not need to send it anywhere else.
 
@@ -151,7 +159,7 @@ In other situations, you need to retrieve data from other APIs with no domain li
 
 Below is an example of how you can proxy API requests through server-side components. The APIs receiving the tokens must still validate them, with the same options as discussed above.
 
-{% plantuml source: _diagrams/blogs/after-authorization-code-grant/session-storage-api-calls.plantuml, alt: "Proxying API calls using tokens stored in a server-side session." %}
+<SessionStorageApiDiagram alt="Proxying API calls using tokens stored in a server-side session." />
 
 Even if you don't present the token to other APIs, you still get the above benefits from using the OAuth Authorization Code grant:
 
