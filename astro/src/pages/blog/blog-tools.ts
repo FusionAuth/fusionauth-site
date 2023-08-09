@@ -32,9 +32,20 @@ export const parseContent = (blog) => {
       blurbLines.push(line);
     }
   }
-  let blurb = blurbLines.join('\n');
-  if (blurb.length > 160) {
-    blurb = blurb.substring(0, 200) + '...';
+  let preblurb = blurbLines.join('\n');
+  let blurb = preblurb;
+  if (preblurb.length > 160) {
+    blurb = preblurb.substring(0, 160);
+    // handle when someone put a link in the blurb and it is in the middle of the cutoff. kinda hacky, sorry
+    const linkOpen = blurb.lastIndexOf('[');
+    let linkClose = blurb.lastIndexOf(')');
+    if (linkOpen > 1 && linkClose < linkOpen) {
+      linkClose = preblurb.substring(linkOpen).indexOf(')');
+      if (linkClose > 0) {
+        blurb = preblurb.substring(0, linkOpen + linkClose + 1);
+      }
+    }
+    blurb = blurb + '...';
   }
   blurb = marked.parse(blurb);
   const categories = blog.data.categories.split(' ');
@@ -64,9 +75,11 @@ const getAllEntries = (blogs, attribute, splitter) => {
 };
 
 export const sortByDate = (a,b) => {
-  if (a.data.publish_date > b.data.publish_date) {
+  const aDate = a.data.updated_date ? a.data.updated_date : a.data.publish_date;
+  const bDate = b.data.updated_date ? b.data.updated_date : b.data.publish_date;
+  if (aDate > bDate) {
     return -1;
-  } else if (a.data.publish_date == b.data.publish_date) {
+  } else if (aDate == bDate) {
     return 0;
   } else {
     return 1;
