@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: Now you can search FusionAuth docs using an LLM 
-description: FusionAuth makes a large language model trained against FusionAuth docs available to the FusionAuth community.
+title: Searching FusionAuth docs using an LLM 
+description: FusionAuth has made a large language model trained against FusionAuth docs available to the FusionAuth community.
 author: Dan Moore
 image: blogs/unlimited-custom-domains/unlimited-custom-domains.png
 category: announcement
@@ -35,15 +35,18 @@ It was pretty good. I especially liked how it provided links to existing documen
 
 We're rolling this AI assistant out to the wider FusionAuth community today. It's trained on the website, articles, technical documentation, forum posts, and blog posts right now. If the community finds this useful, we'll be adding it to other places, but for now you'll see it in the lower right hand side of the technical documentation sections. 
 
-IMAGE
+<br/>
+{% include _image.liquid src="/assets/img/blogs/llm-assistant/initial-screen.png" alt="The LLM assistant awaits." class="img-fluid" figure=false %}
 
 Click or tap on it and type in your question.
 
-IAMGe
+{% include _image.liquid src="/assets/img/blogs/llm-assistant/ask-question.png" alt="Type your question." class="img-fluid" figure=false %}
 
 You'll see answers and the aforementioned links to supporting documentation.
 
-IMAGE
+{% include _image.liquid src="/assets/img/blogs/llm-assistant/answer-question.png" alt="The LLM assistant answers." class="img-fluid" figure=false %}
 
-We hope this will be of use to you as you explore FusionAuth.
+Go ahead. Ask your questions!
+
+We hope this will be of use as you learn more about authentication and FusionAuth.
 
