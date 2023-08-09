@@ -95,10 +95,10 @@ find:
 
 replace:
 ```regexp
-![$2](/$1)
+![$2.](/$1)
 ```
 Or if you're editing with `vi`:
 ```
-:s#^{%\s*include\s*_image.liquid\s*src="/assets\([^"]*\)"\s*alt="\([^"]*\)".*%}\s*#![\2](\1)#
+:s#^{%\s*include\s*_image.liquid\s*src="/assets\([^"]*\)"\s*alt="\([^"]*\)".*%}\s*#![\2.](\1)#
 ```
 to update the liquid tag on the current line.
