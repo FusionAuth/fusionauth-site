@@ -743,6 +743,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"aaas-security-due-diligence-excerpt.mdx": {
+  id: "aaas-security-due-diligence-excerpt.mdx",
+  slug: "aaas-security-due-diligence-excerpt",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "active-directory-and-fusionauth-ciam-comparison.mdx": {
   id: "active-directory-and-fusionauth-ciam-comparison.mdx",
   slug: "active-directory-and-fusionauth-ciam-comparison",
@@ -995,6 +1002,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"auth-facade-pattern.mdx": {
+  id: "auth-facade-pattern.mdx",
+  slug: "auth-facade-pattern",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "auth0-and-fusionauth-a-tale-of-two-solutions.mdx": {
   id: "auth0-and-fusionauth-a-tale-of-two-solutions.mdx",
   slug: "auth0-and-fusionauth-a-tale-of-two-solutions",
@@ -1019,6 +1033,13 @@ declare module 'astro:content' {
 "aws-savings-plans.mdx": {
   id: "aws-savings-plans.mdx",
   slug: "aws-savings-plans",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"become-education-fusionauth.mdx": {
+  id: "become-education-fusionauth.mdx",
+  slug: "become-education-fusionauth",
   body: string,
   collection: "blog",
   data: any
@@ -1054,6 +1075,13 @@ declare module 'astro:content' {
 "clearspend-customizes-fusionauth.mdx": {
   id: "clearspend-customizes-fusionauth.mdx",
   slug: "clearspend-customizes-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"congrats-auth0-okta-acquisition.mdx": {
+  id: "congrats-auth0-okta-acquisition.mdx",
+  slug: "congrats-auth0-okta-acquisition",
   body: string,
   collection: "blog",
   data: any
@@ -1583,6 +1611,20 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"orbitvu-fusionauth-story.mdx": {
+  id: "orbitvu-fusionauth-story.mdx",
+  slug: "orbitvu-fusionauth-story",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"outsourced-auth-team-buy-in.mdx": {
+  id: "outsourced-auth-team-buy-in.mdx",
+  slug: "outsourced-auth-team-buy-in",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "password-history.mdx": {
   id: "password-history.mdx",
   slug: "password-history",
@@ -1635,6 +1677,20 @@ declare module 'astro:content' {
 "saml-and-oidc-difference.mdx": {
   id: "saml-and-oidc-difference.mdx",
   slug: "saml-and-oidc-difference",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"scaling-auth-system-excerpt.mdx": {
+  id: "scaling-auth-system-excerpt.mdx",
+  slug: "scaling-auth-system-excerpt",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"securing-golang-microservice.mdx": {
+  id: "securing-golang-microservice.mdx",
+  slug: "securing-golang-microservice",
   body: string,
   collection: "blog",
   data: any
@@ -1695,6 +1751,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"single-sign-on-sso-with-fusionauth.mdx": {
+  id: "single-sign-on-sso-with-fusionauth.mdx",
+  slug: "single-sign-on-sso-with-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "single-sign-on-vs-single-log-out.mdx": {
   id: "single-sign-on-vs-single-log-out.mdx",
   slug: "single-sign-on-vs-single-log-out",
@@ -1719,6 +1782,13 @@ declare module 'astro:content' {
 "single-sign-on-with-shopify.mdx": {
   id: "single-sign-on-with-shopify.mdx",
   slug: "single-sign-on-with-shopify",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"softozor-fusionauth-hasura-kubernetes.mdx": {
+  id: "softozor-fusionauth-hasura-kubernetes.mdx",
+  slug: "softozor-fusionauth-hasura-kubernetes",
   body: string,
   collection: "blog",
   data: any
@@ -1894,6 +1964,13 @@ declare module 'astro:content' {
 "why-no-auth-in-oauth.mdx": {
   id: "why-no-auth-in-oauth.mdx",
   slug: "why-no-auth-in-oauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"why-outsource-auth.mdx": {
+  id: "why-outsource-auth.mdx",
+  slug: "why-outsource-auth",
   body: string,
   collection: "blog",
   data: any
