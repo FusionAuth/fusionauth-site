@@ -1,4 +1,5 @@
 import { getCollection } from 'astro:content';
+import { marked } from 'marked';
 
 const months = {
   0: 'January',
@@ -33,8 +34,9 @@ export const parseContent = (blog) => {
   }
   let blurb = blurbLines.join('\n');
   if (blurb.length > 160) {
-    blurb = blurb.substring(0, 160) + '...';
+    blurb = blurb.substring(0, 200) + '...';
   }
+  blurb = marked.parse(blurb);
   const categories = blog.data.categories.split(' ');
   const tags = blog.data.tags.split(' ');
   const authors = blog.data.authors.split(',').map(author => author.trim());
