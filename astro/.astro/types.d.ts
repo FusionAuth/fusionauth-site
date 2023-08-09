@@ -771,6 +771,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"announcing-fusionauth-1-33.mdx": {
+  id: "announcing-fusionauth-1-33.mdx",
+  slug: "announcing-fusionauth-1-33",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "announcing-fusionauth-1-34.mdx": {
   id: "announcing-fusionauth-1-34.mdx",
   slug: "announcing-fusionauth-1-34",
@@ -918,6 +925,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"cybanetix-fusionauth-pci-dss.mdx": {
+  id: "cybanetix-fusionauth-pci-dss.mdx",
+  slug: "cybanetix-fusionauth-pci-dss",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "data-partners-gdpr-questions-to-ask.mdx": {
   id: "data-partners-gdpr-questions-to-ask.mdx",
   slug: "data-partners-gdpr-questions-to-ask",
@@ -967,6 +981,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"extending-fusionauth-roles-with-cerbos.mdx": {
+  id: "extending-fusionauth-roles-with-cerbos.mdx",
+  slug: "extending-fusionauth-roles-with-cerbos",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "fusionauth-and-svb.mdx": {
   id: "fusionauth-and-svb.mdx",
   slug: "fusionauth-and-svb",
@@ -977,6 +998,13 @@ declare module 'astro:content' {
 "fusionauth-announces-biotech.mdx": {
   id: "fusionauth-announces-biotech.mdx",
   slug: "fusionauth-announces-biotech",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-codemash.mdx": {
+  id: "fusionauth-codemash.mdx",
+  slug: "fusionauth-codemash",
   body: string,
   collection: "blog",
   data: any
@@ -1128,6 +1156,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"how-to-migrate-from-cognito.mdx": {
+  id: "how-to-migrate-from-cognito.mdx",
+  slug: "how-to-migrate-from-cognito",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "how-to-migrate-from-firebase.mdx": {
   id: "how-to-migrate-from-firebase.mdx",
   slug: "how-to-migrate-from-firebase",
@@ -1163,6 +1198,20 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"inversoft-adds-grolnick-miller-board-directors.mdx": {
+  id: "inversoft-adds-grolnick-miller-board-directors.mdx",
+  slug: "inversoft-adds-grolnick-miller-board-directors",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"inversoft-record-results.mdx": {
+  id: "inversoft-record-results.mdx",
+  slug: "inversoft-record-results",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "is-fusionauth-gdpr-compliant.mdx": {
   id: "is-fusionauth-gdpr-compliant.mdx",
   slug: "is-fusionauth-gdpr-compliant",
@@ -1187,6 +1236,13 @@ declare module 'astro:content' {
 "like-avatar-can-keep.mdx": {
   id: "like-avatar-can-keep.mdx",
   slug: "like-avatar-can-keep",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"maila-networks-fusionauth-openstack.mdx": {
+  id: "maila-networks-fusionauth-openstack.mdx",
+  slug: "maila-networks-fusionauth-openstack",
   body: string,
   collection: "blog",
   data: any
@@ -1264,6 +1320,13 @@ declare module 'astro:content' {
 "quick-comparison-ping-identity-and-fusionauth.mdx": {
   id: "quick-comparison-ping-identity-and-fusionauth.mdx",
   slug: "quick-comparison-ping-identity-and-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"rbac-with-kubernetes-fusionauth.mdx": {
+  id: "rbac-with-kubernetes-fusionauth.mdx",
+  slug: "rbac-with-kubernetes-fusionauth",
   body: string,
   collection: "blog",
   data: any
@@ -1348,6 +1411,13 @@ declare module 'astro:content' {
 "single-sign-on-with-discord.mdx": {
   id: "single-sign-on-with-discord.mdx",
   slug: "single-sign-on-with-discord",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"single-sign-on-with-drupal.mdx": {
+  id: "single-sign-on-with-drupal.mdx",
+  slug: "single-sign-on-with-drupal",
   body: string,
   collection: "blog",
   data: any
