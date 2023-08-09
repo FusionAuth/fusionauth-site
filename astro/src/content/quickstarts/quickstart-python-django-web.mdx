@@ -16,21 +16,19 @@ import LoginAfter from '../../diagrams/quickstarts/login-after.astro';
 import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
 import RemoteCode from '/src/components/RemoteCode.astro';
 
-<Aside type="note">
-TODO - Tatenda, please replace all `RichardJECooke` with `FusionAuth` when you're done testing this guide. It'll work when Dan adds my quickstart repo to their company.
-</Aside>
 
 In this quickstart you are going to build an application with Python and Django, and integrate it with FusionAuth.
 You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=pkH-kD73QUM), a global leader in converting dollars into coins.
 It'll have areas reserved for users who have logged in as well as public facing sections.
 
 The Docker compose file and source code for a complete application are available at
-https://github.com/RichardJECooke/fusionauth-quickstart-python-django-web/.
+https://github.com/FusionAuth/fusionauth-quickstart-python-django-web.
 
 ## Prerequisites
-For this Quickstart, you'll need
+
+For this Quickstart, you'll need:
 * [Python3.8](https://www.python.org/downloads/) or later.
-* [Docker](https://www.docker.com): The quickest way to start FusionAuth. (There are [other ways](https://fusionauth.io/docs/v1/tech/installation-guide/)).
+* [Docker](https://www.docker.com) the quickest way to start FusionAuth. (There are [other ways](https://fusionauth.io/docs/v1/tech/installation-guide/)).
 
 ## General Architecture
 
@@ -47,28 +45,31 @@ The login flow will look like this after FusionAuth is introduced.
 In general, you are introducing FusionAuth in order to normalize and consolidate user data. This helps make sure it is consistent and up-to-date as well as offloading your login security and functionality to FusionAuth.
 
 ## Getting Started
+
 In this section, you'll get FusionAuth up and running and use Django to create a new application.
 
 ### Clone the Code
+
 First off, grab the code from the repository and change into that directory.
 
 ```
-git clone https://github.com/RichardJECooke/fusionauth-quickstart-python-django-web.git
+git clone https://github.com/FusionAuth/fusionauth-quickstart-python-django-web.git
 cd fusionauth-quickstart-python-django-web
 ```
 
 ### Run FusionAuth via Docker
+
 In the root directory of the repo you'll find a Docker compose file, `docker-compose.yml`, and an environment
 variables configuration file `.env`. Assuming you have Docker installed on your machine, you can start
-FusionAuth up on your machine.
+FusionAuth up on your machine with:
 
 ```
-docker-compose up -d;
+docker-compose up -d
 ```
 
 This will start three containers, one each for FusionAuth, Postgres, and Elastic.
 
-Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/v1/tech/installation-guide/kickstart).
+Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](https://fusionauth.io/docs/v1/tech/installation-guide/kickstart).
 When FusionAuth starts for the first time, it will look at the `kickstart/kickstart.json` file and
 configure FusionAuth to your specified state.
 
@@ -77,7 +78,7 @@ If you ever want to reset the FusionAuth system, delete the volumes created by d
 executing `docker-compose down -v`, then re-run `docker-compose up -d`.
 </Aside>
 
-FusionAuth will be configured with these settings
+FusionAuth will be configured with these settings:
 * Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
 * Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
 * Your example username is `richard@example.com` and the password is `password`.
@@ -87,21 +88,23 @@ FusionAuth will be configured with these settings
 You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don't need to.
 
 ### Create a Basic Django Application
+
 In this section, you'll set up a basic Django project with a single app. While this guide builds a new
 Django project, you can use the same method to integrate your existing project with FusionAuth.
 
 #### Setup Your Environment
+
 We recommend working in a virtual environment for this.
 
 ```shell
 python3 -m venv venv && source venv/bin/activate
 ```
 
-Next, create a requirements.txt file to name the project dependencies. (All the files in this guide already exist in the `complete-application` folder if you want to copy them.)
+Next, create a `requirements.txt` file to list the project dependencies. (All the files in this guide already exist in the `complete-application` folder if you want to copy them.)
 
 `requirements.txt`
-<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/requirements.txt"
- lang="python" />
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/requirements.txt"
+ lang="shell" />
 
 And then install the dependencies into your virtual env.
 
@@ -119,8 +122,8 @@ django-admin startproject mysite
 And now create the `.env` file with these contents in your `mysite` folder. (Note that this is a different environment file to the one in the root folder used by Docker for FusionAuth).
 
 `.env`
-<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/.env"
- lang="python" />
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/mysite/.env"
+ lang="shell" />
 
 Start your server.
 
@@ -128,9 +131,10 @@ Start your server.
 python mysite/manage.py runserver
 ```
 
-You can [visit it](http://localhost:8000/app) to ensure it is running, although it will not have content yet. If you need to stop it, hit `control-C` to do so. You can leave this running while you build your application so that you can see your progress.
+You can [visit it](http://localhost:8000/) to ensure it is running, although it will not have content yet. If you need to stop it, hit `control-C` to do so. You can leave this running while you build your application so that you can see your progress.
 
 ## Authentication
+
 Open a new terminal. It is going to be easier to run commands from within your `mysite` directory, so `cd` into it.
 
 ```shell
@@ -138,7 +142,7 @@ source venv/bin/activate;
 cd mysite
 ```
 
-Create an app within your `mysite` project and make a `templates` directory to hold our HTML views.
+Create an app within your `mysite` project and make a `templates` directory to hold the application's HTML views.
 
 ```shell
 python manage.py startapp app;
@@ -149,59 +153,66 @@ You are now going to work from the top down — setting up authentication URLs i
 
 
 ### Project Settings
+
 Overwrite your `mysite/settings.py` contents with the following code.
 
 `settings.py`
-<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/mysite/settings.py" lang="python" />
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/mysite/mysite/settings.py" lang="python" />
 
 All the code above related to `mozilla_django_oidc` and the `OIDC_OP_` constants imported from the `.env` file set up the authentication library from Mozilla. This automatically handles the interaction with FusionAuth on the endpoints configured in this file, and the matching ones configured in the `kickstart.json` file that you used to initialize FusionAuth. You have also added your `app` and `mozilla_django_oidc` to the list of `INSTALLED_APPS`.
 
 ### Project URLs
+
 Overwrite the `mysite/urls.py` file with the following code.
 
 `urls.py`
-<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/mysite/urls.py"
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/mysite/mysite/urls.py"
  lang="python" />
 
- * The `admin` site is default Django.
- * The `app` URLs are for the only app in your project, which you are about to create.
+ * The `admin` site is default Django admin.
+ * The `app` URLs are for the app you created in your project.
  * The `oidc` URLs are automatically generated from the previous settings work you did.
 
 ### App URLs
-You'll work from this point on in the app, not in the main project. First, set the `app/urls.py` to match the project's URLs.
+
+You'll work from this point on in the `app`, not in the main project. First, create the `app/urls.py` file and set its content to match the project's URLs.
 
 `urls.py`
-<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/app/urls.py"
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/mysite/app/urls.py"
  lang="python" />
 
 ### App Views
+
 And now overwrite the `app/views.py` file. There are three pages: the home page, the account page, and the make change page.
 
 `views.py`
-<RemoteCode url="https://raw.githubusercontent.com/RichardJECooke/fusionauth-quickstart-python-django-web/main/complete-application/mysite/app/views.py"
- lang="shell" />
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/mysite/app/views.py"
+ lang="python" />
 
 Let's discuss what they are doing.
 
-* The `app` view, or home page, shows a log in button and redirects the user to the `account` view if they are already logged in.
-* The `account` view checks that the user is logged in and returns the template, passing in the user's email address returned from FusionAuth. If the user isn't logged in they are redirected to the login page. This also happens in the change page.
+* The `app` view, or home page, redirects the user to the `account` view if they are already logged in.
+* The `account` view checks that the user is logged in and returns the account page template, passing in the user's email address returned from FusionAuth. If the user isn't logged in they are redirected to the login page. This also happens in the change page.
 * The `logout` view is necessary because after the user logs out of FusionAuth you still need to clear the session for the user in Django. FusionAuth sends the user to this view after logging them out, which then returns them to the home page.
 * The `change` view looks longer only because it is demonstrating how to do some calculations if the request is a POST instead of a GET. These calculations are then passed to the template in the `change` variable to display on screen.
 
 ## Customization
-The final step is to create the HTML pages and style them with CSS. Copy the folders
+
+The final step is to create the HTML pages and style them with CSS. Copy the following folders:
 * `complete-application/mysite/app/static`
 * `complete-application/mysite/app/templates`
 
-into two folders with the same names in your `mysite/app` folder.
+Into two folders with the same names in your `mysite/app` folder.
 
 There are only two lines in these templates related to authentication. In the home template there is a log in button.
+
 ```html
 <a class="button-lg" href="{% url 'oidc_authentication_init' %}">Login</a>
 ```
 This URL is made available by the Mozilla plugin in the settings file. It directs the user to FusionAuth to log in, which then redirects back to your app's account page.
 
 In the account and change pages there is a log out form.
+
 ```html
 <form id="logoutForm" class="button-lg"  action="{% url 'oidc_logout' %}" method="post">
   {% csrf_token %}
@@ -211,7 +222,8 @@ In the account and change pages there is a log out form.
 Log out has to be a form that submits a POST request to FusionAuth. Here we are using an anchor element that is easy to style, but if your users might disable JavaScript you could use a traditional form `input` element.
 
 ## Run the Application
-Update the default SqlLite database before testing.
+
+Update the default SQLite database before testing.
 
 ```bash
 python manage.py migrate
@@ -228,20 +240,23 @@ source venv/bin/activate && python mysite/manage.py runserver
 Log in using `richard@example.com` and `password`. The change page will allow you to enter a number and see the result of the POST. Log out and verify that you can't browse to the [account page](http://localhost:8000/app/account) while logged out.
 
 ## Next Steps
-This quickstart is a great way to get a proof of concept up and running quickly, but to run
-your application in production, there are some things you're going to want to do.
+
+This quickstart is a great way to get a proof of concept up and running quickly, but to run your application in production, there are some things you're going to want to do.
 
 ### FusionAuth Customization
-FusionAuth gives you the ability to customize just about everything with the user's experience and your application's integration. This includes
-* [Hosted pages](https://fusionauth.io/docs/v1/tech/themes/) such as login, registration, email verification, and many more
-* [Email templates](https://fusionauth.io/docs/v1/tech/email-templates/email-templates)
-* [User data and custom claims in access token JWTs](https://fusionauth.io/articles/tokens/jwt-components-explained)
+
+FusionAuth gives you the ability to customize just about everything with the user's experience and your application's integration. This includes:
+* [Hosted pages](https://fusionauth.io/docs/v1/tech/themes/) such as login, registration, email verification, and many more.
+* [Email templates](https://fusionauth.io/docs/v1/tech/email-templates/email-templates).
+* [User data and custom claims in access token JWTs](https://fusionauth.io/articles/tokens/jwt-components-explained).
 
 ### Security
-* You may want to customize the [token expiration times and policies](https://fusionauth.io/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth
-* Choose [password rules](https://fusionauth.io/docs/v1/tech/core-concepts/tenants#password) and a [hashing algorithm](https://fusionauth.io/docs/v1/tech/reference/password-hashes) that meet your security needs
+
+* You may want to customize the [token expiration times and policies](https://fusionauth.io/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth.
+* Choose [password rules](https://fusionauth.io/docs/v1/tech/core-concepts/tenants#password) and a [hashing algorithm](https://fusionauth.io/docs/v1/tech/reference/password-hashes) that meet your security needs.
 
 ### Tenant and Application Management
-* Model your application topology using [Applications](https://fusionauth.io/docs/v1/tech/core-concepts/applications), [Roles](https://fusionauth.io/docs/v1/tech/core-concepts/roles), [Groups](https://fusionauth.io/docs/v1/tech/core-concepts/groups), [Entities](https://fusionauth.io/docs/v1/tech/core-concepts/groups), and more
-* Set up [MFA](https://fusionauth.io/docs/v1/tech/guides/multi-factor-authentication), [Social login](https://fusionauth.io/docs/v1/tech/identity-providers/), and/or [SAML](https://fusionauth.io/docs/v1/tech/identity-providers/samlv2/) integrations
-* Integrate with external systems using [Webhooks](https://fusionauth.io/docs/v1/tech/events-webhooks/), [SCIM](https://fusionauth.io/docs/v1/tech/core-concepts/scim), and [Lambdas](https://fusionauth.io/docs/v1/tech/lambdas/)
+
+* Model your application topology using [Applications](https://fusionauth.io/docs/v1/tech/core-concepts/applications), [Roles](https://fusionauth.io/docs/v1/tech/core-concepts/roles), [Groups](https://fusionauth.io/docs/v1/tech/core-concepts/groups), [Entities](https://fusionauth.io/docs/v1/tech/core-concepts/groups), and more.
+* Set up [MFA](https://fusionauth.io/docs/v1/tech/guides/multi-factor-authentication), [Social login](https://fusionauth.io/docs/v1/tech/identity-providers/), and/or [SAML](https://fusionauth.io/docs/v1/tech/identity-providers/samlv2/) integrations.
+* Integrate with external systems using [Webhooks](https://fusionauth.io/docs/v1/tech/events-webhooks/), [SCIM](https://fusionauth.io/docs/v1/tech/core-concepts/scim), and [Lambdas](https://fusionauth.io/docs/v1/tech/lambdas/).
