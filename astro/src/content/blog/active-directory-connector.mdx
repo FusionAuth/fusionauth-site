@@ -1,17 +1,17 @@
 ---
-layout: blog-post
+publish_date: 2020-10-01 
 title: Authenticating with AWS Managed Microsoft Active Directory and LDAP
 description: You can use FusionAuth LDAP connectors to authenticate users against Microsoft Active Directory.
-author: Dan Moore
-image: blogs/active-directory-connector/authenticating-with-aws-managed-microsoft-active-directory-and-ldap.png
-category: tutorial
+authors: Dan Moore
+image: /img/blogs/active-directory-connector/authenticating-with-aws-managed-microsoft-active-directory-and-ldap.png
+categories: tutorial
 tags: feature-connectors feature-ldap client-netcore tutorial tutorial-reactor-feature ldap netcore connectors
-excerpt_separator: "<!--more-->"
+excerpt_separator: "{/* more */}"
 ---
 
 Microsoft's Active Directory is a common enterprise user data store. If you are building apps for users authenticated by Active Directory, you might want to connect FusionAuth to it. Another common use case is to have some applications for internal users which should be authenticated against Active Directory and other applications for people outside your organization, with user data stored in FusionAuth. FusionAuth can act as a CIAM for your external users, but delegate authentication of internal accounts to Active Directory.
 
-<!--more-->
+{/* more */}
 
 If you do this, applications no longer have to understand LDAP or be able to connect to your Active Directory server. Any framework or application with OAuth/OIDC or SAML support talks to FusionAuth for auth information, while user data remains in Active Directory.
 
@@ -80,7 +80,7 @@ The first will be an administrative user who has at least read access to the sec
 
 The second user will log in to FusionAuth and be authenticated against Active Directory using the Connector. Below, I'm adding John Stafford. 
 
-{% include _image.liquid src="/assets/img/blogs/active-directory-connector/active-directory-add-user.png" alt="Adding a user in Active Directory." class="img-fluid" figure=false %}
+![Adding a user in Active Directory.](/img/blogs/active-directory-connector/active-directory-add-user.png)
 
 I ran into an issue where when creating the user I required their password to be changed. This blocked FusionAuth from authenticating them. If you run into such issues, you can check by attempting to sign in to the domain, perhaps using the EC2 instance which is set up to auth directly against Active Directory.
 
@@ -90,17 +90,17 @@ Next, you want to add an application in FusionAuth. An application is anything a
 
 To set up this application in FusionAuth, navigate to "Settings" and then "Key Master" to set up an RSA keypair. You need to do this because the default signing algorithm for a JSON Web Token (JWT) in FusionAuth is HMAC, but the ASP.NET library used doesn't support symmetric algorithms. Below I'm generating an RSA key pair, but you can import one you've previously created should you need to share the keys across systems:
 
-{% include _image.liquid src="/assets/img/blogs/active-directory-connector/fusionauth-add-rsa-key.png" alt="Adding an RSA key in Key Master." class="img-fluid" figure=false %}
+![Adding an RSA key in Key Master.](/img/blogs/active-directory-connector/fusionauth-add-rsa-key.png)
 
 Create an application called "Internal Payroll App". This is what you are going to let John have access to. In the "OAuth" tab, add a redirect URL of "http://localhost:5000/signin-oidc". Add a logout redirect of "http://localhost:5000/".
 
 Navigate to the "JWT" tab. Enable JWT application configuration and change the signing keys to the just created RSA key pair: "For Internal Payroll App".
 
-{% include _image.liquid src="/assets/img/blogs/active-directory-connector/fusionauth-jwt-config.png" alt="Configuring the application's JWT settings to sign with the generated RSA keypair." class="img-fluid" figure=false %}
+![Configuring the application's JWT settings to sign with the generated RSA keypair.](/img/blogs/active-directory-connector/fusionauth-jwt-config.png)
 
 Save the application and then view it by clicking on the green magnifying glass. Scroll down to the "OAuth configuration" section, noting the `Client ID` and `Client Secret` values, which you'll need when configuring the web application in a bit:
 
-{% include _image.liquid src="/assets/img/blogs/active-directory-connector/fusionauth-oauth-config.png" alt="Viewing the application's OAuth settings to record the Client ID and Client Secret values." class="img-fluid" figure=false %}
+![Viewing the application's OAuth settings to record the Client ID and Client Secret values.](/img/blogs/active-directory-connector/fusionauth-oauth-config.png)
 
 ## Configure the LDAP connector
 
@@ -202,7 +202,7 @@ If you are using version 1.19.7 or later, use the built in function instead: `Fu
 
 Next, navigate to "Settings" and then "Connectors". Create a new Connector and select the LDAP option. You'll see this screen staring back at you:
 
-{% include _image.liquid src="/assets/img/blogs/active-directory-connector/fusionauth-blank-ldap-connector.png" alt="The creation screen for an LDAP Connector." class="img-fluid" figure=false %}
+![The creation screen for an LDAP Connector.](/img/blogs/active-directory-connector/fusionauth-blank-ldap-connector.png)
 
 Configure the LDAP Connector by providing or modifying the following info:
 
@@ -225,7 +225,7 @@ Good news: Active Directory has a user id that is a GUID. Bad news: Active Direc
 
 After you've added everything, the configuration will look like this, though of course the URL and other properties will be different:
 
-{% include _image.liquid src="/assets/img/blogs/active-directory-connector/fusionauth-create-active-directory-connector.png" alt="The completed creation screen for an Active Directory LDAP Connector." class="img-fluid" figure=false %}
+![The completed creation screen for an Active Directory LDAP Connector.](/img/blogs/active-directory-connector/fusionauth-create-active-directory-connector.png)
 
 ### Configure the Connector policy
 
@@ -235,11 +235,11 @@ Click "Add policy" and select the Connector. You may optionally enter the email 
 
 If you check the "Migrate User" option, this configures FusionAuth to check Active Directory for user attributes, including the password, only at the first authentication of each user. You can read more [about migration here](/docs/v1/tech/connectors/). For this post, Active Directory will remain the system of record, so leave it unchecked and save the policy entry.
 
-{% include _image.liquid src="/assets/img/blogs/active-directory-connector/fusionauth-tenant-connector-policy.png" alt="Setting up the policy for the Active Directory Connector." class="img-fluid" figure=false %}
+![Setting up the policy for the Active Directory Connector.](/img/blogs/active-directory-connector/fusionauth-tenant-connector-policy.png)
 
 The order of Connectors matters; Connectors are checked one after the other until the user is found in one of the data sources. At that point, the user is affiliated with that Connector; it will be used for future authentication attempts as long as it is present. Move the Active Directory Connector above the Default Connector, so that it is tried first.
 
-{% include _image.liquid src="/assets/img/blogs/active-directory-connector/fusionauth-tenant-order-connectors.png" alt="Setting up the policy order for the Active Directory Connector." class="img-fluid" figure=false %}
+![Setting up the policy order for the Active Directory Connector.](/img/blogs/active-directory-connector/fusionauth-tenant-order-connectors.png)
 
 Note that Connectors are configured on a tenant by tenant basis. FusionAuth supports multiple tenants out of the box, so if you need different Connector domain configuration or order, use multiple tenants.
 
@@ -281,15 +281,15 @@ To start the application, run this command: `bin/Debug/netcoreapp3.1/osx.10.14-x
 
 Finally, you get to sign in! Visit `http://localhost:5000` with an incognito browser window. You'll see this page:
 
-{% include _image.liquid src="/assets/img/blogs/active-directory-connector/webapp-initial-page.png" alt="The initial app webpage." class="img-fluid" figure=false %}
+![The initial app webpage.](/img/blogs/active-directory-connector/webapp-initial-page.png)
 
 To log in, click the "Secure" link and you'll be taken to the FusionAuth login page. These can of course be [themed](/docs/v1/tech/themes/), but for now the default look and feel will have to do.
 
-{% include _image.liquid src="/assets/img/blogs/active-directory-connector/webapp-login-page.png" alt="The log in pages for the web application." class="img-fluid" figure=false %}
+![The log in pages for the web application.](/img/blogs/active-directory-connector/webapp-login-page.png)
 
 Sign in with the Active Directory user you added (John's login if you are following along) and you'll be redirected back to a profile page. Note that I used `john@danadtest.fusionauth.io` as the username. That corresponds to the "User UPN logon" value configured when this account was created in Active Directory. This is also the `userPrincipalName` value, what the "Login Identifier Attribute" value was in the Connector config.
 
-{% include _image.liquid src="/assets/img/blogs/active-directory-connector/webapp-secured-page.png" alt="The web application profile page." class="img-fluid" figure=false %}
+![The web application profile page.](/img/blogs/active-directory-connector/webapp-secured-page.png)
 
 ## Take it further
 
