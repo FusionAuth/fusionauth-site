@@ -757,6 +757,27 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"announcing-fusionauth-1-38.mdx": {
+  id: "announcing-fusionauth-1-38.mdx",
+  slug: "announcing-fusionauth-1-38",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"announcing-fusionauth-1-39.mdx": {
+  id: "announcing-fusionauth-1-39.mdx",
+  slug: "announcing-fusionauth-1-39",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"announcing-fusionauth-1-40.mdx": {
+  id: "announcing-fusionauth-1-40.mdx",
+  slug: "announcing-fusionauth-1-40",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "announcing-fusionauth-1-41.mdx": {
   id: "announcing-fusionauth-1-41.mdx",
   slug: "announcing-fusionauth-1-41",
@@ -799,6 +820,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"authenticators-ceremonies-webauthn-oh-my.mdx": {
+  id: "authenticators-ceremonies-webauthn-oh-my.mdx",
+  slug: "authenticators-ceremonies-webauthn-oh-my",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "aws-savings-plans.mdx": {
   id: "aws-savings-plans.mdx",
   slug: "aws-savings-plans",
@@ -820,6 +848,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"data-partners-gdpr-questions-to-ask.mdx": {
+  id: "data-partners-gdpr-questions-to-ask.mdx",
+  slug: "data-partners-gdpr-questions-to-ask",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "download-counts-from-google-cloud-storage.mdx": {
   id: "download-counts-from-google-cloud-storage.mdx",
   slug: "download-counts-from-google-cloud-storage",
@@ -827,9 +862,23 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"download-install-linux-tutorial.mdx": {
+  id: "download-install-linux-tutorial.mdx",
+  slug: "download-install-linux-tutorial",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "download-install-mac-tutorial.mdx": {
   id: "download-install-mac-tutorial.mdx",
   slug: "download-install-mac-tutorial",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"easy-integration-fusionauth-nodejs.mdx": {
+  id: "easy-integration-fusionauth-nodejs.mdx",
+  slug: "easy-integration-fusionauth-nodejs",
   body: string,
   collection: "blog",
   data: any
@@ -897,6 +946,20 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"fusionauth-reviews-around-world.mdx": {
+  id: "fusionauth-reviews-around-world.mdx",
+  slug: "fusionauth-reviews-around-world",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-self-service-registration-typescript.mdx": {
+  id: "fusionauth-self-service-registration-typescript.mdx",
+  slug: "fusionauth-self-service-registration-typescript",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "fusionauth-website-how-we-do-it.mdx": {
   id: "fusionauth-website-how-we-do-it.mdx",
   slug: "fusionauth-website-how-we-do-it",
@@ -918,9 +981,37 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"hackfests-fusionauth.mdx": {
+  id: "hackfests-fusionauth.mdx",
+  slug: "hackfests-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "how-sso-works.mdx": {
   id: "how-sso-works.mdx",
   slug: "how-sso-works",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"how-to-migrate-from-azure-ad-b2c.mdx": {
+  id: "how-to-migrate-from-azure-ad-b2c.mdx",
+  slug: "how-to-migrate-from-azure-ad-b2c",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"illustrative-mathematics-saved-with-fusionauth.mdx": {
+  id: "illustrative-mathematics-saved-with-fusionauth.mdx",
+  slug: "illustrative-mathematics-saved-with-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"introducing-biometric-authentication.mdx": {
+  id: "introducing-biometric-authentication.mdx",
+  slug: "introducing-biometric-authentication",
   body: string,
   collection: "blog",
   data: any
@@ -1117,6 +1208,20 @@ declare module 'astro:content' {
 "what-is-scim.mdx": {
   id: "what-is-scim.mdx",
   slug: "what-is-scim",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"what-is-webauthn-why-do-you-care.mdx": {
+  id: "what-is-webauthn-why-do-you-care.mdx",
+  slug: "what-is-webauthn-why-do-you-care",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"why-cross-platform-gaming-account.mdx": {
+  id: "why-cross-platform-gaming-account.mdx",
+  slug: "why-cross-platform-gaming-account",
   body: string,
   collection: "blog",
   data: any
