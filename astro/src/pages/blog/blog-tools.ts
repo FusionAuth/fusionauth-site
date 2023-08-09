@@ -18,6 +18,8 @@ const months = {
 
 export const getDateString = (date) => months[date.getUTCMonth()] + " " + date.getUTCDate() + ", " + date.getUTCFullYear();
 
+export const getLatestDateString = (post) => getDateString(post.updated_date ? post.updated_date : post.publish_date);
+
 export const getAuthorHref = (author) => !!author ? '/blog/author/' + author.replace(' ', '-').toLowerCase() + '/' : '';
 
 export const parseContent = (blog) => {
