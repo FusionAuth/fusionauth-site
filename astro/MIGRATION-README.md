@@ -73,7 +73,8 @@ import { Content as Install } from '../../components/blog/install-fusionauth.md'
 // use it
 <Install />
 ```
-
+* There are several files in the root of /site/assets/img/blogs that may have been shared.  When the migration is complete, these should be deleted and then the site scanned for broken links.
+  
 ## Handy find-replace regex
 
 ### Remote code (remember to import the RemoteCode component!)
