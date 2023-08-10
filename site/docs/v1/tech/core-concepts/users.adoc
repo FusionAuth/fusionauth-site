@@ -13,11 +13,22 @@ FusionAuth is all about users, and it is helpful to fully understand how FusionA
 
 The User itself is easy enough to understand, it represents your end user, your employee, or your client.
 
+* <<Overview>>
 * <<User Scope>>
 * <<User Sessions>>
+** <<Session Details>>
 * <<What Makes a User Active>>
 * <<User Search>>
+** <<Configuration>>
+** <<Database Search Engine>>
+** <<Elasticsearch Search Engine>>
 * <<Segmenting Users>>
+** <<Tenants>>
+** <<Applications and Registrations>>
+** <<Groups>>
+** <<Entities and Grants>>
+** <<The user.data Field>>
+
 
 Here's a brief video covering some aspects of users:
 
@@ -152,7 +163,7 @@ include::docs/v1/tech/shared/_data-field-data-type-changes.adoc[]
 == Segmenting Users
 
 Often you want to segment or separate your users.
-You have four options to do so in FusionAuth.
+You have options to do so in FusionAuth.
 They each have different tradeoffs.
 The options are:
 
@@ -160,6 +171,7 @@ The options are:
 * Applications and Registrations
 * Groups
 * Entities and Grants
+* The `user.data` field
 
 //TODO table?
 
@@ -269,3 +281,19 @@ The scheduling software could know that Richard would have access to the schedul
 
 If you were to model this using only applications, you'd have to have twenty applications in FusionAuth (two for each store) and keeping those configurations synchronized might be difficult.
 And if you added more applications or stores, you'd face a combinatorial explosion of applications.
+
+=== The user.data Field
+
+You can add add arbitrary JSON to the `user.data` field, such as `org_type` and `org_id` fields. You can do this using the link:/docs/v1/tech/apis/users[User API] on user creation.
+
+This can then be read in a link:/docs/v1/tech/lambdas/jwt-populate[JWT Populate Lambda] and pushed into the tokens generated during authentication.
+
+The downstream application can examine tokens and determine to which organizations a user has access.
+
+A variant of this is using link:/docs/v1/tech/lambdas/#using-lambda-http-connect[Lambda HTTP Connect] which can pass a user Id to an external service during authentication and retrieve user attributes such as an `org_id`. This has the advantage of avoiding synchronization at the cost of requiring a paid plan and increased latency during the authentication event. The exact amount of latency depends on the responsiveness of the called API.
+
+This approach works well when you want FusionAuth to handle authentication but have all user segmentation logic in your application.
+
+==== The user.data Schema
+
+include::docs/v1/tech/shared/_data-field-data-type-changes.adoc[]
