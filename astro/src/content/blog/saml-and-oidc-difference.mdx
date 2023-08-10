@@ -19,7 +19,7 @@ This article will examine two authentication protocols: OpenID Connect (OIDC) an
 
 ## What Is OIDC?
 
-[OIDC](https://openid.net/connect/) is an open authentication protocol built on top of the OAuth 2.0 authorization framework. It delegates authentication to identity providers such as Google and FushionAuth to verify identities, while defining how an identity provider communicates with a relying party (or the platform providing services) to authenticate an entity (or end user).
+[OIDC](https://openid.net/connect/) is an open authentication protocol built on top of the OAuth 2.0 authorization framework. It delegates authentication to identity providers such as Google and FusionAuth to verify identities, while defining how an identity provider communicates with a relying party (or the platform providing services) to authenticate an entity (or end user).
 
 OIDC uses tokens known as [JSON Web Tokens](https://jwt.io/) (JWTs), with which applications can authenticate identities and access data from another application or service. It supports the [single sign-on](https://fusionauth.io/learn/expert-advice/authentication/developer-benefits-single-sign-on) (SSO) mechanism, which is used by most engineers to authenticate a user across several platforms. This can be handled by services like [FusionAuth](https://fusionauth.io/), which provides out-of-the-box features such as SSO for quicker authentication. OIDC works with web-based, mobile, and JavaScript clients.
 
