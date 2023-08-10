@@ -20,7 +20,7 @@ export const getDateString = (date) => months[date.getUTCMonth()] + " " + date.g
 
 export const getLatestDateString = (post) => getDateString(post.updated_date ? post.updated_date : post.publish_date);
 
-export const getAuthorHref = (author) => !!author ? '/blog/author/' + author.replace(' ', '-').toLowerCase() + '/' : '';
+export const getAuthorHref = (author) => !!author ? '/blog/author/' + author.replaceAll(' ', '-').toLowerCase() + '/' : '';
 
 export const parseContent = (blog) => {
   const blurbLines = [];
@@ -105,7 +105,7 @@ export const getStaticIndexPaths = async (paginate, attribute, splitter, paramNa
     // newest first
     filteredPosts.sort(sortByDate);
     const params = {} as any;
-    params[paramName] = target.trim().replace(' ', '-').toLowerCase();
+    params[paramName] = target.trim().replaceAll(' ', '-').toLowerCase();
     const props = {} as any;
     if (attribute === 'authors') {
       props.authorName = target;
