@@ -1,19 +1,16 @@
 ---
+publish_date: 2023-06-13 
 title: Using the Family API with Consents
 description: Using the Family API and Consents to control access to minors
 authors: Dean Rodman
 categories: tutorial
-publish_date: 2023-06-13
-updated_date: 2023-07-29
 image: /img/blogs/family-api/family-consents-header.png
 tags: client-node tutorial tutorial-express tutorial-node api-families api-consents
-featured_tag: passwords
-featured_category: article
 excerpt_separator: "{/* more */}"
 ---
 import RemoteCode from '../../components/RemoteCode.astro';
 
-In this tutorial, you'll build a basic Node.js + [Express](http://expressjs.com) web application that grants conditional access to users in a family structure. Specifically, an adult user will be able to grant access to child users to restricted areas of an application.
+In this tutorial, you'll build a basic Node.js + [Express](http://expressjs.com) web application that grants conditional access to users in a family structure. Specifically, an adult user will be able to grant access to child users to restricted areas of an application.  
 
 {/* more */}
 
@@ -78,7 +75,7 @@ Click "Setup" under "Missing Application" and call your new app "Family-Api-App"
 - `http://localhost:3000/logout` to the "Logout URL".
 
 Make sure that "PKCE" is set to `Required.` Proof Key for Code Exchange (PKCE) was originally intended for public clients like native mobile or desktop apps that couldn’t safely store a client secret. Now it is recommended even on confidential clients like web apps where the client secret is under secure control to protect against authorization code injection attacks. Your application should look like this:
-
+  
 ![Configuring the application URLs in FusionAuth.](/img/blogs/family-api/family-api-create-application.png)
 
 Click the "Save" button at the top right, for your changes to take effect.
@@ -114,7 +111,7 @@ Then, register both users to the application. Click the "Manage" button for each
 Now that you've created your two users and registered them to your application, you can assign both users to their appropriate family roles via the [Family API](/docs/v1/tech/apis/families). Execute the following command in your terminal.
 
 ```sh
-curl -X POST <YOUR_FUSIONAUTH_URL>/api/user/family \
+curl -X POST \<YOUR_FUSIONAUTH_URL\>/api/user/family \
 -H "Authorization: <YOUR_API_KEY>" \
 -H "Content-Type: application/json" \
 -d '{
@@ -122,7 +119,7 @@ curl -X POST <YOUR_FUSIONAUTH_URL>/api/user/family \
     "userId": "<PARENT_USER_ID>",
     "owner": true,
     "role": "Adult"
-  }
+  } 
 }'
 ```
 
@@ -141,7 +138,7 @@ curl -X PUT <YOUR_FUSIONAUTH_URL>/api/user/family/<YOUR_FAMILY_ID> \
     "userId": "<CHILD_USER_ID>",
     "owner": false,
     "role": "Child"
-  }
+  } 
 }'
 ```
 
@@ -151,7 +148,7 @@ You are almost ready to build your custom application and leverage your FusionAu
 
 Navigate to "Settings" then "Consents" and click the "Add" button. Supply a "Name" for the consent. By default, the minimum age of self-consent is `13`, meaning any user aged `13` or older can grant themselves the consent without needing permission from an adult user. You can modify this value if you wish. For the purposes of this guide, just make sure this number is higher than the age of your child user. If you did not supply a "Birthdate" for your child user, you can leave this value as-is, since a blank "Birthdate" will cause a user's age to be calculated as `-1`.
 
-![Creating the consent](/img/blogs/family-api/family-api-add-consent.png)
+![Creating the consent" class="img-fluid](/img/blogs/family-api/family-api-add-consent.png)
 
 ## Setting up Express
 
@@ -184,8 +181,7 @@ The application will have only one page apart from the FusionAuth login page. Th
 
 For the landing page view, add the following to `views/index.pug`. Note that the page uses data from a view model, which you will populate in the home route later.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-family-api/main/app/views/index.pug"
-            lang="pug" />
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-family-api/main/app/views/index.pug" lang="javascript" />
 
 Replace `clientId` with the Id of your FusionAuth application and `http://localhost:9011` with the fully qualified URL of your FusionAuth instance, including the protocol. For example, `clientId` might look like `7d31ada6-27b4-461e-bf8a-f642aacf5775` and your FusionAuth URL might look like `https://local.fusionauth.io`.
 
@@ -215,8 +211,7 @@ There are three main routes needed:
 
 Update the `routes/index.js` file to look like this:
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-family-api/main/app/routes/index.js"
-lang="javascript" />
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-family-api/main/app/routes/index.js" lang="javascript" />
 
 Each route will be reviewed in more detail below.
 
@@ -233,7 +228,7 @@ Find the values for `clientId` and `clientSecret` in FusionAuth under "Applicati
 
 ## The OAuth Callback Route
 
-After authentication, FusionAuth will redirect to the callback route you provided in the login link to FusionAuth, as well as in the authorized callback route set in the FusionAuth application earlier. You can see the route above.
+After authentication, FusionAuth will redirect to the callback route you provided in the login link to FusionAuth, as well as in the authorized callback route set in the FusionAuth application earlier. You can see the route above. 
 
 This route exchanges the `Authentication Code` returned from FusionAuth and the PKCE verifier code for a JWT, which is used to get the user profile of the authenticated user. The user profile is then added to the session and the client is redirected to the home page.
 
@@ -326,7 +321,7 @@ router.post('/change-consent-status', async function (req, res, next) {
   }
 
   try {
-    // Check current user is an adult and that the child is part of their family.
+    // Check current user is an adult and that the child is part of their family. 
     const response = await client.retrieveFamilies(req.session.user.id);
     if (response.response.families && response.response.families.length >= 1) {
       let self = response.response.families[0].members.filter(elem => elem.userId === req.session.user.id)[0];
@@ -368,15 +363,15 @@ router.post('/change-consent-status', async function (req, res, next) {
 
 The route performs quite a few tasks:
 
-1. Checks if there is a logged-in user. If not, the user is redirected to the login page.
+1. Checks if there is a logged-in user. If not, the user is redirected to the login page. 
 2. Checks if the logged-in user is an adult in a family.
 3. Checks if the logged-in user and the child user to grant or revoke the consent to is in the same family.
 4. Checks if there is already a `UserConsent` added for the child. If not, a new `UserConsent` is created and assigned to the child using the `consentId` from the consent created in the FusionAuth admin portal earlier.
-5. Updates the `UserConsent` to the desired status.
+5. Updates the `UserConsent` to the desired status. 
 
 ## Testing
 
-The coding is now complete. Type `npm start` at the console to start up the server, then navigate to `http://localhost:3000` in a private window. This ensures that your main admin login to FusionAuth is not a confounding factor while logging in.
+The coding is now complete. Type `npm start` at the console to start up the server, then navigate to `http://localhost:3000` in a private window. This ensures that your main admin login to FusionAuth is not a confounding factor while logging in.  
 
 You should see the landing page looking something like this:
 

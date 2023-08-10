@@ -1,7 +1,5 @@
 import {defineConfig} from 'astro/config';
-// fixme re-enable this when astro gets their repo fixed
-//import compress from "astro-compress";
-import compress from "@otterlord/astro-compress";
+import compress from "astro-compress";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import tailwind from "@astrojs/tailwind";
