@@ -28,19 +28,19 @@ Newer developers should be aware the examples below are written with the assumpt
 
 If you are only interested in jumping into the code, it can be found [here](https://github.com/FusionAuth/fusionauth-example-dotnet-windowsform-api).
 
-## Custom Validation with FusionAuth APIs
+## Custom Validation With FusionAuth APIs
 *“With great power, comes great responsibility!”*
 
 One of FusionAuth’s strengths is its flexibility. However, with the flexibility comes some complexity. To create a user in the FusionAuth admin user interface, you only need two pieces of information. You will need to supply either the username or the email in addition to a password. (If you are using multiple tenants, you will need the tenant ID as well.) The FusionAuth admin user interface gives you other optional fields to fill in, however none are required. When using the [Create a User API](/docs/v1/tech/apis/users#create-a-user), only the username or email in addition to the password is still required but there are also over 30 additional request parameters available for customization. Creating a custom admin interface around the APIs will not only allow you to choose which of the username or email fields to use, but also what other meta-data is appropriate and required for your application. Below is sample code for creating a user using the FusionAuth API.
 
-### Setting Up the User Object
+### Setting Up The User Object
 First, you need to create a few objects to hold some values. By constructing the classes and decorating properties with the proper attributes, you can still use the strongly typed objects and standard naming conventions in your C# application while also using the JSON Serializer to easily format the request body when it is time.
 
 ```cs
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionDemoAPI/Helper/User.cs %}
 ```
 
-### Taking Input from the User
+### Taking Input From The User
 Next, you need to take the input from the user and assign them to the values in your User object. In this case, you are performing those actions on a click event from the  `Create User` button on a [Windows Form](https://learn.microsoft.com/en-us/visualstudio/ide/create-csharp-winform-visual-studio?view=vs-2022). Pictured below is a screen shot of the interface for the sample application. 
 
 {% include _image.liquid src="/assets/img/blogs/get-more-value/fusionauth-windows-api-demo-front-end.png" alt="FusionAuth Windows API Demo Front End." class="img-fluid" figure=false %}
@@ -94,7 +94,7 @@ It is important to note that the `FusionAuthClient` that has been created for th
     }
 ```
 
-### Creating the User
+### Creating The User
 
 Because you decorated your User objects correctly using the JSONProperty attribute, you can use the JSON Serializer to serialize the object with the `JsonConvert.SerializeObject` method. You also need to encode it properly before you submit it. Once that is complete, you can submit the request to the FusionAuth server. You will do so here using the async pattern so as to not hold up the processing for a request that may take some time or give the application an unresponsive feel. Once you receive the return values, you can interrogate them and act accordingly.
 
@@ -145,21 +145,21 @@ Because you decorated your User objects correctly using the JSONProperty attribu
     }
 ```
 
-## User Workflow with FusionAuth APIs
+## User Workflow With FusionAuth APIs
 *“Amateurs do it till they get it right. Professionals do it until they can not get it wrong.”*
 
 You may have originally set up the users manually in the FusionAuth admin user interface and that is fine to get started. However, the more steps and requirements you have for creating a user, the more likely something will be missed. There can be several steps required to set up a user correctly such as making sure they belong to the correct group(s). While you may be infallible as a developer and get it right every time, wink wink, most likely your users will not.
 
 You can use the FusionAuth APIs to ensure the user is added to the correct group or groups so their permissions will be set properly. After the user is created, you can take this opportunity to automatically assign the user to a specific group or present an admin interface to the administrator that will guide them in selecting the proper group(s). For example, you can ensure Sally Power-User cannot add Joe Limited-Access to the Flaming Carolina Reaper Sauce Appliers on the day she creates him as a user because you know he has not had time to go through the training.
 
-### Setting up the Group Object
+### Setting Up The Group Object
 Once again, you will need to create a few objects to help us organize your groups. The [Add Users to a Group API](/docs/v1/tech/apis/groups#add-users-to-a-group) call you are using requires a collection of groups that each contain an array of user information. In this case, you will only be using the user Id for the new GroupUser information.
 
 ```cs
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionDemoAPI/Helper/Group.cs %}
 ```
 
-### Taking Input from the User
+### Taking Input From The User
 As with creating the user, you need to take the input from the application and assign the values to your Group objects. Again, the `IsGroupValid` function simply returns true for the sample application but you can also validate any data you want before actually adding the user to the group. After you are satisfied the user should be added, you can submit the information to the method that will submit your request to the FusionAuth server.
 
 {% comment %}
@@ -217,7 +217,7 @@ As with creating the user, you need to take the input from the application and a
     }
 ```
 
-### Adding the User to the Group
+### Adding The User To The Group
 Because the JSON format expected in the request body is not readily serializable given the Group objects you have created, you will have to perform a little wizardry to manipulate the Group objects. While this does not have to do with FusionAuth specifically, the code has been abstracted in the `FormatGroupUserJSON` function and can be found [here](https://github.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/blob/35307a11e43caa098d3366be58b07cf0452b6488/sourcecode/FusionDemoAPI/FusionAuthClient.cs#L267-L295) if you are interested. Once the API call has returned, you can retrieve whichever values you see as relevant and pass it back in the result object.
 
 {% comment %}
@@ -271,7 +271,7 @@ Because the JSON format expected in the request body is not readily serializable
     }
 ```
 
-## Branding Your User Management with FusionAuth
+## Branding Your User Management With FusionAuth
 *“Design is the silent ambassador of your brand.”*
 
 One of the best parts about using the APIs to allow application admins to manage their own users is they never have to leave your application. Users are accustomed to things such as Single Page Applications or at least applications that have a consistent look and feel. Depending on the use case, a user may feel uncomfortable switching to the FusionAuth admin interface to manage users. While FusionAuth has a well designed and functional admin interface, the look and feel will likely be different than your application. By using the APIs you can still use all of your own style sheets and design principles.
