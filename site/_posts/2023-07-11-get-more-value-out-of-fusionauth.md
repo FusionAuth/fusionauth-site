@@ -148,7 +148,7 @@ Because you decorated your User objects correctly using the JSONProperty attribu
 ## User Workflow with FusionAuth APIs
 *“Amateurs do it till they get it right. Professionals do it until they can not get it wrong.”*
 
-You may have originally set up the users manually in the FusionAuth admin user interface and that is fine to get started. However, as you add more steps and requirements to creating a user, the more likely something will be missed. There can be several steps required to set up a user correctly such as making sure they belong to the correct group(s). While you may be infallible as a developer and get it right every time, wink wink, most likely your users will not.
+You may have originally set up the users manually in the FusionAuth admin user interface and that is fine to get started. However, the more steps and requirements you have for creating a user, the more likely something will be missed. There can be several steps required to set up a user correctly such as making sure they belong to the correct group(s). While you may be infallible as a developer and get it right every time, wink wink, most likely your users will not.
 
 You can use the FusionAuth APIs to ensure the user is added to the correct group or groups so their permissions will be set properly. After the user is created, you can take this opportunity to automatically assign the user to a specific group or present an admin interface to the administrator that will guide them in selecting the proper group(s). You can ensure Sally Power-User cannot add Joe Limited-Access to the Flaming Carolina Reaper Sauce Appliers on the day she creates him as a user because you know he has not had time to go through the training.
 
