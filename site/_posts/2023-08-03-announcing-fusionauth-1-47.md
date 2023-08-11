@@ -17,7 +17,7 @@ The focus of these updates is performance. In fact, I hereby dub 1.47 the "Perfo
 
 All in all there are 21 issues, enhancements, and bug fixes included in the 1.47.0 and 1.47.1 releases. As always, please see the [release notes](/docs/v1/tech/release-notes#version-1-47-1) for a full breakdown of the changes between 1.46.0 and 1.47.1, including any schema changes.
 
-## Performance improvements
+## Performance Improvements
 
 {% include _image.liquid src="/assets/img/blogs/release-1-47/panther.png" alt="Performance panther is looking at you." class="img-fluid" figure=false %}
 
@@ -34,7 +34,7 @@ Other improvements apply to all FusionAuth users. These include:
 
 Happy tuning!
 
-## Preferred languages on the basic registration form
+## Preferred Languages On The Basic Registration Form
 
 FusionAuth has self-service registration. It comes in two flavors: 
 
@@ -55,7 +55,7 @@ Then, the user will now see a dropdown when registering. This page [can be theme
 
 This feature is useful if your application supports multiple languages and you want to [send your welcome email](/docs/v1/tech/email-templates/templates-replacement-variables#setup-password) in the language your user prefers. Previous to 1.47, you had to use advanced registration forms to get this functionality.
 
-## SAMLv2 assertion encryption
+## SAMLv2 Assertion Encryption
 
 As of version 1.47, FusionAuth is compatible with a SAML v2 Service Provider (SP) that requires encrypted assertions. This functionality is only available when FusionAuth is acting as the SAMLv2 Identity Provider (IdP). You can enable and configure the behavior on the "SAML" tab of a given Application.
 
@@ -68,7 +68,7 @@ Reasons why SAML assertion encryption might be useful:
 
 Learn more about [configuring SAML assertion encryption](/docs/v1/tech/core-concepts/applications#assertion-encryption).
 
-## The rest of it
+## The Rest Of It
 
 As mentioned above, there were 21 issues, enhancements, and bug fixes included in these releases. A selection of the included changes not covered above includes:
 
@@ -78,7 +78,7 @@ As mentioned above, there were 21 issues, enhancements, and bug fixes included i
 
 Read more about all the changes in the [release notes](/docs/v1/tech/release-notes#version-1-47-1).
 
-## Upgrade at will
+## Upgrade At Will
 
 The [release notes](/docs/v1/tech/release-notes#version-1-47-1) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified or enhanced.
 
