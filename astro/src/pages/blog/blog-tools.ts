@@ -50,8 +50,8 @@ export const parseContent = (blog) => {
     blurb = blurb + '...';
   }
   blurb = marked.parse(blurb);
-  const categories = blog.data.categories.split(' ');
-  const tags = blog.data.tags.split(' ');
+  const categories = blog.data.categories.split(',').map(cat => cat.trim());
+  const tags = blog.data.tags.split(',').map(tag => tag.trim());
   const authors = blog.data.authors.split(',').map(author => author.trim());
   return {
     ...blog.data,
@@ -101,15 +101,17 @@ export const getStaticIndexPaths = async (paginate, attribute, splitter, paramNa
   const blogs = await getCollection('blog');
   const allTags = getAllEntries(blogs, attribute, splitter)
   return allTags.map((target) => {
+
     const filteredPosts = blogs.filter((post) => post.data[attribute].includes(target));
     // newest first
     filteredPosts.sort(sortByDate);
     const params = {} as any;
     params[paramName] = target.trim().replaceAll(' ', '-').toLowerCase();
+
+    // Put the readable name inot the astro props
     const props = {} as any;
-    if (attribute === 'authors') {
-      props.authorName = target;
-    }
+    props[paramName + "Name"] = target;
+
     return paginate(filteredPosts, {
       params,
       props,
@@ -118,6 +120,6 @@ export const getStaticIndexPaths = async (paginate, attribute, splitter, paramNa
   });
 }
 
-export const getStaticTagPaths = async (paginate) => getStaticIndexPaths(paginate, 'tags', ' ', 'tag');
-export const getStaticCategoryPaths = async (paginate) => getStaticIndexPaths(paginate, 'categories', ' ', 'category');
+export const getStaticTagPaths = async (paginate) => getStaticIndexPaths(paginate, 'tags', ',', 'tag');
+export const getStaticCategoryPaths = async (paginate) => getStaticIndexPaths(paginate, 'categories', ',', 'category');
 export const getStaticAuthorPaths = async (paginate) => getStaticIndexPaths(paginate, 'authors', ',', 'author');
