@@ -63,10 +63,10 @@ Once Docker Desktop is running, open your terminal and type the following comman
 ```
 curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env
-docker-compose up
+docker compose up
 ```
 
-The above commands will copy the docker-compose YAML file, copy the environment file for FusionAuth, then run the authorization server locally. 
+The above commands will copy the docker-compose.yml file, copy the environment file for FusionAuth, then run the authorization server locally. 
 
 Go to the Docker dashboard. You should see two containers running, one with FusionAuth and one for Postgres, the database that FusionAuth will be using to store information. 
 

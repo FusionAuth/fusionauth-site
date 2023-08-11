@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2022, Inversoft Inc., All Rights Reserved
- */
 'use strict';
 
 var codeBlock = 1;
