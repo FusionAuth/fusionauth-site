@@ -166,35 +166,37 @@ For blog posts:
 - Have a period on the end if it is a sentence, otherwise don't.
 
 ## Proper names and other verbiage
-- macOS
-- Elasticsearch
 - .NET Core
-- OAuth and OAuth2
-- Identity Provider
+- Azure AD
+- CAPTCHA
+- client-side
 - Connector
-- Kickstart
-- multi-factor authentication
-- multi-tenancy/multi-tenant
-- two-factor
-- ECMAScript
-- esport
+- curl
 - Docker
 - Docker Compose
-- WebAuthn
-- IdP
-- Azure AD
-- X.509
-- Node.js
-- re-authentication
-- server-side
-- client-side
-- curl
-- self-service
-- webview
-- CAPTCHA
-- Google reCAPTCHA
-- Spring Boot
+- ECMAScript
+- Elasticsearch
+- esport
 - FusionAuth Cloud
+- Google reCAPTCHA
+- Identity Provider
+- IdP
+- Kickstart
+- macOS
+- multi-factor authentication
+- multi-tenancy/multi-tenant
+- Node.js
+- OAuth and OAuth2
+- re-authentication
+- self-service
+- server-side
+- Spring Boot
+- two-factor
+- WebAuthn
+- webview
+- X.509
+
+
 
 ## Words to avoid
 

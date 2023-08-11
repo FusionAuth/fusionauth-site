@@ -776,6 +776,7 @@ declare module 'astro:content' {
 "quickstart-python-django-web.mdx": {
   id: "quickstart-python-django-web.mdx",
   slug: "quickstart-python-django-web",
+
   body: string,
   collection: "quickstarts",
   data: InferEntrySchema<"quickstarts">
@@ -790,6 +791,13 @@ declare module 'astro:content' {
 "quickstart-ruby-rails-web.mdx": {
   id: "quickstart-ruby-rails-web.mdx",
   slug: "quickstart-ruby-rails-web",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
+} & { render(): Render[".mdx"] },
+"quickstart-springboot-api.mdx": {
+  id: "quickstart-springboot-api.mdx",
+  slug: "quickstart-springboot-api",
   body: string,
   collection: "quickstarts",
   data: InferEntrySchema<"quickstarts">
