@@ -73,6 +73,7 @@ const getAllEntries = (blogs, attribute, splitter) => {
   return blogs.flatMap(blog => blog.data[attribute]
       .split(splitter)
       .map(entry => entry.trim()))
+      .filter(entry => entry !== '')
       .reduce(reducer, []);
 };
 
@@ -108,7 +109,7 @@ export const getStaticIndexPaths = async (paginate, attribute, splitter, paramNa
     const params = {} as any;
     params[paramName] = target.trim().replaceAll(' ', '-').toLowerCase();
 
-    // Put the readable name inot the astro props
+    // Put the readable name into the astro props
     const props = {} as any;
     props[paramName + "Name"] = target;
 
