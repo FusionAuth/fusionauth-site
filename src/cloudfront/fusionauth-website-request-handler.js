@@ -140,7 +140,7 @@ var redirectsByPrefix = [
 
 // order matters
 var redirectsByRegex = [
-  //['^/blog/(category|tags|authors)/([^/]*)$', '$&/'],
+  ['^/blog/(category|tag|author)/([^/]*)$', '$&/'],
   ['/blog/\\d\\d\\d\\d/\\d\\d/\\d\\d/', '/blog/']
 ]
 
@@ -246,3 +246,16 @@ function calculateURI(uri) {
 function redir(loc) {
   return {statusCode:301,statusDescription:'Moved',headers:{'location':{value: loc}}}
 }
+
+console.log(handler({
+  request: {
+    uri: '/blog/author/dan-moore',
+    headers: {}
+  }
+}))
+console.log(handler({
+  request: {
+    uri: '/articles/ciam',
+    headers: {}
+  }
+}))
