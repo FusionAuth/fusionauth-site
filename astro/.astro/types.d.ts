@@ -223,6 +223,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
+"ciam/what-is-ciam.md": {
+  id: "ciam/what-is-ciam.md",
+  slug: "ciam/what-is-ciam",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 "gaming-entertainment/benefits-self-hosting-reduce-latency.md": {
   id: "gaming-entertainment/benefits-self-hosting-reduce-latency.md",
   slug: "gaming-entertainment/benefits-self-hosting-reduce-latency",
@@ -293,6 +300,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
+"identity-basics/magic-links.md": {
+  id: "identity-basics/magic-links.md",
+  slug: "identity-basics/magic-links",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 "identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions.md": {
   id: "identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions.md",
   slug: "identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions",
@@ -1009,6 +1023,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"announcing-fusionauth-1-47.mdx": {
+  id: "announcing-fusionauth-1-47.mdx",
+  slug: "announcing-fusionauth-1-47",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "arm-architecture-support.mdx": {
   id: "arm-architecture-support.mdx",
   slug: "arm-architecture-support",
@@ -1163,6 +1184,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"contenda-saved-time-with-fusionauth.mdx": {
+  id: "contenda-saved-time-with-fusionauth.mdx",
+  slug: "contenda-saved-time-with-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "critical-infrastructure-latency-gaming.mdx": {
   id: "critical-infrastructure-latency-gaming.mdx",
   slug: "critical-infrastructure-latency-gaming",
@@ -1198,9 +1226,23 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"deactivating-reactivating-deleting-user-fusionauth-python.mdx": {
+  id: "deactivating-reactivating-deleting-user-fusionauth-python.mdx",
+  slug: "deactivating-reactivating-deleting-user-fusionauth-python",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "dealcloser-saves-developer-time-with-fusionauth.mdx": {
   id: "dealcloser-saves-developer-time-with-fusionauth.mdx",
   slug: "dealcloser-saves-developer-time-with-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"denver-startup-week-wrapup.mdx": {
+  id: "denver-startup-week-wrapup.mdx",
+  slug: "denver-startup-week-wrapup",
   body: string,
   collection: "blog",
   data: any
@@ -1625,9 +1667,30 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"implementing-fusionauth-python.mdx": {
+  id: "implementing-fusionauth-python.mdx",
+  slug: "implementing-fusionauth-python",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "introducing-biometric-authentication.mdx": {
   id: "introducing-biometric-authentication.mdx",
   slug: "introducing-biometric-authentication",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"introducing-fusionauth-reactor-breached-password-detection.mdx": {
+  id: "introducing-fusionauth-reactor-breached-password-detection.mdx",
+  slug: "introducing-fusionauth-reactor-breached-password-detection",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"introducing-unlimited-custom-domains-for-fusionauth-cloud.mdx": {
+  id: "introducing-unlimited-custom-domains-for-fusionauth-cloud.mdx",
+  slug: "introducing-unlimited-custom-domains-for-fusionauth-cloud",
   body: string,
   collection: "blog",
   data: any
@@ -1691,6 +1754,13 @@ declare module 'astro:content' {
 "like-avatar-can-keep.mdx": {
   id: "like-avatar-can-keep.mdx",
   slug: "like-avatar-can-keep",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"llm-for-fusionauth-documentation.mdx": {
+  id: "llm-for-fusionauth-documentation.mdx",
+  slug: "llm-for-fusionauth-documentation",
   body: string,
   collection: "blog",
   data: any
@@ -1817,6 +1887,13 @@ declare module 'astro:content' {
 "onelogin-and-fusionauth.mdx": {
   id: "onelogin-and-fusionauth.mdx",
   slug: "onelogin-and-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"open-office-hours-19-12-17.mdx": {
+  id: "open-office-hours-19-12-17.mdx",
+  slug: "open-office-hours-19-12-17",
   body: string,
   collection: "blog",
   data: any
