@@ -98,13 +98,6 @@ const qsSections: QuickStartSection[] = [
         navColor: 'blue',
       },
       {
-        href: '/blog/2022/07/15/remix-demo',
-        title: 'Remix',
-        icon: '/img/icons/javascript.svg',
-        faIcon: 'fa-j',
-        navColor: 'yellow'
-      },
-      {
         title: 'Angular',
         icon: '/img/icons/angular-spa.svg',
         faIcon: 'fa-j',
