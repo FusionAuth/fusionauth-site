@@ -69,8 +69,14 @@ This guide refers to User Actions simply as Actions. In the first part, you'll l
 Below are the terms you'll encounter when working with Actions.
 
 * **Action** — An Action is a state or event that can be applied to a User. It is reusable for many Users in many Applications. Applying an Action to a specific User is called an Action instance. This is similar to programming, where you have classes (Actions) and objects (Action instances). An Action instance consists of one User applying the Action on another User, the time of the Action, and the name of the Action.
+
+[NOTE]
+====
+Other FusionAuth documentation pages might speak interchangeably about Actions and Action instances. For instance saying "the Action expires", when it is actually the Action instance that expired. They call an Action instance "taking an Action" or "applying an Action". But in this guide there is so much detailed discussion of the two concepts that it always distinguishes them by using the word "instance". Actions and their instances are separate types of objects in FusionAuth, created in separate areas of the admin UI, and in separate APIs.
+====
+
 * **Actionee** — The User an Action is applied to.
-* **Actioner** — The User that applies the Action. Every Action has an Actioner, even if the instance is automatically applied, in which case the Actioner is set to the administrator of the Application.
+* **Actioner** — The User that applies the Action. Every Action has an Actioner, even if the instance is programmatically created, in which case the Actioner should be set to an administrator of the Application.
 * **Reason** — A text description of why an Action is taken. A Reason is not required when you apply an Action, but it's useful for auditing and filtering Actions sent to webhooks.
 * **Webhook** — A webhook is an outbound HTTP request or requests bearing a message to an endpoint. A webhook is used to inform an external system of some event and can be triggered by an Action. An example is FusionAuth calling a customer-support service like Intercom to start the customer onboarding process when the user has verified their email in FusionAuth. Another example would be posting a message to a Slack channel whenever a new customer signs up.
 +
@@ -176,7 +182,7 @@ flowchart LR
 
 Let's take an instantaneous Action example where a user gives feedback on their interaction with customer support by assigning a rating and giving a comment.
 
-Assume you have already created an instantaneous Action named "Feedback" in FusionAuth, with Options of "Bad", "Neutral", and "Good". Your user chooses "Good" in your feedback form and enters the comment "Problem solved quickly". When the form is saved, your code will call the Action API and create an Action instance for the User with the option "Good", and populate the [field]#comment# field. The [field]#actioner# of the instance will be set to the support User who helped the customer.
+Assume you have already created an instantaneous Action named "Feedback" in FusionAuth, with Options of "Bad", "Neutral", and "Good". Your user chooses "Good" in your feedback form and enters the comment "Problem solved quickly". When the form is saved, your code will call the Action API and create an Action instance for the User with the option "Good", and populate the [field]#comment# field. The [field]#actionee# of the instance will be set to the support User who helped the customer.
 
 At any point in the future, you can use the link:/docs/v1/tech/apis/actioning-users#retrieve-a-previously-taken-action[Actions API] to retrieve this saved Action instance and create a report of the customer support agent's performance or the approval ratings of your app. You can also use a webhook to immediately send this data to an external system when the Action is created.
 
@@ -572,7 +578,7 @@ Create an email template that thanks the user for completing the survey.
 
 ==== Create Survey Action With Options With Localizations
 
-In this last Action, you will add Options that represent the responses a user may have in the survey, with a translation (localization) for each Option so that subscribers who don't speak English can respond in their own language.
+In this last Action, you will add Options that represent the responses a user may have in the survey. You will also add a translation (localization) for each Option so that agents who don't speak English can see feedback in their own language.
 
 * Navigate to [breadcrumb]#Settings -> User Actions# and add icon:plus[role=ui-button green,type=fas] a new User Action.
 ** [field]#Id#: `8e6d80df-74bb-4cb8-9caa-c9a2dafc6e57`
@@ -836,7 +842,7 @@ image::guides/user-actions/locked-account.png[Locked Account After Prevent Login
 
 === Apply Survey Action
 
-Assume the user has now filled in a survey and sent his response to PiedPiper. You'll emulate the app applying the survey Action to the User with the chosen Option and given comment. There is no need to set an expiry value in this command because the Action is instantaneous, not temporal. You need to change the User Ids to match the ones you recorded earlier.
+Assume the user has now filled in a survey and sent his response to PiedPiper. You'll emulate the app applying the survey Action to the User with the chosen Option and given comment. There is no need to set an expiry value in this command because the Action is instantaneous, not temporal. You need to change the User Ids to match the ones you recorded earlier. The customer is the Actioner and the customer support agent is the Actionee.
 
 [source,bash]
 ----
@@ -846,10 +852,10 @@ curl -i --location --request POST 'http://localhost:9011/api/user/action' \
   --data-raw '{
     "broadcast": true,
     "action": {
-      "actioneeUserId": "9af67e9a-8332-4c06-971c-463b6710c340",
-      "actionerUserId": "ac2f073d-c063-4a7b-ab76-812f44ed7f55",
+      "actioneeUserId": "ac2f073d-c063-4a7b-ab76-812f44ed7f55",
+      "actionerUserId": "9af67e9a-8332-4c06-971c-463b6710c340",
       "applicationIds": ["e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"],
-      "comment": "Could not find my horoscope in the newspaper :( ",
+      "comment": "Could not find my horoscope in the newspaper :( Agent did not help me.",
       "emailUser": false,
       "userActionId": "8e6d80df-74bb-4cb8-9caa-c9a2dafc6e57",
       "option": "Bad"
@@ -857,7 +863,7 @@ curl -i --location --request POST 'http://localhost:9011/api/user/action' \
   }'
 ----
 
-Note that the [field]#option# field is a string, not a UUID. Because of this, if you ever change the wording of your options in FusionAuth, you need to change them in every piece of code that uses them.
+Note that the [field]#option# field is a string, `Bad`, not a UUID. Because of this, if you ever change the wording of your Options in FusionAuth, you need to change them in every piece of code that uses them. So when creating your Options, instead of using a descriptive word for the [field]#Name#, like `Bad`, you could give it a code or UUID, like `Bad-269edb4a-aef0-461a-917d-a7f76a254841`, which discourages people from changing it in future. Then create a localization for English too, `Bad`. Now even if you want to change the localizaion `Bad` to `Negative` in the future, you can keep using the same [field]#Name# in all your code that calls the API. Here we include the word in addition to the UUID so that when you are browsing the Options in the admin UI, you can still see what the Options represent, without going in to the localization detail screens.
 
 === Check Slack Is Called
 
@@ -869,8 +875,8 @@ In the PiedPiper terminal, you'll see JSON being sent to the mock Slack.
   event: {
     action: 'Survey',
     actionId: 'ef9e753f-ecc0-468b-8160-dcb25dbb4d91',
-    actioneeUserId: '9af67e9a-8332-4c06-971c-463b6710c340',
-    actionerUserId: 'ac2f073d-c063-4a7b-ab76-812f44ed7f55',
+    actioneeUserId: 'ac2f073d-c063-4a7b-ab76-812f44ed7f55',
+    actionerUserId: '9af67e9a-8332-4c06-971c-463b6710c340',
     applicationIds: [ 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e' ],
     comment: 'Could not find my horoscope in the newspaper :(',
     createInstant: 1690291936476,
@@ -887,7 +893,7 @@ In the PiedPiper terminal, you'll see JSON being sent to the mock Slack.
 }
 ----
 
-The user's comment has been recorded as the survey response. The option that they chose is also shown as [field]#localizedOption#: `'Malbona'`. Note that the translation is shown for the preferred language of the Actionee, not the Actioner.
+The user's comment has been recorded as the survey response. The option that they chose is also shown as [field]#localizedOption#: `'Malbona'`. Note that translations are always shown in the preferred language of the Actionee, not the Actioner. In this example the Actioner is the customer, and the localized option is shown in the language of the administrator (customer service agent).
 
 === Retrieve All Survey Action Instances for This User
 
