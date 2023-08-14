@@ -20,7 +20,9 @@ export const getDateString = (date) => months[date.getUTCMonth()] + " " + date.g
 
 export const getLatestDateString = (post) => getDateString(post.updated_date ? post.updated_date : post.publish_date);
 
-export const getAuthorHref = (author) => !!author ? '/blog/author/' + author.replaceAll(' ', '-').toLowerCase() + '/' : '';
+export const getHref = (name, section) => !!name && !!section
+    ? '/blog/' + section + '/' + name.replaceAll(' ', '-').toLowerCase() + '/'
+    : '';
 
 export const parseContent = (blog) => {
   const blurbLines = [];
@@ -63,7 +65,7 @@ export const parseContent = (blog) => {
   };
 };
 
-const getAllEntries = (blogs, attribute, splitter) => {
+const getAllEntries = (blogs, attribute) => {
   const reducer = (entries, entry) => {
     if (!entries.includes(entry)) {
       entries.push(entry);
@@ -71,9 +73,9 @@ const getAllEntries = (blogs, attribute, splitter) => {
     return entries;
   }
   return blogs.flatMap(blog => blog.data[attribute]
-      .split(splitter)
+      .split(',')
       .map(entry => entry.trim()))
-      .filter(entry => entry !== '')
+      .filter(entry => !!entry)
       .reduce(reducer, []);
 };
 
@@ -98,9 +100,9 @@ export const getLatestStaticPaths = async(paginate) => {
   });
 }
 
-export const getStaticIndexPaths = async (paginate, attribute, splitter, paramName) => {
+export const getStaticIndexPaths = async (paginate, attribute, paramName) => {
   const blogs = await getCollection('blog');
-  const allTags = getAllEntries(blogs, attribute, splitter)
+  const allTags = getAllEntries(blogs, attribute)
   return allTags.map((target) => {
 
     const filteredPosts = blogs.filter((post) => post.data[attribute].includes(target));
@@ -121,6 +123,6 @@ export const getStaticIndexPaths = async (paginate, attribute, splitter, paramNa
   });
 }
 
-export const getStaticTagPaths = async (paginate) => getStaticIndexPaths(paginate, 'tags', ',', 'tag');
-export const getStaticCategoryPaths = async (paginate) => getStaticIndexPaths(paginate, 'categories', ',', 'category');
-export const getStaticAuthorPaths = async (paginate) => getStaticIndexPaths(paginate, 'authors', ',', 'author');
+export const getStaticTagPaths = async (paginate) => getStaticIndexPaths(paginate, 'tags', 'tag');
+export const getStaticCategoryPaths = async (paginate) => getStaticIndexPaths(paginate, 'categories', 'category');
+export const getStaticAuthorPaths = async (paginate) => getStaticIndexPaths(paginate, 'authors', 'author');
