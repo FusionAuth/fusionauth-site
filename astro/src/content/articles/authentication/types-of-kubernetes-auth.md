@@ -3,6 +3,7 @@ title: Types Of Kubernetes Auth
 description: What are the three levels of Kubernetes authentication?
 author: Dan Moore
 section: Authentication
+tags: kubernetes k8s infrastructure service-to-service machine-to-machine requests on-behalf-of
 icon: /img/icons/types-kubernetes-auth.svg
 ---
 
