@@ -7,10 +7,11 @@ import Footer from '../components/Footer.astro';
 import TwitterLink from '../components/blog/TwitterLink.astro';
 import LinkedInLink from '../components/blog/LinkedInLink.astro';
 import SubscribeFooter from '../components/SubscribeFooterCTA.astro';
-import { getHref, getDateString, parseContent } from "../pages/blog/blog-tools";
+import { getHref, getDateString, mapRelated } from "../pages/blog/blog-tools";
 import { getCollection } from 'astro:content';
 
 let { frontmatter, title } = Astro.props;
+let { slug } = Astro.params;
 
 title = frontmatter.title ? frontmatter.title : title;
 const description = frontmatter.description ? frontmatter.description : '';
@@ -23,13 +24,10 @@ const tags = frontmatter.tags ? frontmatter.tags.split(',').map(tag => tag.trim(
 const featuredTag = frontmatter.featured_tag ? frontmatter.featured_tag : tags ? tags[0] : 'passwords';
 const featuredCategory = frontmatter.featured_category ? frontmatter.featured_category : categories ? categories[0] : 'tutorials';
 
-const mapToCategory = (collection, category) => collection.filter(blog => blog.data && blog.data.categories && blog.data.categories.includes(category));
-const mapToTag = (collection, tag) => collection.filter(blog => blog.data && blog.data.tags && blog.data.tags.split(',').includes(tag));
-
 const collection = await getCollection('blog');
 
-const relatedPosts = collection ? mapToCategory(collection, featuredCategory).slice(0, 3).map(parseContent) : [];
-const relatedTags = collection ? mapToTag(collection, featuredTag).slice(0, 3).map(parseContent): [];
+const relatedPosts = mapRelated(collection, 'categories', featuredCategory, slug);
+const relatedTags = mapRelated(collection, 'tags', featuredTag, slug);
 
 const markdownStyles = [
   "prose max-w-max prose:font-inter md:basis-full max-w-2xl xl:pr-7 2xl:pr-5",
@@ -156,9 +154,9 @@ const markdownStyles = [
         </div>
         <div id="blog-sidebar" class="block sm:block md:block lg:mr-16 lg:w-96 xl:mr-36 2xl:mr-16">
           <BlogNewsletterCTA/>
-          <div>
+          { relatedTags && relatedTags.length > 0 &&
             <h2 class="font-bold mb-3 text-slate-800 text-xl md:font-inter md:font-bold md:leading-tight md:text-xl">More on { featuredTag }</h2>
-          </div>
+          }
           { relatedTags && relatedTags.map((relatedTag, idx) =>
             <article class="border-slate-200 border-t-2 flex flex-col py-6" >
               <!--Only image on the first one -->

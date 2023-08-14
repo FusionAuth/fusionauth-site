@@ -24,6 +24,15 @@ export const getHref = (name, section) => !!name && !!section
     ? '/blog/' + section + '/' + name.replaceAll(' ', '-').toLowerCase() + '/'
     : '';
 
+export const mapRelated = (collection, metaSection, target, currentSlug) => collection ? collection
+    .filter(blog => blog.data
+        && blog.data[metaSection]
+        && blog.data[metaSection].split(',').includes(target)
+        && blog.slug !== currentSlug)
+    .sort(sortByDate)
+    .slice(0, 3)
+    .map(parseContent) : [];
+
 export const parseContent = (blog) => {
   const blurbLines = [];
   const separator = blog.data.excerpt_separator;
