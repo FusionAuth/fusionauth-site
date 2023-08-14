@@ -117,3 +117,20 @@ This approach has some limitations:
 * You may end up with a large number of stub accounts, depending on when you create them. You can run this search query to find stub accounts that have not been updated for 30 days. You may want to delete these accounts.
 * You may want to set a cookie with the expiration time of the JWT in a javascript accessible cookie so that warning the user when their anonymous account expires is easy.
 
+
+////
+requirements for app:
+
+have these pages
+- home
+- about
+- pick character
+- game page
+- add code page
+- convert page
+
+when you go to pick character page, create stub user, send jwt with id down (http only secure cookie)
+
+when you have created a stub user, show link to convert page
+when user converts, start forgot password flow after updating API
+////
