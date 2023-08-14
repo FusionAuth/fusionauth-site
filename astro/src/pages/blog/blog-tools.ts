@@ -109,6 +109,10 @@ export const getLatestStaticPaths = async(paginate) => {
   });
 }
 
+export const startCase = (inputString) => inputString
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
 export const getStaticIndexPaths = async (paginate, attribute, paramName) => {
   const blogs = await getCollection('blog');
   const allTags = getAllEntries(blogs, attribute)
