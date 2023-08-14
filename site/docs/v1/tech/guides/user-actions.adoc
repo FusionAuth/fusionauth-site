@@ -124,7 +124,7 @@ You'll see some detailed examples of this process later in this guide.
 
 [NOTE]
 ====
-The primary purpose of FusionAuth is to simplify authentication (verifying a user's identity) and authorization (giving your app a user's role). 
+The primary purpose of FusionAuth is to simplify authentication (verifying a user's identity) and authorization (giving your app a user's role).
 
 Actions are an additional feature that you might want to use in your app. Think of them as a premade way for you to store extra user-related data in FusionAuth instead of your own database, at a specified time, and notify people or systems if these fields change.
 
@@ -244,7 +244,7 @@ These are the parameters used when applying an Action to a User, possibly with a
 
 Let's take a look at a practical example to demonstrate creating Actions to manage subscriptions and a survey for a paid news site called "PiedPiper".
 
-The subscription Action will email the user and trigger a webhook to Intercom. When the Action instance expires, FusionAuth will send the user a goodbye email and trigger a webhook to PiedPiper to create a [field]#Prevent Login# Action. 
+The subscription Action will email the user and trigger a webhook to Intercom. When the Action instance expires, FusionAuth will send the user a goodbye email and trigger a webhook to PiedPiper to create a [field]#Prevent Login# Action.
 
 The survey Action will trigger a webhook to Slack.
 
@@ -608,22 +608,24 @@ Your JavaScript code will act as PiedPiper, Intercom, and Slack, all in one. You
 * Create a new environment variable in the `.env` file called `API_KEY` and set the value to the value of the API key you created earlier `FTQkSoanK7ObbNjOoU69WDVclfTx8L_zfEJbdR8M0xu-jKotV0iQZiQh`.
 * Note in the `package.json` file that the `@fusionauth/typescript-client` library is available for use. This is what will be calling the FusionAuth API to create Action instances.
 
-
-
-=== Create Mock Intercom API
-
-In the `fusionauth-example-5-minute-guide` Node.js app, open `app.js`. Replace the code in `app.js` with the code below.
+In the `fusionauth-example-5-minute-guide` Node.js app, open `app.js`. Replace the code in `app.js` with the code below. This code is explained in the next three sections.
 
 [source,js]
 ----
 {% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-user-actions-guide/main/app.js %}
 ----
 
-The code adds a new route that pretends to be Intercom and listens for new subscribers to start the onboarding process. In this tutorial, the API just prints the webhook to the console so that you can see what it looks like.
+=== Create Mock Intercom API
+The first function adds a new route that pretends to be Intercom and listens for new subscribers to start the onboarding process. In this tutorial, the API just prints the webhook to the console so that you can see what it looks like.
 
 [source,js]
 ----
-app.post('/intercom', function(req, res)
+app.post('/intercom', function(req, res) {
+  console.log('Incoming Request to Intercom:');
+  console.log(req.body);
+  console.log('');
+  res.sendStatus(200);
+});
 ----
 
 === Create Mock Slack API
@@ -632,7 +634,12 @@ A similar API to mock Slack has also been added.
 
 [source,js]
 ----
-app.post('/slack', function(req, res)
+app.post('/slack', function(req, res) {
+  console.log('Incoming Request to Slack:');
+  console.log(req.body);
+  console.log('');
+  res.sendStatus(200);
+});
 ----
 
 Administrators monitoring PiedPiper on Slack can immediately contact the user to help them if their survey response was `Bad`.
@@ -643,7 +650,38 @@ The code also adds an `expire` route which is called by FusionAuth when the user
 
 [source,js]
 ----
-app.post('/expire', async function(req, res)
+app.post('/expire', async function(req, res) {
+  console.log('Incoming Request to PiedPiper Expiry:');
+  console.log(req.body);
+  console.log('');
+  if (req.body.event.action === 'Subscribe' && req.body.event.phase === 'end') {
+    try {
+      const request = {
+        action: {
+          actioneeUserId: req.body.event.actioneeUserId,
+          actionerUserId: req.body.event.actionerUserId,
+          applicationIds: ['e9fdb985-9173-4e01-9d73-ac2d60d1dc8e'],
+          emailUser: false,
+          expiry: 8223372036854775806, // the end of time
+          notifyUser: false,
+          reasonId: '28b0dd40-3a65-48ae-8eb3-4d63d253180a', // subscription expired reason
+          userActionId: 'b96a0548-e87c-42dd-887c-31294ca10c8b' //ban action
+        },
+        broadcast: false
+      };
+      const fusion = new client.FusionAuthClient(apikey, fusionAuthURL);
+      const clientResponse = await fusion.actionUser(request);
+      if (!clientResponse.wasSuccessful)
+        throw Error(clientResponse);
+      console.info('User banned successfully');
+    }
+    catch (e) {
+      console.error('Error handling expiry: ');
+      console.dir(e, { depth: null });
+    }
+  }
+  res.sendStatus(200);
+});
 ----
 
 == Testing
