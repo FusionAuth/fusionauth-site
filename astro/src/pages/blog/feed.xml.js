@@ -2,8 +2,6 @@ import { getCollection } from 'astro:content';
 import rss from '@astrojs/rss';
 
 function convertToRSS(post) {
-  // console.log("Abc");
-  // console.log(post.data.publish_date);
   return {
     title: post.data.title || 'uh-oh, no title',
     pubDate: post.data.updated_date || post.data.publish_date || '2024-08-11',
