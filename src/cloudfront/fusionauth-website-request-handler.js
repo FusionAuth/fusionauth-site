@@ -246,16 +246,3 @@ function calculateURI(uri) {
 function redir(loc) {
   return {statusCode:301,statusDescription:'Moved',headers:{'location':{value: loc}}}
 }
-
-console.log(handler({
-  request: {
-    uri: '/blog/author/dan-moore',
-    headers: {}
-  }
-}))
-console.log(handler({
-  request: {
-    uri: '/articles/ciam',
-    headers: {}
-  }
-}))
