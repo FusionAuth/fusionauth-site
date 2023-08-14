@@ -140,7 +140,7 @@ var redirectsByPrefix = [
 
 // order matters
 var redirectsByRegex = [
-  ['^/blog/(category|tags|authors)/([^/]*)$', '$&/'],
+  //['^/blog/(category|tags|authors)/([^/]*)$', '$&/'],
   ['/blog/\\d\\d\\d\\d/\\d\\d/\\d\\d/', '/blog/']
 ]
 
