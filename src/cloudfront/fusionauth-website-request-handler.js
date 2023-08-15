@@ -138,6 +138,12 @@ var redirectsByPrefix = [
   ['/learn/expert-advice', '/articles']
 ]
 
+// order matters
+var redirectsByRegex = [
+  ['^/blog/(category|tag|author)/([^/]*)$', '$&/'],
+  ['/blog/\\d\\d\\d\\d/\\d\\d/\\d\\d/', '/blog/']
+]
+
 var s3Paths = ['/direct-download', '/license'];
 var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/', '/how-to/', '/articles/', '/dev-tools/', '/quickstarts/'];
 
@@ -150,15 +156,15 @@ function handler(event) {
   }
 
   // fusionauth:rocks
-  if (hdrs.host && hdrs.host.value !== 'fusionauth.io' && (!hdrs.authorization || hdrs.authorization.value !== 'Basic ZnVzaW9uYXV0aDpyb2Nrcw==')) {
-    return {
-      statusCode: 401,
-      statusDescription: 'Unauthorized',
-      headers: {
-        'www-authenticate': { value: 'Basic' }
-      }
-    };
-  }
+  //if (hdrs.host && hdrs.host.value !== 'fusionauth.io' && (!hdrs.authorization || hdrs.authorization.value !== 'Basic ZnVzaW9uYXV0aDpyb2Nrcw==')) {
+    //return {
+      //statusCode: 401,
+      //statusDescription: 'Unauthorized',
+      //headers: {
+        //'www-authenticate': { value: 'Basic' }
+      //}
+    //};
+  //}
 
   var uri = req.uri;
   if (uri.endsWith('.html')) {
@@ -183,7 +189,7 @@ function handler(event) {
 }
 
 function removeSlash(uri) {
-  return ip[uri] !== true && !uri.startsWith('/blog/page') && !uri.startsWith('/blog/archive') &&
+  return ip[uri] !== true && !uri.startsWith('/blog') &&
     redirectsByPrefix.find(e => uri.startsWith(e[0])) === undefined;
 }
 
@@ -196,6 +202,16 @@ function calculateRedirect(uri) {
     if (prefix_replacement !== undefined) {
       result = uri.replace(prefix_replacement[0], prefix_replacement[1]);
     }
+  }
+
+  if (result === null) {
+    redirectsByRegex.forEach(function (regexValueArray) {
+      var regex = new RegExp(regexValueArray[0], "g");
+      var value = regexValueArray[1];
+      if (regex.test(uri)) {
+        result = uri.replace(regex, value);
+      }
+    });
   }
 
   return result;
