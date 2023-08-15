@@ -45,7 +45,7 @@ Let's start by making a simple lambda to test that it works on your machine.
 - <p>Leave the <span class="field">Id</span> blank.</p>
 - <p>Enter the <span class="field">Name</span> "[ATest]" (to put it at the top of the list of lambdas alphabetically).</p>
 - <p>Select the <span class="field">Type</span> "JWT Populate".</p>
-- <p>Leave the <span class="field">Engine</span> on "GraalJS".</p>
+- <p>Leave the <span class="field">Engine</span> as "GraalJS".</p>
 - <p>Enable <span class="uielement">Debug Enabled</span> so that you can see messages in the event log.</p>
 - Add the following line: `jwt.message = 'Hello World!';` to the body of the `populate` function.
 
@@ -130,9 +130,9 @@ First, install the Node CLI library. Open a terminal in your app folder and use 
 npm install --save-dev @fusionauth/cli;
 npx fusionauth --help
 ```
-You should see the FusionAuth logo.
+You should see the FusionAuth logo and a usage help message.
 
-The lambda commands that the CLI provides match the names in the underlying TypeScript client library: `create`, `delete`, and `retrieve`.
+The lambda commands that the CLI provides match operations in the underlying TypeScript client library: `create`, `delete`, and `retrieve`.
 
 Now you can retrieve the "[ATest]" lambda you created earlier. This is a useful way to check that a lambda you've created has been successfully uploaded for your app. Replace the Id in the command below with the one you noted earlier for your lambda.
 
@@ -140,7 +140,7 @@ Now you can retrieve the "[ATest]" lambda you created earlier. This is a useful 
 npx fusionauth lambda:retrieve 1760a1c3-742a-4b74-b3e6-6ef1676ad77c --key lambda_testing_key
 ```
 
-The lambda will be saved to the file `./lambdas/1760a1c3-742a-4b74-b3e6-6ef1676ad77c.json`.
+The lambda will be saved to a file, but your file will be named according to the UUID of your lambda. So it might look something like this: `./lambdas/1760a1c3-742a-4b74-b3e6-6ef1676ad77c.json`.
 
 Let's update the lambda to say "Goodbye World!" instead of "Hello World!" and re-upload it. Open the file in a text editor, change the value of the <span class="field">body</span> property to the following.
 
@@ -159,7 +159,7 @@ You can check that the lambda in FusionAuth now says "Goodbye World" by viewing 
 
 ### API limitations
 
-The FusionAuth API allows you only to retrieve and update lambdas. You can delete a lambda that is not in use by an application with `lambda:delete`, but there is no way to link or unlink a lambda with an application without using the website.
+The FusionAuth API allows you only to retrieve and update lambdas. You can delete a lambda that is not in use by an application with `lambda:delete`, but there is no way to link or unlink a lambda with an application without using another configuration management mechanism such as the admin ui, Terraform or a client library.
 
 ## Testing Overview
 
@@ -373,7 +373,8 @@ node test.js  | npx faucet
 
 If all your unit tests for a lambda pass, you can safely upload it to FusionAuth manually or with the CLI for further testing.
 
-If your HTTP Connect fetch request fails when deployed to FusionAuth please review the [documentation](/docs/v1/tech/lambdas/#using-lambda-http-connect).
+If your HTTP Connect fetch request fails when deployed to FusionAuth please review the [documentation](/docs/v1/tech/lambdas/#using-lambda-http-connect). In particular, ensure you are using a license and that you have purchased the correct plan (Essentials or Enterprise).
+.
 
 ## Addendum - test.js
 
