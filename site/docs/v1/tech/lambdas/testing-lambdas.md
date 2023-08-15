@@ -11,7 +11,6 @@ This guide shows you how to create a simple lambda manually, update it programma
 
 - [Overview](#overview)
 - [Prerequisites](#prerequisites)
-  - [Lambda Limitations](#lambda-limitations)
 - [Manually Creating a Simple Lambda](#manually-creating-a-simple-lambda)
 - [Programmatically Updating a Lambda](#programmatically-updating-a-lambda)
   - [Understanding the Client Libraries](#understanding-the-client-libraries)
@@ -28,14 +27,9 @@ This guide shows you how to create a simple lambda manually, update it programma
 
 ## Prerequisites
 
-To follow this guide, you will need a test instance of FusionAuth. For FusionAuth installation instructions, please visit [the 5-minute setup guide](/docs/v1/tech/5-minute-setup-guide).
+To follow this guide, you need to install [Node.js version 18](https://nodejs.org/en/download) or later.
 
-This guide assumes FusionAuth can be accessed at `http://localhost:9011/admin` with your [FusionAuth example test app](/docs/v1/tech/getting-started/5-minute-docker#5-configure-the-backend-to-complete-the-login) at `http://localhost:3000`.
-
-### Lambda Limitations
-
-{% include _callout-note.liquid content="<p>Remember the following limitations of lambdas when planning what they'll do:<ul><li>Lambdas do not have full access to JavaScript libraries, nor can they load them currently.</li> <li>The console methods take only one argument.</li><li>HTTP requests are not available in the Community or Starter FusionAuth plans.</li><li>If you set the Identity Provider <a href='/docs/v1/tech/identity-providers/#linking-strategies'>linking strategy</a> to 'Link Anonymously', no lambdas will be used for external authentication.</li> </ul></p>"%}
-
+{% include docs/_lambda_limitations.adoc %}
 
 ## Manually Creating a Simple Lambda
 
@@ -45,7 +39,7 @@ Let's start by making a simple lambda to test that it works on your machine.
 - Log in to [FusionAuth admin](`http://localhost:9011/admin).
 - <p>Navigate to <span class="breadcrumb">Customizations -> Lambdas</span>.</p>
 - Click the <i/>{:.ui-button .green .fa .fa-plus} button at the top right to add a new lambda.
-- <p>Leave the <span class="field">Id</span> blank.</p>
+- <p>Enter the <span class="field">Id</span> "f3b3b547-7754-452d-8729-21b50d111505"</p>
 - <p>Enter the <span class="field">Name</span> "[ATest]" (to put it at the top of the list of lambdas alphabetically).</p>
 - <p>Select the <span class="field">Type</span> "JWT Populate".</p>
 - <p>Leave the <span class="field">Engine</span> as "GraalJS".</p>
@@ -63,7 +57,7 @@ function populate(jwt, user, registration) {
 
 {% include docs/_image.liquid src="/assets/img/docs/customization/lambdas/testing-lambdas/populate-lambda.png" alt="Creating a JWT populate lambda" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
-Save the lambda and note the lambda <span>Id</span>{:.field}. You'll use it later when testing.
+Save the lambda.
 
 Now activate the lambda for the test app.
 
@@ -95,7 +89,7 @@ Log in to the app at `http://localhost:3000/`. In the FusionAuth admin interface
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJhdXRob3JpemF0aW9uX2NvZGUiXSwia2lkIjoiMWU1NmM0OWU4In0.eyJhdWQiOiJkZGQwNTAyMS0wNjgyLTQ4NWUtYThlMi1kMDMyOTY0YjAyMTEiLCJleHAiOjE2ODkyNjQwNzEsImlhdCI6MTY4OTI2MDQ3MSwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIwYTkzOTYwNi0zNmVjLTQ1M2ItOTM0Mi04ZWZmOTE3ZjJhZWYiLCJqdGkiOiIyYmZlMjUwNy1hZWM0LTRjOTEtYWY5Yy1hOWVhYjQzNmQ4MGYiLCJhdXRoZW50aWNhdGlvblR5cGUiOiJQQVNTV09SRCIsImVtYWlsIjoiZXJsaWNoQGV4YW1wbGUuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImFwcGxpY2F0aW9uSWQiOiJkZGQwNTAyMS0wNjgyLTQ4NWUtYThlMi1kMDMyOTY0YjAyMTEiLCJzY29wZSI6Im9mZmxpbmVfYWNjZXNzIiwicm9sZXMiOltdLCJzaWQiOiIzNDk5MTAxMS1kNzUxLTRlOTctYWZiNi0zNzQ2N2RlYTc5YWIiLCJhdXRoX3RpbWUiOjE2ODkyNjA0NzEsInRpZCI6ImNiY2VkOWVhLWQ3NzgtZDBlYi03ZjU4LWE0MGYxY2VlNWFhYiIsIm1lc3NhZ2UiOiJIZWxsbyBXb3JsZCEifQ.3DOvP8LRAp6pIh0guUjJjYbNwZKzruVWre8Xq8x_S8k
 ```
 
-Copy this token from your terminal and paste it into the <span>Encoded</span>{:.field} text box at [jwt.io](https://jwt.io). You'll see `"message": "Hello World!"` in the <span>Payload</span>{:.uielement} box at the bottom right, showing you that your new lambda ran correctly.
+Copy this token from your terminal and paste it into the <span>Token</span>{:.field} text box at the [FusionAuth Online JWT Decoder](https://fusionauth.io/dev-tools/jwt-decoder). You'll see `"message": "Hello World!"` in the <span>Payload</span>{:.uielement} box, showing you that your new lambda ran correctly.
 
 ## Programmatically Updating a Lambda
 
@@ -105,11 +99,10 @@ Let's take a look at how to update your lambda programmatically using the Fusion
 
 Although you can use the [lambda API](/docs/v1/tech/apis/lambdas) directly by making HTTP requests, it's much easier to use one of the provided [client libraries](/docs/v1/tech/client-libraries/).
 
-There are three libraries:
+There are two libraries for Javascript:
 
-- The [Node library](https://github.com/FusionAuth/fusionauth-node-client), documented [here](/docs/v1/tech/client-libraries/node), is deprecated and can be ignored.
-- The [TypeScript client library](https://github.com/FusionAuth/fusionauth-typescript-client), documented [here](/docs/v1/tech/client-libraries/typescript), supersedes the old Node library and should be used for any browser or Node code you write in JavaScript or TypeScript. It provides a straightforward way of calling the underlying HTTP API.
-- The [Node CLI](https://github.com/FusionAuth/fusionauth-node-cli) is a set of commands you can run in the terminal to perform a few advanced functions, such as uploading a new theme or lambda to your FusionAuth application. The Node CLI is a wrapper on the TypeScript client library. This is a small library you'll use only in a few cases.
+- The [TypeScript client library](https://github.com/FusionAuth/fusionauth-typescript-client), documented [here](/docs/v1/tech/client-libraries/typescript), should be used for any browser or Node code you write in JavaScript or TypeScript. It provides a straightforward way of calling the underlying HTTP API.
+- The [Node CLI](https://github.com/FusionAuth/fusionauth-node-cli) is a set of commands you can run in the terminal to perform a few advanced functions, such as uploading a new theme or lambda to your FusionAuth application. The Node CLI is a wrapper on the TypeScript client library and operates at a higher level of abstraction. It is helpful to manage lambdas, but you can always drop down to the Typescript client library if needed.
 
 ### Creating an API Key
 
@@ -137,13 +130,13 @@ You should see the FusionAuth logo and a usage help message.
 
 The lambda commands that the CLI provides match operations in the underlying TypeScript client library: `create`, `delete`, and `retrieve`.
 
-Now you can retrieve the "[ATest]" lambda you created earlier. This is a useful way to check that a lambda you've created has been successfully uploaded for your app. Replace the Id in the command below with the one you noted earlier for your lambda.
+Now you can retrieve the "[ATest]" lambda you created earlier. This is a useful way to check that a lambda you've created has been successfully uploaded for your app.
 
 ```bash
-npx fusionauth lambda:retrieve 1760a1c3-742a-4b74-b3e6-6ef1676ad77c --key lambda_testing_key
+npx fusionauth lambda:retrieve f3b3b547-7754-452d-8729-21b50d111505 --key lambda_testing_key
 ```
 
-The lambda will be saved to a file, but your file will be named according to the UUID of your lambda. So it might look something like this: `./lambdas/1760a1c3-742a-4b74-b3e6-6ef1676ad77c.json`.
+The lambda will be saved to a file, but your file will be named according to the UUID of your lambda. So it might look something like this: `./lambdas/f3b3b547-7754-452d-8729-21b50d111505.json`.
 
 Let's update the lambda to say "Goodbye World!" instead of "Hello World!" and re-upload it. Open the file in a text editor, change the value of the <span class="field">body</span> property to the following.
 
@@ -258,7 +251,7 @@ The code above has three sections:
 - Creation of the User request object with `const request`. Details on this can be found in the [TypeScript client library interface](https://github.com/FusionAuth/fusionauth-typescript-client/blob/master/src/FusionAuthClient.ts).
 - Making the request with the client library and checking the response with `await fusion.register(userId, request);`.
 
-Change the <span>applicationId</span>{:.filed} value at the top to match the application Id of your Application in FusionAuth and run the code with the following command.
+Change the <span>applicationId</span>{:.filed} value at the top to match the application Id of your Application in FusionAuth, "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e", and run the code with the following command.
 
 ```bash
 node test.js
