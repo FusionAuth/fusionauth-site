@@ -156,15 +156,15 @@ function handler(event) {
   }
 
   // fusionauth:rocks
-  //if (hdrs.host && hdrs.host.value !== 'fusionauth.io' && (!hdrs.authorization || hdrs.authorization.value !== 'Basic ZnVzaW9uYXV0aDpyb2Nrcw==')) {
-  //  return {
-  //    statusCode: 401,
-  //    statusDescription: 'Unauthorized',
-  //    headers: {
-  //      'www-authenticate': { value: 'Basic' }
-  //    }
-  //  };
-  //}
+  if (hdrs.host && hdrs.host.value !== 'fusionauth.io' && (!hdrs.authorization || hdrs.authorization.value !== 'Basic ZnVzaW9uYXV0aDpyb2Nrcw==')) {
+    return {
+      statusCode: 401,
+      statusDescription: 'Unauthorized',
+      headers: {
+        'www-authenticate': { value: 'Basic' }
+      }
+    };
+  }
 
   var uri = req.uri;
   if (uri.endsWith('.html')) {
