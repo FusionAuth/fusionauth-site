@@ -1,6 +1,6 @@
 ---
-layout: doc 
-title: Testing lambdas with FusionAuth 
+layout: doc
+title: Testing lambdas with FusionAuth
 description: Testing lambdas with FusionAuth
 navcategory: customization
 ---
@@ -9,23 +9,26 @@ navcategory: customization
 
 This guide shows you how to create a simple lambda manually, update it programmatically, and test it with unit and integration tests. You can familiarize yourself with lambdas by reading the [FusionAuth lambda documentation](/docs/v1/tech/lambdas).
 
-- [Prerequisites](#prerequisites) 
+- [Overview](#overview)
+- [Prerequisites](#prerequisites)
   - [Lambda Limitations](#lambda-limitations)
-- [Manually Creating a Simple Lambda](#manually-creating-a-simple-lambda) 
-- [Programmatically Updating a Lambda](#programmatically-updating-a-lambda) 
-  - [Understanding the Client Libraries](#understanding-the-client-libraries) 
-  - [Creating an API Key](#creating-an-api-key) 
-  - [Using the Lambda CLI](#using-the-lambda-cli) 
-  - [API limitations](#api-limitations) 
+- [Manually Creating a Simple Lambda](#manually-creating-a-simple-lambda)
+- [Programmatically Updating a Lambda](#programmatically-updating-a-lambda)
+  - [Understanding the Client Libraries](#understanding-the-client-libraries)
+  - [Creating an API Key](#creating-an-api-key)
+  - [Using the Lambda CLI](#using-the-lambda-cli)
+  - [API Limitations](#api-limitations)
 - [Testing Overview](#testing-overview)
-  - [Test Library](#test-library) 
-  - [Integration Test: Verify JWT population](#integration-test-verify-jwt-population) 
+  - [Test Library](#test-library)
+  - [Integration Test: Verify JWT population](#integration-test-verify-jwt-population)
+    - [Create a User](#create-a-user)
+    - [Write the Test](#write-the-test)
   - [Unit Test: Calling an External Service](#unit-test-calling-an-external-service)
 - [Addendum - test.js](#addendum---testjs)
 
 ## Prerequisites
 
-To follow this guide, you will need a test instance of FusionAuth. For FusionAuth installation instructions, please visit [the 5-minute setup guide](/docs/v1/tech/5-minute-setup-guide). 
+To follow this guide, you will need a test instance of FusionAuth. For FusionAuth installation instructions, please visit [the 5-minute setup guide](/docs/v1/tech/5-minute-setup-guide).
 
 This guide assumes FusionAuth can be accessed at `http://localhost:9011/admin` with your [FusionAuth example test app](/docs/v1/tech/getting-started/5-minute-docker#5-configure-the-backend-to-complete-the-login) at `http://localhost:3000`.
 
@@ -91,7 +94,7 @@ Log in to the app at `http://localhost:3000/`. In the FusionAuth admin interface
 ```
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJhdXRob3JpemF0aW9uX2NvZGUiXSwia2lkIjoiMWU1NmM0OWU4In0.eyJhdWQiOiJkZGQwNTAyMS0wNjgyLTQ4NWUtYThlMi1kMDMyOTY0YjAyMTEiLCJleHAiOjE2ODkyNjQwNzEsImlhdCI6MTY4OTI2MDQ3MSwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIwYTkzOTYwNi0zNmVjLTQ1M2ItOTM0Mi04ZWZmOTE3ZjJhZWYiLCJqdGkiOiIyYmZlMjUwNy1hZWM0LTRjOTEtYWY5Yy1hOWVhYjQzNmQ4MGYiLCJhdXRoZW50aWNhdGlvblR5cGUiOiJQQVNTV09SRCIsImVtYWlsIjoiZXJsaWNoQGV4YW1wbGUuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImFwcGxpY2F0aW9uSWQiOiJkZGQwNTAyMS0wNjgyLTQ4NWUtYThlMi1kMDMyOTY0YjAyMTEiLCJzY29wZSI6Im9mZmxpbmVfYWNjZXNzIiwicm9sZXMiOltdLCJzaWQiOiIzNDk5MTAxMS1kNzUxLTRlOTctYWZiNi0zNzQ2N2RlYTc5YWIiLCJhdXRoX3RpbWUiOjE2ODkyNjA0NzEsInRpZCI6ImNiY2VkOWVhLWQ3NzgtZDBlYi03ZjU4LWE0MGYxY2VlNWFhYiIsIm1lc3NhZ2UiOiJIZWxsbyBXb3JsZCEifQ.3DOvP8LRAp6pIh0guUjJjYbNwZKzruVWre8Xq8x_S8k
 ```
-  
+
 Copy this token from your terminal and paste it into the <span>Encoded</span>{:.field} text box at [jwt.io](https://jwt.io). You'll see `"message": "Hello World!"` in the <span>Payload</span>{:.uielement} box at the bottom right, showing you that your new lambda ran correctly.
 
 ## Programmatically Updating a Lambda
@@ -157,7 +160,7 @@ You can check that the lambda in FusionAuth now says "Goodbye World" by viewing 
 
 {% include docs/_image.liquid src="/assets/img/docs/customization/lambdas/testing-lambdas/updated-lambda.png" alt="Update lambda" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
-### API limitations
+### API Limitations
 
 The FusionAuth API allows you only to retrieve and update lambdas. You can delete a lambda that is not in use by an application with `lambda:delete`, but there is no way to link or unlink a lambda with an application without using another configuration management mechanism such as the admin ui, Terraform or a client library.
 
