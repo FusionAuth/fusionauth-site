@@ -8,7 +8,7 @@ function convertToRSS(post) {
     description: post.data.description || 'uh-oh, no desc',
     // Compute RSS link from post `slug`
     // This example assumes all posts are rendered as `/blog/[slug]` routes
-    link: `/blog/${post.slug}/`,
+    link: `/blog/${post.slug}`,
   }
 }
 
