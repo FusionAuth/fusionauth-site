@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2022, Inversoft Inc., All Rights Reserved
- */
 'use strict';
 
 var codeBlock = 1;
@@ -25,7 +22,7 @@ class CopyToClipboard {
       wrapper.appendChild(pre);
 
       const copyButton = document.createElement('button');
-      copyButton.className = 'absolute top-2 right-2';
+      copyButton.className = 'absolute top-1 right-1';
       copyButton.dataset.widget = 'copy-button';
       copyButton.dataset.copySource = code.id;
 

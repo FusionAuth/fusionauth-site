@@ -3,6 +3,8 @@ import { getCollection } from "astro:content";
 interface QuickStartSection {
   key: string;
   icon?: string;
+  faIcon?: string;
+  color: string;
   title: string;
   anchorTag: string;
   desc?: string;
@@ -184,6 +186,13 @@ const qsSections: QuickStartSection[] = [
         icon: '/img/icons/javascript.svg',
         faIcon: 'fa-x',
         navColor: 'fuchsia',
+      },
+      {
+        href: '/docs/v1/tech/tutorials/integrate-laravel-api',
+        title: 'Laravel',
+        icon: '/img/icons/laravel.svg',
+        faIcon: 'fa-block',
+        navColor: 'rose',
       },
     ],
   },
