@@ -1,6 +1,6 @@
 ---
 layout: blog-post
-title: FusionAuth 'solved an extremely complex problem' for Treefort Systems
+title: How Treefort Systems Uses FusionAuth to Power White-Label Media Streaming for Thousands
 description: Treefort Systems, a white-label media streaming platform, uses FusionAuth to powers auth for everything, including an admin portal, media streaming apps, an API, an internal chat service. They to authenticate users on the web, iOS, and Android.
 author: Dan Moore
 image: blogs/fusionauth-treefort/fusionauth-treefort-header-image.png
