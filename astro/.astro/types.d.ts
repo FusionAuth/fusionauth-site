@@ -1310,23 +1310,30 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-"extending-fusionauth-roles-with-cerbos.mdx": {
-  id: "extending-fusionauth-roles-with-cerbos.mdx",
-  slug: "extending-fusionauth-roles-with-cerbos",
-  body: string,
-  collection: "blog",
-  data: any
-} & { render(): Render[".mdx"] },
-"fitt-finder-fusionauth.mdx": {
-  id: "fitt-finder-fusionauth.mdx",
-  slug: "fitt-finder-fusionauth",
-  body: string,
-  collection: "blog",
-  data: any
-} & { render(): Render[".mdx"] },
-"fusionauth-advanced-mfa.mdx": {
-  id: "fusionauth-advanced-mfa.mdx",
-  slug: "fusionauth-advanced-mfa",
+  "extending-fusionauth-roles-with-cerbos.mdx": {
+    id: "extending-fusionauth-roles-with-cerbos.mdx",
+    slug: "extending-fusionauth-roles-with-cerbos",
+    body: string,
+    collection: "blog",
+    data: any
+  } & { render(): Render[".mdx"] },
+  "firebase-and-fusionauth-ciam-comparison.mdx": {
+    id: "firebase-and-fusionauth-ciam-comparison.mdx",
+    slug: "firebase-and-fusionauth-ciam-comparison",
+    body: string,
+    collection: "blog",
+    data: any
+  } & { render(): Render[".mdx"] },
+  "fitt-finder-fusionauth.mdx": {
+    id: "fitt-finder-fusionauth.mdx",
+    slug: "fitt-finder-fusionauth",
+    body: string,
+    collection: "blog",
+    data: any
+  } & { render(): Render[".mdx"] },
+  "fusionauth-advanced-mfa.mdx": {
+    id: "fusionauth-advanced-mfa.mdx",
+    slug: "fusionauth-advanced-mfa",
   body: string,
   collection: "blog",
   data: any
@@ -1359,26 +1366,33 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-"fusionauth-family-model-consent-management.mdx": {
-  id: "fusionauth-family-model-consent-management.mdx",
-  slug: "fusionauth-family-model-consent-management",
-  body: string,
-  collection: "blog",
-  data: any
-} & { render(): Render[".mdx"] },
-"fusionauth-g2-high-performer.mdx": {
-  id: "fusionauth-g2-high-performer.mdx",
-  slug: "fusionauth-g2-high-performer",
-  body: string,
-  collection: "blog",
-  data: any
-} & { render(): Render[".mdx"] },
-"fusionauth-introduces-pass-wordle.mdx": {
-  id: "fusionauth-introduces-pass-wordle.mdx",
-  slug: "fusionauth-introduces-pass-wordle",
-  body: string,
-  collection: "blog",
-  data: any
+  "fusionauth-family-model-consent-management.mdx": {
+    id: "fusionauth-family-model-consent-management.mdx",
+    slug: "fusionauth-family-model-consent-management",
+    body: string,
+    collection: "blog",
+    data: any
+  } & { render(): Render[".mdx"] },
+  "fusionauth-g2-high-performer.mdx": {
+    id: "fusionauth-g2-high-performer.mdx",
+    slug: "fusionauth-g2-high-performer",
+    body: string,
+    collection: "blog",
+    data: any
+  } & { render(): Render[".mdx"] },
+  "fusionauth-inc-5000.mdx": {
+    id: "fusionauth-inc-5000.mdx",
+    slug: "fusionauth-inc-5000",
+    body: string,
+    collection: "blog",
+    data: any
+  } & { render(): Render[".mdx"] },
+  "fusionauth-introduces-pass-wordle.mdx": {
+    id: "fusionauth-introduces-pass-wordle.mdx",
+    slug: "fusionauth-introduces-pass-wordle",
+    body: string,
+    collection: "blog",
+    data: any
 } & { render(): Render[".mdx"] },
 "fusionauth-introduces-simplepass.mdx": {
   id: "fusionauth-introduces-simplepass.mdx",
