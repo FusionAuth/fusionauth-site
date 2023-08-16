@@ -29,7 +29,7 @@ Topics covered in this document:
 ** <<Rolling Upgrade>>
 ** <<Blue-Green Deployment>>
 ** <<Out-of-Band Database Upgrades>>
-* <<FAQ>>
+* <<Upgrade FAQs>>
 * <<Detailed Upgrade Instructions>>
 ** <<Docker>>
 ** <<Homebrew>>
@@ -151,22 +151,29 @@ If minimizing downtime is a goal, then rolling upgrades or a blue-green deployme
 
 === Rolling Upgrade
 
-You can perform a rolling upgrade if you have three FusionAuth nodes running behind a load balancer. The nodes are upgraded one at a time and the load balancer is configured to direct traffic to the upgraded nodes as they become available for use. This allows you to upgrade FusionAuth with minimal downtime. 
+You can perform a rolling upgrade if you have multiple FusionAuth nodes running behind a load balancer. The nodes are upgraded one at a time and the load balancer is configured to direct traffic to the upgraded nodes as they become available for use. This allows you to upgrade FusionAuth with minimal downtime.
+
+[NOTE]
+====
+This upgrade method requires a load balancer and multiple FusionAuth nodes.
+====
 
 Because individual nodes are taken offline during the rolling update, the capacity of your installation is reduced during the upgrade.
 
 You can choose to run in-place upgrades on each node or to replace each node with a new node running the latest version of FusionAuth. In-place upgrades are simpler and faster because you don't have to spin up a new server, but if something goes wrong, rolling back the upgrade is more complex. Replacing nodes may be slower, but if something goes wrong, you can revert to the previous version of FusionAuth by pointing the load balancer to the old nodes.
 
-An in-place rolling upgrade procedure might look like this:
+An in-place rolling upgrade procedure for a three node cluster might look like this:
 
-- Stop the first node and remove it from the load balancer.
-- Upgrade FusionAuth on the first node. Once FusionAuth is updated, start it up so that it can perform the database migrations. FusionAuth will lock the database and own it while the database upgrade is completed. Note that there will be a schema mismatch between the first node and the other nodes, so the other nodes may give errors while the first node is being upgraded. The nature of these errors depends on the code paths being updated as well as how users interact with the system. For core login functionality, they should be minimal.
-- Add the first node back to the load balancer.
-- Stop the second and third nodes, remove them from the load balancer, and upgrade them. 
-- Start the second and third nodes and add them back to the load balancer.
+1. Stop the first node and remove it from the load balancer.
+1. Upgrade FusionAuth on the first node. Once FusionAuth is updated, start it up so that it can perform the database migrations. FusionAuth will lock the database and own it while the database upgrade is completed. Note that there will be a schema mismatch between the first node and the other nodes, so the other nodes may give errors while the first node is being upgraded. The nature of these errors depends on the code paths being updated as well as how users interact with the system. *For core login functionality, they should be minimal.*
+1. Add the first node back to the load balancer.
+1. Remove the second and third nodes from the load balancer
+1. Stop the second and third nodes.
+1. Upgrade the second and third nodes.
+1. Start the second and third nodes.
+1. Add the second and third nodes back to the load balancer.
 
-There is still downtime with this procedure, but it is limited to the time it takes to run the first node to run the database migration. There will be limited capacity during the upgrade while the second and third nodes are upgrading, but the system will be available for use for most of the upgrade process.
-
+There is still downtime with this procedure, but it is limited to the time it takes to run the first node to run the database migration. There will be limited capacity during the upgrade (only the first node) while the second and third nodes are upgrading, but the system will be available for use for most of the upgrade process.
 
 ++++
 {% mermaid %}
@@ -183,7 +190,17 @@ graph TB
 
 A blue-green deployment is a technique that reduces downtime and risk by running two identical environments in parallel. A load balancer is used to direct traffic to one of the environments. Using a blue-green deployment instead of performing a rolling upgrade isolates the upgrade process from the production environment, reducing the impact and risk to the current production environment.
 
-To perform a blue-green deployment with a three-node cluster, first create three new nodes with the new version of FusionAuth on each of them. Start up one of the new nodes. When the new node starts and connects to the database, it will lock the database and own it while it completes the database upgrade. The original nodes might give errors as they will not have access to the database. These original nodes can be removed from the load balancer. Add the new nodes to the cluster. 
+[NOTE]
+====
+This upgrade method requires a load balancer and multiple FusionAuth nodes.
+====
+
+To perform a blue-green deployment with a three-node cluster, follow these steps.
+
+1. Create three new nodes with the new version of FusionAuth.
+1. Start up one of the new nodes. When the new node starts and connects to the database, it will lock the database and own it while it completes the database upgrade. Note that there will be a schema mismatch between the new node and the original nodes, so the original nodes may give errors while the new node  is upgrading the database. The nature of these errors depends on the code paths being updated as well as how users interact with the system. *For core login functionality, they should be minimal.*
+1. Add the new nodes to the load balancer.
+1. Remove the old nodes from the load balancer.
 
 With this approach, the system will be down for the duration of the database upgrade but once the database upgrade is complete, the system will be back online with the upgraded version of FusionAuth on the new nodes. 
 
@@ -311,12 +328,12 @@ In the context of a FusionAuth upgrade rollback, the RPO would be the time since
 The RPO effectively measures the maximum tolerable data loss in the event of a rollback, and the RTO measures the time it takes to recover from the failure.
 
 
-== FAQ
+== Upgrade FAQs
 
 include::docs/v1/tech/installation-guide/_modes.adoc[]
 
 **Q:** How many versions can I skip? +
-**A:** We recommended migrating from one minor version to the next.
+**A:** We recommended migrating from one minor version to the next. Read the release notes carefully and test your upgrade.
 
 **Q:** How often should I upgrade? +
 **A:** You can upgrade whenever you want to. It is your dependency and we won't force you. We do recommend staying relatively close to the latest release: within the last three minor versions. In addition, we don't typically backport bug fixes. If you run into an issue with a bug, you'll need to upgrade to get the fix. We recommend you set up a regular cadence of reviewing and upgrading FusionAuth that fits your business needs, the same as you would with a framework or library your application depends on.
