@@ -11,7 +11,10 @@ export default defineConfig({
     format: 'file'
   },
   integrations: [
-    compress(),
+    compress({
+      Image: false,
+      SVG: false,
+    }),
     mdx(),
     sitemap(),
     indexPages(),
