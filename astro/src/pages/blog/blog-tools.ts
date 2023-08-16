@@ -34,6 +34,7 @@ export const mapRelated = (collection, metaSection, target, currentSlug) => coll
     .map(parseContent) : [];
 
 export const parseContent = (blog) => {
+  // grab the excerpt text
   const blurbLines = [];
   const separator = blog.data.excerpt_separator;
   const lines = blog.body.split('\n');
@@ -45,25 +46,22 @@ export const parseContent = (blog) => {
       blurbLines.push(line);
     }
   }
-  let preblurb = blurbLines.join('\n');
-  let blurb = preblurb;
-  if (preblurb.length > 160) {
-    blurb = preblurb.substring(0, 160);
-    // handle when someone put a link in the blurb and it is in the middle of the cutoff. kinda hacky, sorry
-    const linkOpen = blurb.lastIndexOf('[');
-    let linkClose = blurb.lastIndexOf(')');
-    if (linkOpen > 1 && linkClose < linkOpen) {
-      linkClose = preblurb.substring(linkOpen).indexOf(')');
-      if (linkClose > 0) {
-        blurb = preblurb.substring(0, linkOpen + linkClose + 1);
-      }
-    }
-    blurb = blurb + '...';
+
+  // render the markdown
+  let blurb = marked.parse(blurbLines.join('\n'));
+  if (blurb.length > 160) {
+    blurb = blurb.substring(0, 160);
+
+    // don't split mid-word
+    const snapPoint = Math.max(blurb.lastIndexOf(' '), blurb.lastIndexOf('.'))
+    blurb = blurb.substring(0, snapPoint) + '...';
   }
-  blurb = marked.parse(blurb);
+
+  // split the categories, authors, and tags into lists
   const categories = blog.data.categories.split(',').map(cat => cat.trim());
   const tags = blog.data.tags.split(',').map(tag => tag.trim());
   const authors = blog.data.authors.split(',').map(author => author.trim());
+
   return {
     ...blog.data,
     blurb,
