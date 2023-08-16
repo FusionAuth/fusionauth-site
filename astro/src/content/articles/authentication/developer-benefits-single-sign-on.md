@@ -3,6 +3,7 @@ title: The Developer Benefits of Single Sign-On
 description: What is Single Sign-On and how can it help developers build successful applications? 
 author: Kasper Siig
 section: Authentication
+tags: architecture single-sign-on sso tradeoffs passwords policy customer-experience centralized-control user-access productivity compliance security
 icon: /img/icons/developer-benefits-single-sign-on.svg
 ---
 

@@ -3,6 +3,7 @@ title: WebAuthn Explained
 description: An in-depth look at how WebAuthn can help you add biometric authentication to your website.
 author: Dan Moore
 section: Authentication
+tags: signature standards open-standards passwords password-managers browsers single-sign-on sso mfa multi-factor-authentication attestation registration user-presence user-verification discoverable-credentials 
 icon: /img/icons/webauthn-explained.svg
 ---
 

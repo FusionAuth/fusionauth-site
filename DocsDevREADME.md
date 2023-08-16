@@ -27,8 +27,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - All code snippets within any documents should have indenting formatted to 2 spaces.
 - When introducing a code snippet, don't use a : (colon). Instead, just use verbiage before it. "The code to exchange the token is similar to below."
 - Prefer 'You' to 'We'. 'Let's' is acceptable.
-- Headers should be title-case.  (see https://titlecase.com/ to check if you would like. No caps on articles 👍)
-- Code captions should be title cased, where the first letter of every word should be capitalized, except for a, an and the: This Code Is the Best
+- Code captions should have the the first letter of every word should be capitalized, except for a, an and the: This Code Is The Best.
 - Use the oxford comma. Apples, bananas, and oranges are my favorite fruits.
 - If something is new in a version, mark it with something like this:
 
@@ -114,13 +113,15 @@ Example response(s)
 
 ## Blog posts
 
+TODO: revise for astro
+
 For blog posts:
 - Indent all code with two spaces per level.
 - The class used for images should be updated to `class="img-fluid"`.
 - If applicable, use _includes/_what-is-fusionauth.liquid to introduce FusionAuth in a standard way.
 - Single spaces should be used instead of double spaces after a period.
 - We use rouge for code formatting. Supported languages are listed here: https://github.com/rouge-ruby/rouge/tree/master/lib/rouge/lexers
-- Blog post headers should have only the first word and any proper nouns are capitalized.
+- Blog post headers should have the first letter of words in headers should be capitalized: This Is The Header Text
   (quick check is: `grep '^## \([^ ].*\)\{0,1\}' site/_posts/<post>.md`)
 - For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
 - For field names, use double quotes: "Login Identifier Attribute".
@@ -166,35 +167,37 @@ For blog posts:
 - Have a period on the end if it is a sentence, otherwise don't.
 
 ## Proper names and other verbiage
-- macOS
-- Elasticsearch
 - .NET Core
-- OAuth and OAuth2
-- Identity Provider
+- Azure AD
+- CAPTCHA
+- client-side
 - Connector
-- Kickstart
-- multi-factor authentication
-- multi-tenancy/multi-tenant
-- two-factor
-- ECMAScript
-- esport
+- curl
 - Docker
 - Docker Compose
-- WebAuthn
-- IdP
-- Azure AD
-- X.509
-- Node.js
-- re-authentication
-- server-side
-- client-side
-- curl
-- self-service
-- webview
-- CAPTCHA
-- Google reCAPTCHA
-- Spring Boot
+- ECMAScript
+- Elasticsearch
+- esport
 - FusionAuth Cloud
+- Google reCAPTCHA
+- Identity Provider
+- IdP
+- Kickstart
+- macOS
+- multi-factor authentication
+- multi-tenancy/multi-tenant
+- Node.js
+- OAuth and OAuth2
+- re-authentication
+- self-service
+- server-side
+- Spring Boot
+- two-factor
+- WebAuthn
+- webview
+- X.509
+
+
 
 ## Words to avoid
 
