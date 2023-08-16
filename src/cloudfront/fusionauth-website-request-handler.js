@@ -189,7 +189,7 @@ function handler(event) {
 }
 
 function removeSlash(uri) {
-  return ip[uri] !== true && !uri.startsWith('/blog') &&
+  return ip[uri] !== true && uri.match('^/blog/.*/$') &&
     redirectsByPrefix.find(e => uri.startsWith(e[0])) === undefined;
 }
 
