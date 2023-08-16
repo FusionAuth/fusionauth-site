@@ -176,7 +176,7 @@ You can check that the lambda in FusionAuth now says "Goodbye World" by viewing 
 
 ### API Limitations
 
-The FusionAuth API allows you only to retrieve and update lambdas. You can delete a lambda that is not in use by an application with `lambda:delete`, but there is no way to link or unlink a lambda with an application without using another configuration management mechanism such as the admin UI, Terraform or a client library.
+The FusionAuth API allows you only to retrieve and update lambdas. You can delete a lambda that is not in use by an application with `lambda:delete`, but there is no way to link or unlink a lambda with an application without using another configuration management mechanism such as the admin UI, Terraform, or a client library.
 
 ## Testing Overview
 
@@ -192,7 +192,6 @@ In both these cases, there are two types of tests you can perform:
 
 Each of these types of lambda test is outlined below.
 
-
 ### Test Library
 
 There are many JavaScript test libraries available and everyone has their preference. Here you'll use a simple library so that you can generalize the tests to your favorite. The tests below use [`tape`](https://github.com/ljharb/tape), which implements the [Test Anything Protocol (TAP)](https://en.wikipedia.org/wiki/Test_Anything_Protocol), a language-agnostic specification for running tests that's been in use since 1987. You also need to use [fetch-mock](https://www.wheresrhys.co.uk/fetch-mock/) to mock `fetch` calls from your lambda.
@@ -204,6 +203,7 @@ npm install --save-dev tape;
 npm install --save-dev faucet; # a little test-runner to give neat tape output
 npm install --save-dev fetch-mock;
 npm install --save-dev jsonwebtoken; # to decode the JWT
+npm install --save-dev uuid; # to make random user Id
 ```
 
 {% include _callout-note.liquid content=" The `fetch()` method is available natively from Node LTS version 18. In earlier versions, `fetch` was provided by libraries, so many popular mocking libraries for `fetch` (such as [Nock](https://github.com/nock/nock)) won't work with modern Node in 2023." %}
@@ -225,20 +225,20 @@ Make a new file in the app called `test.js` and paste the following code into it
 The code above has three sections:
 
 - A declaration of constant variables that match the `kickstart.json` and `.env` files.
-- Creation of the User request object with `const request`. Details on t`his can be found in the [TypeScript client library interface](https://github.com/FusionAuth/fusionauth-typescript-client/blob/master/src/FusionAuthClient.ts).
-- Making the request with the client library and checking the response with `await fusion.register(userId, request);`.
+- The `createRandomUser` function, which creates a User request object with `const request`, and then sends it to `fusion.register()`. Details on this can be found in the [TypeScript client library interface](https://github.com/FusionAuth/fusionauth-typescript-client/blob/master/src/FusionAuthClient.ts).
+- The `deleteUser` function, which the tests you are going to write can use to delete the user just created.
 
-Run the code with the following command.
+Run the code to test user creation with the following command.
 
 ```bash
 node test.js
 ```
 
-In FusionAuth, click on <span>Users</span>{:.breadcrumb} to check that a new user called `lambdatestuser` has been created. Now that you have a user profile to work with, you can delete the `createUser();` line in `test.js`.
+In FusionAuth, click on <span>Users</span>{:.breadcrumb} to check that a new user called `lambdatestuser` has been created. You can delete the `createRandomUser(uuidv4());` line in `test.js`, as each test will use a new temporary user. This will allow you to add multiple lambda tests while avoiding potential conflicts between test users and permissions.
 
 #### Write the Test
 
-Now you can use the new test user to test that the lambda returns "Goodbye World", which will confirm that the CLI `update` command worked.
+Now you will test that the lambda returns "Goodbye World", which will confirm that the CLI `update` command worked.
 
 Add this code to the `test.js` file.
 
@@ -246,9 +246,9 @@ Add this code to the `test.js` file.
 {% remote_include 'https://raw.githubusercontent.com/RichardJECooke/fusionauth-testing-lambdas/main/complete-application/documentation_snippets/test_2.js' %}
 ```
 
-The `login` function calls the FusionAuth library in a similar way to `createUser`. It then decodes the JWT response and returns its `message` property.
+The `login` function calls the FusionAuth Typescript library. It then decodes the JWT response and returns its `message` property.
 
-This `login` function is called by the `tape` function `test`. This test gives the name of the test, says that it expects exactly one assertion to occur with `plan`, checks that calling `login` returns the property you expect from our lambda updated earlier, and exits.
+This `login` function is called by the `tape` function `test`. This test gives the name of the test, says that it expects exactly one assertion to occur with `plan`, checks that calling `login` returns the property you expect from our lambda updated earlier, and exits. Even if the test fails, the `finally` clause will delete the temporary user created.
 
 Run it with the following command.
 
@@ -261,8 +261,6 @@ When your code has several tests, and you want a colorful concise summary, you c
 ```bash
 node test.js | npx faucet
 ```
-
-In reality, you'll want to create a random user at the beginning of each login test and remove it at the end. This will allow you to add multiple lambda tests while avoiding potential conflicts between test users and permissions.
 
 ### Unit Test: Call an External Service
 
