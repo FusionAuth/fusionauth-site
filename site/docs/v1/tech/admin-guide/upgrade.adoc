@@ -112,24 +112,24 @@ In some cases, version jumps are safe to do. To determine if you can perform a v
 
 The alternative to a version jump is to migrate and test at each version of FusionAuth. For example, if you were moving from 1.43.0 to 1.45.0, you'd upgrade to 1.43.1 and test, then 1.43.2 and test, then 1.43.3 and test, then 1.44.0 and test, then 1.45.0 and test. This is a good option because if there are any issues, you'll be able to know precisely which version of FusionAuth is problematic. It's a great option if you have automated tests that can exercise FusionAuth integrations.
 
-
 Whichever approach you take, you should always test the upgrade in a staging environment to identify potential issues. This is particularly important on more complex upgrades where you are moving between distant minor versions (from 1.22.0 to 1.43.0, for example) or if you have made customizations to FusionAuth. We recommend that the staging environment be as close as possible to your production environment. This includes using the same data, or at least the same data volume, as production. This enables you to test both functionality changes and data update performance times before committing to the upgrade on production.
 
-=== Migrating Configuration Between Environments
+=== Updating Configuration 
 
-There are a number of options for managing the configuration of your FusionAuth instance over time and promoting changes from one environment to another. These include:
+You'll need to verify if the new version has any new configuration options with defaults that affect your installation. This can be ascertained by reviewing the release notes.
 
-- Script the changes using a client library.
+There are a number of options for managing the configuration of your FusionAuth instance over time and promoting changes from one environment to another. This includes changes from from one version to another.
+
+Configuration management options include:
+
+- Scripting changes using a client library.
 - Terraform.
 - Pulumi.
 - Manual configuration via the UI.
 
 You can read more in link:/docs/v1/tech/admin-guide/configuration-management[the Configuration Management guide].
 
-=== Themes and Customizations
-
-Review custom themes and how they will be impacted by any FusionAuth updates. If you have made any customizations, you may need to update them to work with the new version of FusionAuth. You can use the https://github.com/FusionAuth/fusionauth-theme-helper[Theme Helper] project to perform diffs on the themes to identify any changes that need to be made.
-
+// this has a hardcoded header
 include::docs/v1/tech/installation-guide/_theme-upgrade.adoc[]
 
 == Upgrade Options
@@ -141,15 +141,17 @@ Maintenance Mode should never be used in production. You don't want your end use
 You should always back up your database before upgrading regardless of the upgrade method you choose.
 ====
 
+For each of the options below, FusionAuth is running any database migrations. However, you can also stop all nodes and run the database migration SQL statements yourself, rather than relying on FusionAuth to run them. See <<Downtime and Database Migrations>> for more.
+
 === Easiest Route
 
-The easiest upgrade route is to simply stop all your services, upgrade each FusionAuth node, and then bring it all back online. In this case, FusionAuth will be performing the database upgrade, if needed, while the servers are stopped.
+The easiest upgrade route is to simply stop all your services, upgrade each FusionAuth node, and then bring it all back online. In this case, FusionAuth will be performing the database upgrade, if needed, when the first node connects to the database.
 
-This is a good option for single-instance development or QA systems, or for systems that can tolerate longer periods of downtime. For instance, if you know you have near-zero user activity at midnight, you can upgrade then. If you have scheduled downtime for other components of your system, that is a good time to upgrade FusionAuth in this manner.
+This is a good option for development instances or non-production systems such as QA.
+
+This is also a good option for systems that can tolerate longer periods of downtime. For instance, if you know you have near-zero user activity at midnight, you can upgrade then. If you have scheduled downtime for other components of your system, that is a good time to upgrade FusionAuth in this manner.
 
 If minimizing downtime is a goal, then rolling upgrades or a blue-green deployment might be more suitable. 
-
-You can also stop all nodes and run the database migration SQL statements yourself, rather than relying on FusionAuth to run them. See <<Downtime and Database Migrations>> for more.
 
 === Rolling Upgrade
 
