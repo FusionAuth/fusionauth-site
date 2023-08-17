@@ -11,6 +11,7 @@ This guide shows you how to create a simple lambda manually, update it programma
 
 - [Overview](#overview)
 - [Prerequisites](#prerequisites)
+  - [Lambda Limitations](#lambda-limitations)
 - [Set Up the FusionAuth Sample Project](#set-up-the-fusionauth-sample-project)
 - [Manually Create a Simple Lambda](#manually-create-a-simple-lambda)
 - [Programmatically Update a Lambda](#programmatically-update-a-lambda)
@@ -24,7 +25,7 @@ This guide shows you how to create a simple lambda manually, update it programma
     - [Create a User](#create-a-user)
     - [Write the Test](#write-the-test)
   - [Unit Test: Call an External Service](#unit-test-call-an-external-service)
-  - [Unit Test: Get Data from FusionAuth](#unit-test-get-data-from-fusionauth)
+  - [Unit Test: Populate JWT from FusionAuth](#unit-test-populate-jwt-from-fusionauth)
 
 ## Prerequisites
 
@@ -32,7 +33,9 @@ To follow this guide, you need
 - [Node.js version 18](https://nodejs.org/en/download) or later, and
 - [Docker](https://www.docker.com/get-started/).
 
-{% include docs/_lambda_limitations.adoc %}
+### Lambda Limitations
+
+{% include _callout-note.liquid content="<p>Remember the following limitations of lambdas when planning what they'll do:<ul><li>Lambdas do not have full access to JavaScript libraries, nor can they load them currently.</li> <li>The console methods take only one argument.</li><li>HTTP requests are not available in the Community or Starter FusionAuth plans.</li><li>If you set the Identity Provider <a href='/docs/v1/tech/identity-providers/#linking-strategies'>linking strategy</a> to 'Link Anonymously', no lambdas will be used for external authentication.</li> </ul></p>"%}
 
 ## Set Up the FusionAuth Sample Project
 Download, or use git to clone, the [testing-lambdas repository](https://github.com/RichardJECooke/fusionauth-testing-lambdas). Open a terminal in the directory you just created and start FusionAuth with Docker.
@@ -297,7 +300,7 @@ If all your unit tests for a lambda pass, you can safely upload it to FusionAuth
 
 If your HTTP Connect fetch request fails when deployed to FusionAuth please review the [documentation](/docs/v1/tech/lambdas/#using-lambda-http-connect). In particular, ensure you are using a license and that you have purchased the correct plan (Essentials or Enterprise).
 
-### Unit Test: Get Data from FusionAuth
+### Unit Test: Populate JWT from FusionAuth
 
 In this final unit test, let's look at how to check user information available in FusionAuth to determine custom fields to return to your app.
 
