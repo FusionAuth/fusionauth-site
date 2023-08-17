@@ -226,6 +226,7 @@ Before you can write any tests you need a test user profile to log in with. The 
 
 Make a new file in the app called `test.js` and paste the following code into it.
 
+<!-- TODO replace all remote includes in this file with tags, when moving to the new Astro system. -->
 ```js
 {% remote_include 'https://raw.githubusercontent.com/RichardJECooke/fusionauth-testing-lambdas/main/complete-application/documentation_snippets/test_1.js' %}
 ```
