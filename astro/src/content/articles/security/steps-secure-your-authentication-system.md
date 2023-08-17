@@ -8,7 +8,7 @@ date: 2021-09-09
 dateModified: 2021-09-09
 ---
 
-Building an authentication system can be both time and cost-intensive for system engineers. Traditionally, organizations have maintained servers dedicated to authentication. Nowadays, third-party authentication providers like [FusionAuth](https://fusionauth.io) help minimize internal maintenance costs and improve security by keeping up with modern best practices for their users.
+Building an authentication system can be both time and cost-intensive for system engineers. Traditionally, organizations have maintained servers dedicated to authentication. Nowadays, third-party authentication providers like [FusionAuth](/) help minimize internal maintenance costs and improve security by keeping up with modern best practices for their users.
 
 Whether your authentication is built in-house or relies on a third-party provider, several specific factors are essential. These include speed, availability, disaster recovery, [SOC 2 compliance](https://www.imperva.com/learn/data-security/soc-2-compliance/), and security protocols to protect systems and user credentials.
 
