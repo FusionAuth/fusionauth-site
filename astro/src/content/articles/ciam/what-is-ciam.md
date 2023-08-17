@@ -107,7 +107,7 @@ There are a number of different MFA methods that can be used, including:
 * Push notification-based MFA: This method sends a notification to the user's mobile device.
 * Biometric MFA: This method requires users to provide a biometric identifier, such as a fingerprint or facial scan.
 
-See what [Muti-Factor Authentication](https://fusionauth.io/articles/authentication/multi-factor-authentication) FusionAuth offers
+See what [Multi-Factor Authentication](/articles/authentication/multi-factor-authentication) FusionAuth offers
 
 ### Single Sign-On
 
