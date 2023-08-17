@@ -35,6 +35,8 @@ To follow this guide, you need
 
 ### Lambda Limitations
 
+<!-- TODO pull this from _lambda-limitations.adoc when moving to Astro -->
+
 {% include _callout-note.liquid content="<p>Remember the following limitations of lambdas when planning what they'll do:<ul><li>Lambdas do not have full access to JavaScript libraries, nor can they load them currently.</li> <li>The console methods take only one argument.</li><li>HTTP requests are not available in the Community or Starter FusionAuth plans.</li><li>If you set the Identity Provider <a href='/docs/v1/tech/identity-providers/#linking-strategies'>linking strategy</a> to 'Link Anonymously', no lambdas will be used for external authentication.</li> </ul></p>"%}
 
 ## Set Up the FusionAuth Sample Project
