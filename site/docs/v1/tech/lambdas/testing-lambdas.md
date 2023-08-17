@@ -24,6 +24,7 @@ This guide shows you how to create a simple lambda manually, update it programma
     - [Create a User](#create-a-user)
     - [Write the Test](#write-the-test)
   - [Unit Test: Call an External Service](#unit-test-call-an-external-service)
+  - [Unit Test: Get Data from FusionAuth](#unit-test-get-data-from-fusionauth)
 
 ## Prerequisites
 
@@ -42,7 +43,7 @@ This command will run FusionAuth, including a sample application with an API Key
 
  {% include _callout-important.liquid
     content=
-    "<The `.env` and `kickstart.json` files contain passwords. In a real application, always add these files to your `.gitignore` file and never commit secrets to version control.>"
+    "The `.env` and `kickstart.json` files contain passwords. In a real application, always add these files to your `.gitignore` file and never commit secrets to version control."
     %}
 
 ## Manually Create a Simple Lambda
@@ -157,12 +158,16 @@ Now you can retrieve the "[ATest]" lambda you created earlier. This is a useful 
 npx fusionauth lambda:retrieve f3b3b547-7754-452d-8729-21b50d111505 --key lambda_testing_key
 ```
 
-The lambda will be saved to a file, where the file name is the UUID of your lambda. So it should look like this: `./lambdas/f3b3b547-7754-452d-8729-21b50d111505.json`.
+The lambda will be saved to a file, where the file name is the UUID of your lambda. So it should look like this: `./lambdas/f3b3b547-7754-452d-8729-21b50d111505.yaml`.
 
 Let's update the lambda to say "Goodbye World!" instead of "Hello World!" and re-upload it. Open the file in a text editor, change the value of the <span class="field">body</span> property to the following.
 
-```
-"function populate(jwt, user, registration) {\r\n  jwt.message = 'Goodbye World!';\r\n  console.info('Goodbye World!');\r\n}"
+```yaml
+body: |
+  function populate(jwt, user, registration) {
+    jwt.message = 'Goodbye World!';
+    console.info('Goodbye World!');
+  }
 ```
 Save the file and upload the lambda with the following command.
 
@@ -176,7 +181,7 @@ You can check that the lambda in FusionAuth now says "Goodbye World" by viewing 
 
 ### API Limitations
 
-The FusionAuth API allows you only to retrieve and update lambdas. You can delete a lambda that is not in use by an application with `lambda:delete`, but there is no way to link or unlink a lambda with an application without using another configuration management mechanism such as the admin UI, Terraform, or a client library.
+The FusionAuth API allows you only to retrieve and update lambdas. You can delete a lambda that is not in use by an application with `lambda:delete`, but there is no way to link or unlink a lambda with an application without using another configuration management mechanism such as the admin UI, Terraform, or a client library. TODO - How can this be done please? I don't think it's possible, and if it is, this is the place to explain to readers how.
 
 ## Testing Overview
 
@@ -203,7 +208,7 @@ npm install --save-dev tape;
 npm install --save-dev faucet; # a little test-runner to give neat tape output
 npm install --save-dev fetch-mock;
 npm install --save-dev jsonwebtoken; # to decode the JWT
-npm install --save-dev uuid; # to make random user Id
+npm install --save-dev uuid; # to make a random user Id
 ```
 
 {% include _callout-note.liquid content=" The `fetch()` method is available natively from Node LTS version 18. In earlier versions, `fetch` was provided by libraries, so many popular mocking libraries for `fetch` (such as [Nock](https://github.com/nock/nock)) won't work with modern Node in 2023." %}
@@ -268,7 +273,7 @@ The next test you'll write is a unit test that verifies your lambda locally usin
 
 Let's take an example where you check if users have email addresses from a country sanctioned by the United States, such as North Korea or Cuba. You call an external site, `https://issanctioned.example.com`, with an email address, and are told whether the domain is banned or not.
 
-Add this new function to `test.js`:
+Add this new function to `test.js`. It is the lambda function that would run on FusionAuth, similar to our "Hello World" function earlier.
 
 ```js
 {% remote_include 'https://raw.githubusercontent.com/RichardJECooke/fusionauth-testing-lambdas/main/complete-application/documentation_snippets/test_3.js' %}
@@ -280,7 +285,7 @@ Now add the two tests below. The first checks that North Korea (`.kp`) is banned
 {% remote_include 'https://raw.githubusercontent.com/RichardJECooke/fusionauth-testing-lambdas/main/complete-application/documentation_snippets/test_4.js' %}
 ```
 
-You used `fetchMock` to mock the external service that would be called from FusionAuth. The mocks for the JWT, user, and registration objects are all simple `{}` objects you can pass as parameters to the `populate()` lambda.
+This test function uses `fetchMock` to mock the external service that would be called from the lambda function in FusionAuth. The mocks for the JWT, user, and registration objects are all simple `{}` objects you can pass as parameters to the `populate()` lambda.
 
 Finally, run the tests.
 
@@ -291,3 +296,87 @@ node test.js  | npx faucet
 If all your unit tests for a lambda pass, you can safely upload it to FusionAuth manually or with the CLI for further testing.
 
 If your HTTP Connect fetch request fails when deployed to FusionAuth please review the [documentation](/docs/v1/tech/lambdas/#using-lambda-http-connect). In particular, ensure you are using a license and that you have purchased the correct plan (Essentials or Enterprise).
+
+### Unit Test: Get Data from FusionAuth
+
+In this final unit test, let's look at how to check user information available in FusionAuth to determine custom fields to return to your app.
+
+There are two objects to consider. The first is the JWT fields that are returned to your app by default when a user logs in.
+
+```js
+{
+  aud: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
+  exp: 1692273965,
+  iat: 1692270365,
+  iss: 'acme.com',
+  sub: '00000000-0000-0000-0000-111111111111',
+  jti: '47cc65ce-3981-4e40-8c99-5221d69c53da',
+  authenticationType: 'PASSWORD',
+  email: 'richard@example.com',
+  email_verified: true,
+  applicationId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
+  roles: [ 'Petty cash keeper', 'First aider' ],
+  auth_time: 1692270365,
+  tid: 'd7d09513-a3f5-401c-9685-34ab6c552453',
+  message: 'goodbye world'
+}
+```
+
+The second object is the user supplied to your `populate()` function in a lambda.
+
+```js
+user: {
+    active: true,
+    birthDate: '1985-11-23',
+    connectorId: 'e3306678-a53a-4964-9040-1c96f36dda72',
+    data: {},
+    email: 'richard@example.com',
+    firstName: 'Richard',
+    id: '00000000-0000-0000-0000-111111111111',
+    insertInstant: 1692176681681,
+    lastLoginInstant: 1692270415045,
+    lastName: 'Hendricks',
+    lastUpdateInstant: 1692176681681,
+    memberships: [],
+    passwordChangeRequired: false,
+    passwordLastUpdateInstant: 1692176681694,
+    preferredLanguages: [],
+    registrations: [
+      {
+        applicationId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
+        data: {},
+        id: '631b3ef1-4f46-42d2-b315-8d29c1cf18ff',
+        insertInstant: 1692176681698,
+        lastLoginInstant: 1692270415045,
+        lastUpdateInstant: 1692269815209,
+        preferredLanguages: [],
+        roles: [ 'Petty cash keeper', 'First aider' ],
+        tokens: {},
+        usernameStatus: 'ACTIVE',
+        verified: true
+      }
+    ],
+    tenantId: 'd7d09513-a3f5-401c-9685-34ab6c552453',
+    twoFactor: { methods: [], recoveryCodes: [] },
+    usernameStatus: 'ACTIVE',
+    verified: true
+  }
+```
+
+You can see that the user object has data that the JWT does not, like names, birthdate, and languages, that you might want to add in a lambda.
+
+You can also add logic in the lambda to manipulate these fields before returning them to your app. Let's do this, by writing a lambda function that returns permissions to your app based on the user's role.  Add the following functions to your `test.js` file.
+
+```js
+{% remote_include 'https://raw.githubusercontent.com/RichardJECooke/fusionauth-testing-lambdas/main/complete-application/documentation_snippets/test_5.js' %}
+```
+
+The lambda function, `populate2`, adds a `permissions` array to the JWT returned.
+
+The test function calls the lambda, passing it a mock `user` object. You need to mock only the fields in this object that the lambda needs. In this case, you've added a `roles` array inside application `registrations`.
+
+Run the test.
+
+```bash
+node test.js | npx faucet;
+```
