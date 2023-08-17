@@ -1,7 +1,7 @@
 ## Documentation Style Guidelines
 
 Here are some guidelines to follow when writing documentation (everything under `/site/docs`) as well as the blog (`_posts`).
-- Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth. 
+- Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth.
   For example, see the API Key APIs description for `apiKeyId`, where API Key is capitalized: `The unique Id of the API Key to create. If not specified a secure random UUID will be generated.`
 - If referring to something that exists as a domain object in FusionAuth, but you are not explicitly referring to an object being created/updated in FusionAuth, use lowercase. Here are some examples:
  `To allow users to log into and use your application, you’ll need to create an Application in FusionAuth.`
@@ -73,7 +73,7 @@ egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /
 ### Including files
 
 - If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_` and use dashes to separate words: `_login-api-integration` not `_login_api_integration`.
-- If you are including a file in the docs which uses asciidoctor, do not prepend the include file path with `/`. 
+- If you are including a file in the docs which uses asciidoctor, do not prepend the include file path with `/`.
   - If it is a top level doc, use the full path: `include::docs/v1/tech/samlv2/_saml_limitations.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
   - If it is an included doc (that is, one that starts with `_`), use the relative path: `include::../../../../src/json/scim/enterpriseuser-create-request.json[]` or `include::_scim-customizable-schema-shared.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
   - If you accidentally do this, you can find the files where the issue is by running: `bundle exec jekyll build --verbose > outfile 2>&1` and then looking through `outfile` for the `WARNING`. The file just before the warning line will be the one with an issue.
@@ -390,7 +390,7 @@ There are currently nine sections:
 * admin guide: for operating FusionAuth, includes roadmap and release notes
 * login methods: the methods someone might use to log a user in
 * developer guide: developer facing doc for integrating with FusionAuth
-* customization: how to customize FusionAuth 
+* customization: how to customize FusionAuth
 * premium features: any paid features should go here
 * APIs: all api docs
 * Release notes: our release notes.
@@ -423,7 +423,7 @@ This will add the example app to the example apps section in the docs.
 ## Expert Advice
 
 The places to put files for the Expert Advice sections differ from the regular blog.
-Content:	`site/learn/expert-advice/security` # or other top level category 
+Content:	`site/learn/expert-advice/security` # or other top level category
 Images: `site/assets/img/advice/<subdir>`
 Stamps: `site/assets/img/stamps`
 Diagrams: `site/_diagrams/learn/expert-advice/<subdir>`
@@ -440,13 +440,13 @@ Prior to requesting review on a PR, please complete the following checklist.
    - If the create request has a property of `"name": "My application"`, the response should contain this same value.
    - Try and use real world names and values in example requests/responses. Using name such as `Payroll` for an Application name is more descriptive than `app 1` and allows the reader to more understand the example.
 4. When referencing a field in the description of another field use this syntax: `[field]#name#`.
-5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.  
-6. There are times when two fields are optional, because only one of the two are required. In these cases, ensure we explain when the field is required, and when it is optional. There are many examples of this in the doc already for reference.  
+5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.
+6. There are times when two fields are optional, because only one of the two are required. In these cases, ensure we explain when the field is required, and when it is optional. There are many examples of this in the doc already for reference.
 
 #### Non API documentation
 1. Screenshots. Review color, dimensions and clarity. Review A/B to ensure layout has not changed, and the new screenshot is consistent with the previous one.
-   - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed. 
-   - The screenshot should not look fuzzy. If it does, the compression may be incorrect. 
+   - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed.
+   - The screenshot should not look fuzzy. If it does, the compression may be incorrect.
 2. If you are referring to a navigatable element, use `[breadcrumb]#Tenants#` or `[breadcrumb]#Tenants -> Your Tenant#`. In other words, use it even for singular elements.
 3. If you are referring to a field the user can fill out, use `[field]#Authorized Redirect URLs#`.
 4. If you are referring to any other UI element, such as a submit button or read-only name, use `[uielement]#Submit#` or (on the application view screen) `[uielement]#Introspect endpoint#`.
@@ -521,7 +521,7 @@ language: javascript
 
 ### APIs
 
-APIS are JSON HTTP APIs that will validate a JWT and return a value. 
+APIS are JSON HTTP APIs that will validate a JWT and return a value.
 
 If you are doing a quickstart for an API, rather than for a web application, follow these guidelines:
 
