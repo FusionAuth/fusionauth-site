@@ -18,6 +18,7 @@ export async function get(context) {
     title: "FusionAuth Blog",
     description: "The FusionAuth blog offers all kinds of insight on software development, authentication and the FusionAuth product.",
     site: context.site,
+    trailingSlash: false,
     items: blog.map(convertToRSS)
   });
 }
