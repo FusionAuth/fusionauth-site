@@ -571,7 +571,7 @@ For a good recording, follow these general best practices:
 ### Mistakes during recording
 Mistakes happen if you make a mistake during recording e.g., miss-spoken or clicked the wrong screen.
 
-#### Calp your hands
+#### Clap your hands
 Breathe, clap your hands in front of the microphone and do it again, this will be very simple to cut as you can see the audio peak on the recording and nobody will ever notice.
 
 #### Note the current Timestamp
@@ -586,6 +586,14 @@ If you are not sure what to use, consider taking 'OBS Studio'.
 OBS runs on Windows, macOS, Linux and it's free, it is often used for streaming but can also be used for recording. 
 Install it from https://obsproject.com, after installing click the `+` sign in the `Sources` section then select `Display Capture`, click `Ok` then you should be able to select your screen in case you have more than one, afer that click on `Settings`, and there you click on `Output` there are two sections, one of them is called `Recording` here you can choose your `Recording Path` where it should store the Video and also select the `Recording Quality`, set it to `High`. Recording format we recommend `MPEG-4` or `Quicktime MOV`. Under `Video Encoder`, (if you got a good graphics chip) you may be able to select Hardware encoding, like `Hardware (NVENC, H.264)`. Only use `Software (x264)` if you have no hardware encoding option, even then consider using another computer with better hardware. If you know what you do you can also select `Advanced` at the top and do some specific changes according to your system and requirements. Next click on the `Video` tab and make sure you selected the exact resolution like your screen is set to, click `Ok` and after that we are ready to go. On the bottom right you should see a button called `Start recording`. If it does not record your voice, have a look at the `Audio Mixer` section, you may need to add your microphone there, also you should see the volume levels (remember don't peak over -10db). In case you don't see any of the mentioned sections check `Docks` in the top menubar.
 
+### ScreenFlow
+We are currently using ScreenFlow v10.x.x to record. This allows for simple recording of desktop, camera, and microphone. You can easily use multiple tracks for recording.
+
+#### Recording
+The recommendation is to automatically hide the Menu Bar as well as the Dock. On Mac you can find this in System Settings->Desktop & Dock. Recording on a screen that allows for 4K (3840x2160) is optimal and allows for clear zoom levels when highlighting content. You will need to increase font size on browsers to 150% and code editors accordingly.
+
+#### Editing
+Keep video actions simple! When zooming in on key areas it is often enough to create an action and place a 200% zoom within the area that is being spoken about. No need to highlight an area and place overlays with a lot of text.
 
 ## Open questions
 * Fusionauth has different `Intros` which of them should be added when? I think the first recording should be without an intro, so it can be added later.
