@@ -18,7 +18,7 @@ This guide shows you how to create a simple lambda manually, update it programma
   - [Understand the Client Libraries](#understand-the-client-libraries)
   - [Create an API Key](#create-an-api-key)
   - [Use the Lambda CLI](#use-the-lambda-cli)
-  - [API Limitations](#api-limitations)
+  - [Other CLI Functionality](#other-cli-functionality)
 - [Testing Overview](#testing-overview)
   - [Test Library](#test-library)
   - [Integration Test: Verify JWT population](#integration-test-verify-jwt-population)
@@ -155,7 +155,7 @@ npx fusionauth --help
 ```
 You should see the FusionAuth logo and a usage help message.
 
-The lambda commands that the CLI provides match operations in the underlying TypeScript client library: `create`, `delete`, and `retrieve`.
+The lambda commands that the CLI provides match operations in the underlying TypeScript client library: `update`, `delete`, and `retrieve`.
 
 Now you can retrieve the "[ATest]" lambda you created earlier. This is a useful way to check that a lambda you've created has been successfully uploaded for your app.
 
@@ -184,9 +184,9 @@ You can check that the lambda in FusionAuth now says "Goodbye World" by viewing 
 
 {% include docs/_image.liquid src="/assets/img/docs/customization/lambdas/testing-lambdas/updated-lambda.png" alt="Update lambda" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
-### API Limitations
+### Other CLI Functionality
 
-The FusionAuth API allows you only to retrieve and update lambdas. You can delete a lambda that is not in use by an application with `lambda:delete`, but there is no way to link or unlink a lambda with an application without using another configuration management mechanism such as the admin UI, Terraform, or a client library. TODO - How can this be done please? I don't think it's possible, and if it is, this is the place to explain to readers how.
+Using the Node CLI you can create a lambda, with `lambda:create`. You can delete a lambda too, with `lambda:delete`, but only one that is not linked with an application. To link or unlink a lambda with an application you need to use the commands `lambda:link-to-application` and `lambda:unlink-from-application`, with existing application and lambda Ids. Linking a lambda will use it for both the application's <span class="field">Access Token populate lambda</span> and its <span class="field">Id Token populate lambda</span>. Unlinking it will remove it from both of these fields, or just one of them if the other links to a different lambda. To link types of lambdas other than JWT populate, you need to use the underlying client library or the admin UI.
 
 ## Testing Overview
 
