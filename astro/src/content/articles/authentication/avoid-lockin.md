@@ -1,8 +1,9 @@
 ---
 title: Avoiding Authentication System Lock-In
-description: What steps do you need to take to ensure your authentication system can scale?
+description: "Steps you can take to avoid auth system lock-in include: considering portability, limiting usage, insulating your application with a facade, and having a backup plan."
 author: Cameron Pavey
 section: Authentication
+tags: lock-in architecture standards facade planning open-standards 
 icon: /img/icons/avoiding-authentication-system-lock-in.svg
 ---
 
@@ -12,7 +13,7 @@ Authentication system lock-in is a big problem. While there are multiple benefit
 
 There is always the monetary cost, which for services like this is typically ongoing rather than a one-off. Having less direct control means you don't have to maintain and monitor it; however, there isn't much you can do if there is an outage or performance issue. Finally, the aforementioned vendor lock-in problem can leave you feeling trapped and unable to move away from your provider if you haven't taken steps to mitigate this risk.
 
-Well we can't solve all of those problems, but we can at least show you how to mitigate the risk of vendor lock-in. In this article, we cover a few different tips and strategies you can apply  when it comes to authentication systems like [Auth0](https://auth0.com/), [Okta](https://www.okta.com/), or [FusionAuth](https://fusionauth.io/).
+Well we can't solve all of those problems, but we can at least show you how to mitigate the risk of vendor lock-in. In this article, we cover a few different tips and strategies you can apply  when it comes to authentication systems like [Auth0](https://auth0.com/), [Okta](https://www.okta.com/), or [FusionAuth](/).
 
 ## Look for Open Standards
 

@@ -36,13 +36,13 @@ Single-page web applications (SPA sometimes pronounced spa or S-P-A) use a singl
 
 Once the application is retrieved, it is started by the browser, normally by invoking a JavaScript framework that bootstraps and then begins to render the application. In many cases, the HTML of the application is produced by JavaScript and the browser updates the current document dynamically.
 
-SPAs use JavaScript and call APIs to handle user interactions and input. For example, if a use clicks a link, the SPA might modify the document to render a different page or form. When a user submits a form, the SPA might call an API on the server.
+SPAs use JavaScript and call APIs to handle user interactions and input. For example, if a user clicks a link, the SPA might modify the document to render a different page or form. When a user submits a form, the SPA might call an API on the server.
 
 APIs are invoked using the `XMLHttpRequest` functionality of browser JavaScript. This generally makes calls to REST APIs on the server. When the server responds, the JavaScript running in the browser handles the response and updates the document.
 
 Since the browser is using `XMLHttpRequest`, it can invoke all of the standard HTTP methods including `GET`, `POST`, `PUT` and `DELETE`. The HTTP method helps inform the server what type of action the user took and how to handle the request.
 
-In is important to note that while we recommend OAuth for SPAs, it causes the browser to close the SPA and navigate to the OAuth provider. Once the OAuth workflow is complete, the browser retrieves and starts the SPA again. This process might seem somewhat heavy, but the SPA should be cached in the browser making the second startup process much faster.
+It is important to note that while we recommend OAuth for SPAs, it causes the browser to close the SPA and navigate to the OAuth provider. Once the OAuth workflow is complete, the browser retrieves and starts the SPA again. This process might seem somewhat heavy, but the SPA should be cached in the browser making the second startup process much faster.
 
 ## Native mobile application authentication
 
@@ -50,6 +50,6 @@ Native mobile applications are usually installed via a store and installed on th
 
 ![Login Workflows](/img/articles/login-authentication-workflows/login-type-native.png)
 
-Native applications often call APIs to handle user interactions and input. For example, if a use clicks a button or submits a form, the application might call an API on the server. This API might be called via HTTP or some other type of protocol. Often, native applications use various libraries for making API calls simpler.
+Native applications often call APIs to handle user interactions and input. For example, if a user clicks a button or submits a form, the application might call an API on the server. This API might be called via HTTP or some other type of protocol. Often, native applications use various libraries for making API calls simpler.
 
-Some experts recommend that native applications (including mobile apps) use OAuth's authorization code grant. This method works fine with many IdPs, including FusionAuth, but is not listed in this section because it is covered in the SPA and Webapp sections above. The only difference is that at the end of the OAuth workflow, the native application pulls the JWT and refresh tokens from the web-view.
+Some experts recommend that native applications (including mobile apps) use OAuth's authorization code grant. This method works fine with many IdPs, including FusionAuth, but is not listed in this section because it is covered in the SPA and WebApp sections above. The only difference is that at the end of the OAuth workflow, the native application pulls the JWT and refresh tokens from the web-view.

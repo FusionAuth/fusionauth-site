@@ -1,78 +1,90 @@
 ---
-title: Quickstart Python Flask and FusionAuth
+title: Python Flask
 description: Quickstart integration of Python Flask web application with FusionAuth
 navcategory: getting-started
 prerequisites: Python 3.8
 section: web
 technology: Flask
 language: Python
+icon: /img/icons/python.svg
+faIcon: fa-snake
+color: yellow
+cta: EmailListCTA
 ---
 import Aside from '/src/components/Aside.astro';
+import LoginAfter from '../../diagrams/quickstarts/login-after.astro';
+import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
 import RemoteCode from '/src/components/RemoteCode.astro';
 
+In this quickstart you are going to build an application with Python and Flask, and integrate it with FusionAuth.
+You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=pkH-kD73QUM), a global leader in converting dollars into coins.
+It'll have areas reserved for users who have logged in as well as public facing sections.
 
-This Quickstart will take you through integrating a Python Flask application with FusionAuth, 
-setting up an OAuth authorization code grant flow and allowing users to log into your 
-application.
-
-In this Quickstart you'll create an application that has
-* A Home Page, which is where a logged-out user goes. It has a login button that allows a user to log in
-  using FusionAuth
-* An Account Page, which is where a user goes when they're logged in. It has a Logout button that allows
-  the user to log out with FusionAuth
-* The associated back end routes to accomplish all of this
-
-This quickstart will be referencing the example application in the [Flask Quickstart Repo](https://github.com/FusionAuth/fusionauth-quickstart-python-flask-web).
-You can build your Flask application from scratch, or you can start with the stub application that we've provided.
-
-#### Repository Contents
-| Item | Description |
-| --- | --- |
-| /docker-compose.yml | A docker-compose config file for standing up a FusionAuth server, a Postgres database, and an Elastic instance |
-| /kickstart/ | A directory containing a `kickstart` file, which is used to configure FusionAuth |
-| /stub-application/ | A base application that goes with this Quickstart. It runs, but doesn't integrate with FusionAutn (yet) |
-| /complete-application/ | A completed application, with a working integration with FusionAuth |
+The docker compose file and source code for a complete application are available at
+https://github.com/FusionAuth/fusionauth-quickstart-python-flask-web
 
 ## Prerequisites
-For this Quickstart, you'll need Python3.8 or later.
+For this Quickstart, you'll need:
+[Python3.8](https://www.python.org/downloads/) or later.
+[Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](/docs/v1/tech/installation-guide/)).
 
-You'll also need Docker, since that's how we'll be running FusionAuth.
+## General Architecture
 
-The commands below are for macOS, but are limited to basic *nix commands.
+While this sample application doesn't have login functionality without FusionAuth, a more typical integration will replace an existing login system with FusionAuth.
 
-## Run FusionAuth
-In the root directory of the repo you'll find a Docker compose file (docker-compose.yml) and an environment variables configuration file (.env). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
+In that case, the system might look like this before FusionAuth is introduced.
 
-```shell
-git clone https://github.com/FusionAuth/fusionauth-quickstart-python-flask-web
+<LoginBefore alt={"Request flow during login before FusionAuth"}/>
+
+The login flow will look like this after FusionAuth is introduced.
+
+<LoginAfter alt={"Request flow during login after FusionAuth"}/>
+
+In general, you are introducing FusionAuth in order to normalize and consolidate user data. This helps make sure it is consistent and up-to-date as well as offloading your login security and functionality to FusionAuth.
+
+## Getting Started
+In this section, you'll get FusionAuth up and running and use Rails to create a new application.
+
+### Clone the Code
+First off, grab the code from the repository and change into that directory.
+
+```
+git clone https://github.com/FusionAuth/fusionauth-quickstart-python-flask-web.git
 cd fusionauth-quickstart-python-flask-web
+```
+
+### Run FusionAuth via Docker
+In the root directory of the repo you'll find a Docker compose file (docker-compose.yml) and an environment
+variables configuration file (.env). Assuming you have Docker installed on your machine, you can stand up
+FusionAuth up on your machine with:
+
+```
 docker-compose up -d
 ```
 
-This will start three containers, once each for FusionAuth, Postgres, and Elastic. 
+This will start three containers, once each for FusionAuth, Postgres, and Elastic.
 
-The FusionAuth configuration files also make use of a unique feature of FusionAuth, called Kickstart: 
-when FusionAuth comes up for the first time, it will look at the Kickstart file and mimic API calls to 
-configure FusionAuth for use when it is first run. The Kickstart will set up (among other things):
-* An Application and somme associated config including that for OAuth, user registration, and more
-* CORS configuration to allow requests from localhost:5000 (your app)
-* A couple of users: admin@example.com and richard@example.com
+Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/v1/tech/installation-guide/kickstart).
+When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and
+configure FusionAuth to a certain initial state.
 
 <Aside type="note">
-If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by executing `docker-compose down -v`.
+If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by
+executing `docker-compose down -v`, then re-run `docker-compose up -d`.
 </Aside>
 
 FusionAuth will be configured with these settings
-* Your client Id is: `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`
-* Your client secret is: `super-secret-secret-that-should-be-regenerated-for-production`
-* Your example username is `richard@example.com` and your password is `password`
-* Your admin username is `admin@example.com` and your password is `password`
-* The FusionAuth API is hosted at `http://localhost:9011/`
+* Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
+* Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
+* Your example username is `richard@example.com` and the password is `password`.
+* Your admin username is `admin@example.com` and the password is `password`.
+* The base URL of FusionAuth `http://localhost:9011/`.
 
 You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don’t need to.
 
-## Create a Basic Flask Application
-In this section, you'll set up a basic Flask application with a single page.
+### Create a Basic Flask Application
+In this section, you'll set up a basic Flask application with a single page. While this section builds a simple
+Python / Flask application, you can use the same method to integrate your existing application with FusionAuth.
 
 #### Setup Your Environment
 We recommend working in a virtual environment for this.
@@ -118,7 +130,7 @@ Note that you won't be able to access it with a browser yet!
 The next step is to get a basic home page up and running. This will require a back end route to handle requests to `/` and a web page template.
 
 In the route function, you're going to look for an access token, which is created when a user is successfully authenticated. If the user
-is not authenticated, you'll just take them to the home page. However, if they _are_ authenticated, you'll redirect them to 
+is not authenticated, you'll just take them to the home page. However, if they _are_ authenticated, you'll redirect them to
 an `/account` page. Since we haven't implemented login yet, the redirect to `/account` won't work.
 
 Add the route handling function to your server.py file.
@@ -128,7 +140,7 @@ Add the route handling function to your server.py file.
  lang="python"
  tags="homeRoute"/>
 
-Next, create the home page in a `templates` directory. This page just has a login button, which won't do anything yet. These commands also 
+Next, create the home page in a `templates` directory. This page just has a login button, which won't do anything yet. These commands also
 install a CSS file and an image to make your app look nicer.
 
 ```shell
@@ -140,19 +152,22 @@ wget -O static/img/money.jpg https://raw.githubusercontent.com/FusionAuth/fusion
 ```
 
 <Aside type="tip">
-With the home page and route complete, you can view the home page in your brower at `http://localhost:5000`.
+With the home page and route complete, you can view the home page in your browser at `http://localhost:5000`.
 </Aside>
 
-## Add OAuth Authentication Routes
-Next, you'll add a `/login` route that uses authlib to take the user to FusionAuth's OAuth2 `authorize` endpoint, 
+## Authentication
+In this section you'll build the integration with FusionAuth, which will allow users to log in to your application.
+
+### Add OAuth Authentication Routes
+Next, you'll add a `/login` route that uses authlib to take the user to FusionAuth's OAuth2 `authorize` endpoint,
 and a `/callback` route that FusionAuth will redirect the user back to after a successful login.
 
-FusionAuth will include an authorization code in the redirect to `/callback`, and the callback function will 
-make a server-to-server call to FusionAuth to exchange the authorization code for an access token, refresh token, 
-and userinfo object. All of this happens in `oauth.FusionAuth.authorize_access_token()`. This sequence of redirects and 
+FusionAuth will include an authorization code in the redirect to `/callback`, and the callback function will
+make a server-to-server call to FusionAuth to exchange the authorization code for an access token, refresh token,
+and userinfo object. All of this happens in `oauth.FusionAuth.authorize_access_token()`. This sequence of redirects and
 back end calls is known as an OAuth Authorization Code Grant flow.
 
-After your app gets the information back from FusionAuth, you'll write these items to HTTP-only cookies, so that they will 
+After your app gets the information back from FusionAuth, you'll write these items to HTTP-only cookies, so that they will
 be returned to the Flask application on subsequent requests, but are not readable by code running in the browser.
 
 We also set the userinfo object in the Flask session, to make it easy to use in rendered templates.
@@ -174,11 +189,11 @@ in, you're taking the user to `/account`, which doesn't exist yet.
 </Aside>
 
 ### Add a Secured Page
-Remember that after logging in, the application redirects the user to `/`, which then redirects a 
+Remember that after logging in, the application redirects the user to `/`, which then redirects a
 logged in user to '/account'. You going to add that route and page now.
 
-First, create the page template for a logged-in user. It's going to show a personalized header 
-and a logout button. 
+First, create the page template for a logged-in user. It's going to show a personalized header
+and a logout button.
 
 ```shell
 wget -O templates/account.html https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-flask-web/main/complete-application/templates/account.html
@@ -195,8 +210,8 @@ If one isn't, it forces a logout at FusionAuth. If one is, it renders the `/acco
 Now when you log in, you should see the `/account` page!
 </Aside>
 
-### Logout
-The last step is to implement logout. When you log a user out of an application, you'll take them to 
+### Add Logout Support
+The last step is to implement logout. When you log a user out of an application, you'll take them to
 FusionAuth's `/oauth2/logout` endpoint. After logging the user out, FusionAuth will redirect the user
 to your app's `/login` endpoint, which you'll create now. This endpoint deletes any cookies that your
 application created, and clears the Flask session.
@@ -210,12 +225,20 @@ Click the `Logout` button and watch the browser first go to FusionAuth to log ou
 </Aside>
 
 ## Next Steps
-If you wanted to improve on this application
-* Try adding support for the `Make Change` menu item on the account page. You can look at the complete application in the repository for guidance.
-* Properly validate the user's loggined in state.
-  * Validate the access token's signature
-  * Check that it isn't expired
-* Add token refresh
-  * If a user has an expired token (or even if they don't), use their refresh token to acquire a new one. If refresh fails,
-    that means it's time for the user to log in again
-* Add token validation and refresh into a function  decorator that can be easily applied to any route
+This quickstart is a great way to get a proof of concept up and running quickly, but to run
+your application in production, there are some things you're going to want to do.
+
+### FusionAuth Customization
+FusionAuth gives you the ability to customize just about everything with the user's experience and your application's integration. This includes
+* [Hosted pages](/docs/v1/tech/themes/) such as login, registration, email verification, and many more
+* [Email templates](/docs/v1/tech/email-templates/email-templates)
+* [User data and custom claims in access token JWTs](/articles/tokens/jwt-components-explained)
+
+### Security
+* You may want to customize the [token expiration times and policies](/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth
+* Choose [password rules](/docs/v1/tech/core-concepts/tenants#password) and a [hashing algorithm](/docs/v1/tech/reference/password-hashes) that meet your security needs
+
+### Tenant and Application Management
+* Model your application topology using [Applications](/docs/v1/tech/core-concepts/applications), [Roles](/docs/v1/tech/core-concepts/roles), [Groups](/docs/v1/tech/core-concepts/groups), [Entities](/docs/v1/tech/core-concepts/groups), and more
+* Set up [MFA](/docs/v1/tech/guides/multi-factor-authentication), [Social login](/docs/v1/tech/identity-providers/), and/or [SAML](/docs/v1/tech/identity-providers/samlv2/) integrations
+* Integrate with external systems using [Webhooks](/docs/v1/tech/events-webhooks/), [SCIM](/docs/v1/tech/core-concepts/scim), and [Lambdas](/docs/v1/tech/lambdas/)
