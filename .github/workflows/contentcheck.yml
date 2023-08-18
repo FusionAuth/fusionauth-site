@@ -22,6 +22,23 @@ jobs:
           RES=`diff out .github/known-blog-categories.txt`
           exit $RES
         shell: bash
+      - name: Grep for absolute URLs referencing FusionAuth.io
+        continue-on-error: true
+        # we ignore 'open your browser and navigate to https://fusionauth.io/docs' because it is part of command output
+        # we ignore 'homepage "https://fusionauth.io"' because it is part of the homebrew formula
+        # we ignore "<a href='https://fusionauth.io/docs/v1/tech/tutorials/'>Learn how this app works.</a>" because it is part of a react tutorial
+        # we use continue-on-error because grep -v exits with code 1 if it doesn't find anything, but that's what we want.
+        run: |
+          find astro/src/content/ -type f -name "*.md*" | xargs grep 'https://fusionauth.io' | grep -v "<a href='https://fusionauth.io/docs/v1/tech/tutorials/'>Learn how this app works.</a>" |grep -v 'homepage "https://fusionauth.io"' | grep -v 'open your browser and navigate to https://fusionauth.io/docs' > absolute.out
+        shell: bash
+      - name: Check for absolute URLs referencing FusionAuth.io from file. Keep this next to 'Grep for absolute URLs referencing FusionAuth.io'
+        run: |
+          exit `cat absolute.out | wc -l | sed 's/[ ]*//g'`
+        shell: bash
+      - name: Check for erroneous markdown references
+        run: |
+          exit `find astro/src/content/ -type f -name "*.md*" | xargs grep ']()'| wc -l |sed 's/[ ]*//g'`
+        shell: bash
       #- name: Check for titles/headers that have incorrect casing
         #run: |
           #! find astro/src/content/ -type f -name "*.md*" |grep -v swp | xargs grep title: |grep -v subtitle|sed 's/.*title: //' | sed "s/'//g" | grep -E '\b[a-z]+\b'
