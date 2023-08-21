@@ -223,6 +223,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".md"] },
+"ciam/what-is-ciam.md": {
+  id: "ciam/what-is-ciam.md",
+  slug: "ciam/what-is-ciam",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 "gaming-entertainment/benefits-self-hosting-reduce-latency.md": {
   id: "gaming-entertainment/benefits-self-hosting-reduce-latency.md",
   slug: "gaming-entertainment/benefits-self-hosting-reduce-latency",
@@ -293,6 +300,13 @@ declare module 'astro:content' {
   collection: "articles",
   data: InferEntrySchema<"articles">
 } & { render(): Render[".mdx"] },
+"identity-basics/magic-links.md": {
+  id: "identity-basics/magic-links.md",
+  slug: "identity-basics/magic-links",
+  body: string,
+  collection: "articles",
+  data: InferEntrySchema<"articles">
+} & { render(): Render[".md"] },
 "identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions.md": {
   id: "identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions.md",
   slug: "identity-basics/multi-tenancy-vs-single-tenant-idaas-solutions",
@@ -776,7 +790,6 @@ declare module 'astro:content' {
 "quickstart-python-django-web.mdx": {
   id: "quickstart-python-django-web.mdx",
   slug: "quickstart-python-django-web",
-
   body: string,
   collection: "quickstarts",
   data: InferEntrySchema<"quickstarts">
