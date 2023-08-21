@@ -90,7 +90,7 @@ Implementing authentication and authorization can be tricky, and if it’s not h
 
 Explore using a third-party user authentication and authorization service. It helps you focus on what makes your game unique, and it’s especially useful when you want to implement SSO, and social auth. Depending on your platform, you may want to allow a user to log in with a gaming network login, such as the XBox or PlayStation Network. An auth server can help with this integration.
 
-Using an external auth server ensures that if the gameplay code breaks, the registration continues working, so you can reach out to registered users once the game comes back online. One option for third-party auth is [FusionAuth](https://fusionauth.io/). It keeps your user data secure and provides all the social login integrations your game might need.
+Using an external auth server ensures that if the gameplay code breaks, the registration continues working, so you can reach out to registered users once the game comes back online. One option for third-party auth is [FusionAuth](/). It keeps your user data secure and provides all the social login integrations your game might need.
 
 ## Use Serverless Infrastructure
 
