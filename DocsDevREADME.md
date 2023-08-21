@@ -19,7 +19,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - When introducing a code snippet, don't use a : (colon). Instead, just use verbiage before it. "The code to exchange the token is similar to below."
 - Prefer 'You' to 'We'. 'Let's' is acceptable.
 - All code snippets within any documents should have indenting formatted to 2 spaces.
-- Code captions should have the the first letter of every word should be capitalized: This Code Is The Best.
+- Code captions should have the the first letter of every word capitalized: This Code Is The Best.
 - All image captions should be one or more complete sentences.
 - Use the oxford comma. Apples, bananas, and oranges are my favorite fruits.
 - Single spaces should be used instead of double spaces after a period.
