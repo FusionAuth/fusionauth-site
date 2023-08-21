@@ -1303,47 +1303,47 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-  "easy-integration-of-fusionauth-and-spring.mdx": {
-    id: "easy-integration-of-fusionauth-and-spring.mdx",
-    slug: "easy-integration-of-fusionauth-and-spring",
-    body: string,
-    collection: "blog",
-    data: any
-  } & { render(): Render[".mdx"] },
-  "extending-fusionauth-roles-with-cerbos.mdx": {
-    id: "extending-fusionauth-roles-with-cerbos.mdx",
-    slug: "extending-fusionauth-roles-with-cerbos",
-    body: string,
-    collection: "blog",
-    data: any
-  } & { render(): Render[".mdx"] },
-  "firebase-and-fusionauth-ciam-comparison.mdx": {
-    id: "firebase-and-fusionauth-ciam-comparison.mdx",
-    slug: "firebase-and-fusionauth-ciam-comparison",
-    body: string,
-    collection: "blog",
-    data: any
-  } & { render(): Render[".mdx"] },
-  "fitt-finder-fusionauth.mdx": {
-    id: "fitt-finder-fusionauth.mdx",
-    slug: "fitt-finder-fusionauth",
-    body: string,
-    collection: "blog",
-    data: any
-  } & { render(): Render[".mdx"] },
-  "fusionauth-advanced-mfa.mdx": {
-    id: "fusionauth-advanced-mfa.mdx",
-    slug: "fusionauth-advanced-mfa",
-    body: string,
-    collection: "blog",
-    data: any
-  } & { render(): Render[".mdx"] },
-  "fusionauth-and-svb.mdx": {
-    id: "fusionauth-and-svb.mdx",
-    slug: "fusionauth-and-svb",
-    body: string,
-    collection: "blog",
-    data: any
+"easy-integration-of-fusionauth-and-spring.mdx": {
+  id: "easy-integration-of-fusionauth-and-spring.mdx",
+  slug: "easy-integration-of-fusionauth-and-spring",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"extending-fusionauth-roles-with-cerbos.mdx": {
+  id: "extending-fusionauth-roles-with-cerbos.mdx",
+  slug: "extending-fusionauth-roles-with-cerbos",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"firebase-and-fusionauth-ciam-comparison.mdx": {
+  id: "firebase-and-fusionauth-ciam-comparison.mdx",
+  slug: "firebase-and-fusionauth-ciam-comparison",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fitt-finder-fusionauth.mdx": {
+  id: "fitt-finder-fusionauth.mdx",
+  slug: "fitt-finder-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-advanced-mfa.mdx": {
+  id: "fusionauth-advanced-mfa.mdx",
+  slug: "fusionauth-advanced-mfa",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-and-svb.mdx": {
+  id: "fusionauth-and-svb.mdx",
+  slug: "fusionauth-and-svb",
+  body: string,
+  collection: "blog",
+  data: any
 } & { render(): Render[".mdx"] },
 "fusionauth-announces-biotech.mdx": {
   id: "fusionauth-announces-biotech.mdx",
@@ -1359,50 +1359,50 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
-  "fusionauth-colorado-company-to-watch.mdx": {
-    id: "fusionauth-colorado-company-to-watch.mdx",
-    slug: "fusionauth-colorado-company-to-watch",
-    body: string,
-    collection: "blog",
-    data: any
-  } & { render(): Render[".mdx"] },
-  "fusionauth-family-model-consent-management.mdx": {
-    id: "fusionauth-family-model-consent-management.mdx",
-    slug: "fusionauth-family-model-consent-management",
-    body: string,
-    collection: "blog",
-    data: any
-  } & { render(): Render[".mdx"] },
-  "fusionauth-g2-high-performer.mdx": {
-    id: "fusionauth-g2-high-performer.mdx",
-    slug: "fusionauth-g2-high-performer",
-    body: string,
-    collection: "blog",
-    data: any
-  } & { render(): Render[".mdx"] },
-  "fusionauth-inc-5000.mdx": {
-    id: "fusionauth-inc-5000.mdx",
-    slug: "fusionauth-inc-5000",
-    body: string,
-    collection: "blog",
-    data: any
-  } & { render(): Render[".mdx"] },
-  "fusionauth-introduces-pass-wordle.mdx": {
-    id: "fusionauth-introduces-pass-wordle.mdx",
-    slug: "fusionauth-introduces-pass-wordle",
-    body: string,
-    collection: "blog",
-    data: any
-  } & { render(): Render[".mdx"] },
-  "fusionauth-introduces-simplepass.mdx": {
-    id: "fusionauth-introduces-simplepass.mdx",
-    slug: "fusionauth-introduces-simplepass",
-    body: string,
-    collection: "blog",
-    data: any
-  } & { render(): Render[".mdx"] },
-  "fusionauth-lambda-http-connect.mdx": {
-    id: "fusionauth-lambda-http-connect.mdx",
+"fusionauth-colorado-company-to-watch.mdx": {
+  id: "fusionauth-colorado-company-to-watch.mdx",
+  slug: "fusionauth-colorado-company-to-watch",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-family-model-consent-management.mdx": {
+  id: "fusionauth-family-model-consent-management.mdx",
+  slug: "fusionauth-family-model-consent-management",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-g2-high-performer.mdx": {
+  id: "fusionauth-g2-high-performer.mdx",
+  slug: "fusionauth-g2-high-performer",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-inc-5000.mdx": {
+  id: "fusionauth-inc-5000.mdx",
+  slug: "fusionauth-inc-5000",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-introduces-pass-wordle.mdx": {
+  id: "fusionauth-introduces-pass-wordle.mdx",
+  slug: "fusionauth-introduces-pass-wordle",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-introduces-simplepass.mdx": {
+  id: "fusionauth-introduces-simplepass.mdx",
+  slug: "fusionauth-introduces-simplepass",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"fusionauth-lambda-http-connect.mdx": {
+  id: "fusionauth-lambda-http-connect.mdx",
   slug: "fusionauth-lambda-http-connect",
   body: string,
   collection: "blog",
@@ -1978,6 +1978,13 @@ declare module 'astro:content' {
 "rbac-with-kubernetes-fusionauth.mdx": {
   id: "rbac-with-kubernetes-fusionauth.mdx",
   slug: "rbac-with-kubernetes-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"react-example-application.mdx": {
+  id: "react-example-application.mdx",
+  slug: "react-example-application",
   body: string,
   collection: "blog",
   data: any
