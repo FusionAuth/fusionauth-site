@@ -118,8 +118,10 @@ class Search {
       this.#pagefind = await import("/_pagefind/pagefind.js");
     }
 
-    const response = await this.#pagefind.search(this.#searchInput.value);
-    await this.#handleResults(response.results);
+    const response = await this.#pagefind.debouncedSearch(this.#searchInput.value);
+    if (response) {
+      await this.#handleResults(response.results);
+    }
   }
 
   #highlightMenuItem(option, focus) {
@@ -133,10 +135,10 @@ class Search {
 
   async #handleResults(results) {
     if (this.#searchInput.value.trim() !== '' && results && results.length > 0) {
-      this.#searchResults.innerHTML = '';
+      let html = '';
       for (const result of results.slice(0, 100)) {
         const data = await result.data();
-        this.#searchResults.innerHTML += `<li class="group" data-widget="search-result">
+        html += `<li class="group" data-widget="search-result">
           <a href="${data.url}" class="bg-slate-100 rounded-md flex group items-center px-4 py-2 dark:bg-slate-700 group-[.active]:bg-indigo-600 group-[.active]:text-white">
             <i class="bg-white border border-slate-900/10 fa-regular fa-hashtag mr-4 px-1 py-0.5 rounded-md shadow-sm text-slate-400 text-sm dark:bg-slate-600 group-[.active]:bg-indigo-600 group-[.active]:border-indigo-300 group-[.active]:text-white"></i>
             <div class="flex flex-col">
@@ -151,6 +153,7 @@ class Search {
           </a>
         </li>`;
       }
+      this.#searchResults.innerHTML = html;
     } else {
       this.#searchResults.innerHTML = `<li data-widget="search-no-results">
         <div class="font-semibold px-2">
