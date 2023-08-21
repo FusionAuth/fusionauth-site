@@ -134,7 +134,7 @@ class Search {
   async #handleResults(results) {
     if (this.#searchInput.value.trim() !== '' && results && results.length > 0) {
       this.#searchResults.innerHTML = '';
-      for (const result of results) {
+      for (const result of results.slice(0, 100)) {
         const data = await result.data();
         this.#searchResults.innerHTML += `<li class="group" data-widget="search-result">
           <a href="${data.url}" class="bg-slate-100 rounded-md flex group items-center px-4 py-2 dark:bg-slate-700 group-[.active]:bg-indigo-600 group-[.active]:text-white">
