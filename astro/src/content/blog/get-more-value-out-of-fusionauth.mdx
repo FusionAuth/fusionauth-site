@@ -1,17 +1,16 @@
 ---
-layout: blog-post
+publish_date: 2023-07-11 
 title: Get More Value Out of FusionAuth Using the APIs for User Maintenance
 description: Customizing the order for your favorite food can make a good meal better. Customizing your end-users experience with user maintenance can make their experience with your application even better.
-author: Mark Robustelli
-image: blogs/get-more-value/get-more-value-header.png
-category: article
+authors: Mark Robustelli
+image: /img/blogs/get-more-value/get-more-value-header.png
+categories: article
 tags: api user maintenance windows forms c#
-excerpt_separator: "<!--more-->"
+excerpt_separator: "{/* more */}"
 ---
+import RemoteCode from '../../components/RemoteCode.astro';
 
-So, you have just set up FusionAuth and are excited to take your new [customer identity and access management](/articles/ciam/) platform out for a spin. You spend some time setting up your Users, Applications, Tenants, etc. in the robust admin interface provided. Things are looking great. You have integrated your applications and are humming along. Now comes a real test, user maintenance.
-
-<!--more-->
+So, you have just set up FusionAuth and are excited to take your new [customer identity and access management](/articles/ciam/) platform out for a spin. {/* more */}You spend some time setting up your Users, Applications, Tenants, etc. in the robust admin interface provided. Things are looking great. You have integrated your applications and are humming along. Now comes a real test, user maintenance.
 
 ## Introduction
 *“A new user with extra pickles, please.”*
@@ -36,114 +35,24 @@ One of FusionAuth’s strengths is its flexibility. However, with the flexibilit
 ### Setting Up The User Object
 First, you need to create a few objects to hold some values. By constructing the classes and decorating properties with the proper attributes, you can still use the strongly typed objects and standard naming conventions in your C# application while also using the JSON Serializer to easily format the request body when it is time.
 
-```cs
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionDemoAPI/Helper/User.cs %}
-```
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionDemoAPI/Helper/User.cs" lang="c#" />
 
 ### Taking Input From The User
-Next, you need to take the input from the user and assign them to the values in your User object. In this case, you are performing those actions on a click event from the  `Create User` button on a [Windows Form](https://learn.microsoft.com/en-us/visualstudio/ide/create-csharp-winform-visual-studio?view=vs-2022). Pictured below is a screen shot of the interface for the sample application. 
+Next, you need to take the input from the user and assign them to the values in your User object. In this case, you are performing those actions on a click event from the `Create User` button on a [Windows Form](https://learn.microsoft.com/en-us/visualstudio/ide/create-csharp-winform-visual-studio?view=vs-2022). Pictured below is a screen shot of the interface for the sample application. 
 
-{% include _image.liquid src="/assets/img/blogs/get-more-value/fusionauth-windows-api-demo-front-end.png" alt="FusionAuth Windows API Demo Front End." class="img-fluid" figure=false %}
+![The Windows demo front end.](/img/blogs/get-more-value/fusionauth-windows-api-demo-front-end.png)
 
-You can also take this chance to validate any information deemed relevant to your application. The logic in the `IsUserValid` function can be edited to suit your needs. In this sample application it simply returns true. I know, not very creative, but useful in the demo.  You can also validate age, location or anything else you choose. Once the validation is successful, you will then pass the user object to the method that will submit your request to the FusionAuth server. Validating input like this will ensure Sally Power-User enters the correct information for the system everytime she adds a new employee.
+You can also take this chance to validate any information deemed relevant to your application. The logic in the `IsUserValid` function can be edited to suit your needs. In this sample application it simply returns true. I know, not very creative, but useful in the demo. You can also validate age, location or anything else you choose. Once the validation is successful, you will then pass the user object to the method that will submit your request to the FusionAuth server. Validating input like this will ensure Sally Power-User enters the correct information for the system every time she adds a new employee.
 
 It is important to note that the `FusionAuthClient` that has been created for this applications handles the setting of the [API Key](/docs/v1/tech/apis/api-keys#overview) and location of the FusionAuth server. These settings are stored in the `App.settings` file for the project.
 
-{% comment %}
-{% convert code to RemoteInclude with tags for this section when converting to Astro %}
-{% RemoteCode url="https://github.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/edit/main/sourcecode/FusionAuthAPIDemoFrontEnd/Form1.cs" lang="c#" tags="btnCreateUser" %}
-{% endcomment %}
-```cs
-  private async void btnCreateUser_Click(object sender, EventArgs e)
-    {
-      //FusionAuthClient is a class that contains the logic to call the FusionAuth APIs
-      var faClient = new FusionAuthClient();
-
-      UserProperties userProperties = new UserProperties()
-      {
-        Email = txtEmail.Text,
-        FirstName = txtFirstName.Text,
-        LastName = txtLastName.Text,
-        Password = txtPassword.Text
-        //add additional properties here
-      };
-
-      User userToCreate = new User()
-      {
-        UserProperties = userProperties
-      };
-
-      //perform custom validation logic in the IsUserValid method
-      if (IsUserValid(userToCreate))
-      {
-        ReturnValue userCreatedReturnValue = await faClient.CreateUser(userToCreate);
-        if (userCreatedReturnValue.success == true)
-        {
-          LogResults($"User created with ID: {userCreatedReturnValue.result}");
-          PopulateComboBox(cmbUsersToDelete, PopulateType.Users);
-        }
-        else
-        {
-          LogResults($"User creation failed. {userCreatedReturnValue.result}");
-        }
-      }
-      else
-      {
-        LogResults($"User data provided is invalid");
-      }
-    }
-```
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionAuthAPIDemoFrontEnd/frmMain.cs" lang="c#" tags="btnCreateUser" />
 
 ### Creating The User
 
 Because you decorated your User objects correctly using the JSONProperty attribute, you can use the JSON Serializer to serialize the object with the `JsonConvert.SerializeObject` method. You also need to encode it properly before you submit it. Once that is complete, you can submit the request to the FusionAuth server. You will do so here using the async pattern so as to not hold up the processing for a request that may take some time or give the application an unresponsive feel. Once you receive the return values, you can interrogate them and act accordingly.
 
-{% comment %}
-{% convert code to RemoteInclude with tags for this section when converting to Astro %}
-{% RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionDemoAPI/FusionAuthClient.cs" lang="c#" tags="CreateUser" %}
-{% endcomment %}
-```cs
-  public async Task<ReturnValue> CreateUser(User userToCreate)
-    {
-      //returns HttpClient with correct setting for instance
-      HttpClient httpClient = GetClient();
-
-      //initialize the return value 
-      ReturnValue returnVal = new ReturnValue()
-      {
-        success = false
-      };
-
-      try
-      {
-        //set the endpoint for creating a user
-        string apiURL = $"/api/user";
-
-        var payload = JsonConvert.SerializeObject(userToCreate);
-        var content = new StringContent(payload, Encoding.UTF8, "application/json");
-
-        HttpResponseMessage response = await httpClient.PostAsync($"{FUSIONAUTH_HOST}{apiURL}", content);
-
-        if (response.IsSuccessStatusCode)
-        {
-
-          string responseBody = await response.Content.ReadAsStringAsync();
-          JObject result = JObject.Parse(responseBody);
-          returnVal.success = true;
-          //assign the newly created user id to the result
-          returnVal.result = result["user"]["id"].ToString();
-        }
-
-      }
-      catch (Exception ex)
-      {
-        Console.WriteLine($"There was an error in the request {ex.Message}");
-        returnVal.result = ex.Message;
-      }
-
-      return returnVal;
-    }
-```
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionDemoAPI/FusionAuthClient.cs" lang="c#" tags="CreateUser" />
 
 ## User Workflow With FusionAuth APIs
 *“Amateurs do it till they get it right. Professionals do it until they can not get it wrong.”*
@@ -155,121 +64,17 @@ You can use the FusionAuth APIs to ensure the user is added to the correct group
 ### Setting Up The Group Object
 Once again, you will need to create a few objects to help us organize your groups. The [Add Users to a Group API](/docs/v1/tech/apis/groups#add-users-to-a-group) call you are using requires a collection of groups that each contain an array of user information. In this case, you will only be using the user Id for the new GroupUser information.
 
-```cs
-{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionDemoAPI/Helper/Group.cs %}
-```
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionDemoAPI/Helper/Group.cs" lang="c#" />
 
 ### Taking Input From The User
 As with creating the user, you need to take the input from the application and assign the values to your Group objects. Again, the `IsGroupValid` function simply returns true for the sample application but you can also validate any data you want before actually adding the user to the group. After you are satisfied the user should be added, you can submit the information to the method that will submit your request to the FusionAuth server.
 
-{% comment %}
-{% convert code to RemoteInclude with tags for this section when converting to Astro %}
-{% RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionDemoAPI/FusionAuthClient.cs" lang="c#" tags="btnAddUserToGroup" %}
-{% endcomment %}
-```cs
-  private async void btnAddUserToGroup_Click(object sender, EventArgs e)
-    {
-      //FusionAuthClient is a class that contains the logic to call  the FusionAuth APIs
-      var faClient = new FusionAuthClient();
-      //Get the selected values from the dropdowns
-      var userIdToAdd = (string)cmbUsersToAddToGroup.SelectedValue;
-      var groupIdToAdd = (string)cmbGroups.SelectedValue;
-
-      if (userIdToAdd != null && groupIdToAdd != null)
-      {
-        List<GroupUser> users = new List<GroupUser>()
-                {
-                    new GroupUser()
-                    {
-                        UserID = userIdToAdd
-                    }
-                };
-
-        Group group = new Group();
-        group.ID = groupIdToAdd;
-        group.Users = users;
-
-        List<Group> groups = new List<Group>();
-        groups.Add(group);
-
-        //perform custom validation logic here
-        if (IsGroupValid(group))
-        {
-          ReturnValue addUserToGroupReturnValue = await faClient.AddUserToGroup(groups);
-          if (addUserToGroupReturnValue.success == true)
-          {
-            LogResults($"User {(string)cmbUsersToAddToGroup.Text} has been added to the group: {(string)cmbGroups.Text}");
-          }
-          else
-          {
-            LogResults($"Adding the user to the group has failed. {addUserToGroupReturnValue.result}");
-          }
-        }
-        else
-        {
-          LogResults($"User and/or group data provided is invalid");
-        }
-      }
-      else
-      {
-        LogResults($"No group or user selected.  Populate Users and Groups.");
-      }
-    }
-```
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionAuthAPIDemoFrontEnd/frmMain.cs" lang="c#" tags="btnAddUserToGroup" />
 
 ### Adding The User To The Group
 Because the JSON format expected in the request body is not readily serializable given the Group objects you have created, you will have to perform a little wizardry to manipulate the Group objects. While this does not have to do with FusionAuth specifically, the code has been abstracted in the `FormatGroupUserJSON` function and can be found [here](https://github.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/blob/35307a11e43caa098d3366be58b07cf0452b6488/sourcecode/FusionDemoAPI/FusionAuthClient.cs#L267-L295) if you are interested. Once the API call has returned, you can retrieve whichever values you see as relevant and pass it back in the result object.
 
-{% comment %}
-{% convert code to RemoteInclude with tags for this section when converting to Astro %}
-{% RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionDemoAPI/FusionAuthClient.cs" lang="c#" tags="AddUserToGroup" %}
-{% endcomment %}
-```cs
-  public async Task<ReturnValue> AddUserToGroup(List<Group> groups)
-    {
-      //returns HttpClient with correct setting for instance
-      HttpClient httpClient = GetClient();
-
-      //initialize the return value 
-      ReturnValue returnVal = new ReturnValue()
-      {
-        success = false
-      };
-
-      try
-      {
-        //set the endpoint for creating a user
-        string apiURL = $"/api/group/member";
-
-        var payload = FormatGroupUserJSON(groups);
-        var content = new StringContent(payload, Encoding.UTF8, "application/json");
-
-        HttpResponseMessage response = await httpClient.PostAsync($"{FUSIONAUTH_HOST}{apiURL}", content);
-
-        if (response.IsSuccessStatusCode)
-        {
-
-          string responseBody = await response.Content.ReadAsStringAsync();
-          JObject result = JObject.Parse(responseBody);
-          returnVal.success = true;
-          returnVal.result = $"Member ID for added user: {result["members"].First().First()[0]["id"]}";
-        }
-        else
-        {
-          returnVal.result = $"Adding user to the group failed.\nPayload\n{payload}\n{response}";
-        }
-
-      }
-      catch (Exception ex)
-      {
-        Console.WriteLine($"There was an error in the request {ex.Message}");
-        returnVal.result = ex.Message;
-      }
-
-
-      return returnVal;
-    }
-```
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionDemoAPI/FusionAuthClient.cs" lang="c#" tags="AddUserToGroup" />
 
 ## Branding Your User Management With FusionAuth
 *“Design is the silent ambassador of your brand.”*
@@ -280,7 +85,7 @@ You may ask yourself, “If I create an admin end for user management in my appl
 
 You don’t even have to tell your users you are using FusionAuth. It’s okay, we don’t mind. We want to make you look good, help you secure your users, and let you focus on building the features your users want.
 
-{% include _image.liquid src="/assets/img/blogs/get-more-value/one-does-not-simply.png" alt="One does not simply implement user access management" class="img-fluid" figure=false %}
+![One does not simply implement user access management.](/img/blogs/get-more-value/one-does-not-simply.png)
 
 ## Conclusion
 It is important to note that as an alternative, FusionAuth does allow the creation of [custom forms](/docs/v1/tech/core-concepts/tenants#form-settings) in the admin user interface. This solution is only available for paid plans, may not support the workflow you are trying to accomplish and would not work if you did not want to give users access to the FusionAuth admin interface.
