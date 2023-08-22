@@ -316,7 +316,7 @@ In this final unit test, let's look at how to check user information available i
 
 There are two objects to consider. The first is the JWT fields that are returned to your app by default when a user logs in.
 
-```json
+```js
 {
   aud: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
   exp: 1692273965,
@@ -337,7 +337,7 @@ There are two objects to consider. The first is the JWT fields that are returned
 
 The second object is the user supplied to your `populate()` function in a lambda.
 
-```json
+```js
 user: {
     active: true,
     birthDate: '1985-11-23',
