@@ -9,27 +9,10 @@ navcategory: customization
 
 This guide shows you how to create a simple lambda manually, update it programmatically, and test it with unit and integration tests. You can familiarize yourself with lambdas by reading the [FusionAuth lambda documentation](/docs/v1/tech/lambdas).
 
-- [Overview](#overview)
-- [Prerequisites](#prerequisites)
-  - [Lambda Limitations](#lambda-limitations)
-- [Set Up The FusionAuth Sample Project](#set-up-the-fusionauth-sample-project)
-- [Manually Create A Simple Lambda](#manually-create-a-simple-lambda)
-- [Programmatically Update A Lambda](#programmatically-update-a-lambda)
-  - [Understand The Client Libraries](#understand-the-client-libraries)
-  - [Create An API Key](#create-an-api-key)
-  - [Use The Lambda CLI](#use-the-lambda-cli)
-  - [Other CLI Functionality](#other-cli-functionality)
-- [Testing Overview](#testing-overview)
-  - [Test Library](#test-library)
-  - [Integration Test: Verify JWT Population](#integration-test-verify-jwt-population)
-    - [Create A User](#create-a-user)
-    - [Write The Test](#write-the-test)
-  - [Unit Test: Call An External Service](#unit-test-call-an-external-service)
-  - [Unit Test: Populate JWT From FusionAuth](#unit-test-populate-jwt-from-fusionauth)
-
 ## Prerequisites
 
 To follow this guide, you need
+
 - [Node.js version 18](https://nodejs.org/en/download) or later, and
 - [Docker](https://www.docker.com/get-started/).
 
@@ -43,7 +26,7 @@ To follow this guide, you need
 Download or use Git to clone the [testing-lambdas repository](https://github.com/FusionAuth/fusionauth-example-testing-lambdas). Open a terminal in the directory you just created and start FusionAuth with Docker.
 
 ```bash
-docker-compose up;
+docker-compose up
 ```
 
 This command will run FusionAuth and set up a sample application with an API Key and a User, configured in the `kickstart.json` file in the `kickstart` subdirectory.
@@ -152,7 +135,7 @@ The kickstart configuration file used by FusionAuth already created a sample API
 First, install the Node CLI library. Open a terminal in your app folder and use the following commands.
 
 ```bash
-npm install --save-dev @fusionauth/cli;
+npm install --save-dev @fusionauth/cli
 npx fusionauth --help
 ```
 
@@ -215,11 +198,11 @@ There are many JavaScript test libraries available, and everyone has their prefe
 Install the following in your test app terminal.
 
 ```bash
-npm install --save-dev tape;
-npm install --save-dev faucet; # a little test-runner to give neat tape output
-npm install --save-dev fetch-mock;
-npm install --save-dev jsonwebtoken; # to decode the JWT
-npm install --save-dev uuid; # to make a random user Id
+npm install --save-dev tape
+npm install --save-dev faucet # a little test-runner to give neat tape output
+npm install --save-dev fetch-mock
+npm install --save-dev jsonwebtoken # to decode the JWT
+npm install --save-dev uuid # to make a random user Id
 ```
 
 {% include _callout-note.liquid content=" The `fetch()` method is available natively from Node LTS version 18. In earlier versions, `fetch` was provided by libraries, so many popular mocking libraries for `fetch` (such as [Nock](https://github.com/nock/nock)) won't work with modern Node in 2023." %}
@@ -393,5 +376,5 @@ The test function calls the lambda, passing it a mock `user` object. You only ne
 Run the test.
 
 ```bash
-node test.js | npx faucet;
+node test.js | npx faucet
 ```
