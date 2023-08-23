@@ -2,6 +2,8 @@ var d="/docs/v1/tech";
 var a="/articles";
 var ex="/learn/expert-advice";
 var idp="/identity-providers";
+var bc="/blog/category";
+var bac="/blog/archive/category";
 
 var ip = {};
 ip['/']=true;
@@ -67,6 +69,12 @@ ip['/quickstarts/']=true;
 ip['/blog/latest/']=true;
 
 var rd = {};
+rd[bac+'/announcement']=bc+'/news';
+rd[bac+'/article']=bc+'/education';
+rd[bac+'/comparison']=bc+'/compare';
+rd[bac+'/community-story']=bc+'/community';
+rd[bac+'/features']=bc+'/product';
+rd[bac+'/tutorial']=bc+'/tutorial';
 rd['/cognito']=d+'/migration-guide/cognito';
 rd['/cognito/']=d+'/migration-guide/cognito';
 rd[a+'/oauth/what-is-oauth']=a+'/oauth/modern-guide-to-oauth';
