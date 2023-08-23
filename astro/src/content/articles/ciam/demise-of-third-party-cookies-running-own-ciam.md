@@ -55,7 +55,7 @@ The latest CIAM solutions can offer adaptive authentication features. The proces
 
 #### Registration and Single Sign-On
 
-[Single sign-on (SSO)](https://www.cloudflare.com/learning/access-management/what-is-sso/) enables users to sign up and log in to your app or service via an account they already own in a different service known as an identity provider. SSO enhances customer satisfaction by eliminating the need for a separate password while still maintaining proper security. It also saves your users time while logging in. A CIAM system like [FusionAuth](https://fusionauth.io/) provides an [SSO feature](/features/single-sign-on) that can be integrated with numerous applications like WordPress or Shopify.
+[Single sign-on (SSO)](https://www.cloudflare.com/learning/access-management/what-is-sso/) enables users to sign up and log in to your app or service via an account they already own in a different service known as an identity provider. SSO enhances customer satisfaction by eliminating the need for a separate password while still maintaining proper security. It also saves your users time while logging in. A CIAM system like [FusionAuth](/) provides an [SSO feature](/features/single-sign-on) that can be integrated with numerous applications like WordPress or Shopify.
 
 #### Authorization
 
@@ -107,5 +107,5 @@ FLoC however, isn't as glorious a solution as it claims to be. The question with
 
 The demise of third-party cookies may affect the advertising industry for a time, but alternative solutions like CIAM solutions can reshape the business model, combining necessary customer data security with a seamless user experience.
 
-If you’re looking for a full-featured CIAM solution, take a look at [FusionAuth](https://fusionauth.io/). An excellent platform for secure access management, it is fully customizable, supports unlimited users, and provides an API for easy integration with all of the apps essential to your business.
+If you’re looking for a full-featured CIAM solution, take a look at [FusionAuth](/). An excellent platform for secure access management, it is fully customizable, supports unlimited users, and provides an API for easy integration with all of the apps essential to your business.
 
