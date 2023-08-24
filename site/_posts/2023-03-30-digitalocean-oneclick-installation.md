@@ -55,7 +55,7 @@ Notice: Setting current-context to <YOUR_CLUSTER_NAME>
 FusionAuth is now running on a publicly accessible IP address. To retrieve this address, run the following command in your terminal:
 
 ```sh
-export SERVICE_IP=$(kubectl get svc --namespace fusionauth fusionauth -o jsonpath='{.status.loadBalancer.ingress[0].ip}') \
+export SERVICE_IP=$(kubectl get svc --namespace fusionauth fusionauth -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 echo http://$SERVICE_IP:9011/
 ```
 
