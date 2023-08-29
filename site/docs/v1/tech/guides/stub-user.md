@@ -1,6 +1,6 @@
 ---
 layout: doc
-title: Stub users
+title: Stub or anonymous users
 description: This guide walks you through creating anonymous stub users in FusionAuth.
 navcategory: developer
 ---
@@ -104,7 +104,7 @@ Then send an email allowing them to reset their password.
 
 TODO put in sample template, switching on `stubUser`.
 
-Finally, update their user data to remove the `stubUser` data. TODO should we do this after they have changed their password? Id on't know if we know that (except in the enterprise events). Can't think of a better way to do this.
+Finally, update their user data to remove the `stubUser` data. TODO should we do this after they have changed their password? Id on't know if we know that (except in the enterprise events). Can't think of a better way to do this. https://fusionauth.io/docs/v1/tech/events-webhooks/events/user-email-verified
 
 At this point, the user has a full fledged user account with a known login identifier and password, but also all of the profile data that they've provided.
 
