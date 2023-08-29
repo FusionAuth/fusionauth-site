@@ -1527,6 +1527,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"fusionauth-vc-free.mdx": {
+  id: "fusionauth-vc-free.mdx",
+  slug: "fusionauth-vc-free",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "fusionauth-website-how-we-do-it.mdx": {
   id: "fusionauth-website-how-we-do-it.mdx",
   slug: "fusionauth-website-how-we-do-it",
@@ -2272,6 +2279,13 @@ declare module 'astro:content' {
 "unio-saves-100k-with-fusionauth.mdx": {
   id: "unio-saves-100k-with-fusionauth.mdx",
   slug: "unio-saves-100k-with-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"unlimited-domains-fusionauth.mdx": {
+  id: "unlimited-domains-fusionauth.mdx",
+  slug: "unlimited-domains-fusionauth",
   body: string,
   collection: "blog",
   data: any
