@@ -12,6 +12,7 @@ color: indigo
 cta: EmailListCTA
 ---
 import Aside from '../../components/Aside.astro';
+import IconButton from '../../components/IconButton.astro';
 import LoginAfter from '../../diagrams/quickstarts/login-after.astro';
 import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
 import RemoteCode from '../../components/RemoteCode.astro';
@@ -85,9 +86,10 @@ You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look
 
 ### Expose your Instance
 
-You need [to expose your local FusionAuth instance](/docs/v1/tech/developer-guide/exposing-instance) and copy the address `ngrok` gave you. Your app will use it to access the FusionAuth instance in your machine.
+You need to [expose your local FusionAuth instance](/docs/v1/tech/developer-guide/exposing-instance) and copy the address `ngrok` gave you. Your app will use it to access the FusionAuth instance in your machine.
 
-### Create your React Native Application and copy the address `ngrok` gave you. Your app will use it to access the FusionAuth instance in your machine.
+### Create your React Native Application
+
 Now you are going to create a React Native application. While this section builds a simple React Native application, you can use the same configuration to integrate your existing React Native application with FusionAuth.
 
 To make things easier, you're going to use `create-expo-app`, a library that sets up the enviroment using [Expo](https://docs.expo.dev/), a platform that runs natively on all your users' devices
@@ -106,18 +108,18 @@ We'll use the [Expo AuthSession library](https://docs.expo.dev/versions/latest/s
 
 ### Configure Expo AuthSession
 
-Install `expo-auth-session` and its dependency `expo-crypto`.
+Install `expo-auth-session`, its dependency `expo-crypto` to handle cryptographic operations and `expo-web-browser` to interact with the device Browser in order to log the user in or out.
 
 ```shell
-npx expo install expo-auth-session expo-crypto
+npx expo install expo-auth-session expo-crypto expo-web-browser
 ```
 
-Create a `.env` file to hold information about your FusionAuth instance and application, replacing the value in `EXPO_PUBLIC_FUSIONAUTH_URL` with the address you copied from `ngrok` when [exposing your instance](#Expose-your-instance).
+Create a `.env` file to hold information about your FusionAuth instance and application, replacing the value in `EXPO_PUBLIC_FUSIONAUTH_URL` with the address you copied from `ngrok` when [exposing your instance](#expose-your-instance).
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-react-native/main/complete-application/.env"
             lang="ini"/>
 
-Add a new scheme to the `app.json` file. This will be used when redirecting back to your application after logging in on out of FusionAuth.
+Edit `app.json` to add a `scheme` that will be used when redirecting back to your application after logging in and out of FusionAuth.
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-react-native/main/complete-application/app.json"
             lang="json"/>
@@ -157,11 +159,26 @@ Start up the React Native application using this command:
 npx expo start
 ```
 
-To test on the connected or emulated Android device, press `a`. Otherwise, press `i` to run on the emulated iOS device.
+After waiting a few moments, you should see a QR Code and a menu with some actions. Right below the QR Code, you'll see a message like this one _(the real address may vary)_.
+
+```
+› Metro waiting on exp://192.168.1.2:8081
+```
+
+To use [Expo Go](https://docs.expo.dev/get-started/expo-go/), a client for testing your apps on Android and iOS devices without building anything locally, you need to:
+
+* Copy that listening address (`exp://192.168.1.2:8081`).
+* Navigate to your FusionAuth instance on [localhost:9011](http://localhost:9011).
+* Browse to **Applications**.
+* Click on <IconButton icon="edit" color="blue" /> in your `ExampleReactNativeApp` to edit it.
+* Go to the **OAuth** tab.
+* Add that address to **Authorized redirect URLs**.
+* Click on <IconButton icon="save" color="blue" /> to save your changes.
+
+Go back to the terminal with the Expo menu. To test on the connected or emulated Android device, press `a`. Otherwise, press `i` to run on the emulated iOS device.
 
 ## Next Steps
-This quickstart is a great way to get a proof of concept up and running quickly, but to run
-your application in production, there are some things you're going to want to do.
+This quickstart is a great way to get a proof of concept up and running quickly, but to run your application in production, there are some things you're going to want to do.
 
 ### FusionAuth Customization
 FusionAuth gives you the ability to customize just about everything with the user's experience and your application's integration. This includes
@@ -179,6 +196,12 @@ FusionAuth gives you the ability to customize just about everything with the use
 * Set up [MFA](/docs/v1/tech/guides/multi-factor-authentication), [Social login](/docs/v1/tech/identity-providers/), and/or [SAML](/docs/v1/tech/identity-providers/samlv2/) integrations
 * Integrate with external systems using [Webhooks](/docs/v1/tech/events-webhooks/), [SCIM](/docs/v1/tech/core-concepts/scim), and [Lambdas](/docs/v1/tech/lambdas/)
 
+### Build your App for Distribution
+
+Follow [Expo's "Create your first build" tutorial](https://docs.expo.dev/build/setup/) to learn how to create a build for your app.
+
 ## Troubleshooting
 
-> @TODO
+* I keep receiving an `invalid_redirect_uri` when running the app with Expo Go
+
+Make sure you have updated the **Authorized redirect URLs** in your [FusionAuth instance](http://localhost:9011) like shown on the [Run the App](#run-the-app) step.
