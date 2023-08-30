@@ -1,0 +1,184 @@
+---
+title: React Native
+description: Quickstart integration of React Native application with FusionAuth
+navcategory: getting-started
+prerequisites: Node, npx, Android Studio and/or Xcode
+section: native
+technology: React Native
+language: JavaScript
+icon: /img/icons/react.svg
+faIcon: fa-r
+color: indigo
+cta: EmailListCTA
+---
+import Aside from '../../components/Aside.astro';
+import LoginAfter from '../../diagrams/quickstarts/login-after.astro';
+import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
+import RemoteCode from '../../components/RemoteCode.astro';
+
+In this quickstart you are going to build an application with React Native and integrate it with FusionAuth.
+You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM), a global leader in converting dollars into coins.
+It'll have areas reserved for users who have logged in as well as public facing sections.
+
+The docker compose file and source code for a complete application are available at
+https://github.com/FusionAuth/fusionauth-quickstart-react-native
+
+## Prerequisites
+
+- [Node](https://nodejs.org): This will be used to set up your project.
+- [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](/docs/v1/tech/installation-guide/)).
+- To test on Android devices, you can either connect a physical device or [Android Studio](https://developer.android.com/studio) to set up an emulator.
+- To test on iOS devices, you'll need a Mac and install [Xcode](https://developer.apple.com/xcode/) to set up an emulator.
+
+This app has been tested with React Native 0.72.4 and Node 20. This example should work with other compatible versions of React Native.
+
+## General Architecture
+
+While this sample application doesn't have login functionality without FusionAuth, a more typical integration will replace an existing login system with FusionAuth.
+
+In that case, the system might look like this before FusionAuth is introduced.
+
+<LoginBefore alt={"Request flow during login before FusionAuth"}/>
+
+The login flow will look like this after FusionAuth is introduced.
+
+<LoginAfter alt={"Request flow during login after FusionAuth"}/>
+
+In general, you are introducing FusionAuth in order to normalize and consolidate user data. This helps make sure it is consistent and up-to-date as well as offloading your login security and functionality to FusionAuth.
+
+## Getting Started
+
+In this section, you'll get FusionAuth up and running and use `npx` to create a new application.
+
+### Clone the Code
+
+First off, grab the code from the repository and change into that directory.
+
+```
+git clone https://github.com/FusionAuth/fusionauth-quickstart-react-native.git
+cd fusionauth-quickstart-react-native
+```
+
+### Run FusionAuth via Docker
+
+In the root directory of the repo you'll find a Docker compose file (`docker-compose.yml`) and an environment variables configuration file (`.env`). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
+
+```
+docker compose up -d
+```
+
+Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/v1/tech/installation-guide/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to a certain initial state.
+
+<Aside type="note">
+  If you ever want to reset the FusionAuth system, delete the volumes created by Docker Compose by executing `docker compose down -v`, then re-run `docker compose up -d`.
+</Aside>
+
+FusionAuth will be initially configured with these settings:
+
+* Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
+* Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
+* Your example username is `richard@example.com` and the password is `password`.
+* Your admin username is `admin@example.com` and the password is `password`.
+* The base URL of FusionAuth `http://localhost:9011/`.
+
+You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don't need to.
+
+### Expose your Instance
+
+You need [to expose your local FusionAuth instance](/docs/v1/tech/developer-guide/exposing-instance) and copy the address `ngrok` gave you. Your app will use it to access the FusionAuth instance in your machine.
+
+### Create your React Native Application and copy the address `ngrok` gave you. Your app will use it to access the FusionAuth instance in your machine.
+Now you are going to create a React Native application. While this section builds a simple React Native application, you can use the same configuration to integrate your existing React Native application with FusionAuth.
+
+To make things easier, you're going to use `create-expo-app`, a library that sets up the enviroment using [Expo](https://docs.expo.dev/), a platform that runs natively on all your users' devices
+
+```shell
+npx create-expo-app my-react-native-app && cd my-react-native-app
+```
+
+<Aside type="note">
+  If this is your first time setting up a React Native application, you'll receive a message asking if you want to install `create-expo-app`, so press `y` to confirm.
+</Aside>
+
+## Authentication
+
+We'll use the [Expo AuthSession library](https://docs.expo.dev/versions/latest/sdk/auth-session/), which simplifies integrating with FusionAuth and creating a secure web application.
+
+### Configure Expo AuthSession
+
+Install `expo-auth-session` and its dependency `expo-crypto`.
+
+```shell
+npx expo install expo-auth-session expo-crypto
+```
+
+Create a `.env` file to hold information about your FusionAuth instance and application, replacing the value in `EXPO_PUBLIC_FUSIONAUTH_URL` with the address you copied from `ngrok` when [exposing your instance](#Expose-your-instance).
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-react-native/main/complete-application/.env"
+            lang="ini"/>
+
+Add a new scheme to the `app.json` file. This will be used when redirecting back to your application after logging in on out of FusionAuth.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-react-native/main/complete-application/app.json"
+            lang="json"/>
+
+## App Customization
+
+In this section, you'll turn your application into a trivial banking application with some styling.
+
+### Add Styling
+
+First, run the command below to install some libraries needed for theming.
+
+```shell
+npm install expo-image expo-constants react-native-currency-input
+```
+
+Instead of using CSS, React Native has its own concept of [stylesheets](https://reactnative.dev/docs/stylesheet). Create a file named `changebank.style.js` with the contents below to style your ChangeBank app.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-react-native/main/complete-application/changebank.style.js"
+            lang="javascript"/>
+
+## Finish Setting up the App
+
+Change the existing `App.js` to integrate `expo-auth-session`, add the ChangeBank template and stitch up everything.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-react-native/main/complete-application/App.js"
+            lang="javascript"/>
+
+## Run the App
+
+If you want to test on an Android device, connect a physical device via USB or install [Android Studio](https://developer.android.com/studio) to set up an emulator.
+
+If you want to test on an iOS device and are running a Mac, install [Xcode](https://developer.apple.com/xcode/) to set up an emulator.
+Start up the React Native application using this command:
+
+```shell
+npx expo start
+```
+
+To test on the connected or emulated Android device, press `a`. Otherwise, press `i` to run on the emulated iOS device.
+
+## Next Steps
+This quickstart is a great way to get a proof of concept up and running quickly, but to run
+your application in production, there are some things you're going to want to do.
+
+### FusionAuth Customization
+FusionAuth gives you the ability to customize just about everything with the user's experience and your application's integration. This includes
+* [Hosted pages](/docs/v1/tech/themes/) such as login, registration, email verification, and many more
+* [Email templates](/docs/v1/tech/email-templates/email-templates)
+* [User data and custom claims in access token JWTs](/articles/tokens/jwt-components-explained)
+
+### Security
+* [Expo AuthSession](https://docs.expo.dev/versions/latest/sdk/auth-session/) handles token validation and refresh
+* You may want to customize the [token expiration times and policies](/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth
+* Choose [password rules](/docs/v1/tech/core-concepts/tenants#password) and a [hashing algorithm](/docs/v1/tech/reference/password-hashes) that meet your security needs
+
+### Tenant and Application Management
+* Model your application topology using [Applications](/docs/v1/tech/core-concepts/applications), [Roles](/docs/v1/tech/core-concepts/roles), [Groups](/docs/v1/tech/core-concepts/groups), [Entities](/docs/v1/tech/core-concepts/groups), and more
+* Set up [MFA](/docs/v1/tech/guides/multi-factor-authentication), [Social login](/docs/v1/tech/identity-providers/), and/or [SAML](/docs/v1/tech/identity-providers/samlv2/) integrations
+* Integrate with external systems using [Webhooks](/docs/v1/tech/events-webhooks/), [SCIM](/docs/v1/tech/core-concepts/scim), and [Lambdas](/docs/v1/tech/lambdas/)
+
+## Troubleshooting
+
+> @TODO
