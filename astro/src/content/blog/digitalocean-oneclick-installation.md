@@ -1,15 +1,17 @@
 ---
-layout: blog-post
+publish_date: 2023-08-08
 title: Deploying FusionAuth on DigitalOcean using the One-Click Installer
-description: Revised version of the guide from the DigitalOcean Marketplace
-author: Dean Rodman, Bradley Van Aardt
-category: blog
-excerpt_separator: "<!--more-->"
+description: In this tutorial, you'll learn how to deploy FusionAuth to DigitalOcean.
+authors:  Dean Rodman, Bradley Van Aardt
+categories: Tutorial
+image: /img/blogs/social-sign-in-twitter-express/adding-twitter-sign-in-node.js-express-app-oauth.png
+tags: digital ocean, marketplaces, kubernetes, helm, self-hosted
+excerpt_separator: "{/* more */}"
 ---
 
 In this tutorial, you will install FusionAuth onto a Kubernetes cluster hosted on DigitalOcean. You can install FusionAuth with one click from the DigitalOcean marketplace, but you will need to follow some additional steps in order to host your FusionAuth instance on a publicly accessible IP. 
 
-<!--more-->
+{/* more */}
 
 ## Prerequisites
 
@@ -25,19 +27,19 @@ Click the links above and follow the instructions for installing, configuring, a
 
 You can install FusionAuth on DigitalOcean by clicking the "Install App" button at [this link](https://marketplace.digitalocean.com/apps/fusionauth).
 
-{% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-install-app.png" alt="Install FusionAuth from DigitalOcean marketplace" class="img-fluid" figure=false %}
+![Install FusionAuth from DigitalOcean marketplace.](/img/blogs/digitalocean/digitalocean-install-app.png)
 
 On the next screen, select "Install". By default, this will install FusionAuth on a new Kubernetes cluster, but you can choose an existing cluster from the dropdown if you have one.  
 
-{% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-select-cluster.png" alt="Select Kubernetes cluster to install FusionAuth on" class="img-fluid" figure=false %}
+![Select Kubernetes cluster to install FusionAuth on.](/img/blogs/digitalocean/digitalocean-select-cluster.png)
 
 You will be taken to the cluster configuration page. The default values here will work. You may want to choose the project to install under and give the cluster a more readable name. When you're done, scroll down to the bottom of the page and click "Create Cluster". Three nodes will be created so that FusionAuth works properly: one for the database, one for Elasticsearch, and one for the FusionAuth API.
 
-{% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-create-cluster.png" alt="Settings configuration for new Kubernetes cluster" class="img-fluid" figure=false %}
+![Settings configuration for new Kubernetes cluster.](/img/blogs/digitalocean/digitalocean-create-cluster.png)
 
 FusionAuth may take several minutes to install. Once installed, click on the cluster name to access guides, resources, settings, and more. Select the "Overview" panel and click "Get Started". Navigate to the second step, "Connecting to Kubernetes". There you will find a command on the "Automated" tab with the appropriate value for `<YOUR_CLUSTER_ID>`.
 
-{% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-connecting-to-kubernetes.png" alt="command line prompt to connect to your Kubernetes cluster" class="img-fluid" figure=false %}
+![command line prompt to connect to your Kubernetes cluster.](/img/blogs/digitalocean/digitalocean-connecting-to-kubernetes.png)
 
 If you have already installed the [DigitalOcean command line tool](https://docs.digitalocean.com/reference/doctl/how-to/install/), run the following command in your terminal:
 
@@ -221,11 +223,11 @@ namespace "fusionauth" deleted
 
 This removes all the FusionAuth, Elasticsearch, and database resources from your Kubernetes cluster, along with the `fusionauth` namespace. However, the Kubernetes cluster itself will still exist. You can delete this cluster from the DigitalOcean admin console. Click on "Kubernetes" in the sidebar, then select the cluster you want to delete. Click on the "Actions" dropdown and select "Destroy". Follow the instructions to destroy the cluster.
 
-{% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-destroy-cluster.png" alt="Destroying a cluster from the DigitalOcean admin console" class="img-fluid" figure=false %}
+![Destroying a cluster from the DigitalOcean admin console.](/img/blogs/digitalocean/digitalocean-destroy-cluster.png)
 
 If you did not destroy the cluster, you can reinstall FusionAuth to this cluster by following the installation instructions above and selecting the current cluster instead of a new one.
 
-{% include _image.liquid src="/assets/img/blogs/digitalocean/digitalocean-select-current-cluster.png" alt="Selecting current cluster from the dropdown in the configuration wizard" class="img-fluid" figure=false %}
+![Selecting current cluster from the dropdown in the configuration wizard.](/img/blogs/digitalocean/digitalocean-select-current-cluster.png)
 
 
 ## Next Steps
