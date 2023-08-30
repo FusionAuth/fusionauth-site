@@ -61,7 +61,7 @@ export SERVICE_IP=$(kubectl get svc --namespace fusionauth fusionauth -o jsonpat
 echo http://$SERVICE_IP:9011/
 ```
 
-This command will output the URL address to the terminal. Navigate to this URL in your web browser. You will be taken to the FusionAuth Setup Wizard. [Complete these steps](https://fusionauth.io/blog/2019/02/05/using-the-setup-wizard) to start using FusionAuth on your public Kubernetes cluster provisioned by DigitalOcean.
+This command will output the URL address to the terminal. Navigate to this URL in your web browser. You will be taken to the FusionAuth Setup Wizard. [Complete these steps](/blog/2019/02/05/using-the-setup-wizard) to start using FusionAuth on your public Kubernetes cluster provisioned by DigitalOcean.
 
 ## Monitoring
 
@@ -232,4 +232,6 @@ If you did not destroy the cluster, you can reinstall FusionAuth to this cluster
 
 ## Next Steps
 
-You've now deployed a FusionAuth instance on a public Kubernetes cluster hosted on DigitalOcean. From here, you can [create an application](https://fusionauth.io/docs/v1/tech/core-concepts/applications) and [register users to it](https://fusionauth.io/docs/v1/tech/tutorials/register-user-login-api) to implement a login page. Be sure to check out the [guides](https://fusionauth.io/docs/v1/tech/guides/) for more information about how to implement FusionAuth's many features into your application.
+You've now deployed a FusionAuth instance on a public Kubernetes cluster hosted on DigitalOcean. From here, you can [create an application](/docs/v1/tech/core-concepts/applications) and [register users to it](/docs/v1/tech/tutorials/register-user-login-api) to implement a login page. Be sure to check out the [guides](/docs/v1/tech/guides/) for more information about how to implement FusionAuth's many features into your application.
+
+You can also see the [other marketplaces FusionAuth is available in](/docs/v1/tech/installation-guide/marketplaces).
