@@ -20,7 +20,10 @@ In support of https://tools.ietf.org/html/rfc6749[OAuth 2.0 IETF RFC 6749], http
 ** <<Refresh Token Grant Request>>
 ** <<Client Credentials Grant Request>>
 * <<Device>>
-* <<Device Validate>>
+** <<Device Authorize>>
+** <<Device User Code>>
+** <<Device Validate>>
+** <<Device Approve>>
 * <<Introspect>>
 
 In support of http://openid.net/specs/openid-connect-core-1_0.html[OpenID Connect], the following endpoints are provided:
@@ -188,25 +191,7 @@ Location: https://piedpiper.com/callback?
 ==== Redirect Parameters
 
 [.api]
-[field]#code# [type]#[String]#::
-The authorization code.
-
-[field]#locale# [type]#[String]#::
-The link:/docs/v1/tech/reference/data-types#locales[locale] that was to render the login page, or a previously selected locale by the user during a previous session.
-This may be useful to know in your own application so you can continue to localize the interface for the language the user selected while on the FusionAuth login page.
-See the link:/docs/v1/tech/themes/localization[Theme Localization] documentation for more information.
-
-[field]#state# [type]#[String]#::
-The state that was provided on the Authorization request.
-This parameter will be omitted if the [field]#state# parameter was not provided on the initial authentication request.
-
-[field]#userState# [type]#[String]#::
-The FusionAuth user state.
-+
-The possible values are:
-+
-* `Authenticated` - The user is successfully authenticated for the requested application.
-* `AuthenticatedNotRegistered` - The user is successfully authenticated, but not registered for the requested application.
+include::docs/v1/tech/shared/_oauth-authorize-redirect-parameters.adoc[]
 
 === Implicit Grant Request
 
@@ -365,7 +350,7 @@ This request parameter will be omitted if an id token was not requested in the [
 See the link:/docs/v1/tech/oauth/tokens#id-token[OAuth Tokens] documentation for more information.
 
 [field]#locale# [type]#[String]#::
-The link:/docs/v1/tech/reference/data-types#locales[locale] that was to render the login page, or a previously selected locale by the user during a previous session.
+The link:/docs/v1/tech/reference/data-types#locales[locale] that was used to render the login page, or a previously selected locale by the user during a previous session.
 This may be useful to know in your own application so you can continue to localize the interface for the language the user selected while on the FusionAuth login page.
 See the link:/docs/v1/tech/themes/localization[Theme Localization] documentation for more information.
 
@@ -387,7 +372,7 @@ The possible values are:
 
 == Logout
 
-This endpoint provides a mechanism to invalidate the user's session held by FusionAuth, this effectively logs the user out of the FusionAuth SSO.
+This endpoint provides a mechanism to invalidate the user's session held by FusionAuth, this effectively logs the user out of the FusionAuth SSO. Calling this endpoint does not revoke refresh tokens or JWTs. You can revoke the former by using the link:/docs/v1/tech/apis/jwt[Revoke Refresh Tokens API]. To revoke JWTs, link:/articles/tokens/revoking-jwts[implement a revocation strategy].
 
 Since `1.10.0` The logout behavior follows that of the https://openid.net/specs/openid-connect-frontchannel-1_0.html[OpenID Connect Front-Channel Logout] specification.
 
@@ -538,11 +523,11 @@ If you will be using the Authorization Code grant, you will make a request to th
 [method]#POST# [uri]#/oauth2/token#
 --
 
-include::docs/v1/tech/oauth/_authorization-header.adoc[]
-
 ==== Request Headers
 
 [.api]
+include::docs/v1/tech/oauth/_authorization-header.adoc[]
+
 [field]#Content-Type# [type]#[String]# [required]#Required#::
 This value must be set to `application/x-www-form-urlencoded`.
 
@@ -604,11 +589,11 @@ If you will be using the Resource Owner Password Credential Grant, you will make
 [method]#POST# [uri]#/oauth2/token#
 --
 
-include::docs/v1/tech/oauth/_authorization-header.adoc[]
-
 ==== Request Headers
 
 [.api]
+include::docs/v1/tech/oauth/_authorization-header.adoc[]
+
 [field]#Content-Type# [type]#[String]# [required]#Required#::
 This value must be set to `application/x-www-form-urlencoded`.
 
@@ -655,18 +640,13 @@ iOS Safari
 +
 
 [field]#metaData.device.type# [type]#[String]# [optional]#Optional# [since]#Available since 1.20.1#::
-The type of device used during login.
-This metadata is used to describe the type of device represented by the refresh token that may be generated for this login request.
+The type of device represented by the `device` parameter. This metadata is used to describe the type of device represented by the refresh token that may be generated for this login request.
 +
-* `BROWSER`
-* `DESKTOP`
-* `LAPTOP`
-* `MOBILE`
-* `OTHER`
-* `SERVER`
-* `TABLET`
-* `TV`
-* `UNKNOWN`
+Prior to version 1.46.0, this value was restricted to the following types:
++
+include::docs/v1/tech/apis/_device-type-list.adoc[]
++
+In version `1.46.0` and beyond, this value can be any string value you'd like, have fun with it!
 
 [field]#username# [type]#[String]# [required]#Required#::
 The login identifier of the user.
@@ -715,11 +695,11 @@ This is the Device Access Token Request portion of the https://tools.ietf.org/ht
 [method]#POST# [uri]#/oauth2/token#
 --
 
-include::docs/v1/tech/oauth/_authorization-header.adoc[]
-
 ==== Request Headers
 
 [.api]
+include::docs/v1/tech/oauth/_authorization-header.adoc[]
+
 [field]#Content-Type# [type]#[String]# [required]#Required#::
 This value must be set to `application/x-www-form-urlencoded`.
 
@@ -772,6 +752,9 @@ The following response applies to the <<Complete the Authorization Code Grant Re
 
 |400
 |The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuth Error section] of the API documentation.
+
+|401
+|The client could not be verified. Verify your `client_id` and `client_secret` are valid and authorized for this request.
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
@@ -834,8 +817,6 @@ If you will be using the Refresh Token Grant, you will make a request to the Tok
 [method]#POST# [uri]#/oauth2/token#
 --
 
-include::docs/v1/tech/oauth/_authorization-header.adoc[]
-
 ==== Request Cookies
 
 [.api]
@@ -847,6 +828,8 @@ If both the cookie and request parameter are provided, the cookie will take prec
 ==== Request Headers
 
 [.api]
+include::docs/v1/tech/oauth/_authorization-header.adoc[]
+
 [field]#Content-Type# [type]#[String]# [required]#Required#::
 This value must be set to `application/x-www-form-urlencoded`.
 
@@ -912,6 +895,9 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&grant_type=refresh_token&refresh_
 |400
 |The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuth Error section] of the API documentation.
 
+|401
+|The client could not be verified. Verify your `client_id` and `client_secret` are valid and authorized for this request.
+
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
 
@@ -976,10 +962,10 @@ If you will be using the Client Credentials grant, you will make a request to th
 ==== Request Headers
 
 [.api]
+include::docs/v1/tech/oauth/_authorization-header.adoc[]
+
 [field]#Content-Type# [type]#[String]# [required]#Required#::
 This value must be set to `application/x-www-form-urlencoded`.
-
-include::docs/v1/tech/oauth/_authorization-header.adoc[]
 
 ==== Request Parameters
 
@@ -1057,6 +1043,9 @@ grant_type=client_credentials
 |400
 |The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuth Error section] of the API documentation.
 
+|401
+|The client could not be verified. Verify your `client_id` and `client_secret` are valid and authorized for this request.
+
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
 
@@ -1095,6 +1084,9 @@ This endpoint been available since 1.11.0
 ====
 
 This is an implementation of the Device Authorization endpoint as defined by the https://tools.ietf.org/html/rfc8628#section-3.1[IETF RFC 8628 Section 3.1].
+
+=== Device Authorize
+
 To begin the Device Authorization Grant you will make a request to the Device Authorization endpoint from the device.
 
 [.endpoint]
@@ -1153,9 +1145,6 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&scope=offline_access
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
-
-|503
-|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
 |===
 
 ==== Response Body
@@ -1196,7 +1185,165 @@ This can be used to build a QR code or provide a clickable link that may pre-pop
 }
 ----
 
-== Device Validate
+=== Device User Code
+
+[NOTE.since]
+====
+This endpoint has been available since 1.46.0
+====
+
+This endpoint is intended to validate the end-user provided [field]#user_code# and return meta-data useful when building your own interactive workflow.
+
+This endpoint is equivalent to the <<Device Validate>> endpoint, but it will return meta-data for the [field]#user_code# in a JSON body.
+
+[.api-authentication]
+Validate and retrieve a user_code using client credentials
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/oauth2/device/user-code#
+--
+
+==== Request Headers
+
+[.api]
+include::docs/v1/tech/oauth/_authorization-header.adoc[]
+
+[field]#Content-Type# [type]#[String]# [required]#Required#::
+This value must be set to `application/x-www-form-urlencoded`.
+
+==== Request Parameters
+
+Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
+[.api]
+[field]#client_id# [type]#[String]# [optional]#Optional#::
+The unique client identifier.
+The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
++
+This parameter is optional when the `Authorization` header is provided.
+When the `Authorization` header is not provided, this parameter is then required.
+Prior to version `1.46.0` this parameter was always required.
+
+[field]#client_secret# [type]#[String]# [optional]#Optional#::
+The client secret.
+This parameter is optional when the `Authorization` header is provided.
+Please see the link:#client-secret-table[the Client Secret table] for more details.
+
+[field]#user_code# [type]#[String]# [required]#Required#::
+The end-user verification code.
+This is the code that a user entered during the Device Authorization grant which you are requesting to be validated.
+
+[.api-authentication]
+link:/docs/v1/tech/apis/authentication#api-key-authentication[icon:lock[type=fas]] Validate and retrieve a user_code using an API key
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/oauth2/device/user-code#
+--
+
+==== Request Headers
+
+[.api]
+[field]#Content-Type# [type]#[String]# [required]#Required#::
+This value must be set to `application/x-www-form-urlencoded`.
+
+==== Request Parameters
+
+Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
+[.api]
+[field]#user_code# [type]#[String]# [required]#Required#::
+The end-user verification code.
+This is the code that a user entered during the Device Authorization grant which you are requesting to be validated.
+
+=== Response
+
+[cols="1a,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful. The response will contain a JSON body.
+
+|400
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuth Error section] of the API documentation.
+
+|401
+|The provided client credentials are invalid, or the API key if provided is not valid.
+
+|500
+|There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
+|===
+
+==== Response Body
+
+[.api]
+[field]#client_id# [type]#[String]#::
+The unique client identifier provided on the Device Authorize request.
+
+[field]#deviceInfo.description# [type]#[String]#::
+The optional device description provided on the Device Authorize request.
+
+[field]#deviceInfo.name# [type]#[String]#::
+The optional device name provided on the Device Authorize request.
+
+[field]#deviceInfo.type# [type]#[String]#::
+The optional device type provided on the Device Authorize request.
+
+[field]#expires_in# [type]#[Integer]#::
+The number of seconds the [field]#device_code# and [field]#user_code# tokens will remain active.
++
+This is how long you have to complete the Device grant.
+
+[field]#pendingIdPLink.displayName# [type]#[String]#::
+The human readable name of the user represented by the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+
+[field]#pendingIdPLink.identityProviderId# [type]#[String]#::
+The unique Identity Provider Id associated with the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+
+[field]#pendingIdPLink.identityProviderName# [type]#[String]#::
+The name of the Identity Provider associated with the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+
+[field]#pendingIdPLink.identityProviderType# [type]#[String]#::
+The type of the Identity Provider associated with the the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+
+[field]#pendingIdPLink.identityProviderUserId# [type]#[String]#::
+The unique user Id of the user represented by the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
++
+This is the value that FusionAuth will use to uniquely link a FusionAuth User to a user in the 3rd party identity provider.
+
+[field]#tenantId# [type]#[UUID]#::
+The unique Id of the Tenant.
+
+[field]#user_code# [type]#[String]#::
+The end-user verification code. This is the same value that was provided in the request body.
+
+[source,json]
+.Example JSON Response
+----
+{
+  "client_id": "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
+  "deviceInfo": {
+    "description": "Johny's Xbox"
+    "name": "Xbox",
+    "type": "Console"
+  },
+  "expires_in": 600,
+  "pendingIdPLink": {
+    "displayName": "jmoney42",
+    "identityProviderId": "af53ab21-34c3-468a-8ba2-ecb3905f67f2",
+    "identityProviderName": "Xbox",
+    "identityProviderType": "Xbox",
+    "identityProviderUserId": "af53ab21-34c3-468a-8ba2-ecb3905f67f2"
+  },
+  "tenantId": "5f35237d-d036-4aaa-a917-17039d4697e6",
+  "user_code": "FBGLLF",
+}
+----
+
+=== Device Validate
 
 [NOTE.since]
 ====
@@ -1204,6 +1351,7 @@ This endpoint has been available since 1.11.0
 ====
 
 This endpoint validates the end-user provided [field]#user_code# from the user-interaction of the Device Authorization Grant.
+
 If you build your own activation form you should validate the user provided code prior to beginning the Authorization grant.
 If you choose to redirect to the FusionAuth provided form `/oauth2/device` then it is not necessary for you to validate the [field]#user_code#.
 
@@ -1239,10 +1387,143 @@ This is the code that a user entered during the Device Authorization grant which
 
 |500
 |There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
-
-|503
-|The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.
 |===
+
+
+=== Device Approve
+
+[NOTE.since]
+====
+This endpoint has been available since 1.46.0
+====
+
+Approve a [field]#user_code# returned from the <<Device Authorize>>. If you are using the FusionAuth themed page for `/oauth2/device` you do not need to use this because the grant will be automatically approved once the user has completed authentication and the OAuth2 Grant has completed.
+
+If you are building your own integration to collect the `user_code` from the end user, and wish to approve the Device Grant after authenticating the user, use this API to approve the device code allowing the Device Grant to complete.
+
+[.endpoint]
+.URI
+--
+[method]#POST# [uri]#/oauth2/device/approve#
+--
+
+==== Request Headers
+
+[.api]
+include::docs/v1/tech/oauth/_authorization-header.adoc[]
+
+[field]#Content-Type# [type]#[String]# [required]#Required#::
+This value must be set to `application/x-www-form-urlencoded`.
+
+==== Request Parameters
+
+Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
+[.api]
+[field]#client_id# [type]#[String]# [optional]#Optional#::
+The unique client identifier.
+The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
++
+This parameter is optional when the `Authorization` header is provided.
+When the `Authorization` header is not provided, this parameter is then required.
+Prior to version `1.3.1` this parameter was always required.
+
+[field]#client_secret# [type]#[String]# [optional]#Optional#::
+The client secret.
+This parameter is optional when the `Authorization` header is provided.
+Please see the link:#client-secret-table[the Client Secret table] for more details.
+
+[field]#token# [type]#[String]# [required]#Required#::
+The access token returned by this OAuth provider as the result of a successful authentication. This token must contain a `sub` claim which will be used to identify the FusionAuth User.
+
+[field]#user_code# [type]#[String]# [required]#Required#::
+The end-user verification code.
+
+=== Response
+
+[cols="1a,9a"]
+.Response Codes
+|===
+|Code |Description
+
+|200
+|The request was successful. The response will contain a JSON body.
+
+|400
+|The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the link:#oautherror[OAuth Error section] of the API documentation.
+
+|401
+|The client could not be verified. Verify your `client_id` and `client_secret` are valid and authorized for this request.
+
+|500
+|There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.
+|===
+
+==== Response Body
+
+[.api]
+[field]#deviceGrantStatus# [type]#[String]#::
+The device grant status. This will always be `Approved`.
+
+[field]#deviceInfo.description# [type]#[String]#::
+The optional device description provided on the Device Authorize request.
+
+[field]#deviceInfo.name# [type]#[String]#::
+The optional device name provided on the Device Authorize request.
+
+[field]#deviceInfo.type# [type]#[String]#::
+The optional device type provided on the Device Authorize request.
+
+[field]#identityProviderLink.displayName# [type]#[String]#::
+The human readable name of the user represented by the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+
+[field]#identityProviderLink.identityProviderId# [type]#[String]#::
+The unique Identity Provider Id associated with the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+
+[field]#identityProviderLink.identityProviderName# [type]#[String]# [since]#Available since 1.47.0#::
+The name of the Identity Provider associated with the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+
+[field]#identityProviderLink.identityProviderType# [type]#[String]#::
+The type of the Identity Provider associated with the the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+
+[field]#identityProviderLink.identityProviderUserId# [type]#[String]#::
+The unique user Id of the user represented by the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
++
+This is the value that FusionAuth will use to uniquely link a FusionAuth User to a user in the 3rd party identity provider.
+
+[field]#identityProviderLink.insertInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] when the identity provider link was created.
+
+[field]#identityProviderLink.lastLoginInstant# [type]#[Long]#::
+The link:/docs/v1/tech/reference/data-types#instants[instant] when the User logged in last using this identity provider.
+
+[field]#tenantId# [type]#[UUID]#::
+The unique Id of the Tenant.
+
+[field]#userId# [type]#[UUID]#::
+The unique Id of the User.
+
+[source,json]
+.Example JSON Response
+----
+{
+  "deviceGrantStatus": "Approved",
+  "deviceInfo": {
+    "description": "Johny's Xbox"
+    "name": "Xbox",
+    "type": "Console"
+  },
+  "identityProviderLink": {
+    "displayName": "jmoney42",
+    "identityProviderId": "af53ab21-34c3-468a-8ba2-ecb3905f67f2",
+    "identityProviderName": "Xbox",
+    "identityProviderType": "Xbox",
+    "identityProviderUserId": "af53ab21-34c3-468a-8ba2-ecb3905f67f2"
+  },
+  "tenantId": "5f35237d-d036-4aaa-a917-17039d4697e6",
+  "userId": "3b6d2f70-4821-4694-ac89-60333c9c4165",
+}
+----
 
 == Introspect
 
@@ -1261,6 +1542,8 @@ Inspect an access token issued by this OAuth provider
 ==== Request Headers
 
 [.api]
+include::docs/v1/tech/oauth/_authorization-header.adoc[]
+
 [field]#Content-Type# [type]#[String]# [required]#Required#::
 This value must be set to `application/x-www-form-urlencoded`.
 
@@ -1269,12 +1552,23 @@ This value must be set to `application/x-www-form-urlencoded`.
 Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
 
 [.api]
-[field]#client_id# [type]#[String]# [required]#Required#::
+[field]#client_id# [type]#[String]# [optional]#Optional#::
 The unique client identifier.
-The client Id is the Id of the FusionAuth Application for which this token was generated.
+The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
++
+This parameter is optional when the `Authorization` header is provided.
+When the `Authorization` header is not provided, this parameter is then required.
+Prior to version `1.46.0` this parameter was always required.
+
+[field]#client_secret# [type]#[String]# [optional]#Optional# [since]#Available since 1.46.0#::
+The client secret.
+This parameter is optional when the `Authorization` header is provided.
+Please see the link:#client-secret-table[the Client Secret table] for more details.
 
 [field]#token# [type]#[String]# [required]#Required#::
 The access token returned by this OAuth provider as the result of a successful authentication.
++
+Starting in version `1.46.0` this endpoint will also accept a token generated by the Client Credentials Grant.
 
 [source,options="wrap"]
 .Example HTTP Request
@@ -1312,18 +1606,21 @@ covered in the link:#oautherror[OAuth Error section] of the API documentation.
 |===
 
 ==== Response Body
+This is an example response body when the provided `access_token` was issued on behalf of a user using the Authorization Code Grant, Implicit Grant ,Password Credentials Grant or Refresh Token Grant.
 
 [.api]
 [field]#active# [type]#[String]#::
 When this value is `true` the token is valid and additional claims will be provided in the response body.
-When this value is
-`false` no claims will be provided in the response body.
+When this value is `false` no claims will be provided in the response body.
 
 [field]#applicationId# [type]#[UUID]#::
-The unique Id of the Application for which the User has been authenticated.
+The unique Id of the Application for which the User has been authenticated. The presence of this claim indicates the user is registered for this application.
 
 [field]#aud# [type]#[String]#::
 The `client_id` that was used to request the access token.
+
+[field]#auth_time# [type]#[Long]#::
+The time of the initial authentication request, expressed as UNIX time which is the number of seconds since Epoch. This claim will remain the same even when the token has been re-issued through the use of a Refresh Token.
 
 [field]#authenticationType# [type]#[String]#::
 The method used to authenticate the User which resulted in this JWT being generated.
@@ -1343,7 +1640,7 @@ The possible values are:
 * `OPENID_CONNECT` - The User was authenticated using an external OpenID Connect provider. [since]#Available since 1.1.0#
 * `PASSWORD` - The User was authenticated using a loginId and password combination.
 * `PASSWORDLESS` - The user was authenticated using a passwordless login link. &nbsp; [since]#Available since 1.5.0#
-* `PING` - The user was authenticated using the PING API w/ a valid JWT.
+* `PING` - The user was authenticated using a `PUT` request on the Login API. This is used to record a login event without prompting for credentials.
 * `REGISTRATION` - The user was created using the Registration API.  &nbsp; [since]#Available since 1.16.0#
 * `REFRESH_TOKEN` - The User requested a new JWT using a Refresh Token.
 * `SAMLv2` - The User was authenticated using an external SAMLv2 provider. [since]#Available since 1.6.0#
@@ -1366,15 +1663,24 @@ The instant the access token was issued, expressed as UNIX time which is the num
 [field]#iss# [type]#[String]#::
 The issuer of the access token.
 
+[field]#jti# [type]#[String]#::
+The unique identifier of the access token.
+
 [field]#preferred_username# [type]#[String]# [since]#Available since 1.5.0#::
 The username of the User whose claims are represented by this JWT.
 
 [field]#roles# [type]#[Array<String>]#::
 The roles assigned to the User in the authenticated Application.
 
+[field]#scope# [type]#[String]#::
+The scope of the access token. This will only be present if scope was requested during authentication.
+
 [field]#sub# [type]#[UUID]#::
 The subject of the access token.
 This value is equal to the User's unique Id in FusionAuth.
+
+[field]#tid# [type]#[UUID]# [since]#Available since 1.36.0#::
+The FusionAuth Tenant unique Id.
 
 [source,json]
 .Example JSON Response for a valid token
@@ -1392,6 +1698,66 @@ This value is equal to the User's unique Id in FusionAuth.
   "roles": [
     "admin"
   ],
+  "sub": "858a4b01-62c8-4c2f-bfa7-6d018833bea7"
+}
+----
+
+[source,json]
+.Example JSON Response for an invalid token
+----
+{
+  "active": false
+}
+----
+
+==== Response Body
+
+[NOTE.since]
+====
+Available Since Version 1.46.0
+====
+
+This is an example response body when the provided `access_token` was issued as the result of the Client Credentials Grant.
+
+[.api]
+[field]#active# [type]#[String]#::
+When this value is `true` the token is valid and additional claims will be provided in the response body.
+When this value is `false` no claims will be provided in the response body.
+
+[field]#aud# [type]#[Object]#::
+The intended audience of this access token. This value may be a string or an array of string values representing one to many intended entities.
+
+[field]#exp# [type]#[Long]#::
+The expiration instant of the access token, expressed as UNIX time which is the number of seconds since Epoch.
+
+[field]#iat# [type]#[Long]#::
+The instant the access token was issued, expressed as UNIX time which is the number of seconds since Epoch.
+
+[field]#iss# [type]#[String]#::
+The issuer of the access token.
+
+[field]#jti# [type]#[String]#::
+The unique identifier of the access token.
+
+[field]#permissions# [type]#[Map<UUID, List<Object>]#::
+The optional permissions requested for this access token. If no permissions were requested, this token represents all permissions allowed by the grant.
+
+[field]#sub# [type]#[UUID]#::
+The subject of the access token.
+This value is equal to the Entity unique Id in FusionAuth.
+
+[field]#tid# [type]#[UUID]#::
+The FusionAuth Tenant unique Id.
+
+[source,json]
+.Example JSON Response for a valid token
+----
+{
+  "active": true,
+  "aud": "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
+  "exp": 1487975407000,
+  "iat": 1487971807000,
+  "iss": "acme.com",
   "sub": "858a4b01-62c8-4c2f-bfa7-6d018833bea7"
 }
 ----
@@ -1464,66 +1830,9 @@ covered in the link:#oautherror[OAuth Error section] of the API documentation.
 
 ==== Response Body
 
-[.api]
-[field]#applicationId# [type]#[UUID]#::
-The unique Id of the Application for which the User has been authenticated.
-
-[field]#birthdate# [type]#[String]# [since]#Available since 1.1.0#::
-The birthDate of the User if available.
-Format will be in `YYYY-MM-DD` as defined by the OpenID Connect core specification.
-
-[field]#email# [type]#[String]#::
-The email address of the User.
-
-[field]#email_verified# [type]#[Boolean]#::
-Indicates if the User's email has been verified.
-
-[field]#family_name# [type]#[String]# [since]#Available since 1.1.0#::
-The last name of the User if available.
-
-[field]#given_name# [type]#[String]# [since]#Available since 1.1.0#::
-The first name of the User if available.
-
-[field]#name# [type]#[String]# [since]#Available since 1.1.0#::
-The full name of the User if available.
-
-[field]#middle_name# [type]#[String]# [since]#Available since 1.1.0#::
-The middle name of the User if available.
-
-[field]#phone_number# [type]#[String]# [since]#Available since 1.1.0#::
-The phone number of the User if available.
-
-[field]#picture# [type]#[String]# [since]#Available since 1.1.0#::
-A URL to a picture of the User if available.
-
-[field]#preferred_username# [type]#[String]# [since]#Available since 1.1.0#::
-The username of the User if available.
-
-[field]#roles# [type]#[Array]#::
-The roles assigned to the User in the authenticated Application.
-
-[field]#sub# [type]#[UUID]#::
-The subject of the access token.
-This value is equal to the User's unique Id in FusionAuth.
-
-[source,json]
-.Example JSON Response
-----
-{
-  "applicationId": "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
-  "birthdate": "1982-03-10",
-  "email": "richard@pipedpuper.com",
-  "email_verified": true,
-  "family_name": "Hendricks",
-  "given_name": "Richard",
-  "phone_number": "555-555-5555",
-  "picture": "http://www.piedpiper.com/app/themes/pied-piper/dist/images/photo-richard.png",
-  "roles": [
-    "admin"
-  ],
-  "sub": "858a4b01-62c8-4c2f-bfa7-6d018833bea7"
-}
-----
+:show_since:
+include::docs/v1/tech/shared/_user-info-response.adoc[]
+:!show_since:
 
 == JSON Web Key Set (JWKS)
 
@@ -1573,6 +1882,18 @@ Returns the well known OpenID Configuration JSON document
 [.endpoint]
 .URI
 --
+[method]#GET# [uri]#/`{tenantId}`/.well-known/openid-configuration#
+--
+
+==== URL segment
+
+[.api]
+[field]#tenantId# [type]#[UUID]# [required]#Required# [since]#Available since 1.46.0#::
+The tenant identifier.
+
+[.endpoint]
+.URI
+--
 [method]#GET# [uri]#/.well-known/openid-configuration#
 --
 
@@ -1581,7 +1902,7 @@ Returns the well known OpenID Configuration JSON document
 [.api]
 [field]#tenantId# [type]#[UUID]# [optional]#Optional# [since]#Available since 1.8.0#::
 The tenant identifier.
-If provided then a specific issuer will be returned.
+If provided then a specific issuer will be returned, when this property is not provided the default tenant Id will be used.
 
 === Response
 
@@ -1669,6 +1990,7 @@ The possible values are:
 +
 * `access_token_expired`
 * `access_token_failed_processing`
+* `access_token_invalid`
 * `access_token_malformed`
 * `access_token_unavailable_for_processing`
 * `auth_code_not_found`
@@ -1695,6 +2017,7 @@ The possible values are:
 * `invalid_response_mode`
 * `invalid_response_type`
 * `invalid_user_code`
+* `invalid_user_id`
 * `invalid_user_credentials`
 * `login_prevented`
 * `missing_client_id`
@@ -1724,19 +2047,19 @@ This parameter is only returned during an HTTP redirect if it was provided on th
 == Client Secret
 
 This table describes when the [field]#client_secret# is required.
-If required, it may be placed in either the `Authorization` header or the request body. 
+If required, it may be placed in either the `Authorization` header or the request body.
 
 Even when the value is not required, if it is provided in the request, it must be valid.
 
-Previous to version 1.28, whether the client secret was required was controlled by the [field]#oauthConfiguration.requireClientAuthentication# value of the application object. 
+Previous to version `1.28.0`, whether the client secret was required was controlled by the [field]#oauthConfiguration.requireClientAuthentication# value of the application object.
 In that case, a value of `true` is equivalent to a [field]#clientAuthenticationPolicy# of `Required` and a value of `false` is equivalent to a [field]#clientAuthenticationPolicy# of `NotRequired`.
 
-For versions 1.28 or later, use [field]#oauthConfiguration.clientAuthenticationPolicy# to configure this functionality.
+For versions `1.28.0` or later, use [field]#oauthConfiguration.clientAuthenticationPolicy# to configure this functionality.
 
 .When Is the Client Secret Required
 [cols="35,35,10,10,10"]
 |===
-| Grant | clientAuthenticationPolicy value | PKCE Used | Secret Required in Header | Secret Required in Body 
+| Grant | clientAuthenticationPolicy value | PKCE Used | Secret Required in Header | Secret Required in Body
 
 |Authorization Code Grant
 |`Required`

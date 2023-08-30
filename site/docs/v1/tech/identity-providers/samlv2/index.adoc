@@ -31,6 +31,7 @@ In this example FusionAuth is the SAML service provider and we are configuring a
 We also provide specific examples for configuring SAML with some providers whose implementation requires unique configuration. If you'd like us to provide additional examples, please open a request on https://github.com/FusionAuth/fusionauth-site/issues[GitHub].
 
 * link:/docs/v1/tech/identity-providers/samlv2/adfs[Configure SAML v2 for Active Directory Federation Services (ADFS)]
+* link:/docs/v1/tech/identity-providers/samlv2/okta-saml[Configure SAML v2 for Okta]
 
 {empty} +
 
@@ -81,6 +82,14 @@ The text to be displayed in the button on the login form. This value defaults to
 [field]#Button image# [optional]#Optional#::
 The image to be displayed in the button on the login form. When this value is omitted a default SAML icon will be displayed on the login button.
 
+[field]#Enable IdP initiated login# [optional]#Optional# [since]#Available since 1.43.0#::
+Allows IdP initiated login requests for this configuration. You must have a valid license to use this feature.
++
+include::docs/v1/tech/shared/_saml-idp-init-warning.adoc[]
+
+[field]#Issuer# [optional]#Optional# [since]#Available since 1.43.0#::
+The EntityId (unique identifier) of the SAML v2 identity provider. Required when [field]#Enable IdP initiated login# is enabled. This value should be provided to you.
+
 [field]#Linking strategy# [optional]#Optional# [default]#defaults to `Link on email. Create the user if they do not exist`# [since]#Available since 1.28.0#::
 The linking strategy for the SAMLv2 provider. link:/docs/v1/tech/identity-providers/#linking-strategies[See Linking Strategies for more].
 
@@ -124,6 +133,24 @@ The key used to sign the SAML request. Required when [field]#Sign request# is en
 [field]#Canonicalization method# [optional]#Optional#::
 The XML signature canonicalization method used when digesting and signing the SAML request. Required when [field]#Use POST method# and [field]#Sign request# are enabled.
 
+[field]#Enable login hint# [optional]#Optional# [since]#Available since 1.43.0#::
+When enabled FusionAuth will provide the username or email address when available to the IdP as a login hint when HTTP redirect bindings are used to initiate the AuthN request.
+
+[field]#Login hint parameter name# [optional]#Optional# [since]#Available since 1.43.0#::
+The name of the parameter used to pass the username or email as login hint to the IDP when HTTP redirect bindings are used to initiate the AuthN request. Required when [field]#Enable login hint# is enabled.
+
+[field]#Destination assertion policy# [optional]#Optional# [since]#Available since 1.43.0#::
+The policy to use when performing a destination assertion on the SAML login request.
++
+The possible values are:
++
+* `Enabled` - Verifies the Destination attribute in the SAML response is equal to the expected Destination which is the FusionAuth ACS (Assertion Consumer Service) URL. This is the default and the recommended setting.
+* `Disabled` - Do not validate the Destination attribute. This is not recommended, please use with caution.
+* `Allow alternates` - Verifies the Destination attribute is either the expected FusionAuth ACS, or one of the configured alternate values. This option is intended to assist with migrations from third-party IdPs and should be used with caution.
+
+[field]#Alternate destinations# [optional]#Optional# [since]#Available since 1.43.0#::
+The array of URLs that FusionAuth will accept as SAML login destinations if the [field]#Destination Assertion Policy# is `Allow alternates`.
+
 === Managed domains
 
 image::identity-providers/identity-provider-samlv2-add-managed-domains.png[Add SAML v2 Managed Domains section,width=1200,role=top-cropped]
@@ -152,7 +179,9 @@ image::identity-providers/identity-provider-samlv2-view-details.png[View the SAM
 
 ==== Fields
 
+:idp_init: false
 include::docs/v1/tech/identity-providers/_samlv2-integration-details-fields.adoc[]
+:idp_init!:
 
 == CORS Configuration
 

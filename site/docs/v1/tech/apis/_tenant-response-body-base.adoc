@@ -248,12 +248,18 @@ The time in seconds until a WebAuthn authentication challenge is no longer valid
 [field]#{base_field_name}.externalIdentifierConfiguration.webAuthnRegistrationChallengeTimeToLiveInSeconds# [type]#[Integer]# [since]#Available since 1.41.0#::
 The time in seconds until a WebAuthn registration challenge is no longer valid and the User will be required to restart the WebAuthn registration ceremony by creating a new challenge. This value also controls the timeout for the client-side WebAuthn `navigator.credentials.create` API call. Value must be greater than 0.
 
+[field]#tenant.failedAuthenticationConfiguration.actionCancelPolicy.onPasswordReset# [type]#[Boolean]# [since]#Available since 1.42.0#::
+Indicates whether you want the user to be able to self-service unlock their account prior to the action duration by completing a password reset workflow.
+
 [field]#{base_field_name}.failedAuthenticationConfiguration.actionDuration# [type]#[Long]# [since]#Available since 1.8.0#::
 The duration of the User Action. This value along with the `actionDurationUnit` will be used to set the duration of the User Action. Value must be greater than 0.
 
 [field]#{base_field_name}.failedAuthenticationConfiguration.actionDurationUnit# [type]#[String]# [since]#Available since 1.8.0#::
 
 include::_expiry_unit.adoc[]
+
+[field]#tenant.failedAuthenticationConfiguration.emailUser# [type]#[String]# [optional]#Optional# [since]#Available since 1.42.0#::
+Indicates you would like to email the user when the user's account is locked due to this action being taken. This requires the User Action specified by the [field]#tenant.failedAuthenticationConfiguration.userActionId# to also be configured for email. If the User Action is not configured to be able to email the user, this configuration will be ignored. See [field]#userEmailingEnabled# on the User Action.
 
 [field]#{base_field_name}.failedAuthenticationConfiguration.resetCountInSeconds# [type]#[Integer]# [since]#Available since 1.8.0#::
 The length of time in seconds before the failed authentication count will be reset. Value must be greater than 0.
@@ -317,16 +323,25 @@ The unique id of the signing key used to sign the access token.
 The unique id of the signing key used to sign the Id token.
 
 [field]#{base_field_name}.jwtConfiguration.refreshTokenExpirationPolicy# [type]#[String]# [since]#Available since 1.17.0#::
-The refresh token expiration policy. The following are valid values:
-
+The Refresh Token expiration policy.
++
+The possible values are:
++
 * `Fixed` - the expiration is calculated from the time the token is issued.
 * `SlidingWindow` - the expiration is calculated from the last time the token was used.
+* `SlidingWindowWithMaximumLifetime` - the expiration is calculated from the last time the token was used, or until the [field]#maximumTimeToLiveInMinutes# is reached. &nbsp; [since]#Available since 1.46.0#
 
 [field]#{base_field_name}.jwtConfiguration.refreshTokenRevocationPolicy.onLoginPrevented# [type]#[Boolean]# [since]#Available since 1.17.0#::
-When enabled, the refresh token will be revoked when a user action, such as locking an account based on a number of failed login attempts, prevents user login.
+When enabled, all refresh tokens will be revoked when a user action, such as locking an account based on a number of failed login attempts, prevents user login.
+
+[field]#{base_field_name}.jwtConfiguration.refreshTokenRevocationPolicy.onMultiFactorEnable# [type]#[Boolean]# [since]#Available since 1.42.0#::
+When enabled, all refresh tokens will be revoked when a user enables multi-factor authentication for the first time. This policy will not be applied when adding subsequent multi-factor methods to the user.
 
 [field]#{base_field_name}.jwtConfiguration.refreshTokenRevocationPolicy.onPasswordChanged# [type]#[Boolean]# [since]#Available since 1.17.0#::
-When enabled, the refresh token will be revoked when a user changes their password.
+When enabled, all refresh tokens will be revoked when a user changes their password.
+
+[field]#{base_field_name}.jwtConfiguration.refreshTokenSlidingWindowConfiguration.maximumTimeToLiveInMinutes# [type]#[Integer]# [since]#Available since 1.46.0#::
+The maximum lifetime of a refresh token when using a [field]#refreshTokenExpirationPolicy# of `SlidingWindowWithMaximumLifetime`.
 
 [field]#{base_field_name}.jwtConfiguration.refreshTokenTimeToLiveInMinutes# [type]#[Integer]# [since]#Available since 1.8.0#::
 The length of time in minutes a Refresh Token is valid from the time it was issued. Value must be greater than 0.
@@ -362,7 +377,7 @@ The Id of a SCIM User Response Lambda that will be used to convert a FusionAuth 
 The link:/docs/v1/tech/reference/data-types#instants[instant] that the Tenant was last updated in the FusionAuth database.
 
 [field]#{base_field_name}.loginConfiguration.requireAuthentication# [type]#[Boolean]# [since]#Available since 1.26.0#::
-Indicates whether to require an API key for the Login API when an `applicationId` is not provided. When an `applicationId` is provided to the Login API call, the application configuration will take precedence. 
+Indicates whether to require an API key for the Login API when an `applicationId` is not provided. When an `applicationId` is provided to the Login API call, the application configuration will take precedence.
 
 [field]#{base_field_name}.logoutURL# [type]#[String]# [since]#Available since 1.8.0#::
 The logout redirect URL when sending the user's browser to the `/oauth2/logout` URI of the FusionAuth Front End. This value is only used when a logout URL is not defined in your Application.
@@ -421,12 +436,16 @@ The default method for encrypting the User's password. The following encryptors 
 * `link:/docs/v1/tech/reference/password-hashes#salted-pbkdf2-hmac-sha-256[salted-pbkdf2-hmac-sha256]`
 * `link:/docs/v1/tech/reference/password-hashes#salted-pbkdf2-hmac-sha-256[salted-pbkdf2-hmac-sha256-512]` &nbsp; [since]#Available since 1.34.0#
 * `link:/docs/v1/tech/reference/password-hashes#salted-bcrypt[bcrypt]`
+* `link:/docs/v1/tech/reference/password-hashes#phpass-md5[phpass-md5]` &nbsp; [since]#Available since 1.45.0#
+* `link:/docs/v1/tech/reference/password-hashes#phpass-sha-512[phpass-sha512]` &nbsp; [since]#Available since 1.45.0#
 
 [field]#{base_field_name}.passwordEncryptionConfiguration.encryptionSchemeFactor# [type]#[Integer]# [since]#Available since 1.8.0#::
 The factor used by the password encryption scheme. If not provided, the `PasswordEncryptor` provides a default value. Generally this will be used as an iteration count to generate the hash. The actual use of this value is up to the `PasswordEncryptor` implementation.
 
 [field]#{base_field_name}.passwordEncryptionConfiguration.modifyEncryptionSchemeOnLogin# [type]#[Boolean]# [since]#Available since 1.8.0#::
 When enabled a user's hash configuration will be modified to match these configured settings. This can be useful to increase a password hash strength over time or upgrade imported users to a more secure encryption scheme after an initial import.
++
+Beginning in version `1.42.0` when this configuration is enabled, in addition to re-hashing on login, the password will be re-hashed on password change as well.
 
 [field]#{base_field_name}.passwordValidationRules.breachDetection.enabled# [type]#[Boolean]# [since]#Available since 1.15.0#::
 Whether to enable Reactor breach detection. Requires an activated license.
@@ -608,6 +627,11 @@ The Relying Party name the tenant will use in WebAuthn ceremonies. This value is
 +
 If no value is configured, the [field]#tenant.issuer# value will be used.
 
+ifdef::include_total[]
+[field]#total# [type]#[Integer]#::
+The total number of Tenants matching the search criteria. Use this value along with the [field]#numberOfResults# and [field]#startRow# in the Search request to perform pagination.
+endif::include_total[]
+
 ifeval::["{base_field_name}" == "tenant"]
 [source,json]
 .Example Response JSON
@@ -617,9 +641,19 @@ include::../../../src/json/tenants/response.json[]
 endif::[]
 
 ifeval::["{base_field_name}" != "tenant"]
+ifdef::include_total[]
+[source,json]
+.Example Response JSON for Tenant Search
+----
+include::../../../src/json/tenants/search-response.json[]
+----
+endif::include_total[]
+
+ifndef::include_total[]
 [source,json]
 .Example Response JSON for all the Tenants
 ----
 include::../../../src/json/tenants/responses.json[]
 ----
+endif::include_total[]
 endif::[]

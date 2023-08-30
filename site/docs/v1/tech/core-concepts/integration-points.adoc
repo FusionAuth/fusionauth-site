@@ -21,6 +21,7 @@ FusionAuth is a developer first platform and there are a large number of ways to
 ** <<JWT Storage>>
 * <<FusionAuth APIs>>
 * <<Hosted Login Pages>>
+* <<Hosted Backend>>
 * <<SAML Integration Options>>
 * <<Client Side API Usage>>
 * <<Other Integration Points>>
@@ -41,7 +42,7 @@ If this level of integration meets your needs, you'll have more portability and 
 
 === Login API
 
-You can also use the link:/docs/v1/tech/apis/login[Login API] to sign your users in directly. In this case, you will likely use one of the link:/docs/v1/tech/client-libraries[FusionAuth client libraries].
+You can also use the link:/docs/v1/tech/apis/login[Login API] to sign your users in directly. In this case, you will likely use one of the link:/docs/v1/tech/client-libraries/[FusionAuth client libraries].
 
 When a user signs in with this API, you receive the entire user object, as well as the JWT.
 
@@ -61,7 +62,7 @@ FusionAuth can create signed JSON web tokens. Customize these using the link:/do
 
 When using OAuth/OIDC, there are multiple kinds of tokens: link:/docs/v1/tech/oauth/tokens[Access Tokens, Id Tokens and Refresh Tokens]. The Login API can also generate a JWT.
 
-These tokens can be consumed by APIs or other systems to verify that the holder of the token has been authorized by FusionAuth. link:/learn/expert-advice/tokens/[Learn more about JWTs].
+These tokens can be consumed by APIs or other systems to verify that the holder of the token has been authorized by FusionAuth. link:/learn/expert-advice/tokens/[Learn more about JWTs] or link:/learn/expert-advice/dev-tools/jwt-decoder[decode a JWT].
 
 === JWT Storage
 
@@ -77,7 +78,7 @@ Recommended storage mechanisms include:
 .JWT Storage Options
 [cols="3,1,1"]
 |===
-| Feature | Cookie | Server Side Session 
+| Feature | Cookie | Server Side Session
 
 |Allows for easy horizontal scaling
 |Yes
@@ -131,36 +132,64 @@ Additionally, when you use the hosted login pages, FusionAuth provides transpare
 
 The alternative to using the hosted login pages is building your own login experience. You can then use the APIs or an OAuth grant to authenticate your user against FusionAuth. This alternative gives you more control at the cost of more development effort.
 
+== Hosted Backend
+
+The Authorization Code grant requires the use of a server side application to do the token exchange. This is often called the "backend". This server side code can securely hold secrets, which a client such as a single-page application (SPA) cannot. It also can send the access token to a SPA as a secure, `HTTPOnly` cookie.
+
+Running your own backend offers you a lot of flexibility. However, it is not the correct solution for all situations.
+
+As of version 1.45, FusionAuth provides a hosted backend. This is included with every FusionAuth installation and can be used to quickly integrate OAuth into a front-end only application.
+
+Please consult the link:/docs/v1/tech/apis/hosted-backend[Hosted Backend API documentation for more details]. You can also work through a link:/docs/v1/tech/tutorials/integrate-react[React quickstart] which uses the hosted backend.
+
 == SAML Integration Options
 
 You can use SAML to integrate with FusionAuth in a few different ways, depending on the role that FusionAuth is playing and your other needs.
 
-.SAML Integration options
+FusionAuth supports both Service Provider initiated login, as well as Identity Provider initiated login in both the Service Provider and Identity Provider roles.
+
+In other words, FusionAuth can act as a SAML v2 Identity Provider or a SAML v2 Service provider, and in either configuration both SP and IdP initiated login flows are supported.
+
+
+=== SP (Service Provider) Initiated Login
+
+This is a traditional integration and the Service Provider will initiate the login request to the Identity Provider by building an AuthN request and sending it to the Identity Provider.
+
+To configure FusionAuth as the Service Provider, see link:/docs/v1/tech/identity-providers/samlv2/[SAML v2 Identity Provider]. To configure FusionAuth as the Identity Provider, see link:/docs/v1/tech/samlv2/[SAML v2].
+
+=== IdP (Identity Provider) Initiated Login
+In this configuration, the login request is not solicited by the Service Provider, and instead the Identity Provider builds an AuthN response and sends it to the Service Provider.
+
+To configure FusionAuth as the Service Provider, see  link:/docs/v1/tech/identity-providers/samlv2/[SAML v2 Identity Provider] and  link:/docs/v1/tech/identity-providers/samlv2-idp-initiated/[SAML v2 IdP Initiated Identity Provider]. To configure FusionAuth as the Identity Provider, see link:/docs/v1/tech/samlv2/[SAML v2].
+
+.Summary of SAML v2 integration options
 [cols="1,1,1,1"]
 |===
-| FusionAuth is the | Who initiates SSO? | Replay protection? | More info
+| FusionAuth is the | Login initiated by | Replay protection | More details
 
-|SP
-|SP
-|Yes, using `InResponseTo` element
-|link:/docs/v1/tech/identity-providers/samlv2/[SAML Identity Provider]
+|Service Provider
+|Service Provider
+|Yes
+|link:/docs/v1/tech/identity-providers/samlv2/[SAML v2 Identity Provider]
 
-|SP
-|IdP, sends unsolicited `AuthN` response to SP
-|Yes, using internal mechanism
-|link:/docs/v1/tech/identity-providers/samlv2-idp-initiated/[SAML IdP Initiated Identity Provider]
+|Service Provider
+|Identity Provider
+|Yes
+|link:/docs/v1/tech/identity-providers/samlv2-idp-initiated/[SAML v2 IdP Initiated Identity Provider], link:/docs/v1/tech/identity-providers/samlv2/[SAML v2 Identity Provider]
 
-|IdP
-|SP
-|The SP must prevent replay attacks using our signed response
+|Identity Provider
+|Service Provider
+|No. This is managed by the SP.
 |link:/docs/v1/tech/samlv2/[SAML v2]
 
-|IdP
-|IdP
-|N/A
-|In development. Please see https://github.com/FusionAuth/fusionauth-issues/issues/1927[this issue for more information]
+|Identity Provider
+|Identity Provider
+|No. This is managed by the SP.
+|link:/docs/v1/tech/samlv2/[SAML v2]
 
 |===
+
+*_Note:_* _SP_ refers to the Service Provider, and _IdP_ refers to the Identity Provider.
 
 == Client Side API Usage
 
@@ -171,7 +200,7 @@ include::docs/v1/tech/shared/_client-side-api-keys.adoc[]
 There are a number of other integration points in FusionAuth beyond the APIs.
 
 * link:/docs/v1/tech/apis/connectors/[Connectors] allow you to authenticate against external user data sources, and optionally migrate users into FusionAuth.
-* link:/docs/v1/tech/account-management[Account Management] Allows admins and users to dynamically edit user data, user passwords, and enable MultiFactor Authentication.
+* link:/docs/v1/tech/account-management/[Account Management] Allows admins and users to dynamically edit user data, user passwords, and enable multi-factor authentication.
 * link:/docs/v1/tech/identity-providers/[Identity Providers] allow you to federate authentication decisions to social or standards based providers. You can also specify a linking strategy which allows you to flexibly map between accounts with different identifiers.
 * link:/docs/v1/tech/lambdas/[Lambdas] allow you to run business logic at certain points in the authentication lifecycle.
 * link:/docs/v1/tech/plugins/[Plugins] allow you to extend FusionAuth with custom Java code. Currently the main use is to allow you to use custom password hashing. This allows you to import user data from existing systems without requiring user password changes.

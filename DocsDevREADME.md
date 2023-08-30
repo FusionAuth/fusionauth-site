@@ -1,30 +1,42 @@
-## Documentation Style Guidelines
+## Content Style Guidelines
 
-Here are some guidelines to follow when writing documentation (everything under `/site/docs`) as well as the blog (`_posts`).
-
+Here are some guidelines to follow when writing documentation (everything under `/site/docs`), articles, and blogs (`astro/src/content/blog`).
+- Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth. 
+  For example, see the API Key APIs description for `apiKeyId`, where API Key is capitalized: `The unique Id of the API Key to create. If not specified a secure random UUID will be generated.`
+- If referring to something that exists as a domain object in FusionAuth, but you are not explicitly referring to an object being created/updated in FusionAuth, use lowercase. Here are some examples:
+ `To allow users to log into and use your application, you’ll need to create an Application in FusionAuth.`
+- From the Link API, note the difference between a FusionAuth User and a 3rd party user: `This API is used to create a link between a FusionAuth User and a user in a 3rd party identity provider. This API may be useful when you already know the unique Id of a user in a 3rd party identity provider and the corresponding FusionAuth User.`
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing.
-- Use `Id` instead of `ID` when describing a unique identifier
+- Use `Id` instead of `ID` or `id` when describing a unique identifier
 - Use `logged in` instead of `logged-in`
 - `log in` is the verb, `login` is the noun
-- Don't use complex breadcrumbs styling. Use `->` because Asciidoc converts this to a nice Unicode arrow. Breadcrumbs should look like this `[breadcrumb]#foo -> bar -> baz#`
-- If you are referencing a URL as a setting and don't want it to be hyperlinked, preface it with a `\`. For example: `\https://fusionauth-example.zendesk.com`
-- If you are referencing a field in a form or JSON API doc, use the `[field]` class (rather than backticks): `[field]#Issuer#`
 - Don't abbreviate FusionAuth, use the full name.
-- When you have a list of values, use this phrase to prefix it: "The possible values are:"
-- Use single backticks when specifying a value that is not a field.
-- When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
-- In general, put screenshot images after the text describing the image. That is "This functionality....\n\n<screenshot of functionality>". However, when describing fields for screens, as in the core concepts section, put the screenshot first.
-- References to `http://127.0.0.1` should be updated to `[http://localhost` and remove hyperlinks to `localhost`
+- References to `http://127.0.0.1` should be updated to `http://localhost`. Remove hyperlinks to `localhost`.
 - Always provide an alt text for images. It should always be a full sentence describing the content of the image.
+- In general, put screenshot images after the text describing the image. That is "This functionality....\n\n<screenshot of functionality>". However, when describing fields for screens, as in the core concepts section, put the screenshot first.
 - If possible use an SVG for images. Otherwise a PNG that has been properly minified is acceptable.
 - Never use the term GUID, it's always UUID. If you mention any, display them in `8-4-4-4-12` format: `631ecd9d-8d40-4c13-8277-80cedb8236e3`
-- Include fragments that are shared between different sections of the doc should be stored in the `shared` directory.
-- All `link`s should be fully-qualified and never include a slash at the end (i.e. `link:/docs/v1/tech/apis/users` not `link:users`)
-- All code snippets within any documents should have indenting formatted to 2 spaces.
 - When introducing a code snippet, don't use a : (colon). Instead, just use verbiage before it. "The code to exchange the token is similar to below."
 - Prefer 'You' to 'We'. 'Let's' is acceptable.
-- Code captions should be title cased, where the first letter of every word should be capitalized, except for a, an and the: This Code Is the Best
+- All code snippets within any documents should have indenting formatted to 2 spaces.
+- Code captions should have the the first letter of every word capitalized: This Code Is The Best.
+- All image captions should be one or more complete sentences.
 - Use the oxford comma. Apples, bananas, and oranges are my favorite fruits.
+- Single spaces should be used instead of double spaces after a period.
+- Headers should have the first letter of every word capitalized: `This Is The Header Text`. This is true for all headers (h1, h2, h3, h4). This is also known as [Start Case](https://en.wikipedia.org/wiki/Letter_case).
+  (quick check is: `grep '^## \([^ ].*\)\{0,1\}' site/_posts/<post>.md`)
+- When writing, you have access to Asides. Here's an [example blog post using an Aside](https://github.com/FusionAuth/fusionauth-site/blob/master/astro/src/content/blog/log4j-fusionauth.mdx). You can assign the following values to the type: `tip` for tips. `note` for things for the user to be aware of. `important` for things the user should pay attention to. `warn` for dangerous actions like deleting a tenant.
+- For links, don't use the absolute URL for the FusionAuth website (https://fusionauth.io), only relative URLs. This allows us to deploy to our local and staging environments and not get sent over to prod.
+
+## Docs 
+- Don't use complex breadcrumbs styling in docs. Use `->` because Asciidoc converts this to a nice Unicode arrow. Breadcrumbs should look like this `[breadcrumb]#foo -> bar -> baz#`. When using markdown, use `<span>foo -> bar -> baz</span>{:breadcrumb}`
+- If you are referencing a URL as a setting and don't want it to be hyperlinked, preface it with a `\`. For example: `\https://fusionauth-example.zendesk.com`
+- If you are referencing a field in a form or JSON API doc, use the `[field]` class (rather than backticks): `[field]#Issuer#` in asciidoc or `<span class="field">Issuer</span> in markdown.
+- If you are referencing a UI element or button, use the `[uielement]` class: `Click the `[uielement]#Ok# button` in asciidoc or `<span class="uielement">Issuer</span> in markdown.
+- When you have a list of values, use this phrase to prefix it: "The possible values are:"
+- When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
+- Include fragments that are shared between different sections of the doc should be stored in the `shared` directory.
+- All `link` elements should be fully-qualified and never include a slash at the end (i.e. `link:/docs/v1/tech/apis/users` not `link:users`)
 - If something is new in a version, mark it with something like this:
 
   [NOTE.since]
@@ -32,36 +44,46 @@ Here are some guidelines to follow when writing documentation (everything under 
   Available Since Version 1.5.0
   ====
 
-- If updating an article, please add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
-
-- When writing blog posts, you have access to callouts.
-
-  ![important-call](https://user-images.githubusercontent.com/16090626/112875860-f75a4000-9081-11eb-8119-799db8cfc385.png)
-  ![note-call](https://user-images.githubusercontent.com/16090626/112875861-f7f2d680-9081-11eb-8fa7-360c0460618e.png)
-  ![tip-call](https://user-images.githubusercontent.com/16090626/112875862-f7f2d680-9081-11eb-845f-09c37a7bcf6d.png)
-
-  - There are three callout liquid files `_callout-tip`, `_callout-important`, `_callout-note`
-  - They can be accessed as so:
-    ```markdown
-    {% include _callout-tip.liquid
-    content=
-    "<your-content-here-and-markdown-compatible-strings-accepted>"
-    %}
-    ```
-
-
-- If a doc gets long consider adding a table of contents in the top section or breaking it into multiple documents. To generate a table of contents from section headers, run this script:
+- If a doc gets long add a table of contents in the top section or break it into multiple documents. To generate a table of contents from section headers, run this script (replacing the `doc.adoc` value). Don't include the link to the section containing the TOC.
 ```
 egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /* <</'|sed 's/$/>>/'
 ```
+- We currently use [FontAwesome v5](https://fontawesome.com/v5/search?m=free) to render icons, so you can use them to refer to UI buttons, like this:
+  - In Markdown:
+    ```markdown
+    <i/>{:.ui-button .green .fa .fa-plus}
+    <i/>{:.ui-button .green .fa .fa-search}
+    <i/>{:.ui-button .blue .fa .fa-edit}
+    <i/>{:.ui-button .blue .fa .fa-save}
+    <i/>{:.ui-button .purple .fas .fa-user}
+    <i/>{:.ui-button .purple .fa .fa-key}
+    <i/>{:.ui-button .gray .fa .fa-minus-circle}
+    <i/>{:.ui-button .red .fa .fa-trash-alt}
+    ```
+  - In AsciiDoc:
+    ```asciidoc
+    icon:plus[role=ui-button green,type=fas]
+    icon:search[role=ui-button green,type=fas]
+    icon:edit[role=ui-button blue,type=fas]
+    icon:save[role=ui-button blue,type=fas]
+    icon:user[role=ui-button purple,type=fas]
+    icon:key[role=ui-button purple,type=fa]
+    icon:minus-circle[role=ui-button gray,type=fa]
+    icon:trash-alt[role=ui-button red,type=fa]
+    ```
+
+    ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/9fd29e3d-c81a-498c-9b82-135f44a7c545)
+
 
 ### Including files
-
 - If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_` and use dashes to separate words: `_login-api-integration` not `_login_api_integration`.
 - If you are including a file in the docs which uses asciidoctor, do not prepend the include file path with `/`. 
   - If it is a top level doc, use the full path: `include::docs/v1/tech/samlv2/_saml_limitations.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
   - If it is an included doc (that is, one that starts with `_`), use the relative path: `include::../../../../src/json/scim/enterpriseuser-create-request.json[]` or `include::_scim-customizable-schema-shared.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
+  - If you accidentally do this, you can find the files where the issue is by running: `bundle exec jekyll build --verbose > outfile 2>&1` and then looking through `outfile` for the `WARNING`. The file just before the warning line will be the one with an issue.
 - If a doc pulls code from an example application, use the include directive against the raw github repo. You can also pull sections with tags or line numbers: `include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/package.json[]` or `include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/routes/index.js[tags=clientIdSecret]`
+
+This will be revised when docs are migrated.
 
 ### For API docs
 - We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
@@ -70,97 +92,122 @@ egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /
   ```
   This field is required when [field]#theOtherField.enabled# is set to true.
   ```
-- If a feature is only available when using a paid edition, use the `shared/_premium-edition-blurb-api.adoc` fragment for API fields, and `shared/_premium-edition-blurb.adoc` for any other location where the feature is mentioned in docs. Only mark the request API fields.
-- If a feature is only available when using a enterprise edition, use the `shared/_enterprise-edition-blurb-api.adoc` fragment for API fields, and `shared/_enterprise-edition-blurb.adoc` for any other location where the feature is mentioned in docs. Only mark the request API fields with this.
+- If a feature is only available when using a paid plan, use the `shared/_premium-edition-blurb-api.adoc` fragment for API fields, and `shared/_premium-edition-blurb.adoc` for any other location where the feature is mentioned in docs. Only mark the request API fields.
+- If a feature is only available when using essentials, use the `shared/_advanced-edition-blurb-api.adoc` fragment for API fields, and `shared/_advanced-edition-blurb.adoc` for any other location where the feature is mentioned in docs. Only mark the request API fields with this.
+- If a feature is only available when using enterprise, use the `shared/_enterprise-edition-blurb-api.adoc` fragment for API fields, and `shared/_enterprise-edition-blurb.adoc` for any other location where the feature is mentioned in docs. Only mark the request API fields with this.
 - If you are working in the `/api/identity-providers` folder there is a `README` there to help you understand the structure and layout of the documentation for the Identity Providers API.
 - If a field was deprecated in a version 30 versions ago (deprecated in 1.15, you are now at 1.45), you can remove it from the docs.
 
-For blog posts:
-- Indent all code with two spaces per level.
-- The class used for images should be updated to `class="img-fluid"`.
-- If applicable, use _includes/_what-is-fusionauth.liquid to introduce FusionAuth in a standard way.
-- Single spaces should be used instead of double spaces after a period.
+
+#### Request section layout
+This is general layout guidance for APIs that have `GET` and `POST` options:
+```
+== Request section header
+GET URLs (could have 1-3 of these, show the most common)
+=== GET request parameters (path segment)
+=== GET request parameters (query string)
+=== GET request headers
+
+POST URLs (only will be one, typically)
+=== POST request headers
+=== POST request parameters (path segment)
+=== POST request body
+Example POST request(s)
+
+=== Response section header
+Response codes
+==== Response body
+Example response(s)
+```
+
+## Blog posts
+
+Follow everything in the `Content Style Guidelines` section.
+
+- If updating an blog post, please update the add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
+- If you have a common component that you want to include, make sure the blog is a `.mdx` file and create a component. [Example components](https://github.com/FusionAuth/fusionauth-site/tree/master/astro/src/components/blog) - [Example blog post using a component](https://github.com/FusionAuth/fusionauth-site/blob/master/astro/src/content/blog/amazon-cognito-and-fusionauth-comparison.mdx)
+- Images should be pulled in using markdown: `![alt text](/path/to/images)`
+- Images for a blog post should go under /astro/public/img/blogs/` in a directory related to the blog title.
 - We use rouge for code formatting. Supported languages are listed here: https://github.com/rouge-ruby/rouge/tree/master/lib/rouge/lexers
-- Blog post headers should have only the first word and any proper nouns are capitalized.
-  (quick check is: `grep '^## \([^ ].*\)\{0,1\}' site/_posts/<post>.md`)
 - For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
 - For field names, use double quotes: "Login Identifier Attribute".
 - For values, use back ticks: `userPrincipalName`.
-- If appropriate, use tags. Here are the following tag types. They are separated with spaces. These are freeform, so feel free to add multiple and choose what works.
-- All references to `stackoverflow.com` should be updated and direct to the community forum at `https://fusionauth.io/community/forum/`
--- `client-<langname>` if the post refers to a specific language we have a client library for (use `client-javascript` for JS even though our client lib is typescript). These show up on the client libraries page.
--- `tutorial` for tutorials. These show up on the tutorial page.
--- `tutorial-<langname>`, `tutorial-<framework>` for a tutorial in a specific language or framework.
--- `tutorial-feature` for a tutorial for a given feature (how to use a lambda, for example)
--- `tutorial-integration` for a tutorial doing an integration with another software package (nodebb, for example)
--- `topic-<topic>` for general topics.
--- `topic-community-story` for any community stories you do.
--- `feature-<topic>` for specific features. These will show up on the feature page.
+- Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/master/.github/known-blog-categories.txt). You can separate categories with commas.
+- Use tags. They are separated with commas. These are freeform, so feel free to add multiple and choose what works. The first one is what is used to show related posts, unless there's a `featuredTag` value in the front matter. You can [learn more about the logic by reviewing the layout](https://github.com/FusionAuth/fusionauth-site/blob/master/astro/src/layouts/Blog.astro).
 - You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.
-- You can add a `related_resources` array of hashes to the front matter if you would like to customize the `additional resources` sidebar. See site/_posts/2022-10-27-introducing-biometric-authentication.md for format and example.
+- All references to `stackoverflow.com` should be updated and direct to the community forum at `https://fusionauth.io/community/forum/`
+- When using an aside in the blog, please use the `nodark="true"` attribute.
 
+## Lists
 
-
-For documentation posts:
-- Headers should be title-case.  (see https://titlecase.com/ to check if you would like. No caps on articles 👍)
-
-For lists:
 - Capitalize the first word.
-- Have a period on the end if it is a sentence, otherwise don't.
+- Have a period on the end if the list item is a sentence, otherwise don't.
 
-### Proper names and other verbiage
-- macOS
-- Elasticsearch
+Examples.
+
+I like:
+
+- apples
+- bananas
+- blueberries
+
+Fruits were domesticated at different times.
+
+- Apples were domesticated 4000 years ago.
+- Bananas were domesticated 3000 years before apples.
+- Blueberries were not domesticated until around 1900.
+
+## Proper names and other verbiage
 - .NET Core
-- OAuth and OAuth2
-- Identity Provider
+- Azure AD
+- CAPTCHA
+- client-side
 - Connector
-- Kickstart
-- multi-factor authentication
-- multi-tenancy/multi-tenant
-- two-factor
-- ECMAScript
-- esport
+- curl
 - Docker
 - Docker Compose
-- WebAuthn
+- ECMAScript
+- Elasticsearch
+- esport
+- FusionAuth Cloud
+- Google reCAPTCHA
+- Identity Provider
 - IdP
-- Azure AD
-- X.509
+- Kickstart
+- macOS
+- multi-factor authentication
+- multi-tenancy/multi-tenant
 - Node.js
+- OAuth and OAuth2
 - re-authentication
+- self-service
+- server-side
+- Spring Boot
+- two-factor
+- WebAuthn
+- webview
+- X.509
 
-## Git
+
+## Words to avoid
+
+- etc
+
+
+## Article workflow
+
+Varies, but you'll always want to 
 
 * Open a PR with changes. Tag someone to review it.
-* Merge using the GitHub interface or using a merge commit.
-* Don't `push -f` in general. Unless you know what you are doing.
+* Merge using the GitHub interface or using a squash commit.
 
-## Tagging
+Don't `push -f` in general. Unless you know what you are doing.
 
-Tag your blog posts.
-
-If they feature any client libraries, tag them with `client-[langname]` and they will automatically appear on the client libraries page. `client-javascript` appears on the typescript page, since that is the supported client library.
-
-If they highlight a feature, tag them with `feature-[featurename]` and if there's a feature page, they'll appear there. `feature-breached-password-detection` for example.
-
-If they are a tutorial, add `tutorial` and they will appear on the tutorials page in the docs. You can also add `tutorial-[langname]` if it focuses on a language, `tutorial-feature` if it is a FusionAuth feature (webhooks, themes, etc) and `tutorial-integration` if it is an integration tutorial (nodebb, wordpress, etc). If it is for an advanced feature/reactor feature, add `tutorial-reactor-feature`. Those are all separate sections.
-
-If it is a community story, tag with `topic-commmunity-story`. Right now that doesn't do anything, but it will.
-
-If it is a story about an upgrade, tag it with one of these tags:
-
-* `topic-upgrade-homegrown`
-* `topic-upgrade-saas`
-* `topic-upgrade-opensource`
-
-As well as the competitor name if mentioned: `topic-upgrade-cognito`.
-
-Separate tags with spaces: `topic-upgrade-homegrown topic-community-story`
+Publishing happens whenever a commit or PR is merged to `master`.
 
 ## Sizing Window for Screenshots
 
-When adding screenshots to the documentation, articles or blogs, use a normalized browser window size. The following apple Script should be used to build a consistent browser window.
+When adding screenshots to the documentation, articles or blogs, use a normalized browser window size. The following apple Script should be used to build a consistent Safari browser window.
 
 Note that you must have at least `1100` pixels of screen height. If you do not, your dimensions will be skewed. Go to `System Preferences > Display` then choose `More Space` or the next selection up from your current selection to ensure you have enough space available.
 
@@ -206,6 +253,7 @@ end tell
 ## Screenshot Standards
 
 - Use light mode when capturing screenshots
+- In macOS **System Settings > Appearance** make sure _Allow wallpaper tinting in windows_ is turned _off_.
 - Make sure you set your `fusionauth-app.runtime-mode` to `production` unless documenting a feature only available in `development` mode.
 - Use `CMD`+`shift`+`4`+`space` to get the drop-shadow style screenshots
 - After sizing the window using the AppleScript, do not make the windows smaller in the Y axis.
@@ -223,7 +271,7 @@ end tell
 - Use https://local.fusionauth.io and use the correct kickstart to add the Silicon Valley characters ( https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/fusionauth/kickstart-development.json )
 - Make sure that the same character is used for every screenshot on a page (unless you are demonstrating a view from the admin and also user perspective)
 
-## Shell script for capturing sceenshots
+### Shell script for capturing sceenshots
 fa-screenshot.sh is located under `fusionauth-site/src/`. With this script you can automate following tasks:
 - Sizing and moving the Safari window
 - Capturing the screenshot
@@ -263,33 +311,13 @@ that this parameter will drop and significantly reduce your file size (by about 
 `-pix_fmt yuv420p` changes the pixel format to yuv420p which is the magic sauce that safari wants (this is
 also the part that needs a size that is divisible by 2)
 
-## Adding a 'Related Posts' section
-
-You can add a related posts section to any of the AsciiDocs pages.
-
-First add tags to the relevant blog posts. If it is a client library post, use the form `client-<language>`. If it is an API related post, use `api-<section name>`.
-
-Then, add the following directive to the top of the file:
-
-```
-:page-liquid:
-```
-
-Then, wherever you want the related posts to show up, add this text:
-
-```
-++++
-{% capture relatedTag %}api-tenants{% endcapture %}
-{% include _doc-related-posts.liquid %}
-++++
-```
-
-Update the `relatedTag` value to match the tag added to the blog post.
-
-
 ## Search
 
-We use algolia to search. This only searches content on the public site, so if you are running locally, it won't fully work. (It'll find local versions of public content, but not unpublished content.)
+We use algolia to search jekyll content and pagefind to search astro content. 
+
+### Algolia
+
+This only searches content on the public site, so if you are running locally, it won't fully work. (It'll find local versions of public content, but not unpublished content.)
 
 To do a dry run of the search indexing to see what will content be indexed on the next push:
 
@@ -303,9 +331,13 @@ or, if you want to see everything:
 bundle exec jekyll algolia --dry-run --verbose
 ```
 
+### Pagefind
+
+This runs on the astro build. https://pagefind.app/ has more details
+
 ## Docs navigation
 
-We use a combination of URL and frontmatter metadata to determine what documentation section to hold open when you are visiting a doc page.
+We use a combination of URL and frontmatter metadata to determine what documentation section to hold open when you are visiting a doc page. This is for the old jekyll site only.
 
 In general, set the `navcategory` frontmatter attribute to the correct value when adding a new documentation page. The only exception is the API docs, which all live under `/apis/` so we can use that path and don't have to set the `navcategory` value.
 
@@ -320,10 +352,11 @@ There are currently nine sections:
 * customization: how to customize FusionAuth 
 * premium features: any paid features should go here
 * APIs: all api docs
+* Release notes: our release notes.
 
 Please don't add a top level section.
 
-If you need a third level indentation, add the "tertiary" class to the list element.
+If you need third level indentation, add the "tertiary" class to the list element.
 
 ```
 <li class="tertiary {% if page.url == "/docs/v1/tech/identity-providers/external-jwt/" %}active{% endif %}"><a href="/docs/v1/tech/identity-providers/external-jwt/">Overview</a></li>
@@ -333,8 +366,6 @@ If you need a third level indentation, add the "tertiary" class to the list elem
 
 Some sections are better suited to being driven by data. Jekyll makes this easy with lightweight YAML files in the `site/_data` directory. You can then iterate and filter the data there in various ways in a .liquid file.
 
-Examples of that are the customers page and the quotes widget.
-
 You can also go from asciidoc to liquid syntax. Examples of that are the 'related posts' section mentioned above, the themes form/api template docs, and the example apps. Note that you can't use liquid syntax in any include files. See https://github.com/asciidoctor/jekyll-asciidoc/issues/166 for more details about this issue.
 
 The theme pages are kinda complex because they a data file which is iterated over and conditionally generates asciidoc. This ascii doc is then included. Because you can't do includes of includes (that I could figure out), the liquid file has to be included in the top level file.
@@ -342,16 +373,42 @@ The theme pages are kinda complex because they a data file which is iterated ove
 
 ### Adding an example app
 
-* Create a repo. It should have the prefix `fusionauth-example-` and you should add both the owners (as admins) and developer team (as maintainers).
+* Create a repo. It should have the prefix `fusionauth-example-` and you should add both the owner and devrel teams (as admins) and developer team (as maintainers).
 * Add a readme and a license (apache2). It's great for the readme to point at the blog post, but you can also update the readme after your post is live.
 * Add an entry in https://github.com/FusionAuth/fusionauth-site/blob/master/site/_data/exampleapps.yaml (you can do it on your blog post branch). Note that you can only put an app in one tech group, and that if it is a JavaScript app, use JavaScript, not typescript, as the group name.
 
 This will add the example app to the example apps section in the docs.
 
-## Expert Advice
+## Documentation self-review checklist
 
-The places to put files for the Expert Advice sections differ from the regular blog.
-Content:	`site/learn/expert-advice/security` # or other top level category 
-Images: `site/assets/img/advice/<subdir>`
-Stamps: `site/assets/img/stamps`
-UML: `site/_diagrams/learn/expert-advice/<subdir>`
+Prior to requesting review on a PR, please complete the following checklist.
+
+### API documentation
+
+1. If you added or changed an API parameter, ensure you added a version flag.
+2. When APIs have default values, this is only documented on the request. Do not add it to the response.
+3. When adding or modifying request or response JSON examples, try to maintain themes and consistently.
+   - If the create request has a property of `"name": "My application"`, the response should contain this same value.
+   - Try and use real world names and values in example requests/responses. Using name such as `Payroll` for an Application name is more descriptive than `app 1` and allows the reader to more understand the example.
+4. When referencing a field in the description of another field use this syntax: `[field]#name#`.
+5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.  
+6. There are times when two fields are optional, because only one of the two are required. In these cases, ensure we explain when the field is required, and when it is optional. There are many examples of this in the doc already for reference.  
+
+#### Non API documentation
+1. Screenshots. Review color, dimensions and clarity. Review A/B to ensure layout has not changed, and the new screenshot is consistent with the previous one.
+   - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed. 
+   - The screenshot should not look fuzzy. If it does, the compression may be incorrect. 
+2. If you are referring to a navigatable element, use `[breadcrumb]#Tenants#` or `[breadcrumb]#Tenants -> Your Tenant#`. In other words, use it even for singular elements.
+3. If you are referring to a field the user can fill out, use `[field]#Authorized Redirect URLs#`.
+4. If you are referring to any other UI element, such as a submit button or read-only name, use `[uielement]#Submit#` or (on the application view screen) `[uielement]#Introspect endpoint#`.
+
+
+## Content checklist
+
+TBD
+
+## Quickstarts
+
+Quickstarts are any pages that are going under /docs/quickstarts that are not on the blog.
+
+See https://github.com/FusionAuth/fusionauth-example-template/blob/master/QUICKSTART-INSTRUCTIONS.md for instructions on building out a quickstart.
