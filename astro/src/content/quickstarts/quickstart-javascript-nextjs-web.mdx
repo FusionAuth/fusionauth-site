@@ -77,62 +77,34 @@ executing `docker compose down -v`, then re-run `docker compose up -d`.
 </Aside>
 
 FusionAuth will be configured with these settings
-* Your client Id is `c2aeeb1e-65cd-43c5-9326-02dce5e03705`.
-* Your client secret is `2HYT86lWSAntc-mvtHLX5XXEpk9ThcqZb4YEh65CLjA-not-for-prod`.
+* Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
+* Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
 * Your example username is `richard@example.com` and the password is `password`.
 * Your admin username is `admin@example.com` and the password is `password`.
 * The base URL of FusionAuth `http://localhost:9011/`.
 
 You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don’t need to.
 
-### Full Example
-
-Make sure once again that you are in the directory `complete-application/`.
-
-Copy the `.env.example` to `.env.local`
-
-```shell
-cp .env.example .env.local
-```
-
-The environment variables will match what is in the `/kickstart/kickstart.json` file that is used when first starting FusionAuth. If you have changed anything, like creating a new Application you will need to update these environment variables accordingly.
-
-`.env.local`
-<RemoteCode url={frontmatter.coderoot + "/complete-application/.env.example"}
-  lang="ts" />
-
-Install required packages
-
-```shell
-npm install
-```
-
-### Walkthrough Example
+### Create Next.js Application
 
 In this section, you'll set up a basic Next.js application with two pages. 
 
 1. Homepage
 1. Account - protected
 
-#### Setup Your Environment
-
 Create a new application using the `npx`.
 
 ```shell
-npx create-next-app@latest changebank
+npx create-next-app@latest changebank --ts --eslint --no-tailwind --src-dir --app --import-alias "@/*"
 ```
 
-Accept all of the default prompts like below
-
-![npx installation defaults](/img/articles/quickstart-javascript-nextjs-web/npx-create-next-app.png)
-
-Make sure you are in your new directory `changebank`
+Make sure you are in your new directory `changebank`.
 
 ```shell
 cd changebank
 ```
 
-Install [NextAuth.js](https://next-auth.js.org/getting-started/example), like any tutorial I will show you what this magic does later.
+Install [NextAuth.js](https://next-auth.js.org/getting-started/example), which simplifies integrating with FusionAuth and creating a secure web application.
 
 ```shell
 npm install next-auth
@@ -156,7 +128,7 @@ As you will be recreating all of the files in our app directory, please delete a
 rm -rf ./src/app && mkdir ./src/app
 ```
 
-#### Authentication API
+## Authentication
 
 Next.js 13.2 introduced <a href="https://nextjs.org/docs/app/building-your-application/routing/router-handlers" target="_blank">Route Handlers</a>, which are the preferred way to handle REST-like requests. In the `Changebank` application you can configure NextAuth.js FusionAuth's provider in a new route handler by creating a file within `src/app/api/auth/[...nextauth]/route.ts`.
 
@@ -164,31 +136,33 @@ On first load of Next.js this file will make sure that you have all of the corre
 
 The `FusionAuthProvider` is then provided to `NextAuth` as a provider for any `GET` or `POST` commands that are sent to the `/api/auth/*` route.
 
-`src/app/api/auth/[...nextauth]/route.ts`
+Create a new file named `src/app/api/auth/[...nextauth]/route.ts` and copy the following CSS for the ChangeBank application.
+
 <RemoteCode url={frontmatter.coderoot + "/complete-application/src/app/api/auth/[...nextauth]/route.ts"}
   lang="ts" />
 
-#### Styles
+## App Customization
 
-Create a new file `src/app/globals.css` copy the below CSS for the changebank application.
+### Styles
 
-`src/app/globals.css`
+Create a new file named `src/app/globals.css` copy the below CSS for the ChangeBank application.
+
 <RemoteCode url={frontmatter.coderoot + "/complete-application/src/app/globals.css"}
   lang="ts" />
 
-#### Login Button
+### Login Button
 
 Create a new file in `src/components/login-button.tsx` that will be used for a button component. Our login button will only be used on the client side so make sure to add `use client` at the top of this file.
-For this button you can use the `signIn` and `signOut` functions from `next-auth/react`. By passing in the session from our pages you can determine if the `Log in` or `Log out` should be shown. (Yeah I know if we could have all decided on Log in or Sign in over the last 20 years that would have been great!)
+For this button you can use the `signIn` and `signOut` functions from `next-auth/react`. By passing in the session from our pages you can determine if the `Log in` or `Log out` should be shown.
 
-`src/components/login-button.tsx`
-<RemoteCode url={frontmatter.coderoot + "/complete-application/src/components/login-button.tsx"}
+Create a new file named `src/components/login-button.tsx` copy the below code for the ChangeBank application.
+<RemoteCode url={frontmatter.coderoot + "/complete-application/src/components/LoginButton.tsx"}
   lang="ts" />
 
-#### Layout
+### Layout
 
 <Aside type="tip">
-If this is your first time using Next.js's App Router, I would highly suggest reading through at least the <a href="https://nextjs.org/docs/app/building-your-application/routing" target="_blank">Routing Fundamentals</a>
+If this is your first time using Next.js's App Router, you should read through <a href="https://nextjs.org/docs/app/building-your-application/routing" target="_blank">Routing Fundamentals</a>.
 </Aside>
 
 Below you will find the full code for the [Root Layout](https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts#root-layout-required)
@@ -199,45 +173,36 @@ There are two items of note:
 1. Getting the session information - `const session = await getServerSession(authOptions);`
 1. Passing the session to the Login Button - `<LoginButton session={session} />`
 
-`src/app/layout.tsx`
+Create a new file named `src/app/layout.tsx` copy the below code for the ChangeBank application.
 <RemoteCode url={frontmatter.coderoot + "/complete-application/src/app/layout.tsx"}
   lang="ts" />
 
-#### Home Page
+### Home Page
 
 Create a new file `src/app/page.tsx` which will have the Homepage details. Not much here just an image and another Login button.
 
-`src/app/page.tsx`
 <RemoteCode url={frontmatter.coderoot + "/complete-application/src/app/page.tsx"}
   lang="ts" />
 
 
-#### Account Page (protected)
+### Account Page (protected)
 
 Create a new file `src/app/account/page.tsx` which will have the Account details.
 
 One special note here is that there is a check to see if the session is missing. If it is, you redirect back to the homepage which protects this page on the server for unauthorized access. (You can find the same when a user is logged in on the homepage, it will redirect to `/account`)
 
-`src/app/account/page.tsx`
+Here's the contents of `src/app/account/page.tsx`.
 <RemoteCode url={frontmatter.coderoot + "/complete-application/src/app/account/page.tsx"}
   lang="ts" />
 
 ### Run the Application
-Run your Next.js application. 
-
-<Aside type="caution">
-If you did the `Full Example` make sure you are in the directory `complete-application` if you did the `Walkthrough Example` make sure you are in the `changebank` directory.
-</Aside>
-
+You can now open up an incognito window and visit the NextJS app at http://localhost:3000/ . Log in with the user account you created when setting up FusionAuth, and you’ll see the email of the user next to a logout button.
 
 ```shell
 npm run dev
 ```
 
 Try clicking the `Login` button at the top or center of the screen.
-
-![Changebank Home Page](/img/articles/quickstart-javascript-nextjs-web/homepage.png)
-
 
 This will take you through the `NextAuth.js` authentication flow. First prompting you to select `Sign in with FusionAuth`. 
 
@@ -252,7 +217,7 @@ This will then take you back to the application in the API route it will check f
 ![Changebank Account Page](/img/articles/quickstart-javascript-nextjs-web/account.png)
 
 <Aside type="tip">
-You could add additional [NextAuth providers](https://next-auth.js.org/providers/) within `complete-application/src/app/api/auth/[...nextauth]/route.ts`. However, another great part about having FusionAuth setup is that you can have a centralized customer identity and access management [CIAM](https://fusionauth.io/articles/ciam/).
+You could add additional [NextAuth providers](https://next-auth.js.org/providers/) within `complete-application/src/app/api/auth/[...nextauth]/route.ts`. However, another great part about having FusionAuth setup is that you can have a centralized customer identity and access management [CIAM](/articles/ciam/).
 </Aside>
 
 
@@ -262,16 +227,17 @@ your application in production, there are some things you're going to want to do
 
 ### FusionAuth Customization
 FusionAuth gives you the ability to customize just about everything with the user's experience and your application's integration. This includes
-* [Hosted pages](https://fusionauth.io/docs/v1/tech/themes/) such as login, registration, email verification, and many more
-* [Email templates](https://fusionauth.io/docs/v1/tech/email-templates/email-templates)
-* [User data and custom claims in access token JWTs](https://fusionauth.io/articles/tokens/jwt-components-explained)
+* [Hosted pages](/docs/v1/tech/themes/) such as login, registration, email verification, and many more
+* [Email templates](/docs/v1/tech/email-templates/email-templates)
+* [User data and custom claims in access token JWTs](/articles/tokens/jwt-components-explained)
 
 ### Security
-* You may want to customize the [token expiration times and policies](https://fusionauth.io/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth
-* Choose [password rules](https://fusionauth.io/docs/v1/tech/core-concepts/tenants#password) and a [hashing algorithm](https://fusionauth.io/docs/v1/tech/reference/password-hashes) that meet your security needs
+* You may want to customize the [token expiration times and policies](/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth
+* You may also want to check the [next-auth.js FusionAuth Docs](https://next-auth.js.org/providers/fusionauth) for any of the FusionAuth Provider options that you might require.
+* Choose [password rules](/docs/v1/tech/core-concepts/tenants#password) and a [hashing algorithm](/docs/v1/tech/reference/password-hashes) that meet your security needs
 
 ### Tenant and Application Management
-* Model your application topology using [Applications](https://fusionauth.io/docs/v1/tech/core-concepts/applications), [Roles](https://fusionauth.io/docs/v1/tech/core-concepts/roles), [Groups](https://fusionauth.io/docs/v1/tech/core-concepts/groups), [Entities](https://fusionauth.io/docs/v1/tech/core-concepts/groups), and more
-* Set up [MFA](https://fusionauth.io/docs/v1/tech/guides/multi-factor-authentication), [Social login](https://fusionauth.io/docs/v1/tech/identity-providers/), and/or [SAML](https://fusionauth.io/docs/v1/tech/identity-providers/samlv2/) integrations
-* Integrate with external systems using [Webhooks](https://fusionauth.io/docs/v1/tech/events-webhooks/), [SCIM](https://fusionauth.io/docs/v1/tech/core-concepts/scim), and [Lambdas](https://fusionauth.io/docs/v1/tech/lambdas/)
+* Model your application topology using [Applications](/docs/v1/tech/core-concepts/applications), [Roles](/docs/v1/tech/core-concepts/roles), [Groups](/docs/v1/tech/core-concepts/groups), [Entities](/docs/v1/tech/core-concepts/groups), and more
+* Set up [MFA](/docs/v1/tech/guides/multi-factor-authentication), [Social login](/docs/v1/tech/identity-providers/), and/or [SAML](/docs/v1/tech/identity-providers/samlv2/) integrations
+* Integrate with external systems using [Webhooks](/docs/v1/tech/events-webhooks/), [SCIM](/docs/v1/tech/core-concepts/scim), and [Lambdas](/docs/v1/tech/lambdas/)
 
