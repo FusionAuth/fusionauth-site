@@ -2,9 +2,9 @@
 publish_date: 2023-08-08
 title: Deploying FusionAuth on DigitalOcean using the One-Click Installer
 description: In this tutorial, you'll learn how to deploy FusionAuth to DigitalOcean.
-authors:  Dean Rodman, Bradley Van Aardt
+authors: Dean Rodman, Bradley Van Aardt
 categories: Tutorial
-image: /img/blogs/social-sign-in-twitter-express/adding-twitter-sign-in-node.js-express-app-oauth.png
+image: /img/blogs/digitalocean/deploying-fusionauth-on-digitalocean-using-the-one-click-installer.png
 tags: digital ocean, marketplaces, kubernetes, helm, self-hosted
 excerpt_separator: "{/* more */}"
 ---
