@@ -16,5 +16,18 @@ To run the project, just type this:
 
 ```
 npm install
+```
+
+Then, generate your pages:
+
+```
 npm run start
+```
+
+## Dev
+
+To run in dev, so file changes are picked up:
+
+```
+npm run dev
 ```

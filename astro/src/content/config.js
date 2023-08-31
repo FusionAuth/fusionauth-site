@@ -3,6 +3,7 @@ import { defineCollection, z } from 'astro:content';
 const articlesCollection = defineCollection({
   schema: z.object({
     author: z.string().optional(),
+    cta: z.string().optional(),
     description: z.string(),
     disableTOC: z.boolean().default(false),
     excludeFromNav: z.boolean().default(false),
@@ -17,6 +18,7 @@ const articlesCollection = defineCollection({
 const devToolsCollection = defineCollection({
   schema: z.object({
     author: z.string().optional(),
+    cta: z.string().optional(),
     color: z.string().optional(),
     description: z.string(),
     disableTOC: z.boolean().default(false),
@@ -29,6 +31,7 @@ const devToolsCollection = defineCollection({
 const quickstartsCollection = defineCollection({
   schema: z.object({
     author: z.string().optional(),
+    cta: z.string().optional(),
     description: z.string(),
     disableTOC: z.boolean().default(false),
     excludeFromNav: z.boolean().default(false),
