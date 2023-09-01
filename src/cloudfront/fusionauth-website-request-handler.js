@@ -94,6 +94,7 @@ rd[d+'/tutorials/two-factor/authenticator-app']=d+'/tutorials/two-factor/authent
 rd[d+'/tutorials/two-factor/twilio-push']=d+'/tutorials/two-factor/twilio-push-pre-1-26';
 rd[d+'/tutorials/integrate-python-flask']= '/docs/quickstarts/quickstart-python-flask-web';
 rd[d+'/tutorials/integrate-ruby-rails']= '/docs/quickstarts/quickstart-ruby-rails-web';
+rd[d+'/tutorials/integrate-dotnet']= '/docs/quickstarts/quickstart-dotnet-web';
 rd[d+'/tutorials/integrate-java-spring']= '/docs/quickstarts/quickstart-springboot-web';
 rd['/features/architecture']='/platform/built-for-developers';
 rd['/features/advanced-registration-forms']='/platform/registration-forms';
