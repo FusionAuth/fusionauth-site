@@ -119,22 +119,49 @@ Now create the `.env` file in your `mysite` folder and add the following to it (
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/.env"
  lang="shell" />
 
+## Preliminary Setup
+
+Before you start with configuring authentication, you need to change the default files created by Remix.
+
+Replace the contents of the file `root.tsx` with the following code.
+
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/root.tsx"
+ lang="typescript" />
+
+These changes to the existing file are simple:
+- Add some styling with `import css from "~/css/changebank.css";` at the top.
+- Specify the `<head>` content for the page — title and CSS link — in the two functions at the bottom.
+
+At the top of the file `entry.server.tsx`, add the following line.
+
+```tsx
+import 'dotenv/config';
+```
+
+This allows any other file run on the server to use settings from `.env`.
+
 ## Authentication
 
-The `app` folder in the `mysite` project holds all your code. The `routes` folder is a special name in Remix, and contains your application's pages. Let's make a `services` folder to keep our authentication code separately.
+Authentication in Remix requires two parts:
+- An Authenticator service to handle communication with FusionAuth
+- Routes (log in, log out, callback) that talk to the Authenticator
+
+### Services
+
+The `app` folder in the `mysite` project holds all your code. The `routes` folder is a special name in Remix, and contains your application's pages. Let's make a `services` folder to keep your authentication code separate.
 
 ```shell
 mkdir app/services
 ```
 
-In this folder add a file called `session.server.ts` and copy in the following code (we are following the example from the [Remix Auth README](https://github.com/sergiodxa/remix-auth)).
+In this folder add a file called `session.server.ts` and copy in the following code (this guide follows the example from the [Remix Auth README](https://github.com/sergiodxa/remix-auth)).
 
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/services/session.server.ts"
  lang="typescript" />
 
 This code provides a way for Remix to store cookies that maintain the user's session. (If you'd prefer to use file-based sessions instead of cookie-based, you can read about it in FusionAuth's older [blog post about using Remix](https://fusionauth.io/blog/remix-demo).)
 
-Next, create an authentication file, `auth.server.ts`, that uses the session provider you just created.
+Next, create an authentication file in the services folder, `auth.server.ts`, that uses the session provider you just created.
 
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/services/auth.server.ts"
  lang="typescript" />
@@ -143,40 +170,61 @@ In the line `new Authenticator<User>`, you can specify what user details you wan
 
 Note that the `User` must have a value. If the Authenticator returns nothing to store in the session, then no one can stay logged in.
 
-### Project Settings
+In the `authOptions` you specify the FusionAuth URLs stored in the `.env` file, which match those created by Kickstart when you ran Docker.
 
-Overwrite your `mysite/mysite/settings.py` contents with the following code.
+Finally, when creating the `authStrategy`, you are returning the user's email, decoded from the JWT returned by FusionAuth.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/mysite/mysite/settings.py" lang="python" />
+### Routes
+First replace the homepage of your app, `mysite/app/routes/_index.tsx` with the following code.
 
-Here, your `app` and `mozilla_django_oidc` are added to the list of `INSTALLED_APPS`. The authentication library from Mozilla is set up by `mozilla_django_oidc` and the `OIDC_OP_` constants imported from the `.env` file. This automatically handles the interaction with FusionAuth on the endpoints configured in this file and the matching ones configured in the `kickstart.json` file that you used to initialize FusionAuth.
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/routes/_index.tsx"
+ lang="typescript" />
 
-### Project URLs
+If you have not worked with React before, there are a few differences from normal HTML to notice:
+- `class` is replaced by `className`, as `class` is a reserved word in Javascript.
+- To add Javascript values into your HTML, you wrap the value in `{  }`.
+- `style` values are not a string, but an object literal in braces, wrapped in braces.
 
-Overwrite the `mysite/mysite/urls.py` file with the following code.
+Remix extends React with a few more custom elements that automatically hide the difference between client and server from the programmer. The line `<Link to="/login" className="button-lg">Login</Link>` is an example. It allows Remix to load the linked page in the background without a separate page refresh.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/mysite/mysite/urls.py"
- lang="python" />
+Additionally, this file imports the Authenticator service you created in the last section. It checks if the user already has a session and, if so, automatically redirects the user to their profile. This `isAuthenticated` function does not call FusionAuth, but insteads checks the user's cookie.
 
- * The `admin` site is the default Django admin.
- * The `app` URLs are for the app you created in your project.
- * The `oidc` URLs are automatically generated from the settings you configured in the previous step.
+Note that this code runs in a Remix `loader` function on the server, not on the client. Remember that Remix provides two functions that run only on the server — `loader` and `action` — for GET requests, and POST, PATCH, UPDATE requests, respectively. These functions will always run before any HTML is returned to the client. In contrast, the `default` function exported from a route, that returns HTML, runs only in the browser (unless the user browses directly to the route without already being on the site). Since Remix mixes server-side and client-side code in the same file, it is essential not to put any authentication handling, or secrets, in the client-side code.
 
-### App URLs
+The link you just created is looking for a login route, so let's code it. Create the file `mysite/app/routes/login.tsx` and add the following code.
 
-From this point, you'll create files in the `mysite/app` application folder, not in the main `mysite/mysite` project.
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/routes/login.tsx"
+ lang="typescript" />
 
-Create a `mysite/app/urls.py` file and set its content to match the project URLs.
+This route is purely server-side, as it exports no default function. Instead, the GET loader function redirects the user to FusionAuth. (The user will automatically be logged in without FusionAuth if they already have a session cookie in their browser).
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/mysite/app/urls.py"
- lang="python" />
+Similarly, create the file `mysite/app/routes/logout.tsx` and add the following code.
 
-### App Views
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/routes/logout.tsx"
+ lang="typescript" />
 
-Now overwrite the `mysite/app/views.py` file. There are three pages: the home page, the account page, and the make change page.
+When a user browses to this route they will be logged out by the authenticator clearing their session, and will be redirected to the home page.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/mysite/app/views.py"
- lang="python" />
+The final route to create is `mysite/app/routes/auth.callback.tsx`.
+
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/routes/auth.callback.tsx"
+ lang="typescript" />
+
+This is where FusionAuth is configured to direct the user after authentication. It may look like this code is doing yet another authentication, with `authenticator.authenticate`, but at this point the Authenticator will already have created a session for the user. So no call to FusionAuth will be made here. It is just a way to direct the user to appropriate page after log in.
+
+## Customization
+
+Now that authentication is done, the last task is to create two example pages that are accessible only when logged in.
+
+Copy over some CSS from the example app.
+
+```shell
+cp ../complete-application
+```
+
+Create a `css` folder in the `app` folder. Add a file to it called `changebank.css`. Paste in the following code.
+
+
 
 Here's what these files do:
 
