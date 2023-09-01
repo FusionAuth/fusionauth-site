@@ -12,27 +12,6 @@ color: green
 cta: EmailListCTA
 ---
 
-#####################
-
-docker-compose up # fusionauth
-
-npx create-remix@latest app # make a new remix app
-basics
-remix app server
-typescript
-
-npm install dotenv cross-env remix-auth remix-auth-oauth2
-
-todo
-- tatenda replace richardjecooke with fusionauth
-
-
-
-#####################
-
-
-
-
 import Aside from '/src/components/Aside.astro';
 import LoginAfter from '../../diagrams/quickstarts/login-after.astro';
 import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
@@ -40,7 +19,7 @@ import RemoteCode from '/src/components/RemoteCode.astro';
 
 In this quickstart, you will build an application with Remix and integrate it with FusionAuth. The application is for [ChangeBank](https://www.youtube.com/watch?v=pkH-kD73QUM), a global leader in converting dollars into coins. It will have areas reserved for logged-in users and public-facing sections.
 
-Find the Docker Compose file and source code for the complete application at https://github.com/RichardJECooke/fusionauth-quickstart-javascript-remix-web.
+Find the Docker Compose file and source code for the complete application at https://github.com/ritza-co/fusionauth-quickstart-javascript-remix-web.
 
 ## Prerequisites
 
@@ -64,15 +43,15 @@ In general, you would introduce FusionAuth to normalize and consolidate user dat
 
 ## Getting Started
 
-Start with getting FusionAuth up and running and creating a new Django application.
+Start with getting FusionAuth up and running and creating a new Remix application.
 
 ### Clone The Code
 
-First, grab the code from the repository and change into that directory.
+First, grab the code from the repository and change into that folder.
 
 ```
-git clone https://github.com/FusionAuth/fusionauth-quickstart-python-django-web.git
-cd fusionauth-quickstart-python-django-web
+git clone https://github.com/ritza-co/fusionauth-quickstart-javascript-remix-web.git
+cd fusionauth-quickstart-javascript-remix-web
 ```
 
 All shell commands in this guide can be entered in a terminal in this folder. On Windows you need to replace forward slashes with backslashes in paths.
@@ -81,7 +60,7 @@ All the files you'll create in this guide already exist in the `complete-applica
 
 ### Run FusionAuth Via Docker
 
-You'll find a Docker Compose file `docker-compose.yml` and an environment variables configuration file `.env` in the root directory of the repo.
+You'll find a Docker Compose file `docker-compose.yml` and an environment variables configuration file `.env` in the root folder of the repository.
 
 Assuming you have Docker installed on your machine, you can start FusionAuth on your machine with the following.
 
@@ -110,55 +89,59 @@ You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) and loo
   The `.env` and `kickstart.json` files contain passwords. In a real application, always add these files to your `.gitignore` file and never commit secrets to version control.
 </Aside>
 
-### Create A Basic Django Application
+### Create A Basic Remix Application
 
-Next, you'll set up a basic Django project with a single app. While this guide builds a new Django project, you can use the same method to integrate your existing project with FusionAuth.
+Next, you'll set up a basic Remix app. While this guide builds a new Remix project, you can use the same method to integrate your existing project with FusionAuth.
 
-#### Set Up Your Environment
-
-You should work in a virtual environment for this.
+Create the default Remix starter project.
 
 ```shell
-python3 -m venv venv && source venv/bin/activate
+npx create-remix@latest mysite
 ```
 
-By using `venv` you isolate all Python dependencies for this project locally, so as not to affect any dependencies used by other projects on your machine.
+Choose the following options:
+- Just the basics
+- Remix App Server
+- TypeScript
+- Yes (to running `npm install`)
 
-Create a `requirements.txt` file to list the project dependencies with the following content.
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/requirements.txt"
- lang="shell" />
-
-Then install the dependencies into your virtual environment.
+Add some other npm packages that the site will use.
 
 ```shell
-pip install -r requirements.txt
+cd mysite
+npm install dotenv remix-auth remix-auth-oauth2 jwt-decode
 ```
 
-#### Create The Application
+The two Remix authentication packages allow you to use FusionAuth without needing to know how OAuth works. The JWT package will provide your app with the user details returned from FusionAuth. The `dotenv` package allows the app to read configuration details from a `.env` file.
 
-Create the default Django starter project.
+Now create the `.env` file in your `mysite` folder and add the following to it (note that this is a different environment file to the one in the root folder used by Docker for FusionAuth).
 
-```shell
-django-admin startproject mysite
-```
-
-Now create a `.env` file in your `mysite` folder and add the following to it (note that this is a different environment file to the one in the root folder used by Docker for FusionAuth).
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/mysite/.env"
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/.env"
  lang="shell" />
 
 ## Authentication
 
-Create an app within your `mysite` project.
+The `app` folder in the `mysite` project holds all your code. The `routes` folder is a special name in Remix, and contains your application's pages. Let's make a `services` folder to keep our authentication code separately.
 
 ```shell
-cd mysite
-python manage.py startapp app
-cd ..
+mkdir app/services
 ```
 
-Now you will work from the top down to set up authentication URLs in the project `settings.py`, then in the application `urls.py`, then the `views.py`, and finally, the HTML templates for the views.
+In this folder add a file called `session.server.ts` and copy in the following code (we are following the example from the [Remix Auth README](https://github.com/sergiodxa/remix-auth)).
+
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/services/session.server.ts"
+ lang="typescript" />
+
+This code provides a way for Remix to store cookies that maintain the user's session. (If you'd prefer to use file-based sessions instead of cookie-based, you can read about it in FusionAuth's older [blog post about using Remix](https://fusionauth.io/blog/remix-demo).)
+
+Next, create an authentication file, `auth.server.ts`, that uses the session provider you just created.
+
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/services/auth.server.ts"
+ lang="typescript" />
+
+In the line `new Authenticator<User>`, you can specify what user details you want to keep in the session. This example uses a single string containing the user's email. But you could define an object with more details, or just a user Id. To do so, you would need to change the definition of `User`, update the object returned in the authentication method (`return token.email`), and update the routes you are about to create to use the new object instead of just an email.
+
+Note that the `User` must have a value. If the Authenticator returns nothing to store in the session, then no one can stay logged in.
 
 ### Project Settings
 
