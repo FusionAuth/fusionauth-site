@@ -412,3 +412,119 @@ TBD
 Quickstarts are any pages that are going under /docs/quickstarts that are not on the blog.
 
 See https://github.com/FusionAuth/fusionauth-example-template/blob/master/QUICKSTART-INSTRUCTIONS.md for instructions on building out a quickstart.
+
+# Video/Audio Recording Guidelines
+Suggestions, tips and tricks to improve recordings and increase re-usability of content.
+
+## Audio
+A clean audio recording from the start is key as in post-production it is almost impossible to fix. These are a few areas to improve the quality.
+
+### Room
+__Room audio reflections__ can be difficult. Echo reflections get picked up by your microphone and will be irritating to the listener therefore, we should try to avoid empty rooms or big flat surfaces like sitting next to a big glass window (if you have curtains, good! close them). 
+
+It may sound paradox, but the more clutter you have in your room, the better it is for your audio recording.
+There is a professional solution for that by using `acoustic absorber panels` in your room.
+
+### Microphones
+A good mic reduces the efforts in post-production and increases the quality for your audience.
+Make sure it runs with `16bit or 24bit` and have it set to `44100 Hz or 48000 Hz`,
+if you go below those values, it won't be suitable for recording professional videos.
+
+#### Professional Microphones
+Try to use a proper microphone like `podcast` or `studio microphones` with a `pop filter` (little round net) if possible.
+Try to be close to the microphone 1-2 inches (2-5cm) away with your mouth and speak directly into it, especially if you have a `pop filter`.
+
+#### Headsets
+Some headsets are OK, but most of them e specially cheep or old `business headsets` sound unnatural or even have low bitrate, both we want to avoid.
+If you use a headset with a cable, make sure to not hit the cable while moving your arms or generally other movements; it may create unwanted knocks on your microphone. Also, the cable should not be under tension to less likely transfer noise to the microphone.
+
+#### Notebook Microphones
+Do not use your built-in microphones;
+they never sound good, alone by the fact that they are too far away from your mouth.
+Outside of that, picking up all sorts of noise like from your fan, keyboard and so on.
+They may work well for video conferences, but for high-quality recordings they are an absolut no-go.
+
+### Audio Recording Level
+Try to not peak over -10db, most recording software have color-indicators for your audio level, try to stay in the yellow area, but don't go into red. An audio signal that's over -10db is getting distorted which is very hard to impossible to fix afterward in post-production.
+
+### Fixing Audio
+There are some simple fixes which can be done in post-production, e.g. remove certain parts, level volume, apply filters. But what goes beyond that needs to be fixed either by:
+
+* Re-Record the part of the video.
+* Record a voice-over which replaces the original audio.
+
+Generally, fixing Audio in post is more time-consuming.
+
+## Video
+For a high-quality video, we recommend to follow the following points.
+
+### Screen
+Use a 16:9 standard aspect ratio like `Full HD` or above on your Monitor.
+
+| Width | Height | Name    |
+|:-----|:-------|:--------|
+| 1920 | 1080   | Full HD |
+| 2560 | 1440   | QHD     |
+| 3200 | 1800   | QHD+    |
+| 3840 | 2160   | 4K UHD  |
+| 5120 | 2880   | 5K      |
+| 7680 | 4320   | 8K UHD  |
+
+### Desktop
+The desktop can be a mayor distraction from what you actually want to show, and because of that:
+* Keep your desktop clean.
+* Keep your dock / task bar clean.
+* Close everything you don't need.
+
+Alternatively, use a separate user profile for recording.
+
+### Browser
+The browser itself can be as well a major distraction from what you actually want to show, and because of that:
+* __Use a clean browser.__ Create a new `Browser Profile` for your recording session. 
+* Try to avoid any unrelated bookmarks, extensions or history entries.
+* Have your browser updated to the latest build.
+* Use your browser in `Fullscreen Mode` when ever possible.
+* Adjust the zoom level to have as little empty space but still have everything visible.
+* Less is more, only show what is relevant. 
+
+#### Navigating
+Navigate only when you have to. Minimize the amount of mouse movement, you can instead navigate in the following ways:
+* You can use `Browser Tabs` and switch between them by using the following shortcuts:  __Firefox/Chrome__ `Ctrl+Tab or Ctrl+PageUp/Down` or in __Safari__ `Shift + Command + left or right`
+* Sometimes you need more than one window, on __macOS__ you can put all window in fullscreen and use `three finger drag right` / `three finger drag left` to switch between them, on __Windows__ you may use `alt + tab`. 
+* Or enable multi desktop on __Windows 11__ and enable `three finger drag` to switch between desktops.
+* Another advanced navigation method would be to zoom in at areas of interest by e.g. `pinch close` / `pinch open` in __Chrome Browser__.
+
+## Best Practices
+For a good recording, follow these general best practices:
+* Create a story board with what you want to show.
+* To increase overall flow and quality, record your dry runs and watch them.
+* Take your time, there is always the way to speed up, but it is difficult to slow down.
+* __Avoid distractions__ like overloaded taskbars or notifications.
+* __Minimize the amount of motion.__ Use your mouse if needed try to avoid unnecessary movement and scrolling.
+* Turn off notifications like using "focus mode" on macOS
+* __Embrace silence:__ you don't need to speak all the time, take breaks between parts.
+* The system should not be under heavy load while recording, using too many VM's in combination with cheep audio hardware can be problematic and lead to unwanted noise.
+* Using visible clicks, one circle per click with a black color.
+
+### Mistakes during recording
+Mistakes happen if you make a mistake during recording e.g., miss-spoken or clicked the wrong screen.
+
+#### Calp your hands
+Breathe, clap your hands in front of the microphone and do it again, this will be very simple to cut as you can see the audio peak on the recording and nobody will ever notice.
+
+#### Note the current Timestamp
+Alternatively, take your time, note the timestamp of the recording time, and just start again.
+This is how someone else will find the part to cut, if you are not cutting it yourself.
+
+
+## Recording Software
+There are many recording programs you can use. What ever you chose make sure the recording Quality is set to High.
+
+If you are not sure what to use, consider taking 'OBS Studio'.
+OBS runs on Windows, macOS, Linux and it's free, it is often used for streaming but can also be used for recording. 
+Install it from https://obsproject.com, after installing click the `+` sign in the `Sources` section then select `Display Capture`, click `Ok` then you should be able to select your screen in case you have more than one, afer that click on `Settings`, and there you click on `Output` there are two sections, one of them is called `Recording` here you can choose your `Recording Path` where it should store the Video and also select the `Recording Quality`, set it to `High`. Recording format we recommend `MPEG-4` or `Quicktime MOV`. Under `Video Encoder`, (if you got a good graphics chip) you may be able to select Hardware encoding, like `Hardware (NVENC, H.264)`. Only use `Software (x264)` if you have no hardware encoding option, even then consider using another computer with better hardware. If you know what you do you can also select `Advanced` at the top and do some specific changes according to your system and requirements. Next click on the `Video` tab and make sure you selected the exact resolution like your screen is set to, click `Ok` and after that we are ready to go. On the bottom right you should see a button called `Start recording`. If it does not record your voice, have a look at the `Audio Mixer` section, you may need to add your microphone there, also you should see the volume levels (remember don't peak over -10db). In case you don't see any of the mentioned sections check `Docks` in the top menubar.
+
+
+## Open questions
+* Fusionauth has different `Intros` which of them should be added when? I think the first recording should be without an intro, so it can be added later.
+
