@@ -167,13 +167,6 @@ const qsSections: QuickStartSection[] = [
         navColor: 'blue',
       },
       {
-        href: '/docs/v1/tech/tutorials/integrate-ruby-rails-api',
-        title: 'Ruby on Rails',
-        icon: '/img/icons/ruby-on-rails.svg',
-        faIcon: 'fa-gem',
-        navColor: 'red',
-      },
-      {
         href: '/blog/2021/02/18/securing-golang-microservice',
         title: 'Go',
         icon: '/img/icons/golang.svg',
