@@ -11,7 +11,7 @@ If you're a developer, it's your responsibility to keep up with the ever-evolvin
 
 ## What Are Magic Links?
 
-In simplest terms, a magic link is a URL with an embedded unique token. They are sometimes included in a [multi-factor authentication (MFA)](https://fusionauth.io/features/multifactor-authentication) approach. Clicking on the link authenticates the user. They can then access a particular service or application. It is similar in function to a [one-time password (OTP)](https://fusionauth.io/articles/authentication/developer-benefits-single-sign-on) setup, but with less risk.
+In simplest terms, a magic link is a URL with an embedded unique token. They are sometimes included in a [multi-factor authentication (MFA)](/features/multifactor-authentication) approach. Clicking on the link authenticates the user. They can then access a particular service or application. It is similar in function to a [one-time password (OTP)](/articles/authentication/developer-benefits-single-sign-on) setup, but with less risk.
 
 Magic links are a straightforward alternative to usernames and passwords. Instead of asking users to create and remember credentials, we send a one-time-use link to their registered email account. The link is unique, so it cannot be used by anyone else. It is also impossible for the user to lose because we can recover it from our servers at any time.
 
