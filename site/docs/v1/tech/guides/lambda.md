@@ -363,3 +363,21 @@ Run the test.
 ```bash
 node test.js | npx faucet
 ```
+
+### How To Run All The Tests
+If you want to run your entire test suite, use the following command.
+
+```bash
+npx tape test_*.js | npx faucet
+```
+
+All tests should be green, as follows.
+
+```bash
+✓ test login returns JWT with "Goodbye World"
+✓ test lambda rejects sanctioned emails and accepts others
+✓ test lambda rejects returns permissions based on role
+# tests 6
+# pass  6
+✓ ok
+```
