@@ -219,15 +219,14 @@ The first of the two tests you're going to write is an integration test. It will
 
 Before you can write any tests, you need a test user profile to log in with. The test app `package.json` includes a reference to the `@fusionauth/typescript-client` discussed earlier, so you can use that to create a test user programmatically.
 
-Make a new file called `test.js` in the app and paste the following code into it.
+Make a new file called `userCreator.js` in the app folder and paste the following code into it.
 
 ```js
-{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/documentation_snippets/test_1.js' %}
+{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/userCreator.js' %}
 ```
 
-The code above has three sections:
+The code above has two functions:
 
-- A declaration of constant variables that match the `kickstart.json` and `.env` files.
 - The `createRandomUser` function, which creates a User request object with `const request` and then sends it to `fusion.register()`. Details on this can be found in the [TypeScript client library interface](https://github.com/FusionAuth/fusionauth-typescript-client/blob/master/src/FusionAuthClient.ts).
 - The `deleteUser` function, which you can use in the tests to delete the user just created.
 
@@ -243,26 +242,57 @@ In FusionAuth, click on <span>Users</span>{:.breadcrumb} to check that a new use
 
 Now you will test that the lambda returns "Goodbye World", which will confirm that the CLI `update` command worked.
 
-Add this code to the `test.js` file.
+Create a file called `userLogin.js` and add the following code.
 
 ```js
-{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/documentation_snippets/test_2.js' %}
+{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/userLogin.js' %}
 ```
 
-The `login` function calls the FusionAuth Typescript library. It then decodes the JWT response and returns its `message` property.
+This helper file allows your tests to log in to FusionAuth programmatically. The `login` function calls the FusionAuth Typescript library. It then decodes the JWT response and returns its `message` property.
 
-This `login` function is called by the `tape` function `test`. This test specifies the name of the test, says that it expects exactly one assertion to occur with `plan`, checks that calling `login` returns the property you expect from the lambda updated earlier, and exits. Even if the test fails, the `finally` clause will delete the temporary user created.
+Now create a test file that will use it, `test_1.js`, and add the following code.
+
+```js
+{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/test_1.js' %}
+```
+
+This file starts with a declaration of constant variables that match the `kickstart.json` and `.env` files. The `login` function is called by the `tape` function `test`. This test specifies the name of the test, says that it expects exactly one assertion to occur with `plan`, checks that calling `login` returns the property you expect from the lambda updated earlier, and exits. Even if the test fails, the `finally` clause will delete the temporary user created.
 
 Run it with the following command.
 
 ```bash
-node test.js
+node test_1.js
+```
+
+The output should be as follows.
+
+```bash
+TAP version 13
+# test login returns JWT with "Goodbye World"
+User c82aced2-b25b-4390-a4a2-72562b9bc13b created successfully
+ok 1 should be truthy
+User c82aced2-b25b-4390-a4a2-72562b9bc13b deleted successfully
+
+1..1
+# tests 1
+# pass  1
+
+# ok
 ```
 
 When your code has several tests, and you want a colorful, concise summary, you can use the following instead.
 
 ```bash
-node test.js | npx faucet
+node test_1.js | npx faucet
+```
+
+The output should be as follows.
+
+```bash
+✓ test login returns JWT with "Goodbye World"
+# tests 1
+# pass  1
+✓ ok
 ```
 
 ### Unit Test: Call An External Service
@@ -271,26 +301,27 @@ The next test you'll write is a unit test that verifies your lambda locally usin
 
 Let's take an example where you check if users have email addresses from a country sanctioned by the United States, such as North Korea or Cuba. You call the external site `https://issanctioned.example.com` with an email address, and you're told whether or not the domain is banned.
 
-Add this new function to `test.js`.
+Create a file called `test_2.js` and add the following code.
 
 ```js
-{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/documentation_snippets/test_3.js' %}
+{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/test_2.js' %}
 ```
 
-This is the lambda function that would run on FusionAuth, similar to the "Hello World" function described earlier.
-
-Now add the two tests below. The first test checks if North Korea (`.kp`) is banned and the second if Canada (`.ca`) is allowed.
-
-```js
-{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/documentation_snippets/test_4.js' %}
-```
-
-This test function uses `fetchMock` to mock the external service that would be called from the lambda function in FusionAuth. The mocks for the JWT, user, and registration objects are all simple `{}` objects you can pass as parameters to the `populate()` lambda.
+This test function uses `fetchMock` to mock the external service that would be called from the lambda function in FusionAuth. The first test checks if North Korea (`.kp`) is banned and the second if Canada (`.ca`) is allowed. The mocks for the JWT, user, and registration objects are all simple `{}` objects you can pass as parameters to the `populate()` lambda. This is the lambda function that would run on FusionAuth, similar to the "Hello World" function described earlier.
 
 Finally, run the tests.
 
 ```bash
-node test.js  | npx faucet
+node test_2.js  | npx faucet
+```
+
+The output should be as follows
+
+```bash
+✓ test lambda rejects sanctioned emails and accepts others
+# tests 2
+# pass  2
+✓ ok
 ```
 
 If all your unit tests for a lambda pass, you can safely upload it to FusionAuth manually or with the CLI for further testing.
@@ -299,9 +330,9 @@ If your HTTP Connect fetch request fails when deployed to FusionAuth, please rev
 
 ### Unit Test: Populate JWT From FusionAuth
 
-In this final unit test, let's look at how to check user information available in FusionAuth to determine custom fields to return to your app.
+In this final unit test, let's look at how to check user information available in FusionAuth to determine custom fields to return to your app. You are also going to download the lambda code to test from FusionAuth, instead of hardcoding the `populate` function into your test.
 
-There are two objects to consider. The first is the JWT fields that are returned to your app by default when a user logs in.
+There are two objects related to login to consider. The first is the JWT fields that are returned to your app by default.
 
 ```js
 {% remote_include '/docs/src/json/jwt/login-response.json' %}
@@ -317,13 +348,13 @@ You can see that the user object has data that the JWT does not, like names, bir
 
 You can also add logic in the lambda to manipulate these fields before returning them to your app.
 
-To demonstrate, let's write a lambda function that returns permissions to your app based on the user's role. Add the following functions to your `test.js` file.
+To demonstrate, let's write a lambda function that returns permissions to your app based on the user's role. Create a file called `test_2.js` and add the following code.
 
 ```js
-{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/documentation_snippets/test_5.js' %}
+{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/test_3.js' %}
 ```
 
-The lambda function `populate2` adds a `permissions` array to the JWT returned.
+The lambda function `populate` adds a `permissions` array to the JWT returned.
 
 The test function calls the lambda, passing it a mock `user` object. You only need to mock the fields the lambda needs in this object. In this case, you've added a `roles` array inside application `registrations`.
 
