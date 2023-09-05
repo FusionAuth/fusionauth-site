@@ -233,7 +233,7 @@ The code above has two functions:
 Run the code to test user creation with the following command.
 
 ```bash
-node test.js
+node userCreator.js
 ```
 
 In FusionAuth, click on <span>Users</span>{:.breadcrumb} to check that a new user called `lambdatestuser` has been created. You can delete the `createRandomUser(uuidv4());` line in `test.js` as each test will use a new temporary user. This will allow you to add multiple lambda tests while avoiding potential conflicts between test users and permissions.
@@ -330,7 +330,7 @@ If your HTTP Connect fetch request fails when deployed to FusionAuth, please rev
 
 ### Unit Test: Populate JWT From FusionAuth
 
-In this final unit test, let's look at how to check user information available in FusionAuth to determine custom fields to return to your app. You are also going to download the lambda code to test from FusionAuth, instead of hardcoding the `populate` function into your test.
+In this final unit test, let's look at how to check user information available in FusionAuth to determine custom fields to return to your app. You are also going to download the lambda code to test from FusionAuth programmatically, instead of hardcoding the `populate` function into your test.
 
 There are two objects related to login to consider. The first is the JWT fields that are returned to your app by default.
 
@@ -348,21 +348,56 @@ You can see that the user object has data that the JWT does not, like names, bir
 
 You can also add logic in the lambda to manipulate these fields before returning them to your app.
 
-To demonstrate, let's write a lambda function that returns permissions to your app based on the user's role. Create a file called `test_2.js` and add the following code.
+To demonstrate, let's write a lambda function that returns permissions to your app based on the user's role.
+
+In the FusionAuth admin UI, open the `[ATest]` lambda function you created earlier and overwrite it with the following code.
+
+```js
+function populate(jwt, user, registration) {
+  jwt.permissions = [];
+  if (user.registrations[0].roles.includes("admin"))
+    jwt.permissions.push("all");
+  else if (user.registrations[0].roles.includes("editor")) {
+    jwt.permissions.push("read");
+    jwt.permissions.push("write");
+  } else if (user.registrations[0].roles.includes("viewer"))
+    jwt.permissions.push("read");
+}
+```
+
+This lambda function `populate` adds a `permissions` array to the JWT returned.
+
+Create a file called `test_3.js` and add the following code.
 
 ```js
 {% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/test_3.js' %}
 ```
 
-The lambda function `populate` adds a `permissions` array to the JWT returned.
-
-The test function calls the lambda, passing it a mock `user` object. You only need to mock the fields the lambda needs in this object. In this case, you've added a `roles` array inside application `registrations`.
+The test function downloads the lambda from FusionAuth and calls it, passing it a mock `user` object. You only need to mock the fields the lambda needs in this object. In this case, you've added a `roles` array inside application `registrations`.
 
 Run the test.
 
 ```bash
-node test.js | npx faucet
+node test_3.js
 ```
+
+The output is as follows.
+
+```bash
+TAP version 13
+# test lambda rejects returns permissions based on role
+ok 1 Check admin and viewer has all permissions
+ok 2 Check editor has write permission
+ok 3 Check editor has read permission
+
+1..3
+# tests 3
+# pass  3
+
+# ok
+```
+
+Note that using `eval` in JavaScript is a massive security risk. Anyone with access to your FusionAuth admin UI can put malicious code into your lambdas that could do anything on your local machine with Node.js. To keep safe, run your tests only in a Docker or LXC container with no disk access.
 
 ### How To Run All The Tests
 If you want to run your entire test suite, use the following command.
