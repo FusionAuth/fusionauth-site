@@ -395,7 +395,7 @@ ok 3 Check editor has read permission
 # ok
 ```
 
-Note that using `eval` in JavaScript is a massive security risk. Anyone with access to your FusionAuth admin UI can put malicious code into your lambdas that could use Node.js to access your local disk, or send passwords over the Internet. To keep safe, run your tests only in a Docker or LXC container with no disk access to your physical machine, and no passwords stored in the container.
+Note that running code downloaded from a database is a security risk. Any administrator with access to your FusionAuth admin UI can put malicious code into your lambdas that could use Node.js to access your local disk, or send passwords over the Internet. To keep safe, run your tests only in a Docker or LXC container with no disk access to your physical machine, and no passwords stored in the container.
 
 ### How To Run All The Tests
 If you want to run your entire test suite, use the following command.
