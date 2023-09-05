@@ -116,7 +116,7 @@ There are two libraries for Javascript:
 
 The API, CLI, and Client Library all need an API Key to access FusionAuth.
 
-The kickstart configuration file used by FusionAuth already created a sample API Key with superuser privileges. For more information on managing API keys, please refer to the following [guide](https://fusionauth.io/docs/v1/tech/apis/authentication#managing-api-keys). If you need to create another key in future applications, you can perform the following steps but you don't need to for this tutorial.
+The kickstart configuration file used by FusionAuth already created a sample API Key with superuser privileges. For more information on managing API keys, please refer to the following [guide](https://fusionauth.io/docs/v1/tech/apis/authentication#managing-api-keys). If you need to create another key in future applications, you can perform the following steps, but you don't need to for this tutorial.
 
 - Navigate to  <span>Settings -> API Keys</span>{:.breadcrumb} and click the <i/>{:.ui-button .green .fa .fa-plus} button at the top right.
 - <p>In the <span class="field">Key</span> field enter a name.</p>
@@ -173,9 +173,13 @@ You can check that the lambda in FusionAuth now says "Goodbye World!" by viewing
 
 {% include docs/_image.liquid src="/assets/img/docs/customization/lambdas/testing-lambdas/updated-lambda.png" alt="Update lambda" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
-### Other CLI Functionality
+### CLI Limitations
+The Node CLI allows you only to create, retrieve, and update lambdas. You can delete a lambda that is not in use by an application with `lambda:delete`, but there is no way to link or unlink a lambda with an application without using the admin UI, API, or a client library. For example, to link a lambda with an application in the Typescript client library, you could use code similar to the following.
 
-You can create a lambda using the Node CLI with `lambda:create` and delete a lambda with `lambda:delete`, but only if the lambda is not linked to an application. To link a lambda to an application, use `lambda:link-to-application` with existing application and lambda Ids. Linking a lambda will use it for both the application's <span>Access Token populate lambda</span>{:.field} and <span>Id Token populate lambda</span>{:.field}. To unlink a lambda from an application, use `lambda:unlink-from-application` with existing application and lambda Ids. Unlinking a lambda will remove it from both the fields or just one of them if the other links to a different lambda. To link types of lambdas other than JWT populate, use the underlying client library or the admin UI.
+```ts
+const request: ApplicationRequest = { "application": { "lambdaConfiguration": {accessTokenPopulateId: "f3b3b547-7754-452d-8729-21b50d111505"} };
+await new FusionAuthClient(apiKey, host).patchApplication(applicationId, request);
+```
 
 ## Testing Overview
 
@@ -267,7 +271,7 @@ The next test you'll write is a unit test that verifies your lambda locally usin
 
 Let's take an example where you check if users have email addresses from a country sanctioned by the United States, such as North Korea or Cuba. You call the external site `https://issanctioned.example.com` with an email address, and you're told whether or not the domain is banned.
 
-Add this new function to `test.js`. 
+Add this new function to `test.js`.
 
 ```js
 {% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/documentation_snippets/test_3.js' %}
@@ -361,7 +365,7 @@ user: {
 
 You can see that the user object has data that the JWT does not, like names, birthdates, and languages, that you might want to add in a lambda.
 
-You can also add logic in the lambda to manipulate these fields before returning them to your app. 
+You can also add logic in the lambda to manipulate these fields before returning them to your app.
 
 To demonstrate, let's write a lambda function that returns permissions to your app based on the user's role. Add the following functions to your `test.js` file.
 
