@@ -24,6 +24,7 @@ Find the Docker Compose file and source code for the complete application at htt
 ## Prerequisites
 
 For this Quickstart, you'll need:
+
 * [Node 18](https://nodejs.org/en/download) or later.
 * [Docker](https://www.docker.com), which is the quickest way to start FusionAuth. (There are [other ways](https://fusionauth.io/docs/v1/tech/installation-guide/)).
 
@@ -68,15 +69,16 @@ Assuming you have Docker installed on your machine, you can start FusionAuth on 
 docker-compose up -d
 ```
 
-This will start three containers, one each for FusionAuth, Postgres, and Elastic.
+This will start three containers, one each for FusionAuth, Postgres, and Elasticsearch.
 
-Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](../../v1/tech/installation-guide/kickstart). When FusionAuth starts for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to your specified state.
+Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/v1/tech/installation-guide/kickstart). When FusionAuth starts for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to your specified state.
 
 <Aside type="note">
 If you ever want to reset the FusionAuth system, delete the volumes created by `docker-compose` by executing `docker-compose down -v`, then rerun `docker-compose up -d`.
 </Aside>
 
 FusionAuth will be configured with these settings:
+
 * Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
 * Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
 * Your example username is `richard@example.com` and the password is `password`.
@@ -105,25 +107,25 @@ Choose the following options:
 - TypeScript
 - Yes (to running `npm install`)
 
-Add some other npm packages that the site will use.
+Add additional npm packages that the site will use using the commands below.
 
 ```shell
 cd mysite
 npm install dotenv remix-auth remix-auth-oauth2 jwt-decode
 ```
 
-The two Remix authentication packages allow you to use FusionAuth without needing to know how OAuth works. The JWT package will provide your app with the user details returned from FusionAuth. The `dotenv` package allows the app to read configuration details from a `.env` file.
+The two Remix authentication packages allow you to use FusionAuth without needing to know how OAuth works. The JWT package will provide your app with the user details returned from FusionAuth. The `dotenv` package allows the app to read configuration details from a `.env` environment file.
 
 Now create the `.env` file in your `mysite` folder and add the following to it (note that this is a different environment file to the one in the root folder used by Docker for FusionAuth).
 
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/.env"
  lang="shell" />
 
-## Preliminary Setup
+### Preliminary Setup
 
 Before you start with configuring authentication, you need to change the default files created by Remix.
 
-Replace the contents of the file `root.tsx` with the following code.
+Replace the contents of the file `mysite/app/root.tsx` with the following code.
 
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/root.tsx"
  lang="typescript" />
@@ -132,7 +134,7 @@ These changes to the existing file are simple:
 - Add some styling with `import css from "~/css/changebank.css";` at the top.
 - Specify the `<head>` content for the page — title and CSS link — in the two functions at the bottom.
 
-At the top of the file `entry.server.tsx`, add the following line.
+At the top of the file `mysite/app/entry.server.tsx`, add the following line.
 
 ```tsx
 import 'dotenv/config';
@@ -143,6 +145,7 @@ This allows any other file run on the server to use settings from `.env`.
 ## Authentication
 
 Authentication in Remix requires two parts:
+
 - An Authenticator service to handle communication with FusionAuth
 - Routes (log in, log out, callback) that talk to the Authenticator
 
@@ -159,7 +162,7 @@ In this folder add a file called `session.server.ts` and copy in the following c
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/services/session.server.ts"
  lang="typescript" />
 
-This code provides a way for Remix to store cookies that maintain the user's session. (If you'd prefer to use file-based sessions instead of cookie-based, you can read about it in FusionAuth's older [blog post about using Remix](https://fusionauth.io/blog/remix-demo).)
+This code provides a way for Remix to store cookies that maintain the user's session. (If you'd prefer to use file-based sessions instead of cookie-based, you can read about it in an earlier [blog post about using Remix](https://fusionauth.io/blog/remix-demo).)
 
 Next, create an authentication file in the services folder, `auth.server.ts`, that uses the session provider you just created.
 
@@ -168,13 +171,14 @@ Next, create an authentication file in the services folder, `auth.server.ts`, th
 
 In the line `new Authenticator<User>`, you can specify what user details you want to keep in the session. This example uses a single string containing the user's email. But you could define an object with more details, or just a user Id. To do so, you would need to change the definition of `User`, update the object returned in the authentication method (`return token.email`), and update the routes you are about to create to use the new object instead of just an email.
 
-Note that the `User` must have a value. If the Authenticator returns nothing to store in the session, then no one can stay logged in.
+Note that the `User` must have a value. If the Authenticator returns nothing to store in the session, then a user will not stay logged in.
 
-In the `authOptions` you specify the FusionAuth URLs stored in the `.env` file, which match those created by Kickstart when you ran Docker.
+In the `authOptions` you specify the FusionAuth URLs stored in the `.env` file, which match those created by Kickstart when you ran the Docker command to start FusionAuth.
 
 Finally, when creating the `authStrategy`, you are returning the user's email, decoded from the JWT returned by FusionAuth.
 
 ### Routes
+
 First replace the homepage of your app, `mysite/app/routes/_index.tsx` with the following code.
 
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/routes/_index.tsx"
@@ -187,7 +191,7 @@ If you have not worked with React before, there are a few differences from norma
 
 Remix extends React with a few more custom elements that automatically hide the difference between client and server from the programmer. The line `<Link to="/login" className="button-lg">Login</Link>` is an example. It allows Remix to load the linked page in the background without a separate page refresh.
 
-Additionally, this file imports the Authenticator service you created in the last section. It checks if the user already has a session and, if so, automatically redirects the user to their profile. This `isAuthenticated` function does not call FusionAuth, but insteads checks the user's cookie.
+Additionally, this file imports the Authenticator service you created in the last section. It checks if the user already has a session and, if so, automatically redirects the user to their profile. This `isAuthenticated` function does not call FusionAuth, but instead checks the user's cookie.
 
 <Aside type="note">
 Note that this code runs in a Remix `loader` function on the server, not on the client. Remember that Remix provides two functions that run only on the server — `loader` and `action` — for GET requests, and POST, PATCH, UPDATE requests, respectively. These functions will always run before any HTML is returned to the client. In contrast, the `default` function exported from a route, that returns HTML, runs only in the browser (unless the user browses directly to the route without already being on the site). Since Remix mixes server-side and client-side code in the same file, it is essential not to put any authentication handling, or secrets, in the client-side code.
@@ -230,7 +234,7 @@ cp ../complete-application/app/css/changebank.css ./app/css/changebank.css
 cp ../complete-application/public/money.jpg ./public/money.jpg
 ```
 
-Add the account page, `app/routes/account.tsx`, with the following code.
+Add the account page, `mysite/app/routes/account.tsx`, with the following code.
 
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/routes/account.tsx"
  lang="typescript" />
@@ -239,7 +243,7 @@ Look at the `loader` function at the top of the page. This prohibits the user fr
 
 The line `const email: string = useLoaderData<typeof loader>();` provides whatever data the loader function returns for use in the HTML. It's used in the line `<p className="header-email">{email}</p>`.
 
-The final page you need is `app/routes/change.tsx`, with the following code.
+The final page you need is `mysite/app/routes/change.tsx`, with the following code.
 
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/routes/change.tsx"
  lang="typescript" />
@@ -265,22 +269,23 @@ This quickstart is a great way to get a proof of concept up and running quickly,
 ### FusionAuth Customization
 
 FusionAuth gives you the ability to customize just about everything to do with the user's experience and the integration of your application. This includes:
-* [Hosted pages](../../v1/tech/themes/) such as login, registration, email verification, and many more.
-* [Email templates](../../v1/tech/email-templates/email-templates).
-* [User data and custom claims in access token JWTs](../../../articles/tokens/jwt-components-explained).
+* [Hosted pages](/docs/v1/tech/themes/) such as login, registration, email verification, and many more.
+* [Email templates](/docs/v1/tech/email-templates/email-templates).
+* [User data and custom claims in access token JWTs](/articles/tokens/jwt-components-explained).
 
 ### Security
 
-* You may want to customize the [token expiration times and policies](../../v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth.
-* Choose [password rules](../../v1/tech/core-concepts/tenants#password) and a [hashing algorithm](../../docs/v1/tech/reference/password-hashes) that meet your security needs.
+* You may want to customize the [token expiration times and policies](/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth.
+* Choose [password rules](/docs/v1/tech/core-concepts/tenants#password) and a [hashing algorithm](/docs/v1/tech/reference/password-hashes) that meet your security needs.
 
 ### Tenant And Application Management
 
-* Model your application topology using [Applications](../../v1/tech/core-concepts/applications), [Roles](../../v1/tech/core-concepts/roles), [Groups](../../v1/tech/core-concepts/groups), [Entities](../../v1/tech/core-concepts/groups), and more.
-* Set up [MFA](../../v1/tech/guides/multi-factor-authentication), [Social login](../../v1/tech/identity-providers/), or [SAML](../../v1/tech/identity-providers/samlv2/) integrations.
-* Integrate with external systems using [Webhooks](../../v1/tech/events-webhooks/), [SCIM](../../docs/v1/tech/core-concepts/scim), and [Lambdas](../../v1/tech/lambdas/).
+* Model your application topology using [Applications](/docs/v1/tech/core-concepts/applications), [Roles](/docs/v1/tech/core-concepts/roles), [Groups](/docs/v1/tech/core-concepts/groups), [Entities](/docs/v1/tech/core-concepts/groups), and more.
+* Set up [MFA](/docs/v1/tech/guides/multi-factor-authentication), [Social login](/docs/v1/tech/identity-providers/), or [SAML](/docs/v1/tech/identity-providers/samlv2/) integrations.
+* Integrate with external systems using [Webhooks](/docs/v1/tech/events-webhooks/), [SCIM](/docs/v1/tech/core-concepts/scim), and [Lambdas](/docs/v1/tech/lambdas/).
 
 ### Remix Authentication
+
 - [Remix Docs](https://remix.run/docs)
 - [Passport.js authentication concepts](https://www.passportjs.org/concepts/authentication/downloads/html/)
 - [Remix Auth](https://github.com/sergiodxa/remix-auth)
