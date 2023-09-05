@@ -304,63 +304,13 @@ In this final unit test, let's look at how to check user information available i
 There are two objects to consider. The first is the JWT fields that are returned to your app by default when a user logs in.
 
 ```js
-{
-  aud: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
-  exp: 1692273965,
-  iat: 1692270365,
-  iss: 'acme.com',
-  sub: '00000000-0000-0000-0000-111111111111',
-  jti: '47cc65ce-3981-4e40-8c99-5221d69c53da',
-  authenticationType: 'PASSWORD',
-  email: 'richard@example.com',
-  email_verified: true,
-  applicationId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
-  roles: [ 'Petty cash keeper', 'First aider' ],
-  auth_time: 1692270365,
-  tid: 'd7d09513-a3f5-401c-9685-34ab6c552453',
-  message: 'goodbye world'
-}
+{% remote_include '/docs/src/json/jwt/login-response.json' %}
 ```
 
 The second object is the user supplied to your `populate()` function in a lambda.
 
 ```js
-user: {
-    active: true,
-    birthDate: '1985-11-23',
-    connectorId: 'e3306678-a53a-4964-9040-1c96f36dda72',
-    data: {},
-    email: 'richard@example.com',
-    firstName: 'Richard',
-    id: '00000000-0000-0000-0000-111111111111',
-    insertInstant: 1692176681681,
-    lastLoginInstant: 1692270415045,
-    lastName: 'Hendricks',
-    lastUpdateInstant: 1692176681681,
-    memberships: [],
-    passwordChangeRequired: false,
-    passwordLastUpdateInstant: 1692176681694,
-    preferredLanguages: [],
-    registrations: [
-      {
-        applicationId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
-        data: {},
-        id: '631b3ef1-4f46-42d2-b315-8d29c1cf18ff',
-        insertInstant: 1692176681698,
-        lastLoginInstant: 1692270415045,
-        lastUpdateInstant: 1692269815209,
-        preferredLanguages: [],
-        roles: [ 'Petty cash keeper', 'First aider' ],
-        tokens: {},
-        usernameStatus: 'ACTIVE',
-        verified: true
-      }
-    ],
-    tenantId: 'd7d09513-a3f5-401c-9685-34ab6c552453',
-    twoFactor: { methods: [], recoveryCodes: [] },
-    usernameStatus: 'ACTIVE',
-    verified: true
-  }
+{% remote_include '/docs/src/json/users/login-response.json' %}
 ```
 
 You can see that the user object has data that the JWT does not, like names, birthdates, and languages, that you might want to add in a lambda.
