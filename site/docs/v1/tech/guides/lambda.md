@@ -344,9 +344,7 @@ The second object is the user supplied to your `populate()` function in a lambda
 {% remote_include '/docs/src/json/users/login-response.json' %}
 ```
 
-You can see that the user object has data that the JWT does not, like names, birthdates, and languages, that you might want to add in a lambda.
-
-You can also add logic in the lambda to manipulate these fields before returning them to your app.
+You can see that the user object has data that the JWT does not, like names, birthdates, and languages, that you might want to add in a lambda. You can also add logic in the lambda to manipulate these fields before returning them to your app.
 
 To demonstrate, let's write a lambda function that returns permissions to your app based on the user's role.
 
@@ -373,7 +371,7 @@ Create a file called `test_3.js` and add the following code.
 {% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/test_3.js' %}
 ```
 
-The test function downloads the lambda from FusionAuth and calls it, passing it a mock `user` object. You only need to mock the fields the lambda needs in this object. In this case, you've added a `roles` array inside application `registrations`.
+The test function downloads the lambda from FusionAuth using `getLambda()`, runs `eval` it to make it available in memory, and calls it, passing it a mock `user` object. You need to mock only the fields the lambda needs in this parameter. In this test, you've added a `roles` array inside application `registrations`.
 
 Run the test.
 
@@ -397,7 +395,7 @@ ok 3 Check editor has read permission
 # ok
 ```
 
-Note that using `eval` in JavaScript is a massive security risk. Anyone with access to your FusionAuth admin UI can put malicious code into your lambdas that could do anything on your local machine with Node.js. To keep safe, run your tests only in a Docker or LXC container with no disk access.
+Note that using `eval` in JavaScript is a massive security risk. Anyone with access to your FusionAuth admin UI can put malicious code into your lambdas that could use Node.js to access your local disk, or send passwords over the Internet. To keep safe, run your tests only in a Docker or LXC container with no disk access to your physical machine, and no passwords stored in the container.
 
 ### How To Run All The Tests
 If you want to run your entire test suite, use the following command.
