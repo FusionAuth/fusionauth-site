@@ -97,7 +97,7 @@ Log in to the app at `http://localhost:3000` with user `richard@example.com` and
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJhdXRob3JpemF0aW9uX2NvZGUiXSwia2lkIjoiMWU1NmM0OWU4In0.eyJhdWQiOiJkZGQwNTAyMS0wNjgyLTQ4NWUtYThlMi1kMDMyOTY0YjAyMTEiLCJleHAiOjE2ODkyNjQwNzEsImlhdCI6MTY4OTI2MDQ3MSwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIwYTkzOTYwNi0zNmVjLTQ1M2ItOTM0Mi04ZWZmOTE3ZjJhZWYiLCJqdGkiOiIyYmZlMjUwNy1hZWM0LTRjOTEtYWY5Yy1hOWVhYjQzNmQ4MGYiLCJhdXRoZW50aWNhdGlvblR5cGUiOiJQQVNTV09SRCIsImVtYWlsIjoiZXJsaWNoQGV4YW1wbGUuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImFwcGxpY2F0aW9uSWQiOiJkZGQwNTAyMS0wNjgyLTQ4NWUtYThlMi1kMDMyOTY0YjAyMTEiLCJzY29wZSI6Im9mZmxpbmVfYWNjZXNzIiwicm9sZXMiOltdLCJzaWQiOiIzNDk5MTAxMS1kNzUxLTRlOTctYWZiNi0zNzQ2N2RlYTc5YWIiLCJhdXRoX3RpbWUiOjE2ODkyNjA0NzEsInRpZCI6ImNiY2VkOWVhLWQ3NzgtZDBlYi03ZjU4LWE0MGYxY2VlNWFhYiIsIm1lc3NhZ2UiOiJIZWxsbyBXb3JsZCEifQ.3DOvP8LRAp6pIh0guUjJjYbNwZKzruVWre8Xq8x_S8k
 ```
 
-Copy this token from your terminal and paste it into the <span>Token</span>{:.field} text box on the [FusionAuth Online JWT Decoder](https://fusionauth.io/dev-tools/jwt-decoder). You'll see `"message": "Hello World!"` in the <span>Payload</span>{:.uielement} box, showing you that your new lambda ran correctly.
+Copy this token from your terminal and paste it into the <span>Token</span>{:.field} text box on the [FusionAuth Online JWT Decoder](/dev-tools/jwt-decoder). You'll see `"message": "Hello World!"` in the <span>Payload</span>{:.uielement} box, showing you that your new lambda ran correctly.
 
 ## Programmatically Update A Lambda
 
@@ -116,7 +116,7 @@ There are two ways to do this using JavaScript:
 
 The API, CLI, and Client Library all need an API Key to access FusionAuth.
 
-The kickstart configuration file used by FusionAuth already created a sample API Key with superuser privileges. For more information on managing API keys, please refer to the following [guide](https://fusionauth.io/docs/v1/tech/apis/authentication#managing-api-keys). If you need to create another key in future applications, you can perform the following steps, but you don't need to for this tutorial.
+The kickstart configuration file used by FusionAuth already created a sample API Key with superuser privileges. For more information on managing API keys, please refer to the following [guide](/docs/v1/tech/apis/authentication#managing-api-keys). If you need to create another key in future applications, you can perform the following steps, but you don't need to for this tutorial.
 
 - Navigate to  <span>Settings -> API Keys</span>{:.breadcrumb} and click the <i/>{:.ui-button .green .fa .fa-plus} button at the top right.
 - <p>In the <span class="field">Key</span> field enter a name.</p>
