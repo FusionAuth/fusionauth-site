@@ -1,8 +1,8 @@
 ---
 layout: doc
-title: Testing Lambdas With FusionAuth
-description: Testing lambdas with FusionAuth
-navcategory: customization
+title: Lambda Guide
+description: Creating and testing lambdas with FusionAuth
+navcategory: developer
 ---
 
 ## Overview
@@ -59,7 +59,7 @@ function populate(jwt, user, registration) {
 }
 ```
 
-{% include docs/_image.liquid src="/assets/img/docs/customization/lambdas/testing-lambdas/populate-lambda.png" alt="Creating a JWT populate lambda" class="img-fluid bottom-cropped" width="1200" figure=false %}
+{% include docs/_image.liquid src="/assets/img/docs/guides/lambda/populate-lambda.png" alt="Creating a JWT populate lambda" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 Save the lambda.
 
@@ -71,7 +71,7 @@ Now activate the lambda for the example app.
 - <p>Under <span class="breadcrumb">Lambda Settings</span>, select the lambda you created, called "[ATest]" for the <span class="field">Access Token populate lambda</span>.</p>
 - Click the <i/>{:.ui-button .blue .fa .fa-save} button to save the changes.
 
-{% include docs/_image.liquid src="/assets/img/docs/customization/lambdas/testing-lambdas/edit-application.png" alt="Enabling the lambda in an application" class="img-fluid" width="1200" figure=false %}
+{% include docs/_image.liquid src="/assets/img/docs/guides/lambda/edit-application.png" alt="Enabling the lambda in an application" class="img-fluid" width="1200" figure=false %}
 
 You can now test that the new lambda writes to the event log and returns extra data in the JWT. The repository you downloaded contains two directories.
 - `complete-application` — This is the result of the work you will complete in this guide if you need to refer to the finished files. Do not work in this directory.
@@ -171,7 +171,7 @@ npx fusionauth lambda:update f3b3b547-7754-452d-8729-21b50d111505 --key lambda_t
 
 You can check that the lambda in FusionAuth now says "Goodbye World!" by viewing the ["[ATest]" lambda details](http://localhost:9011/admin/lambda).
 
-{% include docs/_image.liquid src="/assets/img/docs/customization/lambdas/testing-lambdas/updated-lambda.png" alt="Update lambda" class="img-fluid bottom-cropped" width="1200" figure=false %}
+{% include docs/_image.liquid src="/assets/img/docs/guides/lambda/updated-lambda.png" alt="Update lambda" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 ### CLI Limitations
 The Node CLI allows you only to create, retrieve, and update lambdas. You can delete a lambda that is not in use by an application with `lambda:delete`, but there is no way to link or unlink a lambda with an application without using the admin UI, API, or a client library. For example, to link a lambda with an application in the Typescript client library, you could use code similar to the following.
