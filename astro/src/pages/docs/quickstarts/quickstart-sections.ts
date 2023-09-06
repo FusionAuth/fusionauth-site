@@ -167,13 +167,6 @@ const qsSections: QuickStartSection[] = [
         navColor: 'red',
       },
       {
-        href: '/blog/2021/02/18/securing-golang-microservice',
-        title: 'Go',
-        icon: '/img/icons/golang.svg',
-        faIcon: 'fa-g',
-        navColor: 'blue',
-      },
-      {
         href: '/docs/v1/tech/tutorials/integrate-express-api',
         title: 'Express',
         icon: '/img/icons/javascript.svg',
