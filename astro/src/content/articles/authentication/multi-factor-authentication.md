@@ -3,6 +3,7 @@ title: Multi-Factor Authentication For Developers
 description: What is multi-factor authentication and why is it important?
 author: Dan Moore
 section: Authentication
+tags: mfa 2fa multi-factor-authentication two-factor-authentication user-experience customer-experience security policie sms totp factors ap-push tradeoffs open-standards biometric
 icon: /img/icons/multi-factor-authentication.svg
 ---
 
@@ -17,7 +18,7 @@ As a developer or software engineer, MFA may seem a bit mysterious. This article
 
 At the end, you should have a good understanding of options for integrating MFA into your applications, and how to start doing so.
 
-## What is multi-factor authentication (MFA)?
+## What Is Multi-factor Authentication (MFA)?
 
 When a user is authenticating, they are providing proof of who they are. There are four broad categories of proof:
 
@@ -34,7 +35,7 @@ Multi-factor authentication isn't just for online user accounts, though. If you 
 
 The majority of user accounts have a password as a factor. You might be working in such a system right now. As engineering teams become more aware of the problem of user account hijacking and its real world consequences, more are allowing or requiring additional factors of authentication. 
 
-### What is the difference between MFA and 2FA?
+### What Is The Difference Between MFA And 2FA?
 
 These terms are often used interchangeably, which unfortunately blurs important differences between them.
 
@@ -44,7 +45,7 @@ When a system supports more than one method or factor of authentication, it supp
 
 In general, MFA outlines a system's capabilities, while 2FA describes how many factors are required when authentication is needed.
 
-## Why use multi-factor authentication (MFA)?
+## Why Use Multi-factor Authentication (MFA)?
 
 Building a secure, available system requires ensuring only authorized people and software agents have access to it. This is a foundational concern.
 
@@ -58,7 +59,7 @@ In particular, if another factor is required as part of the login process, accou
 
 Implementing MFA is a partnership with your users, however. Some factors are easier for system developers to support. Others require more effort and care from users.
 
-### The balance between user experience and security risk
+### The Balance Between User Experience And Security Risk
 
 However, though MFA is more secure, you shouldn't require it everywhere. It's a balance, like many parts of software engineering; you want to make the user login experience as smooth as possible while minimizing chances of account takeover. Users don't love an application for the login experience. They want to solve their problems. Friction in the authentication process will annoy some percentage of your users and negatively affect your application's success. 
 
@@ -74,17 +75,17 @@ As a developer, you need to balance between the user experience and the risk of 
 
 The hard part is the situations where the answer isn't obvious. What are some situations where you should consider requiring multi-factor authentication?
 
-## When to require multiple factors of authentication
+## When To Require Multiple Factors Of Authentication
 
 There are many situations where you need a higher level of assurance about the actor behind the credentials. Sometimes the type of the user account is the deciding factor. Other times it is the access requested. Depending on your application and organization, legal requirements or corporate policies may control.
 
-### Administrative accounts
+### Administrative Accounts
 
 Privileged accounts with higher levels of access need to use MFA.
 
 These administrator or operator accounts can wreak havoc if misused or compromised. Therefore you should require MFA on all admin accounts. In extremely sensitive systems, all changes could require providing additional factors.
 
-### High value accounts
+### High Value Accounts
 
 There are also plenty of high value user accounts where MFA can help prevent unwanted account compromises. These accounts don't necessarily possess elevated privileges, but allow data access or actions with real world consequences. Compromise of these accounts can have negative repercussions.
 
@@ -92,7 +93,7 @@ An example of such an account is an online bank account. You don't want users to
 
 Another example is an email account. Beyond the private information often present in email accounts, they represent a risk to accounts in other systems. Many password reset flows send an email to a known address and allow the recipient of that email to modify the password. Compromise of an email account means that any other accounts associated with this user are at risk.
 
-### Risky actions
+### Risky Actions
 
 When a user has already authenticated but is performing a dangerous action, MFA again provides extra security. This is also known as "step up auth", because the additional factor is required at the moment a more privileged action is undertaken. Examples of such actions include:
 
@@ -103,7 +104,7 @@ When a user has already authenticated but is performing a dangerous action, MFA 
 
 These types of actions can be legitimate, but could also be used by someone who has compromised a user account. You can partially mitigate the damage of a compromised account by implementing step up auth. An attacker may be able to access account data, but won't be able to take damaging action.
 
-### Laws or organizational policies
+### Laws Or Organizational Policies
 
 If your application is used by certain organizations or stores personally identifiable information, you may need to require multi-factor authentication for users. As part of the NIST risk management framework, for example, Authenticator Assurance Level 2 requires: ["proof of possession and control of two different authentication factors..."](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-63-3.pdf). 
 
@@ -111,7 +112,7 @@ Sometimes an MFA requirement is not explicit, however. If you are looking to be 
 
 When planning MFA, make sure you review any relevant laws, standards or corporate policies.
 
-### When the user's actions look suspicious
+### When The User's Actions Look Suspicious
 
 An auth system has a unique viewpoint into who is signing in. Information is supplied and reviewed; it results in an answer to the question: "is the person providing this information the user who they are claiming to be?" Some data is provided by the user explicitly, such as the username and password. But every auth system has access to implicit data such as:
 
@@ -124,7 +125,7 @@ Such data can help determine if the person behind the authentication request is 
 
 Requiring MFA before access is allowed when suspicious activity occurs provides another check against stolen credentials. That German hacker could have acquired a user's password, but it's harder to steal a one time passcode sent to the user's phone as well.
 
-## Commonly used factors for MFA
+## Commonly Used Factors For MFA
 
 Beyond a password, what are other ways a user can prove who they are? As mentioned above, there are four main categories. 
 
@@ -145,7 +146,7 @@ Below is a diagram displaying estimated relative deployment and security attribu
 
 Let's look at each category and examine the factors in more detail.
 
-### What you have
+### What You Have
 
 Having possession of a physical object or access to a separate user account can be a secure authentication factor. The out of band communication of a one time code is also a form of "what you have".
 
@@ -183,11 +184,11 @@ SMS has weaknesses that have been exploited, but mostly it's safe. High value sy
 
 There's not a lot you can do as a developer to make this factor more secure. Users, on the other hand, can contact their cell phone providers and ask how phone number transfers are handled to understand possible social engineering attacks. Users can also set up a software service such as Google Voice or Twilio to receive text messages to avoid any dependency on a mobile phone provider.
 
-#### Phone call
+#### Phone Call
 
 Receiving a phone call with a code is very similar to the SMS factor. A phone call has the benefit of working for users who do not have a text message capable phone. Other than that, the implementation and issues are much the same.
 
-#### App push
+#### App Push
 
 A user's phone isn't limited to running a TOTP application, accepting a phone call, or receiving text messages. Users can also install an application on their phone which receives push notifications. Similar to text messages, this code is generated by the authenticating system and sent to the user. 
 
@@ -205,7 +206,7 @@ As a developer, ensure that you have verified the email to which the code is sen
 
 This factor is more convenient because email accounts can be accessed from multiple different computers or devices. Contrast this with the phone based solutions above, which are typically tied to one device. This convenience, however, means that this option can be less secure, depending on user behavior. Users, for their part, must ensure their email account is secured with MFA and that no unauthorized parties have access. 
 
-#### A physical device
+#### A Physical Device
 
 Physical devices, such as Yubikeys, can be used for authentication too. These devices work with your computer or your phone. Depending on the device, the user plugs it in to a computer or passes the device close enough for wireless communication during the authentication process. 
 
@@ -213,7 +214,7 @@ These devices differ from the other factors in this category because they cost m
 
 As a developer, to use this factor, you need to build in support for the device using an SDK or a standard which the device is compatible with, such as WebAuthN. Your users need to ensure they don't lose it and have it available whenever they authenticate.
 
-### What you know
+### What You Know
 
 A password is a common factor in this category. Other options here suffer from the same strengths and weaknesses as passwords:
 
@@ -223,7 +224,7 @@ A password is a common factor in this category. Other options here suffer from t
 
 As a developer, be wary of using these options for additional factors.
 
-#### Questions and answers
+#### Questions And Answers
 
 With questions and answers, the auth system you are building requests answers to questions at a time when the user is known to be present, typically at user registration. 
 
@@ -246,7 +247,7 @@ Counsel your users to answer these questions wisely. Frankly, they should pick f
 
 If the user is saving these answers in a password manager, I would even suggest "h941TphXOL3h0ws7M0U2" or "relevance-middle-yellow-horoscope". The goal is to prevent someone from learning the name of a childhood pet from a Facebook post and using that information to gain illicit access. 
 
-#### Double blind passwords 
+#### Double Blind Passwords 
 
 A double blind password augments the security of a normal password. This is not an independent factor and is entirely in control of the user. It can improve the security of the highest value accounts. As a developer, you cannot suggest nor enforce a double blind password. However, it is an interesting way to increase security, so deserves a brief mention.
 
@@ -254,13 +255,13 @@ With this technique, a user splits a password into two pieces. One is stored in 
 
 This method protects against the compromise of a password manager or other user side password storage mechanism. However, if the system which stores the hash of a password is compromised, or the password is discovered in transit, a horcrux won't help.
 
-### Who you are
+### Who You Are
 
 Another factor category is "who you are". These factors are tied to your physical body or your behavior; the information must be translated to a digital format and shared securely with the authentication system. As a developer, such biometrics are really intriguing: nothing to forget or lose. Deployment and access varies, however. 
 
 In addition, people's bodies and behaviors change over time, so these factors must have room for error. While a password or code can match exactly, biometric solutions are more likely to provide a certain accuracy percentage. Allow other factors to be used or have a fallback plan when someone has a new haircut.
 
-#### Physical biometric
+#### Physical Biometric
 
 These factors identify users based on their body. Examples include facial recognition, which identifies a user from the shape and look of their face, fingerprint scanning, voice identification, and retinal scanners, which look at the variations in the tissue of a user's eye. 
 
@@ -277,7 +278,7 @@ You could also use biometrics integrated into an operating system. All major ope
 
 If you are building web applications, use the [WebAuthn W3C standard](https://www.w3.org/TR/webauthn-2/), which lets the browser access the operating systems biometric implementations. We'll cover this standard in more detail below.
 
-#### Behavioral biometrics
+#### Behavioral Biometrics
 
 This category of biometrics utilizes user behavior as a factor. An example of this is gait recognition technology, which is primarily used for identification rather than authentication. 
 
@@ -285,7 +286,7 @@ Another example is keystroke pattern recognition; that is, how a user types, the
 
 However, there's wide individual variation, even within a single day, of keystroke patterns, which can be problematic. A [study from 2013](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3835878/) "suggested that keystroke dynamics biometrics are unlikely to replace existing knowledge-based authentication entirely and it is also not robust enough to be a sole biometric authenticator."
 
-### Where you are
+### Where You Are
 
 This is a relatively uncommon factor of authentication. 
 
@@ -303,19 +304,19 @@ If the application in question is accessed through a browser, all that's left fo
 
 The WebAuthn standard works not only with biometric identification, but with other factors as well, including physical devices. You may hear the term FIDO mentioned when WebAuthn is discussed. [FIDO2](https://fidoalliance.org/fido2/) is a set of specifications, of which WebAuthn is one.
 
-## Relaxing multi-Factor authentication (MFA) requirements
+## Relaxing Multi-factor Authentication (MFA) Requirements
 
 MFA provides additional security by ensuring that a person accessing a system is authenticated correctly. However, there may be times when you want to explicitly disable MFA, if only for a certain period. 
 
 You can disable MFA when a request is made from a given device, for a period of time, or for a certain user account. As a developer, allowing this in certain circumstances makes the user experience better.
 
-### Known devices
+### Known Devices
 
 This form of MFA relaxation is often paired with a "trust this device" or "this is not a public computer" checkbox. In this case, the authentication system records that this device can be trusted. The trust can last forever or for a certain duration, after which MFA is again required. This has benefits for the user experience, and as long as the device remains secure and in possession of the user, the trust is warranted.
 
 With a browser you can implement this by setting a cookie. An expiring, missing or removed cookie causes MFA to be required at the next login. Other devices have similar local storage mechanisms where preferences can be saved.
 
-### Turning off MFA for a user
+### Turning Off MFA For A User
 
 At times, you might want to relax all MFA requirements for a user's account. This is a high risk operation. Removing MFA opens a user's account up to being hijacked by someone possessing only one factor of authentication, the very issue MFA was meant to ameliorate. 
 

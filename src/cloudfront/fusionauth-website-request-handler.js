@@ -2,6 +2,8 @@ var d="/docs/v1/tech";
 var a="/articles";
 var ex="/learn/expert-advice";
 var idp="/identity-providers";
+var bc="/blog/category";
+var bac="/blog/archive/category";
 
 var ip = {};
 ip['/']=true;
@@ -64,8 +66,15 @@ ip[d+'/tutorials/gating/']=true;
 ip[d+'/tutorials/two-factor/']=true;
 ip['/how-to/']=true;
 ip['/quickstarts/']=true;
+ip['/blog/latest/']=true;
 
 var rd = {};
+rd[bac+'/announcement']=bc+'/news';
+rd[bac+'/article']=bc+'/education';
+rd[bac+'/comparison']=bc+'/compare';
+rd[bac+'/community-story']=bc+'/community';
+rd[bac+'/features']=bc+'/product';
+rd[bac+'/tutorial']=bc+'/tutorial';
 rd['/cognito']=d+'/migration-guide/cognito';
 rd['/cognito/']=d+'/migration-guide/cognito';
 rd[a+'/oauth/what-is-oauth']=a+'/oauth/modern-guide-to-oauth';
@@ -91,6 +100,7 @@ rd[d+'/tutorials/migrate-users']=d+'/migration-guide/tutorial';
 rd[d+'/tutorials/setting-up-user-account-lockout']=d+'/tutorials/gating/setting-up-user-account-lockout';
 rd[d+'/tutorials/two-factor/authenticator-app']=d+'/tutorials/two-factor/authenticator-app-pre-1-26';
 rd[d+'/tutorials/two-factor/twilio-push']=d+'/tutorials/two-factor/twilio-push-pre-1-26';
+rd[d+'/tutorials/integrate-python-django']= '/docs/quickstarts/quickstart-python-django-web';
 rd[d+'/tutorials/integrate-python-flask']= '/docs/quickstarts/quickstart-python-flask-web';
 rd[d+'/tutorials/integrate-ruby-rails']= '/docs/quickstarts/quickstart-ruby-rails-web';
 rd[d+'/tutorials/integrate-java-spring']= '/docs/quickstarts/quickstart-springboot-web';
@@ -138,6 +148,13 @@ var redirectsByPrefix = [
   ['/learn/expert-advice', '/articles']
 ]
 
+// order matters
+var redirectsByRegex = [
+  ['^/blog/(category|tag|author)/([^/]*)$', '$&/'],
+  ['/blog/archive/tag/', '/blog/tag/'],
+  ['/blog/\\d\\d\\d\\d/\\d\\d/\\d\\d/', '/blog/']
+]
+
 var s3Paths = ['/direct-download', '/license'];
 var s3Prefixes = ['/assets/', '/blog/', '/docs/', '/landing/', '/learn/', '/legal/', '/resources/', '/how-to/', '/articles/', '/dev-tools/', '/quickstarts/'];
 
@@ -183,8 +200,8 @@ function handler(event) {
 }
 
 function removeSlash(uri) {
-  return ip[uri] !== true && !uri.startsWith('/blog/page') && !uri.startsWith('/blog/archive') &&
-    redirectsByPrefix.find(e => uri.startsWith(e[0])) === undefined;
+  return ip[uri] !== true && (!uri.startsWith('/blog') || (uri.match('^/blog/[\\w\\d-]*/$') && !uri.match('^/blog/latest/$'))) &&
+      redirectsByPrefix.find(e => uri.startsWith(e[0])) === undefined;
 }
 
 function calculateRedirect(uri) {
@@ -196,6 +213,16 @@ function calculateRedirect(uri) {
     if (prefix_replacement !== undefined) {
       result = uri.replace(prefix_replacement[0], prefix_replacement[1]);
     }
+  }
+
+  if (result === null) {
+    redirectsByRegex.forEach(function (regexValueArray) {
+      var regex = new RegExp(regexValueArray[0], "g");
+      var value = regexValueArray[1];
+      if (regex.test(uri)) {
+        result = uri.replace(regex, value);
+      }
+    });
   }
 
   return result;
