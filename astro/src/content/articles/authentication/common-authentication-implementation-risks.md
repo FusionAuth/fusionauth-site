@@ -3,6 +3,7 @@ title: Common Authentication Implementation Risks And How To Mitigate Them
 description: What are risks of implementing authentication, authorization and user management, and how can you mitigate them?
 author: James Hickey
 section: Authentication
+tags: risks architecture security planning performance compliance speed-to-market vendor password-hashing open-standards privacy regulatory-compliance cost opportunity-cost integration features 
 icon: /img/icons/common-authentication-risks.svg
 ---
 

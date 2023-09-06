@@ -3,6 +3,8 @@ import { getCollection } from "astro:content";
 interface QuickStartSection {
   key: string;
   icon?: string;
+  faIcon?: string;
+  color: string;
   title: string;
   anchorTag: string;
   desc?: string;
@@ -28,13 +30,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'web-application',
     desc: 'Traditional web applications that run on servers',
     articles: [
-      {
-        href: '/docs/v1/tech/tutorials/integrate-python-django',
-        title: 'Django',
-        icon: '/img/icons/python.svg',
-        faIcon: 'fa-snake',
-        navColor: 'orange'
-      },
       {
         href: '/blog/2022/03/07/single-sign-on-with-drupal',
         title: 'Drupal',
@@ -184,6 +179,13 @@ const qsSections: QuickStartSection[] = [
         icon: '/img/icons/javascript.svg',
         faIcon: 'fa-x',
         navColor: 'fuchsia',
+      },
+      {
+        href: '/docs/v1/tech/tutorials/integrate-laravel-api',
+        title: 'Laravel',
+        icon: '/img/icons/laravel.svg',
+        faIcon: 'fa-block',
+        navColor: 'rose',
       },
     ],
   },
