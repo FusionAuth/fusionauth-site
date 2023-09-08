@@ -1527,6 +1527,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"fusionauth-vc-free.mdx": {
+  id: "fusionauth-vc-free.mdx",
+  slug: "fusionauth-vc-free",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "fusionauth-website-how-we-do-it.mdx": {
   id: "fusionauth-website-how-we-do-it.mdx",
   slug: "fusionauth-website-how-we-do-it",
@@ -2276,6 +2283,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"unlimited-domains-fusionauth.mdx": {
+  id: "unlimited-domains-fusionauth.mdx",
+  slug: "unlimited-domains-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "unsupervised-avoids-development-maintenance-with-with-fusionauth.mdx": {
   id: "unsupervised-avoids-development-maintenance-with-with-fusionauth.mdx",
   slug: "unsupervised-avoids-development-maintenance-with-with-fusionauth",
@@ -2528,6 +2542,13 @@ declare module 'astro:content' {
 "quickstart-golang-web.mdx": {
   id: "quickstart-golang-web.mdx",
   slug: "quickstart-golang-web",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
+} & { render(): Render[".mdx"] },
+"quickstart-python-django-web.mdx": {
+  id: "quickstart-python-django-web.mdx",
+  slug: "quickstart-python-django-web",
   body: string,
   collection: "quickstarts",
   data: InferEntrySchema<"quickstarts">
