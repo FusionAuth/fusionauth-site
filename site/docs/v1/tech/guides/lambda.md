@@ -113,25 +113,15 @@ Although you can use the [lambda API](/docs/v1/tech/apis/lambdas) directly by ma
 There are two ways to do this using JavaScript:
 
 - The [TypeScript client library](https://github.com/FusionAuth/fusionauth-typescript-client), documented [here](/docs/v1/tech/client-libraries/typescript), should be used for any browser or Node code you write in JavaScript or TypeScript. It provides a straightforward way of calling the underlying HTTP API.
-- The [Node CLI](https://github.com/FusionAuth/fusionauth-node-cli) is a set of commands you can run in the terminal to perform a few advanced functions, such as uploading a new theme or lambda to your FusionAuth application. The Node CLI is a wrapper on the TypeScript client library and operates at a higher level of abstraction. It is helpful to manage lambdas, but you can always drop down to the Typescript client library if needed.
+- The [Node CLI](https://github.com/FusionAuth/fusionauth-node-cli) is a set of commands you can run in the terminal to perform a few advanced functions. The focus of this CLI is on uploading and downloading of commonly modified assets such as lambdas or themes. The Node CLI is a wrapper on the TypeScript client library and operates at a higher level of abstraction. It is helpful to manage lambdas, but you can always drop down to the Typescript client library if needed.
 
 ### Create An API Key
 
 The API, CLI, and Client Library all need an API Key to access FusionAuth.
 
-The kickstart configuration file used by FusionAuth already created a sample API Key with superuser privileges. For more information on managing API keys, please refer to the following [guide](/docs/v1/tech/apis/authentication#managing-api-keys). If you need to create another key in future applications, you can perform the following steps, but you don't need to for this tutorial.
+The kickstart configuration file used by FusionAuth already created a sample API Key with superuser privileges. For more information on managing API keys, please refer to the following [guide](/docs/v1/tech/apis/authentication#managing-api-keys).
 
-- Navigate to  <span>Settings -> API Keys</span>{:.breadcrumb} and click the <i/>{:.ui-button .green .fa .fa-plus} button at the top right.
-- <p>In the <span class="field">Key</span> field enter a name.</p>
-- You can either leave all the toggle buttons for the Endpoints blank to give the key all permissions or enable the buttons for the following endpoints:
-  - `/api/lambda`
-  - `/api/lambda/search`
-  - `/api/login`
-  - `/api/user`
-  - `/api/user/registration`
-
-  These endpoints are necessary to perform actions on lambdas, such as updating and deleting, and to mimic user actions to test the lambdas, such as logging in.
-- Save the API key.
+{%  include _callout-tip.liquid content="For production you would want to enable only the following endpoints necessary to perform actions on lambdas, such as updating and deleting, and to mimic user actions to test the lambdas, such as logging in `/api/lambda`,`/api/lambda/search`,`/api/login`,`/api/user` and `/api/user/registration`" %}
 
 ### Use The Lambda CLI
 
