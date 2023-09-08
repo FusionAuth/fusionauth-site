@@ -127,13 +127,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'mobile-app',
     desc: 'Mobile application that runs natively on a device',
     articles: [
-      /*{
-        href: '/docs/v1/tech/tutorials/integrate-flutter',
-        title: 'Flutter',
-        icon: '/img/icons/flutter.svg',
-        faIcon: 'fa-snake',
-        navColor: 'indigo'
-      },*/
       {
         href: '/blog/2020/08/19/securing-react-native-with-oauth',
         title: 'React Native',
