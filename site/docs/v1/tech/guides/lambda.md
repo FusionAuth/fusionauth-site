@@ -31,16 +31,19 @@ docker-compose up
 
 This command will run FusionAuth and set up a sample application with an API Key and a User, configured in the `kickstart.json` file in the `kickstart` subdirectory.
 
- {% include _callout-important.liquid
-    content=
-    "The `.env` and `kickstart.json` files contain passwords. In a real application, always add these files to your `.gitignore` file and never commit secrets to version control."
-    %}
+FusionAuth will be initially configured with these settings.
+
+* Your example username is `richard@example.com` and the password is `password`.
+* Your admin username is `admin@example.com` and the password is `password`.
+* The base URL of FusionAuth [http://localhost:9011/](http://localhost:9011/).
+
+{% include _callout-important.liquid content="The `.env` and `kickstart.json` files contain passwords. In a real application, always add these files to your `.gitignore` file and never commit secrets to version control."%}
 
 ## Manually Create A Simple Lambda
 
 Let's start by making a simple lambda to test that it works on your machine.
 
-- Log in to the [FusionAuth admin UI](`http://localhost:9011/admin).
+- Log in to the [FusionAuth admin UI](http://localhost:9011/admin).
 - <p>Navigate to <span class="breadcrumb">Customizations -> Lambdas</span>.</p>
 - Click the <i/>{:.ui-button .green .fa .fa-plus} button at the top right to add a new lambda.
 - <p>Enter the <span class="field">Id</span> "f3b3b547-7754-452d-8729-21b50d111505".</p>
@@ -174,7 +177,8 @@ You can check that the lambda in FusionAuth now says "Goodbye World!" by viewing
 {% include docs/_image.liquid src="/assets/img/docs/guides/lambda/updated-lambda.png" alt="Update lambda" class="img-fluid bottom-cropped" width="1200" figure=false %}
 
 ### CLI Limitations
-The Node CLI allows you only to create, retrieve, and update lambdas. You can delete a lambda that is not in use by an application with `lambda:delete`, but there is no way to link or unlink a lambda with an application without using the admin UI, API, or a client library. For example, to link a lambda with an application in the Typescript client library, you could use code similar to the following.
+
+The Node CLI allows you only to create, retrieve, and update lambdas. You can delete a lambda that is not in use by an application with `lambda:delete`. The way to link or unlink a lambda with an application is through the admin UI, API, or a client library. For example, to link a lambda with an application in the Typescript client library, you could use code similar to the following.
 
 ```ts
 const request: ApplicationRequest = { "application": { "lambdaConfiguration": {accessTokenPopulateId: "f3b3b547-7754-452d-8729-21b50d111505"} };
@@ -236,7 +240,7 @@ Run the code to test user creation with the following command.
 node userCreator.js
 ```
 
-In FusionAuth, click on <span>Users</span>{:.breadcrumb} to check that a new user called `lambdatestuser` has been created. You can delete the `createRandomUser(uuidv4());` line in `test.js` as each test will use a new temporary user. This will allow you to add multiple lambda tests while avoiding potential conflicts between test users and permissions.
+In FusionAuth, click on <span>Users</span>{:.breadcrumb} to check that a new user called `lambdatestuser` has been created. You can delete the `createRandomUser(uuidv4());` line in `userCreator.js` as each test will use a new temporary user. This will allow you to add multiple lambda tests while avoiding potential conflicts between test users and permissions.
 
 #### Write The Test
 
@@ -335,13 +339,13 @@ In this final unit test, let's look at how to check user information available i
 There are two objects related to login to consider. The first is the JWT fields that are returned to your app by default.
 
 ```js
-{% remote_include '/docs/src/json/jwt/login-response.json' %}
+{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-site/master/site/docs/src/json/jwt/login-response.json' %}
 ```
 
 The second object is the user supplied to your `populate()` function in a lambda.
 
 ```js
-{% remote_include '/docs/src/json/users/login-response.json' %}
+{% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-site/master/site/docs/src/json/users/login-response.json' %}
 ```
 
 You can see that the user object has data that the JWT does not, like names, birthdates, and languages, that you might want to add in a lambda. You can also add logic in the lambda to manipulate these fields before returning them to your app.
@@ -352,14 +356,16 @@ In the FusionAuth admin UI, open the `[ATest]` lambda function you created earli
 
 ```js
 function populate(jwt, user, registration) {
+  jwt.message = 'Goodbye World!';
   jwt.permissions = [];
-  if (user.registrations[0].roles.includes("admin"))
+  if (user.registrations[0].roles.includes("admin")) {
     jwt.permissions.push("all");
-  else if (user.registrations[0].roles.includes("editor")) {
+  } else if (user.registrations[0].roles.includes("editor")) {
     jwt.permissions.push("read");
     jwt.permissions.push("write");
-  } else if (user.registrations[0].roles.includes("viewer"))
+  } else if (user.registrations[0].roles.includes("viewer")) {
     jwt.permissions.push("read");
+  }  
 }
 ```
 
@@ -398,6 +404,7 @@ ok 3 Check editor has read permission
 Note that running code downloaded from a database is a security risk. Any administrator with access to your FusionAuth admin UI can put malicious code into your lambdas that could use Node.js to access your local disk, or send passwords over the Internet. To keep safe, run your tests only in a Docker or LXC container with no disk access to your physical machine, and no passwords stored in the container.
 
 ### How To Run All The Tests
+
 If you want to run your entire test suite, use the following command.
 
 ```bash
