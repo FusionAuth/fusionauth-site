@@ -84,9 +84,9 @@ The webhook/API terminology can be confusing. Note that most web applications, i
 * **Temporal Actions** — Temporal (or time-based) Actions have a duration. Once a temporal Action expires or is canceled, it will no longer be considered active and will not affect the user. However, you can apply a temporal Action to a user indefinitely by setting a very distant end date. An Action that prevents login must be temporal.
 +
 Unlike an instantaneous Action, a temporal Action may be canceled or modified. An example of an instantaneous Action would be a reward, such as sending a user a discount coupon.
-* **Active** — An active Action can be applied to Users. In contrast, an inactive Action is soft deleted and cannot be applied to Users. It is still viewable in the list of inactive Actions in FusionAuth. An inactive Action can be reactivated if you want to use it again.
+* **Active** — An active Action can be applied to Users. In contrast, an inactive Action cannot be applied to Users. It is viewable in the list of inactive Actions in FusionAuth. An inactive Action can be reactivated if you want to use it again.
 +
-If a temporal Action instance has ended we do not say that it is not active. Active relates to the Action definition and expiry relates to a particular instance of the Action.
+If a temporal Action instance has ended, it is still considered active. Active relates to the Action definition and expiry relates to a particular instance of the Action.
 * **Option** — A custom text field that you can add to an instantaneous Action but not to temporal Actions. You can add multiple Options to an Action definition, but choose only one for an instance of the Action. Options can be sent through emails and webhooks.
 * **Localization** — A text field with an associated language. It's a way of providing more information to users who speak different languages. Localizations can be added for an Action name, Reason, and Options.
 * **Tenant** — You can make an Action available to all Tenants or just a few. 
@@ -111,7 +111,7 @@ There are two main types of Actions: "temporal Actions" and "instantaneous Actio
 |Instantaneous |To apply a state to a user at a single point in time, recording who did so, optionally with comments. |User surveyed and was happy/indifferent/frustrated · User has earned a sufficient level of trust on your forum and been given an award (possibly increasing their access rights)
 |===
 
-You cannot create a temporal Action that also has Options in FusionAuth at this time.
+You cannot create a temporal Action that also has Options in FusionAuth.
 
 The general process to use an Action is to:
 
@@ -208,8 +208,9 @@ The Actions API reference documentation is long and repeats the same parameters 
 
 Action parameters are used when you create an Action definition.
 
-* [field]#userActionId#
-* [field]#name#, [field]#localizedNames#
+* [field]#userActionId# - The Id of the action.
+* [field]#name# - The name of the Action.
+* [field]#localizedNames# - The name of the Action in various languages.
 * [field]#startEmailTemplateId#, [field]#cancelEmailTemplateId#, [field]#modifyEmailTemplateId#, [field]#endEmailTemplateId# — The Id of the email templates to use when the Action starts, is canceled, is modified, or expires. Temporal Actions have all four events, whereas instantaneous Actions have only the start event.
 * [field]#includeEmailInEventJSON# — Whether to include the email information in the JSON sent to the webhook when an Action is taken.
 * [field]#options#, [field]#options[x].name#, [field]#options[x].localizedNames#
@@ -256,7 +257,7 @@ Below is a diagram of this process.
 {% plantuml source: _diagrams/docs/guides/user-actions_sequence-diagram.plantuml, alt: "Using PiedPiper actions" %}
 ++++
 
-== FusionAuth Work
+=== FusionAuth Setup
 
 This guide assumes you have installed Node.js and FusionAuth. For FusionAuth installation instructions, please follow the link:/docs/v1/tech/getting-started/5-minute-setup-guide[5 minute getting started guide]. You should be able to log in to FusionAuth at `\http://localhost:9011/admin` and your Node.js test app at `\http://localhost:3000`.
 
@@ -616,7 +617,7 @@ In the `fusionauth-example-5-minute-guide` Node.js app, open `app.js`.
 
 You'll add a new route that pretends to be Intercom and will listen for new subscribers to start the onboarding process. In this tutorial, the API will just print the webhook to the console so that you can see what it looks like.
 
-At the very top of the file, add a reference to the FusionAuth TypeScript client library, the `API_KEY` and `BASE_URL` environment variables.
+After the line `var indexRouter = require('./routes/index');`, add a reference to the FusionAuth TypeScript client library, the `API_KEY` and `BASE_URL` environment variables.
 
 [source,js]
 ----
@@ -649,7 +650,7 @@ Administrators monitoring PiedPiper on Slack can immediately contact the user to
 
 === Create PiedPiper API to Listen for Expiry and Call Prevent Login Action
 
-The final piece of code you'll add to `app.js` is a little more complex. The `expire` route below is called by FusionAuth when the user's subscription Action instance ends. To ban the user from logging in after this time, PiedPiper applies the [field]#Prevent Login# Action to the user by calling the FusionAuth API.
+The final piece of code you'll add to `app.js` is a little more complex. The `expire` route below is called by FusionAuth when the user's subscription Action instance ends. To ban the user from logging in after this time, PiedPiper applies the [field]#Prevent Login# Action to the user by calling the FusionAuth API.  Add this code directly below the mock Slack code you just added.
 
 [source,js]
 ----
@@ -680,7 +681,7 @@ Let's start testing by applying the subscription Action to the user. In reality,
 You'll need to install `curl` if it's not already installed.
 ====
 
-In the following code, you will replace the values of [filed]#actioneeUserId# and [field]#actionerUserId# with the values you recorded earlier for the reader and administrator users respectively.
+In the following code, you will replace the values of [field]#actioneeUserId# and [field]#actionerUserId# with the values you recorded earlier for the reader and administrator users respectively.
 
 To test out the workflow, you can let the subscription expire after 60 seconds. From the https://fusionauth.io/dev-tools/date-time[FusionAuth Date-Time tool], copy the [field]#Milliseconds# value, add `60000` (60 seconds) to it, and paste it into the `"expiry"` field below. This will ensure the subscription action expires quickly. If you're on Linux, use the Option 2 code snippet to set the [field]#expiry# value automatically.
 
