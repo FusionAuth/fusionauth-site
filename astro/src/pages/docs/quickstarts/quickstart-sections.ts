@@ -72,13 +72,6 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-n',
         navColor: 'green',
       },
-      {
-        title: 'PHP',
-        icon: '/img/icons/php.svg',
-        faIcon: 'fa-php',
-        comingSoon: true,
-        navColor: 'purple'
-      },
     ],
   },
   {
