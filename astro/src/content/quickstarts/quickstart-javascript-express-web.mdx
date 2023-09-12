@@ -160,30 +160,7 @@ Execute this setup by calling an npm script.
 npm run setup
 ```
 
-## Create the Express Application
-
-In order for our application to look good we have some files that are already made, copy `complete-application/static` and `complete-application/templates` to the `changebank` directory. These static files are used to create the "beautiful" ChangeBank application UI.
-
-<Aside type="note">
-You can choose to examine the full example of the running code now, or skip below and walk through each step of the process.
-</Aside>
-
-### Full Example
-
-Make sure once again that you are in the directory `complete-application`.
-
-`index.ts`
-<RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
-  lang="ts" />
-
-#### Run the App!
-You should now be able to start your Express application with 
-
-```shell
-npm run dev
-```
-
-### Walkthrough Example
+## Authentication
 
 Make sure once again that you are in the directory `change-bank/src`.
 Create a file called `index.ts` and start by setting up your imports and constants. These constants have already been defined by running the kickstart and `setup.js`.
@@ -201,7 +178,7 @@ click the `View` icon under the actions for the ChangeBank application. You'll
 find the Client Id and Client Secret values in the `OAuth configuration` section.
 </Aside>
 
-#### Static files
+### Static files
 
 We need a way to serve our static files, luckily Express makes this easy with `express.static`. These files will include all of the CSS and images that are required for the UI of the ChangeBank application.
 
@@ -210,7 +187,7 @@ We need a way to serve our static files, luckily Express makes this easy with `e
   lang="ts"
   tags="static"/>
 
-#### Homepage
+### Homepage
 
 In order to show off our homepage we need to create a route with the base URL `/`. In this route check to see if `userDetails` cookie has any user values and correctly respond with either the `home.html` or `account.html` template. Also if there is no user you can generate the PKCE challenge pair and store them into `userSession` cookie (take note this is an HTTP-Only cookie).
 
@@ -223,7 +200,7 @@ In this file we will use the package [pkce-challenge](https://www.npmjs.com/pack
   lang="ts"
   tags="homepage"/>
 
-#### Login Route
+### Login Route
 
 In the ChangeBank application there is a `Login` button which will open the `/login` route when clicked (you can find this in `complete-application/templates/home.html`). Have this redirect them to FusionAuth so that FusionAuth can present them with a login page.
 
@@ -240,7 +217,7 @@ You can always find this URL if you view the details of your Application within 
 - `state`: Random string created in our homepage route and stored in our cookie as `stateValue`
 - `code_challenge`: Created in our homepage route using `pkce-challenge` and stored in our cookie as `challenge`, this is one half of the PKCE 
 
-#### OAuth Redirect
+### OAuth Redirect
 
 When FusionAuth redirects back to our Express application, it will return to our `/oauth-redirect` route. In this response it will have two query parameters that we need to further examine: `code` and `state`. 
 
@@ -256,7 +233,7 @@ When FusionAuth redirects back to our Express application, it will return to our
   lang="ts"
   tags="oauth-redirect"/>
 
-#### Account Route (protected)
+### Account Route (protected)
 
 The `/account` page represents what a user sees when they’re logged into their ChangeBank account. A user that isn’t logged in who tries to access this page should just be taken to the home page.
 
@@ -269,7 +246,7 @@ In a production application, we would validate the token signature, make sure it
   lang="ts"
   tags="account"/>
 
-#### Make Change
+### Make Change
 
 Two functions are needed to accept both GET and POST requests on the `/make-change` route. The `GET` verifies that the user is logged in, then servers the HTML file required for the page. The `POST` takes the amount form value as a body parameter and uses the it to calculate how many quarters, dimes, nickels and pennies to return. If `total` is not a valid dollar value or cannot be converted an `error` message is returned. The return string `message` is received by asyncronously and updates the `change-message` or `error-message` div accordingly.
 
@@ -279,7 +256,7 @@ Two functions are needed to accept both GET and POST requests on the `/make-chan
   lang="ts"
   tags="make-change"/>
 
-#### Logout Route
+### Logout Route
 
 <Aside type="tip">
 Click the `Logout` button and watch the browser first go to FusionAuth to log out the user, then return to your home page.
