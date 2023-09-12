@@ -12,10 +12,6 @@ module Jekyll
 
     def render(context)
       display = @attributes['display']
-      puts "abbbbbbbbbbbB"
-      puts display.nil?
-      puts display
-      puts "abbbbbbbbbbbB"
       unless display
         display = 'flex'
       end
