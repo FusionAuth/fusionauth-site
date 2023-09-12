@@ -31,13 +31,6 @@ const qsSections: QuickStartSection[] = [
     desc: 'Traditional web applications that run on servers',
     articles: [
       {
-        href: '/docs/v1/tech/tutorials/integrate-python-django',
-        title: 'Django',
-        icon: '/img/icons/python.svg',
-        faIcon: 'fa-snake',
-        navColor: 'orange'
-      },
-      {
         href: '/blog/2022/03/07/single-sign-on-with-drupal',
         title: 'Drupal',
         icon: '/img/icons/drupal.svg',
@@ -71,13 +64,6 @@ const qsSections: QuickStartSection[] = [
         icon: '/img/icons/nextjs.svg',
         faIcon: 'fa-n',
         navColor: 'green',
-      },
-      {
-        title: 'PHP',
-        icon: '/img/icons/php.svg',
-        faIcon: 'fa-php',
-        comingSoon: true,
-        navColor: 'purple'
       },
     ],
   },
