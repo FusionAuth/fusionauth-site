@@ -100,6 +100,7 @@ rd[d+'/tutorials/migrate-users']=d+'/migration-guide/tutorial';
 rd[d+'/tutorials/setting-up-user-account-lockout']=d+'/tutorials/gating/setting-up-user-account-lockout';
 rd[d+'/tutorials/two-factor/authenticator-app']=d+'/tutorials/two-factor/authenticator-app-pre-1-26';
 rd[d+'/tutorials/two-factor/twilio-push']=d+'/tutorials/two-factor/twilio-push-pre-1-26';
+rd[d+'/tutorials/integrate-angular']= '/docs/quickstarts/quickstart-javascript-angular-web';
 rd[d+'/tutorials/integrate-python-django']= '/docs/quickstarts/quickstart-python-django-web';
 rd[d+'/tutorials/integrate-python-flask']= '/docs/quickstarts/quickstart-python-flask-web';
 rd[d+'/tutorials/integrate-ruby-rails']= '/docs/quickstarts/quickstart-ruby-rails-web';
