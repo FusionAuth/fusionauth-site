@@ -3,8 +3,8 @@
 class PopoutMenu {
   #toggleMap = {};
 
-  #outState = ['lg:ease-out', 'lg:duration-100', 'lg:opacity-0', 'lg:scale-95'];
-  #inState = ['lg:ease-in', 'lg:duration-75', 'lg:opacity-100', 'lg:scale-100'];
+  #unClickedState = ['lg:opacity-0', 'lg:group-hover:opacity-100', 'lg:group-hover:scale-100', 'lg:scale-[.25]', 'lg:duration-300', 'lg:transition'];
+  #clickedState = ['lg:opacity-100', 'lg:scale=100'];
 
   constructor() {
     document.addEventListener('click', () => this.#handleClick(event));
@@ -27,11 +27,11 @@ class PopoutMenu {
     }
 
     if (!this.#toggleMap[id]) {
-      elem.classList.remove(...this.#outState);
-      elem.classList.add(...this.#inState);
+      elem.classList.remove(...this.#unClickedState);
+      elem.classList.add(...this.#clickedState);
     } else {
-      elem.classList.remove(...this.#inState);
-      elem.classList.add(...this.#outState);
+      elem.classList.remove(...this.#clickedState);
+      elem.classList.add(...this.#unClickedState);
     }
 
     this.#toggleMap[id] = !this.#toggleMap[id];
