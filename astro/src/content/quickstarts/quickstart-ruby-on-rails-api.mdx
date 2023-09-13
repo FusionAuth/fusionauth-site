@@ -45,8 +45,8 @@ In this section, you’ll get FusionAuth up and running and create a resource se
 First off, grab the code from the repository and change into that directory.
 
 ```
-git clone https://github.com/FusionAuth/fusionauth-quickstart-go-api.git
-cd fusionauth-quickstart-go-api
+git clone https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api
+cd fusionauth-quickstart-ruby-on-rails-api
 ```
 
 ### Run FusionAuth Via Docker
@@ -74,9 +74,9 @@ FusionAuth will be initially configured with these settings:
 
 You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don't need to.
 
-## Create Your Go Resource Server Application
+## Create Your Ruby on Rails Resource Server Application
 
-Now you are going to create a Go API application. While this section builds a simple API, you can use the same configuration to integrate an existing API with FusionAuth.
+Now you are going to create a Ruby on Rails API application. While this section builds a simple API, you can use the same configuration to integrate an existing API with FusionAuth.
 
 We are going to be building an API backend for a banking application called ChangeBank. This API will have two endpoints:
 - `make-change`: This endpoint will allow you to call GET with a `total` amount and receive a response indicating how many nickels and pennies are needed to make change. Valid roles are `customer` and `teller`.
@@ -89,68 +89,68 @@ If you simply want to run the application , there is a completed version in the 
 
 ```shell
 cd complete-application
-go get
-go run main.go
+bundle install
+bundle e rails s -p 4001
 ```
 
-You can then follow the instructions in the Run the API section started at Get a Token.
+You can then follow the instructions in the [Run the API](#run-the-api) section started at Get a Token.
 </Aside>
-
-To create the application from scratch, make a directory for this API. 
-
-```
-mkdir your-application && cd your-application
-```
 
 ### Initialize The Application
 
-Initialize the Go application using the following:
+Initialize the Ruby on Rails application using the following:
 
 ```
-go mod init your-application
+rails new your-application --api
+cd your-application
 ```
 
-### Write Go Code
+Once this is complete you will see a new directory called `your-application` with several sub directories.
 
-<Aside type="note">
-This tutorial puts all these classes in the same package for simplicity, but for a production application, you'd separate these out.
-</Aside>
+You need to update the `Gemfile` to include two new dependencies:
 
-Now you are going to write some Go code. You need to create a file called 'main.go'. Here you will add the package clause and import declarations below:
+```shell
+gem 'rack-jwt', git: 'https://github.com/FusionAuth/rack-jwt'
+gem 'dotenv-rails'
+```
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/main.go"} tags="package-imports"
-  lang="go"/>
+Your full `Gemfile` will now look like
 
-You will also need to declare a variable that will hold the value of the public key for the application. The value for this key will be set later in the application. Declare this variable below the import declarations.
+<RemoteCode url={frontmatter.coderoot + "/complete-application/Gemfile"}
+  lang="text"/>
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/main.go"} tags="verify-key"
-  lang="go"/>
+You may need to modify the version of ruby specified in the Gemfile. As long as Rails 7 is supported, you will be fine.
 
-### Add Handlers and Functions
+Then, install these new gems.
 
-Create the main function for the application.
+```shell
+bundle install
+```
+### Update Routes Config
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/main.go"} tags="main"
-  lang="go"/>
+Update `/config/routes.rb` to include the two new routes that will be created for `/make-change` and `/panic`. Your `routes.rb` file should now match the below code.
 
-Next, you are going to add some handlers. This tells the application how to handle specific requests. Notice the `isAuthorized` function wrapping around the `panic` and `makeChange` functions. We will implement this function later and it is what will validate the token and verify the roles. This function will also stand up the http listener on port `9001`.
-
-<RemoteCode url={frontmatter.coderoot + "/complete-application/main.go"} tags="handlers"
-  lang="go"/>
-
-You will write two functions that will return values when users access them. These functions are called by the handlers. One is the `panic` which returns a message when a successful `POST` call is made to `/panic`. This will also display a message if the request is not made through a `POST`.
-
-<RemoteCode url={frontmatter.coderoot + "/complete-application/main.go"} tags="panic-function"
-  lang="go"/>
-
-Next you need a function to show the breakdown from making changes. This function will get the `total` value from the query string. If the `total` cannot be cast to a `float64`, the function will return a message stating that. If the `total` is a valid number, the function will return the description of the change.
-
-<RemoteCode url={frontmatter.coderoot + "/complete-application/main.go"} tags="make-change-function"
-  lang="go"/>
+<RemoteCode url={frontmatter.coderoot + "/complete-application/config/routes.rb"}
+  lang="ruby"/>
 
 ### Add Security
 
-Now you need to implement the `isAuthorized` function used by the handlers. Now, you'll protect your endpoints based on the `roles` encoded in the JWT you receive from FusionAuth. The decoded payload of a JWT for a `teller` might look like this:
+Create a new file to hold your environment variables, directly in the `complete-application` directory called `.env.development`. This new file has two variables that are used to call your FusionAuth instance `FUSIONAUTH_LOCATION` and `CLIENT_ID`, with the values that match below.
+
+```text
+# for rails
+
+FUSIONAUTH_LOCATION=http://localhost:9011
+
+CLIENT_ID=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
+```
+
+Utilizing the enviroment variables you just added we can now setup JSON Web Token (JWT) based authentication. Create a new file  `config/initializers/jwt_rack.rb`. This initializer is used to hold configuration settings that are made after all of the frameworks and plugins are loaded. 
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/config/initializers/jwt_rack.rb"}
+  lang="ruby"/>
+
+Having this code protects your endpoints from anonymous users and passes the JWT payload to the controller. The JWT payload includes `roles` encoded in the JWT you receive from FusionAuth. The decoded payload of a JWT for a `teller` might look like this:
 
 ```json
 {
@@ -172,51 +172,26 @@ Now you need to implement the `isAuthorized` function used by the handlers. Now,
 }
 ```
 
-You need to validate the token and make sure the user has the appropriate role to access the API. You can do so by adding the following code:
+### Add Controllers
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/main.go"} tags="authorization"
-  lang="go"/>
+Create a new file for the MakeChangeController `app/controllers/make_change_controller.rb`. This controller will verify that the authenticated user has either the `teller` or `customer` role. It then takes in the url parameter `total` to calculate which coins will be returned in the JSON payload.
 
-There is a lot of code in this function. Let's break it down:
-- First you validate some claims. Notice the `checkAudience` that makes sure the token is intended for this application and `checkIss` to make sure the issuer is as expected.
-- `SetPublicKey`, which is a function we will create later, retrieves the public key for the JWT
-- After the key has been set, the `golang-jwt/jwt` will validate the signature and expiration date.
-- Once the token is validated, you will need to take a look at the roles.
-- The code will look to see which page is being called and then create an array for the roles that are valid for that request in `validRoles`.
-     - The containsRole function will be created as well and that creates an array with the intersection of roles that are allowed and roles that are required. If the length of that intersection is greater than 1 then the user has the proper role.
-- Once the roles have been validated, then the endpoint is served.
+<RemoteCode url={frontmatter.coderoot + "/complete-application/app/controllers/make_change_controller.rb"}
+  lang="ruby"/>
 
-Now, you will add the code to set the public key. This function will accept the key id from the token and call the authorization server to get the public key with that key id and put it in the proper format to be used.
+Create a new file for the PanicController `app/controllers/panic_controller.rb`. This controller will verify that the authenticated user has only the `teller` role. It will respond with `Proper role not found for user.` if this role is not found. This route also verifies that this is a `POST` request and if this is not true it will respond with `Only POST method is supported.` If both of these tests are passed the controller will return a successful message of `We've called the police!`.
 
-<Aside type="note">
-In this example, if the key is already set, it will not call it again. In a production environment you could store this key on the server or set it once one initialization. If your api serves several applications, you will need to get the correct public key for each application if they are different.
-</Aside>
-
-<RemoteCode url={frontmatter.coderoot + "/complete-application/main.go"} tags="set-public-key"
-  lang="go"/>
-
-Then, you will add the code for comparing the required roles and the roles the user has according to the token.
-
-<RemoteCode url={frontmatter.coderoot + "/complete-application/main.go"} tags="contains-role"
-  lang="go"/>
-
-Finally we will add a helper function that returns the name of the function being called by the endpoint.
-
-<RemoteCode url={frontmatter.coderoot + "/complete-application/main.go"} tags="helper"
-  lang="go"/>
-
-That is all the code for the sample application. Save the `main.go` file.
+<RemoteCode url={frontmatter.coderoot + "/complete-application/app/controllers/panic_controller.rb"}
+  lang="ruby"/>
 
 ## Run the API
 
 Start the API resource server by running:
 
-In a command shell window, navigate to the root directory of your application.
+In a command shell window, navigate to the root directory of your application and run the following command to start the server.
 
 ```shell
-cd your-application
-go get
-go run main.go
+bundle e rails s -p 4001
 ```
 
 ### Get a Token
@@ -254,7 +229,7 @@ Copy the `token` from the response, which should look like this:
 Use the `token` as a `Bearer` token in the `Authorization` header. Make a request to `/make-change` with a query parameter `total=5.12`.
 
 ```shell
-curl --location 'http://localhost:9001/make-change?total=5.12' \
+curl --location 'http://localhost:4001/make-change?total=5.12' \
 --header 'Authorization: Bearer <your_token>'
 ```
 
@@ -269,7 +244,7 @@ You were authorized, success! You can try making the request without the `Author
 Next call the `/panic` endpoint because you are in trouble!
 
 ```shell
-curl --location --request POST 'http://localhost:9001/panic' \
+curl --location --request POST 'http://localhost:4001/panic' \
 --header 'Authorization: Bearer <your_token>'
 ```
 
@@ -311,7 +286,7 @@ Your response should look like this:
 Now use that token to call `/make-change` with a query parameter `total=3.24`
 
 ```shell
-curl --location 'http://localhost:9001/make-change?total=3.24' \
+curl --location 'http://localhost:4001/make-change?total=3.24' \
 --header 'Authorization: Bearer <your_token>'
 ```
 
@@ -324,7 +299,7 @@ We can make change using 12 quarters 2 dimes 0 nickels 4 pennies
 So far so good. Now let's try to call the `/panic` endpoint. (We're adding the `-i` flag to see the headers of the response)
 
 ```shell
-curl -i --request POST 'http://localhost:9001/panic' \
+curl -i --request POST 'http://localhost:4001/panic' \
 --header 'Authorization: Bearer <your_token>'
 ```
 
@@ -367,11 +342,10 @@ Make sure you are making a `POST` call and using a token with the `teller` role.
 You can always pull down a complete running application and compare what's different.
 
 ```
-git clone https://github.com/FusionAuth/fusionauth-quickstart-go-api.git
-cd fusionauth-quickstart-go-api
+git clone https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api.git
+cd fusionauth-quickstart-ruby-on-rails-api
 docker-compose up -d
 cd complete-application
-go get
-go run main.go
+bundle install
+bundle e rails s -p 4001
 ```
-
