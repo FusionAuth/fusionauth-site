@@ -4,7 +4,7 @@ title: FusionAuth CLI
 description: Learn about the FusionAuth admin CLI tool
 ---
 
-The FusionAuth command line interface (CLI) tool allows you to manipulate FusionAuth from the command line.
+The FusionAuth command line interface (CLI) tool allows you to manipulate FusionAuth from the command line. The focus of the CLI is on allowing easy management of commonly modified customization code and markup, such as emails, themes or lambdas. It is not a full featured replacement for any of the [client libraries](/docs/v1/tech/client-libraries/), which wrap all of the API.
 
 ## Prerequisites
 
