@@ -1,0 +1,284 @@
+---
+title: Wordpress
+description: Quickstart integration of Wordpress application with FusionAuth
+navcategory: getting-started
+prerequisites: Wordpress version 6.3
+section: web
+technology: Express.js
+language: JavaScript
+icon: /img/icons/javascript.svg
+faIcon: fa-node-js
+color: green
+cta: EmailListCTA
+---
+
+import Aside from '/src/components/Aside.astro';
+import LoginAfter from '../../diagrams/quickstarts/login-after.astro';
+import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
+import RemoteCode from '/src/components/RemoteCode.astro';
+
+In this quickstart, you will build an application with Express.js and integrate it with FusionAuth. The application is for [ChangeBank](https://www.youtube.com/watch?v=pkH-kD73QUM), a global leader in converting dollars into coins. It will have areas reserved for logged in users and public-facing sections.
+
+Find the Docker Compose file and source code for the complete application at https://github.com/ritza-co/fusionauth-quickstart-javascript-express-web.
+
+## Prerequisites
+
+For this Quickstart, you'll need:
+
+* [Node 18](https://nodejs.org/en/download) or later.
+* [Docker](https://www.docker.com), which is the quickest way to start FusionAuth. (There are [other ways](/docs/v1/tech/installation-guide/)).
+
+## General Architecture
+
+While this sample application doesn't have login functionality without FusionAuth, a more typical integration will replace an existing login system with FusionAuth.
+
+In that case, the system might look like this before FusionAuth is introduced.
+
+<LoginBefore alt={"Request flow during login before FusionAuth"}/>
+
+The login flow will look like this after FusionAuth is introduced.
+
+<LoginAfter alt={"Request flow during login after FusionAuth"}/>
+
+In general, you would introduce FusionAuth to normalize and consolidate user data, making it consistent and up-to-date and offloading your login security and functionality to FusionAuth.
+
+## Getting Started
+
+Start with getting FusionAuth up and running and creating a new Express application.
+
+### Clone The Code
+
+First, grab the code from the repository and change into that folder.
+
+```
+git clone https://github.com/ritza-co/fusionauth-quickstart-javascript-express-web.git
+cd fusionauth-quickstart-javascript-express-web
+```
+
+All shell commands in this guide can be entered in a terminal in this folder. On Windows, you need to replace forward slashes with backslashes in paths.
+
+All the files you'll create in this guide already exist in the `complete-application` subfolder, if you prefer to copy them.
+
+### Run FusionAuth Via Docker
+
+You'll find a Docker Compose file `docker-compose.yml` and an environment variables configuration file `.env` in the root folder of the repository.
+
+Assuming you have Docker installed on your machine, you can start FusionAuth on your machine with the following.
+
+```
+docker-compose up -d
+```
+
+This will start three containers, one each for FusionAuth, Postgres, and Elasticsearch.
+
+Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/v1/tech/installation-guide/kickstart). When FusionAuth starts for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to your specified state.
+
+<Aside type="note">
+If you ever want to reset the FusionAuth system, delete the volumes created by `docker-compose` by executing `docker-compose down -v`, then rerun `docker-compose up -d`.
+</Aside>
+
+FusionAuth will be configured with these settings:
+
+* Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
+* Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
+* Your example username is `richard@example.com` and the password is `password`.
+* Your admin username is `admin@example.com` and the password is `password`.
+* The base URL of FusionAuth is `http://localhost:9011/`.
+
+You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want to, but with Docker and Kickstart, everything will already be configured correctly.
+
+<Aside type="caution">
+  The `.env` and `kickstart.json` files contain passwords. In a real application, always add these files to your `.gitignore` file and never commit secrets to version control.
+</Aside>
+
+### Create A Basic Express Application
+
+Next, you'll set up a basic Express app. While this guide builds a new Express project, you can use the same method to integrate your existing project with FusionAuth.
+
+You create the default Express starter project in a folder called `mysite`, with the EJS view template engine. You also add a few npm packages to help with authentication.
+
+```shell
+npx express-generator@latest mysite --view=ejs
+cd mysite
+npm install
+npm audit fix --force # run this only if npm reports security vulnerabilities
+
+npm install dotenv # to read your .env files with passwords
+npm install passport passport-oauth2  # to authenticate with FusionAuth
+npm install jwt-decode # to get the email address from the JWT returned by FusionAuth
+npm install express-session # to maintain the user's session once logged in
+```
+
+Now create the `.env` file in your `mysite` folder and add the following to it (note that this is a different environment file to the one in the root folder used by Docker for FusionAuth).
+
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/.env"
+ lang="shell" />
+
+### Preliminary Setup
+
+Before you configure authentication, you need to change the default file created by Express.
+
+On line 21 of `mysite/app.js`, just before it adds the first route, insert the following line.
+
+```js
+require('./services/authentication')(app);
+```
+
+You can also delete the lines that relate to the users route. This app won't need them.
+
+```js
+var usersRouter = require('./routes/users'); // delete line 8
+
+app.use('/users', usersRouter); // delete line 23
+```
+
+## Authentication
+
+Authentication in Express requires two parts:
+
+- An Authenticator service to handle communication with FusionAuth. For this you will use Passport.js.
+- Routes (`login`, `logout`, `callback`) that talk to the Authenticator and FusionAuth.
+
+The line you added above, `require('./authentication')(app);`, imports a function to add authentication to the Express app instance, and calls it. Let's create that file now.
+
+```shell
+mkdir mysite/services
+```
+
+In this `services` folder, add the file `authentication.js`, and copy in the following code.
+
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/services/authentication.js"
+ lang="typescript" />
+
+The first line, `require('dotenv/config');`, allows the file to use settings from `.env`.
+
+Almost the entire file consists of the configuration function `setupPassport(app)`. It links Passport.js to the instance of the Express app. You could put this code directly in `app.js`, but it would be more cluttered.
+
+The function starts by telling the app to use cookie-based sessions in `app.use(session({`, provided by express-session.js. Passport is set to use this session too, with `app.use(passport.session());`.
+
+In `authOptions`, you specify the FusionAuth URLs stored in the `.env` file, which match those created by Kickstart when you ran the Docker command to start FusionAuth.
+
+You then tell Passport what strategy to use for authentication. Passport itself just keeps the user details in a session once logged in. It cannot authenticate anyone without a strategy — a way of interacting with some authentication system, such as OAuth, Facebook login, or simple username and password. In this case, you use passport-oauth2.js.
+
+This strategy will direct the user to FusionAuth for authentication. Once that is complete, `callback(null, token.email);` returns the user's email to the session for storage. You can specify which user details you want to keep in the session. This example uses a single string containing the user's email, but you could define an object with more details or just a user Id. To do so, you would update the object returned in the authentication method, and update the routes you are about to create to use the new object instead of just an email.
+
+Note that the callback must return a value. If the authenticator returns nothing to store in the session, then a user will not stay logged in.
+
+The `serializeUser` and `deserializeUser` allow you to specify what you want to store in the user's session when logged in, and what to get out of the session cookie on each request. In this example you just pass around the user's email.
+
+### Routes
+
+Replace the homepage of your app in `mysite/routes/index.js` with the following code.
+
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/routes/index.js"
+ lang="typescript" />
+
+All the `router` functions above are server-side HTTP handlers for GET and POST requests. The handlers all follow the standard Express.js pattern `function (req, res, next)`, where
+- `req` is the HTTP request,
+- `res` is the HTTP result to return, and
+- `next` is another function, with the same parameters, that runs after this one.
+
+Your functions can choose to return a result to the user, or perform some middleware function, like logging, or checking the user is authenticated, before calling `next()` to let the next function in the stack handle returning the actual result.
+
+You use this capability to create a middleware function, `checkAuthenticated`, that uses the function provided by Passport, `req.isAuthenticated()`, to redirect the user to the login page if necessary, and otherwise to let the next handler run.
+
+The function, `router.get('/login'`, calls Passport, which sends the user to FusionAuth. Once authenticated, FusionAuth redirects the page to `router.get('/auth/callback'`, which finally sends the user to the account page. Note that this second function calls `passport.authenticate` too. This is not a redundancy — if you remove it the user will not be properly logged in. OAuth uses two tokens to manage authentication and needs both calls.
+
+The logout function calls the Passport function `req.logOut`, which clears the user's session, and redirects them to the home page.
+
+The `router.get('/account'` and `change` pages both use the middleware created earlier, `checkAuthenticated`, to prevent the user from seeing these pages unless logged in. Both get the user's email to display from the session in the request, `req.user`.
+
+The last two handlers are for the same URL, `change`. The GET handler displays the page at first. The POST handler will calculate change for the user and render the page with more data.
+
+## Customization
+
+Now that authentication is done, the last task is to create two example pages that a user can access only when logged in.
+
+Copy over some CSS and an image from the example app.
+
+```shell
+cp ../complete-application/public/stylesheets/changebank.css ./mysite/public/stylesheets/changebank.css
+cp ../complete-application/public/images/money.jpg ./mysite/public/images/money.jpg
+rm ./mysite/public/stylesheets/style.css
+```
+
+Change the index page `mysite/views/index.ejs` with the following code.
+
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/views/index.ejs"
+ lang="typescript" />
+
+This page allows the user to log in by offering a link to the route you created in the previous section, `<a href="/login">`.
+
+Next, add the `account.ejs` view.
+
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/views/account.ejs"
+ lang="typescript" />
+
+ You can see that email returned from FusionAuth is shown in the line `<%= email %>`.
+
+ Finally, add the `change.ejs` view.
+
+ <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/views/change.ejs"
+ lang="typescript" />
+
+This page has a form at the bottom that allows the user to call the POST version of the page when clicked. The server route calculates the change and renders it using the `state` variable. Depending on the result, different sections of the page are shown, by conditional code like `<% if (state.error && state.hasChange) { %>`
+
+## Run The Application
+
+Start the Express server.
+
+```shell
+npm run start
+```
+
+You can now browse to [the app](http://localhost:3000).
+
+Log in using `richard@example.com` and `password`. The change page will allow you to enter a number. Log out and verify that you can't browse to the [account page](http://localhost:3000/account).
+
+## Next Steps
+
+This quickstart is a great way to get a proof of concept up and running quickly, but to run your application in production, there are some things you're going to want to do.
+
+### FusionAuth Customization
+
+FusionAuth gives you the ability to customize just about everything to do with the user's experience and the integration of your application. This includes:
+* [Hosted pages](/docs/v1/tech/themes/) such as login, registration, email verification, and many more.
+* [Email templates](/docs/v1/tech/email-templates/email-templates).
+* [User data and custom claims in access token JWTs](/articles/tokens/jwt-components-explained).
+
+### Security
+
+* You may want to customize the [token expiration times and policies](/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth.
+* Choose [password rules](/docs/v1/tech/core-concepts/tenants#password) and a [hashing algorithm](/docs/v1/tech/reference/password-hashes) that meet your security needs.
+
+### Tenant And Application Management
+
+* Model your application topology using [Applications](/docs/v1/tech/core-concepts/applications), [Roles](/docs/v1/tech/core-concepts/roles), [Groups](/docs/v1/tech/core-concepts/groups), [Entities](/docs/v1/tech/core-concepts/groups), and more.
+* Set up [MFA](/docs/v1/tech/guides/multi-factor-authentication), [Social login](/docs/v1/tech/identity-providers/), or [SAML](/docs/v1/tech/identity-providers/samlv2/) integrations.
+* Integrate with external systems using [Webhooks](/docs/v1/tech/events-webhooks/), [SCIM](/docs/v1/tech/core-concepts/scim), and [Lambdas](/docs/v1/tech/lambdas/).
+
+### Express Authentication
+
+- [Express security best practice](https://expressjs.com/en/advanced/best-practice-security.html)
+- [Passport.js authentication concepts](https://www.passportjs.org/concepts/authentication/downloads/html)
+- [Passport.js Oauth2](https://github.com/jaredhanson/passport-oauth2)
+
+
+## Troubleshooting
+
+* I get "This site can’t be reached localhost refused to connect" when I click the login button.
+
+Ensure FusionAuth is running in the Docker container. You should be able to log in as the admin user `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
+
+* It still doesn't work.
+
+You can always pull down a complete running application and compare what's different.
+
+```
+git clone https://github.com/ritza-co/fusionauth-quickstart-javascript-express-web.git
+cd fusionauth-quickstart-javascript-express-web
+docker-compose up -d
+cd complete-application
+npm install
+npm run start
+```
