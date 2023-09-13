@@ -38,7 +38,7 @@ One way is leveraging a distributed event system that notifies services when ref
 
 ### Example: Revoking JWTs in FusionAuth
 
-To illustrate this, I'm going to use [FusionAuth](https://fusionauth.io/)'s event and Webhook system as well as the *jwt.refresh-token.revoke* event. If you are building your own IdP or using another system, you might need to build out your own eventing system based on this article.
+To illustrate this, I'm going to use [FusionAuth](/)'s event and Webhook system as well as the *jwt.refresh-token.revoke* event. If you are building your own IdP or using another system, you might need to build out your own eventing system based on this article.
 
 The FusionAuth **jwt.refresh-token.revoke** event looks like this:
 
