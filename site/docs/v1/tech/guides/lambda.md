@@ -13,13 +13,13 @@ This guide shows you how to create a simple lambda manually, update it programma
 
 To follow this guide, you need
 
-- [Node.js version 18](https://nodejs.org/en/download) or later, and
-- [Docker](https://www.docker.com/get-started/).
+- [Node.js version 18](https://nodejs.org/en/download) or later
+- [Docker](https://www.docker.com/get-started/)
 
 ### Lambda Limitations
 
 
-{% include _callout-note.liquid content="<p>Remember the following limitations of lambdas when planning what they'll do:<ul><li>Lambdas do not have full access to JavaScript libraries, nor can they load them currently.</li> <li>The console methods take only one argument.</li><li>HTTP requests are not available in the Community or Starter FusionAuth plans.</li><li>If you set the Identity Provider <a href='/docs/v1/tech/identity-providers/#linking-strategies'>linking strategy</a> to 'Link Anonymously', no lambdas will be used for external authentication.</li> </ul></p>"%}
+{% include _callout-note.liquid content="<p>Remember the following limitations of lambdas when planning what they'll do:<ul><li>Lambdas do not have full access to JavaScript libraries, nor can they load them currently.</li> <li>The console methods take only one argument.</li><li>HTTP requests are not available in the Community or Starter FusionAuth plans.</li><li>If you set the Identity Provider <a href='/docs/v1/tech/identity-providers/#linking-strategies'>linking strategy</a> to "Link Anonymously", no lambdas will be used for external authentication.</li> </ul></p>"%}
 
 ## Set Up The FusionAuth Sample Project
 
@@ -51,7 +51,7 @@ Let's start by making a simple lambda to test that it works on your machine.
 - <p>Select the <span class="field">Type</span> "JWT Populate".</p>
 - <p>Leave the <span class="field">Engine</span> as "GraalJS".</p>
 - <p>Enable <span class="uielement">Debug Enabled</span> so that you can see messages in the event log.</p>
-- Add the following line: `jwt.message = 'Hello World!';` to the body of the `populate` function.
+- Add the line `jwt.message = 'Hello World!';` to the body of the `populate` function.
 
 The body should now be similar to below.
 
@@ -71,7 +71,7 @@ Now activate the lambda for the example app.
 - Navigate to <span>Applications</span>{:.breadcrumb} and click the <i/>{:.ui-button .blue .fa .fa-edit} button on the "Example app".
 - Click on the <span>JWT</span>{:.breadcrumb} tab.
 - <p>Toggle <span class="uielement">Enabled</span> to on.</p>
-- <p>Under <span class="breadcrumb">Lambda Settings</span>, select the lambda you created, called "[ATest]" for the <span class="field">Access Token populate lambda</span>.</p>
+- <p>Under <span class="breadcrumb">Lambda Settings</span>, select the lambda you created, called "[ATest]", for the <span class="field">Access Token populate lambda</span>.</p>
 - Click the <i/>{:.ui-button .blue .fa .fa-save} button to save the changes.
 
 {% include docs/_image.liquid src="/assets/img/docs/guides/lambda/edit-application.png" alt="Enabling the lambda in an application" class="img-fluid" width="1200" figure=false %}
@@ -112,16 +112,16 @@ Although you can use the [lambda API](/docs/v1/tech/apis/lambdas) directly by ma
 
 There are two ways to do this using JavaScript:
 
-- The [TypeScript client library](https://github.com/FusionAuth/fusionauth-typescript-client), documented [here](/docs/v1/tech/client-libraries/typescript), should be used for any browser or Node code you write in JavaScript or TypeScript. It provides a straightforward way of calling the underlying HTTP API.
-- The [Node CLI](https://github.com/FusionAuth/fusionauth-node-cli) is a set of commands you can run in the terminal to perform a few advanced functions. The focus of this CLI is on uploading and downloading of commonly modified assets such as lambdas or themes. The Node CLI is a wrapper on the TypeScript client library and operates at a higher level of abstraction. It is helpful to manage lambdas, but you can always drop down to the Typescript client library if needed.
+- The [TypeScript client library](https://github.com/FusionAuth/fusionauth-typescript-client), documented [here](/docs/v1/tech/client-libraries/typescript), should be used for any browser or Node.js code you write in JavaScript or TypeScript. It provides a straightforward way of calling the underlying HTTP API.
+- The [Node CLI](https://github.com/FusionAuth/fusionauth-node-cli) is a set of commands you can run in the terminal to perform a few advanced functions. The focus of this CLI is on uploading and downloading of commonly modified assets such as lambdas or themes. The Node CLI is a wrapper on the TypeScript client library and operates at a higher level of abstraction. It is helpful to manage lambdas, but you can always drop down to the TypeScript client library if needed.
 
 ### Create An API Key
 
-The API, CLI, and Client Library all need an API Key to access FusionAuth.
+The API, CLI, and client library all need an API Key to access FusionAuth.
 
 The kickstart configuration file used by FusionAuth already created a sample API Key with superuser privileges. For more information on managing API keys, please refer to the following [guide](/docs/v1/tech/apis/authentication#managing-api-keys).
 
-{%  include _callout-tip.liquid content="For production you would want to enable only the following endpoints necessary to perform actions on lambdas, such as updating and deleting, and to mimic user actions to test the lambdas, such as logging in `/api/lambda`,`/api/lambda/search`,`/api/login`,`/api/user` and `/api/user/registration`" %}
+{%  include _callout-tip.liquid content="For production, you would want to enable only the following endpoints necessary to perform actions on lambdas, such as updating and deleting, and to mimic user actions to test the lambdas, such as logging in `/api/lambda`,`/api/lambda/search`,`/api/login`,`/api/user` and `/api/user/registration`" %}
 
 ### Use The Lambda CLI
 
@@ -144,7 +144,7 @@ npx fusionauth lambda:retrieve f3b3b547-7754-452d-8729-21b50d111505 --key lambda
 
 The lambda will be saved to a file, where the file name is the UUID of your lambda. So it should look like this: `./lambdas/f3b3b547-7754-452d-8729-21b50d111505.yaml`.
 
-Let's update the lambda to say "Goodbye World!" instead of "Hello World!" and re-upload it. Open the file in a text editor, change the value of the <span>body</span>{:.field} property to the following.
+Let's update the lambda to say "Goodbye World!" instead of "Hello World!" and re-upload it. Open the file in a text editor, and change the value of the <span>body</span>{:.field} property to the following.
 
 {% raw %}
 ```
@@ -168,7 +168,7 @@ You can check that the lambda in FusionAuth now says "Goodbye World!" by viewing
 
 ### CLI Limitations
 
-The Node CLI allows you only to create, retrieve, and update lambdas. You can delete a lambda that is not in use by an application with `lambda:delete`. The way to link or unlink a lambda with an application is through the admin UI, API, or a client library. For example, to link a lambda with an application in the Typescript client library, you could use code similar to the following.
+The Node CLI allows you only to create, retrieve, and update lambdas. You can delete a lambda that is not in use by an application with `lambda:delete`. The way to link or unlink a lambda with an application is through the admin UI, API, or a client library. For example, to link a lambda with an application in the TypeScript client library, you could use code similar to the following.
 
 ```ts
 const request: ApplicationRequest = { "application": { "lambdaConfiguration": {accessTokenPopulateId: "f3b3b547-7754-452d-8729-21b50d111505"} };
@@ -203,7 +203,7 @@ npm install --save-dev jsonwebtoken # to decode the JWT
 npm install --save-dev uuid # to make a random user Id
 ```
 
-{% include _callout-note.liquid content=" The `fetch()` method is available natively from Node LTS version 18. In earlier versions, `fetch` was provided by libraries, so many popular mocking libraries for `fetch` (such as [Nock](https://github.com/nock/nock)) won't work with modern Node in 2023." %}
+{% include _callout-note.liquid content=" The `fetch()` method is available natively from Node.js LTS version 18. In earlier versions, `fetch` was provided by libraries, so many popular mocking libraries for `fetch` (such as [Nock](https://github.com/nock/nock)) won't work with modern Node.js in 2023." %}
 
 ### Integration Test: Verify JWT Population
 
@@ -242,7 +242,7 @@ Create a file called `userLogin.js` and add the following code.
 {% remote_include 'https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/userLogin.js' %}
 ```
 
-This helper file allows your tests to log in to FusionAuth programmatically. The `login` function calls the FusionAuth Typescript library. It then decodes the JWT response and returns its `message` property.
+This helper file allows your tests to log in to FusionAuth programmatically. The `login` function calls the FusionAuth TypeScript library. It then decodes the JWT response and returns its `message` property.
 
 Now create a test file that will use it, `test_1.js`, and add the following code.
 
@@ -391,7 +391,7 @@ ok 3 Check editor has read permission
 # ok
 ```
 
-Note that running code downloaded from a database is a security risk. Any administrator with access to your FusionAuth admin UI can put malicious code into your lambdas that could use Node.js to access your local disk, or send passwords over the Internet. To keep safe, run your tests only in a Docker or LXC container with no disk access to your physical machine, and no passwords stored in the container.
+Note that running code downloaded from a database is a security risk. Any administrator with access to your FusionAuth admin UI can put malicious code into your lambdas that could use Node.js to access your local disk or send passwords over the internet. To keep safe, run your tests only in a Docker or LXC container with no disk access to your physical machine, and no passwords stored in the container.
 
 ### How To Run All The Tests
 
