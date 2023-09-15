@@ -38,7 +38,7 @@ If you don't have this set up yet, please review the following links:
 
 == Initial Setup
 
-In the initial setup we go through the initializing of the Terraform working directory with the FusionAuth API key.
+In the initial setup you go through the initializing of the Terraform working directory with the FusionAuth API key.
 
 === FusionAuth API Key
 
@@ -49,13 +49,33 @@ Copy the key before pressing the Save button.
 
 === Initializing Terraform Working Directory
 
-With the copied API Key from your FusionAuth environment we initialize the Terraform working directory. Create a new directory. Any name will do, but for consistency, it is suggested to name it after your FusionAuth instance host name.
+With the copied API Key from your FusionAuth environment you initialize the Terraform working directory. Create a new directory. Any name will do, but for consistency, it is suggested to name it after your FusionAuth instance host name.
 
 [source]
 ----
 mkdir auth.example.com
 cd auth.example.com
 ----
+For all the variables you are going to use, create a `variables.tf file with the following content to declare all https://developer.hashicorp.com/terraform/language/values/variables[Input Variables] used throughout the example.
+
+include::/home/aaron/WebstormProjects/fusionauth-terraform-examples/examples/import/variables.tf[]
+
+And for the Variable Definitions you create `terraform.tfvars` with the following content and according modifications:
+
+* Adding the previously created key as `fusionauth_api_key` variable
+* Adding the value of the FusionAuth instance you plan to manage to the `fusionauth_host` variable
+* Make sure host is the full URL including protocol of your FusionAuth instance, in the docker example this may be `http://localhost:9011`
+* Adding the value for `fusionauth_default_tenant_id` you can skip for now.
+* Adding `fusionauth_default_application_id` is not necessary as it stays the same for all deployments and the default is defined in `variables.tf`.
+
+include::/home/aaron/WebstormProjects/fusionauth-terraform-examples/examples/import/terraform.tfvars[]
+
+[WARNING]
+====
+Please note the configuration section for `fusionauth_api_key` in `variables.tf`. The configuration option `sensitive = true` is defined, this will prevent sensitive data added to the Terraform state and therefore has to be always defined.
+
+The variable definition with `terraform.tfvars` is only one way, please follow https://developer.hashicorp.com/terraform/language/values/variables#assigning-values-to-root-module-variables[Assigning Values to Root Module Variables] for more information.
+====
 
 Next, add the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/[FusionAuth Terraform Provider] configuration in the directory by:
 
@@ -64,28 +84,12 @@ Next, add the https://registry.terraform.io/providers/gpsinsight/fusionauth/late
 * Copying the Hashicorp Configuration Language (HCL) provided
 * Creating a Terraform configuration file named `main.tf`
 * Pasting the copied HCL into that file
-* Adding the previously created key as `api_key` to the `provider` section
-* Adding the value of the FusionAuth instance you plan to manage ad the `host` variable in the `provider` section
-* Make sure host is the full URL including protocol of your FusionAuth instance, in the docker example this may be `http://localhost:9011`
+* Adding the previously created variable as `var.fusionauth_api_key` to the `provider` section
+* Adding the FusionAuth instance you plan to manage with the `var.fusionauth_host` variable in the `provider` section
 
 Here's what your `main.tf` file might look like after these steps.
 
-[source]
-----
-terraform {
-  required_providers {
-    fusionauth = {
-      source = "gpsinsight/fusionauth"
-      version = "0.1.94"
-    }
-  }
-}
-
-provider "fusionauth" {
-  api_key = "yqTs2LSMd23DYgwbPBA_AxmXHm7_qNFT9jbi3wL9Jr65ymNkNnFisAvjY"
-  host = "https://auth.example.com"
-}
-----
+include::/home/aaron/WebstormProjects/fusionauth-terraform-examples/examples/import/main.tf[tags=terraformProvider]
 
 Finally, the following command performs several different initialization steps in order to prepare the current working directory for use with Terraform.
 
@@ -111,7 +115,7 @@ Once you initialize the Terraform working directory, you should review different
 
 == Terraform Import
 
-Before we cover creating, updating and removing, let's look at the the https://developer.hashicorp.com/terraform/language/import[Import] and https://developer.hashicorp.com/terraform/language/data-sources[Data Source] functionality. 
+Before you look in to creating, updating and removing with Terraform, let's look at the the https://developer.hashicorp.com/terraform/language/import[Import] and https://developer.hashicorp.com/terraform/language/data-sources[Data Source] functionality.
 
 If you have existing FusionAuth configuration you want to manage via Terraform, you will need to import it.
 
@@ -365,7 +369,7 @@ Now that you've set up Terraform to handle default configuration, let's walk thr
 
 To create a new resource you can go through the list of resources available to you in the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs[FusionAuth Terraform Provider Documentation] and pick the resource you are interested in. Each resource contains information about required and optional arguments.
 
-In this example we create an application called forum in the Default tenant with related roles (admin and user), users (forum-user1 and forum-admin1) and according registrations:
+In this example you create an application called forum in the Default tenant with related roles (admin and user), users (forum-user1 and forum-admin1) and according registrations:
 
 * https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application[Terraform Application Resource]
 * https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application_role[Terraform Application Role Resource]
