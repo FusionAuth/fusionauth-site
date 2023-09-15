@@ -5,116 +5,159 @@ description: Anonymous users can be useful in certain scenarios. This post talks
 authors: Dan Moore
 image: /img/blogs/sso-explanation/how-sso-works.png 
 categories: Education
-tags: single sign on, sso, what is single sign on
+tags: anonymous accounts, custom login workflows, jwts, registration, friction, python, ciam
 excerpt_separator: "{/* more */}"
 ---
+import RemoteCode from '../../components/RemoteCode.astro';
 
-For most applications, you want a user to register to access the application. You want to know who the user is. This lets you offer them individualized functionality. If your registration process involves an email or mobile number, you also can communicate with them outside of your application, allowing you to remind them of the value of your application.
+For many applications, a user is forced to register for application access. You want to know who the user is so you can provide them with individualized functionality and data.
+
+If your registration process requires an email or mobile phone number, registration allows you to market to your cusotomers. This is great if you are pursuing a PLG or freemium business model. Having contact information allows you to communicate with them directly, allowing you to remind them of the value of your application and driving re-engagement.
 
 {/* more */}
 
-But sometimes, you don't want any friction, yet you still want the user to be able to have individualized functionality or to have data available after registration.
+But sometimes, you don't want any registration friction, even though you want the user to access customized functionality or to save data on your system. Anonymous users can help with this. Such users don't have any credentials or personally identifiable data associated with their accounts. They do exist in your customer identity and access management (CIAM) system and can be treated like any other account in terms of profile data or reporting. 
 
+FusionAuth doesn't support this concept using [hosted login pages](/docs/v1/tech/core-concepts/integration-points#hosted-login-pages). The hosted login pages abide by the 80/20 rule. They cover 80% of the use cases for customer identity and access managemnt.
 
-The allure of a friction free personalized interaction requires anonymous users. These users don't have any credentials or personal data associated with their accounts, but still exist in your customer identity and access management system. 
+When the hosted login pages don't meet your needs, you can use the [APIs](/docs/v1/tech/apis/) to build your own workflows. You can do this for anonymous users. Here's a [guide to implement this custom registration flow](/docs/v1/tech/guides/anonymous-user). 
 
-FusionAuth doesn't support this concept using [the hosted login pages](/docs/v1/tech/core-concepts/integration-points#hosted-login-pages). The hosted login pages abide by the 80/20 rule: they cover 80% of the use cases for customer identity and access managemnt. When the hosted login pages don't meet your needs, you can use the [APIs](/docs/v1/tech/apis/) to build your own workflows.
+The rest of this blog post will look at some of the wrinkles of building out this progressive registration process, whether you use FusionAuth or any other system.
 
 ## Anonymous User Lifecycle
 
-Here's the lifecycle of an anonymous user.
+Anonymous users have a more complex lifecycle than the typical CIAM user. Here's a typical lifecycle.
 
-* A person visits your site. This is called a visitor or unknown user.
-* The person takes an action in your application.
-* An anonymous account is created to capture the preference. This is also known as a stub or shadow account.
-* The person continues to take actions. Some of these build up the anonymous profile.
-* At some time, the user registers. They may be prompted based on activity, such as wanting to complete an order. Or they may choose to register.
-* The person registers and the account converts to a normal user account. This means that whatever information is required at registration is gathered.
+* A person visits your application. This person is called a visitor or unknown user and is most likely tracked by analytics or web stats logging software.
+* The visitor may take multiple actions such as viewing pages.
+* The person takes a certain action in your application that requires creation of a profile.
+* An anonymous account is created to capture profile data. This is also known as a stub or shadow account.
+* The person continues to take actions in the application. Some of these may trigger updates to the anonymous profile, others may not.
+* At some time, the user registers for a conventional account. They may be prompted to do so based on activity, such as access to advanced functionality or an action that impacts the real world. Or they may choose to register.
+* The person registers and the account converts to a normal user account, including all extant profile data.
 * The person receives an email or text to set up their account.
-* The person sets up their credentials (password, MFA).
-* The person continues on their merry way. They are pleased that they still have access to their data, such as saved homes or products.
+* The person sets up their credentials, including password and/or additional factors.
+* The person continues on their merry way, interacting with the application.
 
-This is an example of progressive registration, with some of the registration taking place while the identity is unknown.
+The application benefits by having a lower time to value. The user benefits because they have access to functionality or preferences before they regsiter, as well as retaining access to any such data after registration.
+
+As mentioned above, this is an example of progressive registration, with some profile data gathering taking place while the identity is unknown.
 
 ## Where Anonymous Users Make Sense
 
-There are two cases where anonymous users make sense. 
+There are two broad scenarios where anonymous users make sense. 
 
-First, if you want to serve personalized content or recommendations to a user who has not yet identified themself via registration.
+First, if you want to serve personalized content or recommendations to a user who has not yet identified themself.
 
-You might do this to increase the usefulness of your site. For example, for an ecommerce site, you might allow the user to "favorite" items they are interested in. You could then use that information to surface other items of interest.
+You might do this to increase the usefulness of your site. For example, for an ecommerce site, you might allow the user to "favorite" items they are interested in. You could then surface related items, or items that other similar users found interesting. Another example might be an online game. Users might want to tweak how their character looks without bothering to register, and such tweaking might drive more gameplay.
 
-Another example might be an online game. Users might want to tweak how their character looks without bothering to register.
+Second, if you want a user to have provided information or preferences available after registration.
 
-Second, if you want a user to be able to have any information they provide when anonymous be available after registration.
+You might do this if you want to allow users experience the functionality of your application without the friction of signing up. For instance, a diagramming application might allow anonymous users to create diagrams. Users would welcome having their saved diagrams available after they have registered. In the above ecommerce example, the favorited items should be available for perusal (and purchase!) after user registration.
 
-You might do this if you want to allow users to get a feel for the functionality of your application without the friction of signing up. For instance, if you have a diagramming application, you might allow anonymous users to create diagrams, and it would be helpful to the user to have the same diagrams available after they have registered.
+Anonymous accounts can be helpful across a wide variety of business domains, including:
 
-In the above ecommerce example, you would certainly want the favorited items to be available for perusal after user registration.
-
-Anonymous accounts can be helpful across a wide variety of sectors, including:
-
-* B2B applications
-* ecommerce sites
+* ecommerce sites with a shopping cart
+* B2B applications where users can create software artifacts
 * games
-* news and content sites
+* high value research applications, such as real estate search sites 
+* news and content sites where personalization can drive engagement
 
-However, anonymous accounts aren't a good fit everywhere. They don't make sense for:
+However, anonymous accounts aren't always a good option. They don't make sense:
 
-* applications where anonymous actions don't exist, such as an email or banking application
-* where the profile data of the anonymous user is not valuable to the application or the user
-* if provide profile data is highly sensitive, such as medical information
+* for applications where anonymous users don't make sense, such as an email or banking application
+* if the profile data of the anonymous user is not valuable to the application or the user
+* for applications where you must be able to contact all users
+* if the profile data is highly sensitive, such as medical information
 
 ## Implementation Subtleties
 
+There are some implementation concerns you should consider when building a system with anonymous users.
+
+### Marking Accounts as Anonymous
+
+Make sure you have some way to identify anonymous users as such. In FusionAuth, you might use the `user.data` field to do so. Below is a screenshot of an anonymous user in the admin UI.
+
+![An anonymous user account in the FusionAuth admin UI.](/img/blogs/anonymous-user/anonymous-user-in-admin-screen.png)
+
+Marking users in this way allows you to run analytics to understand user behavior. It also lets you remove inactive anonymous accounts.
+
+The string `DNUXUS8WIUXRGHQSNALTECZGD8IYZ7LN0X09RTTX2G9WMVFWJ6CF3T7HMCJWV3SF` is a random username, since FusionAuth requires all users to have either a username or an email address. 
+
 ### Storing The Anonymous User's Identity
 
-After you create the anonymous profile, you need some way of associating the user with that profile. With a web application, you can set a persistent cookie. This will remain on the device unless the user or browser removes it. The value of the cookie is typically a synthetic user Id, which does not identify the user outside of your system. A UUID is a good choice.
+After you create an anonymous profile, you need to associate the person with that profile. With a web application, you can set a persistent cookie to maintain this association. The value of the cookie is typically a synthetic user Id, which does not identify the user outside of your system. A UUID is a good choice.
 
 You can store the Id in the following ways inside the cookie:
 
-* a plaintext value. This is easiest, but a malicious client can tweak the user Id to explore different users saved data.
-* a signed value. Checking the signature on every request costs some computational power, but avoids malicious actors probing other user Ids.
-* an encrypted value. This is typically overkill for an opaque value like a user Id, but if your user Id might leak information, such as the size of your userbase because it is an integer value, then encryption might work.
+* A plaintext value is easiest, but a malicious client can tweak the user Id to explore different users saved data.
+* A signed token, such as a JWT. Checking the signature on every request costs some computational power, but avoids malicious actors probing other user Ids.
+* An encrypted, URL safe value. This is typically overkill for an opaque user Id, but if your user Id might leak information, such as the size of your userbase because it is an integer value, then encryption might work.
 
 This cookie can be stored as an HTTPOnly, Secure cookie, since only your server side code will be examining it. Each time the cookie is presented, the server side code can decode it, then update the anonymous account profile if needed.
 
-Because you are storing information on the device, if a person accesses your site from a different browser or device, you have no way of reconciling them. This is a limitation of the storage mechanism, but there's no way around that.
+Here's an example of code which sets a JWT with a user Id, using the [FusionAuth JWT Vend API](/docs/v1/tech/apis/jwt#vend-a-jwt).
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-anonymous-user/main/complete-application/server.py" lang="python" tags="createJWT" />
+
+Because you are storing information on the device, if a person accesses your site from a different browser or device, you have no way of reconciling them. This is also true if the user removes the cookie or the cookie expires. These are limitations of cookies, so there's no way around it.
+
+### Converting Accounts
+
+When you convert an account, you associate the user Id stored in the cookie and a real world user identifier such as an email address or a mobile phone number. Update the anonymous account with this information, which means it is no longer anonymous. Then send a "set up your password" request or other method of setting up credentials.
+
+Here's an example of code that does this:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-anonymous-user/main/complete-application/server.py" lang="python" tags="registerAnonymousUserRoute" />
 
 ### Verifying Accounts
 
-When converting an account from an anonymous to regular account, you want to make sure you verify the user's ownership of the email address (or phone number) they provide. If you instead let someone provide an email address and password on the conversion page, anyone with device access would control the resulting profile. While that may be acceptable when a user registers in a normal flow, where there is no anonymous user data, you don't want to let someone 'take over' an anonymous profile.
+When converting an account from an anonymous account to a regular one, make sure you verify the user's ownership of the email address (or phone number) they provide. If you instead let someone provide an email address and password on the conversion page, anyone with device access would control the resulting profile.
 
-The simplest way to verify ownership of the email address is to send the password reset link after the user provides their email address. At that point, you know they "own" the email address.
+While that may be acceptable when an unknown user registers, where there is no anonymous user data, avoid letting someone "take over" an anonymous profile.
+
+One easy way to verify ownership is to send the password reset email or text after the user provides an email address or mobile phone number. At that point, you know they "own" it.
+
+Then you can update the associated profile to remove anonymous account indicators. Below you can see code to do this.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-anonymous-user/main/complete-application/server.py" lang="python" tags="cleanupAnonymousUserRoute" />
+
+In FusionAuth, the easiest way to do this is via a webhook, but different systems have different mechanisms. The important point is to leave the profile untouched until ownership is proven.
 
 ### Culling Accounts
 
-At some point, plan to clear out old anonymous accounts that have never converted.
+At some point, clear out old anonymous accounts that have never converted to regular user accounts. Do this by querying the update timestamp of each anonymous account. Then, determine which untouched accounts are old enough to delete.
 
-You can do this by seeing the most recent update date of each anonymous account and determining when they are old enough to delete. Synchronize this with the lifetime of the identity cookie. If the cookie is good for a month, you can clear out accounts that have not been updated for 40 days, because the user would never be able to successfully convert their anonymous account after the cookie is gone.
+Synchronize this with the lifetime of the cookie containing the user Id. If the cookie is good for a month, you can clear out accounts that have not been updated for 40 days, because the user would never be able to successfully convert their anonymous account after the cookie is gone.
 
 This reaping process can be run periodically by a scheduled job.
 
 ### Privacy Concerns
 
-Make sure you abide by all rules for any jurisdictions in which your users live. In particular, make sure you don't collect [any personal data](https://commission.europa.eu/law/law-topic/data-protection/reform/what-personal-data_en) unless you have the processes in place to abide by the GDPR.
+Make sure you abide by all rules for jurisdictions in which your users live. In particular, make sure you don't collect [any personal data](https://commission.europa.eu/law/law-topic/data-protection/reform/what-personal-data_en) unless you have the processes in place to abide by the GDPR.
+
+Personal data is defined as:
+
+> any information that relates to an identified or identifiable living individual. Different pieces of information, which collected together can lead to the identification of a particular person, also constitute personal data.
 
 ### Billing Concerns
 
-While it's unlikely to impact the performance of your identity provider, creating numbers of anonymous profiles may impact your bill. Depending on what your identity provider considers an MAU, you may be charged for these accounts.
+While creation of anonymous accounts are unlikely to impact the system performance of an identity provider, these profiles may impact your bill. If your identity provider charges based on active users, you may be charged for these accounts. Before implementing this flow, make sure you understand what a large number of user accounts does to your pricing.
 
-If you are using FusionAuth to implement this workflow, each anonymous account will be counted as an MAU for the month it is created, but not in subsequent months. 
+For example, if you are using FusionAuth to implement this workflow, each anonymous account will be counted as an MAU for the month it is created, but not in subsequent months. 
 
 ## Why Not Just Use JavaScript
 
-You can definitely track anonymous actions with JavaScript. However, at some point, you'll have to convert the account to a server side account with real credentials, so it may be easier to create it serverside initially.
+You can definitely track anonymous actions with JavaScript, with a tool like Google Analytics. However, at some point, you will need to convert the profile to a server side account with real credentials, so it may be easier to create it on the server side initially.
 
 In addition, if you want to have a single view of your userbase, having all users in one data store will be easier.
 
 ## Learn More
 
-If you want to learn more about this workflow, you can:
+If you want to learn more about the anonymous user workflow, you can:
 
 * Read [the anonymous user guide](/docs/v1/tech/guides/anonymous-user)
 * Run and tweak [an example anonymous user application](https://github.com/FusionAuth/fusionauth-example-anonymous-user)
 * Read ["Unlocking Growth: Why A Low Friction User Signup Process Is Crucial For Your Business"](/articles/ciam/unlocking-growth-low-friction-signup-process)
+
+
