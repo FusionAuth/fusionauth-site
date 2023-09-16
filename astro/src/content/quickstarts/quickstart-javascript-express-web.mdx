@@ -19,11 +19,11 @@ import RemoteCode from '/src/components/RemoteCode.astro';
 
 
 In this quickstart you are going to build an application with Express and integrate it with FusionAuth.
-You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=pkH-kD73QUM), a global leader in converting dollars into coins.
+You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM), a global leader in converting dollars into coins.
 It'll have areas reserved for users who have logged in as well as public facing sections.
 
 The docker compose file and source code for a complete application are available at
-https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-web
+[https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-web](https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-web).
 
 ## Prerequisites
 * [Node LTS](https://nodejs.org/en/download)
@@ -97,20 +97,9 @@ mkdir changebank
 cd changebank
 ```
 
-To keep track of changes, initialize your directory with git.
+Create a file called `package.json` with the below dependencies and scripts. Feel free to update the `author` or other attributes as needed. 
 
-```shell
-git init
-```
-
-Create a file called `.gitignore` so that you can exclude files from your git repo.
-
-`.gitignore`
-<RemoteCode url={frontmatter.coderoot + "/complete-application/.gitignore"}
-  lang="text" />
-
-
-Create a file called `package.json` with the below dependencies and scripts.
+The `@fusionauth/typescript-client` will be used to exchange the OAuth Code for Access Token using PKCE, and also to retrieve the User using JWT.
 
 `package.json`
 <RemoteCode url={frontmatter.coderoot + "/complete-application/package.json"}
@@ -132,9 +121,8 @@ cd src
 ## Authentication
 
 Make sure once again that you are in the directory `change-bank/src`.
-Create a file called `index.ts` and start by setting up your imports and constants. These constants have already been defined by running the kickstart and `setup.js`.
+Create a file called `index.ts` and start by setting up your imports and constants. These constants have already been created by running the kickstart when running FusionAuth.
 
-`index.ts`
 <RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
   lang="ts"
   tags="top"/>
@@ -149,68 +137,74 @@ find the Client Id and Client Secret values in the `OAuth configuration` section
 
 ### Static files
 
-We need a way to serve our static files, luckily Express makes this easy with `express.static`. These files will include all of the CSS and images that are required for the UI of the ChangeBank application.
+You need a way to serve your static files, luckily Express makes this easy with `express.static`. These files will include all of the CSS and images that are required for the UI of the ChangeBank application. 
 
-`index.ts`
+Make sure that you are in the directory `change-bank` when running these commands to create new directories and copy the css and images required from `complete-application`.
+
+```shell
+mkdir static && mkdir static/css && mkdir static/img && 
+cp ../complete-application/static/css/changebank.css static/css/changebank.css && cp ../complete-application/static/img/money.jpg static/img/money.jpg
+```
+
+In your `index.ts` file include the below code to serve any assets in the static directory.
+
 <RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
   lang="ts"
   tags="static"/>
 
 ### Homepage
 
-In order to show off our homepage we need to create a route with the base URL `/`. In this route check to see if `userDetails` cookie has any user values and correctly respond with either the `home.html` or `account.html` template. Also if there is no user you can generate the PKCE challenge pair and store them into `userSession` cookie (take note this is an HTTP-Only cookie).
+In order to show off your homepage you need to create a route with the base URL `/`. In this route check to see if `userDetails` cookie has any user values and correctly respond with either the `home.html` or `account.html` template. Also if there is no user you can generate the PKCE challenge pair and store them into `userSession` cookie (this is an `HTTPOnly` cookie, inaccessible to JavaScript).
 
 <Aside type="note">
-In this file we will use the package [pkce-challenge](https://www.npmjs.com/package/pkce-challenge) to generate a Proof Key for Code Exchange (PKCE) challenge pair. Read more about [PKCE](/articles/oauth/modern-guide-to-oauth).
+In this file you will use the [pkce-challenge](https://www.npmjs.com/package/pkce-challenge) package to generate a Proof Key for Code Exchange (PKCE) challenge pair. Read more about [PKCE](/articles/oauth/modern-guide-to-oauth).
 </Aside>
 
-`index.ts`
+Include the below code into `index.ts`, so that the homepage can be displayed when a user is not logged in. If a user is logged in this route will redirect to the `/account` route.
+
 <RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
   lang="ts"
   tags="homepage"/>
 
 ### Login Route
 
-In the ChangeBank application there is a `Login` button which will open the `/login` route when clicked (you can find this in `complete-application/templates/home.html`). Have this redirect them to FusionAuth so that FusionAuth can present them with a login page.
+In the ChangeBank application there is a `Login` button which will open the `/login` route when clicked. This route redirect them to a login page managed by FusionAuth.
 
-`index.ts`
 <RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
   lang="ts"
   tags="login"/>
 
-You can always find this URL if you view the details of your Application within FusionAuth, under "OAuth2 & OpenID Connect Integration details" you will find the property `OAuth IdP login URL`. The endpoint that you will hit on FusionAuth is `/oauth2/authorize` below you can find a list of the needed parameters for FusionAuth's [OAuth Endpoints](/docs/v1/tech/oauth/endpoints)
-
 - `client_id`: Your `applicationId`
-- `response_type`: `code` since we are using the Authorization Code flow
-- `redirect_uri`: Where your FusionAuth will redirect back to during the OAuth flow (in our example, this is our route `oauth-redirect`)
-- `state`: Random string created in our homepage route and stored in our cookie as `stateValue`
-- `code_challenge`: Created in our homepage route using `pkce-challenge` and stored in our cookie as `challenge`, this is one half of the PKCE 
+- `response_type`: `code` since you are using the Authorization Code grant
+- `redirect_uri`: Where your FusionAuth will redirect back to during the OAuth grant. In this example, this is our route `oauth-redirect`, which you'll build next.
+- `state`: A random string created in your homepage route and stored in the cookie as `stateValue`
+- `code_challenge`: Created in the homepage route using `pkce-challenge` and stored in a cookie as `challenge`, this is one half of the PKCE 
 
 ### OAuth Redirect
 
-When FusionAuth redirects back to our Express application, it will return to our `/oauth-redirect` route. In this response it will have two query parameters that we need to further examine: `code` and `state`. 
+When FusionAuth redirects back to your Express application, it will return to your `/oauth-redirect` route. In this response it will have two query parameters that you need to further examine: `code` and `state`. 
 
-1. Make sure to check that the `stateValue` that we stored in our cookie matches the `state` query parameters
-1. Request to the FusionAuth Token endpoint to exchange the authorization `code` returned from the Authorize endpoint and a `verifier` from our `userSession` cookie for an access token.
-1. Retrieve the user by passing the access token to FusionAuth. (This method does not use an API key, instead it uses a JSON Web Token (JWT) for authentication).
-1. Store access token details in `userToken` cookie.
-1. Store retrieved user in `userDetails` cookie (note for our example this is not a secure cookie and JS can access).
+You'll need to do the following:
+
+1. Check that the `stateValue` stored in the cookie matches the `state` query parameter.
+1. Make a request to the FusionAuth token endpoint to exchange the authorization `code` received after the user authenticates at FusionAuth and a `verifier` from our `userSession` cookie for an access token.
+1. Retrieve the user by passing the access token to FusionAuth.
+1. Store access token details in the `userToken` cookie.
+1. Store retrieved user in `userDetails` cookie.
 1. Redirect to `/account` route.
 
-`index.ts`
 <RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
   lang="ts"
   tags="oauth-redirect"/>
 
-### Account Route (protected)
+### Account Route
 
 The `/account` page represents what a user sees when they’re logged into their ChangeBank account. A user that isn’t logged in who tries to access this page should just be taken to the home page.
 
 <Aside type="note">
-In a production application, we would validate the token signature, make sure it wasn't expired, and attempt to refresh it if it were expired.
+In a production application, you would validate the token signature, make sure it wasn't expired, and attempt to refresh it if it were expired.
 </Aside>
 
-`index.ts`
 <RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
   lang="ts"
   tags="account"/>
@@ -219,8 +213,8 @@ In a production application, we would validate the token signature, make sure it
 
 Two functions are needed to accept both GET and POST requests on the `/make-change` route. The `GET` verifies that the user is logged in, then servers the HTML file required for the page. The `POST` takes the amount form value as a body parameter and uses the it to calculate how many quarters, dimes, nickels and pennies to return. If `total` is not a valid dollar value or cannot be converted an `error` message is returned. The return string `message` is received by asyncronously and updates the `change-message` or `error-message` div accordingly.
 
+Add the code below to `index.ts`.
 
-`index.ts`
 <RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
   lang="ts"
   tags="make-change"/>
@@ -232,16 +226,13 @@ Click the `Logout` button and watch the browser first go to FusionAuth to log ou
 </Aside>
 
 The last step is to implement logout. When you log a user out of an application, you'll take them to 
-FusionAuth's `/oauth2/logout` endpoint. After logging the user out, FusionAuth will redirect the user
-to your app's `/logout` endpoint, which you'll create now. This endpoint deletes any cookies that your
-application created, clearing the user's session.
+FusionAuth's `/oauth2/logout` endpoint. FusionAuth calls the logout endpoint (killing the express session), then kills the FusionAuth session, then redirects to the logout endpoint. This endpoint deletes any cookies that your application created, clearing the user's session.
 
-`index.ts`
 <RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
   lang="ts"
   tags="logout"/>
 
-In the below code, we check if the current user session has any information about the user and redirect to the FusionAuth server to initiate the logout on the server. When this returns, the user session cookie will now be empty and we can therefore forward back to our homepage. If we didn't add this check, we would be stuck in an infinite loop between our Express server and FusionAuth.
+In the below code, you check if the current user session has any information about the user and redirect to the FusionAuth server to initiate the logout on the server. When this returns, the user session cookie will now be empty and you can therefore forward back to your homepage. If you didn't add this check, you would be stuck in an infinite loop between your Express server and FusionAuth.
 
 ```ts
 if (userSession) {
