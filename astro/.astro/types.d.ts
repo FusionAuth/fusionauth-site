@@ -1541,6 +1541,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"get-more-value-out-of-fusionauth.mdx": {
+  id: "get-more-value-out-of-fusionauth.mdx",
+  slug: "get-more-value-out-of-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "getting-started-with-email-templates.mdx": {
   id: "getting-started-with-email-templates.mdx",
   slug: "getting-started-with-email-templates",
@@ -2276,6 +2283,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"treefort-uses-fusionauth-for-all-auth.mdx": {
+  id: "treefort-uses-fusionauth-for-all-auth.mdx",
+  slug: "treefort-uses-fusionauth-for-all-auth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "unio-saves-100k-with-fusionauth.mdx": {
   id: "unio-saves-100k-with-fusionauth.mdx",
   slug: "unio-saves-100k-with-fusionauth",
@@ -2577,6 +2591,13 @@ declare module 'astro:content' {
 "quickstart-springboot-web.mdx": {
   id: "quickstart-springboot-web.mdx",
   slug: "quickstart-springboot-web",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
+} & { render(): Render[".mdx"] },
+"quickstart-wordpress-web.mdx": {
+  id: "quickstart-wordpress-web.mdx",
+  slug: "quickstart-wordpress-web",
   body: string,
   collection: "quickstarts",
   data: InferEntrySchema<"quickstarts">

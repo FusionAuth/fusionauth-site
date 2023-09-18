@@ -9,17 +9,18 @@ icon: /img/icons/wordpress.svg
 faIcon: fa-wordpress
 color: green
 cta: EmailListCTA
-demoUrl: https://github.com/ritza-co/fusionauth-quickstart-wordpress-web
+url: https://github.com/ritza-co/fusionauth-quickstart-wordpress-web
 ---
 
 import Aside from '/src/components/Aside.astro';
 import LoginAfter from '../../diagrams/quickstarts/login-after.astro';
 import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
 import RemoteCode from '/src/components/RemoteCode.astro';
+import DockerDependencies from '../../diagrams/quickstarts/quickstart-wordpress-web/docker-dependencies.astro';
 
 In this quickstart, you will build an application with {frontmatter.technology} and integrate it with FusionAuth. The application is for [ChangeBank](https://www.youtube.com/watch?v=pkH-kD73QUM), a global leader in converting dollars into coins. It will have areas reserved for logged in users and public-facing sections.
 
-Find the Docker Compose file and source code for the complete application at {frontmatter.demoUrl}.
+Find the Docker Compose file and source code for the complete application at {frontmatter.url}.
 
 ## Prerequisites
 
@@ -44,14 +45,14 @@ In general, you would introduce FusionAuth to normalize and consolidate user dat
 
 ## Getting Started
 
-Start with getting FusionAuth up and running and creating a new Express application.
+Start with getting FusionAuth up and running and creating a new {frontmatter.technology} application.
 
 ### Clone The Code
 
 First, grab the code from the repository and change into that folder.
 
 ```
-git clone https://github.com/ritza-co/fusionauth-quickstart-javascript-express-web.git
+git clone {frontmatter.url}.git
 cd fusionauth-quickstart-javascript-express-web
 ```
 
@@ -63,13 +64,15 @@ All the files you'll create in this guide already exist in the `complete-applica
 
 You'll find a Docker Compose file `docker-compose.yml` and an environment variables configuration file `.env` in the root folder of the repository.
 
-Assuming you have Docker installed on your machine, you can start FusionAuth on your machine with the following.
+Assuming you have Docker installed on your machine, you can start FusionAuth and {frontmatter.technology} on your machine with the following.
 
 ```
 docker-compose up -d
 ```
 
-This will start three containers, one each for FusionAuth, Postgres, and Elasticsearch.
+This will start five containers, one each for FusionAuth, Postgres, Elasticsearch, Postgres for {frontmatter.technology}, and {frontmatter.technology}. The diagram below shows the component dependencies in the YAML file.
+
+<DockerDependencies alt={"Docker dependencies"}/>
 
 Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/v1/tech/installation-guide/kickstart). When FusionAuth starts for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to your specified state.
 
@@ -91,61 +94,53 @@ You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) and loo
   The `.env` and `kickstart.json` files contain passwords. In a real application, always add these files to your `.gitignore` file and never commit secrets to version control.
 </Aside>
 
-### Create A Basic Express Application
+### Create A Basic {frontmatter.technology} Application
 
-Next, you'll set up a basic Express app. While this guide builds a new Express project, you can use the same method to integrate your existing project with FusionAuth.
-
-You create the default Express starter project in a folder called `mysite`, with the EJS view template engine. You also add a few npm packages to help with authentication.
-
-```shell
-npx express-generator@latest mysite --view=ejs
-cd mysite
-npm install
-npm audit fix --force # run this only if npm reports security vulnerabilities
-
-npm install dotenv # to read your .env files with passwords
-npm install passport passport-oauth2  # to authenticate with FusionAuth
-npm install jwt-decode # to get the email address from the JWT returned by FusionAuth
-npm install express-session # to maintain the user's session once logged in
-```
-
-Now create the `.env` file in your `mysite` folder and add the following to it (note that this is a different environment file to the one in the root folder used by Docker for FusionAuth).
-
-<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/.env"
- lang="shell" />
+Next, you'll set up a basic {frontmatter.technology} site. While this guide builds a new {frontmatter.technology} project, you can use the same method to integrate your existing project with FusionAuth.
 
 ### Preliminary Setup
 
-Before you configure authentication, you need to change the default file created by Express.
+Browse to `http://localhost:3000`. It should automatically redirect you to `http://localhost:3000/wp-admin/install.php`, as this is a brand new site.
 
-On line 21 of `mysite/app.js`, just before it adds the first route, insert the following line.
+Choose <span class="uielement">English (United States)</span> and click `Continue`.
 
-```js
-require('./services/authentication')(app);
-```
+On the next page:
+- Set [uielement]#Site Title# to `Change Bank`.
+- Set [uielement]#Username# and [uielement]#Password# to `u`.
+- Enable [uielement]#Confirm use of weak password#.
+- Set [uielement]#Your Email# to `admin@example.com`.
+- Click [uielement]#Install WordPress#.
 
-You can also delete the lines that relate to the users route. This app won't need them.
+<img src="/img/quickstarts/quickstart-wordpress-web/1.jpg" alt="Wordpress configuration"/>
 
-```js
-var usersRouter = require('./routes/users'); // delete line 8
-
-app.use('/users', usersRouter); // delete line 23
-```
+On the success page, click `login`. On the log in page, enter the username and password `u` and click `Log In`. (You can return to this page later by browsing to [http://localhost:3000/wp-login.php](http://localhost:3000/wp-login.php)).
 
 ## Authentication
 
-Authentication in Express requires two parts:
+You now have a basic {frontmatter.technology} site with a home page. Currently, log in is restricted to this site, with its own private PostgreSQL server. Next, you're going to connect FusionAuth, so that you can log in to this site with the same credentials that you might want your users to use for another forum or site.
 
-- An Authenticator service to handle communication with FusionAuth. For this you will use Passport.js.
-- Routes (`login`, `logout`, `callback`) that talk to the Authenticator and FusionAuth.
+On the {frontmatter.technology} dashboard, Click `Plugins` -> `Add new`. In the search box on the right, paste `OpenID Connect Generic Client`. On the first plugin in the results, by daggerhart, click `Install Now`, then `Activate`.
 
-The line you added above, `require('./authentication')(app);`, imports a function to add authentication to the Express app instance, and calls it. Let's create that file now.
+<img src="/img/quickstarts/quickstart-wordpress-web/2.jpg" alt="Add a plugin"/>
 
-```shell
-mkdir mysite/services
-```
+Browse to `Settings` -> `Open ID Connect Client` and enter the following settings:
+- Client ID - `E9FDB985-9173-4E01-9D73-AC2D60D1DC8E`
+- Client Secret Key - `super-secret-secret-that-should-be-regenerated-for-production`
+- OpenID Scope -`openid`
+- Login Endpoint URL - `http://localhost:9011/oauth2/authorize`
+- Userinfo Endpoint URL - `http://fusionauth:9011/oauth2/userinfo`
+- Token Validation Endpoint URL - `http://fusionauth:9011/oauth2/token`
+- End Session Endpoint URL - `http://localhost:9011/oauth2/logout`
+- Nickname Key - `sub`
+- Display Name Formatting - `{email}`. This is what will be displayed to the user in the {frontmatter.technology} admin screen.
+- Enable `Link Existing Users`. If users in your local {frontmatter.technology} database have the same emails as users in your FusionAuth database those users can log in.
 
-In this `services` folder, add the file `authentication.js`, and copy in the following code.
+Click `Save Changes`.
+
+<img src="/img/quickstarts/quickstart-wordpress-web/3.jpg" alt="Configure FusionAuth"/>
+
+
+
 
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/services/authentication.js"
  lang="typescript" />
