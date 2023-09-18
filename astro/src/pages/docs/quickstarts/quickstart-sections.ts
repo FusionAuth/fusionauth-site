@@ -66,11 +66,11 @@ const qsSections: QuickStartSection[] = [
         navColor: 'blue'
       },
       {
-        title: 'PHP',
-        icon: '/img/icons/php.svg',
-        faIcon: 'fa-php',
-        comingSoon: true,
-        navColor: 'purple'
+        href: '/blog/2023/04/26/nextjs-single-sign-on',
+        title: '.Next.js',
+        icon: '/img/icons/nextjs.svg',
+        faIcon: 'fa-n',
+        navColor: 'green',
       },
     ],
   },
@@ -83,13 +83,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'spa',
     desc: 'JavaScript app that runs in the browser',
     articles: [
-      {
-        href: '/docs/v1/tech/tutorials/integrate-react',
-        title: 'React',
-        icon: '/img/icons/react.svg',
-        faIcon: 'fa-r',
-        navColor: 'blue',
-      },
       {
         href: '/blog/2022/07/15/remix-demo',
         title: 'Remix',

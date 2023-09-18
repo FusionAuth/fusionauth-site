@@ -104,6 +104,7 @@ rd[d+'/tutorials/integrate-python-django']= '/docs/quickstarts/quickstart-python
 rd[d+'/tutorials/integrate-python-flask']= '/docs/quickstarts/quickstart-python-flask-web';
 rd[d+'/tutorials/integrate-ruby-rails']= '/docs/quickstarts/quickstart-ruby-rails-web';
 rd[d+'/tutorials/integrate-java-spring']= '/docs/quickstarts/quickstart-springboot-web';
+rd[d+'/tutorials/integrate-react']= '/docs/quickstarts/quickstart-javascript-react-web';
 rd['/features/architecture']='/platform/built-for-developers';
 rd['/features/advanced-registration-forms']='/platform/registration-forms';
 rd['/features/breached-password-detection']='/features/authentication';
