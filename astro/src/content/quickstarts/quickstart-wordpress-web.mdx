@@ -115,7 +115,7 @@ On the next page:
 
 On the success page, click `login`. On the log in page, enter the username and password `u` and click `Log In`. (You can return to this page later by browsing to [http://localhost:3000/wp-login.php](http://localhost:3000/wp-login.php)).
 
-### Create placeholder pages
+### Create Placeholder Pages
 
 Before you do any FusionAuth work, you're going to create three placeholder pages:
 - A home page, that anyonymous users can see.
@@ -138,9 +138,13 @@ Now to add these pages, do the following:
 
 <img src="/img/quickstarts/quickstart-wordpress-web/6.jpg" alt="Add page"/>
 
-Finally, browse to Settings - Readings. Change Your homepage displays to A static page and under Homepage select Home.
+Browse to Settings - Readings. Change Your homepage displays to A static page and under Homepage select Home.
 
 <img src="/img/quickstarts/quickstart-wordpress-web/6.jpg" alt="Homepage"/>
+
+Finally, browse to Appearance - Editor - Templates - Blank. Click on the paragraph (`This is the Post Content block`) twice. Under Layout on the right, disable Inner blocks use content width, and Save and confirm. This changes each page to use the full browser width.
+
+<img src="/img/quickstarts/quickstart-wordpress-web/13.jpg" alt="Full width setting"/>
 
 ## Authentication
 
@@ -170,7 +174,7 @@ Now if you browse to [http://localhost:3000/wp-login.php](http://localhost:3000/
 
 <img src="/img/quickstarts/quickstart-wordpress-web/4.jpg" alt="Log in"/>
 
-### Prevent default login
+### Prevent Default Login
 
 For a simpler user experience, you're now going to remove the option to log in with WordPress. This is an optional step.
 
@@ -183,7 +187,7 @@ The new file starts commenting out the login form on line 1424 with `<!--`, and 
 
 Now [http://localhost:3000/wp-login.php](http://localhost:3000/wp-login.php) looks much neater.
 
-### Restrict pages to logged in users
+### Restrict Pages To Logged In Users
 
 Currently, if you log out, you can still browse to the pages that should be restricted, like `localhost:3000/account`. Let's prevent that.
 
@@ -198,7 +202,7 @@ Back in Pages, for both the Account and Change page, click Edit, enable `For Log
 
 <img src="/img/quickstarts/quickstart-wordpress-web/9.jpg" alt="Page settings"/>
 
-### Send user to account after log in
+### Send User To Account After Log In
 
 The final improvement you can make to the log in process is to send the user directly to their account page after logging in. Currently they get sent to the dashboard.
 
@@ -210,106 +214,57 @@ Browse to Settings - Dashboard Access. Change the value of Redirect URL to http:
 
 Now if you log out and log in as `richard@example.com`, who is not an administrator, you'll be redirected to the account page. Log in again as `admin@example.com` to continue editing the site.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/services/authentication.js"
- lang="typescript" />
-
-The first line, `require('dotenv/config');`, allows the file to use settings from `.env`.
-
-Almost the entire file consists of the configuration function `setupPassport(app)`. It links Passport.js to the instance of the Express app. You could put this code directly in `app.js`, but it would be more cluttered.
-
-The function starts by telling the app to use cookie-based sessions in `app.use(session({`, provided by express-session.js. Passport is set to use this session too, with `app.use(passport.session());`.
-
-In `authOptions`, you specify the FusionAuth URLs stored in the `.env` file, which match those created by Kickstart when you ran the Docker command to start FusionAuth.
-
-You then tell Passport what strategy to use for authentication. Passport itself just keeps the user details in a session once logged in. It cannot authenticate anyone without a strategy — a way of interacting with some authentication system, such as OAuth, Facebook login, or simple username and password. In this case, you use passport-oauth2.js.
-
-This strategy will direct the user to FusionAuth for authentication. Once that is complete, `callback(null, token.email);` returns the user's email to the session for storage. You can specify which user details you want to keep in the session. This example uses a single string containing the user's email, but you could define an object with more details or just a user Id. To do so, you would update the object returned in the authentication method, and update the routes you are about to create to use the new object instead of just an email.
-
-Note that the callback must return a value. If the authenticator returns nothing to store in the session, then a user will not stay logged in.
-
-The `serializeUser` and `deserializeUser` allow you to specify what you want to store in the user's session when logged in, and what to get out of the session cookie on each request. In this example you just pass around the user's email.
-
-### Routes
-
-Replace the homepage of your app in `mysite/routes/index.js` with the following code.
-
-<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/routes/index.js"
- lang="typescript" />
-
-All the `router` functions above are server-side HTTP handlers for GET and POST requests. The handlers all follow the standard Express.js pattern `function (req, res, next)`, where
-- `req` is the HTTP request,
-- `res` is the HTTP result to return, and
-- `next` is another function, with the same parameters, that runs after this one.
-
-Your functions can choose to return a result to the user, or perform some middleware function, like logging, or checking the user is authenticated, before calling `next()` to let the next function in the stack handle returning the actual result.
-
-You use this capability to create a middleware function, `checkAuthenticated`, that uses the function provided by Passport, `req.isAuthenticated()`, to redirect the user to the login page if necessary, and otherwise to let the next handler run.
-
-The function, `router.get('/login'`, calls Passport, which sends the user to FusionAuth. Once authenticated, FusionAuth redirects the page to `router.get('/auth/callback'`, which finally sends the user to the account page. Note that this second function calls `passport.authenticate` too. This is not a redundancy — if you remove it the user will not be properly logged in. OAuth uses two tokens to manage authentication and needs both calls.
-
-The logout function calls the Passport function `req.logOut`, which clears the user's session, and redirects them to the home page.
-
-The `router.get('/account'` and `change` pages both use the middleware created earlier, `checkAuthenticated`, to prevent the user from seeing these pages unless logged in. Both get the user's email to display from the session in the request, `req.user`.
-
-The last two handlers are for the same URL, `change`. The GET handler displays the page at first. The POST handler will calculate change for the user and render the page with more data.
-
 ## Customization
 
-Now that authentication is done, the last task is to create two example pages that a user can access only when logged in.
+At this point you know everything you need to configure FusionAuth authentication on your own site. To finish this demonstration application you're going to add some content to the three blank pages. There are many ways to create custom pages on {frontmatter.technology}, including
+- Editing the theme.
+- Making a child theme and editing that.
+- Adding new template files for each page.
+- Making custom shortcodes.
+- Making custom blocks.
+- Making custom plugins.
 
-Copy over some CSS and an image from the example app.
+The easiest way to demonstrate the FusionAuth sample pages is to paste custom content into a plugin, but note that is not the most maintainable solution for a real site. If your own site is large or complex, rather take the time to study custom themes and create your own.
 
-```shell
-cp ../complete-application/public/stylesheets/changebank.css ./mysite/public/stylesheets/changebank.css
-cp ../complete-application/public/images/money.jpg ./mysite/public/images/money.jpg
-rm ./mysite/public/stylesheets/style.css
-```
+For now, add the plugin WP Coder by Wow-Company.
 
-Change the index page `mysite/views/index.ejs` with the following code.
+### Add An Image
 
-<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/views/index.ejs"
- lang="typescript" />
+Browse to Media in the sidebar. Click Add New and select `money.jpg` from the `complete-application` folder.
 
-This page allows the user to log in by offering a link to the route you created in the previous section, `<a href="/login">`.
+<img src="/img/quickstarts/quickstart-wordpress-web/11.jpg" alt="Add image"/>
 
-Next, add the `account.ejs` view.
+Click on the image once it's uploaded. Copy the File URL for use later. It should look like `http://localhost:3000/wp-content/uploads/2023/09/money-scaled.jpg`.
 
-<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/views/account.ejs"
- lang="typescript" />
+### Add Custom Page Shortcodes
 
- You can see that email returned from FusionAuth is shown in the line `<%= email %>`.
+You're now going to create three shortcodes with the HTML, CSS, and JS for each page.
 
- Finally, add the `change.ejs` view.
+Browse to Wow Plugins - WP Coder. Click Add New. In the title box at the top, enter `home`. In the HTML box, copy the file contents from `complete-application/home.html`. In the `<img src` at the bottom, enter the file URL for the money image you uploaded. Click the CSS Code tab, and copy the file contents from `changebank.css`. Click Save Changes.
 
- <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/views/change.ejs"
- lang="typescript" />
+<img src="/img/quickstarts/quickstart-wordpress-web/12.jpg" alt="Create home shortcode"/>
 
-This page has a form at the bottom that allows the user to call the POST version of the page when clicked. The server route calculates the change and renders it using the `state` variable. Depending on the result, different sections of the page are shown, by conditional code like `<% if (state.error && state.hasChange) { %>`
+Repeat this process for the account page. Use the file contents from `account.html` and `changebank.css`. You don't need to change any image URLs this time.
+
+Add one last page, the change page. Use `change.html` and `changebank.css`. For this page, also click on the JS Code tab. Add the content of `change.js`.
+
+In the list tab of the WP Coder plugin you can see the shortcodes of each page, like `[WP-Coder title="home"]`.
+
+### Add Email Shortcode Plugin
+
+Add the plugin Snippet Shortcodes by Ali Colville. This enables the shortcode `[sv slug="sc-user-email"]`, which you might have noticed in the account and change page HTML. It displays the user's email on the page.
+
+### Add The Shortcodes To The Pages
+
+The last thing left to do is use these three page shortcodes on the actual pages. Browse to Pages and edit the Account page. Click the hamburger menu at the top right and select Code editor. Now in the text box under the page title box, paste `[WP-Coder title="account"]`, and click Update.
+
+Go back to the page list and edit the Home page. Paste `[WP-Coder title="home"]` and Update.
+
+Edit the Change page, paste `[WP-Coder title="change"]`, and Update.
 
 ## Run The Application
 
-Start the Express server.
-
-```shell
-npm run start
-```
-
-You can now browse to [the app](http://localhost:3000).
-
-Log in using `richard@example.com` and `password`. The change page will allow you to enter a number. Log out and verify that you can't browse to the [account page](http://localhost:3000/account).
+The demonstration application is now complete. Log out. Verify that you can't browse to the [account page](http://localhost:3000/account). Log in using `richard@example.com` and `password`. The change page will allow you to enter a number.
 
 ## Next Steps
 
@@ -333,28 +288,8 @@ FusionAuth gives you the ability to customize just about everything to do with t
 * Set up [MFA](/docs/v1/tech/guides/multi-factor-authentication), [Social login](/docs/v1/tech/identity-providers/), or [SAML](/docs/v1/tech/identity-providers/samlv2/) integrations.
 * Integrate with external systems using [Webhooks](/docs/v1/tech/events-webhooks/), [SCIM](/docs/v1/tech/core-concepts/scim), and [Lambdas](/docs/v1/tech/lambdas/).
 
-### Express Authentication
-
-- [Express security best practice](https://expressjs.com/en/advanced/best-practice-security.html)
-- [Passport.js authentication concepts](https://www.passportjs.org/concepts/authentication/downloads/html)
-- [Passport.js Oauth2](https://github.com/jaredhanson/passport-oauth2)
-
-
 ## Troubleshooting
 
 * I get "This site can’t be reached localhost refused to connect" when I click the login button.
 
 Ensure FusionAuth is running in the Docker container. You should be able to log in as the admin user `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
-
-* It still doesn't work.
-
-You can always pull down a complete running application and compare what's different.
-
-```
-git clone https://github.com/ritza-co/fusionauth-quickstart-javascript-express-web.git
-cd fusionauth-quickstart-javascript-express-web
-docker-compose up -d
-cd complete-application
-npm install
-npm run start
-```
