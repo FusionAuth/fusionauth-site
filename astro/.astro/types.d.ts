@@ -1541,6 +1541,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"get-more-value-out-of-fusionauth.mdx": {
+  id: "get-more-value-out-of-fusionauth.mdx",
+  slug: "get-more-value-out-of-fusionauth",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "getting-started-with-email-templates.mdx": {
   id: "getting-started-with-email-templates.mdx",
   slug: "getting-started-with-email-templates",
@@ -2185,6 +2192,13 @@ declare module 'astro:content' {
   collection: "blog",
   data: any
 } & { render(): Render[".mdx"] },
+"soc2-matrix.mdx": {
+  id: "soc2-matrix.mdx",
+  slug: "soc2-matrix",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
 "softozor-fusionauth-hasura-kubernetes.mdx": {
   id: "softozor-fusionauth-hasura-kubernetes.mdx",
   slug: "softozor-fusionauth-hasura-kubernetes",
@@ -2272,6 +2286,13 @@ declare module 'astro:content' {
 "top-forum-posts-may-2021.mdx": {
   id: "top-forum-posts-may-2021.mdx",
   slug: "top-forum-posts-may-2021",
+  body: string,
+  collection: "blog",
+  data: any
+} & { render(): Render[".mdx"] },
+"treefort-uses-fusionauth-for-all-auth.mdx": {
+  id: "treefort-uses-fusionauth-for-all-auth.mdx",
+  slug: "treefort-uses-fusionauth-for-all-auth",
   body: string,
   collection: "blog",
   data: any
@@ -2542,6 +2563,13 @@ declare module 'astro:content' {
 "quickstart-golang-web.mdx": {
   id: "quickstart-golang-web.mdx",
   slug: "quickstart-golang-web",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
+} & { render(): Render[".mdx"] },
+"quickstart-javascript-react-web.mdx": {
+  id: "quickstart-javascript-react-web.mdx",
+  slug: "quickstart-javascript-react-web",
   body: string,
   collection: "quickstarts",
   data: InferEntrySchema<"quickstarts">
