@@ -91,12 +91,6 @@ const qsSections: QuickStartSection[] = [
         navColor: 'yellow'
       },
       {
-        title: 'Angular',
-        icon: '/img/icons/angular-spa.svg',
-        faIcon: 'fa-j',
-        href: '/docs/v1/tech/tutorials/integrate-angular',
-      },
-      {
         title: 'Vue.js',
         icon: '/img/icons/vue.js.svg',
         faIcon: 'fa-snake',
