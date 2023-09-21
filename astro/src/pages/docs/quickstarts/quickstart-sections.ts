@@ -90,12 +90,6 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-j',
         navColor: 'yellow'
       },
-      {
-        title: 'Angular',
-        icon: '/img/icons/angular-spa.svg',
-        faIcon: 'fa-j',
-        href: '/docs/v1/tech/tutorials/integrate-angular',
-      },
     ],
   },
   {
