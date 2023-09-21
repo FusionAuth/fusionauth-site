@@ -104,6 +104,7 @@ rd[d+'/tutorials/integrate-angular']= '/docs/quickstarts/quickstart-javascript-a
 rd[d+'/tutorials/integrate-python-django']= '/docs/quickstarts/quickstart-python-django-web';
 rd[d+'/tutorials/integrate-python-flask']= '/docs/quickstarts/quickstart-python-flask-web';
 rd[d+'/tutorials/integrate-ruby-rails']= '/docs/quickstarts/quickstart-ruby-rails-web';
+rd[d+'/tutorials/integrate-dotnet']= '/docs/quickstarts/quickstart-dotnet-web';
 rd[d+'/tutorials/integrate-java-spring']= '/docs/quickstarts/quickstart-springboot-web';
 rd[d+'/tutorials/integrate-react']= '/docs/quickstarts/quickstart-javascript-react-web';
 rd['/features/architecture']='/platform/built-for-developers';

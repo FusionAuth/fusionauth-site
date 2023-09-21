@@ -59,13 +59,6 @@ const qsSections: QuickStartSection[] = [
         navColor: 'fuchsia',
       },
       {
-        href: '/docs/v1/tech/tutorials/integrate-dotnet',
-        title: '.NET',
-        icon: '/img/icons/dotnet-c.svg',
-        faIcon: 'fa-hashtag',
-        navColor: 'blue'
-      },
-      {
         href: '/blog/2023/04/26/nextjs-single-sign-on',
         title: '.Next.js',
         icon: '/img/icons/nextjs.svg',
