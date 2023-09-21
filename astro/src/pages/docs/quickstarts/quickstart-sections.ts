@@ -77,30 +77,11 @@ const qsSections: QuickStartSection[] = [
     desc: 'JavaScript app that runs in the browser',
     articles: [
       {
-        href: '/docs/v1/tech/tutorials/integrate-react',
-        title: 'React',
-        icon: '/img/icons/react.svg',
-        faIcon: 'fa-r',
-        navColor: 'blue',
-      },
-      {
         href: '/blog/2022/07/15/remix-demo',
         title: 'Remix',
         icon: '/img/icons/javascript.svg',
         faIcon: 'fa-j',
         navColor: 'yellow'
-      },
-      {
-        title: 'Angular',
-        icon: '/img/icons/angular-spa.svg',
-        faIcon: 'fa-j',
-        href: '/docs/v1/tech/tutorials/integrate-angular',
-      },
-      {
-        title: 'Vue.js',
-        icon: '/img/icons/vue.js.svg',
-        faIcon: 'fa-snake',
-        comingSoon: true,
       },
     ],
   },
