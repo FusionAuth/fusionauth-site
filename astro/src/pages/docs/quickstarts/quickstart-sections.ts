@@ -90,12 +90,6 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-j',
         navColor: 'yellow'
       },
-      {
-        title: 'Vue.js',
-        icon: '/img/icons/vue.js.svg',
-        faIcon: 'fa-snake',
-        comingSoon: true,
-      },
     ],
   },
   {
