@@ -85,15 +85,15 @@ Your authentication system documentation should specify this. It's best if this 
 
 Second, can you get access to the password hashes?
 
-It's not typical to have regular or API access to hashes, as they are highly sensitive. Sometimes you can get a database export of your authentication system including the hashes. If you are using a SaasS authentication system, you may need to open a support ticket to get the hashes. Verify such an export is available by consulting the authentication system documentation. Don't forget to allow for the time needed to obtain the export when actually planning a migration.
+It's not typical to have regular or API access to hashes, as they are highly sensitive. Sometimes you can get a database export of your authentication system including the hashes. If you are using a SaaS authentication system, you may need to open a support ticket to get the hashes. Verify such an export is available by consulting the authentication system documentation. Don't forget to allow for the time needed to obtain the export when actually planning a migration.
 
 ### Hostnames
 
 Control the hostname of your authentication system and make sure it is under a domain name your organization owns. Having this under your control makes any future migration much easier.
 
-Your users won't need change the URL they visit to authenticate. While most people use links from within your app to authenticate, some people bookmark login pages when using a browser.
+Your users won't need to change the URL they visit to authenticate. While most people use links from within your app to authenticate, some people bookmark login pages when using a browser.
 
-If you are integrating with other identity providers, which is common in the business to business to employee (B2B2E) SaaS use case, running an authentication ssystem at a hostname you control is critical.
+If you are integrating with other identity providers, which is common in the business to business to employee (B2B2E) SaaS use case, running an authentication system at a hostname you control is critical.
 
 Common authentication standards which allow for single sign-on, such as SAML and OIDC, embed hostnames and paths into configuration. The terminology used varies, but the functionality is the same: the identity provider needs to send a properly authenticated user to a known location, and this list is often set up when the integration is set up, often by employees with high levels of access, such as IT admins. Such integration allows employees easy, secure access to your application.
 
