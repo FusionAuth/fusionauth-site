@@ -1,0 +1,290 @@
+---
+title: .NET Razor Pages
+description: Quickstart integration of .NET Razor Pages web application with FusionAuth
+navcategory: getting-started
+prerequisites: .NET 7
+section: web
+technology: .NET 7
+language: C#
+icon: /img/icons/dotnet-c.svg
+faIcon: fa-gem
+color: rose
+cta: EmailListCTA
+---
+import Aside from '../../components/Aside.astro';
+import LoginAfter from '../../diagrams/quickstarts/login-after.astro';
+import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
+import RemoteCode from '../../components/RemoteCode.astro';
+
+In this quickstart you are going to build an application with .NET 7 Razor Pages and integrate it with FusionAuth.
+You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=pkH-kD73QUM), a global leader in converting dollars into coins.
+It'll have areas reserved for users who have logged in as well as public facing sections.
+
+The docker compose file and source code for a complete application are available at
+https://github.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages
+
+## Prerequisites
+
+- [.NET 7 ](https://dotnet.microsoft.com/en-us/download/dotnet/7.0): This is the main .NET framework.
+- [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](/docs/v1/tech/installation-guide/)).
+
+This app has been tested with .NET 7. This example should work with other compatible versions of .NET.
+
+Optionally, you can also install [Visual Studio](https://visualstudio.microsoft.com/) to make it easier to work with .NET through an IDE.
+
+## General Architecture
+
+While this sample application doesn't have login functionality without FusionAuth, a more typical integration will replace an existing login system with FusionAuth.
+
+In that case, the system might look like this before FusionAuth is introduced.
+
+<LoginBefore alt={"Request flow during login before FusionAuth"}/>
+
+The login flow will look like this after FusionAuth is introduced.
+
+<LoginAfter alt={"Request flow during login after FusionAuth"}/>
+
+In general, you are introducing FusionAuth in order to normalize and consolidate user data. This helps make sure it is consistent and up-to-date as well as offloading your login security and functionality to FusionAuth.
+
+## Getting Started
+
+In this section, you'll get FusionAuth up and running and use .NET to create a new application.
+
+### Clone the Code
+
+First off, grab the code from the repository and change into that directory.
+
+```
+git clone https://github.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages.git
+cd fusionauth-quickstart-dotnet-razor-pages
+```
+
+### Run FusionAuth via Docker
+
+In the root directory of the repo you'll find a Docker compose file (docker-compose.yml) and an environment variables configuration file (.env). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
+
+```
+docker-compose up -d
+```
+
+Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/v1/tech/installation-guide/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to a certain initial state.
+
+<Aside type="note">
+If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by executing `docker-compose down -v`, then re-run `docker-compose up -d`.
+</Aside>
+
+FusionAuth will be initially configured with these settings:
+
+* Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
+* Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
+* Your example username is `richard@example.com` and the password is `password`.
+* Your admin username is `admin@example.com` and the password is `password`.
+* The base URL of FusionAuth `http://localhost:9011/`.
+
+You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don't need to.
+
+### Create your Ruby on Rails Application
+
+Now you are going to create a Ruby on Rails application. While this section builds a simple Ruby on Rails application, you can use the same configuration to integrate your existing Ruby on Rails application with FusionAuth.
+
+```bash
+dotnet new webapp -o MyApp && cd MyApp
+```
+
+## Authentication
+
+This app uses the standard [.NET OpenIDConnect package](https://www.nuget.org/packages/Microsoft.AspNetCore.Authentication.OpenIdConnect) which simplifies integrating with FusionAuth and creating a secure web application.
+
+### Configure OpenID Connect
+
+Install the .NET OpenIDConnect package and other supporting gems. 
+
+```bash
+dotnet add package Microsoft.AspNetCore.Authentication.OpenIdConnect
+```
+
+Next, update your `appsettings.json` file with FusionAuth OpenID Connect (OIDC) environment specific settings.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/appsettings.json"
+lang="c#"
+tags="oidcConfig"/>
+
+Note that the client secret is not added to the `appsettings.json` file. This is because it is sensitive and should not be committed to source control. Instead, the client secret is provided on the command line via an environment variable, which we will provide when we run the application.
+
+To configure the OIDC middleware, add a `Startup.cs` file to the root of  to the project with the following code:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Startup.cs"
+
+Then, update the `Program.cs` file to call the `Startup.cs` file you just created. Replace the `Program.cs` file with the following code:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Program.cs"
+lang="c#" />
+
+The `Startup.cs` file configures the OIDC middleware to use the FusionAuth OIDC settings from the `appsettings.json` file. Note a few things in the `Startup.cs` file:
+
+- The `Scope` is set to `openid`. This will give the app the permission to read the user's profile information, including name. 
+- The line `options.GetClaimsFromUserInfoEndpoint = true;`. As only the user's email address is returned in the token itself, the app needs to make an additional call after receiving the token to the FusionAuth userinfo endpoint to get the user's other profile information. This line configures the .NET OIDC middleware to make this call.
+
+The application is now configured to use FusionAuth for authentication. Next, you'll add some pages to the application.
+
+## App Customization
+
+In this section, you'll turn your application into a trivial banking application with some styling.
+
+### Add A Stylesheet
+
+Before adding any pages, modify the stylesheet to make the HTML we add later look and layout nice. Replace the `wwwroot/css/site.css` file with the following code:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/wwwroot/css/site.css" lang="css" />
+
+
+### Add A Login and Logout Link
+
+The application will need to display a login link and logout link, depending on whether the user is logged in or not. To add these links across all pages, modify the `_Layout.cshtml` file. Replace the `Views/Shared/_Layout.cshtml` file with the following code:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Views/Shared/_Layout.cshtml" lang="c#" />
+
+### Add a Logout Page
+
+To complete the logout process, create a `Logout.cshtml` file and `Logout.cshtml.cs` file in the `Pages` folder. This page and code behind will handle signing out and deleting the local cookie, after the user has been signed out of FusionAuth and redirected back here. 
+
+Add the following code to the `Pages/Logout.cshtml` file:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/Logout.cshtml" lang="c#" />
+
+Add the following code to the `Pages/Logout.cshtml.cs` file:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/Logout.cshtml.cs" lang="c#" />
+
+### Add a default page
+
+When a user first visits the application, they will be directed to the default `Index` page. This page will display a welcome message and a few links to register and login. These links will redirect the user to FusionAuth to complete the registration and login process.
+
+Update the `Pages/Index.cshtml` file with the following code:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/Index.cshtml" lang="c#" />
+
+Update the `Pages/Index.cshtml.cs` file with the following code:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/Index.cshtml.cs" lang="c#" />
+
+### Add An Account Page
+
+There is no dedicated login page for the application. Instead, the protected pages are annotated with the `[Authorize]` attribute. When a user attempts to access a protected page, they will be redirected to FusionAuth to login. After logging in, they will be redirected back to the protected page. You'll notice in the log in link in the `_Layout.cshtml` file points to the `Account` page. FusionAuth will display all the login options instead.
+
+The main page the user will see after logging in is an Account page. This page will display the user's name, email address and a fake ChangeBank balance.
+
+Add a `Account.cshtml` file and `Account.cshtml.cs` file in the `Pages` folder. This page and code behind will handle displaying the user's account information.
+
+Add the following code to the `Pages/Account.cshtml` file:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/Account.cshtml" lang="c#" />
+
+This layout file shows a new menu items for logged in users. The main one is the "Make Change" link, which links to a page that posts back to the server to make a change. The "Make Change" page will be added in the next section. 
+
+Add the following code to the `Pages/Account.cshtml.cs` file:
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/Account.cshtml.cs" lang="c#" />
+
+This code behind file has the important `[Authorize]` attribute decorating the page model, which ensures that only logged in users can access this page. 
+
+### Add A Make Change Page
+
+The heart of the ChangeBank service is making change from paper money. The Make Change page handles this functionality by accepting a user input and returning the correct amount of coins. The calculation is done on the server side, so the user can't cheat by changing the amount of money they want to convert. 
+
+Add a `MakeChange.cshtml` file and `MakeChange.cshtml.cs` file in the `Pages` folder. This page and code behind will handle making the correct change for a user. 
+
+Update the `Pages/MakeChange.cshtml` file with the following code:  
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/MakeChange.cshtml" lang="c#" />
+
+This page has a form that accepts a user input and posts back to the server. The server will then calculate the correct amount of coins to return to the user. Add the backend logic to the `Pages/MakeChange.cshtml.cs` file:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/MakeChange.cshtml.cs" lang="c#" />
+
+The controller also has a `[Authorize]` attribute, which ensures that only logged in users can access this core banking functionality.
+
+## Run the App
+
+Before running the app in a development environment, you'll need to add a development setting to allow the app to connect to FusionAuth without SSL. This is because FusionAuth is running in a Docker container on your local machine. In production, FusionAuth should always be running with SSL enabled.
+
+The port that the .NET application runs on should also match the port set in the `Kickstart.json` file used to set up FusionAuth. To set both the port and allow an HTTP connection to FusionAuth, add a new file called `appsettings.Development.json` to the root of the project with the following code:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/appsettings.Development.json" lang="c#" />
+
+Now the application can be run. There are multiple ways of [deploying a .NET application](https://docs.microsoft.com/en-us/dotnet/core/deploying/), but publishing ensures your deployment process is repeatable. Here’s the command to publish a standalone executable for macOS:
+
+
+```bash
+dotnet publish -r osx-x64
+```
+
+To build for a different platform, modify the `-r` parameter to match the RID for your platform. You can find a [list of RIDs here](https://learn.microsoft.com/en-us/dotnet/core/rid-catalog).
+
+Start up the .NET application using this command:
+
+```bash
+ASPNETCORE_ENVIRONMENT=Development FusionAuth__ClientSecret=super-secret-secret-that-should-be-regenerated-for-production bin/Debug/net7.0/osx-x64/publish/MyApp
+```
+
+`ASPNETCORE_ENVIRONMENT` is set to `Development` to ensure the application uses the `appsettings.Development.json` file.
+
+`FusionAuth__ClientSecret` is the client secret, which was defined by the [FusionAuth Kickstart Script](#run-fusionauth-via-docker) step. You don't want to commit secrets like this to version control, so use an environment variable.
+
+You can also run the project from Visual Studio if you prefer.
+
+You can now open up an incognito window and visit the .NET app at https://localhost:7028/ . Log in with the user credentials created with the Kickstart.json file, which should be `richard@example.com` and the password `password`.
+
+You'll see the email of the user next to the log out button. You'll also see the user's `given_name` claim above their balance.
+
+## Next Steps
+This quickstart is a great way to get a proof of concept up and running quickly, but to run
+your application in production, there are some things you're going to want to do.
+
+### FusionAuth Customization
+FusionAuth gives you the ability to customize just about everything with the user's experience and your application's integration. This includes
+* [Hosted pages](/docs/v1/tech/themes/) such as login, registration, email verification, and many more
+* [Email templates](/docs/v1/tech/email-templates/email-templates)
+* [User data and custom claims in access token JWTs](/articles/tokens/jwt-components-explained)
+
+### Security
+* [Microsoft.AspNetCore.Authentication.OpenIdConnect](https://www.nuget.org/packages/Microsoft.AspNetCore.Authentication.OpenIdConnect) handles token validation and refresh
+* You may want to customize the [token expiration times and policies](/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth
+* Choose [password rules](/docs/v1/tech/core-concepts/tenants#password) and a [hashing algorithm](/docs/v1/tech/reference/password-hashes) that meet your security needs
+
+### Tenant and Application Management
+* Model your application topology using [Applications](/docs/v1/tech/core-concepts/applications), [Roles](/docs/v1/tech/core-concepts/roles), [Groups](/docs/v1/tech/core-concepts/groups), [Entities](/docs/v1/tech/core-concepts/groups), and more
+* Set up [MFA](/docs/v1/tech/guides/multi-factor-authentication), [Social login](/docs/v1/tech/identity-providers/), and/or [SAML](/docs/v1/tech/identity-providers/samlv2/) integrations
+* Integrate with external systems using [Webhooks](/docs/v1/tech/events-webhooks/), [SCIM](/docs/v1/tech/core-concepts/scim), and [Lambdas](/docs/v1/tech/lambdas/)
+
+## Troubleshooting
+
+* I get `This site can’t be reached  localhost refused to connect.` when I click the Login button
+
+Ensure FusionAuth is running in the Docker container.  You should be able to login as the admin user, `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
+
+* I get an error page when I click on the Login button with message of `"error_reason" : "invalid_client_id"`
+
+Ensure the value for `ClientId` in the `FusionAuth` section of the `appsettings.json` matches the client Id configured in FusionAuth for the Example App Application at [http://localhost:9011/admin/application/](http://localhost:9011/admin/application/).
+
+* I'm getting an error from .NET after logging in
+
+```
+OpenIdConnectProtocolException: Message contains error: 'invalid_client', error_description: 'Client authentication missing as Basic Authorization header or credentials in the body (or some combination of them).', error_uri: 'error_uri is null'.
+```
+
+This indicates that .NET OpenIDConnect is unable to call FusionAuth to validate the returned token.  It is likely caused because of an incorrect client secret, or the client secret has not been passed to the app.  Ensure the `FusionAuth__ClientSecret` environment variable used to start the .NET app matches the FusionAuth ExampleApp client secret. You can review that by logging in as the admin user and examining the Application at [http://localhost:9011/admin/application/](http://localhost:9011/admin/application/)
+
+* It still doesn't work
+
+You can always pull down a complete running application and compare what's different.
+
+```
+git clone https://github.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages.git
+cd fusionauth-quickstart-dotnet-razor-pages
+docker-compose up -d
+cd complete-app
+cd MyApp
+dotnet publish -r osx-x64 
+ASPNETCORE_ENVIRONMENT=Development FusionAuth__ClientSecret=super-secret-secret-that-should-be-regenerated-for-production bin/Debug/net7.0/osx-x64/publish/MyApp
+```
+
