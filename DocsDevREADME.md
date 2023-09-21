@@ -412,3 +412,10 @@ TBD
 Quickstarts are any pages that are going under /docs/quickstarts that are not on the blog.
 
 See https://github.com/FusionAuth/fusionauth-example-template/blob/master/QUICKSTART-INSTRUCTIONS.md for instructions on building out a quickstart.
+
+## Pull request review process
+
+* If a piece of content is technical, it needs a technical review by engineering or devrel.
+* Typo fixes don't need review.
+* If a piece of content is significant (blog post, guide, article) give it the label `content` and it will be published to a slack channel for marketing awareness.
+
