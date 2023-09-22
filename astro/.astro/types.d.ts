@@ -2539,6 +2539,13 @@ declare module 'astro:content' {
 } & { render(): Render[".mdx"] },
 },
 "quickstarts": {
+"quickstart-dotnet-web.mdx": {
+  id: "quickstart-dotnet-web.mdx",
+  slug: "quickstart-dotnet-web",
+  body: string,
+  collection: "quickstarts",
+  data: InferEntrySchema<"quickstarts">
+} & { render(): Render[".mdx"] },
 "quickstart-golang-web.mdx": {
   id: "quickstart-golang-web.mdx",
   slug: "quickstart-golang-web",

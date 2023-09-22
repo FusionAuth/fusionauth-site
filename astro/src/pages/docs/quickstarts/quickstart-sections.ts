@@ -58,13 +58,6 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-w',
         navColor: 'fuchsia',
       },
-      {
-        href: '/docs/v1/tech/tutorials/integrate-dotnet',
-        title: '.NET',
-        icon: '/img/icons/dotnet-c.svg',
-        faIcon: 'fa-hashtag',
-        navColor: 'blue'
-      }
     ],
   },
   {
@@ -82,18 +75,6 @@ const qsSections: QuickStartSection[] = [
         icon: '/img/icons/javascript.svg',
         faIcon: 'fa-j',
         navColor: 'yellow'
-      },
-      {
-        title: 'Angular',
-        icon: '/img/icons/angular-spa.svg',
-        faIcon: 'fa-j',
-        href: '/docs/v1/tech/tutorials/integrate-angular',
-      },
-      {
-        title: 'Vue.js',
-        icon: '/img/icons/vue.js.svg',
-        faIcon: 'fa-snake',
-        comingSoon: true,
       },
     ],
   },
