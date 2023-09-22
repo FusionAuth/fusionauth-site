@@ -58,13 +58,6 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-w',
         navColor: 'fuchsia',
       },
-      {
-        href: '/blog/2023/04/26/nextjs-single-sign-on',
-        title: '.Next.js',
-        icon: '/img/icons/nextjs.svg',
-        faIcon: 'fa-n',
-        navColor: 'green',
-      },
     ],
   },
   {
