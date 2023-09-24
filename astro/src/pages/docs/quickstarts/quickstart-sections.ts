@@ -51,13 +51,13 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-block',
         navColor: 'rose',
       },
-      {
+      /*{
         href: '/blog/2021/12/06/how-to-set-up-single-sign-on-between-fusionauth-wordpress',
         title: 'Wordpress',
         icon: '/img/icons/wordpress.svg',
         faIcon: 'fa-w',
         navColor: 'fuchsia',
-      },
+      },*/
       {
         href: '/docs/v1/tech/tutorials/integrate-dotnet',
         title: '.NET',
