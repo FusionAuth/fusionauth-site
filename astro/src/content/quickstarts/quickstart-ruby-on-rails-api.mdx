@@ -135,7 +135,7 @@ Update `/config/routes.rb` to include the two new routes that will be created fo
 
 Create a new file to hold your environment variables directly in the `your-application` directory called `.env.development`. You will need to add two variables that are used to call your FusionAuth instance `FUSIONAUTH_LOCATION` and `CLIENT_ID`, with the values that match below.
 
-```text
+```
 # for rails
 
 FUSIONAUTH_LOCATION=http://localhost:9011
@@ -202,7 +202,7 @@ You will want to leave the server running in one terminal and open another termi
 
 First let's try the requests as the `teller@example.com` user. Based on the configuration this user has the `teller` role and should be able to use both `/make-change` and `/panic`.
 
-1. Acquire an access token for `teller@example` by making the following request
+Acquire an access token for `teller@example` by making the following request
 
 ```shell
 curl --location 'http://localhost:9011/api/login' \
@@ -214,7 +214,7 @@ curl --location 'http://localhost:9011/api/login' \
   "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
 }'
 ```
-Copy the `token` from the response, which should look like this:
+Your response should look like the below JSON. Grab the token field (which begins with ey).
 
 ```json
 {
@@ -228,11 +228,17 @@ Copy the `token` from the response, which should look like this:
 
 ### Make the Request
 
-Use the `token` as a `Bearer` token in the `Authorization` header. Make a request to `/make-change` with a query parameter `total=5.12`.
+<Aside type="tip">
+Here you are placing the token in a cookie named `app.at`. 
+This is for compatibility with the FusionAuth best practices and <a href="/docs/v1/tech/apis/hosted-backend" target="_blank">the hosted backend</a>.
+
+</Aside>
+
+Replace `<your_token>` with the copied token and pass as a cookie value. Make a request to `/make-change` with a query parameter `total=5.12`.
 
 ```shell
 curl --location 'http://localhost:4001/make-change?total=5.12' \
---header 'Authorization: Bearer <your_token>'
+--cookie 'app.at=<your_token>'
 ```
 
 Your response should look like this:
@@ -241,13 +247,13 @@ Your response should look like this:
 We can make change using 20 quarters 1 dimes 0 nickels 2 pennies
 ```
 
-You were authorized, success! You can try making the request without the `Authorization` header or with a different string rather than a valid token, and see that you are denied access.
+You were authorized, success! You can try making the request without the `--cookie` or with a different string rather than a valid token, and see that you are denied access.
 
 Next call the `/panic` endpoint because you are in trouble!
 
 ```shell
 curl --location --request POST 'http://localhost:4001/panic' \
---header 'Authorization: Bearer <your_token>'
+--cookie 'app.at=<your_token>'
 ```
 
 This is a `POST` not a get because you want all your emergency calls to be non-idempotent.
@@ -273,7 +279,7 @@ curl --location 'http://localhost:9011/api/login' \
 }'
 ```
 
-Your response should look like this:
+Your response should look like the below JSON. Grab the token field (which begins with ey).
 
 ```json
 {
@@ -289,7 +295,7 @@ Now use that token to call `/make-change` with a query parameter `total=3.24`
 
 ```shell
 curl --location 'http://localhost:4001/make-change?total=3.24' \
---header 'Authorization: Bearer <your_token>'
+--cookie 'app.at=<your_token>'
 ```
 
 Your response should look like this:
@@ -302,7 +308,7 @@ So far so good. Now let's try to call the `/panic` endpoint. (We're adding the `
 
 ```shell
 curl -i --request POST 'http://localhost:4001/panic' \
---header 'Authorization: Bearer <your_token>'
+--cookie 'app.at=<your_token>'
 ```
 
 You will get a `401` Unauthorized response with the message `Proper role not found for user`.
