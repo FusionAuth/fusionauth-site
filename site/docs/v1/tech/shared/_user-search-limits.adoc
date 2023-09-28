@@ -1,3 +1,7 @@
 You cannot filter search results in FusionAuth to only return certain fields. Instead you must do this through post-processing. So if you want to retrieve only the `firstName` and `birthDate` fields of a set of users, the results will give you each entire user object and you must select desired fields. You can use the JSON processing facilities in your chosen language to do so, or use a tool such as https://stedolan.github.io/jq/[`jq`].
 
 When using the Elasticsearch search engine, the maximum number of users returned for any search is 10000 users. There is an https://github.com/FusionAuth/fusionauth-issues/issues/494[open bug] tracking this issue.
+
+There are no latency guarantees around the indexing of user data in Elasticsearch after the user has been updated using the API. The Elasticsearch index is eventually consistent. The duration between an Update User API call and the changed attributes appearing in a search request would be however long it takes FusionAuth to make the request to Elasticsearch added to the time for Elasticsearch to refresh the index and make it visible to search.
+
+The Elasticsearch `refresh_interval` defaults to 1s, so this is the minimal practical delay you may observe. This setting is the time it takes for Elasticsearch to make https://www.elastic.co/guide/en/elasticsearch/reference/current/index-modules.html#index-refresh-interval-setting["recent changes to the index visible to search"]. There is also a request from FusionAuth to Elasticsearch to update put the changed document into Elasticsearch.
