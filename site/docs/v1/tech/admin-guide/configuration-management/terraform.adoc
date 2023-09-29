@@ -247,7 +247,7 @@ terraform apply
 ====
 Once imported, Terraform tracks the resource in your state file. You can then manage the imported resource similar to any other by updating its attributes.
 
-You can't destroy the default FusionAuth Application. In FusionAuth this can't be deleted. Attempting to do so will break your Terraform state. See <<Terraform Remove>> for more details.
+You can't destroy the default FusionAuth Application. In FusionAuth this can't be deleted. Attempting to do so will break your Terraform state. See <<Prevent Destroy>> for more details.
 ====
 
 Leave the import block in your configuration as a record of the default Application resource’s origin. The import block records that Terraform imported the resource and didn't create it.
@@ -309,6 +309,8 @@ include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform
 include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/terraform/examples/create/main.tf[tags=createForumApplicationRoles]
 ----
 
+* https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/lambda[Terraform Lambda]
+
 This example assumes you're using a data source to reference the Default Tenant. If you imported the Default Tenant, remove the prefix `data.` to have this example work correctly.
 
 [source]
@@ -317,6 +319,11 @@ include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform
 ----
 
 Once you're happy with your configuration run `terraform plan` and if you aren't experiencing errors and are ok with the planned changes you can go ahead with `terraform apply`.
+
+[WARNING]
+====
+Deleting a Tenant removes all the associated Applications, Groups, and Users. If you want to make sure that the Tenant isn't destroyed, see <<Prevent Destroy>> for more details.
+====
 
 == Terraform Update
 
@@ -332,46 +339,7 @@ The configuration can get very large and if you want to show only very specific 
 //source: ignore lifecycle changes https://itnext.io/how-and-when-to-ignore-lifecycle-changes-in-terraform-ed5bfb46e7ae
 Every time you plan new changes you could face the challenge that information has been updated in your FusionAuth installation. You can either align your configuration with the installation or decide to https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#ignore_changes[ignore_changes] in your configuration.
 
-There are two very common examples in FusionAuth resources. One if you manage users through Terraform, where you during creation set password_change_required to true. Or where the user starts changing personal information through FusionAuth or Application.
-
-[source]
-----
-resource "fusionauth_user" "forum-user1" {
-  email                    = "forum-user1@email.internal"
-  first_name               = "John"
-  last_name                = "Doe"
-  middle_name              = "William"
-  password_change_required = true
-  password                 = "%WLTvrsYELsyPqC^R7FMUNxt##VyDf6XaWk2R7!gS$oL76Ww"
-  username_status          = "ACTIVE"
-  lifecycle {
-    ignore_changes = [
-      data,
-      image_url,
-      password
-    ]
-  }
-}
-
-resource "fusionauth_user" "forum-admin1" {
-  email                    = "forum-admin1@email.internal"
-  first_name               = "John"
-  last_name                = "Doe"
-  middle_name              = "William"
-  password_change_required = true
-  password                 = "@CfosPAVT3&hCzz5c^&#2F5BxNUY$X!@s!7Wx9bd6Yon54e3"
-  username_status          = "ACTIVE"
-  lifecycle {
-    ignore_changes = [
-      data,
-      image_url,
-      password
-    ]
-  }
-}
-----
-
-Another example is where your e.g. business application adds user driven data to the FusionAuth Application.
+There is a very common example in FusionAuth resources. Where your e.g. business application adds user driven data to the FusionAuth Application.
 
 [source]
 ----
