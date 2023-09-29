@@ -102,7 +102,7 @@ It is always safe to run https://developer.hashicorp.com/terraform/cli/commands/
 
 === Configuration Strategy
 
-Once you initialize the Terraform working directory, you should review different strategies to handle the import of default FusionAuth configuration which will be discussed below.
+Once you initialize the Terraform working directory, you should review different initial strategies to handle the import of default FusionAuth configuration which will be discussed below.
 
 [cols="2,4,4"]
 |===
@@ -110,7 +110,7 @@ Once you initialize the Terraform working directory, you should review different
 
 | import | manage existing resources | some resources dont fully support the Terraform lifecycle
 | data source  | reference existing resources without having to manage them | requires a external process to manage these resources
-| create | create and then manage all resources through Terraform | bigger initial effort
+| create | always create and be able to manage all resources through Terraform | bigger initial effort
 |===
 
 == Terraform Import
@@ -151,100 +151,13 @@ You can use this technique with any resource you want to import into Terraform.
 
 //TODO: Screenshot Tenant Id
 
-[source]
-----
-import {
-  to = fusionauth_tenant.Default
-  id = "Replace-This-With-The-Existing-Default-Tenant-Id"
-}
+include::/home/aaron/WebstormProjects/fusionauth-terraform-examples/examples/import/main.tf[tags=defaultTenantImport]
 
-resource "fusionauth_tenant" "Default" {
-  name = "Default"
-  issuer = "acme.com"
-  theme_id = "00000000-0000-0000-0000-000000000000"
-  external_identifier_configuration {
-    authorization_grant_id_time_to_live_in_seconds = 30
-    change_password_id_generator {
-      length = 32
-      type   = "randomBytes"
-    }
-    change_password_id_time_to_live_in_seconds = 600
-    device_code_time_to_live_in_seconds        = 300
-    device_user_code_id_generator {
-      length = 6
-      type   = "randomAlphaNumeric"
-    }
-    email_verification_id_generator {
-      length = 32
-      type   = "randomBytes"
-    }
-    email_verification_id_time_to_live_in_seconds      = 86400
-    email_verification_one_time_code_generator {
-      length = 6
-      type   = "randomAlphaNumeric"
-    }
-    external_authentication_id_time_to_live_in_seconds = 300
-    one_time_password_time_to_live_in_seconds          = 60
-    passwordless_login_generator {
-      length = 32
-      type   = "randomBytes"
-    }
-    passwordless_login_time_to_live_in_seconds = 180
-    registration_verification_id_generator {
-      length = 32
-      type   = "randomBytes"
-    }
-    registration_verification_id_time_to_live_in_seconds = 86400
-    registration_verification_one_time_code_generator {
-      length = 6
-      type   = "randomAlphaNumeric"
-    }
-    saml_v2_authn_request_id_ttl_seconds = 300
-    setup_password_id_generator {
-      length = 32
-      type   = "randomBytes"
-    }
-    setup_password_id_time_to_live_in_seconds   = 86400
-    two_factor_id_time_to_live_in_seconds       = 300
-    two_factor_one_time_code_id_generator {
-      length = 6
-      type   = "randomDigits"
-    }
-    two_factor_trust_id_time_to_live_in_seconds = 2592000
-  }
-  jwt_configuration {
-    refresh_token_time_to_live_in_minutes              = 43200
-    time_to_live_in_seconds                            = 3600
-    refresh_token_revocation_policy_on_login_prevented = true
-    refresh_token_revocation_policy_on_password_change = true
-    access_token_key_id                                = "00000000-0000-0000-0000-000000000000"
-    id_token_key_id                                    = "00000000-0000-0000-0000-000000000000"
-  }
-  login_configuration {
-    require_authentication = true
-  }
-  email_configuration {
-    default_from_email                  = "change-me@example.com"
-    default_from_name                   = "FusionAuth"
-    host                                = "localhost"
-    implicit_email_verification_allowed = true
-    port                                = 25
-    security                            = "NONE"
-    verification_strategy               = "ClickableLink"
-    verify_email                        = false
-    verify_email_when_changed           = false
-    forgot_password_email_template_id   = "00000000-0000-0000-0000-000000000000"
-    passwordless_email_template_id      = "00000000-0000-0000-0000-000000000000"
-    set_password_email_template_id      = "00000000-0000-0000-0000-000000000000"
-  }
-}
-----
-
-Since you provided a valid Tenant Id, you can let Terraform find the other Ids. Then you can update `main.tf` with those values. Do this by running `terraform plan`.
+Since you provided a valid Tenant Id, you can let Terraform find the other Ids by searching the plan output for in-place updates. Then you can update `main.tf` with those values. Do this by running `terraform plan`.
 
 [source]
 ----
-terraform plan | grep 0000
+terraform plan | grep \~
 ----
 
 Because of the way Terraform works, it is suggesting replacing the UUID definitions for configuration with `00000000-0000-0000-0000-000000000000`. You don't want to do that. Instead, copy the UUIDs to `main.tf` and replace the `00000000-0000-0000-0000-000000000000`s with them.
@@ -253,17 +166,19 @@ Here is how the output of the `grep` command might look:
 
 [source]
 ----
-~ theme_id                           = "75a068fd-e94b-451a-9aeb-3ddb9a3b5987" -> "00000000-0000-0000-0000-000000000000"
-~ forgot_password_email_template_id  = "03c264a2-9c89-4fb2-a78b-4333b9485d99" -> "00000000-0000-0000-0000-000000000000"
-~ passwordless_email_template_id     = "8e95e7ca-104a-48ce-86d1-aa39e2c71d51" -> "00000000-0000-0000-0000-000000000000"
-~ set_password_email_template_id     = "6752116b-9f34-4e66-98ef-438258edeb18" -> "00000000-0000-0000-0000-000000000000"
-~ access_token_key_id                = "12c6b146-89cf-9473-490b-1c97e4e68674" -> "00000000-0000-0000-0000-000000000000"
-~ id_token_key_id                    = "092dbedc-30af-4149-9c61-b578f2c72f59" -> "00000000-0000-0000-0000-000000000000"
+  ~ update in-place
+  ~ resource "fusionauth_tenant" "Default" {
+      ~ theme_id                           = "75a068fd-e94b-451a-9aeb-3ddb9a3b5987" -> "00000000-0000-0000-0000-000000000000"
+      ~ email_configuration {
+      ~ jwt_configuration {
+          ~ access_token_key_id                                = "a39be146-51cb-0288-7806-6eb6c066aed3" -> "00000000-0000-0000-0000-000000000000"
+          ~ id_token_key_id                                    = "092dbedc-30af-4149-9c61-b578f2c72f59" -> "00000000-0000-0000-0000-000000000000"
 ----
 
 Make sure you copy all those Id's from your output to the `main.tf` file. For example, modify `jwt_configuration` to look like
 
-\```
+[source]
+----
 jwt_configuration {
     refresh_token_time_to_live_in_minutes              = 43200
     time_to_live_in_seconds                            = 3600
@@ -272,10 +187,7 @@ jwt_configuration {
     access_token_key_id                                = "12c6b146-89cf-9473-490b-1c97e4e68674"
     id_token_key_id                                    = "092dbedc-30af-4149-9c61-b578f2c72f59"
   }
-\```
-
-
-
+----
 
 Once appended run https://developer.hashicorp.com/terraform/cli/commands/plan[terraform plan] to check the validity of your configuration. If there is no output, that indicates that the remote FusionAuth configuration and the `main.tf` file are in sync.
 
@@ -302,20 +214,10 @@ You can't destroy the default tenant. In FusionAuth this cannot be deleted. Atte
 Leave the import block in your configuration as a record of the default tenant resource’s origin. The import block records that Terraform imported the resource and did not create it.
 
 === Importing The FusionAuth Application
-Next, follow the same process to import the default FusionAuth application which provides the FusionAuth admin user interface. You'll use the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application[Application Terraform Resource] and add the following to `main.tf`. 
+Next, follow the same process to import the default FusionAuth application which provides the FusionAuth admin user interface. You'll use the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application[Application Terraform Resource] and add the following to `main.tf`.
 
-[source]
-----
-import {
-  to = fusionauth_application.FusionAuth
-  id = "3c219e58-ed0e-4b18-ad48-f4f92793ae32"
-}
+include::/home/aaron/WebstormProjects/fusionauth-terraform-examples/examples/import/main.tf[tags=defaultApplicationImport]
 
-resource "fusionauth_application" "FusionAuth" {
-  tenant_id = fusionauth_tenant.Default.id
-  name = "FusionAuth"
-}
-----
 Once appended run https://developer.hashicorp.com/terraform/cli/commands/plan[terraform plan] to check the validity of your configuration.
 
 If the plan is valid and you are happy with the changes run https://developer.hashicorp.com/terraform/cli/commands/apply[terraform apply]
@@ -345,16 +247,8 @@ If you choose to manage the Default tenant and FusionAuth application outside Te
 * https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/data-sources/application[Terraform Data Source: Application]
 
 Here's an example of how you might add such data sources to your Terraform file.
-[source]
-----
-data "fusionauth_tenant" "Default" {
-  name = "Default"
-}
-
-data "fusionauth_application" "FusionAuth" {
-  name = "FusionAuth"
-}
-----
+include::/home/aaron/WebstormProjects/fusionauth-terraform-examples/examples/data-source/main.tf[tags=defaultTenantDataSource]
+include::/home/aaron/WebstormProjects/fusionauth-terraform-examples/examples/data-source/main.tf[tags=defaultApplicationDataSource]
 
 [NOTE.note]
 ====
@@ -369,68 +263,23 @@ Now that you've set up Terraform to handle default configuration, let's walk thr
 
 To create a new resource you can go through the list of resources available to you in the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs[FusionAuth Terraform Provider Documentation] and pick the resource you are interested in. Each resource contains information about required and optional arguments.
 
-In this example you create an application called forum in the Default tenant with related roles (admin and user), users (forum-user1 and forum-admin1) and according registrations:
+In this example you create an Application called forum in the newly created forum Tenant with related roles (admin and user):
+
+* https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/tenant[Terraform Tenant Resource]
+
+include::/home/aaron/WebstormProjects/fusionauth-terraform-examples/examples/create/main.tf[tags=createForumTenant]
 
 * https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application[Terraform Application Resource]
+
+include::/home/aaron/WebstormProjects/fusionauth-terraform-examples/examples/create/main.tf[tags=createForumApplication]
+
 * https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application_role[Terraform Application Role Resource]
-* https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/user[Terraform User Resource]
-* https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/registration[Terraform Registration Resource]
+
+include::/home/aaron/WebstormProjects/fusionauth-terraform-examples/examples/create/main.tf[tags=createForumApplicationRoles]
 
 This example assumes you are using a data source to reference the default tenant. If you imported the default tenant, remove the prefix `data.` to have this example work correctly.
 
-[source]
-----
-resource "fusionauth_application" "forum" {
-  tenant_id = data.fusionauth_tenant.Default.id
-  name = "forum"
-}
-
-resource "fusionauth_application_role" "forum_admin_role" {
-  application_id = fusionauth_application.forum.id
-  is_default     = false
-  is_super_role  = true
-  name           = "admin"
-}
-
-resource "fusionauth_application_role" "forum_user_role" {
-  application_id = fusionauth_application.forum.id
-  is_default     = true
-  is_super_role  = false
-  name           = "user"
-}
-
-resource "fusionauth_user" "forum-user1" {
-  email                    = "forum-user1@email.internal"
-  first_name               = "John"
-  last_name                = "Doe"
-  middle_name              = "William"
-  password_change_required = true
-  password                 = "%WLTvrsYELsyPqC^R7FMUNxt##VyDf6XaWk2R7!gS$oL76Ww"
-  username_status          = "ACTIVE"
-}
-
-resource "fusionauth_user" "forum-admin1" {
-  email                    = "forum-admin1@email.internal"
-  first_name               = "John"
-  last_name                = "Doe"
-  middle_name              = "William"
-  password_change_required = true
-  password                 = "@CfosPAVT3&hCzz5c^&#2F5BxNUY$X!@s!7Wx9bd6Yon54e3"
-  username_status          = "ACTIVE"
-}
-
-resource "fusionauth_registration" "forum-admin1-admin-role" {
-  user_id        = fusionauth_user.forum-admin1.id
-  application_id = fusionauth_application.forum.id
-  roles          = ["admin"]
-}
-
-resource "fusionauth_registration" "forum-user1-user-role" {
-  user_id        = fusionauth_user.forum-user1.id
-  application_id = fusionauth_application.forum.id
-  roles          = ["user"]
-}
-----
+include::/home/aaron/WebstormProjects/fusionauth-terraform-examples/examples/create/main.tf[tags=defaultDataSource]
 
 Once you are happy with your configuration run `terraform plan` and if you are not experiencing errors and are ok with the planned changes you can go ahead with `terraform apply`.
 
