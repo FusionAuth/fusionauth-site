@@ -56,7 +56,7 @@ All the files you'll create in this guide already exist in the `complete-applica
 
 You'll find a Docker Compose file `docker-compose.yml` and an environment variables configuration file `.env` in the root folder of the repository.
 
-Assuming you have Docker installed on your machine, you can start FusionAuth on your machine with the following.
+Assuming you have Docker installed, you can start FusionAuth on your machine with the following.
 
 ```
 docker compose up -d
@@ -79,7 +79,7 @@ FusionAuth will be initially configured with these settings:
 * Your admin username is `admin@example.com` and your password is `password`.
 * Your fusionAuthBaseUrl is 'http://localhost:9011/'.
 
-You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don't need to.
+You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart everything will already be configured correctly.
 
 <Aside type="caution">
   The `.env` and `kickstart.json` files contain passwords. In a real application, always add these files to your `.gitignore` file and never commit secrets to version control.
@@ -93,40 +93,42 @@ You are going to be building an API backend for a banking application called Cha
 - `make-change`: This endpoint will allow you to call GET with a `total` amount and receive a response indicating how many nickels and pennies are needed to make change. Valid roles are `customer` and `teller`.
 - `panic`: Tellers may call this POST endpoint to call the police in case of an incident. The only valid role is `teller`.
 
-Both endpoints will be protected such that a valid JSON web token (JWT) will be required in a cookie in order to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
+Both endpoints will be protected such that a valid JSON web token (JWT) will be required in a cookie in order for the endpoints to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
 
 Create the starter app called `your-application` for this API.
 
 ```shell
-npx express-generator@latest mysite --no-view
-cd mysite
+npx express-generator@latest your-application --no-view
+cd your-application
 npm install
-npm audit fix --force # run this only if npm reports security vulnerabilities
-npm install dotenv # to read your .env files with passwords
-npm install jose # to validate JWT authenticity
+npm audit fix --force
+npm install dotenv
+npm install jose
 ```
 
-Now create the `.env` file in your `mysite` folder and add the following to it (note that this is a different environment file to the one in the root folder used by Docker for FusionAuth).
+Here you set up your application and add project dependencies. The [`dotenv`](https://www.npmjs.com/package/dotenv) library allows the code to read your `.env` environment variable file. Additionally, the [`jose`](https://www.npmjs.com/package/jose) library allows you to validate the authenticity of the JWT.
+
+Now create the `.env` file in your `your-application` folder and add the following to it.
+
+<Aside type="note">
+This is a different environment file to the one in the root folder used by Docker for FusionAuth
+</Aside>
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-express-api/main/complete-application/.env"
  lang="shell" />
 
-### Preliminary Setup
+ ## Authentication
 
-Before you configure authentication, you need to change the default file created by Express.
+Before you configure authentication, you need to change the default `app.js` file created by {frontmatter.technology} to add an authentication check to every call made to the API.
 
 Add the following lines in `app.js` just above `app.use('/', indexRouter);`.
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-express-api/main/complete-application/app.js"
  lang="javascript" tags="verifyToken" />
 
-This adds an authentication check to every call made to {frontmatter.technology}.
+The line, `const verifyJWT = require('./services/verifyJWT');`, imports middleware to add authentication to the app. Let's create that file now.
 
-## Authentication
-
-The line you added above, `const verifyJWT = require('./services/verifyJWT');`, imports middleware to add authentication to the app. Let's create that file now.
-
-First create the `services` directory under `mysite`.
+First create the `services` directory under `your-application`.
 
 ```shell
 mkdir services
@@ -139,7 +141,7 @@ In this `services` folder, add the file `verifyJWT.js`, and copy in the followin
 
 The first line, `require('dotenv/config');`, tells the application to use the settings from `.env` you created earlier.
 
-The function `verifyJWT` gets the JWT access token from a cookie in the request, and uses `jose.js` to check the signature is correct for your installation of FusionAuth. If either the token is missing or not signed correctly, an error is returned. Otherwise, the next function in the {frontmatter.technology} middleware stack is called.
+The function `verifyJWT` gets the JWT access token from a cookie in the request, and it uses `jose.js` to check the signature is correct for your installation of FusionAuth. If either the token is missing or it is not signed correctly, an error is returned. Otherwise, the next function in the {frontmatter.technology} middleware stack is called.
 
 Now, you'll add one more file that will check if the user has a role with permissions necessary to call an API endpoint.
 
@@ -148,9 +150,14 @@ In the `services` folder, add the file `hasRole.js` and copy in the following co
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-express-api/main/complete-application/services/hasRole.js"
  lang="javascript" />
 
-This function is given a list of roles, any of which allow the user's request. It returns a middleware function that checks if the JWT contains one of the required roles, and either returns an error or allows the next function in the middleware stack to proceed. Note that you do not need to check for the existence of a token in a cookie here because the previous middleware function you wrote already did that.
+This function is given a list of roles, any of which allow the user's request. It returns a middleware function that checks if the JWT contains one of the required roles, and either returns an error or allows the next function in the middleware stack to proceed.
+
+<Aside type="note">
+You do not need to check for the existence of a token in a cookie here because the previous middleware function you wrote already did that.
+</Aside>
 
 ### Create The Routes
+
 All that's left to do is write the two endpoints that will demonstrate your authentication.
 
 Overwrite `routes/index.js` with the following code.
@@ -164,7 +171,7 @@ The GET `make-change` route uses `hasRole` function with the `['customer', 'tell
 
 ## Run The Application
 
-Start the API server by running the command below in the `mysite` directory:
+Start the API server by running the command below in the `your-application` directory:
 
 ```
 npm run start
@@ -231,8 +238,10 @@ This is a POST not a GET because you want all your emergency calls to be non-ide
 
 Your response should look like this:
 
-```shell
-We've called the police!
+```json
+{
+  "message": "We've called the police!"
+}
 ```
 
 Nice, help is on the way!
@@ -260,9 +269,9 @@ Your response should look like this:
 
 ```json
 {
-    "total": 3.24,
-    "nickels": 64,
-    "pennies": 4
+  "total": 3.24,
+  "nickels": 64,
+  "pennies": 4
 }
 ```
 
