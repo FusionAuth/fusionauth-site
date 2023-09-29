@@ -286,13 +286,20 @@ Now that you've set up Terraform to handle default configuration, let's walk thr
 
 To create a new resource you can go through the list of resources available to you in the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs[FusionAuth Terraform Provider Documentation] and pick the resource you're interested in. Each resource contains information about required and optional arguments.
 
-In this example you create an Application called forum in the newly created forum Tenant with related roles (admin and user):
+In this example you create an Application called forum with a custom Access Token Key in a newly created forum Tenant with related roles (admin and user):
 
 * https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/tenant[Terraform Tenant Resource]
 
 [source]
 ----
 include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/terraform/examples/create/main.tf[tags=createForumTenant]
+----
+
+* https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/key[Terraform Key]
+
+[source]
+----
+include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/terraform/examples/create/main.tf[tags=createKey]
 ----
 
 * https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application[Terraform Application Resource]
@@ -308,8 +315,6 @@ include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform
 ----
 include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/terraform/examples/create/main.tf[tags=createForumApplicationRoles]
 ----
-
-* https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/lambda[Terraform Lambda]
 
 This example assumes you're using a data source to reference the Default Tenant. If you imported the Default Tenant, remove the prefix `data.` to have this example work correctly.
 
@@ -329,7 +334,33 @@ Deleting a Tenant removes all the associated Applications, Groups, and Users. If
 
 Once a resource is either created or imported you can change `main.tf` according to the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/[Terraform Provider Documentation].
 
-After you're done with your configuration changes, run `terraform plan` to check the planned changes and review potential errors. After that you can go ahead with `terraform apply`.
+For example by changing the time to live in seconds to half a hour in the JWT configuration.
+
+[source]
+----
+  jwt_configuration {
+    refresh_token_time_to_live_in_minutes = 43200
+    time_to_live_in_seconds               = 1800
+  }
+----
+
+After you're done with your configuration changes, run `terraform plan` to check the planned changes and review potential errors. It will show you what it will change from the current value to the new value.
+
+[source]
+----
+Terraform will perform the following actions:
+
+  # fusionauth_tenant.forum will be updated in-place
+  ~ resource "fusionauth_tenant" "forum" {
+        id                                 = "ef1f5235-82de-4a2a-b103-4d130fa5f5f2"
+        name                               = "Forum"
+        # (7 unchanged attributes hidden)
+
+      ~ jwt_configuration {
+          ~ time_to_live_in_seconds                            = 3600 -> 1800
+----
+
+After that you can go ahead with `terraform apply`.
 
 If you want to know what already has been defined by Terraform but not specified in your `.tf` files you can run `terraform show`.
 
