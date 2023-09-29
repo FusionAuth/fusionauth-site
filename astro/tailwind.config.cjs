@@ -40,7 +40,7 @@ module.exports = {
     },
     extend: {
       backgroundImage: {
-        'hero': 'url("/img/heroes/dots-code.svg"), radial-gradient(circle farthest-side at 0 0, #0f172a, #3e67fc 73%, #1e293b)',
+        'hero': 'url("/img/heroes/dots-code.svg")',
         'articles': 'radial-gradient(circle 768px at top right, rgb(199,210,254,0.95) 0%, rgba(255,255,255,0.95) 80%, rgba(255,255,255,1.0) 100%), url("/img/texture/grid.svg")',
         'articles-dark': 'radial-gradient(circle 768px at top right, rgba(55,48,163,0.75) 0%, rgba(15,23,42,0.75) 80%, rgba(15,23,42,1.0) 100%), url("/img/texture/grid.svg")'
         // 'articles': 'linear-gradient(90deg, rgba(15,23,42,1) 0%, rgba(15,23,42,1) 50%, rgba(99,102,241,0.50) 80%, rgba(15,23,42,0.75) 100%), linear-gradient(180deg, rgba(15,23,42,0.5) 0%, rgba(15,23,42,0.8) 50%, rgba(15,23,42,1.0) 80%, rgba(15,23,42,1.0) 100%), url("/img/texture/grid.svg")'
