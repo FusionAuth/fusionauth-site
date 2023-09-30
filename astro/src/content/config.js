@@ -45,8 +45,19 @@ const quickstartsCollection = defineCollection({
   }),
 });
 
+const docsCollection = defineCollection({
+  schema: z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    section: z.string().optional(),
+    subcategory: z.string().optional(),
+    tertcategory: z.string().optional(),
+  }),
+});
+
 export const collections = {
   'articles': articlesCollection,
   'dev-tools': devToolsCollection,
   'quickstarts': quickstartsCollection,
+  'docs': docsCollection,
 };

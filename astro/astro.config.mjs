@@ -6,6 +6,7 @@ import tailwind from "@astrojs/tailwind";
 import indexPages from "astro-index-pages/index.js";
 import {rehypeTasklistEnhancer} from './src/plugins/rehype-tasklist-enhancer';
 import {marked} from 'marked';
+import {codeTitleRemark} from './src/plugins/code-title-remark';
 
 /*
  * Configuring marked to render blog excerpts as plain text, effectively taking anything that would go to html and just spitting out the text.
@@ -33,7 +34,7 @@ const extensions = [
 
 marked.use({extensions});
 
-export default defineConfig({
+const config = defineConfig({
   build: {
     format: 'file'
   },
@@ -52,10 +53,17 @@ export default defineConfig({
     })
   ],
   markdown: {
+    remarkPlugins: [
+        codeTitleRemark
+    ],
     rehypePlugins: [
         // Tweak GFM task list syntax
-        rehypeTasklistEnhancer()
+        rehypeTasklistEnhancer(),
     ]
   },
   site: 'https://fusionauth.io/'
 });
+
+console.log(config.markdown.remarkPlugins[0]())
+
+export default config;
