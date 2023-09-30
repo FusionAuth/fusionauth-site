@@ -195,7 +195,7 @@ jwt_configuration {
     time_to_live_in_seconds                            = 3600
     refresh_token_revocation_policy_on_login_prevented = true
     refresh_token_revocation_policy_on_password_change = true
-    access_token_key_id                                = "12c6b146-89cf-9473-490b-1c97e4e68674"
+    access_token_key_id                                = "a39be146-51cb-0288-7806-6eb6c066aed3"
     id_token_key_id                                    = "092dbedc-30af-4149-9c61-b578f2c72f59"
   }
 ----
@@ -370,6 +370,47 @@ The configuration can get very large and if you want to show only very specific 
 Every time you plan new changes you could face the challenge that information has been updated in your FusionAuth installation. You can either align your configuration with the installation or decide to https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#ignore_changes[ignore_changes] in your configuration.
 
 There is a very common example in FusionAuth resources. Where your e.g. business application adds user driven data to the FusionAuth Application.
+
+If you call your FusionAuth Application from outside with a curl command and update the data part of it in the following way.
+
+[source]
+----
+include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/terraform/scripts/fusionauth-application-data/script.sh[]
+----
+
+`patch.json`
+[source]
+----
+include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/terraform/scripts/fusionauth-application-data/patch.json[]
+----
+
+You will see in the `terraform plan` output that it wants to revert it back to the original state.
+
+[source]
+----
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+
+Terraform will perform the following actions:
+
+  # fusionauth_application.forum will be updated in-place
+  ~ resource "fusionauth_application" "forum" {
+      ~ data                                       = {
+          - "externalApplication" = "Acme. Customer Support Forum" -> null
+          - "productOwner"        = "john@acme.com" -> null
+          - "supportHotline"      = "+1-636-555-3226" -> null
+        }
+        id                                         = "7acaec93-edd4-49a1-82db-602fe8dda23f"
+        name                                       = "forum"
+        # (12 unchanged attributes hidden)
+
+        # (5 unchanged blocks hidden)
+    }
+
+Plan: 0 to add, 1 to change, 0 to destroy.
+----
+
+To avoid Terraform from doing this, you can use the `ignore_changes` Meta-Argument to ignore parts of your configuration.
 
 [source]
 ----
