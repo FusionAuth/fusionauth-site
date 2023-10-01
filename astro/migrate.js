@@ -334,10 +334,15 @@ const convert = (filePath, partial = false) => {
 
   const convertEndpoint = () => {
     addImport(`import APIURI from 'src/components/api/APIURI.astro'`);
-    //skip two
-    lines.shift();
-    lines.shift();
-    const line = lines.shift();
+    let line = '';
+
+    // skip up to the -- separator
+    do {
+      line = lines.shift();
+    } while (line.match(/^--/) === null);
+
+    line = lines.shift();
+    debugLog('endpoint', `Processing line: ${line}`);
     const methodMatch = line.match(/method]#(\w*)#/);
     const method = ` method="${methodMatch[1]}"`;
     const uriMatch = line.match(/uri]#(.*)#/);
@@ -447,7 +452,11 @@ const convert = (filePath, partial = false) => {
   }
 
   const getMappedUrl = (url) => {
-    const newUrl = (urlMap && url in urlMap) ? urlMap[url] : url;
+    // handle URLs with fragments by stripping off the fragment and appending it onto the new URL
+    const match = url.match(/^([^#]*)(#.*)?/);
+    const baseUrl = match[1];
+    const fragment = match[2];
+    const newUrl = (baseUrl !== undefined && baseUrl in urlMap) ? (urlMap[baseUrl] + (fragment !== undefined ? fragment : '')) : url;
 
     debugLog(`URL Map: ${url} --> ${newUrl}`);
     return newUrl;
@@ -488,7 +497,8 @@ const convert = (filePath, partial = false) => {
     if (complexLinkMatches) {
       for (const match of complexLinkMatches) {
         const targetAttr = match[3] === 'window="_blank"' ? ' target="_blank"' : '';
-        line = line.replace(match[0], `<a href="${match[1]}"${targetAttr}>${match[2]}</a>`);
+        const mappedUrl = getMappedUrl(match[1]);
+        line = line.replace(match[0], `<a href="${mappedUrl}"${targetAttr}>${match[2]}</a>`);
       }
     }
 
