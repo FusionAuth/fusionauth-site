@@ -11,7 +11,6 @@ Usage migrate.js [options]
   -t, --target <file>         The target directory to migrate to. Needs to be one of:
                                 * Relative 'astro/src/content/docs' (ex: get-started/download-and-install)
                                 * Relative to '/astro' (ex: src/content/docs/get-started/download-and-install)
-  -u, --urlmap <file>         An optional file containing a JSON object mapping old relative docs URLs to new relative docs URLs.
   -d, --debug                 Debug mode. Will log extra info. (optional)
 `;
 
@@ -72,22 +71,7 @@ const setState = () => {
     state.tertiary = parts[2];
   }
 
-  // log the state before adding a big json object
   debugLog('state', JSON.stringify(state, null, 2));
-
-  const u = process.argv.findIndex(arg => ['-u', '--urlmap'].includes(arg));
-
-  if (u >= 0) {
-    const filename = process.argv[u + 1];
-
-    if (!fs.existsSync(filename)) {
-      console.log(`Error -- file not found: ${filename}`);
-      process.exit(-1);
-    }
-
-    let content = fs.readFileSync(filename, 'utf8');
-    state.urlMap = JSON.parse(content);
-  }
 };
 
 const gitMoveFile = (oldPath, newPath) => {
@@ -111,17 +95,17 @@ const setUpDirectories = () => {
     const contentPath = 'src/content/docs/' + subPath;
     if (!fs.existsSync(contentPath)) {
       console.log(`${contentPath} does not exist yet. Creating it.`);
-      fs.mkdirSync(contentPath);
+      fs.mkdirSync(contentPath, { recursive: true });
     }
     const imagesPath = 'public/img/docs/' + subPath;
     if (!fs.existsSync(imagesPath)) {
       console.log(`${imagesPath} does not exist yet. Creating it.`);
-      fs.mkdirSync(imagesPath);
+      fs.mkdirSync(imagesPath, { recursive: true });
     }
     const pagesPath = 'src/pages/docs/' + subPath;
     if (!fs.existsSync(pagesPath)) {
       console.log(`${pagesPath} does not exist yet. Creating it.`);
-      fs.mkdirSync(pagesPath);
+      fs.mkdirSync(pagesPath, { recursive: true });
     }
     if (!fs.existsSync(pagesPath + '/[...slug].astro')) {
       console.log(`${pagesPath}/[...slug].astro does not exist yet. Creating it.`);
@@ -401,7 +385,7 @@ const convert = (filePath, partial = false) => {
           }
           if (!fs.existsSync(`src/json/${parts.join('/')}`)) {
             console.log(`Creating directory src/json/${parts.join('/')}`);
-            fs.mkdirSync(`src/json/${parts.join('/')}`);
+            fs.mkdirSync(`src/json/${parts.join('/')}`, { recursive: true });
           }
         }
         gitMoveFile(`../site/${jsonFile}`, newPath);
@@ -463,11 +447,10 @@ const convert = (filePath, partial = false) => {
   }
 
   const getMappedUrl = (url) => {
-    const newUrl = (urlMap && url in state.urlMap) ? state.urlMap[url] : url;
+    const newUrl = (urlMap && url in urlMap) ? urlMap[url] : url;
 
     debugLog(`URL Map: ${url} --> ${newUrl}`);
     return newUrl;
-    //return (urlMap && url in state.urlMap) ? state.urlMap[url] : url;
   }
 
   const convertLine = (line) => {
@@ -676,10 +659,7 @@ console.log(`
 console.log('\n\n');
 validateArgs();
 setState();
-
 debugLog('urlmap', `${Object.keys(urlMap).length} translations in URL map`);
-
-process.exit(0);
 setUpDirectories()
 move();
 convert(state.newPath);
