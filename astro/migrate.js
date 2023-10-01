@@ -569,7 +569,7 @@ const convert = (filePath, partial = false) => {
     }
   };
 
-  const skipLeads = [':code_id', ':sectnumlevels', '- <<', '* <<', '** <<', '{empty} +', '//'];
+  const skipLeads = [':code_id', ':sectnumlevels', '- <<', '* <<', '** <<', '{empty} +'];
   const asides = ['[NOTE', '[TIP', '[IMPORTANT', '[WARNING'];
 
   const nextLine = (frontDone = false) => {
@@ -626,6 +626,11 @@ const convert = (filePath, partial = false) => {
         return [true, frontDone];
       } else if (line.startsWith('[.api]')) {
         convertAPIBlock();
+        return [true, frontDone];
+      } else if (line.startsWith('//')) {
+        if (line.length > 2) {
+          outLines.push(`{/* ${line.slice(2)} */}`);
+        }
         return [true, frontDone];
       } else {
         line = convertLine(line)
