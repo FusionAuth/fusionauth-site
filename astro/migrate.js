@@ -557,6 +557,22 @@ const convert = (filePath, partial = false) => {
     moveImage(imageLocation, imageFile);
   };
 
+  const handleVideo = (line) => {
+    const match = line.match(/^video::([^\[]*)\[([^,]*),width=([0-9]*),height=([0-9]*)]$/);
+
+    if (match) {
+      const id = match[1];
+      const platform = match[2];
+      const width = match[3];
+      const height = match[4];
+
+      if (platform === 'youtube') {
+    outLines.push(`<iframe allowfullscreen="" frameborder="0" width="${width}" height="${height}" src="//www.youtube.com/embed/${id}?rel=0" enablejsapi="true" data-gtm-yt-inspected-8="true"></iframe>`);
+        
+      }
+    }
+  };
+
   const handleAdocVar = (line) => {
     const match = line.match(adocVariablePattern);
 
@@ -623,6 +639,9 @@ const convert = (filePath, partial = false) => {
         return [true, frontDone];
       } else if (line.startsWith('image::')) {
         handleImage(line);
+        return [true, frontDone];
+      } else if (line.startsWith('video::')) {
+        handleVideo(line);
         return [true, frontDone];
       } else if (line.startsWith('[.api]')) {
         convertAPIBlock();
