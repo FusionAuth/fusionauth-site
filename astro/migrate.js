@@ -585,7 +585,7 @@ const convert = (filePath, partial = false) => {
     }
   };
 
-  const skipLeads = [':code_id', ':sectnumlevels', '- <<', '* <<', '** <<', '{empty} +'];
+  const skipLeads = [':code_id', ':sectnumlevels', '- <<', '* <<', '** <<', '{empty} +', '{nbsp} +'];
   const asides = ['[NOTE', '[TIP', '[IMPORTANT', '[WARNING'];
 
   const nextLine = (frontDone = false) => {
