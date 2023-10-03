@@ -58,20 +58,6 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-w',
         navColor: 'fuchsia',
       },
-      {
-        href: '/docs/v1/tech/tutorials/integrate-dotnet',
-        title: '.NET',
-        icon: '/img/icons/dotnet-c.svg',
-        faIcon: 'fa-hashtag',
-        navColor: 'blue'
-      },
-      {
-        href: '/blog/2023/04/26/nextjs-single-sign-on',
-        title: '.Next.js',
-        icon: '/img/icons/nextjs.svg',
-        faIcon: 'fa-n',
-        navColor: 'green',
-      },
     ],
   },
   {
@@ -83,12 +69,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'spa',
     desc: 'JavaScript app that runs in the browser',
     articles: [
-      {
-        title: 'Vue.js',
-        icon: '/img/icons/vue.js.svg',
-        faIcon: 'fa-snake',
-        comingSoon: true,
-      },
     ],
   },
   {
@@ -138,13 +118,6 @@ const qsSections: QuickStartSection[] = [
         icon: '/img/icons/ruby-on-rails.svg',
         faIcon: 'fa-gem',
         navColor: 'red',
-      },
-      {
-        href: '/blog/2021/02/18/securing-golang-microservice',
-        title: 'Go',
-        icon: '/img/icons/golang.svg',
-        faIcon: 'fa-g',
-        navColor: 'blue',
       },
       {
         href: '/docs/v1/tech/tutorials/integrate-express-api',
