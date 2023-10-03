@@ -698,4 +698,4 @@ setUpDirectories()
 move();
 convert(state.newPath);
 console.log('\nALL DONE BRO! PLEASE CHECK MY WORK!');
-console.log(`You should be able to see it here: http://localhost:3000/docs/${state.target}/${state.fileName.replace('.mdx', '')}`);
+console.log(`You should be able to see it here: http://localhost:3000/docs/${state.target}/${state.fileName.replace('.mdx', '').replace(/index$/, '')}`);
