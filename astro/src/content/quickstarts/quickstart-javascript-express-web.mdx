@@ -29,7 +29,6 @@ The docker compose file and source code for a complete application are available
 * [Node LTS](https://nodejs.org/en/download)
 * [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](/docs/v1/tech/installation-guide/)).
 * [git](https://git-scm.com/downloads/): Not required but recommended if you want to track your changes.
-* [express 4.16+](https://expressjs.com/): Web Framework for Node.js 
 
 ## General architecture
 
@@ -88,7 +87,7 @@ You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look
 
 ### Setup Application
 
-In this section, you'll set up a basic Express application with a single page.
+In this section, you'll set up a basic Express application.
 
 Create a new directory to hold your application, and go into it.
 
@@ -101,7 +100,6 @@ Create a file called `package.json` with the below dependencies and scripts. Fee
 
 The `@fusionauth/typescript-client` will be used to exchange the OAuth Code for Access Token using PKCE, and also to retrieve the User using JWT.
 
-`package.json`
 <RemoteCode url={frontmatter.coderoot + "/complete-application/package.json"}
   lang="json" />
 
@@ -174,7 +172,7 @@ In the ChangeBank application there is a `Login` button which will open the `/lo
   lang="ts"
   tags="login"/>
 
-- `client_id`: Your `applicationId`
+- `client_id`: Your Client Id.
 - `response_type`: `code` since you are using the Authorization Code grant
 - `redirect_uri`: Where your FusionAuth will redirect back to during the OAuth grant. In this example, this is our route `oauth-redirect`, which you'll build next.
 - `state`: A random string created in your homepage route and stored in the cookie as `stateValue`
@@ -187,7 +185,7 @@ When FusionAuth redirects back to your Express application, it will return to yo
 You'll need to do the following:
 
 1. Check that the `stateValue` stored in the cookie matches the `state` query parameter.
-1. Make a request to the FusionAuth token endpoint to exchange the authorization `code` received after the user authenticates at FusionAuth and a `verifier` from our `userSession` cookie for an access token.
+1. Make a request to the FusionAuth token endpoint exchanging the `code`, `clientId`, `clientSecret`, Redirect URI, and `verifier` from our `userSession` cookie. The response will contain the required `accessToken`.
 1. Retrieve the user by passing the access token to FusionAuth.
 1. Store access token details in the `userToken` cookie.
 1. Store retrieved user in `userDetails` cookie.
@@ -201,17 +199,13 @@ You'll need to do the following:
 
 The `/account` page represents what a user sees when they’re logged into their ChangeBank account. A user that isn’t logged in who tries to access this page should just be taken to the home page.
 
-<Aside type="note">
-In a production application, you would validate the token signature, make sure it wasn't expired, and attempt to refresh it if it were expired.
-</Aside>
-
 <RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
   lang="ts"
   tags="account"/>
 
 ### Make Change
 
-Two functions are needed to accept both GET and POST requests on the `/make-change` route. The `GET` verifies that the user is logged in, then servers the HTML file required for the page. The `POST` takes the amount form value as a body parameter and uses the it to calculate how many quarters, dimes, nickels and pennies to return. If `total` is not a valid dollar value or cannot be converted an `error` message is returned. The return string `message` is received by asyncronously and updates the `change-message` or `error-message` div accordingly.
+Two functions are needed to accept both `GET` and `POST` requests on the `/make-change` route. The `GET` verifies that the user is logged in, then serves the HTML file required for the page. The `POST` takes the amount form value as a body parameter and uses the it to calculate how many quarters, dimes, nickels and pennies to return. If `total` is not a valid dollar value or cannot be converted an `error` message is returned. The return string `message` is received by asynchronously and updates the `change-message` or `error-message` div accordingly.
 
 Add the code below to `index.ts`.
 
@@ -225,21 +219,24 @@ Add the code below to `index.ts`.
 Click the `Logout` button and watch the browser first go to FusionAuth to log out the user, then return to your home page.
 </Aside>
 
-The last step is to implement logout. When you log a user out of an application, you'll take them to 
-FusionAuth's `/oauth2/logout` endpoint. FusionAuth calls the logout endpoint (killing the express session), then kills the FusionAuth session, then redirects to the logout endpoint. This endpoint deletes any cookies that your application created, clearing the user's session.
+The last step is to implement logout. The `/logout` route in your application will redirect to the FusionAuth server. FusionAuth will then end the OAuth session for this user and redirect back to the `logoutURL` specified in your `kickstarter.json` file.
 
 <RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
   lang="ts"
   tags="logout"/>
 
-In the below code, you check if the current user session has any information about the user and redirect to the FusionAuth server to initiate the logout on the server. When this returns, the user session cookie will now be empty and you can therefore forward back to your homepage. If you didn't add this check, you would be stuck in an infinite loop between your Express server and FusionAuth.
+ The application's logout route is `/oauth2/logout`. Within this route we can safely clear all of the cookies related to this user using the below code.
 
-```ts
-if (userSession) {
-    res.redirect(302, `${fusionAuthURL}/oauth2/logout?client_id=${clientId}`);
-} else {
-    res.redirect(302, '/')
-}
+<RemoteCode url={frontmatter.coderoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="oauth-logout"/>
+
+### Run Application
+
+Now that your application is complete you can run it with the below command.
+
+```shell
+npm run dev
 ```
 
 ## Next Steps
