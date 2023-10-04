@@ -7,7 +7,7 @@ import { visit } from 'unist-util-visit';
 export const codeTitleRemark = () => {
    return (tree, file) => {
      visit(tree, "code", (node, index, parent) => {
-       console.log(node);
+
        const metaString = `${node.lang ?? ""} ${node.meta ?? ""}`.trim();
        if (!metaString) return;
        const [title] = metaString.match(/(?<=title=("|'))(.*?)(?=("|'))/) ?? [""];

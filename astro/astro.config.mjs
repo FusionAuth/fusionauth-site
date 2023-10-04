@@ -64,6 +64,4 @@ const config = defineConfig({
   site: 'https://fusionauth.io/'
 });
 
-console.log(config.markdown.remarkPlugins[0]())
-
 export default config;

@@ -1,27 +1,29 @@
-import { getCollection } from 'astro:content';
-import { marked } from 'marked';
+import { getCollection } from "astro:content";
+import { marked } from "marked";
 
 const months = {
-  0: 'January',
-  1: 'February',
-  2: 'March',
-  3: 'April',
-  4: 'May',
-  5: 'June',
-  6: 'July',
-  7: 'August',
-  8: 'September',
-  9: 'October',
-  10: 'November',
-  11: 'December'
+  0: "January",
+  1: "February",
+  2: "March",
+  3: "April",
+  4: "May",
+  5: "June",
+  6: "July",
+  7: "August",
+  8: "September",
+  9: "October",
+  10: "November",
+  11: "December",
 };
 
 export const getDateString = (date) => months[date.getUTCMonth()] + " " + date.getUTCDate() + ", " + date.getUTCFullYear();
 
 export const getLatestDateString = (post) => getDateString(post.updated_date ? post.updated_date : post.publish_date);
 
+export const refCase = (target) => target.replaceAll(' ', '-').toLowerCase();
+
 export const getHref = (name, section) => !!name && !!section
-    ? '/blog/' + section + '/' + name.replaceAll(' ', '-').toLowerCase() + '/'
+    ? '/blog/' + section + '/' + refCase(name) + '/'
     : '';
 
 export const mapRelated = (collection, metaSection, target, currentSlug) => collection ? collection
