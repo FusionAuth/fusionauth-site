@@ -510,6 +510,14 @@ const convert = (filePath, partial = false) => {
       }
     }
 
+    const inlineUIElementMatches = line.matchAll(/\[uielement]#([^#]*)#/g);
+    if (inlineUIElementMatches) {
+      addImport(`import InlineUIElement from 'src/components/InlineUIElement.astro';`);
+      for (const match of inlineFieldMatches) {
+        line = line.replace(match[0], `<InlineUIElement>${match[1]}</InlineUIElement>`);
+      }
+    }
+
     while (line.includes('<<')) {
       const idx = line.indexOf('link:');
       let start = line.substring(idx, line.length);
