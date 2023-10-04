@@ -107,6 +107,7 @@ rd[d+'/tutorials/integrate-ruby-rails']= '/docs/quickstarts/quickstart-ruby-rail
 rd[d+'/tutorials/integrate-dotnet']= '/docs/quickstarts/quickstart-dotnet-web';
 rd[d+'/tutorials/integrate-java-spring']= '/docs/quickstarts/quickstart-springboot-web';
 rd[d+'/tutorials/integrate-react']= '/docs/quickstarts/quickstart-javascript-react-web';
+rd[d+'/tutorials/integrate-expressjs']= '/docs/quickstarts/quickstart-javascript-express-web';
 rd['/features/architecture']='/platform/built-for-developers';
 rd['/features/advanced-registration-forms']='/platform/registration-forms';
 rd['/features/breached-password-detection']='/features/authentication';
