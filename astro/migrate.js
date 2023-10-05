@@ -284,6 +284,13 @@ const convert = (filePath, partial = false) => {
         if (line.trim() === '+') {
           outLines.push('');
           next();
+        } else if (line.startsWith('include::') || line.startsWith(':')) {
+          if (line.startsWith(':')) {
+            handleAdocVar(line);
+          } else {
+            moveInclude(line, adocVars);
+          }
+          next()
         } else {
            line = `    ${convertLine(line)}`;
            outLines.push(line);
@@ -513,7 +520,7 @@ const convert = (filePath, partial = false) => {
     const inlineUIElementMatches = line.matchAll(/\[uielement]#([^#]*)#/g);
     if (inlineUIElementMatches) {
       addImport(`import InlineUIElement from 'src/components/InlineUIElement.astro';`);
-      for (const match of inlineFieldMatches) {
+      for (const match of inlineUIElementMatches) {
         line = line.replace(match[0], `<InlineUIElement>${match[1]}</InlineUIElement>`);
       }
     }
@@ -651,7 +658,7 @@ const convert = (filePath, partial = false) => {
       } else if (line.startsWith('video::')) {
         handleVideo(line);
         return [true, frontDone];
-      } else if (line.startsWith('[.api]')) {
+      } else if (['[api]', '[.api]'].find(apitag => line.trim().startsWith(apitag))) {
         convertAPIBlock();
         return [true, frontDone];
       } else if (line.startsWith('//')) {
