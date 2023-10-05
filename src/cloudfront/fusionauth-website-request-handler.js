@@ -107,6 +107,7 @@ rd[d+'/'+tu+'/integrate-angular']= '/docs/quickstarts/quickstart-javascript-angu
 rd[d+'/'+tu+'/integrate-python-django']= '/docs/quickstarts/quickstart-python-django-web';
 rd[d+'/'+tu+'/integrate-python-flask']= '/docs/quickstarts/quickstart-python-flask-web';
 rd[d+'/'+tu+'/integrate-ruby-rails']= '/docs/quickstarts/quickstart-ruby-rails-web';
+rd[d+'/'+tu+'/integrate-ruby-rails-api']= '/docs/quickstarts/quickstart-ruby-on-rails-api';
 rd[d+'/'+tu+'/integrate-dotnet']= '/docs/quickstarts/quickstart-dotnet-web';
 rd[d+'/'+tu+'/integrate-java-spring']= '/docs/quickstarts/quickstart-springboot-web';
 rd[d+'/'+tu+'/integrate-react']= '/docs/quickstarts/quickstart-javascript-react-web';
