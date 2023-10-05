@@ -38,13 +38,6 @@ const qsSections: QuickStartSection[] = [
         navColor: 'blue',
       },
       {
-        href: '/docs/v1/tech/tutorials/integrate-expressjs',
-        title: 'Express',
-        icon: '/img/icons/javascript.svg',
-        faIcon: 'fa-x',
-        navColor: 'fuchsia'
-      },
-      {
         href: '/blog/2023/03/13/single-sign-on-laravel-fusionauth',
         title: 'Laravel',
         icon: '/img/icons/laravel.svg',
@@ -57,20 +50,6 @@ const qsSections: QuickStartSection[] = [
         icon: '/img/icons/wordpress.svg',
         faIcon: 'fa-w',
         navColor: 'fuchsia',
-      },
-      {
-        href: '/docs/v1/tech/tutorials/integrate-dotnet',
-        title: '.NET',
-        icon: '/img/icons/dotnet-c.svg',
-        faIcon: 'fa-hashtag',
-        navColor: 'blue'
-      },
-      {
-        href: '/blog/2023/04/26/nextjs-single-sign-on',
-        title: '.Next.js',
-        icon: '/img/icons/nextjs.svg',
-        faIcon: 'fa-n',
-        navColor: 'green',
       },
     ],
   },
@@ -89,12 +68,6 @@ const qsSections: QuickStartSection[] = [
         icon: '/img/icons/javascript.svg',
         faIcon: 'fa-j',
         navColor: 'yellow'
-      },
-      {
-        title: 'Vue.js',
-        icon: '/img/icons/vue.js.svg',
-        faIcon: 'fa-snake',
-        comingSoon: true,
       },
     ],
   },
@@ -145,13 +118,6 @@ const qsSections: QuickStartSection[] = [
         icon: '/img/icons/ruby-on-rails.svg',
         faIcon: 'fa-gem',
         navColor: 'red',
-      },
-      {
-        href: '/blog/2021/02/18/securing-golang-microservice',
-        title: 'Go',
-        icon: '/img/icons/golang.svg',
-        faIcon: 'fa-g',
-        navColor: 'blue',
       },
       {
         href: '/docs/v1/tech/tutorials/integrate-express-api',
