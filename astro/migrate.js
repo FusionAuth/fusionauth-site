@@ -366,7 +366,7 @@ const convert = (filePath, partial = false) => {
       lang = headerParts[1].trim();
     }
     if (headerParts.length > 2) {
-      title = ` title="${headerParts[2].trim().replace('title=', '')}"`;
+      title = ` title="${headerParts[2].trim().replace('title=', '').replace(/"/g, '')}"`;
     }
 
     let meta = lines.shift(); //might be a dash might not
