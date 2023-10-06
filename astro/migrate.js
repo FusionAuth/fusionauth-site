@@ -511,16 +511,16 @@ const convert = (filePath, partial = false) => {
 
     const inlineFieldMatches = line.matchAll(/\[field]#([^#]*)#/g);
     if (inlineFieldMatches) {
-      addImport(`import InlineField from 'src/components/InlineField.astro';`);
       for (const match of inlineFieldMatches) {
+        addImport(`import InlineField from 'src/components/InlineField.astro';`);
         line = line.replace(match[0], `<InlineField>${match[1]}</InlineField>`);
       }
     }
 
     const inlineUIElementMatches = line.matchAll(/\[uielement]#([^#]*)#/g);
     if (inlineUIElementMatches) {
-      addImport(`import InlineUIElement from 'src/components/InlineUIElement.astro';`);
       for (const match of inlineUIElementMatches) {
+        addImport(`import InlineUIElement from 'src/components/InlineUIElement.astro';`);
         line = line.replace(match[0], `<InlineUIElement>${match[1]}</InlineUIElement>`);
       }
     }
@@ -713,4 +713,4 @@ setUpDirectories()
 move();
 convert(state.newPath);
 console.log('\nALL DONE BRO! PLEASE CHECK MY WORK!');
-console.log(`You should be able to see it here: http://localhost:3000/docs/${state.target}/${state.fileName.replace('.mdx', '').replace(/index$/, '')}`);
+console.log(`You should be able to see it here: \n\nhttp://localhost:3000/docs/${state.target}/${state.fileName.replace('.mdx', '').replace(/index$/, '')}`);
