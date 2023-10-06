@@ -1,7 +1,7 @@
-import { getDocsPages } from 'src/pages/docs/doc-tools';
 import { AstroGlobal } from "astro";
 import { startCase } from 'src/tools/string';
 import { refCase } from 'src/tools/string/refCase';
+import { getDocsPages } from 'src/tools/docs/getDocsPages';
 
 export const getDocsSideMenu = async (Astro: AstroGlobal) => {
   const { entry } = Astro.props;
