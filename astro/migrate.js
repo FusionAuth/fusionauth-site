@@ -534,14 +534,18 @@ const convert = (filePath, partial = false) => {
       addImport(`import ScrollRef from 'src/components/ScrollRef.astro';`);
     }
     // please don't explode, please don't explode
-    const matches = line.matchAll(/http[^ ]*\[([\w ]*)]/g);
+    const matches = line.matchAll(/http[^ ]*\[([\w\- ]*)]/g);
     if (matches) {
+      let matchIdx = 0;
       for (const match of matches) {
-        const fragment = line.slice(match.index, match.index + match[0].length);
+        const index = match.index + (matchIdx * 2);
+        const fragment = line.slice(index, index + match[0].length);
         const label = fragment.slice(fragment.indexOf('[') + 1, fragment.indexOf(']'));
         const url = fragment.slice(0, fragment.indexOf('['));
         const replacement = `[${label}](${url})`;
+        debugLog('handling link', fragment, replacement);
         line = line.replace(fragment, replacement);
+        matchIdx++;
       }
     }
     return line;
