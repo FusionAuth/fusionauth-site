@@ -3,6 +3,14 @@ import { getCollection } from "astro:content";
 import { AstroGlobal } from "astro";
 import { refCase, startCase } from "src/pages/blog/blog-tools";
 
+export interface Feature {
+  displayName: string;
+  edition: 'premium' | 'advanced' | 'enterprise';
+  link: string;
+}
+
+export const sortFeatures = (featA: Feature, featB: Feature) => featA.displayName.localeCompare(featB.displayName);
+
 export const filterPartials = (entry) => {
   const parts = entry.slug.split("/");
   const doc = parts[parts.length - 1];
