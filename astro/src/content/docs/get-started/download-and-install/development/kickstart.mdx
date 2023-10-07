@@ -1,60 +1,46 @@
 ---
-layout: doc
 title: Kickstart
 description: Automate development and production deployment using Kickstart
-navcategory: installation
+section: get started
+subcategory: download and install
+tertcategory: development
 ---
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import DefaultEntities from 'src/content/docs/_shared/_default-entities.mdx';
+import KickstartLicenseText from 'src/content/docs/_shared/_kickstart-license-text.mdx';
+import KickstartTroubleshooting from 'src/content/docs/get-started/download-and-install/development/_kickstart-troubleshooting.mdx';
 
-== Overview
+## Overview
 
 FusionAuth Kickstart&#8482; is super easy and if you can do it with an API, you can do it in Kickstart. Kickstart allows you to build a template that will be executed during startup to quickly replicate development or production environments.
 
 The kickstart file is a collection of one or more API keys and a list of API requests. You can call `POST`, `PUT` or `PATCH` on any API that you like and each request will be executed in order using the primary API key defined in the bootstrap file.
 
-To kickstart FusionAuth, set an environment variable named `FUSIONAUTH_APP_KICKSTART_FILE` that points to your kickstart file, or configure `fusionauth-app.kickstart.file` in your `fusionauth.properties` file. See link:/docs/v1/tech/reference/configuration[Configuration] for more options.
+To kickstart FusionAuth, set an environment variable named `FUSIONAUTH_APP_KICKSTART_FILE` that points to your kickstart file, or configure `fusionauth-app.kickstart.file` in your `fusionauth.properties` file. See [Configuration](/docs/reference/configuration) for more options.
 
-[WARNING.warning]
-====
+<Aside type="caution">
 Kickstart will only run if no API keys, users or tenants exist. If any exist, Kickstart will not run.
 
-Kickstart is suitable for spinning up development, CI, and testing environments to a known state, but is not a generic configuration management solution. See link:/docs/v1/tech/admin-guide/configuration-management[Configuration Management] for configuration management options.
-====
+Kickstart is suitable for spinning up development, CI, and testing environments to a known state, but is not a generic configuration management solution. See [Configuration Management](/docs/operate/deploy/configuration-management) for configuration management options.
+</Aside>
 
 You can safely leave this environment variable configured even after the system has been configured.
 
-You are implicitly accepting the link:/license[FusionAuth License] when using Kickstart.
+You are implicitly accepting the [FusionAuth License](/license) when using Kickstart.
 
-If you'd like to run a Kickstart file in a Docker container, please check out the link:/docs/v1/tech/installation-guide/docker[Docker installation guide].
+If you'd like to run a Kickstart file in a Docker container, please check out the [Docker installation guide](/docs/get-started/download-and-install/docker).
 
 
-* <<Getting Started>>
-** <<The API Key>>
-** <<Using Variables>>
-** <<Using Environment Variables>>
-** <<Adding API Requests>>
-* <<Advanced Concepts>>
-** <<Referencing Defaults>>
-** <<Modify the Default Tenant Id>>
-** <<Set Your License Id>>
-** <<Settings>>
-** <<Include Text Files>>
-** <<Include JSON files>>
-** <<Determining Kickstart Completion>>
-* <<Reference>>
-** <<Variables>>
-** <<Environment Variables>>
-** <<Functions>>
-** <<Comments>>
-** <<Escape>>
-* <<Troubleshooting>>
-
-== Getting Started
+## Getting Started
 
 Let's work from simple to complex, each example will introduce a new feature so you can learn how to best build and leverage the options available to you as you build out your kickstart file.
 
-The examples found here, as well as community contributed examples may also be found on GitHub in the https://github.com/FusionAuth/fusionauth-example-kickstart[FusionAuth Kickstart repository]. If you think you've got a cool kickstart, please submit a PR, your example may really help the community.
+The examples found here, as well as community contributed examples may also be found on GitHub in the [FusionAuth Kickstart repository](https://github.com/FusionAuth/fusionauth-example-kickstart). If you think you've got a cool kickstart, please submit a PR, your example may really help the community.
 
-=== The API Key
+### The API Key
 
 Here is the simplest kickstart file you can use, it simply adds a single API key and that's it. This may be useful if you intend to complete the rest of your setup by calling APIs in your own application or development setup script.
 
@@ -72,7 +58,7 @@ This API key can be any string, and you should specify one unique to your Fusion
 
 Because this value will primarily be used during your integration as an Authorization HTTP request header. If you utilize non-ASCII characters in your API key you will need to ensure they are properly escaped in the HTTP request header. For this reason, unless you have specific requirements, utilizing a long alphanumeric string using an underscore `_` or dash `-` for visual separation if desired will be ideal and quite sufficient to ensure a high entropy key.
 
-==== Scoping an API Key
+#### Scoping an API Key
 
 The first API key you specify has to have authority over all tenants and permissions against all endpoints. If you want to create subsequent API keys these can optionally be scoped to a Tenant and have restrictions on which endpoints they can call.
 
@@ -124,11 +110,11 @@ You may also add a `keyManager` attribute if you would like an API key to be a k
 }
 ```
 
-In both of these cases, the new key can be used to create other keys. The first key will be able to create keys for any tenant and any set of permissions. The second will be able to create other keys able to retrieve users. Learn more about the limits of link:/docs/v1/tech/apis/api-keys[key managers].
+In both of these cases, the new key can be used to create other keys. The first key will be able to create keys for any tenant and any set of permissions. The second will be able to create other keys able to retrieve users. Learn more about the limits of [key managers](/docs/apis/api-keys).
 
-Beginning in version `1.30.0`, if you have an Enterprise edition of FusionAuth with Threat Detection enabled, you can optionally specify an IP Access Control List to be used with an API key by adding the [field]#ipAccessControlListId# property to the API key. Note that you will need to create the IP Access Control List in your Kickstart definition in order to use this feature.
+Beginning in version `1.30.0`, if you have an Enterprise edition of FusionAuth with Threat Detection enabled, you can optionally specify an IP Access Control List to be used with an API key by adding the <InlineField>ipAccessControlListId</InlineField> property to the API key. Note that you will need to create the IP Access Control List in your Kickstart definition in order to use this feature.
 
-=== Using Variables
+### Using Variables
 
 You may find yourself repeating yourself when you build your kickstart file, nobody likes to type the same value over and over. Use variables to help you reduce repetition.
 
@@ -150,7 +136,7 @@ Here is the same example as above, but instead of hard coding the API key, we ar
 }
 ```
 
-=== Using Environment Variables
+### Using Environment Variables
 
 It is reasonable to think you may not want to hard code a password or API key in the kickstart file which could get checked into version control. You can use environment variables which should make this a bit easier for you.
 
@@ -171,39 +157,41 @@ Here is the same example as above, but instead of hard coding the API key, we ar
 }
 ```
 
-=== Adding API Requests
+### Adding API Requests
 
 Now comes the interesting part. Once you have defined at least one API key, you can define one to many API requests that will be executed in order using the primary API key. Each API request is represented as a JSON object.
 
 You may call any API you like, but you are limited to the `POST`, `PUT` and `PATCH` HTTP methods. The following define the fields available for each API request.
 
-[.api]
-[field]#method# [type]#[String]# [required]#Required#::
-The HTTP method.
-+
-The possible values are:
-+
-* `POST`
-* `PUT`
-* `PATCH`
+<APIBlock>
+  <APIField name="method" type="String" required>
+    The HTTP method.
 
-[field]#contentType# [type]#[String]# [optional]#Optional# [default]#Defaults to `application/json`# [since]#Available since 1.40.1#::
-The optional value of the `Content-Type` request header.
-+
-Currently this is only intended when using the `PATCH` HTTP request [field]#method# for a value of `application/json-patch+json` or `application/merge-patch+json`.
+    The possible values are:
 
-[field]#url# [type]#[String]# [required]#Required#::
-The relative URL of API endpoint, such as `/api/user/registration`.
+    * `POST`
+    * `PUT`
+    * `PATCH`
+  </APIField>
+  <APIField name="contentType" type="String" optional since="1.40.1">
+    The optional value of the `Content-Type` request header.
 
-[field]#tenantId# [type]#[UUID]# [optional]#Optional#::
-The unique Tenant Id.
-+
-This is useful if you are using a globally scoped API key, have multiple tenants, and are creating an application or other tenant scoped object in one tenant. Otherwise this can be omitted.
+    Currently this is only intended when using the `PATCH` HTTP request <InlineField>method</InlineField> for a value of `application/json-patch+json` or `application/merge-patch+json`.
+  </APIField>
+  <APIField name="url" type="String" required>
+    The relative URL of API endpoint, such as `/api/user/registration`.
+  </APIField>
+  <APIField name="tenantId" type="UUID" optional>
+    The unique Tenant Id.
 
-[field]#body# [type]#[Object]# [optional]#Optional#::
-The JSON object representing the body of the API call.
+    This is useful if you are using a globally scoped API key, have multiple tenants, and are creating an application or other tenant scoped object in one tenant. Otherwise this can be omitted.
+  </APIField>
+  <APIField name="body" type="Object" optional>
+    The JSON object representing the body of the API call.
+  </APIField>
+</APIBlock>
 
-Here is an example of creating a FusionAuth admin user using the `requests` object array. This example is using the link:/docs/v1/tech/apis/registrations[Registration API] to create the User and registration in a single request.
+Here is an example of creating a FusionAuth admin user using the `requests` object array. This example is using the [Registration API](/docs/apis/registrations) to create the User and registration in a single request.
 
 You'll notice we are using a special variable that we did not define in the `variables` object. This is one of two reserved variables provided for your convenience.
 
@@ -245,7 +233,7 @@ You'll notice we are using a special variable that we did not define in the `var
 }
 ```
 
-==== Tenants
+#### Tenants
 
 If you don't create a tenant using the Tenant API in your kickstart file then you're all set. If you do find yourself creating more than one tenant then you will need to specify the Tenant Id on the API requests.
 
@@ -291,7 +279,7 @@ This kickstart will create a second tenant named `Aviato` which will contain a s
 }
 ```
 
-==== Tenants' API Keys
+#### Tenants' API Keys
 
 An API key may also be configured to be restricted to a single tenant, as implied above. To do this, add the `tenantId` to the API key configuration.
 
@@ -333,19 +321,19 @@ In this example we will modify the restricted API key example from above to furt
 }
 ```
 
-== Advanced Concepts
+## Advanced Concepts
 
-=== Referencing Defaults
+### Referencing Defaults
 
 There are some items in FusionAuth with default, fixed Ids, such as the default theme or the FusionAuth application.
 
 Here are the default items and their Ids:
 
-include::docs/v1/tech/shared/_default-entities.adoc[]
+<DefaultEntities />
 
 With the known Id, you can build other configuration in your Kickstart file that depend on or copy them. For example, you may copy the default theme and modify the copied theme via Kicstart, or you may create a new tenant but set the tenant Id token signing key to one of the shadow keys.
 
-=== Modify the Default Tenant Id
+### Modify the Default Tenant Id
 
 FusionAuth generates the Id for the default tenant when the database schema is first created. For development and production environments it may be helpful to have a known `tenantId` for consistency across environments.
 
@@ -361,20 +349,19 @@ The value resolved when using the `FUSIONAUTH_TENANT_ID` variable will reflect t
 }
 ```
 
-=== Set Your License Id
+### Set Your License Id
 
 If you have a paid edition of FusionAuth you will be provided with a license Id. 
 
-include::docs/v1/tech/installation-guide/_kickstart-license-text.adoc[]
+<KickstartLicenseText />
 
 If you are using the community edition, you can omit this field.
 
-=== Settings
+### Settings
 
-[NOTE.since]
-====
+<Aside type="version">
 Available since 1.20.1
-====
+</Aside>
 
 Kickstart works by making API calls. By default each API request has a read and a connect timeout, and the API call will fail if it does not succeed within the timeout period.
 
@@ -393,17 +380,19 @@ Below, both timeouts are set to 7 seconds.
 }
 ```
 
-==== Settings Details
+#### Settings Details
 
-[.api]
-[field]#connectTimeout# [type]#[Integer]# [optional]#Optional# [default]#defaults to `5000`#::
-The HTTP connection timeout, in milliseconds, when connecting to the API.
+<APIBlock>
+  <APIField name="connectTimeout" type="Integer" optional defaults="5000">
+    The HTTP connection timeout, in milliseconds, when connecting to the API.
+  </APIField>
+  <APIField name="readTimeout" type="Integer" optional defaults="5000">
+    The HTTP read timeout, in milliseconds, when connecting to the API.
+  </APIField>
+</APIBlock>
 
-[field]#readTimeout# [type]#[Integer]# [optional]#Optional# [default]#defaults to `5000`#::
-The HTTP read timeout, in milliseconds, when connecting to the API.
 
-
-=== Include Text Files
+### Include Text Files
 
 When making API requests to create an email template or request which may have lengthy values, it may be helpful to separate these values into separate files. The directories shown here are just examples, and you can use your own convention.
 
@@ -452,7 +441,7 @@ In this example we are creating an Email template and reading in the values for 
 
 Newlines are preserved in included text files, whereas they are not in the kickstart file. If you are, for example, including a lambda function definition, it may lead to better readability if you include the body from a text file.
 
-=== Include JSON files
+### Include JSON files
 
 If you're making a lot of API requests, or simply want to manage each API request body separately it may be helpful to read in external JSON files. The directories shown here are just examples, and you can use your own convention.
 
@@ -555,26 +544,26 @@ And the usage in the kickstart file:
   ]
 }
 ```
-=== Determining Kickstart Completion
+### Determining Kickstart Completion
 
-Kickstart runs a set of API calls, just as if you were running them. You may want to know when Kickstart completes, especially if you are running in a CI/CD environment and want to wait until it is finished to begin your tests. To this end, please review the link:/docs/v1/tech/events-webhooks/events/kickstart-success[kickstart success webhook] documentation.
+Kickstart runs a set of API calls, just as if you were running them. You may want to know when Kickstart completes, especially if you are running in a CI/CD environment and want to wait until it is finished to begin your tests. To this end, please review the [kickstart success webhook](/docs/extend/events-and-webhooks/events/kickstart-success) documentation.
 
-== Reference
+## Reference
 
-=== Variables
+### Variables
 There is one special variable that when defined can be used to modify the Id of the default tenant.
 
 * `defaultTenantId` - The Id of the default Tenant which is where the FusionAuth application resides. Set this if you'd like to control the Id.
 
-=== Environment Variables
+### Environment Variables
 
 The following environment variables provided.
 
 * `FUSIONAUTH_APPLICATION_ID` - The Id of the FusionAuth application.
 * `FUSIONAUTH_TENANT_ID` - The Id of the default Tenant. This is always the Tenant which contains the FusionAuth application.
-* `FUSIONAUTH_FORM[adminUser]_ID` - The Id of the default admin user form. &nbsp; [since]#Available since 1.22.1#
-* `FUSIONAUTH_FORM[adminRegistration]_ID` - The Id of the default registration form. &nbsp; [since]#Available since 1.22.1#
-* `FUSIONAUTH_LAMBDA[lambdatype]_ID` - The Id of the default reconcile Lambda for supported Identity Providers, used to configure a corresponding Identity Provider. &nbsp; [since]#Available since 1.20.1#
+* `FUSIONAUTH_FORM[adminUser]_ID` - The Id of the default admin user form. *Available since 1.22.1*
+* `FUSIONAUTH_FORM[adminRegistration]_ID` - The Id of the default registration form. &*Available since 1.22.1*
+* `FUSIONAUTH_LAMBDA[lambdatype]_ID` - The Id of the default reconcile Lambda for supported Identity Providers, used to configure a corresponding Identity Provider. *Available since 1.20.1*
 +
 The available Lambda Ids are available as `FUSIONAUTH_LAMBDA[lambdatype]_ID` values:
 +
@@ -588,9 +577,9 @@ The available Lambda Ids are available as `FUSIONAUTH_LAMBDA[lambdatype]_ID` val
 +
 For example, for Twitter the variable name would be `FUSIONAUTH_LAMBDA[TwitterReconcile]_ID`.
 
-* `FUSIONAUTH_DEFAULT_SIGNING_KEY_ID` - the Id of the default signing key. &nbsp; [since]#Available since 1.22.1#
+* `FUSIONAUTH_DEFAULT_SIGNING_KEY_ID` - the Id of the default signing key. *Available since 1.22.1*
 
-=== Functions
+### Functions
 
 The following functions are provided.
 
@@ -599,15 +588,15 @@ The following functions are provided.
 
 
 
-=== Comments
+### Comments
 
 You may not add comments to kickstart files.
 
-=== Escape
+### Escape
 
 The escape character sequence is `\\`. For example, to use a literal `\#{`, escape the first character `\\#{`.
 
-== Troubleshooting
+## Troubleshooting
 
-include::docs/v1/tech/installation-guide/_kickstart-troubleshooting.adoc[]
+<KickstartTroubleshooting />
 
