@@ -6,7 +6,7 @@ import InlineField from 'src/components/InlineField.astro';
 import JSON from 'src/components/JSON.astro';
 import semver from 'semver';
 
-const { name, fieldName, version, description, scope, transactional, fields, jsonFile, includeTenantId } = Astro.props;
+const { name, eventType, version, description, scope, transactional } = Astro.props;
 
 ---
 
@@ -18,14 +18,16 @@ const { name, fieldName, version, description, scope, transactional, fields, jso
   </Aside>
 }
 
-<p>
-{description}
-</p>
-
+{ description && 
+  <p>
+    {description}
+  </p>
+}
+<slot name="description" />
 
 <span class="italic">Event type</span>
 <pre>
-{fieldName}
+{eventType}
 </pre>
 
 <h3>Event Scope</h3>
@@ -42,6 +44,13 @@ const { name, fieldName, version, description, scope, transactional, fields, jso
   <p> Prior to version 1.37.0 this event was sent to all webhooks, and it was a webhook's responsibility to filter on the <InlineField>tenantId</InlineField> field.</p>
   <p> In version 1.37.0 and later, this event will only be sent to tenants for which webhooks for this event are enabled.</p>
 }
+{ scope === 'application' &&
+  <p>Prior to version 1.37.0 this was a tenant or application scoped event. It can be sent to all applications or to one or more specified applications.</p>
+
+  <p>The ability to limit the generation of an event for only certain applications is legacy functionality and is removed as of version 1.37.0. In earlier versions, you almost certainly want to enable this event at the tenant level and optionally filter on the [field]#tenantId# when consuming the event.</p>
+
+  <p>In version 1.37.0 and later this is a tenant scoped event. It can be sent to all tenants or to one or more specified tenants. Those tenants will only be sent events related to their tenant. You can optionally also filter on the [field]#applicationId# when consuming the event.</p>
+}
 
 <h3>Transaction Compatibility</h3>
 { transactional == "false" ? 
@@ -53,79 +62,3 @@ const { name, fieldName, version, description, scope, transactional, fields, jso
     This event is transactional. The final state of the operation which caused the webhook is not persisted to FusionAuth until after the webhook finishes; <a href="/docs/extend/events-and-webhooks/writing-a-webhook#calling-fusionauth-apis-in-webhooks">learn more</a>
   </p>
 }
-
-<h3>Event Body</h3>
-
-<slot />
-
-<APIField name="event.info.data" type="Object">
-An object that can hold any information about the event that should be persisted.
-</APIField>
-
-<APIField name="event.info.deviceDescription" type="String">
-The description of the device associated with the event.
-</APIField>
-
-<APIField name="event.info.deviceName" type="String">
-The device name associated with the event.
-</APIField>
-
-<APIField name="event.info.deviceType" type="String">
-The type of device associated with the event.
-</APIField>
-
-<APIField name="event.info.ipAddress" type="String">
-The source IP address of the event.
-</APIField>
-
-<APIField name="event.info.location.city" type="String">
-The city where the event originated.
-<PremiumEditionBlurbApi feature="event info location" />
-</APIField>
-
-<APIField name="event.info.location.country" type="String">
-The country where the event originated.
-<PremiumEditionBlurbApi feature="event info location" />
-</APIField>
-
-<APIField name="event.info.location.latitude" type="Double">
-The latitude where the event originated.
-<PremiumEditionBlurbApi feature="event info location" />
-</APIField>
-
-<APIField name="event.info.location.longitude" type="Double">
-The longitude where the event originated.
-<PremiumEditionBlurbApi feature="event info location" />
-</APIField>
-
-<APIField name="event.info.location.region" type="String">
-The geographic location where the event originated.
-<PremiumEditionBlurbApi feature="event info location" />
-</APIField>
-
-<APIField name="event.info.location.zipcode" type="String">
-The zip code where the event originated.
-<PremiumEditionBlurbApi feature="event info location" />
-</APIField>
-
-<APIField name="event.info.os" type="String">
-The operating system associated with the event.
-</APIField>
-
-<APIField name="event.info.userAgent" type="String">
-The user agent associated with the event.
-</APIField>
-
-<slot name="custom-fields" />
-
-{includeTenantId && 
-<APIField name="event.tenantId" type="UUID">
-The unique tenant identifier. This value may not be returned if not applicable.
-</APIField>
-}
-
-<APIField name="event.type" type="String">
-The event type, this value will always be <code>{fieldName}</code>.
-</APIField>
-
-<JSON title="Example Event JSON" src={`events/${jsonFile}`} />
