@@ -305,8 +305,6 @@ The `astro/src/components` folder has many useful helper classes you can use in 
 - `Set <Field label="Site Title"/> to ` &#96; `Change Bank` &#96; `.`
 - `Choose "English (United States)" and click <Uielement label="Continue"/>. `
 
-
-
 ## Old Jekyll / Asciidoc Documents
 
 The old documentation site was built in Asciidoc and Jekyll. Write new articles instead in the `astro` folder.
