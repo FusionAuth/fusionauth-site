@@ -259,7 +259,13 @@ also the part that needs a size that is divisible by 2)
 
 ## New Astro.js / MDX Documentation
 
-Write new FusionAuth documentation in Astro.js in the `astro` folder. The older documentation was writtin in Asciidoc and Jekyll.
+Write new FusionAuth documentation in Astro.js in the `astro` folder. The older documentation was written in Asciidoc and Jekyll.
+
+To run it:
+
+```bash
+cd fusionauth-site/astro && npm run dev;
+```
 
 ### Search With Pagefind
 
@@ -351,6 +357,12 @@ The `astro/src/components` folder has many useful helper classes you can use in 
 ## Old Jekyll / Asciidoc Documentation
 
 The old documentation site was built in Asciidoc and Jekyll. Write new articles instead in the `astro` folder.
+
+To run it:
+
+```bash
+cd ritza_fusionauth-site && ./run-docker --serve;
+```
 
 ### Document Hierarchy And Navigation
 
