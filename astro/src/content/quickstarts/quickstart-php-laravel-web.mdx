@@ -1,32 +1,33 @@
 ---
-title: Express.js
-description: Quickstart integration of JavaScript Express.js web application with FusionAuth
+title: Laravel
+description: Quickstart integration of PHP Laravel web application with FusionAuth
 navcategory: getting-started
-prerequisites: Node.js version 18
+prerequisites: Docker version 20
 section: web
-technology: Express.js
-language: JavaScript
-icon: /img/icons/javascript.svg
-faIcon: fa-node-js
-color: green
-cta: EmailListCTA
+technology: Laravel
+language: PHP
+icon: /img/icons/laravel.svg
+faIcon: fa-laravel
+url: https://github.com/ritza-co/fusionauth-quickstart-php-laravel-web
 ---
 
 import Aside from '/src/components/Aside.astro';
+import Breadcrumb from '/src/components/Breadcrumb.astro';
+import Field from '/src/components/Field.astro';
 import LoginAfter from '../../diagrams/quickstarts/login-after.astro';
 import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
 import RemoteCode from '/src/components/RemoteCode.astro';
+import Uielement from '/src/components/Uielement.astro';
 
-In this quickstart, you will build an application with Express.js and integrate it with FusionAuth. The application is for [ChangeBank](https://www.youtube.com/watch?v=pkH-kD73QUM), a global leader in converting dollars into coins. It will have areas reserved for logged in users and public-facing sections.
+In this quickstart, you will build an application with {frontmatter.technology} and integrate it with FusionAuth. The application is for [ChangeBank](https://www.youtube.com/watch?v=pkH-kD73QUM), a global leader in converting dollars into coins. It will have areas reserved for logged in users and public-facing sections.
 
-Find the Docker Compose file and source code for the complete application at https://github.com/ritza-co/fusionauth-quickstart-javascript-express-web.
+Find the Docker Compose file and source code for the complete application at {frontmatter.url}.
 
 ## Prerequisites
 
 For this Quickstart, you'll need:
 
-* [Node 18](https://nodejs.org/en/download) or later.
-* [Docker](https://www.docker.com), which is the quickest way to start FusionAuth. (There are [other ways](/docs/v1/tech/installation-guide/)).
+* [Docker](https://www.docker.com), version 20 or later, which is the quickest way to start FusionAuth. (There are [other ways](/docs/v1/tech/installation-guide/)).
 
 ## General Architecture
 
@@ -44,22 +45,22 @@ In general, you would introduce FusionAuth to normalize and consolidate user dat
 
 ## Getting Started
 
-Start with getting FusionAuth up and running and creating a new Express application.
+Start with getting FusionAuth up and running and creating a new {frontmatter.technology} application.
 
 ### Clone The Code
 
 First, grab the code from the repository and change into that folder.
 
 ```
-git clone https://github.com/ritza-co/fusionauth-quickstart-javascript-express-web.git
-cd fusionauth-quickstart-javascript-express-web
+git clone https://github.com/ritza-co/fusionauth-quickstart-php-laravel-web
+cd fusionauth-quickstart-php-laravel-web
 ```
 
 All shell commands in this guide can be entered in a terminal in this folder. On Windows, you need to replace forward slashes with backslashes in paths.
 
 All the files you'll create in this guide already exist in the `complete-application` subfolder, if you prefer to copy them.
 
-### Run FusionAuth Via Docker
+### Run FusionAuth and {frontmatter.technology} Via Docker
 
 You'll find a Docker Compose file `docker-compose.yml` and an environment variables configuration file `.env` in the root folder of the repository.
 
@@ -69,7 +70,7 @@ Assuming you have Docker installed on your machine, you can start FusionAuth on 
 docker-compose up -d
 ```
 
-This will start three containers, one each for FusionAuth, Postgres, and Elasticsearch.
+This will start five containers, one each for FusionAuth, Postgres, Elasticsearch, MariaDB, and Laravel.
 
 Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/v1/tech/installation-guide/kickstart). When FusionAuth starts for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to your specified state.
 
@@ -91,55 +92,35 @@ You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) and loo
   The `.env` and `kickstart.json` files contain passwords. In a real application, always add these files to your `.gitignore` file and never commit secrets to version control.
 </Aside>
 
-### Create A Basic Express Application
+### The Basic {frontmatter.technology} Application
 
-Next, you'll set up a basic Express app. While this guide builds a new Express project, you can use the same method to integrate your existing project with FusionAuth.
+While this guide builds a new {frontmatter.technology} project, you can use the same method to integrate your existing project with FusionAuth.
 
-You create the default Express starter project in a folder called `mysite`, with the EJS view template engine. You also add a few npm packages to help with authentication.
+The {frontmatter.technology} [documentation](https://laravel.com/docs/10.x#your-first-laravel-project) suggests many ways of creating a new project. In this guide, you've used the standard [Bitnami Laravel Docker image](https://hub.docker.com/r/bitnami/laravel), which has created the project for you. If you browse to `http://localhost:3000`, you'll see the site is running.
 
-```shell
-npx express-generator@latest mysite --view=ejs
-cd mysite
-npm install
-npm audit fix --force # run this only if npm reports security vulnerabilities
+All the files are available in the `your-application` folder for editing. Composer packages are already in the `vendor` folder — you don't need to download them. Normally you should not commit your vendor folder to git, but the Docker container won't start without all its Composer dependencies, so they have been included in this guide.
 
-npm install dotenv # to read your .env files with passwords
-npm install passport passport-oauth2  # to authenticate with FusionAuth
-npm install jwt-decode # to get the email address from the JWT returned by FusionAuth
-npm install express-session # to maintain the user's session once logged in
+## Authentication
+
+Authentication in Laravel is managed by [Socialite](https://laravel.com/docs/10.x/socialite). For this application, you need the [FusionAuth provider](https://github.com/SocialiteProviders/FusionAuth). To install it, run the following command, which uses the PHP inside your Docker container.
+
+```bash
+docker compose exec lara_app      composer require socialiteproviders/fusionauth
 ```
+
+
+
+Authentication in {frontmatter.technology} requires two parts:
+
+- An Authenticator service to handle communication with FusionAuth. For this you will use Passport.js.
+- Routes (`login`, `logout`, `callback`) that talk to the Authenticator and FusionAuth.
 
 Now create the `.env` file in your `mysite` folder and add the following to it (note that this is a different environment file to the one in the root folder used by Docker for FusionAuth).
 
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/.env"
  lang="shell" />
 
-### Preliminary Setup
-
-Before you configure authentication, you need to change the default file created by Express.
-
-On line 21 of `mysite/app.js`, just before it adds the first route, insert the following line.
-
-```js
-require('./services/authentication')(app);
-```
-
-You can also delete the lines that relate to the users route. This app won't need them.
-
-```js
-var usersRouter = require('./routes/users'); // delete line 8
-
-app.use('/users', usersRouter); // delete line 23
-```
-
-## Authentication
-
-Authentication in Express requires two parts:
-
-- An Authenticator service to handle communication with FusionAuth. For this you will use Passport.js.
-- Routes (`login`, `logout`, `callback`) that talk to the Authenticator and FusionAuth.
-
-The line you added above, `require('./authentication')(app);`, imports a function to add authentication to the Express app instance, and calls it. Let's create that file now.
+The line you added above, `require('./authentication')(app);`, imports a function to add authentication to the {frontmatter.technology} app instance, and calls it. Let's create that file now.
 
 ```shell
 mkdir mysite/services
@@ -152,7 +133,7 @@ In this `services` folder, add the file `authentication.js`, and copy in the fol
 
 The first line, `require('dotenv/config');`, allows the file to use settings from `.env`.
 
-Almost the entire file consists of the configuration function `setupPassport(app)`. It links Passport.js to the instance of the Express app. You could put this code directly in `app.js`, but it would be more cluttered.
+Almost the entire file consists of the configuration function `setupPassport(app)`. It links Passport.js to the instance of the {frontmatter.technology} app. You could put this code directly in `app.js`, but it would be more cluttered.
 
 The function starts by telling the app to use cookie-based sessions in `app.use(session({`, provided by express-session.js. Passport is set to use this session too, with `app.use(passport.session());`.
 
@@ -173,7 +154,7 @@ Replace the homepage of your app in `mysite/routes/index.js` with the following 
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/routes/index.js"
  lang="typescript" />
 
-All the `router` functions above are server-side HTTP handlers for GET and POST requests. The handlers all follow the standard Express.js pattern `function (req, res, next)`, where
+All the `router` functions above are server-side HTTP handlers for GET and POST requests. The handlers all follow the standard {frontmatter.technology}.js pattern `function (req, res, next)`, where
 - `req` is the HTTP request,
 - `res` is the HTTP result to return, and
 - `next` is another function, with the same parameters, that runs after this one.
@@ -225,7 +206,7 @@ This page has a form at the bottom that allows the user to call the POST version
 
 ## Run The Application
 
-Start the Express server.
+Start the {frontmatter.technology} server.
 
 ```shell
 npm run start
@@ -257,28 +238,44 @@ FusionAuth gives you the ability to customize just about everything to do with t
 * Set up [MFA](/docs/v1/tech/guides/multi-factor-authentication), [Social login](/docs/v1/tech/identity-providers/), or [SAML](/docs/v1/tech/identity-providers/samlv2/) integrations.
 * Integrate with external systems using [Webhooks](/docs/v1/tech/events-webhooks/), [SCIM](/docs/v1/tech/core-concepts/scim), and [Lambdas](/docs/v1/tech/lambdas/).
 
-### Express Authentication
+### {frontmatter.technology} Authentication
 
-- [Express security best practice](https://expressjs.com/en/advanced/best-practice-security.html)
+- [{frontmatter.technology} security best practice](https://expressjs.com/en/advanced/best-practice-security.html)
 - [Passport.js authentication concepts](https://www.passportjs.org/concepts/authentication/downloads/html)
 - [Passport.js Oauth2](https://github.com/jaredhanson/passport-oauth2)
 
 
 ## Troubleshooting
 
-* I get "This site can’t be reached localhost refused to connect" when I click the login button.
+### I get "This site can’t be reached localhost refused to connect" when I click the login button.
 
 Ensure FusionAuth is running in the Docker container. You should be able to log in as the admin user `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
 
-* It still doesn't work.
+### It still doesn't work.
 
 You can always pull down a complete running application and compare what's different.
 
 ```
 git clone https://github.com/ritza-co/fusionauth-quickstart-javascript-express-web.git
+docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q);
 cd fusionauth-quickstart-javascript-express-web
 docker-compose up -d
 cd complete-application
 npm install
 npm run start
+```
+docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q);
+docker compose exec lara_app      composer install
+
+
+The `lara_app` Docker container is running PHP and Laravel. If you want to run any PHP commands, you can execute them in the container.
+```bash
+docker compose exec lara_app      composer install
+```
+
+### Docker complains that the container `lara_app` is already running
+Run the following command to stop and remove all existing Docker containers.
+
+```bash
+docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q);
 ```
