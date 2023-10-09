@@ -11,6 +11,7 @@ Usage migrate.js [options]
   -t, --target <file>         The target directory to migrate to. Needs to be one of:
                                 * Relative 'astro/src/content/docs' (ex: get-started/download-and-install)
                                 * Relative to '/astro' (ex: src/content/docs/get-started/download-and-install)
+                              If you add an '.mdx' suffix we will change the source file name. Please update the spreadsheet!
   -d, --debug                 Debug mode. Will log extra info. (optional)
 `;
 
@@ -55,6 +56,14 @@ const setState = () => {
   state.target = process.argv[t + 1];
 
   state.target = state.target.replace(/^src\/content\/docs\//, "")
+
+  if (state.target.endsWith(".mdx")) {
+    const parts = state.target.split('/');
+    const fileName = parts[parts.length - 1];
+    console.log(`changing fileName to ${state.target}. Please note this is in the spreadsheet!`);
+    state.fileName = fileName;
+    state.target = state.target.replace(`/${fileName}`, '');
+  }
 
   if (process.argv.find(arg => ['-d', '--debug'].includes(arg))) {
     state.debug = true;
@@ -121,8 +130,11 @@ const setUpDirectories = () => {
 };
 
 const move = () => {
-  const fileName = state.source.split('/').pop();
-  state.fileName = fileName.replace('.adoc', '.mdx');
+  if (!state.fileName) {
+    const fileName = state.source.split('/').pop();
+    state.fileName = fileName.replace('.adoc', '.mdx');
+  }
+
   state.newPath = 'src/content/docs/' + state.target + '/' + state.fileName;
 
   if (!fs.existsSync(state.source)) {
@@ -156,7 +168,7 @@ const convert = (filePath, partial = false) => {
   const doFrontMatter = () => {
     const next = () => {
       const line = lines.shift();
-      if (['section', 'subcategory', 'tertcategory', 'layout', 'navcategory'].find(e => !!line.startsWith(e))) {
+      if (['section', 'subcategory', 'tertcategory', 'layout', 'n avcategory'].find(e => !!line.startsWith(e))) {
         //skip
         next();
       } else if (line.trim() === '---') {
