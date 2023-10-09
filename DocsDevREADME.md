@@ -11,14 +11,14 @@
   - [Screenshot Standards](#screenshot-standards)
   - [Shell Script To Take Screenshots](#shell-script-to-take-screenshots)
   - [Converting Terminalizer Gifs To Videos](#converting-terminalizer-gifs-to-videos)
-- [Astro.js / MDX New Documentation](#astrojs--mdx-new-documentation)
+- [New Astro.js / MDX Documentation](#new-astrojs--mdx-documentation)
   - [Search With Pagefind](#search-with-pagefind)
   - [How To Create A New Article And Their Types](#how-to-create-a-new-article-and-their-types)
     - [Quickstarts](#quickstarts)
     - [Example Apps](#example-apps)
     - [Blog Posts](#blog-posts)
   - [Useful Components](#useful-components)
-- [Old Jekyll / Asciidoc Documents](#old-jekyll--asciidoc-documents)
+- [Old Jekyll / Asciidoc Documentation](#old-jekyll--asciidoc-documentation)
   - [Document Hierarchy And Navigation](#document-hierarchy-and-navigation)
   - [General Rules](#general-rules-1)
   - [Including Files](#including-files)
@@ -257,7 +257,7 @@ that this parameter will drop and significantly reduce your file size (by about 
 `-pix_fmt yuv420p` changes the pixel format to yuv420p which is the magic sauce that safari wants (this is
 also the part that needs a size that is divisible by 2)
 
-## Astro.js / MDX New Documentation
+## New Astro.js / MDX Documentation
 
 Write new FusionAuth documentation in Astro.js in the `astro` folder. The older documentation was writtin in Asciidoc and Jekyll.
 
@@ -299,13 +299,56 @@ Follow everything in [Content Style Guidelines](#content-style-guidelines).
 
 ### Useful Components
 
-The `astro/src/components` folder has many useful helper classes you can use in your Markdown articles.
+The `astro/src/components` folder has many useful helper classes you can use in your Markdown articles (.mdx).
 
-- `Under <Breadcrumb label="Settings -> Permalinks"/>`
-- `Set <Field label="Site Title"/> to ` &#96; `Change Bank` &#96; `.`
-- `Choose "English (United States)" and click <Uielement label="Continue"/>. `
+- Import a component from this folder with
+  ```js
+  import Uielement from '/src/components/Uielement.astro';
+  ```
+- Use `->` for arrows. They will automatically be converted to a proper right arrow when rendered.
 
-## Old Jekyll / Asciidoc Documents
+- In your frontmatter, add variables you can use throughout the article, for instance
+  ```md
+  technology: WordPress
+  ```
+  You can refer to it in the article body as:
+  ```md
+  {frontmatter.technology}
+  ```
+  To use frontmatter variables in a link, write:
+  ```html
+  <a href={frontmatter.url}>{frontmatter.url}</a>
+  ```
+- To use a frontmatter variable as a url, use the following format, with quote inside the `{frontmatter ...}` part:
+  ```js
+  FRONTMATTER:
+
+  codeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-php-laravel-web/main
+
+  ARTICLE BODY:
+
+  <RemoteCode
+    url={frontmatter.codeRoot + "/laravel/services.php"}
+    lang="php"
+    tags="fusionauth" />
+  ```
+- To show only a code snippet from you example application files, add commented tags to the file, like so:
+  ```php
+      //tag::fusionauth[]
+    'fusionauth' => [
+        'client_id' => env('FUSIONAUTH_CLIENT_ID'),
+        'client_secret' => env('FUSIONAUTH_CLIENT_SECRET'),
+        'base_url' => env('FUSIONAUTH_BASE_URL'),
+        'redirect' => env('FUSIONAUTH_REDIRECT_URL'),
+        'tenant_id' => env('FUSIONAUTH_TENANT_ID'),
+    ],
+    //end::fusionauth[]
+  ```
+- For breadcrumbs (navigation widgets), use `<Breadcrumb label="Settings -> Permalinks" />`
+- For fields (textboxes), use `<Field label="Site Title"/>` and write the value to enter in backticks.
+- For UI elements like buttons, use `<Uielement label="Continue"/>`.
+
+## Old Jekyll / Asciidoc Documentation
 
 The old documentation site was built in Asciidoc and Jekyll. Write new articles instead in the `astro` folder.
 
