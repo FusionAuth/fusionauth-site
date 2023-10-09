@@ -70,6 +70,9 @@ const setState = () => {
   if (parts.length > 2) {
     state.tertiary = parts[2];
   }
+  if (parts.length > 3) {
+    state.quaternary = parts[3];
+  }
 
   debugLog('state', JSON.stringify(state, null, 2));
 };
@@ -163,6 +166,9 @@ const convert = (filePath, partial = false) => {
         }
         if (state.tertiary) {
           outLines.push(`tertcategory: ${state.tertiary}`);
+        }
+        if (state.quaternary) {
+          outLines.push(`quatercategory: ${state.quaternary}`);
         }
         outLines.push(line);
       } else {
