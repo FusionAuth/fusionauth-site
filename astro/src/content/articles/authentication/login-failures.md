@@ -131,7 +131,7 @@ Once you implement tracking, you may determine that you want to do something to 
 
 4. **Keep users logged in if they choose.** Ensure your authentication system provides the ability for users to select “Remember me”. Long lived sessions reduce the need to log in, sometimes at the expense of security (tradeoffs, remember!). Administrators choose the maximum length of valid sessions before a user is forced to authenticate again. Here you’ll want to again balance between ease of use and security.
 
-## Conclusion
+## In Conclusion
 
 In the case of login failures, knowledge is power. Instrument your current login success and failure rates with granular data about each outcome. Understand why users are failing to authenticate, and take action accordingly. 
 

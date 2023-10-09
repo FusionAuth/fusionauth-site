@@ -70,7 +70,7 @@ While this price tag is attractive, it's important not to forget that open-sourc
 
 ## Commercial Authentication Providers
 
-An alternative to open-source, commercial authentication providers (such as [FusionAuth](https://fusionauth.io/), [Okta](https://www.okta.com/), and [Auth0](https://auth0.com/)) are popular because they take care of all the ambiguity and self-reliance that come with open source.
+An alternative to open-source, commercial authentication providers (such as [FusionAuth](/), [Okta](https://www.okta.com/), and [Auth0](https://auth0.com/)) are popular because they take care of all the ambiguity and self-reliance that come with open source.
 
 But just because commercial providers handle many of open source's problems doesn't mean there aren't tradeoffs that need to be considered.
 

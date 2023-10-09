@@ -41,7 +41,7 @@ Many popular games allow players to customize the appearance of their gaming per
 
 A customized authentication flow can also improve the player’s experience. The user doesn’t need to know that authentication is being handled by a third-party service. Branding and customization features allow you to customize login and registration pages, “forgot password” screens, emails, and messages, giving users a more consistent and familiar experience. 
 
-[Customization features](https://fusionauth.io/platform/customizable) can also include localization and multiple language support to help you adapt content for specific regions, as well as APIs that allow you to build additional tools on top of the core authentication system to meet custom business requirements. 
+[Customization features](/platform/customizable) can also include localization and multiple language support to help you adapt content for specific regions, as well as APIs that allow you to build additional tools on top of the core authentication system to meet custom business requirements. 
 
 ### Shorter Development Timelines
 
@@ -55,7 +55,7 @@ A flexible identity management solution that’s easy to implement shortens deve
 
 Gamers have to go through the onboarding process and create separate login credentials each time they sign up to a new platform. Authentication and account linking with third-party social networks and popular gaming platforms like PSN and Twitch allow players to authenticate using existing credentials. This is known as federated authentication. 
 
-Federated authentication creates a system of trust between two parties (the main identity provider and the external identity provider) to authenticate users and relay the information needed to authorize the user’s access to resources. It allows you to delegate authentication to an [external identity provider](https://fusionauth.io/docs/v1/tech/identity-providers/) to simplify the user sign-in and registration process. 
+Federated authentication creates a system of trust between two parties (the main identity provider and the external identity provider) to authenticate users and relay the information needed to authorize the user’s access to resources. It allows you to delegate authentication to an [external identity provider](/docs/v1/tech/identity-providers/) to simplify the user sign-in and registration process. 
 
 The main identity provider requests user credentials from the external identity provider, which verifies the user and sends the verification information to the first system. This streamlines the player verification process, allowing players to use the same digital identity on multiple platforms to access games faster and easier. 
 
@@ -65,7 +65,7 @@ Major gaming and esports events can result in hundreds of thousands of authentic
 
 Your identity provider should be able to scale to millions of users without slowing down. Scalable systems increase reliability, helping you to avoid outages during big game launches and to maintain continuous uptime during tournaments.
 
-A flexible identity solution can easily handle dramatic spikes in resource demand. It should be able to scale as games and platforms increase in popularity so that you maintain a smooth customer experience even when demand spikes. Identity providers that support containerization and orchestration technologies like Docker and Kubernetes allow you to take advantage of [auto-scaling features](https://fusionauth.io/platform/scalable) to easily scale identity management to handle steady growth or spikes in demand. 
+A flexible identity solution can easily handle dramatic spikes in resource demand. It should be able to scale as games and platforms increase in popularity so that you maintain a smooth customer experience even when demand spikes. Identity providers that support containerization and orchestration technologies like Docker and Kubernetes allow you to take advantage of [auto-scaling features](/platform/scalable) to easily scale identity management to handle steady growth or spikes in demand. 
 
 ### Cross-Save or Cross-Progression Support 
 
@@ -73,7 +73,7 @@ With the increasing popularity of multiplayer games, players want to connect wit
 
 Cross-save or cross-progression support allows players to save and access progress on any platform where they have purchased the game. This provides seamless access to unlocked game content and allows players to continue where they left off in the game even if they switch platforms. 
 
-Identity provider features like federated authentication and single sign-on allow players to use one account across multiple gaming platforms. [Single sign-on](https://fusionauth.io/features/single-sign-on)(SSO) allows users to use one set of credentials to log into multiple different gaming applications or websites, which differs from federated authentication in that the identity provider handles the authentication instead of delegating it to an external identity provider. 
+Identity provider features like federated authentication and single sign-on allow players to use one account across multiple gaming platforms. [Single sign-on](/features/single-sign-on)(SSO) allows users to use one set of credentials to log into multiple different gaming applications or websites, which differs from federated authentication in that the identity provider handles the authentication instead of delegating it to an external identity provider. 
 
 ## Summing Up
 

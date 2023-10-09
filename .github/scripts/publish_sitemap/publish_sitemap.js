@@ -19,8 +19,8 @@ google.options({ auth: client });
 (async () => {
   try {
     await searchconsole.sitemaps.submit({
-      feedpath: "https://fusionauth.io/sitemap.xml",
-      siteUrl: "https://fusionauth.io/",
+      feedpath: "https://fusionauth.io/sitemap-all.xml",
+      siteUrl: "sc-domain:fusionauth.io",
     });
     console.log("all good");
     process.exit(0);

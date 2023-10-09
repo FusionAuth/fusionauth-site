@@ -2,7 +2,7 @@ When developing against a FusionAuth Cloud instance with a `.fusionauth.io` addr
 
 To work around this, you can:
 
-* develop locally (`localhost` will work).
+* develop using a local FusionAuth instance, so both your webapp and FusionAuth are running on `localhost`.
 * set up a lightweight proxy to ensure both servers are the same domain.
 * stand up a barebones backend with a more liberal cookie policy: [here's an example](https://github.com/FusionAuth/fusionauth-example-react-sdk/tree/main/server).
 * set up a [custom domain name for the FusionAuth Cloud instance](/docs/v1/tech/installation-guide/cloud#updating-with-existing-custom-domains) (limited to certain plans).

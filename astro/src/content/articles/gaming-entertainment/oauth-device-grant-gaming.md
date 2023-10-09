@@ -56,7 +56,7 @@ git clone https://github.com/FusionAuth/fusionauth-example-gaming-device-grant.g
 
 * Install Docker Desktop on your machine. You can install it on either [Mac](https://docs.docker.com/desktop/mac/install/) or [Windows](https://docs.docker.com/desktop/windows/install/).
 
-* Install an authorization server or identity provider. This tutorial uses [FusionAuth](https://fusionauth.io/); follow the [installation guide](https://fusionauth.io/docs/v1/tech/installation-guide/docker). You will run a Docker image that will be running the identity provider. 
+* Install an authorization server or identity provider. This tutorial uses [FusionAuth](/); follow the [installation guide](/docs/v1/tech/installation-guide/docker). You will run a Docker image that will be running the identity provider. 
 
 Once Docker Desktop is running, open your terminal and type the following commands: 
 
@@ -75,7 +75,7 @@ Go to the Docker dashboard. You should see two containers running, one with Fusi
 
 ### Set Up FusionAuth for Device Authorization
 
-Now that your Docker image for FusionAuth is running, you need to configure the identity provider for your demo application. Go to [http://localhost:9011/admin/setup-wizard](http://localhost:9011/admin/setup-wizard) and fill in your name, email, and password. Click **Submit**. (You can learn more about the [Setup Wizard here](https://fusionauth.io/docs/v1/tech/tutorials/setup-wizard).)
+Now that your Docker image for FusionAuth is running, you need to configure the identity provider for your demo application. Go to [http://localhost:9011/admin/setup-wizard](http://localhost:9011/admin/setup-wizard) and fill in your name, email, and password. Click **Submit**. (You can learn more about the [Setup Wizard here](/docs/v1/tech/tutorials/setup-wizard).)
 
 Go to Applications on the navigation bar and click on "Create a new application". Name the application `Test Grant` and save it.
 
@@ -124,7 +124,7 @@ Now that the app is running, use your browser to go to [http://localhost:8000/](
 
 ### Make a Request to the Device Verification Endpoint
 
-The code in the `main.js` file contains the `connectDevice()` function, which is used to make an [authorization request](https://fusionauth.io/docs/v1/tech/oauth/#example-device-authorization-grant) to FusionAuth’s endpoint authorization server at `/oauth2/device_authorize`.
+The code in the `main.js` file contains the `connectDevice()` function, which is used to make an [authorization request](/docs/v1/tech/oauth/#example-device-authorization-grant) to FusionAuth’s endpoint authorization server at `/oauth2/device_authorize`.
 
 The request should look like the below code:
 
