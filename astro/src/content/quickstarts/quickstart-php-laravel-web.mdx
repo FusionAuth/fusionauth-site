@@ -9,6 +9,7 @@ language: PHP
 icon: /img/icons/laravel.svg
 faIcon: fa-laravel
 url: https://github.com/ritza-co/fusionauth-quickstart-php-laravel-web
+codeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-php-laravel-web/main
 ---
 
 import Aside from '/src/components/Aside.astro';
@@ -108,80 +109,94 @@ Authentication in Laravel is managed by [Socialite](https://laravel.com/docs/10.
 docker compose exec lara_app      composer require socialiteproviders/fusionauth
 ```
 
+Edit `your-application/.env` and insert the following lines.
 
-
-Authentication in {frontmatter.technology} requires two parts:
-
-- An Authenticator service to handle communication with FusionAuth. For this you will use Passport.js.
-- Routes (`login`, `logout`, `callback`) that talk to the Authenticator and FusionAuth.
-
-Now create the `.env` file in your `mysite` folder and add the following to it (note that this is a different environment file to the one in the root folder used by Docker for FusionAuth).
-
-<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/.env"
- lang="shell" />
-
-The line you added above, `require('./authentication')(app);`, imports a function to add authentication to the {frontmatter.technology} app instance, and calls it. Let's create that file now.
-
-```shell
-mkdir mysite/services
+```env
+FUSIONAUTH_CLIENT_ID="E9FDB985-9173-4E01-9D73-AC2D60D1DC8E"
+FUSIONAUTH_CLIENT_SECRET="super-secret-secret-that-should-be-regenerated-for-production"
+FUSIONAUTH_BASE_URL="http://fusionauth:9011"
+FUSIONAUTH_REDIRECT_URL="http://localhost:3000/auth/callback"
+# FUSIONAUTH_TENANT_ID=
 ```
 
-In this `services` folder, add the file `authentication.js`, and copy in the following code.
+In this file, also overwrite the following database fields.
 
-<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/services/authentication.js"
- lang="typescript" />
+```env
+DB_HOST=mariadb
+DB_USERNAME=bn_myapp
+DB_DATABASE=bitnami_myapp
+```
 
-The first line, `require('dotenv/config');`, allows the file to use settings from `.env`.
+Note that Laravel will overwrite the `DB_HOST` value with `mariadb`, in the file `InteractsWithDockerComposeServices.php`, so you can't change this value, or the database container name, in Docker. If you encounter database connection errors in your own app, check that this file isn't interfering with your connection strings.
 
-Almost the entire file consists of the configuration function `setupPassport(app)`. It links Passport.js to the instance of the {frontmatter.technology} app. You could put this code directly in `app.js`, but it would be more cluttered.
+In the file `your-application/app/Providers/EventServiceProvider.php`, replace the `$listen` array with the code below.
 
-The function starts by telling the app to use cookie-based sessions in `app.use(session({`, provided by express-session.js. Passport is set to use this session too, with `app.use(passport.session());`.
+<RemoteCode
+  url={frontmatter.coderoot + "/complete-application/laravel/app/Providers/EventServiceProvider.php"}
+  lang="php"
+  tags="fusionauth" />
 
-In `authOptions`, you specify the FusionAuth URLs stored in the `.env` file, which match those created by Kickstart when you ran the Docker command to start FusionAuth.
+In the file `your-application/config/services.php`, add one more item to the array being returned with the code below.
 
-You then tell Passport what strategy to use for authentication. Passport itself just keeps the user details in a session once logged in. It cannot authenticate anyone without a strategy — a way of interacting with some authentication system, such as OAuth, Facebook login, or simple username and password. In this case, you use passport-oauth2.js.
+<RemoteCode
+  url={frontmatter.coderoot + "/complete-application/laravel/config/services.php"}
+  lang="php"
+  tags="fusionauth" />
 
-This strategy will direct the user to FusionAuth for authentication. Once that is complete, `callback(null, token.email);` returns the user's email to the session for storage. You can specify which user details you want to keep in the session. This example uses a single string containing the user's email, but you could define an object with more details or just a user Id. To do so, you would update the object returned in the authentication method, and update the routes you are about to create to use the new object instead of just an email.
+In the file `your-application/app/Models/User.php`, add the FusionAuth items to the `$fillable` and `$hidden` properties with the code below.
 
-Note that the callback must return a value. If the authenticator returns nothing to store in the session, then a user will not stay logged in.
+<RemoteCode
+  url={frontmatter.coderoot + "/complete-application/app/Models/User.php"}
+  lang="php"
+  tags="fusionauth" />
 
-The `serializeUser` and `deserializeUser` allow you to specify what you want to store in the user's session when logged in, and what to get out of the session cookie on each request. In this example you just pass around the user's email.
+Create a file named `your-application/database/migrations/2023_09_27_142009_add_fusionauth_fields_user_table.php`, or run the command below to create it.
 
-### Routes
+```bash
+docker compose exec lara_app        php artisan make:migration add_fusionauth_fields_user_table
+```
 
-Replace the homepage of your app in `mysite/routes/index.js` with the following code.
+There is no difference in result if you create the database scripts manually, or with this command. Choose the method you prefer.
 
-<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-express-web/main/complete-application/routes/index.js"
- lang="typescript" />
+Now add the code below to the file.
 
-All the `router` functions above are server-side HTTP handlers for GET and POST requests. The handlers all follow the standard {frontmatter.technology}.js pattern `function (req, res, next)`, where
-- `req` is the HTTP request,
-- `res` is the HTTP result to return, and
-- `next` is another function, with the same parameters, that runs after this one.
+<RemoteCode
+  url={frontmatter.coderoot + "your-application/database/migrations/2023_09_27_142009_add_fusionauth_fields_user_table.php"}
+  lang="php" />
 
-Your functions can choose to return a result to the user, or perform some middleware function, like logging, or checking the user is authenticated, before calling `next()` to let the next function in the stack handle returning the actual result.
+Run the command below to update your MariaDB database with the new User definition.
 
-You use this capability to create a middleware function, `checkAuthenticated`, that uses the function provided by Passport, `req.isAuthenticated()`, to redirect the user to the login page if necessary, and otherwise to let the next handler run.
-
-The function, `router.get('/login'`, calls Passport, which sends the user to FusionAuth. Once authenticated, FusionAuth redirects the page to `router.get('/auth/callback'`, which finally sends the user to the account page. Note that this second function calls `passport.authenticate` too. This is not a redundancy — if you remove it the user will not be properly logged in. OAuth uses two tokens to manage authentication and needs both calls.
-
-The logout function calls the Passport function `req.logOut`, which clears the user's session, and redirects them to the home page.
-
-The `router.get('/account'` and `change` pages both use the middleware created earlier, `checkAuthenticated`, to prevent the user from seeing these pages unless logged in. Both get the user's email to display from the session in the request, `req.user`.
-
-The last two handlers are for the same URL, `change`. The GET handler displays the page at first. The POST handler will calculate change for the user and render the page with more data.
+```bash
+docker compose exec lara_app         php artisan migrate;
+```
 
 ## Customization
 
-Now that authentication is done, the last task is to create two example pages that a user can access only when logged in.
+Now that authentication is done, the last task is to create example pages that a user can access only when logged in.
 
 Copy over some CSS and an image from the example app.
 
-```shell
-cp ../complete-application/public/stylesheets/changebank.css ./mysite/public/stylesheets/changebank.css
-cp ../complete-application/public/images/money.jpg ./mysite/public/images/money.jpg
-rm ./mysite/public/stylesheets/style.css
+```bash
+cp ./complete-application/laravel/public/changebank.css ./your-application/public/changebank.css
+cp ./complete-application/laravel/public/money.jpg ./your-application/public/money.jpg
 ```
+
+Create three pages from the complete-application.
+
+```bash
+cp ./complete-application/laravel/resources/views/index.blade.php ./your-application/resources/views/index.blade.php
+cp ./complete-application/laravel/resources/views/account.blade.php ./your-application/resources/views/account.blade.php
+cp ./complete-application/laravel/resources/views/change.blade.php ./your-application/resources/views/change.blade.php
+```
+
+
+In the file `your-application/routes/web.php`, overwrite everything with the code below.
+
+<RemoteCode
+  url={frontmatter.coderoot + "/complete-application/laravel/routes/web.php"}
+  lang="php" />
+
+
 
 Change the index page `mysite/views/index.ejs` with the following code.
 
