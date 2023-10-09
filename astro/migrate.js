@@ -365,8 +365,17 @@ const convert = (filePath, partial = false) => {
     if (headerParts.length > 1) {
       lang = headerParts[1].trim();
     }
-    if (headerParts.length > 2) {
-      title = ` title="${headerParts[2].trim().replace('title=', '').replace(/"/g, '')}"`;
+    let preTitle = '';
+    if (lang.startsWith("title")) {
+      //ugh, we didn't include a lang for this block but we did include a title. Let's assume sh
+      preTitle = lang;
+      lang = 'sh';
+    }
+    if (!preTitle && headerParts.length > 2) {
+      preTitle = headerParts[2];
+    }
+    if (preTitle) {
+      title = ` title="${preTitle.trim().replace('title=', '').replace(/"/g, '')}"`;
     }
 
     let meta = lines.shift(); //might be a dash might not
@@ -548,6 +557,7 @@ const convert = (filePath, partial = false) => {
         matchIdx++;
       }
     }
+    line = line.replaceAll('*Note:*', '**Note:**');
     return line;
   }
 
