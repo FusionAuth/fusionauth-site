@@ -432,7 +432,7 @@ const convert = (filePath, partial = false) => {
       }
       lines.shift();
       addImport(`import JSON from 'src/components/JSON.astro';`);
-      outLines.push(`<JSON ${title.trim()} src="${jsonFile.replace('docs/src/json/', '')}" />`);
+      outLines.push(`<JSON ${title.trim()} src="${jsonFile.replace('docs/src/content/json/', '')}" />`);
     } else {
       outLines.push('```' + lang + title);
 
