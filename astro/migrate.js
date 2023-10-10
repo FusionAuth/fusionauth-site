@@ -254,7 +254,8 @@ const convert = (filePath, partial = false) => {
     let outLine = `<${alias}`;
 
     for (const k of Object.keys(vars)) {
-      outLine = outLine + ` ${k}="${vars[k]}"`
+      // a var with no value is inherently a boolean
+      outLine = outLine + (!!vars[k] ? ` ${k}="${vars[k]}"` : ` ${k}`);
     }
 
     outLine = outLine + ' />';
@@ -286,7 +287,7 @@ const convert = (filePath, partial = false) => {
     if (optionalMatch) {
       optional = ` optional`;
     }
-    const defaultsMatch = header.match(/\[default]#defaults to `([\w]*)`#/);
+    const defaultsMatch = header.match(/\[default]#defaults to `?([\w ]*)`?#/);
     if (defaultsMatch) {
       defaults = ` defaults="${defaultsMatch[1]}"`;
     }
@@ -414,7 +415,7 @@ const convert = (filePath, partial = false) => {
         jsonFile = jsonFile.replace(relativeMatch[1], 'docs/src/json');
       }
       const paths = jsonFile.split('/');
-      const newPath = `src/json/${jsonFile.replace('docs/src/json/', '')}`;
+      const newPath = `src/content/json/${jsonFile.replace('docs/src/json/', '')}`;
       if (fs.existsSync(newPath)) {
         console.log(`Looks like ${newPath} already exists! Awesome.`);
       } else {
@@ -423,16 +424,16 @@ const convert = (filePath, partial = false) => {
           for (let j = 3; j < i + 1; j++) {
             parts.push(paths[j]);
           }
-          if (!fs.existsSync(`src/json/${parts.join('/')}`)) {
-            console.log(`Creating directory src/json/${parts.join('/')}`);
-            fs.mkdirSync(`src/json/${parts.join('/')}`, { recursive: true });
+          if (!fs.existsSync(`src/content/json/${parts.join('/')}`)) {
+            console.log(`Creating directory src/content/json/${parts.join('/')}`);
+            fs.mkdirSync(`src/content/json/${parts.join('/')}`, { recursive: true });
           }
         }
         gitMoveFile(`../site/${jsonFile}`, newPath);
       }
       lines.shift();
       addImport(`import JSON from 'src/components/JSON.astro';`);
-      outLines.push(`<JSON ${title.trim()} src="${jsonFile.replace('docs/src/content/json/', '')}" />`);
+      outLines.push(`<JSON ${title.trim()} src="${jsonFile.replace('docs/src/json/', '')}" />`);
     } else {
       outLines.push('```' + lang + title);
 
