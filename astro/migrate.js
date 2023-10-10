@@ -371,7 +371,8 @@ const convert = (filePath, partial = false) => {
     const methodMatch = line.match(/method]#(\w*)#/);
     const method = ` method="${methodMatch[1]}"`;
     const uriMatch = line.match(/uri]#(.*)#/);
-    const uri = uriMatch[1];
+    let uri = uriMatch[1];
+    uri = uri.replaceAll('\\', '').replaceAll('``', '`')
     outLines.push(`<APIURI${method}>${uri}</APIURI>`);
   }
 
