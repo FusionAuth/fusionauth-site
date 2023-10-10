@@ -55,9 +55,14 @@ const docsCollection = defineCollection({
   }),
 });
 
+const jsonCollection = defineCollection({
+  type: 'data',
+})
+
 export const collections = {
   'articles': articlesCollection,
   'dev-tools': devToolsCollection,
   'quickstarts': quickstartsCollection,
   'docs': docsCollection,
+  'json': jsonCollection,
 };

@@ -34,7 +34,7 @@ export const getStaticIndexPaths = async (paginate: PaginateFunction, attribute:
   const blogs = await getCollection('blog');
   const allTags = getAllEntries(blogs, attribute);
 
-  return allTags.map((target) => {
+  return allTags.flatMap((target) => {
 
     const filteredPosts = blogs.filter((post) => post.data[attribute].includes(target));
     // newest first
