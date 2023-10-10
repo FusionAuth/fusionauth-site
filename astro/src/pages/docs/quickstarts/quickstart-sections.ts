@@ -38,13 +38,6 @@ const qsSections: QuickStartSection[] = [
         navColor: 'blue',
       },
       {
-        href: '/blog/2023/03/13/single-sign-on-laravel-fusionauth',
-        title: 'Laravel',
-        icon: '/img/icons/laravel.svg',
-        faIcon: 'fa-block',
-        navColor: 'rose',
-      },
-      {
         href: '/blog/2021/12/06/how-to-set-up-single-sign-on-between-fusionauth-wordpress',
         title: 'Wordpress',
         icon: '/img/icons/wordpress.svg',
