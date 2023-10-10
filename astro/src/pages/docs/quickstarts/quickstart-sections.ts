@@ -113,13 +113,6 @@ const qsSections: QuickStartSection[] = [
         navColor: 'blue',
       },
       {
-        href: '/docs/v1/tech/tutorials/integrate-ruby-rails-api',
-        title: 'Ruby on Rails',
-        icon: '/img/icons/ruby-on-rails.svg',
-        faIcon: 'fa-gem',
-        navColor: 'red',
-      },
-      {
         href: '/docs/v1/tech/tutorials/integrate-express-api',
         title: 'Express',
         icon: '/img/icons/javascript.svg',
