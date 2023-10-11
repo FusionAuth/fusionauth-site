@@ -214,6 +214,11 @@ const convert = (filePath, partial = false, parent = '') => {
     return result.join('');
   };
 
+  const addRemoteCodeRef = (url, title) => {
+    addImport("import RemoteCode from 'src/components/RemoteCode.astro';");
+    outLines.push(`<RemoteCode title="${title}" url="${url}" />`);
+  } 
+
   const moveInclude = (line, vars) => {
     line = line.replace('include::', '').replace('\[\]', '');
     let newDir = '';
@@ -429,6 +434,15 @@ const convert = (filePath, partial = false, parent = '') => {
       // this is a json include block
       debugLog('working json include line', lines[0]);
       let jsonFile = lines.shift().replace('include::', '').replace('\[\]', '');
+
+      // handle remote import
+      if (jsonFile.startsWith('http')) {
+        debugLog('handling remote json file ref');
+        addRemoteCodeRef(jsonFile, title); 
+        lines.shift();
+        return;
+      }
+      
       const relativeMatch = jsonFile.match(/((?:\.\.\/)+src\/json)/);
       if (relativeMatch) {
         jsonFile = jsonFile.replace(relativeMatch[1], 'docs/src/json');
