@@ -439,6 +439,9 @@ const convert = (filePath, partial = false) => {
 
       const next = () => {
         const line = lines.shift();
+
+        if (!line) { return false; }
+
         debugLog(`source line`, line, lines.length);
         if (line.startsWith('----')) {
           outLines.push('```');
