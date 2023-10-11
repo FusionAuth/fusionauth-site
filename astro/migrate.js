@@ -143,7 +143,7 @@ const move = () => {
   gitMoveFile(state.source, state.newPath);
 };
 
-const convert = (filePath, partial = false) => {
+const convert = (filePath, partial = false, parent = '') => {
   console.log(`Converting ${filePath} to proper mdx.`);
 
   const fileString = fs.readFileSync('./'+ filePath, 'utf8');
@@ -218,18 +218,30 @@ const convert = (filePath, partial = false) => {
     line = line.replace('include::', '').replace('\[\]', '');
     let newDir = '';
     const sharedPath = 'src/content/docs/_shared/';
-    let targetPath = state.target.split('/').pop();
+    if (line.split('/').length === 1) {
+      console.log(`looks like ${line} is a relative include...`);
+      if (!parent) {
+        console.error('No parent for relative include!');
+      }
+      const pp = parent.split('/');
+      const absolutePath = pp.slice(0, pp.length -1).join('/');
+      line = absolutePath + '/' + line;
+      console.log('trying', line);
+    }
     if (line.startsWith('docs/v1/tech/shared')) {
       newDir = sharedPath;
     } else if ('src/content/docs/' + state.target + '/') {
+      // um.. this is always true?
       newDir = 'src/content/docs/' + state.target + '/';
     } else {
       console.error(`I don't know where to put this!`, line);
       return;
     }
+    console.log('looking to move', line);
     const fileName = line.split('/').pop().replace('.adoc', '.mdx');
     const oldPath = '../site/' + line;
     let newPath = newDir + fileName;
+    console.log('file name', fileName)
 
     if (fs.existsSync(newPath)) {
       console.log(`Looks like ${newPath} already exists!`);
@@ -242,9 +254,15 @@ const convert = (filePath, partial = false) => {
     } else if (fs.existsSync(newPath.replace(newDir, sharedPath).replace(fileName, fileName[0] + fileName.slice(1).replaceAll('_', '-')).replace('.mdx', '.astro'))) {
       console.log(`Looks like ${newPath.replace(newDir, sharedPath).replace('.mdx', '.astro')} already exists!`);
       newPath = newPath.replace(newDir, sharedPath).replace(fileName, fileName[0] + fileName.slice(1).replaceAll('_', '-')).replace('.mdx', '.astro');
+    } else if (line.startsWith('docs/v1/tech/apis') && fs.existsSync('./src/content/docs/apis/' + fileName)) {
+      console.log(`oh ${fileName} this is a common api file`);
+      newPath = 'src/content/docs/apis/' + fileName;
+    } else if (line.startsWith('docs/v1/tech/apis') && fs.existsSync('./src/content/docs/apis/' + fileName.replace('.mdx', '.astro'))) {
+      console.log(`oh ${fileName.replace('.mdx', '.astro')} this is a common api file`);
+      newPath = 'src/content/docs/apis/' + fileName.replace('.mdx', '.astro');
     } else {
       gitMoveFile(oldPath, newPath);
-      convert(newPath, true);
+      convert(newPath, true, line);
     }
     let alias = camelCase(fileName.replace('.mdx', ''));
     alias = alias.charAt(0).toUpperCase() + alias.slice(1);
@@ -327,6 +345,7 @@ const convert = (filePath, partial = false) => {
     outLines.push('<APIBlock>');
     const next = () => {
       if (lines[0] && lines[0].startsWith('[field')) {
+        debugLog('found api field', lines[0]);
         convertApiField(lines.shift());
         next();
       }

@@ -22,7 +22,7 @@ export const getDocsSideMenu = async (Astro: AstroGlobal) => {
 export const getDocNavSections = async () => {
   const docs = await getDocsPages();
   const allSections = docs.map(doc => doc.data.section).reduce((set, section) => set.add(section), new Set<string>());
-  return Array.from(allSections).map((section: string) => ({
+  return Array.from(allSections).filter(section => !!section).map((section: string) => ({
     path: `/docs/${section}`,
     title: startCase(section),
   }));
