@@ -17,6 +17,7 @@ import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
 import DotNetPreReqs from '../../components/quickstarts/dotnet-prereqs.mdx';
 import RemoteCode from '../../components/RemoteCode.astro';
 
+## Introduction
 In this tutorial, you are going to learn how to integrate a .NET Web API resource server with FusionAuth. You will protect an API resource from unauthorized usage. You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM), a global leader in converting dollars into coins.
 
 The docker compose file and source code for a complete application are available at https://github.com/FusionAuth/fusionauth-quickstart-dotnet-api.
@@ -27,37 +28,32 @@ The docker compose file and source code for a complete application are available
 
 ## General Architecture
 
-While this sample application doesn't have login functionality without FusionAuth, a more typical integration will replace an existing login system with FusionAuth.
+A client wants access to an API resource at `/resource`. However, it is denied this resource until it acquires an access token from FusionAuth.
 
-In that case, the system might look like this before FusionAuth is introduced.
+<Diagram />
 
-<LoginBefore alt={"Request flow during login before FusionAuth"}/>
+While the access token is acquired via the Login API above, this is for simplicity of illustration. The token can be, and typically is, acquired through one of the [OAuth grants](/docs/v1/tech/oauth/).
 
-The login flow will look like this after FusionAuth is introduced.
-
-<LoginAfter alt={"Request flow during login after FusionAuth"}/>
-
-In general, you are introducing FusionAuth in order to normalize and consolidate user data. This helps make sure it is consistent and up-to-date as well as offloading your login security and functionality to FusionAuth.
 
 ## Getting Started
 
-In this section, you'll get FusionAuth up and running and use .NET to create a new application.
+In this section, you’ll get FusionAuth up and running and create a resource server which will serve the API.
 
 ### Clone the Code
 
 First off, grab the code from the repository and change into that directory.
 
 ```
-git clone https://github.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages.git
-cd fusionauth-quickstart-dotnet-razor-pages
+git clone https://github.com/FusionAuth/fusionauth-quickstart-dotnet-api.git
+cd fusionauth-quickstart-dotnet-api
 ```
 
-### Run FusionAuth via Docker
+### Run FusionAuth Via Docker
 
-In the root directory of the repo you'll find a Docker compose file (docker-compose.yml) and an environment variables configuration file (.env). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
+In the root directory of the repo you’ll find a Docker compose file (docker-compose.yml) and an environment variables configuration file (.env). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
 
 ```
-docker-compose up -d
+docker compose up -d
 ```
 
 Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/v1/tech/installation-guide/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to a certain initial state.
@@ -68,216 +64,341 @@ If you ever want to reset the FusionAuth system, delete the volumes created by d
 
 FusionAuth will be initially configured with these settings:
 
-* Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
-* Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
-* Your example username is `richard@example.com` and the password is `password`.
-* Your admin username is `admin@example.com` and the password is `password`.
-* The base URL of FusionAuth `http://localhost:9011/`.
+* Your client Id is: `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`
+* Your client secret is: `super-secret-secret-that-should-be-regenerated-for-production`
+* Your example teller username is `teller@example.com` and your password is `password`. They will have the role `teller`.
+* Your example customer username is `customer@example.com` and your password is `password`. They will have the role `customer`.
+* Your admin username is `admin@example.com` and your password is `password`.
+* Your fusionAuthBaseUrl is 'http://localhost:9011/'
 
 You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don't need to.
 
-### Create your Ruby on Rails Application
 
-Now you are going to create a Ruby on Rails application. While this section builds a simple Ruby on Rails application, you can use the same configuration to integrate your existing Ruby on Rails application with FusionAuth.
+### Create your ASP.NET Web API Resource Server
+
+Now you are going to create an ASP.NET API application. While this section builds a simple API, you can use the same configuration to integrate an existing API with FusionAuth.
+
+We are going to be building an API backend for a banking application called ChangeBank. This API will have two endpoints:
+- `make-change`: This endpoint will allow you to call GET with a `total` amount and receive a response indicating how many nickels and pennies are needed to make change. Valid roles are `customer` and `teller`.
+- `panic`: Tellers may call this endpoint to call the police in case of an incident. The only valid role is `teller`.
+
+Both endpoints will be protected such that a valid JSON web token (JWT) will be required in the `Authorization` header or in a cookie named `app.idt` in order to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
+
+
+Make a directory for this API. 
+
+```
+mkdir dotnet-api && cd dotnet-api
+```
+
+Now, create a base ASP.NET API project 
 
 ```bash
-dotnet new webapp -o MyApp && cd MyApp
+dotnet new webapi -o MyApi && cd MyApi
 ```
 
 ## Authentication
 
-This app uses the standard [.NET OpenIDConnect package](https://www.nuget.org/packages/Microsoft.AspNetCore.Authentication.OpenIdConnect) which simplifies integrating with FusionAuth and creating a secure web application.
+This app uses the standard [.NET JWTBearer package](https://www.nuget.org/packages/Microsoft.AspNetCore.Authentication.JWTBearer) which simplifies extracting and validating JWT tokens from FusionAuth.
 
-### Configure OpenID Connect
+### Configure ASP.NET Authentication
 
-Install the .NET OpenIDConnect package and other supporting gems. 
+Install the .NET JWTBearer package and other supporting libraries. 
 
 ```bash
-dotnet add package Microsoft.AspNetCore.Authentication.OpenIdConnect
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+dotnet add package Microsoft.AspNetCore.OpenApi
+dotnet add package System.IdentityModel.Tokens.Jwt
+dotnet add package Microsoft.IdentityModel.Protocols.OpenIdConnect
 ```
 
-Next, update your `appsettings.json` file with FusionAuth OpenID Connect (OIDC) environment specific settings.
+Next, update your `appsettings.json` file with FusionAuth Issuer and ClientID (Audience)  specific settings.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/appsettings.json"
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-api/main/complete-app/appsettings.json"
 lang="c#"
-tags="oidcConfig"/>
+tags="IssuerConfig"/>
 
-Note that the client secret is not added to the `appsettings.json` file. This is because it is sensitive and should not be committed to source control. Instead, the client secret is provided on the command line via an environment variable, which we will provide when we run the application.
+Also, add a new file in the root of the project, called `appsettings.Development.json`. Add the following code to that file:
 
-To configure the OIDC middleware, add a `Startup.cs` file to the root of  to the project with the following code:
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-api/main/complete-app/appsettings.Development.json"
+lang="c#"
+tags="DevelopmentSettings"/>
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Startup.cs"
+This file will be used when you run the application in development mode. It will enable some useful development options, mainly that it will not require HTTPS for the Issuer (FusionAuth) server. In production, you must use HTTPS for the Issuer server.
 
-Then, update the `Program.cs` file to call the `Startup.cs` file you just created. Replace the `Program.cs` file with the following code:
+To configure ASP.NET authentication to use JWT tokens, update the `Program.cs` file. Replace the `Program.cs` file with the following code:
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Program.cs"
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-api/main/complete-app/Program.cs"
 lang="c#" />
 
-The `Startup.cs` file configures the OIDC middleware to use the FusionAuth OIDC settings from the `appsettings.json` file. Note a few things in the `Startup.cs` file:
+The `Program.cs` file configures the authentication services to use JWT bearer tokens to authenticate users through the `.AddJwtBearer()` method. The Issuer and Audience settings used by the JWT verification code is set in the `appsettings.json` file under the `Authentication` section. Note the `options.Events` section which configures the JWT bearer authentication to use the `OnMessageReceived` event to read the JWT from the `app.at` cookie if it is present. By default, the JWT bearer authentication will only read the JWT from the `Authorization` header. With this code, the JWT can be passed in either the `Authorization` header or the `app.at` cookie.
 
-- The `Scope` is set to `openid`. This will give the app the permission to read the user's profile information, including name. 
-- The line `options.GetClaimsFromUserInfoEndpoint = true;`. As only the user's email address is returned in the token itself, the app needs to make an additional call after receiving the token to the FusionAuth userinfo endpoint to get the user's other profile information. This line configures the .NET OIDC middleware to make this call.
+The application is now configured to use FusionAuth JWTs for authentication. Next, you'll add some routes to the application.
 
-The application is now configured to use FusionAuth for authentication. Next, you'll add some pages to the application.
+### Write C# Code
 
-## App Customization
+Now you are going to write some C# code. You are going to write two API controller and their corresponding model objects,
 
-In this section, you'll turn your application into a trivial banking application with some styling.
+### Add Model Objects
 
-### Add A Stylesheet
+We will need response objects for the API to return. One is the `PanicResponse` which returns a message when a successful `POST` call is made to `/panic`. In the `Models` folder create a new class `PanicResponse.cs`.
 
-Before adding any pages, modify the stylesheet to make the HTML we add later look and layout nice. Replace the `wwwroot/css/site.css` file with the following code:
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-api/main/complete-application/Models/PanicResponse.cs"
+            lang="c#"/>
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/wwwroot/css/site.css" lang="css" />
+Next you need an object to show the breakdown from making change. This object will hold a double `total` and Integers `nickels` and `pennies`. In the `Models` folder create a new class `Change.cs`.
 
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-api/main/complete-application/Models/Change.cs"
+            lang="c#"/>
 
-### Add A Login and Logout Link
+### Add Controllers
 
-The application will need to display a login link and logout link, depending on whether the user is logged in or not. To add these links across all pages, modify the `_Layout.cshtml` file. Replace the `Views/Shared/_Layout.cshtml` file with the following code:
+Next you need to add controllers to handle API calls. In the `Controllers` folder add a new class `MakeChangeController.cs`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Views/Shared/_Layout.cshtml" lang="c#" />
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-api/main/complete-application/Controllers/MakeChangeController.cs"
+            lang="c#" />
 
-### Add a Logout Page
+In this class a `total` is a http request query parameter that is converted to a `double`, and the `get` method divides the `total` into `nickels` and `pennies` and returns the response object.
 
-To complete the logout process, create a `Logout.cshtml` file and `Logout.cshtml.cs` file in the `Pages` folder. This page and code behind will handle signing out and deleting the local cookie, after the user has been signed out of FusionAuth and redirected back here. 
-
-Add the following code to the `Pages/Logout.cshtml` file:
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/Logout.cshtml" lang="c#" />
-
-Add the following code to the `Pages/Logout.cshtml.cs` file:
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/Logout.cshtml.cs" lang="c#" />
-
-### Add a default page
-
-When a user first visits the application, they will be directed to the default `Index` page. This page will display a welcome message and a few links to register and login. These links will redirect the user to FusionAuth to complete the registration and login process.
-
-Update the `Pages/Index.cshtml` file with the following code:
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/Index.cshtml" lang="c#" />
-
-Update the `Pages/Index.cshtml.cs` file with the following code:
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/Index.cshtml.cs" lang="c#" />
-
-### Add An Account Page
-
-There is no dedicated login page for the application. Instead, the protected pages are annotated with the `[Authorize]` attribute. When a user attempts to access a protected page, they will be redirected to FusionAuth to login. After logging in, they will be redirected back to the protected page. You'll notice in the log in link in the `_Layout.cshtml` file points to the `Account` page. FusionAuth will display all the login options instead.
-
-The main page the user will see after logging in is an Account page. This page will display the user's name, email address and a fake ChangeBank balance.
-
-Add a `Account.cshtml` file and `Account.cshtml.cs` file in the `Pages` folder. This page and code behind will handle displaying the user's account information.
-
-Add the following code to the `Pages/Account.cshtml` file:
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/Account.cshtml" lang="c#" />
-
-This layout file shows a new menu items for logged in users. The main one is the "Make Change" link, which links to a page that posts back to the server to make a change. The "Make Change" page will be added in the next section. 
-
-Add the following code to the `Pages/Account.cshtml.cs` file:
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/Account.cshtml.cs" lang="c#" />
-
-This code behind file has the important `[Authorize]` attribute decorating the page model, which ensures that only logged in users can access this page. 
-
-### Add A Make Change Page
-
-The heart of the ChangeBank service is making change from paper money. The Make Change page handles this functionality by accepting a user input and returning the correct amount of coins. The calculation is done on the server side, so the user can't cheat by changing the amount of money they want to convert. 
-
-Add a `MakeChange.cshtml` file and `MakeChange.cshtml.cs` file in the `Pages` folder. This page and code behind will handle making the correct change for a user. 
-
-Update the `Pages/MakeChange.cshtml` file with the following code:  
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/MakeChange.cshtml" lang="c#" />
-
-This page has a form that accepts a user input and posts back to the server. The server will then calculate the correct amount of coins to return to the user. Add the backend logic to the `Pages/MakeChange.cshtml.cs` file:
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/Pages/MakeChange.cshtml.cs" lang="c#" />
-
-The controller also has a `[Authorize]` attribute, which ensures that only logged in users can access this core banking functionality.
-
-## Run the App
-
-Before running the app in a development environment, you'll need to add a development setting to allow the app to connect to FusionAuth without SSL. This is because FusionAuth is running in a Docker container on your local machine. In production, FusionAuth should always be running with SSL enabled.
-
-The port that the .NET application runs on should also match the port set in the `Kickstart.json` file used to set up FusionAuth. To set both the port and allow an HTTP connection to FusionAuth, add a new file called `appsettings.Development.json` to the root of the project with the following code:
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages/main/complete-app/MyApp/appsettings.Development.json" lang="c#" />
-
-Now the application can be run. There are multiple ways of [deploying a .NET application](https://docs.microsoft.com/en-us/dotnet/core/deploying/), but publishing ensures your deployment process is repeatable. Here’s the command to publish a standalone executable for macOS:
+Note the `[Authorize("teller,customer")]` attribute which adds the magic of ASP.NET roles based authorization to the route. The ASP.NET JWT Bearer package automatically reads out the roles claimed in the user token, and then adds them to the user object. For example, a decoded JWT for a teller user would look like this:
 
 
-```bash
-dotnet publish -r osx-x64
+```json
+{
+  "aud": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
+  "exp": 1689289585,
+  "iat": 1689285985,
+  "iss": "http://localhost:9011",
+  "sub": "00000000-0000-0000-0000-111111111111",
+  "jti": "ebaa4184-2320-47dd-925b-2e18756c635f",
+  "authenticationType": "PASSWORD",
+  "email": "teller@example.com",
+  "email_verified": true,
+  "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
+  "roles": [
+    "teller"
+  ],
+  "auth_time": 1689285985,
+  "tid": "d7d09513-a3f5-401c-9685-34ab6c552453"
+}
 ```
 
-To build for a different platform, modify the `-r` parameter to match the RID for your platform. You can find a [list of RIDs here](https://learn.microsoft.com/en-us/dotnet/core/rid-catalog).
+ASP.NET reads the `role` field, adds those roles to the user, and will test the user for the roles via the `Authorize` attribute.
 
-Start up the .NET application using this command:
+Now, add a controller for tellers to call in an emergency. In the base package add a class `PanicController.cs`.
 
-```bash
-ASPNETCORE_ENVIRONMENT=Development FusionAuth__ClientSecret=super-secret-secret-that-should-be-regenerated-for-production bin/Debug/net7.0/osx-x64/publish/MyApp
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-api/main/complete-application/Controllers/PanicController.cs"
+            lang="c#" />
+
+This class listens on `/panic` for a POST request and returns a response indicating that the police were called. The attributes are the same as `MakeChangeController.cs` route except that this is a `POST` request, so it is named `Post` and has the `[HttpPost]` attribute marking it as such. 
+
+## Run the API
+
+Start the API resource server by running:
+
+```sh
+dotnet run
 ```
 
-`ASPNETCORE_ENVIRONMENT` is set to `Development` to ensure the application uses the `appsettings.Development.json` file.
+This will build and run the project. It should be running on port 5001.
 
-`FusionAuth__ClientSecret` is the client secret, which was defined by the [FusionAuth Kickstart Script](#run-fusionauth-via-docker) step. You don't want to commit secrets like this to version control, so use an environment variable.
+### Get a Token
 
-You can also run the project from Visual Studio if you prefer.
+There are [several ways to acquire a token](/docs/v1/tech/oauth/) in FusionAuth, but for this example you will use the [Login API](/docs/v1/tech/apis/login) to keep things simple.
 
-You can now open up an incognito window and visit the .NET app at https://localhost:7028/ . Log in with the user credentials created with the Kickstart.json file, which should be `richard@example.com` and the password `password`.
+First let's try the requests as the `teller@example.com` user. Based on the configuration this user has the `teller` role and should be able to use both `/make-change` and `/panic`.
 
-You'll see the email of the user next to the log out button. You'll also see the user's `given_name` claim above their balance.
+1. Acquire an access token for `teller@example` by making the following request
+
+```shell
+curl --location 'http://localhost:9011/api/login' \
+--header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "loginId": "teller@example.com",
+  "password": "password",
+  "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
+}'
+```
+Copy the `token` from the response, which should look like this:
+
+```json
+{
+    "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InVOYl9iQzFySHZZTnZMc285VzRkOEprZkxLWSJ9.eyJhdWQiOiJlOWZkYjk4NS05MTczLTRlMDEtOWQ3My1hYzJkNjBkMWRjOGUiLCJleHAiOjE2ODkzNTMwNTksImlhdCI6MTY4OTM1Mjk5OSwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo5MDExIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMTExMTExMTExMTExIiwianRpIjoiY2MzNWNiYjUtYzQzYy00OTRjLThmZjMtOGE4YWI1NTI0M2FjIiwiYXV0aGVudGljYXRpb25UeXBlIjoiUEFTU1dPUkQiLCJlbWFpbCI6InRlbGxlckBleGFtcGxlLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhcHBsaWNhdGlvbklkIjoiZTlmZGI5ODUtOTE3My00ZTAxLTlkNzMtYWMyZDYwZDFkYzhlIiwicm9sZXMiOlsiY3VzdG9tZXIiLCJ0ZWxsZXIiXSwiYXV0aF90aW1lIjoxNjg5MzUyOTk5LCJ0aWQiOiJkN2QwOTUxMy1hM2Y1LTQwMWMtOTY4NS0zNGFiNmM1NTI0NTMifQ.WLzI9hSsCDn3ZoHKA9gaifkd6ASjT03JUmROGFZaezz9xfVbO3quJXEpUpI3poLozYxVcj2hrxKpNT9b7Sp16CUahev5tM0-4_FaYlmUEoMZBKo2JRSH8hg-qVDvnpeu8nL6FXxJII0IK4FNVwrQVFmAz99ZCf7m5xruQSziXPrfDYSU-3OZJ3SRuvD8bMopSiyRvZLx6YjWfBsvGSmMXeh_8vHG5fVkq5w1IkaDdugHnivtJIivHuCfl38kQBgw9rAqJLJoKRHHW0Ha7vHIcS6OCWWMDIIVspLyQNcLC16pL9Nss_5v9HMofow1OvQ9sUSMrbbkipjKq2peSjG7qA",
+    "tokenExpirationInstant": 1689353059670,
+    "user": {
+        ...
+    }
+}
+```
+
+### Make the Request
+
+You can provide the token to the resource API via a cookie named `app.at`, or in the HTTP `Authorization` header.
+
+Now, make a request to `/make-change` with a query parameter `total=5.12`, using either of the methods above:
+
+This is a request using the `Authorization` header: 
+
+```shell
+curl --location 'http://localhost:5001/makeChange?total=5.12' \
+--header 'Authorization: Bearer <your_token>'
+```
+And this is using a cookie: 
+
+```shell
+curl --location 'http://localhost:5001/makeChange?total=5.12' \
+--cookie 'app.at=<your_token>'
+```
+
+Your response should look like this:
+
+```json
+{
+    "total": 5.12,
+    "nickels": 102,
+    "pennies": 2
+}
+```
+
+You were authorized, success! You can try making the request without the `Authorization` header or with a different string rather than a valid token, and see that you are denied access.
+
+Next call the `/panic` endpoint because you are in trouble!
+
+Using the `Authorization` header: 
+
+```shell
+curl --location --request POST 'http://localhost:5001/panic' \
+--header 'Authorization: Bearer <your_token>'
+```
+
+Or using a cookie: 
+```shell
+curl --location --request POST 'http://localhost:5001/panic' \
+--cookie 'app.at=<your_token>'
+```
+
+This is a `POST` not a get because you want all your emergency calls to be non-idempotent.
+
+Your response should look like this:
+
+```shell
+{
+    "message": "We've called the police!"
+}
+```
+
+Nice, help is on the way!
+
+Now let's try as `customer@example.com` who has the role `customer`. Acquire a token for `customer@example.com`.
+
+```shell
+curl --location 'http://localhost:9011/api/login' \
+--header 'Authorization: this_really_should_be_a_long_random_alphanumeric_value_but_this_still_works' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "loginId": "customer@example.com",
+  "password": "password",
+  "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"
+}'
+```
+
+Your response should look like this:
+
+```json
+{
+    "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InVOYl9iQzFySHZZTnZMc285VzRkOEprZkxLWSJ9.eyJhdWQiOiJlOWZkYjk4NS05MTczLTRlMDEtOWQ3My1hYzJkNjBkMWRjOGUiLCJleHAiOjE2ODkzNTQxMjMsImlhdCI6MTY4OTM1MzUyMywiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo5MDExIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMjIyMjIyMjIyMjIyIiwianRpIjoiYjc2YWMwMGMtMDdmNi00NzkzLTgzMjgtODM4M2M3MGU4MWUzIiwiYXV0aGVudGljYXRpb25UeXBlIjoiUEFTU1dPUkQiLCJlbWFpbCI6ImN1c3RvbWVyQGV4YW1wbGUuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImFwcGxpY2F0aW9uSWQiOiJlOWZkYjk4NS05MTczLTRlMDEtOWQ3My1hYzJkNjBkMWRjOGUiLCJyb2xlcyI6WyJjdXN0b21lciJdLCJhdXRoX3RpbWUiOjE2ODkzNTM1MjMsInRpZCI6ImQ3ZDA5NTEzLWEzZjUtNDAxYy05Njg1LTM0YWI2YzU1MjQ1MyJ9.T1bELQ6a_ItOS0_YYpvqhIVknVMNeamcoC7BWnPjg2lgA9XpCmFA2mVnycoeuz-mSOHbp2cCoauP5opxehBR2lCn4Sz0If6PqgJgXKEpxh5pAxCPt91UyfjH8hGDqE3rDh7E4Hqn7mb-dFFwdfX7CMdKvC3dppMbXAGCZTl0LizApw5KIG9Wmt670339pSf5lzD38P9WAG5Wr7fAmVrIJPVu6yv2FoR-pMYD2lnAF63HWKknrWB-khmhr9ZKRLXKhP1UK-ThY1FSnmpp8eNblsBqCxf6WaYxYkdp5_F2e56M4sQwHzrg4P9tZGVCmMri4dShF3Ck7OGa7hel-iIPew",
+    "tokenExpirationInstant": 1689354123118,
+    "user": {
+        ...
+    }
+}
+```
+
+Now use that token to call `/make-change` with a query parameter `total=3.24`
+
+Using the `Authorization` header:
+
+```shell
+curl --location 'http://localhost:5001/makeChange?total=3.24' \
+--header 'Authorization: Bearer <your_token>'
+```
+
+Or using a cookie:
+```shell
+curl --location 'http://localhost:5001/makeChange?total=3.24' \
+--cookie 'app.at=<your_token>'
+```
+
+Your response should look like this:
+
+```json
+{
+    "total": 3.24,
+    "nickels": 64,
+    "pennies": 4
+}
+```
+
+So far so good. Now let's try to call the `/panic` endpoint. (We're adding the `-i` flag to see the headers of the response)
+
+Using the `Authorization` header:
+
+```shell
+curl -i --request POST 'http://localhost:5001/panic' \
+--header 'Authorization: Bearer <your_token>'
+```
+Or using a cookie:
+```shell
+curl -i --request POST 'http://localhost:5001/panic' \
+--cookie 'app.at=<your_token>'
+```
+
+Your response should look like:
+
+```shell
+HTTP/1.1 403 Forbidden
+Content-Length: 0
+Date: Wed, 11 Oct 2023 08:29:09 GMT
+Server: Kestrel
+```
+
+Uh oh, I guess you are not allowed to do that. Notice that it returns a `403 Forbidden` rather than a `401 Unauthorized` which means it has authenticated the user, but the user is forbidden to access that particular resource.
+
+Enjoy your secured resource server!
 
 ## Next Steps
-This quickstart is a great way to get a proof of concept up and running quickly, but to run
-your application in production, there are some things you're going to want to do.
 
-### FusionAuth Customization
-FusionAuth gives you the ability to customize just about everything with the user's experience and your application's integration. This includes
-* [Hosted pages](/docs/v1/tech/themes/) such as login, registration, email verification, and many more
-* [Email templates](/docs/v1/tech/email-templates/email-templates)
-* [User data and custom claims in access token JWTs](/articles/tokens/jwt-components-explained)
+This quickstart is a great way to get a proof of concept up and running quickly, but to run your API in production, there are some things you're going to want to do.
+
+### FusionAuth Integration
+
+* Rather than call the Login API, you're probably going to want to use the [Authorization Code grant](/docs/v1/tech/oauth/#example-authorization-code-grant), which keeps all sensitive credentials within the bounds of FusionAuth. You can customize the [hosted login pages](/docs/v1/tech/themes/).
+* You may want to generate a token using the [Client Credentials grant](/docs/v1/tech/oauth/#example-client-credentials-grant) if you are calling the API from another service.
 
 ### Security
-* [Microsoft.AspNetCore.Authentication.OpenIdConnect](https://www.nuget.org/packages/Microsoft.AspNetCore.Authentication.OpenIdConnect) handles token validation and refresh
-* You may want to customize the [token expiration times and policies](/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth
-* Choose [password rules](/docs/v1/tech/core-concepts/tenants#password) and a [hashing algorithm](/docs/v1/tech/reference/password-hashes) that meet your security needs
-
-### Tenant and Application Management
-* Model your application topology using [Applications](/docs/v1/tech/core-concepts/applications), [Roles](/docs/v1/tech/core-concepts/roles), [Groups](/docs/v1/tech/core-concepts/groups), [Entities](/docs/v1/tech/core-concepts/groups), and more
-* Set up [MFA](/docs/v1/tech/guides/multi-factor-authentication), [Social login](/docs/v1/tech/identity-providers/), and/or [SAML](/docs/v1/tech/identity-providers/samlv2/) integrations
-* Integrate with external systems using [Webhooks](/docs/v1/tech/events-webhooks/), [SCIM](/docs/v1/tech/core-concepts/scim), and [Lambdas](/docs/v1/tech/lambdas/)
+* Customize the [token expiration times and policies](/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth
+* [Make sure you know how to securely consume a token](/articles/tokens/building-a-secure-jwt#consuming-a-jwt)
+* Secure your API [using an API gateway](/docs/v1/tech/developer-guide/api-gateways/) rather than at the framework layer.
 
 ## Troubleshooting
 
-* I get `This site can’t be reached  localhost refused to connect.` when I click the Login button
+* I get `This site can’t be reached  localhost refused to connect.` when I call the Login API.
 
 Ensure FusionAuth is running in the Docker container.  You should be able to login as the admin user, `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
 
-* I get an error page when I click on the Login button with message of `"error_reason" : "invalid_client_id"`
+* The `/panic` endpoint doesn't work when I call it.
 
-Ensure the value for `ClientId` in the `FusionAuth` section of the `appsettings.json` matches the client Id configured in FusionAuth for the Example App Application at [http://localhost:9011/admin/application/](http://localhost:9011/admin/application/).
-
-* I'm getting an error from .NET after logging in
-
-```
-OpenIdConnectProtocolException: Message contains error: 'invalid_client', error_description: 'Client authentication missing as Basic Authorization header or credentials in the body (or some combination of them).', error_uri: 'error_uri is null'.
-```
-
-This indicates that .NET OpenIDConnect is unable to call FusionAuth to validate the returned token.  It is likely caused because of an incorrect client secret, or the client secret has not been passed to the app.  Ensure the `FusionAuth__ClientSecret` environment variable used to start the .NET app matches the FusionAuth ExampleApp client secret. You can review that by logging in as the admin user and examining the Application at [http://localhost:9011/admin/application/](http://localhost:9011/admin/application/)
+Make sure you are making a `POST` call and using a token with the `teller` role.
 
 * It still doesn't work
 
 You can always pull down a complete running application and compare what's different.
 
 ```
-git clone https://github.com/FusionAuth/fusionauth-quickstart-dotnet-razor-pages.git
-cd fusionauth-quickstart-dotnet-razor-pages
+git clone https://github.com/FusionAuth/fusionauth-quickstart-dotnet-api.git
+cd fusionauth-quickstart-dotnet-api
 docker-compose up -d
 cd complete-app
-cd MyApp
-dotnet publish -r osx-x64 
-ASPNETCORE_ENVIRONMENT=Development FusionAuth__ClientSecret=super-secret-secret-that-should-be-regenerated-for-production bin/Debug/net7.0/osx-x64/publish/MyApp
+dotnet run
 ```
-
