@@ -1,32 +1,22 @@
 ---
-layout: doc
 title: FusionAuth Connectors
 description: FusionAuth Connectors allow you to authenticate users against arbitrary data sources and optionally migrate them.
 navcategory: premium
+section: lifecycle
+subcategory: migrate users
+tertcategory: connectors
 ---
-:page-liquid:
+import Aside from 'src/components/Aside.astro';
+import ConnectorDiagram from 'src/diagrams/docs/lifecycle/migrate-users/connectors/_connector-diagram.astro';
+import PremiumEditionBlurb from 'src/content/docs/_shared/_premium-edition-blurb.astro';
 
-:sectnumlevels: 0
+<PremiumEditionBlurb />
 
-include::docs/v1/tech/shared/_premium-edition-blurb.adoc[]
+## Overview
 
-== Overview
-
-[NOTE.since]
-====
+<Aside type="version">
 Available since 1.18.0
-====
-
-* <<Data Flow>>
-* <<Authentication>>
-** <<Required Fields>>
-** <<Suggested Fields>>
-* <<Migration>>
-** <<Required Fields>>
-** <<Suggested Fields>>
-* <<Connector Policies>>
-** <<Domains>>
-* <<Connectors Vs Identity Providers>>
+</Aside>
 
 Connectors allow you to connect other sources of user data to your FusionAuth instance. Once the connection is created, you may either:
 
@@ -35,29 +25,25 @@ Connectors allow you to connect other sources of user data to your FusionAuth in
 
 The following Connectors are available:
 
-* link:/docs/v1/tech/connectors/generic-connector[Generic Connector]
-* link:/docs/v1/tech/connectors/ldap-connector[LDAP Connector]
-* link:/docs/v1/tech/connectors/fusionauth-connector[FusionAuth Connector]
+* [Generic Connector](/docs/lifecycle/migrate-users/connectors/generic-connector)
+* [LDAP Connector](/docs/lifecycle/migrate-users/connectors/ldap-connector)
+* [FusionAuth Connector](/docs/lifecycle/migrate-users/connectors/fusionauth-connector)
 
-If you're looking for a Connector not listed here, review the open feature requests in https://github.com/FusionAuth/fusionauth-issues/issues[GitHub] and either vote or comment on an existing feature, or open a new feature request if you do not find an existing issue.
+If you're looking for a Connector not listed here, review the open feature requests in [GitHub](https://github.com/FusionAuth/fusionauth-issues/issues) and either vote or comment on an existing feature, or open a new feature request if you do not find an existing issue.
 
-Find Connectors in the administrative user interface by navigating to [breadcrumb]#Settings -> Connectors# or use the link:/docs/v1/tech/apis/connectors/[Connectors] APIs.
+Find Connectors in the administrative user interface by navigating to <strong>Settings -> Connectors</strong> or use the [Connectors](/docs/apis/connectors/overview) APIs.
 
-image::connectors/connectors-screen.png[Choose what type of Connector to create.,width=1200,role=shadowed]
+<img src="/img/docs/lifecycle/migrate-users/connectors/connectors-screen.png" alt="Choose what type of Connector to create." width="1200" role="shadowed" />
 
-== Data Flow
+## Data Flow
 
 If you are using a Connector, then to your end user and application, it is exactly the same as if FusionAuth is authenticating directly against the Fusionauth user datastore. Connector usage is transparent.
 
 Below is a diagram of the data flow for an Authorization Code grant when a Connector is configured. 
 
-++++
-{% mermaid display: "block" %}
-{% include docs/_connector-diagram.liquid %}
-{% endmermaid %}
-++++
+<ConnectorDiagram />
 
-== Authentication
+## Authentication
 
 Using a Connector for authentication alone results in similar functionality to using the data source as an Identity Provider, but without the redirects. Subsequent logins continue to use the external source as the System of Record, including for user data such as registrations and group membership.
 
@@ -67,7 +53,7 @@ Using a Connector for authentication allows you to use an external user manageme
 
 The user will be placed into the same tenant as the application they are authenticating against.
 
-=== Required Fields
+### Required Fields
 
 If you are authenticating a user, you must provide the following fields in the user object you return.
 
@@ -78,13 +64,13 @@ If you are using the generic connector, you are building the `user` object, so e
 
 In addition, ensure that the same `user.id` is returned each time a user is retrieved. If you have an LDAP attribute in the form of a UUID or a value that can be translated to a UUID, using that attribute or its translation is recommended. If you have to generate a UUID, ensure that you are able to return the same value each time the user authenticates. Doing so ensures that FusionAuth knows which user is being referenced, even if the username or email address changes.
 
-=== Suggested Fields
+### Suggested Fields
 
 If you are authenticating a user, you likely want to populate these fields:
 
 * `user.registrations`: the applications to which this user should have access. Providing at least one entry in this array will associate a user with an application in FusionAuth, authorizing them to access the application. At a minimum, you likely want to add the application the user is logging into.
 
-== Migration
+## Migration
 
 In this scenario, the user data is migrated from the external data source to FusionAuth. Subsequent logins will authenticate against FusionAuth, not the external data store. The external data store is never again consulted for any login of the migrated user. In addition, any future changes in the external data store will not be propagated to FusionAuth. 
 
@@ -92,7 +78,7 @@ Using a Connector in this way allows for a phased migration. Let your users sign
 
 The user will be placed into the same tenant as the application they are authenticating against.
 
-=== Required Fields
+### Required Fields
 
 If you are migrating a user, you must provide the following fields in the user object you return.
 
@@ -103,20 +89,20 @@ If you are using the generic connector, you are building the `user` object, so e
 
 If you don't have a UUID to associate with this user, you may create a random one, as the source datastore won't be consulted after the user is initially migrated. 
 
-=== Suggested Fields
+### Suggested Fields
 
 If you are migrating a user, you likely want to populate these fields:
 
 * `user.registrations`: the applications to which this user should have access. Providing at least one entry in this array will associate a user with an application in FusionAuth, authorizing them to access the application. At a minimum, you likely want to add the application the user is logging into.
 * `user.data`: arbitrary data associated with the user. This can be application or migration specific. For example, you could indicate the migration date of a user for subsequent searches.
 
-== Connector Policies
+## Connector Policies
 
 Connectors can be enabled on a per tenant basis. This is done with a Connector policy. These may change over time.
 
 In the following screenshot you will see that we have enabled two custom Connectors for the Default tenant. The default Connector is present as well. 
 
-image::connectors/tenant-connector-tab.png[The Tenant Connector policy configuration tab.,width=1200,role=shadowed]
+<img src="/img/docs/get-started/core-concepts/tenant-connector-tab.png" alt="The Tenant Connector policy configuration tab." width="1200" role="shadowed" />
 
 The order of operations matters for Connectors. The Connector policy rules are applied in order when a user authenticates for the first time. 
 
@@ -126,13 +112,13 @@ Users who have an email address with any other domain will be authenticated agai
 
 On authentication the Connector creates the user object and stores it into FusionAuth. Once a user is authenticated against a Connector, they will always be authenticated against that same data source. If a Connector is deleted, users will be authenticated against the Connectors in the order defined by the current policy.
 
-=== Domains
+### Domains
 
 A domain may be either be the string `*` in which case the Connector policy applies to all users, or one or more valid email domains such as `example.com` or `piedpiper.com`. If more than one domain is entered, they must be separated by newlines.
 
-== Connectors Vs Identity Providers
+## Connectors Vs Identity Providers
 
-Connectors share many features with link:/docs/v1/tech/identity-providers/[Identity Providers]. Both can connect FusionAuth to an external system of record for user identity.
+Connectors share many features with [Identity Providers](/docs/v1/tech/identity-providers/). Both can connect FusionAuth to an external system of record for user identity.
 
 How can you decide between them? While they each have strengths, these questions may be helpful in choosing:
 
@@ -141,9 +127,4 @@ How can you decide between them? While they each have strengths, these questions
 * Are you looking to connect to a system which only supports LDAP? A Connector is the better fit.
 * Will the external system remain the system of record for the users? An Identity Provider is typically a better choice.
 * Does your existing identity store expose no standard way to share identity data? A Connector is the better option.
-
-++++
-{% capture relatedTag %}feature-connectors{% endcapture %}
-{% include _doc-related-posts.liquid %}
-++++
 
