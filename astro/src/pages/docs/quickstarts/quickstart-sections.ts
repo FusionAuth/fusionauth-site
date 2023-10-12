@@ -38,13 +38,6 @@ const qsSections: QuickStartSection[] = [
         navColor: 'blue',
       },
       {
-        href: '/docs/v1/tech/tutorials/integrate-expressjs',
-        title: 'Express',
-        icon: '/img/icons/javascript.svg',
-        faIcon: 'fa-x',
-        navColor: 'fuchsia'
-      },
-      {
         href: '/blog/2023/03/13/single-sign-on-laravel-fusionauth',
         title: 'Laravel',
         icon: '/img/icons/laravel.svg',
@@ -118,13 +111,6 @@ const qsSections: QuickStartSection[] = [
         icon: '/img/icons/dotnet-c.svg',
         faIcon: 'fa-hashtag',
         navColor: 'blue',
-      },
-      {
-        href: '/docs/v1/tech/tutorials/integrate-ruby-rails-api',
-        title: 'Ruby on Rails',
-        icon: '/img/icons/ruby-on-rails.svg',
-        faIcon: 'fa-gem',
-        navColor: 'red',
       },
       {
         href: '/docs/v1/tech/tutorials/integrate-laravel-api',
