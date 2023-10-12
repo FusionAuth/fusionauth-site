@@ -113,13 +113,6 @@ const qsSections: QuickStartSection[] = [
         navColor: 'blue',
       },
       {
-        href: '/docs/v1/tech/tutorials/integrate-express-api',
-        title: 'Express',
-        icon: '/img/icons/javascript.svg',
-        faIcon: 'fa-x',
-        navColor: 'fuchsia',
-      },
-      {
         href: '/docs/v1/tech/tutorials/integrate-laravel-api',
         title: 'Laravel',
         icon: '/img/icons/laravel.svg',
