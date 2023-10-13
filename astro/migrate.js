@@ -294,11 +294,12 @@ const convert = (filePath, partial = false, parent = '') => {
     let optional = '';
     let since = '';
     let defaults = '';
+    let deprecated = '';
     const nameMatch = header.match(/\[field]#([\w\.`\[\] ]*)#/);
     if (nameMatch) {
       name = ` name="${nameMatch[1]}"`.replaceAll('`', '');
     }
-    const typeMatch = header.match(/\[type]#\[(\w*)]#/);
+    const typeMatch = header.match(/\[type]#\[([\w<>, ]*)]#/);
     if (typeMatch) {
       type = ` type="${typeMatch[1]}"`;
     }
@@ -310,6 +311,10 @@ const convert = (filePath, partial = false, parent = '') => {
     if (optionalMatch) {
       optional = ` optional`;
     }
+    const deprecatedMatch = header.match(/\[deprecated]/);
+    if (deprecatedMatch) {
+      deprecated = ` deprecated`;
+    }
     const defaultsMatch = header.match(/\[default]#defaults to `?([\w ]*)`?#/);
     if (defaultsMatch) {
       defaults = ` defaults="${defaultsMatch[1]}"`;
@@ -318,7 +323,7 @@ const convert = (filePath, partial = false, parent = '') => {
     if (sinceMatch) {
       since = ` since="${sinceMatch[1]}"`;
     }
-    outLines.push(`  <APIField${name}${type}${required}${optional}${defaults}${since}>`);
+    outLines.push(`  <APIField${name}${type}${required}${optional}${defaults}${since}${deprecated}>`);
     const next = () => {
       let line = lines.shift();
       debugLog('working line', line)
