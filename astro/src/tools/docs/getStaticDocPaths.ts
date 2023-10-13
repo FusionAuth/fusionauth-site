@@ -1,5 +1,5 @@
 import { getCollection } from 'astro:content';
-import { filterPartials } from './filterPartials';
+import { filterDocs } from 'src/tools/docs/filterDocs';
 
 /**
  * Get static paths for docs. filters out partials (starts with "_")
@@ -7,8 +7,8 @@ import { filterPartials } from './filterPartials';
  */
 export const getStaticDocPaths = (path: string) => {
   return async () => {
-    const entry = await getCollection('docs', filterPartials);
-    return entry.map(entry => {
+    const entries = await getCollection('docs', entry => filterDocs(entry, path));
+    return entries.map(entry => {
       const slug = entry.slug.replace(path, '');
       //@ts-ignore
       entry.slug = slug;
