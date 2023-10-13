@@ -133,13 +133,6 @@ const qsSections: QuickStartSection[] = [
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
       {
-        href: '/docs/v1/tech/tutorials/integrate-dotnet-api',
-        title: '.NET Core',
-        icon: '/img/icons/dotnet-c.svg',
-        faIcon: 'fa-hashtag',
-        navColor: 'blue',
-      },
-      {
         href: '/docs/v1/tech/tutorials/integrate-ruby-rails-api',
         title: 'Ruby on Rails',
         icon: '/img/icons/ruby-on-rails.svg',
