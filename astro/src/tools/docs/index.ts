@@ -1,3 +1,4 @@
+export * from './DataElement';
 export * from './Feature';
 export * from './filterPartials';
 export * from './getDocNavContext';
