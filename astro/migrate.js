@@ -294,9 +294,9 @@ const convert = (filePath, partial = false, parent = '') => {
     let optional = '';
     let since = '';
     let defaults = '';
-    const nameMatch = header.match(/\[field]#([\w\. ]*)#/);
+    const nameMatch = header.match(/\[field]#([\w\.`\[\] ]*)#/);
     if (nameMatch) {
-      name = ` name="${nameMatch[1]}"`;
+      name = ` name="${nameMatch[1]}"`.replaceAll('`', '');
     }
     const typeMatch = header.match(/\[type]#\[(\w*)]#/);
     if (typeMatch) {
