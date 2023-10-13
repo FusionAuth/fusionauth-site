@@ -34,15 +34,22 @@ const extensions = [
 
 marked.use({extensions});
 
+const optionalIntegrations = [];
+if (!process.env.DEV) {
+  optionalIntegrations.push(compress({
+    Image: false,
+    SVG: false,
+  }))
+} else {
+  console.log('skipping compression');
+}
+
 const config = defineConfig({
   build: {
     format: 'file'
   },
   integrations: [
-    compress({
-      Image: false,
-      SVG: false,
-    }),
+    ...optionalIntegrations,
     mdx(),
     sitemap(),
     indexPages(),

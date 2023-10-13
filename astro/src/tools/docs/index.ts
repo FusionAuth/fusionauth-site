@@ -1,5 +1,7 @@
 export * from './DataElement';
 export * from './Feature';
+export * from './filterByPath';
+export * from './filterDocs';
 export * from './filterPartials';
 export * from './getDocNavContext';
 export * from './getDocsPages';
