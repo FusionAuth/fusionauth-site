@@ -4,14 +4,20 @@ var ex="/learn/expert-advice";
 var idp="/identity-providers";
 var bc="/blog/category";
 var bac="/blog/archive/category";
+var t="/tutorials/";
+var f="/features/";
+var dq="/docs/quickstarts/"
+var at="/authentication/"
+var ib="/identity-basics/"
+var pe="/pricing/edition";
 
 var ip = {};
 ip['/']=true;
 ip[a+'/']=true;
-ip[a+'/authentication/']=true;
+ip[a+at]=true;
 ip[a+'/ciam/']=true;
 ip[a+'/gaming-entertainment/']=true;
-ip[a+'/identity-basics/']=true;
+ip[a+ib]=true;
 ip[a+'/login-authentication-workflows/']=true;
 ip[a+'/oauth/']=true;
 ip[a+'/security/']=true;
@@ -20,7 +26,7 @@ ip['/blog/']=true;
 ip['/community/forum/']=true;
 ip['/dev-tools/']=true;
 ip['/docs/']=true;
-ip['/docs/quickstarts/']=true;
+ip[dq]=true;
 ip[d+'/']=true;
 ip[d+'/account-management/']=true;
 ip[d+'/admin-guide/']=true;
@@ -61,9 +67,9 @@ ip[d+'/premium-features/webauthn/']=true;
 ip[d+'/reference/']=true;
 ip[d+'/samlv2/']=true;
 ip[d+'/themes/']=true;
-ip[d+'/tutorials/']=true;
-ip[d+'/tutorials/gating/']=true;
-ip[d+'/tutorials/two-factor/']=true;
+ip[d+t]=true;
+ip[d+t+'gating/']=true;
+ip[d+t+'two-factor/']=true;
 ip['/how-to/']=true;
 ip['/quickstarts/']=true;
 ip['/blog/latest/']=true;
@@ -95,45 +101,47 @@ rd[d+'/reference/password-encryptors']=d+'/reference/password-hashes';
 rd[d+'/reactor']=d+'/admin-guide/licensing';
 rd[d+'/reactor/']=d+'/admin-guide/licensing';
 rd[d+'/troubleshooting']=d+'/admin-guide/troubleshooting';
-rd[d+'/tutorials/gate-accounts-until-verified']=d+'/tutorials/gating/gate-accounts-until-user-email-verified';
-rd[d+'/tutorials/migrate-users']=d+'/migration-guide/tutorial';
-rd[d+'/tutorials/setting-up-user-account-lockout']=d+'/tutorials/gating/setting-up-user-account-lockout';
-rd[d+'/tutorials/two-factor/authenticator-app']=d+'/tutorials/two-factor/authenticator-app-pre-1-26';
-rd[d+'/tutorials/two-factor/twilio-push']=d+'/tutorials/two-factor/twilio-push-pre-1-26';
-rd[d+'/tutorials/integrate-angular']= '/docs/quickstarts/quickstart-javascript-angular-web';
-rd[d+'/tutorials/integrate-python-django']= '/docs/quickstarts/quickstart-python-django-web';
-rd[d+'/tutorials/integrate-python-flask']= '/docs/quickstarts/quickstart-python-flask-web';
-rd[d+'/tutorials/integrate-ruby-rails']= '/docs/quickstarts/quickstart-ruby-rails-web';
-rd[d+'/tutorials/integrate-java-spring']= '/docs/quickstarts/quickstart-springboot-web';
-rd[d+'/tutorials/integrate-react']= '/docs/quickstarts/quickstart-javascript-react-web';
-rd['/features/architecture']='/platform/built-for-developers';
-rd['/features/advanced-registration-forms']='/platform/registration-forms';
-rd['/features/breached-password-detection']='/features/authentication';
-rd['/features/built-for-developers']='/platform/built-for-developers';
-rd['/features/connectors']='/features/authentication';
-rd['/features/scalability']='/platform/scalable';
-rd['/features/security-data-compliance']='/security-data-compliance';
-rd['/features/user-experience']='/platform/customizable';
-rd['/features/user-management-reporting']='/features/user-management';
+rd[d+t+'gate-accounts-until-verified']=d+t+'gating/gate-accounts-until-user-email-verified';
+rd[d+t+'migrate-users']=d+'/migration-guide/tutorial';
+rd[d+t+'setting-up-user-account-lockout']=d+t+'gating/setting-up-user-account-lockout';
+rd[d+t+'two-factor/authenticator-app']=d+t+'two-factor/authenticator-app-pre-1-26';
+rd[d+t+'two-factor/twilio-push']=d+t+'two-factor/twilio-push-pre-1-26';
+rd[d+t+'integrate-angular']= dq+'quickstart-javascript-angular-web';
+rd[d+t+'integrate-python-django']= dq+'quickstart-python-django-web';
+rd[d+t+'integrate-python-flask']= dq+'quickstart-python-flask-web';
+rd[d+t+'integrate-ruby-rails']= dq+'quickstart-ruby-rails-web';
+rd[d+t+'integrate-dotnet']= dq+'quickstart-dotnet-web';
+rd[d+t+'integrate-java-spring']= dq+'quickstart-springboot-web';
+rd[d+t+'integrate-react']= dq+'quickstart-javascript-react-web';
+rd[d+t+'integrate-expressjs']= dq+'quickstart-javascript-express-web';
+rd[f+'architecture']='/platform/built-for-developers';
+rd[f+'advanced-registration-forms']='/platform/registration-forms';
+rd[f+'breached-password-detection']=f+'authentication';
+rd[f+'built-for-developers']='/platform/built-for-developers';
+rd[f+'connectors']=f+'authentication';
+rd[f+'scalability']='/platform/scalable';
+rd[f+'security-data-compliance']='/security-data-compliance';
+rd[f+'user-experience']='/platform/customizable';
+rd[f+'user-management-reporting']=f+'user-management';
 rd['/gaming']='/industries/gaming-entertainment';
 rd['/gaming/']='/industries/gaming-entertainment';
 rd['/kubernetes']=d+'/installation-guide/kubernetes/';
-rd[ex+'/authentication/gaming-identity-provider-needs']=a+'/gaming-entertainment/gaming-identity-provider-needs';
-rd[ex+'/authentication/login-authentication-workflows']=a+'/login-authentication-workflows/authentication-workflows-overview';
-rd[ex+'/authentication/login-authentication-workflows/']=a+'/login-authentication-workflows/authentication-workflows-overview';
+rd[ex+at+'/gaming-identity-provider-needs']=a+'/gaming-entertainment/gaming-identity-provider-needs';
+rd[ex+at+'/login-authentication-workflows']=a+'/login-authentication-workflows/authentication-workflows-overview';
+rd[ex+at+'/login-authentication-workflows/']=a+'/login-authentication-workflows/authentication-workflows-overview';
 rd[ex+'/dev-tools/jwt-debugger']='/dev-tools/jwt-decoder';
-rd[ex+'/identity-basics/avoid-lockin']=a+'/authentication/avoid-lockin';
-rd[ex+'/identity-basics/common-authentication-implementation-risks']=a+'/authentication/common-authentication-implementation-risks';
-rd[ex+'/identity-basics/making-sure-your-auth-system-scales']=a+'/ciam/making-sure-your-auth-system-scales';
-rd[ex+'/identity-basics/value-standards-compliant-authentication']=a+'/oauth/value-standards-compliant-authentication';
+rd[ex+ib+'avoid-lockin']=a+at+'/avoid-lockin';
+rd[ex+ib+'common-authentication-implementation-risks']=a+at+'/common-authentication-implementation-risks';
+rd[ex+ib+'making-sure-your-auth-system-scales']=a+'/ciam/making-sure-your-auth-system-scales';
+rd[ex+ib+'value-standards-compliant-authentication']=a+'/oauth/value-standards-compliant-authentication';
 rd[ex+'/tokens/anatomy-of-jwt']=a+'/tokens/jwt-components-explained';
 rd[ex+'/tokens/jwt-authentication-token-components-explained']=a+'/tokens/jwt-components-explained';
 rd['/podcast']='/';
 rd['/pricing/cloud/']='/pricing';
-rd['/pricing/edition']='/pricing';
-rd['/pricing/edition/']='/pricing';
-rd['/pricing/editions']='/pricing';
-rd['/pricing/editions/']='/pricing';
+rd[pe]='/pricing';
+rd[pe+'/']='/pricing';
+rd[pe+'s']='/pricing';
+rd[pe+'s/']='/pricing';
 rd['/products/identity-user-management/ciam-vs-iam']=ex+'/ciam/ciam-vs-iam';
 rd['/resources/auth0-migration']='/auth0-migration';
 rd['/resources/guide-to-user-data-security']=ex+'/security/guide-to-user-data-security';
@@ -143,11 +151,11 @@ rd['/upgrade/from-saas']='/compare';
 
 // order matters
 var redirectsByPrefix = [
-  ['/learn/expert-advice/dev-tools', '/dev-tools'],
-  ['/learn/expert-advice/authentication/spa', '/articles/login-authentication-workflows/spa'],
-  ['/learn/expert-advice/authentication/mobile', '/articles/login-authentication-workflows/mobile'],
-  ['/learn/expert-advice/authentication/webapp', '/articles/login-authentication-workflows/webapp'],
-  ['/learn/expert-advice', '/articles']
+  [ex+'/dev-tools', '/dev-tools'],
+  [ex+at+'spa', '/articles/login-authentication-workflows/spa'],
+  [ex+at+'mobile', '/articles/login-authentication-workflows/mobile'],
+  [ex+at+'webapp', '/articles/login-authentication-workflows/webapp'],
+  [ex, '/articles']
 ]
 
 // order matters
