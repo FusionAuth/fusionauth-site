@@ -214,9 +214,10 @@ const convert = (filePath, partial = false, parent = '') => {
     return result.join('');
   };
 
-  const addRemoteCodeRef = (url, title) => {
+  const addRemoteCodeRef = (url, title, lang, tags) => {
     addImport("import RemoteCode from 'src/components/RemoteCode.astro';");
-    outLines.push(`<RemoteCode title="${title}" url="${url}" />`);
+
+    outLines.push(`<RemoteCode url="${url}"${ title ? (' title="' + title + '"') : ''}${lang ? (' lang="' + lang + '"') : ''}${ tags ? (' tags="' + tags + '"') : ''} />`);
   } 
 
   // returns an array of matching files under the given directory
@@ -234,6 +235,16 @@ const convert = (filePath, partial = false, parent = '') => {
 
   const moveInclude = (line, vars) => {
     line = line.replace('include::', '').replace('\[\]', '');
+
+    // handle remote code includes. for now, just remote code.
+    if (line.startsWith('https://raw.githubusercontent')) {
+      const includeMatch = line.match(/^([^[]*)(\[tags=(.*)])?/);
+      if (includeMatch) {
+        addRemoteCodeRef(includeMatch[1], undefined, undefined, includeMatch[3])
+      }
+      return;
+    }
+
     let newDir = '';
     const sharedPath = 'src/content/docs/_shared/';
     if (line.split('/').length === 1) {
