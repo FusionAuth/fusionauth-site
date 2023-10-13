@@ -7,7 +7,7 @@ navcategory: developer
 
 == Signing Webhooks
 
-Signing Webhook events allows you to verify each event was sent by FusionAuth.  Webhook signatures provide an extra layer of security in addition to the methods described in XXX.  Signature verification provides protection against bad actors spoofing webhook event payloads to look like they came from FusionAuth.
+Signing Webhook events allows you to verify each event was sent by FusionAuth.  Webhook signatures provide an extra layer of security in addition to the methods described in link:/docs/v1/tech/events-webhooks/securing[Securing a Webhook].  Signature verification provides protection against bad actors spoofing webhook event payloads to look like they came from FusionAuth.
 
 This document covers configuring webhook signatures, verifying signatures in your webhook listener, and key rotation.
 
@@ -39,13 +39,13 @@ image::webhook-settings-signature.png[Webhook Settings Signature,width=1200,role
 
 === Signature Verification
 
-The webhook signature is provided in the HTTP header `X-FusionAuth-Signature-JWT` as a signed JWT with a claim of `request_body_sha256` containing the sha256 hash of the webhook event payload.
+The webhook signature is provided in the HTTP header `X-FusionAuth-Signature-JWT` as a signed JWT with a claim of `request_body_sha256` containing the SHA-256 hash of the webhook event payload.
 
-Your webhook listener can verify the signature by
+Your webhook listener can verify the signature by:
 
-- Verify the JWT is properly signed
-- Decode the JWT
-- Compare the JWT's `request_body_sha256` claim against your own calculated sha256 hash of the event body
+- Verifying the JWT is properly signed
+- Decoding the JWT
+- Comparing the JWT's `request_body_sha256` claim against your own calculated SHA-256 hash of the event body
 
 [source,ini]
 .Example webhook HTTP header
@@ -72,7 +72,7 @@ The JWT decodes with:
 }
 ----
 
-The `kid` identifies the Id of the key used to sign the JWT.  JWT libraries can look the key up from the JWKS endpoint, or a locally stored key can be used.  After verifying the JWT signature, the JWT's `request_body_sha256` payload claim is compared against your own calculated sha256 hash of the event body
+The `kid` identifies the Id of the key used to sign the JWT.  JWT libraries can look the key up from the JWKS endpoint, or a locally stored key can be used.  After verifying the JWT signature, the JWT's `request_body_sha256` payload claim is compared against your own calculated SHA-256 hash of the event body
 
 === Example Webhook Listener Code
 
@@ -146,9 +146,9 @@ link:/docs/v1/tech/events-webhooks/#test-a-webhook[Webhook Testing] page provide
 
 === Key Rotation
 
-link:/docs/v1/tech/tutorials/key-rotation[Rotating keys] regularly is an important part of a defense-in-depth strategy.  The type of key used for signing webhook events determines the process for rotating keys.
+link:/docs/v1/tech/tutorials/key-rotation[Rotating keys] regularly is an important part of a defense-in-depth strategy.  The type of key used for signing webhook events and the method used for fetching that key determines the process for rotating keys.
 
-* Keys with public keys (RSA or EC) *and* signature verification dynamically fetches public key from  `.well-known/jwks.json` endpoint
+* Signatures validated using a public key (RSA or EC) where signature verification dynamically fetches public key from  `.well-known/jwks.json` endpoint
 ** Generate new key in FusionAuth
 ** Update webhook signing key to use new key
 ** Test
