@@ -219,6 +219,19 @@ const convert = (filePath, partial = false, parent = '') => {
     outLines.push(`<RemoteCode title="${title}" url="${url}" />`);
   } 
 
+  // returns an array of matching files under the given directory
+  const findMatchingFiles = (dir, filename) => {
+    const matches = execSync(`find ${dir} -regex '.*\/${filename}'`).toString('utf8').split('\n').filter((f) => f !== '');
+
+    if (matches.length > 1) {
+      console.log(`*** WARNING *** --- Multiple candidate files found for ${filename}`);
+      matches.map((fname) => console.log(` - ${fname}`));
+    }
+
+    return matches;
+  }
+
+
   const moveInclude = (line, vars) => {
     line = line.replace('include::', '').replace('\[\]', '');
     let newDir = '';
@@ -266,9 +279,27 @@ const convert = (filePath, partial = false, parent = '') => {
       console.log(`oh ${fileName.replace('.mdx', '.astro')} this is a common api file`);
       newPath = 'src/content/docs/apis/' + fileName.replace('.mdx', '.astro');
     } else {
-      gitMoveFile(oldPath, newPath);
-      convert(newPath, true, line);
+      // look for a matching file elsewhere
+      let matchingFiles = findMatchingFiles('src/content/docs', fileName);
+
+      if (matchingFiles.length === 0) {
+        matchingFiles = findMatchingFiles('src/content/docs', fileName.replace('.mdx', '.astro'));
+      }
+
+      if (matchingFiles.length > 0) {
+        console.log(`Found a likely match for ${oldPath} in ${matchingFiles[0]}`);
+
+        newPath = matchingFiles[0];
+
+        if(matchingFiles.length > 1) {
+          matchingFiles.map((fname) => outLines.push(`{/* ${fname} */}`));
+        }
+      } else {
+        gitMoveFile(oldPath, newPath);
+        convert(newPath, true, line);
+      }
     }
+
     let alias = camelCase(fileName.replace('.mdx', ''));
     alias = alias.charAt(0).toUpperCase() + alias.slice(1);
 
@@ -394,7 +425,7 @@ const convert = (filePath, partial = false, parent = '') => {
     line = lines.shift();
     debugLog('endpoint', `Processing line: ${line}`);
     const methodMatch = line.match(/method]#(\w*)#/);
-    const method = ` method="${methodMatch[1]}"`;
+    const method = (methodMatch && methodMatch.length > 0) ? ` method="${methodMatch[1]}"` : '';
     const uriMatch = line.match(/uri]#(.*)#/);
     let uri = uriMatch[1];
     uri = uri.replaceAll('\\', '').replaceAll('``', '`')
@@ -620,10 +651,21 @@ const convert = (filePath, partial = false, parent = '') => {
   const moveImage = (imageLocation, imageFile) => {
     const oldPath = `../site/assets/img/docs/${imageLocation}`;
     const newPath = `public/img/docs/${state.target}/${imageFile}`;
+
     if (fs.existsSync(newPath)) {
       console.log(`Looks like ${newPath} already exists! Sweet!`);
     } else {
-      gitMoveFile(oldPath, newPath);
+      const matchingFiles = findMatchingFiles('public/img/docs', imageFile);
+
+      if (matchingFiles.length > 0) {
+        console.log(`Found a likely match for ${oldPath} in ${matchingFiles[0]}`);
+        
+        return matchingFiles.map((f) => f.split('/').pop());
+      } else {
+        gitMoveFile(oldPath, newPath);
+
+        return [newPath];
+      }
     }
   };
 
@@ -638,8 +680,13 @@ const convert = (filePath, partial = false, parent = '') => {
         return `${key}="${value}"`;
     }).join(' ');
 
-    outLines.push(`<img src="/img/docs/${state.target}/${imageFile}" alt="${title}" ${props} />`);
-    moveImage(imageLocation, imageFile);
+    const newFileList = moveImage(imageLocation, imageFile);
+    outLines.push(`<img src="/img/docs/${state.target}/${newFileList[0]}" alt="${title}" ${props} />`);
+
+    if (newFileList.length > 1) {
+      newFileList.map((fname, idx) => idx > 0 && outLines.push(`{/* /img/docs/${state.target}/${newFileList[0]} */}`));
+    }
+
   };
 
   const handleVideo = (line) => {
