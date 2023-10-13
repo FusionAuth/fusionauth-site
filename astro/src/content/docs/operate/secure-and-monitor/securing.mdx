@@ -1,29 +1,29 @@
 ---
-layout: doc
 title: Securing FusionAuth services
 description: Secure your installation by limiting network traffic
 navcategory: admin
+section: operate
+subcategory: secure and monitor
 ---
+import Aside from 'src/components/Aside.astro';
 
-:sectnumlevels: 0
+## Securing
 
-== Securing
-
-If you're installing FusionAuth on your own server, use the following guide as a baseline for securing the network services. If you need further assistance to secure FusionAuth, please ask a question in the https://fusionauth.io/community/forum/[FusionAuth forum, window="_blank"]. If you have a licensed edition you may open a https://account.fusionauth.io/account/support/[support request from your account, window="_blank"].
+If you're installing FusionAuth on your own server, use the following guide as a baseline for securing the network services. If you need further assistance to secure FusionAuth, please ask a question in the <a href="https://fusionauth.io/community/forum/" target="_blank">FusionAuth forum</a>. If you have a licensed edition you may open a <a href="https://account.fusionauth.io/account/support/" target="_blank">support request from your account</a>.
 
 If you are already a FusionAuth customer and would like to be on the security announcement email list, log into https://account.fusionauth.io[account.fusionauth.io] and ensure you have been assigned the security officer role.
 
-== Required ports
+## Required ports
 
-See the link:/docs/v1/tech/reference/configuration[Configuration Reference] for more information on default port configuration. The documentation below
+See the [Configuration Reference](/docs/reference/configuration) for more information on default port configuration. The documentation below
 assumes the default port configuration.
 
-=== FusionAuth Search
+### FusionAuth Search
 
 If FusionAuth Search is running on the same system as the FusionAuth App service and you're only running a single instance of FusionAuth
 App then no external ports should be allowed for FusionAuth Search. In this scenario, FusionAuth App will access the Elasticsearch
 service on port `9021` on the `localhost` address. The default configuration should cause FusionAuth Search to only bind to `127.0.0.1` or other
-localhost addresses. See `fusionauth-search.hosts` in the link:/docs/v1/tech/reference/configuration[Configuration Reference].
+localhost addresses. See `fusionauth-search.hosts` in the [Configuration Reference](/docs/reference/configuration).
 
 If FusionAuth App is installed on multiple servers and those servers can communicate across a private network using a site local address then
 the default FusionAuth Search Configuration will not bind to any public IP addresses. In this scenario you will need to allow access to
@@ -36,12 +36,12 @@ To protect FusionAuth Search with HTTP basic authentication as well as a firewal
 The `9020` port is utilized by Elasticsearch for internal communication including clustering. The `9021` port is the HTTP port utilized by
 FusionAuth App to make requests to the search index.
 
-=== FusionAuth App
+### FusionAuth App
 
 To access the FusionAuth UI you'll need to open port `9011`. If you have more than one instance of FusionAuth installed you will need
 to ensure that each instance of FusionAuth Backend can communicate on port `9011`.
 
-== Database Access
+## Database Access
 
 FusionAuth uses a database to store almost all system data and configuration. This database contains extremely sensitive user information such as PII and password hashes. 
 
@@ -49,46 +49,44 @@ Ensure that access to this database is limited to a single database user, and th
 
 In addition, access to backups of this database should be limited and backups permanently deleted when no longer of use.
 
-== Configuration Information
+## Configuration Information
 
-The FusionAuth App is link:/docs/v1/tech/reference/configuration[configured] using system properties, environment variables or a configuration file. This configuration includes sensitive information such as database credentials. Ensure you properly secure this configuration. For example:
+The FusionAuth App is [configured](/docs/reference/configuration) using system properties, environment variables or a configuration file. This configuration includes sensitive information such as database credentials. Ensure you properly secure this configuration. For example:
 
 * If using a file, ensure the file is only readable by the user FusionAuth is running as.
 * If using environment variables, ensure they are stored safely and minimally accessible.
 * If using system properties, avoid setting them on the command line where they could be visible to other users on the system.
 
-== Custom Certificate Authority
+## Custom Certificate Authority
 
 FusionAuth ships with the default `cacerts` file from OpenJDK, which contains a list of root certificate authorities. There are times when you need to add a certificate authority to this file. This might occur if:
 
 * You are using a self signed certificate.
 * Your certificate authority does not ship with the version of Java that FusionAuth uses.
 
-[WARNING.warning]
-====
+<Aside type="caution">
 This operation affects the security of your FusionAuth installation. Ensure that you know the provenance of this certificate and trust the issuer.
-====
+</Aside>
 
-In some cases, such as with link:/docs/v1/tech/events-webhooks/securing[webhooks], you may provide your own certificate via the FusionAuth API or UI, but you may need to install a certificate authority globally. 
+In some cases, such as with [webhooks](/docs/extend/events-and-webhooks/securing), you may provide your own certificate via the FusionAuth API or UI, but you may need to install a certificate authority globally. 
 
 You have two options, specifying a custom keystore and truststore in the Java runtime arguments or importing the certificate into the default keystore that is used by FusionAuth.
 
-=== Custom Keystore
+### Custom Keystore
 
 To specify it in the Java runtime arguments with a custom keystore, use the `fusionauth-app.additional-java-args` and `fusionauth-search.additional-java-args` configuration parameters. 
 
-Create a keystore and truststore as documented by the https://docs.oracle.com/javase/9/tools/keytool.htm[Java documentation]. Let's assume you have created a keystore called `my-keystore` and a truststore called `my-truststore`, and placed them both at `/usr/local/fusionauth/config/` using a configuration management tool with the passwords of `changeit`. With this setup, here is an example the property you might add to the `fusionauth.properties` file.
+Create a keystore and truststore as documented by the [Java documentation](https://docs.oracle.com/javase/9/tools/keytool.htm). Let's assume you have created a keystore called `my-keystore` and a truststore called `my-truststore`, and placed them both at `/usr/local/fusionauth/config/` using a configuration management tool with the passwords of `changeit`. With this setup, here is an example the property you might add to the `fusionauth.properties` file.
 
-[source,properties]
-----
+```properties
 fusionauth-app.additional-java-args=-Djavax.net.ssl.keyStore=/usr/local/fusionauth/config/my-keystore -Djavax.net.ssl.keyStorePassword=changeit -Djavax.net.ssl.trustStore=/usr/local/fusionauth/config/my-truststore -Djavax.net.ssl.trustStorePassword=changeit
-----
+```
 
-Learn more about link:/docs/v1/tech/reference/configuration[configuration options].
+Learn more about [configuration options](/docs/reference/configuration).
 
 If you are using the docker image, you'll have to put the keystore and truststore in a file location accessible to the docker image, as well as define the configuration options using the environment variable syntax. 
 
-=== Importing Into the FusionAuth Keystore
+### Importing Into the FusionAuth Keystore
 
 To import it into the standard keystore, import the certificate representing this authority in every one of your FusionAuth instances. 
 
@@ -98,14 +96,13 @@ If your Java installation is at `/usr/local/fusionauth/java/current/`, the `/usr
 
 Import the certificate with this command:
 
-[source,sh]
-----
+```sh
 /usr/local/fusionauth/java/current/bin/keytool -importcert -file newcacert.pem -keystore fusionauth/java/current/lib/security/cacerts -storepass changeit  -alias faselfsignedcert
-----
+```
 
 Then, restart FusionAuth. 
 
-You'll have to repeat these steps every time the FusionAuth Java version is updated. This is a major change and will be highlighted in the link:/docs/v1/tech/release-notes[release notes].
+You'll have to repeat these steps every time the FusionAuth Java version is updated. This is a major change and will be highlighted in the [release notes](/docs/v1/tech/release-notes).
 
-If you are using the docker image, you'll have to build a custom dockerfile based on the FusionAuth dockerfile which runs the `keytool` import command. The base FusionAuth dockerfile is available in the https://github.com/fusionauth/fusionauth-containers[fusionauth-containers repo].
+If you are using the docker image, you'll have to build a custom dockerfile based on the FusionAuth dockerfile which runs the `keytool` import command. The base FusionAuth dockerfile is available in the [fusionauth-containers repo](https://github.com/fusionauth/fusionauth-containers).
 
