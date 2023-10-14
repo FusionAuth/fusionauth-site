@@ -48,31 +48,16 @@ Here are some guidelines to follow when writing documentation (everything under 
 ```
 egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /* <</'|sed 's/$/>>/'
 ```
-- We currently use [FontAwesome v5](https://fontawesome.com/v5/search?m=free) to render icons, so you can use them to refer to UI buttons, like this:
-  - In Markdown:
-    ```markdown
-    <i/>{:.ui-button .green .fa .fa-plus}
-    <i/>{:.ui-button .green .fa .fa-search}
-    <i/>{:.ui-button .blue .fa .fa-edit}
-    <i/>{:.ui-button .blue .fa .fa-save}
-    <i/>{:.ui-button .purple .fas .fa-user}
-    <i/>{:.ui-button .purple .fa .fa-key}
-    <i/>{:.ui-button .gray .fa .fa-minus-circle}
-    <i/>{:.ui-button .red .fa .fa-trash-alt}
-    ```
-  - In AsciiDoc:
-    ```asciidoc
-    icon:plus[role=ui-button green,type=fas]
-    icon:search[role=ui-button green,type=fas]
-    icon:edit[role=ui-button blue,type=fas]
-    icon:save[role=ui-button blue,type=fas]
-    icon:user[role=ui-button purple,type=fas]
-    icon:key[role=ui-button purple,type=fa]
-    icon:minus-circle[role=ui-button gray,type=fa]
-    icon:trash-alt[role=ui-button red,type=fa]
+- We currently use [FontAwesome v6](https://fontawesome.com/) to render icons, so you can use them to refer to UI buttons, like this:
+    ```jsx
+    <IconButton icon="edit" color="blue" />
+    <IconButton icon="copy" color="purple" />
+    <IconButton icon="search" color="green" />
+    <IconButton icon="minus-circle" color="gray" />
+    <IconButton icon="trash" color="red" />
     ```
 
-    ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/9fd29e3d-c81a-498c-9b82-135f44a7c545)
+    ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/719bffe8-2a54-41a2-a339-b3afeda8d499)
 
 
 ### Including files
@@ -412,3 +397,10 @@ TBD
 Quickstarts are any pages that are going under /docs/quickstarts that are not on the blog.
 
 See https://github.com/FusionAuth/fusionauth-example-template/blob/master/QUICKSTART-INSTRUCTIONS.md for instructions on building out a quickstart.
+
+## Pull request review process
+
+* If a piece of content is technical, it needs a technical review by engineering or devrel.
+* Typo fixes don't need review.
+* If a piece of content is significant (blog post, guide, article) give it the label `content` and it will be published to a slack channel for marketing awareness.
+

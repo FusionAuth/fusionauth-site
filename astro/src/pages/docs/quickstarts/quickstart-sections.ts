@@ -31,25 +31,11 @@ const qsSections: QuickStartSection[] = [
     desc: 'Traditional web applications that run on servers',
     articles: [
       {
-        href: '/docs/v1/tech/tutorials/integrate-python-django',
-        title: 'Django',
-        icon: '/img/icons/python.svg',
-        faIcon: 'fa-snake',
-        navColor: 'orange'
-      },
-      {
         href: '/blog/2022/03/07/single-sign-on-with-drupal',
         title: 'Drupal',
         icon: '/img/icons/drupal.svg',
         faIcon: 'fa-droplet',
         navColor: 'blue',
-      },
-      {
-        href: '/docs/v1/tech/tutorials/integrate-expressjs',
-        title: 'Express',
-        icon: '/img/icons/javascript.svg',
-        faIcon: 'fa-x',
-        navColor: 'fuchsia'
       },
       {
         href: '/blog/2023/03/13/single-sign-on-laravel-fusionauth',
@@ -65,27 +51,6 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-w',
         navColor: 'fuchsia',
       },
-      {
-        href: '/docs/v1/tech/tutorials/integrate-dotnet',
-        title: '.NET',
-        icon: '/img/icons/dotnet-c.svg',
-        faIcon: 'fa-hashtag',
-        navColor: 'blue'
-      },
-      {
-        href: '/blog/2023/04/26/nextjs-single-sign-on',
-        title: '.Next.js',
-        icon: '/img/icons/nextjs.svg',
-        faIcon: 'fa-n',
-        navColor: 'green',
-      },
-      {
-        title: 'PHP',
-        icon: '/img/icons/php.svg',
-        faIcon: 'fa-php',
-        comingSoon: true,
-        navColor: 'purple'
-      },
     ],
   },
   {
@@ -98,30 +63,11 @@ const qsSections: QuickStartSection[] = [
     desc: 'JavaScript app that runs in the browser',
     articles: [
       {
-        href: '/docs/v1/tech/tutorials/integrate-react',
-        title: 'React',
-        icon: '/img/icons/react.svg',
-        faIcon: 'fa-r',
-        navColor: 'blue',
-      },
-      {
         href: '/blog/2022/07/15/remix-demo',
         title: 'Remix',
         icon: '/img/icons/javascript.svg',
         faIcon: 'fa-j',
         navColor: 'yellow'
-      },
-      {
-        title: 'Angular',
-        icon: '/img/icons/angular-spa.svg',
-        faIcon: 'fa-j',
-        href: '/docs/v1/tech/tutorials/integrate-angular',
-      },
-      {
-        title: 'Vue.js',
-        icon: '/img/icons/vue.js.svg',
-        faIcon: 'fa-snake',
-        comingSoon: true,
       },
     ],
   },
@@ -165,27 +111,6 @@ const qsSections: QuickStartSection[] = [
         icon: '/img/icons/dotnet-c.svg',
         faIcon: 'fa-hashtag',
         navColor: 'blue',
-      },
-      {
-        href: '/docs/v1/tech/tutorials/integrate-ruby-rails-api',
-        title: 'Ruby on Rails',
-        icon: '/img/icons/ruby-on-rails.svg',
-        faIcon: 'fa-gem',
-        navColor: 'red',
-      },
-      {
-        href: '/blog/2021/02/18/securing-golang-microservice',
-        title: 'Go',
-        icon: '/img/icons/golang.svg',
-        faIcon: 'fa-g',
-        navColor: 'blue',
-      },
-      {
-        href: '/docs/v1/tech/tutorials/integrate-express-api',
-        title: 'Express',
-        icon: '/img/icons/javascript.svg',
-        faIcon: 'fa-x',
-        navColor: 'fuchsia',
       },
       {
         href: '/docs/v1/tech/tutorials/integrate-laravel-api',

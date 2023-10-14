@@ -1,0 +1,202 @@
+---
+title: React
+description: Quickstart integration of a React web application with FusionAuth
+navcategory: getting-started
+prerequisites: Node 18
+section: spa
+technology: React
+language: JavaScript
+icon: /img/icons/react.svg
+faIcon: fa-react
+color: red
+coderoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main
+cta: EmailListCTA
+---
+import Aside from '/src/components/Aside.astro';
+import LoginAfterSdk from '../../diagrams/quickstarts/login-after-sdk.astro';
+import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
+import RemoteCode from '/src/components/RemoteCode.astro';
+
+
+In this quickstart you are going to build an application with React and integrate it with FusionAuth.
+You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM), a global leader in converting dollars into coins.
+It'll have areas reserved for users who have logged in as well as public facing sections.
+
+The docker compose file and source code for a complete application are available at
+[https://github.com/FusionAuth/fusionauth-quickstart-javascript-react-web](https://github.com/FusionAuth/fusionauth-quickstart-javascript-react-web).
+
+## Prerequisites
+* [Node v18](https://nodejs.org/en): This will be used to run the React application.
+* [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](/docs/v1/tech/installation-guide/)).
+
+This app has been tested with Node v18 and React v18.2.0. This example should work with other compatible versions of Node and React.
+
+## General Architecture
+
+While this sample application doesn't have login functionality without FusionAuth, a more typical integration will replace an existing login system with FusionAuth.
+
+In that case, the system might look like this before FusionAuth is introduced.
+
+<LoginBefore alt={"Request flow during login before FusionAuth"}/>
+
+The login flow will look like this after FusionAuth is introduced.
+
+<LoginAfterSdk alt={"Request flow during login after FusionAuth"}/>
+
+In general, you are introducing FusionAuth in order to normalize and consolidate user data. This helps make sure it is consistent and up-to-date as well as offloading your login security and functionality to FusionAuth.
+
+## Getting Started
+
+In this section, you'll get FusionAuth up and running and use React CLI to create a new application.
+
+### Clone the Code
+First off, grab the code from the repository and change into that directory.
+
+```shell
+git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-react-web.git
+cd fusionauth-quickstart-javascript-react-web
+```
+
+### Run FusionAuth via Docker
+In the root directory of the repo you'll find a Docker compose file (docker-compose.yml) and an environment
+variables configuration file (.env). Assuming you have Docker installed on your machine, you can stand up
+FusionAuth up on your machine with:
+
+```shell
+docker compose up -d
+```
+
+This will start three containers, once each for FusionAuth, Postgres, and Elastic.
+
+Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/v1/tech/installation-guide/kickstart).
+When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and
+configure FusionAuth to a certain initial state.
+
+<Aside type="note">
+    If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by
+    executing `docker compose down -v`, then re-run `docker compose up -d`.
+</Aside>
+
+<p id="fusionauthconfig">FusionAuth will be configured with these settings</p>
+* Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
+* Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
+* Your example username is `richard@example.com` and the password is `password`.
+* Your admin username is `admin@example.com` and the password is `password`.
+* The base URL of FusionAuth `http://localhost:9011/`.
+
+You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don’t need to.
+
+### Create a basic React application
+
+Now you are going to create a basic React application using the React CLI. While this section builds a simple React application, you can use the same configuration to integrate your existing React application with FusionAuth.
+
+```shell
+npx create-react-app changebank && cd changebank
+```
+<Aside type="note">
+    It may ask you to install the `create-react-app` package, just confirm it. Further information can be found on the [Create React App Website](https://create-react-app.dev/docs/getting-started/)
+</Aside>
+
+We are going to use the [Hosted Backend](/docs/v1/tech/apis/hosted-backend) feature of FusionAuth, so you don't need to worry about setting up a backend server.
+
+Install the FusionAuth React SDK, and React Router, which we'll use to manage the routes in our application:
+
+```shell
+npm install @fusionauth/react-sdk react-router-dom
+```
+
+Next, you'll need to configure the SDK with your FusionAuth URL and client ID. You can do this by creating a new file under `src/config.js`:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/config.js"
+            lang="javascript"/>
+
+Then replace the contents of `src/index.js` with the below to configure the SDK:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/index.js"
+            lang="jsx"/>
+
+We also set up the `BrowserRouter` from React Router, which will allow us to use the `Routes` and `Route` component to define the routes later.
+
+Our example application is going to have a home page and an account page. The account page will be protected and only visible to logged in users.
+
+#### Create a Home Page
+
+The next step is to get a basic home page up and running. We’ll take this opportunity to copy in all the images and CSS style files that you’ll need for the application.
+
+Run the following copy commands to copy these files from the quickstart repo into your project. This assumes that you checked the quickstart repo out into the parent directory. If that’s not the case, replace the `..` below with your actual repo location.
+
+```shell
+cp -r ../complete-application/src/assets src && \
+cp -r ../complete-application/src/index.css src
+```
+
+The home page will be a simple page with a welcome message and a login link. Create a new directory `pages` under `src`, in that directory create a new file `src/pages/HomePage.js`:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/pages/HomePage.js"
+            lang="jsx"/>
+
+#### Create an Account Page
+
+The account page will be a simple page that displays a random balance for the logged in user. Create a new file `src/pages/AccountPage.js`:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/pages/AccountPage.js"
+            lang="jsx"/>
+
+#### Create A Make Change Page
+
+The make change page will be a simple page that displays an input field for the user to enter a dollar amount and a button to convert that amount into coins. Create a new file `src/pages/MakeChangePage.js`:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/pages/MakeChangePage.js"
+            lang="jsx"/>
+
+## Authentication
+
+You now have created a basic React application with a home page and an account page.
+
+Depending on the user's authentication state, the login or logout button should be displayed in the header. For this create a new directory `components` in `src` and a new file `src/components/LogoHeader.js`:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/components/LogoHeader.js"
+            lang="jsx"/>
+
+Additionally, we want to display different menu items. For this create a new file `src/components/MenuBar.js`:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/components/MenuBar.js"
+            lang="jsx"/>
+
+The next step is to tie it all together. Update the `src/App.js` file by replacing its content with the following code:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/App.js"
+            lang="jsx"/>
+
+## Running the Application
+
+You can now run the application with the following command:
+
+```shell
+npm start
+```
+
+You can now open up an incognito window and navigate to http://localhost:3000. You will be greeted with the home page. Log in with the user account you created when setting up FusionAuth, and you'll be redirected to the account page.
+
+<Aside type="note">
+    The username and password of the `example user` can be found in the <a href="#fusionauthconfig">FusionAuth via Docker</a> section at the top of this article.
+</Aside>
+
+## Next Steps
+This quickstart is a great way to get a proof of concept up and running quickly, but to run your application in production, there are some things you're going to want to do.
+
+### FusionAuth Customization
+FusionAuth gives you the ability to customize just about everything with the user's experience and your application's integration. This includes
+* [Hosted pages](/docs/v1/tech/themes/) such as login, registration, email verification, and many more
+* [Email templates](/docs/v1/tech/email-templates/email-templates)
+* [User data and custom claims in access token JWTs](/articles/tokens/jwt-components-explained)
+
+### Security
+* You may want to customize the [token expiration times and policies](/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth
+* You can use the hosted backend pages to run this example without your own OAuth backend, but [review the hosted backend docs](/docs/v1/tech/apis/hosted-backend) to be aware of the limitations of this approach
+* Choose [password rules](/docs/v1/tech/core-concepts/tenants#password) and a [hashing algorithm](/docs/v1/tech/reference/password-hashes) that meet your security needs
+
+### Tenant and Application Management
+* Model your application topology using [Applications](/docs/v1/tech/core-concepts/applications), [Roles](/docs/v1/tech/core-concepts/roles), [Groups](/docs/v1/tech/core-concepts/groups), [Entities](/docs/v1/tech/core-concepts/groups), and more
+* Set up [MFA](/docs/v1/tech/guides/multi-factor-authentication), [Social login](/docs/v1/tech/identity-providers/), and/or [SAML](/docs/v1/tech/identity-providers/samlv2/) integrations
+* Integrate with external systems using [Webhooks](/docs/v1/tech/events-webhooks/), [SCIM](/docs/v1/tech/core-concepts/scim), and [Lambdas](/docs/v1/tech/lambdas/)

@@ -47,7 +47,7 @@ npm install
 Then copy and paste the following code into `setup.js`. This file uses the [FusionAuth API](/docs/v1/tech/apis/) to configure an Application, CORS, and more to allow for easy integration.
 
 ```javascript
-{% remote_include https://raw.githubusercontent.com/fusionauth/fusionauth-example-client-libraries/angular/typescript/setup-angular.js %}
+{% remote_include https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/typescript/setup-angular.js %}
 ```
 
 Then, you can run the setup script.
