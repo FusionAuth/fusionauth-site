@@ -214,11 +214,10 @@ const convert = (filePath, partial = false, parent = '') => {
     return result.join('');
   };
 
-  const addRemoteCodeRef = (url, title, lang, tags) => {
+  const addRemoteCodeRef = (url, title) => {
     addImport("import RemoteCode from 'src/components/RemoteCode.astro';");
-
-    outLines.push(`<RemoteCode url="${url}"${ title ? (' title="' + title + '"') : ''}${lang ? (' lang="' + lang + '"') : ''}${ tags ? (' tags="' + tags + '"') : ''} />`);
-  } 
+    outLines.push(`<RemoteCode title="${title}" url="${url}" />`);
+  }
 
   // returns an array of matching files under the given directory
   const findMatchingFiles = (dir, filename) => {
@@ -235,16 +234,6 @@ const convert = (filePath, partial = false, parent = '') => {
 
   const moveInclude = (line, vars) => {
     line = line.replace('include::', '').replace('\[\]', '');
-
-    // handle remote code includes. for now, just remote code.
-    if (line.startsWith('https://raw.githubusercontent')) {
-      const includeMatch = line.match(/^([^[]*)(\[tags=(.*)])?/);
-      if (includeMatch) {
-        addRemoteCodeRef(includeMatch[1], undefined, undefined, includeMatch[3])
-      }
-      return;
-    }
-
     let newDir = '';
     const sharedPath = 'src/content/docs/_shared/';
     if (line.split('/').length === 1) {
@@ -291,24 +280,24 @@ const convert = (filePath, partial = false, parent = '') => {
       newPath = 'src/content/docs/apis/' + fileName.replace('.mdx', '.astro');
     } else {
       // look for a matching file elsewhere
-      let matchingFiles = findMatchingFiles('src/content/docs', fileName);
-
-      if (matchingFiles.length === 0) {
-        matchingFiles = findMatchingFiles('src/content/docs', fileName.replace('.mdx', '.astro'));
-      }
-
-      if (matchingFiles.length > 0) {
-        console.log(`Found a likely match for ${oldPath} in ${matchingFiles[0]}`);
-
-        newPath = matchingFiles[0];
-
-        if(matchingFiles.length > 1) {
-          matchingFiles.map((fname) => outLines.push(`{/* ${fname} */}`));
-        }
-      } else {
+      //let matchingFiles = findMatchingFiles('src/content/docs', fileName);
+      //
+      //if (matchingFiles.length === 0) {
+      //  matchingFiles = findMatchingFiles('src/content/docs', fileName.replace('.mdx', '.astro'));
+      //}
+      //
+      //if (matchingFiles.length > 0) {
+      //  console.log(`Found a likely match for ${oldPath} in ${matchingFiles[0]}`);
+      //
+      //  newPath = matchingFiles[0];
+      //
+      //  if(matchingFiles.length > 1) {
+      //    matchingFiles.map((fname) => outLines.push(`{/* ${fname} */}`));
+      //  }
+      //} else {
         gitMoveFile(oldPath, newPath);
         convert(newPath, true, line);
-      }
+      //}
     }
 
     let alias = camelCase(fileName.replace('.mdx', ''));
@@ -337,7 +326,7 @@ const convert = (filePath, partial = false, parent = '') => {
     let since = '';
     let defaults = '';
     let deprecated = '';
-    const nameMatch = header.match(/\[field]#([\w\.`\[\] {}]*)#/);
+    const nameMatch = header.match(/\[field]#([\w\.`\[\]{} ]*)#/);
     if (nameMatch) {
       name = ` name="${nameMatch[1]}"`.replaceAll('`', '');
     }
@@ -419,6 +408,7 @@ const convert = (filePath, partial = false, parent = '') => {
         'unlock': 'unlock',
         'server': 'server',
         'shield': 'shield',
+        'passport': 'passport-red',
       }[iconMatch[1]] + '"';
     }
     let textMatch = line.match(/fas]] (.*)/);
