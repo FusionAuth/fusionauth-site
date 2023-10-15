@@ -337,7 +337,7 @@ const convert = (filePath, partial = false, parent = '') => {
     let since = '';
     let defaults = '';
     let deprecated = '';
-    const nameMatch = header.match(/\[field]#([\w\.`\[\] ]*)#/);
+    const nameMatch = header.match(/\[field]#([\w\.`\[\] {}]*)#/);
     if (nameMatch) {
       name = ` name="${nameMatch[1]}"`.replaceAll('`', '');
     }
@@ -798,6 +798,9 @@ const convert = (filePath, partial = false, parent = '') => {
         if (line.length > 2) {
           outLines.push(`{/* ${line.slice(2)} */}`);
         }
+        return [true, frontDone];
+      } else if (line.trimStart().startsWith('[field')) {
+        convertApiField(line);
         return [true, frontDone];
       } else {
         line = convertLine(line)
