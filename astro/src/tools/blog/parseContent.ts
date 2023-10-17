@@ -29,8 +29,13 @@ export const parseContent = (blog: BlogContent): ParsedBlog => {
     }
   }
 
-  // render the markdown
-  let blurb = marked.parse(blurbLines.join('\n'));
+  // remove markdown headings, code formatting, and links from the blurb
+  let blurb = blurbLines.map((l) => l.replace(/^##* /, '').replaceAll('`', '')).join('\n');
+
+  blurb = blurb.replaceAll(/\[([^\]]*)]\([^)]*\)/g, (t) => {
+    return t.replace('[', '').replace(/].*/, '');
+  });
+
   // and trim
   if (blurb.length > 160) {
     blurb = blurb.substring(0, 160);

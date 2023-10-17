@@ -2,6 +2,7 @@
 /**
   * Remote code fetcher and syntax highlighter via the Astro Code component.
   */
+import { marked } from 'marked';
 
 export interface Props {
   /**
@@ -32,7 +33,7 @@ export interface Props {
   title?: string;
 }
 
-const { url, lang = 'plaintext', tags, title} = Astro.props as Props;
+const { url, lang = 'plaintext', tags, title, markdown } = Astro.props as Props;
 import { Code } from 'astro/components';
 let remoteSelectedCode = "not available";
 
@@ -49,6 +50,12 @@ try {
     } else {
       remoteSelectedCode = remoteCode.trim();
     }
+  }
+
+  if (markdown) {
+    remoteSelectedCode = remoteSelectedCode.replace('-->', '');
+    remoteSelectedCode = marked.parse(remoteSelectedCode);
+    console.log(remoteSelectedCode);
   }
 } catch (e) {
   console.log("Couldn't retrieve remote code",e);
@@ -78,4 +85,7 @@ function selectLines(content: string, lineNum: string, lineEnd: string): string 
     <em>{ title }</em>
   </p>
 }
-<Code code={remoteSelectedCode} lang={lang}/>
+{ markdown ?
+  <article set:html={remoteSelectedCode} /> :
+  <Code code={remoteSelectedCode} lang={lang}/>
+}
