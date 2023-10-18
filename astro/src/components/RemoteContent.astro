@@ -1,22 +1,16 @@
 ---
 /**
-  * Remote code fetcher and syntax highlighter via the Astro Code component.
+  * Remote content fetcher. Remote content is assumed to be markdown.
   */
+import { marked } from 'marked';
+
 export interface Props {
   /**
    * Url to fetch code from.  Also allows selecting specific line(s) of code with
    * the Github line syntax.
    * E.g., https://raw.githubusercontent.com/FusionAuth/fusionauth-example-client-libraries/main/ruby/Gemfile#L3
    */
-	url: string;
-
-  /**
-   * The language of your code.
-   * Supports all languages listed here: https://github.com/shikijs/shiki/blob/main/docs/languages.md#all-languages
-   *
-   * @default "plaintext"
-   */
-  lang?: string;
+  url: string;
 
   /**
    * Optional tags marking beginning and end of content to include
@@ -24,31 +18,28 @@ export interface Props {
    * Note: Currently only supports one set of tags.
    */
   tags?: string;
-
-  /**
-   * The title of the remote code section, shown as a piece of text above the block.
-   */
-  title?: string;
 }
 
-const { url, lang = 'plaintext', tags, title } = Astro.props as Props;
-import { Code } from 'astro/components';
-let remoteSelectedCode = "not available";
+const { url, tags } = Astro.props as Props;
+let remoteSelectedContent = "not available";
 
 try {
   const remoteResponse = await fetch(url);
-  const remoteCode = await remoteResponse.text();
+  const remoteContent = await remoteResponse.text();
 
   if (tags) {
-    remoteSelectedCode = selectTagged(remoteCode, tags);
+    remoteSelectedContent = selectTagged(remoteContent, tags);
   } else {
     const matchLines = url.match(/.*#L(\d+)(-L(\d+))?$/);
     if (matchLines) {
-      remoteSelectedCode = selectLines(remoteCode, matchLines[1], matchLines[3]);
+      remoteSelectedContent = selectLines(remoteContent, matchLines[1], matchLines[3]);
     } else {
-      remoteSelectedCode = remoteCode.trim();
+      remoteSelectedContent = remoteContent.trim();
     }
   }
+
+  remoteSelectedContent = marked.parse(remoteSelectedContent);
+
 } catch (e) {
   console.log("Couldn't retrieve remote code",e);
 }
@@ -58,6 +49,12 @@ function selectTagged(content: string, tags: string): string {
 
   const startLine = lines.findIndex((line) => line.includes(`tag::${tags}`));
   const endLine = lines.findIndex((line) => line.includes(`end::${tags}`));
+
+  // remove trailing multi-line HTML comment
+  if (startLine < lines.length - 1) {
+    lines[startLine + 1] = lines[startLine + 1].replace('-->', '');
+  }
+
   return lines.slice(startLine + 1, endLine).join("\n").replace(/\s+$/g, '');
 }
 
@@ -72,9 +69,4 @@ function selectLines(content: string, lineNum: string, lineEnd: string): string 
   }
 }
 ---
-{title &&
-  <p data-title={title}>
-    <em>{ title }</em>
-  </p>
-}
-<Code code={remoteSelectedCode} lang={lang}/>
+<article set:html={remoteSelectedContent} />
