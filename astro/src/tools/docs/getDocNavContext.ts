@@ -56,10 +56,7 @@ const prepContext = (context: DocNavContext, subcategory: string, tertcategory: 
   }
 }
 
-export const getDocNavContext = async (Astro: AstroGlobal) => {
-  const { entry } = Astro.props;
-  const { section } = entry.data;
-
+export const getDocNavContext = async (section: string) => {
   const context: DocNavContext = {
     category: {
       name: section,
@@ -71,10 +68,11 @@ export const getDocNavContext = async (Astro: AstroGlobal) => {
 
   const sectionDocs = await getCollection('docs', doc => doc.data.section === section);
   sectionDocs.forEach(doc => {
-    const { subcategory, tertcategory, quatercategory, title } = doc.data;
+    const { subcategory, tertcategory, quatercategory, title, description } = doc.data;
     const category = prepContext(context, subcategory, tertcategory, quatercategory);
     category.entries.push({
       title,
+      description,
       href: getDocHref(doc.slug),
     })
   });

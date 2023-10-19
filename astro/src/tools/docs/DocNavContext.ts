@@ -1,6 +1,7 @@
 export interface DocNavEntry  {
   title: string;
   href: string;
+  description?: string;
 }
 export interface DocNavContext {
   category: Category;
