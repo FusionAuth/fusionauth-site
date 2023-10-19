@@ -30,10 +30,10 @@ export async function getStaticPaths() {
       frontmatter.subcategory = parts[1].replaceAll('-', ' ');
     }
     if (parts.length > 2) {
-      frontmatter.tertcategory = parts[1].replaceAll('-', ' ');
+      frontmatter.tertcategory = parts[2].replaceAll('-', ' ');
     }
     if (parts.length > 3) {
-      frontmatter.quatercategory = parts[1].replaceAll('-', ' ');
+      frontmatter.quatercategory = parts[3].replaceAll('-', ' ');
     }
     return {
       params: { overview }, props: { frontmatter }
@@ -43,22 +43,31 @@ export async function getStaticPaths() {
 const { frontmatter } = Astro.props;
 const navContext = await getDocNavContext(frontmatter.section);
 let currentCat = navContext.category;
+console.log(frontmatter);
 if (frontmatter.subcategory) {
   currentCat = currentCat.subcategories.find(sub => sub.name === frontmatter.subcategory);
   if (frontmatter.tertcategory) {
-    currentCat = currentCat.subcategories.find(tert => tert.name == frontmatter.tertcategory);
+    currentCat = currentCat.subcategories.find(tert => tert.name === frontmatter.tertcategory);
     if (frontmatter.quatercategory) {
       currentCat = currentCat.subcategories.find(quat => quat.name === frontmatter.quatercategory);
     }
   }
 }
 const entries = currentCat.entries || [];
+const subCategories = currentCat.subcategories;
 ---
 
 <Layout {frontmatter} {navContext} disableTOC={true}>
+  {entries.length > 0 && <h1 class="capitalize">{currentCat.name} Pages </h1>}
   <div class="gap-6 grid grid-cols-1 not-prose lg:grid-cols-2" xmlns="http://www.w3.org/1999/xhtml">
   {entries.map(entry =>
     <ClickableCard href={entry.href} title={entry.title} description={entry.description}/>
   )}
-</div>
+  </div>
+  {subCategories.length > 0 && <h1 class="capitalize mt-8">{currentCat.name} Sub-Sections </h1>}
+  <div class="gap-6 grid grid-cols-1 not-prose lg:grid-cols-2" xmlns="http://www.w3.org/1999/xhtml">
+  {subCategories.map(entry =>
+    <ClickableCard href={entry.href} title={entry.name} />
+  )}
+  </div>
 </Layout>

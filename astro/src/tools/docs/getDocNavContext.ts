@@ -67,6 +67,7 @@ export const getDocNavContext = async (section: string) => {
   };
 
   const sectionDocs = await getCollection('docs', doc => doc.data.section === section);
+  sectionDocs.sort((a, b) => a.data.title.localeCompare(b.data.title));
   sectionDocs.forEach(doc => {
     const { subcategory, tertcategory, quatercategory, title, description } = doc.data;
     const category = prepContext(context, subcategory, tertcategory, quatercategory);
