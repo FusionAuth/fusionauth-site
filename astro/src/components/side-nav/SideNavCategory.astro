@@ -1,0 +1,73 @@
+---
+import { Category } from 'src/tools/docs';
+import Icon from 'src/components/icon/Icon.astro';
+
+const { category, level, frontmatter }: { category: Category, level: number} = Astro.props;
+
+let titleSize = {
+  0: 'text-sm',
+  1: 'text-xs',
+  2: 'text-[11px]',
+}[level] || 'text-xl';
+
+let titleWeight = {
+  0: 'font-semibold',
+  1: 'font-semibold',
+  2: 'font-medium',
+}[level] || 'font-bold';
+
+let categoryName = {
+  0: frontmatter.subcategory,
+  1: frontmatter.tertcategory,
+  2: frontmatter.quatercategory
+}[level] || '';
+
+let sectionName = {
+  0: frontmatter.section,
+  1: frontmatter.subcategory,
+  2: frontmatter.tertcategory,
+  3: frontmatter.quatercategory,
+}[level] || '';
+
+const itemClass = "block border-l border-transparent pl-4 text-slate-700 text-sm -ml-px dark:text-slate-400 dark:hover:text-slate-200 dark:border-slate-700 dark:hover:border-slate-200 dark:group-[.active]:border-indigo-400 dark:group-[.active]:text-indigo-400 group-[.active]:border-indigo-600 group-[.active]:font-semibold group-[.active]:text-indigo-600 hover:border-slate-900/50"
+---
+<ul>
+  {!category.entries.find(entry => entry.href === category.href) &&
+    <li class:list={["group", Astro.url.pathname === category.href ? "active " : ""]}>
+      <a href={category.href} class={itemClass}> Overview </a>
+    </li>
+  }
+  {category.entries.map(item =>
+    <li class:list={["group", category.name === sectionName && item.title === frontmatter.title ? "active " : ""]}>
+      <a href={item.href} class={itemClass}>{item.title}</a>
+    </li>)
+  }
+</ul>
+{category.subcategories.map(sub =>
+  <details open={sub.name === categoryName }>
+    <!--FIXME check safari-->
+    <summary class="list-none my-2">
+      <div class="flex flex-row justify-between w-full" >
+        <p class:list={[titleSize, titleWeight, "capitalize"]}>{sub.name}</p>
+        <span class:list={["down-icon", sub.name !== categoryName ? "" : "hidden"]}><Icon name="chevron-down"/></span>
+        <span class:list={["up-icon", sub.name === categoryName ? "" : "hidden"]}><Icon name="chevron-up"/></span>
+      </div>
+    </summary>
+    <Astro.self category={sub} level={level + 1} {frontmatter}/>
+  </details>
+)}
+<script>
+  const summaries = document.querySelectorAll('summary');
+  summaries.forEach(summary => summary.addEventListener('click', event => {
+    const details= summary.parentElement as HTMLDetailsElement;
+    const up = summary.querySelector('.up-icon');
+    const down = summary.querySelector('.down-icon');
+    if (!details.open) {
+      down.classList.add('hidden');
+      up.classList.remove('hidden');
+    } else {
+      up.classList.add('hidden');
+      down.classList.remove('hidden');
+    }
+  }));
+</script>
