@@ -87,13 +87,6 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-snake',
         navColor: 'indigo'
       },
-      {
-        href: '/blog/2020/08/19/securing-react-native-with-oauth',
-        title: 'React Native',
-        icon: '/img/icons/react.svg',
-        faIcon: 'fa-r',
-        navColor: 'indigo'
-      },
     ],
   },
   {
