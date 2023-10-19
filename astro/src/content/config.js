@@ -52,6 +52,7 @@ const docsCollection = defineCollection({
     section: z.string().optional(),
     subcategory: z.string().optional(),
     tertcategory: z.string().optional(),
+    quatercategory: z.string().optional(),
   }),
 });
 

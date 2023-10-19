@@ -1,35 +1,81 @@
-import { AstroGlobal } from "astro";
-import { startCase } from 'src/tools/string';
-import { refCase } from 'src/tools/string/refCase';
-import { getDocsPages } from 'src/tools/docs/getDocsPages';
+import { AstroGlobal } from 'astro';
+import { getCollection } from 'astro:content';
+import { refCase, startCase } from 'src/tools/string';
+import { getHref } from 'src/tools/blog';
+import { getDocHref } from 'src/tools/docs/getDocHref';
+import { Category, DocNavContext } from 'src/tools/docs/DocNavContext';
 
-export const getDocsSideMenu = async (Astro: AstroGlobal) => {
-  const { entry } = Astro.props;
-  const docs = await getDocsPages();
-  const subCatDocs = docs.filter(doc => doc.data.section === entry.data.section);
-  const allSubs = Array.from(subCatDocs.map(sec => sec.data.subcategory).filter(sub => !!sub).reduce((subs, sub) => subs.add(sub), new Set<string>()));
-  return allSubs.map((sub: string) => {
-  const subItems = subCatDocs.filter(s => s.data.subcategory === sub)
-      .map(s => ({title: startCase(s.data.title), path: `/docs/${s.slug}`}));
-  return {
-    title: startCase(sub),
-    href: `/docs/${refCase(sub)}`,
-    items: subItems,
+const joinup = (...parts: string[]) => [...parts].join('/')
+
+const prepContext = (context: DocNavContext, subcategory: string, tertcategory: string, quatercategory: string): Category => {
+  let subContext: Category = null;
+  let tertContext: Category = null;
+  let qautContext: Category = null;
+  if (subcategory) {
+    subContext = context.category.subcategories.find(sub => sub.name === subcategory);
+    if (!subContext) {
+      subContext = {
+        name: subcategory,
+        href: getDocHref(joinup(context.category.name, subcategory)),
+        entries: [],
+        subcategories: []
+      }
+      context.category.subcategories.push(subContext);
+    }
+  } else {
+    return context.category;
   }
-});
+  if (tertcategory) {
+    tertContext = subContext.subcategories.find(sub => sub.name === tertcategory);
+    if (!tertContext) {
+      tertContext = {
+        name: tertcategory,
+        href: getDocHref(joinup(context.category.name, subcategory, tertcategory)),
+        entries: [],
+        subcategories: [],
+      }
+      subContext.subcategories.push(tertContext);
+    }
+  } else {
+    return subContext;
+  }
+  if (quatercategory) {
+    qautContext = tertContext.subcategories.find(sub => sub.name === quatercategory);
+    if (!qautContext) {
+      qautContext = {
+        name: quatercategory,
+        href: getDocHref(joinup(context.category.name, subcategory, tertcategory, quatercategory)),
+        entries: [],
+        subcategories: []
+      }
+      tertContext.subcategories.push(qautContext);
+    }
+    return qautContext;
+  } else {
+    return tertContext;
+  }
 }
 
-export const getDocNavSections = async () => {
-  const docs = await getDocsPages();
-  const allSections = docs.map(doc => doc.data.section).reduce((set, section) => set.add(section), new Set<string>());
-  return Array.from(allSections).filter(section => !!section).map((section: string) => ({
-    path: `/docs/${section}`,
-    title: startCase(section),
-  }));
-};
+export const getDocNavContext = async (section: string) => {
+  const context: DocNavContext = {
+    category: {
+      name: section,
+      href: getDocHref(section),
+      entries: [],
+      subcategories: [],
+    },
+  };
 
-export const getDocNavContext = async (Astro: AstroGlobal) => {
-  const sideMenu = await getDocsSideMenu(Astro);
-  const sections = await getDocNavSections();
-  return { sideMenu, sections };
+  const sectionDocs = await getCollection('docs', doc => doc.data.section === section);
+  sectionDocs.sort((a, b) => a.data.title.localeCompare(b.data.title));
+  sectionDocs.forEach(doc => {
+    const { subcategory, tertcategory, quatercategory, title, description } = doc.data;
+    const category = prepContext(context, subcategory, tertcategory, quatercategory);
+    category.entries.push({
+      title,
+      description,
+      href: getDocHref(doc.slug),
+    })
+  });
+  return context;
 }
