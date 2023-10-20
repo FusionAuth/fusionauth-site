@@ -15,25 +15,24 @@ import Aside from '../../components/Aside.astro';
 import LoginAfter from '../../diagrams/quickstarts/login-after.astro';
 import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
 import RemoteCode from '../../components/RemoteCode.astro';
+import RemoteValue from '../../components/RemoteValue/RemoteValue.astro';
+import Uielement from '../../components/Uielement.astro';
+import Field from '../../components/Field.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
 
+In this quickstart guide you will build a Drupal web application and integrate it FusionAuth.
 
-You will create a Drupal application and integrate it with FusionAuth in this quickstart.
-You'll be creating it for [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM), a leader in the world of coin-to-dollar conversion. Both public facing sections and areas designated for logged-in users will be present.
+The Drupal application will be a trivial banking application that will allow users to make change from whole dollars, based on [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM).
 
-The Docker compose file and source code for a complete application are available at
-https://github.com/FusionAuth/fusionauth-php-quickstart-drupal-web
+The docker compose file and source code for a complete application are available at
+https://github.com/ritza-co/fusionauth-quickstart-php-drupal-web
 
 ## Prerequisites
 
-- [Composer](https://getcomposer.org/): This will be used to install a copy of Drupal and all required packages.
-- [Drupal](https://www.drupal.org/): We'll be grabbing the latest copy of Drupal 10.
-- [Drush](https://www.drupal.org/): This is used to control, manipulate and manage the Drupal application from the command line.
 - [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](/docs/v1/tech/installation-guide/)).
 
-This app has been tested with Drupal 10.1.5. This example should work with other compatible versions of Drupal 10.
-
 <Aside type="note">
-Drupal 10 requires PHP 8.1.0 or higher and MariaDB 10.3.7+ or MySQL/Percona 5.7.8+ in order to run.
+  This app has been tested with Drupal 10.1.5. This example should work with other compatible versions of Drupal 10. Drupal 10 requires PHP 8.1.0 or higher and MariaDB 10.3.7+ or MySQL/Percona 5.7.8+ in order to run.
 </Aside>
 
 ## General Architecture
@@ -52,20 +51,125 @@ In general, you are introducing FusionAuth in order to normalize and consolidate
 
 ## Getting Started
 
-In this section, you'll get FusionAuth up and running and use Composer to create a new Drupal application.
+In this section, you'll get FusionAuth up and running on your machine. You'll also create a Drupal application and configure it to use FusionAuth for authentication.
 
-### Clone the Code
+### Clone The Code
 
 First off, grab the code from the repository and change into that directory.
 
 ```shell
-git clone https://github.com/FusionAuth/fusionauth-quickstart-php-drupal-web.git
-cd fusionauth-quickstart-drupal-web
+git clone https://github.com/ritza-co/fusionauth-quickstart-php-drupal-web.git
+cd fusionauth-quickstart-php-drupal-web
 ```
 
-### Run FusionAuth via Docker
+### Create Your Drupal Application
 
-In the root directory of the repo you'll find a Docker compose file (docker-compose.yml) and an environment variables configuration file (.env). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
+The `complete-application` directory in the repository already contains a complete Drupal application, but for learning purposes you're going to create a new one from scratch and then switch the volumes in the `docker-compose.yml` file to point to your new application.
+
+Let's start by grabbing a copy of Drupal 10 and creating a new project by running the following command.
+
+```shell
+composer create-project drupal/recommended-project:10.1.5 "your-application" && cd your-application
+```
+
+Next, you're going to make two changes in the `docker-compose.yml` file that will allow you to use the new Drupal application.
+
+<Aside type="note">
+ If you want to use the existing application at any point you simply need to revert the next two changes and then rebuild the docker containers and volumes.
+</Aside>
+
+Under the `web` service change `volumes` from `./complete-application:/opt/drupal:cached` to `./your-application:/opt/drupal:cached`.
+
+Next, you're going to update the database name so that you are not using the same database as the existing application. Under the `db2` service change the key MYSQL_DATABASE from `drupaldb` to `changebank`.
+
+Save your changes and then run the following commands to get the application up and running.
+
+```shell
+docker compose up -d
+```
+
+Once the application is up and running, you can navigate to http://localhost/ and you should see the Drupal installation wizard.
+
+Run through the wizard and fill in all required fields. Make sure to enter the following.
+
+On <Breadcrumb label="Step 1"/> choose you language. Click <Uielement label="Save and continue"/>.
+
+On <Breadcrumb label="Step 2"/> choose profile `Standard`. Click <Uielement label="Save and continue"/>.
+
+On <Breadcrumb label="Step 4"/> enter the following database connection details.
+
+- <Field label="Database type"/> - `MySQL, MariaDB, Percona Server, or equivalent`.
+- <Field label="Database name"/> - `changebank`.
+- <Field label="Database username"/> - `drupal`.
+- <Field label="Database password"/> - `verybadpassword`.
+- Expand on Advanced options.
+  - set <Field label="Host"/> to `fusionauth-quickstart-php-drupal-web-db2-1`.
+  - set the <Field label="port number"/> to `3307`.
+- Click <Uielement label="Save and continue"/>.
+
+On <Breadcrumb label="Step 7"/>
+
+- <Field label="Site name"/> - `Changebank`.
+- <Field label="Site email addres"/> - `admin@example.com`.
+- <Field label="Username"/> - `admin`.
+- <Field label="Password"/> - `verybadpassword`.
+- <Field label="Email address"/> - `admin@example.com`.
+- Click <Uielement label="Save and continue"/>.
+
+
+Once you've successfully completed the installation wizard you should land up on the welcome page.
+
+Now that your Drupal application is installed, you're going to install a contributed module called OpenID Connect that will handle the authentication with FusionAuth and another module called Admin Toolbar which adds a bit of quality of life when navigating Drupal's administration menu.
+
+In a terminal run the following command from `your-application` directory:
+
+```shell
+composer require 'drupal/openid_connect:3.x-dev@dev' 'drupal/admin_toolbar:^3.4'
+```
+
+To enable the modules, you can visit the extensions page of your Drupal application at http://localhost/admin/modules. Search for OpenID Connect and Admin Toolbar using the <Field label="Filter"/> field. Select the module checkboxes and then clicking on the <Uielement label="Install"/> button.
+
+Alternatively, you can use drush to enable the modules. Drush is a command line shell and Unix scripting interface for Drupal. It is available as a [composer package](https://packagist.org/packages/drush/drush) and can be installed by running the following command:
+
+```shell
+composer require drush/drush
+```
+
+You might need to rebuild the docker containers and volumes for the changes to take effect. You can do so by running the following command.
+
+```shell
+docker compose down -v && docker compose up -d
+```
+
+Once the containers are up and running, you'll want to connect to the Drupal container's terminal so that you can run drush commands. To do so, run the following command.
+
+```shell
+docker exec -it fusionauth-quickstart-php-drupal-web-web-1 bash
+```
+
+You should now be inside the Drupal container. Run the following command to enable the modules:
+
+```shell
+vendor/bin/drush pm-enable openid_connect admin_toolbar
+```
+
+Drush can be used to run a number of commands and makes it easy to perform common tasks in Drupal.
+
+Other popular commands include:
+
+- `vendor/bin/drush cr`: Clears the cache,
+- `vendor/bin/drush pm-enable <module name>`: Enables a module,
+- `vendor/bin/drush updb`: Updates the database,
+- `vendor/bin/drush uli`: Generates a one-time login link for a user,
+- and many more.
+
+For a full list of commands, visit https://www.drush.org/12.2.0/commands/all/.
+
+Next, we're going to head over to FusionAuth and grab the client id and client secret that we will need to configure the OpenID Connect module.
+
+### Run FusionAuth Via Docker
+
+In the root directory of the repo you'll find a Docker compose file `docker-compose.yml` and an environment variables configuration file `.env`. If you started the Drupal application, then the FusionAuth containers will already be running too. If not, you can start them by running the following command:
 
 ```shell
 docker compose up -d
@@ -74,73 +178,57 @@ docker compose up -d
 Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/v1/tech/installation-guide/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to a certain initial state.
 
 <Aside type="note">
-If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by executing `docker compose down -v`, then re-run `docker compose up -d`.
+ If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by executing `docker compose down -v`, then re-run `docker compose up -d`.
 </Aside>
 
 FusionAuth will be initially configured with these settings:
 
-* Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
-* Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
-* Your example username is `richard@example.com` and the password is `password`.
-* Your admin username is `admin@example.com` and the password is `password`.
-* The base URL of FusionAuth `http://localhost:9011/`.
+* Your client Id is: `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`
+* Your client secret is: `super-secret-secret-that-should-be-regenerated-for-production`
+* Your example username is `richard@example.com` and your password is `password`.
+* Your admin username is `admin@example.com` and your password is `password`.
+* Your fusionAuthBaseUrl is 'http://localhost:9011/'
 
-You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don't need to.
-
-### Create your Drupal Application
-
-Now you are going to create a Drupal application. In your terminal, run the following command to pull the latest version of Drupal 10:
-
-```shell
-composer create-project drupal/recommended-project:10.1.5 "changebank" && cd changebank
-```
-
-Navigate to your browser and enter the path to your drupal installation.
-
-Run through the installation wizard and fill in all required fields.
-
-Once you've successfully completed the installation wizard you should land up on the welcome page.
-
-Now that your Drupal application is installed, we're going to install a contributed module called OpenID Connect that will handle the authentication with FusionAuth and another module called Admin Toolbar which adds a bit of quality of life when navigating Drupal's administration menu.
-
-Flip back to your terminal and run the following command:
-
-```shell
-composer require 'drupal/openid_connect:3.x-dev@dev' 'drupal/admin_toolbar:^3.4'
-```
-
-To enable the modules, you can do so by visiting the extensions page of your Drupal application at /admin/modules or by running the following command:
-
-```shell
-drush pm-enable openid_connect admin_toolbar
-```
+You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker and Kickstart, everything will already be configured correctly.
 
 ## Authentication
 
-To setup the authentication between Drupal and FusionAuth, head to /admin/config/people/openid-connect on your Drupal site or hover over Configuration > People and click on OpenID Connect.
+To setup the authentication between Drupal and FusionAuth, head to http://localhost/admin/config/people/openid-connect on your Drupal site.
 
-Add a new client by clicking on + Generic OAuth 2.0 and then filling in the details as follows:
+Add a new client by clicking on <Uielement label="+ Generic OAuth 2.0"/> and then filling in the details as follows:
 
-- Name:
-- Client ID:
-- Client secret:
-- Authorization endpoint:
-- Token endpoint:
+- <Field label="Name"/> - `generic`
+- <Field label="Client ID"/> - `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`
+- <Field label="Client secret"/> - `super-secret-secret-that-should-be-regenerated-for-production`
+- <Field label="Authorization endpoint"/> - `http://host.docker.internal:9011/oauth2/authorize`
+- <Field label="Token endpoint"/> - `http://host.docker.internal:9011/oauth2/token`
+- <Field label="UserInfo endpoint"/> - `http://host.docker.internal:9011/oauth2/userinfo`
 
-## App Customization
+Click <Uielement label="Create OpenID Connect client"/> to create the client.
+
+### Testing Authentication
+
+Now that we have the client configured, we can test the authentication flow.
+
+In the browser navigate to http://localhost/user/logout to logout of the Drupal application. Navigate to http://localhost/user/login and click on the <Uielement label="Login with generic"/> button.
+
+You should be taken to the FusionAuth login page. Enter the following credentials and you can login with username `richard@example.com` and password `password`.
+
+You should be redirected back to the Drupal application and logged in.
+
+## Customization
 
 In this section, you'll turn your application into a trivial banking application with some styling.
 
-We're going to create a module called Changebank that will handle the logic for making change from whole dollars and also add a couple of blocks to the application.
+You're going to create a module called Changebank that will handle the logic for making change from whole dollars and also add a couple of blocks to the application.
 
 ### Generate Module
 
-At your terminal, make sure you are inside the Drupal project directory and run the following command:
+On your terminal, make sure you are inside the Drupal docker container and run the following command.
 
 ```shell
-drush generate module
+vendor/bin/drush generate module
 ```
-
 You will be presented with the module wizard. Fill it out as follows:
 
 ```
@@ -186,16 +274,14 @@ No
 
 The following directories and files have been created or updated:
 
-- /var/www/html/web/modules/custom/changebank/changebank.info.yml
-- /var/www/html/web/modules/custom/changebank/changebank.module
-- /var/www/html/web/modules/custom/changebank/changebank.routing.yml
-- /var/www/html/web/modules/custom/changebank/src/Controller/ChangebankController.php
-- /var/www/html/web/modules/custom/changebank/src/Plugin/Block/ExampleBlock.info.yml
+- .../web/modules/custom/changebank/changebank.info.yml
+- .../web/modules/custom/changebank/changebank.module
+- .../web/modules/custom/changebank/changebank.routing.yml
+- .../web/modules/custom/changebank/src/Controller/ChangebankController.php
+- .../web/modules/custom/changebank/src/Plugin/Block/ExampleBlock.info.yml
 ```
 
-
-
-The first block that was created when we generated the module has a filename of `ExampleBlock.php` which is far too generic.
+The first block that was created when we generatd the module has a filename of `ExampleBlock.php` which is far too generic.
 
 Navigate to /web/modules/custom/changebank/src/Plugin/Block/ and rename it to `UserLoginLogoutBlock.php` which is more descriptive of its intended purpose.
 
@@ -204,7 +290,7 @@ We're also going to generate an additional block and a form which we will do now
 To generate the block, run the following command and complete the wizard:
 
 ```shell
-drush generate block
+vendor/bin/drush generate block
 ```
 
 You will be presented with the block wizard. Fill it out as follows:
@@ -238,13 +324,13 @@ No
 
 The following directories and files have been created or updated:
 
-- /var/www/html/web/modules/custom/changebank/src/Plugin/Block/UserEmailBlock.php
+- .../web/modules/custom/changebank/src/Plugin/Block/UserEmailBlock.php
 ```
 
 To generate the form, run the following command:
 
-```bash
-drush generate form
+```shell
+vendor/bin/drush generate form
 ```
 
 You will be presented with the form wizard. Fill it out as follows:
@@ -267,7 +353,7 @@ The following directories and files have been created or updated:
 ```
 
 
-### Customizing the Module
+### Customizing The Module
 
 Next, we are going to customize the module by making changes to the following files:
 
@@ -278,11 +364,11 @@ Next, we are going to customize the module by making changes to the following fi
 - `UserLoginLogoutBlock.php`
 - `changebank.module`
 
-#### Customizing the Changebank Form
+#### Customizing The Make Change Form
 
 Select the form `ChangebankForm.php` located at /web/modules/custom/changebank/src/Form/ in your text editor, clear the existing boilerplate contents and add the following in:
 
-```
+```php
 <?php
 
 namespace Drupal\changebank\Form;
@@ -341,34 +427,35 @@ class ChangebankForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $amount = $form_state->getValue('amount');
-    $quarters = 0;
-    $dimes = 0;
-    $nickels = 0;
-    $pennies = 0;
 
-    // Calculate the number of quarters, dimes, nickels, and pennies for every 100 cents (1 dollar).
-    $quarters_per_dollar = 2;
-    $dimes_per_dollar = 3;
-    $nickels_per_dollar = 3;
-    $pennies_per_dollar = 5;
+    $amount_in_cents = round($amount * 100);
 
-    $quarters += floor($amount) * $quarters_per_dollar;
-    $dimes += floor($amount) * $dimes_per_dollar;
-    $nickels += floor($amount) * $nickels_per_dollar;
-    $pennies += floor($amount) * $pennies_per_dollar;
-
-    $amount_in_cents = $amount * 100;
-    $amount_in_cents %= 100;
-
-    $quarters += floor($amount_in_cents / 25);
+    $quarters = floor($amount_in_cents / 25);
     $amount_in_cents %= 25;
-    $dimes += floor($amount_in_cents / 10);
-    $amount_in_cents %= 10;
-    $nickels += floor($amount_in_cents / 5);
-    $amount_in_cents %= 5;
-    $pennies += $amount_in_cents;
 
-    $result = $this->t('We can make change for $@dollars with @dimes dimes, @nickels nickels and @pennies pennies!', [
+    $dimes = floor($amount_in_cents / 10);
+    $amount_in_cents %= 10;
+
+    $nickels = floor($amount_in_cents / 5);
+    $amount_in_cents %= 5;
+
+    $pennies = $amount_in_cents;
+
+    $coins = [];
+    if ($quarters > 0) {
+      $coins[] = "@quarters quarters";
+    }
+    if ($dimes > 0) {
+      $coins[] = "@dimes dimes";
+    }
+    if ($nickels > 0) {
+      $coins[] = "@nickels nickels";
+    }
+    if ($pennies > 0) {
+      $coins[] = "@pennies pennies";
+    }
+
+    $result = $this->t('We can make change for $@dollars with ' . implode(', ', $coins) . '!', [
       '@dollars' => $amount,
       '@quarters' => $quarters,
       '@dimes' => $dimes,
@@ -385,11 +472,11 @@ class ChangebankForm extends FormBase {
 }
 ```
 
-#### Customizing the Controller
+#### Customizing The Controller
 
 Select the `ChangebankController.php` file located at /web/modules/custom/changebank/src/Controller/ in your text editor and make the following changes:
 
-```
+```php
 <?php
 
 namespace Drupal\changebank\Controller;
@@ -432,7 +519,7 @@ class ChangebankController extends ControllerBase {
 }
 ```
 
-#### Customizing the Routing
+#### Customizing The Routing
 
 Next we're going to setup two routes, one for the form and one for the account page. Select the `changebank.routing.yml` file located at /web/modules/custom/changebank/ and make the following changes:
 
@@ -459,7 +546,7 @@ changebank.account:
 
 We want to display the current user's email address in a block and we're going to use the User Email Block to do so. Select the `UserEmailBlock.php` file located at /web/modules/custom/changebank/src/Plugin/Block/ and make the following changes:
 
-```
+```php
 <?php
 
 namespace Drupal\changebank\Plugin\Block;
@@ -608,7 +695,7 @@ class UserLoginLogoutBlock extends BlockBase implements ContainerFactoryPluginIn
 }
 ```
 
-#### Customizing the .Module File
+#### Customizing The .Module File
 
 In order to make the blocks available to the application, we need to make some changes to the `changebank.module` file located at /web/modules/custom/changebank/ and add the following:
 
@@ -638,6 +725,14 @@ function changebank_block_info() {
 
     return $blocks;
 }
+```
+
+#### Enable The Changebank Module
+
+Finally, we need to enable the Changebank module. To do so, navigate to /admin/modules and select the checkbox next to Changebank and then click on the `Install` button or run the following command inside the Drupal docker container:
+
+```bash
+vendor/bin/drush pm-enable changebank
 ```
 
 ### Add Styling
@@ -684,7 +779,7 @@ Inside the templates directory we are going to create the following files:
 
 Inside the page template for the front page, denoted by the `page--front.html.twig` filename, add the following:
 
-```
+```twig
 {% extends "@bootstrap_barrio/layout/page.html.twig" %}
 
 {#
@@ -846,7 +941,7 @@ Next, we're going to add markup to create a custom layout for our site logo, the
 
 Add the following to the `region--secondary-menu.html.twig` template:
 
-```
+```twig
 {#
 /**
  * @file
@@ -893,7 +988,7 @@ Finally, since we added the System Branding Block to the secondary menu region t
 
 Add the following to the `block--system-branding-block.html.twig` template:
 
-```
+```twig
 {#
 /**
  * @file
@@ -923,10 +1018,9 @@ Add the following to the `block--system-branding-block.html.twig` template:
     </div>
   {% endif %}
 ```
+In the above we simply hid the  `site_name`  variable by commenting it out, but you can delete it if you want.
 
-In the above we simply hid the {{ site_name }} variable by commenting it out, but you can delete it if you want.
-
-#### Customizing the Stylesheet
+#### Customizing The Stylesheet
 
 Next, we're going to add some styling to the application to make it look a little nicer. Select the `styles.css` file located at /web/themes/custom/changebank/css/ and add the following:
 
@@ -1096,7 +1190,7 @@ Click on the `Roles` tab under Visibility and select the `Authenticated user` ro
 Click on `Save block`.
 
 <Aside type="note">
-Although we set the access restriction to the account and makechange routes to authenticated (logged in) users in our custom module, we also want to make sure that the menu itself is only visible to authenticated users as well.
+  Although we set the access restriction to the account and makechange routes to authenticated (logged in) users in our custom module, we also want to make sure that the menu itself is only visible to authenticated users as well.
 </Aside>
 
 #### Enable User Email Block
@@ -1156,8 +1250,22 @@ Drupal is a very powerful CMS and there are many ways to customize it. Here are 
 
 * I get `This site can’t be reached  localhost refused to connect.` when I click the Login button
 
-Ensure FusionAuth is running in the Docker container.  You should be able to login as the admin user, `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
+Ensure FusionAuth is running in the Docker container.  You should be able to login as the admin user, <code><RemoteValue url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-php-drupal-web/main/kickstart/kickstart.json" selector="$.variables.adminEmail" /></code> with a password of <code><RemoteValue url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-php-drupal-web/main/kickstart/kickstart.json" selector="$.variables.adminPassword" /></code> at [http://localhost:9011/admin](http://localhost:9011/admin).
 
 * I get an error page when I click on the Login button with message of `"error_reason" : "invalid_client_id"`
 
 Ensure the value for `config.x.fusionauth.client_id` in the file `config/environments/development.rb` matches client Id configured in FusionAuth for the Example App Application at [http://localhost:9011/admin/application/](http://localhost:9011/admin/application/).
+
+* I get an error `/usr/bin/env: 'php\r': No such file or directory` when trying to run drush commands.
+
+Incorrect line endings are known to cause this issue. To fix the issue, you need to convert the line endings of the file from Windows to Unix. this can be done by use of the `dos2unix` command. You can install `dos2unix` by running the following command inside the Drupal container:
+
+```shell
+apt-get update && apt-get install -y dos2unix
+```
+
+Once installed, you can convert the line endings of the file by running the following command inside the Drupal container:
+
+```shell
+dos2unix /opt/drupal/vendor/bin/drush
+```
