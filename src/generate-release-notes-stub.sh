@@ -37,9 +37,9 @@ gh_issue_list() {
         if [[ "${generated_copy}" == "" ]]; then
             generated_copy=${title}
         else
-            generated_copy=`echo $generated_copy | sed 's#\\\\r\\\\n#\n#g' | grep -o '[[:alpha:]].*'`
+            generated_copy=`echo $generated_copy | sed 's#\\\\r\\\\n#\n#g'`
         fi
-        echo "* ${generated_copy}"
+        echo "* ${generated_copy#[$'\r\t\n ']}"
         echo "** Resolves https://github.com/FusionAuth/fusionauth-issues/issues/$number[GitHub Issue #$number]"
     done
     echo ""
