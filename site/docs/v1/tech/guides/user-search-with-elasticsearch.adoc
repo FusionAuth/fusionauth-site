@@ -1,7 +1,7 @@
 ---
 layout: doc
 title: Searching Users With Elasticsearch
-description: Learn how to search users with the Elasticsearch searc engine
+description: Learn how to search users with the Elasticsearch search engine
 navcategory: developer
 ---
 
@@ -15,7 +15,7 @@ Examples are in curl, but you may also use any of the link:/docs/v1/tech/client-
 
 * <<What Type of Engine>>
 * <<An Introduction To The Elasticsearch Search Engine>>
-** <<Three Types of Searches>>
+** <<Four Types of Searches>>
 ** <<Field Mappings>>
 * <<Results Of a User Search>>
 * <<User Search Examples>>
@@ -53,7 +53,7 @@ If you are using the database search engine, you'll want to link:/docs/v1/tech/c
 
 With any search, you can make either a `POST` or a `GET` request. The functionality is exactly the same, but a `POST` request can be larger. On the other hand, a `GET` request is easily shared. Pick what works for you. However, this document uses `POST` requests.
 
-=== Three Types of Searches
+=== Four Types of Searches
 
 There are three parameters for a search, and they are mutually exclusive.
 
@@ -73,6 +73,10 @@ There are three parameters for a search, and they are mutually exclusive.
 | `query`
 | Yes
 | Useful to leverage the full power of Elasticsearch queries and need to look across different fields, including nested values, and/or use compound or complex search parameters such as ranges.
+
+| `nextResults`
+| Yes
+| Allows you to continue paging forward in the results set after an initial `query` or `queryString` query. Useful for paging past the 10000 results limit in Elasticsearch. See link:docs/v1/tech/reference/limitations#user-searches[Limitations] for more information. Available since version 1.48.0.
 
 |===
 
@@ -98,6 +102,21 @@ You may use `AND` and `OR` clauses in this parameter to construct compound queri
 ==== Query Searches
 
 The `query` parameter search requires an escaped JSON string which is passed to Elasticsearch and therefore must be a valid Elasticsearch query. With a `query` search, you have the full power of the Elasticsearch query language.
+
+==== Next Results Searches
+
+[NOTE.since]
+====
+Available since 1.48.0
+====
+
+You may perform a `nextResults` search after receiving a `nextResults` token in the response from a previous `query` or `queryString` query when using the Elasticsearch engine.
+
+The token contains encoded information about the prior query and the previously returned results and if provided will return a set of results that immediately follow the results from the previous response in the ordered query.
+
+This is roughly equivalent to performing a normal paginated request using `startRow`. For example if you submitted a search quest with a `startRow` of `0` and a `numberOfResults` of `25` and then supplied the same query with a `startRow` of `25` and `numberOfResults` of `25` you should expect to receive the same users in the response as if you supplied a query with a `startRow` of `0` and a `numberOfResults` of `25` and then use the `nextResults` token with a `numberOfResults` of `25` in the next request.
+
+Where this differs is the ability to continue paging through large result sets. Elasticsearch has a limitation that prevents a search from paging past 10000 results. The `nextResults` token will internally perform a `search_after` query in Elasticsearch which can bypass that limitation. You can find more info in the link:https://www.elastic.co/guide/en/elasticsearch/reference/7.17/paginate-search-results.html[Elasticsearch Documentation].
 
 === Field Mappings
 
@@ -314,7 +333,47 @@ You'll get back any users that match all the criteria.
 
 include::docs/v1/tech/shared/_paginating-search-results.adoc[]
 
-Note that you'll only be able to get back 10000 results no matter how you paginate. See the <<Limitations>> section for workarounds.
+Note that prior to version 1.48.0 you'll only be able to get back 10000 results no matter how you paginate. See the <<Limitations>> section for workarounds.
+
+=== Extended Pagination
+
+[NOTE.since]
+====
+Available since 1.48.0
+====
+
+Suppose you ran the following search query because you wanted to find all of your users. Note the use of `accurateTotal` to see the true number of available users.
+
+[source,json]
+.Search Query To Find All Users
+----
+include::docs/src/json/users/search-queryString-all-users-elasticsearch-request.json[]
+----
+
+You might get a response back like this:
+
+[source,json]
+.Result Of Find All Query
+----
+{
+  "nextResults": "eyJscyI6WyIxLjAwMTQ2MTkiLG51bGwsInRlc3R1c2VyOTkwOUBsb2NhbC5jb20iLCJjNmI4ZjQyNC0wOTRjLTQ1MWYtYWMxNS05Y2ZkODI3NTZlNGEiXSwicXMiOiIqIiwic2YiOltdfQ",
+  "total": 12009,
+  "users": [
+    ...
+  ]
+}
+----
+
+If you attempt run a query to find results using a `startRow` greater than 10000 you will receive an error. To get around this you can use the same query with a `startRow` of 9975 and a `numberOfResults` of 25. Using those results you can take the `nextResults` token from the response and run the following query:
+
+[source,json]
+.Next Results Query
+----
+include::docs/src/json/users/search-nextResults-request.json[]
+----
+
+You will receive a response containing users 10001 through 10025. You can then take the `nextResults` token from that response and repeat the request for users 10026 through 10050, and continue to repeat as needed to page through the results.
+
 
 == Re-indexing
 

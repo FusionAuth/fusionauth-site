@@ -15,6 +15,7 @@ FusionAuth ships with two options for search: a simple search via the database s
 * <<Using the Database Search Engine>>
 * <<Using the Elasticsearch Search Engine>>
 * <<Pagination>>
+** <<Extended Pagination>>
 
 == Configuration
 
@@ -81,4 +82,29 @@ include::docs/v1/tech/shared/_re-indexing-elasticsearch.adoc[]
 
 include::docs/v1/tech/shared/_paginating-search-results.adoc[]
 
-Note that you'll only be able to get back 10000 results no matter how you paginate. See the link:/docs/v1/tech/reference/limitations#user-searches[Known Limitations] section for more and some workarounds.
+Note that prior to version 1.48.0 you'll only be able to get back 10000 results no matter how you paginate. See the link:/docs/v1/tech/reference/limitations#user-searches[Known Limitations] section for more and some workarounds.
+
+[NOTE.since]
+====
+
+As of version 1.48.0, FusionAuth you can use a [field]#nextResults# token to page past the 10000 results limitation when using the Elasticsearch engine.
+
+See the <<Extended Pagination>> section for more details.
+
+====
+
+=== Extended Pagination
+
+Starting in version 1.48.0 of FusionAuth every search using the Elasticsearch engine will return a [field]#nextResults# token in the response. You may use this token on subsequent calls to continue paging forward in the result set and go past the 10000 results limit with Elasticsearch. Every search request made a [field]#nextResults# token will return a page of results and another [field]#nextResults# token that can be used to retrieve the next page. These calls can be made indefinitely until the number of returned results is 0.
+
+Internally FusionAuth uses this token to make a `search_after` parameter on the request to Elasticsearch. See link:https://www.elastic.co/guide/en/elasticsearch/reference/7.17/paginate-search-results.html[the Elasticsearch documentation] for more information.
+
+[NOTE]
+====
+Because this call relies on the parameters of a previous search request you cannot supply new parameters in a search request with a [field]#nextResults# token which would change the query to Elasticsearch.
+
+As such when using a [field]#nextResults# token in a search request you may only supply the [field]#numberOfResults# as an additional request parameter.
+====
+
+For more detail on extended pagination see the link:/docs/v1/tech/guides/user-search-with-elasticsearch[Searching Users With Elasticsearch] guide.
+
