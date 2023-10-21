@@ -62,13 +62,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'spa',
     desc: 'JavaScript app that runs in the browser',
     articles: [
-      {
-        href: '/blog/2022/07/15/remix-demo',
-        title: 'Remix',
-        icon: '/img/icons/javascript.svg',
-        faIcon: 'fa-j',
-        navColor: 'yellow'
-      },
     ],
   },
   {
