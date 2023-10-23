@@ -263,6 +263,7 @@ const redirects = {
   '/docs/v1/tech/guides/user-actions': '/docs/lifecycle/manage-users/user-actions',
   '/docs/v1/tech/migration-guide/cognito': '/docs/lifecycle/migrate-users/bulk/cognito',
   '/docs/v1/tech/migration-guide/auth0': '/docs/lifecycle/migrate-users/bulk/auth0',
+  '/docs/v1/tech/guides/auth0-migration': '/docs/lifecycle/migrate-users/bulk/auth0',
   '/docs/v1/tech/migration-guide/duende': '/docs/lifecycle/migrate-users/bulk/duende',
   '/docs/v1/tech/migration-guide/firebase': '/docs/lifecycle/migrate-users/bulk/firebase',
   '/docs/v1/tech/migration-guide/general': '/docs/lifecycle/migrate-users/bulk/general',
@@ -298,7 +299,6 @@ const redirects = {
   '/docs/v1/tech/tutorials/prometheus': '/docs/operate/secure-and-monitor/prometheus',
   '/docs/v1/tech/admin-guide/securing': '/docs/operate/secure-and-monitor/securing',
   '/docs/v1/tech/admin-guide/vulnerabilities': '/docs/operate/secure-and-monitor/vulnerabilities',
-  'troubleshooting categories': '/docs/v1/tech/docs/operate/troubleshooting/troubleshooting categories',
   '/docs/v1/tech/admin-guide/technical-support': '/docs/operate/troubleshooting/technical-support',
   '/docs/v1/tech/admin-guide/troubleshooting': '/docs/operate/troubleshooting/troubleshooting',
   '/docs/v1/tech/getting-started/5-minute-docker': '/docs/quickstarts/5-minute-docker',
@@ -351,8 +351,8 @@ const redirects = {
   '/docs/v1/tech/admin-guide/release-notifications': '/docs/operate/roadmap/releases',
   '/docs/v1/tech/apis/consent': '/docs/apis/consents',
   '/docs/v1/tech/common-errors': '/docs/operate/troubleshooting/troubleshooting',
-  '/docs/v1/tech/articles/security/guide-to-user-data-security': '/docs/lifecycle/migrate-users/bulk/auth0',
   '/docs/v1/tech/guides/migration': '/docs/lifecycle/migrate-users/bulk/general',
+  '/docs/v1/tech/guides/migration/general': '/docs/lifecycle/migrate-users/bulk/general',
   '/docs/v1/tech/guides/passwordless': '/docs/lifecycle/authenticate-users/passwordless/magic-links',
   '/docs/v1/tech/guides/webauthn': '/docs/lifecycle/authenticate-users/passwordless/webauthn-passkeys',
   '/docs/v1/tech/installation-guide/configuration-management': '/docs/operate/deploy/configuration-management',
@@ -370,6 +370,13 @@ const redirects = {
   '/docs/v1/tech/tutorials/setting-up-user-account-lockout': '/docs/lifecycle/authenticate-users/setting-up-user-account-lockout',
   '/docs/v1/tech/tutorials/two-factor/authenticator-app': '/docs/customize/email-and-messages/deprecated/authenticator-app-pre-1-26',
   '/docs/v1/tech/tutorials/two-factor/twilio-push': '/docs/customize/email-and-messages/deprecated/twilio-push-pre-1-26',
+  '/docs/v1/tech/tutorials/integrate-angular': '/docs/quickstarts/quickstart-javascript-angular-web',
+  '/docs/v1/tech/tutorials/integrate-python-django': '/docs/quickstarts/quickstart-python-django-web',
+  '/docs/v1/tech/tutorials/integrate-python-flask': '/docs/quickstarts/quickstart-python-flask-web',
+  '/docs/v1/tech/tutorials/integrate-ruby-rails': '/docs/quickstarts/quickstart-ruby-rails-web',
+  '/docs/v1/tech/tutorials/integrate-dotnet': '/docs/quickstarts/quickstart-dotnet-web',
+  '/docs/v1/tech/tutorials/integrate-java-spring': '/docs/quickstarts/quickstart-springboot-web',
+  '/docs/v1/tech/tutorials/integrate-react': '/docs/quickstarts/quickstart-javascript-react-web',
   '/learn/expert-advice/': '/articles/',
   '/learn/expert-advice/authentication/gaming-identity-provider-needs': '/articles/gaming-entertainment/gaming-identity-provider-needs',
   '/learn/expert-advice/authentication/login-authentication-workflows': '/articles/login-authentication-workflows/authentication-workflows-overview',
@@ -379,6 +386,7 @@ const redirects = {
   '/learn/expert-advice/identity-basics/making-sure-your-auth-system-scales': '/articles/ciam/making-sure-your-auth-system-scales',
   '/learn/expert-advice/identity-basics/value-standards-compliant-authentication': '/articles/oauth/value-standards-compliant-authentication',
   '/learn/expert-advice/tokens/anatomy-of-jwt': '/articles/tokens/jwt-components-explained',
+  '/learn/expert-advice/ciam/ciam-vs-iam': '/articles/ciam/ciam-vs-iam',
   '/learn/expert-advice/tokens/jwt-authentication-token-components-explained': '/articles/tokens/jwt-components-explained',
   '/blog/archive/category/announcement': '/blog/category/news',
   '/blog/archive/category/article': '/blog/category/education',
@@ -388,7 +396,7 @@ const redirects = {
   '/blog/archive/category/tutorial': '/blog/category/tutorial',
   '/dev-tools/jwt-debugger': '/dev-tools/jwt-decoder',
   '/kubernetes/': '/docs/get-started/download-and-install/kubernetes/',
-  '/cognito/': '/docs/lifecycle/migrate-users/bulk/cognito',
+  '/cognito': '/docs/lifecycle/migrate-users/bulk/cognito',
   '/articles/oauth/what-is-oauth': '/articles/oauth/modern-guide-to-oauth',
   '/podcast/': '/',
   '/pricing/cloud': '/pricing',
@@ -397,7 +405,32 @@ const redirects = {
   '/pricing/editions': '/pricing',
   '/pricing/editions/': '/pricing',
   '/products/identity-user-management/ciam-vs-iam': '/articles/ciam/ciam-vs-iam',
-  '/resources/guide-to-user-data-security': '/articles/security/guide-to-user-data-security'
+  '/resources/guide-to-user-data-security': '/articles/security/guide-to-user-data-security',
+  '/learn/expert-advice/security/guide-to-user-data-security': '/articles/security/guide-to-user-data-security',
+
+  // these are for the brochure site
+  '/features/architecture': '/platform/built-for-developers',
+  '/features/built-for-developers': '/platform/built-for-developers',
+  '/features/advanced-registration-forms': '/platform/registration-forms',
+  '/features/breached-password-detection': '/features/authentication',
+  '/features/connectors': '/features/authentication',
+  '/features/scalability': '/platform/scalable',
+  '/features/security-data-compliance': '/security-data-compliance',
+  '/features/user-experience': '/platform/customizable',
+  '/features/user-management-reporting': '/features/user-management',
+  '/gaming': '/industries/gaming-entertainment',
+  '/gaming/': '/industries/gaming-entertainment',
+  '/podcast': '/',
+  '/pricing/cloud/': '/pricing',
+  '/pricing/edition': '/pricing',
+  '/pricing/edition/': '/pricing',
+  '/pricing/editions': '/pricing',
+  '/pricing/editions/': '/pricing',
+  '/resources/auth0-migration': '/auth0-migration',
+  '/upgrade/from-homegrown': '/compare',
+  '/upgrade/from-open-source': '/compare',
+  '/upgrade/from-saas': '/compare',
+  '/kubernetes': '/docs/get-started/download-and-install/kubernetes/index'
 };
 
 const indexPaths = {
@@ -535,7 +568,7 @@ function removeSlash(uri) {
 }
 
 function calculateRedirect(uri) {
-  var result = redirects.hasOwnProperty(uri) ? rd[uri] : null;
+  var result = redirects.hasOwnProperty(uri) ? redirects[uri] : null;
 
   if (result === null) {
     var prefix_replacement = redirectsByPrefix.find(e => uri.startsWith(e[0]));
