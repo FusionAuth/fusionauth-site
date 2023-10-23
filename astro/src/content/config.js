@@ -49,6 +49,7 @@ const docsCollection = defineCollection({
   schema: z.object({
     title: z.string().optional(),
     description: z.string().optional(),
+    canonicalUrl: z.string().optional(),
     section: z.string().optional(),
     subcategory: z.string().optional(),
     tertcategory: z.string().optional(),
