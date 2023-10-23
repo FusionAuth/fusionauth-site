@@ -660,6 +660,7 @@ const convert = (filePath, partial = false, parent = '') => {
 
     if (fs.existsSync(newPath)) {
       console.log(`Looks like ${newPath} already exists! Sweet!`);
+      return [newPath]
     } else {
       const matchingFiles = findMatchingFiles('public/img/docs', imageFile);
 
@@ -687,10 +688,9 @@ const convert = (filePath, partial = false, parent = '') => {
     }).join(' ');
 
     const newFileList = moveImage(imageLocation, imageFile);
-    outLines.push(`<img src="/img/docs/${state.target}/${newFileList[0]}" alt="${title}" ${props} />`);
-
-    if (newFileList.length > 1) {
-      newFileList.map((fname, idx) => idx > 0 && outLines.push(`{/* /img/docs/${state.target}/${newFileList[0]} */}`));
+    if (newFileList) {
+      outLines.push(`<img src="/img/docs/${state.target}/${newFileList[0]}" alt="${title}" ${props} />`);
+      //newFileList.map((fname, idx) => idx > 0 && outLines.push(`{/* /img/docs/${state.target}/${newFileList[0]} */}`));
     }
 
   };
@@ -705,7 +705,7 @@ const convert = (filePath, partial = false, parent = '') => {
       const height = match[4];
 
       if (platform === 'youtube') {
-    outLines.push(`<iframe allowfullscreen="" frameborder="0" width="${width}" height="${height}" src="//www.youtube.com/embed/${id}?rel=0" enablejsapi="true" data-gtm-yt-inspected-8="true"></iframe>`);
+        outLines.push(`<iframe allowfullscreen="" frameborder="0" width="${width}" height="${height}" src="//www.youtube.com/embed/${id}?rel=0" enablejsapi="true" data-gtm-yt-inspected-8="true"></iframe>`);
         
       }
     }
