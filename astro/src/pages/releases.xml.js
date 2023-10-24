@@ -11,7 +11,7 @@ export async function GET(context) {
     author: {
       name: 'FusionAuth'
     },
-    updated: new Date(), // should we only do this at certain times?
+    updated: items[0].pubDate,
     items,
   });
 }

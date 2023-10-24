@@ -6,7 +6,7 @@ export const getReleaseNoteRssItems = async () => {
   const releaseLines = releaseNotes.body.split("\n");
   const archiveLines = archive.body.split("\n");
   const lines = [...releaseLines, ...archiveLines];
-  return lines.map(line => line.match(/ReleaseNoteHeading version="(.*)" releaseDate="(.*)"/))
+  const items = lines.map(line => line.match(/ReleaseNoteHeading version="(.*)" releaseDate="(.*)"/))
       .filter(line => !!line)
       .map(match => ({version: match[1], date: match[2]}))
       .map(version => ({
@@ -19,12 +19,13 @@ export const getReleaseNoteRssItems = async () => {
         const link = id;
         const title = `Release ${version.version}`;
         const updated = version.date;
-        console.log(updated, version.versionRef);
         return {
           id,
           link,
           title,
-          pubDate: updated.toISOString()
+          pubDate: updated
         };
       });
+  items.sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime());
+  return items;
 }
