@@ -524,7 +524,7 @@ const referenceData = {
   s3Prefixes: ['/blog/', '/docs/', '/legal/', '/articles/', '/dev-tools/']
 }
 
-const handler = (event, context, callback) => {
+exports.handler = (event, context, callback) => {
   var req = event.Records[0].cf.request;
   var uri = req.uri;
   var result = req;
@@ -549,9 +549,9 @@ const handler = (event, context, callback) => {
   
     if (redirect !== null) {
       result = redir(redirect);
+    } else {
+      req.uri = calculateURI(uri);
     }
-
-    req.uri = calculateURI(uri);
   }
   
   callback(null, result);
@@ -615,7 +615,5 @@ function calculateURI(uri) {
 }
 
 function redir(loc) {
-  return {statusCode:301,statusDescription:'Moved',headers:{'location':[{value: loc}]}}
+  return {status:301,statusDescription:'Moved',headers:{'location':[{key: 'Location', value: loc}]}}
 }
-
-exports.handler = handler;

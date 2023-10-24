@@ -25,7 +25,7 @@ const makeRequest = (path) => {
 }
 
 const makeRedirect = (path) => {
-  return {statusCode: 301, statusDescription: 'Moved', headers: {'location': [{value: path}]}};
+  return {status: 301, statusDescription: 'Moved', headers: {'location': [{key: "Location", value: path}]}};
 };
 
 const makePassThroughRequest = (path) => {
