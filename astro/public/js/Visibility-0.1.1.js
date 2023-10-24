@@ -9,6 +9,8 @@ class Visibility {
 
     const button = event.target.closest('[data-widget="visibility-button"]');
     if (!button || !button.dataset.element) {
+
+      // handle clicks that are outside the nav and close it if applicable
       const navbtns = document.querySelectorAll('[data-widget="visibility-button"]');
       navbtns.forEach(btn => {
         const id = btn.dataset.element;
@@ -17,12 +19,11 @@ class Visibility {
           nav.classList.add('hidden');
         }
       });
+
       return;
     }
 
     const element = document.getElementById(button.dataset.element);
-    event.preventDefault();
-    event.stopPropagation();
     element.classList.toggle('hidden')
   }
 }
