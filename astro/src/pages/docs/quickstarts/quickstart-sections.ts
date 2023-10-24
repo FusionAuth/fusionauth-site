@@ -112,13 +112,6 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-hashtag',
         navColor: 'blue',
       },
-      {
-        href: '/docs/v1/tech/tutorials/integrate-laravel-api',
-        title: 'Laravel',
-        icon: '/img/icons/laravel.svg',
-        faIcon: 'fa-block',
-        navColor: 'rose',
-      },
     ],
   },
 ];
