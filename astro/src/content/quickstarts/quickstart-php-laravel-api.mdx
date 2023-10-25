@@ -102,23 +102,21 @@ Both endpoints will be protected such that a valid JSON web token (JWT) will be 
 To create the application from scratch, you'll use [Laravel Sail](https://laravel.com/docs/10.x/installation#laravel-and-docker) to set up and run your application using Docker.
 
 ```shell
-curl "https://laravel.build/fusionauth-quickstart-php-laravel-api?with=mariadb" | bash
-cd fusionauth-quickstart-php-laravel-api
+curl "https://laravel.build/your-application?with=mariadb" | bash
+cd your-application
 ```
+
+<Aside type="note">
+  This may ask for your user password to run commands with `sudo`.
+</Aside>
 
 ### Initialize the Application
 
-Initialize the Laravel application using the following:
+Initialize the Laravel application using the following command (it'll run things in background, just like `docker compose up -d` would).
 
 ```shell
-./vendor/bin/sail up
+./vendor/bin/sail up -d
 ```
-
-### Update Routes
-
-Change `routes/api.php` to add both `/make-change` and `/panic` endpoints for your ChangeBank application.
-
-<RemoteCode url={frontmatter.coderoot + "/complete-application/routes/api.php"} lang="php"/>
 
 ### Add Security
 
@@ -127,7 +125,6 @@ Include FusionAuth's library to add JWT support to the authentication system.
 ```shell
 ./vendor/bin/sail composer require fusionauth/jwt-auth-webtoken-provider web-token/jwt-signature-algorithm-rsa
 ```
-
 ### Create Fields in the User Entity
 
 When installing Laravel, it will automatically make a migration to create a `users` table in the database. You'll have to edit the file `database/migrations/2014_10_12_000000_create_users_table.php` to change the default behavior and use UUID for the primary key, remove the need for a password and the remember token.
@@ -156,27 +153,39 @@ Run the remaining migrations to create the necessary tables in your database.
 
 By default, Laravel only allows JWTs that correspond to users in your database, but one of the greatest benefits of using FusionAuth is to have a single source of truth of user management. So, you want your API to automatically provision new users when it receives a trusted JWT from FusionAuth.
 
-To do so, add a new [User Provider](https://laravel.com/docs/10.x/authentication#adding-custom-user-providers) at `app/FusionAuth/Providers/FusionAuthEloquentUserProvider.php` to create new users when receiving valid JWTs from FusionAuth.
+To do so, first create a folder named `FusionAuth` inside `app/`, and another one named `Providers` inside `FusionAuth`, so you can have `app/FusionAuth/Providers`.
+
+```shell
+mkdir -p app/FusionAuth/Providers
+````
+
+Add a new [User Provider](https://laravel.com/docs/10.x/authentication#adding-custom-user-providers) at `app/FusionAuth/Providers/FusionAuthEloquentUserProvider.php` to create new users when receiving valid JWTs from FusionAuth.
 
 <RemoteCode url={frontmatter.coderoot + "/complete-application/app/FusionAuth/Providers/FusionAuthEloquentUserProvider.php"} lang="php"/>
 
-Now, add an [Authentication Guard](https://laravel.com/docs/10.x/authentication#adding-custom-guards) in `app/FusionAuth/FusionAuthJWTGuard.php` to call that custom method from the User Provider created above.
+Now, add an [Authentication Guard](https://laravel.com/docs/10.x/authentication#adding-custom-guards) in `app/FusionAuth/FusionAuthJwtGuard.php` to call that custom method from the User Provider created above.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/app/FusionAuth/FusionAuthJWTGuard.php"} lang="php"/>
+<RemoteCode url={frontmatter.coderoot + "/complete-application/app/FusionAuth/FusionAuthJwtGuard.php"} lang="php"/>
 
 Let Laravel know about these two classes by editing `config/auth.php`.
 
 First, change the `driver` for the `web` Guard to `jwt`:
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/config/auth.php"} tag="guards" lang="php"/>
+<RemoteCode url={frontmatter.coderoot + "/complete-application/config/auth.php"} tags="guards" lang="php"/>
 
 Now, change the default `provider` to `fusionauth_eloquent`:
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/config/auth.php"} tag="providers" lang="php"/>
+<RemoteCode url={frontmatter.coderoot + "/complete-application/config/auth.php"} tags="providers" lang="php"/>
 
 Finally, create a [Service Provider](https://laravel.com/docs/10.x/providers) in `app/FusionAuth/Providers/FusionAuthServiceProvider.php` to make sure Laravel will use the newly created classes instead of its defaults.
 
 <RemoteCode url={frontmatter.coderoot + "/complete-application/app/FusionAuth/Providers/FusionAuthServiceProvider.php"} lang="php"/>
+
+### Update Routes
+
+Change `routes/api.php` to add both `/api/make-change` and `/api/panic` endpoints for your ChangeBank application.
+
+<RemoteCode url={frontmatter.coderoot + "/complete-application/routes/api.php"} lang="php"/>
 
 ### Add Controllers
 
@@ -184,17 +193,29 @@ Change the base controller at `app/Http/Controllers/Controller.php` to include a
 
 <RemoteCode url={frontmatter.coderoot + "/complete-application/app/Http/Controllers/Controller.php"} lang="php"/>
 
-Create a new file for the `/make-change` endpoint at `app/Http/Controllers/ChangeBank/MakeChangeController.php`. This controller will verify that the authenticated user has either the `teller` or `customer` role. It then takes in the URL parameter `total` to calculate which coins will be returned in the JSON payload.
+Create a folder named `ChangeBank` inside `app/Http/Controllers` to hold the two controllers you're going to create.
+
+```shell
+mkdir app/Http/Controllers/ChangeBank
+```
+
+To respond the `/api/make-change` endpoint, create a file at `app/Http/Controllers/ChangeBank/MakeChangeController.php`. This controller will verify that the authenticated user has either the `teller` or `customer` role. It then takes in the URL parameter `total` to calculate which coins will be returned in the JSON payload.
 
 <RemoteCode url={frontmatter.coderoot + "/complete-application/app/Http/Controllers/ChangeBank/MakeChangeController.php"} lang="php"/>
 
-To finish, create a controller at `app/Http/Controllers/ChangeBank/PanicController.php` to handle the `/panic` endpoint for users with the `teller` role.
+To finish, create a controller at `app/Http/Controllers/ChangeBank/PanicController.php` to handle the `/api/panic` endpoint for users with the `teller` role.
 
 <RemoteCode url={frontmatter.coderoot + "/complete-application/app/Http/Controllers/ChangeBank/PanicController.php"} lang="php"/>
 
 ### Validating Issuer and Audience Claims
 
 Besides verifying the signature, it is also recommended to validate the issuer (`iss`) and audience (`aud`) claims when receiving a JWT. To do those checks, you need to create two files.
+
+Create a folder named `Claims` inside `app/FusionAuth`.
+
+```shell
+mkdir app/FusionAuth/Claims
+```
 
 First, create a file named `app/FusionAuth/Claims/Audience.php` that will check if the audience (`aud`) claim actually contains the Client Id for the application you created in FusionAuth.
 
@@ -220,15 +241,21 @@ In that same `config/app.php` file, add these lines at the end (just before the 
 
 <RemoteCode url={frontmatter.coderoot + "/complete-application/config/app.php"} tags="fusionauth" lang="php"/>
 
+To make the library available for use, publish its configuration by running the command below.
+
+```shell
+./vendor/bin/sail artisan vendor:publish --provider="FusionAuth\JWTAuth\WebTokenProvider\Providers\WebTokenServiceProvider"
+```
+
 ## Run the API
 
 ### Get a Token
 
 There are [several ways to acquire a token](/docs/v1/tech/oauth/) in FusionAuth, but for this example you will use the [Login API](/docs/v1/tech/apis/login) to keep things simple.
 
-First let's try the requests as the <code><RemoteValue url={frontmatter.coderoot + "/kickstart/kickstart.json"} selector="$.variables.userEmail" /></code> user. Based on the configuration this user has the `teller` role and should be able to use both `/make-change` and `/panic`.
+First, try requests as the <code><RemoteValue url={frontmatter.coderoot + "/kickstart/kickstart.json"} selector="$.variables.tellerEmail" /></code> user. Based on the configuration this user has the `teller` role and should be able to use both `/api/make-change` and `/api/panic`.
 
-1. Acquire an access token for <code><RemoteValue url={frontmatter.coderoot + "/kickstart/kickstart.json"} selector="$.variables.userEmail" /></code> by making the following request
+1. Acquire an access token for <code><RemoteValue url={frontmatter.coderoot + "/kickstart/kickstart.json"} selector="$.variables.tellerEmail" /></code> by making the following request
 
 <RemoteValue
     url={frontmatter.coderoot + "/kickstart/kickstart.json"}
@@ -258,10 +285,10 @@ Copy the `token` from the response, which should look like this:
 
 ### Make the Request
 
-Make a request to `/make-change` with a query parameter `total=5.12` and passing the `token` in an `app.at` cookie.
+Make a request to `/api/make-change` with a query parameter `total=5.12` and passing the `token` in an `app.at` cookie.
 
 ```shell
-curl --cookie 'app.at=YOUR_TOKEN' 'http://localhost:9001/make-change?total=5.12' \
+curl --cookie 'app.at=YOUR_TOKEN' 'http://localhost/api/make-change?total=5.12'
 ```
 
 The response should look similar to below, however it has been formatted here for readability:
@@ -292,10 +319,10 @@ The response should look similar to below, however it has been formatted here fo
 
 You were authorized, success! You can try making the request without the cookie or with a different string rather than a valid token, and see that you are denied access.
 
-Next call the `/panic` endpoint because you are in trouble!
+Next call the `/api/panic` endpoint because you are in trouble!
 
 ```shell
-curl --cookie 'app.at=YOUR_TOKEN' --request POST 'http://localhost:9001/panic'
+curl --cookie 'app.at=YOUR_TOKEN' --request POST 'http://localhost/api/panic'
 ```
 
 This is a `POST` (not a `GET`) because you want all your emergency calls to be non-idempotent.
@@ -336,10 +363,10 @@ Your response should look like this:
 }
 ```
 
-Now use that token to call `/make-change` with a query parameter `total=3.24`.
+Now use that token to call `/api/make-change` with a query parameter `total=3.24`.
 
 ```shell
-curl --cookie 'app.at=YOUR_TOKEN' --location 'http://localhost:9001/make-change?total=3.24'
+curl --cookie 'app.at=YOUR_TOKEN' --location 'http://localhost/api/make-change?total=3.24'
 ```
 
 The response should look similar to below, however it has been formatted here for readability:
@@ -368,10 +395,10 @@ The response should look similar to below, however it has been formatted here fo
 }
 ```
 
-So far so good. Now call the `/panic` endpoint with `-i` flag to see the headers of the response).
+So far so good. Now call the `/api/panic` endpoint with `-i` flag to see the headers of the response).
 
 ```shell
-curl --cookie 'app.at=YOUR_TOKEN' -i --request POST 'http://localhost:9001/panic'
+curl --cookie 'app.at=YOUR_TOKEN' -i --request POST 'http://localhost/api/panic'
 ```
 
 Your should receive a `403 Forbidden` response with the following message and a huge stack trace (because you are in development mode):
@@ -406,7 +433,7 @@ This quickstart is a great way to get a proof of concept up and running quickly,
 
 Ensure FusionAuth is running in the Docker container. You should be able to login as the admin user, `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
 
-* The `/panic` endpoint doesn't work when I call it.
+* The `/api/panic` endpoint doesn't work when I call it.
 
 Make sure you are making a `POST` call and using a token with the `teller` role.
 
