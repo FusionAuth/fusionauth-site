@@ -1,5 +1,5 @@
 import rss from '@astrojs/rss';
-import { getReleaseNoteRssItems } from '../tools/docs';
+import { getReleaseNoteRssItems } from '../../tools/docs';
 
 export async function GET(context) {
   const items = await getReleaseNoteRssItems();
