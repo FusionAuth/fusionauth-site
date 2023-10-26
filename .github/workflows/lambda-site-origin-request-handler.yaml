@@ -1,0 +1,57 @@
+---
+name: lambda-site-origin-request-handler
+
+env:
+  AWS_REGION: us-east-1
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - 'src/lambdas/site-origin-request-handler/src/index.mjs'
+      - 'src/lambdas/site-origin-request-handler/terraform/**'
+  pull_request:
+    branches:
+      - development
+    paths:
+      - 'src/lambdas/site-origin-request-handler/src/index.mjs'
+      - 'src/lambdas/site-origin-request-handler/terraform/**'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: fusionauth-standard
+    container: 752443094709.dkr.ecr.us-west-2.amazonaws.com/gha-runner-ubuntu-22.04:bootstrap-05
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: set aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-chaining: true
+          role-to-assume: arn:aws:iam::752443094709:role/github-actions
+          role-session-name: github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: setup terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.2
+
+      - name: terraform plan
+        if: github.event_name == 'pull_request'
+        working-directory: src/lambdas/site-origin-request-handler/terraform
+        shell: bash
+        run: terraform init && terraform plan
+
+      - name: terraform apply
+        if: github.event_name == 'push'
+        working-directory: src/lambdas/site-origin-request-handler/terraform
+        shell: bash
+        run: terraform init && terraform apply -auto-approve
