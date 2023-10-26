@@ -1,7 +1,4 @@
-import { AstroGlobal } from 'astro';
 import { getCollection } from 'astro:content';
-import { refCase, startCase } from 'src/tools/string';
-import { getHref } from 'src/tools/blog';
 import { getDocHref } from 'src/tools/docs/getDocHref';
 import { Category, DocNavContext } from 'src/tools/docs/DocNavContext';
 
@@ -56,6 +53,22 @@ const prepContext = (context: DocNavContext, subcategory: string, tertcategory: 
   }
 }
 
+const recursiveSort = (category: Category) => {
+  if (category.entries.length > 0) {
+    category.entries.sort((a, b) => a.title.localeCompare(b.title));
+    const top = category.entries.find(entry => entry.topOfNav);
+    if (top) {
+      const idx = category.entries.indexOf(top);
+      category.entries.splice(idx, 1);
+      category.entries.unshift(top);
+    }
+  }
+  if (category.subcategories.length > 0) {
+    category.subcategories.sort((a, b) => a.name.localeCompare(b.name));
+    category.subcategories.forEach(sub => recursiveSort(sub));
+  }
+}
+
 export const getDocNavContext = async (section: string) => {
   const context: DocNavContext = {
     category: {
@@ -67,15 +80,16 @@ export const getDocNavContext = async (section: string) => {
   };
 
   const sectionDocs = await getCollection('docs', doc => doc.data.section === section);
-  sectionDocs.sort((a, b) => a.data.title.localeCompare(b.data.title));
   sectionDocs.forEach(doc => {
-    const { subcategory, tertcategory, quatercategory, title, description } = doc.data;
+    const { subcategory, tertcategory, quatercategory, title, description, topOfNav } = doc.data;
     const category = prepContext(context, subcategory, tertcategory, quatercategory);
     category.entries.push({
       title,
       description,
       href: getDocHref(doc.slug),
+      topOfNav,
     })
   });
+  recursiveSort(context.category);
   return context;
 }

@@ -5,6 +5,9 @@ const specialCapsMap = {
   'samlv2': 'SAMLv2',
   'api': 'API',
   'apis': 'APIs',
+  'sdk': 'SDK',
+  'sdks': 'SDKs',
+  'scim': 'SCIM',
 }
 export const specialCaps = (target: string) => target
     .split(' ')
