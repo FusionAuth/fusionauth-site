@@ -60,11 +60,6 @@ export const handler = async (event, context) => {
 };
 
 async function syncRedirectRules() {
-  const command = new GetObjectCommand({
-    Bucket: fileBucket,
-    Key: fileKey,
-  });
-
   // If we're within the sync interval period, do nothing.
   let currentTime = new Date().getTime();
   if (lastUpdatedTime && (currentTime - lastUpdatedTime) < (intervalBetweenUpdates * 1000)) {
@@ -74,6 +69,10 @@ async function syncRedirectRules() {
   console.log('Synchronizing redirect rules from s3')
 
   try {
+    const command = new GetObjectCommand({
+      Bucket: fileBucket,
+      Key: fileKey,
+    });
     const response = await s3.send(command)
     redirectRules = await response.Body.transformToString()
     intervalBetweenUpdates = redirectRules.refreshTime;
