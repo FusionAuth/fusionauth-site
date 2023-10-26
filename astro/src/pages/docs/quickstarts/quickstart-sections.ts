@@ -38,7 +38,7 @@ const qsSections: QuickStartSection[] = [
         navColor: 'blue',
       },
       {
-        href: '/docs/v1/tech/tutorials/integrate-expressjs',
+        href: '/docs/quickstarts/quickstart-javascript-express-web',
         title: 'Express',
         icon: '/img/icons/javascript.svg',
         faIcon: 'fa-x',
@@ -88,7 +88,7 @@ const qsSections: QuickStartSection[] = [
     desc: 'Mobile application that runs natively on a device',
     articles: [
       {
-        href: '/docs/v1/tech/tutorials/integrate-flutter',
+        href: '/docs/quickstarts/quickstart-flutter-native',
         title: 'Flutter',
         icon: '/img/icons/flutter.svg',
         faIcon: 'fa-snake',
@@ -113,28 +113,28 @@ const qsSections: QuickStartSection[] = [
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
       {
-        href: '/docs/v1/tech/tutorials/integrate-dotnet-api',
+        href: '/docs/quickstarts/quickstart-dotnet-api',
         title: '.NET Core',
         icon: '/img/icons/dotnet-c.svg',
         faIcon: 'fa-hashtag',
         navColor: 'blue',
       },
       {
-        href: '/docs/v1/tech/tutorials/integrate-ruby-rails-api',
+        href: '/docs/quickstarts/quickstart-ruby-on-rails-api',
         title: 'Ruby on Rails',
         icon: '/img/icons/ruby-on-rails.svg',
         faIcon: 'fa-gem',
         navColor: 'red',
       },
       {
-        href: '/docs/v1/tech/tutorials/integrate-express-api',
+        href: '/docs/quickstarts/quickstart-javascript-express-api',
         title: 'Express',
         icon: '/img/icons/javascript.svg',
         faIcon: 'fa-x',
         navColor: 'fuchsia',
       },
       {
-        href: '/docs/v1/tech/tutorials/integrate-laravel-api',
+        href: '/docs/quickstarts/quickstart-laravel-api',
         title: 'Laravel',
         icon: '/img/icons/laravel.svg',
         faIcon: 'fa-block',
