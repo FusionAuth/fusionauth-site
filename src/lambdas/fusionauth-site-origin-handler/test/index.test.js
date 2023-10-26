@@ -3,16 +3,25 @@ import { handler } from '../src/index.js';
 
 let event, result;
 
+// Mock a lambda event that we can pass to the handler.
 const mockEvent = (path) => {
-  return { Records: [{ cf: { request: { headers: {}, uri: path }}}]}
+  return { 'Records': [{ 'cf': { 'request': { 'headers': {}, 'uri': path }}}]}
 }
 
+// Build the expected response for a 301 redirect.
 const makeRedirect = (path) => {
-  return { status: 301, statusDescription: 'Moved', headers: {'location': [{ key: "Location", value: path }]}};
+  return { 'status': 301, 'statusDescription': 'Moved', 'headers': {'location': [{ 'key': "Location", 'value': path }]}};
 }
+
+// Build the expected response for a passthrough.
 const makePassThroughRequest = (path) => {
   return { headers: {}, uri: path };
 };
+
+
+// All the tests follow a similar format. We pass the mock event to the
+// handler which contains the path we're testing. The handler's real
+// response is asserted to be equal to the expected response.
 
 describe('html extension', function() {
   it('/something.html', async function() {

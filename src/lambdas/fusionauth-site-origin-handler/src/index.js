@@ -1,9 +1,17 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 const s3 = new S3Client({ region: 'us-east-1' });
 
+// Location of the file containing the redirect rules.
+const fileBucket = 'fusionauth-dev-us-east-1-artifacts';
+const fileKey = 'lambda-at-edge/cloudfront-redirects/redirects.json';
+
 let redirectRules = null;
+
+// When is the last time the rules were updated? This is stored
+// in globals so it can be shared between lambda invocations.
 let lastUpdatedTime = 0;
-let intervalBetweenUpdates = 60;
+// How frequently (in seconds) should we refresh the redirect rules?
+let intervalBetweenUpdates = 300;
 
 export const handler = async (event, context) => {
   var req = event.Records[0].cf.request;
@@ -17,11 +25,13 @@ export const handler = async (event, context) => {
     if (!redirectRules) {
       console.error("[ERROR] missing redirect rules");
       return;
-    } else {
+    }
+    // If we successfully retrieved the rules, parse them as JSON.
+    else {
       redirectRules = JSON.parse(redirectRules);
     }
 
-    // There shouldn't be links to .html files out there.
+    // If any requests come in with .html extensions, trim the extension.
     if (uri.endsWith('.html')) {
       result = redir(uri.substring(0, uri.length - 5));
     }
@@ -51,8 +61,8 @@ export const handler = async (event, context) => {
 
 async function syncRedirectRules() {
   const command = new GetObjectCommand({
-    Bucket: 'fusionauth-dev-us-east-1-artifacts',
-    Key: 'lambda-at-edge/cloudfront-redirects/redirects.json',
+    Bucket: fileBucket,
+    Key: fileKey,
   });
 
   // If we're within the sync interval period, do nothing.
@@ -60,6 +70,8 @@ async function syncRedirectRules() {
   if (lastUpdatedTime && (currentTime - lastUpdatedTime) < (intervalBetweenUpdates * 1000)) {
     return;
   }
+
+  console.log('Synchronizing redirect rules from s3')
 
   try {
     const response = await s3.send(command)
@@ -104,14 +116,18 @@ function calculateRedirect(uri) {
   return result;
 }
 
+
 function appendHTML(uri) {
   var slashIndex = uri.lastIndexOf('/');
   var dotIndex = uri.indexOf('.', slashIndex);
+
   if (slashIndex < uri.length - 1 && dotIndex < 0) {
     uri = uri + '.html';
   }
+
   return uri;
 }
+
 
 function calculateURI(uri) {
   var i;
@@ -130,6 +146,18 @@ function calculateURI(uri) {
   return uri;
 }
 
+
 function redir(loc) {
-  return {status:301,statusDescription:'Moved',headers:{'location':[{key: 'Location', value: loc}]}}
+  return {
+    'status': 301,
+    'statusDescription': 'Moved',
+    'headers': {
+      'location': [
+        {
+          'key': 'Location',
+          'value': loc
+        }
+      ]
+    }
+  }
 }
