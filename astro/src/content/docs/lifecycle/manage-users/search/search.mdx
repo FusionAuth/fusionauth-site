@@ -7,12 +7,13 @@ subcategory: manage users
 tertcategory: search
 ---
 import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
 import ReIndexingElasticsearch from 'src/content/docs/_shared/_re-indexing-elasticsearch.mdx';
 import PaginatingSearchResults from 'src/content/docs/_shared/_paginating-search-results.mdx';
 
 ## Overview
 
-FusionAuth ships with two options for search: a simple search via the database search engine and the Elasticsearch database engine.
+FusionAuth ships with two options for search: a simple search via the database search engine and the Elasticsearch search engine.
 
 ## Configuration
 
@@ -78,4 +79,27 @@ The Elasticsearch search engine is appropriate for systems that are dependent on
 
 <PaginatingSearchResults />
 
-Note that you'll only be able to get back 10000 results no matter how you paginate. See the [Known Limitations](/docs/get-started/core-concepts/limitations#user-searches) section for more and some workarounds.
+Note that prior to version 1.48.0 you'll only be able to get back 10,000 results no matter how you paginate. See the [Known Limitations](/docs/get-started/core-concepts/limitations#user-searches) section for more and some workarounds.
+
+As of version 1.48.0, FusionAuth you can use a <InlineField>nextResults</InlineField> token to page past the 10,000 results limitation when using the Elasticsearch engine.
+
+See the [Extended Pagination](#extended-pagination) section for more details.
+
+### Extended Pagination
+
+<Aside type="version">
+Available since 1.48.0
+</Aside>
+
+Starting in version 1.48.0 of FusionAuth every search using the Elasticsearch engine will return a <InlineField>nextResults</InlineField> token in the response. You may use this token on subsequent calls to continue paging forward in the result set and go past the 10,000 results limit with Elasticsearch. Every search request made using a <InlineField>nextResults</InlineField> token will return a page of results and another <InlineField>nextResults</InlineField> token that can be used to retrieve the next page. These calls can be made indefinitely until the number of returned results is 0.
+
+Internally FusionAuth uses this token to make a `search_after` parameter on the request to Elasticsearch. See [the Elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/paginate-search-results.html) for more information.
+
+<Aside type="note">
+Because this call relies on the parameters of a previous search request, you cannot supply new parameters in a search request with a <InlineField>nextResults</InlineField> token which would change the query to Elasticsearch.
+
+As such, when using a <InlineField>nextResults</InlineField> token in a search request you may only supply the <InlineField>numberOfResults</InlineField> as an additional request parameter.
+</Aside>
+
+For more detail on extended pagination see the [Searching Users With Elasticsearch](/docs/lifecycle/manage-users/search/user-search-with-elasticsearch) guide.
+

@@ -38,13 +38,6 @@ const qsSections: QuickStartSection[] = [
         navColor: 'blue',
       },
       {
-        href: '/docs/quickstarts/quickstart-javascript-express-web',
-        title: 'Express',
-        icon: '/img/icons/javascript.svg',
-        faIcon: 'fa-x',
-        navColor: 'fuchsia'
-      },
-      {
         href: '/blog/2023/03/13/single-sign-on-laravel-fusionauth',
         title: 'Laravel',
         icon: '/img/icons/laravel.svg',
@@ -69,13 +62,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'spa',
     desc: 'JavaScript app that runs in the browser',
     articles: [
-      {
-        href: '/blog/2022/07/15/remix-demo',
-        title: 'Remix',
-        icon: '/img/icons/javascript.svg',
-        faIcon: 'fa-j',
-        navColor: 'yellow'
-      },
     ],
   },
   {
@@ -92,13 +78,6 @@ const qsSections: QuickStartSection[] = [
         title: 'Flutter',
         icon: '/img/icons/flutter.svg',
         faIcon: 'fa-snake',
-        navColor: 'indigo'
-      },
-      {
-        href: '/blog/2020/08/19/securing-react-native-with-oauth',
-        title: 'React Native',
-        icon: '/img/icons/react.svg',
-        faIcon: 'fa-r',
         navColor: 'indigo'
       },
     ],
@@ -118,20 +97,6 @@ const qsSections: QuickStartSection[] = [
         icon: '/img/icons/dotnet-c.svg',
         faIcon: 'fa-hashtag',
         navColor: 'blue',
-      },
-      {
-        href: '/docs/quickstarts/quickstart-ruby-on-rails-api',
-        title: 'Ruby on Rails',
-        icon: '/img/icons/ruby-on-rails.svg',
-        faIcon: 'fa-gem',
-        navColor: 'red',
-      },
-      {
-        href: '/docs/quickstarts/quickstart-javascript-express-api',
-        title: 'Express',
-        icon: '/img/icons/javascript.svg',
-        faIcon: 'fa-x',
-        navColor: 'fuchsia',
       },
       {
         href: '/docs/quickstarts/quickstart-laravel-api',
