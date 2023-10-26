@@ -13,12 +13,12 @@ let lastUpdatedTime = 0;
 // How frequently (in seconds) should we refresh the redirect rules?
 let intervalBetweenUpdates = 300;
 
-export const handler = async (event, context) => {
+export const handler = async (event) => {
   var req = event.Records[0].cf.request;
   var uri = req.uri;
   var result = req;
 
-  await syncRedirectRules()
+  await syncRedirectRules();
 
   try {
     // Try to load the redirect rules from s3.
@@ -66,19 +66,19 @@ async function syncRedirectRules() {
     return;
   }
 
-  console.log('Synchronizing redirect rules from s3')
+  console.log('Synchronizing redirect rules from s3');
 
   try {
     const command = new GetObjectCommand({
       Bucket: fileBucket,
       Key: fileKey,
     });
-    const response = await s3.send(command)
-    redirectRules = await response.Body.transformToString()
+    const response = await s3.send(command);
+    redirectRules = await response.Body.transformToString();
     intervalBetweenUpdates = redirectRules.refreshTime;
     lastUpdatedTime = currentTime;
   } catch (err) {
-    console.error('[ERROR] failed to retrieve redirect rules file from s3: %s', err)
+    console.error('[ERROR] failed to retrieve redirect rules file from s3: %s', err);
     redirectRules = null;
     lastUpdatedTime = currentTime;
   }
@@ -158,5 +158,5 @@ function redir(loc) {
         }
       ]
     }
-  }
+  };
 }

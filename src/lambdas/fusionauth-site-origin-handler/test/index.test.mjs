@@ -1,17 +1,17 @@
 import assert from 'node:assert/strict';
-import { handler } from '../src/index.js';
+import { handler } from '../src/index.mjs';
 
-let event, result;
+let result;
 
 // Mock a lambda event that we can pass to the handler.
 const mockEvent = (path) => {
-  return { 'Records': [{ 'cf': { 'request': { 'headers': {}, 'uri': path }}}]}
-}
+  return { 'Records': [{ 'cf': { 'request': { 'headers': {}, 'uri': path }}}]};
+};
 
 // Build the expected response for a 301 redirect.
 const makeRedirect = (path) => {
   return { 'status': 301, 'statusDescription': 'Moved', 'headers': {'location': [{ 'key': "Location", 'value': path }]}};
-}
+};
 
 // Build the expected response for a passthrough.
 const makePassThroughRequest = (path) => {
@@ -27,7 +27,7 @@ const runTest = (path, expected) => {
     result = await handler(mockEvent(path), null);
     assert.deepEqual(result, expected);
   });
-}
+};
 
 describe('html extension', function() {
   runTest('/something.html', makeRedirect('/something'));
