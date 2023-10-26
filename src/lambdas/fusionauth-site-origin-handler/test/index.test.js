@@ -71,6 +71,10 @@ describe('docs redirects', function() {
     result = await handler(mockEvent('/docs/v1/tech/reactor/'), null)
     assert.deepEqual(result, makeRedirect('/docs/v1/tech/reactor'))
   });
+  it('/docs/v1/tech/identity-providers/', async function() {
+    result = await handler(mockEvent('/docs/v1/tech/identity-providers/'), null)
+    assert.deepEqual(result, makeRedirect('/docs/lifecycle/authenticate-users/identity-providers/'))
+  });
 })
 
 describe('blog', function() {

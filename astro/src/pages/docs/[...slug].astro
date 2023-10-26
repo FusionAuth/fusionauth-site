@@ -12,7 +12,14 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const navContext = await getDocNavContext(entry.data.section);
-const { Content, headings } = await entry.render();
+let { Content, headings } = await entry.render();
+if (entry.data.nestedHeadings) {
+  const globs = await Astro.glob('../../content/docs/**/**.mdx');
+  const myglob = globs.find(glob => glob.url.endsWith(entry.id));
+  if (myglob && myglob.headings) {
+    headings = myglob.headings;
+  }
+}
 ---
 <Layout frontmatter={entry.data} {headings} {navContext}>
   <Content />
