@@ -62,13 +62,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'spa',
     desc: 'JavaScript app that runs in the browser',
     articles: [
-      {
-        href: '/blog/2022/07/15/remix-demo',
-        title: 'Remix',
-        icon: '/img/icons/javascript.svg',
-        faIcon: 'fa-j',
-        navColor: 'yellow'
-      },
     ],
   },
   {
@@ -85,13 +78,6 @@ const qsSections: QuickStartSection[] = [
         title: 'Flutter',
         icon: '/img/icons/flutter.svg',
         faIcon: 'fa-snake',
-        navColor: 'indigo'
-      },
-      {
-        href: '/blog/2020/08/19/securing-react-native-with-oauth',
-        title: 'React Native',
-        icon: '/img/icons/react.svg',
-        faIcon: 'fa-r',
         navColor: 'indigo'
       },
     ],
