@@ -50,6 +50,7 @@ test('docs redirects', (t) => {
   runTest('/docs/v1/tech/common-errors', makeRedirect('/docs/operate/troubleshooting/troubleshooting'));
   runTest('/docs/v1/tech/admin-guide/troubleshooting', makeRedirect('/docs/operate/troubleshooting/troubleshooting'));
   runTest('/docs/v1/tech/reactor/', makeRedirect('/docs/v1/tech/reactor'));
+  runTest('/docs/v1/tech/identity-providers/', makeRedirect('/docs/lifecycle/authenticate-users/identity-providers/'));
 });
 
 test('blog', (t) => {
