@@ -15,6 +15,7 @@ import Aside from '../../components/Aside.astro';
 import LoginAfter from '../../diagrams/quickstarts/login-after.astro';
 import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
 import RemoteCode from '../../components/RemoteCode.astro';
+import RemoteValue from '../../components/RemoteValue/RemoteValue.astro';
 
 In this quickstart you are going to build an application with Ruby on Rails and integrate it with FusionAuth.
 You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM), a global leader in converting dollars into coins.
@@ -74,10 +75,10 @@ If you ever want to reset the FusionAuth system, delete the volumes created by d
 
 FusionAuth will be initially configured with these settings:
 
-* Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
-* Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
-* Your example username is `richard@example.com` and the password is `password`.
-* Your admin username is `admin@example.com` and the password is `password`.
+* Your client Id is <code><RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json" selector="$.variables.applicationId" /></code>.
+* Your client secret is <code><RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json" selector="$.requests.[?(@.url === '/api/application/#{applicationId}')].body.application.oauthConfiguration.clientSecret" /></code>.
+* Your example username is <code><RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json" selector="$.variables.userEmail" /></code> and the password is <code><RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json" selector="$.variables.userPassword" /></code>.
+* Your admin username is <code><RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json" selector="$.variables.adminEmail" /></code> and the password is <code><RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json" selector="$.variables.adminPassword" /></code>.
 * The base URL of FusionAuth `http://localhost:9011/`.
 
 You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don't need to.
@@ -98,7 +99,7 @@ We'll use the [OmniAuth Library](https://github.com/omniauth/omniauth), which si
 
 Install the omniauth gem and other supporting gems. Add the following three lines to your `Gemfile`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/Gemfile" 
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/Gemfile"
  lang="ruby"
  tags="gemfile"/>
 
@@ -161,7 +162,7 @@ lang="ruby" />
 
 This lets you have a nice `logout` method and also handle the callback from omniauth. The latter sets a `session` attribute with user data, which can be used by views later.
 
-Now, update the application controller at `app/controllers/application_controller.rb`. 
+Now, update the application controller at `app/controllers/application_controller.rb`.
 
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/app/controllers/application_controller.rb"
 lang="ruby" />
@@ -220,9 +221,11 @@ Once you’ve created these files, you can test the application out.
 
 Start up the Rails application using this command:
 
-```shell
-OP_SECRET_KEY="super-secret-secret-that-should-be-regenerated-for-production" bundle exec rails s
-```
+<RemoteValue
+    url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json"
+    selector="$.requests.[?(@.url === '/api/application/#{applicationId}')].body.application.oauthConfiguration.clientSecret"
+    codeLang="shell"
+    codeRenderer={(value) => `OP_SECRET_KEY="${value}" bundle exec rails s`} />
 
 `OP_SECRET_KEY` is the client secret, which was defined by the [FusionAuth Installation via Docker](#run-fusionauth-via-docker) step. You don't want to commit secrets like this to version control, so use an environment variable.
 
@@ -252,7 +255,7 @@ FusionAuth gives you the ability to customize just about everything with the use
 
 * I get `This site can’t be reached  localhost refused to connect.` when I click the Login button
 
-Ensure FusionAuth is running in the Docker container.  You should be able to login as the admin user, `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
+Ensure FusionAuth is running in the Docker container.  You should be able to login as the admin user, <code><RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json" selector="$.variables.adminEmail" /></code> with a password of <code><RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json" selector="$.variables.adminPassword" /></code> at [http://localhost:9011/admin](http://localhost:9011/admin).
 
 * I get an error page when I click on the Login button with message of `"error_reason" : "invalid_client_id"`
 
@@ -271,12 +274,14 @@ This indicates that Omniauth is unable to call FusionAuth to validate the return
 
 You can always pull down a complete running application and compare what's different.
 
-```
-git clone https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web.git
+<RemoteValue
+    url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json"
+    selector="$.requests.[?(@.url === '/api/application/#{applicationId}')].body.application.oauthConfiguration.clientSecret"
+    codeLang="shell"
+    codeRenderer={(value) => `git clone https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web.git
 cd fusionauth-quickstart-ruby-on-rails-web
 docker-compose up -d
 cd complete-app
 bundle install
-OP_SECRET_KEY=super-secret-secret-that-should-be-regenerated-for-production bundle exec rails s
-```
+OP_SECRET_KEY=${value} bundle exec rails s`} />
 
