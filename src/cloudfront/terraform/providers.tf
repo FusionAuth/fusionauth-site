@@ -35,9 +35,9 @@ provider "aws" {
     tags = {
       managedBy       = "terraform"
       terraformRepo   = "fusionauth-site"
-      terraformConfig = "src/cloudfront/fusionauth-dev/terraform"
+      terraformConfig = "src/cloudfront/terraform"
       environment     = "dev"
-      team            = "support"
+      team            = "engineering"
       service         = "fusionauth-site"
     }
   }
