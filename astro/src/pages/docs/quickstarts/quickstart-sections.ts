@@ -99,7 +99,7 @@ const qsSections: QuickStartSection[] = [
         navColor: 'blue',
       },
       {
-        href: '/docs/quickstarts/quickstart-laravel-api',
+        href: '/docs/quickstarts/quickstart-php-laravel-api',
         title: 'Laravel',
         icon: '/img/icons/laravel.svg',
         faIcon: 'fa-block',
