@@ -102,6 +102,7 @@ const qsSections: QuickStartSection[] = [
         navColor: 'blue',
       },
 */
+/* not merged yet
       {
         href: '/docs/quickstarts/quickstart-php-laravel-api',
         title: 'Laravel',
@@ -109,6 +110,7 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-block',
         navColor: 'rose',
       },
+*/
     ],
   },
   {
