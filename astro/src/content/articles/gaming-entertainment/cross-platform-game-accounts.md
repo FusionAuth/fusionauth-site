@@ -54,7 +54,7 @@ In order to properly secure cross-platform gaming accounts, your auth provider s
 
 Each game platform is built differently, so in choosing an auth server, you need to verify that the server supports logging into major game networks like PSN, Xbox, Nintendo, Twitch, or Epic. Pre-built integrations will remove the need for your developers to spend time building that undifferentiated code. 
 
-Ensure that your auth server allows [identity linking](/docs/v1/tech/identity-providers/#linking-strategies), which enables a gamer to log in on a PC and later log in on a PlayStation and link those two accounts together, even if the user signed up on the PC with a different email address than they did with the PlayStation network. It also allows gamers to switch platforms without worrying about compatibility issues, loss of progression, logging delays, or eventual failure.
+Ensure that your auth server allows [identity linking](/docs/lifecycle/authenticate-users/identity-providers/#linking-strategies), which enables a gamer to log in on a PC and later log in on a PlayStation and link those two accounts together, even if the user signed up on the PC with a different email address than they did with the PlayStation network. It also allows gamers to switch platforms without worrying about compatibility issues, loss of progression, logging delays, or eventual failure.
 
 ### Support for Device Grants
 
@@ -198,7 +198,7 @@ FusionAuth offers multiple authentication options for you to consider when build
 
 - The [hosted login pages](/docs/v1/tech/core-concepts/integration-points#hosted-login-pages) where FusionAuth hosts the registration forms and pages.
 - An [API-based](/docs/v1/tech/apis/users) approach to manage users.
-- [Third-party login](/docs/v1/tech/identity-providers/) using identity providers such as Google.
+- [Third-party login](/docs/lifecycle/authenticate-users/identity-providers/) using identity providers such as Google.
 
 You can use any combination of these. In this application, you are going to utilize the API option due to its simplicity and direct approach.
 
