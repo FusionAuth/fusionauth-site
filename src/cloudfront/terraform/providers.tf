@@ -9,7 +9,7 @@ terraform {
     region         = "us-west-2"
     dynamodb_table = "terraform-state"
     encrypt        = true
-    key            = "fusionauth-site/172023253951-us-east-1/lambdas/site-origin-request-handler/terraform.tfstate"
+    key            = "fusionauth-site/172023253951-us-east-1/cloudfront/fusionauth-dev/terraform.tfstate"
     role_arn       = "arn:aws:iam::752443094709:role/github-actions"
   }
 
@@ -35,7 +35,7 @@ provider "aws" {
     tags = {
       managedBy       = "terraform"
       terraformRepo   = "fusionauth-site"
-      terraformConfig = "src/lambdas/site-origin-request-handler/terraform"
+      terraformConfig = "src/cloudfront/fusionauth-dev/terraform"
       environment     = "dev"
       team            = "support"
       service         = "fusionauth-site"
