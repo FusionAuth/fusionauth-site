@@ -3,7 +3,7 @@ const s3 = new S3Client({ region: 'us-east-1' });
 
 // Location of the file containing the redirect rules.
 const fileBucket = 'fusionauth-dev-us-east-1-artifacts';
-const fileKey = 'lambda/fusionauth-site-origin-handler/redirects.json';
+const fileKey = 'lambda/site-origin-request-handler/redirects.json';
 
 let redirectRules = null;
 
