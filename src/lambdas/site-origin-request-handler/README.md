@@ -1,4 +1,4 @@
-# fusionauth-site-origin-handler
+# site-origin-request-handler
 
 This is a Lambda@Edge function that handles redirects for fusionauth.dev.
 
