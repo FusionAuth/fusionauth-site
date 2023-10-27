@@ -64,7 +64,6 @@ const qsSections: QuickStartSection[] = [
     articles: [
     ],
   },
-/*
   {
     key: 'native',
     icon: '/img/icons/native-mobile-app.svg',
@@ -74,6 +73,7 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'mobile-app',
     desc: 'Mobile application that runs natively on a device',
     articles: [
+/* not merged yet
       {
         href: '/docs/quickstarts/quickstart-flutter-native',
         title: 'Flutter',
@@ -81,10 +81,9 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-snake',
         navColor: 'indigo'
       },
+*/
     ],
   },
-*/
-/*
   {
     key: 'api',
     icon: '/img/icons/backend-api.svg',
@@ -94,6 +93,7 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'api',
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
+/* not merged yet
       {
         href: '/docs/quickstarts/quickstart-dotnet-api',
         title: '.NET Core',
@@ -101,6 +101,7 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-hashtag',
         navColor: 'blue',
       },
+*/
       {
         href: '/docs/quickstarts/quickstart-php-laravel-api',
         title: 'Laravel',
@@ -110,7 +111,6 @@ const qsSections: QuickStartSection[] = [
       },
     ],
   },
-*/
   {
     key: 'fiveminute',
     icon: '/img/icons/web-application.svg',
