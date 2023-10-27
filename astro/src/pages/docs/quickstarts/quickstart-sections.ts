@@ -64,6 +64,7 @@ const qsSections: QuickStartSection[] = [
     articles: [
     ],
   },
+/*
   {
     key: 'native',
     icon: '/img/icons/native-mobile-app.svg',
@@ -82,6 +83,8 @@ const qsSections: QuickStartSection[] = [
       },
     ],
   },
+*/
+/*
   {
     key: 'api',
     icon: '/img/icons/backend-api.svg',
@@ -107,6 +110,7 @@ const qsSections: QuickStartSection[] = [
       },
     ],
   },
+*/
   {
     key: 'fiveminute',
     icon: '/img/icons/web-application.svg',

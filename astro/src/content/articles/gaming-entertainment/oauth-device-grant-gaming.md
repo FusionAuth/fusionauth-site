@@ -56,7 +56,7 @@ git clone https://github.com/FusionAuth/fusionauth-example-gaming-device-grant.g
 
 * Install Docker Desktop on your machine. You can install it on either [Mac](https://docs.docker.com/desktop/mac/install/) or [Windows](https://docs.docker.com/desktop/windows/install/).
 
-* Install an authorization server or identity provider. This tutorial uses [FusionAuth](/); follow the [installation guide](/docs/v1/tech/installation-guide/docker). You will run a Docker image that will be running the identity provider. 
+* Install an authorization server or identity provider. This tutorial uses [FusionAuth](/); follow the [installation guide](/docs/get-started/download-and-install/docker). You will run a Docker image that will be running the identity provider. 
 
 Once Docker Desktop is running, open your terminal and type the following commands: 
 
