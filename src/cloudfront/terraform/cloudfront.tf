@@ -79,18 +79,22 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.basic_auth.arn
+      event_type = "viewer-request"
+      # TODO -- need to figure out what this is doing, because the site doesn't work correctly wuthout it.
+      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-website-request-handler"
     }
     function_association {
       event_type   = "viewer-response"
       function_arn = aws_cloudfront_function.fusionauth_dev_fix_webflow_redirect.arn
     }
-    lambda_function_association {
-      event_type   = "origin-request"
-      include_body = false
-      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
-    }
+    # TODO -- when this is enabled, and viewer-request uses the basic-auth function,
+    # we get a redirect loop. Need to pull this apart and figure out why, because
+    # this is the only thing that still uses fusionauth-website-request-handler.
+    # lambda_function_association {
+    #   event_type   = "origin-request"
+    #   include_body = false
+    #   lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
+    # }
   }
 
   ordered_cache_behavior {
