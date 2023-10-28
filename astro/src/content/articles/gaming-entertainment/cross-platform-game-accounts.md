@@ -151,11 +151,11 @@ Click "Submit".
 
 Once FusionAuth starts, you’ll be taken to the Setup Wizard. Create an administrator account and accept the license.
 
-For more on setup wizard, [read the documentation](/docs/v1/tech/tutorials/setup-wizard).
+For more on setup wizard, [read the documentation](/docs/get-started/download-and-install/setup-wizard).
 
 ### Create a Tenant
 
-FusionAuth supports single and multiple tenants. This enables you to host multiple games or applications on a single instance of the FusionAuth server. A [tenant](/docs/v1/tech/apis/tenants) can hold multiple groups of users in which each user is unique by email address or username.
+FusionAuth supports single and multiple tenants. This enables you to host multiple games or applications on a single instance of the FusionAuth server. A [tenant](/docs/apis/tenants) can hold multiple groups of users in which each user is unique by email address or username.
 
 To create a tenant, open the "Tenants" tab on the side pane and click the plus button in the top right corner. Give the tenant a unique name, in this case `GameGuruTenant`, leaving the rest of the options as they are and saving the tenant.
 
@@ -176,7 +176,7 @@ You also need to add some roles for this apps use case:
  
 ### Create an API Key
 
-Most FusionAuth APIs [require authentication](/docs/v1/tech/apis/authentication) when making requests. This is done by adding an `Authorization` header to the request with an API key associated with your application.
+Most FusionAuth APIs [require authentication](/docs/apis/authentication) when making requests. This is done by adding an `Authorization` header to the request with an API key associated with your application.
 
 On the side pane, click "Settings" and then "API Keys" and click the plus button on the top right corner.
 
@@ -196,13 +196,13 @@ You are going to build a [Flutter](https://flutter.dev/) cross-platform game for
 
 FusionAuth offers multiple authentication options for you to consider when building your application. These include:
 
-- The [hosted login pages](/docs/v1/tech/core-concepts/integration-points#hosted-login-pages) where FusionAuth hosts the registration forms and pages.
-- An [API-based](/docs/v1/tech/apis/users) approach to manage users.
+- The [hosted login pages](/docs/get-started/core-concepts/integration-points#hosted-login-pages) where FusionAuth hosts the registration forms and pages.
+- An [API-based](/docs/apis/users) approach to manage users.
 - [Third-party login](/docs/lifecycle/authenticate-users/identity-providers/) using identity providers such as Google.
 
 You can use any combination of these. In this application, you are going to utilize the API option due to its simplicity and direct approach.
 
-In a real-world application, you’ll want to use the hosted login pages, because that will allow you to offload all responsibility to FusionAuth for passwords or other credentials. It also allows you to easily add more security to your application if needed, including enabling MFA or rate-limiting certain users. But you'll want to make sure you [theme them to look like your application](/docs/v1/tech/themes/).
+In a real-world application, you’ll want to use the hosted login pages, because that will allow you to offload all responsibility to FusionAuth for passwords or other credentials. It also allows you to easily add more security to your application if needed, including enabling MFA or rate-limiting certain users. But you'll want to make sure you [theme them to look like your application](/docs/customize/look-and-feel/).
 
 ### Create a New Flutter Application
 
@@ -354,11 +354,11 @@ Here is an explanation of some of the variables in the above code.
 
 The `login` function receives two arguments, `username` and `password`, which are sent to the server for user authentication.
 
-The [FusionAuth login API](/docs/v1/tech/apis/login#request) is located at `/api/login` and requires an [API key authentication](/docs/v1/tech/apis/authentication), which is passed in the `Authorization` header. If authentication is successful, the API will return data that you store securely for other purposes. An unsuccessful request will fail with an error code as defined in the [Login API documentation](/docs/v1/tech/apis/login#request).
+The [FusionAuth login API](/docs/apis/login#request) is located at `/api/login` and requires an [API key authentication](/docs/apis/authentication), which is passed in the `Authorization` header. If authentication is successful, the API will return data that you store securely for other purposes. An unsuccessful request will fail with an error code as defined in the [Login API documentation](/docs/apis/login#request).
 
-The `register` function also receives two arguments, `username` and `password`, which are sent to the server for user creation and registration. The [FusionAuth Registration API](/docs/v1/tech/apis/registrations) is located at `/api/user/registration/`, and also requires an API key for authentication.
+The `register` function also receives two arguments, `username` and `password`, which are sent to the server for user creation and registration. The [FusionAuth Registration API](/docs/apis/registrations) is located at `/api/user/registration/`, and also requires an API key for authentication.
 
-However, in some scenarios, the [X-FusionAuth-TenantId](/docs/v1/tech/apis/authentication#making-an-api-request-using-a-tenant-id) header is required to scope the request properly.
+However, in some scenarios, the [X-FusionAuth-TenantId](/docs/apis/authentication#making-an-api-request-using-a-tenant-id) header is required to scope the request properly.
 
 Finally, in the JSON request, you add a list of roles that the user should have. In this case, you assign the `gamer` role created above.
 
@@ -366,8 +366,8 @@ User creation involves creating a tenant scoped account for a user on the Fusion
 
 FusionAuth offers two ways to create and register a user: 
 
-1. [Create a user and registration combined](/docs/v1/tech/apis/registrations#create-a-user-and-registration-combined)
-2. [Create a user](/docs/v1/tech/apis/users#create-a-user) and then [register the user](/docs/v1/tech/apis/registrations#create-a-user-registration-for-an-existing-user)
+1. [Create a user and registration combined](/docs/apis/registrations#create-a-user-and-registration-combined)
+2. [Create a user](/docs/apis/users#create-a-user) and then [register the user](/docs/apis/registrations#create-a-user-registration-for-an-existing-user)
 
 This application uses the first option, since it is simpler. Below is a video of how your application should be working when registering an account on Android.
 
