@@ -24,7 +24,7 @@ resource "aws_iam_policy" "site_origin_request_handler" {
 #
 module "site_origin_request_handler" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "6.0.1"
+  version = "6.2.0"
 
   lambda_at_edge = true
 

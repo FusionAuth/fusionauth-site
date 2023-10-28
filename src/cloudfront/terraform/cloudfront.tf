@@ -1,32 +1,4 @@
 #
-# origin access control for astro s3 bucket
-#
-resource "aws_cloudfront_origin_access_control" "astro" {
-  name                              = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
-  origin_access_control_origin_type = "s3"
-  signing_behavior                  = "always"
-  signing_protocol                  = "sigv4"
-}
-
-#
-# basic-auth function - used as the viewer-request handler for most behaviors.
-#
-resource "aws_cloudfront_function" "basic_auth" {
-  name    = "basic-auth"
-  runtime = "cloudfront-js-1.0"
-  code    = file("../functions/basic-auth.js")
-}
-
-#
-# dev-site-response function - used as the viewer-response handler for many behaviors.
-#
-resource "aws_cloudfront_function" "fusionauth_dev_response" {
-  name    = "fusionauth-dev-response"
-  runtime = "cloudfront-js-1.0"
-  code    = file("../functions/fusionauth-dev-response.js")
-}
-
-#
 # cloudfront for fusionauth.dev site
 #
 resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
@@ -39,13 +11,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
   retain_on_delete    = false
   wait_for_deployment = true
 
-  custom_error_response {
-    error_code            = 403
-    response_code         = 404
-    response_page_path    = "/404.html"
-    error_caching_min_ttl = 10
-  }
-
+  # Community forums
   origin {
     domain_name = "fusionauth.nodebb.com"
     origin_id   = "fusionauth.nodebb.com"
@@ -56,6 +22,19 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
       origin_ssl_protocols   = ["SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2"]
     }
   }
+  # New docs site.
+  origin {
+    domain_name              = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
+    origin_id                = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
+    origin_access_control_id = "E2EQIBLOLKM4ZQ"
+  }
+  # Old docs site, deprecated, should probably be removed?
+  origin {
+    domain_name              = "fusionauth-dev-site.s3.us-east-2.amazonaws.com"
+    origin_id                = "fusionauth-dev-site.s3.us-east-2.amazonaws.com"
+    origin_access_control_id = "E38FYPU7E1AY7S"
+  }
+  # Default origin. Requests that aren't caught by any other behaviors go here.
   origin {
     domain_name = "webflow.fusionauth.dev"
     origin_id   = "webflow.fusionauth.dev"
@@ -66,15 +45,12 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
       origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
-  origin {
-    domain_name              = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
-    origin_id                = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
-    origin_access_control_id = "E2EQIBLOLKM4ZQ"
-  }
-  origin {
-    domain_name              = "fusionauth-dev-site.s3.us-east-2.amazonaws.com"
-    origin_id                = "fusionauth-dev-site.s3.us-east-2.amazonaws.com"
-    origin_access_control_id = "E38FYPU7E1AY7S"
+
+  custom_error_response {
+    error_code            = 403
+    response_code         = 404
+    response_page_path    = "/404.html"
+    error_caching_min_ttl = 10
   }
 
   logging_config {
@@ -89,7 +65,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
   }
 
   viewer_certificate {
-    acm_certificate_arn            = "arn:aws:acm:us-east-1:172023253951:certificate/fbe87f1f-f149-4313-a5ee-60e7229a5b70"
+    acm_certificate_arn            = local.acm_certificate.fusionauth_dev
     cloudfront_default_certificate = false
     minimum_protocol_version       = "TLSv1.2_2021"
     ssl_support_method             = "sni-only"
@@ -100,15 +76,20 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     target_origin_id       = "webflow.fusionauth.dev"
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-website-request-handler"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     function_association {
       event_type   = "viewer-response"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-dev-fix-webflow-redirect"
+      function_arn = aws_cloudfront_function.fusionauth_dev_fix_webflow_redirect.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -118,11 +99,11 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
     compress               = false
-    cache_policy_id        = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # Managed-CachingDisabled
+    cache_policy_id        = local.managed_cache_policy.caching_disabled
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-website-request-handler"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
   }
 
@@ -132,20 +113,20 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/basic-auth"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     function_association {
       event_type   = "viewer-response"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-dev-response"
+      function_arn = aws_cloudfront_function.fusionauth_dev_response.arn
     }
     lambda_function_association {
       event_type   = "origin-request"
       include_body = false
-      lambda_arn   = "arn:aws:lambda:us-east-1:172023253951:function:cloudfront-redirect:20"
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -155,20 +136,20 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/basic-auth"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     function_association {
       event_type   = "viewer-response"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-dev-response"
+      function_arn = aws_cloudfront_function.fusionauth_dev_response.arn
     }
     lambda_function_association {
       event_type   = "origin-request"
       include_body = false
-      lambda_arn   = "arn:aws:lambda:us-east-1:172023253951:function:cloudfront-redirect:20"
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -178,20 +159,20 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/basic-auth"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     function_association {
       event_type   = "viewer-response"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-dev-response"
+      function_arn = aws_cloudfront_function.fusionauth_dev_response.arn
     }
     lambda_function_association {
       event_type   = "origin-request"
       include_body = false
-      lambda_arn   = "arn:aws:lambda:us-east-1:172023253951:function:cloudfront-redirect:20"
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -201,20 +182,20 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/basic-auth"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     function_association {
       event_type   = "viewer-response"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-dev-response"
+      function_arn = aws_cloudfront_function.fusionauth_dev_response.arn
     }
     lambda_function_association {
       event_type   = "origin-request"
       include_body = false
-      lambda_arn   = "arn:aws:lambda:us-east-1:172023253951:function:cloudfront-redirect:20"
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -224,20 +205,20 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/basic-auth"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     function_association {
       event_type   = "viewer-response"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-dev-response"
+      function_arn = aws_cloudfront_function.fusionauth_dev_response.arn
     }
     lambda_function_association {
       event_type   = "origin-request"
       include_body = false
-      lambda_arn   = "arn:aws:lambda:us-east-1:172023253951:function:cloudfront-redirect:20"
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -247,20 +228,20 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/basic-auth"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     function_association {
       event_type   = "viewer-response"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-dev-response"
+      function_arn = aws_cloudfront_function.fusionauth_dev_response.arn
     }
     lambda_function_association {
       event_type   = "origin-request"
       include_body = false
-      lambda_arn   = "arn:aws:lambda:us-east-1:172023253951:function:cloudfront-redirect:20"
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -270,20 +251,20 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/basic-auth"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     function_association {
       event_type   = "viewer-response"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-dev-response"
+      function_arn = aws_cloudfront_function.fusionauth_dev_response.arn
     }
     lambda_function_association {
       event_type   = "origin-request"
       include_body = false
-      lambda_arn   = "arn:aws:lambda:us-east-1:172023253951:function:cloudfront-redirect:20"
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -293,20 +274,20 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/basic-auth"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     function_association {
       event_type   = "viewer-response"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-dev-response"
+      function_arn = aws_cloudfront_function.fusionauth_dev_response.arn
     }
     lambda_function_association {
       event_type   = "origin-request"
       include_body = false
-      lambda_arn   = "arn:aws:lambda:us-east-1:172023253951:function:cloudfront-redirect:20"
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -316,20 +297,20 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/basic-auth"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     function_association {
       event_type   = "viewer-response"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-dev-response"
+      function_arn = aws_cloudfront_function.fusionauth_dev_response.arn
     }
     lambda_function_association {
       event_type   = "origin-request"
       include_body = false
-      lambda_arn   = "arn:aws:lambda:us-east-1:172023253951:function:cloudfront-redirect:20"
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -339,16 +320,16 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/basic-auth"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     lambda_function_association {
       event_type   = "origin-request"
       include_body = false
-      lambda_arn   = "arn:aws:lambda:us-east-1:172023253951:function:cloudfront-redirect:20"
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -358,16 +339,16 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/basic-auth"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     lambda_function_association {
       event_type   = "origin-request"
       include_body = false
-      lambda_arn   = "arn:aws:lambda:us-east-1:172023253951:function:cloudfront-redirect:20"
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -377,20 +358,20 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/basic-auth"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     function_association {
       event_type   = "viewer-response"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-dev-response"
+      function_arn = aws_cloudfront_function.fusionauth_dev_response.arn
     }
     lambda_function_association {
       event_type   = "origin-request"
       include_body = false
-      lambda_arn   = "arn:aws:lambda:us-east-1:172023253951:function:cloudfront-redirect:20"
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -400,20 +381,20 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/basic-auth"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     function_association {
       event_type   = "viewer-response"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-dev-response"
+      function_arn = aws_cloudfront_function.fusionauth_dev_response.arn
     }
     lambda_function_association {
       event_type   = "origin-request"
       include_body = false
-      lambda_arn   = "arn:aws:lambda:us-east-1:172023253951:function:cloudfront-redirect:20"
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -423,20 +404,20 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/basic-auth"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     function_association {
       event_type   = "viewer-response"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-dev-response"
+      function_arn = aws_cloudfront_function.fusionauth_dev_response.arn
     }
     lambda_function_association {
       event_type   = "origin-request"
       include_body = false
-      lambda_arn   = "arn:aws:lambda:us-east-1:172023253951:function:cloudfront-redirect:20"
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -446,20 +427,30 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6" # Managed-CachingOptimized
+    cache_policy_id        = local.managed_cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-request"
-      function_arn = "arn:aws:cloudfront::172023253951:function/basic-auth"
+      function_arn = aws_cloudfront_function.basic_auth.arn
     }
     function_association {
       event_type   = "viewer-response"
-      function_arn = "arn:aws:cloudfront::172023253951:function/fusionauth-dev-response"
+      function_arn = aws_cloudfront_function.fusionauth_dev_response.arn
     }
     lambda_function_association {
       event_type   = "origin-request"
       include_body = false
-      lambda_arn   = "arn:aws:lambda:us-east-1:172023253951:function:cloudfront-redirect:20"
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
+}
+
+#
+# origin access control for astro s3 bucket
+#
+resource "aws_cloudfront_origin_access_control" "astro" {
+  name                              = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
 }
