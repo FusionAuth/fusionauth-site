@@ -31,7 +31,7 @@ resource "aws_cloudfront_function" "fusionauth_dev_response" {
 #
 resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
   aliases             = ["fusionauth.dev"]
-  comment             = ""
+  comment             = "fusionauth.dev"
   enabled             = true
   http_version        = "http2"
   is_ipv6_enabled     = true

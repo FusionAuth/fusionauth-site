@@ -1,22 +1,27 @@
 ---
-name: lambda-site-origin-request-handler
+name: cloudfront-dev
 
 env:
   AWS_REGION: us-east-1
+  WORKDIR: src/cloudfront/terraform
 
 on:
   push:
     branches:
       - development
     paths:
-      - 'src/lambdas/site-origin-request-handler/src/index.mjs'
-      - 'src/lambdas/site-origin-request-handler/terraform/**'
+      - 'src/cloudfront/**'
+    # If we're only updating the redirect rules, ignore it.
+    paths-ignore:
+      - 'src/cloudfront/lambdas/site-origin-request-handler/data/redirects.json'
   pull_request:
     branches:
       - development
     paths:
-      - 'src/lambdas/site-origin-request-handler/src/index.mjs'
-      - 'src/lambdas/site-origin-request-handler/terraform/**'
+      - 'src/cloudfront/**'
+    # If we're only updating the redirect rules, ignore it.
+    paths-ignore:
+      - 'src/cloudfront/lambdas/site-origin-request-handler/data/redirects.json'
 
 permissions:
   id-token: write
@@ -31,8 +36,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
         with:
-          sparse-checkout: |
-            src
+          sparse-checkout: src/cloudfront  # the repo is huge, so let's only check out what we need.
 
       - name: set aws credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -49,12 +53,10 @@ jobs:
 
       - name: terraform plan
         if: github.event_name == 'pull_request'
-        working-directory: src/lambdas/site-origin-request-handler/terraform
-        shell: bash
+        working-directory: ${{ env.WORKDIR }}
         run: terraform init && terraform plan
 
       - name: terraform apply
         if: github.event_name == 'push'
-        working-directory: src/lambdas/site-origin-request-handler/terraform
-        shell: bash
+        working-directory: ${{ env.WORKDIR }}
         run: terraform init && terraform apply -auto-approve
