@@ -33,10 +33,8 @@ module "site_origin_request_handler" {
   handler       = "index.handler"
   runtime       = "nodejs18.x"
   architectures = ["x86_64"]
-
-  source_path = "../lambdas/site-origin-request-handler/src/index.mjs"
-
-  # timeout = 10
+  source_path   = "../lambdas/site-origin-request-handler/src/index.mjs"
+  timeout       = 10
 
   attach_policy = true
   policy        = aws_iam_policy.site_origin_request_handler.arn

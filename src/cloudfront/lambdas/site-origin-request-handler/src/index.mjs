@@ -115,7 +115,6 @@ function calculateRedirect(uri) {
   return result;
 }
 
-
 function appendHTML(uri) {
   var slashIndex = uri.lastIndexOf('/');
   var dotIndex = uri.indexOf('.', slashIndex);
@@ -126,7 +125,6 @@ function appendHTML(uri) {
 
   return uri;
 }
-
 
 function calculateURI(uri) {
   var i;
@@ -144,7 +142,6 @@ function calculateURI(uri) {
 
   return uri;
 }
-
 
 function redir(loc) {
   return {

@@ -4,7 +4,6 @@ function handler(event) {
     response.headers.foobar = { value: 'baz' };
     return response;
   }
-
   var uri = event.request.uri;
   if (uri.endsWith('.html')) {
     response.statusCode = 301;
