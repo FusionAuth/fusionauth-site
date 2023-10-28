@@ -81,7 +81,7 @@ There are two password hashing concerns to be aware of.
 
 First, what is the hashing algorithm used for your passwords?
 
-Your authentication system documentation should specify this. It's best if this is an industy-standard hash such as Argon or PBK2DF. Certain authentication systems, such as FusionAuth, allow for [custom password hashing algorithms](/docs/extend/code/password-hashes/custom-password-hashing) to be used, which can mitigate the risk of using a nonstandard hash.
+Your authentication system documentation should specify this. It's best if this is an industy-standard hash such as Argon or PBK2DF. Certain authentication systems, such as FusionAuth, allow for [custom password hashing algorithms](/docs/v1/tech/plugins/custom-password-hashing) to be used, which can mitigate the risk of using a nonstandard hash.
 
 Second, can you get access to the password hashes?
 

@@ -40,7 +40,7 @@ Now, because employees can work from anywhere, on any device, this perimeter is 
 
 While Zero Trust offers a lot of advantages when it comes to securing networks, it is inherently more complex than the simpler models which preceded it. As such, properly configuring a Zero Trust environment calls for knowledge, expertise, and experience in mitigating potential security hazards. There are a number of supporting technologies that go into making a Zero Trust system work. These include:
 
-* [Multi-factor Authentication (MFA)](/docs/lifecycle/authenticate-users/multi-factor-authentication) requires the user to provide multiple points of authentication, such as a temporary code in addition to a password.
+* [Multi-factor Authentication (MFA)](/docs/v1/tech/guides/multi-factor-authentication) requires the user to provide multiple points of authentication, such as a temporary code in addition to a password.
 * Segmentation divides the network into smaller zones with dedicated access to only what they need, making it difficult for attackers to move laterally through a network.
 * Privilege access management (PAM) allows you to restrict a user’s access to implement “least-access privilege” for each user. 
 

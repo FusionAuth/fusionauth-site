@@ -10,7 +10,7 @@ Picture a chart representing user logins. It has a line, trending upwards and to
 
 ![No dips here!.](/img/articles/login-failure/login-success-graph.png)
 
-When you care about providing great [authentication](/docs/get-started/core-concepts/authentication-authorization) experiences, like us (the few, the proud), there is nothing better than this chart - undeniable proof that our users are successfully logging in. And, more importantly, getting access to the features or data which that login process protects. That’s what most users are looking for, after all.
+When you care about providing great [authentication](/docs/v1/tech/core-concepts/authentication-authorization) experiences, like us (the few, the proud), there is nothing better than this chart - undeniable proof that our users are successfully logging in. And, more importantly, getting access to the features or data which that login process protects. That’s what most users are looking for, after all.
 
 The more people who successfully log in, the more confident we are that our solution can handle a large number of users and that users are able to enter the application smoothly.
 
@@ -39,7 +39,7 @@ Next, walk through what you should be doing::
 
 1. **Begin logging login activity, if you aren’t already.** Both successes and failures must be measured to understand the average login success ratio and the trend over time. Here are some common ways to capture this data:
 
-* [FusionAuth’s login failure webhook](/docs/extend/events-and-webhooks/events/user-login-failed) fires an event when a login fails due to invalid credentials
+* [FusionAuth’s login failure webhook](/docs/v1/tech/events-webhooks/events/user-login-failed) fires an event when a login fails due to invalid credentials
 * Okta gives admins access to a report that contains failed login information
 * Auth0 provides events that give specific reasons why a login failed
 * If you are using another provider, consult the documentation
