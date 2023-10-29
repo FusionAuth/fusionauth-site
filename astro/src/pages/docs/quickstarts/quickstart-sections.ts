@@ -73,6 +73,7 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'mobile-app',
     desc: 'Mobile application that runs natively on a device',
     articles: [
+/* not merged yet
       {
         href: '/docs/quickstarts/quickstart-flutter-native',
         title: 'Flutter',
@@ -80,6 +81,7 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-snake',
         navColor: 'indigo'
       },
+*/
     ],
   },
   {
@@ -91,6 +93,7 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'api',
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
+/* not merged yet
       {
         href: '/docs/quickstarts/quickstart-dotnet-api',
         title: '.NET Core',
@@ -98,13 +101,16 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-hashtag',
         navColor: 'blue',
       },
+*/
+/* not merged yet
       {
-        href: '/docs/quickstarts/quickstart-laravel-api',
+        href: '/docs/quickstarts/quickstart-php-laravel-api',
         title: 'Laravel',
         icon: '/img/icons/laravel.svg',
         faIcon: 'fa-block',
         navColor: 'rose',
       },
+*/
     ],
   },
   {

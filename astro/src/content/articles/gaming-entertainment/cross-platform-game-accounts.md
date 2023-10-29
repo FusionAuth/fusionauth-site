@@ -84,7 +84,7 @@ Now that you understand how cross-platform gaming accounts are implemented, you�
 
 ### Requirements
 
-This tutorial assumes you have either a MySQL or PostgreSQL database already initialized with the necessary permissions to create, delete, and update tables. If you don’t, [follow these instructions](/docs/v1/tech/installation-guide/database) to install.
+This tutorial assumes you have either a MySQL or PostgreSQL database already initialized with the necessary permissions to create, delete, and update tables. If you don’t, [follow these instructions](/docs/get-started/download-and-install/database) to install.
 
 You’ll also need Node.js installed. You can verify that it’s installed by running `node -v` in your terminal; you should see a version returned:
 
@@ -101,9 +101,9 @@ Settling down with a cross-platform gaming auth server is tricky. Your auth serv
 
 FusionAuth does that and more. Gaming accounts are valuable since players invest money into buying in-game merchandise and services. FusionAuth implements a powerful [hashing scheme](/articles/security/math-of-password-hashing-algorithms-entropy) to ensure that user accounts are secure. With its identity-linking strategies for a variety of identity providers, you can achieve seamless integration of your users’ accounts across multiple platforms.
 
-Installing FusionAuth is painless, and it can all be run from a simple cURL request (or PowerShell command in Windows). FusionAuth provides [multiple installation methods](/docs/v1/tech/installation-guide/).
+Installing FusionAuth is painless, and it can all be run from a simple cURL request (or PowerShell command in Windows). FusionAuth provides [multiple installation methods](/docs/get-started/download-and-install/).
 
-This guide will assume you are using [Fast Path](/docs/v1/tech/installation-guide/fast-path), which requires a previously installed MySQL or PostgreSQL database.
+This guide will assume you are using [Fast Path](/docs/get-started/download-and-install/fast-path), which requires a previously installed MySQL or PostgreSQL database.
 
 After you install and run the Fast Path script, you will see something like this:
 
@@ -145,7 +145,7 @@ You need to enter the following:
 
 Click "Submit". 
 
-> If you do encounter the error ***Exception in thread main java.lang.NoClassDefFoundError: com/inversoft/mysql/MySQLHelper***, make sure you've [installed the MySQL driver](/docs/v1/tech/installation-guide/database#install-mysql-connector).
+> If you do encounter the error ***Exception in thread main java.lang.NoClassDefFoundError: com/inversoft/mysql/MySQLHelper***, make sure you've [installed the MySQL driver](/docs/get-started/download-and-install/database#install-mysql-connector).
 
 ### Complete the Setup Wizard
 
