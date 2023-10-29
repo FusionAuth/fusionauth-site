@@ -30,8 +30,8 @@ const runTest = (path, expected) => {
 };
 
 describe('site root', function() {
-  runTest('/', makeRedirect(''));
-  runTest('', makePassThroughRequest(''));
+  runTest('', makeRedirect('/'));
+  runTest('/', makePassThroughRequest('/'));
 });
 
 describe('html extension', function() {
