@@ -73,7 +73,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'mobile-app',
     desc: 'Mobile application that runs natively on a device',
     articles: [
-/* not merged yet
       {
         href: '/docs/quickstarts/quickstart-flutter-native',
         title: 'Flutter',
@@ -81,7 +80,6 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-snake',
         navColor: 'indigo'
       },
-*/
     ],
   },
   {
@@ -93,7 +91,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'api',
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
-/* not merged yet
       {
         href: '/docs/quickstarts/quickstart-dotnet-api',
         title: '.NET Core',
@@ -101,29 +98,19 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-hashtag',
         navColor: 'blue',
       },
-*/
-/* not merged yet
-      {
-        href: '/docs/quickstarts/quickstart-php-laravel-api',
-        title: 'Laravel',
-        icon: '/img/icons/laravel.svg',
-        faIcon: 'fa-block',
-        navColor: 'rose',
-      },
-*/
     ],
   },
   {
-    key: 'fiveminute',
-    icon: '/img/icons/web-application.svg',
-    faIcon: 'fa-code-simple',
-    color: 'indigo',
-    title: '5-minute Guides',
-    anchorTag: '5-minute',
-    desc: 'Guides for getting up and running quickly',
-    articles: [
-    ],
-  },
+      key: 'fiveminute',
+      icon: '/img/icons/web-application.svg',
+      faIcon: 'fa-code-simple',
+      color: 'indigo',
+      title: '5-minute Guides',
+      anchorTag: '5-minute',
+      desc: 'Guides for getting up and running quickly',
+      articles: [
+      ],
+    },
 ];
 
 // merge in quickstarts managed by astro to the list of quickstart links we have above
