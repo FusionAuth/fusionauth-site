@@ -3,6 +3,7 @@ name: cloudfront-dev-publish
 
 env:
   AWS_REGION: us-east-1
+  DIST_ID: E3N8W7YX4AAW44
   WORKDIR: src/cloudfront/terraform
 
 on:
@@ -34,7 +35,7 @@ jobs:
         with:
           sparse-checkout: src/cloudfront  # the repo is huge, so let's only check out what we need.
 
-      - name: set aws credentials
+      - name: set aws credentials for svc account
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-chaining: true
@@ -56,3 +57,15 @@ jobs:
         if: github.event_name == 'push'
         working-directory: ${{ env.WORKDIR }}
         run: terraform init && terraform apply -auto-approve
+
+      - name: set aws credentials for dev account
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-chaining: true
+          role-to-assume: arn:aws:iam::172023253951:role/github-actions
+          role-session-name: github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: invalidate the cache
+        if: github.event_name == 'push'
+        run: aws cloudfront create-invalidation --distribution-id $DIST_ID --paths "/*"
