@@ -1,0 +1,39 @@
+---
+name: publish-site-redirect-rules-to-s3
+
+env:
+  AWS_ACCOUNT_ID: '172023253951'
+  AWS_REGION: us-east-1
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - 'src/lambdas/site-origin-request-handler/data/redirects.json'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish-to-s3:
+    runs-on: fusionauth-standard
+    container: 752443094709.dkr.ecr.us-west-2.amazonaws.com/gha-runner-ubuntu-22.04:bootstrap-05
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: set aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-chaining: true
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-actions
+          role-session-name: github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: upload file to s3
+        working-directory: src/lambdas/site-origin-request-handler/data
+        run: |
+          aws s3 cp ./redirects.json s3://fusionauth-dev-us-east-1-artifacts/lambda/site-origin-request-handler/redirects.json

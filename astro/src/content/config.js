@@ -54,6 +54,9 @@ const docsCollection = defineCollection({
     subcategory: z.string().optional(),
     tertcategory: z.string().optional(),
     quatercategory: z.string().optional(),
+    nestedHeadings: z.boolean().optional(),
+    disableTOC: z.boolean().default(false),
+    topOfNav: z.boolean().default(false),
   }),
 });
 

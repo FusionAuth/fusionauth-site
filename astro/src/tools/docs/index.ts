@@ -7,6 +7,7 @@ export * from './filterPartials';
 export * from './getDocNavContext';
 export * from './getDocsPages';
 export * from './getPagePath';
+export * from './getReleaseNoteRssItems';
 export * from './getStaticDocPaths';
 export * from './LambdaDoc';
 export * from './sortFeatures';
