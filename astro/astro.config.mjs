@@ -17,6 +17,8 @@ if (!process.env.DEV) {
   console.log('skipping compression');
 }
 
+const siteMapFilter = (page) => !page.startsWith('https://fusionauth.io/landing')
+
 const config = defineConfig({
   build: {
     format: 'file'
@@ -24,7 +26,9 @@ const config = defineConfig({
   integrations: [
     ...optionalIntegrations,
     mdx(),
-    sitemap(),
+    sitemap({
+      filter: siteMapFilter
+    }),
     indexPages(),
     tailwind({
       config: {
