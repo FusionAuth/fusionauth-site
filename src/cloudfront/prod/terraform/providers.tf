@@ -9,7 +9,7 @@ terraform {
     region         = "us-west-2"
     dynamodb_table = "terraform-state"
     encrypt        = true
-    key            = "fusionauth-site/121700706967-us-east-1/cloudfront/fusionauth-dev/terraform.tfstate"
+    key            = "fusionauth-site/121700706967-us-east-1/cloudfront/fusionauth-prod/terraform.tfstate"
     role_arn       = "arn:aws:iam::752443094709:role/github-actions"
   }
 
