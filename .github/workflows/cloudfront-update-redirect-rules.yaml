@@ -37,13 +37,20 @@ jobs:
         run: |
           set -xv
           if [ "${{ github.head_ref }}" == "main" ]; then
-            echo "ENVIRONMENT=prod" >> $GITHUB_ENV
             echo "AWS_ACCOUNT_ID=121700706967" >> $GITHUB_ENV
+            echo "ENVIRONMENT=prod" >> $GITHUB_ENV
+            echo "SOURCE=src/cloudfront/prod/lambdas/site-origin-request-handler/data" >> $GITHUB_ENV
           else
-            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
             echo "AWS_ACCOUNT_ID=172023253951" >> $GITHUB_ENV
+            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
+            echo "FILE_SOURCE=src/cloudfront/dev/lambdas/site-origin-request-handler/data/redirects.json" >> $GITHUB_ENV
+            echo "S3_DEST=s3://fusionauth-prod-us-east-1-artifacts/lambda/site-origin-request-handler/redirects.json" >> $GITHUB_ENV
           fi
-          echo "WORKDIR=src/cloudfront/${ENVIRONMENT}/lambdas/site-origin-request-handler/data" >> $GITHUB_ENV
+
+      - name: validate json
+        run: |
+          set -xv
+          cat "${{ env.FILE_SOURCE }}" | jq empty
 
       - name: set aws credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -53,13 +60,7 @@ jobs:
           role-session-name: github-actions
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: validate json
-        run: |
-          set -xv
-          cat "${{ env.WORKDIR }}"/redirects.json | jq empty
-
       - name: upload file to s3
         if: github.event_name == 'push'
-        working-directory: ${{ env.WORKDIR }}
         run: |
-          echo "aws s3 cp ./redirects.json s3://fusionauth-prod-us-east-1-artifacts/lambda/site-origin-request-handler/redirects.json"
+          echo "aws s3 cp ${{ env.FILE_SOURCE}} ${{ env.S3_DEST }}"
