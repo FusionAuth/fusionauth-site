@@ -1,0 +1,60 @@
+---
+name: cloudfront-dev-update-redirect-rules
+
+env:
+  AWS_ACCOUNT_ID: '121700706967'
+  AWS_REGION: us-east-1
+
+on:
+  push:
+    branches:
+      - development
+      - master
+    paths:
+      - 'src/cloudfront/prod/lambdas/site-origin-request-handler/data/redirects.json'
+  pull_request:
+    branches:
+      - development
+      - master
+    # paths:
+    #   - 'src/cloudfront/prod/lambdas/site-origin-request-handler/data/redirects.json'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish-to-s3:
+    runs-on: fusionauth-standard
+    container: 752443094709.dkr.ecr.us-west-2.amazonaws.com/gha-runner-ubuntu-22.04:latest
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v4
+
+      # - name: set aws credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-chaining: true
+      #     role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-actions
+      #     role-session-name: github-actions
+      #     aws-region: ${{ env.AWS_REGION }}
+
+      - name: validate json
+        run: |
+          set -xv
+          echo "${{ github.ref_name }}"
+          echo "${{ github.head_ref }}"
+          echo "${{ github.base_ref }}"
+          # if [ "${{ github.head_ref }}" == "main" ]; then \
+          #   echo "ENVIRONMENT=prod" >> $GITHUB_ENV; \
+          # else \
+          #   echo "ENVIRONMENT=dev" >> $GITHUB_ENV; \
+          # fi
+          # cat src/cloudfront/${{ env.ENVIRONMENT }}/lambdas/site-origin-request-handler/data/redirects.json | jq empty
+
+      # - name: upload file to s3
+      #   if: github.event_name == 'push'
+      #   working-directory: ${{ env.WORKDIR }}
+      #   run: |
+      #     aws s3 cp ./redirects.json s3://fusionauth-prod-us-east-1-artifacts/lambda/site-origin-request-handler/redirects.json
