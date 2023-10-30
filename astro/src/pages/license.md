@@ -1,21 +1,41 @@
 ---
-layout: developer-container
+layout: ../layouts/Developer.astro
 title: FusionAuth Customer License Agreement
 description: The FusionAuth Customer License Agreement
 ---
 
 <style>
-main .container ol {
-  counter-reset: item;
-  margin-bottom: 10px;
-  margin-top: 10px;
+h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 4rem 6rem;
+  color: rgb(71 85 105);
 }
-main .container li {
+h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 3rem 6rem;
+  color: rgb(71 85 105);
+}
+h3 {
+  font-size: 1.5rem;
+  font-weight: 200;
+  margin: 1rem 6rem;
+  color: rgb(71 85 105);
+}
+p {
+  margin: 4rem 6rem;
+}
+ol {
+  counter-reset: item;
+  margin: 0 6rem .7rem;
+}
+li {
   display: block;
   margin-bottom: 5px;
   margin-top: 5px;
 }
-main .container li:before {
+li:before {
   content: counters(item, ".") ". ";
   counter-increment: item;
 }
@@ -117,26 +137,26 @@ This Support Services exhibit ("Support Exhibit") by and between Company and Lic
 
 This Professional Services exhibit ("Services Exhibit") by and between Company and Licensee is hereby incorporated into the Licensee License Agreement (the "Agreement") and provides the terms and conditions for certain Company professional services purchased by Licensee related to Licensee's use of the Offerings.  All terms not otherwise defined in this Services Exhibit have the meanings provided in the Agreement. The terms and condition in this Services Exhibit only apply if Licensee has purchased professional services as reflected in an applicable Order Form.
 
-1. Services to be Provided.  Company agrees to provide the professional services ("Services"), and Licensee agrees to pay the Fees, identified in separate statement(s) of work (each a "SOW"), unless otherwise set forth in an Order Form.  If any onsite visits to Licensee's premises are necessary to perform the Services, Licensee agrees to provide Company with reasonable access to the premises, Licensee's equipment and other parts of Licensee's system as may be necessary or appropriate. Company will use commercially reasonable efforts to perform the Services for Licensee in accordance with the schedule specified in the applicable SOW or applicable Order Form.
-1. Duration. This Services Exhibit will terminate upon the expiration or termination of the Agreement for any reason.  Company may terminate this Services Exhibit or suspend Services if Licensee fails to make payment as provided under this Agreement or breaches this Services Exhibit and such breach is not remedied within fifteen (15) days after Licensee receives notice of the breach.
-1. Fees and Payment.  Unless otherwise specified in a SOW or the applicable Order Form, Company will periodically invoice Licensee for Fees and other charges and reimbursable expenses for the Services.  Invoices will be due and payable within thirty (30) days of invoice date. Termination of this Services Exhibit will not relieve Licensee of its obligations to pay all Fees, other charges and expenses that accrued prior to such termination.
-1. Proprietary Rights.  Unless otherwise expressly agreed to in writing by the parties, Licensee agrees that any and all deliverables or work product provided to Licensee ("Deliverables") or other results of the Services shall be owned exclusively by Company including all intellectual property and proprietary rights therein.  Company hereby grants Licensee a non-exclusive and non-transferable license to use the Deliverables, during the Term of the Agreement, solely for Licensee's authorized use of the Offerings pursuant to the licenses granted to Licensee in the Agreement.
-1. Licensee Assistance. Licensee shall provide Company with such resources, information and assistance as Company may reasonably request in connection with the performance of the Services.  Licensee acknowledges and agrees that Company's ability to successfully perform the Services in a timely manner is contingent upon its receipt from Licensee of the information, resources and assistance requested.  Company shall have no liability for deficiencies in the Services resulting from the acts or omissions of Licensee, its agents or employees or performance of the Services in accordance with Licensee's instructions.
+  1. Services to be Provided.  Company agrees to provide the professional services ("Services"), and Licensee agrees to pay the Fees, identified in separate statement(s) of work (each a "SOW"), unless otherwise set forth in an Order Form.  If any onsite visits to Licensee's premises are necessary to perform the Services, Licensee agrees to provide Company with reasonable access to the premises, Licensee's equipment and other parts of Licensee's system as may be necessary or appropriate. Company will use commercially reasonable efforts to perform the Services for Licensee in accordance with the schedule specified in the applicable SOW or applicable Order Form.
+  1. Duration. This Services Exhibit will terminate upon the expiration or termination of the Agreement for any reason.  Company may terminate this Services Exhibit or suspend Services if Licensee fails to make payment as provided under this Agreement or breaches this Services Exhibit and such breach is not remedied within fifteen (15) days after Licensee receives notice of the breach.
+  1. Fees and Payment.  Unless otherwise specified in a SOW or the applicable Order Form, Company will periodically invoice Licensee for Fees and other charges and reimbursable expenses for the Services.  Invoices will be due and payable within thirty (30) days of invoice date. Termination of this Services Exhibit will not relieve Licensee of its obligations to pay all Fees, other charges and expenses that accrued prior to such termination.
+  1. Proprietary Rights.  Unless otherwise expressly agreed to in writing by the parties, Licensee agrees that any and all deliverables or work product provided to Licensee ("Deliverables") or other results of the Services shall be owned exclusively by Company including all intellectual property and proprietary rights therein.  Company hereby grants Licensee a non-exclusive and non-transferable license to use the Deliverables, during the Term of the Agreement, solely for Licensee's authorized use of the Offerings pursuant to the licenses granted to Licensee in the Agreement.
+  1. Licensee Assistance. Licensee shall provide Company with such resources, information and assistance as Company may reasonably request in connection with the performance of the Services.  Licensee acknowledges and agrees that Company's ability to successfully perform the Services in a timely manner is contingent upon its receipt from Licensee of the information, resources and assistance requested.  Company shall have no liability for deficiencies in the Services resulting from the acts or omissions of Licensee, its agents or employees or performance of the Services in accordance with Licensee's instructions.
 
 ## Exhibit C
 ### SLA
 
 This SLA exhibit ("SLA Exhibit") by and between Company and Licensee is hereby incorporated into the Licensee License Agreement (the "Agreement").  All terms not otherwise defined in this SLA Exhibit have the meanings provided in the Agreement. The terms and condition in this exhibit only apply if Licensee has purchased access to the Hosted Platform.
 
-1. Service Level:  System Availability. Company shall provide the Hosted Platform on a 24 hours per day, 365 days per year basis with an availability uptime set forth in the Order Form, excluding scheduled maintenance which shall not be performed during normal business hours of operation from 9:00 AM to 5:00 PM (MST) ("Service Level").  Company will provide Licensee with its maintenance schedule and will endeavor to pre-notify Licensee of any non-scheduled maintenance.  The term "availability uptime" means that the Software hosted by Company, is accessible and available to Licensee and its authorized users without interference or interruption, excluding any Excused Delay.
-1. Service Level:  Security. Company shall provide adequate and appropriate physical and technical security, in no event less that those security standards set forth in the Statement on Standards for Attestation Engagements ("SSAE") 16.
-1. Remedies. In the event that Company fails to meet any of the Service Levels set forth in this SLA Exhibit (each such failure, a "SLA Failure") within a calendar month, and such SLA Failure that is not excused due to any Excused Delay (as defined below), then Licensee shall be entitled to receive service level credits as follows (each, a "SLA Credit"):
+  1. Service Level:  System Availability. Company shall provide the Hosted Platform on a 24 hours per day, 365 days per year basis with an availability uptime set forth in the Order Form, excluding scheduled maintenance which shall not be performed during normal business hours of operation from 9:00 AM to 5:00 PM (MST) ("Service Level").  Company will provide Licensee with its maintenance schedule and will endeavor to pre-notify Licensee of any non-scheduled maintenance.  The term "availability uptime" means that the Software hosted by Company, is accessible and available to Licensee and its authorized users without interference or interruption, excluding any Excused Delay.
+  1. Service Level:  Security. Company shall provide adequate and appropriate physical and technical security, in no event less that those security standards set forth in the Statement on Standards for Attestation Engagements ("SSAE") 16.
+  1. Remedies. In the event that Company fails to meet any of the Service Levels set forth in this SLA Exhibit (each such failure, a "SLA Failure") within a calendar month, and such SLA Failure that is not excused due to any Excused Delay (as defined below), then Licensee shall be entitled to receive service level credits as follows (each, a "SLA Credit"):
       
-    (a) The ratio of unavailable minutes to total potentially available minutes (net of Excused Delays) in the applicable calendar month during which the Service Level was not met multiplied by the monthly fee for the Hosted Platform due for such month (1/12 of the annual fee if the Fees for access to the Hosted Platform is paid annually).  
+      (a) The ratio of unavailable minutes to total potentially available minutes (net of Excused Delays) in the applicable calendar month during which the Service Level was not met multiplied by the monthly fee for the Hosted Platform due for such month (1/12 of the annual fee if the Fees for access to the Hosted Platform is paid annually).  
       
-    Notwithstanding anything to the contrary, in no event shall the value of the SLA Credits exceed three (3) months of Hosted Platform fees ("SLA Credit Cap"). Licensee shall notify Company in writing if Licensee believes it is entitled to any SLA Credit, which notice shall be provided no later than thirty (30) days after the end of the applicable month in which the SLA Failure(s) occurred, and shall describe the SLA Failure(s) in detail. If Company agrees that Licensee is due an SLA Credit, Company will promptly credit Licensee's account.  If Company does not reasonably believe Licensee is entitled to an SLA Credit, the parties will meet and discuss the issue in good faith. If the parties cannot mutually agree on a resolution, Company's determination shall be binding and final.  In the event Licensee brings any claim for damages based upon response times, then any such damages shall be offset by any SLA Credits issued to Licensee hereunder.
+      Notwithstanding anything to the contrary, in no event shall the value of the SLA Credits exceed three (3) months of Hosted Platform fees ("SLA Credit Cap"). Licensee shall notify Company in writing if Licensee believes it is entitled to any SLA Credit, which notice shall be provided no later than thirty (30) days after the end of the applicable month in which the SLA Failure(s) occurred, and shall describe the SLA Failure(s) in detail. If Company agrees that Licensee is due an SLA Credit, Company will promptly credit Licensee's account.  If Company does not reasonably believe Licensee is entitled to an SLA Credit, the parties will meet and discuss the issue in good faith. If the parties cannot mutually agree on a resolution, Company's determination shall be binding and final.  In the event Licensee brings any claim for damages based upon response times, then any such damages shall be offset by any SLA Credits issued to Licensee hereunder.
       
-    For purposes herein, "Excused Delay" shall mean (a) scheduled maintenance, (b) maintenance or service interruptions requested by Licensee and implemented by Company, (c) Licensee's breach of any provision of this Agreement that solely and directly caused the delay, (d) any delay solely and directly caused by any Licensee Data, (e) performance of internet services, or (f) any delay caused by a Force Majeure Event. 
+      For purposes herein, "Excused Delay" shall mean (a) scheduled maintenance, (b) maintenance or service interruptions requested by Licensee and implemented by Company, (c) Licensee's breach of any provision of this Agreement that solely and directly caused the delay, (d) any delay solely and directly caused by any Licensee Data, (e) performance of internet services, or (f) any delay caused by a Force Majeure Event. 
 
 ## Version
 
