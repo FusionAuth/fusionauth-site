@@ -2,7 +2,6 @@
 name: cloudfront-prod-update-redirect-rules
 
 env:
-  AWS_ACCOUNT_ID: '121700706967'
   AWS_REGION: us-east-1
 
 on:
@@ -34,6 +33,17 @@ jobs:
         with:
           sparse-checkout: src/cloudfront  # the repo is huge, so let's only check out what we need.
 
+      - name: set environment
+        run: |
+          set -xv
+          if [ "${{ github.head_ref }}" == "main" ]; then
+            echo "ENVIRONMENT=prod" >> $GITHUB_ENV
+            echo "AWS_ACCOUNT_ID=121700706967" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
+            echo "AWS_ACCOUNT_ID=172023253951" >> $GITHUB_ENV
+          fi
+
       # - name: set aws credentials
       #   uses: aws-actions/configure-aws-credentials@v4
       #   with:
@@ -45,11 +55,6 @@ jobs:
       - name: validate json
         run: |
           set -xv
-          if [ "${{ github.head_ref }}" == "main" ]; then
-            echo "ENVIRONMENT=prod" >> $GITHUB_ENV
-          else
-            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
-          fi
           cat src/cloudfront/"${{ env.ENVIRONMENT }}"/lambdas/site-origin-request-handler/data/redirects.json | jq empty
 
       # - name: upload file to s3
