@@ -28,7 +28,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     origin_id                = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
     origin_access_control_id = "E2EQIBLOLKM4ZQ"
   }
-  # Old site. Some behaviors are still using this.
+  # Old site.
   origin {
     domain_name              = "fusionauth-dev-site.s3.us-east-2.amazonaws.com"
     origin_id                = "fusionauth-dev-site.s3.us-east-2.amazonaws.com"
@@ -217,7 +217,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/direct-download"
-    target_origin_id       = "fusionauth-dev-site.s3.us-east-2.amazonaws.com"
+    target_origin_id       = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -240,7 +240,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/license"
-    target_origin_id       = "fusionauth-dev-site.s3.us-east-2.amazonaws.com"
+    target_origin_id       = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -301,7 +301,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/landing/*"
-    target_origin_id       = "fusionauth-dev-site.s3.us-east-2.amazonaws.com"
+    target_origin_id       = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -325,7 +325,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
   ordered_cache_behavior {
     path_pattern           = "/articles/*"
     target_origin_id       = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
@@ -348,7 +348,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
   ordered_cache_behavior {
     path_pattern           = "/dev-tools/*"
     target_origin_id       = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
@@ -371,7 +371,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
   ordered_cache_behavior {
     path_pattern           = "/css/*"
     target_origin_id       = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
@@ -394,7 +394,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
   ordered_cache_behavior {
     path_pattern           = "/img/*"
     target_origin_id       = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
@@ -417,7 +417,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
   ordered_cache_behavior {
     path_pattern           = "/js/*"
     target_origin_id       = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
@@ -440,7 +440,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
   ordered_cache_behavior {
     path_pattern           = "/webfonts/*"
     target_origin_id       = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
@@ -463,7 +463,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
   ordered_cache_behavior {
     path_pattern           = "/_astro/*"
     target_origin_id       = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
@@ -486,7 +486,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
   ordered_cache_behavior {
     path_pattern           = "/_pagefind/*"
     target_origin_id       = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
@@ -508,8 +508,8 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/favicon.svg"
-    target_origin_id       = "fusionauth-dev-site.s3.us-east-2.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    target_origin_id       = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
+    allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
