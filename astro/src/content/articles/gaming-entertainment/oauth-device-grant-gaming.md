@@ -75,7 +75,7 @@ Go to the Docker dashboard. You should see two containers running, one with Fusi
 
 ### Set Up FusionAuth for Device Authorization
 
-Now that your Docker image for FusionAuth is running, you need to configure the identity provider for your demo application. Go to [http://localhost:9011/admin/setup-wizard](http://localhost:9011/admin/setup-wizard) and fill in your name, email, and password. Click **Submit**. (You can learn more about the [Setup Wizard here](/docs/v1/tech/tutorials/setup-wizard).)
+Now that your Docker image for FusionAuth is running, you need to configure the identity provider for your demo application. Go to [http://localhost:9011/admin/setup-wizard](http://localhost:9011/admin/setup-wizard) and fill in your name, email, and password. Click **Submit**. (You can learn more about the [Setup Wizard here](/docs/get-started/download-and-install/setup-wizard).)
 
 Go to Applications on the navigation bar and click on "Create a new application". Name the application `Test Grant` and save it.
 
@@ -124,7 +124,7 @@ Now that the app is running, use your browser to go to [http://localhost:8000/](
 
 ### Make a Request to the Device Verification Endpoint
 
-The code in the `main.js` file contains the `connectDevice()` function, which is used to make an [authorization request](/docs/v1/tech/oauth/#example-device-authorization-grant) to FusionAuth’s endpoint authorization server at `/oauth2/device_authorize`.
+The code in the `main.js` file contains the `connectDevice()` function, which is used to make an [authorization request](/docs/lifecycle/authenticate-users/oauth/#example-device-authorization-grant) to FusionAuth’s endpoint authorization server at `/oauth2/device_authorize`.
 
 The request should look like the below code:
 
@@ -166,7 +166,7 @@ For simplicity, this tutorial keeps everything running locally.
 
 Using a secondary device (a mobile phone or computer), the user visits the URL displayed on the device screen and starts to authenticate using the displayed code. In this case, you’ll use the same machine and open the URL displayed there. 
 
-Click on the URL to open it in your browser or a different one. All the pages shown in this tutorial are the stock FusionAuth theme, but you can [easily modify the look and feel of the theme](/docs/v1/tech/themes/). Verify the device by entering the code and clicking "Submit".
+Click on the URL to open it in your browser or a different one. All the pages shown in this tutorial are the stock FusionAuth theme, but you can [easily modify the look and feel of the theme](/docs/customize/look-and-feel/). Verify the device by entering the code and clicking "Submit".
 
 ![Entering the device grant code.](/img/articles/device-grant-gaming/device-grant-code-entry.png)
 
