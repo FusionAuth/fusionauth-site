@@ -31,6 +31,8 @@ jobs:
 
       - name: checkout
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: src/cloudfront  # the repo is huge, so let's only check out what we need.
 
       # - name: set aws credentials
       #   uses: aws-actions/configure-aws-credentials@v4
@@ -43,15 +45,12 @@ jobs:
       - name: validate json
         run: |
           set -xv
-          echo "${{ github.ref_name }}"
-          echo "${{ github.head_ref }}"
-          echo "${{ github.base_ref }}"
-          # if [ "${{ github.head_ref }}" == "main" ]; then \
-          #   echo "ENVIRONMENT=prod" >> $GITHUB_ENV; \
-          # else \
-          #   echo "ENVIRONMENT=dev" >> $GITHUB_ENV; \
-          # fi
-          # cat src/cloudfront/${{ env.ENVIRONMENT }}/lambdas/site-origin-request-handler/data/redirects.json | jq empty
+          if [ "${{ github.head_ref }}" == "master" ]; then \
+            echo "ENVIRONMENT=prod" >> $GITHUB_ENV; \
+          else \
+            echo "ENVIRONMENT=dev" >> $GITHUB_ENV; \
+          fi
+          cat src/cloudfront/${{ env.ENVIRONMENT }}/lambdas/site-origin-request-handler/data/redirects.json | jq empty
 
       # - name: upload file to s3
       #   if: github.event_name == 'push'
