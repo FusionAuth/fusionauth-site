@@ -35,22 +35,20 @@ jobs:
 
       - name: set environment
         run: |
-          set -xv
           if [ "${{ github.head_ref }}" == "main" ]; then
-            echo "AWS_ACCOUNT_ID=121700706967" >> $GITHUB_ENV
             echo "ENVIRONMENT=prod" >> $GITHUB_ENV
+            echo "AWS_ACCOUNT_ID=121700706967" >> $GITHUB_ENV
             echo "SOURCE=src/cloudfront/prod/lambdas/site-origin-request-handler/data" >> $GITHUB_ENV
-          else
-            echo "AWS_ACCOUNT_ID=172023253951" >> $GITHUB_ENV
-            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
-            echo "FILE_SOURCE=src/cloudfront/dev/lambdas/site-origin-request-handler/data/redirects.json" >> $GITHUB_ENV
             echo "S3_DEST=s3://fusionauth-prod-us-east-1-artifacts/lambda/site-origin-request-handler/redirects.json" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
+            echo "AWS_ACCOUNT_ID=172023253951" >> $GITHUB_ENV
+            echo "FILE_SOURCE=src/cloudfront/dev/lambdas/site-origin-request-handler/data/redirects.json" >> $GITHUB_ENV
+            echo "S3_DEST=s3://fusionauth-dev-us-east-1-artifacts/lambda/site-origin-request-handler/redirects.json" >> $GITHUB_ENV
           fi
 
       - name: validate json
-        run: |
-          set -xv
-          cat "${{ env.FILE_SOURCE }}" | jq empty
+        run: cat "${{ env.FILE_SOURCE }}" | jq empty
 
       - name: set aws credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -62,5 +60,4 @@ jobs:
 
       - name: upload file to s3
         if: github.event_name == 'push'
-        run: |
-          echo "aws s3 cp ${{ env.FILE_SOURCE}} ${{ env.S3_DEST }}"
+        run: aws s3 cp ${{ env.FILE_SOURCE}} ${{ env.S3_DEST }}
