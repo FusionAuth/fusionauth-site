@@ -1,17 +1,55 @@
 #
 # cloudfront for fusionauth.dev site
 #
-resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
-  aliases             = ["fusionauth.dev"]
-  comment             = "fusionauth.dev"
+resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
+  aliases             = ["fusionauth.io", "www.fusionauth.io"]
+  comment             = "FusionAuth website and forum"
   enabled             = true
   http_version        = "http2"
   is_ipv6_enabled     = true
-  price_class         = "PriceClass_100"
+  price_class         = "PriceClass_300"
   retain_on_delete    = false
   wait_for_deployment = true
 
+
+
+  # Webflow
+  origin {
+    domain_name = "webflow.fusionauth.io"
+    origin_id   = "webflow.fusionauth.io"
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2"]
+    }
+  }
+
   # Community forums
+  origin {
+    domain_name = "forum.fusionauth.io"
+    origin_id   = "forum.fusionauth.io"
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2"]
+    }
+  }
+
+  # This is not used!
+  origin {
+    domain_name = "fusionauth.webflow.io"
+    origin_id   = "fusionauth.webflow.io"
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2"]
+    }
+  }
+
+  # This is not used!
   origin {
     domain_name = "fusionauth.nodebb.com"
     origin_id   = "fusionauth.nodebb.com"
@@ -22,39 +60,46 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
       origin_ssl_protocols   = ["SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2"]
     }
   }
+
+  # New site - OAC
+  origin {
+    domain_name              = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
+    origin_id                = "website-2023-S3"
+    origin_access_control_id = "E1JZD75YLBY9RG"
+  }
+
+  # New site
+  origin {
+    domain_name              = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
+    origin_id                = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
+    origin_access_control_id = "E1JZD75YLBY9RG"
+  }
+
+  # Old site
+  origin {
+    domain_name              = "fusionauth-io-website-2022.s3-website-us-east-1.amazonaws.com"
+    origin_id                = "fusionauth-io-website-2022.s3-website-us-east-1.amazonaws.com"
+    origin_access_control_id = "E1JZD75YLBY9RG"
+  }
+
   # New site.
   origin {
     domain_name              = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
     origin_id                = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
     origin_access_control_id = "E2EQIBLOLKM4ZQ"
   }
-  # Old site. Some behaviors are still using this.
-  origin {
-    domain_name              = "fusionauth-dev-site.s3.us-east-2.amazonaws.com"
-    origin_id                = "fusionauth-dev-site.s3.us-east-2.amazonaws.com"
-    origin_access_control_id = "E38FYPU7E1AY7S"
-  }
-  # Default origin. Requests that aren't caught by any other behaviors go here.
-  origin {
-    domain_name = "webflow.fusionauth.dev"
-    origin_id   = "webflow.fusionauth.dev"
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "https-only"
-      origin_ssl_protocols   = ["TLSv1.2"]
-    }
-  }
 
   custom_error_response {
-    error_code            = 403
+    error_code            = 404
     response_code         = 404
     response_page_path    = "/404.html"
     error_caching_min_ttl = 10
   }
 
   logging_config {
-    bucket = "fusionauth-dev-cloudfront-logs.s3.amazonaws.com"
+    bucket          = "fusionauth-io-website-2022-logs.s3.amazonaws.com"
+    prefix          = "fusionauth-io-logs"
+    include_cookies = true
   }
 
   restrictions {
@@ -65,7 +110,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
   }
 
   viewer_certificate {
-    acm_certificate_arn            = local.acm_certificate.fusionauth_dev
+    acm_certificate_arn            = local.acm_certificate.fusionauth_io
     cloudfront_default_certificate = false
     minimum_protocol_version       = "TLSv1.2_2021"
     ssl_support_method             = "sni-only"
@@ -557,7 +602,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
 # origin access control for astro s3 bucket
 #
 resource "aws_cloudfront_origin_access_control" "astro" {
-  name                              = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
+  name                              = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
