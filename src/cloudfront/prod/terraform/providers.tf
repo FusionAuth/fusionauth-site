@@ -31,14 +31,14 @@ provider "aws" {
     session_name = "fusionauth-site"
   }
 
-  default_tags {
-    tags = {
-      managedBy       = "terraform"
-      terraformRepo   = "fusionauth-site"
-      terraformConfig = "src/cloudfront/terraform"
-      environment     = "prod"
-      team            = "engineering"
-      service         = "fusionauth-site"
-    }
-  }
+  # default_tags {
+  #   tags = {
+  #     managedBy       = "terraform"
+  #     terraformRepo   = "fusionauth-site"
+  #     terraformConfig = "src/cloudfront/terraform"
+  #     environment     = "prod"
+  #     team            = "engineering"
+  #     service         = "fusionauth-site"
+  #   }
+  # }
 }
