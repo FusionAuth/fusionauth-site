@@ -1,5 +1,5 @@
 ---
-name: cloudfront-prod-update-redirect-rules
+name: cloudfront-update-redirect-rules
 
 env:
   AWS_REGION: us-east-1
@@ -43,22 +43,23 @@ jobs:
             echo "ENVIRONMENT=dev" >> $GITHUB_ENV
             echo "AWS_ACCOUNT_ID=172023253951" >> $GITHUB_ENV
           fi
+          echo "WORKDIR=src/cloudfront/${ENVIRONMENT}/lambdas/site-origin-request-handler/data" >> $GITHUB_ENV
 
-      # - name: set aws credentials
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     role-chaining: true
-      #     role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-actions
-      #     role-session-name: github-actions
-      #     aws-region: ${{ env.AWS_REGION }}
+      - name: set aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-chaining: true
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-actions
+          role-session-name: github-actions
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: validate json
         run: |
           set -xv
-          cat src/cloudfront/"${{ env.ENVIRONMENT }}"/lambdas/site-origin-request-handler/data/redirects.json | jq empty
+          cat "${{ env.WORKDIR }}"/redirects.json | jq empty
 
-      # - name: upload file to s3
-      #   if: github.event_name == 'push'
-      #   working-directory: ${{ env.WORKDIR }}
-      #   run: |
-      #     aws s3 cp ./redirects.json s3://fusionauth-prod-us-east-1-artifacts/lambda/site-origin-request-handler/redirects.json
+      - name: upload file to s3
+        if: github.event_name == 'push'
+        working-directory: ${{ env.WORKDIR }}
+        run: |
+          echo "aws s3 cp ./redirects.json s3://fusionauth-prod-us-east-1-artifacts/lambda/site-origin-request-handler/redirects.json"
