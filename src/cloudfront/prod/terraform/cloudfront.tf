@@ -11,78 +11,9 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
   retain_on_delete    = false
   wait_for_deployment = true
 
-  # This is not used!
   origin {
-    domain_name = "fusionauth.nodebb.com"
-    origin_id   = "fusionauth.nodebb.com"
-    custom_header {
-      name  = "x-forwarded-host"
-      value = "forum.fusionauth.io"
-    }
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "https-only"
-      origin_ssl_protocols   = ["TLSv1.2"]
-    }
-  }
-
-  # Old site
-  origin {
-    domain_name = "fusionauth-io-website-2022.s3-website-us-east-1.amazonaws.com"
-    origin_id   = "fusionauth-io-website-2022.s3-website-us-east-1.amazonaws.com"
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "http-only"
-      origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
-    }
-  }
-
-  # New site
-  origin {
-    domain_name = "fusionauth-io-website-2023.s3-website-us-east-1.amazonaws.com"
-    origin_id   = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "http-only"
-      origin_ssl_protocols   = ["TLSv1.2"]
-    }
-  }
-
-  # Community forums
-  origin {
-    domain_name = "forum.fusionauth.io"
-    origin_id   = "forum.fusionauth.io"
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "https-only"
-      origin_ssl_protocols   = ["TLSv1.2"]
-    }
-  }
-
-  # This is not used!
-  origin {
-    domain_name = "fusionauth.webflow.io"
-    origin_id   = "fusionauth.webflow.io"
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "https-only"
-      origin_ssl_protocols   = ["TLSv1.2"]
-    }
-    origin_shield {
-      enabled              = true
-      origin_shield_region = "us-west-2"
-    }
-  }
-
-  # Webflow
-  origin {
+    origin_id   = "webflow"
     domain_name = "webflow.fusionauth.io"
-    origin_id   = "webflow.fusionauth.io"
     custom_origin_config {
       http_port              = 80
       https_port             = 443
@@ -94,22 +25,24 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
       origin_shield_region = "us-west-2"
     }
   }
-
   origin {
-    domain_name              = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
-    origin_id                = "website-2023-S3"
-    origin_access_control_id = "E8TFVBUWC8MJ2"
+    origin_id   = "forum"
+    domain_name = "forum.fusionauth.io"
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
   }
-
-  # New site - OAC
   origin {
+    origin_id                = "astro"
     domain_name              = "fusionauth-io-website-astro-2023.s3.us-east-1.amazonaws.com"
-    origin_id                = "astro-2023"
     origin_access_control_id = aws_cloudfront_origin_access_control.astro_2023.id
   }
 
   custom_error_response {
-    error_code            = 404
+    error_code            = 403
     response_code         = 404
     response_page_path    = "/404"
     error_caching_min_ttl = 10
@@ -139,7 +72,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
-    target_origin_id       = "webflow.fusionauth.io"
+    target_origin_id       = "webflow"
     cache_policy_id        = local.cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
@@ -155,7 +88,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern             = "/community/forum/*"
-    target_origin_id         = "forum.fusionauth.io"
+    target_origin_id         = "forum"
     allowed_methods          = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods           = ["GET", "HEAD", "OPTIONS"]
     compress                 = false
@@ -170,7 +103,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern             = "/community/forum"
-    target_origin_id         = "forum.fusionauth.io"
+    target_origin_id         = "forum"
     allowed_methods          = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods           = ["GET", "HEAD", "OPTIONS"]
     compress                 = false
@@ -185,7 +118,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/blog/*"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -204,7 +137,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/docs/*"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -223,7 +156,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/legal/*"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -242,7 +175,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/resources/*"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -261,7 +194,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/direct-download"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -280,7 +213,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/license"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -299,7 +232,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/robots.txt"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -318,7 +251,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/sitemap*"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -337,7 +270,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/landing/*"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -356,7 +289,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/articles/*"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -375,7 +308,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/dev-tools/*"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -394,7 +327,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/css/*"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -413,7 +346,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/img/*"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -432,7 +365,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/js/*"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -451,7 +384,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/webfonts/*"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -470,7 +403,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/_astro/*"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -489,7 +422,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/_pagefind/*"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -508,7 +441,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/favicon.svg"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -527,7 +460,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 
   ordered_cache_behavior {
     path_pattern           = "/cdn/*"
-    target_origin_id       = "astro-2023"
+    target_origin_id       = "astro"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
@@ -543,16 +476,6 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
       lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
-}
-
-#
-# origin access control for astro s3 bucket
-#
-resource "aws_cloudfront_origin_access_control" "astro" {
-  name                              = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
-  origin_access_control_origin_type = "s3"
-  signing_behavior                  = "always"
-  signing_protocol                  = "sigv4"
 }
 
 #

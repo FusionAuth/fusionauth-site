@@ -22,7 +22,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
     }
   }
   origin {
-    origin_id   = "forums"
+    origin_id   = "forum"
     domain_name = "fusionauth.nodebb.com"
     custom_origin_config {
       http_port              = 80
@@ -86,7 +86,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
 
   ordered_cache_behavior {
     path_pattern             = "/community/forum/*"
-    target_origin_id         = "forums"
+    target_origin_id         = "forum"
     allowed_methods          = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods           = ["GET", "HEAD", "OPTIONS"]
     compress                 = false
@@ -101,7 +101,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
 
   ordered_cache_behavior {
     path_pattern             = "/community/forum"
-    target_origin_id         = "forums"
+    target_origin_id         = "forum"
     allowed_methods          = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods           = ["GET", "HEAD", "OPTIONS"]
     compress                 = false
