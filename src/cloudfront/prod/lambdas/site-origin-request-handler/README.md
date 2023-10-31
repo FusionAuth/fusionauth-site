@@ -1,6 +1,6 @@
 # site-origin-request-handler
 
-This is a Lambda@Edge function that handles redirects for fusionauth.dev.
+This is a Lambda@Edge function that handles redirects for fusionauth.io.
 
 ## Localdev
 
@@ -11,7 +11,7 @@ From this directory, install the dependencies.
 npm install
 ```
 
-Run the tests with AWS credentials that have permissions to read from the `fusionauth-dev-us-east-1-artifacts` bucket.
+Run the tests with AWS credentials that have permissions to read from the `fusionauth-prod-us-east-1-artifacts` bucket.
 ```
-AWS_PROFILE=fusionauth-dev npm test
+AWS_PROFILE=fusionauth-prod npm test
 ```
