@@ -95,11 +95,17 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
     }
   }
 
-  # New site - OAC
   origin {
     domain_name              = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
     origin_id                = "website-2023-S3"
     origin_access_control_id = "E8TFVBUWC8MJ2"
+  }
+
+  # New site - OAC
+  origin {
+    domain_name              = "fusionauth-io-website-astro-2023.s3.us-east-1.amazonaws.com"
+    origin_id                = "astro-2023"
+    origin_access_control_id = aws_cloudfront_origin_access_control.astro_2023.id
   }
 
   custom_error_response {
@@ -612,6 +618,16 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 #
 resource "aws_cloudfront_origin_access_control" "astro" {
   name                              = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
+#
+# origin access control for astro s3 bucket
+#
+resource "aws_cloudfront_origin_access_control" "astro_2023" {
+  name                              = "fusionauth-io-website-astro-2023.s3.us-east-1.amazonaws.com"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
