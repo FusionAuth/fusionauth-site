@@ -74,7 +74,7 @@ const qsSections: QuickStartSection[] = [
     desc: 'Mobile application that runs natively on a device',
     articles: [
       {
-        href: '/docs/v1/tech/tutorials/integrate-flutter',
+        href: '/docs/quickstarts/quickstart-flutter-native',
         title: 'Flutter',
         icon: '/img/icons/flutter.svg',
         faIcon: 'fa-snake',
@@ -92,7 +92,7 @@ const qsSections: QuickStartSection[] = [
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
       {
-        href: '/docs/v1/tech/tutorials/integrate-dotnet-api',
+        href: '/docs/quickstarts/quickstart-dotnet-api',
         title: '.NET Core',
         icon: '/img/icons/dotnet-c.svg',
         faIcon: 'fa-hashtag',
@@ -100,6 +100,17 @@ const qsSections: QuickStartSection[] = [
       },
     ],
   },
+  {
+      key: 'fiveminute',
+      icon: '/img/icons/web-application.svg',
+      faIcon: 'fa-code-simple',
+      color: 'indigo',
+      title: '5-minute Guides',
+      anchorTag: '5-minute',
+      desc: 'Guides for getting up and running quickly',
+      articles: [
+      ],
+    },
 ];
 
 // merge in quickstarts managed by astro to the list of quickstart links we have above

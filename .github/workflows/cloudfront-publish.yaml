@@ -1,0 +1,86 @@
+---
+name: cloudfront-publish
+
+env:
+  AWS_REGION: us-east-1
+
+on:
+  push:
+    branches:
+      # - master
+      - development
+    paths:
+      - 'src/cloudfront/**'
+      - '!src/cloudfront/*/lambdas/site-origin-request-handler/data/**'  # ignore changes to data files
+  pull_request:
+    branches:
+      # - master
+      - development
+    paths:
+      - 'src/cloudfront/**'
+      - '!src/cloudfront/*/lambdas/site-origin-request-handler/data/**'  # ignore changes to data files
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: fusionauth-standard
+    container: 752443094709.dkr.ecr.us-west-2.amazonaws.com/gha-runner-ubuntu-22.04:latest
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: src/cloudfront  # the repo is huge, so let's only check out what we need.
+
+      - name: set environment
+        run: |
+          if [ "${{ github.head_ref }}" == "master" ]; then
+            echo "ENVIRONMENT=prod" >> $GITHUB_ENV
+            echo "AWS_ACCOUNT_ID=121700706967" >> $GITHUB_ENV
+            echo "CF_DIST_ID=E1JZD75YLBY9RG" >> $GITHUB_ENV
+            echo "WORKDIR=src/cloudfront/prod/terraform" >> $GITHUB_ENV
+          else
+            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
+            echo "AWS_ACCOUNT_ID=172023253951" >> $GITHUB_ENV
+            echo "CF_DIST_ID=E3N8W7YX4AAW44" >> $GITHUB_ENV
+            echo "WORKDIR=src/cloudfront/dev/terraform" >> $GITHUB_ENV
+          fi
+
+      - name: set aws credentials for svc account
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-chaining: true
+          role-to-assume: arn:aws:iam::752443094709:role/github-actions
+          role-session-name: github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: setup terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.2
+
+      - name: terraform plan
+        if: github.event_name == 'pull_request'
+        working-directory: ${{ env.WORKDIR }}
+        run: terraform init && terraform plan
+
+      - name: terraform apply
+        if: github.event_name == 'push'
+        working-directory: ${{ env.WORKDIR }}
+        run: terraform init && terraform apply -auto-approve
+
+      - name: set aws credentials for destination account
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-chaining: true
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/github-actions
+          role-session-name: github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: invalidate the cache
+        if: github.event_name == 'push'
+        run: aws cloudfront create-invalidation --distribution-id ${{ env.CF_DIST_ID }} --paths "/*"
