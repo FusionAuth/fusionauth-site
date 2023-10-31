@@ -2,7 +2,7 @@ import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 const s3 = new S3Client({ region: 'us-east-1' });
 
 // Location of the file containing the redirect rules.
-const fileBucket = 'fusionauth-dev-us-east-1-artifacts';
+const fileBucket = 'fusionauth-prod-us-east-1-artifacts';
 const fileKey = 'lambda/site-origin-request-handler/redirects.json';
 
 let redirectRules = null;
@@ -115,7 +115,6 @@ function calculateRedirect(uri) {
   return result;
 }
 
-
 function appendHTML(uri) {
   var slashIndex = uri.lastIndexOf('/');
   var dotIndex = uri.indexOf('.', slashIndex);
@@ -126,7 +125,6 @@ function appendHTML(uri) {
 
   return uri;
 }
-
 
 function calculateURI(uri) {
   var i;
@@ -144,7 +142,6 @@ function calculateURI(uri) {
 
   return uri;
 }
-
 
 function redir(loc) {
   return {

@@ -29,6 +29,11 @@ const runTest = (path, expected) => {
   });
 };
 
+describe('site root', function() {
+  runTest('', makeRedirect('/'));
+  runTest('/', makePassThroughRequest('/'));
+});
+
 describe('html extension', function() {
   runTest('/something.html', makeRedirect('/something'));
 });
@@ -43,10 +48,15 @@ describe('docs redirects', function() {
   runTest('/cognito', makeRedirect('/docs/lifecycle/migrate-users/bulk/cognito'));
   runTest('/docs/v1/tech/installation-guide/configuration-management', makeRedirect('/docs/operate/deploy/configuration-management'));
   runTest('/features/advanced-registration-forms', makeRedirect('/platform/registration-forms'));
+  runTest('/landing/the-praetorians', makePassThroughRequest('/landing/the-praetorians.html'));
   runTest('/docs/v1/tech/common-errors', makeRedirect('/docs/operate/troubleshooting/troubleshooting'));
   runTest('/docs/v1/tech/admin-guide/troubleshooting', makeRedirect('/docs/operate/troubleshooting/troubleshooting'));
   runTest('/docs/v1/tech/reactor/', makeRedirect('/docs/v1/tech/reactor'));
   runTest('/docs/v1/tech/identity-providers/', makeRedirect('/docs/lifecycle/authenticate-users/identity-providers/'));
+});
+
+describe('pdf', function() {
+  runTest('/resources/adcellerant-case-study.pdf', makePassThroughRequest('/resources/adcellerant-case-study.pdf'));
 });
 
 describe('blog', function() {

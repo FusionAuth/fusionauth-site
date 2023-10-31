@@ -9,14 +9,14 @@ terraform {
     region         = "us-west-2"
     dynamodb_table = "terraform-state"
     encrypt        = true
-    key            = "fusionauth-site/172023253951-us-east-1/lambdas/site-origin-request-handler/terraform.tfstate"
+    key            = "fusionauth-site/121700706967-us-east-1/cloudfront/fusionauth-prod/terraform.tfstate"
     role_arn       = "arn:aws:iam::752443094709:role/github-actions"
   }
 
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.22.0"
+      version = "~> 5.23.1"
     }
   }
 }
@@ -27,18 +27,18 @@ terraform {
 provider "aws" {
   region = "us-east-1"
   assume_role {
-    role_arn     = "arn:aws:iam::172023253951:role/github-actions"
+    role_arn     = "arn:aws:iam::121700706967:role/github-actions"
     session_name = "fusionauth-site"
   }
 
-  default_tags {
-    tags = {
-      managedBy       = "terraform"
-      terraformRepo   = "fusionauth-site"
-      terraformConfig = "src/lambdas/site-origin-request-handler/terraform"
-      environment     = "dev"
-      team            = "support"
-      service         = "fusionauth-site"
-    }
-  }
+  # default_tags {
+  #   tags = {
+  #     managedBy       = "terraform"
+  #     terraformRepo   = "fusionauth-site"
+  #     terraformConfig = "src/cloudfront/terraform"
+  #     environment     = "prod"
+  #     team            = "engineering"
+  #     service         = "fusionauth-site"
+  #   }
+  # }
 }
