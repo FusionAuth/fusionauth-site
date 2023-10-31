@@ -48,6 +48,7 @@ describe('docs redirects', function() {
   runTest('/cognito', makeRedirect('/docs/lifecycle/migrate-users/bulk/cognito'));
   runTest('/docs/v1/tech/installation-guide/configuration-management', makeRedirect('/docs/operate/deploy/configuration-management'));
   runTest('/features/advanced-registration-forms', makeRedirect('/platform/registration-forms'));
+  runTest('/landing/the-praetorians', makePassThroughRequest('/landing/the-praetorians.html'));
   runTest('/docs/v1/tech/common-errors', makeRedirect('/docs/operate/troubleshooting/troubleshooting'));
   runTest('/docs/v1/tech/admin-guide/troubleshooting', makeRedirect('/docs/operate/troubleshooting/troubleshooting'));
   runTest('/docs/v1/tech/reactor/', makeRedirect('/docs/v1/tech/reactor'));
