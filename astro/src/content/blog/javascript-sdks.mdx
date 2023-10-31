@@ -4,7 +4,7 @@ title: Our New Vue, React and Angular SDKs
 description: JavaScript SDKs make integrating with FusionAuth easier
 authors: Dan Moore
 excerpt_separator: "{/* more */}"
-image: /img/blogs/hackfest/hackfest-fusionauth.png
+image: /img/blogs/javascript-sdks/our-new-vue-react-and-angular-sdks.png
 categories: Company
 tags: javascript, sdks, angular, vue, react, client libraries
 ---
@@ -36,24 +36,11 @@ This post will cover the nitty gritty of using these SDKs, but first, let's disc
 
 ## Client Libraries vs SDKs
 
-At FusionAuth, a client library is different from an SDK, even though many people in the industry use the terms interchangeably.
-
-### Client Libraries
-
-A client library is a wrapper over [FusionAuth APIs](/docs/v1/tech/apis/). Client libraries support all public FusionAuth API endpoints and offer a convenient way to use that API in many software languages. At the time of writing, there are eight supported languages, including TypeScript. There's also an OpenAPI definition, useful for viewing API changes over time or generating a client library for an unsupported language like C++ or Rust.
-
-If you want to compare a client library to a child's toy, it is like legos. Engineers build a script or program using a client library to extend or configure FusionAuth. Some examples of tasks well suited to a client library:
-
-* [rotating client secrets or API keys](/docs/v1/tech/tutorials/key-rotation) to improve your security posture
-* pulling user data every night for data warehouse ingestion
-* creating a new FusionAuth tenant every time a client signs up for your app
-* offering a unique, custom login or registration experience not supported by the [FusionAuth hosted login pages](/docs/v1/tech/core-concepts/integration-points#hosted-login-pages)
-
-Requests made with client libraries usually require an API key as well as a URL for the FusionAuth instance to be configured.
+At FusionAuth, an SDK is different from a client library, even though many people in the industry use the terms interchangeably.
 
 ### SDKs
 
-An SDK, in contrast to a client library, is an opinionated collection of abstracted functionality. To continue with the toy metaphor, an SDK is a doll or a toy truck. Less assembly, but less flexibility. SDKs are designed to allow front-end engineers to add authentication to their applications.
+An SDK is an opinionated collection of abstracted functionality. If it were a toy, it'd be a doll or a toy truck. Ready to play with, no assembly required. SDKs are designed to allow front-end engineers to add authentication workflows to their applications.
 
 A FusionAuth SDK includes:
 
@@ -65,9 +52,22 @@ A FusionAuth SDK includes:
 
 SDKs are configured to work with a specific FusionAuth application and therefore expect a client Id as well as a FusionAuth instance URL. The SDKs do not offer management functionality and therefore don't require an API key.
 
+### Client Libraries
+
+A client library, in contrast, is a wrapper over [FusionAuth APIs](/docs/v1/tech/apis/). Client libraries support all public FusionAuth API endpoints and offer a convenient way to use that API in many software languages. At the time of writing, there are eight supported languages, including TypeScript. There's also an OpenAPI definition, useful for viewing API changes over time or generating a client library for a language without an official client library, like C++ or Rust.
+
+If you want to compare a client library to a child's toy, it is like legos. Engineers build a script or program using a client library to extend or configure FusionAuth. Some examples of tasks well suited to a client library:
+
+* [rotating client secrets or API keys](/docs/v1/tech/tutorials/key-rotation) to improve your security posture
+* pulling user data every night for data warehouse ingestion
+* creating a new FusionAuth tenant every time a client signs up for your app
+* offering a unique, custom login or registration experience not supported by the [FusionAuth hosted login pages](/docs/v1/tech/core-concepts/integration-points#hosted-login-pages)
+
+Requests made with client libraries usually require an API key as well as a URL for the FusionAuth instance which the requests will be applied to.
+
 ### Better Together?
 
-You can use both if your use case requires the front-end SDK-based solutions for easy integration and the management access provided by a client library. They are not mutually exclusive.
+You can use both an SDK and a client library if your use case requires the front-end SDK-based solutions for easy integration and the management access provided by a client library. They are not mutually exclusive.
 
 ## SDK Examples
 
@@ -89,19 +89,10 @@ And, finally, here's code from the [Vue quickstart](/docs/quickstarts/quickstart
 
 In general, there are two components for each SDK.
 
-* a node server-side component
 * a client-side package installed into your SPA via a package manager like npm
+* an optional server-side component
 
 The SDKs are open source and the GitHub repos are linked from the documentation pages, so you can dig in there if you want more details.
-
-### The Server Side Component
-
-The server-side component has endpoints that map to the [hosted backend APIs](/docs/v1/tech/apis/hosted-backend). You can implement the server-side component in any other language if that's preferable. The server-side code sets access tokens and refresh tokens as `HTTPOnly`, `Secure` cookies. This is a great storage choice for first-party API requests because such cookies are not vulnerable to JavaScript exfiltration. The cookies are presented on every request from the SPA to an API, as long as you set the [`credentials` property correctly](https://developer.mozilla.org/en-US/docs/Web/API/Request/credentials) and the API is in the same domain that the SPA is served from. For this approach to work, APIs have to be designed to read the cookie, though they can also fall back to the `Authorization` header; you can see examples in our [API quickstarts](/docs/quickstarts/#api). 
-For SPAs which make requests to APIs not on the same domain, the backend for frontend pattern is recommended. You should not put bearer tokens into local storage or session storage. Here's a video about the insecurity of storing tokens anyplace accessible to JavaScript running in the browser.
-
-<YouTube id="2nVYLruX76M" />
-
-You can read more about [OAuth token storage in this article](/articles/oauth/oauth-token-storage). Using a server-side component gives you the flexibility to store the token wherever makes sense.
 
 ### The Client Side Package
 
@@ -162,14 +153,26 @@ Here's code from an [example application](https://github.com/FusionAuth/fusionau
 
 The takeaway from this code is that you can set the `state` parameter when redirecting the user to the login page, then extract a value from it and redirect back to the correct location.
 
+### The Server Side Component
+
+The server-side component has endpoints that correspond to the [hosted backend APIs](/docs/v1/tech/apis/hosted-backend). You can implement the server-side component in any other language if that's preferable for your application. The server-side code sets access tokens and refresh tokens as `HTTPOnly`, `Secure` cookies. This is a great storage choice for first-party API requests because such cookies are not vulnerable to JavaScript exfiltration. The cookies are presented on every request from the SPA to an API, as long as you set the [`credentials` property correctly](https://developer.mozilla.org/en-US/docs/Web/API/Request/credentials) and the API is in the same domain that the SPA is served from. For this approach to work, APIs must look for an access token in a cookie, though they can also fall back to the `Authorization` header. You can see examples of this behavior in our [API quickstarts](/docs/quickstarts/#api). 
+
+For SPAs which must request APIs that don't live on the same domain the SPA is served from, cookies won't work. In this situation, the backend for frontend pattern is recommended. **You should not put bearer tokens into local storage or session storage.** Here's a video about the insecurity of storing tokens anyplace accessible to JavaScript running in the browser.
+
+<YouTube id="2nVYLruX76M" />
+
+You can read more about [OAuth token storage in this article](/articles/oauth/oauth-token-storage). Using a server-side component gives you flexibility around token storage.
+
 ### Redirects Don't Work, Help!
 
 If your application architecture, use case, or design team rules out redirects, you can use the [Login API](/docs/v1/tech/apis/login) to directly pass user credentials to FusionAuth. You'll miss out on the functionality and security benefits outlined above, however.
 
-At the current time there's no SDK support for this approach, but FusionAuth users can and have built out their own user interface using this API.
+This is not a recommended approach and at present there's no SDK support for this approach. However, FusionAuth users can and have built out their own login interfaces using this API. If you pursue this, use tightly scoped API keys and make sure you understand the security ramifications of a publicly accessible API key.
 
 ## In Conclusion
 
 Using the Angular, React, or Vue SDKs can accelerate your app's integration with FusionAuth.
 
-By doing so, you can focus on the features your users actually care about while leveraging a world-class implementation of undifferentiated login workflows and the security of an isolated authentication server.
+By doing so, you can focus on the features your users actually care about while leveraging a world-class implementation of login workflows and the security of an isolated authentication server.
+
+Happy SDKing!
