@@ -1,3 +1,11 @@
+## Running builds
+Almost all of the content for site now lives under the [astro](./astro) directory and is built by astro. You can run the site by cd-ing into the astro directory and running npm scripts from there or by running savant targets from the top level.
+
+The build targets are
+- `npm run dev` or `sb watch`: starts the astro dev server. Will render each page on demand and watch for file changes. Does not run the full build
+- `npm run start` or `sb server`: runs a full build except for the compression step and will serve the whole site. Useful if you need test search or the build process.
+- `npm run dev-build` or `sb compile`: runs the build step minus the compression but does not serve the file
+
 ## Content Style Guidelines
 
 Here are some guidelines to follow when writing documentation (everything under [docs](astro/src/content/docs)), articles (everything under [articles](astro/src/content/articles)), and blogs [blog](astro/src/content/blog).
@@ -112,21 +120,21 @@ You can find help for {props.topic} at [help](/help)
 #### Request section layout
 This is general layout guidance for APIs that have `GET` and `POST` options:
 ```
-== Request section header
+## Request section header
 GET URLs (could have 1-3 of these, show the most common)
-=== GET request parameters (path segment)
-=== GET request parameters (query string)
-=== GET request headers
+### GET request parameters (path segment)
+### GET request parameters (query string)
+##3 GET request headers
 
 POST URLs (only will be one, typically)
-=== POST request headers
-=== POST request parameters (path segment)
-=== POST request body
+### POST request headers
+### POST request parameters (path segment)
+### POST request body
 Example POST request(s)
 
-=== Response section header
+### Response section header
 Response codes
-==== Response body
+#### Response body
 Example response(s)
 ```
 
@@ -202,7 +210,6 @@ Fruits were domesticated at different times.
 ## Words to avoid
 
 - etc
-
 
 ## Article workflow
 
@@ -323,63 +330,49 @@ also the part that needs a size that is divisible by 2)
 
 ## Search
 
-We use algolia to search jekyll content and pagefind to search astro content. 
-
-### Algolia
-
-This only searches content on the public site, so if you are running locally, it won't fully work. (It'll find local versions of public content, but not unpublished content.)
-
-To do a dry run of the search indexing to see what will content be indexed on the next push:
-
-```
-bundle exec jekyll algolia --dry-run
-```
-
-or, if you want to see everything:
-
-```
-bundle exec jekyll algolia --dry-run --verbose
-```
+We use pagefind to search astro content. 
 
 ### Pagefind
 
 This runs on the astro build. https://pagefind.app/ has more details
 
+In order for it to work you locally you will need to fully run the astro build, it will not work in regular dev mode
+
+```sh
+npm run start
+```
+
+alternatively if you like savant you can do
+
+```sh
+sb watch
+```
+
+we build the full site with search for development
+
 ## Docs navigation
 
-We use a combination of URL and frontmatter metadata to determine what documentation section to hold open when you are visiting a doc page. This is for the old jekyll site only.
+We use a combination of URL and frontmatter metadata to determine what documentation section to hold open when you are visiting a doc page. The front matter attributes `section`, `subcategory`, `tertcategory`, and `quatercategory` should generally correspond to the url path segments of the page.
 
-In general, set the `navcategory` frontmatter attribute to the correct value when adding a new documentation page. The only exception is the API docs, which all live under `/apis/` so we can use that path and don't have to set the `navcategory` value.
+In general, set the frontmatter attributes to the correct value when adding a new documentation page.
 
 There are currently nine sections:
 
-* getting started: aimed at first time users
-* installation guide: installing
-* migration guide: migrating
-* admin guide: for operating FusionAuth, includes roadmap and release notes
-* login methods: the methods someone might use to log a user in
-* developer guide: developer facing doc for integrating with FusionAuth
-* customization: how to customize FusionAuth 
-* premium features: any paid features should go here
-* APIs: all api docs
-* Release notes: our release notes.
+* get started: aimed at first time users
+* lifecycle: for everyday fusionauth stuff
+* customize: making fusionauth your own
+* extend: making fusionauth do even MORE stuff
+* operate: making fusionauth do the stuff it is supposed to do
+* sdks: code we ship that can help you do things with fusionauth
+* apis: application programming interfaces
+* release notes: see what's new
+* reference: general info that the other pages might link to
 
 Please don't add a top level section.
 
-If you need third level indentation, add the "tertiary" class to the list element.
-
-```
-<li class="tertiary {% if page.url == "/docs/v1/tech/identity-providers/external-jwt/" %}active{% endif %}"><a href="/docs/v1/tech/identity-providers/external-jwt/">Overview</a></li>
-```
-
 ## Data Driven Pages
 
-Some sections are better suited to being driven by data. Jekyll makes this easy with lightweight YAML files in the `site/_data` directory. You can then iterate and filter the data there in various ways in a .liquid file.
-
-You can also go from asciidoc to liquid syntax. Examples of that are the 'related posts' section mentioned above, the themes form/api template docs, and the example apps. Note that you can't use liquid syntax in any include files. See https://github.com/asciidoctor/jekyll-asciidoc/issues/166 for more details about this issue.
-
-The theme pages are kinda complex because they a data file which is iterated over and conditionally generates asciidoc. This ascii doc is then included. Because you can't do includes of includes (that I could figure out), the liquid file has to be included in the top level file.
-
+Some sections are better suited to being driven by data. Jekyll makes this easy with lightweight json files in the `astro/src/content/json` directory. You can then iterate and filter the data there in various ways in a `.astro` file.
 
 ### Adding an example app
 
@@ -400,7 +393,7 @@ Prior to requesting review on a PR, please complete the following checklist.
 3. When adding or modifying request or response JSON examples, try to maintain themes and consistently.
    - If the create request has a property of `"name": "My application"`, the response should contain this same value.
    - Try and use real world names and values in example requests/responses. Using name such as `Payroll` for an Application name is more descriptive than `app 1` and allows the reader to more understand the example.
-4. When referencing a field in the description of another field use this syntax: `[field]#name#`.
+4. When referencing a field in the description of another field use this syntax: `<InlineField>name</InlineField>`.
 5. Always try and provide a complete description of an API parameter. Brief descriptions that only re-state the obvious are not adeqaute.  
 6. There are times when two fields are optional, because only one of the two are required. In these cases, ensure we explain when the field is required, and when it is optional. There are many examples of this in the doc already for reference.  
 
@@ -408,9 +401,9 @@ Prior to requesting review on a PR, please complete the following checklist.
 1. Screenshots. Review color, dimensions and clarity. Review A/B to ensure layout has not changed, and the new screenshot is consistent with the previous one.
    - In the PR diff, generally speaking the dimensions and file size will be similar, if they are not, something may have changed. 
    - The screenshot should not look fuzzy. If it does, the compression may be incorrect. 
-2. If you are referring to a navigatable element, use `[breadcrumb]#Tenants#` or `[breadcrumb]#Tenants -> Your Tenant#`. In other words, use it even for singular elements.
-3. If you are referring to a field the user can fill out, use `[field]#Authorized Redirect URLs#`.
-4. If you are referring to any other UI element, such as a submit button or read-only name, use `[uielement]#Submit#` or (on the application view screen) `[uielement]#Introspect endpoint#`.
+2. If you are referring to a navigatable element, use `<Breadcrumb>Tenants</Breadcrumb>` or `<Breadcrumb>Tenants -> Your Tenant</Breadcrumb>`. In other words, use it even for singular elements.
+3. If you are referring to a field the user can fill out, use `<InlineField>Authorized Redirect URLs</InlineField>`.
+4. If you are referring to any other UI element, such as a submit button or read-only name, use `<UIelement>Submit</UIelement>` or (on the application view screen) `<UIelement>Introspect endpoint</UIelement>`.
 
 
 ## Content checklist

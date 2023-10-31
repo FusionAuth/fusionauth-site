@@ -17,7 +17,7 @@ For the Oauth group they each have an "Overview" and then include the following 
     
 Before including the `_oauth-idp-operations.mdx` all the needed `idp_` attributes are defined and they carry through into all the sub-includes.
 
-For the "others" group the basic structure of the `_oauth-idp-operations.mdx` is defined in the top level `adoc` (e.g. `apple.adoc`) and then IdP specific request and response `adoc` files are included.
+For the "others" group the basic structure of the `_oauth-idp-operations.mdx` is defined in the top level `mdx` (e.g. `apple.mdx`) and then IdP specific request and response `mdx` files are included.
 
 For example:
 - apple.mdx
@@ -30,8 +30,8 @@ However, you must define `idp_display_name` for these providers.
     
 ### Available Since
 
-This is the only attribute `idp_since` that is set for every IdP.  Since it is used various places it is set before any includes and unset at the bottom of the `adoc` file.
+This is the only attribute `idp_since` that is set for every IdP.  Since it is used various places it is set before any includes and unset at the bottom of the `mdx` file.
 
 ### Token Storage
 
-Each Identity Provider stores a token at the end of the authentication process. This is often a refresh token, but may vary. See `_token-storage-note.adoc` for more details about this.
+Each Identity Provider stores a token at the end of the authentication process. This is often a refresh token, but may vary. See `_token-storage-note.mdx` for more details about this.
