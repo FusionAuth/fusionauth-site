@@ -42,3 +42,12 @@ provider "aws" {
     }
   }
 }
+
+provider "aws" {
+  alias  = "use2"
+  region = "us-east-2"
+  assume_role {
+    role_arn     = "arn:aws:iam::172023253951:role/github-actions"
+    session_name = "fusionauth-site"
+  }
+}

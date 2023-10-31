@@ -37,7 +37,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
   }
   origin {
     origin_id                = "astro"
-    domain_name              = "fusionauth-io-website-astro-2023.s3.us-east-1.amazonaws.com"
+    domain_name              = aws_s3_bucket.astro.bucket_regional_domain_name
     origin_access_control_id = aws_cloudfront_origin_access_control.astro_2023.id
   }
 
@@ -482,7 +482,7 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
 # origin access control for astro s3 bucket
 #
 resource "aws_cloudfront_origin_access_control" "astro_2023" {
-  name                              = "fusionauth-io-website-astro-2023.s3.us-east-1.amazonaws.com"
+  name                              = aws_s3_bucket.astro.bucket_regional_domain_name
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"

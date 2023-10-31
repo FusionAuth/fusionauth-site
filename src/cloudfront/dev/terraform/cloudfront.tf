@@ -33,8 +33,8 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
   }
   origin {
     origin_id                = "astro"
-    domain_name              = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
-    origin_access_control_id = "E2EQIBLOLKM4ZQ"
+    domain_name              = aws_s3_bucket.astro.bucket_regional_domain_name
+    origin_access_control_id = aws_cloudfront_origin_access_control.astro.id
   }
 
   custom_error_response {
@@ -548,7 +548,7 @@ resource "aws_cloudfront_distribution" "fusionauth_dev_site" {
 # origin access control for astro s3 bucket
 #
 resource "aws_cloudfront_origin_access_control" "astro" {
-  name                              = "fusionauth-dev-astro.s3.us-east-2.amazonaws.com"
+  name                              = aws_s3_bucket.astro.bucket_regional_domain_name
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
