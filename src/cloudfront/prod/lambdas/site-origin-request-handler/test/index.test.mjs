@@ -55,6 +55,10 @@ describe('docs redirects', function() {
   runTest('/docs/v1/tech/identity-providers/', makeRedirect('/docs/lifecycle/authenticate-users/identity-providers/'));
 });
 
+describe('pdf', function() {
+  runTest('/resources/adcellerant-case-study.pdf', makePassThroughRequest('/resources/adcellerant-case-study.pdf'));
+});
+
 describe('blog', function() {
   runTest('/blog', makeRedirect('/blog/'));
   runTest('/blog/category/tutorial', makeRedirect('/blog/category/tutorial/'));
