@@ -1,6 +1,6 @@
 ## Content Style Guidelines
 
-Here are some guidelines to follow when writing documentation (everything under `/site/docs`), articles, and blogs (`astro/src/content/blog`).
+Here are some guidelines to follow when writing documentation (everything under [docs](astro/src/content/docs)), articles (everything under [articles](astro/src/content/articles)), and blogs [blog](astro/src/content/blog).
 - Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth. 
   For example, see the API Key APIs description for `apiKeyId`, where API Key is capitalized: `The unique Id of the API Key to create. If not specified a secure random UUID will be generated.`
 - If referring to something that exists as a domain object in FusionAuth, but you are not explicitly referring to an object being created/updated in FusionAuth, use lowercase. Here are some examples:
@@ -14,40 +14,35 @@ Here are some guidelines to follow when writing documentation (everything under 
 - References to `http://127.0.0.1` should be updated to `http://localhost`. Remove hyperlinks to `localhost`.
 - Always provide an alt text for images. It should always be a full sentence describing the content of the image.
 - In general, put screenshot images after the text describing the image. That is "This functionality....\n\n<screenshot of functionality>". However, when describing fields for screens, as in the core concepts section, put the screenshot first.
-- If possible use an SVG for images. Otherwise a PNG that has been properly minified is acceptable.
+- If possible use an SVG for images. Otherwise, a PNG that has been properly minified is acceptable.
 - Never use the term GUID, it's always UUID. If you mention any, display them in `8-4-4-4-12` format: `631ecd9d-8d40-4c13-8277-80cedb8236e3`
 - When introducing a code snippet, don't use a : (colon). Instead, just use verbiage before it. "The code to exchange the token is similar to below."
 - Prefer 'You' to 'We'. 'Let's' is acceptable.
 - All code snippets within any documents should have indenting formatted to 2 spaces.
-- Code captions should have the the first letter of every word capitalized: This Code Is The Best.
+- Code captions should have the first letter of every word capitalized: This Code Is The Best.
 - All image captions should be one or more complete sentences.
 - Use the oxford comma. Apples, bananas, and oranges are my favorite fruits.
 - Single spaces should be used instead of double spaces after a period.
 - Headers should have the first letter of every word capitalized: `This Is The Header Text`. This is true for all headers (h1, h2, h3, h4). This is also known as [Start Case](https://en.wikipedia.org/wiki/Letter_case).
-  (quick check is: `grep '^## \([^ ].*\)\{0,1\}' site/_posts/<post>.md`)
 - When writing, you have access to Asides. Here's an [example blog post using an Aside](https://github.com/FusionAuth/fusionauth-site/blob/master/astro/src/content/blog/log4j-fusionauth.mdx). You can assign the following values to the type: `tip` for tips. `note` for things for the user to be aware of. `important` for things the user should pay attention to. `warn` for dangerous actions like deleting a tenant.
 - For links, don't use the absolute URL for the FusionAuth website (https://fusionauth.io), only relative URLs. This allows us to deploy to our local and staging environments and not get sent over to prod.
 
 ## Docs 
-- Don't use complex breadcrumbs styling in docs. Use `->` because Asciidoc converts this to a nice Unicode arrow. Breadcrumbs should look like this `[breadcrumb]#foo -> bar -> baz#`. When using markdown, use `<span>foo -> bar -> baz</span>{:breadcrumb}`
-- If you are referencing a URL as a setting and don't want it to be hyperlinked, preface it with a `\`. For example: `\https://fusionauth-example.zendesk.com`
-- If you are referencing a field in a form or JSON API doc, use the `[field]` class (rather than backticks): `[field]#Issuer#` in asciidoc or `<span class="field">Issuer</span> in markdown.
-- If you are referencing a UI element or button, use the `[uielement]` class: `Click the `[uielement]#Ok# button` in asciidoc or `<span class="uielement">Issuer</span> in markdown.
+- Don't use complex breadcrumbs styling in docs. Use `->`. Use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component. Breadcrumbs should look like this `<Breadcrumb>foo -> bar -> baz</Breadcrumb>`.
+- If you are referencing a field in a form or JSON API doc, use the [InlineField](astro/src/components/InlineField.astro) component: `<InlineField>Issuer</InlineField>`.
+- If you are referencing a UI element or button, use the [UIelement](astro/src/components/Uielement.astro) component: `Click the <UIelement>Ok</UIelement> button`.
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
 - When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
-- Include fragments that are shared between different sections of the doc should be stored in the `shared` directory.
-- All `link` elements should be fully-qualified and never include a slash at the end (i.e. `link:/docs/v1/tech/apis/users` not `link:users`)
+- Include fragments that are shared between different sections of the doc should be stored in the [shared](astro/src/content/docs/_shared) directory.
+- All links elements should be fully-qualified and never include a slash at the end (i.e. `[users](/docs/apis/users)` not `[users](./users)`)
 - If something is new in a version, mark it with something like this:
 
-  [NOTE.since]
-  ====
-  Available Since Version 1.5.0
-  ====
+  <Aside type="since">
+    Available Since Version 1.5.0
+  </Aside>
 
-- If a doc gets long add a table of contents in the top section or break it into multiple documents. To generate a table of contents from section headers, run this script (replacing the `doc.adoc` value). Don't include the link to the section containing the TOC.
-```
-egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /* <</'|sed 's/$/>>/'
-```
+- The table of contents along the right side is populated by a list of headings extracted from the top level markdown. If you are using nested markdown files with your headings you need to export them into the parent MDX file.
+  - See [Account Portal](astro/src/content/docs/get-started/download-and-install/account-portal.mdx) for an example. See the Astro docs for [exported variables](https://docs.astro.build/en/guides/markdown-content/#using-exported-variables-in-mdx) and [exported properties](https://docs.astro.build/en/guides/markdown-content/#exported-properties) to see what that is doing.
 - We currently use [FontAwesome v6](https://fontawesome.com/) to render icons, so you can use them to refer to UI buttons, like this:
     ```jsx
     <IconButton icon="edit" color="blue" />
@@ -62,24 +57,54 @@ egrep '^[=]+ ' site/docs/v1/tech/doc.adoc |sed 's/=//' |sed 's/=/*/g'|sed 's/* /
 
 ### Including files
 - If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_` and use dashes to separate words: `_login-api-integration` not `_login_api_integration`.
-- If you are including a file in the docs which uses asciidoctor, do not prepend the include file path with `/`. 
-  - If it is a top level doc, use the full path: `include::docs/v1/tech/samlv2/_saml_limitations.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
-  - If it is an included doc (that is, one that starts with `_`), use the relative path: `include::../../../../src/json/scim/enterpriseuser-create-request.json[]` or `include::_scim-customizable-schema-shared.adoc[]`. Otherwise you will get `WARNING: include file is outside of jail; recovering automatically` messages.
-  - If you accidentally do this, you can find the files where the issue is by running: `bundle exec jekyll build --verbose > outfile 2>&1` and then looking through `outfile` for the `WARNING`. The file just before the warning line will be the one with an issue.
-- If a doc pulls code from an example application, use the include directive against the raw github repo. You can also pull sections with tags or line numbers: `include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/package.json[]` or `include::https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node/master/routes/index.js[tags=clientIdSecret]`
-
-This will be revised when docs are migrated.
+- You may include both markdown files and astro components as imports in MDX. These are treated as components.
+```mdxjs
+import AccountPortalCore from 'src/content/docs/_shared/_account-portal.mdx';
+...
+<AccountPortalCore/>
+```
+- You can pass `props` to both astro components and mdx components.
+  - For astro components this looks like:
+```typescript jsx
+---
+const { feature } = Astro.props;
+---
+{ feature && <><strong>Note:</strong> An Enterprise plan is required to utilize {feature}. </>}
+```
+  - For mdx it looks like:
+```mdxjs
+---
+---
+# Getting Help
+You can find help for {props.topic} at [help](/help)
+```
+- In MDX files you can put some content behind a javascript expression
+```mdxjs
+---
+---
+{props.showStuff && <>
+  This is some more content <a href="/home">Home</a>
+</>}
+```
+  - You may need to add a empty tag multi-line content after the expression to indicate that this is a block
+  - Markdown syntax will not render inside of a block inside of an expression. You must use html there.
+  - Content passed in the `<slot></slot>` of a component will be passed as rendered markdown.
+  - you may need to coerce a prop into a boolean to use as a conditional for an expression. Such as `{!!props.message && <span>{props.message}</span>}`;
+- JSON files are their own content collection in astro. You cn reference these using the [JSON component](astro/src/components/JSON.astro)
+- We have an alias mapped in [tsconfig](astro/tsconfig.json) that allows you to use absolute references from 'src'. Otherwise, imports must use relative paths.
+- 
+- If a doc pulls code from an example application, use the [RemoteContent](astro/src/components/RemoteContent.astro). You can also pull sections with tags: `<RemoteContent url="https://raw.githubusercontent.com/FusionAuth/fusionauth-react-sdk/main/README.md" tags="forDocSite" />`
 
 ### For API docs
 - We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
 - `Defaults` is always capitalized.
 - If a field is required, but only when another feature is enabled, mark it optional rather than required in the API. Then, add a note in the description saying when it is required, like so:
   ```
-  This field is required when [field]#theOtherField.enabled# is set to true.
+  This field is required when <InlineField>theOtherField.enabled</InlineField> is set to true.
   ```
-- If a feature is only available when using a paid plan, use the `shared/_premium-edition-blurb-api.adoc` fragment for API fields, and `shared/_premium-edition-blurb.adoc` for any other location where the feature is mentioned in docs. Only mark the request API fields.
-- If a feature is only available when using essentials, use the `shared/_advanced-edition-blurb-api.adoc` fragment for API fields, and `shared/_advanced-edition-blurb.adoc` for any other location where the feature is mentioned in docs. Only mark the request API fields with this.
-- If a feature is only available when using enterprise, use the `shared/_enterprise-edition-blurb-api.adoc` fragment for API fields, and `shared/_enterprise-edition-blurb.adoc` for any other location where the feature is mentioned in docs. Only mark the request API fields with this.
+- If a feature is only available when using a paid plan, use the [PremiumEditionBlurbApi](astro/src/content/docs/_shared/_premium-edition-blurb-api.astro) component `<PremiumEditionBlurbApi premium_feature="custom forms" />` fragment for API fields, and [PremiumEditionBlurb](astro/src/content/docs/_shared/_premium-edition-blurb.astro) component for any other location where the feature is mentioned in docs. Only mark the request API fields.
+- If a feature is only available when using essentials, use the [AdvancedEditionBlurbApi](astro/src/content/docs/_shared/_advanced-edition-blurb-api.astro) component for API fields, and [AdvancedEditionBlurb](astro/src/content/docs/_shared/_advanced-edition-blurb.astro) for any other location where the feature is mentioned in docs. Only mark the request API fields with this.
+- If a feature is only available when using enterprise, use the [EnterpriseEditionBlurbApi](astro/src/content/docs/_shared/_enterprise-edition-blurb-api.astro) component for API fields, and [EnterpriseEditionBlurb](astro/src/content/docs/_shared/_enterprise-edition-blurb.astro) for any other location where the feature is mentioned in docs. Only mark the request API fields with this.
 - If you are working in the `/api/identity-providers` folder there is a `README` there to help you understand the structure and layout of the documentation for the Identity Providers API.
 - If a field was deprecated in a version 30 versions ago (deprecated in 1.15, you are now at 1.45), you can remove it from the docs.
 

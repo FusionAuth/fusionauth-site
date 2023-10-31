@@ -9,22 +9,22 @@ There are two groups of Identity Providers.  The first group are all very simili
 
 For the Oauth group they each have an "Overview" and then include the following tree (only the first 2 levels are listed, there are other, but you will find them as you go) of `adoc` files:
 
-- _oauth-idp-operations.adoc
-  - _oauth-idp-request-body.adoc
-  - _oauth-idp-response-body.adoc
-  - _identity-provider-login-request-body.adoc
-  - _identity-provider-login-response-body.adoc
+- _oauth-idp-operations.mdx
+  - _oauth-idp-request-body.mdx
+  - _oauth-idp-response-body.mdx
+  - _identity-provider-login-request-body.mdx
+  - _identity-provider-login-response-body.mdx
     
-Before including the `_oauth-idp-operations.adoc` all the needed `idp_` attributes are defined and they carry through into all the sub-includes.
+Before including the `_oauth-idp-operations.mdx` all the needed `idp_` attributes are defined and they carry through into all the sub-includes.
 
-For the "others" group the basic structure of the `_oauth-idp-operations.adoc` is defined in the top level `adoc` (e.g. `apple.adoc`) and then IdP specific request and response `adoc` files are included.
+For the "others" group the basic structure of the `_oauth-idp-operations.mdx` is defined in the top level `adoc` (e.g. `apple.adoc`) and then IdP specific request and response `adoc` files are included.
 
 For example:
-- apple.adoc
-  - _apple-request-body.adoc
-  - _apple-response-body.adoc
-  - _identity-provider-login-request-body.adoc
-  - _identity-provider-login-response-body.adoc
+- apple.mdx
+  - _apple-request-body.mdx
+  - _apple-response-body.mdx
+  - _identity-provider-login-request-body.mdx
+  - _identity-provider-login-response-body.mdx
 
 However, you must define `idp_display_name` for these providers.
     
