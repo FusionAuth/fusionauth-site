@@ -143,12 +143,13 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
     cache_policy_id        = local.cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
       event_type   = "viewer-response"
       function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
@@ -182,433 +183,364 @@ resource "aws_cloudfront_distribution" "fusionauth_prod_site" {
     }
   }
 
-  # TO BE REMOVED!
-  ordered_cache_behavior {
-    path_pattern           = "/assets/*"
-    target_origin_id       = "fusionauth-io-website-2022.s3-website-us-east-1.amazonaws.com"
-    allowed_methods        = ["GET", "HEAD"]
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
-    cache_policy_id        = local.cache_policy.caching_optimized
-    viewer_protocol_policy = "redirect-to-https"
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
-      event_type   = "viewer-response"
-      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
-    }
-  }
-
   ordered_cache_behavior {
     path_pattern           = "/blog/*"
-    target_origin_id       = "website-2023-S3"
+    target_origin_id       = "astro-2023"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
       event_type   = "viewer-response"
       function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
     }
-  }
-
-  # TO BE REMOVED!
-  ordered_cache_behavior {
-    path_pattern           = "/docs/quickstarts/*"
-    target_origin_id       = "website-2023-S3"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
-    cache_policy_id        = local.cache_policy.caching_optimized
-    viewer_protocol_policy = "redirect-to-https"
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
-      event_type   = "viewer-response"
-      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
-    }
-  }
-
-  # TO BE REMOVED!
-  ordered_cache_behavior {
-    path_pattern           = "/docs/"
-    target_origin_id       = "website-2023-S3"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
-    cache_policy_id        = local.cache_policy.caching_optimized
-    viewer_protocol_policy = "redirect-to-https"
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
-      event_type   = "viewer-response"
-      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
   ordered_cache_behavior {
     path_pattern           = "/docs/*"
-    target_origin_id       = "fusionauth-io-website-2022.s3-website-us-east-1.amazonaws.com"
+    target_origin_id       = "astro-2023"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
       event_type   = "viewer-response"
       function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
     }
-  }
-
-  # TO BE REMOVED!
-  ordered_cache_behavior {
-    path_pattern           = "/learn/*"
-    target_origin_id       = "fusionauth-io-website-2022.s3-website-us-east-1.amazonaws.com"
-    allowed_methods        = ["GET", "HEAD"]
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
-    cache_policy_id        = local.cache_policy.caching_optimized
-    viewer_protocol_policy = "redirect-to-https"
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
-      event_type   = "viewer-response"
-      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
   ordered_cache_behavior {
     path_pattern           = "/legal/*"
-    target_origin_id       = "fusionauth-io-website-2022.s3-website-us-east-1.amazonaws.com"
+    target_origin_id       = "astro-2023"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
       event_type   = "viewer-response"
       function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
   ordered_cache_behavior {
     path_pattern           = "/resources/*"
-    target_origin_id       = "fusionauth-io-website-2022.s3-website-us-east-1.amazonaws.com"
+    target_origin_id       = "astro-2023"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
       event_type   = "viewer-response"
       function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
   ordered_cache_behavior {
     path_pattern           = "/direct-download"
-    target_origin_id       = "fusionauth-io-website-2022.s3-website-us-east-1.amazonaws.com"
+    target_origin_id       = "astro-2023"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
       event_type   = "viewer-response"
       function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
   ordered_cache_behavior {
     path_pattern           = "/license"
-    target_origin_id       = "fusionauth-io-website-2022.s3-website-us-east-1.amazonaws.com"
+    target_origin_id       = "astro-2023"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
       event_type   = "viewer-response"
       function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
   ordered_cache_behavior {
     path_pattern           = "/robots.txt"
-    target_origin_id       = "fusionauth-io-website-2022.s3-website-us-east-1.amazonaws.com"
+    target_origin_id       = "astro-2023"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
       event_type   = "viewer-response"
       function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
   ordered_cache_behavior {
     path_pattern           = "/sitemap*"
-    target_origin_id       = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
+    target_origin_id       = "astro-2023"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
       event_type   = "viewer-response"
       function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
   ordered_cache_behavior {
     path_pattern           = "/landing/*"
-    target_origin_id       = "fusionauth-io-website-2022.s3-website-us-east-1.amazonaws.com"
+    target_origin_id       = "astro-2023"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
     function_association {
       event_type   = "viewer-response"
       function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
     }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
+    }
   }
-
-  # TO BE REMOVED!
-  ordered_cache_behavior {
-    path_pattern           = "/how-to/*"
-    target_origin_id       = "fusionauth-io-website-2022.s3-website-us-east-1.amazonaws.com"
-    allowed_methods        = ["GET", "HEAD"]
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
-    cache_policy_id        = local.cache_policy.caching_optimized
-    viewer_protocol_policy = "redirect-to-https"
-  }
-
 
   ordered_cache_behavior {
     path_pattern           = "/articles/*"
-    target_origin_id       = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    target_origin_id       = "astro-2023"
+    allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
       event_type   = "viewer-response"
       function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 
   ordered_cache_behavior {
     path_pattern           = "/dev-tools/*"
-    target_origin_id       = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
-    cache_policy_id        = local.cache_policy.caching_optimized
-    viewer_protocol_policy = "redirect-to-https"
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
-      event_type   = "viewer-response"
-      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
-    }
-  }
-
-  ordered_cache_behavior {
-    path_pattern           = "/css/*"
-    target_origin_id       = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
-    cache_policy_id        = local.cache_policy.caching_optimized
-    viewer_protocol_policy = "redirect-to-https"
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
-      event_type   = "viewer-response"
-      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
-    }
-  }
-
-  ordered_cache_behavior {
-    path_pattern           = "/img/*"
-    target_origin_id       = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
-    cache_policy_id        = local.cache_policy.caching_optimized
-    viewer_protocol_policy = "redirect-to-https"
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
-      event_type   = "viewer-response"
-      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
-    }
-  }
-
-  ordered_cache_behavior {
-    path_pattern           = "/js/*"
-    target_origin_id       = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
-    cache_policy_id        = local.cache_policy.caching_optimized
-    viewer_protocol_policy = "redirect-to-https"
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
-      event_type   = "viewer-response"
-      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
-    }
-  }
-
-  ordered_cache_behavior {
-    path_pattern           = "/webfonts/*"
-    target_origin_id       = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
-    cache_policy_id        = local.cache_policy.caching_optimized
-    viewer_protocol_policy = "redirect-to-https"
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
-      event_type   = "viewer-response"
-      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
-    }
-  }
-
-  ordered_cache_behavior {
-    path_pattern           = "/_astro/*"
-    target_origin_id       = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
-    cache_policy_id        = local.cache_policy.caching_optimized
-    viewer_protocol_policy = "redirect-to-https"
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
-      event_type   = "viewer-response"
-      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
-    }
-  }
-
-  ordered_cache_behavior {
-    path_pattern           = "/_pagefind/*"
-    target_origin_id       = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
-    cache_policy_id        = local.cache_policy.caching_optimized
-    viewer_protocol_policy = "redirect-to-https"
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
-      event_type   = "viewer-response"
-      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
-    }
-  }
-
-  ordered_cache_behavior {
-    path_pattern           = "/favicon.svg"
-    target_origin_id       = "fusionauth-io-website-2022.s3-website-us-east-1.amazonaws.com"
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
-    cache_policy_id        = local.cache_policy.caching_optimized
-    viewer_protocol_policy = "redirect-to-https"
-    function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
-    }
-    function_association {
-      event_type   = "viewer-response"
-      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
-    }
-  }
-
-  ordered_cache_behavior {
-    path_pattern           = "/cdn/*"
-    target_origin_id       = "fusionauth-io-website-2023.s3.us-east-1.amazonaws.com"
+    target_origin_id       = "astro-2023"
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     compress               = true
     cache_policy_id        = local.cache_policy.caching_optimized
     viewer_protocol_policy = "redirect-to-https"
     function_association {
-      event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.fusionauth_website_request_handler.arn
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
     }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
+    }
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/css/*"
+    target_origin_id       = "astro-2023"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = true
+    cache_policy_id        = local.cache_policy.caching_optimized
+    viewer_protocol_policy = "redirect-to-https"
     function_association {
       event_type   = "viewer-response"
       function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
+    }
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/img/*"
+    target_origin_id       = "astro-2023"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = true
+    cache_policy_id        = local.cache_policy.caching_optimized
+    viewer_protocol_policy = "redirect-to-https"
+    function_association {
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
+    }
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/js/*"
+    target_origin_id       = "astro-2023"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = true
+    cache_policy_id        = local.cache_policy.caching_optimized
+    viewer_protocol_policy = "redirect-to-https"
+    function_association {
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
+    }
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/webfonts/*"
+    target_origin_id       = "astro-2023"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = true
+    cache_policy_id        = local.cache_policy.caching_optimized
+    viewer_protocol_policy = "redirect-to-https"
+    function_association {
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
+    }
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/_astro/*"
+    target_origin_id       = "astro-2023"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = true
+    cache_policy_id        = local.cache_policy.caching_optimized
+    viewer_protocol_policy = "redirect-to-https"
+    function_association {
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
+    }
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/_pagefind/*"
+    target_origin_id       = "astro-2023"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = true
+    cache_policy_id        = local.cache_policy.caching_optimized
+    viewer_protocol_policy = "redirect-to-https"
+    function_association {
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
+    }
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/favicon.svg"
+    target_origin_id       = "astro-2023"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = true
+    cache_policy_id        = local.cache_policy.caching_optimized
+    viewer_protocol_policy = "redirect-to-https"
+    function_association {
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
+    }
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/cdn/*"
+    target_origin_id       = "astro-2023"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = true
+    cache_policy_id        = local.cache_policy.caching_optimized
+    viewer_protocol_policy = "redirect-to-https"
+    function_association {
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.fusionauth_security_headers.arn
+    }
+    lambda_function_association {
+      event_type   = "origin-request"
+      include_body = false
+      lambda_arn   = module.site_origin_request_handler.lambda_function_qualified_arn
     }
   }
 }
