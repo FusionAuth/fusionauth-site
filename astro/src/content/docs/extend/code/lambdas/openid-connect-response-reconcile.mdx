@@ -19,7 +19,7 @@ It is common that the claims returned from the Userinfo endpoint during an OpenI
 When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement. If you are using the API to create the lambda you will need to ensure your function has the following signature:
 
 ```javascript
-function reconcile(user, registration, jwt, id_token) {
+function reconcile(user, registration, jwt, id_token, tokens) {
   // Lambda code goes here
 }
 ```
@@ -28,22 +28,22 @@ This lambda must contain a function named `reconcile` that takes at least three 
 
 <ReconcileLambdaUserRegistrationParameters />
 * `jwt` - the JSON payload returned from the OpenID Connect Userinfo endpoint. This is read-only.
-* `id_token` - the JSON payload returned in the `id_token` when available. This parameter may not be provided and will be `undefined` in that case. This is read-only.
-
-<Aside type="version">
-The `id_token` parameter has been available since 1.31.0.
-</Aside>
+* `id_token` - the JSON payload returned in the `id_token` when available. This parameter may not be provided and will be `undefined` in that case. This is read-only. <span class="px-3 text-green-500 italic capitalize">Available since 1.31.0</span>
+* `tokens` - an object containing the encoded versions of the `access_token` and optionally the `id_token` when available. This is read-only. <span class="px-3 text-green-500 italic capitalize">Available since 1.48.0</span>
 
 The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation.
 
 The `jwt` object contains the payload from the Userinfo endpoint. It may contain well known OpenID Connect registered claims as well as any custom claims defined by the Identity Provider.
 
-The `id_token` will be provided to the Lambda only:
+The `id_token` will be provided to the Lambda only when it was returned by the IdP and the signature can be verified. The `id_token` will be returned by the Identity Provider when the `openid` scope was requested.
 
-* when it is returned by the Identity Provider and 
-* it has been signed using the `client_secret` and an HMAC algorithm
+The signature can be verified in one of two ways:
+* The token has been signed using the `client_secret` and an HMAC algorithm.
+* The token has been signed using an asymmetric key-pair and the public key used to verify the signature has been published using the JSON Web Key Set (JWKS) and is correctly advertised by the `jwks_uri` in the `.well-known/openid-configuration` discovery document. In order for FusionAuth to correctly resolve this public key, you must configure the IdP using the Issuer and allow FusionAuth to discover the OpenID Connect configuration using the OpenID Connect discovery document. If you manually configure the Authorize, Token and Userinfo endpoints, automatic discovery of the JSON Web Key Set uri will not occur.
 
-In particular, if the `id_token` is signed using an asymmetric key-pair, it will not be available to the Lambda.
+Please note that prior to version `1.48.0`, this parameter was only available if it had been signed with the `client_secret` using an HMAC algorithm.
+
+The `tokens` parameter will always be present and will contain the encoded version of the `access_token`. When the `id_token` is present and the signature has been verified, this object will also contain the `id_token` in the encoded form. These tokens may be useful if you need to use the HTTP Lambda Connect feature to make an external API call using either of these tokens.
 
 ## Assigning the Lambda
 
@@ -57,18 +57,16 @@ Navigate to <strong>Settings -> Identity Providers</strong> and select your exis
 
 ## Modifying Email and Username Claims
 
-If the JWT from the OIDC identity provider does not come back with an email claim you can add your own. This claim is `email` by default but may be changed with the `oauth2.emailClaim` as documented in the [API docs](/docs/apis/identity-providers/openid-connect).
+FusionAuth will require an email or username to create a user. However, if the response from the Userinfo endpoint, or the `id_token` does not return an email claim you can optionally create a unique value to satisfy this requirement. This claim is `email` by default but may be changed with the `oauth2.emailClaim` as documented in the [OpenID Connect Identity Provider API](/docs/apis/identity-providers/openid-connect).
 
 <Aside type="note">
 This capability is available beginning in version `1.31.0`. It was also available from `1.17.3` to `1.28.0`.
 </Aside>
 
-If the Userinfo or Id Token available to you in the lambda has unique user information, you can build a fake email address from it.
-
-Here, the `sub` claim is the unique user id, and we're building an email address:
+In this example, we will assume the the `jwt` or `id_token` objects contain unique user information such as the `sub` claim. This unique value can be used to fabricate an email address.
 
 ```javascript
-function(user, registration, jwt) {
+function(user, registration, jwt, id_token, tokens) {
   // The user's unique Id is the 'sub' claim.
   user.email = jwt.sub + '@no-email-present.example.com';
 }
