@@ -73,13 +73,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'mobile-app',
     desc: 'Mobile application that runs natively on a device',
     articles: [
-      {
-        href: '/docs/quickstarts/quickstart-flutter-native',
-        title: 'Flutter',
-        icon: '/img/icons/flutter.svg',
-        faIcon: 'fa-snake',
-        navColor: 'indigo'
-      },
     ],
   },
   {
@@ -91,13 +84,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'api',
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
-      {
-        href: '/docs/quickstarts/quickstart-dotnet-api',
-        title: '.NET Core',
-        icon: '/img/icons/dotnet-c.svg',
-        faIcon: 'fa-hashtag',
-        navColor: 'blue',
-      },
     ],
   },
   {
