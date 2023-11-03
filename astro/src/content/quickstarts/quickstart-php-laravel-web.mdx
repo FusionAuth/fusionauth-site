@@ -12,7 +12,6 @@ faIcon: fa-laravel
 url: https://github.com/FusionAuth/fusionauth-quickstart-php-laravel-web
 codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-php-laravel-web/main
 ---
-
 import Aside from '/src/components/Aside.astro';
 import LoginAfter from '../../diagrams/quickstarts/login-after.astro';
 import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
@@ -26,6 +25,9 @@ Find the Docker Compose file and source code for the complete application at <a 
 
 For this Quickstart, you'll need:
 
+* [PHP](https://www.php.net/manual/en/install.php) 8.1
+* [Composer](https://getcomposer.org/)
+* [Nodejs](https://nodejs.org/)
 * [Docker](https://www.docker.com), version 20 or later, which is the quickest way to start FusionAuth. (There are [other ways](/docs/v1/tech/installation-guide/)).
 
 ## General Architecture
@@ -59,7 +61,7 @@ All shell commands in this guide can be entered in a terminal in this folder. On
 
 All the files you'll create in this guide already exist in the `complete-application` subfolder, if you prefer to copy them.
 
-### Run FusionAuth And {frontmatter.technology} Via Docker
+### Run FusionAuth Via Docker
 
 You'll find a Docker Compose file `docker-compose.yml` and an environment variables configuration file `.env` in the root folder of the repository.
 
@@ -69,7 +71,7 @@ Assuming you have Docker installed, you can start FusionAuth on your machine wit
 docker compose up -d
 ```
 
-This will start five containers, one each for FusionAuth, Postgres, Elasticsearch, MariaDB, and {frontmatter.technology}. Wait for all five containers to start.
+This will start three containers, one each for FusionAuth, Postgres and Elasticsearch.
 
 Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/v1/tech/installation-guide/kickstart). When FusionAuth starts for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to your specified state.
 
@@ -95,17 +97,13 @@ You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) and loo
 
 While this guide builds a new {frontmatter.technology} project, you can use the same method to integrate your existing project with FusionAuth.
 
-The {frontmatter.technology} [documentation](https://laravel.com/docs/10.x#your-first-laravel-project) suggests many ways of creating a new project. This guide uses the standard [Bitnami Laravel Docker image](https://hub.docker.com/r/bitnami/laravel), which creates the project for you. This image also contains a version of PHP, so you don't need to install PHP on your physical machine.  If you browse to [http://localhost:5001](http://localhost:5001), you'll see the site is running.
+To create a new {frontmatter.technology} project run the following command. There are other ways of creating the project as suggested in the {frontmatter.technology} [documentation](https://laravel.com/docs/10.x#your-first-laravel-project).
 
-<Aside type="note">
-  It may take a few more minutes for the host to come up on http://localhost:5001 after you run the `docker compose up -d` command as the Laravel container updates dependencies and executes migrations.
-</Aside>
+```shell
+composer create-project laravel/laravel your-application && cd your-application
+```
 
-All the starter app files are available for editing in the `your-application` folder and mapped to the {frontmatter.technology} Docker volume. Composer packages are already in the `vendor` folder, so you don't need to download them.
-
-<Aside type="caution">
-Normally, you should not commit your vendor folder to Git, but the Docker container won't start without all the Composer dependencies, so they are included in this guide.
-</Aside>
+Composer will initialize the project and add all the starter app files in `your-application` directory.
 
 If you are not familiar with Laravel, here's a brief explanation of its structure:
 
@@ -122,42 +120,55 @@ If you are not familiar with Laravel, here's a brief explanation of its structur
 
 ## Authentication
 
-Authentication in {frontmatter.technology} is managed by [Socialite](https://laravel.com/docs/10.x/socialite). For this application, you need the [FusionAuth Socialite provider](https://github.com/SocialiteProviders/FusionAuth). To install it, run the following command, which uses the PHP inside your Docker container.
+Authentication in {frontmatter.technology} is managed by [Socialite](https://laravel.com/docs/10.x/socialite). For this application, you need the [FusionAuth Socialite provider](https://github.com/SocialiteProviders/FusionAuth). To install it, run the following command.
 
 ```shell
-docker compose exec lara_app composer require socialiteproviders/fusionauth
+composer require socialiteproviders/fusionauth
 ```
 
-Edit `your-application/.env` and insert the following lines.
+In `your-application/.env` insert the following lines.
 
 ```
 FUSIONAUTH_CLIENT_ID="E9FDB985-9173-4E01-9D73-AC2D60D1DC8E"
 FUSIONAUTH_CLIENT_SECRET="super-secret-secret-that-should-be-regenerated-for-production"
-FUSIONAUTH_BASE_URL="http://fusionauth:9011"
-FUSIONAUTH_REDIRECT_URL="http://localhost:5001/auth/callback"
+FUSIONAUTH_BASE_URL="http://localhost:9011"
+FUSIONAUTH_REDIRECT_URL="http://localhost:8000/auth/callback"
 # FUSIONAUTH_TENANT_ID=
 ```
 
 This tells {frontmatter.technology} where to find and connect to FusionAuth.
 
-In this file, also overwrite the values for the following keys as described here.
+This quickstart will use a [SQLite](https://www.sqlite.org/index.html) database a small, fast, self-contained database engine but you can use MySQL or Postgres if you have them installed on your machine.
+
+Create a SQLite database by running the following command from `your-application` directory.
+
+```shell
+touch database/database.sqlite
+```
+
+In the `your-application/.env` file, comment out the values for the following keys as shown here.
 
 ```
-DB_HOST=mariadb
-DB_USERNAME=bn_myapp
-DB_DATABASE=bitnami_myapp
+# DB_CONNECTION=mysql
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
+# DB_DATABASE=laravel
+# DB_USERNAME=root
+# DB_PASSWORD=
 ```
 
-This enables {frontmatter.technology} to connect to the database running in the adjacent Docker container.
+Add the following key above the keys you just commented out.
 
-<Aside type="note">
-  Note that {frontmatter.technology} will silently overwrite the `DB_HOST` value with `mariadb` in the file `InteractsWithDockerComposeServices.php`, so you can't change this value or the database service name in Docker. If you encounter database connection errors in your own apps running in Docker, check that this file isn't interfering with your connection strings.
-</Aside>
+```
+DB_CONNECTION=sqlite
+```
+
+This enables {frontmatter.technology} to connect to the SQLite database.
 
 In the file `your-application/config/services.php`, add one more item to the array being returned with the code below.
 
 <RemoteCode
-  url={frontmatter.codeRoot + "/complete-application/laravel/config/services.php"}
+  url={frontmatter.codeRoot + "/complete-application/config/services.php"}
   lang="php"
   tags="fusionauth" />
 
@@ -166,7 +177,7 @@ Now the configuration files have all the settings you need. Next, you'll change 
 In the file `your-application/app/Providers/EventServiceProvider.php`, replace the `$listen` array with the code below.
 
 <RemoteCode
-  url={frontmatter.codeRoot + "/complete-application/laravel/app/Providers/EventServiceProvider.php"}
+  url={frontmatter.codeRoot + "/complete-application/app/Providers/EventServiceProvider.php"}
   lang="php"
   tags="fusionauth" />
 
@@ -175,20 +186,20 @@ Finally, update your User model to have FusionAuth fields.
 In the file `your-application/app/Models/User.php`, add the FusionAuth items to the `$fillable` and `$hidden` properties with the code below.
 
 <RemoteCode
-  url={frontmatter.codeRoot + "/complete-application/laravel/app/Models/User.php"}
+  url={frontmatter.codeRoot + "/complete-application/app/Models/User.php"}
   lang="php"
   tags="fusionauth" />
 
 Every model in {frontmatter.technology} uses the database, so you need to update the database table to match your new model.
 
-Create a file named `your-application/database/migrations/2023_09_27_142009_add_fusionauth_fields_user_table.php` or run the command below to create it.
+Create a file named `your-application/database/migrations/2023_11_03_112258_add_fusionauth_fields_user_table.php` or run the command below to create it.
 
 <Aside type="note">
   Running the command below will create the file with a slightly different name depending on the date you are running the command.
 </Aside>
 
 ```shell
-docker compose exec lara_app php artisan make:migration add_fusionauth_fields_user_table
+php artisan make:migration add_fusionauth_fields_user_table
 ```
 
 The result is the same whether you create the database scripts manually or with this command, so you can use your preferred method.
@@ -196,13 +207,19 @@ The result is the same whether you create the database scripts manually or with 
 Add the code below to the file.
 
 <RemoteCode
-  url={frontmatter.codeRoot + "/complete-application/laravel/database/migrations/2023_09_27_142009_add_fusionauth_fields_user_table.php"}
+  url={frontmatter.codeRoot + "/complete-application/database/migrations/2023_11_03_112258_add_fusionauth_fields_user_table.php"}
   lang="php" />
 
-Run the command below to update your MariaDB database with the new User definition.
+Install the following package required to allow manipulation of columns.
 
 ```shell
-docker compose exec lara_app php artisan migrate
+composer require doctrine/dbal
+```
+
+Run the command below to update your database with the new User definition.
+
+```shell
+php artisan migrate
 ```
 
 ## Customization
@@ -211,23 +228,24 @@ Now that authentication is done, the last task is to create example pages that a
 
 ### CSS And HTML
 
-Copy over some CSS and an image from the example app.
+Copy over some CSS and images from the example app.
 
 ```shell
-cp ./complete-application/laravel/public/changebank.css ./your-application/public/changebank.css
-cp ./complete-application/laravel/public/money.jpg ./your-application/public/money.jpg
+cp ../complete-application/public/changebank.css public/changebank.css
+cp ../complete-application/public/money.jpg public/money.jpg
+cp ../complete-application/public/changebank.svg public/changebank.svg
 ```
 
 Next, create an `index.blade.php` file.
 
 ```shell
-touch your-application/resources/views/index.blade.php
+touch resources/views/index.blade.php
 ```
 
 Paste the following code into the file.
 
 <RemoteCode
-  url={frontmatter.codeRoot + "/complete-application/laravel/resources/views/index.blade.php"}
+  url={frontmatter.codeRoot + "/complete-application/resources/views/index.blade.php"}
   lang="php" />
 
 The index page contains nothing to note except a link to the login page `<a href="/login">`.
@@ -235,13 +253,13 @@ The index page contains nothing to note except a link to the login page `<a href
 Next, create an `account.blade.php` file.
 
 ```shell
-touch your-application/resources/views/account.blade.php
+touch resources/views/account.blade.php
 ```
 
 Paste the following code into the file.
 
 <RemoteCode
-  url={frontmatter.codeRoot + "/complete-application/laravel/resources/views/account.blade.php"}
+  url={frontmatter.codeRoot + "/complete-application/resources/views/account.blade.php"}
   lang="php" />
 
 The account page displays the user's email from FusionAuth, as you'll see later when you create the route `<p class="header-email">{{$email}}</p>`.
@@ -249,13 +267,13 @@ The account page displays the user's email from FusionAuth, as you'll see later 
 Next, create a `change.blade.php` file.
 
 ```shell
-touch your-application/resources/views/change.blade.php
+touch resources/views/change.blade.php
 ```
 
 Paste the following code into the file.
 
 <RemoteCode
-  url={frontmatter.codeRoot + "/complete-application/laravel/resources/views/change.blade.php"}
+  url={frontmatter.codeRoot + "/complete-application/resources/views/change.blade.php"}
   lang="php" />
 
 The change page uses some Blade conditional statements to display different divs depending on the state returned by the form POST `@if ($state['error'] && $state['hasChange'])`.
@@ -267,12 +285,10 @@ The change page also includes a `@csrf` anti-forgery token in the form at the bo
 In the file `your-application/routes/web.php`, overwrite everything with the code below.
 
 <RemoteCode
-  url={frontmatter.codeRoot + "/complete-application/laravel/routes/web.php"}
+  url={frontmatter.codeRoot + "/complete-application/routes/web.php"}
   lang="php" />
 
 The homepage route `/` checks whether you are logged in and redirects you to your account page if you are.
-
-The login route replaces the Docker service name `fusionauth` with `localhost` in `$url = str_replace('fusionauth', 'localhost', $url);`. The former is used in the {frontmatter.technology} service to access FusionAuth, while the latter needs to be displayed in your browser URL bar, which doesn't know about Docker since it's on your physical machine. In future apps, if you aren't running in Docker, you can use the first commented line instead of this replacement.
 
 After login, FusionAuth redirects you to the `/auth/callback` route. Use Socialite to update the user model in the database with `$user = User::updateOrCreate([`, then start a session for the user with `Auth::login($user);`.
 
@@ -284,7 +300,13 @@ Finally, the change route has both a GET and a POST version. Both versions retur
 
 ## Run The Application
 
-Browse to [the app](http://localhost:5001). Log in using `richard@example.com` and `password`. The change page will allow you to enter a number. Log out and verify that you can't browse to the [account page](http://localhost:5001/account).
+From `your-application` directory run the following command
+
+```shell
+php artisan serve
+```
+
+Browse to [the app](http://localhost:8000) at http://localhost:8000. Log in using `richard@example.com` and `password`. The change page will allow you to enter a number. Log out and verify that you can't browse to the [account page](http://localhost:8000/account).
 
 ## Next Steps
 
@@ -319,15 +341,6 @@ FusionAuth gives you the ability to customize just about everything to do with t
 
 Ensure FusionAuth is running in the Docker container. You should be able to log in as the admin user `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
 
-- Docker complains that the container `lara_app` is already running.
-
-Run the following command to stop and remove all existing Docker containers then start them again.
-
-```shell
-docker stop $(docker ps -a -q)
-docker rm lara_db
-docker rm lara_app
-```
 
 - {frontmatter.technology} says there is an invalid state exception.
 
@@ -339,11 +352,13 @@ You can always pull down a complete running application and compare what's diffe
 
 ```shell
 git clone https://github.com/FusionAuth/fusionauth-quickstart-php-laravel-web.git
-docker stop $(docker ps -a -q)
-docker rm lara_db
-docker rm lara_app
-cd fusionauth-quickstart-php-laravel-web/complete-application
+cd fusionauth-quickstart-php-laravel-web
 docker compose up -d
-docker compose exec lara_app composer install
-docker compose exec lara_app php artisan migrate
+cd complete-application
+composer install
+touch database/database.sqlite
+php artisan migrate
+php artisan serve
 ```
+
+Browse to the app at http://localhost:8000.
