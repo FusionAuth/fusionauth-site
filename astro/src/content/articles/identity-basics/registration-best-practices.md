@@ -16,7 +16,7 @@ You can make the registration form process simpler. And you should.
 
 Before you start, ask yourself a fundamental question: does your application require registration?
 
-While [user registration](/docs/v1/tech/tutorials/register-user-login-api) to create an account is commonplace, every step required of a user before seeing the value of your application affects sign up rates. What can you do to avoid a typical registration process?
+While [user registration](/docs/lifecycle/register-users/register-user-login-api) to create an account is commonplace, every step required of a user before seeing the value of your application affects sign up rates. What can you do to avoid a typical registration process?
 
 ### Let them try it first
 

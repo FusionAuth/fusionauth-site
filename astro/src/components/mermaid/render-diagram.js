@@ -11,7 +11,7 @@ const config = {
   wrap: true
 };
 
-export default async function renderDiagram({ code, id }) {
+export default async function renderDiagram({ code, id, nostyle=true }) {
   const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
   const page = await browser.newPage();
 
@@ -43,7 +43,9 @@ export default async function renderDiagram({ code, id }) {
   await browser.close();
 
   if (result.status === 'success' && typeof result.svgCode === 'string') {
-    result.svgCode = result.svgCode.replace(/<style>.+<\/style>/i, '');
+    if (nostyle) {
+      result.svgCode = result.svgCode.replace(/<style>.+<\/style>/i, '');
+    }
     return result.svgCode;
   }
 

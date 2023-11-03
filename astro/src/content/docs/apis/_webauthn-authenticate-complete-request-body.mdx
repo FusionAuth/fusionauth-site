@@ -1,0 +1,46 @@
+import InlineField from 'src/components/InlineField.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import JSON from 'src/components/JSON.astro';
+
+#### Request Body
+
+The <InlineField>credential</InlineField> in the request body contains data returned by the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) call. The <InlineField>credential.response.authenticatorData</InlineField>, <InlineField>credential.response.clientDataJSON</InlineField>, <InlineField>credential.response.signature</InlineField>, and <InlineField>credential.response.userHandle</InlineField> fields must be converted to base64url-encoded strings for the FusionAuth API request. See [WebAuthn JavaScript API Binary Format](/docs/apis/webauthn#webauthn-javascript-api-binary-format) for details.
+
+<APIBlock>
+  <APIField name="credential.clientExtensionResults" type="Object" optional>
+    The results for WebAuthn extensions requested during authentication. FusionAuth does not currently support any WebAuthn authentication extensions.
+  </APIField>
+  <APIField name="credential.id" type="String" required>
+    A base64url-encoded version of the credential Id used by the authenticator for this ceremony.
+  </APIField>
+  <APIField name="credential.rpId" type="String" optional>
+    If the tenant configuration overrides the Relying Party Id, this parameter should match <InlineField>tenant.webAuthnConfiguration.relyingPartyId</InlineField>, otherwise the value should be omitted from the request object.
+  </APIField>
+  <APIField name="credential.response.authenticatorData" type="String" required>
+    The base64url-encoded authenticator data from the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) response, which includes information on the passkey used to complete the ceremony and other data important for validation. See [Converting ArrayBuffer to base64url-encoded String](/docs/apis/webauthn#converting-arraybuffer-to-base64url-encoded-string) for details on converting this value for the FusionAuth API request.
+  </APIField>
+  <APIField name="credential.response.clientDataJSON" type="String" required>
+    The base64url-encoded client data from the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) response. This contains important information for the WebAuthn authentication validation process, including the one-time challenge generated when the registration ceremony began. See [Converting ArrayBuffer to base64url-encoded String](/docs/apis/webauthn#converting-arraybuffer-to-base64url-encoded-string) for details on converting this value for the FusionAuth API request.
+  </APIField>
+  <APIField name="credential.response.signature" type="String" required>
+    The base64url-encoded signature from the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) response. The authenticator generates the signature using the selected passkey's private key by signing over the binary concatenation of <InlineField>credential.response.authenticatorData</InlineField> and the SHA-256 hash of <InlineField>credential.response.clientDataJSON</InlineField> before they are converted to base64url-encoded strings. See [Converting ArrayBuffer to base64url-encoded String](/docs/apis/webauthn#converting-arraybuffer-to-base64url-encoded-string) for details on converting this value for the FusionAuth API request.
+  </APIField>
+  <APIField name="credential.response.userHandle" type="String" optional>
+    The base64url-encoded user handle from the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) response. This field is only required when the user was not identified prior to the authentication ceremony through the use of a client-side discoverable passkey. See [Converting ArrayBuffer to base64url-encoded String](/docs/apis/webauthn#converting-arraybuffer-to-base64url-encoded-string) for details on converting this value for the FusionAuth API request.
+  </APIField>
+  <APIField name="credential.type" type="String" required>
+    The credential type of the passkey. The only value supported by WebAuthn is `public-key`.
+  </APIField>
+  <APIField name="origin" type="String" required>
+    The browser request origin during the authentication ceremony. For example, `example.com`.
+  </APIField>
+  <APIField name="rpId" type="String" required>
+    If the tenant configuration overrides the Relying Party Id, this parameter should match <InlineField>tenant.webAuthnConfiguration.relyingPartyId</InlineField>, otherwise the value should be the browser request origin's effective domain during the ceremony.
+  </APIField>
+  <APIField name="twoFactorTrustId" type="String" optional>
+    The Multi-Factor Trust identifier returned by the Multi-Factor Login API response. This value may be provided to bypass the Multi-Factor challenge when a User has Multi-Factor enabled.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="webauthn/authenticate-complete-request.json" />
