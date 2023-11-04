@@ -102,7 +102,7 @@ const qsSections: QuickStartSection[] = [
   },
   {
       key: 'fiveminute',
-      icon: '/img/icons/web-application.svg',
+      icon: '/img/icons/qs-main.svg',
       faIcon: 'fa-code-simple',
       color: 'indigo',
       title: '5-minute Guides',
