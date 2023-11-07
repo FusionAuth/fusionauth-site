@@ -25,9 +25,11 @@ class Search {
     document.addEventListener('keyup', event => this.#handleKeyUp(event));
 
     this.#handleResults({});
-    this.#isMac = window.navigator.platform === 'MacIntel';
-    this.#altKey = this.#isMac ? 'Meta' : 'Alt';
-    this.#searchKeyHint.innerText = this.#isMac ? '⌘K' : 'Alt+K';
+    if (this.#searchKeyHint) {
+      this.#isMac = window.navigator.platform === 'MacIntel';
+      this.#altKey = this.#isMac ? 'Meta' : 'Alt';
+      this.#searchKeyHint.innerText = this.#isMac ? '⌘K' : 'Alt+K';
+    }
   }
 
   closeSearch() {
