@@ -3,16 +3,15 @@
 #
 name: Prod astro deployment
 env:
-  BUCKET_NAME: "fusionauth-io-website-2023"
+  BUCKET_NAME: "fusionauth-io-website-astro-2023"
   PUBLISHER_ROLE_ARN: "${{ secrets.PUBLISHER_ROLE_ARN }}"
-  AWS_REGION: "us-east-2"
+  AWS_REGION: "us-east-1"
 on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["master"]
     paths:
       - 'astro/**'
-      - 'src/cloudfront/fusionauth-website-request-handler.js'
       - '.github/workflows/prod-astro.yml'
 
   # Allows you to run this workflow manually from the Actions tab
@@ -30,7 +29,7 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-8-core-32-gb
     defaults:
       run:
         working-directory: ./astro
@@ -38,9 +37,9 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.PUBLISHER_ROLE_ARN }}
           role-session-name: site_publisher_session
@@ -56,8 +55,4 @@ jobs:
       - name: CloudFront request handler and cache invalidation
         working-directory: .
         run: |
-          CLOUDFRONT_FUNCTION_ETAG=$(aws cloudfront describe-function --name fusionauth-website-request-handler --query 'ETag' --output text)
-          CLOUDFRONT_FUNCTION_ETAG=$(aws cloudfront update-function --name fusionauth-website-request-handler --function-code fileb://src/cloudfront/fusionauth-website-request-handler.js --function-config Comment="Request handler for the FusionAuth website",Runtime="cloudfront-js-1.0" --if-match ${CLOUDFRONT_FUNCTION_ETAG} --query 'ETag' --output text)
-          aws cloudfront publish-function --name fusionauth-website-request-handler --if-match ${CLOUDFRONT_FUNCTION_ETAG}
           aws cloudfront create-invalidation --distribution-id ${{ secrets.DISTRIBUTION_ID }} --paths "/*"
-
