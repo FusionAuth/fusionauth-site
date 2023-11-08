@@ -93,7 +93,7 @@ def make_api_path(type)
   base = "apis/"
 
   if is_event(type)
-    base = "events-webhooks/events/"
+    base = "extend/events-and-webhooks/events/"
     # convert audit-log-create-event to audit-log-create
     type = type.gsub("-event","")
     if type == "user-action"
@@ -128,19 +128,25 @@ def make_api_path(type)
     return base + "families"
   end
   if type == "entity"
-    return base + "entity-management/entities"
+    return base + "entities/entities"
   end
   if type == "entity-type"
-    return base + "entity-management/entity-types"
+    return base + "entities/entity-types"
   end
   if type == "entity-grant"
-    return base + "entity-management/grants"
+    return base + "entities/grants"
   end
   if type == "ldap-connector-configuration"
     return base + "connectors/ldap"
   end
   if type == "email-template"
     return base + "emails"
+  end
+  if type == "form"
+    return base + "custom-forms/forms"
+  end
+  if type == "form-field"
+    return base + "custom-forms/form-fields"
   end
   return base + type + "s"
 end
