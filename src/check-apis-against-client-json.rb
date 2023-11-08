@@ -283,7 +283,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
 
   unless page_content
     # if we are in leaf object, we don't need to pull the page content
-    api_url = options[:siteurl] + "/docs/v1/tech/"+make_api_path(todash(t))
+    api_url = options[:siteurl] + "/docs/"+make_api_path(todash(t))
     if options[:verbose]
       puts "retrieving " + api_url
     end
