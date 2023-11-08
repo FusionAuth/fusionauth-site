@@ -365,7 +365,20 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
       if files.length == 1
         file = files[0]
       else
+        # lets look in our containing objects
         ancestor_type = t.gsub(/^\..*/,'')
+
+        #special case for application oauth2 config
+        if field_type == "OAuth2Configuration" and ancestor_type == "application"
+          files.each do |mf|
+            if mf.include?('oauth2.OAuth2Configuration')
+              # this is our file
+              file = mf
+              break
+            end
+          end
+        end
+        
         if options[:verbose]
           puts "looking for matching inner class"
         end
@@ -399,6 +412,9 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
         end
       end
       if file
+        if options[:verbose] && files.length > 1
+          puts "found file: "+file
+        end
         process_file(file, missing_fields, options, make_on_page_field_name(t), field_name, page_content)
       else
         puts "couldn't find file for "+field_type
