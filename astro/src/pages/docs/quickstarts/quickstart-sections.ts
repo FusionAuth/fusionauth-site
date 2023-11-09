@@ -38,13 +38,6 @@ const qsSections: QuickStartSection[] = [
         navColor: 'blue',
       },
       {
-        href: '/blog/2023/03/13/single-sign-on-laravel-fusionauth',
-        title: 'Laravel',
-        icon: '/img/icons/laravel.svg',
-        faIcon: 'fa-block',
-        navColor: 'rose',
-      },
-      {
         href: '/blog/2021/12/06/how-to-set-up-single-sign-on-between-fusionauth-wordpress',
         title: 'Wordpress',
         icon: '/img/icons/wordpress.svg',
@@ -73,13 +66,15 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'mobile-app',
     desc: 'Mobile application that runs natively on a device',
     articles: [
+/*
       {
-        href: '/docs/v1/tech/tutorials/integrate-flutter',
+        href: '/docs/quickstarts/quickstart-flutter-native',
         title: 'Flutter',
         icon: '/img/icons/flutter.svg',
         faIcon: 'fa-snake',
         navColor: 'indigo'
       },
+*/
     ],
   },
   {
@@ -91,22 +86,28 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'api',
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
+/*
       {
-        href: '/docs/v1/tech/tutorials/integrate-dotnet-api',
+        href: '/docs/quickstarts/quickstart-dotnet-api',
         title: '.NET Core',
         icon: '/img/icons/dotnet-c.svg',
         faIcon: 'fa-hashtag',
         navColor: 'blue',
       },
-      {
-        href: '/docs/v1/tech/tutorials/integrate-laravel-api',
-        title: 'Laravel',
-        icon: '/img/icons/laravel.svg',
-        faIcon: 'fa-block',
-        navColor: 'rose',
-      },
+*/
     ],
   },
+  {
+      key: 'fiveminute',
+      icon: '/img/icons/qs-main.svg',
+      faIcon: 'fa-code-simple',
+      color: 'indigo',
+      title: '5-minute Guides',
+      anchorTag: '5-minute',
+      desc: 'Guides for getting up and running quickly',
+      articles: [
+      ],
+    },
 ];
 
 // merge in quickstarts managed by astro to the list of quickstart links we have above
