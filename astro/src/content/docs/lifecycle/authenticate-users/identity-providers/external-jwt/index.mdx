@@ -1,11 +1,11 @@
 ---
-title: External JWT Identity Provider
+title: External JWT
 description: Complete a FusionAuth login with an external JWT from a third party Identity Provider.
 navcategory: login-methods
 section: lifecycle
 subcategory: authenticate users
 tertcategory: identity providers
-quatercategory: external jwt
+quatercategory: External JWT
 ---
 import ExternalJwtProviderWarning from 'src/content/docs/_shared/_external-jwt-provider-warning.mdx';
 import APIBlock from 'src/components/api/APIBlock.astro';
@@ -49,11 +49,13 @@ To create an Identity Provider navigate to <strong>Settings -> Identity Provider
 
     To configure a lambda, navigate to <strong>Customizations -> Lambdas</strong>.
   </APIField>
-  <APIField name="Debug enabled" optional>
+  <APIField name="Linking strategy" optional since="1.28.0">
+    The linking strategy for this identity provider. [See Linking Strategies for more](/docs/lifecycle/authenticate-users/identity-providers/#linking-strategies).
+  </APIField>
+  <APIField name="Debug enabled" optional defaults="false">
     Enable debug to create an event log to assist you in debugging integration errors.
   </APIField>
 </APIBlock>
-
 
 ## Applications
 
@@ -75,49 +77,39 @@ This configuration is necessary to allow FusionAuth to properly inspect the thir
 ### Form Fields
 
 <APIBlock>
-  <APIField name="Unique claim" required>
-    This value is the name of the claim in the third-party JWT where FusionAuth can find the user's email address. The email address will be used in FusionAuth to uniquely identify a user.
-
-    This field defaults to `email`, this is likely the correct claim name.
+  <APIField name="Unique Id claim" optional defaults="sub">
+    The name of the claim that will contain the user's unique Id.
   </APIField>
-  <APIField name="Header key identifier" required>
+  <APIField name="Email claim" optional defaults="email">
+    The name of the claim that will contain an email address.
+  </APIField>
+  <APIField name="Email verified claim" optional defaults="email_verified" since="1.48.0">
+    The name of the claim that will contain the email verified claim.
+
+    When the linking strategy is configured to Link On Email, a link will be rejected if this claim is returned by the identity provider and the value is `false`.
+  </APIField>
+  <APIField name="Username claim" optional defaults="preferred_username">
+    The name of the claim that will contain the user's username.
+  </APIField>
+  <APIField name="Header key identifier" optional defaults="kid">
     This value is the name of the claim in the third-party JWT header FusionAuth can find the identifier used to indicate which key pair was used to generate the JWT signature. This allows FusionAuth to use the correct key if more than one key is provided in the `Verification Keys` configuration.
 
     This field defaults to `kid`, this is a common identifier used in the JWT header to identify the key used to generate the signature.
   </APIField>
-</APIBlock>
+  <APIField name="Default verification key" optional>
+    This value is the name of the claim in the third-party JWT header FusionAuth can find the identifier used to indicate which key pair was used to generate the JWT signature. This allows FusionAuth to use the correct key if more than one key is provided in the `Verification Keys` configuration.
 
-
-## Add Claim Mapping Dialog
-
-If you click on the `Add Claim` button on this page you will be presented with the following dialog.
-
-<img src="/img/docs/lifecycle/authenticate-users/identity-providers/external-jwt/identity-provider-add-claim-dialog.png" alt="Add Claim Mapping" width="300" role="box-shadow" />
-
-### Form Fields
-
-<APIBlock>
-  <APIField name="Incoming claim" required>
-    The name of the claim in the third-party JWT that you would like to map to a FusionAuth user claim
+    This field defaults to `kid`, this is a common identifier used in the JWT header to identify the key used to generate the signature.
   </APIField>
-  <APIField name="FusionAuth claim" required>
-    The FusionAuth user claim to receive the value of the specified claim in the third-party JWT. If you select the special values `UserData` or `RegistrationData` the value will be stored in either the user or registration data with the key being the claim name.
+  <APIField name="Unique claim" optional deprecated>
+    This value is the name of the claim in the third-party JWT where FusionAuth can find the user's email address. The email address will be used in FusionAuth to uniquely identify a user.
 
-    For example, if you select `company` as the incoming claim, and specify `RegistrationData`, the claim will be stored in the registration data for the corresponding application.
-
-    ```json
-    {
-     "registration": {
-       "data": {
-        "company": "Acme. Corp"
-       }
-     }
-    }
-    ```
+    This field defaults to `email`, this is likely the correct claim name.
   </APIField>
 </APIBlock>
 
-## Managed Domains
+
+## Managed domains
 
 To successfully reconcile a JWT to FusionAuth using this identity provider, you can *optionally* specify one more managed domains.
 A managed domain will indicate to FusionAuth this identity provider can reconcile a user based upon their email address.
@@ -140,35 +132,36 @@ A domain may only be managed by a single identity provider. More than one domain
   </APIField>
 </APIBlock>
 
-## Verification Keys
+## Claim mapping
 
-For FusionAuth to use this identity provider to reconcile third-party JWTs, you will need to provide one or more verification keys. This key will likely be an `X.509` public certificate or other PEM encoded public key that may be used to verify the JWT signature.
+All configured claim mappings will be visible here. Use the `Add Claim` button to add additional claim mappings. You may optionally perform all of the claim mapping using a Reconcile lambda function.
 
-<img src="/img/docs/lifecycle/authenticate-users/identity-providers/external-jwt/identity-provider-external-jwt-keys-add.png" alt="Add External JWT" width="1200" />
+## Add Claim Mapping Dialog
 
-## Add Key Dialog
+If you click on the `Add Claim` button on this page you will be presented with the following dialog.
 
-If you click on the `Add Key` button on this page you will be presented with the following dialog.
-
-<img src="/img/docs/lifecycle/authenticate-users/identity-providers/external-jwt/identity-provider-add-key-dialog.png" alt="Add Verification Key" width="550" role="box-shadow" />
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/external-jwt/identity-provider-external-jwt-add-claim-dialog.png" alt="Add Claim Mapping" width="1200" role="box-shadow" />
 
 ### Form Fields
 
 <APIBlock>
-  <APIField name="Default key">
-    Optionally a single key may be designated as the default key. You may use this feature if the JWT you will be sending to FusionAuth to be reconciled will not have a key identifier `kid` value in the JWT header.
-
-    In this scenario, there will be no `kid` to indicate which key was used to sign the JWT, so if a default key has been designated, the default key will be used to verify the signature.
-
-    If you only have JWTs with the kid claim, or another key identifier, you will not use this feature. When this toggle is enabled, the <InlineField>Key identifier</InlineField> field will be disabled and no longer required.
+  <APIField name="Incoming claim" required>
+    The name of the claim in the third-party JWT that you would like to map to a FusionAuth user claim
   </APIField>
-  <APIField name="Key identifier" required>
-    The string identifier for this key. If this is an `X.509` certificate you may leave this field blank and the `X.509` certificate thumbprint will be generated for you.
+  <APIField name="FusionAuth claim" required>
+    The FusionAuth user claim to receive the value of the specified claim in the third-party JWT. If you select the special values `UserData` or `RegistrationData` the value will be stored in either the user or registration data with the key being the claim name.
 
-    If this is a normal PEM encoded RSA public key, for example, you will need to provide the key identifier. This identifier should be the value that will be written to the `kid` header of the JWT provided by the external identity provider.
-  </APIField>
-  <APIField name="Encoded key" required>
-    The PEM encoded key may be an X.509 certificate or other PEM encoded public key.
+    For example, if you select `company` as the incoming claim, and specify `RegistrationData`, the claim will be stored in the registration data for the corresponding application.
+
+    ```json
+    {
+     "registration": {
+       "data": {
+        "company": "Acme. Corp"
+       }
+     }
+    }
+    ```
   </APIField>
 </APIBlock>
 
