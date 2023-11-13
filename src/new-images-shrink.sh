@@ -1,14 +1,14 @@
 #!/bin/bash
 
-echo "here"
+#echo "here"
 
 for file in `gh pr diff --name-only`; do
-  echo "processing $file"
   if [[ $file == *.png ]]; then
-    ls -l $file
+    echo "processing $file"
+    #ls -l $file
     ./src/shrink-images.sh $file
-    ls -l $file
+    #ls -l $file
+    echo "done processing $file"
   fi
-  echo "done processing $file"
 done
 
