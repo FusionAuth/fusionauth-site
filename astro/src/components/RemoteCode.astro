@@ -2,7 +2,6 @@
 /**
   * Remote code fetcher and syntax highlighter via the Astro Code component.
   */
-
 export interface Props {
   /**
    * Url to fetch code from.  Also allows selecting specific line(s) of code with
@@ -25,9 +24,14 @@ export interface Props {
    * Note: Currently only supports one set of tags.
    */
   tags?: string;
+
+  /**
+   * The title of the remote code section, shown as a piece of text above the block.
+   */
+  title?: string;
 }
 
-const { url, lang = 'plaintext', tags} = Astro.props as Props;
+const { url, lang = 'plaintext', tags, title } = Astro.props as Props;
 import { Code } from 'astro/components';
 let remoteSelectedCode = "not available";
 
@@ -54,7 +58,7 @@ function selectTagged(content: string, tags: string): string {
 
   const startLine = lines.findIndex((line) => line.includes(`tag::${tags}`));
   const endLine = lines.findIndex((line) => line.includes(`end::${tags}`));
-  return lines.slice(startLine + 1, endLine).join("\n");
+  return lines.slice(startLine + 1, endLine).join("\n").replace(/\s+$/g, '');
 }
 
 function selectLines(content: string, lineNum: string, lineEnd: string): string {
@@ -68,4 +72,9 @@ function selectLines(content: string, lineNum: string, lineEnd: string): string 
   }
 }
 ---
+{title &&
+  <p data-title={title}>
+    <em>{ title }</em>
+  </p>
+}
 <Code code={remoteSelectedCode} lang={lang}/>
