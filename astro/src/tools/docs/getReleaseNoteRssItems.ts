@@ -6,7 +6,7 @@ export const getReleaseNoteRssItems = async () => {
   const releaseLines = releaseNotes.body.split("\n");
   const archiveLines = archive.body.split("\n");
   const lines = [...releaseLines, ...archiveLines];
-  const items = lines.map(line => line.match(/ReleaseNoteHeading version="(.*)" releaseDate="(.*)"/))
+  const items = lines.map(line => line.match(/ReleaseNoteHeading version="([^"]*)" releaseDate="([^"]*)"/))
       .filter(line => !!line)
       .map(match => ({version: match[1], date: match[2]}))
       .map(version => ({
