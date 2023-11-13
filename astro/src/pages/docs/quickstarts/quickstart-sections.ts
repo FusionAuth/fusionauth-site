@@ -66,15 +66,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'mobile-app',
     desc: 'Mobile application that runs natively on a device',
     articles: [
-/*
-      {
-        href: '/docs/quickstarts/quickstart-flutter-native',
-        title: 'Flutter',
-        icon: '/img/icons/flutter.svg',
-        faIcon: 'fa-snake',
-        navColor: 'indigo'
-      },
-*/
     ],
   },
   {
