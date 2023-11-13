@@ -137,7 +137,7 @@ A query string and, more generally, any string in a URL, is never private. JavaS
 
 Refresh tokens are longer lived than access tokens and have a higher level of privilege, since they can be used to create entirely new access tokens. Therefore you should take more care when securing a refresh token. Never share your refresh tokens between different devices.
 
-If they are acquired by an attacker, they can create access tokens at will. Obviously at that point, the resource which the access tokens protect will no longer be secured. As an example of how to secure refresh tokens, here’s a [post using the Authorization Code grant](/articles/login-authentication-workflows/spa/oauth-authorization-code-grant-jwts-refresh-tokens-cookies) which stores refresh tokens using HttpOnly cookies with a constrained cookie domain, and you can learn more about [FusionAuth's access and refresh tokens here](/docs/v1/tech/oauth/tokens).
+If they are acquired by an attacker, they can create access tokens at will. Obviously at that point, the resource which the access tokens protect will no longer be secured. As an example of how to secure refresh tokens, here’s a [post using the Authorization Code grant](/articles/login-authentication-workflows/spa/oauth-authorization-code-grant-jwts-refresh-tokens-cookies) which stores refresh tokens using HttpOnly cookies with a constrained cookie domain, and you can learn more about [FusionAuth's access and refresh tokens here](/docs/lifecycle/authenticate-users/oauth/tokens).
 
 The OAuth 2.1 draft provides two options for refresh tokens: they can be one-time use or tied to the sender with a cryptographic binding.
 
