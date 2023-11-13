@@ -1,0 +1,301 @@
+---
+title: Consent APIs
+description: APIs for creating, retrieving, updating and deleting consents
+section: apis
+---
+import Aside from 'src/components/Aside.astro';
+import APIAuthentication from 'src/components/api/APIAuthentication.astro'
+import APIURI from 'src/components/api/APIURI.astro'
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import ConsentRequestBody from 'src/content/docs/apis/_consent-request-body.mdx';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import ConsentResponseBody from 'src/content/docs/apis/_consent-response-body.mdx';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import ConsentsResponseBody from 'src/content/docs/apis/_consents-response-body.mdx';
+import GenericUpdateExplanationFragment from 'src/content/docs/apis/_generic-update-explanation-fragment.mdx';
+import PatchSupport from 'src/content/docs/apis/_patch-support.astro';
+import StandardPutResponseCodes from 'src/content/docs/apis/_standard-put-response-codes.astro';
+import StandardDeleteResponseCodes from 'src/content/docs/apis/_standard-delete-response-codes.astro';
+import ConsentSearchRequestParameters from 'src/content/docs/apis/_consent-search-request-parameters.mdx';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+import UserConsentRequestBody from 'src/content/docs/apis/_user-consent-request-body.mdx';
+import UserConsentResponseBody from 'src/content/docs/apis/_user-consent-response-body.mdx';
+import UserConsentsResponseBody from 'src/content/docs/apis/_user-consents-response-body.mdx';
+
+## Overview
+
+<Aside type="version">
+This API has been available since 1.7.0
+</Aside>
+
+A FusionAuth Consent is a definition of a permission that can be given to a User. At a minimum a consent has a name, and defines the minimum age of self-consent. A consent can then be granted to a User from a family member or optionally a User may self-consent if they meet the minimum age defined by the consent.
+
+The first API allows you to create, delete, update and retrieve a consent. The FusionAuth Consent is the object that defines the consent, the values, minimum ages, etc.
+
+The second API is the User Consent API, this API allows you to grant a User Consent, and update a User Consent. In order to revoke a User Consent you simply need to update the consent status.
+
+[//]: # (Removing Related posts for now)
+
+## Create a Consent
+
+This API is used to create a new Consent.
+
+### Request
+
+<APIAuthentication icon="lock">Create a new Consent with a randomly generated Id</APIAuthentication>
+<APIURI method="POST">/api/consent</APIURI>
+
+<APIAuthentication icon="lock">Create a new Consent with the provided unique Id</APIAuthentication>
+<APIURI method="POST">/api/consent/`{consentId}`</APIURI>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="consentId" type="UUID" optional defaults="secure random UUID">
+    The Id to use for the new Consent. If not specified a secure random UUID will be generated.
+  </APIField>
+</APIBlock>
+
+<ConsentRequestBody />
+
+### Response
+
+The response for this API contains the Consent that was created.
+
+<StandardPostResponseCodes />
+
+<ConsentResponseBody />
+
+## Retrieve a Consent
+
+This API is used to retrieve a single Consent by unique Id or all of the configured Consents.
+
+### Request
+
+<APIAuthentication icon="lock">Retrieve all of the Consents</APIAuthentication>
+<APIURI method="GET">/api/consent</APIURI>
+
+<APIAuthentication icon="lock">Retrieve a Consent by Id</APIAuthentication>
+<APIURI method="GET">/api/consent/`{consentId}`</APIURI>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="consentId" type="UUID" required>
+    The unique Id of the Consent to retrieve.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API contains either a single Consent or all of the Consents. When you call this API with an Id the response will contain a single Consent. When you call this API without an Id the response will contain all of the Consents. Both response types are defined below along with an example JSON response.
+
+<StandardGetResponseCodes />
+
+<ConsentResponseBody />
+
+<ConsentsResponseBody />
+
+## Update a Consent
+
+<GenericUpdateExplanationFragment capitalized_object_name="Consent" />
+
+### Request
+
+<APIAuthentication icon="lock">Update the Consent with the given Id</APIAuthentication>
+<APIURI method="PUT">/api/consent/`{consentId}`</APIURI>
+
+<PatchSupport api_endpoint="/api/consent/`{consentId}`" />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="consentId" type="UUID" required>
+    The Id to use for the Consent to update.
+  </APIField>
+</APIBlock>
+
+<ConsentRequestBody />
+
+### Response
+
+The response for this API contains the Consent that was updated.
+
+<StandardPutResponseCodes />
+
+<ConsentResponseBody />
+
+## Delete a Consent
+
+This API is used to permanently delete a Consent. Deleting a Consent will also permanently delete all granted User Consent. This operation cannot be reversed and it may affect users across multiple tenants.
+
+### Request
+
+<APIAuthentication icon="lock">Delete a Consent by Id</APIAuthentication>
+<APIURI method="DELETE">/api/consent/`{consentId}`</APIURI>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="consentId" type="UUID" required>
+    The unique Id of the Consent to delete.
+  </APIField>
+</APIBlock>
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes />
+
+## Search for Consents
+
+<Aside type="version">
+This API has been available since 1.45.0
+</Aside>
+
+This API is used to search for Consents and may be called using the `GET` or `POST` HTTP methods. Examples of each are provided below. The `POST` method is provided to allow for a richer request object without worrying about exceeding the maximum length of a URL. Calling this API with either the `GET` or `POST` HTTP method will provide the same search results given the same query parameters.
+
+### Request
+
+<APIAuthentication icon="lock">Search for Consents</APIAuthentication>
+<APIURI method="GET">/api/consent/search`?name={name}`</APIURI>
+
+### Request Parameters
+
+<ConsentSearchRequestParameters parameter_prefix />
+
+<br/>
+
+<APIAuthentication icon="lock">Search for Consents</APIAuthentication>
+<APIURI method="POST">/api/consent/search</APIURI>
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+### Request Body
+
+<ConsentSearchRequestParameters parameter_prefix="search." />
+
+### Response
+
+The response for this API contains the Consents matching the search criteria in paginated format and the total number of results matching the search criteria.
+
+<StandardGetResponseCodes never_missing never_search_error />
+
+<ConsentsResponseBody include_total />
+
+## Grant a User Consent
+
+This API is used to grant Consent to a User.
+
+### Request
+
+<APIAuthentication icon="lock">Grant consent to a User with a randomly generated Id</APIAuthentication>
+<APIURI method="POST">/api/user/consent</APIURI>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<APIAuthentication icon="lock">Grant consent to a User with the provided unique Id</APIAuthentication>
+<APIURI method="POST">/api/user/consent/`{userConsentId}`</APIURI>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userConsentId" type="UUID" optional defaults="secure random UUID">
+    The Id to use for the new User Consent. If not specified a secure random UUID will be generated.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<UserConsentRequestBody />
+
+### Response
+
+The response for this API contains the User Consent that was created.
+
+<StandardPostResponseCodes />
+
+<UserConsentResponseBody />
+
+## Retrieve a User Consent
+
+This API is used to retrieve a single User Consent by unique Id or all of User's Consents by user Id.
+
+### Request
+
+<APIAuthentication icon="lock">Retrieve all of a User's Consents</APIAuthentication>
+<APIURI method="GET">/api/user/consent`?userId={uuid}`</APIURI>
+
+<APIAuthentication icon="lock">Retrieve a User Consent by Id</APIAuthentication>
+<APIURI method="GET">/api/user/consent/`{userConsentId}`</APIURI>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userId" type="UUID" optional>
+    The unique Id of the User to retrieve User Consents for.
+  </APIField>
+  <APIField name="userConsentId" type="UUID" optional>
+    The unique Id of the User Consent to retrieve.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API contains either a single User Consent or all of a User's Consents. When you call this API with an Id the response will contain a single Consent. When you call this API with the `userId` query parameter, the response will contain all of the User's Consents. Both response types are defined below along with an example JSON response.
+
+<StandardGetResponseCodes />
+
+<UserConsentResponseBody />
+
+<UserConsentsResponseBody />
+
+## Update a User Consent
+
+This API is used to update a consent. Once consent has been granted to a User, only the values and status may be modified.
+
+### Request
+
+<APIAuthentication icon="lock">Update a User Consent with given Id</APIAuthentication>
+<APIURI method="PUT">/api/user/consent/`{userConsentId}`</APIURI>
+
+<PatchSupport api_endpoint="/api/user/consent/`{userConsentId}`" />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userConsentId" type="UUID" required>
+    The Id of the User Consent to update.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<UserConsentRequestBody update />
+
+### Response
+
+The response for this API contains the User Consent that was updated.
+
+<StandardPutResponseCodes />
+
+<UserConsentResponseBody />
+
+## Revoke a User Consent
+
+This API is used to revoke a consent. This is equivalent to using the Update User Consent API and modifying the status to `Revoked`.
+
+### Request
+
+<APIAuthentication icon="lock">Revoke a User Consent with given Id</APIAuthentication>
+<APIURI method="DELETE">/api/user/consent/`{userConsentId}`</APIURI>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes />

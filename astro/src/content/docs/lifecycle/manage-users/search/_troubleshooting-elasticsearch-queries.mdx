@@ -1,0 +1,77 @@
+import Aside from 'src/components/Aside.astro';
+
+When you are troubleshooting Elasticsearch queries, running them against the Elasticsearch server is helpful.
+
+<Aside type="caution">
+If you are running in FusionAuth Cloud, you cannot access Elasticsearch in the manner described here.
+</Aside>
+
+When running FusionAuth locally in Docker, you can expose the Elasticsearch port by adding the following lines to your `docker-compose.yml` file and restarting.
+
+```yaml title="Exposing Elasticsearch Ports"
+# ... other stuff
+  search:
+# ... other stuff
+    ports:
+      - 9200:9200
+```
+
+Once you've opened up the port, you can query Elasticsearch directly. Here's an example of a single field query.
+
+```shell title="Example Of Querying Elasticsearch Directly"
+curl -X GET "localhost:9200/_search?pretty" -H 'Content-Type: application/json' -d' 
+{
+  "query": {
+    "match": {
+      "data.Company": {
+        "query": "PiedPiper"
+      }
+    }
+  }
+}'
+```
+
+When you run this curl command, you'll get back results similar to below.
+
+```json title="Results Of Querying Elasticsearch Directly"
+{
+  "took" : 6,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 10,
+    "successful" : 10,
+    "skipped" : 0,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : {
+      "value" : 3,
+      "relation" : "eq"
+    },
+    "max_score" : 2.0,
+    "hits" : [
+      {
+        "_index" : "fusionauth_user",
+        "_type" : "_doc",
+        "_id" : "00000000-0000-0000-0000-000000000003",
+        "_score" : 2.0
+      },
+      {
+        "_index" : "fusionauth_user",
+        "_type" : "_doc",
+        "_id" : "00000000-0000-0000-0000-000000000006",
+        "_score" : 2.0
+      },
+      {
+        "_index" : "fusionauth_user",
+        "_type" : "_doc",
+        "_id" : "00000000-0000-0000-0000-000000000005",
+        "_score" : 2.0
+      }
+    ]
+  }
+}
+```
+
+When debugging, examine the `hits.hits` array. The `_id` value corresponds to the user Id that matched your query. If the content or number of users returned are different than expected, modify the query.
+

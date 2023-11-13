@@ -93,7 +93,7 @@ def make_api_path(type)
   base = "apis/"
 
   if is_event(type)
-    base = "events-webhooks/events/"
+    base = "extend/events-and-webhooks/events/"
     # convert audit-log-create-event to audit-log-create
     type = type.gsub("-event","")
     if type == "user-action"
@@ -128,19 +128,25 @@ def make_api_path(type)
     return base + "families"
   end
   if type == "entity"
-    return base + "entity-management/entities"
+    return base + "entities/entities"
   end
   if type == "entity-type"
-    return base + "entity-management/entity-types"
+    return base + "entities/entity-types"
   end
   if type == "entity-grant"
-    return base + "entity-management/grants"
+    return base + "entities/grants"
   end
   if type == "ldap-connector-configuration"
     return base + "connectors/ldap"
   end
   if type == "email-template"
     return base + "emails"
+  end
+  if type == "form"
+    return base + "custom-forms/forms"
+  end
+  if type == "form-field"
+    return base + "custom-forms/form-fields"
   end
   return base + type + "s"
 end
@@ -283,7 +289,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
 
   unless page_content
     # if we are in leaf object, we don't need to pull the page content
-    api_url = options[:siteurl] + "/docs/v1/tech/"+make_api_path(todash(t))
+    api_url = options[:siteurl] + "/docs/"+make_api_path(todash(t))
     if options[:verbose]
       puts "retrieving " + api_url
     end
@@ -359,7 +365,20 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
       if files.length == 1
         file = files[0]
       else
+        # lets look in our containing objects
         ancestor_type = t.gsub(/^\..*/,'')
+
+        #special case for application oauth2 config
+        if field_type == "OAuth2Configuration" and ancestor_type == "application"
+          files.each do |mf|
+            if mf.include?('oauth2.OAuth2Configuration')
+              # this is our file
+              file = mf
+              break
+            end
+          end
+        end
+        
         if options[:verbose]
           puts "looking for matching inner class"
         end
@@ -393,6 +412,9 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
         end
       end
       if file
+        if options[:verbose] && files.length > 1
+          puts "found file: "+file
+        end
         process_file(file, missing_fields, options, make_on_page_field_name(t), field_name, page_content)
       else
         puts "couldn't find file for "+field_type
