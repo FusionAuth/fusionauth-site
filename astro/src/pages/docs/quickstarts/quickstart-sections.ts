@@ -38,13 +38,6 @@ const qsSections: QuickStartSection[] = [
         navColor: 'blue',
       },
       {
-        href: '/blog/2023/03/13/single-sign-on-laravel-fusionauth',
-        title: 'Laravel',
-        icon: '/img/icons/laravel.svg',
-        faIcon: 'fa-block',
-        navColor: 'rose',
-      },
-      {
         href: '/blog/2021/12/06/how-to-set-up-single-sign-on-between-fusionauth-wordpress',
         title: 'Wordpress',
         icon: '/img/icons/wordpress.svg',
@@ -73,13 +66,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'mobile-app',
     desc: 'Mobile application that runs natively on a device',
     articles: [
-      {
-        href: '/docs/quickstarts/quickstart-flutter-native',
-        title: 'Flutter',
-        icon: '/img/icons/flutter.svg',
-        faIcon: 'fa-snake',
-        navColor: 'indigo'
-      },
     ],
   },
   {
@@ -91,6 +77,7 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'api',
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
+/*
       {
         href: '/docs/quickstarts/quickstart-dotnet-api',
         title: '.NET Core',
@@ -98,11 +85,12 @@ const qsSections: QuickStartSection[] = [
         faIcon: 'fa-hashtag',
         navColor: 'blue',
       },
+*/
     ],
   },
   {
       key: 'fiveminute',
-      icon: '/img/icons/web-application.svg',
+      icon: '/img/icons/qs-main.svg',
       faIcon: 'fa-code-simple',
       color: 'indigo',
       title: '5-minute Guides',

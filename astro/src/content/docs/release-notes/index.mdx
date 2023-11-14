@@ -5,10 +5,8 @@ section: release notes
 disableTOC: true
 topOfNav: true
 ---
-import Aside from 'src/components/Aside.astro';
 import DatabaseMigrationWarning from 'src/content/docs/release-notes/__database-migration-warning.mdx';
-import GeneralMigrationWarning from 'src/content/docs/release-notes/__general-migration-warning.mdx';
-import InlineField from 'src/components/InlineField.astro';
+import GeneralMigrationWarning from 'src/content/docs/release-notes/__general-migration-warning.astro';
 import ReleaseNotesSelector from 'src/components/docs/release-notes/ReleaseNotesSelector.astro';
 import ReleaseNoteHeading from 'src/components/docs/release-notes/ReleaseNoteHeading.astro';
 
@@ -27,7 +25,7 @@ Looking for release notes older than 1.23.0? Look in the [release notes archive]
   * Resolves [GitHub Issue #2535](https://github.com/FusionAuth/fusionauth-issues/issues/2535)
 
 
-<ReleaseNoteHeading version="1.48.0" releaseDate="October 27th, 2023" />
+<ReleaseNoteHeading version="1.48.0" releaseDate="October 27th, 2023" name="Webhook Walrus" />
 
 <DatabaseMigrationWarning/>
 
@@ -46,6 +44,8 @@ Looking for release notes older than 1.23.0? Look in the [release notes archive]
 ### Security
 * When an IdP is configured to Link by Email or Link by Username and a user already exists with this email or username respectively, perform additional validation to ensure the user does not already have an existing link to the current Identity Provider. This only affects IdP that allow for one to many tenants to be accessed through a single IdP configuration. In practice this means that the IdP cannot guarantee that an email address is considered globally unique and only assigned to a single user.
   * Resolves [GitHub Issue #2512](https://github.com/FusionAuth/fusionauth-issues/issues/2512)
+* A bug was identified in the `multipart/form-data` parser that may cause elevated CPU usage in some specific cases.
+  * Resolves [GitHub Issue #2385](https://github.com/FusionAuth/fusionauth-issues/issues/2385)
 
 ### Fixed
 * Enhance the widget used in multi-value select controls to accept a value when pasting. For example, you may now paste a value from the clipboard directly into the `Authorized redirect URLs` field. While previously the paste operation worked, the user would have to click the value to confirm. If you clicked off of the field, the value would not be saved.
@@ -112,7 +112,7 @@ Looking for release notes older than 1.23.0? Look in the [release notes archive]
   * Resolves [GitHub Issue #2501](https://github.com/FusionAuth/fusionauth-issues/issues/2501)
 
 ### Internal
-* Update 3rd party dependencies to remove CVE scan warnings. No known exploits are vulnerabilities exist in FusionAuth as the result of using these 3rd party clients. These upgrades are simply a precautionary measure to stay current.
+* Update 3rd party dependencies to remove CVE scan warnings and to stay current. These upgrades are simply a precautionary measure to stay current.
   * Upgrade `google-guice` `5.1.0` to `6.0.0`
   * Upgrade `google-guava` `30.1.0` to `32.1.2`
   * Upgrade `java-http` `0.2.0` to `0.2.9`
@@ -134,11 +134,13 @@ Looking for release notes older than 1.23.0? Look in the [release notes archive]
  * Resolves [GitHub Issue #2392](https://github.com/FusionAuth/fusionauth-issues/issues/2392), thanks to [@pigletto](https://github.com/pigletto) and [@patricknwn](https://github.com/patricknwn) for reporting.
 
 
-<ReleaseNoteHeading version="1.47.0" releaseDate="July 25th, 2023" />
+<ReleaseNoteHeading version="1.47.0" releaseDate="July 25th, 2023" name="Performance Panther" />
 
-<GeneralMigrationWarning warning_message='Please be sure to read the notes in the "Changed" section before upgrading.' />
+<GeneralMigrationWarning >
+Please be sure to read the notes in the **Changed** section before upgrading.
+</GeneralMigrationWarning>
 
-<DatabaseMigrationWarning warning_message='Please be sure to read the notes in the "Changed" section before upgrading.' />
+<DatabaseMigrationWarning />
 
 ### Known Issues
 * The garbage collection logging change introduced in version `1.47.0` was not compatible with the way the FusionAuth docker image was built. You will need to use version `1.47.1` if you will be using the FusionAuth docker image.
@@ -178,13 +180,13 @@ Looking for release notes older than 1.23.0? Look in the [release notes archive]
                           federatedCSRFToken=""]
 ```
 
-3.  Find the element `<div class="login-button-container">` in the macro named `alternativeLogins` in `helpers` and add `id="login-button-container"` and `data-federated-csrf="\$\{federatedCSRFToken}"` attributes.
+3.  Find the element `<div class="login-button-container">` in the macro named `alternativeLogins` in `helpers` and add `id="login-button-container"` and `data-federated-csrf="${federatedCSRFToken}"` attributes.
 
 ```html
 [#-- Updated div in alternativeLogins macro. Line breaks added for readability. --]
 <div id="login-button-container"
      class="login-button-container"
-     data-federated-csrf="\$\{federatedCSRFToken}">
+     data-federated-csrf="${federatedCSRFToken}">
 ```
 
 ### Fixed
@@ -1330,7 +1332,7 @@ Correct an edge case that exists where an `event-log.create` event fails to be s
 * Improvements to locale handling to expand beyond ISO 639 support to support locales such as `es_419`, `aghem` and others.
   * Resolves [GitHub Issue #978](https://github.com/FusionAuth/fusionauth-issues/issues/978)
   * Resolves [GitHub Issue #1132](https://github.com/FusionAuth/fusionauth-issues/issues/1132)
-* Disabling webhooks on the tenant configuration by clicking on the <InlineField>Enabled</InlineField> header doesn't work as expected.
+* Disabling webhooks on the tenant configuration by clicking on the Enabled table header doesn't work as expected.
   * Resolves [GitHub Issue #1123](https://github.com/FusionAuth/fusionauth-issues/issues/1123)
 * Fix general message template issues when using the preview action for a message template, or a localized version of the template.
   * Resolves [GitHub Issue #1171](https://github.com/FusionAuth/fusionauth-issues/issues/1171)
@@ -1487,14 +1489,15 @@ Correct an edge case that exists where an `event-log.create` event fails to be s
 
 <ReleaseNoteHeading version="1.30.0" releaseDate="August 12th, 2021" />
 
-Features that require the Threat Detection feature: \
-- CAPTCHA \
-- Domain blocking in registration \
-- IP access control lists \
-- IP location \
-- Some of the new events and transactional emails \
-- Rate limiting]
-<GeneralMigrationWarning />
+<GeneralMigrationWarning>
+Features that require the Threat Detection feature:
+- CAPTCHA
+- Domain blocking in registration
+- IP access control lists
+- IP location
+- Some of the new events and transactional emails
+- Rate limiting
+</GeneralMigrationWarning>
 
 
 <DatabaseMigrationWarning />
@@ -1856,14 +1859,22 @@ Features that require the Threat Detection feature: \
 
 <ReleaseNoteHeading version="1.26.0" releaseDate="April 20th, 2021" />
 
-*Two Factor APIs* \
-Breaking changes. If you use this functionality, please review the API changes and test before upgrading. \
-The Two-Factor API, two-factor fields on the User and Import User APIs and the Integrations API have changed and are not backwards compatible. If you use this functionality, please review the API changes and test before upgrading. \
-*Upgrading from < 1.7.0* \
-If you are upgrading from a version less than 1.7.0, you must do a two stage upgrade. Upgrade to a version greater than or equal to 1.7.0 but less than 1.26.0, then upgrade from that version to 1.26.0. There were internal migration changes which necessitate this two stage process. \
-*Accessing the admin Login after upgrading:* \
-The `/` path of FusionAuth no longer automatically forwards to the admin login. To access the Admin UI to complete this configuration append `/admin/` to the URL. Once the theme configuration is complete, this root page will contain links to login and instructions on how to utilize this root landing page.]
-<GeneralMigrationWarning />
+<GeneralMigrationWarning >
+Lots of changes ahead! Read carefully to see how this release may affect you.
+
+**Two Factor APIs**
+
+Breaking changes. If you use this functionality, please review the API changes and test before upgrading.
+The Two-Factor API, two-factor fields on the User and Import User APIs and the Integrations API have changed and are not backwards compatible. If you use this functionality, please review the API changes and test before upgrading.
+
+**Upgrading from &lt; 1.7.0**
+
+If you are upgrading from a version less than 1.7.0, you must do a two stage upgrade. Upgrade to a version greater than or equal to 1.7.0 but less than 1.26.0, then upgrade from that version to 1.26.0. There were internal migration changes which necessitate this two stage process.
+
+**Accessing the admin Login after upgrading:**
+
+The `/` path of FusionAuth no longer automatically forwards to the admin login. To access the Admin UI to complete this configuration append `/admin/` to the URL. Once the theme configuration is complete, this root page will contain links to login and instructions on how to utilize this root landing page.
+</GeneralMigrationWarning>
 
 <DatabaseMigrationWarning />
 
@@ -2002,7 +2013,7 @@ The `/` path of FusionAuth no longer automatically forwards to the admin login. 
 * Updating a User that has existing group memberships may no longer be searchable in Elasticsearch by their Group memberships until the next time the user logs into FusionAuth.
   * Resolves [GitHub Issue #1087](https://github.com/FusionAuth/fusionauth-issues/issues/1087)
 * A Kafka Producer configuration that contains an equals sign `=` in the property value will fail to parse. This was identified in attempting to configure credentials to connect to CloudKarafka.
-  * Resolves [GitHub Issue #1107](https://github.com/FusionAuth/fusionauth-issues/issues/1107), thanks to [@chris-bridges](https://fusionauth.io/community/forum/user/chris-bridges) for letting us know!
+  * Resolves [GitHub Issue #1107](https://github.com/FusionAuth/fusionauth-issues/issues/1107), thanks to [@chris-bridges](/community/forum/user/chris-bridges) for letting us know!
 
 ### Enhancements
 * Support a Kickstart file with only a `licenseId`. Previously at least one API key was required because the intent of Kickstart is to call one or more APIs. While there is not a very practical use case for only providing a `licenseId` and no API requests,  this minimal configuration will no longer fail indicating an API key is required. See [Set your License Id](/docs/get-started/download-and-install/development/kickstart#set-your-license-id) in the [Kickstart](/docs/get-started/download-and-install/development/kickstart) documentation.
