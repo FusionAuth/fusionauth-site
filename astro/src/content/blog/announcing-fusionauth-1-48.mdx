@@ -11,7 +11,6 @@ excerpt_separator: "{/* more */}"
 import JSON from 'src/components/JSON.astro';
 import Aside from '../../components/Aside.astro';
 
-
 FusionAuth version 1.48 shipped in late October, 2023. This version includes webhook improvements, the ability to retrieve more than 10,000 users, and exposes the access token to your lambdas.
 
 {/* more */}
@@ -36,18 +35,29 @@ There are many ways to secure the contents of webhooks in transit and ensure tha
 
 However, signing the webhook contents means they can't be tampered with in transit without you, the recipient, knowing. You have cryptographic certainty the payload FusionAuth sent is the payload you received. This is important whenever you depend on webhook contents being correct. That is to say, always.
 
-Here's how it works. When webhook signing is configured, you choose a signing key. On webhook creation FusionAuth hashes the payload of the webhook message. It then creates a JWT with a `request_body_sha256` claim, and sets the value to that calculated hash. The JWT is signed using the signing key. The JWT is sent along with the webhook in a custom header, `X-FusionAuth-Signature-JWT`.
+Here's how it works: 
 
-To verify the integrity of the message, create a sha 256 hash of the payload you receive. Extract the JWT from the header and process it. Verify the signature of the JWT; this step is important, otherwise someone modify the JWT in the header, and tweak the hash to match the modified payload.
+* When webhook signing is configured, you choose a signing key.
+* On webhook creation FusionAuth hashes the payload of the webhook message.
+* It then creates a JWT with a `request_body_sha256` claim, and sets the value to that calculated hash.
+* The JWT is signed using the signing key.
+* The JWT is sent along with the webhook in a custom header, `X-FusionAuth-Signature-JWT`.
 
-After you have verified the JWT, compare the hash you calculated with the value from the `request_body_sha256` claim. If they match, you can be certain that the payload is unchanged.
+Then, the application which receives the webhook needs to verify the message integrity. To do so: 
 
-It's not just webhook signing. There were other webhook related improvements too, including:
+* Create a sha 256 hash of the payload you receive.
+* Extract the JWT from the `X-FusionAuth-Signature-JWT` header.
+* Verify the signature of the JWT. This step is important, otherwise someone might modify the JWT in the header, and tweak the hash to match the modified payload.
+* Then, compare the payload hash you first calculated with the value from the `request_body_sha256` claim.
 
-* Webhook test messages include more information if the webhook does not succeed.
+If they match, you can be certain the payload is unchanged.
+
+But it's not just webhook signing. There were other webhook related improvements too, including:
+
+* Webhook test messages now include more information if the webhook does not succeed.
 * You can use [key master](/docs/operate/secure-and-monitor/key-master) to manage webhook certificates. This is the recommended solution going forward.
-* A bug where tenant specific webhooks were removed when `PATCH`ing a tenant has been fixed.
-* Test messages sent using the admin UI preserve the body payload, making it easier to develop webhooks.
+* A fixed bug: tenant specific webhooks were previously removed when `PATCH`ing a tenant.
+* Test messages sent using the admin UI now preserve the body payload, making it easier to develop webhooks.
 
 ## User Search
 
@@ -73,7 +83,7 @@ As of this release, the access token will be available to a lambda in the `token
 
 As mentioned above, there were 34 issues, enhancements, and bug fixes included in these releases. A selection of the changes not covered above includes:
 
-* A critical fix to avoid deleting users who were verified and then changed their email address. Until you have upgraded to version 1.48.0, please disable `Delete unverified users` if you currently have enabled `Email verification`, `Verify email when changed` and `Delete unverified users`. 
+* A critical fix to avoid deleting users who were verified and then changed their email address. Until you have upgraded to version 1.48.1, please disable `Delete unverified users` if you currently have enabled `Email verification`, `Verify email when changed` and `Delete unverified users`. 
 * Updated internal dependencies, including the latest Java 17 LTS.
 * Modal windows in the admin UI now can be closed using the escape key.
 
