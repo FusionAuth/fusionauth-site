@@ -215,7 +215,7 @@ const convert = (filePath, partial = false, parent = '') => {
   };
 
   const addRemoteCodeRef = (url, title) => {
-    addImport("import RemoteCode from 'src/components/RemoteCode.astro';");
+    addImport("import {RemoteCode} from '@fusionauth/astro-components';");
     outLines.push(`<RemoteCode title="${title}" url="${url}" />`);
   }
 
