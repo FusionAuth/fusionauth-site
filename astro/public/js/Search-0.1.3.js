@@ -156,14 +156,22 @@ class Search {
     const promises = filterSet.map(filters => doSearch(filters));
     promises.push(doSearch(null))
 
+    const filterThreshold = 0.3;
+
     const resolved = await Promise.all(promises);
     console.log(resolved);
-    const results = new Set();
+    const results = [];
     resolved.filter(response => !!response)
-            .forEach(response => response.results.forEach(result => results.add(result)));
+            .forEach((response, idx, arr) => response.results
+               .filter(result => idx + 1 === arr.length || result.score > filterThreshold )
+               .forEach(result => {
+                 if (!results.find(r => r.id === result.id)) {
+                   results.push(result);
+                 }
+               }));
     console.log(results);
 
-    await this.#handleResults(Array.from(results));
+    await this.#handleResults(results);
   }
 
   #highlightMenuItem(option, focus) {
