@@ -1,5 +1,13 @@
 'use strict';
 
+const debounce = (func, timeout = 300) => {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => func.apply(this, args), timeout);
+  };
+}
+
 class Search {
   #altKey;
   #isMac;
@@ -17,7 +25,7 @@ class Search {
     this.#searchModal.addEventListener('mousemove', event => this.#handleMouseMove(event));
     this.#searchResults = document.querySelector('[data-widget="search-results"] ul');
     this.#searchInput = document.querySelector('[data-widget="search-input"]');
-    this.#searchInput.addEventListener('input', event => this.#handleSearch(event));
+    this.#searchInput.addEventListener('input', debounce(event => this.#handleSearch(event)));
     this.#searchKeyHint = document.querySelector('[data-widget="search-key-hint"]');
 
     document.addEventListener('click', event => this.#handleClick(event));
@@ -116,14 +124,46 @@ class Search {
       return;
     }
 
+    let paths = window.location.pathname.split('/');
+    paths = paths.slice(1, paths.length);
+    const environment = paths.shift();
+    console.log(environment, paths);
+    const filterSet = paths.map((val, idx, arr) => {
+      console.log(val, idx, arr);
+      const filters = { environment };
+      for (let i= 0; i <= idx; i++) {
+        const key = {
+          0: 'section',
+          1: 'subcategory',
+          2: 'tertcategory',
+          3: 'quatercategory'
+        }[i];
+        filters[key] = arr[i].replaceAll('-', ' ');
+      }
+      return filters;
+    });
+    filterSet.reverse();
+    filterSet.push({ environment });
+
     if (!this.#pagefind) {
-      this.#pagefind = await import("/_pagefind/pagefind.js");
+      this.#pagefind = await import("/pagefind/pagefind.js");
+      console.log(JSON.stringify(await this.#pagefind.filters(), null, 2))
     }
 
-    const response = await this.#pagefind.debouncedSearch(this.#searchInput.value);
-    if (response) {
-      await this.#handleResults(response.results);
-    }
+    const doSearch = async (filters) => this.#pagefind.search(this.#searchInput.value, { filters });
+
+    console.log(filterSet);
+    const promises = filterSet.map(filters => doSearch(filters));
+    promises.push(doSearch(null))
+
+    const resolved = await Promise.all(promises);
+    console.log(resolved);
+    const results = new Set();
+    resolved.filter(response => !!response)
+            .forEach(response => response.results.forEach(result => results.add(result)));
+    console.log(results);
+
+    await this.#handleResults(Array.from(results));
   }
 
   #highlightMenuItem(option, focus) {
@@ -145,7 +185,7 @@ class Search {
             <div class="flex flex-col">
               <span class="bg-slate-200 border border-slate-900/10 font-semibold mb-2 px-2 py-0.5 rounded-full text-slate-700 text-xs w-fit dark:bg-slate-600 dark:text-slate-400 group-[.active]:bg-indigo-500 group-[.active]:border-indigo-300 group-[.active]:text-white">
                 ${data.meta.title}
-              </span> 
+              </span>
               <span class="mr-auto text-slate-700 text-sm dark:text-slate-400 group-[.active]:text-white">
                 ${data.excerpt}
               </span>
