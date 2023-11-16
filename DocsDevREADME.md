@@ -70,6 +70,8 @@ If you want a page to float to the top of the navigation, because it is an overv
 topOfNav: true
 ```
 
+Make descriptions full sentences.
+
 
 ### Including files
 - If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_` and use dashes to separate words: `_login-api-integration` not `_login_api_integration`.
