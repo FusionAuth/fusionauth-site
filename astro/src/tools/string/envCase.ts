@@ -1,0 +1,1 @@
+export const envCase = (input: string) => input.replaceAll('.', '_').replaceAll('-', '_').toUpperCase();

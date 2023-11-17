@@ -36,7 +36,7 @@ Steps:
     * After your frontmatter: `import Aside from '/src/components/Aside.astro';`
     * Then format the callout with `<Aside type="note">content</Aside>`
     * More here: https://inversoft.slack.com/archives/C04DGBXKPGC/p1691171143090139
-  * If there are any blocks with `{% remote_include` replace them with the [Remote Code](src/components/RemoteCode.astro) component
+  * If there are any blocks with `{% remote_include` replace them with the [`<RemoteCode>`](https://www.npmjs.com/package/@fusionauth/astro-components) component
   * If you find a `{% plantuml ...` tag
     * `git mv site/_diagrams/blogs/SUBDIR/DIAGRAM.plantuml astro/src/diagrams/blog/SUBDIR/DIAGRAM.astro`
     * Look at another sequence diagram to update your diagram to be mermaid compliant

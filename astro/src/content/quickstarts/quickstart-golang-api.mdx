@@ -14,7 +14,7 @@ coderoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-gol
 ---
 import Aside from '../../components/Aside.astro';
 import Diagram from '../../diagrams/quickstarts/resource-server.astro';
-import RemoteCode from '../../components/RemoteCode.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
 
 In this tutorial, you are going to learn how to integrate a Golang resource server with FusionAuth. You will protect an API resource from unauthorized usage. You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM), a global leader in converting dollars into coins.
 
@@ -24,7 +24,7 @@ The docker compose file and source code for a complete application are available
 
 - [Go](https://go.dev/): This quickstart was built using Golang 1.21.0. This example may work on different versions of Golang, but it has not been tested.
 - [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. Ensure you also have [docker compose](https://docs.docker.com/compose/) installed.
-- (Alternatively, you can [Install FusionAuth Manually](/docs/v1/tech/installation-guide/)).
+- (Alternatively, you can [Install FusionAuth Manually](/docs/get-started/download-and-install)).
 
 ## General Architecture
 
@@ -32,7 +32,7 @@ A client wants access to an API resource at `/resource`. However, it is denied t
 
 <Diagram />
 
-While the access token is acquired via the Login API above, this is for simplicity of illustration. The token can be, and typically is, acquired through one of the [OAuth grants](/docs/v1/tech/oauth/).
+While the access token is acquired via the Login API above, this is for simplicity of illustration. The token can be, and typically is, acquired through one of the [OAuth grants](/docs/lifecycle/authenticate-users/oauth/).
 
 ## Getting Started
 
@@ -55,7 +55,7 @@ In the root directory of the repo you’ll find a Docker compose file (docker-co
 docker compose up -d
 ```
 
-Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/v1/tech/installation-guide/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to a certain initial state.
+Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/get-started/download-and-install/development/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to a certain initial state.
 
 <Aside type="note">
 If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by executing `docker-compose down -v`, then re-run `docker-compose up -d`.
@@ -94,7 +94,7 @@ go run main.go
 You can then follow the instructions in the Run the API section started at Get a Token.
 </Aside>
 
-To create the application from scratch, make a directory for this API. 
+To create the application from scratch, make a directory for this API.
 
 ```
 mkdir your-application && cd your-application
@@ -194,7 +194,7 @@ There is a lot of code in this function. Let's break it down:
 Now, you will add the code to set the public key. This function will accept the key Id from the token and call the authorization server to get the public key with that key Id and put it in the proper format to be used.
 
 <Aside type="note">
-Different tokens can be signed with different keys. In this example there is only one key used. If the key is already set, the application will not attempt to set it again. In a production environment you could store this key on the server or set it once on initialization. If your api serves several applications, you will need to get the correct public key for each application if the signing keys are different between applications. It should also be noted that you could use [JWKS](/docs/v1/tech/oauth/endpoints#json-web-key-set-jwks), a standard for retreiving public keys, but this example uses FusionAuth's proprietary APIs.
+Different tokens can be signed with different keys. In this example there is only one key used. If the key is already set, the application will not attempt to set it again. In a production environment you could store this key on the server or set it once on initialization. If your api serves several applications, you will need to get the correct public key for each application if the signing keys are different between applications. It should also be noted that you could use [JWKS](/docs/lifecycle/authenticate-users/oauth/endpoints#json-web-key-set-jwks), a standard for retrieving public keys, but this example uses FusionAuth's proprietary APIs.
 </Aside>
 
 <RemoteCode url={frontmatter.coderoot + "/complete-application/main.go"} tags="set-public-key"
@@ -226,7 +226,7 @@ go run main.go
 
 ### Get a Token
 
-There are [several ways to acquire a token](/docs/v1/tech/oauth/) in FusionAuth, but for this example you will use the [Login API](/docs/v1/tech/apis/login) to keep things simple.
+There are [several ways to acquire a token](/docs/lifecycle/authenticate-users/oauth/) in FusionAuth, but for this example you will use the [Login API](/docs/apis/login) to keep things simple.
 
 First let's try the requests as the `teller@example.com` user. Based on the configuration this user has the `teller` role and should be able to use both `/make-change` and `/panic`.
 
@@ -263,7 +263,7 @@ curl --location 'http://localhost:9001/make-change?total=5.12' \
 --header 'Authorization: Bearer <your_token>'
 ```
 
-The response should look look similar to below, however it has been formatted here for readability:
+The response should look similar to below, however it has been formatted here for readability:
 
 ```json
 {
@@ -340,7 +340,7 @@ curl --location 'http://localhost:9001/make-change?total=3.24' \
 --header 'Authorization: Bearer <your_token>'
 ```
 
-The response should look look similar to below, however it has been formatted here for readability:
+The response should look similar to below, however it has been formatted here for readability:
 
 ```json
 {
@@ -387,13 +387,13 @@ This quickstart is a great way to get a proof of concept up and running quickly,
 
 ### FusionAuth Integration
 
-* Rather than call the Login API, you're probably going to want to use the [Authorization Code grant](/docs/v1/tech/oauth/#example-authorization-code-grant), which keeps all sensitive credentials within the bounds of FusionAuth. You can customize the [hosted login pages](/docs/v1/tech/themes/).
-* You may want to generate a token using the [Client Credentials grant](/docs/v1/tech/oauth/#example-client-credentials-grant) if you are calling the API from another service.
+* Rather than call the Login API, you're probably going to want to use the [Authorization Code grant](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant), which keeps all sensitive credentials within the bounds of FusionAuth. You can customize the [hosted login pages](/docs/apis/themes).
+* You may want to generate a token using the [Client Credentials grant](/docs/lifecycle/authenticate-users/oauth/#example-client-credentials-grant) if you are calling the API from another service.
 
 ### Security
-* Customize the [token expiration times and policies](/docs/v1/tech/oauth/#configure-application-oauth-settings) in FusionAuth
+* Customize the [token expiration times and policies](/docs/lifecycle/authenticate-users/oauth/#configure-application-oauth-settings) in FusionAuth
 * [Make sure you know how to securely consume a token](/articles/tokens/building-a-secure-jwt#consuming-a-jwt)
-* Secure your API [using an API gateway](/docs/v1/tech/developer-guide/api-gateways/) rather than at the framework layer.
+* Secure your API [using an API gateway](/docs/extend/examples/api-gateways/) rather than at the framework layer.
 
 ## Troubleshooting
 

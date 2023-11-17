@@ -1,0 +1,56 @@
+import InlineField from 'src/components/InlineField.astro';
+import Aside from 'src/components/Aside.astro';
+
+FusionAuth sends a lot of email, for forgotten passwords, passwordless login and other features.
+
+Troubleshooting email delivery is difficult. There are many factors affecting it. However, there are steps you can take to narrow down the problem.
+
+### Send A Test Email
+
+<Aside type="version">
+The *Send Test Email* button has been available since 1.16.0
+</Aside>
+
+The first step is to ensure that you can send a test email. Navigate to <strong>Tenants -> Your Tenant -> Edit -> Email</strong> and send a test email. If it is received, FusionAuth can send emails via SMTP. 
+
+<img src="/img/docs/customize/email-and-messages/send-test-email.png" alt="Sending a test email" width="1200" />
+
+If sending a test email fails, a tool such as [SWAKS](https://www.jetmore.org/john/code/swaks/) can help debug SMTP issues. Using this tool removes FusionAuth from the equation. 
+
+### Further Investigation
+
+If the test email succeeds, but you aren't receiving other emails, investigate further by following these steps:
+
+* Send emails to different addresses at different providers and check the spam folder.
+* Make sure that you are firing the event that you expect to send email correctly. For instance, if you are looking for email verification of users, make sure that is enabled.
+* Test with a different FusionAuth function. Sending a password reset email is easy to do from the user details screen.
+* Make sure the email template is correct, or use [a default template](/docs/customize/email-and-messages/).
+
+Additionally, confirm that the template content matches up with the template type. Otherwise template variables will be missing. If this occurs, you may see a message like this in the Event Log.
+
+```
+Render Errors
+---------------
+html : freemarker.core.InvalidReferenceException: The following has evaluated to null or missing:
+##> changePasswordId  [in nameless template at line 5, column 59]
+```
+
+### SMTP Logging
+
+To enable SMTP logging prior to `1.37.0` follow these steps:
+
+1. Enable debugging by navigating to <strong>Tenants -> Your Tenant -> Edit -> Advanced -> SMTP Settings -> Additional properties</strong> and add `mail.debug=true`.
+1. Save the tenant.
+1. Send an email. 
+1. View the system logs by navigating to <strong>System -> Logs</strong>. 
+1. Select `fusionauth-app.log` and you will see verbose SMTP output.
+
+To enable SMTP logging for version `1.37.0` or later follow these steps:
+
+1. Enable debugging by navigating to <strong>Tenants -> Your Tenant -> Edit -> Email -> Debug</strong>.
+1. Save the tenant.
+1. Send an email.
+1. View the Event Logs by navigating to <strong>System -> Event Logs</strong>.
+1. Select the Event Log that starts with `"Email debug information"`.
+
+Doing this logs the full SMTP conversation, which can be verbose. You should remove this setting when you have finished troubleshooting.

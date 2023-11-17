@@ -1,0 +1,47 @@
+Kafka is a powerful but complicated piece of software and you'll need Kafka expertise to run a production Kafka setup to consume all of your FusionAuth events. If you get stuck integrating Kafka, try the following.
+
+### Troubleshooting the FusionAuth-Side of the Integration
+
+* Check that you included a topic when adding the integration.
+* Check that you saved the integration after configuring and testing it.
+* Check the FusionAuth logs for errors relating to Kafka.
+* If you're using Docker Compose, check that you've correctly mapped the ports for both Kafka and Zookeeper and correctly configured a Docker network so that FusionAuth can connect to Kafka.
+
+### Troubleshooting your Kafka Installation
+
+It can be useful to run quick commands directly against your Kafka cluster to create topics and log events. You can download a version of Kafka from [the official Kafka website](https://kafka.apache.org/downloads) and extract it to your local machine. This will give you some utility scripts to directly interact with your Kafka cluster.
+
+If you're using a Docker Compose setup locally, add an entry to your hosts file to map `kafka` to `127.0.0.1`.
+
+```
+127.0.0.1 kafka
+```
+
+You can then create a topic (for example, `fa-events`) that you can use in FusionAuth by running the following.
+
+```
+bin/kafka-topics.sh --create --topic fa-events --bootstrap-server kafka:9092
+```
+
+You can set a consumer to watch for new events with the following command. If everything is correctly set up, you'll see events streamed to this consumer and logged to your shell as you carry out actions in FusionAuth.
+
+```
+bin/kafka-console-consumer.sh --topic fa-events --from-beginning --bootstrap-server kafka:9092
+```
+
+Or if you need to talk to a remote Kafka cluster, you can create a file locally called `consumer.properties` with credentials for your remote cluster. 
+
+```
+bootstrap.servers=pkc-6ojv2.us-west4.gcp.confluent.cloud:9092
+client.dns.lookup=use_all_dns_ips
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule   required username='ZN6LJ5UHSXWLW2LR'   password='M9T8b75OPspFAS37Do5Baq7jIS+hi7h7bY8MRrfVff5lz8xeCweaRTO8GD3nKXUD';
+sasl.mechanism=PLAIN
+security.protocol=SASL_SSL
+session.timeout.ms=45000
+```
+
+And then run the scripts above passing in the file with the `--consumer.config` flag and the remote bootstrap server. For example, use the following to see events posted to your `fa-events` topic in a remote cluster.
+
+```
+bin/kafka-console-consumer.sh --bootstrap-server pkc-6ojv2.us-west4.gcp.confluent.cloud:9092 --consumer.config consumer.properties --topic fa-events
+```
