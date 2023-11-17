@@ -77,15 +77,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'api',
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
-/*
-      {
-        href: '/docs/quickstarts/quickstart-dotnet-api',
-        title: '.NET Core',
-        icon: '/img/icons/dotnet-c.svg',
-        faIcon: 'fa-hashtag',
-        navColor: 'blue',
-      },
-*/
     ],
   },
   {
