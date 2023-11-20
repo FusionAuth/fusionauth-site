@@ -1,74 +1,57 @@
 ---
-layout: doc
-title: Managing FusionAuth Using Terraform
+title: FusionAuth And Terraform
 description: Manage FusionAuth configuration changes over time with Terraform.
 navcategory: admin
-prerequisites: FusionAuth
-technology: Terraform
+section: operate
+subcategory: deploy
 ---
+import Aside from 'src/components/Aside.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
 
-== Overview
+## Overview
 
-In this section you'll learn more about the community supported, open source https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/[FusionAuth Terraform Provider], with which you will be able to manage FusionAuth using Terraform, an open source infrastructure as code automation tool.
+In this section you'll learn more about the community supported, open source https://registry.terraform.io/providers/fusionauth/fusionauth/latest/[FusionAuth Terraform Provider], with which you will be able to manage FusionAuth using Terraform, an open source infrastructure as code automation tool.
 
-Since it is a community project, it is not as complete as the client libraries, but it covers the majority of use cases. If you find yourself needing to manage an unsupported resource or configuration, please submit a PR to the https://github.com/gpsinsight/terraform-provider-fusionauth[project using GitHub]. PRs are regularly reviewed and merged.
+Since it is a community project, it is not as complete as the client libraries, but it covers the majority of use cases. If you find yourself needing to manage an unsupported resource or configuration, please submit a PR to the https://github.com/fusionauth/terraform-provider-fusionauth[project using GitHub]. PRs are regularly reviewed and merged.
 
-* <<Prerequisites>>
-* <<Initial Setup>>
-** <<FusionAuth API Key>>
-** <<Initializing Terraform Working Directory>>
-* <<Terraform Import>>
-** <<Importing The Default Tenant>>
-** <<Importing The FusionAuth Application>>
-** <<Terraform Data Source Instead Of Import>>
-* <<Terraform Create>>
-* <<Terraform Update>>
-** <<Ignore Lifecycle Changes>>
-* <<Terraform Remove>>
-** <<Prevent Destroy>>
-
-== Prerequisites
+## Prerequisites
 
 In order to get the most value from this guide, you should have a running FusionAuth instance and the Terraform CLI installed.
 
 If you don't have this set up yet, please review the following links:
 
-* link:/docs/v1/tech/5-minute-setup-guide[5 minute setup guide] - get a FusionAuth instance up and running with a simple application.
-* The https://developer.hashicorp.com/terraform/tutorials/docker-get-started/install-cli[Install Terraform] section in the https://developer.hashicorp.com/terraform/tutorials/docker-get-started[Get Started - Docker] guide from Terraform will walk you through installing the Terraform CLI.
+* [5 minute setup guide](/docs/v1/tech/5-minute-setup-guide) - get a FusionAuth instance up and running with a simple application.
+* The [Install Terraform](https://developer.hashicorp.com/terraform/tutorials/docker-get-started/install-cli) section in the [Get Started - Docker](https://developer.hashicorp.com/terraform/tutorials/docker-get-started) guide from Terraform will walk you through installing the Terraform CLI.
 
-== Initial Setup
+## Initial Setup
 
 In the initial setup you go through the initializing of the Terraform working directory with the FusionAuth API key.
 
-=== FusionAuth API Key
+### FusionAuth API Key
 
-Create an unlimited super user API Key as described in link:/docs/v1/tech/apis/authentication#managing-api-keys[Managing API Keys] by not selecting any endpoint methods to create a super user key. A super user API Key has access to all API endpoints. If you want to limit operations which can be performed by Terraform, you can limit the API Key to certain endpoints. But for this document, a super user API Key is assumed.
+Create an unlimited super user API Key as described in [Managing API Keys](/docs/apis/authentication#managing-api-keys) by not selecting any endpoint methods to create a super user key. A super user API Key has access to all API endpoints. If you want to limit operations which can be performed by Terraform, you can limit the API Key to certain endpoints. But for this document, a super user API Key is assumed.
 
 Copy the key before pressing the Save button.
 //TODO: screenshot http://fusionauth-terraform:9011/admin/api-key/
 
-An automated way would be to use Kickstart with a predefined API Key which you can add as a secret ENV variable in your overall automated deployment.
+An automated way to set up an API Key would be to use [Kickstart](/docs/get-started/download-and-install/development/kickstart) with a predefined API Key which you can add as a secret in your automated deployment.
 
-[source]
-----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/kickstart/kickstart.json[]
-----
+<RemoteCode url="https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/kickstart/kickstart.json" />
 
-=== Initializing Terraform Working Directory
+### Initializing Terraform Working Directory
 
 With the copied API Key from your FusionAuth environment you initialize the Terraform working directory. Create a new directory. Any name will do, but for consistency, it is suggested to name it after your FusionAuth instance host name.
 
-[source]
-----
+```
 mkdir auth.example.com
 cd auth.example.com
-----
+```
 
-For all the variables you're going to use, create a `variables.tf file with the following content to declare all https://developer.hashicorp.com/terraform/language/values/variables[Input Variables] used throughout the example.
+For all the variables you're going to use, create a `variables.tf` file with the following content to declare all https://developer.hashicorp.com/terraform/language/values/variables[Input Variables] used throughout the example.
 
 [source]
 ----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/examples/import/variables.tf[]
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/examples/import/variables.tf[]
 ----
 
 And for the Variable Definitions you create `terraform.tfvars` with the following content and according modifications:
@@ -81,19 +64,18 @@ And for the Variable Definitions you create `terraform.tfvars` with the followin
 
 [source]
 ----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/examples/import/terraform.tfvars[]
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/examples/import/terraform.tfvars[]
 ----
 
-[WARNING]
-====
+<Aside type="caution">
 Please note the configuration section for `fusionauth_api_key` in `variables.tf`. The configuration option `sensitive = true` is defined, this will prevent sensitive data added to the Terraform state and therefore has to be always defined.
 
 The variable definition with `terraform.tfvars` is only one way, please follow https://developer.hashicorp.com/terraform/language/values/variables#assigning-values-to-root-module-variables[Assigning Values to Root Module Variables] for more information.
-====
+</Aside>
 
-Next, add the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/[FusionAuth Terraform Provider] configuration in the directory by:
+Next, add the [FusionAuth Terraform Provider](https://registry.terraform.io/providers/fusionauth/fusionauth/latest) configuration in the directory by:
 
-* Opening the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs[FusionAuth Terraform Provider Documentation]
+* Opening the [FusionAuth Terraform Provider Documentation](https://registry.terraform.io/providers/fusionauth/fusionauth/latest/docs)
 * Clicking the [uielement]#USE PROVIDER# button
 * Copying the Hashicorp Configuration Language (HCL) provided
 * Creating a Terraform configuration file named `main.tf`
@@ -105,19 +87,18 @@ Here's what your `main.tf` file might look like after these steps.
 
 [source]
 ----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/examples/import/main.tf[tags=terraformProvider]
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/examples/import/main.tf[tags=terraformProvider]
 ----
 
 Finally, the following command performs several different initialization steps in order to prepare the current working directory for use with Terraform.
 
-[source]
-----
+```shell
 terraform init
-----
+```
 
 It is always safe to run https://developer.hashicorp.com/terraform/cli/commands/init[init] multiple times, to bring the working directory up to date with changes in the configuration. Though subsequent runs may give errors, this command will never delete your existing configuration or state.
 
-=== Configuration Strategy
+### Configuration Strategy
 
 Once you initialize the Terraform working directory, you should review different initial strategies to handle the import of default FusionAuth configuration which will be discussed below.
 
@@ -130,30 +111,28 @@ Once you initialize the Terraform working directory, you should review different
 | create | always create and be able to manage all resources through Terraform | bigger initial effort and default resources are out of scope
 |===
 
-== Terraform Import
+## Terraform Import
 
 Before you look in to creating, updating, and removing with Terraform, let's look at the the https://developer.hashicorp.com/terraform/language/import[Import] and https://developer.hashicorp.com/terraform/language/data-sources[Data Source] functionality.
 
 If you have existing FusionAuth configuration you want to manage via Terraform, you will need to import it.
 
-[NOTE.note]
-====
+<Aside type="tip">
 The most consistent method is to create all resources through Terraform. In certain scenarios you must use use `Import` or `Data Source` to handle default configuration.
-====
+</Aside>
 
 There are link:/docs/v1/tech/reference/limitations#default-configuration[configuration elements] that are present in every FusionAuth installation. If you want to manage changes to these via Terraform, you must tell Terraform about them. 
 
 The FusionAuth Default Tenant and default Application are two of these configuration elements that you will almost certainly want to modify.
 
-=== Importing The Default Tenant
+## Importing The Default Tenant
 The Default Tenant is created during the initial deployment of FusionAuth. To manage it through Terraform, you must import it. In addition, if you're managing the FusionAuth Application, which is the administrative user interface, it will always be in the Default Tenant.
 
-[NOTE.note]
-====
+<Aside type="tip">
 In many cases, you can use the Default Tenant for all your Applications. When using Terraform, it is easier to create your own Tenant and Applications related to your Tenant instead of importing the default ones.
-====
+</Aside>
 
-As outlined in the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/tenant[Tenant Terraform Resource documentation], add the following code to `main.tf`.
+As outlined in the https://registry.terraform.io/providers/fusionauth/fusionauth/latest/docs/resources/tenant[Tenant Terraform Resource documentation], add the following code to `main.tf`.
 
 To make things easier, you only have to update the first Id in the import section with the Default Tenant Id. You can find this Id in the FusionAuth Admin UI under `Tenants`. Replace `Replace-This-With-The-Existing-Default-Tenant-Id` with that value.
 
@@ -165,22 +144,20 @@ image::admin-guide/configuration-management/default-tenant-id.png[The dashboard 
 
 [source]
 ----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/examples/import/main.tf[tags=defaultTenantImport]
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/examples/import/main.tf[tags=defaultTenantImport]
 ----
 
 Since you provided a valid Tenant Id, you can let Terraform find the other Ids by searching the plan output for in-place updates. Then you can update `main.tf` with those values. Do this by running `terraform plan`.
 
-[source]
-----
+```shell
 terraform plan | grep \~
-----
+```
 
 Because of the way Terraform works, it is suggesting replacing the UUID definitions for configuration with `00000000-0000-0000-0000-000000000000`. You don't want to do that. Instead, copy the UUIDs to `main.tf` and replace the `00000000-0000-0000-0000-000000000000` with them.
 
 Here is how the output of the `grep` command might look:
 
-[source]
-----
+```text
   ~ update in-place
   ~ resource "fusionauth_tenant" "Default" {
       ~ theme_id                           = "75a068fd-e94b-451a-9aeb-3ddb9a3b5987" -> "00000000-0000-0000-0000-000000000000"
@@ -188,12 +165,11 @@ Here is how the output of the `grep` command might look:
       ~ jwt_configuration {
           ~ access_token_key_id                                = "a39be146-51cb-0288-7806-6eb6c066aed3" -> "00000000-0000-0000-0000-000000000000"
           ~ id_token_key_id                                    = "092dbedc-30af-4149-9c61-b578f2c72f59" -> "00000000-0000-0000-0000-000000000000"
-----
+```
 
 Make sure you copy all those Id's from your output to the `main.tf` file. For example, modify `jwt_configuration` to look like
 
-[source]
-----
+```hcl
 jwt_configuration {
     refresh_token_time_to_live_in_minutes              = 43200
     time_to_live_in_seconds                            = 3600
@@ -202,162 +178,128 @@ jwt_configuration {
     access_token_key_id                                = "a39be146-51cb-0288-7806-6eb6c066aed3"
     id_token_key_id                                    = "092dbedc-30af-4149-9c61-b578f2c72f59"
   }
-----
+```
 
 Once appended run https://developer.hashicorp.com/terraform/cli/commands/plan[terraform plan] to check the validity of your configuration. If there is no output, that indicates that the remote FusionAuth configuration and the `main.tf` file are in sync.
 
-[NOTE.note]
-====
+<Aside type="tip">
 The example configuration above is subject to change either by manual changes via the admin UI or version differences such as new Tenant configuration defaults. Carefully check the `terraform plan` output.
-====
+</Aside>
 
 If the plan is valid and you're happy with the changes run https://developer.hashicorp.com/terraform/cli/commands/apply[terraform apply]
 
-[source]
-----
+```shell
 terraform plan
 terraform apply
-----
+```
 
-[WARNING]
-====
-Once imported, Terraform tracks the resource in your state file. You can then manage the imported resource similar to any other by updating its attributes.
-
-You can't destroy the Default Tenant. In FusionAuth this can't be deleted. Attempting to do so will break your Terraform state. See <<Prevent Destroy>> for more details.
-====
-
-Leave the import block in your configuration as a record of the Default Tenant resource’s origin. The import block records that Terraform imported the resource and didn't create it.
-
-=== Importing The FusionAuth Application
-Next, follow the same process to import the default FusionAuth Application which provides the FusionAuth admin user interface. You'll use the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application[Application Terraform Resource documentation] and add the following to `main.tf`. The FusionAuth Application ID is always `"3c219e58-ed0e-4b18-ad48-f4f92793ae32"` which is why you can copy the example as is.
-
-[source]
-----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/examples/import/main.tf[tags=defaultApplicationImport]
-----
-
-Once appended run https://developer.hashicorp.com/terraform/cli/commands/plan[terraform plan] to check the validity of your configuration.
-
-If the plan is valid and you're happy with the changes run https://developer.hashicorp.com/terraform/cli/commands/apply[terraform apply]
-
-[source]
-----
-terraform plan
-terraform apply
-----
-
-[WARNING]
-====
+<Aside type="caution">
 Once imported, Terraform tracks the resource in your state file. You can then manage the imported resource similar to any other by updating its attributes.
 
 You can't destroy the default FusionAuth Application. In FusionAuth this can't be deleted. Attempting to do so will break your Terraform state. See <<Prevent Destroy>> for more details.
-====
+</Aside>
 
 Leave the import block in your configuration as a record of the default Application resource’s origin. The import block records that Terraform imported the resource and didn't create it.
 
-=== Terraform Data Source Instead Of Import
+### Terraform Data Source Instead Of Import
 
-Instead of importing a resource you can use an existing FusionAuth configuration as a `Data Source`, the list of all supported data sources you can find in the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs[FusionAuth Terraform Provider Documentation].
+Instead of importing a resource you can use an existing FusionAuth configuration as a `Data Source`, the list of all supported data sources you can find in the https://registry.terraform.io/providers/fusionauth/fusionauth/latest/docs[FusionAuth Terraform Provider Documentation].
 
 If you choose to manage the Default Tenant and FusionAuth Application outside Terraform manually or via a script using the link:/docs/v1/tech/client-libraries/[client libraries], but still need to add Applications in to the Default Tenant via Terraform, you can reference it in `main.tf` as a data source.
 
-* https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/data-sources/tenant[Tenant Data Source documentation]
-* https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/data-sources/application[Application Data Source documentation]
+* https://registry.terraform.io/providers/fusionauth/fusionauth/latest/docs/data-sources/tenant[Tenant Data Source documentation]
+* https://registry.terraform.io/providers/fusionauth/fusionauth/latest/docs/data-sources/application[Application Data Source documentation]
 
 Here's an example of how you might add such data sources to your Terraform file.
 
 [source]
 ----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/examples/data-source/main.tf[tags=defaultTenantDataSource]
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/examples/data-source/main.tf[tags=defaultTenantDataSource]
 ----
 
 [source]
 ----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/examples/data-source/main.tf[tags=defaultApplicationDataSource]
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/examples/data-source/main.tf[tags=defaultApplicationDataSource]
 ----
 
-[NOTE.note]
-====
+<Aside type="tip">
 If you manage the Default Tenant and FusionAuth Application outside of Terraform but want specific actions (scripts, API calls, etc.) integrated and triggered by your Terraform configuration, you could make the use of https://developer.hashicorp.com/terraform/language/resources/provisioners/syntax[Provisioners].
 
 Terraform includes the concept of provisioners as a measure of pragmatism and last resort since provisioners are non-declarative and potentially unpredictable. They exist because there are always certain behaviors that can't be directly represented in Terraform's declarative model.
-====
+</Aside>
 
 Now that you've set up Terraform to handle default configuration, let's walk through creating, updating, and removing other resources.
 
-== Terraform Create
+## Terraform Create
 
-To create a new resource you can go through the list of resources available to you in the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs[FusionAuth Terraform Provider Documentation] and pick the resource you're interested in. Each resource contains information about required and optional arguments.
+To create a new resource you can go through the list of resources available to you in the https://registry.terraform.io/providers/fusionauth/fusionauth/latest/docs[FusionAuth Terraform Provider Documentation] and pick the resource you're interested in. Each resource contains information about required and optional arguments.
 
 In this example you create an Application called forum with a custom Access Token Key in a newly created forum Tenant with related Roles (admin and user). And as it's very common to use kickstart during automated deployments creating an Email Template too:
 
-* https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/tenant[Terraform Tenant Resource documentation]
+* https://registry.terraform.io/providers/fusionauth/fusionauth/latest/docs/resources/tenant[Terraform Tenant Resource documentation]
 
 [source]
 ----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/examples/create/main.tf[tags=createForumTenant]
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/examples/create/main.tf[tags=createForumTenant]
 ----
 
-* https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/key[Terraform Key Resource documentation]
-
-[source]
-----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/examples/create/main.tf[tags=createKey]
-----
-
-* https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/email[Terraform Email Resource documentation]
+* https://registry.terraform.io/providers/fusionauth/fusionauth/latest/docs/resources/key[Terraform Key Resource documentation]
 
 [source]
 ----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/examples/create/main.tf[tags=createEmailTemplate]
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/examples/create/main.tf[tags=createKey]
 ----
 
-* https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application[Terraform Application Resource documentation]
-
-[source]
-----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/examples/create/main.tf[tags=createForumApplication]
-----
-
-* https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/resources/application_role[Terraform Application Role Resource documentation]
+* https://registry.terraform.io/providers/fusionauth/fusionauth/latest/docs/resources/email[Terraform Email Resource documentation]
 
 [source]
 ----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/examples/create/main.tf[tags=createForumApplicationRoles]
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/examples/create/main.tf[tags=createEmailTemplate]
+----
+
+* https://registry.terraform.io/providers/fusionauth/fusionauth/latest/docs/resources/application[Terraform Application Resource documentation]
+
+[source]
+----
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/examples/create/main.tf[tags=createForumApplication]
+----
+
+* https://registry.terraform.io/providers/fusionauth/fusionauth/latest/docs/resources/application_role[Terraform Application Role Resource documentation]
+
+[source]
+----
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/examples/create/main.tf[tags=createForumApplicationRoles]
 ----
 
 This example assumes you're using a data source to reference the Default Tenant. If you imported the Default Tenant, remove the prefix `data.` to have this example work correctly.
 
 [source]
 ----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/examples/create/main.tf[tags=defaultDataSource]
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/examples/create/main.tf[tags=defaultDataSource]
 ----
 
 Once you're happy with your configuration run `terraform plan` and if you aren't experiencing errors and are ok with the planned changes you can go ahead with `terraform apply`.
 
-[WARNING]
-====
+<Aside type="caution">
 Deleting a Tenant removes all the associated Applications, Groups, and Users. If you want to make sure that the Tenant isn't destroyed, see <<Prevent Destroy>> for more details.
-====
+</Aside>
 
-== Terraform Update
+## Terraform Update
 
-Once a resource is either created or imported you can change `main.tf` according to the https://registry.terraform.io/providers/gpsinsight/fusionauth/latest/docs/[Terraform Provider Documentation].
+Once a resource is either created or imported you can change `main.tf` according to the [Terraform Provider Documentation](https://registry.terraform.io/providers/fusionauth/fusionauth/latest/docs/).
 
 For example by changing the time to live in seconds to half a hour in the JWT configuration.
 
-[source]
-----
+```hcl
   jwt_configuration {
     refresh_token_time_to_live_in_minutes = 43200
     time_to_live_in_seconds               = 1800
   }
-----
+```
 
 After you're done with your configuration changes, run `terraform plan` to check the planned changes and review potential errors. It will show you what it will change from the current value to the new value.
 
-[source]
-----
+```text
 Terraform will perform the following actions:
 
   # fusionauth_tenant.forum will be updated in-place
@@ -368,14 +310,14 @@ Terraform will perform the following actions:
 
       ~ jwt_configuration {
           ~ time_to_live_in_seconds                            = 3600 -> 1800
-----
+```
 
 After that you can go ahead with `terraform apply`. And if you want to know what already has been defined by Terraform but not specified in your `.tf` files you can run `terraform show`.
 
 The configuration can get very large and if you want to show only very specific resources you can list all resources with `terraform state list` and show the resource state with `terraform state show <resource-name>` accordingly.
 
-=== Ignore Lifecycle Changes
-Every time you plan new changes you could face the challenge that information has been updated in your FusionAuth installation. You can either align your configuration with the installation or decide to https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#ignore_changes[ignore_changes] in your configuration.
+### Ignore Lifecycle Changes
+Every time you plan new changes you could face the challenge that information has been updated in your FusionAuth installation. You can either align your configuration with the installation or decide to [`ignore_changes`](https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#ignore_changes) in your configuration.
 
 There is a very common example in FusionAuth resources. Where your e.g. business application adds user driven data to the FusionAuth Application.
 
@@ -383,19 +325,18 @@ If you call your FusionAuth Application from outside with a curl command and upd
 
 [source]
 ----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/scripts/fusionauth-application-data/script.sh[]
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/scripts/fusionauth-application-data/script.sh[]
 ----
 
 `patch.json`
 [source]
 ----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/scripts/fusionauth-application-data/patch.json[]
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/scripts/fusionauth-application-data/patch.json[]
 ----
 
 You will see in the `terraform plan` output that it wants to revert it back to the original state.
 
-[source]
-----
+```text
 Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
   ~ update in-place
 
@@ -416,12 +357,11 @@ Terraform will perform the following actions:
     }
 
 Plan: 0 to add, 1 to change, 0 to destroy.
-----
+```
 
 To avoid Terraform from doing this, you can use the `ignore_changes` Meta-Argument to ignore parts of your configuration.
 
-[source]
-----
+```hcl
 resource "fusionauth_application" "forum" {
   tenant_id = data.fusionauth_tenant.Default.id
   name = "forum"
@@ -431,45 +371,43 @@ resource "fusionauth_application" "forum" {
     ]
   }
 }
-----
+```
 
 If you're only interested in initially creating and destroying resources you can as well ignore all changes.
 
-[source]
-----
+```hcl
 lifecycle {
   ignore_changes = all
 }
-----
+```
 
-== Terraform Remove
+## Terraform Remove
 
 If you want to remove a resource, comment out or delete the lines defining the resource in `main.tf`. Run `terraform plan` to double check. Then run `terraform apply`, which will destroy the resource.
 
-[WARNING]
-====
-If you run https://developer.hashicorp.com/terraform/cli/commands/destroy[terraform destroy] you need to be aware that all Terraform managed resources will be destroyed.
-====
+<Aside type="caution">
+If you run [`terraform destroy`](https://developer.hashicorp.com/terraform/cli/commands/destroy), be aware that all Terraform managed resources will be destroyed.
+</Aside>
 
-=== Prevent Destroy
-If you still want to make sure that certain resources aren't destroyed, you can specify the https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#prevent_destroy[prevent_destroy] lifecycle meta-argument as a measure of safety against the accidental replacement of objects that may be costly to reproduce. However, it will make certain configuration changes impossible to apply, and will prevent the use of the `terraform destroy` command once such objects are created.
+### Prevent Destroy
+If you still want to make sure that certain resources aren't destroyed, you can specify the [`prevent_destroy`](https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#prevent_destroy lifecycle) meta-argument as a measure of safety against the accidental replacement of objects that may be costly to reproduce. However, it will make certain configuration changes impossible to apply, and will prevent the use of the `terraform destroy` command once such objects are created.
 
-[source]
-----
+```hcl
 lifecycle {
   prevent_destroy = true
 }
-----
+```
 
 A good example would be an in-use FusionAuth Tenant. Deleting a Tenant removes all the associated Applications, Groups, and Users.
 
 [source]
 ----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/examples/create/main.tf[tags=createForumTenant]
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/examples/create/main.tf[tags=createForumTenant]
 ----
 The same meta-argument you can use for Terraform managed non-deletable resources like Default Tenant and FusionAuth Application as Terraform would not be able to anyway.
 
 [source]
 ----
-include::https://raw.githubusercontent.com/sonderformat-llc/fusionauth-terraform-examples/main/examples/import/main.tf[tags=defaultApplicationImport]
+include::https://raw.githubusercontent.com/fusionauth/fusionauth-example-terraform/main/examples/import/main.tf[tags=defaultApplicationImport]
 ----
+
