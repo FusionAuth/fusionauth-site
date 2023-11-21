@@ -1,0 +1,27 @@
+import InlineField from 'src/components/InlineField.astro';
+
+FusionAuth provides `data` fields on many types of objects:
+
+* Applications
+* Tenants
+* Groups
+* Users
+* Registrations
+* Consents
+
+If you are using the Elasticsearch search engine, the <InlineField>user.data</InlineField>, <InlineField>registration.data</InlineField>, and <InlineField>entity.data</InlineField> fields are indexed by Elasticsearch.
+
+For example, you could create a field contained in <InlineField>user.data</InlineField> called <InlineField>migrated</InlineField> and store a boolean value. If you later set that field to an object value for any user, you won't be able to search for that user. Other users added after this user will be found, however, as long as they have the correct boolean value for <InlineField>user.data.migrated</InlineField> (or no value).
+
+Elasticsearch requires fields to have the same data type across all indexed objects. In the example above, once Elasticsearch "knows" that <InlineField>user.data.migrated</InlineField> is a boolean, it expects this field, if present, to be a boolean for all users.
+
+Therefore, you should not change the data type of fields stored in these fields across entities. This must be enforced by any software that updates these fields. There's an [open GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/1149) to allow FusionAuth to enforce the Elasticsearch schema.
+
+Other object <InlineField>data</InlineField> fields may in the future be indexed by Elasticsearch. Therefore, it is recommended to maintain a consistent schema for all data contained in <InlineField>data</InlineField> fields.
+
+This limitation applies only to installations using the Elasticsearch search engine. However, if you start with the database search engine and eventually need to switch to the Elasticsearch search engine because the database search engine no longer meets your needs, if you have not enforced consistency in the `data` field types, you will not be able to do so.
+
+Dates that are stored in the <InlineField>data</InlineField> field must be valid. Dates such as "0000-00-00" will fail to parse, for example. Some databases will return that value for invalid timestamps. When setting <InlineField>data</InlineField> values, invalid dates should be set to `null` to keep the schema valid.
+
+If you do not enforce the schema, objects will be mysteriously hidden from searches. It can also result in a [MapperParsingException](/docs/operate/troubleshooting/troubleshooting#mapperparsingexception).
+
