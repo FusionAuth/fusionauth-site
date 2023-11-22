@@ -35,13 +35,12 @@ class DirectDownloads {
 
   constructor() {
     this.#container = document.getElementById('downloads');
-    console.log(this.#container)
 
     if (!this.#loadCache()) {
       this.#getVersions();
     } else {
       this.#render();
-      setTimeout(this.#getVersions, 1000);
+      setTimeout(this.#getVersions.bind(this), 1000);
     }
   }
 
