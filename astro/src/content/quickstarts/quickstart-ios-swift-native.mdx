@@ -1,0 +1,226 @@
+---
+title: Apple iOS Swift
+description: Quickstart integration of a Swift and SwiftUI-based iOS app with FusionAuth
+navcategory: getting-started
+prerequisites: XCode Studio, Git, Docker
+section: native
+technology: iOS
+language: Swift
+icon: /img/icons/ios.svg
+faIcon: fa-ios
+color: indigo
+cta: EmailListCTA
+---
+import Aside from '../../components/Aside.astro';
+import LoginAfter from '../../diagrams/quickstarts/login-after-native.astro';
+import LoginBefore from '../../diagrams/quickstarts/login-before-native.astro';
+import IconButton from '../../components/IconButton.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+
+In this quickstart you are going to build an iOS app with Swift and SwiftUI and integrate it with FusionAuth.
+You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM), a global leader in converting dollars into coins.
+It'll have areas reserved for users who have logged in as well as public facing sections.
+
+The docker compose file and source code for a complete application are available at
+[https://github.com/FusionAuth/fusionauth-quickstart-java-android-native](https://github.com/FusionAuth/fusionauth-quickstart-java-android-native).
+
+## Prerequisites
+
+- [Xcode](https://developer.apple.com/xcode/): The official IDE for iOS development. Install it from the Mac App Store.
+- Optional: An Apple Developer Account: Necessary for running your app on a device and publishing your app. You can still develop and test the app in a simulator without an account.
+- [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. Ensure you also have [docker compose](https://docs.docker.com/compose/) installed.
+- (Alternatively, you can [Install FusionAuth Manually](https://fusionauth.io/docs/v1/tech/installation-guide/)).
+
+This app was built using of [AppAuth](https://github.com/openid/AppAuth-ios), which is an open source client SDK for communicating with OAuth 2.0 and OpenID Connect providers. AppAuth supports AppAuth supports iOS 7 and above.
+
+## General Architecture
+
+While this sample application doesn't have login functionality without FusionAuth, a more typical integration will replace an existing login system with FusionAuth.
+
+In that case, the system might look like this before FusionAuth is introduced.
+
+<LoginBefore/>
+
+The login flow will look like this after FusionAuth is introduced.
+
+<LoginAfter/>
+
+In general, you are introducing FusionAuth in order to normalize and consolidate user data. This helps make sure it is consistent and up-to-date as well as offloading your login security and functionality to FusionAuth.
+
+## Getting Started
+
+In this section, you'll get FusionAuth up and running and use `git` to create a new application.
+
+### Clone the Code
+
+First off, grab the code from the repository and change into that directory.
+
+```shell
+git clone https://github.com/FusionAuth/fusionauth-quickstart-ios-swift-native
+cd fusionauth-quickstart-ios-swift-native
+```
+
+### Run FusionAuth via Docker
+
+In the root directory of the repo you'll find a Docker compose file (`docker-compose.yml`) and an environment variables configuration file (`.env`). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
+
+```
+docker compose up -d
+```
+
+Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/get-started/download-and-install/development/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to a certain initial state.
+
+<Aside type="note">
+    If you ever want to reset the FusionAuth system, delete the volumes created by docker compose by executing `docker compose down -v`, then re-run `docker compose up -d`.
+</Aside>
+
+FusionAuth will be initially configured with these settings:
+
+* Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
+* Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
+* Your example username is `richard@example.com` and the password is `password`.
+* Your admin username is `admin@example.com` and the password is `password`.
+* The base URL of FusionAuth `http://localhost:9011/`.
+
+### Expose FusionAuth Instance
+
+You can skip this step if you are running the iOS app in the simulator. 
+
+To make sure your local FusionAuth instance is accessible to your iOS app, you need to [expose it to the Internet](/docs/get-started/download-and-install/development/exposing-instance). Write down the URL ngrok gave you as you'll need it soon.
+
+### Configure FusionAuth Instance
+
+Now that you have [exposed your instance](#expose-fusionauth-instance), you need to update the Tenant issuer to make sure it matches the given address.
+
+Log into the [FusionAuth admin UI](http://localhost:9011/admin), browse to `Tenants` in the sidebar, click <IconButton icon="edit" color="blue" /> on the **Default** tenant to edit it. Paste the complete address _(with protocol and domain)_ you copied from ngrok into the `Issuer` field (e.g. `https://6d1e-2804-431-c7c9-739-4703-98a7-4b81-5ba6.ngrok-free.app`). Save the application by clicking the <IconButton icon="save" color="blue" /> icon in the top right corner.
+
+Navigate to `Applications` and click <IconButton icon="edit" color="blue" /> on the **Example Android App** application. Click on the `JWT` tab, change both `Access token signing key` and `Id token signing key` to `Auto generate a new key on save...` and save the application.
+
+<Aside type="note">
+You must create new keys after modifying the `Tenant` because the `Issuer` field is embedded in the key.
+</Aside>
+
+### Create your Android App
+
+Now you are going to create an Android app. While this section builds a simple Android app on top of the [AppAuth demo app](https://github.com/openid/AppAuth-Android), you can use the same configuration to integrate your existing app with FusionAuth.
+
+```shell
+git clone https://github.com/FusionAuth/openid-AppAuth-Android.git
+cd openid-AppAuth-Android
+```
+
+Start by removing some unused files:
+
+```shell
+rm app/java/io/fusionauth/app/BrowserSelectionAdapter.java
+rm app/res/layout/browser_selector_layout.xml
+```
+
+Change the package namespace in `app/build.gradle`. You can replace the entire file with below contents.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/build.gradle"
+            lang="groovy"/>
+
+Replace `app/AndroidManifest.xml` as well.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/AndroidManifest.xml"
+            lang="xml"/>
+
+## Authentication
+
+We'll use the [AppAuth Library](https://github.com/openid/AppAuth-Android), which simplifies integrating with FusionAuth and creating a secure web application.
+
+### Configure AppAuth
+
+Modify `app/res/raw/auth_config.json` to use the values provisioned by Kickstart. Update the `discovery_uri` value; change `https://[YOUR-NGROK-MAIN-DOMAIN]` to the URL you wrote when [exposing your instance](#expose-fusionauth-instance).
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/raw/auth_config.json"
+            lang="json"/>
+
+### Change Activities
+
+An [Activity](https://developer.android.com/guide/components/activities/intro-activities) is a screen for your app, combining the User Interface as well as the logic to handle it. Start by changing the login activity layout at `app/res/layout/activity_login.xml`. Replace it with the below XML.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/layout/activity_login.xml"
+            lang="xml"/>
+
+Now modify login activity logic by replacing `app/java/io/fusionauth/app/LoginActivity.java` with this code.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/java/io/fusionauth/app/LoginActivity.java"
+            lang="java"/>
+
+Update the main screen layout in the file `app/res/layout/activity_token.xml`.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/layout/activity_token.xml"
+            lang="xml"/>
+
+And finally, change the main screen logic by replacing the content of `app/java/io/fusionauth/app/TokenActivity.java` with the below.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/java/io/fusionauth/app/TokenActivity.java"
+            lang="java"/>
+
+## App Customization
+
+In this section, you'll update the look and feel of your native application to match the ChangeBank banking styling.
+
+### Change Colors and Strings
+
+Change the application colors in `app/res/values/colors.xml` to the ones used by Changebank.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/values/colors.xml"
+            lang="xml"/>
+
+Modify strings shown in the user interface by updating `app/res/values/strings.xml`.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/values/strings.xml"
+            lang="xml"/>
+
+### Add Styling
+
+Now, add image assets to make this look like a real application with the following shell commands.
+
+```shell
+curl -o app/res/drawable/changebank.png https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/drawable/changebank.png
+curl -o app/res/mipmap-hdpi/ic_launcher.png https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/mipmap-hdpi/ic_launcher.png
+curl -o app/res/mipmap-hdpi/ic_launcher.png https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/mipmap-hdpi/ic_launcher.png
+curl -o app/res/mipmap-mdpi/ic_launcher.png https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/mipmap-mdpi/ic_launcher.png
+curl -o app/res/mipmap-xhdpi/ic_launcher.png https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/mipmap-xhdpi/ic_launcher.png
+curl -o app/res/mipmap-xxhdpi/ic_launcher.png https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/mipmap-xxhdpi/ic_launcher.png
+curl -o app/res/mipmap-xxxhdpi/ic_launcher.png https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/mipmap-xxxhdpi/ic_launcher.png
+```
+
+Once you've created these files, you can test the application out.
+
+## Run the App
+
+You can either [connect a hardware device](https://developer.android.com/studio/run/device) or create an Android Virtual Device to run the [Android Emulator](https://developer.android.com/studio/run/emulator)
+
+[Build and run the app](https://developer.android.com/studio/run/) following Android Studio guidelines.
+
+## Next Steps
+
+This quickstart is a great way to get a proof of concept up and running quickly, but to run your application in production, there are some things you're going to want to do.
+
+### FusionAuth Customization
+
+FusionAuth gives you the ability to customize just about everything with the user's experience and your application's integration. This includes
+* [Hosted pages](/docs/customize/look-and-feel/) such as login, registration, email verification, and many more
+* [Email templates](/docs/customize/email-and-messages/email-templates)
+* [User data and custom claims in access token JWTs](/articles/tokens/jwt-components-explained)
+
+### Security
+* Implement refresh tokens using [AppAuth](https://github.com/openid/AppAuth-Android)
+* You may want to customize the [token expiration times and policies](/docs/lifecycle/authenticate-users/oauth/#configure-application-oauth-settings) in FusionAuth
+* Choose [password rules](/docs/get-started/core-concepts/tenants#password) and a [hashing algorithm](/docs/reference/password-hashes) that meet your security needs
+
+### Tenant and Application Management
+* Model your application topology using [Applications](/docs/get-started/core-concepts/applications), [Roles](/docs/get-started/core-concepts/roles), [Groups](/docs/get-started/core-concepts/groups), [Entities](/docs/get-started/core-concepts/groups), and more
+* Set up [MFA](/docs/lifecycle/authenticate-users/multi-factor-authentication), [Social login](/docs/lifecycle/authenticate-users/identity-providers/), and/or [SAML](/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2) integrations
+* Integrate with external systems using [Webhooks](/docs/extend/events-and-webhooks/), [SCIM](/docs/lifecycle/migrate-users/scim/scim), and [Lambdas](/docs/extend/code/lambdas/)
+
+## Troubleshooting
+
+* I can't log in
+
+Make sure you have the right values at `app/res/raw/auth_config.json`. Double-check the `Issuer` in the **Tenant** to make sure it matches the public URL that FusionAuth is running at.
+
