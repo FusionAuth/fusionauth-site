@@ -15,7 +15,7 @@ coderoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-php
 import Aside from '../../components/Aside.astro';
 import LoginAfter from '../../diagrams/quickstarts/login-after.astro';
 import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
-import RemoteCode from '../../components/RemoteCode.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
 import Uielement from '../../components/Uielement.astro';
 import Field from '../../components/Field.astro';
 import Breadcrumb from '../../components/Breadcrumb.astro';
@@ -29,7 +29,9 @@ https://github.com/FusionAuth/fusionauth-quickstart-php-drupal-web
 
 ## Prerequisites
 
-- [Composer](https://getcomposer.org/).
+- [PHP](https://www.php.net/downloads.php) 8.1.0+
+- [Composer](https://getcomposer.org/)
+- [GD extension](https://www.php.net/manual/en/book.image.php)
 - [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](/docs/v1/tech/installation-guide/)).
 
 <Aside type="note">
@@ -107,7 +109,7 @@ On <Breadcrumb>Step 4</Breadcrumb>, enter the following database connection deta
 
 Click <Uielement label="Save and continue"/>.
 
-On <Breadcrumb label="Step 7"/>, enter the following values.
+On <Breadcrumb>Step 7</Breadcrumb>, enter the following values.
 
 - <Field label="Site name"/>: `Change Bank`.
 - <Field label="Site email address"/>: `admin@example.com`.
@@ -128,7 +130,11 @@ In a terminal, run the following command from the `your-application` directory.
 composer require 'drupal/openid_connect:3.x-dev@dev' 'drupal/admin_toolbar:^3.4'
 ```
 
-Next, enable the modules by visiting the extensions page of your Drupal application at http://localhost/admin/modules. Search for "OpenID Connect" and "Admin Toolbar" using the <Field label="Filter"/> field. Select the module checkboxes and click the <Uielement label="Install"/> button.
+#### Enabling Extensions Via UI
+
+You can enable the modules by visiting the extensions page of your Drupal application at http://localhost/admin/modules. Search for "OpenID Connect" and "Admin Toolbar" using the <Field label="Filter"/> field. Select the module checkboxes and click the <Uielement label="Install"/> button.
+
+#### Enabling Extensions With Drush
 
 Alternatively, you can use Drush to enable the modules. Drush is a command line shell and Unix scripting interface for Drupal, available as a [composer package](https://packagist.org/packages/drush/drush). Install it by running the following command.
 
@@ -207,9 +213,17 @@ Add a new client by clicking on <Uielement label="+ Generic OAuth 2.0"/> and fil
 - <Field label="Token endpoint"/>: `http://host.docker.internal:9011/oauth2/token`
 - <Field label="UserInfo endpoint"/>: `http://host.docker.internal:9011/oauth2/userinfo`
 
+<Aside>
+  You may need to update your hosts file to include an entry for `127.0.0.1 host.docker.internal` if it's not already present. On macOS and Linux you can achieve this by running the following command:
+
+  ```
+  echo "127.0.0.1 host.docker.internal" | sudo tee -a /etc/hosts
+  ```
+</Aside>
+
 Scroll down and click <Uielement label="Create OpenID Connect client"/>.
 
-While on the page that lists your newly created client, click the <Breadcrumb label="Settings"/> tab. Under the section <Breadcrumb label="OpenID buttons display in user login form"/>, change the value from `Hidden` to `Below` to display the "Login with FusionAuth" button on the login page.
+While on the page that lists your newly created client, click the <Breadcrumb>Settings</Breadcrumb> tab. Under the section <Breadcrumb>OpenID buttons display in user login form</Breadcrumb>, change the value from `Hidden` to `Below` to display the "Login with FusionAuth" button on the login page.
 
 Scroll down and click <Uielement label="Save configuration"/> to save the settings.
 
@@ -499,11 +513,15 @@ To make the blocks available to the application, you need to make some changes t
 
 #### Enable The Changebank Module
 
-To enable the Changebank module, navigate to http://localhost/admin/modules while logged in as admin and select the checkbox next to the Changebank module item. Click the <Uielement label="Install"/> button. You can also enable the module by running the following command in the Drupal Docker container.
+To enable the Changebank module, navigate to http://localhost/admin/modules while logged in as admin and select the checkbox next to the Changebank module item. Click the <Uielement label="Install"/> button.
+
+<Aside type="note">
+You can also enable the module by running the following command in the Drupal Docker container.
 
 ```shell
 vendor/bin/drush pm-enable changebank
 ```
+</Aside>
 
 ### Add Styling
 
@@ -567,6 +585,12 @@ vendor/bin/drush pm-enable twig_tweak
 
 In the subtheme directory of your application, add a couple of templates to override the default templates provided by the Bootstrap Barrio theme. This will allow you to customize the markup of the application.
 
+The `page--front.html.twig` template file you will create uses an image that is currently not in your application. To copy the image to your application, run the following command from `your-application` directory.
+
+```shell
+cp ../complete-application/web/sites/default/files/money-new.jpg  web/sites/default/files/money-new.jpg
+```
+
 Navigate to `your-application/web/themes/custom/subtheme/templates/`. If the `templates` directory is not there, you may need to create it.
 
 In the templates directory, create the following files:
@@ -574,12 +598,6 @@ In the templates directory, create the following files:
 - `page--front.html.twig`
 - `block--system-branding-block.html.twig`
 - `region--secondary-menu.html.twig`
-
-The `page--front.html.twig` file uses an image that is currently not in your application. To copy the image to your application, run the following command from `your-application`.
-
-```shell
-cp ../complete-application/web/sites/default/files/money-new.jpg  web/sites/default/files/money-new.jpg
-```
 
 In the page template for the front page (called `page--front.html.twig`), add the following code.
 
@@ -646,7 +664,7 @@ Scroll down to the Primary Menu section and click <Uielement label="Place block"
 - Type `Changebank Menu` in the <Field label="Filter"/> field.
 - Click <Uielement label="Place block"/> to place the block in the region.
 - Uncheck the <Uielement label="Display title"/> checkbox so as not to display the title.
-- Click on the <Breadcrumb label="Roles"/> tab under <Breadcrumb label="Visibility"/> and enable the `Authenticated user` role.
+- Click on the <Breadcrumb>Roles</Breadcrumb> tab under <Breadcrumb>Visibility</Breadcrumb> and enable the `Authenticated user` role.
 - Click on <Uielement label="Save block"/>.
 
 <Aside type="note">
@@ -660,7 +678,7 @@ Scroll down to the Secondary Menu section and click <Uielement label="Place bloc
 - Type `User Email Block` in the <Field label="Filter"/> field.
 - Click <Uielement label="Place block"/> to place the block in the region.
 - Uncheck the <Uielement label="Display title"/> checkbox.
-- Click the <Breadcrumb label="Roles"/> tab under <Breadcrumb label="Visibility"/> and enable the `Authenticated user` role.
+- Click the <Breadcrumb>Roles</Breadcrumb> tab under <Breadcrumb>Visibility</Breadcrumb> and enable the `Authenticated user` role.
 - Click on <Uielement label="Save block"/>.
 
 #### Enable The User Login And Logout Block
@@ -670,7 +688,7 @@ Scroll down to the Secondary Menu section and click <Uielement label="Place bloc
 - Type `User Login Logout Block` in the <Field label="Filter"/> field.
 - Click <Uielement label="Place block"/> to place the block in the region.
 - Uncheck the <Uielement label="Display title"/> checkbox.
-- Leave the <Breadcrumb label="Roles"/> tab under <Breadcrumb label="Visibility"/> set to any role by not selecting any of the options (the visibility of the login and logout links is controlled in your custom module).
+- Leave the <Breadcrumb>Roles</Breadcrumb> tab under <Breadcrumb>Visibility</Breadcrumb> set to any role by not selecting any of the options (the visibility of the login and logout links is controlled in your custom module).
 - Click on <Uielement label="Save block"/>.
 
 #### Default Blocks
@@ -683,7 +701,7 @@ To disable `Breadcrumbs`, click the dropdown arrow next to the `Breadcrumbs` blo
 
 The theme we used also has default blocks, like `Search Form (wide)` in the top header form and `Search Form (narrow)` in the sidebar first section. You don't need search functionality in this application, so remove these blocks by clicking on the dropdown arrow next to each and selecting <Uielement label="Remove"/>.
 
-Now let's set the Main Navigation block to only be visible to anonymous users. Click the <Uielement label="Configure"/> link next to the Main Navigation block. Click the <Breadcrumb label="Roles"/> tab under <Breadcrumb label="Visibility"/> and select the `Anonymous user` role. Click <Uielement label="Save block"/>.
+Now let's set the Main Navigation block to only be visible to anonymous users. Click the <Uielement label="Configure"/> link next to the Main Navigation block. Click the <Breadcrumb>Roles</Breadcrumb> tab under <Breadcrumb>Visibility</Breadcrumb> and select the `Anonymous user` role. Click <Uielement label="Save block"/>.
 
 Move the Site Branding block to the Secondary Menu section by dragging the block and dropping it into the region above the other two blocks. Scroll down and click <Uielement label="Save blocks"/>.
 
@@ -691,7 +709,7 @@ Finally, configure the Site Branding block to only display the logo by uncheckin
 
 ### Set Login Redirect
 
-Navigate to http://localhost/admin/config/people/openid-connect and click the <Breadcrumb label="Settings"/> tab.
+Navigate to http://localhost/admin/config/people/openid-connect and click the <Breadcrumb>Settings</Breadcrumb> tab.
 
 Since you have the `/account` route set up in your custom module, let's make sure that the user is redirected to that page after logging in and not the standard user page.
 
