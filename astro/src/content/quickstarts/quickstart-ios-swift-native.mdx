@@ -100,42 +100,67 @@ Navigate to `Applications` and click <IconButton icon="edit" color="blue" /> on 
 You must create new keys after modifying the `Tenant` because the `Issuer` field is embedded in the key.
 </Aside>
 
-### Create your Android App
+### Create your iOS App
 
-Now you are going to create an Android app. While this section builds a simple Android app on top of the [AppAuth demo app](https://github.com/openid/AppAuth-Android), you can use the same configuration to integrate your existing app with FusionAuth.
+Now you are going to create an iOS app. While this section builds a simple iOS app using [AppAuth](https://github.com/openid/AppAuth-ios), you can use the same configuration to integrate your existing app with FusionAuth.
 
-```shell
-git clone https://github.com/FusionAuth/openid-AppAuth-Android.git
-cd openid-AppAuth-Android
-```
+Open XCode and click File -> New Project. Choose "iOS" as the platform, and "App" as the application type. Click "Next"
 
-Start by removing some unused files:
+Set the name of the product as "ChangeBank". Set the "Organization Identifier" to "FusionAuth". Note that it if you use different values here, you will need to update the redirect URLs in your FusionAuth application to match your changes. 
+Click Next, and choose a location on your computer to save the project to. 
 
-```shell
-rm app/java/io/fusionauth/app/BrowserSelectionAdapter.java
-rm app/res/layout/browser_selector_layout.xml
-```
+At this point, you'll have the standard "Hello World" app. You can run it in the simulator by clicking the play button in the top left corner of XCode, or selecting "Product" -> "Run" from the menu bar.
 
-Change the package namespace in `app/build.gradle`. You can replace the entire file with below contents.
+## Add the AppAuth library
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/build.gradle"
-            lang="groovy"/>
+We'll use the [AppAuth Library](https://github.com/openid/AppAuth-ios), which simplifies integrating with FusionAuth and creating a secure web application.
 
-Replace `app/AndroidManifest.xml` as well.
+There are many ways to add the AppAuth library to your project. The simplest without installing any additional tools is to add the package to the project. 
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/AndroidManifest.xml"
-            lang="xml"/>
+Select "File" -> "Add Packages" from the menu bar. In the search bar, paste in "https://github.com/openid/AppAuth-ios" and click "Add Package". You will be asked to choose the packages to install. Select "AppAuth" and "AppAuthCore". Click "Add Package" to add the packages to your project.
 
-## Authentication
+### Add Assets And Styles
 
-We'll use the [AppAuth Library](https://github.com/openid/AppAuth-Android), which simplifies integrating with FusionAuth and creating a secure web application.
+Before starting to code, you'll need to add some assets and styles to your project that will be referenced later.
 
-### Configure AppAuth
+Add the ChangeBank logo to the project. You can download it from [here](link). Click on the "Assets" folder in the project navigator to open the asset manager. Drag and drop the downloaded `ChangeBank.png` into the asset manager.
 
-Modify `app/res/raw/auth_config.json` to use the values provisioned by Kickstart. Update the `discovery_uri` value; change `https://[YOUR-NGROK-MAIN-DOMAIN]` to the URL you wrote when [exposing your instance](#expose-fusionauth-instance).
+Add an app icon. You can download it from [here](link). Click on the "Assets" folder in the project navigator to open the asset manager. Click the "AppIcon" item in the asset manager. Now Drag and drop the downloaded `AppIcon.png` into the AppIcon placeholder in the asset manager.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/raw/auth_config.json"
-            lang="json"/>
+Add a new styles file to the project. Select "File" -> "New" -> "File" from the menu bar. Select "Swift File" as the template. Click "Next". Set the name of the file to "Styles". Click "Create".
+
+Add the following code to the `Styles.swift` file:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-swift-ios-native/main/complete-application/Styles.swift"
+            lang="swift"/>
+
+
+### Add A Plist File
+
+To store the settings necessary to connect to the FusionAuth instance, you'll need to add a plist file to the project. None of the settings stored are sensitive, so you can safely store them in an unencrypted plist file.
+
+Select "File" -> "New" -> "File" from the menu bar. Select "Property List" in the "Resource" section as the template. Click "Next". Set the name of the file to "ChangeBank". Click "Create". The file will be opened in the plist editor.
+
+Click the "+" button next to the "Root" item. Name the new item "authCredentials", and select the "Type" as "Dictionary". Click the "+" button next to the "authCredentials" item. Name the new item "clientId", and select the "type" as "String". In the "Value" column, enter "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e". 
+
+Click the "+" button next to the "authCredentials" item again. Name the new item "issuer", and select the "type" as "String". In the "Value" column, enter 'http://localhost:9011'.
+
+### Implement AppAuth Logic
+
+The AppAuth library was built before SwiftUI, so it uses UIKit. To use it in a SwiftUI app, you'll need to implement some bridge logic between the two frameworks.
+
+The main component to add is an `AppDelegate` class. This class will be responsible for breaking out and handling the OAuth flow and interfacing with AppAuth. 
+
+Select "File" -> "New" -> "File" from the menu bar. Select "Swift File" as the template. Click "Next". Set the name of the file to "AppDelegate". Click "Create".
+
+Add the following code to the `AppDelegate.swift` file:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-swift-ios-native/main/complete-application/AppDelegate.swift"
+            lang="swift"/>
+
+The next step is to add an authentication flow manager class to the app. This class will be responsible for initiating login and logout flows, and handling the results of those flows. It will also be responsible for storing the user's authentication state, and retrieving the user's profile information from FusionAuth.
+
+
 
 ### Change Activities
 
@@ -222,5 +247,5 @@ FusionAuth gives you the ability to customize just about everything with the use
 
 * I can't log in
 
-Make sure you have the right values at `app/res/raw/auth_config.json`. Double-check the `Issuer` in the **Tenant** to make sure it matches the public URL that FusionAuth is running at.
+Make sure you have the right values in the `ChangeBank.plist` file. Double-check the `Issuer` in the **Tenant** to make sure it matches the public URL that FusionAuth is running at.
 
