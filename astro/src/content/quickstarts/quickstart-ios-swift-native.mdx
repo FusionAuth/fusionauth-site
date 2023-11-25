@@ -22,7 +22,7 @@ You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUs
 It'll have areas reserved for users who have logged in as well as public facing sections.
 
 The docker compose file and source code for a complete application are available at
-[https://github.com/FusionAuth/fusionauth-quickstart-java-android-native](https://github.com/FusionAuth/fusionauth-quickstart-java-android-native).
+[https://github.com/FusionAuth/fusionauth-quickstart-swift-ios-native](https://github.com/FusionAuth/fusionauth-quickstart-swift-ios-native).
 
 ## Prerequisites
 
@@ -82,24 +82,6 @@ FusionAuth will be initially configured with these settings:
 * Your admin username is `admin@example.com` and the password is `password`.
 * The base URL of FusionAuth `http://localhost:9011/`.
 
-### Expose FusionAuth Instance
-
-You can skip this step if you are running the iOS app in the simulator. 
-
-To make sure your local FusionAuth instance is accessible to your iOS app, you need to [expose it to the Internet](/docs/get-started/download-and-install/development/exposing-instance). Write down the URL ngrok gave you as you'll need it soon.
-
-### Configure FusionAuth Instance
-
-Now that you have [exposed your instance](#expose-fusionauth-instance), you need to update the Tenant issuer to make sure it matches the given address.
-
-Log into the [FusionAuth admin UI](http://localhost:9011/admin), browse to `Tenants` in the sidebar, click <IconButton icon="edit" color="blue" /> on the **Default** tenant to edit it. Paste the complete address _(with protocol and domain)_ you copied from ngrok into the `Issuer` field (e.g. `https://6d1e-2804-431-c7c9-739-4703-98a7-4b81-5ba6.ngrok-free.app`). Save the application by clicking the <IconButton icon="save" color="blue" /> icon in the top right corner.
-
-Navigate to `Applications` and click <IconButton icon="edit" color="blue" /> on the **Example Android App** application. Click on the `JWT` tab, change both `Access token signing key` and `Id token signing key` to `Auto generate a new key on save...` and save the application.
-
-<Aside type="note">
-You must create new keys after modifying the `Tenant` because the `Issuer` field is embedded in the key.
-</Aside>
-
 ### Create your iOS App
 
 Now you are going to create an iOS app. While this section builds a simple iOS app using [AppAuth](https://github.com/openid/AppAuth-ios), you can use the same configuration to integrate your existing app with FusionAuth.
@@ -137,7 +119,7 @@ Add the following code to the `Styles.swift` file:
 
 ### Add A Plist File
 
-To store the settings necessary to connect to the FusionAuth instance, you'll need to add a plist file to the project. None of the settings stored are sensitive, so you can safely store them in an unencrypted plist file.
+To store the settings necessary to connect to the FusionAuth instance, you'll need to add a Property List file, or `plist file` for short to the project. None of the settings stored are sensitive, so you can safely store them in an unencrypted plist file.
 
 Select "File" -> "New" -> "File" from the menu bar. Select "Property List" in the "Resource" section as the template. Click "Next". Set the name of the file to "ChangeBank". Click "Create". The file will be opened in the plist editor.
 
@@ -145,11 +127,20 @@ Click the "+" button next to the "Root" item. Name the new item "authCredentials
 
 Click the "+" button next to the "authCredentials" item again. Name the new item "issuer", and select the "type" as "String". In the "Value" column, enter 'http://localhost:9011'.
 
+To read the settings from the plist file, you'll need to add a new class to the project. Select "File" -> "New" -> "File" from the menu bar. Select "Swift File" as the template. Click "Next". Set the name of the file to "AppSettingsReader". Click "Create".
+
+Add the following code to the `AppSettingsReader.swift` file:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-swift-ios-native/main/complete-application/AppSettingsReader.swift"
+            lang="swift"/>
+
+This code adds new structs to hold the credentials and issuer settings, and a class to read the settings from the plist file. 
+
 ### Implement AppAuth Logic
 
-The AppAuth library was built before SwiftUI, so it uses UIKit. To use it in a SwiftUI app, you'll need to implement some bridge logic between the two frameworks.
+The AppAuth library was built for [UIKit](https://developer.apple.com/documentation/uikit). To use it in a SwiftUI app, you'll need to implement some bridge logic between the two frameworks.
 
-The main component to add is an `AppDelegate` class. This class will be responsible for breaking out and handling the OAuth flow and interfacing with AppAuth. 
+The main component to add is an `AppDelegate` class. This class will be responsible for coordinating the breakout browser window to handle the OAuth flow and interfacing with AppAuth. 
 
 Select "File" -> "New" -> "File" from the menu bar. Select "Swift File" as the template. Click "Next". Set the name of the file to "AppDelegate". Click "Create".
 
@@ -158,69 +149,105 @@ Add the following code to the `AppDelegate.swift` file:
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-swift-ios-native/main/complete-application/AppDelegate.swift"
             lang="swift"/>
 
-The next step is to add an authentication flow manager class to the app. This class will be responsible for initiating login and logout flows, and handling the results of those flows. It will also be responsible for storing the user's authentication state, and retrieving the user's profile information from FusionAuth.
+
+The AppDelegate class extends UIResponder and adopts the UIApplicationDelegate protocol, which means it listens for events in the iOS app's lifecycle. 
+
+In the application(_:open:options:) method, this code checks if the URL being opened corresponds to an authorization flow and, if so, it tries to resume this flow. This flow relates to the situation where a user has completed a login or logout function in a web browser and the app is reopened via a callback URL from FusionAuth. The `resumeExternalUserAgentFlow(with:)` method is a part of AppAuth that handles the incoming URL and determines whether it corresponds to the AppAuth flow that was initiated, proceeding with the process if it matches.
+
+The next step is to add an authentication flow manager class to the app. This class will be responsible for discovering the auth server endpoints and keys, and initiating login and logout flows and handling the results of those flows. It will also be responsible for storing the user's authentication state, and retrieving the user's profile information from FusionAuth.
+
+Select the "File" -> "New" -> "File" from the menu bar. Select "Swift File" as the template. Click "Next". Set the name of the file to "UserAuth". Click "Create".
+
+Copy the following code into the `UserAuth.swift` file:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-swift-ios-native/main/complete-application/UserAuth.swift"
+            lang="swift"/>
+
+
+Since the `UserAuth` class will be used by multiple views to determine the user's logged in status and profile information, it is declared as an `ObservableObject`. This means that any SwiftUI views that use the `UserAuth` class will be notified when the `UserAuth` object changes. As we only want one instance of the `UserAuth` class, it should be instantiated in the main `App` class and passed to the views that need it via the root view's [`environmentObject` method](https://developer.apple.com/documentation/swiftui/view/environmentobject(_:)). This will make the `UserAuth` object available to all child views of the root view, and any views that need to access the `UserAuth` object can declare it as an `@EnvironmentObject` property.
+
+Update the `App` class in the `ChangBankApp.swift` file to instantiate the `UserAuth` object and pass it to the root view:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-swift-ios-native/main/complete-application/ChangBankApp.swift"
+            lang="swift"/>
+
+
+## Create the ContentView view
+
+The `ContentView` view is the root view of the app. It will display the login screen if the user is not logged in, and the main app screens if the user is logged in. The `UserAuth` object is accessed via the `@EnvironmentObject` property wrapper, and the `isLoggedIn` property is used to determine which view to display.
+
+Update the `ContentView` class in the `ContentView.swift` file to display the login screen if the user is not logged in, and the main app screens if the user is logged in:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-swift-ios-native/main/complete-application/ContentView.swift"
+            lang="swift"/>
+
+## Create the LoginView view
+
+The `LoginView` view is displayed when the user is not logged in. It contains a button that initiates the login flow. The `UserAuth` object is accessed via the `@EnvironmentObject` property wrapper, and the `login` method is called when the login button is pressed.
+
+Select "File" -> "New" -> "File" from the menu bar. Select "Swift File" as the template. Click "Next". Set the name of the file to "LoginView". Click "Create".
+
+Copy the following code into the `LoginView.swift` file:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-swift-ios-native/main/complete-application/LoginView.swift"
+            lang="swift"/>
+
+## Add the Logged in Home view
+
+The `HomeView` view is displayed when the user is logged in. It greets the user by name, retrieved from FusionAuth It contains a button that initiates the logout flow. The `UserAuth` object is accessed via the `@EnvironmentObject` property wrapper, and its `logout` method is called when the logout button is pressed.
+
+Select "File" -> "New" -> "File" from the menu bar. Select "Swift File" as the template. Click "Next". Set the name of the file to "HomeView". Click "Create".
+
+Copy the following code into the `HomeView.swift` file:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-swift-ios-native/main/complete-application/HomeView.swift"
+            lang="swift"/>
 
 
 
-### Change Activities
+## Add the Make Change view
 
-An [Activity](https://developer.android.com/guide/components/activities/intro-activities) is a screen for your app, combining the User Interface as well as the logic to handle it. Start by changing the login activity layout at `app/res/layout/activity_login.xml`. Replace it with the below XML.
+ChangeBank's main business is to convert your notes to coins. The `MakeChangeView` view is available when the user is logged in. This takes an amount in dollars and returns the equivalent amount in nickels and pennies. 
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/layout/activity_login.xml"
-            lang="xml"/>
+Select "File" -> "New" -> "File" from the menu bar. Select "Swift File" as the template. Click "Next". Set the name of the file to "MakeChangeView". Click "Create".
 
-Now modify login activity logic by replacing `app/java/io/fusionauth/app/LoginActivity.java` with this code.
+Copy the following code into the `MakeChangeView.swift` file:
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/java/io/fusionauth/app/LoginActivity.java"
-            lang="java"/>
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-swift-ios-native/main/complete-application/MakeChangeView.swift"
+            lang="swift"/>
 
-Update the main screen layout in the file `app/res/layout/activity_token.xml`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/layout/activity_token.xml"
-            lang="xml"/>
+## Run the App in the Simulator
 
-And finally, change the main screen logic by replacing the content of `app/java/io/fusionauth/app/TokenActivity.java` with the below.
+To run the app in the simulator, click the play button in the top left corner of XCode, or select "Product" -> "Run" from the menu bar. The app will be built and run in the simulator. 
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/java/io/fusionauth/app/TokenActivity.java"
-            lang="java"/>
+Click "Login". You should see a system notification and then be redirected to FusionAuth in a pop-up browser. Log in with the username `richard@example.com` and the password `password`. You should see the home screen with your name displayed, your balance and a logout button. 
 
-## App Customization
+At the bottom of the screen, you'll see a tab bar with two tabs. Click the "Make Change" tab. Enter an amount in dollars, and click "Make Change". You should see the equivalent amount in nickels and pennies displayed.
 
-In this section, you'll update the look and feel of your native application to match the ChangeBank banking styling.
+Navigate back to the home screen by clicking the "Home" tab. Click "Logout". You should see another system notification and then redirected to FusionAuth to log out. Then you'll be returned to the login screen.
 
-### Change Colors and Strings
+## Running the App on a Device
 
-Change the application colors in `app/res/values/colors.xml` to the ones used by Changebank.
+To run the app on your device, you'll need to make a few changes. This is because the app will be running on a different device to the FusionAuth instance, so it won't be able to access the FusionAuth instance via `localhost`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/values/colors.xml"
-            lang="xml"/>
+A simple way to get around this is to use [ngrok](https://ngrok.com/). Ngrok is a tool that allows you to expose a local server to the internet. You can follow the [guide ehere](/docs/get-started/download-and-install/development/exposing-instance). Note the URL ngrok gave you as you'll need it soon.
 
-Modify strings shown in the user interface by updating `app/res/values/strings.xml`.
+Now that you have, you need to update the FusionAuth Tenant issuer to make sure it matches the given address.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/values/strings.xml"
-            lang="xml"/>
+Log into the [FusionAuth admin UI](http://localhost:9011/admin), browse to `Tenants` in the sidebar, click <IconButton icon="edit" color="blue" /> on the **Default** tenant to edit it. Paste the complete address _(with protocol and domain)_ you copied from ngrok into the `Issuer` field (e.g. `https://6d1e-2804-431-c7c9-739-4703-98a7-4b81-5ba6.ngrok-free.app`). Save the application by clicking the <IconButton icon="save" color="blue" /> icon in the top right corner.
 
-### Add Styling
+Navigate to `Applications` and click <IconButton icon="edit" color="blue" /> on the **Example Apple SwiftUI iOS App** application. Click on the `JWT` tab, change both `Access token signing key` and `Id token signing key` to `Auto generate a new key on save...` and save the application.
 
-Now, add image assets to make this look like a real application with the following shell commands.
+<Aside type="note">
+You must create new keys after modifying the `Tenant` because the `Issuer` field is embedded in the key.
+</Aside>
 
-```shell
-curl -o app/res/drawable/changebank.png https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/drawable/changebank.png
-curl -o app/res/mipmap-hdpi/ic_launcher.png https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/mipmap-hdpi/ic_launcher.png
-curl -o app/res/mipmap-hdpi/ic_launcher.png https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/mipmap-hdpi/ic_launcher.png
-curl -o app/res/mipmap-mdpi/ic_launcher.png https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/mipmap-mdpi/ic_launcher.png
-curl -o app/res/mipmap-xhdpi/ic_launcher.png https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/mipmap-xhdpi/ic_launcher.png
-curl -o app/res/mipmap-xxhdpi/ic_launcher.png https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/mipmap-xxhdpi/ic_launcher.png
-curl -o app/res/mipmap-xxxhdpi/ic_launcher.png https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-android-native/main/complete-application/app/res/mipmap-xxxhdpi/ic_launcher.png
-```
+Now you need to update the `ChangeBank.plist` file to use the ngrok URL. Open the `ChangeBank.plist` file in the project navigator. Change the value of the `issuer` key to the ngrok URL.
 
-Once you've created these files, you can test the application out.
+After making these changes, you can run the app on your device. Connect your device to your computer via USB. In XCode, select your device from the device menu in the top left corner of the window. Click the play button in the top left corner of XCode, or select "Product" -> "Run" from the menu bar. The app will be built and run on your device.
 
-## Run the App
-
-You can either [connect a hardware device](https://developer.android.com/studio/run/device) or create an Android Virtual Device to run the [Android Emulator](https://developer.android.com/studio/run/emulator)
-
-[Build and run the app](https://developer.android.com/studio/run/) following Android Studio guidelines.
+Note that you will need to enabled [developer mode](https://developer.apple.com/documentation/xcode/enabling-developer-mode-on-a-device) on your device to run the app on your device. You will also need to associate a developer team with your XCode project. You can do this by selecting the project file in the project navigator, and selecting your team in the "Signing & Capabilities" tab. If you don't have a developer account, you can use your personal Apple ID as the team. 
 
 ## Next Steps
 
@@ -234,7 +261,7 @@ FusionAuth gives you the ability to customize just about everything with the use
 * [User data and custom claims in access token JWTs](/articles/tokens/jwt-components-explained)
 
 ### Security
-* Implement refresh tokens using [AppAuth](https://github.com/openid/AppAuth-Android)
+* Implement refresh tokens using [AppAuth](https://github.com/openid/AppAuth-ios)
 * You may want to customize the [token expiration times and policies](/docs/lifecycle/authenticate-users/oauth/#configure-application-oauth-settings) in FusionAuth
 * Choose [password rules](/docs/get-started/core-concepts/tenants#password) and a [hashing algorithm](/docs/reference/password-hashes) that meet your security needs
 
