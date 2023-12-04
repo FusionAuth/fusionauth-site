@@ -1,13 +1,100 @@
 ---
-// todo better styling on this mofo
-const { method, uri }: { method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', uri } = Astro.props;
+import Icon from '../icon/Icon.astro';
+
+const { authentication, method, title, uri } : {
+  authentication: ['api-key' | 'basic' | 'client-credentials' | 'jwt' | 'local-bypass' | 'none'],
+  description,
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+  uri
+} = Astro.props;
+
+// Parse URI
+let parts= [];
+let parameters = null;
+
+if (uri) {
+  let url = uri;
+
+  // Separate the URL from the query string
+  let q = uri.indexOf("?");
+  if (q >= 0) {
+    parameters = uri.substring(q);
+    url = url.substring(0, q );
+  }
+
+  // Optionally extract one or more segment.
+  let type = 'literal';
+  let atom = '';
+
+  for (let i = 0; i < url.length; i++) {
+    let c = url.charAt(i);
+    atom += c;
+
+    if (c === '{') {
+      parts.push({type: 'literal', value: atom.substring(0, atom.length - 1)});
+      type = 'segment';
+      atom = '{';
+    } else if (c === '}') {
+      parts.push({type: 'segment', value: atom});
+      type = 'literal';
+      atom = '';
+    } else if (i === url.length) {
+      if (atom.length > 0) {
+        parts.push({type: 'literal', value: atom});
+      }
+    }
+  }
+
+  // Account for a literal URL w/out any parameter segments
+  if (parts.length === 0) {
+    parts.push({type: 'literal', value: url});
+  }
+}
+
+const authenticationTypes = {
+  'api-key': {icon: 'lock', path: '/docs/apis/authentication#api-key-authentication'},
+  'none': {icon: 'unlock', path: '/docs/apis/authentication#no-authentication-required'},
+  'jwt': {icon: 'badge', path: '/docs/apis/authentication#jwt-authentication'},
+  'basic': {icon: 'shield', path: '/docs/apis/authentication#basic-authentication-using-an-api-key'},
+  'client-credentials': {icon: 'passport-red', path: '/docs/apis/authentication#client-credentials'},
+  'local-bypass': {icon: 'server', path: '/docs/apis/authentication#localhost-authentication-bypass'},
+}
 ---
-<div class="my-4">
-  <p class="my-0 font-semibold">URI</p>
+
+{(authentication || title) &&
+<div class="border-b-2 flex flex-row">
+  { authentication &&
+  <div class="mr-2 not-prose">
+    { authentication.map(i =>
+        <a class="mx-1 no-underline font-semibold" href={authenticationTypes[i].path}>
+          <Icon name={authenticationTypes[i].icon}/>
+        </a>
+    )}
+  </div>
+  }
+  { title &&
+  <span class="font-semibold">{ title }</span>
+  }
+</div>
+}
+
+<div class="mt-4 mb-8">
+  <p class="my-0">URI</p>
   <div class="bg-gray-800 my-0 py-2 px-4">
-    <span class="text-orange-500 font-bold pr-2">{ method }</span>
-    <span class="text-white api-uri-ref prose-code:text-blue-500 prose-code:border-0 prose-code:bg-slate-800">
-      <slot></slot>
+    <span class="text-orange-500 pr-2">{ method }</span>
+    <span class="text-white api-uri-ref">
+      { uri &&
+         parts.map(part =>
+           <span class:list={[ part.type === 'segment' ? 'text-blue-400' : '']}>{ part.value }</span>
+         )
+      }
+      { parameters && <span class="text-blue-400">{ parameters }</span> }
+      {/* Fallback, delete once we update all usages */}
+      { !uri &&
+          <span class="text-white api-uri-ref prose-code:text-blue-500 prose-code:border-0 prose-code:bg-slate-800">
+            <slot></slot>
+          </span>
+      }
     </span>
   </div>
 </div>
