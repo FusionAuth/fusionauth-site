@@ -57,14 +57,23 @@ If it is inline (for a field), use <AvailableSince since="1.5.0"> - [AvailableSi
   - See [Account Portal](astro/src/content/docs/get-started/download-and-install/account-portal.mdx) for an example. See the Astro docs for [exported variables](https://docs.astro.build/en/guides/markdown-content/#using-exported-variables-in-mdx) and [exported properties](https://docs.astro.build/en/guides/markdown-content/#exported-properties) to see what that is doing.
 - We currently use [FontAwesome v6](https://fontawesome.com/) to render icons, so you can use them to refer to UI buttons, like this:
     ```jsx
-    <IconButton icon="edit" color="blue" />
-    <IconButton icon="copy" color="purple" />
-    <IconButton icon="search" color="green" />
-    <IconButton icon="minus-circle" color="gray" />
-    <IconButton icon="trash" color="red" />
+    <IconButton icon="edit" />
+    <IconButton icon="copy" />
+    <IconButton icon="fa-search" />
     ```
 
     ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/719bffe8-2a54-41a2-a339-b3afeda8d499)
+
+Import the ocmponent:
+
+```
+import Icon from 'src/components/icon/Icon.astro';
+
+...
+    <IconButton name="plus" />
+```
+
+Review [the component for all options and icons](astro/src/components/icon/Icon.astro).
 
 ### Docs Navigation
 
