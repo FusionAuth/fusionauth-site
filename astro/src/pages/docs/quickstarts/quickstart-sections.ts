@@ -42,13 +42,6 @@ const qsSections: QuickStartSection[] = [
     desc: 'Traditional web applications that run on servers',
     articles: [
       {
-        href: '/blog/2022/03/07/single-sign-on-with-drupal',
-        title: 'Drupal',
-        icon: '/img/icons/drupal.svg',
-        faIcon: 'fa-droplet',
-        navColor: 'blue',
-      },
-      {
         href: '/blog/2021/12/06/how-to-set-up-single-sign-on-between-fusionauth-wordpress',
         title: 'Wordpress',
         icon: '/img/icons/wordpress.svg',
