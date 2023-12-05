@@ -47,7 +47,7 @@ In general, MFA outlines a system's capabilities, while 2FA describes how many f
 
 ### What is Adaptive Multi-factor Authentication?
 
-At its core, adaptive MFA is about flexibility and intelligence in security. You can read more about our approach to Adaptive MFA through our [Advanced Threat Detection](https://fusionauth.io/docs/operate/secure-and-monitor/advanced-threat-detection) features. 
+At its core, adaptive MFA is about flexibility and intelligence in security. You can read more about our approach to Adaptive MFA through our [Advanced Threat Detection](/docs/operate/secure-and-monitor/advanced-threat-detection) features. 
 
 Imagine a security system that not only asks for your credentials but also reads the room – where you are, what device you're using, even the time of day. It's like having a doorman who knows not just your face, but also your habits and preferences. If you're logging in from your usual laptop in the comfort of your home office, adaptive MFA might just give you a nod with a simple password check. But if you're trying to access sensitive data from a café in a different city, it might raise an eyebrow and ask for additional proof of identity, like a fingerprint or a one-time code sent to your phone.
 
