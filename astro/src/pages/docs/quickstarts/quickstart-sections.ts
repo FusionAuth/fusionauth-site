@@ -22,7 +22,7 @@ interface QuickStartSection {
 
 const qsSections: QuickStartSection[] = [
   {
-      key: 'fiveminute',
+      key: 'five-minute',
       icon: '/img/icons/qs-main.svg',
       faIcon: 'fa-code-simple',
       color: 'indigo',
