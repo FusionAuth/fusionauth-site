@@ -22,6 +22,17 @@ interface QuickStartSection {
 
 const qsSections: QuickStartSection[] = [
   {
+      key: 'five-minute',
+      icon: '/img/icons/qs-main.svg',
+      faIcon: 'fa-code-simple',
+      color: 'indigo',
+      title: '5-minute Guides',
+      anchorTag: '5-minute',
+      desc: 'Guides for getting up and running quickly',
+      articles: [
+      ],
+  },
+  {
     key: 'web',
     icon: '/img/icons/web-application.svg',
     faIcon: 'fa-code-simple',
@@ -30,13 +41,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'web-application',
     desc: 'Traditional web applications that run on servers',
     articles: [
-      {
-        href: '/blog/2022/03/07/single-sign-on-with-drupal',
-        title: 'Drupal',
-        icon: '/img/icons/drupal.svg',
-        faIcon: 'fa-droplet',
-        navColor: 'blue',
-      }
     ],
   },
   {
@@ -59,15 +63,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'mobile-app',
     desc: 'Mobile application that runs natively on a device',
     articles: [
-/*
-      {
-        href: '/docs/quickstarts/quickstart-flutter-native',
-        title: 'Flutter',
-        icon: '/img/icons/flutter.svg',
-        faIcon: 'fa-snake',
-        navColor: 'indigo'
-      },
-*/
     ],
   },
   {
@@ -79,28 +74,8 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'api',
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
-/*
-      {
-        href: '/docs/quickstarts/quickstart-dotnet-api',
-        title: '.NET Core',
-        icon: '/img/icons/dotnet-c.svg',
-        faIcon: 'fa-hashtag',
-        navColor: 'blue',
-      },
-*/
     ],
   },
-  {
-      key: 'fiveminute',
-      icon: '/img/icons/qs-main.svg',
-      faIcon: 'fa-code-simple',
-      color: 'indigo',
-      title: '5-minute Guides',
-      anchorTag: '5-minute',
-      desc: 'Guides for getting up and running quickly',
-      articles: [
-      ],
-    },
 ];
 
 // merge in quickstarts managed by astro to the list of quickstart links we have above
