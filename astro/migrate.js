@@ -435,7 +435,7 @@ const convert = (filePath, partial = false, parent = '') => {
     const uriMatch = line.match(/uri]#(.*)#/);
     let uri = uriMatch[1];
     uri = uri.replaceAll('\\', '').replaceAll('``', '`')
-    outLines.push(`<APIURI${method}>${uri}</APIURI>`);
+    outLines.push(`<API${method}>${uri}</API>`);
   }
 
   const convertSourceBlock = (header) => {
@@ -475,11 +475,11 @@ const convert = (filePath, partial = false, parent = '') => {
       // handle remote import
       if (jsonFile.startsWith('http')) {
         debugLog('handling remote json file ref');
-        addRemoteCodeRef(jsonFile, title); 
+        addRemoteCodeRef(jsonFile, title);
         lines.shift();
         return;
       }
-      
+
       const relativeMatch = jsonFile.match(/((?:\.\.\/)+src\/json)/);
       if (relativeMatch) {
         jsonFile = jsonFile.replace(relativeMatch[1], 'docs/src/json');
@@ -666,7 +666,7 @@ const convert = (filePath, partial = false, parent = '') => {
 
       if (matchingFiles.length > 0) {
         console.log(`Found a likely match for ${oldPath} in ${matchingFiles[0]}`);
-        
+
         return matchingFiles.map((f) => f.split('/').pop());
       } else {
         gitMoveFile(oldPath, newPath);
@@ -706,7 +706,7 @@ const convert = (filePath, partial = false, parent = '') => {
 
       if (platform === 'youtube') {
         outLines.push(`<iframe allowfullscreen="" frameborder="0" width="${width}" height="${height}" src="//www.youtube.com/embed/${id}?rel=0" enablejsapi="true" data-gtm-yt-inspected-8="true"></iframe>`);
-        
+
       }
     }
   };
