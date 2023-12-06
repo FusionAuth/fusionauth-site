@@ -38,9 +38,9 @@ One way is leveraging a distributed event system that notifies services when ref
 
 ### Example: Revoking JWTs in FusionAuth
 
-To illustrate this, I'm going to use [FusionAuth](https://fusionauth.io/)'s event and Webhook system as well as the `jwt.refresh-token.revoke` event. If you are building your own IdP or using another system, you might need to build out your own eventing system based on this article.
+To illustrate this, I'm going to use [FusionAuth](/)'s event and Webhook system as well as the *jwt.refresh-token.revoke* event. If you are building your own IdP or using another system, you might need to build out your own eventing system based on this article.
 
-The FusionAuth `jwt.refresh-token.revoke` event looks like this:
+The FusionAuth **jwt.refresh-token.revoke** event looks like this:
 
 ```json
 {
@@ -54,7 +54,7 @@ The FusionAuth `jwt.refresh-token.revoke` event looks like this:
 }
 ```
 
-Next, let's write a simple Webhook in our application that will receive this event and update the JWTManager. (NOTE: our example has a variable called `applicationId` that is a global variable that stores the Id of the application itself - in this case it would be **cc0567da-68a1-45f3-b15b-5a6228bb7146**). Our code below is written in Node.js and uses the [FusionAuth Node client library](https://github.com/FusionAuth/fusionauth-node-client).
+Next, let's write a simple Webhook in our application that will receive this event and update the JWTManager. (NOTE: our example has a variable called `applicationId` that is a global variable that stores the Id of the application itself - in this case it would be **cc0567da-68a1-45f3-b15b-5a6228bb7146**). Our code below is written in Node.js and uses the [FusionAuth Node client library](https://github.com/FusionAuth/fusionauth-node-client).
 
 ```js
 /* Handle FusionAuth event. */
@@ -133,6 +133,7 @@ And finally we configure our Webhook in FusionAuth:
 
 We can now revoke a user's refresh token and FusionAuth will broadcast the event to our Webhook. The Webhook then updates the JWTManager which will cause JWTs for that user to be revoked.
 
-This solution works well even in large systems with numerous backends. It requires the use of refresh tokens and an API that allows refresh tokens to be revoked. The only caveat is to be sure that your JWTManager code cleans up after itself to avoid running out memory.
+This solution works well even in large systems with numerous backends. It requires the use of refresh tokens and an API that allows refresh tokens to be revoked. The only caveat is to be sure that your JWTManager code cleans up after itself to avoid running out memory.
 
 If you are using FusionAuth, you can use the Webhook and Event system to build this feature into your application quickly. We are also writing JWTManager implementations into each of our client libraries so you don't have to write those yourself. At the time of this writing, the Java and Node clients both have a JWTManager you can use. The other languages might have a JWTManager implementation now but if they don't, just submit a support ticket or a GitHub issue and we will write one for you.
+
