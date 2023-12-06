@@ -6,7 +6,7 @@ If at all possible you should plan to access FusionAuth and your application in 
 
 * Develop using a local FusionAuth instance, so both your webapp and FusionAuth are running on `localhost`.
 * Use a proxy to rewrite the requests to utilize the same domain. 
-* Do not use the the FusionAuth hosted backend, and instead write your own backend with a cross origin cookie policy: [here's an example](https://github.com/FusionAuth/fusionauth-example-react-sdk/tree/main/server).
+* Do not use the FusionAuth hosted backend, and instead write your own backend with a cross origin cookie policy: [here's an example](https://github.com/FusionAuth/fusionauth-example-react-sdk/tree/main/server).
 * Configure a [custom domain name for the FusionAuth Cloud instance](/docs/get-started/run-in-the-cloud/cloud#updating-with-existing-custom-domains) (limited to certain plans).
 
 Modifying FusionAuth CORS configuration options will not fix this issue because the cookies that FusionAuth writes will not be accessible cross domain.
