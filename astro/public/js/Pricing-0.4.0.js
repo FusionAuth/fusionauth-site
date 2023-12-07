@@ -30,12 +30,16 @@ class FusionAuthPriceCalculator {
     this.billingToggle.addEventListener('click', event => this._handleBillingIntervalChange(event));
     this._loadState();
     this.billingInterval = 'monthly';
+    this.monthlyMAUToolTip = 'This is your estimated Monthly Active User (MAU) charge after your initial month of deployment. This price will adjust based on your actual MAU.';
+    this.yearlyMAUToolTip = 'This charge reflects the MAU capacity purchased as part of your annual subscription.';
 
     document.querySelectorAll('a[data-step]')
             .forEach(e => e.addEventListener('click', event => this._handleStepClick(event)));
     document.querySelectorAll('a[data-plan]')
             .forEach(e => e.addEventListener('click', event => this._handlePlanClick(event)));
     window.addEventListener('popstate', event => this._handleStateChange(event));
+
+    this._setTooltipContent();
 
     fetch(`https://${this.accountHost}/ajax/purchase/price-model`)
         .then(response => response.json())
@@ -44,6 +48,10 @@ class FusionAuthPriceCalculator {
           this._changeStep();
           this._drawPlanPrices();
         });
+  }
+
+  _setTooltipContent() {
+    document.getElementById('pricing-tooltip')._tippy.setContent(this.billingInterval === 'monthly' ? this.monthlyMAUToolTip : this.yearlyMAUToolTip);
   }
 
   _calculateHostingPrice(type) {
@@ -155,11 +163,10 @@ class FusionAuthPriceCalculator {
       this.billingToggle.classList.remove('toggle-on')
     }
 
-    document.querySelectorAll(".billed")
+    this._setTooltipContent();
 
     this._redraw();
   }
-
 
   _handleStateChange() {
     this._loadState();
