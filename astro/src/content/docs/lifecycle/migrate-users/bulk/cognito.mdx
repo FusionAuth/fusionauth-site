@@ -1,6 +1,6 @@
 ---
 title: Migration From Amazon Cognito
-description: How to migrate your users to FusionAuth from Amazon Cognito.
+description: Learn how to migrate your users to FusionAuth from Amazon Cognito.
 section: lifecycle
 subcategory: migrate users
 tertcategory: bulk
@@ -48,7 +48,7 @@ This guide assumes you have installed FusionAuth. If you have not, please [view 
 
 ### Slow Migration or Bulk Migration
 
-To preserve your user's passwords, you need to perform a slow migration. Users log in to FusionAuth with their Cognito credentials, and FusionAuth transparently migrates their data. Slow migrations in FusionAuth use Connectors, a paid feature.
+To preserve your user's passwords, you need to perform a slow migration. Users log in to FusionAuth with their Cognito credentials, and FusionAuth transparently migrates their data. Slow migrations in FusionAuth use [Connectors](/docs/apis/connectors), a paid feature.
 
 If, on the other hand, resetting user passwords is acceptable, a <ScrollRef target="Bulk Migration" /> can work for you. Review that section for more details on the required steps. You may also perform a bulk migration after a slow migration has run for a while. Active users can be transparently migrated and infrequent users may not mind resetting their password.
 
@@ -84,7 +84,7 @@ To retrieve the user information, use the approach documented in the <ScrollRef 
 
 ### Other Entities
 
-<OtherEntitiesIntro other_migrated_entities="app clients or password policies" />
+<OtherEntitiesIntro other_migrated_entities="app clients or password policies" migration_source_name={migration_source_name}/>
 
 * [Lambda Triggers](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html) are ways for you to customize authentication or authorization workflows with AWS Lambdas. FusionAuth has a similar concept called [Lambdas](/docs/extend/code/lambdas/). FusionAuth also has [webhooks](/docs/extend/events-and-webhooks/) fired at certain points in the user lifecycle; in certain configurations, they can also stop a particular authentication flow.
 * Cognito is deeply integrated with [AWS IAM](https://aws.amazon.com/iam/), in particular with respect to roles and permissions. FusionAuth has [roles](/docs/get-started/core-concepts/roles) that are configured on an application by application basis and made available in a token after a successful authentication.
@@ -104,7 +104,7 @@ Cognito, in contrast, gives users access to all Cognito applications In a User P
 
 #### Identifiers 
 
-<Identifiers />
+<Identifiers migration_source_name={migration_source_name}/>
 
 #### Differences
 
@@ -194,6 +194,10 @@ The AWS lambda receives the login request from FusionAuth, attempts to log the u
 
 When setting this up, modify the example lambda code provided in this guide. Here's the entire sample AWS lambda, tested with the node 14 runtime:
 
+<Aside type="caution">
+This code will not work with the node 18 runtime or greater. Be sure to select the proper version of the node runtime when creating the AWS lambda.
+</Aside>
+
 <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-cdk-cognito-migration/main/resources/index.js"
             lang="js"
             title="AWS Connector Lambda code" />
@@ -210,6 +214,23 @@ const authorizationHeaderValue = // a random string to ensure that only the Conn
 You must modify the `processUserJSON` function as well. This converts the JSON returned from Cognito into the JSON format FusionAuth requires. You can see samples of both below. 
 
 The exact implementation depends on your UserPool custom attributes and business logic. You could, for example, give users certain FusionAuth roles, register them for more than one application or add them to a previously created FusionAuth group.
+
+<Aside type="tip">
+To test the AWS lambda you can configure the test event in the AWS management console. You will need to supply the `Event JSON`. It should look something like this:
+
+```json title="Test Event JSON"
+{
+  "path": "/",
+  "httpMethod": "POST",
+  "headers": {
+    "Authorization": "2687EE95-AF19-4CE6-A8BD-963139DED32E"
+  },
+  "body": "{\"loginId\":\"user1\",\"password\":\"Password#1\"}"
+} 
+```
+
+Update the Authorization header value and supply a known Cognito username and password.
+</Aside>
 
 ```json title="Sample User Data Response from Cognito"
 {
