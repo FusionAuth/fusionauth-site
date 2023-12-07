@@ -41,13 +41,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'web-application',
     desc: 'Traditional web applications that run on servers',
     articles: [
-      {
-        href: '/blog/2021/12/06/how-to-set-up-single-sign-on-between-fusionauth-wordpress',
-        title: 'Wordpress',
-        icon: '/img/icons/wordpress.svg',
-        faIcon: 'fa-w',
-        navColor: 'fuchsia',
-      },
     ],
   },
   {
