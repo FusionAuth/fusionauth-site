@@ -23,7 +23,7 @@ All of the FusionAuth Docker images may be found on [Docker Hub](https://hub.doc
 
 The FusionAuth Docker Compose yaml files may be found on [FusionAuth containers repository](https://github.com/FusionAuth/fusionauth-containers).
 
-If you're looking for a complete configuration to get up and running quickly, use our Docker Compose example. `docker-compose.yml` will install FusionAuth with ElasticSearch, but you can [switch between the different search engines](/docs/lifecycle/manage-users/search/switch-search-engines/).
+If you're looking for a complete configuration to get up and running quickly, use our Docker Compose example. `docker-compose.yml` will install FusionAuth with OpenSearch, but you can [switch between the different search engines](/docs/lifecycle/manage-users/search/switch-search-engines/).
 
 ### Installing FusionAuth
 
@@ -34,7 +34,6 @@ If you're looking for a complete configuration to get up and running quickly, us
 The following is the default `docker-compose.yml` file, which installs FusionAuth.
 
 <RemoteCode title="docker-compose.yml" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml" lang="yaml" />
-
 
 ## Docker Services
 
@@ -78,100 +77,7 @@ You may add other services to the Docker Compose files if needed.
 
 For example, in development environments it can be helpful to run [MailCatcher](https://mailcatcher.me/) which provides a local SMTP server. This allows FusionAuth to send transactional emails for account verification, password reset, and others.
 
-```yaml title="docker-compose.yml with mailcatcher"
-version: '3'
-
-services:
-  db:
-    image: postgres:12.9
-    environment:
-      PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - db_net
-    restart: unless-stopped
-    volumes:
-      - db_data:/var/lib/postgresql/data
-
-  search:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
-    container_name: search
-    environment:
-      cluster.name: fusionauth
-      bootstrap.memory_lock: "true"
-      discovery.type: single-node
-      ES_JAVA_OPTS: ${ES_JAVA_OPTS}
-    healthcheck:
-      test: [ "CMD", "curl",  "--fail" ,"--write-out", "'HTTP %{http_code}'", "--silent", "--output", "/dev/null", "http://localhost:9200/" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - search_net
-    restart: unless-stopped
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - search_data:/usr/share/elasticsearch/data
-
-  fusionauth:
-    image: fusionauth/fusionauth-app:latest
-    depends_on:
-      db:
-        condition: service_healthy
-      search:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
-      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
-      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
-      DATABASE_USERNAME: ${DATABASE_USERNAME}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
-      FUSIONAUTH_APP_RUNTIME_MODE: development
-      FUSIONAUTH_APP_URL: http://fusionauth:9011
-      SEARCH_SERVERS: http://search:9200
-      SEARCH_TYPE: elasticsearch
-
-    networks:
-      - db_net
-      - search_net
-      - mailcatcher_net
-    restart: unless-stopped
-    ports:
-      - 9011:9011
-    volumes:
-      - fusionauth_config:/usr/local/fusionauth/config
-
-  mailcatcher:
-    image: schickling/mailcatcher
-    ports:
-      - "1025:1025"
-      - "1080:1080"
-    networks:
-      - mailcatcher_net
-
-networks:
-  db_net:
-    driver: bridge
-  search_net:
-    driver: bridge
-  mailcatcher_net:
-    driver: bridge
-
-volumes:
-  db_data:
-  fusionauth_config:
-  search_data:
-```
+<RemoteCode title="Example docker-compose.yml with mailcatcher" url="https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-docker-compose/main/mailcatcher/docker-compose.yml" lang="yaml" />
 
 Below is a functional configuration on the tenant email tab based on the above configuration file:
 
@@ -259,90 +165,7 @@ Here are the steps to do so:
 
 The following is an example `docker-compose.yml` file configuring FusionAuth to run the commands in a `kickstart.json` at startup.
 
-```yaml title="Example Docker compose file for running Kickstart"
-version: '3'
-
-services:
-  db:
-    image: postgres:12.9
-    environment:
-      PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - db_net
-    restart: unless-stopped
-    volumes:
-      - db_data:/var/lib/postgresql/data
-
-  search:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
-    environment:
-      cluster.name: fusionauth
-      bootstrap.memory_lock: "true"
-      discovery.type: single-node
-      ES_JAVA_OPTS: ${ES_JAVA_OPTS}
-    healthcheck:
-      test: [ "CMD", "curl",  "--fail" ,"--write-out", "'HTTP %{http_code}'", "--silent", "--output", "/dev/null", "http://localhost:9200/" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - search_net
-    restart: unless-stopped
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - search_data:/usr/share/elasticsearch/data
-
-  fusionauth:
-    image: fusionauth/fusionauth-app:latest
-    depends_on:
-      db:
-        condition: service_healthy
-      search:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
-      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
-      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
-      DATABASE_USERNAME: ${DATABASE_USERNAME}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
-      FUSIONAUTH_APP_RUNTIME_MODE: development
-      FUSIONAUTH_APP_URL: http://fusionauth:9011
-      SEARCH_SERVERS: http://search:9200
-      SEARCH_TYPE: elasticsearch
-      FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}
-
-    networks:
-      - db_net
-      - search_net
-    restart: unless-stopped
-    ports:
-      - 9011:9011
-    volumes:
-      - fusionauth_config:/usr/local/fusionauth/config
-      - ./kickstart:/usr/local/fusionauth/kickstart
-
-networks:
-  db_net:
-    driver: bridge
-  search_net:
-    driver: bridge
-
-volumes:
-  db_data:
-  fusionauth_config:
-  search_data:
-```
+<RemoteCode title="Example docker-compose.yml for running Kickstart" url="https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-docker-compose/main/kickstart/docker-compose.yml" lang="yaml" />
 
 After running `docker compose up` you should see a line like this in the output:
 
@@ -376,91 +199,7 @@ Here are the steps to do so:
 
 The following is an example `docker-compose.yml` file configuring FusionAuth to scan for plugins at startup.
 
-```yaml title="Example Docker compose file for installing a plugin"
-
-version: '3'
-
-services:
-  db:
-    image: postgres:12.9
-    environment:
-      PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - db_net
-    restart: unless-stopped
-    volumes:
-      - db_data:/var/lib/postgresql/data
-
-  search:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
-    container_name: search
-    environment:
-      cluster.name: fusionauth
-      bootstrap.memory_lock: "true"
-      discovery.type: single-node
-      ES_JAVA_OPTS: ${ES_JAVA_OPTS}
-    healthcheck:
-      test: [ "CMD", "curl",  "--fail" ,"--write-out", "'HTTP %{http_code}'", "--silent", "--output", "/dev/null", "http://localhost:9200/" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - search_net
-    restart: unless-stopped
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - search_data:/usr/share/elasticsearch/data
-
-  fusionauth:
-    image: fusionauth/fusionauth-app:latest
-    depends_on:
-      db:
-        condition: service_healthy
-      search:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
-      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
-      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
-      DATABASE_USERNAME: ${DATABASE_USERNAME}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
-      FUSIONAUTH_APP_RUNTIME_MODE: development
-      FUSIONAUTH_APP_URL: http://fusionauth:9011
-      SEARCH_SERVERS: http://search:9200
-      SEARCH_TYPE: elasticsearch
-
-    networks:
-      - db_net
-      - search_net
-    restart: unless-stopped
-    ports:
-      - 9011:9011
-    volumes:
-      - fusionauth_config:/usr/local/fusionauth/config
-      - ./plugins:/usr/local/fusionauth/plugins
-
-networks:
-  db_net:
-    driver: bridge
-  search_net:
-    driver: bridge
-
-volumes:
-  db_data:
-  fusionauth_config:
-  search_data:
-```
+<RemoteCode title="Example docker-compose.yml for installing a plugin" url="https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-docker-compose/main/plugin/docker-compose.yml" lang="yaml" />
 
 After running `docker compose up` you should see a line like this in the output:
 
@@ -484,6 +223,12 @@ In this situation, do one of the following:
 * Install FusionAuth on the host machine, using FastPath or another method
 
 Modifying FusionAuth to use other Docker networking schemes such as `host` may work, but isn't fully tested or supported.
+
+## OpenSearch Production Deployment Configuration
+
+The runtime requirements and configuration for OpenSearch will differ from the docker compose examples as they're configured without any security and redundancy.
+
+Please review the [Installing OpenSearch documentation](https://opensearch.org/docs/latest/install-and-configure/install-opensearch/index/) for further details around production deployment.
 
 ## Elasticsearch Production Deployment Configuration
 
