@@ -1,13 +1,5 @@
 'use strict';
 
-const debounce = (func, timeout = 300) => {
-  let timer;
-  return (...args) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => func.apply(this, args), timeout);
-  };
-}
-
 class Search {
   #altKey;
   #isMac;
@@ -25,7 +17,7 @@ class Search {
     this.#searchModal.addEventListener('mousemove', event => this.#handleMouseMove(event));
     this.#searchResults = document.querySelector('[data-widget="search-results"] ul');
     this.#searchInput = document.querySelector('[data-widget="search-input"]');
-    this.#searchInput.addEventListener('input', debounce(event => this.#handleSearch(event)));
+    this.#searchInput.addEventListener('input', this.#debounce(event => this.#handleSearch(event)));
     this.#searchKeyHint = document.querySelector('[data-widget="search-key-hint"]');
 
     document.addEventListener('click', event => this.#handleClick(event));
@@ -48,6 +40,14 @@ class Search {
     if (!this.#searchModal.classList.toggle('hidden')) {
       this.#searchInput.focus();
     }
+  }
+
+  #debounce(func, timeout = 300){
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => func.apply(this, args), timeout);
+    };
   }
 
   #handleClick(event) {
@@ -125,7 +125,6 @@ class Search {
 
   async #handleDocsSearch(paths) {
     const filterSet = paths.map((val, idx, arr) => {
-      console.log(val, idx, arr);
       const filters = { environment: 'docs' };
       for (let i= 0; i <= idx; i++) {
         const key = {
@@ -171,11 +170,11 @@ class Search {
     let paths = window.location.pathname.split('/');
     paths = paths.slice(1, paths.length);
     const environment = paths.shift();
-    console.log(environment, paths);
 
     if (!this.#pagefind) {
       this.#pagefind = await import("/pagefind/pagefind.js");
-      console.log(JSON.stringify(await this.#pagefind.filters(), null, 2))
+      // prime the filters
+      await this.#pagefind.filters();
     }
 
     let results;
