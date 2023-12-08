@@ -22,7 +22,7 @@ interface QuickStartSection {
 
 const qsSections: QuickStartSection[] = [
   {
-      key: 'fiveminute',
+      key: 'five-minute',
       icon: '/img/icons/qs-main.svg',
       faIcon: 'fa-code-simple',
       color: 'indigo',
@@ -41,20 +41,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'web-application',
     desc: 'Traditional web applications that run on servers',
     articles: [
-      {
-        href: '/blog/2022/03/07/single-sign-on-with-drupal',
-        title: 'Drupal',
-        icon: '/img/icons/drupal.svg',
-        faIcon: 'fa-droplet',
-        navColor: 'blue',
-      },
-      {
-        href: '/blog/2021/12/06/how-to-set-up-single-sign-on-between-fusionauth-wordpress',
-        title: 'Wordpress',
-        icon: '/img/icons/wordpress.svg',
-        faIcon: 'fa-w',
-        navColor: 'fuchsia',
-      },
     ],
   },
   {
