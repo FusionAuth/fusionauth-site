@@ -8,6 +8,7 @@ const specialCapsMap = {
   'sdk': 'SDK',
   'sdks': 'SDKs',
   'scim': 'SCIM',
+  'spa': 'SPA',
 }
 export const specialCaps = (target: string) => target
     .split(' ')
