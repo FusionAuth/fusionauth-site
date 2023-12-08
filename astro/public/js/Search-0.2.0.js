@@ -119,18 +119,14 @@ class Search {
     this.#moveY = event.screenY;
   }
 
-  async #handleSearch() {
-    if (this.#searchModal.classList.contains('hidden')) {
-      return;
-    }
+  #doSearch(filters) {
+    return this.#pagefind.search(this.#searchInput.value, { filters })
+  }
 
-    let paths = window.location.pathname.split('/');
-    paths = paths.slice(1, paths.length);
-    const environment = paths.shift();
-    console.log(environment, paths);
+  async #handleDocsSearch(paths) {
     const filterSet = paths.map((val, idx, arr) => {
       console.log(val, idx, arr);
-      const filters = { environment };
+      const filters = { environment: 'docs' };
       for (let i= 0; i <= idx; i++) {
         const key = {
           0: 'section',
@@ -143,23 +139,14 @@ class Search {
       return filters;
     });
     filterSet.reverse();
-    filterSet.push({ environment });
+    filterSet.push({ environment: 'docs' });
 
-    if (!this.#pagefind) {
-      this.#pagefind = await import("/pagefind/pagefind.js");
-      console.log(JSON.stringify(await this.#pagefind.filters(), null, 2))
-    }
-
-    const doSearch = async (filters) => this.#pagefind.search(this.#searchInput.value, { filters });
-
-    console.log(filterSet);
-    const promises = filterSet.map(filters => doSearch(filters));
-    promises.push(doSearch(null))
+    const promises = filterSet.map(filters => this.#doSearch(filters));
+    promises.push(this.#doSearch(null))
 
     const filterThreshold = 0.3;
 
     const resolved = await Promise.all(promises);
-    console.log(resolved);
     const results = [];
     resolved.filter(response => !!response)
             .forEach((response, idx, arr) => response.results
@@ -169,7 +156,37 @@ class Search {
                    results.push(result);
                  }
                }));
-    console.log(results);
+    return results;
+  }
+
+  async #handleDefaultSearch() {
+    return (await this.#doSearch(null)).results;
+  }
+
+  async #handleSearch() {
+    if (this.#searchModal.classList.contains('hidden')) {
+      return;
+    }
+
+    let paths = window.location.pathname.split('/');
+    paths = paths.slice(1, paths.length);
+    const environment = paths.shift();
+    console.log(environment, paths);
+
+    if (!this.#pagefind) {
+      this.#pagefind = await import("/pagefind/pagefind.js");
+      console.log(JSON.stringify(await this.#pagefind.filters(), null, 2))
+    }
+
+    let results;
+    switch(environment) {
+      case 'docs':
+        results = await this.#handleDocsSearch(paths);
+        break;
+      default:
+        results = await this.#handleDefaultSearch();
+        break;
+    }
 
     await this.#handleResults(results);
   }
