@@ -17,7 +17,7 @@ class Search {
     this.#searchModal.addEventListener('mousemove', event => this.#handleMouseMove(event));
     this.#searchResults = document.querySelector('[data-widget="search-results"] ul');
     this.#searchInput = document.querySelector('[data-widget="search-input"]');
-    this.#searchInput.addEventListener('input', event => this.#handleSearch(event));
+    this.#searchInput.addEventListener('input', this.#debounce(event => this.#handleSearch(event)));
     this.#searchKeyHint = document.querySelector('[data-widget="search-key-hint"]');
 
     document.addEventListener('click', event => this.#handleClick(event));
@@ -40,6 +40,14 @@ class Search {
     if (!this.#searchModal.classList.toggle('hidden')) {
       this.#searchInput.focus();
     }
+  }
+
+  #debounce(func, timeout = 300){
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => func.apply(this, args), timeout);
+    };
   }
 
   #handleClick(event) {
@@ -111,19 +119,75 @@ class Search {
     this.#moveY = event.screenY;
   }
 
+  #doSearch(filters) {
+    return this.#pagefind.search(this.#searchInput.value, { filters })
+  }
+
+  async #handleDocsSearch(paths) {
+    const filterSet = paths.map((val, idx, arr) => {
+      const filters = { environment: 'docs' };
+      for (let i= 0; i <= idx; i++) {
+        const key = {
+          0: 'section',
+          1: 'subcategory',
+          2: 'tertcategory',
+          3: 'quatercategory'
+        }[i];
+        filters[key] = arr[i].replaceAll('-', ' ');
+      }
+      return filters;
+    });
+    filterSet.reverse();
+    filterSet.push({ environment: 'docs' });
+
+    const promises = filterSet.map(filters => this.#doSearch(filters));
+    promises.push(this.#doSearch(null))
+
+    const filterThreshold = 0.3;
+
+    const resolved = await Promise.all(promises);
+    const results = [];
+    resolved.filter(response => !!response)
+            .forEach((response, idx, arr) => response.results
+               .filter(result => idx + 1 === arr.length || result.score > filterThreshold )
+               .forEach(result => {
+                 if (!results.find(r => r.id === result.id)) {
+                   results.push(result);
+                 }
+               }));
+    return results;
+  }
+
+  async #handleDefaultSearch() {
+    return (await this.#doSearch(null)).results;
+  }
+
   async #handleSearch() {
     if (this.#searchModal.classList.contains('hidden')) {
       return;
     }
 
+    let paths = window.location.pathname.split('/');
+    paths = paths.slice(1, paths.length);
+    const environment = paths.shift();
+
     if (!this.#pagefind) {
-      this.#pagefind = await import("/_pagefind/pagefind.js");
+      this.#pagefind = await import("/pagefind/pagefind.js");
+      // prime the filters
+      await this.#pagefind.filters();
     }
 
-    const response = await this.#pagefind.debouncedSearch(this.#searchInput.value);
-    if (response) {
-      await this.#handleResults(response.results);
+    let results;
+    switch(environment) {
+      case 'docs':
+        results = await this.#handleDocsSearch(paths);
+        break;
+      default:
+        results = await this.#handleDefaultSearch();
+        break;
     }
+
+    await this.#handleResults(results);
   }
 
   #highlightMenuItem(option, focus) {
@@ -145,7 +209,7 @@ class Search {
             <div class="flex flex-col">
               <span class="bg-slate-200 border border-slate-900/10 font-semibold mb-2 px-2 py-0.5 rounded-full text-slate-700 text-xs w-fit dark:bg-slate-600 dark:text-slate-400 group-[.active]:bg-indigo-500 group-[.active]:border-indigo-300 group-[.active]:text-white">
                 ${data.meta.title}
-              </span> 
+              </span>
               <span class="mr-auto text-slate-700 text-sm dark:text-slate-400 group-[.active]:text-white">
                 ${data.excerpt}
               </span>
