@@ -1,5 +1,5 @@
 ---
-title: Multi-Factor Authentication (MFA): The Ultimate Guide
+title: "Multi-Factor Authentication (MFA): The Ultimate Guide"
 description: What is multi-factor authentication and how it works?
 author: Dan Moore
 section: Authentication
