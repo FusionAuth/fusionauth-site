@@ -6,7 +6,7 @@ section: Authentication
 tags: lock-in architecture standards facade planning open-standards
 icon: /img/icons/passwordless-authentication-image.svg
 ---
-Password-based authentication methods have grappled with various vulnerabilities, with one of the most conspicuous being their susceptibility to phishing attacks. It's no secret that hackers have become increasingly proficient at exploiting the weaknesses in our sensitive data. This has prompted the search for an innovative solution that will usher us into a new era of personal and web security. That solution is WebAuthn
+Password-based authentication methods have grappled with various vulnerabilities, with one of the most conspicuous being their susceptibility to phishing attacks. It's no secret that hackers have become increasingly proficient at exploiting the weaknesses in our sensitive data. This has prompted the search for an innovative solution that will usher us into a new era of personal and web security. That solution is WebAuthn.
 
 ## What is WebAuthn?
 
