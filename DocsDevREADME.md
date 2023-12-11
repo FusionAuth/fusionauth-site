@@ -16,6 +16,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - From the Link API, note the difference between a FusionAuth User and a 3rd party user: `This API is used to create a link between a FusionAuth User and a user in a 3rd party identity provider. This API may be useful when you already know the unique Id of a user in a 3rd party identity provider and the corresponding FusionAuth User.`
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing.
 - Use `Id` instead of `ID` or `id` when describing a unique identifier
+- Use `admin UI` instead of `Admin UI` when writing about the admin user interface.
 - Use `logged in` instead of `logged-in`
 - `log in` is the verb, `login` is the noun
 - Don't abbreviate FusionAuth, use the full name.
