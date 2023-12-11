@@ -16,6 +16,7 @@ class FusionAuthPriceCalculator {
     this.planPriceDiv = document.getElementById('plan-price');
     this.mauChargeDiv = document.getElementById('mau-charge');
     this.mauChargeLabelDiv = document.getElementById('mau-charge-label');
+    this.sumLabel = document.querySelector('h3[class=total]');
     this.sumDiv = document.getElementById('total-price');
     this.monthlyActiveUserSlider = document.querySelector('input[name=monthly-active-users]');
     this.monthlyActiveUserSlider.addEventListener('input', event => this._handleSliderChange(event));
@@ -261,10 +262,13 @@ class FusionAuthPriceCalculator {
 
     document.querySelectorAll('div[data-plan]').forEach(e => e.style.border = '2px solid transparent');
 
-    const billingIntervalLabel = this._billingIntervalReadable();
-    this.mauChargeLabelDiv.innerText = `${billingIntervalLabel} MAU charge`;
+    const billingIntervalLabel = this.billingInterval === 'yearly' ? 'Annually' : 'Monthly';
+    const billingIntervalLabelAdj = this.billingInterval === 'yearly' ? 'Annual' : 'Monthly';
+    this.mauChargeLabelDiv.innerText = `${billingIntervalLabelAdj} MAU charge`;
     document.querySelectorAll('.renewal-abb').forEach(e => e.textContent = this.billingInterval === 'yearly' ? ' /yr' : ' /mo');
-    document.querySelectorAll('.billed, .renewal-type').forEach(e => e.textContent = billingIntervalLabel);
+    document.querySelectorAll('.billed').forEach(e => e.textContent = billingIntervalLabel);
+    document.querySelectorAll('.renewal-type').forEach(e => e.textContent = billingIntervalLabelAdj);
+    this.sumLabel.textContent = this.billingInterval === 'yearly' ? 'Total' : 'Estimate Total';
 
     const { planPrice, mauPrice } = this._calculatePlanPrice(this.plan);
 
