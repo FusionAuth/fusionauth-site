@@ -644,7 +644,26 @@ You can put as many as 100,000 users in each FusionAuth import JSON file.
 After you have transformed your data to the format expected by the Import Users API, load the user data. Place all the JSON files in a directory, and update the shell script below with the location of that directory, the FusionAuth instance hostname and the API key you created above. Then you can run this shell script.
 
 ```sh title="Example Import Shell Script"
-include::docs/src/shell/migration-guide/user-import-shell-script.sh[]
+#!/bin/sh
+
+API_KEY=...
+JSON_FILE_DIR=...
+FA_HOST=...
+
+for file in $JSON_FILE_DIR/*.json; do
+  echo "Processing $file";
+  RES=`curl --max-time 600 \
+       -s -w "%{http_code}" \
+       -H "Authorization: $API_KEY" \
+       -H "Content-type: application/json" \
+       -XPOST \
+       $FA_HOST/api/user/import \
+       -d@$file`
+  if [ "$RES" -ne "200" ]; then
+    echo "Error: $RES";
+    exit 1;
+  fi
+done
 ```
 
 You can also review the [Import scripts repository](https://github.com/FusionAuth/fusionauth-import-scripts) for other example scripts which process export data in a more robust fashion; the Auth0 import script is a good example. Pull requests to add Cognito compatibility are welcome!
