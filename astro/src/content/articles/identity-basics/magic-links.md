@@ -39,7 +39,7 @@ Implementing a secure password-based system can be a challenge. It involves crea
 
 ## Are Magic Links Better Than Passwords?
 
-The comparison between the traditional login process using passwords and magic link authentication is both valid and  pertinent. Let’s explore why magic links might be a superior choice for enhancing the authentication process.
+The comparison between the traditional login process using passwords and magic link authentication is both valid and pertinent. Let’s explore why magic links might be a superior choice for enhancing the authentication process.
 
 Starting with the user experience, the login process is a critical touchpoint. Magic links simplify this process. Instead of remembering complex passwords or relying on a password manager, users receive a magic link in their email, click on it, and gain access. This streamlined login process not only boosts user satisfaction but can also increase engagement rates.
 
