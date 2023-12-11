@@ -1,6 +1,6 @@
 ---
 title: What are Magic Links and How to Use Them
-description: Magic Links: A Guide to Passwordless Authentication
+description: "Magic Links: A Guide to Passwordless Authentication"
 author: Brad McCarty
 icon: /img/icons/magic-links.svg
 section: Identity Basics
