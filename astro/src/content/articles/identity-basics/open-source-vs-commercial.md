@@ -84,7 +84,7 @@ The peace of mind from having dedicated support can be one of the most important
 
 Unlike with open-source providers, it may be difficult to know how often updates for commercial providers are released, especially if all of the provider's infrastructure lives in the cloud and updates don't require any action from the customer. They may release their software multiple times per day, or it may be months between public releases.
 
-This is one of the questions you can ask the sales team when evaluating different providers, but commercial providers don't always have the transparency associated with open-source providers. You can't always just go and look up previous release dates and research update progress yourself. However, some providers, such as FusionAuth, do offer [comprehensive release notes](/docs/v1/tech/release-notes) to aid you in your evaluation.
+This is one of the questions you can ask the sales team when evaluating different providers, but commercial providers don't always have the transparency associated with open-source providers. You can't always just go and look up previous release dates and research update progress yourself. However, some providers, such as FusionAuth, do offer [comprehensive release notes](/docs/release-notes/) to aid you in your evaluation.
 
 ### Relicensing
 

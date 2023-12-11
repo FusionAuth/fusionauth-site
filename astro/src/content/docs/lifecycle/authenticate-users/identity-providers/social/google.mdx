@@ -1,0 +1,224 @@
+---
+title: Google
+description: Learn how to add a login with Google button to your application.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: identity providers
+quatercategory: social
+---
+import InlineField from 'src/components/InlineField.astro';
+import IdpApplicationConfiguration from 'src/content/docs/_shared/_idp-application-configuration.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import LoginApiIntegration from 'src/content/docs/_shared/_login-api-integration.astro';
+import Aside from 'src/components/Aside.astro';
+
+## Overview
+
+Adding a Login with Google button to FusionAuth is straightforward, and this guide will walk you through the steps necessary to collect the credentials from Google in order to enable this Social login.
+
+Once you have completed this configuration you will be able to enable the Google login button for one or more FusionAuth Applications. Below is an example login page with the Google Identity Provider enabled.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/login-google.png" alt="Google Login" width="1200" />
+
+## Create a Google Cloud Account
+
+Ensure you have a Google login, and then navigate to the Google Cloud console.
+
+* https://console.cloud.google.com
+
+## Create Google OAuth client credentials
+
+In the Google Cloud console, find the APIs & Services Credentials by navigating to <strong>APIs and Services -> Credentials</strong>.
+
+If you are prompted to select or create a project, do that now. In the following example I will need to create my first project before I can create credentials. I will call the project `Pied Piper`.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-create-project.png" alt="Create Google Cloud Project" width="1200" role="bottom-cropped" />
+
+Now that you have selected or created your first project, navigate to <strong>APIs & Services -> Credentials</strong> and then click on <strong>Create credentials</strong> and select <InlineField>OAuth client ID</InlineField>.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-create-credentials.png" alt="Create Credentials" width="1200" role="bottom-cropped" />
+
+If you see an alert indicating you first need to configure the content screen, do that now by clicking on <strong>Configure consent screen</strong>.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-configure-consent.png" alt="Configure Consent" width="1200" role="bottom-cropped" />
+
+You will be prompted to define a consent type, typically <InlineField>External</InlineField>. Click `Create`.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-configure-consent-internal-external.png" alt="Configure Consent" width="1200" role="bottom-cropped" />
+
+On this panel, you will need to fill out the required fields and then click `Save`.
+
+In this example I have set the following fields.
+
+* Application name
+* User support email (not shown)
+* App logo (not shown)
+* Authorized domains
+* Application Homepage link
+* Application Privacy Policy link
+* Application Terms of Service link
+* Authorized domains
+* Developer contact information (not shown)
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-configure-consent-screen.png" alt="Configure Consent Screen" width="1200" />
+
+Once this is complete, you can add or update scopes by clicking on the `Add or remove scopes` button. It is typical to select `userinfo.email` and `userinfo.profile` as well as `openid`, but feel free to enable any you would like. [View the full list of Google scopes](https://developers.google.com/identity/protocols/oauth2/scopes).
+
+These same scopes should be referenced in the IdP configuration in FusionAuth, which is configured later in this process.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-configure-scopes.png" alt="Configure Google Scopes" width="1200" />
+
+Then, click `Save and continue` after optionally adding any test users.
+
+Navigate to <strong>APIs & Services -> Credentials</strong> and then click on <strong>Create credentials</strong> and select <InlineField>OAuth client ID</InlineField>.
+
+How you configure this panel depends on the type of login method interaction used. In this example I have specified `https://login.piedpiper.com` because this is the URL of FusionAuth for Pied Piper.
+
+If using a redirect method, add an Authorized redirect URI. This should be an absolute URL. For example, if FusionAuth is installed at login.piedpiper.com, the value would be `https://login.piedpiper.com/oauth2/callback`.
+
+If using a popup, select `Web application`, specify the name of the credential and fill out the `Authorized JavaScript origins` field. This value should be the origin of your application login page.
+
+In the image below, we are showcasing details needed for both the popup login method (added an origin) and the redirect url.  In the real world you will fill in either option, but not both (depending on your business needs).
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-create-client-id.png" alt="Create OAuth Client credentials" width="1200" />
+
+Now you have completed creating a Google OAuth client credential. If you select the newly created credential, you will be provided with the `Client ID` and `Client secret` necessary for the next step.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/google-cloud-client-credentials.png" alt="OAuth Client credentials" width="1200" />
+
+## Create a Google Identity Provider
+
+The last step will be to create a Google Identity Provider in FusionAuth. To create an Identity Provider navigate to <strong>Settings -> Identity Providers</strong> and click the menu in the upper right corner and select `Add Google`.
+
+This will take you to the `Add Google` panel, and you'll fill out the `Client Id` and `Client secret` required fields using the values found in the Google Cloud console. Provide the scopes needed for your application which you configured in the Google Console above. The button text is also required but it will be defaulted to `Login with Google`, you may optionally modify this default value.
+
+<IdpApplicationConfiguration identity_provider="Google" />
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/identity-provider-google-add.png" alt="Add Google" width="1200" />
+
+### Form Fields
+
+<APIBlock>
+  <APIField name="Client Id" required>
+    The Google Client Id found in your Google credentials settings in the `Client ID` field.
+  </APIField>
+  <APIField name="Client secret" required>
+    The Google Client Secret found in your Google credentials settings in the `Client secret` field.
+  </APIField>
+  <APIField name="Login Method" optional>
+    User interaction behavior after clicking on the IdP button (`Login with Google`, for instance).
+
+     * `Use redirect for login` - if selected, the user is redirected to a Google login page. Once authenticated, the user is redirected back to FusionAuth.
+    If selected, the redirect URL *must* be set to an absolute URL in the Google console for your application. If your hostname is login.piedpiper.com, the redirect URL would be `https://login.piedpiper.com/oauth2/callback`.
+     * `Use popup for login` - if selected, a popup is displayed to the user to login with google. Once authenticated, the window is closed.
+    If selected, the `Authorized JavaScript origins` URL *must* be allowed for your host name in the Google console for your application. For example, `https://login.piedpiper.com`.
+     * `Use vendor JavaScript` - if selected, the login method will be determined by the vendor JavaScript library.
+
+    Please note if an `idp_hint` is appended to the OAuth Authorize endpoint, then the interaction behavior will be `redirect`, even if popup interaction is explicitly configured.
+
+    <span class="text-green-500">Since 1.44.0</span>
+
+    **If you are using a version of FusionAuth older than 1.44.0**, `Use popup for login` won't work. `UseRedirect` will continue to work after this date. Please see https://github.com/FusionAuth/fusionauth-issues/issues/1939[Issue #1939] for more. This [forum post](/community/forum/topic/2329/upcoming-google-identity-provider-changes) has more details on an available workaround and upgrade process.
+  </APIField>
+  <APIField name="Button text" required>
+    The text to be displayed in the button on the login form. This value is defaulted to `Login with Google` but it may be modified to your preference.
+
+    <span class="text-green-500">Since 1.44.0</span>
+
+    The <InlineField>Button text</InlineField> value may only be used when the <InlineField>Login method</InlineField> is set to `Use redirect for login`. The button text is managed by Google for all other configurations. Google allows for minor adjustments using their API. You may specify any valid API parameter in the <InlineField>Button properties</InlineField> configuration.
+  </APIField>
+  <APIField name="Scope" optional>
+    This optional field defines the scope you're requesting from the user during login. See the Google login documentation for further information. Three common scopes to include are `email`, `profile`, and `openid`.
+
+    <span class="text-green-500">Since 1.44.0</span>
+
+    The <InlineField>Scope</InlineField> value may only be used when the <InlineField>Login method</InlineField> is set to `Use redirect for login`. The `email`, `profile`, and `openid` scopes will always be requested for all other configurations.
+  </APIField>
+  <APIField name="Linking strategy" optional>
+    The linking strategy for the Google FusionAuth Identity Provider. [See Linking Strategies for more](/docs/lifecycle/authenticate-users/identity-providers/#linking-strategies).
+  </APIField>
+  <APIField name="Reconcile lambda" optional since="1.17.0">
+    A lambda may be utilized to map custom claims returned from Google.
+
+    To configure a lambda, navigate to <strong>Customizations -> Lambdas</strong>.
+  </APIField>
+  <APIField name="Debug enabled" optional defaults="false">
+    Enable debug to create an event log to assist you in debugging integration errors.
+  </APIField>
+</APIBlock>
+
+### Options
+
+The Options tab can be used to configure the Google identity provider by providing properties for the [Google Identity Services API](https://developers.google.com/identity/gsi/web/reference/html-reference).
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/identity-provider-google-add-options.png" alt="Add Google Options" width="1200" role="top-cropped" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="API properties" optional since="1.44.0">
+    Google Identity Services login API configuration in a properties file formatted String. Any attribute from [Google's documentation](https://developers.google.com/identity/gsi/web/reference/html-reference#element_with_id_g_id_onload) can be added. Properties can be referenced in templates that support Google login to initialize the API via HTML or JavaScript. The properties specified in this field should not include the `data-` prefix on the property name.
+
+    If omitted, this value will default to the following properties:
+
+    *Default API Configuration Properties*
+
+    ```ini
+    auto_prompt=true
+    auto_select=false
+    cancel_on_tap_outside=false
+    context=signin
+    itp_support=true
+    ```
+  </APIField>
+  <APIField name="Button properties" optional since="1.44.0" defaults="SEE DESCRIPTION">
+    Google Identity Services button configuration in a properties file formatted String. Any attribute from [Google's documentation](https://developers.google.com/identity/gsi/web/reference/html-reference#element_with_class_g_id_signin) can be added. Properties can be referenced in templates that support Google login to render the login button via HTML or JavaScript. The properties specified in this field should not include the `data-` prefix on the property name.
+
+    If omitted, this value will default to the following properties:
+
+    *Default Button Properties*
+
+    ```ini
+    logo_alignment=left
+    shape=rectangular
+    size=large
+    text=signin_with
+    theme=outline
+    type=standard
+    ```
+  </APIField>
+</APIBlock>
+
+### Google One Tap
+
+Google One Tap provides registration and authentication with a single user action on supporting applications.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/login-google-one-tap.png" alt="Add Google Options" width="1200" role="bottom-cropped" />
+
+Google One Tap can be enabled in FusionAuth `1.44.0` and later by including `auto_prompt=true` in the <InlineField>API properties</InlineField> configuration.
+
+## Building Your Own Integration
+
+<LoginApiIntegration apiRef="/docs/apis/identity-providers/google#complete-the-propsidp_display_name-login" />
+
+## Custom Parameters
+
+Google sometimes requires custom URL parameters when starting a login to access certain functionality. Examples include:
+
+* `access_type=offline` if you want a refresh token from Google.
+* `prompt=select_account` if you want to force an account selection screen.
+
+There are more [options covered here](https://developers.google.com/identity/protocols/oauth2/openid-connect#advancedtopics).
+
+<Aside type="note">
+Google is great at conforming to OIDC, so using the OIDC provider instead of Google has no affect on functionality. It just requires a tad more configuration.
+</Aside>
+
+When you need such custom parameters, the Google Identity Provider won't work. Instead, do the following:
+
+* Create an [OpenId Connect Identity Provider](/docs/lifecycle/authenticate-users/identity-providers/).
+* Set <InlineField>Discover endpoints</InlineField> to be `false`.
+* Enter the endpoints manually from the [Discovery document](https://developers.google.com/identity/protocols/oauth2/openid-connect#discovery).
+* Append whatever additional parameters are needed to the <InlineField>Authorization endpoint</InlineField> value. For example, you might end up with something like `https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=select_account` .

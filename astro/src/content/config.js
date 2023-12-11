@@ -45,8 +45,29 @@ const quickstartsCollection = defineCollection({
   }),
 });
 
+const docsCollection = defineCollection({
+  schema: z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    canonicalUrl: z.string().optional(),
+    section: z.string().optional(),
+    subcategory: z.string().optional(),
+    tertcategory: z.string().optional(),
+    quatercategory: z.string().optional(),
+    nestedHeadings: z.boolean().optional(),
+    disableTOC: z.boolean().default(false),
+    topOfNav: z.boolean().default(false),
+  }),
+});
+
+const jsonCollection = defineCollection({
+  type: 'data',
+})
+
 export const collections = {
   'articles': articlesCollection,
   'dev-tools': devToolsCollection,
   'quickstarts': quickstartsCollection,
+  'docs': docsCollection,
+  'json': jsonCollection,
 };

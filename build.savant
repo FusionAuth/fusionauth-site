@@ -14,58 +14,30 @@ project(group: "io.fusionauth", name: "fusionauth-site", version: "3.0.0", licen
   publishWorkflow {
     subversion(repository: "https://svn.savantbuild.org")
   }
-
-  dependencies {
-    group(name: "css", export: false) {
-      dependency(id: "io.fusionauth:fusionauth-style:fusionauth-website-style:${fusionauthWebsiteStyleVersion}:css")
-      dependency(id: "io.fusionauth:fusionauth-style:fusionauth-website-style:${fusionauthWebsiteStyleVersion}:css.map")
-    }
-  }
 }
 
 dependency = loadPlugin(id: "org.savantbuild.plugin:dependency:1.0.2")
 file = loadPlugin(id: "org.savantbuild.plugin:file:1.0.2")
 
-target(name: "css", description: "Copies the CSS into place") {
-  file.delete {
-    fileSet(dir: "site/assets/css", includePatterns: [~/fusionauth-website.+/,~/fusionauth-login-style.+/])
-  }
 
-  dependency.copy(to: "site/assets/css") {
-    dependencies(group: "css", transitive: false, fetchSource: true)
-  }
-
-  file.copyFile(file: "site/assets/css/fusionauth-website-style-${fusionauthWebsiteStyleVersion}.css", to: "site/assets/css/fusionauth-login-style.css")
-
-  file.rename {
-    fileSet(dir: "site/assets/css", includePatterns: [~/fusionauth-website.+/])
-    filter(token: "-{integration}", value: "")
-  }
+target(name: "clean", description: "cleans the project") {
+  astroExecute(["rm", "-rf", "node_modules", "dist"])
 }
 
-target(name: "clean", description: "cleans the project", dependsOn: ["css"]) {
-  cleanExecute(["bundle", "exec", "jekyll", "clean"], false)
-}
-
-target(name: "compile", description: "builds the project", dependsOn: ["css"]) {
-  if (switches.has("drafts")) {
-    cleanExecute(["bundle", "exec", "jekyll", "build", "--drafts"], false)
-  } else {
-    cleanExecute(["bundle", "exec", "jekyll", "build"], false)
-  }
-}
-
-target(name: "serve", description: "Build and watch the project", dependsOn: ["css"]) {
-  cleanExecute(["bundle", "exec", "jekyll", "serve", "--drafts", "--future", "--incremental", "-o"], false)
-}
-
-target(name: "astro", description: "Build and watch the astro project") {
+target(name: "install", description: "installs npm dependencies") {
   astroExecute(["npm", "install"])
-  astroExecute(["npm", "run", "dev"])
 }
 
-target(name: "watch", description: "Build and watch the project", dependsOn: ["css"]) {
-  cleanExecute(["bundle", "exec", "jekyll", "build", "--drafts", "--future", "--incremental", "--watch"], false)
+target(name: "compile", description: "builds the project", dependsOn: ["install"]) {
+  astroExecute(["npm", "run", "dev-build"])
+}
+
+target(name: "serve", description: "Build and watch the project") {
+  astroExecute(["npm", "run", "start"])
+}
+
+target(name: "watch", description: "Build and watch the project", dependsOn: ["install"]) {
+  astroExecute(["npm", "run", "dev"])
 }
 
 boolean astroExecute(List<String> args) {
@@ -76,19 +48,6 @@ boolean astroExecute(List<String> args) {
   return process.exitValue() == 0
 }
 
-boolean cleanExecute(List<String> args, boolean prod) {
-  ProcessBuilder pb = new ProcessBuilder(args).inheritIO().directory(new File('.'))
-  clearEnvironment(pb)
-
-  if (prod) {
-    pb.environment().put("JEKYLL_ENV", "production")
-  }
-
-  def process = pb.start()
-  process.consumeProcessOutput(System.out, System.err)
-  process.waitFor()
-  return process.exitValue() == 0
-}
 
 /**
  * Clears out the RBENV variables in the environment.

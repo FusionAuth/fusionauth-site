@@ -5,9 +5,32 @@ import Head from '../components/Head.astro';
 import Header from '../components/Header.astro';
 import Navigation from '../components/Navigation.astro';
 import GitHubEdit from '../components/GitHubEdit.astro';
-import Search from '../components/Search.astro';
+import Search from '../components/search/Search.astro';
 import SectionNavigation from '../components/SectionNavigation.astro';
 import TOC from '../components/TOC.astro';
+import Article from './Article.astro';
+import ArticleNav from '../components/nav/ArticleNav.astro';
+import Icon from '../components/icon/Icon.astro';
+import { specialCaps } from '../tools/string';
+
+interface Props {
+  author?: string;
+  date?: string;
+  description?: string;
+  disableTOC?: boolean;
+  excludeFromSearchIndex?: boolean,
+  frontmatter?: Record<string, any>,
+  headings?: any[];
+  icon?: string;
+  image?: string;
+  section?: string;
+  sections?: any[];
+  sideMenu?: any[];
+  title?: string;
+  cta?: string;
+  contribute?: boolean;
+  breadcrumbs?: any[];
+}
 
 let {
   author,
@@ -23,8 +46,12 @@ let {
   sections = [],
   sideMenu = [],
   title = "",
-  cta = "DownloadCTA"
-} = Astro.props;
+  cta = "DownloadCTA",
+  contribute = true,
+  breadcrumbs = [],
+  searchFilters = {},
+}: Props = Astro.props;
+
 author = frontmatter.author ? frontmatter.author : author;
 date = frontmatter.date ? frontmatter.date : date;
 description = frontmatter.description ? frontmatter.description : description;
@@ -34,19 +61,42 @@ section = frontmatter.section ? frontmatter.section : section;
 title = frontmatter.title ? frontmatter.title : title;
 disableTOC = frontmatter.disableTOC ? frontmatter.disableTOC : disableTOC;
 cta = frontmatter.cta ? frontmatter.cta : cta;
+
+if (author && !searchFilters['author']) {
+  searchFilters = {...searchFilters, author: [author]}
+}
+if (section && !searchFilters['section']) {
+  searchFilters = {...searchFilters, section: [section]}
+}
+
+const articleStyles = [
+  // base
+  "max-w-none pb-24 prose prose-slate dark:prose-invert", disableTOC ? "lg:pl-[19rem]" : "lg:px-[19rem]",
+  // a
+  "dark:prose-a:text-indigo-400 hover:prose-a:border-b-2 hover:prose-a:border-b-indigo-500 prose-a:border-b prose-a:border-b-indigo-500 prose-a:no-underline prose-a:text-indigo-700",
+  // code
+  "dark:prose-code:bg-slate-800 prose-code:bg-slate-100 prose-code:p-0.5 prose-code:rounded-sm prose-code:break-words",
+  // headings
+  "dark:prose-headings:text-slate-200 prose-headings:scroll-mt-24 prose-headings:text-slate-700",
+  // table
+  "prose-table:table overflow-x-auto"
+];
 ---
 
 <!DOCTYPE html>
 <html class="antialiased min-h-full" lang="en">
-<Head title={title} description={description}/>
+<Head title={title} description={description} canonicalUrl={frontmatter.canonicalUrl} {searchFilters} />
 <body
   class="antialiased bg-articles bg-right-top bg-no-repeat bg-white min-h-full text-slate-700 dark:bg-articles-dark dark:bg-slate-900 dark:text-slate-200"
   data-pagefind-ignore={excludeFromSearchIndex ? 'all' : false}>
-<Header/>
+<slot name="nav"/>
+<!--<div class="bg-indigo-100 block dark:bg-indigo-950 opacity-75 flex flex-row lg:hidden">-->
+<!-- <button id="mobile-nav-button" class="border-indigo-700 border-opacity-50 rounded p-2" ><Icon name="mobile-menu" /></button>-->
+<!--</div>-->
 <main class="max-w-8xl mx-auto px-4 py-8">
   <!-- Left sidebar -->
   <div id="side-nav"
-       class="lg:bg-opacity-0 dark:bg-slate-900 bg-white bottom-0 fixed hidden left-0 overflow-y-auto pb-10 pt-4 px-4 right-0 top-0 z-10 lg:block lg:left-[max(0px,calc(50%-45rem))] lg:pt-0 lg:right-auto lg:top-[4.3rem] lg:w-[19rem] mt-32 lg:mt-0">
+       class="lg:bg-opacity-0 hidden absolute max-w-xs dark:bg-slate-900 bg-white bottom-0 left-0 overflow-y-auto pb-10 pt-4 px-4 right-0 top-0 z-10 lg:block lg:left-[max(0px,calc(50%-45rem))] lg:pt-0 lg:right-auto lg:top-[4.3rem] lg:w-[19rem] lg:mt-0 border-b-2 lg:border-b-0">
     <!-- Relative container for the sticky search -->
     <div class="relative">
       <!-- Mobile close button -->
@@ -63,23 +113,40 @@ cta = frontmatter.cta ? frontmatter.cta : cta;
           </button>
         </div>
 
-        <!-- Section nav -->
+      <!-- Allow Docs to insert their own here -->
+      { Astro.slots.has('sideNav') &&
+          <slot name="sideNav"></slot>
+      }
+
+      <!-- Default Nav i.e. articles, may just break this out later-->
+      { !Astro.slots.has('sideNav') && <>
+          <!-- Section nav -->
         <SectionNavigation items={sections}/>
 
         <!-- Sidebar nav -->
         <Navigation items={sideMenu}/>
 
         <!-- Contribute -->
-        <GitHubEdit {...Astro.props} />
+        { contribute && <GitHubEdit {...Astro.props} /> }
+
+      </>}
+
       </div>
     </div>
 
     <!-- Main content section -->
-    <article class:list={["max-w-none pb-24 prose prose-slate dark:prose-a:text-indigo-400 dark:prose-code:bg-slate-800 dark:prose-code:border-blue-800 dark:prose-invert dark:prose-headings:text-slate-200 hover:prose-a:border-b-2 hover:prose-a:border-b-indigo-500 prose-a:border-b prose-a:border-b-indigo-500 prose-a:no-underline prose-a:text-indigo-700 prose-headings:scroll-mt-24 prose-code:bg-slate-100 prose-code:border prose-code:border-blue-300 prose-code:border-dashed prose-code:p-0.5 prose-code:rounded-sm prose-headings:text-slate-700", disableTOC ? "lg:pl-[19rem]" : "lg:px-[19rem]"]}>
+    <article data-pagefind-body class:list={articleStyles}>
       <div class="flex items-start">
         <div class="flex-grow">
-          {section && <p class="font-semibold mb-4 mt-0 text-indigo-700 text-lg dark:text-indigo-500">{section}</p>}
-          <h1 class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]}>{title}</h1>
+          {breadcrumbs.length > 0 && <div class="flex flex-row not-prose hidden lg:block items-center pb-6">
+            { breadcrumbs.map((crumb, i) => <>
+            <a href={crumb.href} class="font-medium text-slate-500 mb-4 mt-0 text-sm hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:underline capitalize">{ specialCaps(crumb.title) }</a>
+            { i !== breadcrumbs.length - 1 && <span class="mx-2 text-slate-500">/</span> }
+          </>) }
+          </div> }
+
+          {breadcrumbs.length === 0 && section && <p class="font-semibold mb-4 mt-0 text-indigo-700 text-lg dark:text-indigo-500">{ specialCaps(section) }</p>}
+          <h1 data-pagefind-meta="title" data-pagefind-body class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]}>{title}</h1>
           {author &&
             <p class="m-0 text-sm">By {author} {date && <span>- {new Date(date).toDateString()}</span>}</p>
           }
@@ -88,7 +155,11 @@ cta = frontmatter.cta ? frontmatter.cta : cta;
           <img src={icon} alt={title} class="ml-8 mr-4 my-0 w-20 "/>
         }
       </div>
-      <slot/>
+      {/* helps encourage pagefind to actually index the markdown content */}
+      <section data-pagefind-body>
+        <slot/>
+      </section>
+
     </article>
 
     <!-- Table of contents -->

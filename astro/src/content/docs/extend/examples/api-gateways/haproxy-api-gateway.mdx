@@ -1,0 +1,182 @@
+---
+title: HAProxy API Gateway
+description: Learn about the HAProxy JWT integration.
+navcategory: developer
+section: extend
+subcategory: examples
+tertcategory: api gateways
+---
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import FrameworkIntegrationTutorialList from 'src/content/docs/_shared/_framework-integration-tutorial-list.mdx';
+
+## Overview
+
+[HAProxy](https://www.haproxy.com) is a popular load balancer that can also be used as an [API Gateway](https://www.haproxy.com/blog/using-haproxy-as-an-api-gateway-part-1/).
+
+You can configure HAProxy to handle authorization to services through JSON Web Tokens (JWTs) issued on behalf of a user authenticated by an identity provider.
+
+In this document, you'll learn how to set up HAProxy with FusionAuth as the identity provider to protect an HTTP service using JWTs.
+
+## Prerequisites
+
+* A FusionAuth instance running on a publicly accessible URL. You can spin up a [basic FusionAuth Cloud instance](/pricing) or [install it on any server](/docs/get-started/download-and-install).
+* An HAProxy instance routed to an HTTP service. You can follow [this guide](https://www.haproxy.com/blog/how-to-run-haproxy-with-docker/) to get a simple example running on Docker.
+
+<Aside type="note">
+When creating your HAProxy container, be sure to use `haproxytech/haproxy-alpine:latest`, not `haproxytech/haproxy-alpine:2.4` as the guide instructs. Version 2.4 does not support the full set of JWT features needed in this tutorial.
+If you have trouble getting the `haproxy` container from the guide to start, make sure your `haproxy.cfg` file ends with a newline. Even a white space character on the last line will prevent the container from running.
+</Aside>
+
+
+## FusionAuth Configuration
+
+Navigate to your FusionAuth instance.
+
+First, you need to make sure that the JWT issuer setting is correct. Navigate to <strong>Tenants -> Your Tenant</strong> and change the <InlineField>Issuer</InlineField> field to the URL of your FusionAuth instance, for example, `https://local.fusionauth.io`. Record this value, because you will use it later when generating the JWT. It will be referred to as `<YOUR_FUSIONAUTH_URL>`.
+
+<img src="/img/docs/extend/examples/api-gateways/haproxy-tenant-issuer.png" alt="Tenant issuer" width="1200px" />
+
+Next, you need to configure a FusionAuth application to issue tokens to access the HAProxy services.
+
+Navigate to <strong>Applications</strong> and create a new application. Fill out the <InlineField>Name</InlineField> field, then click the <strong>JWT</strong> tab and toggle the <InlineField>Enabled</InlineField> switch. Select <InlineUIElement>Auto generate a new key on save...</InlineUIElement> for the <InlineField>Access Token signing key</InlineField> and <InlineField>Id token signing key</InlineField> fields. This will generate an RS256 asymmetric key pair specifically for this application.
+
+<img src="/img/docs/extend/examples/api-gateways/haproxy-application-jwt-settings.png" alt="Application JWT settings" width="1200px" />
+
+Click the <InlineUIElement>Save</InlineUIElement> button.
+
+After saving the new application, find it in the list of applications and click the <InlineUIElement>View</InlineUIElement> button next to it (look for the green magnifying glass). Here you will find the application <InlineField>Id</InlineField>. Record this value, as you will need it further on. It will be referred to later as `<YOUR_APPLICATION_ID>`.
+
+<img src="/img/docs/extend/examples/api-gateways/haproxy-application-id.png" alt="Application id" width="1200px" role="bottom-cropped" />
+
+Now, navigate to <strong>Settings -> Key Master</strong>. You will see the access key that you've just created in this list. By default, it has the name `Access token signing key generated for application <NAME_OF_APPLICATION>`. View this key and copy the entire contents of the <InlineField>PEM encoded</InlineField> field under the <strong>Public Key</strong> section. Create a file called `pubkey.pem` in the same directory as you placed the `haproxy.cfg` file while setting up HAProxy with the public key you copied. Remember this filename, as you will supply it to the HAProxy configuration file later.
+
+<img src="/img/docs/extend/examples/api-gateways/haproxy-public-key.png" alt="Record the public key for later use" width="1200px" />
+
+You will use FusionAuth's API to generate a test JWT for your application. However, in a real-world application, the user or service would get the JWT through an OAuth grant. In the case of a user, the appropriate grant is the Authorization Code grant, and for a service, the Client Credentials grant. To make this example simpler, you'll use the Login API to get the JWT. To do this, you need an API key with POST access to the `/api/login` endpoint. Go to <strong>Settings -> API Keys</strong> to add the key. Make sure the appropriate tenant is selected in the <InlineField>Tenant</InlineField> field.
+
+<img src="/img/docs/extend/examples/api-gateways/haproxy-api-key-permissions.png" alt="API key with post access to /api/login" width="1200px" />
+
+After saving the API key, you can view the key in the list of API keys. Make a note of the value of the <InlineField>Key</InlineField> field. You will need to click the red padlock icon next to the key to reveal the value.
+
+<img src="/img/docs/extend/examples/api-gateways/haproxy-api-key-value.png" alt="Contents of API key" width="1200px" role="bottom-cropped" />
+
+Finally, make sure there is at least one user registered to your application so that you can test with a JWT issued for that user. You can create a new user by navigating to <strong>Users -> Add user</strong>. Toggle the <InlineField>Send email to set up password</InlineField> switch to `disabled` and manually enter a password in the <InlineField>Password</InlineField> field.
+
+<img src="/img/docs/extend/examples/api-gateways/haproxy-create-user.png" alt="Create user with email and password" width="1200px" role="bottom-cropped" />
+
+After saving this user, click <InlineUIElement>Manage</InlineUIElement> and go to the <strong>Registrations</strong> tab. Click <InlineUIElement>Add Registration</InlineUIElement> to register the user to your application.
+
+<img src="/img/docs/extend/examples/api-gateways/haproxy-user-registration.png" alt="Register user to HAProxy application" width="1200px" />
+
+## Configure HAProxy
+
+After following the HAProxy quickstart guide noted earlier, you can execute the following command in the terminal:
+
+```shell title="Test HAProxy setup"
+curl -X GET -I http://localhost:80
+```
+
+If you have correctly set up HAProxy, this command will return `HTTP/1.1 200 OK`, indicating a successful connection to the service.
+
+Now you can restrict access to the service by requiring a JWT. To do this, add the following lines to the `frontend myfrontend` section of your `haproxy.cfg` file. More information on this can be found [here](https://www.haproxy.com/blog/verify-oauth-jwt-tokens-with-haproxy/#configure-haproxy-for-jwts).
+
+```ini title="Add JWT requirement to HAProxy configuration file"
+  http-request deny content-type 'text/html' string 'Missing Authorization HTTP header' unless { req.hdr(authorization) -m found }
+
+  # get header part of the JWT
+  http-request set-var(txn.alg) http_auth_bearer,jwt_header_query('$.alg')
+  http-request set-var(txn.iss) http_auth_bearer,jwt_payload_query('$.iss')
+  http-request set-var(txn.aud) http_auth_bearer,jwt_payload_query('$.aud')
+
+  # get payload part of the JWT
+  http-request set-var(txn.exp) http_auth_bearer,jwt_payload_query('$.exp','int')
+
+  # Validate the JWT
+  http-request deny content-type 'text/html' string 'Unsupported JWT signing algorithm'  unless { var(txn.alg) -m str RS256 }
+  http-request deny content-type 'text/html' string 'Invalid JWT issuer'  unless { var(txn.iss) -m str <YOUR_FUSIONAUTH_URL> }
+  http-request deny content-type 'text/html' string 'Invalid JWT audience'  unless { var(txn.aud) -m str <YOUR_APPLICATION_ID> }
+  http-request deny content-type 'text/html' string 'Invalid JWT signature'  unless { http_auth_bearer,jwt_verify(txn.alg,"/etc/haproxy/pubkey.pem") -m int 1 }
+
+  http-request set-var(txn.now) date()
+  http-request deny content-type 'text/html' string 'JWT has expired' if { var(txn.exp),sub(txn.now) -m int le 0 }
+
+```
+
+In the `Invalid JWT issuer` and `Invalid JWT audience` lines above, the placeholder values `<YOUR_FUSIONAUTH_URL>` and `<YOUR_APPLICATION_ID>` will need to be updated with the appropriate values from the previous section. `<YOUR_FUSIONAUTH_URL>` is the fully-qualified URL from the <InlineField>Issuer</InlineField> field in your <strong>Tenant</strong> configuration and `<YOUR_APPLICATION_ID>` is the UUID that identifies your FusionAuth application.
+
+Note that your configuration file will look slightly different from the one in HAProxy's documentation linked above. You only need to import the lines necessary for proper JWT authentication. For example, you do not need to bind to port 443 or set up an SSL certificate, although it is good practice to do so in a production environment. More information on this can be found [here](https://www.haproxy.com/blog/haproxy-ssl-termination/).
+
+Restart HAProxy by running the following:
+
+```shell title="Restart the HAProxy load balancer"
+sudo docker kill -s HUP haproxy
+```
+
+At this point, the service is inaccessible without a token. To confirm this, you can execute:
+
+```shell title="Test that service is inaccessible without JWT"
+curl -X GET -I http://localhost:80
+```
+
+This will return `HTTP/1.1 403 Forbidden`. You can also omit the `-I` option to see the error message that you supplied above, namely `Missing Authorization HTTP header`.
+
+## Accessing the Service with a JWT
+
+You can now generate a test JWT to access your HAProxy service using FusionAuth's login API. Execute the following command in your terminal:
+
+```shell title="Get JWT token from FusionAuth"
+curl --location --request POST '<YOUR_FUSIONAUTH_URL>/api/login' \
+--header 'Authorization: <API_KEY>' \
+--header 'Content-Type: application/json' \
+--data-raw '  {
+    "loginId": "<USER_EMAIL>",
+    "password": "<USER_PASSWORD>",
+    "applicationId": "<APPLICATION_ID>",
+    "noJWT" : false
+  }'
+```
+
+Here, `<YOUR_FUSIONAUTH_URL>` is the <InlineField>Issuer</InlineField> name, and `<API_KEY>` is the key you noted when setting it up on the <strong>Settings -> API Keys</strong> page.
+
+For `<APPLICATION_ID>`, use the Id of your FusionAuth application, noted when setting up the application.
+
+The values for `<USER_EMAIL>` and `<USER_PASSWORD>` are the <InlineField>Username</InlineField> and <InlineField>Password</InlineField> of the test user that you registered to that application.
+
+The returned response from FusionAuth should look similar to the following:
+
+```json title="Token response from API call"
+{
+    "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImhDUjA4X3daR2s0OUFlYUFmRDY5ZmJKWmRGTSJ9.eyJhdWQiOiI2M2I3M2Y3Ni03NDAwLTQ4N2QtYjEyMi01NzA1Yjg0OGRhODAiLCJleHAiOjE2NzMzNjYyMDQsImlhdCI6MTY3MzM2MjYwNCwiaXNzIjoiaHR0cHM6Ly9mdXNpb25hdXRoLnJpdHphLmNvIiwic3ViIjoiMzk2MzAwMGYtNjg2ZC00MTY5LWI2MjgtOWM5YzQ1MzRiNzgwIiwianRpIjoiZDk3ZGIyZWYtZjExNS00ZDIxLWFlOTQtMDIyN2RmMGU4YzI5IiwiYXV0aGVudGljYXRpb25UeXBlIjoiUEFTU1dPUkQiLCJlbWFpbCI6ImJvYkBhd3MuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInByZWZlcnJlZF91c2VybmFtZSI6ImJvYmF3cyIsImFwcGxpY2F0aW9uSWQiOiI2M2I3M2Y3Ni03NDAwLTQ4N2QtYjEyMi01NzA1Yjg0OGRhODAiLCJyb2xlcyI6W10sImF1dGhfdGltZSI6MTY3MzM2MjYwNCwidGlkIjoiZjAwNGMxZmUtNDg0Yi05MDJjLWQ3Y2EtYmRiYzQ2NGRhMGI3In0.m7gzXhNLToPNVE1p5Vo2pLgP6WBcPNfS_zZJnJ81mdEgi6-orViz-tU8j0L8wva0-8KlMdy54cq_XjnDnYJ0aX90O4ZE_QVU5NuDDfzXH14wQtKQoIIydsB6ZvQoBt8JNFUHJb9ANLCGnfn6FVQKqPIzye18Gx_7wYSVokw3eLNFyzrq9dwOD5Q8V9gvZmXV2pTokQAtA7qFaadb2dIeFlSEB7wamKiZLXILjeWAeMbbvAAMQZWFh46UJjwr06QTd8PxQmRwDWWznJy1Vs8EAgZA4vkRSWnn3IbiaCtOaL1ANuEex6il7q32ahxj0Ncm9wn0DbDsQE9NB0CCNTSIhA",
+    "tokenExpirationInstant": 1673366204805,
+    "user": {
+        "sampleuserdata" : "..."
+    }
+}
+```
+
+Copy the <InlineField>token</InlineField> value. You can now gain access to your HAProxy service by passing this value as a bearer token.
+
+```shell title="Gain access with JWT"
+curl -I http://localhost:80 \
+-H 'Authorization: Bearer <TOKEN>'
+```
+
+Here, `TOKEN` is the value of the JWT that you copied from the `/api/login` call.
+
+This command should return `HTTP/1.1 200 OK`, indicating successful authorization to the HAProxy service.
+
+## Troubleshooting
+
+* The JWT issued by the FusionAuth Login API has an expiration date. If you wait too long before using it to call the HAProxy service, the token will expire and the call will fail. You can resolve this by rerunning the curl command to obtain another JWT token and use the new token.
+
+* The issuer URL set in the <InlineField>Issuer</InlineField> field from <strong>Tenants -> Your Tenant</strong> must exactly match the `<YOUR_FUSIONAUTH_URL>` value in the `haproxy.cfg` file. If the values do not match exactly, including any white space and slashes, the JWT token will not be accepted by HAProxy.
+
+## Next Steps
+
+You've learned how to enable JWT authorization on an HAProxy service. In a production application, using HAProxy and the JWT plugin is useful to secure the backend services of the application. This way, each service does not need to handle authorization or authentication. Instead, authentication and authorization are handled by FusionAuth and HAProxy.
+
+You used the FusionAuth API to create a test token on behalf of a user. For a production system, the token will be generated after a user signs in to your application through a frontend. Check out some of the framework integration tutorials to implement that:
+
+<FrameworkIntegrationTutorialList />

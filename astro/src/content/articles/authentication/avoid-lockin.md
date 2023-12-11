@@ -1,7 +1,7 @@
 ---
 title: Avoiding Authentication System Lock-In
 description: "Steps you can take to avoid auth system lock-in include: considering portability, limiting usage, insulating your application with a facade, and having a backup plan."
-author: Cameron Pavey
+author: Cameron Pavey, Dan Moore
 section: Authentication
 tags: lock-in architecture standards facade planning open-standards 
 icon: /img/icons/avoiding-authentication-system-lock-in.svg
@@ -65,6 +65,41 @@ Sure, you hope never to invoke Plan B - and the cost it would entail. Still, if 
 
 This is a similar principle to the test-first mindset. If you write your code with testing as a foremost concern, the output will likely be different - and more testable by nature - than if you conducted testing as an afterthought. Making architectural decisions while mindfully being aware of possible future migrations can lead to more robust system design and easier migrations in the future.
 
+## Technical Planning For A Migration
+
+There are certain technical issues you should consider as well. Planning upfront for these will help you avoid pain if you do need to invoke plan B or migrate away from an authentication system.
+
+### Password Hashes
+
+While password hashes are briefly mentioned above, understanding how they might lock you in is critical for future flexibility. Having access to your hashes allows you to perform a smooth migration of users who log in with those credentials. A password hash is always one way, so if you cannot get acquire them, you are left with the following unsavory options:
+
+* never migrating
+* resetting all your users' passwords 
+* performing a [drip migration](/articles/identity-basics/slow-migration)
+
+There are two password hashing concerns to be aware of.
+
+First, what is the hashing algorithm used for your passwords?
+
+Your authentication system documentation should specify this. It's best if this is an industry-standard hash such as <code>Argon</code> or <code>PBK2DF</code>. Certain authentication systems, such as FusionAuth, allow for [custom password hashing algorithms](/docs/extend/code/password-hashes/custom-password-hashing) to be used, which can mitigate the risk of using a nonstandard hash.
+
+Second, can you get access to the password hashes?
+
+It's not typical to have regular or API access to hashes, as they are highly sensitive. Sometimes you can get a database export of your authentication system including the hashes. If you are using a SaaS authentication system, you may need to open a support ticket to get the hashes. Verify such an export is available by consulting the authentication system documentation. Don't forget to allow for the time needed to obtain the export when actually planning a migration.
+
+### Hostnames
+
+Control the hostname of your authentication system and make sure it is under a domain name your organization owns. Having this under your control makes any future migration much easier.
+
+Your users won't need to change the URL they visit to authenticate. While most people use links from within your app to authenticate, some people bookmark login pages when using a browser.
+
+If you are integrating with other identity providers, which is common in the business to business to employee (B2B2E) SaaS use case, running an authentication system at a hostname you control is critical.
+
+Common authentication standards which allow for single sign-on, such as SAML and OIDC, embed hostnames and paths into configuration. The terminology used varies, but the functionality is the same: the identity provider needs to send a properly authenticated user to a known location, and this list is often set up when the integration is set up, often by employees with high levels of access, such as IT admins. Such integration allows employees easy, secure access to your application.
+
+If you enable SAML or OIDC single sign-on integration with your application, make sure you use a hostname under your control. Otherwise, during a migration you may need to coordinate configuration changes across many customers, run multiple systems so you can migrate customers on their timeline, or relax security checks (when possible).
+
+Paths can change between authentication systems as well. If you control the hostname, you can configure a proxy to rewrite paths, which will make a migration easier as well. 
 
 ## Wrapping Up
 

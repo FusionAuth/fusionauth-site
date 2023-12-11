@@ -1,0 +1,195 @@
+---
+title: Vue.js
+description: Quickstart integration of a Vue.js web application with FusionAuth
+navcategory: getting-started
+prerequisites: Node 18
+section: spa
+technology: Vue.js
+language: JavaScript
+icon: /img/icons/vue.js.svg
+faIcon: fa-vue
+color: red
+coderoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-vue-web/main
+cta: EmailListCTA
+---
+import Aside from '/src/components/Aside.astro';
+import LoginAfterSdk from '../../diagrams/quickstarts/login-after-sdk.astro';
+import LoginBefore from '../../diagrams/quickstarts/login-before.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+
+
+In this quickstart you are going to build an application with Vue.js and integrate it with FusionAuth.
+You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM), a global leader in converting dollars into coins.
+It'll have areas reserved for users who have logged in as well as public facing sections.
+
+The docker compose file and source code for a complete application are available at
+[https://github.com/FusionAuth/fusionauth-quickstart-javascript-vue-web](https://github.com/FusionAuth/fusionauth-quickstart-javascript-vue-web)
+
+## Prerequisites
+* [Node v18](https://nodejs.org/en): This will be used to run the Vue.js application.
+* [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](/docs/get-started/download-and-install)).
+
+This app has been tested with Node v18 and Vue.js v3.3.4. This example should work with other compatible versions of Node and Vue.js.
+
+## General Architecture
+
+While this sample application doesn't have login functionality without FusionAuth, a more typical integration will replace an existing login system with FusionAuth.
+
+In that case, the system might look like this before FusionAuth is introduced.
+
+<LoginBefore alt={"Request flow during login before FusionAuth"}/>
+
+The login flow will look like this after FusionAuth is introduced.
+
+<LoginAfterSdk alt={"Request flow during login after FusionAuth"}/>
+
+In general, you are introducing FusionAuth in order to normalize and consolidate user data. This helps make sure it is consistent and up-to-date as well as offloading your login security and functionality to FusionAuth.
+
+## Getting Started
+
+In this section, you'll get FusionAuth up and running and use Vue.js CLI to create a new application.
+
+### Clone The Code
+First off, grab the code from the repository and change into that directory.
+
+```shell
+git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-vue-web.git
+cd fusionauth-quickstart-javascript-vue-web
+```
+
+### Run FusionAuth Via Docker
+In the root directory of the repo you'll find a Docker compose file (docker-compose.yml) and an environment
+variables configuration file (.env). Assuming you have Docker installed on your machine, you can stand up
+FusionAuth up on your machine with:
+
+```shell
+docker compose up -d
+```
+
+This will start three containers, once each for FusionAuth, Postgres, and Elastic.
+
+Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/get-started/download-and-install/development/kickstart).
+When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and
+configure FusionAuth to a certain initial state.
+
+<Aside type="note">
+    If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by
+    executing `docker compose down -v`, then re-run `docker compose up -d`.
+</Aside>
+
+<p id="fusionauthconfig">FusionAuth will be configured with these settings:</p>
+* Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
+* Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
+* Your example username is `richard@example.com` and the password is `password`.
+* Your admin username is `admin@example.com` and the password is `password`.
+* The base URL of FusionAuth `http://localhost:9011/`.
+
+You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don’t need to.
+
+### Create A Basic Vue.js Application
+
+Now you are going to create a basic Vue.js application using Create Vue. While this section builds a simple Vue.js application, you can use the same configuration to integrate your existing Vue.js application with FusionAuth.
+
+```shell
+npm create vue@latest -- changebank --typescript --router
+```
+
+We are going to use the [Hosted Backend](/docs/apis/hosted-backend) feature of FusionAuth, so you don't need to worry about setting up a backend server.
+
+First, install the FusionAuth Vue SDK:
+
+```shell
+npm install @fusionauth/vue-sdk
+```
+
+Next, you'll need to configure and activate the FusionAuth Vue SDK. You can do this by updating the `src/main.ts` file contents. Replace what is there with this:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-vue-web/main/complete-application/src/main.ts"
+            lang="typescript"/>
+
+Our example application is going to have a home page, an account page and a page where someone can make change. The account and make change page will be protected and only visible to logged in users.
+
+#### Create A Home Page
+
+The next step is to get a basic home page up and running. We’ll take this opportunity to copy in all the images and CSS style files that you’ll need for the application.
+
+Run the following copy command to copy these files from the quickstart repo into your project. This assumes that you checked the quickstart repo out into the parent directory. If that’s not the case, replace the `..` below with your actual repo location.
+
+```shell
+cp -r ../complete-application/src/assets src
+```
+
+The home page will be a simple page with a welcome message and a login link. Replace the content of the file `src/views/HomeView.vue`:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-vue-web/main/complete-application/src/views/HomeView.vue"
+            lang="vue"/>
+
+#### Create An Account Page
+
+The account page displays a random balance for the logged in user. Create a new file `src/views/AccountView.vue`:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-vue-web/main/complete-application/src/views/AccountView.vue"
+            lang="vue"/>
+
+#### Create A Make Change Page
+
+Next, you'll create a page only visible to logged in users. This page displays an input field for the user to enter a dollar amount and a button to convert that amount into coins. Create a new file `src/views/MakeChangeView.vue`:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-vue-web/main/complete-application/src/views/MakeChangeView.vue"
+            lang="vue"/>
+
+## Authentication
+
+You now have created a basic Vue.js application with a home page, account page and a page for making change.
+
+Depending on the user's authentication state, the login or logout button should be displayed in the header. For this create a new file `src/components/LogoHeader.vue`:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-vue-web/main/complete-application/src/components/LogoHeader.vue"
+            lang="vue"/>
+
+Additionally, we want to display different menu items. For this create a new file `src/components/MenuBar.vue`:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-vue-web/main/complete-application/src/components/MenuBar.vue"
+            lang="jsx"/>
+
+The next step is to tie it all together. Update the `src/App.vue` file to add the router view and header. You can replace the contents of the file with the below:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-vue-web/main/complete-application/src/App.vue"
+            lang="vue"/>
+
+And finally we register the routes in `src/router/index.ts`. Update that file with the code below.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-vue-web/main/complete-application/src/router/index.ts"
+            lang="typescript"/>
+
+## Running The Application
+
+You can now run the application with the following command:
+
+```shell
+npm run dev
+```
+
+You can now open up an incognito window and navigate to http://localhost:5173. You will be greeted with the home page. Log in with the user account you created when setting up FusionAuth, and you'll be redirected to the account page.
+
+<Aside type="note">
+    The username and password of the `example user` can be found in the <a href="#fusionauthconfig">FusionAuth via Docker</a> section at the top of this article.
+</Aside>
+
+## Next Steps
+This quickstart is a great way to get a proof of concept up and running quickly, but to run your application in production, there are some things you're going to want to do.
+
+### FusionAuth Customization
+FusionAuth gives you the ability to customize just about everything with the user's experience and your application's integration. This includes
+* [Hosted pages](/docs/customize/look-and-feel/) such as login, registration, email verification, and many more
+* [Email templates](/docs/customize/email-and-messages/email-templates)
+* [User data and custom claims in access token JWTs](/articles/tokens/jwt-components-explained)
+
+### Security
+* You may want to customize the [token expiration times and policies](/docs/lifecycle/authenticate-users/oauth/#configure-application-oauth-settings) in FusionAuth
+* Choose [password rules](/docs/get-started/core-concepts/tenants#password) and a [hashing algorithm](/docs/reference/password-hashes) that meet your security needs
+
+### Tenant And Application Management
+* Model your application topology using [Applications](/docs/get-started/core-concepts/applications), [Roles](/docs/get-started/core-concepts/roles), [Groups](/docs/get-started/core-concepts/groups), [Entities](/docs/get-started/core-concepts/groups), and more
+* Set up [MFA](/docs/lifecycle/authenticate-users/multi-factor-authentication), [Social login](/docs/lifecycle/authenticate-users/identity-providers/), and/or [SAML](/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2) integrations
+* Integrate with external systems using [Webhooks](/docs/extend/events-and-webhooks/), [SCIM](/docs/lifecycle/migrate-users/scim/scim), and [Lambdas](/docs/extend/code/lambdas/)

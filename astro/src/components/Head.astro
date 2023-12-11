@@ -1,7 +1,18 @@
 ---
-const { description, title, openGraphImage } = Astro.props;
+import SearchFilter  from 'src/components/search/SearchFilter.astro';
+
+interface Props {
+  description?: string;
+  title?: string;
+  openGraphImage?: string;
+  canonicalUrl?: string;
+  searchFilters?: { [key: string]: string[] };
+}
+
+const { description, title, openGraphImage, canonicalUrl, searchFilters = {} } = Astro.props;
 const openGraphImageUrl = openGraphImage ? new URL(openGraphImage, Astro.url): new URL("/img/articles-developers.png", Astro.url);
 const normalizedUrl = Astro.url.toString().replace(/.html$/, '');
+const hasDark = !Astro.url.pathname.startsWith('/blog');
 const isProd = import.meta.env.PROD as boolean;
 ---
 <head>
@@ -9,19 +20,23 @@ const isProd = import.meta.env.PROD as boolean;
   <meta name="viewport" content="width=device-width"/>
   <!-- TODO: Implement favicons by following this blog post https://dev.to/masakudamatsu/favicon-nightmare-how-to-maintain-sanity-3al7 -->
   <link rel="icon" type="image/png" href="/img/favicon.png"/>
+  { canonicalUrl && <link rel="canonical" href={canonicalUrl} /> }
   <link rel="sitemap" href="/sitemap-index.xml">
   <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-  <link rel="stylesheet" href="/css/diagrams.css"/>
-  <link rel="stylesheet" href="/css/fontawesome.min.css"/>
   <link rel="stylesheet" href="/css/brands.min.css"/>
   <link rel="stylesheet" href="/css/duotone.min.css"/>
+  <link rel="stylesheet" href="/css/fontawesome.min.css"/>
   <link rel="stylesheet" href="/css/light.min.css"/>
   <link rel="stylesheet" href="/css/regular.min.css"/>
+  <link rel="stylesheet" href="/css/sharp-solid.min.css"/>
+  <link rel="stylesheet" href="/css/sharp-thin.min.css"/>
+  <link rel="stylesheet" href="/css/solid.min.css"/>
   <script src="/js/CopyToClipboard-0.2.2.js" type="text/javascript"></script>
-  <script src="/js/Search-0.1.2.js" type="text/javascript"></script>
+  <script src="/js/Search-0.2.0.js" type="text/javascript"></script>
   <script src="/js/ScrollSpy-0.1.0.js" type="text/javascript"></script>
-  <script src="/js/ThemeSelector-0.1.0.js" type="text/javascript"></script>
-  <script src="/js/Visibility-0.1.0.js" type="text/javascript"></script>
+  { hasDark && <script src="/js/ThemeSelector-0.1.0.js" type="text/javascript"></script> }
+  <script src="/js/Visibility-0.1.1.js" type="text/javascript"></script>
+  <script src="/js/BlogScrollTable-0.1.0.js" type="text/javascript"></script>
   <title>{title}</title>
   <meta name="description" content={description}/>
   <meta property="og:site_name" content="FusionAuth"/>
@@ -31,6 +46,18 @@ const isProd = import.meta.env.PROD as boolean;
   <meta property="og:type" content="website"/>
   <meta property="og:locale" content="en_US"/>
   <meta property="og:image" content={openGraphImageUrl}/>
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@FusionAuth">
+  <meta name="twitter:creator" content="@FusionAuth">
+  <meta name="twitter:title" content={title}>
+  <meta name="twitter:description" content={description}>
+  <meta name="twitter:image" content={openGraphImageUrl}>
+
+  <!-- Search -->
+  {searchFilters && <SearchFilter filters={searchFilters} />}
+
   {isProd &&
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -60,7 +87,7 @@ src="https://widget.kapa.ai/kapa-widget.bundle.js"
 data-website-id="26ad3b7e-7d94-491c-ab54-95712d1fafee"
 data-project-name="FusionAuth"
 data-project-color="#475569"
-data-project-logo="https://fusionauth.io/assets/img/android-icon-144x144.png"
+data-project-logo="/img/android-icon-144x144.png"
 ></script>
 </head>
 

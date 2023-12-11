@@ -1,74 +1,40 @@
 'use strict';
 
 class PopoutMenu {
-  #outState = ['ease-out', 'duration-100', 'opacity-0', 'scale-95'];
-  #inState = ['ease-in', 'duration-75', 'opacity-100', 'scale-100'];
+  #toggleMap = {};
 
-  #mouseOverMedButton = false;
-  #mouseOverMedMenu = false;
-  #medMenuVisible = false;
-  #medMenuClicked = false;
+  #unClickedState = ['lg:opacity-0', 'lg:group-hover:opacity-100', 'lg:group-hover:scale-100', 'lg:scale-[.25]', 'lg:duration-300', 'lg:transition'];
+  #clickedState = ['lg:opacity-100', 'lg:scale=100'];
 
-  #menuElem
   constructor() {
-    this.#menuElem = document.getElementById('more-menu');
-
-    document.getElementById('menu-button').addEventListener('mouseout', event => {
-        this.#mouseOverMedButton = false;
-        if (!this.#medMenuClicked) {
-          this.#toggleMedMenu();
-        }
-      });
-
-      document.getElementById('more-menu').addEventListener('mouseout', event => {
-        this.#mouseOverMedMenu = false;
-        if (!this.#medMenuClicked) {
-          this.#toggleMedMenu();
-        }
-      });
-
-      document.getElementById('menu-button').addEventListener('mouseover', event => {
-        this.#mouseOverMedButton = true;
-        if (!this.#medMenuClicked) {
-          this.#toggleMedMenu();
-        }
-      });
-
-      document.getElementById('more-menu').addEventListener('mouseover', event => {
-        this.#mouseOverMedMenu = true;
-        if (!this.#medMenuClicked) {
-          this.#toggleMedMenu();
-        }
-      });
-
-      document.getElementById('menu-button').addEventListener('click', event => {
-        // handle mobile clicked
-        this.#medMenuClicked = !this.#medMenuClicked;
-        this.#toggleMedMenu();
-      });
+    document.addEventListener('click', () => this.#handleClick(event));
   }
 
-  #toggleMedMenu() {
-    if (this.#medMenuClicked) {
-      if (!this.#medMenuVisible) {
-        this.#medMenuVisible = true;
-        this.#menuElem.classList.remove(...this.#outState);
-        this.#menuElem.classList.add(...this.#inState);
-      }
+  #handleClick(event) {
+    const button = event.target.closest('[data-widget="popout-button"]');
+    if (!button || !button.dataset.element) {
+      return;
     }
-    if ((this.#mouseOverMedButton || this.#mouseOverMedMenu) && !this.#medMenuVisible) {
-      this.#medMenuVisible = true;
-      this.#menuElem.classList.remove(...this.#outState);
-      this.#menuElem.classList.add(...this.#inState);
-    } else if (!this.#medMenuClicked) {
-      setTimeout(() => {
-        if (!this.#mouseOverMedMenu && !this.#mouseOverMedMenu) {
-          this.#medMenuVisible = false;
-          this.#menuElem.classList.remove(...this.#inState);
-          this.#menuElem.classList.add(...this.#outState);
-        }
-      }, 500);
+
+    const id = button.dataset.element;
+    const element = document.getElementById(id);
+    this.#toggleMenuClicked(id, element);
+  }
+
+  #toggleMenuClicked(id, elem) {
+    if (!Object.keys(this.#toggleMap).includes(id)) {
+      this.#toggleMap[id] = false;
     }
+
+    if (!this.#toggleMap[id]) {
+      elem.classList.remove(...this.#unClickedState);
+      elem.classList.add(...this.#clickedState);
+    } else {
+      elem.classList.remove(...this.#clickedState);
+      elem.classList.add(...this.#unClickedState);
+    }
+
+    this.#toggleMap[id] = !this.#toggleMap[id];
   }
 }
 

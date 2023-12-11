@@ -1,0 +1,71 @@
+---
+title: "OIDC & CockroachDB"
+description: Learn how to set up CockroachDB to allow users to log in using FusionAuth via OIDC.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: integrations
+quatercategory: oidc
+---
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import Aside from 'src/components/Aside.astro';
+import Icon from 'src/components/icon/Icon.astro';
+
+## Overview
+
+[CockroachDB](https://www.cockroachlabs.com/) is a distributed SQL database designed for speed and scale. It offers a self-hosted deployment model, where you run the clusters in your own environment, and two SaaS options: dedicated and serverless. We'll use the dedicated version to set up Single Sign-On, allowing users to log in to your CockroachDB Console interface using their FusionAuth credentials.
+
+## Prerequisites
+
+This document assumes you have a running instance of FusionAuth and a working CockroachDB application. You will also need admin accounts for both to configure them correctly.
+
+## Configure FusionAuth
+
+First, you have to change the issuer of your tenant. Navigate to <strong>Tenants -> Your Tenant</strong> and set the <InlineField>Issuer</InlineField> to the full URL of your FusionAuth instance including the protocol (e.g. `https://your.fusionauth.app.domain`) and with no trailing slashes. Click the blue floppy disk icon to save your changes.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/edit-tenant.png" alt="Edit tenant to change the issuer." width="1200" />
+
+Now, navigate to <strong>Applications</strong> and create a new application. Fill out the <InlineField>Name</InlineField> field (e.g. `CockroachDB`), then click the <strong>OAuth</strong> tab. Make sure that the <InlineField>Enabled grants</InlineField> checkboxes have the `Authorization Code` and `Refresh Token` grants enabled. Now, click the <strong>JWT</strong> tab, toggle the <InlineField>Enabled</InlineField> field and set both <InlineField>Access Token signing key</InlineField> and <InlineField>Id Token signing key</InlineField> to `Auto generate a new key on save...`, like shown in the image below.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/application.png" alt="Configuring your application." width="1200" />
+
+Click the <InlineUIElement>Save</InlineUIElement> button.
+
+After being redirected to the <strong>Applications</strong> page, click on the <Icon name="fa-search"/> button next to your application to view its details. In the modal that opens, scroll down a bit until you reach the <InlineUIElement>OAuth configuration</InlineUIElement> section. Write down both <InlineField>Client Id</InlineField> and the <InlineField>Client Secret</InlineField> values, as you'll need them soon.
+
+## Set Up CockroachDB
+
+<Aside type="note">
+The steps below are performed in a CockroachDB Cloud instance. On Self-Hosted clusters, instructions are different. Refer to [this article](https://www.cockroachlabs.com/docs/stable/sso-db-console.html).
+</Aside>
+
+Log in to your Cockroach DB console using an administrator account and navigate to <strong>Organization -> Authentication</strong>.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/enable-sso.png" alt="Enable SSO." width="1200" />
+
+Click <InlineUIElement>Enable</InlineUIElement> to activate SSO providers in your organization. You will be prompted to provide a <InlineField>Custom URL</InlineField> for your instance, where all users will be required to use when logging in (this will be prefixed by `https://cockroachlabs.cloud/login/`). Define the URL and click <InlineUIElement>Next</InlineUIElement>. You should now toggle the <InlineField>Confirm</InlineField> box to acknowledge that this operation cannot be reverted and finally click <InlineUIElement>Enable</InlineUIElement> to save.
+
+After doing so, you'll be taken back to the <strong>Authentication</strong> page. Click <InlineUIElement>Add</InlineUIElement> in <InlineUIElement>Authentication Methods</InlineUIElement> to create a new provider, set <InlineField>Configuration</InlineField> to `OIDC` and give it a meaningful name, like "FusionAuth", which will be displayed to your users when they browse to the login page. Click <InlineUIElement>Submit</InlineUIElement> to go to the details page.
+
+In the method details page, click <InlineUIElement>Edit</InlineUIElement> and fill in <InlineField>Issuer URL</InlineField>, <InlineField>Client ID</InlineField> and <InlineField>Client Secret</InlineField> fields with the values you copied when creating the application in your FusionAuth instance.
+
+By default, someone will only be able to log in to your CockroachDB application if you have already created a user there with the same email address from your FusionAuth instance. However, you can enable CockroachDB to automatically create a user there with a `Developer` role if they don't exist by clicking <InlineUIElement>Additional Settings</InlineUIElement> and setting the <InlineUIElement>Auto-provision Accounts</InlineUIElement> switch to "Enabled". You can also define which email domains will be accepted by filling <InlineField>Allowed Email Domains</InlineField>.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/add-oidc.png" alt="Adding FusionAuth OIDC provider to CockroachDB." width="1200" />
+
+Submit your changes by clicking <InlineUIElement>Save</InlineUIElement> in the top right corner of the screen, which will redirect you back to the method details page, where you need to copy the <InlineField>Callback URL</InlineField>. Go back to your FusionAuth instance and select <strong>Applications</strong>. Click the blue pencil icon to edit your application and paste that URL in <InlineField>Authorized redirect URLs</InlineField> and save your application.
+
+Go back to CockroachDB and click the <InlineUIElement>Test</InlineUIElement> button in <InlineUIElement>Test Connection</InlineUIElement> to actually try out the whole process. If it succeeds, you can enable the integration by toggling the <InlineField>Status</InlineField> switch.
+
+## Log in
+
+To test everything, open a different browser (or an incognito tab) and go to that custom URL you've configured earlier (something like `https://cockroachlabs.cloud/login/your-url-here`). You'll now see a <InlineUIElement>Log in with FusionAuth</InlineUIElement> (or whatever the name you chose) button. Click it and you will be prompted to log in to your FusionAuth instance. After completing the process, you should be redirected back to your CockroachDB DB Console already logged in.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/login.png" alt="Login screen for your CockroachDB instance." width="1200" />
+
+## Troubleshooting
+
+* Watch out when defining the issuer for your tenant and make sure you have included both the protocol (most commonly `https://`) and no trailing slashes.
+* Ensure that the signing keys for your FusionAuth application are using  asymmetric encryption (RS256) by navigating to <strong>Settings -> Key Master</strong>, locating the two keys named `Access token signing key generated for application CockroachDB` and `Id token signing key generated for application CockroachDB`. Both of them should have <InlineUIElement>Type</InlineUIElement> as `RSA`.
+* If you have trouble configuring your CockroachDB instance, please refer to their Single Sign-On support docs for either [Cloud](https://www.cockroachlabs.com/docs/cockroachcloud/cloud-org-sso.html) and [Self-Hosted](https://www.cockroachlabs.com/docs/stable/sso-db-console.html) clusters.

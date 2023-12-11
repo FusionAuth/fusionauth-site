@@ -55,7 +55,7 @@ A flexible identity management solution that’s easy to implement shortens deve
 
 Gamers have to go through the onboarding process and create separate login credentials each time they sign up to a new platform. Authentication and account linking with third-party social networks and popular gaming platforms like PSN and Twitch allow players to authenticate using existing credentials. This is known as federated authentication. 
 
-Federated authentication creates a system of trust between two parties (the main identity provider and the external identity provider) to authenticate users and relay the information needed to authorize the user’s access to resources. It allows you to delegate authentication to an [external identity provider](/docs/v1/tech/identity-providers/) to simplify the user sign-in and registration process. 
+Federated authentication creates a system of trust between two parties (the main identity provider and the external identity provider) to authenticate users and relay the information needed to authorize the user’s access to resources. It allows you to delegate authentication to an [external identity provider](/docs/lifecycle/authenticate-users/identity-providers/) to simplify the user sign-in and registration process. 
 
 The main identity provider requests user credentials from the external identity provider, which verifies the user and sends the verification information to the first system. This streamlines the player verification process, allowing players to use the same digital identity on multiple platforms to access games faster and easier. 
 

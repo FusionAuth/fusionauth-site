@@ -7,8 +7,15 @@ import Footer from '../components/Footer.astro';
 import TwitterLink from '../components/blog/TwitterLink.astro';
 import LinkedInLink from '../components/blog/LinkedInLink.astro';
 import SubscribeFooter from '../components/SubscribeFooterCTA.astro';
-import { getHref, getDateString, mapRelated } from "../pages/blog/blog-tools";
+import { getHref, mapRelated } from "src/tools/blog";
 import { getCollection } from 'astro:content';
+import { getDateString } from '../tools/date';
+import { BlogContent } from '../tools/blog';
+
+interface Props {
+  frontmatter: any;
+  title: string;
+}
 
 let { frontmatter, title } = Astro.props;
 let { slug } = Astro.params;
@@ -24,10 +31,15 @@ const tags = frontmatter.tags ? frontmatter.tags.split(',').map(tag => tag.trim(
 const featuredTag = frontmatter.featured_tag ? frontmatter.featured_tag : tags ? tags[0] : 'passwords';
 const featuredCategory = frontmatter.featured_category ? frontmatter.featured_category : categories ? categories[0] : 'tutorials';
 
-const collection = await getCollection('blog');
+const collection = await getCollection<BlogContent>('blog');
 
 const relatedPosts = mapRelated(collection, 'categories', featuredCategory, slug);
 const relatedTags = mapRelated(collection, 'tags', featuredTag, slug);
+
+const searchFilters = {
+  author: authors,
+  category: categories,
+}
 
 const markdownStyles = [
   "prose max-w-max prose:font-inter md:basis-full max-w-2xl xl:pr-7 2xl:pr-5",
@@ -38,7 +50,7 @@ const markdownStyles = [
   // code
   "prose-code:bg-slate-100 prose-code:border prose-code:border-blue-300 prose-code:border-dashed prose-code:p-0.5 prose-code:rounded-sm",
   // headings
-  "prose-headings:font-bold prose-headings:leading-6 prose-headings:md:leading-7 prose-headings:text-slate-800",
+  "prose-headings:font-bold prose-headings:leading-6 prose-headings:md:leading-7 prose-headings:text-slate-800 prose-headings:capitalize",
   // h2
   "prose-h2:mb-5 prose-h2:mt-7 prose-h2:text-xl prose-h2:md:text-2xl",
   // h3
@@ -61,7 +73,7 @@ const markdownStyles = [
 ---
 <!DOCTYPE html>
 <html class="antialiased" lang="en">
-<HeadComponent title={ title } description={description} openGraphImage={image}></HeadComponent>
+<HeadComponent title={ title } description={description} openGraphImage={image} {searchFilters}></HeadComponent>
 <body class="antialiased leading-tight">
 <Nav/>
 <!-- Hero -->
@@ -75,10 +87,10 @@ const markdownStyles = [
           </a>
         )}
       </ul>
-      <h1 class="capitalize font-extrabold leading-8 mb-3 text-3xl text-white lg:text-4xl xl:text-4xl 2xl:text-5xl">
+      <h1 data-pagefind-meta="title" data-pagefind-body class="capitalize font-extrabold leading-8 mb-3 text-3xl text-white lg:text-4xl xl:text-4xl 2xl:text-5xl">
         { title }
       </h1>
-      <p class="font-normal leading-5 mb-1 text-slate-400">
+      <p data-pagefind-meta="description" data-pagefind-body class="font-normal leading-5 mb-1 text-slate-400">
         { description }
       </p>
     </div>
@@ -120,12 +132,11 @@ const markdownStyles = [
   </div>
 </section>
 <section id="blog-content">
-  <div name="blog-main-div"
-    class="container mx-auto pt-2 px-6 md:pt-6 lg:mx-auto lg:pr-0 lg:pt-4 lg:w-5/6 xl:mx-auto xl:pl-36 xl:w-5/6 2xl:container 2xl:ml-auto 2xl:pl-20 2xl:pr-0 2xl:w-7/12">
+  <div class="container mx-auto pt-2 px-6 md:pt-6 lg:mx-auto lg:pr-0 lg:pt-4 lg:w-5/6 xl:mx-auto xl:pl-36 xl:w-5/6 2xl:container 2xl:ml-auto 2xl:pl-20 2xl:pr-0 2xl:w-7/12">
       <div class="md:flex md:flex-col md:justify-start lg:flex-row lg:pt-4 lg:self-start">
         <div id="content" class="mb-16 md:basis-full md:mr-10 md:w-full lg:w-4/6 xl:mr-0 2xl:mr-12">
-          <main class="xl:pr-5 2xl:pr-0">
-            <article class:list={ markdownStyles }>
+          <main>
+            <article data-pagefind-body id="blog-article" class:list={markdownStyles}>
               <slot/>
             </article>
             <div id="blog-tags" class="mt-14 max-w-2xl">
@@ -136,7 +147,7 @@ const markdownStyles = [
                   { tags && tags.map((tag, idx, arr) =>
                     <span>
                       <a href={ getHref(tag, 'tag') } class="hover:decoration-auto hover:underline hover:underline-offset-2 inline-block mt-1 text-indigo-600">
-                        <li class="text-base">{ tag }</li>
+                        <li class="text-base blog-tag">{tag}</li>
                       </a>{ idx + 1 < arr.length && <span class="mr-1">,</span> }
                     </span>
                   )}
@@ -156,7 +167,8 @@ const markdownStyles = [
         <div id="blog-sidebar" class="block sm:block md:block lg:w-64 2xl:w-72">
           <BlogNewsletterCTA/>
           { relatedTags && relatedTags.length > 0 &&
-            <h2 class="font-bold mb-3 text-slate-800 text-xl md:font-inter md:font-bold md:leading-tight md:text-xl">More on { featuredTag }</h2>
+            <h2 class="capitalize font-bold mb-3 text-slate-800 text-xl md:font-inter md:font-bold md:leading-tight md:text-xl spellcheck-ignore">More
+              on {featuredTag}</h2>
           }
           { relatedTags && relatedTags.map((relatedTag, idx) =>
             <article class="border-slate-200 border-t-2 flex flex-col py-6" >
@@ -166,7 +178,7 @@ const markdownStyles = [
                   <img class="rounded-lg" src={ relatedTag.image }/>
                 </a>
               }
-              <h3 class="font-bold leading-6 mb-3 normal-case text-slate-800 text-lg md:font-inter md:font-bold md:leading-7 md:text-xl lg:leading-6">
+              <h3 class="capitalize font-bold leading-6 mb-3 text-slate-800 text-lg md:font-inter md:font-bold md:leading-7 md:text-xl lg:leading-6">
                 <a href={"/blog/" + relatedTag.slug }
                    class="hover:decoration-1 hover:text-indigo-600 hover:underline hover:underline-offset-2">
                   { relatedTag.title }
@@ -189,7 +201,8 @@ const markdownStyles = [
 </section>
 <section id="related-posts" class="mb-20 px-6 lg:container lg:mx-auto">
   <div class="mb-6">
-    <h2 class="font-bold leading-6 mb-5 mt-10 text-slate-800 text-xl md:font-inter md:font-bold md:leading-7 md:text-2xl">Related Posts</h2>
+    <h2 class="capitalize font-bold leading-6 mb-5 mt-10 text-slate-800 text-xl md:font-inter md:font-bold md:leading-7 md:text-2xl">Related
+      Posts</h2>
     <hr class="bg-slate-200 border-t-0 h-0.5"/>
   </div>
   <div class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
@@ -208,8 +221,9 @@ const markdownStyles = [
           )}
         </div>
 
-        <h3 class="font-bold leading-6 mb-3 normal-case text-slate-800 text-lg md:font-inter md:font-bold md:leading-7 md:text-xl" id="blog-h2"><a
-          href={"/blog/" + relatedPost.slug } class="hover:text-indigo-600 hover:underline hover:underline-offset-2">{relatedPost.title}</a></h3>
+        <h3 class="capitalize font-bold leading-6 mb-3 text-slate-800 text-lg md:font-inter md:font-bold md:leading-7 md:text-xl" id="blog-h2">
+          <a href={"/blog/" + relatedPost.slug} class="hover:text-indigo-600 hover:underline hover:underline-offset-2">{relatedPost.title}</a>
+        </h3>
         <p class="font-inter leading-6 text-slate-600 sm:text-base md:leading-7 md:text-lg break-words" set:html={relatedPost.blurb}></p>
         <div class="flex flex-col mt-4 sm:flex-row">
           {relatedPost.authors && relatedPost.authors.map(author =>

@@ -1,0 +1,50 @@
+---
+---
+### TLS v1.2
+The first step in securing your {props.request_entity}s is to ensure that they are using TLS v1.2 or higher. You should be using a web server that is configured with a certificate from a valid certificate authority and to only receive traffic from a secure connection. We also recommend that you disable all older secure protocols including SSL, TLS 1.0 and TLS 1.1.
+
+If you need a certificate, most cloud providers offer them or you can use LetsEncrypt to generate a certificate and ensure it is always up-to-date.
+
+### Headers
+When you configure your {props.request_entity} with FusionAuth, you should include a security header of some kind. There are two ways to define a security header:
+* Add a Basic Authentication username and password under the **Security**
+* Define an HTTP header under the **Headers** tab
+
+In either case, your {props.request_entity} code should validate the security header to ensure the request is coming from FusionAuth. Here's some example code that validates an `Authorization` header:
+
+*Example {props.request_entity}*
+<pre>
+<code>
+{`
+router.route('/fusionauth-${props.request_entity_lc}').post((req, res) => {
+  const authorization = req.header('Authorization');
+  if (authorization !== 'API-KEY') {
+    res.status(401).send({
+      'errors': [{
+        'code': '[notAuthorized]'
+      }]
+    });
+  } else {
+    // process the request 
+  }
+});
+`}
+</code>
+</pre>
+
+### Certificates
+You may provide an X.509 certificate to use with your {props.request_entity}. {props.ssl_certificate_sentence}. It is used to establish a TLS connection to the {props.request_entity} endpoint. Use this option if FusionAuth cannot connect to your {props.request_entity} without the certificate.
+
+Providing this certificate will build a custom SSL context for requests made for the {props.request_entity}. Therefore, any other JDK keystores and certificate authority chains will be bypassed for this request. 
+
+### Firewalls
+In addition to using TLS and a security header, you might also want to put a firewall in front of your {props.request_entity}. In most cases, this firewall will only allow traffic to your {props.request_entity} that originated from your FusionAuth instance. Depending on how you are hosting your {props.request_entity}, you might be able to lock down the URL for your {props.request_entity} specifically. You might also leverage an API gateway or a proxy to ensure that only traffic coming from FusionAuth is routed to your {props.request_entity}. The exact specifics of deploying and configuring a Firewall are outside the scope of this document, but you can consult the documentation for your proxy, API Gateway or hosting provider to determine how to manage it.
+
+As an example, you can configure an AWS Application Load Balancer so that traffic coming from the IP address of your FusionAuth servers with a URL of <code>{`https://apis.mycompany.com/fusionauth-${props.request_entity_lc}`}</code> is routed through. You can then configure the Application Load Balancer so that all other traffic to that URL is rejected.
+
+### Controlling Traffic with a Proxy
+
+Since version `1.31.0`, FusionAuth can be configured to send all outbound HTTP traffic, including that from a {props.request_entity}, through a proxy. This allows you examine any messages sent from FusionAuth. You can audit them, only allow connections to certain hosts, or otherwise modify them.
+
+To configure a proxy for FusionAuth outbound traffic, use the `proxy.*` [configuration options](/docs/reference/configuration).
+
