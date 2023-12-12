@@ -31,13 +31,9 @@ Find the Docker Compose file and source code for the complete application at <a 
 
 For this quickstart, you'll need:
 
-* [PHP](https://www.php.net/downloads.php) 8+
+* [PHP](https://www.php.net/downloads.php) 8.1+
 * [Composer](https://getcomposer.org/)
 * [Docker](https://www.docker.com) version 20 or later, which is the quickest way to start FusionAuth. (There are [other ways](/docs/v1/tech/installation-guide/).)
-
-You will run PHP 8, Composer, and Apache in Docker. Using Docker makes this tutorial suitable for Windows, Linux, and macOS.
-
-If you are experienced in PHP, you can install PHP 8, Composer, and Apache on your host machine instead and convert commands to work on your operating system.
 
 ## General Architecture
 
@@ -64,24 +60,11 @@ First, grab the code from the repository and change to that directory.
 ```shell
 git clone https://github.com/FusionAuth/fusionauth-quickstart-php-web.git
 cd fusionauth-quickstart-php-web
-mkdir your-application
 ```
 
 All shell commands in this guide can be entered in a terminal in this directory. On Windows, you need to replace forward slashes with backslashes in paths.
 
-All the files you'll create in this guide already exist in the `complete-application` subdirectory, if you prefer to copy them to `your-application`.
-
-<Aside type="note">
-  If you simply want to run the application and not create your own, there is a completed version in the `complete-application` directory. You can use the following commands to get it up and running.
-
-  ```shell
-  cd complete-application
-  composer install
-  docker compose up
-  ```
-
-  View the application at http://localhost:9012.
-</Aside>
+All the files you'll create in this guide already exist in the `complete-application` subdirectory, if you prefer to copy them to your application.
 
 ### Run FusionAuth Via Docker
 
@@ -93,7 +76,7 @@ Assuming you have Docker installed, you can start FusionAuth on your machine wit
 docker compose up
 ```
 
-This will start four containers, one each for FusionAuth, Postgres, OpenSearch, and PHP.
+This will start three containers, one each for FusionAuth, Postgres, and OpenSearch.
 
 Here you are using a bootstrapping feature of FusionAuth called [Kickstart](/docs/v1/tech/installation-guide/kickstart). When FusionAuth starts for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to your specified state.
 
@@ -121,64 +104,66 @@ You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) and loo
 
 While this guide builds a new {frontmatter.technology} project, you can use the same method to integrate your existing project with FusionAuth.
 
-In the `docker-compose.yml` configuration, on the `php` service change the volume parameter `./complete-application:/var/www/html` to reference your application with `./your-application:/var/www/html`.
-
-The `./your-application:/var/www/html` volume parameter shares your application directory with the container so both your physical machine and Docker can read and write the same files.
-
 <Aside type="note">
-  Note that the `phpimage.Dockerfile` in the root directory of the project configures Apache to serve files from the `public` directory over the web, to hide `vendor` and configuration files. If you're not using Docker, you will need to do this yourself.
+  If you simply want to run the application and not create your own, there is a completed version in the `complete-application` directory. You can use the following commands to get it up and running.
 
+  ```shell
+  cd complete-application
+  composer install
+  php -S localhost:9012 -t public
   ```
-  RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
-  RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/apache2.conf
-  ```
+
+  View the application at http://localhost:9012.
 </Aside>
+
+First create the directory for your application and change to that directory.
+
+```bash
+mkdir your-application
+cd your-application
+```
 
 Before you start coding, you need to install the PHP module for your application to communicate with FusionAuth. Run the following command.
 
 ```bash
-docker run --rm -v ./your-application:/app composer require vlucas/phpdotenv jerryhopper/oauth2-fusionauth
+composer require vlucas/phpdotenv jerryhopper/oauth2-fusionauth
 ```
 
 ## Authentication
 
 Authentication in {frontmatter.technology} is managed by [FusionAuth community member Jerry Hopper's FusionAuth Provider](https://github.com/jerryhopper/oauth2-fusionauth) for [The League's OAuth library](https://github.com/thephpleague/oauth2-client).
 
-
-Make the file `your-application/.env` and insert the following lines.
+Create an `.env` file within `your-application` directory and insert the following lines.
 
 <RemoteCode url={frontmatter.codeRoot + "/complete-application/.env"}/>
 
 This tells {frontmatter.technology} where to find and connect to FusionAuth.
 
-<Aside type="note">
-  If you're not using Docker, you can change the server URL to match the browser URL, as all network communication will
-  be on your physical machine.
-</Aside>
-
-Authentication is handled by two files: `login.php` and `logout.php`.
+In this application authentication is handled by two files: `login.php` and `logout.php`.
 
 The login file is based almost exactly on Jerry Hopper's code, but is split into neater functions and does two extra things: Starts a session and saves the user details to the session after login.
 
 Create a `public` directory within `your-application`.
 
 ```shell
-mkdir your-application/public
+mkdir public
 ```
 
-In the directory, make the file `your-application/public/login.php` and insert the following code.
+In the `public` directory, create a `login.php` file and insert the following code.
 
 <RemoteCode
   url={frontmatter.codeRoot + "/complete-application/public/login.php"}
   lang="php"/>
 
 This setup code:
+
 - Prevents errors from being displayed in the browser, for security.
 - Loads all vendor modules into PHP so you can use them.
 - Reads your variables from the `.env` file.
 - Starts a new session using HTTP (not HTTPS since you're on localhost) and ensures your user Id cookie will not be accessible by JavaScript.
 
 Next comes the FusionAuth handlers. Starting from the `getFusionAuthProvider()` function, the code:
+
 - Creates a FusionAuth provider with your environment variables.
 - Sends the user to the account page if they already have a login cookie.
 - Sends the user to the FusionAuth URL if they are not logged in.
@@ -189,7 +174,7 @@ PHP automatically links the user's session to their browser by returning a cooki
 
 The login page handles both the initial user request to start the login process and the server callback request from FusionAuth to complete the authentication.
 
-Logging out is much simpler. Make the file `your-application/public/logout.php` and insert the following code.
+Logging out is much simpler. Create a `logout.php` file in the `public` directory and insert the following code.
 
 <RemoteCode
   url={frontmatter.codeRoot + "/complete-application/public/logout.php"}
@@ -203,20 +188,20 @@ Now that authentication is done, the last task is to create example pages that a
 
 ### CSS And HTML
 
-Create a `static` directory in the `your-application/public` directory.
+Create a `static` directory within `your-application/public` directory.
 
 ```shell
-mkdir your-application/public/static
+mkdir public/static
 ```
 
 Copy images from the example app.
 
 ```shell
-cp complete-application/public/static/money.jpg your-application/public/static/money.jpg
-cp complete-application/public/static/changebank.svg your-application/public/static/changebank.svg
+cp ../complete-application/public/static/money.jpg public/static/money.jpg
+cp ../complete-application/public/static/changebank.svg public/static/changebank.svg
 ```
 
-Create a stylesheet file `your-application/public/static/changebank.css` and add the following code to it.
+Create a `changebank.css` stylesheet file in `your-application/public/static` directory and add the following code to it.
 
 <RemoteCode
   url={frontmatter.codeRoot + "/complete-application/public/static/changebank.css"}
@@ -254,7 +239,11 @@ The HTML at the bottom of the file displays a blank form when the page first loa
 
 ## Run The Application
 
-The application is already being served by Apache in Docker.
+From `your-application` directory run the following command to serve the application using the built-in PHP server.
+
+```bash
+php -S localhost:9012 -t public
+```
 
 Browse to the app at http://localhost:9012. Log in using `richard@example.com` and `password`. The change page allows you to enter a number.
 
@@ -306,9 +295,11 @@ You can always pull down a complete running application and compare what's diffe
 
 ```shell
 git clone https://github.com/FusionAuth/fusionauth-quickstart-php-web.git
-cd fusionauth-quickstart-php-web/complete-application
-composer install
+cd fusionauth-quickstart-php-web
 docker compose up
+cd complete-application
+composer install
+php -S localhost:9012 -t public
 ```
 
 Browse to the app at http://localhost:9012.
