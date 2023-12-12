@@ -1,30 +1,34 @@
 ---
-title: Modeling organizations
+title: Modeling Organizations
 description: Using FusionAuth's Entity Management feature to model organizations and users that belong to organizations.
 navcategory: developer
 section: extend
 subcategory: examples
 ---
 
+import PremiumEditionBlurb from 'src/content/docs/_shared/_premium-edition-blurb.astro';
+
 A common use-case for B2B businesses is to model their customers and the employees of those customers. This concept isn't limited just to SaaS businesses either as many companies sell products and services to other companies. The employees, contractors, and other types of users at these customers (i.e. other companies) need access to various applications to do their work.
 
-An example of this is a CRM. Let's we are building a hot new CRM called AwesomeCRM. Our customers will be other businesses and let's say one is called ClownShoes.com. ClownShoes employs 10 salespeople and they will all need access to our CRM. However, each one might have different permissions. To layer in even more complexity, ClownShoes uses an outsourced CRO service called Big Bucks CRO. Jane is a fractional CRO with Big Bucks and she will also need access to our CRM, but she might be working with 10 or more clients, including ClownShoes. We'll need to ensure Jane can access all these accounts and has the correct permissions for each, which might be different for each of her clients.
+An example of this is a CRM. Let's say you are building a hot new CRM called AwesomeCRM. Your customers will be other businesses and let's say one is called ClownShoes.com. ClownShoes employs 10 salespeople and they will all need access to your CRM. However, each one might have different permissions. To layer in even more complexity, ClownShoes uses an outsourced CRO service called Big Bucks CRO. Jane is a fractional CRO with Big Bucks and she will also need access to your CRM, but she might be working with 10 or more clients, including ClownShoes. You'll need to ensure Jane can access all these accounts and has the correct permissions for each, which might be different for each of her clients.
 
-As you can see, this structure introduces a lot of complexity. This is where FusionAuth's Entity Management feature comes in handy. Entity Management allows us to create objects (i.e. Entities) and grant Users permissions to them. Users aren't limited to having permissions to just one Entity; instead they can be granted different permissions to different Entities.
+As you can see, this structure introduces a lot of complexity. This is where FusionAuth's [Entity Management](/docs/get-started/core-concepts/entity-management) feature comes in handy. Entity Management allows you to create objects (i.e. Entities) and grant Users permissions to them. Users aren't limited to having permissions to just one Entity; instead they can be granted different permissions to different Entities.
+
+<PremiumEditionBlurb />
 
 This guide will walk you through implementing the use-case described above with Entity Management using the FusionAuth APIs, you can also see more in our [core concepts for Entity Management](/docs/get-started/core-concepts/entity-management).
 
 Let's get started.
 
-## Create an Entity Type
+## Create An Entity Type
 
-The first step is to create an Entity Type. Entity Types define a class of Entities along with the permissions that can be granted. We can create Entity Types using the API, but in most cases, Entity Types are only created once, so we'll use the admin UI here. If you prefer to use the APIs, you'll find [that API here](/docs/v1/tech/apis/entity-management/entity-types).
+The first step is to create an Entity Type. Entity types define a class of entities along with the permissions that can be granted. You can create Entity Types using the API, but in most cases, Entity Types are only created once, so you can use the admin UI for that. If you prefer to use the APIs, you'll find [that API here](/docs/v1/tech/apis/entity-management/entity-types).
 
 Let's create an Entity Type called `Customers`. You can name it something else if you prefer since the name is just for display purposes. Here's what this looks like:
 
 ![Entity Type creation](/img/guides/organizations/entity-type.png)
 
-We've defined 5 different permissions for our `Customers` type and those are:
+You have defined 5 different permissions for your `Customers` type and those are:
 
 * Admin - this permission allows the User to do anything with the account
 * Sales - this permission is for salespeople and allows them to do things like create contacts, companies, deals, etc.
@@ -34,13 +38,13 @@ We've defined 5 different permissions for our `Customers` type and those are:
 
 The names for permissions are also arbitrary and mostly for display purposes, so feel free to name things whatever you want.
 
-After we create the Entity Type, we need to copy its id for the next step.
+After you create the Entity Type, we need to copy its id for the next step.
 
 ## Creating Entities
 
-Now that we have an Entity Type, we can start creating Entities. The process of creating Entities is usually part of the signup process or some other type of on-boarding process. This will depend on how your business handles creating accounts for your customers. For AwesomeCRM, we'll collect this information when the user signs up. During this signup process, we'll create the Entity and then grant the newly created User permissions to that Entity. This will model the fact that the user who signs up is always the first Admin of the account.
+Now that you have an entity type, we can start creating entities. The process of creating Entities is usually part of the signup process or some other type of on-boarding process. This will depend on how your business handles creating accounts for your customers. For AwesomeCRM, you'll collect this information when the user signs up. During this signup process, you'll create the Entity and then grant the newly created User permissions to that Entity. This will model the fact that the user who signs up is always the first Admin of the account.
 
-To accomplish both of these tasks, we'll call FusionAuth APIs. To create the Entity for this new customer, we'll call the [Create Entity API](/docs/v1/tech/apis/entity-management/entities#create-an-entity). Here's what our JSON will look like:
+To accomplish both of these tasks, you'll call FusionAuth APIs. To create the Entity for this new customer, we'll call the [Create Entity API](/docs/v1/tech/apis/entity-management/entities#create-an-entity). Here's what your JSON will look like:
 
 ```json
 {
@@ -53,9 +57,9 @@ To accomplish both of these tasks, we'll call FusionAuth APIs. To create the Ent
 }
 ```
 
-This JSON will create an Entity with the newly created Entity Type from above with the name `Pied Piper`. Entity names are not unique, so we don't need to worry about multiple users conflicting with respect to their company name.
+This JSON will create an Entity with the newly created Entity Type from above with the name `Pied Piper`. Entity names are not unique, so you don't need to worry about multiple users conflicting with respect to their company name.
 
-We'll need to parse the response to capture the id of this newly created Entity. Here's how the JSON response looks:
+You'll need to parse the response to capture the id of this newly created Entity. Here's how the JSON response looks:
 
 ```json
 {
@@ -85,7 +89,7 @@ Extract the `id` from this JSON and store it in a variable.
 
 ## Create Entity Grants
 
-The final step during the signup process will be to assign the correct permissions for the user to their Entity. To accomplish this, we will call the [Grant API](/docs/v1/tech/apis/entity-management/grants#grant-a-user-or-entity-permissions-to-an-entity). In order to call this API, we will need the Entity and User ids. Here's how the JSON will look for the grant request:
+The final step during the signup process will be to assign the correct permissions for the user to their entity. To accomplish this, you will call the [Grant API](/docs/v1/tech/apis/entity-management/grants#grant-a-user-or-entity-permissions-to-an-entity). In order to call this API, you will need the entity and user ids. Here's how the JSON will look for the grant request:
 
 ```json
 {
@@ -106,19 +110,19 @@ POST /api/entity/<user-id>/grant
 
 It's important to note that the User id can be determine in a number of different ways, depending on how your registration process is set up. If you are using FusionAuth for registration, you can extract the User id from the JWT access token that FusionAuth provides at the end of the OAuth workflow. The user id is stored in the `sub` claim. Or you can use the [User Info](/docs/v1/tech/oauth/endpoints#userinfo) or [Introspect](/docs/v1/tech/oauth/endpoints#introspect) APIs with the access token to retrieve the user details. All of these places will contain the user id.
 
-Now we have constructed all the necessary pieces to model the customers of AwesomeCRM and the Users that have access to the customer accounts.
+Now you have constructed all the necessary pieces to model the customers of AwesomeCRM and the users that have access to the customer accounts.
 
 ## Login
 
-Now that our data model is prepared, we need to handle login events. When a user logs in, our application needs to know what organization they belong to. Generally, we store this information in a cookie or in a server-side session, such that it is available on each request to the application.
+Now that your data model is prepared, you need to handle login events. When a user logs in, your application needs to know what organization they belong to. Generally, this information is stored in a cookie or in a server-side session, such that it is available on each request to the application.
 
-To get this information from FusionAuth, we will call the [Search Grants](/docs/v1/tech/apis/entity-management/grants#search-for-grants) API. This API allows us to retrieve all of the grants that a specific User has to any Entities. This API doesn't take a JSON body, but we will supply the user id on the URL. The URL looks like this:
+To get this information from FusionAuth, you will call the [Search Grants](/docs/v1/tech/apis/entity-management/grants#search-for-grants) API. This API allows you to retrieve all of the grants that a specific user has to any Entities. This API doesn't take a JSON body, but we will supply the User Id on the URL. The URL looks like this:
 
 ```http
 GET /api/entity/grant/search?userId={userId}
 ```
 
-We will replace the `userId` parameter with the id of the User that is currently logged in. In the same manner as above, this information can be retrieved from the access token JWT or the [User Info](/docs/v1/tech/oauth/endpoints#userinfo) or [Introspect](/docs/v1/tech/oauth/endpoints#introspect) APIs.
+You will replace the `userId` parameter with the Id of the user that is currently logged in. In the same manner as above, this information can be retrieved from the access token JWT or the [User Info](/docs/v1/tech/oauth/endpoints#userinfo) or [Introspect](/docs/v1/tech/oauth/endpoints#introspect) APIs.
 
 The response from this API looks like this:
 
@@ -161,13 +165,13 @@ The response from this API looks like this:
 }
 ```
 
-You can see that the permissions are available in the response. We can extract the permissions and use them to authorize actions that the user takes or APIs they are calling. In this example, the User has the `Admin` permissions, which means they are likely allowed to do anything they wish.
+You can see that the permissions are available in the response. You can extract the permissions and use them to authorize actions that the user takes or APIs they are calling. In this example, the User has the `Admin` permissions, which means they are likely allowed to do anything they wish.
 
-The `grant` object, or some portion of it, can be stored in any number of locations for easy access. We could store it in a cookie (encrypted is preferred), a server-side session, or a database. The [Search Grants](/docs/v1/tech/apis/entity-management/grants#search-for-grants) is designed to be queried repeatedly and returned quickly, so depending on the scale of the application and where FusionAuth is deployed, we could also query this API for each request. This has the benefit of ensuring that the User's permissions are always the most current version.
+The `grant` object, or some portion of it, can be stored in any number of locations for easy access. You could store it in a cookie (encrypted is preferred), a server-side session, or a database. The [Search Grants](/docs/v1/tech/apis/entity-management/grants#search-for-grants) is designed to be queried repeatedly and returned quickly, so depending on the scale of the application and where FusionAuth is deployed, you could also query this API for each request. This has the benefit of ensuring that the User's permissions are always the most current version.
 
 ## Multiple Organizations
 
-The final component we'll cover in this guide is handling multiple organizations for a single User. AwesomeCRM works will many partners and often these partners work with many clients. This means that a User at a partner might be working with multiple organizations at the same time. To handle this scenario, we simply need to ensure we can handle multiple results from the [Retrieve Grants](/docs/v1/tech/apis/entity-management/grants#retrieve-grants) API.
+The final component that will be covered in this guide is handling multiple organizations for a single user. AwesomeCRM works will many partners and often these partners work with many clients. This means that a user at a partner might be working with multiple organizations at the same time. To handle this scenario, you need to ensure you can handle multiple results from the [Retrieve Grants](/docs/v1/tech/apis/entity-management/grants#retrieve-grants) API.
 
 Here's an example of the response from the [Retrieve Grants](/docs/v1/tech/apis/entity-management/grants#retrieve-grants) API when a user has multiple organizations (many properties have been trimmed for brevity):
 
@@ -210,23 +214,23 @@ Here's an example of the response from the [Retrieve Grants](/docs/v1/tech/apis/
 }
 ```
 
-This response indicates that the User belongs to 3 organizations and has various permissions to each. To manage this in our AwesomeCRM application, we can present an option to the User when they log in, to select the company they'd like to work on initially. This option screen might look like this:
+This response indicates that the User belongs to 3 organizations and has various permissions for each. To manage this in your AwesomeCRM application, you can present an option to the user when they log in, to select the company they'd like to work on initially. This option screen might look like this:
 
 [IMAGE]
 
 ## Managing Users
 
-Often applications provide the ability for users to manage other users on their account. This is accomplished in much the same way we have described above. To add a user to an organization, we can use the [Grant API](/docs/v1/tech/apis/entity-management/grants#grant-a-user-or-entity-permissions-to-an-entity). To remove a user from an organization, we can use the [Delete a Grant](/docs/v1/tech/apis/entity-management/grants#delete-a-grant) API. If we need to adjust the permissions a user has to an organization, we can use the same [Grant API](/docs/v1/tech/apis/entity-management/grants#grant-a-user-or-entity-permissions-to-an-entity) from above. The Grant API is an upsert, which means that if a grant already exists, it will update its attributes.
+Often applications provide the ability for users to manage other users on their account. This is accomplished in much the same way as described above. To add a user to an organization, you can use the [Grant API](/docs/v1/tech/apis/entity-management/grants#grant-a-user-or-entity-permissions-to-an-entity). To remove a user from an organization, you can use the [Delete a Grant](/docs/v1/tech/apis/entity-management/grants#delete-a-grant) API. If you need to adjust the permissions a user has to an organization, you can use the same [Grant API](/docs/v1/tech/apis/entity-management/grants#grant-a-user-or-entity-permissions-to-an-entity) from above. The Grant API is an upsert, which means that if a grant already exists, it will update its attributes.
 
-## Changing an Organization
+## Changing An Organization
 
-Beyond managing users, some applications provide the ability to rename or modify a user's organization. To update an Entity, we can use the [Update an Entity](/docs/v1/tech/apis/entity-management/entities#update-an-entity) API. This allows any attribute of the Entity to be updated, including custom data.
+Beyond managing users, some applications provide the ability to rename or modify a user's organization. To update an Entity, you can use the [Update an Entity](/docs/v1/tech/apis/entity-management/entities#update-an-entity) API. This allows any attribute of the Entity to be updated, including custom data.
 
-## Custom data and search
+## Custom Data And Search
 
-Custom data on an Entity can be used to store additional information about the Entity, such as various ids (Stripe, QuickBooks, NetSuite, etc), organization attributes (locations, parent company, etc), or just about anything that is needed. Custom data on an Entity is indexed within FusionAuth, which means it is also searchable using the [Entity Search API](/docs/v1/tech/apis/entity-management/entities#search-for-entities).
+Custom data on an entity can be used to store additional information about the Entity, such as various ids (Stripe, QuickBooks, NetSuite, etc), organization attributes (locations, parent company, etc), or just about anything that is needed. Custom data on an Entity is indexed within FusionAuth, which means it is also searchable using the [Entity Search API](/docs/v1/tech/apis/entity-management/entities#search-for-entities).
 
-Let's say that our organizations have a custom attribute for the address like this:
+Let's say that your organizations have a custom attribute for the address like this:
 
 ```json
 {
@@ -245,7 +249,7 @@ Let's say that our organizations have a custom attribute for the address like th
 
 ```
 
-We can search for this attribute using this request:
+You can search for this attribute using this request:
 
 ```http
 GET /api/entity/search?queryString=data.address.city:denver
