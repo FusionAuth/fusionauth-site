@@ -5,13 +5,32 @@ import Head from '../components/Head.astro';
 import Header from '../components/Header.astro';
 import Navigation from '../components/Navigation.astro';
 import GitHubEdit from '../components/GitHubEdit.astro';
-import Search from '../components/Search.astro';
+import Search from '../components/search/Search.astro';
 import SectionNavigation from '../components/SectionNavigation.astro';
 import TOC from '../components/TOC.astro';
 import Article from './Article.astro';
 import ArticleNav from '../components/nav/ArticleNav.astro';
 import Icon from '../components/icon/Icon.astro';
 import { specialCaps } from '../tools/string';
+
+interface Props {
+  author?: string;
+  date?: string;
+  description?: string;
+  disableTOC?: boolean;
+  excludeFromSearchIndex?: boolean,
+  frontmatter?: Record<string, any>,
+  headings?: any[];
+  icon?: string;
+  image?: string;
+  section?: string;
+  sections?: any[];
+  sideMenu?: any[];
+  title?: string;
+  cta?: string;
+  contribute?: boolean;
+  breadcrumbs?: any[];
+}
 
 let {
   author,
@@ -21,7 +40,6 @@ let {
   excludeFromSearchIndex = false,
   frontmatter,
   headings = [],
-  nav,
   icon,
   image,
   section,
@@ -31,7 +49,9 @@ let {
   cta = "DownloadCTA",
   contribute = true,
   breadcrumbs = [],
-} = Astro.props;
+  searchFilters = {},
+}: Props = Astro.props;
+
 author = frontmatter.author ? frontmatter.author : author;
 date = frontmatter.date ? frontmatter.date : date;
 description = frontmatter.description ? frontmatter.description : description;
@@ -41,11 +61,31 @@ section = frontmatter.section ? frontmatter.section : section;
 title = frontmatter.title ? frontmatter.title : title;
 disableTOC = frontmatter.disableTOC ? frontmatter.disableTOC : disableTOC;
 cta = frontmatter.cta ? frontmatter.cta : cta;
+
+if (author && !searchFilters['author']) {
+  searchFilters = {...searchFilters, author: [author]}
+}
+if (section && !searchFilters['section']) {
+  searchFilters = {...searchFilters, section: [section]}
+}
+
+const articleStyles = [
+  // base
+  "max-w-none pb-24 prose prose-slate dark:prose-invert", disableTOC ? "lg:pl-[19rem]" : "lg:px-[19rem]",
+  // a
+  "dark:prose-a:text-indigo-400 hover:prose-a:border-b-2 hover:prose-a:border-b-indigo-500 prose-a:border-b prose-a:border-b-indigo-500 prose-a:no-underline prose-a:text-indigo-700",
+  // code
+  "dark:prose-code:bg-slate-800 prose-code:bg-slate-100 prose-code:p-0.5 prose-code:rounded-sm prose-code:break-words",
+  // headings
+  "dark:prose-headings:text-slate-200 prose-headings:scroll-mt-24 prose-headings:text-slate-700",
+  // table
+  "prose-table:table overflow-x-auto"
+];
 ---
 
 <!DOCTYPE html>
 <html class="antialiased min-h-full" lang="en">
-<Head title={title} description={description} canonicalUrl={frontmatter.canonicalUrl} />
+<Head title={title} description={description} canonicalUrl={frontmatter.canonicalUrl} {searchFilters} />
 <body
   class="antialiased bg-articles bg-right-top bg-no-repeat bg-white min-h-full text-slate-700 dark:bg-articles-dark dark:bg-slate-900 dark:text-slate-200"
   data-pagefind-ignore={excludeFromSearchIndex ? 'all' : false}>
@@ -95,7 +135,7 @@ cta = frontmatter.cta ? frontmatter.cta : cta;
     </div>
 
     <!-- Main content section -->
-    <article class:list={["max-w-none pb-24 prose prose-slate dark:prose-a:text-indigo-400 dark:prose-code:bg-slate-800 dark:prose-invert dark:prose-headings:text-slate-200 hover:prose-a:border-b-2 hover:prose-a:border-b-indigo-500 prose-a:border-b prose-a:border-b-indigo-500 prose-a:no-underline prose-a:text-indigo-700 prose-headings:scroll-mt-24 prose-code:bg-slate-100 prose-code:p-0.5 prose-code:rounded-sm prose-code:break-words prose-headings:text-slate-700 prose-table:overflow-x-scroll prose-table:flex prose-table:flex-grow-0 prose-table:flex-col prose-td:text-base", disableTOC ? "lg:pl-[19rem]" : "lg:px-[19rem]"]}>
+    <article data-pagefind-body class:list={articleStyles}>
       <div class="flex items-start">
         <div class="flex-grow">
           {breadcrumbs.length > 0 && <div class="flex flex-row not-prose hidden lg:block items-center pb-6">
@@ -105,8 +145,8 @@ cta = frontmatter.cta ? frontmatter.cta : cta;
           </>) }
           </div> }
 
-          {breadcrumbs.length === 0 && section && <p class="font-semibold mb-4 mt-0 text-indigo-700 text-lg dark:text-indigo-500">{section}</p>}
-          <h1 class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]}>{title}</h1>
+          {breadcrumbs.length === 0 && section && <p class="font-semibold mb-4 mt-0 text-indigo-700 text-lg dark:text-indigo-500">{ specialCaps(section) }</p>}
+          <h1 data-pagefind-meta="title" data-pagefind-body class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]}>{title}</h1>
           {author &&
             <p class="m-0 text-sm">By {author} {date && <span>- {new Date(date).toDateString()}</span>}</p>
           }
@@ -115,7 +155,11 @@ cta = frontmatter.cta ? frontmatter.cta : cta;
           <img src={icon} alt={title} class="ml-8 mr-4 my-0 w-20 "/>
         }
       </div>
-      <slot/>
+      {/* helps encourage pagefind to actually index the markdown content */}
+      <section data-pagefind-body>
+        <slot/>
+      </section>
+
     </article>
 
     <!-- Table of contents -->
