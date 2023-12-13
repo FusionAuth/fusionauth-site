@@ -160,13 +160,13 @@ Here are the steps to do so:
 * In the `volumes:` section of the `fusionauth` service, add `- ./kickstart:/usr/local/fusionauth/kickstart`.
 * Modify `.env` and add the Kickstart configuration variable: `FUSIONAUTH_APP_KICKSTART_FILE=/usr/local/fusionauth/kickstart/kickstart.json`. This path should be what the Docker container expects, not the path on the host.
 * Configure `docker-compose.yml` to pass the environment variable set by `.env` to the container. Do this by adding `FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}` to the `environment` section of the `fusionauth` service. 
-* `docker compose up`
+* `docker compose up -d`
 
 The following is an example `docker-compose.yml` file configuring FusionAuth to run the commands in a `kickstart.json` at startup.
 
 <RemoteCode title="Example docker-compose.yml for running Kickstart" url="https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-docker-compose/main/kickstart/docker-compose.yml" lang="yaml" />
 
-After running `docker compose up` you should see a line like this in the output:
+After running `docker compose up -d` you should see a line like this in the logs `docker compose logs fusionauth`:
 
 ```plaintext title="FusionAuth log messages indicating Kickstart has succeeded"
 io.fusionauth.api.service.system.kickstart.KickstartRunner - Summary
@@ -188,19 +188,19 @@ docker compose down -v
 
 ## Plugins
 
-You can mount a directory containing a plugin to your Docker container.
+Instead of building a custom docker image, you can directly mount a directory containing a plugin to your Docker container.
 
 Here are the steps to do so:
 
 * In the `volumes:` section of the `fusionauth` service, add `- ./plugins:/usr/local/fusionauth/plugins`.
 * Copy your plugin jar file, created [by following the instructions](/docs/extend/code/password-hashes/), to your `plugins` directory on the host.
-* `docker compose up`
+* `docker compose up -d`
 
 The following is an example `docker-compose.yml` file configuring FusionAuth to scan for plugins at startup.
 
 <RemoteCode title="Example docker-compose.yml for installing a plugin" url="https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-docker-compose/main/plugin/docker-compose.yml" lang="yaml" />
 
-After running `docker compose up` you should see a line like this in the output:
+After running `docker compose up -d` you should see a line like this in the logs `docker compose logs fusionauth`:
 
 ```plaintext title="FusionAuth log messages indicating a plugin has been successfully installed"
 INFO  io.fusionauth.api.plugin.guice.PluginModule - Installing plugin [com.mycompany.fusionauth.plugins.guice.MyExampleFusionAuthPluginModule]
@@ -211,21 +211,21 @@ Such output indicates that the plugin has been installed and can be used.
 
 ## Accessing the Host Machine
 
-The default FusionAuth Docker configuration sets up the network using the `bridge` configuration. This means that all the hosts defined by `docker-compose` can access each other. However, it means that any applications running on your host machine cannot be accessed by FusionAuth using `localhost`.
+The default FusionAuth Docker configuration sets up the network using the `bridge` configuration. This means that all the hosts defined by `docker-compose.yml` can access each other. However, it means that any applications running on your host machine cannot be accessed by FusionAuth using `localhost`.
 
 This is typically only an issue when FusionAuth is accessing resources outside of the Docker network to, for example, send email or request a webhook. If a Rails application is running locally on a Mac and you want FusionAuth, running in Docker, to send a webhook payload to it, `localhost` won't work.
 
 In this situation, do one of the following:
 
-* Use `host.docker.internal` as the hostname; this works on macOS and Windows hosts
+* Use `host.docker.internal` as the hostname instead of `localhost`; this works on macOS and Windows hosts, for linux you have to add `--add-host=host.docker.internal:host-gateway` to the docker engine.
 * Run a container with your application in Docker
 * Install FusionAuth on the host machine, using FastPath or another method
 
-Modifying FusionAuth to use other Docker networking schemes such as `host` may work, but isn't fully tested or supported.
+Modifying the FusionAuth service in `docker-compose.yml` to use other Docker networking schemes such as `host` may work, but isn't fully tested or supported.
 
 ## OpenSearch Production Deployment Configuration
 
-The runtime requirements and configuration for OpenSearch will differ from the docker compose examples as they're configured without any security and redundancy.
+The productive runtime requirements and configuration for OpenSearch will drastically differ from the docker compose examples as they're configured without any security and redundancy.
 
 Please review the [Installing OpenSearch documentation](https://opensearch.org/docs/latest/install-and-configure/install-opensearch/index/) for further details around production deployment.
 
