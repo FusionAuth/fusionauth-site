@@ -315,7 +315,7 @@ class FusionAuthPriceCalculator {
 FusionAuthPriceCalculator.names = {
   'basic-cloud': 'Basic',
   'business-cloud': 'Business',
-  'ha-cloud': 'HA',
+  'ha-cloud': 'High Availability',
   'self-hosting': 'Self-hosting'
 }
 
