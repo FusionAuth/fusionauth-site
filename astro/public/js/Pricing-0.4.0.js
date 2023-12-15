@@ -73,17 +73,19 @@ class FusionAuthPriceCalculator {
     return price;
   }
 
-  _getBillingIntervalKey() {
-    return 'pricePerUnit' + this._billingIntervalReadable();
+  _getBillingIntervalKey(billingInterval) {
+    const interval = billingInterval || this.billingInterval;
+    return 'pricePerUnit' + this._billingIntervalReadable(interval);
   }
 
-  _billingIntervalReadable() {
-    return this.billingInterval.charAt(0).toUpperCase() + this.billingInterval.slice(1);
+  _billingIntervalReadable(billingInterval) {
+    const interval = billingInterval || this.billingInterval;
+    return interval.charAt(0).toUpperCase() + interval.slice(1);
   }
 
   _calculatePlanPrice(plan) {
     if (!plan || plan === 'Community') {
-      return { planPrice: 0, mauPrice: 0 };
+      return { planPrice: 0, mauPrice: 0, discount: 0 };
     }
 
     var mau = parseInt(this.monthlyActiveUserSlider.value);
@@ -100,7 +102,16 @@ class FusionAuthPriceCalculator {
       mauPrice = (planPricing.tier2[billingKey] * 9) + (planPricing.tier3[billingKey] * 90) + (planPricing.tier4[billingKey] * (increments - 100));
     }
 
-    return { planPrice: planPricing.base[billingKey], mauPrice: mauPrice };
+    var discount = 0;
+    const basePrice = planPricing.base[billingKey];
+
+    if (this.billingInterval === 'yearly' && plan && plan !== 'Community') {
+      const monthlyPrice = planPricing.base['pricePerUnitMonthly'] * 12;
+      
+      discount = Math.round(100.0 * (monthlyPrice - basePrice) / monthlyPrice);
+    }
+
+    return { planPrice: basePrice, mauPrice: mauPrice, discount: discount };
   }
 
   _changeStep() {
@@ -270,7 +281,7 @@ class FusionAuthPriceCalculator {
     document.querySelectorAll('.renewal-type').forEach(e => e.textContent = billingIntervalLabelAdj);
     this.sumLabel.textContent = this.billingInterval === 'yearly' ? 'Total' : 'Estimate Total';
 
-    const { planPrice, mauPrice } = this._calculatePlanPrice(this.plan);
+    const { planPrice, mauPrice, discount } = this._calculatePlanPrice(this.plan);
 
     if (this.plan) {
       this.planPriceDiv.innerText = '$' + new Intl.NumberFormat('en').format(Math.floor(planPrice));
@@ -279,6 +290,11 @@ class FusionAuthPriceCalculator {
       document.querySelector(`div[data-plan=${this.plan}]`).style.border = '2px solid #f58320';
     } else {
       this.planPriceDiv.innerText = '-';
+    }
+
+    if (discount > 0) {
+      document.getElementById('annual-discount-label').innerText = `Saves ${discount}%`;
+      document.getElementById('annual-discount-label').style.display = this.billingInterval === 'yearly' ? 'block' : 'none';
     }
 
     if (this.hosting && this.plan) {
