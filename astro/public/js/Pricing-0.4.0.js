@@ -7,8 +7,7 @@
 class FusionAuthPriceCalculator {
   constructor() {
 
-    this.accountHost = 'account-local.fusionauth.io';
-    //this.accountHost = 'account.fusionauth.io';
+    this.accountHost = 'account.fusionauth.io';
     this.hostingSelectionDiv = document.getElementById('hosting-selection');
     this.hostingPriceDiv = document.getElementById('hosting-price');
     this.planSelectionDiv = document.getElementById('plan-selection');
