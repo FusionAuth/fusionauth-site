@@ -7,9 +7,7 @@
 class FusionAuthPriceCalculator {
   constructor() {
 
-    //this.accountHost = 'account.fusionauth.io';
     this.accountHost = 'account.fusionauth.dev';
-    //this.accountHost = 'account-local.fusionauth.io';
     this.hostingSelectionDiv = document.getElementById('hosting-selection');
     this.hostingPriceDiv = document.getElementById('hosting-price');
     this.planSelectionDiv = document.getElementById('plan-selection');
@@ -88,11 +86,11 @@ class FusionAuthPriceCalculator {
       return { planPrice: 0, mauPrice: 0, discount: 0 };
     }
 
-    var mau = parseInt(this.monthlyActiveUserSlider.value);
-    var planPricing = this.priceModel.plan.tierPricing[plan];
-    var billingKey = this._getBillingIntervalKey();
-    var increments = mau / 10000;
-    var mauPrice;
+    const mau = parseInt(this.monthlyActiveUserSlider.value);
+    const planPricing = this.priceModel.plan.tierPricing[plan];
+    const billingKey = this._getBillingIntervalKey();
+    const increments = mau / 10000;
+    let mauPrice;
 
     if (increments < 10) {
       mauPrice = planPricing.tier2[billingKey] * (increments - 1);
@@ -102,13 +100,14 @@ class FusionAuthPriceCalculator {
       mauPrice = (planPricing.tier2[billingKey] * 9) + (planPricing.tier3[billingKey] * 90) + (planPricing.tier4[billingKey] * (increments - 100));
     }
 
-    var discount = 0;
+    let discount = 0;
     const basePrice = planPricing.base[billingKey];
 
-    if (this.billingInterval === 'yearly' && plan && plan !== 'Community') {
+    if (plan && plan !== 'Community') {
       const monthlyPrice = planPricing.base['pricePerUnitMonthly'] * 12;
+      const yearlyPrice = planPricing.base['pricePerUnitYearly'];
       
-      discount = Math.round(100.0 * (monthlyPrice - basePrice) / monthlyPrice);
+      discount = Math.round(100.0 * (monthlyPrice - yearlyPrice) / monthlyPrice);
     }
 
     return { planPrice: basePrice, mauPrice: mauPrice, discount: discount };
@@ -217,10 +216,10 @@ class FusionAuthPriceCalculator {
   _drawPlanPrices() {
     for (const plan in FusionAuthPriceCalculator.plans) {
       if (plan !== 'community') {
-        var planPricing = this.priceModel.plan.tierPricing[FusionAuthPriceCalculator.plans[plan]];
-        var billingKey = this._getBillingIntervalKey();
-        var price = planPricing.base[billingKey];
-        var pricingDiv = document.getElementById(plan + '-base-price');
+        const planPricing = this.priceModel.plan.tierPricing[FusionAuthPriceCalculator.plans[plan]];
+        const billingKey = this._getBillingIntervalKey();
+        let price = planPricing.base[billingKey];
+        const pricingDiv = document.getElementById(plan + '-base-price');
 
         if (this.billingInterval === 'yearly') {
           price = Math.ceil(price / 12.0);
@@ -288,18 +287,17 @@ class FusionAuthPriceCalculator {
       this.mauChargeDiv.innerText = '$' + new Intl.NumberFormat('en').format(Math.floor(mauPrice));
 
       document.querySelector(`div[data-plan=${this.plan}]`).style.border = '2px solid #f58320';
+
+      document.getElementById('annual-discount-label').style.display = 'block';
+      document.getElementById('annual-discount-label').innerText = `Saves ${discount}%`;
     } else {
       this.planPriceDiv.innerText = '-';
-    }
-
-    if (discount > 0) {
-      document.getElementById('annual-discount-label').innerText = `Saves ${discount}%`;
-      document.getElementById('annual-discount-label').style.display = this.billingInterval === 'yearly' ? 'block' : 'none';
+      document.getElementById('annual-discount-label').style.display = 'none';
     }
 
     if (this.hosting && this.plan) {
 
-      var purchaseHref = `https://${this.accountHost}/account/purchase/start?hosting=${this.hosting}&plan=${this.plan}&renewal=${this._billingIntervalReadable()}&monthlyActiveUsers=${this.monthlyActiveUserSlider.value}`;
+      const purchaseHref = `https://${this.accountHost}/account/purchase/start?hosting=${this.hosting}&plan=${this.plan}&renewal=${this._billingIntervalReadable()}&monthlyActiveUsers=${this.monthlyActiveUserSlider.value}`;
 
       this.purchaseButton.removeAttribute('disabled');
       this.purchaseButton.classList.remove('grayed-out');
