@@ -64,6 +64,8 @@ class FusionAuthPriceCalculator {
       price = (2 * this.priceModel.ec2['medium']) + this.priceModel.elb.base + (this.priceModel.rds['medium'] * 2);
     }
 
+    price = Math.floor(price);
+
     if (this.billingInterval === 'yearly') {
       price *= 12;
     }
@@ -103,10 +105,11 @@ class FusionAuthPriceCalculator {
     let discount = 0;
     const basePrice = planPricing.base[billingKey];
 
-    if (this.billingInterval === 'yearly' && plan && plan !== 'Community') {
+    if (plan && plan !== 'Community') {
       const monthlyPrice = planPricing.base['pricePerUnitMonthly'] * 12;
+      const yearlyPrice = planPricing.base['pricePerUnitYearly'];
       
-      discount = Math.round(100.0 * (monthlyPrice - basePrice) / monthlyPrice);
+      discount = Math.round(100.0 * (monthlyPrice - yearlyPrice) / monthlyPrice);
     }
 
     return { planPrice: basePrice, mauPrice: mauPrice, discount: discount };
@@ -286,13 +289,12 @@ class FusionAuthPriceCalculator {
       this.mauChargeDiv.innerText = '$' + new Intl.NumberFormat('en').format(Math.floor(mauPrice));
 
       document.querySelector(`div[data-plan=${this.plan}]`).style.border = '2px solid #f58320';
+
+      document.getElementById('annual-discount-label').style.display = 'block';
+      document.getElementById('annual-discount-label').innerText = `Saves ${discount}%`;
     } else {
       this.planPriceDiv.innerText = '-';
-    }
-
-    if (discount > 0) {
-      document.getElementById('annual-discount-label').innerText = `Saves ${discount}%`;
-      document.getElementById('annual-discount-label').style.display = this.billingInterval === 'yearly' ? 'block' : 'none';
+      document.getElementById('annual-discount-label').style.display = 'none';
     }
 
     if (this.hosting && this.plan) {
