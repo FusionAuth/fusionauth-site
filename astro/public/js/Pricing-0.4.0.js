@@ -64,6 +64,8 @@ class FusionAuthPriceCalculator {
       price = (2 * this.priceModel.ec2['medium']) + this.priceModel.elb.base + (this.priceModel.rds['medium'] * 2);
     }
 
+    price = Math.floor(price);
+
     if (this.billingInterval === 'yearly') {
       price *= 12;
     }
