@@ -1,0 +1,28 @@
+---
+import { Code } from 'astro/components';
+import { getEntry, CollectionEntry, DataCollectionKey } from 'astro:content';
+import { parseInline } from 'marked';
+
+interface Props {
+  title?: string;
+  src: string;
+}
+
+const { title, src, jsonkey }: Props = Astro.props;
+
+const json = await getEntry('text', src.replace('.json', '')) as CollectionEntry<DataCollectionKey>;
+if (!json || !json.data) {
+  console.error('Could not resolve json', src);
+}
+// use parseInline so that we do not add additional <p> tags for plain text.
+// - https://marked.js.org/using_advanced
+const parsedTitle = title ? parseInline(title) : '';
+
+const code = json.data[jsonkey];
+//@ts-ignore
+---
+{/* title is optional, do not render an empty em tag */}
+{title && <em set:html={parsedTitle}/>}
+<div class="mb-14 prose-pre:mt-0">
+  <Code lang="text" {code}></Code>
+</div>

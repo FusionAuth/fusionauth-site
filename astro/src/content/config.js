@@ -62,7 +62,11 @@ const docsCollection = defineCollection({
 
 const jsonCollection = defineCollection({
   type: 'data',
-})
+});
+
+const textCollection = defineCollection({
+  type: 'data',
+});
 
 export const collections = {
   'articles': articlesCollection,
@@ -70,4 +74,5 @@ export const collections = {
   'quickstarts': quickstartsCollection,
   'docs': docsCollection,
   'json': jsonCollection,
+  'text': textCollection,
 };
