@@ -11,9 +11,7 @@ import OIDCFlow from "../../../diagrams/articles/identity-basics/oidc-flow.astro
 import Aside from '/src/components/Aside.astro';
 
 
-OIDC, which stands for OpenID Connect, is a specification to allow users to authenticate using a standard protocol.
-
-This article will cover what OIDC is, why you might want to use it, and how it works.
+OIDC, which stands for OpenID Connect, is a specification to allow users to authenticate using a standard protocol. This article covers what OIDC is, why you might want to use it, and how it works.
 
 ## What Is OIDC?
 
@@ -25,7 +23,7 @@ It's an extremely flexible framework that can cover both simple authentication s
 
 At a high level, using OIDC lets you delegate user authentication in a standardized fashion. By running an OIDC compliant identity data store, other applications, including custom built apps, open source applications, commercial off the shelf apps, and SaaS solutions, can all use the same authentication solution.
 
-For example, you could have your own application (custom-built), forum software like Discourse (open source), Oracle (COTS), and Zendesk all delegate authentication to your OIDC compliant user identity datastore.
+For example, you could have your own application (custom-built), forum software like Discourse (open source), Oracle (COTS), and Zendesk all delegate authentication to your OIDC compliant user identity datastore. You can support both employees and customers using such a solution. In fact, because so many customer applications are web apps, OIDC is a perfect fit for a customer identity and access management (CIAM) system.
 
 ## Why Would You Use OIDC?
 
@@ -37,63 +35,69 @@ Similar to other single sign-on software, using OIDC has the following benefits:
 
 OIDC is unique because:
 
-* since it is a standard, many other applications support it
-* it is widely deployed 
-* it's built for web applications
-* since it is built on OAuth, all OIDC flows automatically get an access token
+* many modern applications support it
+* it's built for web and mobile applications
+* as it is built on OAuth, OIDC flows can get an access token, useful if you are also using APIs
 
 Let's dive into some of the major pieces of OIDC.
 
-## Clients, OIDC Providers and Relying Parties
+## Users, OIDC Providers and Relying Parties
 
 OIDC has a few important components:
 
-* An end user who is trying to get access to an application using a browser or omobile device.
-* An OpenID provider (OP), by definition an OAuth 2.0 compatible authorization server, which will authenticate a user. It can also delegate authentication to other identity stores via OIDC or other protocols.
-* A relying party (RP), an application that needs to identify the end user.
+* An end user who is trying to get access to an application using a browser or mobile device.
+* An OpenID provider (OP), which is an OAuth 2.0 compatible authorization server. The OP authenticates users. It can also delegate authentication to other identity stores via OIDC or other protocols.
+* A relying party (RP), which is an application that needs to identify the end user.
+
+An example of an OP is FusionAuth. Examples of RPs include:
+
+* Your custom web or mobile application
+* Commercial SaaS software like SaleForce or Zendesk
+* Open source software like Discourse
+* Cloud software providers like AWS and GCP
 
 Here's an example OIDC flow, using the authorization code flow.
 
 <OIDCFlow/>
 
+For the RP, the end result of an interaction with the OP is a set of tokens which contain information about the user. Let's look at those next.
+
 ## Tokens
 
-Because OIDC is built on top of OAuth, an access token is always returned, but an Id token and possibly a refresh token are returned as well.
+Because OIDC is built on top of OAuth, an access token is always returned, but an Id token and possibly a refresh token are returned as well. The Id token is the star of the OIDC show, because it contains authentication information, so that's what this article will focus on.
 
 The Id token looks like this:
 
-TODO include Id token
+TODO include Id token after 2774 is merged.
 
-It is a signed JWT and must be validated. The claims inside the token can be examined by the RP to determine the identity of the user who went through the flow. 
+The Id token is a signed JWT and must be validated. The claims inside the token can be examined by the RP to determine the identity of the user who went through the flow. 
 
 <Aside type="note">
-A claim is fancy term for a key and value pair in a JSON object.
+A claim is fancy term for a key/value pair in a the JSON object which is the payload the JWT [Learn more about JWTs](/articles/tokens/).
 </Aside>
 
-There are a number of standard claims defined by the specification. Some of these reflect the authentication event and OP details. These include but are not limited to:
+There are a number of standard claims defined by the OIDC standard. Some reflect the authentication event and details about the OP. These include but are not limited to:
 
-* `iss` which is the identifier of the issuer of the Id token. It's a URL like `https://example.com`.
-* `aud` which is the identifier of the RP. Per the specification, it must be at least the `client_id` of the RP, but can include other identifiers.
-* `exp` which is the expiration time of the Id token.
-* `iat` which is the time at which the Id token was issued.
-* `auth_time` which is the time the authentication event occurred.
+* `iss`, the identifier of the issuer of the Id token. It's a URL like `https://example.com`.
+* `aud`, the identifier of the RP. Per the specification, it must be at least the `client_id` of the RP, but can include other identifiers.
+* `exp`, the expiration time of the Id token.
+* `iat`, the time at which the Id token was issued.
+* `auth_time`, the time the authentication event occurred.
 
-There are also claims for user profile data. Here's an incomplete list:
+There are also user profile claims. Here's an incomplete list:
 
-* `sub` which is an identifier for the end user at the OP.
-* `name` which is the full name, in a format displayable to humans.
-* `preferred_username` which is a preferred username for use by the RP. This is not guaranteed to be unique.
-* `email` which is the user's preferred email address, again, not guaranteed to be unique.
+* `sub`, an identifier for the end user at the OP.
+* `name`, the full name, in a format displayable to humans.
+* `preferred_username`, a preferred username for the RP to use. This is not guaranteed to be unique.
+* `email`, the user's preferred email address. Again, this is not guaranteed to be unique.
 * `email_verified` which is `true` if the email address has been verified to be controlled by the end user, as defined by the OP.
-* `locale` which is the end user's locale, like `en-US` or `fr-CA`.
-* `phone_number` which is the user's preferred telephone number.
-* `updated_at` the time the user's info was last updated.
+* `locale`, the end user's locale, like `en-US` or `fr-CA`.
+* `phone_number`, the user's preferred telephone number.
+* `updated_at`, the time the user's information was last updated.
 
-All times are numbers representing the number of seconds since the unix epoch.
+All times are numbers representing the number of seconds since the unix epoch. The `iss`, `sub`, `aud`, `exp`, and `iat` claims are required and will be present in every Id token. Every other claim is optional, though some are required if the RP requests them or the OP is configured in certain ways. 
 
-The `iss`, `sub`, `aud`, `exp`, and `iat` claims are required and should be present in every Id token. Every other claim is optional, though some are required if the RP requests it or the OP is configured in certain ways. 
-
-You can see that you can get a decent amount of information about a user and their authentication from the OP. It's transmitted in the Id token, which must be validated to ensure that there's no funny business going on.
+You can see that an RP can get a decent amount of information about a user and the authentication from the OP. It's all transmitted in the Id token, which must be validated to ensure that there's no funny business going on.
 
 ### Id Token Validation
 
@@ -104,17 +108,17 @@ As an RP, you must [validate the Id token](https://openid.net/specs/openid-conne
 * ensure the `aud` claim contains the RP `client_id`.
 * validate that the time represented by the `exp` claim is in the future.
 
-Because of the flexibility of OIDC, there may be other validation required if the RP requests certain profile data.
+Because of the flexibility of OIDC, there will be other validation steps depending on what data is requested.
 
 <Aside type="caution">
-The combination of `iss` and `sub` claims is guaranteed to be unique and stable. Nothing else is. So if you are building an application and need a unique identifier for a user, make sure you use these.
+The combination of the `iss` and `sub` claims is guaranteed by OIDC to be unique and stable. If you are building an application and need a unique identifier for a user, make sure you use the combination of these.
 
-The reason for this is that `sub` claim is, per the specification, guaranteed to be unique in any OP and never reassigned or changed. The `iss` claim is, again per the specification, a URL containing the `https` scheme and a hostname.
+The `sub` claim is guaranteed to be unique within any OP and never reassigned or changed.
 </Aside>
 
 ### What Next?
 
-After validation, the RP can use the claims. It might use these in a number of different ways:
+After validation, the RP can use the claims from the Id token. It might use these in a number of different ways:
 
 * create a record in its own datastore to attach application specific data to
 * display the profile data to the end user; "Welcome Dan!"
@@ -123,22 +127,18 @@ After validation, the RP can use the claims. It might use these in a number of d
 
 ## Requesting Certain Data
 
-The RP can request certain profile data. OIDC optionally uses scopes to determine the claims returned. 
-
-The [following scopes are outlined by the specification](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims):
+The RP can request specific profile data. OIDC typically uses scopes to determine which user profile data claims to return. The [following scopes are outlined by the specification](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims):
 
 * `profile` which requests access to the users default profile claims. These are: `name`, `family_name`, `given_name`, `middle_name`, `nickname`, `preferred_username`, `profile`, `picture`, `website`, `gender`, `birthdate`, `zoneinfo`, `locale`, and `updated_at`. 
 * `email` which requests access to the `email` and `email_verified` claims. 
 * `address` which requests access to the `address` claim. 
 * `phone` which requests access to the `phone_number` and `phone_number_verified` claims. 
 
-An OP may support zero, one or more of these scopes.
-
-These scopes are placed on the initial authorization request, just like any other OAuth scopes. So an RP can ask for just the `email` and `profile` scopes. Since the user has to consent to any information shared, requesting the minimum amount of profile data to fulfill the RP's needs is good practice.
+An OP may support zero, one or more of these scopes. These scopes are sent on the initial authorization request, just like any other OAuth scopes. So an RP can ask for just the `email` and `profile` scopes. Since the user has to consent to any information shared, requesting the minimum amount of profile data to fulfill the RP's needs is good practice.
 
 ## Response Types
 
-OIDC supports a number of other response types, which determine what components of the system have access to the tokens and whether a refresh token can be requested. In general, however, using the `code` response type, which maps to the OAuth authorization code grant, is a good place to start.
+OIDC supports a number of response types, which determine access to the tokens and whether a refresh token can be requested. In general, however, using the `code` response type, which maps to the OAuth authorization code grant, is a good starting point.
 
 ## What's Outside the Scope of OIDC
 
@@ -148,11 +148,13 @@ OIDC specifies how the RP can delegate authentication to the OP. But there are n
 
 The actual methods of authentication are defined and managed by the OP.
 
+In addition, verification of emails or phone numbers, which are critical to ensure the security of your users, are handled by the OP. They are also not defined by the specification, so make sure to check your OP's documentation to understand what verification methods they use.
+
 ## OIDC and CIAM
 
-As mentioned above, OIDC work well with CIAM systems, such as FusionAuth.
+As mentioned above, OIDC works well with CIAM systems, such as FusionAuth.
 
-OIDC is useful when you are trying to standardize the authentication process across many applciations. Because it is a stadard, lots of application support OIDC as a RP. This is just as true for applications which customers use as those that employees use. 
+OIDC is useful when you are trying to standardize the authentication process across many applications. Because it is a standard, many applications are RPs which support OIDC. This is just as true for applications which customers use as those that employees use. 
 
 Leveraging OIDC simplifies the authentication experience for your customers and also gives you a single view into their activities.
 
