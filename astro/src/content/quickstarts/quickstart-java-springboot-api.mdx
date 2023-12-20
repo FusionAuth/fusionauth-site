@@ -1,6 +1,6 @@
 ---
-title: Spring Boot API Resource Server
-description: Quickstart integration of a Spring Boot api application action as a resource server with FusionAuth
+title: Spring Boot
+description: Quickstart integration of a Spring Boot API application action as a resource server with FusionAuth
 navcategory: getting-started
 prerequisites: Maven, Java
 section: api
@@ -18,7 +18,7 @@ import {RemoteCode} from '@fusionauth/astro-components';
 
 In this tutorial, you are going to learn how to integrate a Java Spring Boot resource server with FusionAuth. You will protect an API resource from unauthorized usage. You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM), a global leader in converting dollars into coins.
 
-The docker compose file and source code for a complete application are available at https://github.com/FusionAuth/fusionauth-quickstart-springboot-api.
+The docker compose file and source code for a complete application are available at https://github.com/FusionAuth/fusionauth-quickstart-java-springboot-api.
 
 ## Prerequisites
 
@@ -41,8 +41,8 @@ In this section, you’ll get FusionAuth up and running and create a resource se
 First off, grab the code from the repository and change into that directory.
 
 ```
-git clone https://github.com/FusionAuth/fusionauth-quickstart-springboot-api.git
-cd fusionauth-quickstart-springboot-api
+git clone https://github.com/FusionAuth/fusionauth-quickstart-java-springboot-api.git
+cd fusionauth-quickstart-java-springboot-api
 ```
 
 ### Run FusionAuth Via Docker
@@ -78,7 +78,7 @@ We are going to be building an API backend for a banking application called Chan
 - `make-change`: This endpoint will allow you to call GET with a `total` amount and receive a response indicating how many nickels and pennies are needed to make change. Valid roles are `customer` and `teller`.
 - `panic`: Tellers may call this endpoint to call the police in case of an incident. The only valid role is `teller`.
 
-Both endpoints will be protected such that a valid JSON web token (JWT) will be required in the `Authorization` header in order to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
+Both endpoints will be protected such that a valid JSON web token (JWT) will be required in a cookie or the `Authorization` header in order to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
 
 Make a directory for this API. 
 
@@ -126,7 +126,7 @@ rmdir springapi
 
 Open `src/main/resources/application.properties`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-springboot-api/main/complete-application/src/main/resources/application.properties"
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-api/main/complete-application/src/main/resources/application.properties"
             lang="ini"/>
 
 We need two properties here:
@@ -145,19 +145,19 @@ This tutorial puts all these classes in the same package for simplicity, but for
 
 We will need response objects for the API to return. One is the `PanicResponse` which returns a message when a successful `POST` call is made to `/panic`. In the base package create a new class `PanicResponse.java`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/PanicResponse.java"
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/PanicResponse.java"
             lang="java"/>
 
 Next you need an object to show the breakdown from making change. This object will hold a BigDecimal `total` and Integers `nickels` and `pennies`. In the base package create a new class `Change.java`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/Change.java"
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/Change.java"
             lang="java"/>
 
 ### Add Controllers
 
 Next you need to add controllers to handle API calls. In the base package add a new class `MakeChangeController.java`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/MakeChangeController.java"
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/MakeChangeController.java"
             lang="java" />
 
 In this class a `total` is a http request query parameter that is converted to a `BigDecimal`, and the `get` method divides the `total` into `nickels` and `pennies` and returns the response object.
@@ -169,7 +169,7 @@ There are three annotations that are important for the controller to work:
 
 Now, add a controller for tellers to call in an emergency. In the base package add a class `PanicController.java`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/PanicController.java"
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/PanicController.java"
             lang="java" />
 
 This class listens on `/panic` for a POST request and returns a response indicating that the police were called. The annotations are the same as `MakeChangeController.java` except for `@PostMapping` indicates a POST request handler.
@@ -200,7 +200,7 @@ So far you have not done anything with auth, and the controllers are unaware of 
 
 You need to tell Spring how to parse the `roles` out of the claim in the JWT, and for that you need a `Converter`. In the base package add a class `CustomJwtAuthenticationConverter.java`:
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/CustomJwtAuthenticationConverter.java"
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/CustomJwtAuthenticationConverter.java"
             lang="java" />
 
 This class implements the `Converter` interface and takes the `roles` claim and maps it to a `Collection<GrantedAuthority>` Spring will use to authorize the user. We set these as the `authorities` on the AuthenticationToken.
@@ -209,12 +209,13 @@ Because you are using a custom converter you also need to check the audience. Pu
 
 Now you can add a security configuration. In the base package create a new class `SecurityConfiguration.java`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/SecurityConfiguration.java"
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/SecurityConfiguration.java"
             lang="java" />
 
 This class does a lot in a few lines of code. Let's break it down:
 - `@Configuration` tells spring to autowire this configuration class and `@Bean` wires the `SecurityFilterChain` which will add the rules for handling the security on http requests.
 - `OAuth2ResourceServerProperties` is injected into the configuration bean and holds the values you defined in the `application.properties` file.
+- The custom `BearerTokenResolver` looks in both the `app.at` cookie and the `Authorization` header for the access token
 - In the `SecurityFilterChain` you do the following:
   1. Get `audiences` list from the `OAuth2ResourceServerProperties`
   2. Create a new instance of `CustomJwtAuthenticationConverter` and pass it the `audiences` list
@@ -263,13 +264,19 @@ Copy the `token` from the response, which should look like this:
 }
 ```
 
-### Make the Request
+### Make The Request
 
-Use the `token` as a `Bearer` token in the `Authorization` header. Make a request to `/make-change` with a query parameter `total=5.12`.
+<Aside type="note">
+The code is set up to extract the token from either a cookie or the `Authorization` header so depending on your preference you can replace `--cookie 'app.at=<your_token>'` with `--header 'Authorization: Bearer <your_token>'` when making requests to the API.
+
+If you use a cookie, make sure you store it in a secure, HTTPOnly cookie to avoid exfiltration attacks. See [Storing OAuth Tokens](/articles/oauth/oauth-token-storage) for more information.
+</Aside>
+
+Make a request to `/make-change` with a query parameter `total=5.12`. Use the `token` as the `app.at` cookie.
 
 ```shell
 curl --location 'http://localhost:8080/make-change?total=5.12' \
---header 'Authorization: Bearer <your_token>'
+--cookie 'app.at=<your_token>'
 ```
 
 Your response should look like this:
@@ -288,7 +295,7 @@ Next call the `/panic` endpoint because you are in trouble!
 
 ```shell
 curl --location --request POST 'http://localhost:8080/panic' \
---header 'Authorization: Bearer <your_token>'
+--cookie 'app.at=<your_token>'
 ```
 
 This is a `POST` not a get because you want all your emergency calls to be non-idempotent.
@@ -332,7 +339,7 @@ Now use that token to call `/make-change` with a query parameter `total=3.24`
 
 ```shell
 curl --location 'http://localhost:8080/make-change?total=3.24' \
---header 'Authorization: Bearer <your_token>'
+--cookie 'app.at=<your_token>'
 ```
 
 Your response should look like this:
@@ -349,7 +356,7 @@ So far so good. Now let's try to call the `/panic` endpoint. (We're adding the `
 
 ```shell
 curl -i --request POST 'http://localhost:8080/panic' \
---header 'Authorization: Bearer <your_token>'
+--cookie 'app.at=<your_token>'
 ```
 
 Your response should look like:
@@ -420,8 +427,8 @@ Make sure you requested the two required dependencies when you used the Initiali
 You can always pull down a complete running application and compare what's different.
 
 ```
-git clone https://github.com/FusionAuth/fusionauth-quickstart-spring-api.git
-cd fusionauth-quickstart-spring-api
+git clone https://github.com/FusionAuth/fusionauth-quickstart-java-springboot-api.git
+cd fusionauth-quickstart-java-springboot-api
 docker-compose up -d
 cd complete-app
 ./mvnw package spring-boot:run
