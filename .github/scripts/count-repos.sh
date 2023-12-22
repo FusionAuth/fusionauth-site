@@ -1,7 +1,7 @@
 #!/bin/sh
 
 SHOW_DIFF=0
-if [ "x$1" == "x-v" ]; then
+if [ "$1x" == "-vx" ]; then
   SHOW_DIFF=1
 fi
 
