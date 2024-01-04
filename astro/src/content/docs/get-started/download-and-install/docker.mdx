@@ -77,7 +77,7 @@ You may add other services to the Docker Compose files if needed.
 
 For example, in development environments it can be helpful to run [MailCatcher](https://mailcatcher.me/) which provides a local SMTP server. This allows FusionAuth to send transactional emails for account verification, password reset, and others.
 
-<RemoteCode title="Example docker-compose.yml with mailcatcher" url="https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-docker-compose/main/mailcatcher/docker-compose.yml" lang="yaml" />
+<RemoteCode title="Example docker-compose.yml with mailcatcher" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-docker-compose/main/mailcatcher/docker-compose.yml" lang="yaml" />
 
 Below is a functional configuration on the tenant email tab based on the above configuration file:
 
@@ -127,17 +127,19 @@ When running in development runtime mode, silent mode was enabled based upon the
 
 The Docker Compose file references the `latest` tag, but that tag is not dynamic. It is only the latest at a point in time. To get the most recently released image, you have a couple of options.
 
-* Edit the Docker Compose file and specify a specific version. This is a good idea for a production deployment.
-* Remove the old image first: `docker rmi <old image id>`. This command may prompt you to remove containers using that image. Since all state is stored in the database, you can safely remove the containers. Then, when you recreate Docker Compose, the latest image will be retrieved.
-* Pull the latest image with this command: `docker pull fusionauth/fusionauth-app:latest` or `docker compose pull` and recreate your deployment.
+* Pull the latest image with this command: `docker pull fusionauth/fusionauth-app:latest` or `docker compose pull` and recreate your deployment with `docker compose up -d` which will recreate every container where a new image is available.
+* Edit the Docker Compose file and specify a specific version. This is a good idea for a production deployment. With `docker compose pull` you can only pull the specified image, or just run `docker compose up -d` which will pull the image and recreate the container at the same time.
+* Remove all images with `docker rmi <IMAGE ID>` selected from the list of IMAGE IDs which you can show with `docker images`. This requires that the image isn't used and therefore may prompt you to remove containers using it. Since all state of FusionAuth is stored in the database, and for docker you use volumes to persist data, you can safely remove the containers. After that you can use `docker compose pull`, `docker compose build` and `docker compose up -d` accordingly to get images specified the in the `docker-compose.yml`.
+
+To generally clean up your images on your system `docker image prune` is useful too as it will remove all dangling images.
 
 ## Custom Docker Images
 
 If you want to build your own image starting with our base image, start with the `fusionauth/fusionauth-app` image. Just as the FusionAuth Docker image is based on the `ubuntu:jammy` image, you can build a Docker file which is based on the `fusionauth/fusionauth-app:latest` image. This can be useful if you want to permanently add a password hashing plugin, configuration file, or other customization directly in to the image.
 
-<RemoteCode title="Example docker-compose.yml for building fusionauth-app including a plugin" url="https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-docker-compose/main/build/docker-compose.yml" lang="yaml" />
+<RemoteCode title="Example docker-compose.yml for building fusionauth-app including a plugin" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-docker-compose/main/build/docker-compose.yml" lang="yaml" />
 
-<RemoteCode title="Example Dockerfile for building fusionauth-app including a plugin" url="https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-docker-compose/main/build/fusionauth-app/Dockerfile" lang="yaml" />
+<RemoteCode title="Example Dockerfile for building fusionauth-app including a plugin" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-docker-compose/main/build/fusionauth-app/Dockerfile" lang="yaml" />
 
 With this example can use `docker compose build` to only run the build steps in the referenced Dockerfile. This will create you a custom Docker image which is consequentially used in the creation of the container in Docker Compose when running `docker compose up -d`. Alternatively you can run only `docker compose up -d` which will automatically take care of the build as well if not present.
 
@@ -172,9 +174,9 @@ Here are the steps to do so:
 
 The following is an example `docker-compose.yml` file configuring FusionAuth to run the commands in a `kickstart.json` at startup.
 
-<RemoteCode title="Example docker-compose.yml for running Kickstart" url="https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-docker-compose/main/kickstart/docker-compose.yml" lang="yaml" />
+<RemoteCode title="Example docker-compose.yml for running Kickstart" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-docker-compose/main/kickstart/docker-compose.yml" lang="yaml" />
 
-After running `docker compose up -d` you should see a line like this in the logs `docker compose logs fusionauth`:
+After running `docker compose up -d` you should see a line similar to the one below in the logs. These logs can  be accessed using this command: `docker compose logs fusionauth`:
 
 ```plaintext title="FusionAuth log messages indicating Kickstart has succeeded"
 io.fusionauth.api.service.system.kickstart.KickstartRunner - Summary
@@ -206,7 +208,7 @@ Here are the steps to do so:
 
 The following is an example `docker-compose.yml` file configuring FusionAuth to scan for plugins at startup.
 
-<RemoteCode title="Example docker-compose.yml for installing a plugin" url="https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-docker-compose/main/plugin/docker-compose.yml" lang="yaml" />
+<RemoteCode title="Example docker-compose.yml for installing a plugin" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-docker-compose/main/plugin/docker-compose.yml" lang="yaml" />
 
 After running `docker compose up -d` you should see a line like this in the logs `docker compose logs fusionauth`:
 
@@ -225,7 +227,8 @@ This is typically only an issue when FusionAuth is accessing resources outside o
 
 In this situation, do one of the following:
 
-* Use `host.docker.internal` as the hostname instead of `localhost`; this works on macOS and Windows hosts, for linux you have to add `--add-host=host.docker.internal:host-gateway` to the docker engine.
+* For macOS and Windows hosts, you can use `host.docker.internal` as the hostname instead of `localhost`.
+* For Linux hosts, add `extra_hosts: - "host.docker.internal:host-gateway"` to your `docker-compose.yml`.
 * Run a container with your application in Docker
 * Install FusionAuth on the host machine, using FastPath or another method
 
@@ -233,7 +236,7 @@ Modifying the FusionAuth service in `docker-compose.yml` to use other Docker net
 
 ## OpenSearch Production Deployment Configuration
 
-The productive runtime requirements and configuration for OpenSearch will drastically differ from the docker compose examples as they're configured without any security and redundancy.
+Production runtime requirements and configuration for OpenSearch will drastically differ from the docker compose examples as the examples are configured without any security or redundancy.
 
 Please review the [Installing OpenSearch documentation](https://opensearch.org/docs/latest/install-and-configure/install-opensearch/index/) for further details around production deployment.
 
