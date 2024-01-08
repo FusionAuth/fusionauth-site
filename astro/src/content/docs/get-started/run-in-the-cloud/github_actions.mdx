@@ -12,17 +12,10 @@ import {RemoteCode} from '@fusionauth/astro-components';
 
 ### Todo
 
-- [ ] how to deploy to prod
+- [ ] readme for sample app
 - [ ] learn about github actions marketplace
 - [ ] decide what the marketplace action should do (all 3 os?)
 - [ ] write and deploy the action to marketplace
-- [ ] write the article
-  - [x] target audience - newbies to fa and actions
-  - [ ] mention fa cloud paid service
-  - [ ] secrets and .env
-  - [ ] how to test live site
-  - [ ] add images
-- [ ] readme for sample app
 - [ ] proofread
 
 ## Introduction
@@ -49,8 +42,8 @@ You will need Docker and Node.js installed if you want to run the example applic
 - [Deploy Your App In A GitHub Action](#deploy-your-app-in-a-github-action)
 - [Test Your Production Release](#test-your-production-release)
 - [Secrets And Deployment Environments](#secrets-and-deployment-environments)
+- [Summary Of Testing And Deployment](#summary-of-testing-and-deployment)
 - [Use The Action For FusionAuth In The GitHub Action Marketplace](#use-the-action-for-fusionauth-in-the-github-action-marketplace)
-- [Summary](#summary)
 - [Further Reading](#further-reading)
 
 
@@ -201,6 +194,10 @@ If you browse to FusionAuth again you'll see that the user you created is still 
 The FusionAuth application is separate to the FusionAuth database. In this case, the database is stored in a Docker volume. When the upgrade scripts run, the data should not be broken and upgrading FusionAuth should be unnoticeable. However, mistakes can happen, as well as database crashes, and you should backup both the FusionAuth database and your application database daily. The rest of this article will show you how to automate login tests to check that your system still works after upgrading FusionAuth or your app. If something breaks, you can restore the old version of the database and begin debugging.
 
 For more details on upgrading FusionAuth, including non-silent upgrade, please read this [article](/docs/get-started/download-and-install/docker#upgrading).
+
+<Aside type="info">
+FusionAuth also has a paid version that [runs in the cloud](/docs/get-started/run-in-the-cloud/cloud). If you want to avoid the hassle of managing, backing up, and upgrading FusionAuth yourself, this might be the solution for you.
+</Aside>
 
 ## Test Your App Login With Playwright
 
@@ -428,7 +425,7 @@ To deploy your Go application you have alternatives:
 
 Using Docker is the least work for the server and least likely to disrupt your operations. It requires compiling the executable on the server, just like option two. Downloading the code on the server and compiling it there is the easiest to do, but might disrupt the server.
 
-To make your Go binary (and all the HTML templates it serves) available for other steps in the workflow, use the [upload-artifcation action](https://github.com/actions/upload-artifact). To build and push a DockerHub image, use the [Docker action.](https://github.com/marketplace/actions/build-and-push-docker-images).
+To make your Go binary (and all the HTML templates it serves) available for other steps in the workflow, use the [upload-artifact action](https://github.com/actions/upload-artifact). To build and push a DockerHub image, use the [Docker action.](https://github.com/marketplace/actions/build-and-push-docker-images).
 
 Once you have your application files ready, you can again SSH into your server, download the image or files, run any database migrations scripts, and restart your web application.
 
@@ -442,13 +439,46 @@ If this test passes, you can be certain your live website and FusionAuth can sti
 
 ## Secrets And Deployment Environments
 
-Dev, Test, QA, Preprod, And Prod Environments
+Your organization will probably have a number of environments (server and database) where your application runs:
+- Development — where programmers are free to test new features without fear of breaking anything. Database users are anonymized.
+- Test — where quality assurance testers test the latest release that is scheduled to go live soon.
+- Preproduction — An exact duplicate of the Production environment, with real sensitive user information. This is used for debugging errors in Production. Access is restricted.
+- Production — The live site that must always be online. Access is restricted to a system administrator and automated deployment programs.
 
-when to run actions - pull, which branches
-what to do on failure
+The production environment might also be two mirrored applications and databases (called blue and green). You could deploy to one color, and then immediately transfer the live URL from the other color once it's complete. This way your application will never suffer a moment's downtime.
+
+Each environment should correspond to a single branch in GitHub, and has its own set of secrets: passwords, URLs, database values.
+
+In this guide's sample application action, you've set the action event to be pushing to the main branch (which corresponds to the production environment). You would need to add other events and scripts to run tests, but not deploy, for all other environments, and for pull request events too.
+
+This application also used two `.env` files to store secrets that your app and FusionAuth use. In reality, you should never do this, as it allows anyone to access your private database with your password kept publicly on GitHub.
+
+Instead, each environment should store its secrets in environment variables or a configuration file that is not overwritten on deployment. These values should be readable only by the system administrator and the application's user account.
+
+But you also need some secrets in the GitHub action, such as the SSH key of the server you are deploying to. This was seen in the script above.
+```yaml
+key: ${{ secrets.SERVER_SSH_KEY }}
+```
+
+These secrets are kept in the [GitHub Secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) page, where they are automatically available to your scripts.
+
+![GitHub secrets](./github_actions_images/secrets.png)
+
+## Summary Of Testing And Deployment
+
+This has been a long guide, so let's summarize what you need to do to test and deploy your application:
+
+- Configure your server to run Docker and the programming framework that your app uses.
+- Keep secrets safe and private in environment variables on each server, even from your developers.
+- Backup your FusionAuth and app database frequently, and test that you can restore them successfully.
+- Write Playwright tests that check your app can log in with FusionAuth, and any other essential functionality, including new features that you are releasing.
+- Write a GitHub action that runs these tests when receiving a pull request, or pushing code to a branch.
+- Add secrets in GitHub that allow it to access your deployment environment.
+- Add a deployment step to your GitHub action that sends your new release to the server and starts it.
+- Add a final step in the action to test that your Playwright tests work on the deployed server.
+- If your tests are all successful, switch your public URL over to the latest release.
 
 ## Use The Action For FusionAuth In The GitHub Action Marketplace
 
-## Summary
 
 ## Further Reading
