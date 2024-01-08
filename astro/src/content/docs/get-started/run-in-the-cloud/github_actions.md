@@ -168,23 +168,23 @@ docker compose up
 The output of the Docker command below shows that FusionAuth silently (without user approval) and successfully runs database migration (upgrade) scripts on the existing database when starting.
 
 ```bash
-fusionauth  | ---------------------------------- Entering Silent Configuration Mode ---
-fusionauth  | ----------------------------
-fusionauth  | 2024-01-05 12:49:04.337 PM INFO  com.inversoft.maintenance.db.JDBCMaintenanceModeDatabaseService - [TW2QyQ] Attempting to lock database to support multi-node configurations
-fusionauth  | 2024-01-05 12:49:04.348 PM INFO  com.inversoft.maintenance.db.JDBCMaintenanceModeDatabaseService - [TW2QyQ] Obtained a database lock
-fusionauth  | 2024-01-05 12:49:04.386 PM INFO  com.inversoft.maintenance.db.JDBCMaintenanceModeDatabaseService - [TW2QyQ] Database Version [1.42.1]
-fusionauth  | 2024-01-05 12:49:04.393 PM INFO  com.inversoft.maintenance.db.JDBCMaintenanceModeDatabaseService - [TW2QyQ] Latest Migration Version [1.48.1]
-fusionauth  | 2024-01-05 12:49:04.401 PM INFO  com.inversoft.maintenance.db.JDBCMaintenanceModeDatabaseService - [TW2QyQ] Execute migration script [1.43.0]
-fusionauth  | 2024-01-05 12:49:04.415 PM INFO  com.inversoft.maintenance.db.JDBCMaintenanceModeDatabaseService - [TW2QyQ] Execute migration script [1.44.0]
-fusionauth  | 2024-01-05 12:49:04.425 PM INFO  com.inversoft.maintenance.db.JDBCMaintenanceModeDatabaseService - [TW2QyQ] Execute migration script [1.45.2]
-fusionauth  | 2024-01-05 12:49:04.432 PM INFO  com.inversoft.maintenance.db.JDBCMaintenanceModeDatabaseService - [TW2QyQ] Execute migration script [1.46.0]
-fusionauth  | 2024-01-05 12:49:04.444 PM INFO  com.inversoft.maintenance.db.JDBCMaintenanceModeDatabaseService - [TW2QyQ] Execute migration script [1.47.0]
-fusionauth  | 2024-01-05 12:49:04.459 PM INFO  com.inversoft.maintenance.db.JDBCMaintenanceModeDatabaseService - [TW2QyQ] Execute migration script [1.48.0]
-fusionauth  | 2024-01-05 12:49:04.472 PM INFO  com.inversoft.maintenance.db.JDBCMaintenanceModeDatabaseService - [TW2QyQ] Execute migration script [1.48.1]
-fusionauth  | 2024-01-05 12:49:04.500 PM INFO  com.inversoft.maintenance.db.JDBCMaintenanceModeDatabaseService - [TW2QyQ] Database Version [1.48.1]
-fusionauth  | 2024-01-05 12:49:04.500 PM INFO  com.inversoft.maintenance.db.JDBCMaintenanceModeDatabaseService - [TW2QyQ] Latest Migration Version [1.48.1]
-fusionauth  | 2024-01-05 12:49:04.500 PM INFO  com.inversoft.maintenance.db.JDBCMaintenanceModeDatabaseService - [TW2QyQ] Attempting to unlock database to support multi-node configurations
-fusionauth  | 2024-01-05 12:49:04.501 PM INFO  com.inversoft.maintenance.db.JDBCMaintenanceModeDatabaseService - [TW2QyQ] Unlock completed
+fa | ---------------------------------- Entering Silent Configuration Mode ---
+fa | ----------------------------
+fa | 12:49:04.337 PM INFO JDBCMaintenanceModeDatabaseService - Attempting to lock database to support multi-node configurations
+fa | 12:49:04.348 PM INFO JDBCMaintenanceModeDatabaseService - Obtained a database lock
+fa | 12:49:04.386 PM INFO JDBCMaintenanceModeDatabaseService - Database Version [1.42.1]
+fa | 12:49:04.393 PM INFO JDBCMaintenanceModeDatabaseService - Latest Migration Version [1.48.1]
+fa | 12:49:04.401 PM INFO JDBCMaintenanceModeDatabaseService - Execute migration script [1.43.0]
+fa | 12:49:04.415 PM INFO JDBCMaintenanceModeDatabaseService - Execute migration script [1.44.0]
+fa | 12:49:04.425 PM INFO JDBCMaintenanceModeDatabaseService - Execute migration script [1.45.2]
+fa | 12:49:04.432 PM INFO JDBCMaintenanceModeDatabaseService - Execute migration script [1.46.0]
+fa | 12:49:04.444 PM INFO JDBCMaintenanceModeDatabaseService - Execute migration script [1.47.0]
+fa | 12:49:04.459 PM INFO JDBCMaintenanceModeDatabaseService - Execute migration script [1.48.0]
+fa | 12:49:04.472 PM INFO JDBCMaintenanceModeDatabaseService - Execute migration script [1.48.1]
+fa | 12:49:04.500 PM INFO JDBCMaintenanceModeDatabaseService - Database Version [1.48.1]
+fa | 12:49:04.500 PM INFO JDBCMaintenanceModeDatabaseService - Latest Migration Version [1.48.1]
+fa | 12:49:04.500 PM INFO JDBCMaintenanceModeDatabaseService - Attempting to unlock database to support multi-node configurations
+fa | 12:49:04.501 PM INFO JDBCMaintenanceModeDatabaseService - Unlock completed
 
 ```
 
