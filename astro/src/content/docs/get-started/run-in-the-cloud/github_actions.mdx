@@ -70,6 +70,7 @@ You will need Docker and Node.js installed if you want to run the example applic
 - [A Simple Example Using GitHub Actions](#a-simple-example-using-github-actions)
 - [How To Upgrade FusionAuth](#how-to-upgrade-fusionauth)
 - [Test Your App Login To FusionAuth With Playwright](#test-your-app-login-to-fusionauth-with-playwright)
+  - [Write a test for Playwright](#write-a-test-for-playwright)
 - [Build Your App In A GitHub Action](#build-your-app-in-a-github-action)
 - [Test Your App In A GitHub Action](#test-your-app-in-a-github-action)
 - [Dev, Test, QA, Preprod, And Prod Environments](#dev-test-qa-preprod-and-prod-environments)
@@ -245,7 +246,7 @@ To start the Playwright tests for this app, open a new terminal and run the code
 
 ```bash
 npx playwright install
-npx playwright install-deps
+npx playwright install-deps # install necessary browsers
 npx playwright test --project=chromium;
 ```
 
@@ -259,12 +260,34 @@ Running 1 test using 1 worker
   1 passed (5.8s)
 ```
 
+The command returns `0` to the terminal if all tests passed, and another number if any tests failed. This allows you (and GitHub Actions) to write shell scripts that perform different tasks if the tests succeed or not.
+
 To see what is happening visually, run the code below.
 
 ```bash
 npx playwright test --project=chromium --ui;
 ```
 
+You can see that Playwright runs a browser, clicks buttons, and fills in forms.
+
+![Playwright test UI](./github_actions_images/playwright.png)
+
+### Write a test for Playwright
+
+The code for the test Playwright runs is in the file `test.spec.js`.
+
+<RemoteCode url={frontmatter.coderoot + "/app/tests/test.spec.js"}
+  lang="js" />
+
+The code should mostly be self explanatory, but there are a few things to note:
+- `await` is used frequently as most operations on the page are asynchronous.
+- `waitForLoadState('networkidle')` is used to wait for pages to load. `.waitForNavigation()` and `.waitForURL()` failed when this article was written.
+- Tests start with `expect()`, such as `expect(emailText).toBe('richard@example.com')`. Without these your tests won't actually test anything.
+- To add a new test of your own, write a new function like `test('Test login', async ({ page }) => {`.
+
+To add Playwright to your own project, follow [their guide](https://playwright.dev/docs/intro). Running `npm init playwright` will create a configuration file and sample test you can use as a starting point.
+
+The configuration file `playwright.config.js` allows you set which browsers to use (which we used in `--project=chromium` earlier), and whether to start your app before running the tests.
 
 ## Build Your App In A GitHub Action
 
