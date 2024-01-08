@@ -69,10 +69,11 @@ You will need Docker and Node.js installed if you want to run the example applic
 - [Some Definitions And Goals](#some-definitions-and-goals)
 - [A Simple Example Using GitHub Actions](#a-simple-example-using-github-actions)
 - [How To Upgrade FusionAuth](#how-to-upgrade-fusionauth)
-- [Test Your App Login To FusionAuth With Playwright](#test-your-app-login-to-fusionauth-with-playwright)
+- [Test Your App Login With Playwright](#test-your-app-login-with-playwright)
   - [Write a test for Playwright](#write-a-test-for-playwright)
-- [Build Your App In A GitHub Action](#build-your-app-in-a-github-action)
 - [Test Your App In A GitHub Action](#test-your-app-in-a-github-action)
+- [Understand GitHub Actions](#understand-github-actions)
+- [Build Your App In A GitHub Action](#build-your-app-in-a-github-action)
 - [Dev, Test, QA, Preprod, And Prod Environments](#dev-test-qa-preprod-and-prod-environments)
 - [Use The Action For FusionAuth In The GitHub Action Marketplace](#use-the-action-for-fusionauth-in-the-github-action-marketplace)
 - [Further Reading](#further-reading)
@@ -226,7 +227,7 @@ The FusionAuth application is separate to the FusionAuth database. In this case,
 
 For more details on upgrading FusionAuth, including non-silent upgrade, please read this [article](/docs/get-started/download-and-install/docker#upgrading).
 
-## Test Your App Login To FusionAuth With Playwright
+## Test Your App Login With Playwright
 
 FusionAuth is already running. To start the app that uses it, run the code below.
 
@@ -265,7 +266,7 @@ The command returns `0` to the terminal if all tests passed, and another number 
 To see what is happening visually, run the code below.
 
 ```bash
-npx playwright test --project=chromium --ui;
+npx playwright test --project=chromium --ui
 ```
 
 You can see that Playwright runs a browser, clicks buttons, and fills in forms.
@@ -282,16 +283,46 @@ The code for the test Playwright runs is in the file `test.spec.js`.
 The code should mostly be self explanatory, but there are a few things to note:
 - `await` is used frequently as most operations on the page are asynchronous.
 - `waitForLoadState('networkidle')` is used to wait for pages to load. `.waitForNavigation()` and `.waitForURL()` failed when this article was written.
-- Tests start with `expect()`, such as `expect(emailText).toBe('richard@example.com')`. Without these your tests won't actually test anything.
+- Tests start with `expect()`, such as `expect(emailText).toBe('richard@example.com')`. Without these, your tests won't actually test anything.
 - To add a new test of your own, write a new function like `test('Test login', async ({ page }) => {`.
 
 To add Playwright to your own project, follow [their guide](https://playwright.dev/docs/intro). Running `npm init playwright` will create a configuration file and sample test you can use as a starting point.
 
 The configuration file `playwright.config.js` allows you set which browsers to use (which we used in `--project=chromium` earlier), and whether to start your app before running the tests.
 
-## Build Your App In A GitHub Action
-
 ## Test Your App In A GitHub Action
+
+Now that you know how to test your app after a change to it or FusionAuth, let's automate the process in GitHub. Your goal is to have a test run whenever committing to your main branch. GitHub will email you if the test fails.
+
+Open the file `.github/workflows/test.yaml` and change the branch name on line five from
+
+```yaml
+      - main_RENAME_THIS_TO_ENABLE_TEST
+```
+
+to
+
+```yaml
+      - main
+```
+
+You've renamed the trigger that causes this Action to execute, from a nonsense name, to the main branch of your application.
+
+Save, commit in Git, and push to GitHub. This will cause the test to execute.
+
+You can browse to the Actions tab in your GitHub repository to see the test run, or view the results in the [original repository]({frontmatter.url + '/actions'}).
+
+![Passed test](./github_actions_images/passedtest.png)
+
+To test that the test works, change the email in `test.spec.js` to `wrong@example.com` and push to GitHub again. You can now verify that the test does detect a broken login.
+
+![Failed test](./github_actions_images/failedtest.png)
+
+If your test runs successfuly, you can be certain that your app and FusionAuth are both running, can speak to each other, and that the user is still present in the database after any migrations have run.
+
+## Understand GitHub Actions
+
+## Build Your App In A GitHub Action
 
 ## Dev, Test, QA, Preprod, And Prod Environments
 
