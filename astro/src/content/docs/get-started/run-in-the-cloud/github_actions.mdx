@@ -42,13 +42,15 @@ You will need Docker and Node.js installed if you want to run the example applic
 - [A Simple Example Using GitHub Actions](#a-simple-example-using-github-actions)
 - [How To Upgrade FusionAuth](#how-to-upgrade-fusionauth)
 - [Test Your App Login With Playwright](#test-your-app-login-with-playwright)
-  - [Write a test for Playwright](#write-a-test-for-playwright)
+- [Write a test for Playwright](#write-a-test-for-playwright)
 - [Test Your App In A GitHub Action](#test-your-app-in-a-github-action)
 - [Understand GitHub Actions](#understand-github-actions)
 - [Compile Your App In A GitHub Action](#compile-your-app-in-a-github-action)
 - [Deploy Your App In A GitHub Action](#deploy-your-app-in-a-github-action)
-- [Dev, Test, QA, Preprod, And Prod Environments](#dev-test-qa-preprod-and-prod-environments)
+- [Test Your Production Release](#test-your-production-release)
+- [Secrets And Deployment Environments](#secrets-and-deployment-environments)
 - [Use The Action For FusionAuth In The GitHub Action Marketplace](#use-the-action-for-fusionauth-in-the-github-action-marketplace)
+- [Summary](#summary)
 - [Further Reading](#further-reading)
 
 
@@ -248,7 +250,7 @@ You can see that Playwright runs a browser, clicks buttons, and fills in forms.
 
 ![Playwright test UI](./github_actions_images/playwright.png)
 
-### Write a test for Playwright
+## Write a test for Playwright
 
 The code for the test Playwright runs is in the file `test.spec.js`.
 
@@ -387,18 +389,66 @@ You might have noticed that GitHub did not build your app at any point in this w
 
 ## Deploy Your App In A GitHub Action
 
-While building your app is simple, deploying it is more complex. Your production environment might be a physical server, a virtual server such as Digital Ocean, or a large service provider such as AWS or Azure. You might also want to deploy a new version of FusionAuth, which might use Docker.
+While building your app is simple, deploying it is more complex. Your production environment might be a physical server, a virtual server such as DigitalOcean, or a large service provider such as AWS or Azure. You might also want to deploy a new version of FusionAuth, which might use Docker.
 
+You can deploy using an existing action, such as those for [AWS](https://github.com/aws-actions), [Azure](https://github.com/Azure/actions), or [DigitalOcean](https://github.com/digitalocean/action-doctl), or write your own script.
 
+Let's assume your production environment is a virtual server that runs your application in a Go binary and FusionAuth in Docker.
 
+After the tests in your action have run successfully, you can deploy your app and FusionAuth to the server.
 
-## Dev, Test, QA, Preprod, And Prod Environments
+To run a command on your server from within an action, use the [SSH-Action](https://github.com/appleboy/ssh-action). This action allows you to open a terminal on your server and run commands. Here's how you would change the version number of FusionAuth, and restart it in Docker.
+
+```yaml
+- name: Update FusionAuth and Restart Docker
+  uses: appleboy/ssh-action@master
+  with:
+    host: ${{ secrets.SERVER_HOST }}
+    username: ${{ secrets.SERVER_USERNAME }}
+    key: ${{ secrets.SERVER_SSH_KEY }}
+    script: |
+      cd /fa_config
+
+      # change docker version number
+      sed -i 's|fusionauth/fusionauth-app:.*|fusionauth/fusionauth-app:1.48.3|' docker-compose.yml
+
+      # pull the latest image from DockerHub before we try to use it
+      docker-compose pull fusionauth-app
+
+      # restart docker and leave it running
+      docker-compose up -d fusionauth-app
+```
+
+We'll discuss the secrets in the next section.
+
+To deploy your Go application you have alternatives:
+1. Download the repository of source code to the server and compile it there.
+1. Compile the executable in the action and download it on the server.
+1. Build your app into a Docker image, upload that to DockerHub, and download and run it on the server.
+
+Using Docker is the least work for the server and least likely to disrupt your operations. It requires compiling the executable on the server, just like option two. Downloading the code on the server and compiling it there is the easiest to do, but might disrupt the server.
+
+To make your Go binary (and all the HTML templates it serves) available for other steps in the workflow, use the [upload-artifcation action](https://github.com/actions/upload-artifact). To build and push a DockerHub image, use the [Docker action.](https://github.com/marketplace/actions/build-and-push-docker-images).
+
+Once you have your application files ready, you can again SSH into your server, download the image or files, run any database migrations scripts, and restart your web application.
+
+## Test Your Production Release
+
+Unfortunately your work still isn't done. Even though your tests ran successfully in the GitHub virtual machine, your production release might not allow users to log in. You need to test again.
+
+Add a final step to your script, after the deploy step, that runs the Playwright login test. But this time, run a test file that uses the production server URL, instead of your localhost, in the line `await page.goto('http://localhost:3000');`.
+
+If this test passes, you can be certain your live website and FusionAuth can still communicate. If it fails, you need to revert your release to the previous version immediately.
+
+## Secrets And Deployment Environments
+
+Dev, Test, QA, Preprod, And Prod Environments
 
 when to run actions - pull, which branches
 what to do on failure
-- Testing login works should be done in the action. The final test of logging to the deployed app can be done by hand when checking the site is actually up.
-
 
 ## Use The Action For FusionAuth In The GitHub Action Marketplace
+
+## Summary
 
 ## Further Reading
