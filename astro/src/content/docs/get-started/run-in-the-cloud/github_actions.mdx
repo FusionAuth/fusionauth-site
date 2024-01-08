@@ -1,13 +1,14 @@
-- [Notes](#notes)
-  - [Brief](#brief)
-  - [Todo](#todo)
-- [Introduction](#introduction)
-- [How to upgrade FusionAuth](#how-to-upgrade-fusionauth)
-- [Test your app's login to FusionAuth with Playwright](#test-your-apps-login-to-fusionauth-with-playwright)
-- [Build your app in a GitHub action](#build-your-app-in-a-github-action)
-- [Test your app in a GitHub action](#test-your-app-in-a-github-action)
-- [Use the Action for FusionAuth in the GitHub Action Marketplace](#use-the-action-for-fusionauth-in-the-github-action-marketplace)
-- [Further reading](#further-reading)
+---
+title: GitHub Actions With FusionAuth
+description: How to use CI/CD with FusionAuth in GitHub
+navcategory: get-started
+prerequisites: Docker version 20
+section: web
+url: https://github.com/ritza-co/fusionauth_github_actions
+codeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth_github_actions/main
+---
+import Aside from '/src/components/Aside.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
 
 ## Notes
 
@@ -37,7 +38,7 @@ Brief - https://docs.google.com/document/d/16ql1wY7kPI4MxESMzMaK2pLCa3ZdSxQcsqbT
 - [x] make article outline
 - [x] make test repo - https://github.com/ritza-co/fusionauth_github_actions
 - [x] do the same thing in a github action
-- [ ] how to upgrade FA
+- [x] how to upgrade FA and backup
 - [ ] how to deploy to prod
 - [ ] learn about github actions marketplace
 - [ ] decide what the marketplace action should do (all 3 os?)
@@ -51,15 +52,62 @@ Brief - https://docs.google.com/document/d/16ql1wY7kPI4MxESMzMaK2pLCa3ZdSxQcsqbT
 
 ## Introduction
 
-Things users want to automate deployment of:
-- When pushing to main branch, deploy their app and FusionAuth to AWS, Azure, Digital Ocean, or a custom server.
-- Test that login works through terminal.
-- Test login works from their app. A web page GUI tester.
-- Upgrade FusionAuth to a new version.
-- Leave FusionAuth untouched on server if no changes have been made to kickstart files or FusionAuth version.
-- Set up CD functionality through a GitHub marketplace action.
+This article explains:
+- How to upgrade FusionAuth
+- How to write automated tests of your application login with FusionAuth
+- How to run these tests in a GitHub Action when pushing to the main branch
+- How to automate deployment and testing on your live application
 
-- Testing login works should be done in the action. The final test of logging to the deployed app can be done by hand when checking the site is actually up.
+To understand this article, you need to know how to create a project in GitHub, but don't need to know anything about FusionAuth, GitHub actions, or automated testing. The basics are explained here.
+
+- [Notes](#notes)
+  - [Brief](#brief)
+  - [Todo](#todo)
+- [Introduction](#introduction)
+- [Some Definitions And Goals](#some-definitions-and-goals)
+- [A Simple Example](#a-simple-example)
+- [How To Upgrade FusionAuth](#how-to-upgrade-fusionauth)
+- [Dev, Test, QA, Preprod, And Prod Environments](#dev-test-qa-preprod-and-prod-environments)
+- [Test Your App Login To FusionAuth With Playwright](#test-your-app-login-to-fusionauth-with-playwright)
+- [Build Your App In A GitHub Action](#build-your-app-in-a-github-action)
+- [Test Your App In A GitHub Action](#test-your-app-in-a-github-action)
+- [Use The Action For FusionAuth In The GitHub Action Marketplace](#use-the-action-for-fusionauth-in-the-github-action-marketplace)
+- [Further Reading](#further-reading)
+
+
+## Some Definitions And Goals
+
+FusionAuth provides all login functionality for your web application. It stores users in its own database, separate to the database your app uses to keep its data. Assuming you have built a login page that redirects a user to FusionAuth for login, your system will have the components shown below.
+
+```mermaid
+graph LR
+  subgraph app [ ]
+    direction TB
+    1[App website] --> 2[Database]
+  end
+
+  subgraph auth [ ]
+    direction TB
+    3[FusionAuth website] --> 4[Database]
+  end
+
+  app <--> auth
+```
+
+You might have the following questions:
+- How do I deploy all this to production?
+- What happens when FusionAuth releases a new version? How do I upgrade it without losing data?
+- How can I test that login still works after upgrading my app or FusionAuth?
+- How do I separate and manage my development and production environments?
+- Where do I keep database passwords safely and include them when deploying?
+
+Automating these tasks above is called continuous integration / continuous deployment (CI/CD).
+- CI refers to testing that changes to code you push to the main branch fits in with the existing system and everything still works.
+- CD refers to deploying every push to the main branch to your production (live) site.
+
+GitHub provides a tool for automating workflows called GitHub actions. It provides a virtual machine in which you can run scripts to check out your code, compile it, deploy alongside FusionAuth and other services, run tests, and deploy everything.
+
+The flow looks like the diagram below.
 
 ```mermaid
 graph TD
@@ -74,7 +122,11 @@ graph TD
     end
 ```
 
-## How to upgrade FusionAuth
+## A Simple Example
+
+## How To Upgrade FusionAuth
+
+
 
 https://fusionauth.io/docs/get-started/download-and-install/docker#upgrading
 https://hub.docker.com/r/fusionauth/fusionauth-app/tags
@@ -105,12 +157,17 @@ fusionauth_github_actions-fusionauth-1  | 2024-01-05 12:49:04.501 PM INFO  com.i
 
 ```
 
-## Test your app's login to FusionAuth with Playwright
+## Dev, Test, QA, Preprod, And Prod Environments
 
-## Build your app in a GitHub action
 
-## Test your app in a GitHub action
+- Testing login works should be done in the action. The final test of logging to the deployed app can be done by hand when checking the site is actually up.
 
-## Use the Action for FusionAuth in the GitHub Action Marketplace
+## Test Your App Login To FusionAuth With Playwright
 
-## Further reading
+## Build Your App In A GitHub Action
+
+## Test Your App In A GitHub Action
+
+## Use The Action For FusionAuth In The GitHub Action Marketplace
+
+## Further Reading
