@@ -4,6 +4,7 @@ description: Are you tracking your login failures? Learn about how to track them
 author: Hannah Sutor
 section: Authentication
 icon: /img/icons/login-failures.svg
+darkIcon: /img/icons/login-failures-dark.svg
 ---
 
 Picture a chart representing user logins. It has a line, trending upwards and to the right. Growing over time, never dipping. 

@@ -3,6 +3,7 @@ title: Performing Due Diligence On Authentication Vendors
 description: What kind of due diligence should you do when evaluating identity as a service vendors?
 author: Mihir Patel
 icon: /img/icons/diligence-auth-vendors.svg
+darkIcon: /img/icons/diligence-auth-vendors-dark.svg
 section: Identity Basics
 date: 2021-02-24
 dateModified: 2021-02-24

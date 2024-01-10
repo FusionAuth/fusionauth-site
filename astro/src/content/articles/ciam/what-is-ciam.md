@@ -4,6 +4,7 @@ description: "CIAM solutions help organizations to securely authenticate and aut
 section: CIAM
 author: Alex Patterson
 icon: /img/icons/what-is-ciam.svg
+darkIcon: /img/icons/what-is-ciam-dark.svg
 ---
 Customer Identity and Access Management (CIAM) is a set of processes and technologies that organizations use to manage the identities and access of their customers. CIAM solutions help organizations to securely authenticate and authorize customers, protect customer data, and provide a seamless customer experience.
 
