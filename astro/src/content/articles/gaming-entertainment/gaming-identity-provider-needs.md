@@ -4,6 +4,7 @@ description: What are the specific features you need to look for in an identity 
 author: Deborah Ruck
 section: Gaming & Entertainment
 icon: /img/icons/identity-provider-gaming-esports.svg
+darkIcon: /img/icons/identity-provider-gaming-esports-dark.svg
 # date: 2022-03-15
 # dateModified: 2022-03-15
 ---

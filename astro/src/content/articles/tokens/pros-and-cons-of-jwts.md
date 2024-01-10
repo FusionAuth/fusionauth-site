@@ -3,6 +3,7 @@ title: Pros And Cons of JWTs
 description: The pros and cons of JWTs and why you should (or shouldn't) use them.
 author: Brian Pontarelli
 icon: /img/icons/pros-cons-jwts.svg
+darkIcon: /img/icons/pros-cons-jwts-dark.svg
 section: Tokens
 # date: 2019-11-04
 # dateModified: 2019-11-04

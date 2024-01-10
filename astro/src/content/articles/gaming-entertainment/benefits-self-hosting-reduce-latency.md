@@ -4,6 +4,7 @@ description: While esports competitions are high skill cap events, both hobby ga
 section: Gaming & Entertainment
 author: Kealan Parr
 icon: /img/icons/self-hosting-reduce-latency-gaming.svg
+darkIcon: /img/icons/self-hosting-reduce-latency-gaming-dark.svg
 # date: 2022-07-19
 # dateModified: 2022-07-19
 ---
