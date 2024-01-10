@@ -5,6 +5,7 @@ author: Cameron Pavey, Dan Moore
 section: Authentication
 tags: lock-in architecture standards facade planning open-standards 
 icon: /img/icons/avoiding-authentication-system-lock-in.svg
+darkIcon: /img/icons/avoiding-authentication-system-lock-in-dark.svg
 ---
 
 Years ago your team decided to use a third-party authentication system to avoid the time and cost of building one in-house. But now a better option has hit the market and you're wanting to make the switch. Except, hold on, your old system is so deeply ingrained into your organization that you're practically locked-in to your current vendor.

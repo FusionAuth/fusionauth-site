@@ -5,6 +5,7 @@ author: James Hickey
 section: Authentication
 tags: risks architecture security planning performance compliance speed-to-market vendor password-hashing open-standards privacy regulatory-compliance cost opportunity-cost integration features 
 icon: /img/icons/common-authentication-risks.svg
+darkIcon: /img/icons/common-authentication-risks-dark.svg
 ---
 
 Given the increase of [data beaches in the past few years](https://haveibeenpwned.com/PwnedWebsites), it's more important than ever for software engineering leaders to prioritize security, quality development practices, and robust governance controls. Your customers' trust is on the line—and that's the lifeblood of any business that wants to keep growing.

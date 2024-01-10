@@ -7,6 +7,7 @@ section: OAuth
 date: 2022-04-12
 dateModified: 2022-04-12
 icon: /img/icons/complete-list-oauth-2-grants.svg
+darkIcon: /img/icons/complete-list-oauth-2-grants-dark.svg
 ---
 
 Authorization is necessary to protect resources from malicious use. When the [Internet Engineering Task Force (IETF)](https://www.ietf.org/) drafted internet protocols and rules, it also planned out different methods to protect and access resources on a server. These efforts led to OAuth 1.0 and later [OAuth 2.0](https://oauth.net/2/).
