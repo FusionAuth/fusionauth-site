@@ -3,6 +3,7 @@ title: Why Outsource Your Auth System And How To Sell The Decision To Your Compa
 description: Why should you consider outsourcing your authentication, authorization and user management system, and how to get buy-in from your teammates.
 author: Joe Stech
 icon: /img/icons/outsource-auth-sell-decision-to-company.svg
+darkIcon: /img/icons/outsource-auth-sell-decision-to-company-dark.svg
 section: Identity Basics
 date: 2021-04-16
 dateModified: 2021-04-16

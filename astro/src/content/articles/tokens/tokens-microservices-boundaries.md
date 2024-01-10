@@ -3,6 +3,7 @@ title: Tokens At The Microservices Context Boundary
 description: How to handle tokens at the boundary of your microservices
 author: Dan Moore
 icon: /img/icons/tokens-microservices-context-boundary.svg
+darkIcon: /img/icons/tokens-microservices-context-boundary-dark.svg
 section: Tokens
 # date: 2022-05-02
 # dateModified: 2022-05-02
