@@ -1,5 +1,5 @@
 ---
-publish_date: 2023-12-13
+publish_date: 2024-01-10
 title: API Authentication
 description: What are ways you can authenticate APIs?
 authors: Dan Moore
@@ -11,7 +11,7 @@ excerpt_separator: "{/* more */}"
 
 When you are building out web APIs for web applications, desktop apps or mobile applications to access functionality or data, you need to authenticate these requests. 
 
-You may say to yourself "of course" but there have been incidents where APIs were not protected at relatively large or prominent organizations. TODO put in links
+You may say to yourself "of course" but there have been incidents where APIs were not protected at relatively large or prominent organizations. TODO put in links from api authentication presentation
 
 Let's take a look at the options below.
 
@@ -28,7 +28,7 @@ Web APIs can take a lot of different forms, but a very common one nowadays has t
 
 So a browser being controlled by a human being can make a `GET` request against `https://example.com/api/todo` to retrieve todos for a user. The browser is a client and the server is at example.com.
 
-TODO diagram
+TODO diagram showing a request
 
 But how does the server know what user to get todos for when it receives a request? And how do you know that the requester is allowed to access them?
 
@@ -49,7 +49,15 @@ The pre-eminent task any API authentication method must perform is to make sure 
 
 API authentication methods must also be performant. While a secondary concern, if an API is not accessible due slow authentication of requests, the API is not fulfilling its purpose.
 
-## Possible Options
+### Authentication And Authorization
+
+Typically after you authenticate and know who the caller is, you then authorize. That lets the system know what access the caller has.
+
+This can be done with a variety of mechanisms, including role-based access control (RBAC) but is usually tied in with business logic. 
+
+For example, after the system knows the caller is Richard, it knows that the requester can read and write Richard's todos, but not Dinesh's.
+
+## API Protection Options
 
 There are really three choices for API protection.
 
@@ -57,11 +65,11 @@ There are really three choices for API protection.
 * Centralized
 * Decentralized
 
-The option case is useful when you have a public API that offers the same data or functionality for all users. I once worked on an application that needed tremendous scale and one way it achieved it was to push out JSON formatted messages to Amazon S3, which were then ingested by JavaScript running on millions of browsers. This was a read-only API that had no authentication. Having no authentication simplifies everything and is a good option when it works.
+The first option is useful when you have a public API that offers the same data or functionality for all users. I once worked on an application that needed tremendous scale and it achieved it by publishing JSON formatted messages to Amazon S3, which were then ingested by JavaScript running on millions of browsers. This was a read-only API that had no authentication. No authentication means authorization is the same for everyone. Having no authentication simplifies everything and is a good option when it works.
 
-But this type of API is the exception rather than the rule. Far more often, especially if you are using APIs to let clients update data in the server or offering user specific functionality or data, you will need to perform some sort of authentication and authorization.
+This approach is the exception rather than the rule. Far more often, especially if you are using APIs to let clients update data in the server or offering user specific functionality or data, you will need to perform some sort of authentication and authorization.
 
-Let's look at those two options.
+Let's look at centralized vs decentralized authentication and authorization.
 
 TODO note
 Authentication is "who are you" and authorization is "what can you do". While they can be separated (car keys authorize without authenticating and a business card (weakly) authenticates without authorizing) they are usually together.
@@ -80,24 +88,46 @@ BAJKLADSasdfjkljasdflj TODO
 
 ### Getting The API Key
 
-The user retrieves the API key through an authentication event, typicaly interactive. Then they visit an API key generation portal. 
+The client retrieves the API key in some fashion, after they've been authenticated. This is usually a managed API portal for a long lived key.
 
-There are other ways to do this, with ephemeral API keys being created before a request is made, but at the end of the say some central authority is minting API keys.
+You could also generate an ephemeral API keys after user login and then send that to the client. In this case, every time a user logged in, they'd use a new API key.
+
+Either wya, there is a central authority is creating API keys.
+
+The client must then store the API key securely.
+
+TODO diagram
 
 ### How Does The Client Provide The API Key
 
-The client stores the API key securely.
+When a client needs to make a request to the API, it retrieves the API key from storage. Then it provides it on the request.
 
-what does the server do with it
+It can be provided in a variety of ways for an HTTP API:
 
-## 
+* The `Authorization` header
+* Some other HTTP header
+* As a form parameter
+* As a URL query parameter (but don't do that, it'll be recorded in log files and captured by proxies)
 
-additional concerns
+TODO DIAGRAM
+
+When the server recieves a request, then it will first verify the key is valid. It does this by passing the API key to the issuing server, which can confirm validity. After that, the server can look up authorization information, including the user or account the API was granted to. This may be stored centrally or it may be stored locally.
+
+Finally, the API server can return the requested data or take the requested action.
+
+MEME
+
+## Additional Concerns With API Keys
+
+With centralized API keys, you should consider the following
+
+* security of the API key at rest. In particular with browser based clients, it is really difficult to secure an API key. If you bundle it in and deliver it as part of your SPA or webpage, it will be available to anyone who can examine them. That is, anyone who has access to them.
+* security of the API key in transit. Never pass the API key where it might be recorded in a log file or proxy. This includes as a URL query param.
+* protection
+
+api gateways
 
 ## Decentralized Authentication
-
-diagram client requests with API key
-simple explanation
 
 how do you get the token
 
@@ -106,6 +136,9 @@ how do you provide it
 what does the server do with it
 
 additional concerns
+revocation
+type of token
+
 
 Evolution of api protection
 none
@@ -123,6 +156,7 @@ scopes
 
 refresh grant
 api gateway
+
 
 others
 network based
