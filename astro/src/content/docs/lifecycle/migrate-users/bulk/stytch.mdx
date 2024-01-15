@@ -130,10 +130,10 @@ const parallelization = 1;
 const keyLength = 32;
 
 crypto.scrypt(password, salt, keyLength, { N: cost, r: blockSize, p: parallelization, maxmem: 1024 * 1024 * 1024*50 }, (err, derivedKey) => {
-    if (err) throw err;
-    const keyBase64 = derivedKey.toString('base64');
-    console.log('Hash:', keyBase64); // 8dg6AaIWPfcLTQU7lb4H+CI49dHeqaBXfFE1ogb2qRQ=
-    console.log('Matches provided hash:', keyBase64 === hash);
+  if (err) throw err;
+  const keyBase64 = derivedKey.toString('base64');
+  console.log('Hash:', keyBase64); // 8dg6AaIWPfcLTQU7lb4H+CI49dHeqaBXfFE1ogb2qRQ=
+  console.log('Matches provided hash:', keyBase64 === hash);
 });
 ```
 
@@ -147,11 +147,11 @@ const keyBase64 = derivedKey.toString('base64').replace(/\+/g, '-').replace(/\//
 
 ### Create Your Own User Manually To Test Hashing
 
-If you find after migration that your users cannot log in to FusionAuth, you'll need to test why their password hashes are no longer matching. It's useful to have a known username and password to test this.
+If you find after migration that your users cannot log in to FusionAuth, you'll need to debug why their password hashes are no longer matching. It's useful to have a known username and password to test this.
 
 The easiest way is to create a user with the Stytch API, so that the user is included in your Stytch password export file.
 
-Below is JavaScript code to do this.
+Below is JavaScript code to create a user.
 
 ```js
 // npm install bcryptjs stytch;
@@ -160,29 +160,85 @@ import * as stytch from "stytch";
 import * as bcrypt from 'bcryptjs';
 
 const client = new stytch.Client({
-    project_id: "project-test-36510638-652a-4d3d-9a94-f0a7106582fc",
-    secret: "secret-test-m89L26ZKZgDm_Ox_IukmvE-pAID9_zPBROI=",
+  project_id: "project-test-36510638-652a-4d3d-9a94-f0a7106582fc",
+  secret: "secret-test-something=",
 });
 
 await createUser({ email: "user4@example.com", phone_number: '+272223331444',  first_name: 'A', last_name: 'Example', password: "averylongandunguessablepasswordwithlotsofrandominfooofisjoafasnr;,n1"});
 
 async function createUser(p) {
-    await client.users.create({ email: p.email, phone_number: p.phone_number,  name:{first_name: p.first_name, last_name: p.last_name}});
-    const hash = await bcrypt.default.hash(p.password, 0);
-    await client.passwords.migrate({
-        email: p.email,
-        hash: hash,
-        hash_type: "bcrypt"
-    });
-    console.log(`Hash: ${hash}`);
-    const user = await client.passwords.authenticate({ email: p.email, password: p.password });
-    console.log(user);
+  await client.users.create({ email: p.email, phone_number: p.phone_number,  name:{first_name: p.first_name, last_name: p.last_name}});
+  const hash = await bcrypt.default.hash(p.password, 0);
+  await client.passwords.migrate({
+    email: p.email,
+    hash: hash,
+    hash_type: "bcrypt"
+  });
+  console.log(`Hash: ${hash}`);
+  const user = await client.passwords.authenticate({ email: p.email, password: p.password });
+  console.log(user);
 }
 ```
+
+Get your `project_id` and `secret` from the [Stytch web interface](https://stytch.com/dashboard/api-keys).
 
 You create the user's password hash with Bcrypt in this example and save that in Stytch. But you authenticate the user afterwards (which is similar to logging in). Stytch uses the plaintext password you send in the authentication to rehash the user's password using Scrypt. Thus the hash you receive for this user in the emailed file from Stytch will also be in Scrypt, not Bcrypt.
 
 ## Extract User Details From Stytch
+
+Stytch emails you only the user hash and Id. You have to use the Stytch API to retrieve all user details from Stytch, then combine those with the hash from the email, and save the user to FusionAuth.
+
+Below is JavaScript code to get user details from Stytch. (Stytch also has SDKs for [Go, Java, Python, and Ruby](https://stytch.com/docs/sdks), or you can use `curl` directly).
+
+```js
+import * as stytch from "stytch";
+
+const client = new stytch.Client({
+    project_id: "project-test-36510638-652a-4d3d-9a94-f0a7106582fc",
+    secret: "secret-test-something=",
+});
+
+const u = await client.users.get({ user_id: "user-test-c1be12e4-fc61-4e7a-8831-0fc14cb87b65" });
+console.log(u);
+```
+
+The reply will look similar to the JSON below.
+
+```js
+{
+  biometric_registrations: [],
+  created_at: '2024-01-11T09:55:02Z',
+  crypto_wallets: [],
+  emails: [
+    {
+      email: 'user2@example.com',
+      email_id: 'email-test-21e7b4d6-fc9b-45a1-af0a-519b6536e9b6',
+      verified: false
+    }
+  ],
+  name: { first_name: 'B', last_name: 'Example', middle_name: '' },
+  password: {
+    password_id: 'password-test-dd564ea4-5711-414e-a5a4-052e671609a7',
+    requires_reset: false
+  },
+  phone_numbers: [
+    {
+      phone_id: 'phone-number-test-767f26e1-34bd-41a9-86af-1411b4c20be6',
+      phone_number: '+272223334445',
+      verified: false
+    }
+  ],
+  providers: [],
+  request_id: 'request-id-test-04a96a55-2eca-4691-a2aa-77f095911275',
+  status: 'active',
+  status_code: 200,
+  totps: [],
+  trusted_metadata: {},
+  untrusted_metadata: {},
+  user_id: 'user-test-c1be12e4-fc61-4e7a-8831-0fc14cb87b65',
+  webauthn_registrations: []
+}
+```
 
 ## Authentication Types
 
