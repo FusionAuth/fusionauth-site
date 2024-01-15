@@ -18,12 +18,15 @@ import {RemoteCode} from '@fusionauth/astro-components';
 
 ## Todo
 
-- create an overview page
+- review overview page and add stytch concepts and terms
 - create stytch account, add users, export them and all details
 - https://stytch.com/docs/guides/migrations/migrating-user-data-statically
 - review other services migration pages this references
+- remove unused frontmatter
 
 ## Introduction
+
+Review the overview article (link). Ensure you understand password hashing and salts (link). Mentions words below:
 
 - Setup Dual Write: Modify the application to write to both the old system and Stytch.
 - Perform Backfill: Export data from the old system and import it into Stytch.
@@ -38,3 +41,65 @@ Rolling migration:
 
 security risks of migration?
 what login types does fusionauth support - magic email, passwordless, phone, google, facebook
+
+## Request User Passwords From Stytch
+
+You cannot download your users' password hashes from Stytch using their API. To get them, email support@stytch.com from the email address you used to sign up with Stytch. Ask support to send your users' hashes to you.
+
+### Email The Request
+
+Stytch will encrypt the hashes with your public key. Attach this key in a `.pem` file to the email you send Stytch.
+
+To create a private and public key pair, use the commands below in a terminal.
+
+```shell
+openssl genpkey -algorithm RSA -out private_key.pem &&
+openssl rsa -pubout -in private_key.pem -out public_key.pem
+```
+
+Email Stytch only `public_key.pem`. Keep `private_key.pem` secret and secure.
+
+### Decrypt The Reply
+
+Stytch will reply with two files: an encrypted password hash file (`something-hashes.enc`), and the key with which to decrypt it (`key.bin.enc`).
+
+Decrypt the password file with the commands below.
+
+```shell
+openssl pkeyutl -decrypt -inkey private_key.pem -in key.bin.enc -out key.bin &&
+openssl enc -d -aes-256-cbc -in something-hashes.enc -out stytch_password_hashes.csv -pass file:./key.bin
+```
+
+Now you have all your user passwords in the file `stytch_password_hashes.csv`.
+
+Below is an example of its content for three users.
+
+```csv
+scrypt hash parameters,,,,
+scryptCostParameter,1 << 15,,,
+scryptRParameter,8,,,
+scryptPParameter,1,,,
+scryptKeyLengthParamenter,32,,,
+,,,,
+id,hash,salt,hash_method,project_id
+
+user-test-178d8ee5-c458-4f48-a482-8fefa30a1a87,uiOC_BwbKta9R9QL6Ss6KTDpCcULh9_zhObl5j4398M=,BbV-sGQqUIX1NwE6uqtSITv4fa1iMw==,scrypt,project-test-36510638-652a-4d3d-9a94-f0a7106582fc
+
+user-test-799ea981-b2bb-417f-afe8-4ab6e79fcd2a,A6VzdsTsTHPqafORIb0GkGD6qFxdncqwA15YXRsVgvs=,XPapDAm6xdV5UhMpyPrSpy8FbfCDtA==,scrypt,project-test-36510638-652a-4d3d-9a94-f0a7106582fc
+
+user-test-c1be12e4-fc61-4e7a-8831-0fc14cb87b65,8dg6AaIWPfcLTQU7lb4H-CI49dHeqaBXfFE1ogb2qRQ=,zKia-0BdIFKCzWbzXbj3qrhBnbiWNg==,scrypt,project-test-36510638-652a-4d3d-9a94-f0a7106582fc
+```
+
+The file header describes the parameters you need to use when running the Scrypt hashing algorithm to convert user passwords to match the hashes in this file.
+
+Below the header are the column names, and then one row per user.
+
+Even though you can create passwords for Stytch users with different hashing algorithms ([bcrypt, scrypt, argon2, MD-5, SHA-1, or PBKDF2](https://stytch.com/docs/api/password-migrate)), Bcrypt is Stytch's preferred algorithm. Whenever a user logs in, Stytch will verify their password hash using the algorithm it is currently stored with, and then rehash their password using Bcrypt and discard the old hash. Password rehashing is a common technique used to upgrade security as hashing algorithms evolve over time.
+
+This means that the passwords you receive in the CSV file will almost all be in Bcrypt format. However, there might be some users who haven't logged in in a long time, and their password hash uses a different algorithm.
+
+## Extract User Details From Stytch
+
+## Authentication Types
+
+passwords, passwordless, others?
