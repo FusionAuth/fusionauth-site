@@ -14,18 +14,18 @@ import {RemoteCode} from '@fusionauth/astro-components';
 ## Introduction
 
 This article explains:
-- How to upgrade FusionAuth
-- How to write automated tests of your application login with FusionAuth
-- How to run these tests in a [GitHub Action](https://docs.github.com/en/actions) when pushing to the main branch
-- How to automate deployment and testing on your live application
+- How to upgrade FusionAuth.
+- How to write automated tests of your application login with FusionAuth.
+- How to run these tests in a [GitHub Actions workflow](https://docs.github.com/en/actions) when pushing to the main branch.
+- How to automate deployment and testing on your live application.
 
-To understand this article, you need to know how to create a project in GitHub, but don't need to know anything about FusionAuth, GitHub actions, or automated testing. The basics are explained here.
+To follow this article, you need to know how to create a project in GitHub, but you don't need to know anything about FusionAuth, GitHub Actions, or automated testing, as the basics are explained here.
 
-You will need Docker and Node.js installed if you want to run the example application accompanying this guide.
+You will need Docker and Node.js installed to run the example application accompanying this guide.
 
 ## Some Definitions And Goals
 
-FusionAuth provides all login functionality for your web application. It stores users in its own database, separate to the database your app uses to keep its data. Assuming you have built a login page that redirects a user to FusionAuth, your system will have the components shown below.
+FusionAuth provides login functionality for your web application. Users are stored in the FusionAuth database, separate from the database your app uses to keep its data. Assuming you have built a login page that redirects a user to FusionAuth, your system will have the components shown below.
 
 ```bash
 
@@ -64,17 +64,17 @@ graph LR
 
 
 You might have the following questions:
-- How do I deploy all this to production?
-- What happens when FusionAuth releases a new version? How do I upgrade it without losing data?
+- How do I deploy these components to production?
+- What happens when FusionAuth releases a new version? How do I upgrade FusionAuth without losing data?
 - How can I test that login still works after upgrading my app or FusionAuth?
 - How do I separate and manage my development and production environments?
 - Where do I keep database passwords safely and include them when deploying?
 
-Automating these tasks above is called continuous integration / continuous deployment (CI/CD).
-- CI refers to testing that changes to code you push to the main branch fits in with the existing system and everything still works.
+Automating these tasks is called CI/CD or continuous integration and continuous deployment.
+- CI refers to testing changes to code you push to the main branch to ensure it fits in with the existing system and everything still works.
 - CD refers to deploying every push to the main branch to your production (live) site.
 
-GitHub provides a tool for automating workflows called GitHub actions. It provides a virtual machine in which you can run scripts to check out your code, compile it, deploy alongside FusionAuth and other services, run tests, and deploy everything.
+GitHub provides a tool for automating workflows called GitHub Actions. It provides a virtual machine in which you can run scripts to check out your code, compile it, deploy alongside FusionAuth and other services, run tests, and manage deployment.
 
 The flow looks like the diagram below.
 
@@ -112,7 +112,7 @@ graph TD
                             │
                             ▼
  ┌───────────────────────────────────────────────────────────────────────────────┐
- │                                                        Inside GitHub Action   │
+ │                                                        Inside GitHub action   │
  │  ┌──────────────────────────────────────────────────┐                         │
  │  │  🛠️ Compile app in a virtual machine             │                         │
  │  └──────────────────────────────────────────────────┘                         │
@@ -136,9 +136,9 @@ graph TD
 
 There is a minimal but complete CI/CD example in this <a href={frontmatter.url}>repository</a>.
 
-In GitHub, click <InlineUIElement>Fork</InlineUIElement> and add the repository to your own account. Then run `git clone https://github.com/<your_username>/fusionauth_github_actions.git` in a terminal to download it.
+In GitHub, click <InlineUIElement>Fork</InlineUIElement> and add the repository to your GitHub account. Then run `git clone https://github.com/<your_username>/fusionauth_github_actions.git` in a terminal to download it.
 
-Below are the repository contents.
+Below is the repository structure.
 
 ```bash
 
@@ -169,36 +169,40 @@ Below are the repository contents.
     └── kickstart.json
 ```
 
-FusionAuth is managed by the `docker-compose.yml` and `.env` files and `kickstart` directory. FusionAuth runs in a Docker container. Upon starting, it uses the `.env` file to get the database password. The database is stored in files in a Docker volume. If starting for the first time, FusionAuth uses the `kickstart` details to configure its visual style and various settings. If it has run before, FusionAuth attaches to the existing volume and uses that database.
+FusionAuth is managed by the `docker-compose.yml` and `.env` files, and the `kickstart` directory. FusionAuth runs in a Docker container. On starting, FusionAuth uses the `.env` file to get the database password. The database is stored in files in a Docker volume. When FusionAuth starts for the first time, it uses the `kickstart` details to configure the visual style and various settings. If FusionAuth has run before, it attaches to the existing volume and uses that database.
 
-The `app` folder contains a Node.js JavaScript application. The server runs with Express.js and provides a login page that sends the user to FusionAuth, then directs them to the acount page after login. The `tests` folder contains a login test written in [Playwright](https://playwright.dev/docs/intro). Playwright runs tests in an actual web browser to see if all elements and interactions behave as they would with a real user. The tests can all be run from the terminal however, allowing you to test your application on a computer without a graphical environment.
+The `app` folder contains a Node.js JavaScript application. The Express server provides a login page that sends the user to FusionAuth, and then to the account page after login. The `tests` folder contains a login test written in [Playwright](https://playwright.dev/docs/intro). Playwright runs tests in a web browser to see if all elements and interactions behave as they would with a real user. The tests can all be run from the terminal, however, so you can test your application on a computer without a graphical environment.
 
-The `.github/workflows/test.yaml` file is the GitHub Action script. There is another script in `app/.github/workflows/playwright.yml` provided by Playwright when creating the app, but it uses more GitHub resources, with a long timeout and saving the test results in a file. GitHub provides 2000 minutes of time for actions per month for free, so the `test.yaml` uses as little as possible.
+The `.github/workflows/test.yaml` file is the GitHub Actions workflow script. The `app/.github/workflows/playwright.yml` file contains a Playwright-provided script, but this script uses more GitHub resources, has a long timeout, and saves the test results to a file. The `test.yaml` script is written to take advantage of the GitHub Free 2000 CI/CD minutes per month.
 
-<Aside type="note">To learn how FusionAuth runs in Docker, please read the [five minute guide](/docs/quickstarts/5-minute-docker). To learn how Express.js connects to FusionAuth, please read this [quickstart](/docs/quickstarts/quickstart-javascript-express-web).</Aside>
+<Aside type="note">To learn how FusionAuth runs in Docker, please read the [five-minute guide](/docs/quickstarts/5-minute-docker). To learn how Express connects to FusionAuth, please read this [quickstart](/docs/quickstarts/quickstart-javascript-express-web).</Aside>
 
 ## How To Upgrade FusionAuth
 
 Before running the app, let's demonstrate how to upgrade FusionAuth. It should usually be as trivial as changing the version number and restarting FusionAuth.
 
-In this section you will:
+In this section, you will:
 - Start an older version of FusionAuth.
 - Create a new user.
 - Upgrade FusionAuth.
-- Check that user is still there.
+- Check that the new user is still there.
 
-Open the `docker-compose.yml` file and on line 51 set the FusionAuth image to
+Open the `docker-compose.yml` file. On line 51, set the FusionAuth image to the following.
+
 ```yaml
 image: fusionauth/fusionauth-app:1.47.1
 ```
 
-In a terminal run
+In a terminal, run the following command.
+
 ```bash
 docker compose up
 ```
+
 FusionAuth will start, and you will be able to log in at `http://localhost:9011` with username `admin@example.com` and password `password`. In the Users section of the site, create a new user.
 
-Stop Docker in the terminal. Change the `docker-compose.yml` line 51 to use a new FusionAuth version, `1.48.3`. Again run
+Stop Docker in the terminal. In the `docker-compose.yml` file, change line 51 to use a new FusionAuth version, `1.48.3`. Run the startup command again.
+
 ```bash
 docker compose up
 ```
@@ -221,11 +225,11 @@ fa | 12:49:04.501 PM INFO JDBCMaintenanceModeDatabaseService - Unlock completed
 
 ```
 
-If you browse to FusionAuth again you'll see that the user you created is still there.
+If you browse to FusionAuth again, you'll see that the user you created is still there.
 
-The FusionAuth application is separate to the FusionAuth database. In this case, the database is stored in a Docker volume. When the upgrade scripts run, the data should not be broken and upgrading FusionAuth should be unnoticeable. However, mistakes can happen, as well as database crashes, and you should backup both the FusionAuth database and your application database daily. The rest of this article will show you how to automate login tests to check that your system still works after upgrading FusionAuth or your app. If something breaks, you can restore the old version of the database and begin debugging.
+The FusionAuth application is separate from the FusionAuth database. In this case, the database is stored in a Docker volume. When the upgrade scripts run, the data should not be broken, and upgrading FusionAuth should be unnoticeable. However, mistakes can happen, as well as database crashes, and you should backup both the FusionAuth database and your application database daily. The rest of this article will show you how to automate login tests to check that your system still works after upgrading FusionAuth or your app. If something breaks, you can restore the old version of the database and begin debugging.
 
-For more details on upgrading FusionAuth, including non-silent upgrade, please read this [article](/docs/get-started/download-and-install/docker#upgrading).
+For more details on upgrading FusionAuth, including non-silent upgrades, please read this [article](/docs/get-started/download-and-install/docker#upgrading).
 
 <Aside type="note">
 FusionAuth also has a paid version that [runs in the cloud](/docs/get-started/run-in-the-cloud/cloud). If you want to avoid the hassle of managing, backing up, and upgrading FusionAuth yourself, this might be the solution for you.
@@ -241,12 +245,12 @@ npm install
 npm run start
 ```
 
-Browse to `http://localhost:3000` and log in with the same user as before.
+Browse to `http://localhost:3000` and log in with the same user as previously.
 
 When changing your application, it would be faster to test that login works automatically, rather than by hand. This is called an integration, or end-to-end test, as opposed to a unit test, which tests only a single function. For integration tests in the browser, you can use Playwright.
 
 <Aside type="note">
-Playwright was created by Microsoft, runs in JavaScript, and allows you to run tests in multiple browsers. It is a popular successor to Selenium, which used Java, and Puppeteer, which was written by Google and focussed on Chrome.
+Playwright was created by Microsoft, runs in JavaScript, and allows you to run tests in multiple browsers. It is a popular successor to Selenium, which used Java, and Puppeteer, which was written by Google and focused on Chrome.
 </Aside>
 
 To start the Playwright tests for this app, open a new terminal and run the code below.
@@ -279,7 +283,7 @@ You can see that Playwright runs a browser, clicks buttons, and fills in forms.
 
 <img src="/img/docs/get-started/run-in-the-cloud//github_actions/playwright.png" alt="Playwright test UI." role="bottom-cropped" />
 
-## Write a test for Playwright
+## Write A Test For Playwright
 
 The code for the test Playwright runs is in the file `test.spec.js`.
 
@@ -288,33 +292,33 @@ The code for the test Playwright runs is in the file `test.spec.js`.
 
 The code should mostly be self-explanatory, but there are a few things to note:
 - `await` is used frequently as most operations on the page are asynchronous.
-- `waitForLoadState('networkidle')` is used to wait for pages to load. `.waitForNavigation()` and `.waitForURL()` failed when this article was written.
-- Tests start with `expect()`, such as `expect(emailText).toBe('richard@example.com')`. Without these, your tests won't actually test anything.
+- `waitForLoadState('networkidle')` is used to wait for pages to load. When this article was written, `.waitForNavigation()` and `.waitForURL()` failed.
+- Tests start with `expect()`, such as `expect(emailText).toBe('richard@example.com')`. Without this function, your tests won't test anything.
 - To add a new test of your own, write a new function like `test('Test login', async ({ page }) => {`.
 
 To add Playwright to your own project, follow [their guide](https://playwright.dev/docs/intro). Running `npm init playwright` will create a configuration file and sample test you can use as a starting point.
 
-The configuration file `playwright.config.js` allows you to set which browsers to use (we used `--project=chromium` earlier), whether to start your app before running the tests, and in which directory to look for test files.
+In the configuration file `playwright.config.js`, you can set which browsers to use (we used `--project=chromium` earlier), whether to start your app before running the tests, and which directory contains test files.
 
 ## Test Your App In A GitHub Action
 
 Now that you know how to test your app after a change to it or FusionAuth, let's automate the process in GitHub. Your goal is to have a test run whenever committing to your main branch. GitHub will email you if the test fails.
 
-Open the file `.github/workflows/test.yaml` and change the branch name on line five from
+Open the file `.github/workflows/test.yaml`. Line 5 currently reads as follows.
 
 ```yaml
       - main_RENAME_THIS_TO_ENABLE_TEST
 ```
 
-to
+Change the line to the following.
 
 ```yaml
       - main
 ```
 
-You've renamed the trigger that causes this Action to execute, from a nonsense name to the main branch of your application.
+You've renamed the trigger that causes this action to execute, from a nonsense name to the main branch of your application.
 
-By default, GitHub prevents Action workflows from running on forked repositories. Therefore, you must grant permission for the workflow to execute by navigating to the Actions tab and clicking on the <InlineUIElement>I understand my workflows, go ahead and enable them</InlineUIElement> button on the repository. Save, commit in Git, and push to GitHub. This will cause the test to execute.
+By default, GitHub prevents action workflows from running on forked repositories. To grant permission for the workflow to execute, navigate to the Actions tab and click on the <InlineUIElement>I understand my workflows, go ahead and enable them</InlineUIElement> button on the repository. Save, commit in Git, and push to GitHub, and the test will execute.
 
 You can browse to the Actions tab in your GitHub repository to see the test run.
 
@@ -328,9 +332,9 @@ If your test runs successfully, you can be certain that your app and FusionAuth 
 
 ## Understand GitHub Actions
 
-GitHub Actions are a service provided by GitHub that allow you to run workflows that can do anything you can write in a script, triggered by different types of events in your repository. GitHub runs your script in a virtual machine. You are allowed a certain amount of free CPU minutes per month, and set amount of storage. For more details, see the [pricing page](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions).
+GitHub Actions is a service provided by GitHub that allows you to run workflows that can do anything you can write in a script, triggered by different types of events in your repository. GitHub runs your script in a virtual machine. GitHub allocates each user a certain amount of free CPU minutes per month and a set amount of storage, depending on your plan. For more details, see the [pricing page](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions).
 
-Let's review the action script to see how it works. All scripts are stored in the `.github/workflows` directory, and the files can be called whatever you want. Here the file is called `test.yaml`.
+Let's review the action script to see how it works. All scripts are stored in the `.github/workflows` directory, and the files can be called whatever you like. Here, the file is called `test.yaml`.
 
 <RemoteCode url={frontmatter.codeRoot + "/.github/workflows/test.yaml"}
   lang="yaml" />
@@ -341,9 +345,9 @@ Each action has a name, which is a human-readable label.
 name: Test FusionAuth login
 ```
 
-This is followed by an event, which is all the conditions that trigger the action to execute. Events are stored in the `on` object. The most common ones to use are when pushing a commit, or receiving a pull request. For a full list, see the [documentation](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows).
+This is followed by an event, which is all the conditions that trigger the action to execute. Events are stored in the `on` object. The most common ones to use are when pushing a commit or receiving a pull request. For a full list, see the [documentation](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows).
 
-Your action uses the push to main branch event.
+Your action uses the push-to-main-branch event.
 
 ```yaml
   push:
@@ -351,11 +355,11 @@ Your action uses the push to main branch event.
       - main
 ```
 
-Finally, comes the action itself, which is stored in the `jobs` object. This is what will run when the event occurs. Your action has just one job, `run-tests`.
+Then comes the action itself, which is stored in the `jobs` object. This is what will run when the event occurs. Your action has just one job, `run-tests`.
 
-You need to specify the type of operating system the machine will run to execute the job steps. Here you use `ubuntu-latest`. It is the cheapest runner on GitHub. Windows runners use minutes at twice the rate of Linux, and Mac runners use ten times the rate of Linux.
+You need to specify the type of operating system the machine will run to execute the job steps. Here, you use `ubuntu-latest`. It is the cheapest runner on GitHub. Windows runners use minutes at twice the rate of Linux, and Mac runners use ten times the rate of Linux.
 
-The service sections says that you need to use Docker (where FusionAuth runs).
+The `services` section specifies that the action requires Docker (where FusionAuth runs).
 
 ```yaml
     services:
@@ -368,11 +372,11 @@ The service sections says that you need to use Docker (where FusionAuth runs).
 ```
 
 The steps consist of two types of code:
-- actions, which are existing tasks in GitHub, such as checking out a repository or installing Node.
-- custom commands, which run code directly in the machine's terminal.
+- Actions, which are existing tasks in GitHub like checking out a repository or installing Node.js.
+- Custom commands, which run code directly in the machine's terminal.
 
 <Aside type="note">
-Reusable actions in a workflow are different to the workflow itself, but they are both called Actions in GitHub. Workflows are declared in YAML files and reusable Actions are public JavaScript or Docker repositories.
+Reusable actions in a workflow are different from the workflow itself, but they are both called actions in GitHub. Workflows are declared in YAML files, and reusable actions are public JavaScript or Docker repositories.
 </Aside>
 
 This script starts by checking out your repository and installing Node.js in actions.
@@ -388,7 +392,7 @@ This script starts by checking out your repository and installing Node.js in act
           node-version: '18'
 ```
 
-Custom code then starts Docker, installs Node modules, runs the app, and runs the tests. Note that steps usually run in serial. To run steps simultaneously, you use `-d` in Docker, and `npm run start &` to start the next step without waiting for the first step to exit. If a step fails, the next step will not run.
+Custom code then starts Docker, installs Node.js modules, runs the app, and runs the tests. Note that steps usually run in serial. To run steps simultaneously, you use `-d` in Docker, and `npm run start &` to start the next step without waiting for the first step to exit. If a step fails, the next step will not run.
 
 ```yaml
       - name: Start FusionAuth in Docker
@@ -422,15 +426,15 @@ You might have noticed that GitHub did not build your app at any point in this w
 
 ## Deploy Your App In A GitHub Action
 
-While building your app is simple, deploying it is more complex. Your production environment might be a physical server, a virtual server such as DigitalOcean, or a large service provider such as AWS or Azure. You might also want to deploy a new version of FusionAuth, which might use Docker.
+Deploying your app with a GitHub action is more complex than building it. Your production environment might be a physical server, a virtual server like DigitalOcean, or a large service provider like AWS or Azure. You might also want to deploy a new version of FusionAuth, which may use Docker.
 
-You can deploy using an existing action, such as those for [AWS](https://github.com/aws-actions), [Azure](https://github.com/Azure/actions), or [DigitalOcean](https://github.com/digitalocean/action-doctl), or write your own script.
+You can deploy using an existing action, such as those for [AWS](https://github.com/aws-actions), [Azure](https://github.com/Azure/actions), or [DigitalOcean](https://github.com/digitalocean/action-doctl), or you can write your own deployment script.
 
 Let's assume your production environment is a virtual server that runs your application in a Go binary and FusionAuth in Docker.
 
 After the tests in your action have run successfully, you can deploy your app and FusionAuth to the server.
 
-To run a command on your server from within an action, use the [SSH-Action](https://github.com/appleboy/ssh-action). This action allows you to open a terminal on your server and run commands. Here's how you would change the version number of FusionAuth, and restart it in Docker.
+To run a command on your server from within an action, use [SSH for GitHub Actions](https://github.com/appleboy/ssh-action). This action allows you to open a terminal on your server and run commands. Here's how you would change the version number of FusionAuth, and restart it in Docker.
 
 ```yaml
 - name: Update FusionAuth and Restart Docker
@@ -454,44 +458,44 @@ To run a command on your server from within an action, use the [SSH-Action](http
 
 We'll discuss the secrets in a later section.
 
-To deploy your Go application you have alternatives:
+To deploy your Go application, you can do one of the following:
 1. Download the repository of source code to the server and compile it there.
 2. Compile the executable in the action and download it on the server.
-3. Build your app into a Docker image, upload that to DockerHub, and download and run it on the server.
+3. Build your app into a Docker image, upload the image to DockerHub, and download and run it on the server.
 
-Using Docker is the least work for the server and least likely to disrupt your operations. It requires compiling the executable on the server, just like option two. Downloading the code on the server and compiling it there is the easiest to do, but might disrupt the server.
+Using Docker is the least work for the server and least likely to disrupt your operations. It requires compiling the executable on the server, as with option two. Downloading the code on the server and compiling it there is the easiest to do but might disrupt the server.
 
-To make your Go binary (and all the HTML templates it serves) available for other steps in the workflow, use the [upload-artifact action](https://github.com/actions/upload-artifact). To build and push a DockerHub image, use the [Docker action.](https://github.com/marketplace/actions/build-and-push-docker-images).
+To make your Go binary (and all the HTML templates it serves) available for other steps in the workflow, use the [upload-artifact action](https://github.com/actions/upload-artifact). To build and push a DockerHub image, use the [Docker action](https://github.com/marketplace/actions/build-and-push-docker-images).
 
-Once you have your application files ready, you can again SSH into your server using the SSH action, download the Docker image or binary files, run any database migrations scripts, and restart your web application.
+Once you have your application files ready, you can SSH into your server using the SSH action, download the Docker image or binary files, run any database migrations scripts, and restart your web application.
 
 ## Test Your Production Release
 
-Unfortunately your work still isn't done. Even though your tests ran successfully in the GitHub virtual machine, your production release might not allow users to log in. You need to test again.
+Even if your tests run successfully in the GitHub virtual machine, your production release might not allow users to log in. You need to test again.
 
-Add a final step to your script, after the deployment step, that runs the Playwright login test. But this time, run a test file that uses the production server URL, instead of your localhost, in the line `await page.goto('http://localhost:3000');`.
+Add a final step to your script, after the deployment step, that runs the Playwright login test. This time, run a test file that uses the production server URL instead of your localhost in the line `await page.goto('http://localhost:3000');`.
 
-If this test passes, you can be certain your live website and FusionAuth can still communicate. If it fails, you need to revert your release to the previous version immediately.
+If this test passes, you can be certain your live website and FusionAuth can still communicate. If it fails, you need to revert your release to the previous version.
 
 ## Secrets And Deployment Environments
 
-Your organization will probably have a number of environments (server and database) where your application runs:
+Your organization will probably have several environments (server and database) where your application runs:
 Environment | Purpose
 --- | ---
 Development | Where programmers are free to test new features without fear of breaking anything. Database users are anonymized.
 Test | Where quality assurance testers test the latest release that is scheduled to go live soon.
-Preproduction | An exact duplicate of the Production environment, with real sensitive user information. This is used for debugging errors in Production. Access is restricted.
+Preproduction | An exact duplicate of the production environment, with real sensitive user information. This is used for debugging errors in production. Access is restricted.
 Production | The live site that must always be online. Access is restricted to a system administrator and automated deployment programs.
 
-The production environment might also be two mirrored applications and databases (called blue and green). You could deploy to one color, and then immediately transfer the live URL from the other color once it's complete. This way your application will never suffer a moment's downtime.
+The production environment might also be two mirrored applications and databases (called blue and green). You could deploy to one color, and then immediately transfer the live URL from the other color once it's complete. This way, your application will never suffer a moment's downtime.
 
-Each environment should correspond to a single branch in GitHub, and has its own set of secrets: passwords, URLs, and database values.
+Each environment should correspond to a single branch in GitHub, and have its own set of secrets: passwords, URLs, and database values.
 
-In this guide's sample application action, you've set the action event to be triggered when pushing to the main branch (which corresponds to the production environment). You would need to add other events and scripts to run tests, but not deploy, for all other environments, and for pull request events too. For example, you would probably want a push to the test branch, to run tests, and deploy the new release to the test environment.
+In this guide's sample application action, you set the action event to be triggered when pushing to the main branch (which corresponds to the production environment). You'll need to add other events and scripts to run tests, but not deploy, for all other environments and pull-request events. For example, you would probably want a push to the test branch to run tests, and deploy the new release to the test environment.
 
 This application also used two `.env` files to store secrets that your app and FusionAuth use. In reality, you should never do this, as it allows anyone to access your private database with your password kept publicly on GitHub.
 
-Instead, each environment should store its secrets in environment variables or a configuration file that is not overwritten on deployment. These values should be readable only by the system administrator and the application's user account.
+Instead, each environment should store its secrets in environment variables or a configuration file that is not overwritten on deployment. These values should only be readable by the system administrator and the application's user account.
 
 But you also need some secrets in the GitHub action, such as the SSH key of the server you are deploying to. This was seen in the script above.
 ```yaml
@@ -504,33 +508,33 @@ These secrets are kept in the [GitHub Secrets](https://docs.github.com/en/action
 
 ## Summary Of Testing And Deployment
 
-This has been a long guide, so let's summarize what you need to do to test and deploy your application:
+Let's summarize what you need to do to test and deploy your application:
 
 - Configure your server to run Docker and the programming framework that your app uses.
 - Keep secrets safe and private in environment variables on each server, even from your developers.
 - Backup your FusionAuth and app database frequently, and test that you can restore them successfully.
-- Write Playwright tests that check your app can log in with FusionAuth, and any other essential functionality, including new features that you are releasing.
-- Write a GitHub action that runs these tests when receiving a pull request, or pushing code to a branch.
+- Write Playwright tests that check your app can log in with FusionAuth and any other essential functionality, including new features that you are releasing.
+- Write a GitHub action that runs these tests when receiving a pull request or pushing code to a branch.
 - Add secrets in GitHub that allow it to access your deployment environment.
 - Add a deployment step to your GitHub action that sends your new release to the server and starts it.
 - Add a final step in the action to test that your Playwright tests work on the deployed server.
-- If your tests are all successful, switch your public URL over to the latest release.
+- If your tests are successful, switch your public URL over to the latest release.
 
 
 ## Further Reading
 
 - [Playwright test framework](https://playwright.dev/docs/intro)
-- [FusionAuth five minute guide](/docs/quickstarts/5-minute-docker)
-- [FusionAuth Express.js quickstart](/docs/quickstarts/quickstart-javascript-express-web)
+- [FusionAuth five-minute guide](/docs/quickstarts/5-minute-docker)
+- [FusionAuth Express quickstart](/docs/quickstarts/quickstart-javascript-express-web)
 - [FusionAuth upgrade guide](/docs/get-started/download-and-install/docker#upgrading)
 - [FusionAuth cloud version](/docs/get-started/run-in-the-cloud/cloud)
 - [GitHub Actions](https://docs.github.com/en/actions)
 - [GitHub Actions pricing](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions)
-- [GitHub Action events](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows)
+- [GitHub Actions events](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows)
 - [GitHub Secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions)
-- [AWS Action](https://github.com/aws-actions)
-- [Azure Action](https://github.com/Azure/actions)
-- [DigitalOcean Action](https://github.com/digitalocean/action-doctl)
-- [SSH Action](https://github.com/appleboy/ssh-action)
-- [Upload artifact Action](https://github.com/actions/upload-artifact)
-- [DockerHub Action](https://github.com/marketplace/actions/build-and-push-docker-images)
+- [AWS actions](https://github.com/aws-actions)
+- [Azure actions](https://github.com/Azure/actions)
+- [DigitalOcean actions](https://github.com/digitalocean/action-doctl)
+- [SSH for GitHub Actions](https://github.com/appleboy/ssh-action)
+- [Upload-artifact action](https://github.com/actions/upload-artifact)
+- [Build and push Docker images action](https://github.com/marketplace/actions/build-and-push-docker-images)
