@@ -23,7 +23,8 @@ import {RemoteCode} from '@fusionauth/astro-components';
   - [Decrypt The Reply](#decrypt-the-reply)
   - [Common Problems With Hashes](#common-problems-with-hashes)
   - [Create Your Own User Manually To Test Hashing](#create-your-own-user-manually-to-test-hashing)
-- [Extract User Details From Stytch](#extract-user-details-from-stytch)
+- [Example User Details From Stytch](#example-user-details-from-stytch)
+- [A Script To Get All Users' Details And Combine With Hashes](#a-script-to-get-all-users-details-and-combine-with-hashes)
 - [Save The User Details And Hash To FusionAuth](#save-the-user-details-and-hash-to-fusionauth)
   - [How To Write A FusionAuth Plugin (DELETE)](#how-to-write-a-fusionauth-plugin-delete)
   - [Install The Scrypt Plugin](#install-the-scrypt-plugin)
@@ -193,7 +194,7 @@ Get your `project_id` and `secret` from the [Stytch web interface](https://stytc
 
 You create the user's password hash with Bcrypt in this example and save that in Stytch. But you authenticate the user afterwards (which is similar to logging in). Stytch uses the plaintext password you send in the authentication to rehash the user's password using Scrypt. Thus the hash you receive for this user in the emailed file from Stytch will also be in Scrypt, not Bcrypt.
 
-## Extract User Details From Stytch
+## Example User Details From Stytch
 
 Stytch emails you only the user hash and Id. You have to use the Stytch API to retrieve all user details from Stytch, then combine those with the hash from the email, and save the user to FusionAuth.
 
@@ -252,6 +253,63 @@ The reply will look similar to the code below.
   "webauthn_registrations": []
 }
 ```
+
+Note that in Stytch a user can have multiple emails and phone numbers. FusionAuth allows for only one. You will store the extras in the user data JSON field when migrating the user, along with any other Stytch fields FusionAuth does not support.
+
+## A Script To Get All Users' Details And Combine With Hashes
+
+Let's create a script that loops through every user in the Stytch hash file, gets their details from the API, then combines the details and hash into a JSON file ready for FusionAuth to import.
+
+Firstly, open your hash file from Stytch in a text editor and remove all the header lines so only one user per row remains. The file should look like this now:
+
+```csv
+user-test-178d8ee5-c458-4f48-a482-8fefa30a1a87,uiOC_BwbKta9R9QL6Ss6KTDpCcULh9_zhObl5j4398M=,BbV-sGQqUIX1NwE6uqtSITv4fa1iMw==,scrypt,project-test-36510638-652a-4d3d-9a94-f0a7106582fc
+user-test-799ea981-b2bb-417f-afe8-4ab6e79fcd2a,A6VzdsTsTHPqafORIb0GkGD6qFxdncqwA15YXRsVgvs=,XPapDAm6xdV5UhMpyPrSpy8FbfCDtA==,scrypt,project-test-36510638-652a-4d3d-9a94-f0a7106582fc
+user-test-c1be12e4-fc61-4e7a-8831-0fc14cb87b65,8dg6AaIWPfcLTQU7lb4H-CI49dHeqaBXfFE1ogb2qRQ=,zKia-0BdIFKCzWbzXbj3qrhBnbiWNg==,scrypt,project-test-36510638-652a-4d3d-9a94-f0a7106582fc
+```
+
+Check the fourth column to ensure that only Scrypt users are included. In the unlikely case that you have multiple hash algorithms in Stytch, you will need to modify the export and import scripts in this tutorial.
+
+You care only about the first three columns: Id, Hash, and Salt. If you name this file `hash.csv`, you can use the following Node.js code to create the data ready for import to FusionAuth. Put this code into a file called `export.mjs`.
+
+```js
+import * as stytch from "stytch";
+import * as fs from "fs";
+import csv from "csv-parser";
+
+async function processCSV() {
+  const client = new stytch.Client({
+    project_id: "project-test-REPLACE",
+    secret: "secret-test-REPLACE",
+  });
+  const table = fs.createReadStream('hash.csv')
+                  .pipe(csv({ headers: false }));
+  const users = [];
+  for await (const row of table) {
+    try {
+      const user = await client.users.get({ user_id: row[0] });
+      user.hash = row[1];
+      user.salt = row[2];
+      users.push(user);
+    }
+    catch (error) {
+      console.error(`Error fetching user details for ID ${row[0]}: ${error.message}`);
+    }
+  }
+  fs.writeFileSync('export.json', JSON.stringify(users, null, 2));
+}
+
+processCSV().catch(error => console.error(error));
+```
+
+Run it with the code below.
+
+```bash
+npm install csv-parser stytch
+node export.mjs
+```
+
+It creates the file `export.json`.
 
 ## Save The User Details And Hash To FusionAuth
 
