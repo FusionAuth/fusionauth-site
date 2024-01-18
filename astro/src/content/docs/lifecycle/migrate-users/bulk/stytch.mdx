@@ -28,6 +28,7 @@ import {RemoteCode} from '@fusionauth/astro-components';
   - [How To Write A FusionAuth Plugin (DELETE)](#how-to-write-a-fusionauth-plugin-delete)
   - [Install The Scrypt Plugin](#install-the-scrypt-plugin)
 - [Authentication Types](#authentication-types)
+- [References](#references)
 
 
 ## Todo
@@ -41,6 +42,7 @@ import {RemoteCode} from '@fusionauth/astro-components';
 - [x] create hasher
 - [ ] import stytch users to fa with my hash
 - [ ] add import script to https://github.com/FusionAuth/fusionauth-import-scripts
+- [ ] pull request for fusionauth-contrib stytch branch
 
 ## Introduction
 
@@ -124,6 +126,14 @@ Even when using Scrypt with the given parameters, you need to carefully check th
 
 For instance, we can use this snippet of JavaScript Node.js code below to create a hash for the last user in the example file above.
 
+TODO USE BASH OPENSSL
+
+```
+```
+
+
+Or JavaScript
+
 ```js
 import * as crypto from 'crypto';
 
@@ -195,57 +205,74 @@ You create the user's password hash with Bcrypt in this example and save that in
 
 Stytch emails you only the user hash and Id. You have to use the Stytch API to retrieve all user details from Stytch, then combine those with the hash from the email, and save the user to FusionAuth.
 
-Below is JavaScript code to get user details from Stytch. (Stytch also has SDKs for [Go, Java, Python, and Ruby](https://stytch.com/docs/sdks), or you can use `curl` directly).
+Below is a bash script to get user details from Stytch. (Stytch also has SDKs for [Go, Java, Python, and Ruby](https://stytch.com/docs/sdks). You first need to install [JQ](https://jqlang.github.io/jq) for JSON with your operating system's package manager, such as Brew or APT. If you use Windows, please install [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) to run bash scripts.
 
-```js
-import * as stytch from "stytch";
+```bash
+#!/bin/bash
 
-const client = new stytch.Client({
-  project_id: "project-test-36510638-652a-4d3d-9a94-f0a7106582fc",
-  secret: "secret-test-something=",
-});
+projectId="project-test-REPLACE"
+apiKey="secret-test-REPLACE="
+apiEndpoint="https://test.stytch.com/v1"
+userId="user-test-REPLACE"
 
-const u = await client.users.get({ user_id: "user-test-c1be12e4-fc61-4e7a-8831-0fc14cb87b65" });
-console.log(u);
+curl \
+    -s   `# silent` \
+    -X GET "$apiEndpoint/users/$userId" \
+    -u "$projectId:$apiKey" \
+    -H "Content-Type: application/json" \
+    | jq '.' > user_details.json # save output to file unchanged, formatted as JSON
+
+if [ -s user_details.json ]; then
+    echo "User details saved to user_details.json"
+else
+    echo "Failed to save user details"
+fi
 ```
 
-The reply will look similar to the JSON below.
+The reply will look similar to the code below.
 
-```js
+```json
 {
-  biometric_registrations: [],
-  created_at: '2024-01-11T09:55:02Z',
-  crypto_wallets: [],
-  emails: [
+  "biometric_registrations": [],
+  "created_at": "2024-01-11T09:54:59Z",
+  "crypto_wallets": [],
+  "emails": [
     {
-      email: 'user2@example.com',
-      email_id: 'email-test-21e7b4d6-fc9b-45a1-af0a-519b6536e9b6',
-      verified: false
+      "email": "user1@example.com",
+      "email_id": "email-test-8af9b269-8f2f-44a6-8322-6f2f276cba5d",
+      "verified": false
     }
   ],
-  name: { first_name: 'B', last_name: 'Example', middle_name: '' },
-  password: {
-    password_id: 'password-test-dd564ea4-5711-414e-a5a4-052e671609a7',
-    requires_reset: false
+  "name": {
+    "first_name": "A",
+    "last_name": "Example",
+    "middle_name": ""
   },
-  phone_numbers: [
+  "password": {
+    "password_id": "password-test-80e44428-9182-4635-8a08-9c4c5ccf6c72",
+    "requires_reset": false
+  },
+  "phone_numbers": [
     {
-      phone_id: 'phone-number-test-767f26e1-34bd-41a9-86af-1411b4c20be6',
-      phone_number: '+272223334445',
-      verified: false
+      "phone_id": "phone-number-test-b4c5c640-3f30-46bc-8bdf-5379ad21367b",
+      "phone_number": "+272223334444",
+      "verified": false
     }
   ],
-  providers: [],
-  request_id: 'request-id-test-04a96a55-2eca-4691-a2aa-77f095911275',
-  status: 'active',
-  status_code: 200,
-  totps: [],
-  trusted_metadata: {},
-  untrusted_metadata: {},
-  user_id: 'user-test-c1be12e4-fc61-4e7a-8831-0fc14cb87b65',
-  webauthn_registrations: []
+  "providers": [],
+  "request_id": "request-id-test-1aee71b3-094d-4f90-a1be-086004c695fc",
+  "status": "active",
+  "status_code": 200,
+  "totps": [],
+  "trusted_metadata": {},
+  "untrusted_metadata": {},
+  "user_id": "user-test-178d8ee5-c458-4f48-a482-8fefa30a1a87",
+  "webauthn_registrations": []
 }
+
 ```
+
+
 
 ## Save The User Details And Hash To FusionAuth
 
@@ -264,8 +291,10 @@ The Scrypt hashing algorithm is not [natively supported by FusionAuth](/docs/ref
 - [x] add new plugin to index file
 - [x] build
 - [x] add jar file to my copy of fusionauth's plugin folder
-- [ ] import user
+- [ ] get stytch user details and hashes
+- [ ] import user - `example-salted-stytch-scrypt`. https://github.com/FusionAuth/fusionauth-import-scripts/
 - [ ] pull request for hash repo
+- [ ] pull request for https://github.com/FusionAuth/fusionauth-import-scripts/.
 - [ ] document how to use hash repo in article
 - [ ] add an import script for users from stytch in json format? - https://github.com/FusionAuth/fusionauth-import-scripts/tree/master
 - [ ] edit both readme files
@@ -284,3 +313,12 @@ docker cp "/home/rje/code/fusionauth-contrib/Password Hashing Plugins/target/fus
 ## Authentication Types
 
 passwords, passwordless, others?
+
+## References
+https://fusionauth.io/docs/reference/password-hashes
+https://fusionauth.io/docs/extend/code/password-hashes/custom-password-hashing
+https://fusionauth.io/docs/lifecycle/migrate-users/bulk/duende#add-the-aspnet-identity-v2-hashing-plugin
+https://fusionauth.io/docs/lifecycle/migrate-users/bulk/auth0
+https://fusionauth.io/docs/lifecycle/migrate-users/bulk/general
+
+https://jqlang.github.io/jq/
