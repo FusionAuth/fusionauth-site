@@ -276,17 +276,21 @@ user-test-c1be12e4-fc61-4e7a-8831-0fc14cb87b65,8dg6AaIWPfcLTQU7lb4H-CI49dHeqaBXf
 
 Check the fourth column to ensure that only Scrypt users are included. In the unlikely case that you have multiple hash algorithms in Stytch, you will need to modify the export and import scripts in this tutorial.
 
-You care only about the first three columns: Id, Hash, and Salt. If you name this file `hash.csv`, you can use the following Node.js code to create the data ready for import to FusionAuth. Put this code into a file called `export.mjs`.
+You care about the first four columns: `id`, `hash`, `salt`, and `hash_method`. If you name this file `hash.csv`, you can use the following Node.js code to create the data ready for import to FusionAuth. Put this code into a file called `export.mjs`.
 
 ```js
+// npm install csv-parser stytch
+
 import * as stytch from "stytch";
 import * as fs from "fs";
 import csv from "csv-parser";
 
+processCSV();
+
 async function processCSV() {
   const client = new stytch.Client({
-    project_id: "project-test-REPLACE",
-    secret: "secret-test-REPLACE",
+    project_id: "project-test-36510638-652a-4d3d-9a94-f0a7106582fc",
+    secret: "secret-test-Ww5WZPWzBGJdW44BOCq3K6VypSyjC8iO4dE=",
   });
   const table = fs.createReadStream('hash.csv')
                   .pipe(csv({ headers: false }));
@@ -296,6 +300,7 @@ async function processCSV() {
       const user = await client.users.get({ user_id: row[0] });
       user.hash = row[1];
       user.salt = row[2];
+      user.hashAlgorithm = row[3];
       users.push(user);
     }
     catch (error) {
@@ -304,8 +309,6 @@ async function processCSV() {
   }
   fs.writeFileSync('export.json', JSON.stringify(users, null, 2));
 }
-
-processCSV().catch(error => console.error(error));
 ```
 
 Run it with the code below.
@@ -333,6 +336,10 @@ You now have the users file `export.json` and an installed Scrypt plugin. To imp
 
 Add the following code into a file called `import.mjs`.
 
+TODO
+/ faUser.registrations = Array<UserRegistration>;
+// faUser.tenantId = UUID;
+
 ```js
 // npm install @fusionauth/typescript-client stream-json
 
@@ -341,19 +348,16 @@ import parser from 'stream-json';
 import StreamArray from 'stream-json/streamers/StreamArray.js';
 import Chain from 'stream-chain';
 import * as fs from "fs";
+import util from 'util'
 
 const apiKey = '33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod';
 const fusionauthUrl = 'http://localhost:9011';
 const fa = new FusionAuthClient(apiKey, fusionauthUrl);
 
-processUsers().catch(error => console.error(error));
+processUsers();
 
 async function processUsers() {
-  const stytchUsers = new Chain([
-    fs.createReadStream('export.json'),
-    parser(),
-    new StreamArray(),
-  ]);
+  const stytchUsers = new Chain([fs.createReadStream('export.json'), parser(), new StreamArray(),]);
   for await (const { value: stytchUser } of stytchUsers) {
     const faUser = getFaUserFromStytchUser(stytchUser);
     await importUser(faUser, stytchUser);
@@ -367,8 +371,11 @@ function getFaUserFromStytchUser(stytchUser) {
   // faUser.breachedPasswordLastCheckedInstant = number;
   // faUser.breachedPasswordStatus = BreachedPasswordStatus;
   // faUser.connectorId = UUID;
-  faUser.encryptionScheme = 'example-salted-stytch-scrypt';
-  // faUser.factor = number;
+  if (stytchUser.hashAlgorithm == "scrypt")
+    faUser.encryptionScheme = 'example-salted-stytch-scrypt';
+  else
+    throw new Error("Handle hash algorithms other than Scrypt by searching for this error message and adding a new encryptionScheme.");
+  faUser.factor = 1; // unused by scrypt, but required by FusionAuth
   faUser.id = getNullOrUUIDFromUserId(stytchUser.user_id);
   // faUser.lastLoginInstant = number;
   faUser.password = stytchUser.hash;
@@ -376,7 +383,7 @@ function getFaUserFromStytchUser(stytchUser) {
   if (faUser.passwordChangeRequired)
     faUser.passwordChangeReason = "Requested by Stytch on import";
   // faUser.passwordLastUpdateInstant = number;
-  faUser.salt = stytchUser.salt;
+  faUser.salt = Buffer.from(stytchUser.salt, 'base64').toString('base64'); // fusionAuth doesn't like Stytch salts
   faUser.uniqueUsername = stytchUser.user_id;
   faUser.username = stytchUser.user_id;
   // faUser.usernameStatus = ContentStatus;
@@ -385,10 +392,8 @@ function getFaUserFromStytchUser(stytchUser) {
     faUser.verified = true;
     faUser.email = stytchUser.emails.find(e => e.verified).email;
   }
-  else if (stytchUser.emails && stytchUser.emails.length > 0) {
-    faUser.verified = false;
+  else if (stytchUser.emails && stytchUser.emails.length > 0)
     faUser.email = stytchUser.emails[0].email;
-  }
   // faUser.verifiedInstant = number;
 
   // User fields ------
@@ -443,10 +448,7 @@ function getFaUserFromStytchUser(stytchUser) {
 }
 
 async function importUser(faUser, stytchUser) {
-  const importRequest = {
-    users: [faUser],
-    validateDbConstraints: true
-  };
+  const importRequest = { users: [faUser], validateDbConstraints: true };
   try {
     const result = await fa.importUsers(importRequest);
     if (result.wasSuccessful())
@@ -456,17 +458,16 @@ async function importUser(faUser, stytchUser) {
   }
   catch (e) {
     console.error(`Error importing user ${stytchUser.user_id}`);
-    console.error(e);
+    console.error(util.inspect(e, { showHidden: false, depth: null, colors: true }));
   }
 }
 
 function getNullOrUUIDFromUserId(id) {
-  const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i; //   "user_id": "user-test-178d8ee5-c458-4f48-a482-8fefa30a1a87",
+  const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i; // "user_id": "user-test-178d8ee5-c458-4f48-a482-8fefa30a1a87",
   const match = id.match(uuidRegex);
   if (match)
     return match[0];
-  else
-    return null;
+  return null;
 }
 ```
 
