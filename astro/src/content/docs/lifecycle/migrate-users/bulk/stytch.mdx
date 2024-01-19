@@ -346,70 +346,112 @@ const apiKey = '33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod';
 const fusionauthUrl = 'http://localhost:9011';
 const fa = new FusionAuthClient(apiKey, fusionauthUrl);
 
-importUsers().catch(error => console.error(error));
+processUsers().catch(error => console.error(error));
 
-async function importUsers() {
-    const stytchUsers = new Chain([
-      fs.createReadStream('export.json'),
-      parser(),
-      new StreamArray(),
-    ]);
-    for await (const { value: stytchUser } of stytchUsers) {
-      const faUser = getFaUserFromStytchUser(stytchUser);
-      // await fa.importUsers();
-    }
-
-  // client.retrieveUserByEmail('user@example.com')
-  //     .then(clientResponse => {
-  //       console.log("User:", JSON.stringify(clientResponse.response.user, null, 2));
-  //     }).catch(console.error);
+async function processUsers() {
+  const stytchUsers = new Chain([
+    fs.createReadStream('export.json'),
+    parser(),
+    new StreamArray(),
+  ]);
+  for await (const { value: stytchUser } of stytchUsers) {
+    const faUser = getFaUserFromStytchUser(stytchUser);
+    await importUsers();
+  }
 }
 
 function getFaUserFromStytchUser(stytchUser) {
+  const faUser = {};
 
+  // SecureIdentity fields ------
+  // faUser.breachedPasswordLastCheckedInstant = number;
+  // faUser.breachedPasswordStatus = BreachedPasswordStatus;
+  // faUser.connectorId = UUID;
+  faUser.encryptionScheme = 'example-salted-stytch-scrypt';
+  // faUser.factor = number;
+  faUser.id = getNullOrUUIDFromUserId(stytchUser.user_id);
+  // faUser.lastLoginInstant = number;
+  faUser.password = stytchUser.hash;
+  faUser.passwordChangeReason = "Requested by Stytch on import";
+  faUser.passwordChangeRequired = stytchUser.password?.requires_reset;
+  // faUser.passwordLastUpdateInstant = number;
+  faUser.salt = stytchUser.salt;
+  faUser.uniqueUsername = stytchUser.user_id;
+  faUser.username = stytchUser.user_id;
+  // faUser.usernameStatus = ContentStatus;
+  faUser.verified = false;
+  if (stytchUser.emails && stytchUser.emails.some(e => e.verified === true)) {
+    faUser.verified = true;
+    faUser.email = stytchUser.emails.find(e => e.verified).email;
+  }
+  else if (stytchUser.emails && stytchUser.emails.length > 0) {
+    faUser.verified = false;
+    faUser.email = stytchUser.emails[0].email;
+  }
+  // faUser.verifiedInstant = number;
+
+  // User fields ------
+  faUser.active = stytchUser.status == "active";
+  // faUser.birthDate = string;
+  // faUser.cleanSpeakId = UUID;
+  // faUser.expiry = number;
+  faUser.firstName = stytchUser.name?.first_name;
+  faUser.fullName = [stytchUser.name?.first_name, stytchUser.name?.middle_name, stytchUser.name?.last_name]
+    .filter(name => name !== null && name !== undefined && name !== '')
+    .join(' ');
+  // faUser.imageUrl = string;
+  // faUser.insertInstant = number;
+  faUser.lastName = stytchUser.name?.last_name;
+  // faUser.lastUpdateInstant = number;
+  // faUser.memberships = Array<GroupMember>;
+  faUser.middleName = stytchUser.name?.middle_name;
+  // faUser.mobilePhone = string;
+  if (stytchUser.phone_numbers?.length > 0)
+    faUser.mobilePhone = stytchUser.phone_numbers[0].phone_number;
+  // faUser.parentEmail = string;
+  // faUser.preferredLanguages = Array<string>;
+  // faUser.registrations = Array<UserRegistration>;
+  // faUser.tenantId = UUID;
+  // faUser.timezone = string;
+  // faUser.twoFactor = UserTwoFactorConfiguration;
+  faUser.data = {}
+  faUser.data.stytch_biometric_registrations = stytchUser.biometric_registrations;
+  faUser.data.stytch_created_at = stytchUser.created_at;
+  faUser.data.stytch_crypto_wallets = stytchUser.crypto_wallets;
+  if (stytchUser.emails?.length > 1)
+    faUser.data.stytch_emails = stytchUser.emails.filter(e => e.email != faUser.email);
+  if (stytchUser.phone_numbers?.length > 1)
+    faUser.data.stytch_phone_numbers = stytchUser.phone_numbers.filter(e => e.phone_number != faUser.mobilePhone);
+  faUser.data.stytch_providers = stytchUser.providers;
+  faUser.data.stytch_trusted_metadata = stytchUser.trusted_metadata;
+  faUser.data.stytch_untrusted_metadata = stytchUser.untrusted_metadata;
+  faUser.data.stytch_user_id = stytchUser.user_id;
+  faUser.data.stytch_webauthn_registrations = stytchUser.webauthn_registrations;
+  faUser.data.stytch_export_request_id = stytchUser.request_id;
+
+  return faUser;
 }
 
-/*
-{
-  "biometric_registrations": [],
-  "created_at": "2024-01-11T09:54:59Z",
-  "crypto_wallets": [],
-  "emails": [
-    {
-      "email": "user1@example.com",
-      "email_id": "email-test-8af9b269-8f2f-44a6-8322-6f2f276cba5d",
-      "verified": false
-    }
-  ],
-  "name": {
-    "first_name": "A",
-    "last_name": "Example",
-    "middle_name": ""
-  },
-  "password": {
-    "password_id": "password-test-80e44428-9182-4635-8a08-9c4c5ccf6c72",
-    "requires_reset": false
-  },
-  "phone_numbers": [
-    {
-      "phone_id": "phone-number-test-b4c5c640-3f30-46bc-8bdf-5379ad21367b",
-      "phone_number": "+272223334444",
-      "verified": false
-    }
-  ],
-  "providers": [],
-  "request_id": "request-id-test-068fcadb-af1b-4811-bbcd-e1313ae3fb56",
-  "status": "active",
-  "status_code": 200,
-  "totps": [],
-  "trusted_metadata": {},
-  "untrusted_metadata": {},
-  "user_id": "user-test-178d8ee5-c458-4f48-a482-8fefa30a1a87",
-  "webauthn_registrations": [],
-  "hash": "uiOC_BwbKta9R9QL6Ss6KTDpCcULh9_zhObl5j4398M=",
-  "salt": "BbV-sGQqUIX1NwE6uqtSITv4fa1iMw=="
+async function importUsers(faUser) {
+  const importRequest = {
+    users: [faUser],
+    validateDbConstraints: true
+  };
+  const result = await fa.importUsers(importRequest);
+  if (result.wasSuccessful())
+    console.log(`User ${stytchUser.user_id} imported successfully`);
+  else
+    console.error(`Error importing user ${stytchUser.user_id}`);
 }
-*/
+
+function getNullOrUUIDFromUserId(id) {
+  const uuidRegex = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i; //   "user_id": "user-test-178d8ee5-c458-4f48-a482-8fefa30a1a87",
+  const match = id.match(uuidRegex);
+  if (match)
+    return match[0];
+  else
+    return null;
+}
 ```
 
 `apiKey`
