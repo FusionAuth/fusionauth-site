@@ -334,12 +334,90 @@ You now have the users file `export.json` and an installed Scrypt plugin. To imp
 Add the following code into a file called `import.mjs`.
 
 ```js
+// npm install @fusionauth/typescript-client stream-json
+
+import {FusionAuthClient} from '@fusionauth/typescript-client';
+import parser from 'stream-json';
+import StreamArray from 'stream-json/streamers/StreamArray.js';
+import Chain from 'stream-chain';
+import * as fs from "fs";
+
+const apiKey = '33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod';
+const fusionauthUrl = 'http://localhost:9011';
+const fa = new FusionAuthClient(apiKey, fusionauthUrl);
+
+importUsers().catch(error => console.error(error));
+
+async function importUsers() {
+    const stytchUsers = new Chain([
+      fs.createReadStream('export.json'),
+      parser(),
+      new StreamArray(),
+    ]);
+    for await (const { value: stytchUser } of stytchUsers) {
+      const faUser = getFaUserFromStytchUser(stytchUser);
+      // await fa.importUsers();
+    }
+
+  // client.retrieveUserByEmail('user@example.com')
+  //     .then(clientResponse => {
+  //       console.log("User:", JSON.stringify(clientResponse.response.user, null, 2));
+  //     }).catch(console.error);
+}
+
+function getFaUserFromStytchUser(stytchUser) {
+
+}
+
+/*
+{
+  "biometric_registrations": [],
+  "created_at": "2024-01-11T09:54:59Z",
+  "crypto_wallets": [],
+  "emails": [
+    {
+      "email": "user1@example.com",
+      "email_id": "email-test-8af9b269-8f2f-44a6-8322-6f2f276cba5d",
+      "verified": false
+    }
+  ],
+  "name": {
+    "first_name": "A",
+    "last_name": "Example",
+    "middle_name": ""
+  },
+  "password": {
+    "password_id": "password-test-80e44428-9182-4635-8a08-9c4c5ccf6c72",
+    "requires_reset": false
+  },
+  "phone_numbers": [
+    {
+      "phone_id": "phone-number-test-b4c5c640-3f30-46bc-8bdf-5379ad21367b",
+      "phone_number": "+272223334444",
+      "verified": false
+    }
+  ],
+  "providers": [],
+  "request_id": "request-id-test-068fcadb-af1b-4811-bbcd-e1313ae3fb56",
+  "status": "active",
+  "status_code": 200,
+  "totps": [],
+  "trusted_metadata": {},
+  "untrusted_metadata": {},
+  "user_id": "user-test-178d8ee5-c458-4f48-a482-8fefa30a1a87",
+  "webauthn_registrations": [],
+  "hash": "uiOC_BwbKta9R9QL6Ss6KTDpCcULh9_zhObl5j4398M=",
+  "salt": "BbV-sGQqUIX1NwE6uqtSITv4fa1iMw=="
+}
+*/
 ```
+
+`apiKey`
 
 In a terminal, run the code below.
 
 ```bash
-npm install @fusionauth/typescript-client
+npm install @fusionauth/typescript-client stream-json
 node import.mjs
 ```
 
