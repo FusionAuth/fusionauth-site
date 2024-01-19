@@ -45,7 +45,10 @@ const config = defineConfig({
         rehypeTasklistEnhancer(),
     ]
   },
-  site: 'https://fusionauth.io/'
+  site: 'https://fusionauth.io/',
+  experimental: {
+    contentCollectionCache: true,
+  }
 });
 
 export default config;
