@@ -128,7 +128,7 @@ This means that the passwords you receive in the CSV file will almost all be in 
 
 Not all hash algorithms use separate salts. For instance, Bcrypt will create a salt automatically when hashing a password, and store the hash and salt concatenated in one string. You may have to deal with peculiarities of different algorithms like this if you previously migrated users into Stytch from an authentication provider that did not use Scrypt.
 
-Even when using Scrypt with the given parameters, you need to carefully check that how you hash passwords has the same result as Stytch.
+Even when using Scrypt with the given parameters, you need to carefully check that how you hash passwords has the same result as Stytch. Hashes and salts are arrays of bytes (numbers) and therefore cannot be displayed directly as text. They are instead mapped to text using a conversion process called Base64. However, there are [different ways](https://en.wikipedia.org/wiki/Base64#Variants_summary_table) of doing this mapping. Since you can see the hashes from Stytch use `-` and `_`, they must be using RFC 4648 (URL- and filename-safe standard). This can cause miscommunications with other hash libraries.
 
 For instance, we can use this snippet of JavaScript Node.js code below to create a hash for the last user in the example file above. (Stytch also has SDKs for [Go, Java, Python, and Ruby](https://stytch.com/docs/sdks) if you prefer to write your own scripts.)
 
@@ -154,11 +154,13 @@ crypto.scrypt(password, salt, keyLength, { N: cost, r: blockSize, p: paralleliza
 
 Note that our hash algorithm looks correct, but the hashes differ by one character, `+`, in `8dg6AaIWPfcLTQU7lb4H-CI49dHeqaBXfFE1ogb2qRQ=` and `8dg6AaIWPfcLTQU7lb4H+CI49dHeqaBXfFE1ogb2qRQ=`.
 
-This is because Stych uses alternative characters in Base64 encoding to make them safe in URLs. To have the hashes match correctly, you need to replace the `+` and `/` characters in your hash:
+To have the hashes match correctly, you need to replace the `+` and `/` characters in your hash:
 
 ```js
 const keyBase64 = derivedKey.toString('base64').replace(/\+/g, '-').replace(/\//g, '_');
 ```
+
+FusionAuth uses the `+` and `/` symbols, differing from Stytch's `-` and `_`.
 
 ### Create Your Own User Manually To Test Hashing
 
@@ -377,12 +379,12 @@ function getFaUserFromStytchUser(stytchUser) {
   faUser.factor = 1; // unused by scrypt, but required by FusionAuth
   faUser.id = getNullOrUUIDFromUserId(stytchUser.user_id);
   // faUser.lastLoginInstant = number;
-  faUser.password = stytchUser.hash;
+  faUser.password = Buffer.from(stytchUser.hash, 'base64').toString('base64'); // fusionAuth doesn't like - and - in Base64, only / and +
   faUser.passwordChangeRequired = stytchUser.password?.requires_reset;
   if (faUser.passwordChangeRequired)
     faUser.passwordChangeReason = "Requested by Stytch on import";
   // faUser.passwordLastUpdateInstant = number;
-  faUser.salt = Buffer.from(stytchUser.salt, 'base64').toString('base64'); // fusionAuth doesn't like Stytch salts
+  faUser.salt = Buffer.from(stytchUser.salt, 'base64').toString('base64'); // fusionAuth doesn't like - and - in Base64, only / and +
   faUser.uniqueUsername = stytchUser.user_id;
   faUser.username = stytchUser.user_id;
   // faUser.usernameStatus = ContentStatus;
