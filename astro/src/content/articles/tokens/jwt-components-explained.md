@@ -3,6 +3,7 @@ title: Components of JWTs Explained
 description: Technical article explains JSON Web Tokens (JWT), their component parts, and how they are used for authentication. 
 author: Dan Moore
 icon: /img/icons/components-jwt-explained.svg
+darkIcon: /img/icons/components-jwt-explained-dark.svg
 section: Tokens
 # date: 2022-02-24
 # dateModified: 2022-02-24
