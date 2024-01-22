@@ -60,7 +60,7 @@ Finally, you need a basic understanding of password hashing and how salts work. 
 ### Prerequisites
 
 This article is in the form of a tutorial, with data and code examples, showing you exactly how to extract and combine user credentials and information, and insert them into your FusionAuth database. To follow this tutorial, you need:
-- [Node.js](https://nodejs.org/en) to run the migration scripts.
+- [Node.js](https://nodejs.org/en) to run the migration scripts, and npm.
 - FusionAuth. The easiest way to run it locally is to use [Docker](https://docs.docker.com/get-docker/) with the configuration file provided in this tutorial.
 
 ## Create Stytch Users
@@ -68,17 +68,27 @@ This article is in the form of a tutorial, with data and code examples, showing 
 You probably already have a Stytch account with users you want to export to FusionAuth. Even so, it is a good idea to create a separate test project in Stytch with only a few users. You can this to run an end-to-end migration between Stytch and FusionAuth quickly, without having to handle millions of real users, and the privacy risks of handling their data when encountering errors.
 
 Create a new Stytch project:
-- Create, or sign in, to your Stytch account at https://stytch.com/dashboard.
+- Create or sign in to your Stytch account at https://stytch.com/dashboard.
 - In the header there is a workspace button at the top left, then a project button. Use the project button to create a new project you'll use for test users.
 - Click <InlineUIElement>Configuration</InlineUIElement> — <InlineUIElement>API Keys</InlineUIElement> in the sidebar.
 - Note the project Id and secret.
 
-Download this tutorial's scripts repository from https://github.com/fusionauth/fusionauth-import-scripts and unzip it, or if you have Git run:
-```bash
-git clone https://github.com/fusionauth/fusionauth-import-scripts.git
-```
+Create three example users:
+- Download this tutorial's scripts repository from https://github.com/fusionauth/fusionauth-import-scripts and unzip it, or if you have Git run the code below.
+  ```bash
+  git clone https://github.com/fusionauth/fusionauth-import-scripts.git
+  ```
+- In the file `fusionauth-import-scripts/stytch/js/1_makeStytchUsers.mjs`, change the project Id and secret to match your project.
+- In a terminal run the code below to create three new users in Stytch using their JavaScript API.
+  ```bash
+  cd fusionauth-import-scripts/stytch/js
+  npm update
+  node 1_makeStytchUsers.mjs
+  ```
+- In the Stytch dashboard, check that the users now exist.
+- If any errors occur and you need to delete the users, uncomment the lines with `client.users.delete`, set the user Ids, and rerun the script.
 
-
+The `1_makeStytchUsers.mjs` uses the Stytch JavaScript SDK to create users with three different hashing algorithms. However, the line `client.passwords.authenticate` provides the cleartext password to Stytch, which Stytch uses to rehash the user password using the Scrypt hashing algorithm. Thus, at the end of this script, all your users' passwords will be hashed with Scrypt in the Stytch database. Once you have completed this tutorial and understand how to import hashes into FusionAuth, you might want to go back and comment out this line to test other hashing algorithms. Note that this is necessary only in the rare case that you previously imported users into Stytch from another system, and some of those users have not yet logged in again.
 
 ## Request User Passwords From Stytch
 
@@ -97,9 +107,13 @@ openssl rsa -pubout -in private_key.pem -out public_key.pem
 
 Email Stytch only `public_key.pem`. Keep `private_key.pem` secret and secure.
 
+An example of what these keys look like is in the directory `fusionauth-import-scripts/stytch/exampleData/1_emailRequest`. You can use the keys to request test users from Stytch, but do **not** use these keys for real users, as they are publicly available on GitHub.
+
+(If you don't want to bother sending Stytch an email, you can use the example response files for the rest of this tutorial. The two files Stytch emailed are in `exampleData/2_emailResponse`.)
+
 ### Decrypt The Reply
 
-Stytch will reply with two files: an encrypted password hash file (`something-hashes.enc`), and the key with which to decrypt it (`key.bin.enc`).
+Stytch will reply with two files: an encrypted password hash file (`stytch-project-<hashes>.enc`), and the key with which to decrypt it (`key.bin.enc`).
 
 Decrypt the password file with the commands below.
 
@@ -108,9 +122,9 @@ openssl pkeyutl -decrypt -inkey private_key.pem -in key.bin.enc -out key.bin &&
 openssl enc -d -aes-256-cbc -in something-hashes.enc -out stytch_password_hashes.csv -pass file:./key.bin
 ```
 
-Now you have all your user hashes in the file `stytch_password_hashes.csv`.
+Now you have all your user hashes in the file `stytch_password_hashes.csv`. An example decrypted hash file is in `exampleData/3_responseDecryption`.
 
-Below is an example of the file content for three users.
+Below is the file content for three users.
 
 ```csv
 scrypt hash parameters,,,,
@@ -120,11 +134,8 @@ scryptPParameter,1,,,
 scryptKeyLengthParamenter,32,,,
 ,,,,
 id,hash,salt,hash_method,project_id
-
 user-test-178d8ee5-c458-4f48-a482-8fefa30a1a87,uiOC_BwbKta9R9QL6Ss6KTDpCcULh9_zhObl5j4398M=,BbV-sGQqUIX1NwE6uqtSITv4fa1iMw==,scrypt,project-test-36510638-652a-4d3d-9a94-f0a7106582fc
-
 user-test-799ea981-b2bb-417f-afe8-4ab6e79fcd2a,A6VzdsTsTHPqafORIb0GkGD6qFxdncqwA15YXRsVgvs=,XPapDAm6xdV5UhMpyPrSpy8FbfCDtA==,scrypt,project-test-36510638-652a-4d3d-9a94-f0a7106582fc
-
 user-test-c1be12e4-fc61-4e7a-8831-0fc14cb87b65,8dg6AaIWPfcLTQU7lb4H-CI49dHeqaBXfFE1ogb2qRQ=,zKia-0BdIFKCzWbzXbj3qrhBnbiWNg==,scrypt,project-test-36510638-652a-4d3d-9a94-f0a7106582fc
 ```
 
