@@ -5,10 +5,9 @@ section: lifecycle
 subcategory: migrate users
 tertcategory: bulk
 prerequisites: none
-importCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-import-scripts/master
-javaCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-contrib/master
+importCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-import-scripts/stytch
+javaCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-contrib/scrypt
 dateCreated: 2024-01-22
-dateUpdated: none
 ---
 
 import InlineUIElement from 'src/components/InlineUIElement.astro';
@@ -53,7 +52,7 @@ import {RemoteCode} from '@fusionauth/astro-components';
 
 ## Introduction
 
-This article explains how to import users from Stytch into FusionAuth. It is a low-level technical tutorial focussing on transferring password hashes, calling APIs, and preparing data. The article does not explain the high-level process of migration planning. This is explained in the [migration overview article](/docs/lifecycle/migrate-users/bulk/general.mdx). Please ensure you understand concepts like dual write, backfill, final synchronization, rolling migration, and cutover before proceeding. The [Stytch documentation on migration strategies](https://stytch.com/docs/guides/migrations/migrating-user-data-statically) is also useful reading. Also be aware of all laws regarding the protection and transfer of personal information in your country.
+This article explains how to import users from Stytch into FusionAuth. It is a low-level technical tutorial focussing on transferring password hashes, calling APIs, and preparing data. The article does not explain the high-level process of migration strategy. This is explained in the [migration overview article](/docs/lifecycle/migrate-users/bulk/general.mdx). Before proceeding, please ensure you understand concepts like dual write, backfill, final synchronization, rolling migration, and cutover. The [Stytch documentation on migration strategies](https://stytch.com/docs/guides/migrations/migrating-user-data-statically) is also useful reading. Also be aware of all laws regarding the protection and transfer of personal information in your country.
 
 Finally, you need a basic understanding of password hashing and how salts work. FusionAuth has a [hashing article](/articles/security/math-of-password-hashing-algorithms-entropy) that is a good starting point.
 
@@ -62,13 +61,13 @@ Finally, you need a basic understanding of password hashing and how salts work. 
 
 This article is in the form of a tutorial, with data and code examples, showing you exactly how to extract and combine user credentials and information, and insert them into your FusionAuth database. To follow this tutorial, you need:
 - [Node.js](https://nodejs.org/en) to run the migration scripts, and npm.
-- FusionAuth. The easiest way to run it locally is to use [Docker](https://docs.docker.com/get-docker/) with the configuration file provided in this tutorial.
+- FusionAuth. The easiest way to run it locally is to use [Docker](https://docs.docker.com/get-docker/) with the configuration file provided later in this tutorial.
 
 Stytch also has SDKs for [Go, Java, Python, and Ruby](https://stytch.com/docs/sdks) if you prefer to convert the JavaScript scripts accompanying this tutorial to another language for your migration in production.
 
 ## Create Stytch Users
 
-You probably already have a Stytch account with users you want to export to FusionAuth. Even so, it is a good idea to create a separate test project in Stytch with only a few users. You can this to run an end-to-end migration between Stytch and FusionAuth quickly, without having to handle millions of real users, and the privacy risks of handling their data when encountering errors.
+You probably already have a Stytch account with users you want to export to FusionAuth. Even so, it is a good idea to create a separate test project in Stytch with only a few users. You can use this to run an end-to-end migration between Stytch and FusionAuth quickly, without having to handle millions of real users, and the privacy risks of handling their data when encountering errors.
 
 Create a new Stytch project:
 - Create or sign in to your Stytch account at https://stytch.com/dashboard.
@@ -88,14 +87,16 @@ Create three example users:
   npm update
   node 1_makeStytchUsers.mjs
   ```
-- In the Stytch dashboard, check that the users now exist.
-- If any errors occur and you need to delete the users, uncomment the lines with `client.users.delete`, set the user Ids, and rerun the script.
+- In the Stytch web dashboard, check that the users now exist.
+- If any errors occur and you need to delete the users, uncomment the lines with `client.users.delete`, set the user Ids from the dashboard, and rerun the script.
 
-The `1_makeStytchUsers.mjs` uses the Stytch JavaScript SDK to create users with three different hashing algorithms. However, the line `client.passwords.authenticate` provides the cleartext password to Stytch, which Stytch uses to rehash the user password using the Scrypt hashing algorithm. Thus, at the end of this script, all your users' passwords will be hashed with Scrypt in the Stytch database.
+<Aside type="note">
+The `1_makeStytchUsers.mjs` file uses the Stytch JavaScript SDK to create users with three different hashing algorithms. However, the line `client.passwords.authenticate` provides the cleartext password to Stytch, which Stytch uses to rehash the user password using the Scrypt hashing algorithm. Thus, at the end of this script, all your users' passwords will be hashed with Scrypt in the Stytch database.
 
 Even though you can create passwords for Stytch users with different hashing algorithms ([bcrypt, scrypt, argon2, MD-5, SHA-1, or PBKDF2](https://stytch.com/docs/api/password-migrate)), Scrypt is Stytch's preferred algorithm. Whenever a user logs in, Stytch will verify their password hash using the algorithm it is currently stored with, and then rehash their password using Scrypt and discard the old hash. Password rehashing is a common technique used to upgrade security as hashing algorithms evolve over time.
 
-Once you have completed this tutorial and understand how to import hashes into FusionAuth, you might want to go back and comment out the authentic line in `1_makeStytchUsers.mjs` to test other hashing algorithms. Note that this is necessary only in the rare case that you previously imported users into Stytch from another system, and some of those users have not yet logged in again.
+Once you have completed this tutorial and understand how to import hashes into FusionAuth, you might want to go back and comment out the `authenticate` line to test other hashing algorithms. Note that this is necessary only in the rare case that you previously imported users into Stytch from another system, and some of those users have not yet logged in again.
+</Aside>
 
 ## Request User Passwords From Stytch
 
@@ -116,7 +117,9 @@ Email Stytch only `public_key.pem`. Keep `private_key.pem` secret and secure.
 
 An example of what these keys look like is in the directory `fusionauth-import-scripts/stytch/exampleData/1_emailRequest`. You can use the keys to request test users from Stytch, but do **not** use these keys for real users, as they are publicly available on GitHub.
 
-(If you don't want to bother sending Stytch an email, you can use the example response files for the rest of this tutorial. The two files Stytch emailed are in `exampleData/2_emailResponse`. Just remember to change the sample user Ids to your actual user Ids as you proceed.)
+<Aside type="tip">
+If you don't want to bother sending Stytch an email, you can use the example response files for the rest of this tutorial. The two files Stytch emailed are in `exampleData/2_emailResponse`. Just remember to change the sample user Ids to your actual user Ids as you proceed.
+</Aside>
 
 ### Decrypt The Reply
 
@@ -129,11 +132,9 @@ openssl pkeyutl -decrypt -inkey private_key.pem -in key.bin.enc -out key.bin &&
 openssl enc -d -aes-256-cbc -in stytch-project-test-36510638-652a-4d3d-9a94-f0a7106582fc-hashes-2021-01-11.enc -out stytch_password_hashes.csv -pass file:./key.bin
 ```
 
-Now you have all your user hashes in the file `stytch_password_hashes.csv`. An example decrypted hash file is in `exampleData/3_responseDecryption`.
+Now you have all your user hashes in the file `stytch_password_hashes.csv`. Below is the file content for three users, in `exampleData/3_responseDecryption/stytch_password_hashes.csv`.
 
-Below is the file content for three users, in `exampleData/3_responseDecryption/stytch_password_hashes.csv`.
-
-< RemoteCode
+<RemoteCode
     url={frontmatter.importCodeRoot + "/stytch/exampleData/3_responseDecryption/stytch_password_hashes.csv"}
     lang="csv"
 />
@@ -146,16 +147,21 @@ Below the header are the column names, and then one row per user. In the example
 
 Not all hash algorithms use separate salts. For instance, Bcrypt will create a salt automatically when hashing a password, and store the hash and salt concatenated in one string. You may have to deal with peculiarities of different algorithms like this if you previously migrated users into Stytch from an authentication provider that did not use Scrypt.
 
-Even when using Scrypt with the given parameters, you need to carefully check that how you hash passwords has the same result as Stytch. Hashes and salts are arrays of bytes (numbers) and therefore cannot be displayed directly as text. They are instead mapped to text using a conversion process called Base64. However, there are [different ways](https://en.wikipedia.org/wiki/Base64#Variants_summary_table) of doing this mapping. Since you can see the hashes from Stytch use `-` and `_`, they must be using RFC 4648 (the URL-safe standard). This can cause miscommunications with other hash libraries, which use `+` and `-`.
+Even when using Scrypt with the given parameters, you need to carefully check that how you hash passwords has the same result as Stytch. Hashes and salts are arrays of bytes (numbers) and therefore cannot be displayed directly as text. They are instead mapped to text using a conversion process called Base64. However, there are [different ways](https://en.wikipedia.org/wiki/Base64#Variants_summary_table) of doing this mapping. Since you can see the hashes from Stytch use `-` and `_`, they must use RFC 4648 (the URL-safe standard). This can cause miscommunications with other hash libraries, which use `+` and `-`.
 
 For instance, we can use this snippet of JavaScript Node.js code below in `js/2_checkHash.mjs` to create a hash for the last user in the example file above.
 
-< RemoteCode
+<RemoteCode
     url={frontmatter.importCodeRoot + "/stytch/js/2_checkHash.mjs"}
     lang="js"
 />
 
-Note that our hash algorithm looks correct, but the hashes differ by one character, `+`, in `8dg6AaIWPfcLTQU7lb4H-CI49dHeqaBXfFE1ogb2qRQ=` and `8dg6AaIWPfcLTQU7lb4H+CI49dHeqaBXfFE1ogb2qRQ=`.
+Note that our hash algorithm looks correct, but the hashes differ by one character, `+`, in
+```
+8dg6AaIWPfcLTQU7lb4H-CI49dHeqaBXfFE1ogb2qRQ=
+and
+8dg6AaIWPfcLTQU7lb4H+CI49dHeqaBXfFE1ogb2qRQ=
+```
 
 To have the hashes match correctly, you need to replace the `+` and `/` characters in your hash:
 
@@ -163,15 +169,15 @@ To have the hashes match correctly, you need to replace the `+` and `/` characte
 const keyBase64 = derivedKey.toString('base64').replace(/\+/g, '-').replace(/\//g, '_');
 ```
 
-JavaScript and FusionAuth use the `+` and `/` symbols. Stytch and the FusionAuth Java Stytch plugin use `-` and `_`. If you encounter an error when verifying hashes, try first converting the hash and salt to use the other character set.
+JavaScript and FusionAuth use the `+` and `/` symbols. Stytch and the FusionAuth Java Stytch plugin use `-` and `_`. If you encounter an error when verifying hashes, try converting the hash and salt to use the other character set.
 
 ## Get All User Details And Combine With Hashes
 
 Stytch emails you only the user hash and Id. You have to use the Stytch API to retrieve all user details from Stytch, then combine those with the hash from the email, and save the user to FusionAuth.
 
-Firstly, open your hash file from Stytch in a text editor and remove all the header lines so only one user per row remains. Save this file into `stytch/js/hash.csv`. The file should look like `exampleData/4_hashFilePreparation/hash.csv` now:
+Open your hash file from Stytch in a text editor and remove all the header lines so only one user per row remains. Save this file into `stytch/js/hash.csv`. The file should look like `exampleData/4_hashFilePreparation/hash.csv` now:
 
-< RemoteCode
+<RemoteCode
     url={frontmatter.importCodeRoot + "/stytch/exampleData/4_hashFilePreparation/hash.csv"}
     lang="csv"
 />
@@ -189,7 +195,7 @@ The `3_getUserDetails.mjs` script loops through each user in the `hash.csv` file
 
 Open `js/users.json`. It should look like the sample in `exampleData/5_userDetailAndHashPreparation/users.json`.
 
-< RemoteCode
+<RemoteCode
     url={frontmatter.importCodeRoot + "/stytch/exampleData/5_userDetailAndHashPreparation/user.json"}
     lang="json"
 />
@@ -211,7 +217,7 @@ Note that this repository has multiple plugin projects. You need to build and in
 
 Open the file `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleStytchScryptPasswordEncryptor.java`. It is shown below.
 
-< RemoteCode
+<RemoteCode
     url={frontmatter.javaCodeRoot + "/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleStytchScryptPasswordEncryptor.java"}
     lang="java"
 />
@@ -221,6 +227,8 @@ This program takes a password and salt and returns a hash. It accepts and return
 There are two other files linked to this Scrypt plugin that you shouldn't need to alter:
 - `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleStytchScryptPasswordEncryptorTest.java`, which holds unit tests for the hasher.
 - `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/guice/MyExampleFusionAuthPluginModule.java`, which makes the hasher file known to FusionAuth.
+
+If you make another hash plugin you will need to make your own test and add your plugin to the guice file.
 
 Let's build the Java plugin now and add it to FusionAuth:
 - Open the file `fusionauth-contrib/Password Hashing Plugins/src/test/java/com/mycompany/fusionauth/plugins/ExampleArgon2idPasswordEncryptorTest.java` and comment out all the tests. They did not work at the time of writing this tutorial and will break your compilation.
@@ -238,7 +246,7 @@ Let's build the Java plugin now and add it to FusionAuth:
   exit
   ```
 
-All tests should and the plugin file should be available in `Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar`.
+All tests should pass and the plugin file should be available in `Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar`.
 
 ## Deploy the plugin
 
@@ -251,7 +259,7 @@ If you are not running FusionAuth already, or want to test this process in anoth
   docker compose up
   ```
 - FusionAuth will now be running and browsable at `http://localhost:9011`. You can log in with user `admin@example.com` and `password`. The container is called `fa`.
-- In the `fusionauth-contrib` terminal where you built the plugin, run the code below. It will copy the JAR file into the FusionAuth container plugins directory.
+- In the `fusionauth-contrib` terminal where you built the plugin, run the code below. It will copy the JAR file into the FusionAuth container `plugins` directory.
   ```bash
   docker exec fa mkdir /usr/local/fusionauth/plugins &&
   docker cp "Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar" fa:/usr/local/fusionauth/plugins/fusionauth-example-password-encryptor-0.1.0.jar
@@ -269,21 +277,23 @@ npm update
 npm 4_import.js
 ```
 
-This import script needs only FusionAuth to be running locally on port 9011, and the `users.json` file to exist in the same directory. The Fusion Kickstart file already set a sample application (user registration) to match the Ids in `4_import.js`. If your FusionAuth installation is different, please edit the Ids in `4_import.js`.
+This import script needs only FusionAuth to be running locally on port 9011, and the `users.json` file to exist in the same directory. The FusionAuth Kickstart file already set a sample Application (user registration) to match the Ids in `4_import.js`. If your FusionAuth installation is different, please edit the Ids in `4_import.js`.
 
-You might also want to set the user's registration and tenant for production migration.
+<Aside type="tip">
+You might want to set the user's registration and tenant Ids in your production migration.
 ```js
 faUser.registrations = Array<UserRegistration>;
 faUser.tenantId = UUID;
 ```
+</Aside>
 
 If the migration script ran successfully you should be able to log in to FusionAuth with one of the imported users:
 - Browse to http://localhost:9011
 - Enter username `user1@example.com` and password `averylongandunguessablepasswordwithlotsofrandominfooofisjoafasnr;,n1`
 - Logging in should work, but your user will not be able to see anything as it has no administration rights.
 - Log out again and login with `admin@example.com`.
-- Browse to users and edit one of the imported users.
-- In the Source tab you can see all the user details.
+- Browse to <InlineUIElement>Users</InlineUIElement> and edit one of the imported users.
+- In the <InlineUIElement>Source</InlineUIElement> tab you can see all the user details.
 
 ## Debug With The FusionAuth Database
 
@@ -322,7 +332,7 @@ It takes a Stytch user from the JSON file, maps it to a FusionAuth (FA) user rea
 
 The `getFaUserFromStytchUser()` function does a few things:
 - Map as many matching fields from Stytch to FusionAuth as possible.
-- FusionAuth allows only one email and phone number. Stytch has an array. The import script takes the first verified contact it can as the primary FusionAuth contact, otherwise it just takes the first one. Extra contacts are saved in the generic `data` JSON field.
+- FusionAuth allows only one email and phone number. Stytch has an array. The import script takes the first verified contact it can find as the primary FusionAuth contact, otherwise it just takes the first contact. Extra contacts are saved in the generic `data` JSON field.
 - All Stytch user details that don't map to FusionAuth are stored in the `data` field.
 - Empty fields and arrays are ignored.
 
