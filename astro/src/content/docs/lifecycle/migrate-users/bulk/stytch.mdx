@@ -24,14 +24,12 @@ import {RemoteCode} from '@fusionauth/astro-components';
   - [Email The Request](#email-the-request)
   - [Decrypt The Reply](#decrypt-the-reply)
   - [Common Problems With Hashes](#common-problems-with-hashes)
-- [Get All Users' Details And Combine With Hashes](#get-all-users-details-and-combine-with-hashes)
+- [Get All User Details And Combine With Hashes](#get-all-user-details-and-combine-with-hashes)
 - [Install the Scrypt Password Hash Plugin For FusionAuth](#install-the-scrypt-password-hash-plugin-for-fusionauth)
 - [Deploy the plugin](#deploy-the-plugin)
 - [Save The User Details And Hash To FusionAuth](#save-the-user-details-and-hash-to-fusionauth)
 - [Debug With The FusionAuth Database](#debug-with-the-fusionauth-database)
-- [Authentication Types](#authentication-types)
-- [References](#references)
-
+- [A Closer Look At The Import Script](#a-closer-look-at-the-import-script)
 
 ## Todo
 
@@ -48,6 +46,10 @@ import {RemoteCode} from '@fusionauth/astro-components';
 - [ ] pull request for https://github.com/FusionAuth/fusionauth-import-scripts/.
 - [ ] add an import script for users from stytch in json format? - https://github.com/FusionAuth/fusionauth-import-scripts/tree/master
 - [ ] what login types does fusionauth support - magic email, passwordless, phone, google, facebook
+- [ ] - [ ] passwords, passwordless, others?
+- [ ] https://fusionauth.io/docs/lifecycle/migrate-users/bulk/duende#add-the-aspnet-identity-v2-hashing-plugin
+- [ ] https://fusionauth.io/docs/lifecycle/migrate-users/bulk/auth0
+- [ ] https://fusionauth.io/docs/lifecycle/migrate-users/bulk/general
 
 ## Introduction
 
@@ -114,11 +116,11 @@ Email Stytch only `public_key.pem`. Keep `private_key.pem` secret and secure.
 
 An example of what these keys look like is in the directory `fusionauth-import-scripts/stytch/exampleData/1_emailRequest`. You can use the keys to request test users from Stytch, but do **not** use these keys for real users, as they are publicly available on GitHub.
 
-(If you don't want to bother sending Stytch an email, you can use the example response files for the rest of this tutorial. The two files Stytch emailed are in `exampleData/2_emailResponse`.)
+(If you don't want to bother sending Stytch an email, you can use the example response files for the rest of this tutorial. The two files Stytch emailed are in `exampleData/2_emailResponse`. Just remember to change the sample user Ids to your actual user Ids as you proceed.)
 
 ### Decrypt The Reply
 
-Stytch will reply with two files: an encrypted password hash file (`stytch-project-<hashes>.enc`), and the key with which to decrypt it (`key.bin.enc`).
+Stytch will reply with two files: an encrypted password hash file (`stytch-project-test-36510638-652a-4d3d-9a94-f0a7106582fc-hashes-2021-01-11.enc`), and the key with which to decrypt it (`key.bin.enc`).
 
 Decrypt the password file with the commands below.
 
@@ -163,7 +165,7 @@ const keyBase64 = derivedKey.toString('base64').replace(/\+/g, '-').replace(/\//
 
 JavaScript and FusionAuth use the `+` and `/` symbols. Stytch and the FusionAuth Java Stytch plugin use `-` and `_`. If you encounter an error when verifying hashes, try first converting the hash and salt to use the other character set.
 
-## Get All Users' Details And Combine With Hashes
+## Get All User Details And Combine With Hashes
 
 Stytch emails you only the user hash and Id. You have to use the Stytch API to retrieve all user details from Stytch, then combine those with the hash from the email, and save the user to FusionAuth.
 
@@ -258,34 +260,74 @@ If you are not running FusionAuth already, or want to test this process in anoth
 
 ## Save The User Details And Hash To FusionAuth
 
-You now have the users file `users.json` and installed the Scrypt plugin. To import the users into FusionAuth you need to install the FusionAuth SDK for Node.js, then run the script below.
+You now have the users file `users.json` and installed the Scrypt plugin. To import the users into FusionAuth you need to run the Node.js import script.
 
-Add the following code into a file called `import.mjs`.
+Open a terminal in the `fusionauth-import-scripts` directory and run the code below.
+```bash
+cd stytch/js
+npm update
+npm 4_import.js
+```
 
-TODO
+This import script needs only FusionAuth to be running locally on port 9011, and the `users.json` file to exist in the same directory. The Fusion Kickstart file already set a sample application (user registration) to match the Ids in `4_import.js`. If your FusionAuth installation is different, please edit the Ids in `4_import.js`.
+
+You might also want to set the user's registration and tenant for production migration.
+```js
 faUser.registrations = Array<UserRegistration>;
 faUser.tenantId = UUID;
-
-In a terminal, run the code below.
-
-```bash
-npm install @fusionauth/typescript-client stream-json
-node import.mjs
 ```
+
+If the migration script ran successfully you should be able to log in to FusionAuth with one of the imported users:
+- Browse to http://localhost:9011
+- Enter username `user1@example.com` and password `averylongandunguessablepasswordwithlotsofrandominfooofisjoafasnr;,n1`
+- Logging in should work, but your user will not be able to see anything as it has no administration rights.
+- Log out again and login with `admin@example.com`.
+- Browse to users and edit one of the imported users.
+- In the Source tab you can see all the user details.
 
 ## Debug With The FusionAuth Database
 
-users
-identites
-DBeaver
+If you have errors logging in, use the FusionAuth database directly to see if your users were imported, and check their hashes manually.
 
-## Authentication Types
+You can use any Postgresql browser. [DBeaver](https://dbeaver.io/download) is free, cross-platform, and open source. The connection details are in `fusionauth-import-scripts/stytch/fusionAuthDockerFiles/docker-compose.yml` and `.env`.
 
-passwords, passwordless, others?
+In DBeaver or your database IDE, create a new Postgresql connection with the following details:
+- URL: jdbc:postgresql://localhost:6432/fusionauth
+- Host: localhost
+- Port: 6432
+- Database: fusionauth
+- Username: fusionauth
+- Password: hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3
 
-## References
-- [x] https://fusionauth.io/docs/reference/password-hashes
-- [x] https://fusionauth.io/docs/extend/code/password-hashes/custom-password-hashing
-- [ ] https://fusionauth.io/docs/lifecycle/migrate-users/bulk/duende#add-the-aspnet-identity-v2-hashing-plugin
-- [ ] https://fusionauth.io/docs/lifecycle/migrate-users/bulk/auth0
-- [ ] https://fusionauth.io/docs/lifecycle/migrate-users/bulk/general
+Log in to the database and browse to `Databases/fusionauth/Schemas/public/Tables/identies` and `users`. These two tables will show you the login credentials and user personal information.
+
+## A Closer Look At The Import Script
+
+The `4_import.mjs` script is the code you will need to spend the most time editing if you want to customize your own migration. Let's look at how it works.
+
+It has two dependencies:
+- `stream-json` — A JSON library that can read massive files with millions of users incrementally. It opens `users.json` for reading in the line `new Chain([fs.createReadStream(filename), parser(), new StreamArray(),])`. For more information read https://github.com/uhop/stream-json.
+- `@fusionauth/typescript-client` — The FusionAuth SDK for Node.js. It's only used for a single operation: `fa.importUsers(importRequest);`. For more information read https://fusionauth.io/docs/sdks/typescript.
+
+The main program loop is the code below.
+
+```js
+for await (const { value: stytchUser } of stytchUsers) {
+  const faUser = getFaUserFromStytchUser(stytchUser);
+  await importUser(faUser, stytchUser);
+}
+```
+
+It takes a Stytch user from the JSON file, maps it to a FusionAuth (FA) user ready for import, sends it to FusionAuth.
+
+The `getFaUserFromStytchUser()` function does a few things:
+- Map as many matching fields from Stytch to FusionAuth as possible.
+- FusionAuth allows only one email and phone number. Stytch has an array. The import script takes the first verified contact it can as the primary FusionAuth contact, otherwise it just takes the first one. Extra contacts are saved in the generic `data` JSON field.
+- All Stytch user details that don't map to FusionAuth are stored in the `data` field.
+- Empty fields and arrays are ignored.
+
+Carefully read this function and see if you agree that the user information you need is imported correctly. If information is not needed, you can comment out the relevant lines.
+
+The function `getNullOrUUIDFromUserId()` extracts a standard UUID from the Stytch format to set a user Id in FusionAuth.
+
+Finally, this script imports users individually. If this is too slow when running the production migration, wrap the `importUsers()` FusionAuth SDK call in a loop that bundles users in batches of 100.
