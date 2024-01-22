@@ -220,7 +220,7 @@ There are two other files linked to this Scrypt plugin that you shouldn't need t
 - `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleStytchScryptPasswordEncryptorTest.java`, which holds unit tests for the hasher.
 - `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/guice/MyExampleFusionAuthPluginModule.java`, which makes the hasher file known to FusionAuth.
 
-
+Let's build the Java plugin now and add it to FusionAuth:
 - Open the file `fusionauth-contrib/Password Hashing Plugins/src/test/java/com/mycompany/fusionauth/plugins/ExampleArgon2idPasswordEncryptorTest.java` and comment out all the tests. They did not work at the time of writing this tutorial and will break your compilation.
 - Open a terminal and run the code below to build a Docker container for Java, with the repository shared as a volume into the container.
   ```bash
@@ -236,18 +236,29 @@ There are two other files linked to this Scrypt plugin that you shouldn't need t
   exit
   ```
 
+All tests should and the plugin file should be available in `Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar`.
+
 ## Deploy the plugin
 
-- Copy `fusionauth-example-password-encryptor-0.1.0.jar` to your FusionAuth `plugins` directory and restart FusionAuth.
-    - If using FusionAuth in Docker, where the container is called `fa` this command will be:
-    ```bash
-    docker exec fa mkdir /usr/local/fusionauth/plugins &&
-    docker cp "Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar" fa:/usr/local/fusionauth/plugins/fusionauth-example-password-encryptor-0.1.0.jar
-    ```
+You now need to copy `fusionauth-example-password-encryptor-0.1.0.jar` to your FusionAuth `plugins` directory and restart FusionAuth.
+
+If you are not running FusionAuth already, or want to test this process in another instance, you can start FusionAuth in Docker.
+- Open a new terminal in the `fusionauth-import-scripts` directory and run the code below.
+  ```bash
+  cd stytch/fusionAuthDockerFiles
+  docker compose up
+  ```
+- FusionAuth will now be running and browsable at `http://localhost:9011`. You can log in with user `admin@example.com` and `password`. The container is called `fa`.
+- In the `fusionauth-contrib` terminal where you built the plugin, run the code below. It will copy the JAR file into the FusionAuth container plugins directory.
+  ```bash
+  docker exec fa mkdir /usr/local/fusionauth/plugins &&
+  docker cp "Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar" fa:/usr/local/fusionauth/plugins/fusionauth-example-password-encryptor-0.1.0.jar
+  ```
+- Finally, you need to restart FusionAuth for it to detect the plugin. In the terminal where FusionAuth is running in Docker push `ctrl-c` to stop it, wait, and run `docker compose up` again.
 
 ## Save The User Details And Hash To FusionAuth
 
-You now have the users file `export.json` and an installed Scrypt plugin. To import the users into FusionAuth you need to install the FusionAuth SDK for Node.js, then run the script below.
+You now have the users file `users.json` and installed the Scrypt plugin. To import the users into FusionAuth you need to install the FusionAuth SDK for Node.js, then run the script below.
 
 Add the following code into a file called `import.mjs`.
 
