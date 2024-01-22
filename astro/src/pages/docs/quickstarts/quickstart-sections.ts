@@ -22,6 +22,17 @@ interface QuickStartSection {
 
 const qsSections: QuickStartSection[] = [
   {
+      key: 'five-minute',
+      icon: '/img/icons/qs-main.svg',
+      faIcon: 'fa-code-simple',
+      color: 'indigo',
+      title: '5-minute Guides',
+      anchorTag: '5-minute',
+      desc: 'Guides for getting up and running quickly',
+      articles: [
+      ],
+  },
+  {
     key: 'web',
     icon: '/img/icons/web-application.svg',
     faIcon: 'fa-code-simple',
@@ -30,27 +41,6 @@ const qsSections: QuickStartSection[] = [
     anchorTag: 'web-application',
     desc: 'Traditional web applications that run on servers',
     articles: [
-      {
-        href: '/blog/2022/03/07/single-sign-on-with-drupal',
-        title: 'Drupal',
-        icon: '/img/icons/drupal.svg',
-        faIcon: 'fa-droplet',
-        navColor: 'blue',
-      },
-      {
-        href: '/blog/2023/03/13/single-sign-on-laravel-fusionauth',
-        title: 'Laravel',
-        icon: '/img/icons/laravel.svg',
-        faIcon: 'fa-block',
-        navColor: 'rose',
-      },
-      {
-        href: '/blog/2021/12/06/how-to-set-up-single-sign-on-between-fusionauth-wordpress',
-        title: 'Wordpress',
-        icon: '/img/icons/wordpress.svg',
-        faIcon: 'fa-w',
-        navColor: 'fuchsia',
-      },
     ],
   },
   {
@@ -86,17 +76,6 @@ const qsSections: QuickStartSection[] = [
     articles: [
     ],
   },
-  {
-      key: 'fiveminute',
-      icon: '/img/icons/web-application.svg',
-      faIcon: 'fa-code-simple',
-      color: 'indigo',
-      title: '5-minute Guides',
-      anchorTag: '5-minute',
-      desc: 'Guides for getting up and running quickly',
-      articles: [
-      ],
-    },
 ];
 
 // merge in quickstarts managed by astro to the list of quickstart links we have above

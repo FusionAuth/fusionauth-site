@@ -5,6 +5,7 @@ author: Cameron Pavey, Dan Moore
 section: Authentication
 tags: lock-in architecture standards facade planning open-standards 
 icon: /img/icons/avoiding-authentication-system-lock-in.svg
+darkIcon: /img/icons/avoiding-authentication-system-lock-in-dark.svg
 ---
 
 Years ago your team decided to use a third-party authentication system to avoid the time and cost of building one in-house. But now a better option has hit the market and you're wanting to make the switch. Except, hold on, your old system is so deeply ingrained into your organization that you're practically locked-in to your current vendor.
@@ -71,7 +72,7 @@ There are certain technical issues you should consider as well. Planning upfront
 
 ### Password Hashes
 
-While password hashes are briefly mentioned above, understanding how they might lock you in is critical for future flexibility. Having access to your hashes allows you to perform a smooth migration of users who log in with those credentials. A password hash is always one way, so if you cannot get acquire them, you are left with the follwoing unsavory options:
+While password hashes are briefly mentioned above, understanding how they might lock you in is critical for future flexibility. Having access to your hashes allows you to perform a smooth migration of users who log in with those credentials. A password hash is always one way, so if you cannot get acquire them, you are left with the following unsavory options:
 
 * never migrating
 * resetting all your users' passwords 
@@ -81,7 +82,7 @@ There are two password hashing concerns to be aware of.
 
 First, what is the hashing algorithm used for your passwords?
 
-Your authentication system documentation should specify this. It's best if this is an industy-standard hash such as Argon or PBK2DF. Certain authentication systems, such as FusionAuth, allow for [custom password hashing algorithms](/docs/extend/code/password-hashes/custom-password-hashing) to be used, which can mitigate the risk of using a nonstandard hash.
+Your authentication system documentation should specify this. It's best if this is an industry-standard hash such as <code>Argon</code> or <code>PBK2DF</code>. Certain authentication systems, such as FusionAuth, allow for [custom password hashing algorithms](/docs/extend/code/password-hashes/custom-password-hashing) to be used, which can mitigate the risk of using a nonstandard hash.
 
 Second, can you get access to the password hashes?
 

@@ -16,6 +16,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - From the Link API, note the difference between a FusionAuth User and a 3rd party user: `This API is used to create a link between a FusionAuth User and a user in a 3rd party identity provider. This API may be useful when you already know the unique Id of a user in a 3rd party identity provider and the corresponding FusionAuth User.`
 - Do not manually wrap long lines. Use the soft wrap in your editor to view while editing.
 - Use `Id` instead of `ID` or `id` when describing a unique identifier
+- Use `admin UI` instead of `Admin UI` when writing about the admin user interface.
 - Use `logged in` instead of `logged-in`
 - `log in` is the verb, `login` is the noun
 - Don't abbreviate FusionAuth, use the full name.
@@ -38,7 +39,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 ## Docs 
 - Don't use complex breadcrumbs styling in docs. Use `->`. Use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component. Breadcrumbs should look like this `<Breadcrumb>foo -> bar -> baz</Breadcrumb>`.
 - If you are referencing a field in a form or JSON API doc, use the [InlineField](astro/src/components/InlineField.astro) component: `<InlineField>Issuer</InlineField>`.
-- If you are referencing a UI element or button, use the [UIelement](astro/src/components/Uielement.astro) component: `Click the <UIelement>Ok</UIelement> button`.
+- If you are referencing a UI element or button, use the [InlineUIElement](astro/src/components/InlineUIElement.astro) component: `Click the <UIelement>Ok</UIelement> button`.
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
 - When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
 - Include fragments that are shared between different sections of the doc should be stored in the [shared](astro/src/content/docs/_shared) directory.
@@ -49,18 +50,41 @@ Here are some guidelines to follow when writing documentation (everything under 
     Available Since Version 1.5.0
   </Aside>
 
+If it is inline (for a field), use <AvailableSince since="1.5.0"> - [AvailableSince](astro/src/components/api/AvailableSince.astro)
+- If you are deprecating a field, use <DeprecatedSince since="1.5.0"> - [DeprecatedSince](astro/src/components/api/DeprecatedSince.astro)
+- If you are removing a field, use <RemovedSince since="1.5.0"> - [RemovedSince](astro/src/components/api/RemovedSince.astro)
+
 - The table of contents along the right side is populated by a list of headings extracted from the top level markdown. If you are using nested markdown files with your headings you need to export them into the parent MDX file.
   - See [Account Portal](astro/src/content/docs/get-started/download-and-install/account-portal.mdx) for an example. See the Astro docs for [exported variables](https://docs.astro.build/en/guides/markdown-content/#using-exported-variables-in-mdx) and [exported properties](https://docs.astro.build/en/guides/markdown-content/#exported-properties) to see what that is doing.
 - We currently use [FontAwesome v6](https://fontawesome.com/) to render icons, so you can use them to refer to UI buttons, like this:
     ```jsx
-    <IconButton icon="edit" color="blue" />
-    <IconButton icon="copy" color="purple" />
-    <IconButton icon="search" color="green" />
-    <IconButton icon="minus-circle" color="gray" />
-    <IconButton icon="trash" color="red" />
+    <IconButton icon="edit" />
+    <IconButton icon="copy" />
+    <IconButton icon="fa-search" />
     ```
 
     ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/719bffe8-2a54-41a2-a339-b3afeda8d499)
+
+Import the ocmponent:
+
+```
+import Icon from 'src/components/icon/Icon.astro';
+
+...
+    <IconButton name="plus" />
+```
+
+Review [the component for all options and icons](astro/src/components/icon/Icon.astro).
+
+### Docs Navigation
+
+If you want a page to float to the top of the navigation, because it is an overview page, use this attribute:
+
+```
+topOfNav: true
+```
+
+Make descriptions full sentences.
 
 
 ### Including files

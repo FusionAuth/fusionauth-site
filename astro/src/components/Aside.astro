@@ -5,10 +5,11 @@
 export interface Props {
 	type?: 'note' | 'tip' | 'caution' | 'danger' | 'database' | 'version';
 	title?: string;
-        nodark?: boolean;
+	titleBold?: boolean;
+	nodark?: boolean;
 }
 
-const { type = 'note', title = type, nodark = false } = Astro.props as Props;
+const { type = 'note', title = type, titleBold = true, nodark = false } = Astro.props as Props;
 
 // SVG icon paths based on GitHub Octicons
 const icons: Record<NonNullable<Props['type']>, { viewBox: string; d: string }> = {
@@ -40,28 +41,35 @@ const icons: Record<NonNullable<Props['type']>, { viewBox: string; d: string }> 
 const { viewBox, d } = icons[type];
 
 const bgColors: Record<NonNullable<Props['type']>, string> = {
-	note: 'border-blue-500 bg-blue-50' + (!nodark ? ' dark:bg-blue-900' : ''),
-	tip: 'border-green-500 bg-green-50' + (!nodark ? ' dark:bg-green-900' : ''),
-	caution: 'border-yellow-500 bg-yellow-50' + (!nodark ? ' dark:bg-yellow-700' : ''),
-	danger: 'border-red-500 bg-red-50' + (!nodark ? ' dark:bg-red-900' : ''),
-	database: 'border-orange-500 bg-orange-50' + (!nodark ? ' dark:bg-orange-900' : ''),
-	version: 'border-green-500 bg-green-50' + (!nodark ? ' dark:bg-green-900' : ''),
-	};
+	note: 'border-blue-500 bg-blue-50' + (!nodark ? ' dark:bg-blue-900 dark:bg-opacity-30' : ''),
+	tip: 'border-green-500 bg-green-50' + (!nodark ? ' dark:bg-green-900 dark:bg-opacity-30' : ''),
+	caution: 'border-yellow-500 bg-yellow-50' + (!nodark ? ' dark:bg-yellow-700 dark:bg-opacity-20' : ''),
+	danger: 'border-red-500 bg-red-50' + (!nodark ? ' dark:bg-red-900 dark:bg-opacity-30' : ''),
+	database: 'border-orange-500 bg-orange-50' + (!nodark ? ' dark:bg-orange-900 dark:bg-opacity-30' : ''),
+	version: 'border-green-500 bg-green-50' + (!nodark ? ' dark:bg-green-900 dark:bg-opacity-30' : ''),
+};
 const bgColor = bgColors[type];
 
 ---
 
-<div class={`border-l-4 p-4 ${bgColor}`} aria-label={title}>
-	<div class="title not-prose flex align-text-bottom font-bold uppercase" aria-hidden="true">
+<div class={`border-l-4 p-4 mb-5 rounded-sm ${bgColor}`} aria-label={title}>
+	<div class="title not-prose flex align-text-bottom font-bold" aria-hidden="true">
 		<span class="icon mb-2 pr-2">
-			<svg xmlns="http://www.w3.org/2000/svg" class="inline" viewBox={viewBox} width={16} height={16}>
+			<svg xmlns="http://www.w3.org/2000/svg" class="inline" viewBox={viewBox} width={24} height={24}>
 				<path class:list={["fill-slate-800", nodark ? '' : 'dark:fill-slate-200']} fill-rule="evenodd" d={d}></path>
 			</svg>
 		</span>
-		<span class="mb-2">{title}</span>
-
+		{/* Intentionally not showing the title and message the same time. Please do one of the following:
+				 1. Use the title property and slot.
+				 2. Use the message property.
+		*/}
+		<span class:list={[titleBold ? 'mb-4' : 'font-normal']}>{title}</span>
 	</div>
-	<div class="prose-p:my-0">
+
+	{/* Do not add this additional div do the dom unless a slot was provided by the caller */}
+	{Astro.slots.has('default') && (
+	<div class="prose-p:mt-0 prose-p:mb-5 last:prose-p:mb-0">
 		<slot />
 	</div>
+	)}
 </div>

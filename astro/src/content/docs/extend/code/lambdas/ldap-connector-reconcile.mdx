@@ -1,6 +1,6 @@
 ---
 title: LDAP Connector Reconcile Lambda
-description: An overview of the LDAP Connector Reconcile lambda
+description: An overview of the LDAP Connector Reconcile lambda.
 navcategory: customization
 section: extend
 subcategory: code
@@ -62,7 +62,33 @@ Navigate to <strong>Settings -> Connectors</strong> and click <strong>Add</stron
 The following is a simple example of an LDAP Connector reconcile lambda. You will need to modify it to suit your needs.
 
 ```javascript
-include::docs/src/lambda/ldap-connector-reconcile.js[]
+// This is an example LDAP Connector reconcile, modify this to your liking.
+function reconcile(user, userAttributes) {
+
+  // Uncomment this line to see the userAttributes object printed to the event log
+  // console.info(JSON.stringify(userAttributes, null, 2));
+
+  // This assumes the 'uid' attribute is a string form of a UUID in the format
+  // `8-4-4-4-12`. It will be necessary to ensure an attribute is returned by your LDAP
+  // connection that can be used for the FusionAuth user Id.
+  user.id = userAttributes.uid;
+  user.active = true;
+
+  // if migrating users, tag them by uncommenting the below lines
+  // user.data = {};
+  // user.data.migrated = true;
+
+  user.email = userAttributes.mail;
+  user.fullName = userAttributes.cn;
+
+  // In this example, the registration is hard coded, you may also build this
+  // dynamically based upon the returned LDAP attributes.
+  user.registrations = [{
+    applicationId: "5d562fea-9ba9-4d5c-b4a3-e57bb254d6db",
+    roles = ['user', 'admin']
+  }];
+
+}
 ```
 
 ### Example Active Directory lambda
