@@ -60,14 +60,11 @@ const recursiveSort = (category: Category) => {
 
     // sort these in reverse order so we process the Z elements before the A elements, which means A elements come first
     topOfNavElements.sort((a, b) => b.title.localeCompare(a.title));
-    if (topOfNavElements !== [] ) {
-      topOfNavElements.map((top) => {
-          const idx = category.entries.indexOf(top);
-          category.entries.splice(idx, 1);
-          category.entries.unshift(top);
-        }
-      )
-    }
+    topOfNavElements.map((top) => {
+      const idx = category.entries.indexOf(top);
+      category.entries.splice(idx, 1);
+      category.entries.unshift(top);
+    });
   }
   if (category.subcategories.length > 0) {
     category.subcategories.sort((a, b) => a.name.localeCompare(b.name));
