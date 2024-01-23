@@ -14,9 +14,11 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 import InlineField from 'src/components/InlineField.astro';
 import Aside from '/src/components/Aside.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
+import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/bulk/_additional-support.mdx';
 
 - [Todo](#todo)
 - [Introduction](#introduction)
+  - [Limitations](#limitations)
   - [Prerequisites](#prerequisites)
 - [Create Stytch Users](#create-stytch-users)
 - [Request User Passwords From Stytch](#request-user-passwords-from-stytch)
@@ -29,37 +31,28 @@ import {RemoteCode} from '@fusionauth/astro-components';
 - [Save The User Details And Hash To FusionAuth](#save-the-user-details-and-hash-to-fusionauth)
 - [Debug With The FusionAuth Database](#debug-with-the-fusionauth-database)
 - [A Closer Look At The Import Script](#a-closer-look-at-the-import-script)
+  - [Importing Roles](#importing-roles)
+- [Additional Support](#additional-support)
 
 ## Todo
 
-- [ ] review overview page and add stytch concepts and terms
-- [ ] create stytch account, add users, export them and all details
-- [ ] https://stytch.com/docs/guides/migrations/migrating-user-data-statically
-- [ ] review other services migration pages this references
-- [ ] remove unused frontmatter
-- [ ] review other articles, like bradley's - https://fusionauth.io/docs/lifecycle/migrate-users/bulk/duende#add-the-aspnet-identity-v2-hashing-plugin
-- [x] create hasher
-- [ ] pull request for fusionauth-contrib stytch branch
-- [ ] review details here - https://fusionauth.io/docs/lifecycle/migrate-users/bulk/duende#add-the-aspnet-identity-v2-hashing-plugin
-- [ ] pull request for hash repo
-- [ ] pull request for https://github.com/FusionAuth/fusionauth-import-scripts/.
-- [ ] add an import script for users from stytch in json format? - https://github.com/FusionAuth/fusionauth-import-scripts/tree/master
-- [ ] what login types does fusionauth support - magic email, passwordless, phone, google, facebook
-- [ ] - [ ] passwords, passwordless, others?
-- [ ] https://fusionauth.io/docs/lifecycle/migrate-users/bulk/duende#add-the-aspnet-identity-v2-hashing-plugin
-- [ ] https://fusionauth.io/docs/lifecycle/migrate-users/bulk/auth0
-- [ ] https://fusionauth.io/docs/lifecycle/migrate-users/bulk/general
-- [ ] Probably convert it to Ruby because I see all their scripts are in Ruby (2:4)
-- [ ] See what other Stytch authentication types FA supports and work out how to import them (magic email, passkeys, social login, etc). This could be huge, no idea yet. (2:36)
-- [ ] Review the other import articles and see what sections I need to add (1:8)
-- [ ] Review the overview article on migration strategy and add missing sections (2:4)
+- [ ] test with header csv
+- [ ] limitations too much - magic links, passkeys, passcodes, mobile biometrics, and social logins such as Google OAuth.
+- [ ] create an application and link to user
+- [ ] include generic sections from other other migrate guides
+- [ ] ruby
 
 ## Introduction
 
 This article explains how to import users from Stytch into FusionAuth. It is a low-level technical tutorial focussing on transferring password hashes, calling APIs, and preparing data. The article does not explain the high-level process of migration strategy. This is explained in the [migration overview article](/docs/lifecycle/migrate-users/bulk/general.mdx). Before proceeding, please ensure you understand concepts like dual write, backfill, final synchronization, rolling migration, and cutover. The [Stytch documentation on migration strategies](https://stytch.com/docs/guides/migrations/migrating-user-data-statically) is also useful reading. Also be aware of all laws regarding the protection and transfer of personal information in your country.
 
-Finally, you need a basic understanding of password hashing and how salts work. FusionAuth has a [hashing article](/articles/security/math-of-password-hashing-algorithms-entropy) that is a good starting point.
+Finally, if you want to import user passwords in addition to user personal details, you need a basic understanding of how password hashing and salts work. FusionAuth has a [hashing article](/articles/security/math-of-password-hashing-algorithms-entropy) that is a good starting point.
 
+### Limitations
+
+This article explains how to migrate Stytch users from a Consumer Authentication project. It has not been tested with their B2B Saas Authentication project type.
+
+This article explains how to import passwords into FusionAuth, but does not deal with other Stytch authentication types: magic links, passkeys, passcodes, mobile biometrics, and social logins such as Google OAuth.
 
 ### Prerequisites
 
@@ -339,9 +332,25 @@ The `getFaUserFromStytchUser()` function does a few things:
 - FusionAuth allows only one email and phone number. Stytch has an array. The import script takes the first verified contact it can find as the primary FusionAuth contact, otherwise it just takes the first contact. Extra contacts are saved in the generic `data` JSON field.
 - All Stytch user details that don't map to FusionAuth are stored in the `data` field.
 - Empty fields and arrays are ignored.
+- The value in `faUser.encryptionScheme = 'example-salted-stytch-scrypt';` matches the name we registered for the hashing algorithm in the Java plugin earlier.
 
 Carefully read this function and see if you agree that the user information you need is imported correctly. If information is not needed, you can comment out the relevant lines.
 
 The function `getNullOrUUIDFromUserId()` extracts a standard UUID from the Stytch format to set a user Id in FusionAuth.
 
-Finally, this script imports users individually. If this is too slow when running the production migration, wrap the `importUsers()` FusionAuth SDK call in a loop that bundles users in batches of 100.
+Finally, this script imports users individually. If this is too slow when running the production migration, wrap the `importUsers()` FusionAuth SDK call in a loop that bundles users in batches of 1000.
+
+If you are uncertain what a user attribute in FusionAuth does, read more in the [user guide](docs/apis/users), as linked in the [general migration guide](/docs/lifecycle/migrate-users/bulk/general) recommended earlier.
+
+### Importing Roles
+
+Stytch does not support user roles and applications as native properties of users. Instead, you can [implement roles](https://stytch.com/docs/guides/authorization/rbac) by adding them as values in the JSON `trusted_metadata` field of the user. This field is similar to the FusionAuth `data` field.
+
+As discussed in the general migration guide, roles in FusionAuth are stored in a Registration object (a link between a User and an Application).
+
+If you have roles in Stytch you want to import, add them to the `faUser.registrations` array in the import script. This is not included in the tutorial script because every Stytch client will have made their own unique way of linking users and applications in Stytch using JSON.
+
+## Additional Support
+
+<AdditionalSupport />
+
