@@ -16,7 +16,6 @@ import Aside from '/src/components/Aside.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
 import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/bulk/_additional-support.mdx';
 
-- [Todo](#todo)
 - [Introduction](#introduction)
   - [Limitations](#limitations)
   - [Prerequisites](#prerequisites)
@@ -34,11 +33,6 @@ import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/bulk/_ad
   - [Import Roles](#import-roles)
 - [Additional Support](#additional-support)
 
-## Todo
-
-- [ ] limitations too much - magic links, passkeys, passcodes, mobile biometrics, and social logins such as Google OAuth.
-- [ ] ruby
-
 ## Introduction
 
 This article explains how to import users from Stytch into FusionAuth. It is a low-level technical tutorial focussing on transferring password hashes, calling APIs, and preparing data. The article does not explain the high-level process of migration strategy. This is explained in the [migration overview article](/docs/lifecycle/migrate-users/bulk/general.mdx). Before proceeding, please ensure you understand concepts like dual write, backfill, final synchronization, rolling migration, and cutover. The [Stytch documentation on migration strategies](https://stytch.com/docs/guides/migrations/migrating-user-data-statically) is also useful reading. Also be aware of all laws regarding the protection and transfer of personal information in your country.
@@ -48,7 +42,7 @@ Finally, if you want to import user passwords in addition to user personal detai
 ### Limitations
 
 - This article explains how to migrate Stytch users from a Consumer Authentication project. It has not been tested with their B2B Saas Authentication project type.
-- This article explains how to import passwords into FusionAuth, but does not deal with other Stytch authentication types: magic links, passkeys, passcodes, mobile biometrics, and social logins such as Google OAuth.
+- This article explains how to import passwords into FusionAuth, but does not deal with other Stytch authentication types: magic links, passkeys, passcodes, mobile biometrics, two-factor authentication, and social logins such as Google OAuth.
 
 ### Prerequisites
 
@@ -140,7 +134,7 @@ Below the header are the column names, and then one row per user. In the example
 
 Not all hash algorithms use separate salts. For instance, Bcrypt will create a salt automatically when hashing a password, and store the hash and salt concatenated in one string. You may have to deal with peculiarities of different algorithms like this if you previously migrated users into Stytch from an authentication provider that did not use Scrypt.
 
-Even when using Scrypt with the given parameters, you need to carefully check that how you hash passwords has the same result as Stytch. Hashes and salts are arrays of bytes (numbers) and therefore cannot be displayed directly as text. They are instead mapped to text using a conversion process called Base64. However, there are [different ways](https://en.wikipedia.org/wiki/Base64#Variants_summary_table) of doing this mapping. Since you can see the hashes from Stytch use `-` and `_`, they must use RFC 4648 (the URL-safe standard). This can cause miscommunications with other hash libraries, which use `+` and `-`.
+Even when using Scrypt with the given parameters, you need to carefully check that how you hash passwords has the same result as Stytch. Hashes and salts are arrays of bytes (numbers) and therefore cannot be displayed directly as text. They are instead mapped to text using a conversion process called Base64. However, there are [different ways](https://en.wikipedia.org/wiki/Base64#Variants_summary_table) of doing this mapping. Since you can see the hashes from Stytch use `-` and `_`, they must use RFC 4648 (the URL-safe standard). This can cause miscommunications with other hash libraries, which use `+` and `/`.
 
 For instance, we can use this snippet of JavaScript Node.js code below in `js/2_checkHash.mjs` to create a hash for the last user in the example file above.
 
@@ -168,7 +162,7 @@ JavaScript and FusionAuth use the `+` and `/` symbols. Stytch and the FusionAuth
 
 Stytch emails you only the user hash and Id. You have to use the Stytch API to retrieve all user details from Stytch, then combine those with the hash from the email, and save the user to FusionAuth.
 
-Open your hash file from Stytch in a text editor and remove all the header lines so only one user per row remains. Save this file into `stytch/js/hash.csv`. The file should look like `exampleData/4_hashFilePreparation/hash.csv` now:
+Open your hash file from Stytch in a text editor and remove all the header lines so only one user per row remains. Save this file into `stytch/js/hash.csv`. The file should look like `exampleData/4_hashFilePreparation/hash.csv` now.
 
 <RemoteCode
     url={frontmatter.importCodeRoot + "/stytch/exampleData/4_hashFilePreparation/hash.csv"}
@@ -255,7 +249,7 @@ If you are not running FusionAuth already, or want to test this process in anoth
 - FusionAuth will now be running and browsable at `http://localhost:9011`. You can log in with user `admin@example.com` and `password`. The container is called `fa`.
 - In the `fusionauth-contrib` terminal where you built the plugin, run the code below. It will copy the JAR file into the FusionAuth container `plugins` directory.
   ```bash
-  docker exec fa mkdir /usr/local/fusionauth/plugins &&
+  docker exec fa mkdir /usr/local/fusionauth/plugins
   docker cp "Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar" fa:/usr/local/fusionauth/plugins/fusionauth-example-password-encryptor-0.1.0.jar
   ```
 - Finally, you need to restart FusionAuth for it to detect the plugin. In the terminal where FusionAuth is running in Docker push `ctrl-c` to stop it, wait, and run `docker compose up` again.
@@ -271,7 +265,7 @@ npm update
 npm 4_import.js
 ```
 
-This import script needs only FusionAuth to be running locally on port 9011, and the `users.json` file to exist in the same directory. The FusionAuth Kickstart file already set a sample Application (user registration) to match the Ids in `4_import.js`. If your FusionAuth installation is different, please edit the Ids in `4_import.js`.
+This import script needs only FusionAuth to be running locally on port 9011, and the `users.json` file to exist in the `js` directory. The FusionAuth Kickstart file already set a sample Application to match the Ids in `4_import.js`. If your FusionAuth installation is different, please edit the Ids in `4_import.js`.
 
 <Aside type="tip">
 You might want to set the user's registration and tenant Ids in your production migration.
