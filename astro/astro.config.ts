@@ -46,9 +46,9 @@ const config = defineConfig({
     ]
   },
   site: 'https://fusionauth.io/',
-  experimental: {
-    contentCollectionCache: true,
-  }
+  // experimental: {
+  //   contentCollectionCache: true,
+  // }
 });
 
 export default config;
