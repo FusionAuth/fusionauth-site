@@ -19,6 +19,9 @@ import APIRequestWithTimeboundAPIKey from "../../diagrams/blog/api-authenticatio
 import APIRequestWithTimeboundAPIKeySecondRequest from "../../diagrams/blog/api-authentication/api-request-with-timebound-api-key-second-request.astro";
 import APIRequestWithDataAPIKey from "../../diagrams/blog/api-authentication/api-request-with-data-api-key.astro";
 import APIRequestWithRefreshAPIKey from "../../diagrams/blog/api-authentication/api-request-with-refresh-api-key.astro";
+import GetOAuthToken from "../../diagrams/blog/api-authentication/get-oauth-token.astro";
+import IntrospectionValidation from "../../diagrams/blog/api-authentication/introspection-validation.astro";
+import SignedTokenValidation from "../../diagrams/blog/api-authentication/signed-token-validation.astro";
 
 import Aside from '../../components/Aside.astro';
 
@@ -118,11 +121,13 @@ It's any high entropy random string of HTTP safe characters that can be stored i
 
 ### Getting The API Key
 
-The client retrieves the API key in some fashion, after they've been authenticated. This is usually some kind of registration process, where the client associates themselves with a user and then can create an API key or keys.
+The client retrieves the API key in some fashion, after they've been authenticated. This is usually some kind of registration process, where the client associates themselves with a user and then can create an API key or keys. 
 
-This is often managed by an API portal for a long lived key. There is a central authority is creating API keys and associating them with users or other pieces of software. After they are minted, the client must then store the API key securely.
+Though this could be part of the application which serves up the API, it is often managed by an API portal. There is a central authority is creating API keys and associating them with users or other pieces of software. After they are minted, the client must then store the API key securely.
 
 So, before any API requests are made, the key must be retrieved and stored.
+
+TODO oauth scopes section, third party vs first party section, blog post as well as article so icon needed. TODO blog post about centralized
 
 <GetAPIKey alt="Client getting an API key." />
 
@@ -261,38 +266,47 @@ If you sign the API key with an asymmetric keypair, however, the integrity of th
 
 Now the API server still needs to retrieve public keys, but it doesn't need to contact the central authority on every request.
 
-Congrats, you've re-implemented a chunk of OAuth2  (TODO client registration?) as well as successfully decentralizing API authentication.
+Congrats, you've re-implemented a chunk of OAuth2! 
 
 ## Decentralized Authentication
 
-As you've evolved centralized API authentication for your todo application, there were certain architectural components. I used certain names above, but they map to well-known and understood terms. Here's a table:
+As you've evolved centralized API authentication for your todo application, there were certain architectural components. I used certain names above, but they map to well-known and understood terms in the OAuth family of specifications.
 
-TODO table
-client: client
-central authority: authorization server
-API server: resource server
-getting the API key: client registration (kinda)
-API key: access token
-refresh API key: refresh token
+Here's a table illustrating the correspondences
 
+| Term used above | OAuth term |
+| ---- | ---- | 
+| client | client |
+| central authority | authorization server |
+| api server | resource server |
+| API key | access token |
+| refresh API key | refresh token |
 
 With decentralized authentication, there's still a process of getting the token. If you are following OAuth2, it looks like this:
 
-TODO diagram
+<GetOAuthToken alt="Get the access token." />
 
-The token is signed and optionally comes with a refresh token. If you are using OIDC on top, it comes with an id token as well (learn more about OIDC TODO link).
+The token is signed and optionally comes with a refresh token. If you are using OIDC on top, it comes with an id token as well ([learn more about OIDC](/articles/identity-basics/what-is-oidc)).
 
 The server needs to process the access token, which means:
 
 * validating the signature
-* examining the claims, including the expiration claim and other standard claims (learn more TODO)
-* extract claim information and use it ot provide the service
+* examining the claims, including the expiration claim and other standard claims ([learn more about JWTs and claims](/articles/tokens/building-a-secure-jwt))
+* extract claim information and use it to provide the service
 
-Of course, nothing is free. There are some additional concerns when you are using centralized authentication.
+There are two ways to validate a token. The first is to use the authorization server.
+
+<IntrospectionValidation alt="Validation using introspection." />
+
+The second is to use a signed token and validate it locally.
+
+<SignedTokenValidation alt="Validation using a signed token." />
+
+Of course, nothing is free. There are some additional concerns when you are using decentralized authentication.
 
 ### Additional Concerns
 
-Because there's no communication with the authorization server (central authority) during validation of the access token, revocation becomes difficult. You can work around this in several ways:
+Because there's no communication with the authorization server (what was previously termed the central authority) during validation of the access token, revocation becomes difficult. You can work around this in several ways:
 
 * having a short lifetime of a token and leaning on the refresh token process, which does commmunicate with the authorization server, to handle revocation
 * rotating signing keys and pushing them to the resource server
@@ -315,10 +329,10 @@ I'm partial to JWTs because I think they have unparalleled documentation and sup
 
 Access tokens are bearer tokens, which means they are like a car key. A car will turn on no matter who holds the key. An access token grants access to an API or resource, no matter who holds it. This is why [clients should store such tokens carefully](/articles/oauth/oauth-token-storage).
 
-However, there are some standards that can bind a token to a particular client. One is MTLS, which uses client certificates. The other is DPOP, which was recently promoted to a standard.
+However, there are some standards that can bind a token to a particular client. One is MTLS TODO link, which uses client certificates. The other is DPoP TODO link, which was recently promoted to a standard.
 
-## In Conclusion
+## All About Tradeoffs
 
-Centralized and decentralized protection of APIs offer different tradeoffs. When using API keys, you must keep communicating with whatever issued those API keys.
+Centralized and decentralized protection of APIs offer different tradeoffs. When using API keys, you must keep communicating with the software which issued those API keys. Additionally, as you add more complexity and functionality to the API keys, you approach decentralized solutions like OAuth 2.
 
 Decentralized tokens, often using a signed format like JWTs and built on standards like OAuth, can offer scaling advantages and help make systems more fault-tolerant, with the tradeoff that revocation becomes more complex.
