@@ -33,6 +33,8 @@ There are a few types of JSON Web Tokens, but I’ll focus on signed JWTs as the
 
 There’s a header, which in the case of the JWT above, starts with `eyJhbGc`. Then there is a body or payload, which above starts with `eyJhdWQ`. Finally, there is a signature, which starts with `dee-K` in the example JWT.
 
+![The components of a JWT, visualized.](/img/shared/json-web-token.png)
+
 How does a JWT work? Let’s break this example JWT apart and dig a bit deeper.
 
 ## The JWT Header Explained
