@@ -44,7 +44,9 @@ The first is that a signed JWT is like a postcard. Anyone who has access to it c
 eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJmdXNpb25hdXRoLmlvIiwiZXhwIjoxNTkwNzA4Mzg1LCJhdWQiOiIyMzhkNDc5My03MGRlLTQxODMtOTcwNy00OGVkOGVjZDE5ZDkiLCJzdWIiOiIxOTAxNmI3My0zZmZhLTRiMjYtODBkOC1hYTkyODc3Mzg2NzciLCJuYW1lIjoiRGFuIE1vb3JlIiwicm9sZXMiOlsiUkVUUklFVkVfVE9ET1MiXX0.8QfosnY2ZledxWajJJqFPdEvrtQtP_Y3g5Kqk8bvHjo
 ```
 
-You can [decode it using any number of online tools](/dev-tools/jwt-decoder), because it's just three base 64 encoded strings joined by periods.
+You can [decode it using any number of online tools](/dev-tools/jwt-decoder), because it's two base 64 encoded strings joined by periods, with a signature for integrity checking. The three parts of a signed JWT are a header specifying metadata, a payload containing claims and data, and the signature.
+
+![The components of a JWT.](/img/shared/json-web-token.png)
 
 Keep any data that you wouldn't want in the hands of someone else outside of your JWT. When you sign and send a token, or when you decode and receive it, you're guaranteed the contents didn't change. You're not guaranteed the contents are unseen.
 
