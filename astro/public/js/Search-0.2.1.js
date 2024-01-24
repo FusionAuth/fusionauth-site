@@ -171,6 +171,16 @@ class Search {
     paths = paths.slice(1, paths.length);
     const environment = paths.shift();
 
+    try {
+      if (gtag) {
+        gtag('event', 'site_search', {
+          'search_parameter': this.#searchInput.value,
+        });
+      }
+    } catch (e) {
+      //ignore
+    }
+
     if (!this.#pagefind) {
       this.#pagefind = await import("/pagefind/pagefind.js");
       // prime the filters
