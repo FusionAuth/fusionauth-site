@@ -43,6 +43,10 @@ To solve this problem, most applications use refresh tokens. Refresh tokens are 
 
 Since JWTs are cryptographically signed, they require a cryptographic algorithm to verify. Cryptographic algorithms are purposefully designed to be slow. The slower the algorithm, the higher the complexity, and the less likely that the algorithm can be cracked using brute-force.
 
+Every signed JWT contains a header, a body or payload, and a signature:
+
+![The components of a JWT, visualized.](/img/shared/json-web-token.png)
+
 On a quad-core MacBook Pro, about 200 JWTs can be created and signed per second using RSA public-private key signing. This number drops dramatically on virtualized hardware like Amazon EC2s. HMAC signing is much faster but lacks the same flexibility and security characteristics. Specifically, if the identity provider uses HMAC to sign a JWT, then all services that want to verify the JWT must have the HMAC secret. This means that all the services can now create and sign JWTs as well. This makes the JWTs less portable (specifically to public services) and less secure.
 
 To give you an idea of the performance characteristics of JWTs and the cryptographic algorithms used, we ran some tests on a quad-core MacBook. Here are some of the metrics and timings we recorded for JWTs:
