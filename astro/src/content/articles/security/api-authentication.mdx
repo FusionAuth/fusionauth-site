@@ -1,0 +1,338 @@
+---
+publish_date: 2024-01-10
+title: API Authentication
+description: What are ways you can authenticate APIs?
+authors: Dan Moore
+image: /img/blogs/api-authentication/protecting-apis.png
+categories: Education
+tags: apis, authentication, api keys, oauth, tokens
+excerpt_separator: "{/* more */}"
+---
+import APIRequest from "../../diagrams/blog/api-authentication/api-request.astro";
+import FailedAPIRequest from "../../diagrams/blog/api-authentication/failed-api-request.astro";
+import APIRequestWithAPIKey from "../../diagrams/blog/api-authentication/api-request-with-api-key.astro";
+import GetAPIKey from "../../diagrams/blog/api-authentication/get-api-key.astro";
+import GetHashedAPIKey from "../../diagrams/blog/api-authentication/get-hashed-api-key.astro";
+import APIRequestWithAPIKeyAndCentralAuthority from "../../diagrams/blog/api-authentication/api-request-with-api-key-and-central-authority.astro";
+import APIRequestWithAPIKeyHashed from "../../diagrams/blog/api-authentication/api-request-with-api-key-hashed.astro";
+import APIRequestWithTimeboundAPIKey from "../../diagrams/blog/api-authentication/api-request-with-timebound-api-key.astro";
+import APIRequestWithTimeboundAPIKeySecondRequest from "../../diagrams/blog/api-authentication/api-request-with-timebound-api-key-second-request.astro";
+import APIRequestWithDataAPIKey from "../../diagrams/blog/api-authentication/api-request-with-data-api-key.astro";
+import APIRequestWithRefreshAPIKey from "../../diagrams/blog/api-authentication/api-request-with-refresh-api-key.astro";
+import GetOAuthToken from "../../diagrams/blog/api-authentication/get-oauth-token.astro";
+import IntrospectionValidation from "../../diagrams/blog/api-authentication/introspection-validation.astro";
+import SignedTokenValidation from "../../diagrams/blog/api-authentication/signed-token-validation.astro";
+
+import Aside from '../../components/Aside.astro';
+
+When you are building out web APIs for web applications, desktop apps or mobile applications to access functionality or data, you need to authenticate these requests. 
+
+You may say to yourself "of course" but there have been incidents where APIs were not protected at relatively large or prominent organizations. TODO put in links from api authentication presentation
+
+Let's take a look at the options below.
+
+{/* more */}
+
+## What Is An API?
+
+First, what is an API? API stands for Application Programming Interface and in the general sense is a way for one piece of software to communicate with another. The method of transport and the format of messages need to be defined, whether a C program is calling into a numeric processing library or a mobile application is requesting user data. 
+
+Web APIs can take a lot of different forms, but a very common one nowadays has the following attributes:
+
+* TLS and HTTP, including verbs, for the transport layer
+* JSON and HTTP headers for the message formatting layer
+
+So a browser being controlled by a human being can make a `GET` request against `https://example.com/api/todo` to retrieve a list of todos for a user. The browser is a client and the server is at example.com.
+
+<APIRequest alt="An API request." />
+
+But how does the server know what user to get todos for when it receives a request? And how do you know that the requester is allowed to access them? After all, you need to deny random users access to those precious, precious tasks.
+
+<FailedAPIRequest alt="A failed API request." />
+
+That brings up the next question, how do you authenticate and authorize API requests?
+
+## What Are API Authentication Needs
+
+When you are making an API call, the returned value is often data which will be formatted for display to the user. This data could include results of functionality requests such as "when will the car the user requested pick them up".
+
+In all these cases, the user needs to provide some proof of who they are to get access to functionality and/or data.
+
+The authentication mechanism should be:
+
+* secure
+* performant
+
+The pre-eminent task any API authentication method must perform is to make sure that only the appropriate callers get data back from the server. There are many aspects to this, including how the initial authentication is performed, looking for unexpected requests, and determining what access is requested and provided.
+
+API authentication methods must also be performant. While a secondary concern, if an API is not accessible due slow authentication of requests, the API is not fulfilling its purpose.
+
+### Authentication And Authorization
+
+Typically after you authenticate and know who the caller is, you then authorize. That lets the system know what access the caller has.
+
+This can be done with a variety of mechanisms, including role-based access control (RBAC) but is usually tied in with business logic. 
+
+For example, after the system knows the caller is Richard, it knows that the requester can read and write Richard's todos, but not Dinesh's.
+
+## API Protection Options
+
+There are really three choices for API protection.
+
+* No authentication
+* Centralized
+* Decentralized
+
+### Unprotected APIs
+
+The first option is useful when you have a public API that offers the same data or functionality for all users. I once worked on an application that needed tremendous scale and it achieved it by publishing JSON formatted messages to Amazon S3, which were then ingested by JavaScript running on millions of browsers. This was a read-only API that had no authentication. No authentication means authorization is the same for everyone. Having no authentication simplifies everything and is a good option when it works.
+
+Updating the data this API served was done through a different process which was very much limited to known systems via authentication.
+
+This approach is the exception rather than the rule. Far more often, especially if you are using APIs to let clients update data in the server or offering user specific functionality or data, you will need to perform some sort of authentication and authorization.
+
+## Centralized vs Decentralized Authentication and Authorization
+
+Let's look at the differences between centralized and decentralized authentication and authorization for your API calls. Let's examine a hypothetical Todo service, which allows users to create, update and delete tasks. It'll have multiple client applications and an API which records these tasks. Users should be able to create and update their own tasks, but not those of others.
+
+<Aside type="note" nodark="true">
+Authentication is "who are you" and authorization is "what can you do". While they can be treated separately (car keys authorize without authenticating and a business card weakly authenticates without authorizing) they are usually considered together.
+</Aside>
+
+## Centralized Authentication
+
+In this scenario the following happens.
+
+* The user, through one of the clients such as a browser, gets an API key. This is a signifier of who the user is and controls what they have access to.
+* The client stores and then presents that API key to the server which has the todos data.
+* The server verifies the API key is valid and looks up authorization data. If valid, the request is allowed to complete.
+
+If the API key is invalid or the authorization is insufficient for the access requested, the request is denied.
+
+An API key might look like this:
+
+```
+emORxyLHIuY0e1Wvep1BPamyUF4eMHOpX8cPEY9E
+```
+
+It's any high entropy random string of HTTP safe characters that can be stored in a database and by a client such as a browser. You'll present the key to the todos API server.
+
+<APIRequestWithAPIKey alt="An authenticated API request." />
+
+### Getting The API Key
+
+The client retrieves the API key in some fashion, after they've been authenticated. This is usually some kind of registration process, where the client associates themselves with a user and then can create an API key or keys. 
+
+Though this could be part of the application which serves up the API, it is often managed by an API portal. There is a central authority is creating API keys and associating them with users or other pieces of software. After they are minted, the client must then store the API key securely.
+
+So, before any API requests are made, the key must be retrieved and stored.
+
+TODO oauth scopes section, third party vs first party section, blog post as well as article so icon needed. TODO blog post about centralized
+
+<GetAPIKey alt="Client getting an API key." />
+
+Then requests for the todos can be made:
+
+<APIRequestWithAPIKeyAndCentralAuthority alt="An authenticated API request with verification done against a central authority." />
+
+After the API key is retrieved, it needs to be stored. How it is stored depends on the usage of the key and whether the client is a server side component, a browser or a mobile device. Either way it should be stored safely because possession allows access to the todos API.
+
+### How Does Verification Happen
+
+Every time the todos API server gets a request, it needs to verify with the central authority that the key is valid. This could be as simple as matching two strings, one provided by the client, the other in a database, or it could involve more moving pieces, such as examining other attributes of the request (IP address, date and time, specifics of the request).
+
+The API server protects and delivers the data, whereas the central authority is responsible for controlling access through API key management.
+
+The central authority can be colocated with the todos API server. In fact, in many cases, you can use a simple table in the same database. But as an architectural component, it can be useful to think of it as another system, which is responsible for creating, managing and verifying API keys. Even if it is deployed together with the API server, the central authority has a different purpose.
+
+
+TODO central authority -> API key manager? rename, maybe?
+
+
+### How Does The Client Provide The API Key
+
+When a client needs to make a request to the API, it retrieves the API key from storage. Then it provides it on the request.
+
+It can be provided in a variety of ways for an HTTP API:
+
+* The `Authorization` header (which you saw previously)
+* Some other HTTP header
+* As a form parameter
+* As a URL query parameter (but don't do that, it'll be recorded in log files and captured by proxies)
+
+When the server recieves a request, then it will first verify the key is valid. It does this by passing the API key to the central authority, which can confirm validity. After that, the server can look up authorization information, including the user or account the API was granted to. This may be stored centrally or it may be stored locally.
+
+Finally, the API server can return the requested data or take the requested action.
+
+<APIRequestWithAPIKeyAndCentralAuthority alt="A successful API request." />
+
+![Frodo after dropping ring into mount doom, with caption 'data has been sent' meme.](/img/blogs/api-authentication/data-sent.jpg)
+
+The API server can be fronted by an API gateway which can provide additional benefits. It can check the API key, but also:
+
+* throttle API requests
+* add an additional layer of indirection, sheltering clients from API server changes
+* keep track of API requests per user, including optionally charging them
+
+## Additional Concerns With API Keys
+
+With centralized API keys, you should consider the following
+
+* security of the API key at rest. In particular with browser based clients, it is really difficult to secure an API key. If you bundle it in and deliver it as part of your SPA or webpage, it will be available to anyone who can examine them. That is, anyone who has access to them.
+* security of the API key in transit. Never pass the API key where it might be recorded in a log file or proxy. This includes as a URL query param.
+
+## Evolving Centralized API Protection
+
+Centralized API keys can work really well, but as you build out your solution, you may begin to make changes to improve security or functionality.
+
+As you saw above, there are three main components to this system:
+
+* a client, which wants data access
+* an API server, which has data
+* a central authority, which can generate and verify API keys
+
+### Protecting the API Key at the Central Authority
+
+The central authority, where all the API keys are kept, is a tempting target for attackers. Every API key you store there can access user data, so if an attacker gains access to the datastore and the stored keys, they can masquarade as any account. You can and should protect datastore access and you can encrypt the keys to protect them in the event of an attack, but with API keys you can do even better.
+
+You can change how you deliver the key. Rather than store the plaintext value, create it, display it to the end user, and then store the hashed value.
+
+Instead of storing this in the central authority datastore, where it can subsequently be tested for validity:
+
+```
+emORxyLHIuY0e1Wvep1BPamyUF4eMHOpX8cPEY9E
+```
+
+Store a hash of that value. This is the sha-256 hash of the above key. This is a one way hash, meaning if the plaintext is provided, the hash can be calculated, but having the hash does not allow you to obtain the plaintext.
+
+```
+ac8c440c9da582a301fa12d82ca2ab69613585fd24fcb30ae9174966ff03fa5a
+```
+
+<GetHashedAPIKey alt="Client getting an API key, but the central authority stores the hash." />
+
+When the client presents an API key such as `emORxyLHIuY0e1Wvep1BPamyUF4eMHOpX8cPEY9E`, either the API server or the central authority hashes the value and compares the hashed value with what is stored in the database. If they are the same, the request is allowed.
+
+<APIRequestWithAPIKeyHashed alt="Successful API request with a hashed key." />
+
+This impacts the client. They must securely store the API key the first time they receive it, because there's no way to view it again. If the API key is lost, clients have to request a new one.
+
+### Avoiding Static API Keys
+
+But maybe storing the hash isn't enough. Static keys in general are problematic, because they allow access for unlimited lengths of time making them enticing targets.
+
+You could force the keys to be rotated regularly by adding a time limit to the keys. After the API key expires, the user has to log back into the portal and get a new API key.
+
+You could also generate an ephemeral API keys after each user login. Every time a user logged in, they'd use a new API key.
+
+Either way you'd need to record the date and time the API key became invalid. Because of timezones, you'd probably want to use a standard offset in UTC, maybe like the unix epoch.
+
+<APIRequestWithTimeboundAPIKey alt="Successful API request with a timebound key." />
+
+However, time will pass and eventually the key will expire. At that point, the request looks like this:
+
+<APIRequestWithTimeboundAPIKeySecondRequest alt="Failed API request with a timebound key." />
+
+### Adding Data To Keys
+
+Instead of storing all the data about expiration time in the central authority, you could also encode it in the key. That way the client can examine at the key and see if it is expired or near expiration. If the key is near expiration, the client may postpone certain operations or prompt the user to log in to refresh the key.
+
+Once you start putting expiration data in the token, you might think of other things that would be worthwhile to add as well. Information such as:
+
+* the user that the API key is for
+* who issued the key
+* who the audience of the API key is
+* roles or permissions of the user
+
+All of these can be put in the key. The key still needs to be validated against the central authority, because a malicious client may tamper with the key, but once that validation has been done, no additional requests need to be made against to the central authority to check these attributes. That minimizes the number of requests to the central authority.
+
+<APIRequestWithDataAPIKey alt="Successful API request with a key holding data." />
+
+### Refreshing the Key
+
+However, you may want to take it a step further. The API key is presented to the API server to get access. When it expires, the user needs to login again to get a new API key. What if, at authentication, you handed back two strings, instead of one.
+
+What if you handed back one API key that was for the API server, and another one which was for the central authority. The latter would be a refresh API key which also expired, but was good for longer. The API key for the API server could be used until it expired, then the refresh API key could be used to get a new API key.
+
+<APIRequestWithRefreshAPIKey alt="API request with a refresh API key." />
+
+This would be useful because it means the user would not have to log in until the refresh API key expired. However, you'd still see some security benefit because the API key would be short lived and the central server could be more intelligent about handing out API server API keys.
+
+### Signing the API Key
+
+However, the API key would still need to be verified against the central authority every time it was presented to the API server. This is because the API key could be tampered with. Since it contains data used by the API server to control functionality, any tampering could lead to privilege escalation. You don't want a hacker changing their role from `user` to `admin` and then making requests against the API server to retrieve everyone's todos.
+
+If you sign the API key with an asymmetric keypair, however, the integrity of the key content can be assured. This is because if the key is signed with a private key by the central authority, a public key can be used to verify that signature. The public key can be published by the central authority and retrieved and cached by the API server
+
+Now the API server still needs to retrieve public keys, but it doesn't need to contact the central authority on every request.
+
+Congrats, you've re-implemented a chunk of OAuth2! 
+
+## Decentralized Authentication
+
+As you've evolved centralized API authentication for your todo application, there were certain architectural components. I used certain names above, but they map to well-known and understood terms in the OAuth family of specifications.
+
+Here's a table illustrating the correspondences
+
+| Term used above | OAuth term |
+| ---- | ---- | 
+| client | client |
+| central authority | authorization server |
+| api server | resource server |
+| API key | access token |
+| refresh API key | refresh token |
+
+With decentralized authentication, there's still a process of getting the token. If you are following OAuth2, it looks like this:
+
+<GetOAuthToken alt="Get the access token." />
+
+The token is signed and optionally comes with a refresh token. If you are using OIDC on top, it comes with an id token as well ([learn more about OIDC](/articles/identity-basics/what-is-oidc)).
+
+The server needs to process the access token, which means:
+
+* validating the signature
+* examining the claims, including the expiration claim and other standard claims ([learn more about JWTs and claims](/articles/tokens/building-a-secure-jwt))
+* extract claim information and use it to provide the service
+
+There are two ways to validate a token. The first is to use the authorization server.
+
+<IntrospectionValidation alt="Validation using introspection." />
+
+The second is to use a signed token and validate it locally.
+
+<SignedTokenValidation alt="Validation using a signed token." />
+
+Of course, nothing is free. There are some additional concerns when you are using decentralized authentication.
+
+### Additional Concerns
+
+Because there's no communication with the authorization server (what was previously termed the central authority) during validation of the access token, revocation becomes difficult. You can work around this in several ways:
+
+* having a short lifetime of a token and leaning on the refresh token process, which does commmunicate with the authorization server, to handle revocation
+* rotating signing keys and pushing them to the resource server
+* creating an allow list or deny list of revoked access tokens
+* check with the authorization server for validity every request
+
+The first option doesn't support token revocation entirely, but it does lessen the risk of use of a revoked token; it's limited to the lifetime of that token. 
+
+The other options re-centralize, to some extent, validation of the token, since you need to increase communication between the authorization server and the resource server. The last option completely centralizes the validity check.
+
+![Man saying tradeoffs meme.](/img/blogs/api-authentication/tradeoffs.jpg)
+
+#### Token Types
+
+The type of token you use to decentralize might matter too. Some options are IETF standards, such as JWTs. Others, like PASETO, try to avoid some of the issues of a JWT. Others, like biscuits allow for attenuation of access; you can create a child token which has at most the priveliges of the parent token.
+
+I'm partial to JWTs because I think they have unparalleled documentation and support across a variety of systems and are well understood. Learn more about [creating a secure JWT](/articles/tokens/building-a-secure-jwt).
+
+#### Bearer Tokens
+
+Access tokens are bearer tokens, which means they are like a car key. A car will turn on no matter who holds the key. An access token grants access to an API or resource, no matter who holds it. This is why [clients should store such tokens carefully](/articles/oauth/oauth-token-storage).
+
+However, there are some standards that can bind a token to a particular client. One is MTLS TODO link, which uses client certificates. The other is DPoP TODO link, which was recently promoted to a standard.
+
+## All About Tradeoffs
+
+Centralized and decentralized protection of APIs offer different tradeoffs. When using API keys, you must keep communicating with the software which issued those API keys. Additionally, as you add more complexity and functionality to the API keys, you approach decentralized solutions like OAuth 2.
+
+Decentralized tokens, often using a signed format like JWTs and built on standards like OAuth, can offer scaling advantages and help make systems more fault-tolerant, with the tradeoff that revocation becomes more complex.
