@@ -43,7 +43,7 @@ While less damaging than breaches, outages can still cause reputational damage a
 
 As an example, when Microsoft's Azure Active Directory (AAD) [went down for a good portion of the afternoon late last year](https://www.zdnet.com/article/microsofts-azure-ad-authentication-outage-what-went-wrong/), logins for applications across the internet stopped working. 
 
-When your competitors' authorization systems are down at the same time yours are, nobody blames you for it, but when you're the only company having issues, you suffer reputationally. No matter what your outsourced auth system is (FusionAuth, Cognito, AAD, etc), you can be almost certain that you won't be alone in the event of an outage.
+When your competitors' authorization systems are down at the same time yours are, nobody blames you for it, but when you're the only company having issues, you suffer reputationally. No matter what your outsourced auth system is (FusionAuth, Cognito, Azure AD/Microsoft Entra ID, etc), you can be almost certain that you won't be alone in the event of an outage.
 
 ### Maintainability
 
