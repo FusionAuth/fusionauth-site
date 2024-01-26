@@ -128,11 +128,9 @@ However, with this approach, the central authority is a chokepoint. Each service
 
 TODO hub and spoke or multiple requests
 
-TODO stopped here
-
 ### Decentralized Authentication
 
-With decentralized authentication, the central authority issues a signed token. These signed tokens use public key cryptography to allow an API server to validate an API key without communicating with the central authority every request. Instead, the signature of the API key is
+With decentralized authentication, the central authority issues a signed token for use as an API key. These use public key cryptography to allow an API server to validate them without communicating with the central authority every request. They do this by validating the signature using a known public key, and then examining the content of the API key to make sure they are expected.
 
 TODO diagram
 
@@ -144,28 +142,35 @@ OAuth is a common implementation of decentralized authentication. To map the ter
 | central authority | authorization server |
 | api server | resource server |
 | API key | access token |
-| refresh API key | refresh token |
 
-An API key in a decentralized system is often a JWT TODO link or other self contained token which can carry more information than a simple API key in a centralized system can.
+However, for clarity, this post will continue to use the same terms, such as API server, as before.
+
+An API key in a decentralized system is often a JWT TODO link which can carry more information than a simple API key in a centralized system does.
 
 TODO JWT image
 
-That means you can include items like:
+This payload can be trusted because of the signature. The existence of the signature means that the API server can verify that the contents of the API key were not changed after it was created by the central authority.
+
+An API key can include information like:
 
 * the user identity
 * who the API key is intended for
 * who created the API key
 * business specific data like the account level of the user
 
-With decentralized authentication, you have less communication with the central authority and can leverage delivered data.
+With decentralized authentication, you have far less communication with the central authority. Because of the signature integrity guarantees, you can use the payload to reduce network calls.
 
-But the flip side is that revocation of the API key TODO link to revocation is more complex. This is why API keys in a decnetralized system have valid time windows built into them. Having those attributes means that no API key will ever be valid forever.
+But the flip side of this decentralization is that revocation of the API key TODO link to revocation is more complex. To minimize the impact of revocation complexity, API keys in a decentralized system have time windows, which mean that no API key in a decentralized system will be valid forever.
 
 ### Introspection
 
-If you use introspection ([RFC 7662](https://datatracker.ietf.org/doc/html/rfc7662)), then you can make an OAuth server behave like the centralized scenario. Every time the API server receives a request, it can present the central authority with the API key.
+As mentioned above, OAuth supports decentralized API authentication. However, if you use introspection ([RFC 7662](https://datatracker.ietf.org/doc/html/rfc7662)), then you can make use OAuth in a centralized scenario. 
 
-The response is defined by the standard and a typical one will look like:
+With introspection, every time the API server receives a request, it presents the central authority with the API key. The central authoriy then responds with a valid/not valid response. The format of the response is defined by the RFC.
+
+TODO introspection diagram
+
+A typical response looks like:
 
 ```json
 {
@@ -182,32 +187,38 @@ The response is defined by the standard and a typical one will look like:
 }
 ```
 
-However, make sure you understand what a valid response from the central authority means. The `active` attribute is the only required value. From the specification, `active` is a
+However, ensure you understand what a valid response from the central authority means. The `active` attribute is the only required value. From the specification, `active` is a:
 
 > [b]oolean indicator of whether or not the presented token is currently active.  The specifics of a token's "active" state will vary depending on the implementation of the authorization server and the information it keeps about its tokens...
 
-TODO diagram
-
 ## First Party vs Third Party APIs
 
-Another key dimension to think about is first party vs third party APIs. In the example above, the todos client, the API and the central authority are all owned by example.com. This makes the API a first party API. The same entity controls access to the data.
+Another API authentication consideration is whether you are securing a first party or third party API. In the example above, the todos client, the API server and the central authority are all owned by piedpiper.com. This makes the todos API a first party API because the same entity controls access to the data.
 
-But what if they want to build a platform, building a true ecosystem of todos based add-ons. As alluded to above, there are additional services which might make users' todo experiences more enjoyable. Some examples:
+But what if Pied Piper wants to build a platform to foster an ecosystem of todos based add-ons. There are additional services which will make users' todo experiences more enjoyable. Some examples include:
 
 * an LLM based service to summarize todos
-* a reminder service to read todo due dates and text you or email you when you have an upcoming task due
-* an analytics service to give you monthly summaries of your accomplishments
-* custom clients to add todos, so you don't have to use example.com's crufty interface
+* a reminder service to read todo due dates and text or email a user about upcoming tasks
+* an analytics service to give the user monthly summaries of their accomplishments
+* custom clients to add todos, so you don't have to use piedpiper.com's interface
 
-While these could be built by example.com, they could also be built by third party developers. In this case, you'd need to authenticate not just the API requester, but also give them varying levels of access. For example the custom client would need to read and write todos. The analytics service would only need read access.
+While these could be built by Pied Piper, if they open up a platform and provide the right incentives, Pied Piper can harness the creativity and energy of more developers than they could ever hope to hire. 
 
-These third party API clients hit a little different.
+With the platform in mind, Pied Piper needs to authenticate not just the API requester, but also control thier access in a more sophsiticated way, based on the service's needs. The custom client would need to read and write todos. The analytics service would only need read access.
 
-### Third Party API Requirements
+But third party API clients have even more specific authentication requirements.
 
-You'll want to define coarse grained permissions. More importantly, you'll need the client to ask permission and the *user* to grant or withhold permissions. This will typically happen when the user installs or authorizes access for one of these third party solutions.
+### Third Party API Authentication Requirements
 
-The OAuth solution is to use scopes. Reqeusted scopes are provided when the user first grants access to the third party application.
+You'll want to define coarse grained permissions. More importantly, you'll need the client to ask permission and the *user* to grant or withhold permissions. That's right, these clients aren't granted access based on just what they are, but also on a user by user basis.
+
+This particular access grant occurs when the user installs or authorizes access for a third party solution.
+
+<Aside type="note" nodark="true">
+It doesn't make sense for a first party API to ask for user permission to certain data or operations because the first party has access to all the data!
+</Aside>
+
+The OAuth solution to this problem is to use scopes to define the permissions required and to ask users to grant them. You can also use these concepts with a centralized API key solution. Let's dig into that standards based solution a bit more.
 
 TODO diagram
 user visits marketplace
@@ -218,26 +229,44 @@ user consents
 user bounced back to third party app which stores api key
 third party app makes request with API key
 
-Again, when you are building out API schemes, you won't need to worry about third party APIs unless you are building a platform.
+To follow the principal of least privilege and security best practices, the third party should ask for as few scopes as needed to perform its operations.
+
+### Scope Validation
+
+Scope validation takes place in a couple of different places and times.
+
+Before a third party is granted access by the central authority to get API keys, the scopes it requests should be vetted. In the OAuth world, this is part of client registration.
+
+When the third party service asks for access to a particular user's data, the user should be prompted to grant permission. 
+
+This is critical for securing user data usage by third party applications. The presentation is controlled by the central authority, but should clearly lay out the ramifications of the data access to the end user. This is the users chance to disallow improper access to their data. For instance, if the analytics tool asks for todos write access, the request should be clear enough that the normal user will prohibit it. 
+
+The central authority should also verify requested scopes. Since the scope request is under control of the third party client, a malicious or buggy client could modify the scope request. If the central authority receives a scope request that is not granted to the third party, it must disallow the request.
 
 ### Designing Scopes
 
-Scope design is difficult to do upfront, but even more painful to retrofit. Since third party clients are building on top of these systems, updating or changing the scopes will be a long, drawn out process. So spend some time up front thinking about scopes.
+Scope design is difficult to do when designing your APIs, but even more painful to retrofit. Since third party clients are building on top of the APIs you provide, updating or changing the scopes will be a long, drawn out process. Spend some time up front thinking about scopes. You want them to be:
 
-You want them to be:
-
-* cover a cohesive chunk of functionality
+* broad enough to cover a cohesive chunk of functionality
+* narrow enough to be useful to control access (avoid `admin` scopes)
 * be understandable to users
 * have no overlap
+* not be overbroad
 
-One common way to design these is to break your APIs into chunks of functionality and then offer read and write permissions to each of these. So for our todo application, these scopes might make sense:
+You don't need to have scopes for every API endpoint. For example, there may be certain admin APIs which would only be usable by first party applications. In that case, exclude them from your scope definitions to remove the possibility they'd ever be granted to or requested by third party applications.
 
-* todo-read: the permission to read and list todos
-* todo-write: the permission to create and update todos
+One common way to design scopes is to break your APIs into defined sections of functionality and offer read and write permissions to each area. For the Pied Piper todo application, scopes might be:
 
-This is more of an art than a science.
+* `todo-read`: the permission to read and list todos
+* `todo-write`: the permission to create and update todos
+
+As more API functionality is built, different read and write scopes can be added. In addition, there might be scopes which allow for higher level access. This is more of an art than a science.
+
+These scopes should be validated by the API server to check that the scope in the API token matches the requested operation.
 
 ## Wrapping Up
 
-When you are exposing an API, you need to protect it. You should think about whether to use a centralized system or a decentralized system. You also may need to consider handling coarse grained permissions for third party API users.
+When you are exposing an API, you need to protect it.
+
+You should think about whether to use a centralized system or a decentralized system. You also may need to consider handling coarse grained permissions for third party API users.
 
