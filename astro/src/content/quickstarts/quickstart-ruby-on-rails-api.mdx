@@ -10,9 +10,10 @@ icon: /img/icons/ruby-on-rails.svg
 faIcon: fa-gem
 color: red
 cta: EmailListCTA
-coderoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api/main
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api/main
 ---
 import Aside from '../../components/Aside.astro';
+import DockerSpinup from '/src/components/quickstarts/DockerSpinup.astro';
 import Intro from '/src/components/quickstarts/Intro.astro';
 import LoginArchitectureApi from '/src/components/quickstarts/LoginArchitectureApi.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
@@ -48,28 +49,7 @@ cd fusionauth-quickstart-ruby-on-rails-api
 
 ### Run FusionAuth Via Docker
 
-In the root directory of the repo you’ll find a Docker compose file (docker-compose.yml) and an environment variables configuration file (.env). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
-
-```
-docker compose up -d
-```
-
-Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/get-started/download-and-install/development/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to a certain initial state.
-
-<Aside type="note">
-If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by executing `docker-compose down -v`, then re-run `docker-compose up -d`.
-</Aside>
-
-FusionAuth will be initially configured with these settings:
-
-* Your client Id is: `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`
-* Your client secret is: `super-secret-secret-that-should-be-regenerated-for-production`
-* Your example teller username is `teller@example.com` and your password is `password`. They will have the role of `teller`.
-* Your example customer username is `customer@example.com` and your password is `password`. They will have the role of `customer`.
-* Your admin username is `admin@example.com` and your password is `password`.
-* Your fusionAuthBaseUrl is 'http://localhost:9011/'
-
-You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don't need to.
+<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} withTeller />
 
 ## Create Your Ruby on Rails Resource Server Application
 
@@ -113,7 +93,7 @@ gem 'dotenv-rails'
 
 Your full `Gemfile` will now look like
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/Gemfile"}
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/Gemfile"}
   lang="text"/>
 
 Then, install these new gems, by issuing the following command in your terminal window.
@@ -125,7 +105,7 @@ bundle install
 
 Update `/config/routes.rb` to include the two new routes that will be created for `/make-change` and `/panic`. Your `routes.rb` file should now match the below code.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/config/routes.rb"}
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/config/routes.rb"}
   lang="ruby"/>
 
 ### Add Security
@@ -142,7 +122,7 @@ CLIENT_ID=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
 
 Utilizing the environment variables you just added, you can now setup JSON Web Token (JWT) based authentication. Create a new file  `config/initializers/jwt_rack.rb`. This initializer is used to hold configuration settings that are made after all of the frameworks and plugins are loaded. 
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/config/initializers/jwt_rack.rb"}
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/config/initializers/jwt_rack.rb"}
   lang="ruby"/>
 
 Having this code protects your endpoints from anonymous users and passes the JWT payload to the controller. The JWT payload includes `roles` encoded in the JWT you receive from FusionAuth. The decoded payload of a JWT for a `teller` might look like this:
@@ -171,12 +151,12 @@ Having this code protects your endpoints from anonymous users and passes the JWT
 
 Create a new file for the MakeChangeController `app/controllers/make_change_controller.rb`. This controller will verify that the authenticated user has either the `teller` or `customer` role. It then takes in the url parameter `total` to calculate which coins will be returned in the JSON payload.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/app/controllers/make_change_controller.rb"}
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app/controllers/make_change_controller.rb"}
   lang="ruby"/>
 
 Create a new file for the PanicController `app/controllers/panic_controller.rb`. This controller will verify that the authenticated user has only the `teller` role. It will respond with `Proper role not found for user.` if this role is not found. This route also verifies that this is a `POST` request and if this is not true it will respond with `Only POST method is supported.` If both of these tests are passed the controller will return a successful message of `We've called the police!`.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/app/controllers/panic_controller.rb"}
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app/controllers/panic_controller.rb"}
   lang="ruby"/>
 
 ## Run the API

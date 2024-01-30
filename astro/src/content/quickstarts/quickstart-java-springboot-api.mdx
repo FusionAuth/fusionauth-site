@@ -10,8 +10,10 @@ icon: /img/icons/spring.svg
 faIcon: fa-leaf
 color: green
 cta: EmailListCTA
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-api/main
 ---
 import Aside from '../../components/Aside.astro';
+import DockerSpinup from '/src/components/quickstarts/DockerSpinup.astro';
 import Intro from '/src/components/quickstarts/Intro.astro';
 import LoginArchitectureApi from '/src/components/quickstarts/LoginArchitectureApi.astro';
 import SpringBootPreReqs from '../../components/quickstarts/springboot-prereqs.mdx';
@@ -44,28 +46,7 @@ cd fusionauth-quickstart-java-springboot-api
 
 ### Run FusionAuth Via Docker
 
-In the root directory of the repo you’ll find a Docker compose file (docker-compose.yml) and an environment variables configuration file (.env). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
-
-```
-docker compose up -d
-```
-
-Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/get-started/download-and-install/development/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to a certain initial state.
-
-<Aside type="note">
-If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by executing `docker-compose down -v`, then re-run `docker-compose up -d`.
-</Aside>
-
-FusionAuth will be initially configured with these settings:
-
-* Your client Id is: `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`
-* Your client secret is: `super-secret-secret-that-should-be-regenerated-for-production`
-* Your example teller username is `teller@example.com` and your password is `password`. They will have the role `teller`.
-* Your example customer username is `customer@example.com` and your password is `password`. They will have the role `customer`.
-* Your admin username is `admin@example.com` and your password is `password`.
-* Your fusionAuthBaseUrl is 'http://localhost:9011/'
-
-You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don't need to.
+<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} withTeller />
 
 ## Create Your Spring Boot Resource Server Application
 
@@ -123,7 +104,7 @@ rmdir springapi
 
 Open `src/main/resources/application.properties`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-api/main/complete-application/src/main/resources/application.properties"
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/main/resources/application.properties"}
             lang="ini"/>
 
 We need two properties here:
@@ -142,19 +123,19 @@ This tutorial puts all these classes in the same package for simplicity, but for
 
 We will need response objects for the API to return. One is the `PanicResponse` which returns a message when a successful `POST` call is made to `/panic`. In the base package create a new class `PanicResponse.java`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/PanicResponse.java"
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/main/java/io/fusionauth/quickstart/springapi/PanicResponse.java"}
             lang="java"/>
 
 Next you need an object to show the breakdown from making change. This object will hold a BigDecimal `total` and Integers `nickels` and `pennies`. In the base package create a new class `Change.java`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/Change.java"
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/main/java/io/fusionauth/quickstart/springapi/Change.java"}
             lang="java"/>
 
 ### Add Controllers
 
 Next you need to add controllers to handle API calls. In the base package add a new class `MakeChangeController.java`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/MakeChangeController.java"
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/main/java/io/fusionauth/quickstart/springapi/MakeChangeController.java"}
             lang="java" />
 
 In this class a `total` is a http request query parameter that is converted to a `BigDecimal`, and the `get` method divides the `total` into `nickels` and `pennies` and returns the response object.
@@ -166,7 +147,7 @@ There are three annotations that are important for the controller to work:
 
 Now, add a controller for tellers to call in an emergency. In the base package add a class `PanicController.java`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/PanicController.java"
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/main/java/io/fusionauth/quickstart/springapi/PanicController.java"}
             lang="java" />
 
 This class listens on `/panic` for a POST request and returns a response indicating that the police were called. The annotations are the same as `MakeChangeController.java` except for `@PostMapping` indicates a POST request handler.
@@ -197,7 +178,7 @@ So far you have not done anything with auth, and the controllers are unaware of 
 
 You need to tell Spring how to parse the `roles` out of the claim in the JWT, and for that you need a `Converter`. In the base package add a class `CustomJwtAuthenticationConverter.java`:
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/CustomJwtAuthenticationConverter.java"
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/main/java/io/fusionauth/quickstart/springapi/CustomJwtAuthenticationConverter.java"}
             lang="java" />
 
 This class implements the `Converter` interface and takes the `roles` claim and maps it to a `Collection<GrantedAuthority>` Spring will use to authorize the user. We set these as the `authorities` on the AuthenticationToken.
@@ -206,7 +187,7 @@ Because you are using a custom converter you also need to check the audience. Pu
 
 Now you can add a security configuration. In the base package create a new class `SecurityConfiguration.java`.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-api/main/complete-application/src/main/java/io/fusionauth/quickstart/springapi/SecurityConfiguration.java"
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/main/java/io/fusionauth/quickstart/springapi/SecurityConfiguration.java"}
             lang="java" />
 
 This class does a lot in a few lines of code. Let's break it down:
