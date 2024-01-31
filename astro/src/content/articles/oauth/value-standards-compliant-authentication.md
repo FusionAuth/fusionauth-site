@@ -7,6 +7,7 @@ section: OAuth
 date: 2021-06-10
 dateModified: 2021-06-10
 icon: /img/icons/value-standards-authentication.svg
+darkIcon: /img/icons/value-standards-authentication-dark.svg
 ---
 
 Software applications regularly need access to data from other services on behalf of their users.

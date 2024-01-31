@@ -4,6 +4,7 @@ description: The OAuth Device Authorization grant enables game users to authenti
 author: Success Ologunsua
 section: Gaming & Entertainment
 icon: /img/icons/oauth-authorization-grant.svg
+darkIcon: /img/icons/oauth-authorization-grant-dark.svg
 date: 2022-09-01
 dateModified: 2022-09-01
 ---

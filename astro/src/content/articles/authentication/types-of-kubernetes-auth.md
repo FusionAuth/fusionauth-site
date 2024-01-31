@@ -5,6 +5,7 @@ author: Dan Moore
 section: Authentication
 tags: kubernetes k8s infrastructure service-to-service machine-to-machine requests on-behalf-of
 icon: /img/icons/types-kubernetes-auth.svg
+darkIcon: /img/icons/types-kubernetes-auth-dark.svg
 ---
 
 When considering [auth inside your Kubernetes cluster](/docs/get-started/download-and-install/kubernetes/), it's good to think of three different types. Each has different needs and requirements and implementation choices.

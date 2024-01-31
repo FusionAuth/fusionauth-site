@@ -4,6 +4,7 @@ description: You can build a game that deploys to multiple platforms using tools
 section: Gaming & Entertainment
 author: Rabo James Bature
 icon: /img/icons/cross-platform-gaming-accounts.svg
+darkIcon: /img/icons/cross-platform-gaming-accounts-dark.svg
 # date: 2022-10-01
 # dateModified: 2022-10-01
 ---

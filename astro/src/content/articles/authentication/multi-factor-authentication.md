@@ -5,6 +5,7 @@ author: Dan Moore
 section: Authentication
 tags: mfa 2fa multi-factor-authentication two-factor-authentication user-experience customer-experience security policie sms totp factors ap-push tradeoffs open-standards biometric
 icon: /img/icons/multi-factor-authentication.svg
+darkIcon: /img/icons/multi-factor-authentication-dark.svg
 ---
 
 As more of our lives move online, multi-factor authentication (MFA) becomes increasingly important as a way of keeping our accounts secure. As a user, you know you should enable MFA on any accounts containing valuable data or which you want to keep safe. 

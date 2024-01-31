@@ -4,6 +4,7 @@ description: What steps do you need to take to ensure your authentication system
 section: CIAM
 author: James Hickey
 icon: /img/icons/auth-system-scale.svg
+darkIcon: /img/icons/auth-system-scale-dark.svg
 ---
 
 Have you ever worked on a software system that stored passwords in plain text? I once worked on a product that stored encrypted plain-text passwords. Thankfully, this system was eventually fixed to store hashed passwords!

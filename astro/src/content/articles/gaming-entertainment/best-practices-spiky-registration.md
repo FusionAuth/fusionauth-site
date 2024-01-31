@@ -4,6 +4,7 @@ description: What are steps you can take to make sure your servers can handle an
 section: Gaming & Entertainment
 author: Muhammad Yasoob Ullah Khalid
 icon: /img/icons/registration-traffic-game-launches.svg
+darkIcon: /img/icons/registration-traffic-game-launches-dark.svg
 # date: 2022-08-24
 # dateModified: 2022-08-24
 ---

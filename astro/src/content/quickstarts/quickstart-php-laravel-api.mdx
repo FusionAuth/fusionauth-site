@@ -32,7 +32,7 @@ A client wants access to an API resource at `/resource`. However, it is denied t
 
 <Diagram/>
 
-While the access token is acquired via the Login API above, this is for simplicity of illustration. The token can be, and typically is, acquired through one of the [OAuth grants](/docs/v1/tech/oauth/).
+While the access token is acquired via the Login API above, this is for simplicity of illustration. The token can be, and typically is, acquired through one of the [OAuth grants](/docs/lifecycle/authenticate-users/oauth/).
 
 ## Getting Started
 
@@ -74,7 +74,7 @@ You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look
 
 ### Expose FusionAuth Instance
 
-To make sure your local FusionAuth instance is accessible to your Laravel app, you need to [expose it to the Internet](/docs/v1/tech/developer-guide/exposing-instance). Write down the URL ngrok gave you as you'll need it soon.
+To make sure your local FusionAuth instance is accessible to your Laravel app, you need to [expose it to the Internet](/docs/get-started/download-and-install/development/exposing-instance). Write down the URL ngrok gave you as you'll need it soon.
 
 ## Create your Laravel Application
 
@@ -84,7 +84,7 @@ We are going to be building an API backend for a banking application called Chan
 - `make-change`: This endpoint will allow you to call GET with a `total` amount and receive a response indicating how many nickels and pennies are needed to make change. Valid roles are `customer` and `teller`.
 - `panic`: Tellers may call this endpoint to call the police in case of an incident. The only valid role is `teller`.
 
-Both endpoints will be protected such that a valid JSON web token (JWT) will be required in the `app.at` cookie in order to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
+Both endpoints will be protected such that a valid JSON web token (JWT) will be required in an `app.at` cookie or the `Authorization` header in order to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
 
 <Aside type="note">
   If you simply want to run the application, there is a completed version in the `complete-application` directory. You can install [PHP](https://www.php.net) and [Composer](https://getcomposer.org/) and use the following commands to get it up and running if you do not want to create your own.
@@ -258,7 +258,7 @@ To make the library available for use, publish its configuration by running the 
 
 ### Get a Token
 
-There are [several ways to acquire a token](/docs/v1/tech/oauth/) in FusionAuth, but for this example you will use the [Login API](/docs/v1/tech/apis/login) to keep things simple.
+There are [several ways to acquire a token](/docs/lifecycle/authenticate-users/oauth/) in FusionAuth, but for this example you will use the [Login API](/docs/apis/login) to keep things simple.
 
 First, try requests as the <code><RemoteValue url={frontmatter.coderoot + "/kickstart/kickstart.json"} selector="$.variables.tellerEmail" /></code> user. Based on the configuration this user has the `teller` role and should be able to use both `/api/make-change` and `/api/panic`.
 
@@ -291,11 +291,15 @@ Copy the `token` from the response, which should look like this:
 
 ### Make the Request
 
-Make a request to `/api/make-change` with a query parameter `total=5.12` and passing the `token` in an `app.at` cookie.
+Make a request to `/api/make-change` with a query parameter `total=5.12` and pass the `token` in an `app.at` cookie (or as a `Bearer` token in the `Authorization` header).
 
 ```shell
 curl --cookie 'app.at=YOUR_TOKEN' 'http://localhost/api/make-change?total=5.12'
 ```
+
+<Aside type="note">
+  You can replace `--cookie 'app.at=<your_token>'` with `--header 'Authorization: Bearer <your_token>'` if you wish to use the `Authorization` header instead of the `app.at` cookie.
+</Aside>
 
 The response should look similar to below, however it has been formatted here for readability:
 
@@ -454,3 +458,4 @@ cd complete-application
 composer install
 ./vendor/bin/sail up -d
 ```
+

@@ -5,6 +5,7 @@ author: Kasper Siig
 section: Authentication
 tags: architecture single-sign-on sso tradeoffs passwords policy customer-experience centralized-control user-access productivity compliance security
 icon: /img/icons/developer-benefits-single-sign-on.svg
+darkIcon: /img/icons/developer-benefits-single-sign-on-dark.svg
 ---
 
 Making the sign-up process simpler is the first place to start if you want more people to use your product. It can significantly help you improve your application conversion.

@@ -3,6 +3,7 @@ title: Breached Password Detection
 description: What is breached password detection and why should you implement it.
 author: Dan Moore
 icon: /img/icons/breached-password-detection.svg
+darkIcon: /img/icons/breached-password-detection-dark.svg
 section: Security
 date: 2020-07-22
 dateModified: 2020-07-22

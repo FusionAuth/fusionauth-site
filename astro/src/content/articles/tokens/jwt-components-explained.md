@@ -3,6 +3,7 @@ title: Components of JWTs Explained
 description: Technical article explains JSON Web Tokens (JWT), their component parts, and how they are used for authentication. 
 author: Dan Moore
 icon: /img/icons/components-jwt-explained.svg
+darkIcon: /img/icons/components-jwt-explained-dark.svg
 section: Tokens
 # date: 2022-02-24
 # dateModified: 2022-02-24
@@ -31,6 +32,8 @@ This may look like a lot of gibberish, but as you learn more about JWTs and how 
 There are a few types of JSON Web Tokens, but I’ll focus on signed JWTs as they are the most common. A signed JWT may also be called a JWS. It has three parts, separated by periods.
 
 There’s a header, which in the case of the JWT above, starts with `eyJhbGc`. Then there is a body or payload, which above starts with `eyJhdWQ`. Finally, there is a signature, which starts with `dee-K` in the example JWT.
+
+![The components of a JWT, visualized.](/img/shared/json-web-token.png)
 
 How does a JWT work? Let’s break this example JWT apart and dig a bit deeper.
 

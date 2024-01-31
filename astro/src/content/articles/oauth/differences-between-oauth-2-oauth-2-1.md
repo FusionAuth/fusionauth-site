@@ -7,6 +7,7 @@ section: OAuth
 date: 2020-10-20
 dateModified: 2020-10-20
 icon: /img/icons/difference-oauth2-2.1.svg
+darkIcon: /img/icons/difference-oauth2-2.1-dark.svg
 ---
 
 OAuth 2.1 is consolidating best practices learned over the eight years since OAuth 2 was published. The original OAuth 2.0 specification was released in October 2012 as [RFC 6749](https://tools.ietf.org/html/rfc6749) and [RFC 6750](https://tools.ietf.org/html/rfc6750). It replaced OAuth 1.0, released in April 2010. There have been a number of extensions and modifications to OAuth 2 over the subsequent years.

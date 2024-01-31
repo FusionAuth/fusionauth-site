@@ -5,6 +5,7 @@ author: Dan Moore
 section: Authentication
 tags: signature standards open-standards passwords password-managers browsers single-sign-on sso mfa multi-factor-authentication attestation registration user-presence user-verification discoverable-credentials 
 icon: /img/icons/webauthn-explained.svg
+darkIcon: /img/icons/webauthn-explained-dark.svg
 ---
 
 WebAuthn is a new way to authenticate your users using biometric, secure authentication methods. It is also called "passkeys", but WebAuthn is the standard, so that's the term this document will use.

@@ -3,6 +3,7 @@ title: Open Source vs. Commercial Auth Providers
 description: A look at the pros and cons of open-source and commercial authentication providers.
 author: Keanan Koppenhaver
 icon: /img/icons/open-source-commercial-auth.svg
+darkIcon: /img/icons/open-source-commercial-auth-dark.svg
 section: Identity Basics
 date: 2021-04-15
 dateModified: 2021-04-15
