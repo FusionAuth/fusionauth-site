@@ -16,137 +16,164 @@ import FailedAPIRequest from "../../diagrams/blog/protecting-your-api/failed-api
 import SignedTokenValidation from "../../diagrams/blog/protecting-your-api/signed-token-validation.astro";
 import IntrospectionValidation from "../../diagrams/blog/protecting-your-api/introspection-validation.astro";
 
-When you are building out HTTP based JSON APIs for web applications, desktop apps or mobile applications to access functionality or data, you must authenticate these requests properly. 
+When you are building out APIs for web applications, desktop apps or mobile applications, you must authenticate these requests. 
 
-You may say to yourself "of course, who wouldn't do that?". But there have been incidents in the last few years where APIs were not protected at large or prominent organizations, including [LinkedIn and Parler](https://securityboulevard.com/2021/11/biggest-api-security-attacks-of-2021-so-far/).
-
-There's also an [OWASP API top 10 list](https://owasp.org/API-Security/editions/2023/en/0x11-t10/), and authentication is number two on it.
-
-Let's take a look at some things to think about when you are protecting your APIs.
+You may say to yourself, "of course, who wouldn't do that?". There have been incidents in the last few years where APIs were not protected at large or prominent organizations, including [LinkedIn and Parler](https://securityboulevard.com/2021/11/biggest-api-security-attacks-of-2021-so-far/). There's an [OWASP API top 10 list](https://owasp.org/API-Security/editions/2023/en/0x11-t10/) illustrating industry wide security issues. Authentication is number two on that list.
 
 {/* more */}
 
+Let's take a look at what you need to think about when protecting your APIs. In this post, you'll learn about where you should verify your API keys and the differences between first-party and third-party APIs.
+
 ## What Is An API?
 
-First, though, what is an API? API stands for Application Programming Interface and in the general sense is a way for one piece of software to communicate with another. The method of transport and the format of messages need to be defined, whether a C program is calling into a numeric processing library or a mobile application is requesting user data. 
+First, though, what is an API?
 
-Web APIs can take a lot of different forms, but a very common one nowadays has the following attributes:
+The acronym API stands for "Application Programming Interface" and defines a method for one piece of software to communicate with another. The transport and the message format must be be defined and mutually agreed upon, whether the participants are a C program is calling into a Fortran numeric processing library or a mobile application requesting user data from a web server.
 
-* TLS and HTTP, including verbs, for the transport layer
+Web APIs vary, but it is common for them to use:
+
+* TLS and HTTP (well, TLS, really) for the transport layer
 * JSON and HTTP headers for the message formatting layer
 
-An API has:
+### The Players
 
-* an client, the software program making the request
-* an API server, which holds the protected data or functionality
-* an API key, a unique identifier for the client which can be validated by the API server
+Any web API has the following entities:
+
+* an client which is the software program making the request
+* an API server which offers protected data or functionality
+* an API key which is a unique identifier for the client which can be validated by the API server to authenticate that client
 * a central authority which can issue API keys
 
-I like examples, so throughout this post, you'll examine a hypothetical todo service run by Pied Piper, which allows users to create, update and delete todos. It'll have multiple client applications and an API which records these tasks. Users should be able to create and update their own tasks, but not those of others.
+Throughout this post, we'll examine a hypothetical todo service run by Pied Piper, the Pied Piper Todo Management System (PPTMS). This service allows users to create, update and delete todos. It'll have multiple client applications and a web API. For ease of writing, I'll shorten 'web API' to 'API'.
 
-A web browser can make a `GET` request against an API server such as `https://todo.piedpiper.com/api/todo` to retrieve a list of todos for a certain user. The browser is a client and the server is at `todos.piedpiper.com`. An API key is held by the client and presented to the API server to authenticate the request. An API key needs to be HTTP safe and unique to a given user, but there are no other constraints.
+Users can create and update their own tasks. But users should not be able to access anyone else's todos.
+
+A client can make a `GET` request against an API server at `https://todo.piedpiper.com/api/todo` to retrieve a list of user's todos. An API key is held by the client and presented to the API server to authenticate the request. The API key needs to be HTTP safe and unique per user, but there are no other constraints.
+
+Here's an example of a successful API request, where Richard requests information about his todos:
 
 <APIRequest alt="An API request." />
 
-But how does the server know which user to get todos for when it receives a request? And how do you know that the requester is allowed to access them? After all, you need to deny random or malicious users access to those precious, precious tasks. If the API server knows the caller is Richard, it knows that the requester can read and write Richard's todos, but not Dinesh's.
+But how does the server know which user to get todos for when it receives a request? You need to deny random or malicious users access to precious, precious tasks. Authentication is critical. If the API server knows the caller is Richard, it knows that the requester can read and write Richard's todos, but not Dinesh's.
+
+Here's a failed request, because the user is unauthorized.
 
 <FailedAPIRequest alt="A failed API request." />
 
-## What Are API Authentication Needs
+## What API Authentication Needs
 
 To get access to data from an API, the user or software program needs to provide proof of who/what they are to get access to functionality and/or data. The API authentication mechanism should be:
 
 * secure
 * performant
 
-The pre-eminent task any API authentication method must perform is to make sure that only the appropriate callers gets access to data or functionality. There are many aspects to this, including how the initial authentication is performed, looking for unexpected requests, and determining what access is requested and provided.
+The first requirement of API authentication is allow only appropriate callers gets access to data or functionality. This requirement includes how the initial authentication is performed, properly handling unexpected requests, and determining what access is requested and provided.
 
-While you can rely on TLS for HTTP API requests to secure the API key in transit, you need to make sure the API key is secured both on the client and the API server.
+While you can rely on TLS for web API requests to secure the API key in transit, make sure the API key is secured from unauthorized access on both the client and the API server.
 
-API authentication methods must also be performant. While a secondary concern, if an API is not accessible due slow authentication of requests, the API is broken.
+API authentication methods must also be performant. If an API is not accessible due to slow authentication, the API is broken.
+
+API keys, which are high entropy random strings assigned to clients by a central authority, give you both security and performance. There are other methods which work, such as network access control lists, but for internet enabled web APIs, API keys are a great solution.
 
 ## API Protection Options
 
-There are really three ways to protect an API.
+But to protect the API with keys, you need to verify a presented key is valid. There are three ways to think about API key verification.
 
-* No authentication
-* Centralized authentication, where API key validity is determined by the central authority
-* Decentralized authentication, where the API server can determine API key validity
+* No authentication needed: no verification required
+* Centralized verification: where a central authority determines API key validity
+* Decentralized verification: where an API server determines API key validity
 
-What does API key validity mean? It means that the API key is recognized as one that was issued by the central authority. When an API key is valid, the requester is properly authenticated.
+What does API key validity mean? It is the end result of a process that determines the API key was issued by a known central authority and has not been revoked or expired. When an API key is valid, the requester is properly authenticated.
 
 ### Unprotected APIs
 
-The first option is useful when you have a public API that offers the same data or functionality for all users. I once worked on an application that needed tremendous scale and it achieved it by publishing JSON formatted messages to Amazon S3, which were then ingested by JavaScript running on millions of browsers. This was a read-only API that had no authentication. Having no authentication simplifies everything and is a good option when it works.
+The first option fits when you have a public API that offers identical data or functionality for all users. I once worked on an application that had tremendous scale requirements. It published JSON formatted messages to Amazon S3, which were then ingested by JavaScript running on millions of browsers, and displayed data to the end user. This was a read-only API with no authentication. Updating the data this API served happend through a different process where credentials were checked.
 
-Updating the data that this API served was done through a different process which was absolutely authenticated.
+Having no authentication simplifies security and performance. It is a good option when no data modification needs to happen, or when there are read-only and write channels, as above.
 
-This approach is the exception rather than the rule. It only applies when client data access is read only and the data is the same for every client.
+However, such an approach is the exception rather than the rule. 
 
-Far more often, especially if you are using APIs to let clients update data in the server or offering user specific functionality or data, you will need to perform some sort of authentication and authorization.
+Far more often, especially when APIs allow clients to update data or offer functionality tied to the user's identity, you must authenticate and authorize the API request.
 
 ## Authentication And Authorization
 
-Typically after you authenticate and know who the caller, you authorize the request. That lets the system know what access the caller has, or whether access should be denied entirely.
+Typically after you authenticate a reqeust and know who the caller is, you authorize it. This lets the API server know what access the caller has or if access should be denied.
 
 <Aside type="note" nodark="true">
-Authentication is "who are you" and authorization is "what can you do". While they can be treated separately (car keys authorize without authenticating and a business card weakly authenticates without authorizing) they are usually considered together.
+Authentication is "who are you" and authorization is "what can you do". While they can be treated separately (car keys authorize without authenticating and a business card authenticates without authorizing), they are often considered together.
 </Aside>
 
-This can be done with a variety of mechanisms, including role-based access control (RBAC) but is typically embedded in business logic or extracted to an authorization server which controls access. 
+Authorization can be done in a number of ways, including role-based access control (RBAC), attribute-based access control (ABAC), and relationship-based access control (ReBAC). Authorization decisions are typically embedded in business logic or extracted to a standalone policy decision point (PDP). 
 
-For example, after a request to `todos.piedpiper.com/api/todos` with a proper API key, if the system knows the caller is Richard, it knows that the requester can read and write Richard's todos, but not Dinesh's. The API key doesn't necessarily contain information about what Richard can and can't do, but the API server consuming the API key needs to have an access control layer.
+An example of authorization is when a request to `todos.piedpiper.com/api/todos` is received and has a valid API key representing Richard, the system allows read and write access to Richard's todos. But Dinesh's todos are not accessed.
 
-Each API is stateless because it is over HTTP. Because this system needs to support a variety of clients, browser-specific mechanisms like cookie sessions can't be relied on. This means that the API key should be presented every time.
+The API key doesn't necessarily contain information about what Richard can and can't do, but the API server consuming the API key needs to be able to authorize the request after authenticating it somehow. A useful API key authenticates the request and also can be used to determine authorization status.
 
-## Centralized vs Decentralized Authentication and Authorization
+Finally, APIs are stateless because of the HTTP transport mechanism. Because the todos server supports different clients, browser-specific mechanisms such as cookie-based sessions can't be used. The API key should be presented to the API server every time.
 
-Let's look at the differences between centralized and decentralized authentication and authorization for your API calls. Let's examine the hypothetical todo service run by Pied Piper, which again allows users to create, update and delete tasks. It'll have multiple client applications and an API which records these tasks. Users should be able to create and update their own tasks, but not those of others.
+## Centralized vs Decentralized API Key Verification
 
-To simplify this process, assume that the client making request magically has obtained the appropriate API key from the central authority. In this system, there are also other API services too. There might be a service for sharing todos or summarizing them using an LLM. These will also require authentication.
+Let's look at the differences between centralized and decentralized API key verification. The Pied Piper Todo Management Syste allows users to create, update and delete todos and tasks. It'll have multiple client applications and an API to store data. Users should be able to create and update their own tasks, but not those of others.
 
-So, to sum up, these are the important parts of the system:
+We're not going to deeply discuss how the client gets the API key in this post. You could do this using the [OAuth grants](/articles/oauth/complete-list-oauth-grants) or a developer portal issuing static keys, but this section will assume the client obtained a key that needs to be valided.
 
-* the client, which wants to display or add todos
-* the todo API server, which holds the todos
-* the API key, which authenticates the client to the todo API server
-* the central authority, which determines API key validity
-* the other API services, such as a sharing or summarization service
+In this system, there are also other API services. There might be a service for sharing todos or summarizing them using an LLM. Accessing these will also require valid API keys.
 
-Let's look at centralized authentication first.
+These are the important components of the Pied Piper Todo Management System:
 
-## Centralized Authentication
+* clients which display or add todos
+* the todo API server which holds todos data and allows for modification of that data
+* API keys which authenticates each client to the todo API server
+* the central authority which issues and validates API keys
+* other API services, such as a sharing or summarization service
 
-With centralized authentication, the central authority is consulted every time there is an API request. The client offers up the API key on every request to the API server, and the API server needs to in turn present the API key to the central authority. The central authority verifies the API key is valid using the value of the API key and contextual information about the request and requested resource.
+With that context out of the way, let's look at centralized API key validation.
+
+## Centralized API Key Verification
+
+With centralized API key verification, the central authority is consulted every time there is an API request. On every request, the client presents the API key such as `emORxy...` to the API server, and the API server in turn presents the API key to the central authority.
+
+The central authority validates the API key using its value and, possibly, contextual information about the request and requested resource.
 
 <APIRequestWithCentralAuthority alt="API request with central authority validating the key." />
 
-What does the central authority look like? It could be a database table, a separate in-memory service or a separate architectural component. Conceptually these are all the same, but of course performance and complexity are different for each of these solutions, as well as their ability to support different services. But that's one of the good things about the centralized authentication scenario. You can migrate between these implementations in a transparent manner. And having a local solution, such as a database table, makes deployment and reasoning about the system relatively easy.
+What does the central authority look like? It's named vaguely intentionally, as it could be:
+* a database table
+* a separate in-memory service or
+* a standalone server
 
-There are other benefits with this approach. Revocation of an API key is easy, if a client should no longer have access. Every request is checked, so when a user should no longer be able to access their todos, the central authority updates an API key status or removes the API key from its datastore. Subsequent requests fail.
+Conceptually these all offer the same functionality, which is checking if an API key is tied to a user and is valid. Performance and complexity are different for each of these solutions, though. But that's a benefit of the centralized scenario. You can migrate between implementations without changing the clients or the API server. Having a local solution, such as a database table, makes deployment simple and reasoning about the system relatively easy.
 
-However, with the centralized authentication option, the central authority is a possible chokepoint. Each service needs to verify every request. This means the central authority needs to meet high availability and performance requirements. As you add more services and more clients, the requirements become more stringent.
+There are other benefits with the centralized approach. Revocation of an API key is trivial. If a client should no longer have access, you update the central authority's datastore to remove that API key or change its status.
+
+Every request presents an API key to the central authority, so when a user should no longer be able to access their todos, such as when they failed to pay Pied Piper the monthly fee, the central authority removes the API key from its datastore. Subsequent requests fail authentication.
+
+However, with centralized verification, the central authority is a chokepoint. Since each service verifies every request, the central authority needs high availability and performance. As you add more services and more clients, such non-functional requirements increase.
 
 <APIRequestWithMultipleRequestsCentralAuthority alt="API request with central authority validating the key for multiple requests." />
 
-### Decentralized Authentication
+Additionally, if you need to integrate with third-party services, you need to figure out how your API key approach maps to their API key protection system. This may require a proxy to translate requests, or additional integration work.
 
-With decentralized authentication, the central authority issues a signed token for use as an API key. These use public key cryptography to allow an API server to validate them without communicating with the central authority every request. They do this by validating the signature using a known public key, and then examining the content of the API key to make sure they are expected.
+Let's look at decentralized API key verification, which has a different set of tradeoffs.
+
+### Decentralized API Key Verification
+
+With decentralized API key verification, the central authority issues a signed token as an API key. Such tokens use public key cryptography to allow an API server to validate them without communicating with the central authority on every request. The signature is signed by the central authority using a private key. The corresponding public key is published and retrieved periodically by the API server. The public key verifies that the token was signed by the central authority, which means that the contents can be trusted. When the contents of the token are examined, they can provide other information about the requester or operation, including when the token expires, who created the token and more.
 
 <SignedTokenValidation alt="Validation using signed API keys." />
 
-OAuth is a common implementation of decentralized authentication. To map the terms used above into OAuth jargon:
+The OAuth standards can be used to implement decentralized API key verification. Let's map the words used above into OAuth terminology:
 
-| Term used above | OAuth term |
-| ---- | ---- | 
-| client | client | 
-| central authority | authorization server |
-| api server | resource server |
-| API key | access token |
+| Term used above | OAuth term | OAuth abbreviation |
+| ---- | ---- | ---- | 
+| client | client | n/a |
+| central authority | authorization server | AS |
+| api server | resource server | RS |
+| API key | access token | AT |
 
-However, for clarity, this post will continue to use the same terms, such as API server, as before.
+For clarity, this post will continue to use the non-OAuth terms, such as API server.
 
-An API key in a decentralized system is often [a JSON web token (JWT)](/articles/tokens/jwt-components-explained) which can carry more information than a simple API key in a centralized system does.
+An API key in a decentralized system is often [a JSON web token (JWT)](/articles/tokens/jwt-components-explained) which carries more information than a simple API key in a centralized system can.
 
 A signed JWT has three components. A header with metadata, a payload with data, and a signature for integrity checking.
 
@@ -154,22 +181,22 @@ A signed JWT has three components. A header with metadata, a payload with data, 
 
 The payload can be trusted because of the signature. The existence of the signature means that the API server can verify that the contents of the API key were not changed after it was created by the central authority.
 
-An API key which is a signed token can include information like:
+An API key which is a signed token can include data such as:
 
 * the user identity
 * who the API key is intended for
 * who created the API key
-* business specific data like the account level of the user
+* business specific information like the account level of the user
 
-With decentralized authentication, you have far less communication with the central authority. Because of the signature integrity guarantees, you can use the payload to reduce network calls.
+With the decentralized option, you have far less communication with the central authority. Because of the signature integrity guarantees, you can use the payload to reduce network calls and increase scalability. Additionally, systems can be more isolated as there isn't the same single point of failure, and can continue to operate for a time if the central authority is unavailable.
 
-But the flip side of this decentralization is that [revocation of the API key](/articles/tokens/revoking-jwts) is more complex. To minimize the impact of revocation complexity, API keys in a decentralized system have time windows, which mean that no API key in a decentralized system will be valid forever.
+The flip side of this decentralization is that [revocation of the API key](/articles/tokens/revoking-jwts) is more complex. 
 
-### Introspection
+### Why Not Both? OAuth Introspection
 
-As mentioned above, OAuth supports decentralized API authentication. However, if you use introspection ([RFC 7662](https://datatracker.ietf.org/doc/html/rfc7662)), then you can make use OAuth in a centralized scenario. 
+As mentioned above, OAuth supports decentralized API key verification. However, if you use introspection ([RFC 7662](https://datatracker.ietf.org/doc/html/rfc7662)), then you can use OAuth as a centralized API key verification system. 
 
-With introspection, every time the API server receives a request, it presents the central authority with the API key. The central authoriy then responds with a valid/not valid response. The format of the response is defined by the RFC.
+With introspection, every time the API server receives a request, it presents the central authority with the API key. The central authoriy returns response indicating whether the API key was valid or invalid. The format of the response is defined by the RFC.
 
 <IntrospectionValidation alt="Validation using signed OAuth introspection." />
 
@@ -179,104 +206,110 @@ A typical response looks like:
 {
   "active": true,
   "client_id": "l238j323ds-23ij4",
-  "username": "jdoe",
-  "scope": "read write dolphin",
+  "username": "richard",
+  "scope": "read write share",
   "sub": "Z5O3upPC88QrAjx00dis",
-  "aud": "https://protected.example.net/resource",
-  "iss": "https://server.example.com/",
+  "aud": "https://todo.piedpiper.com/api/todo",
+  "iss": "https://auth.piedpiper.com/",
   "exp": 1419356238,
   "iat": 1419350238,
-  "extension_field": "twenty-seven"
+  "subLevel": "premium"
 }
 ```
 
-However, ensure you understand what a valid response from the central authority means. The `active` attribute is the only required value. From the specification, `active` is a:
+However, when using OAuth introspection, make sure you understand what a valid response from the central authority indicates. The `active` attribute is the *only* required value. 
+
+From the specification, `active` is a:
 
 > [b]oolean indicator of whether or not the presented token is currently active.  The specifics of a token's "active" state will vary depending on the implementation of the authorization server and the information it keeps about its tokens...
 
+With OAuth centralized API key verification, you can't rely on the central authority for everything. You must check the data it returns for correctness as well.
+
 ## First Party vs Third Party APIs
 
-Another API authentication consideration is whether you are securing a first party or third party API. In the example above, the todos client, the API server and the central authority are all owned by piedpiper.com. This makes the todos API a first party API because the same entity controls access to the data.
+Another API security consideration is whether you are protecting a first-party or third-party API. In the example above, the todos client, the API server and the central authority are all owned by Pied Piper.
 
-But what if Pied Piper wants to build a platform to foster an ecosystem of todos based add-ons. There are additional services which will make users' todo experiences more enjoyable. Some examples include:
+But what if Pied Piper builds a platform to foster an ecosystem of todos based add-ons. If this takes off, there are additional services which will make users' task management experience more enjoyable. Some examples of third-party todo based enhancements include:
 
 * an LLM based service to summarize todos
 * a reminder service to read todo due dates and text or email a user about upcoming tasks
-* an analytics service to give the user monthly summaries of their accomplishments
-* custom clients to add todos, so you don't have to use piedpiper.com's interface
+* an analytics service to give a user monthly summaries of their accomplishments
+* custom clients to add todos using an Apple watch interface
 
-While these could be built by Pied Piper, if they open up a platform and provide the right incentives, Pied Piper can harness the creativity and energy of more developers than they could ever hope to hire. 
+While all these services could be built by Pied Piper, if they open up a platform and provide the right incentives, they can harness the creativity and energy of more developers than they could ever hope to hire.
 
-With the platform in mind, Pied Piper needs to authenticate not just the API requester, but also control thier access in a more sophsiticated way, based on the service's needs. The custom client would need to read and write todos. The analytics service would only need read access.
+With such a platform in mind, Pied Piper needs to authenticate not just the API requester, but also control access in a more sophsiticated way, based on what each service's needs. For example, the Apple watch client needs to be able to read and write todos, but the analytics service onlys need to be able to read them.
 
-But third party API clients have even more specific authentication requirements.
+Third-party API clients have specialized authentication requirements which are more complex than the first-party API clients that you learned about above.
 
 ### Third Party API Authentication Requirements
 
-You'll want to define coarse grained permissions. More importantly, you'll need the client to ask permission and the *user* to grant or withhold permissions. That's right, these clients aren't granted access based on just what they are, but also on a user by user basis.
+With third parties, define coarse grained permissions which control access to user data you hold. More importantly, you'll need the client to ask permission for data access and the *user* to grant or withhold permission. That's right, third-party clients aren't granted access based on just what they are, but also on a user by user basis.
 
-This particular access grant occurs when the user installs or authorizes access for a third party solution.
+This permission request typically occurs when the user installs or authorizes access for a third-party solution.
 
 <Aside type="note" nodark="true">
-It doesn't make sense for a first party API to ask for user permission to certain data or operations because the first party has access to all the data!
+In contrast, it doesn't make sense for a first-party API to ask for a user's permission to read or write certain data or operations because the first-party has access to everything.
 </Aside>
 
-The OAuth solution to this problem is to use scopes to define the permissions required and to ask users to grant them. You can also use these concepts with a centralized API key solution. Let's dig into that standards based solution a bit more.
+The OAuth solution to the third-party problem is scopes. These strings define the permissions required and allow clients to ask users to grant them. Let's dig into the standards based solution a bit more.
 
-While the way the user grants the third party application access to their data might vary, it could look like this:
+While the way the user grants the third-party application access to their data might vary, it could look like this:
 
-* user visits todos marketplace
-* user installs third party app to summarize their todos with LLM-magic
-* user is sent to the central authority server with read scope request
-* user prompted for consent to the read scope
-* user consents
-* user sent back to third party app which stores the API key
-* third party app makes request with API key to the todos API server
-* todos API server validates the API key, including scopes
-* todos API server returns todos data
+* Richard visits a Pied Piper Todos Management System marketplace 
+* Richard installs a third-party app to summarize their todos with a LLM: LLMSum
+* Richard is sent to the central authority server with `read` scope request
+* Richard is prompted to consent to the grant of the `read` scope
+* Richard consents
+* Richard is sent back to third-party app which stores the API key which contains scope information as well as other data
+* LLMSum makes a request with API key to the todos API server
+* the todos API server validates the API key, including that the scopes included match the requested operation; a write request would fail
+* when validation passes, the todos API server returns todos data to LLMSum
 
-To follow the principal of least privilege and security best practices, the third party should ask for as few scopes as needed to perform its operations.
+To follow the principal of least privilege and security best practices, the third-party application should ask for as limited a number scopes as is needed to perform the operations.
 
 ### Scope Validation
 
-Scope validation takes place in a couple of different places and times.
+Scope validation occurs in a few different places and times. Before a third party is granted access by the central authority to obtain API keys that it can then use to obtain user data, the scopes the third party requests are vetted to determine if they are appropriate. In the OAuth world, this vetting is part of client registration.
 
-Before a third party is granted access by the central authority to get API keys, the scopes it requests should be vetted. In the OAuth world, this is part of client registration.
+Next, when the third-party service requests access to a particular user's data, as outlined with Richard above, the user should be prompted to grant consent. 
 
-When the third party service asks for access to a particular user's data, the user should be prompted to grant permission. 
+This consent is critical for securing third-party application access. The presentation of the consent is controlled by the central authority, but should clearly lay out the ramifications of the data access to the end user. This is the user's chance to disallow improper access to their data.
 
-This is critical for securing user data usage by third party applications. The presentation is controlled by the central authority, but should clearly lay out the ramifications of the data access to the end user. This is the users chance to disallow improper access to their data. For instance, if the analytics tool asks for todos write access, the request should be clear enough that the normal user will prohibit it. 
+For instance, if the analytics tool asks for write access to the todos, the request should be clear enough that any normal user will prohibit it. 
 
-The central authority should also verify requested scopes. Since the scope request is under control of the third party client, a malicious or buggy client could modify the scope request. If the central authority receives a scope request that is not granted to the third party, it must disallow the request.
+The central authority should also verify requested scopes. Since the scope request is under control of the third-party client, a malicious or buggy client could request disallowed values. If the central authority receives an initial scope request that was not granted to the third-party, the request is invalid and should not be processed.
+
+Finally, if you are using scopes in a decentralized API key verification system, they should be validated by the API server to check that the scope in the API token matches the requested operation.
 
 ### Designing Scopes
 
-Scope design is difficult to do when designing your APIs, but even more painful to retrofit. Since third party clients are building on top of the APIs you provide, updating or changing the scopes will be a long, drawn out process. Spend some time up front thinking about scopes. You want them to be:
+Scope design is hard when first designing APIs, but even more painful to retrofit. Since third-party clients are building on top of the APIs you provide, updating or changing scopes will be a long, drawn out process.
 
-* broad enough to cover a cohesive chunk of functionality
-* narrow enough to be useful to control access (avoid `admin` scopes)
+Spend some time up front thinking about what scopes make sense for your API. You want them to:
+
+* be broad enough to cover a cohesive chunk of functionality
+* be narrow enough to be useful to control access (avoid `superuser` scopes)
 * be understandable to users
 * have no overlap
-* not be overbroad
+* avoid being overbroad
 
-You don't need to have scopes for every API endpoint. For example, there may be certain admin APIs which would only be usable by first party applications. In that case, exclude them from your scope definitions to remove the possibility they'd ever be granted to or requested by third party applications.
+Also, you don't need to have scopes for every API endpoint. For example, there may be certain admin APIs which would only be usable by first-party applications. In that case, don't write scope definitions for them. This avoids the possibility they'd ever be mistakenly granted to or requested by third-party applications. 
 
-One common way to design scopes is to break your APIs into defined sections of functionality and offer read and write permissions to each area. For the Pied Piper todo application, scopes might be:
+One way to design your scopes is to break your APIs into discrete functionality and offer read and write permissions to each area. For the Pied Piper Todo Management System, scopes might be:
 
 * `todo-read`: the permission to read and list todos
 * `todo-write`: the permission to create and update todos
 
-As more API functionality is built, different read and write scopes can be added. In addition, there might be scopes which allow for higher level access. This is more of an art than a science.
-
-These scopes should be validated by the API server to check that the scope in the API token matches the requested operation.
+As more API functionality is built, different read and write scopes can be added. It's also easier to add new scopes than to remove them, so err on the side of minimalism. This is more of an art than a science.
 
 ## Wrapping Up
 
 When you are exposing an API, you need to protect it.
 
-You should think about whether to use a centralized system or a decentralized system. A centralized system requires constant communication between the consumers of API keys, the systems serving the API, and the central authority issuing API keys to confirm validity of the keys. 
+You should think about whether to use centralized API key verification system or decentralized verification. The centralized option requires constant communication between the consumers of API keys, the systems serving the API, and the central authority issuing API keys, all to ensure validity of the keys. 
 
-On the other hand, a decentralized authentication system allows API key consumers to validate API keys on their own, increasing scalability while making revocation more complex.
+On the other hand, a decentralized authentication system allows API key consumers to validate API keys on their own, increasing scalability but making revocation more complex.
 
-You also need set up user based coarse grained permissions for third party API application when building a platform.
+You also may need set up user based coarse grained permissions for third-party API application when building a platform.
 
