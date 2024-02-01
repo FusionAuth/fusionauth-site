@@ -1,11 +1,11 @@
 ---
-publish_date: 2024-01-10
-title: Protecting Your APIs
-description: What are ways you can authenticate requesters to protect APIs?
+publish_date: 2024-01-1
+title: "Securing Your APIs: Verifying API Keys And Using Scopes"
+description: You have APIs. You need to make sure you know who is calling them and what they can do. What are your options?
 authors: Dan Moore
 image: /img/blogs/protecting-your-api/protecting-apis.png
 categories: Education
-tags: apis, authentication, api keys, oauth, tokens
+tags: apis, authentication, api keys, oauth, tokens, scopes, jwt
 excerpt_separator: "{/* more */}"
 ---
 import APIRequestWithCentralAuthority from "../../diagrams/blog/protecting-your-api/api-request-with-api-key-and-central-authority.astro";
@@ -148,6 +148,8 @@ Every request presents an API key to the central authority, so when a user shoul
 
 However, with centralized verification, the central authority is a chokepoint. Since each service verifies every request, the central authority needs high availability and performance. As you add more services and more clients, such non-functional requirements increase.
 
+Here's a diagram showing three parallel requests from three different API servers which all need to have an API key verified.
+
 <APIRequestWithMultipleRequestsCentralAuthority alt="API request with central authority validating the key for multiple requests." />
 
 Additionally, if you need to integrate with third-party services, you need to figure out how your API key approach maps to their API key protection system. This may require a proxy to translate requests, or additional integration work.
@@ -255,14 +257,21 @@ The OAuth solution to the third-party problem is scopes. These strings define th
 While the way the user grants the third-party application access to their data might vary, it could look like this:
 
 * Richard visits a Pied Piper Todos Management System marketplace 
-* Richard installs a third-party app to summarize their todos with a LLM: LLMSum
-* Richard is sent to the central authority server with `read` scope request
-* Richard is prompted to consent to the grant of the `read` scope
+* Richard installs a third-party app to summarize his todos with a LLM, called LLMSum
+* Richard signs into LLMSum
+* Richard is prompted to connect his LLMSum account to his Pied Piper account
+* Richard starts connecting the accounts
+* Richard is sent to the central authority server with a `read` scope request
+* Richard is prompted to consent to the `read` scope request
 * Richard consents
-* Richard is sent back to third-party app which stores the API key which contains scope information as well as other data
-* LLMSum makes a request with API key to the todos API server
-* the todos API server validates the API key, including that the scopes included match the requested operation; a write request would fail
+* Richard is sent back to LLSum which stores the API key which contains scope information as well as other data
+* LLMSum makes a request with API key to the Pied Piper todos API server
+* the todos API server validates the API key, including that the scopes included match the requested operation (a write request would fail)
 * when validation passes, the todos API server returns todos data to LLMSum
+* LLMSum does its LLM magic
+* Richard is happy, see below
+
+![Picture of man holding arms up in joy as sun shines.](/img/blogs/protecting-your-api/happiness.png)
 
 To follow the principle of least privilege and security best practices, the third-party application should ask for as limited a number of scopes as is needed to perform the operations.
 
