@@ -211,6 +211,7 @@ Fruits were domesticated at different times.
 - ECMAScript
 - Elasticsearch
 - esport
+- first-party
 - FusionAuth Cloud
 - Google reCAPTCHA
 - Identity Provider
@@ -225,6 +226,7 @@ Fruits were domesticated at different times.
 - self-service
 - server-side
 - Spring Boot
+- third-party
 - two-factor
 - WebAuthn
 - webview
