@@ -47,18 +47,18 @@ To make things a bit more concrete, let's use an example from the [FusionAuth Qu
 
 This guide will show two ways to extend the [express based](https://expressjs.com) [ChangeBank application](/docs/quickstarts/quickstart-javascript-express-web) to limit concurrent logins.
 
-The completed applications code is available on GitHub at:
--  [Simple Guide)[https://github.com/FusionAuth/fusionauth-device-limit-guide-simple]
--  [User Friendly Guide)[https://github.com/FusionAuth/fusionauth-device-limit-guide-friendly]
+Full implementations of both device limiting methods in the ChangeBank application are available on GitHub at:
+-  [Simple Guide Full Application](https://github.com/FusionAuth/fusionauth-device-limit-guide-simple)
+-  [User Friendly Guide Full Application](https://github.com/FusionAuth/fusionauth-device-limit-guide-friendly)
 
 
 ## Login Requirements
 
 Since the crux of the solution relies on the number of active refresh tokens for a user, you will need to ensure that your FusionAuth application is set up to issue refresh tokens, and that your client application requests them when logging in. 
 
-To ensure that your FusionAuth application is set up to issue refresh tokens, navigate to "Applications" -> "Edit" -> "JWT Configuration". Ensure that "Issue Refresh Tokens" is checked.
+To ensure that your FusionAuth application is set up to issue refresh tokens, navigate to <strong>Applications -> Edit -> JWT Configuration</strong>. Ensure that <InlineField>Issue Refresh Tokens</InlineField> is checked.
 
-To ensure that your client application requests refresh tokens when logging in, ensure that the `offline_access` scope is included in the `scope` parameter of the `/oauth2/authorize` request. If you are constructing the request manually, it should look something like this:
+To ensure that your client application requests refresh tokens when logging in, [ensure that the `offline_access` scope](https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/) is included in the `scope` parameter of the `/oauth2/authorize` request. If you are constructing the request manually, it should look something like this:
 
 ```javascript
 res.redirect(302, `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&scope=offline_access&redirect_uri=http://localhost:${port}/oauth-redirect&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256`)
@@ -72,9 +72,9 @@ For other libraries and languages, consult the documentation to see how to inclu
 
 ## Using the Refresh Token API
 
-Both solutions depend on calling the FusionAuth API to retrieve the active [refresh tokens](https://fusionauth.io/docs/apis/jwt) for a user, using the [JWT Retrieve Refresh Tokens API](https://fusionauth.io/docs/apis/jwt#retrieve-refresh-tokens). This API requires an API key](https://fusionauth.io/docs/apis/api-keys). You will use it with the GET and DELETE permissions for `/api/jwt/refresh` in this guide.
+Both solutions depend on calling the FusionAuth API to retrieve the active [refresh tokens](https://fusionauth.io/docs/apis/jwt) for a user, using the [JWT Retrieve Refresh Tokens API](https://fusionauth.io/docs/apis/jwt#retrieve-refresh-tokens). This API requires an API key](https://fusionauth.io/docs/apis/api-keys). You will use it with the GET and DELETE permissions for the `/api/jwt/refresh` API route in this guide.
 
-To create this key, navigate to "Settings" -> "API Keys" and click the "+" button to add a key. Give the key a name, and select the GET and DELETE permissions for `/api/jwt/refresh`. Click "Save API Key".
+To create this key, navigate to <strong>Settings -> API Keys</strong> and click the <InlineField>+</InlineField> button to add a key. Give the key a name, and enable the GET and DELETE permissions for `/api/jwt/refresh`. Click <InlineField>Save API Key</InlineField>.
 
 Once you have the key, you will be able to use it to call the API to retrieve the active refresh tokens for a user. Note that refresh tokens for all applications will be returned, so you will need to filter the tokens by the `applicationId` to get the number of active sessions for a specific application. Also note that refresh tokens without an `applicationId` may also be present. These tokens are used for the "Remember me" feature on FusionAuth itself, and should be ignored when counting the number of active sessions for a user.
 
@@ -106,12 +106,10 @@ To let the user know that the reason the login failed was because they were logg
 
 ### Create A Webhook In FusionAuth
 
-TODO: Describe adding a webhook via the UI. Also describe how it is automatically created via the quickstart. Route is `/user-login-success`. Remember docker note on localhost -> host.docker.internal routing. Webhook must be configured to "all succeed" mode. 
-
 To add the webhook to FusionAuth, navigate to <strong>Settings -> Webhooks</strong> in the sidebar. Click the "+" button to add a webhook. Give the webhook a name, and select the <InlineField>user.login.success </InlineField> event. Set the URL to `http://{YOUR_APPLICATION_URL}/user-login-success`. Click <strong>Save Webhook</strong> when you are done. 
 
 <Aside type="note">
-In production you should add security to the webhook in the form of Basic Auth and a certificate by navigating to the <strong>Security</strong> tab. This ensures that the webhook can only be called by FusionAuth.
+In production you should [add security to the webhook](https://fusionauth.io/docs/extend/events-and-webhooks/#security) in the form of Basic Auth and a certificate by navigating to the <strong>Security</strong> tab. This ensures that the webhook can only be called by FusionAuth.
 </Aside>
 
 ### Listen To The Webhook
@@ -148,23 +146,31 @@ app.post('/user-login-success', async (req, res, next) => {
 
 ```
 
-As described in the [documentation](https://fusionauth.io/docs/extend/events-and-webhooks/events/user-login-success), the event data sent by FusionAuth as JSON in the body of the webhook invcludes the `applicationId` and `userId` among other information. The `applicationId` is used to check that the login event is for the application you are limiting logins for. The `userId` is used to retrieve the active refresh tokens for the user.
+As described in the [documentation](https://fusionauth.io/docs/extend/events-and-webhooks/events/user-login-success), the event data sent by FusionAuth as JSON in the body of the webhook includes the `applicationId` and `userId` among other information. The `applicationId` is used to check that the login event is for the application you are limiting logins for. The `userId` is used to retrieve the active refresh tokens for the user.
 
-Running an application with the webhook connected and logging in with the same user on more than 2 devices. You can simulate multiple devices by logging in with multiple browsers and with private tabs. You should see the following message when trying to log in for the third time:
+Try running your application with the webhook connected and logging in with the same user on more than 2 devices. You can simulate multiple devices by logging in with multiple browsers and with private tabs. You should see the following message when trying to log in for the third time:
 
 ```
 One or more webhooks returned an invalid response or were unreachable. Based on your transaction configuration, your action cannot be completed.
 ```
 
-This message is very generic, and does not tell the user that the reason they cannot log in is because they are logged in on too many devices. To fix this, override the default message with a custom message. You can do this by customizing the `WebhookTransactionException` message in your FusionAuth theme templates. To do this, navigate to "Customizations" -> "Themes". Click the "Edit" Button next to the `ChangeBank Theme`. Under "Templates", click "Messages". Click the "Edit" button next to the "Default" Locale. Search for `[WebhookTransactionException]` (approx. line 606), and change the message to read `You are already logged in on other devices. Please log out of one of your other devices and try again.`. Click "Save" , and then save the theme as well. <TODO: Is there a way to include this in the kickstart file>
+This message is very generic, and does not tell the user that the reason they cannot log in is because they are logged in on too many devices. To fix this, override the default message with a custom message. You can do this by customizing the <InlineField>WebhookTransactionException</InlineField> message in your FusionAuth theme templates. 
+
+To do this, navigate to <strong>Customizations -> Themes</strong>. Click the <InlineField>Edit</InlineField> Button next to the "ChangeBank Theme". Under <InlineField>Templates</InlineField>, click <InlineField>Messages</InlineField>. Click the <InlineField>Edit</InlineField> button next to the <InlineField>Default</InlineField> Locale. Search for `[WebhookTransactionException]` (approx. line 606), and change the message to read something more explanatory such as "You are already logged in on other devices. Please log out of one of your other devices and try again.". Click <InlineField>Save</InlineField> , and then save the theme as well. 
 
 Logging in again with the same user on more than 2 devices should now display the new message.
 
 ## The User Friendly Implementation
 
-The previous implementation has the advantage of code simplicity, but it does have a few problems. The first is from the user perspective - they have to manually log out of one of their devices before they can log in again. The second is that the user is not informed of which devices they are logged in on. The third is that the message used to inform the user that they are logged in on too many devices is the same generic message used for all webhook errors. Therefore adding other webhooks to your application will result in the same error message being displayed, regardless of the type of webhook failing. 
+The previous implementation has the advantage of code simplicity, but it does have a few problems. 
 
-This implementation provides a more user friendly way of handling device limits. It saves the user the trouble of having to manually log out of one of their devices. Instead, the user will be presented with a list of their current logins, and will be able to select which session to end. The application will then call the FusionAuth API to end the session, by [revoking the refresh token](https://fusionauth.io/docs/v1/tech/apis/jwt#revoke-refresh-tokens) for the chosen session.
+* The first is inconvenience - the user has to manually log out of one of their devices before they can log in again. 
+
+* The second is that the user is not informed of which devices they are logged in on. They will have to try remember which of their devices they are logged in on. If they don't have physical access to one of their devices, they will be unable to log in. 
+
+* The third is that the message used to inform the user that they are logged in on too many devices is the same generic message used for all webhook errors. Therefore adding other webhooks to your application will result in the same error message being displayed, regardless of the type of webhook failing. 
+
+This implementation provides a more user friendly way of handling device limits. It saves the user the trouble of having to manually log out of one of their devices. Instead, the user will be presented with a list of their current logins, and will be able to select which sessions to end. The application will then call the FusionAuth API to end the session, by [revoking the refresh token](https://fusionauth.io/docs/v1/tech/apis/jwt#revoke-refresh-tokens) for the chosen sessions.
 
 To achieve this, the application will always allow a login to proceed, and once logged in will call the FusionAuth API to retrieve the other sessions to check if the device limit has been reached. Before allowing the user to access the rest of the app, a page will display the user's current logins, and allow them to select which session to end.
 
@@ -231,9 +237,9 @@ async function getActiveDeviceList(req: any): Promise<any> {
 
 }
 ```
-Notice that in the `getActiveDeviceList` function, the current session token is removed from the list of active sessions. This is because it would not make sense to allow the user to end the current session to continue using the application. The userID is also retrieved from the existing authentication cookie. For this reason, the device limit middleware must always be placed after the user authentication and token validation middleware for any secured route. 
+Notice that in the `getActiveDeviceList` function, the current session's refresh token is removed from the list of active sessions. This is because it would not make sense to allow the user to end the current session to continue using the application. The userID is also retrieved from the existing authentication cookie. For this reason, the device limit middleware must always be placed after the user authentication and token validation middleware for any secured route. 
 
-The `getActiveDeviceList` function returns a list of active session view models for the user, which will also be used to display the user's current logins and allow them to select which session to end.
+The `getActiveDeviceList` function returns a list of view models containing all the session information for the user. This list of view models will also be used to display the user's current logins and allow them to select which session to end.
 
 The middleware function `checkDeviceLimit` can be used on restricted routes, such as the `make-change` and `account` routes in the ChangeBank app, like this:
 
@@ -369,7 +375,7 @@ app.post("/device-limit", validateUserToken, async (req, res) => {
 
 ## Example Applications
 
-You can download, review and run applications for both the simple and user friendly device limiting implementations from the GitHub: 
+You can download, review and run full applications for both the simple and user friendly device limiting implementations from the FusionAuth GitHub: 
 
  * [Simple (Webhook) implementation](https://github.com/FusionAuth/fusionauth-device-limit-guide-simple). 
 
