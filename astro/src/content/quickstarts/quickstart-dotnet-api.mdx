@@ -10,16 +10,20 @@ icon: /img/icons/dotnet-c.svg
 faIcon: fa-gem
 color: rose
 cta: EmailListCTA
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-api/main
 ---
 import Aside from '../../components/Aside.astro';
-import Diagram from '../../diagrams/quickstarts/resource-server.astro';
+import DockerSpinup from '/src/components/quickstarts/DockerSpinup.astro';
 import DotNetPreReqs from '../../components/quickstarts/dotnet-prereqs.mdx';
+import Intro from '/src/components/quickstarts/Intro.astro';
+import LoginArchitectureApi from '/src/components/quickstarts/LoginArchitectureApi.astro';
+import NextStepsApi from '/src/components/quickstarts/NextStepsApi.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
 
 
-In this tutorial, you are going to learn how to integrate a .NET Web API resource server with FusionAuth. You will protect an API resource from unauthorized usage. You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM), a global leader in converting dollars into coins.
-
-The docker compose file and source code for a complete application are available at https://github.com/FusionAuth/fusionauth-quickstart-dotnet-api.
+<Intro technology={frontmatter.technology}
+       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-dotnet-api"
+       api/>
 
 ## Prerequisites
 
@@ -27,11 +31,7 @@ The docker compose file and source code for a complete application are available
 
 ## General Architecture
 
-A client wants access to an API resource at `/resource`. However, it is denied this resource until it acquires an access token from FusionAuth.
-
-<Diagram />
-
-While the access token is acquired via the Login API above, this is for simplicity of illustration. The token can be, and typically is, acquired through one of the [OAuth grants](/docs/lifecycle/authenticate-users/oauth/).
+<LoginArchitectureApi />
 
 
 ## Getting Started
@@ -49,34 +49,7 @@ cd fusionauth-quickstart-dotnet-api
 
 ### Run FusionAuth Via Docker
 
-In the root directory of the repo you’ll find a Docker compose file `docker-compose.yml` and an environment variables configuration file `.env`. Assuming you have Docker installed, you can start FusionAuth on your machine with the following.
-
-```shell
-docker compose up -d
-```
-
-This will start three containers, one each for FusionAuth, Postgres, and Elasticsearch.
-
-Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/get-started/download-and-install/development/kickstart). When FusionAuth starts for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to your specified state.
-
-<Aside type="note">
-If you ever want to reset the FusionAuth system, delete the volumes created by Docker Compose by executing `docker compose down -v`, then re-run `docker compose up -d`.
-</Aside>
-
-FusionAuth will be initially configured with these settings:
-
-* Your client Id is `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`.
-* Your client secret is `super-secret-secret-that-should-be-regenerated-for-production`.
-* Your example teller username is `teller@example.com` and your password is `password`. They will have the role `teller`.
-* Your example customer username is `customer@example.com` and your password is `password`. They will have the role `customer`.
-* Your admin username is `admin@example.com` and your password is `password`.
-* The base URL of FusionAuth is 'http://localhost:9011/'.
-
-You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want to, but with Docker and Kickstart, everything will already be configured correctly.
-
-<Aside type="caution">
-  The `.env` and `kickstart.json` files contain passwords. In a real application, always add these files to your `.gitignore` file and never commit secrets to version control.
-</Aside>
+<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} api />
 
 ## Create Your ASP.NET Web API Resource Server
 
@@ -120,17 +93,17 @@ dotnet add package Microsoft.IdentityModel.Protocols.OpenIdConnect -v 7.0.3
 
 Next, replace your `appsettings.json` file with settings specific to the FusionAuth Issuer and Client Id (Audience).
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-api/main/complete-application/appsettings.json"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/appsettings.json"}/>
 
 Replace the code in the `appsettings.Development.json` file with the following.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-api/main/complete-application/appsettings.Development.json"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/appsettings.Development.json"}/>
 
 The `appsettings.Development.json` file will be used when you run the application in development mode. It will enable some useful development options, mainly that HTTPS will not be required for the Issuer (FusionAuth) server. In production, you must use HTTPS for the Issuer server.
 
 Update the `Program.cs` file to configure ASP.NET authentication to use JWT tokens. Replace the code in the `Program.cs` file with the following code.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-api/main/complete-application/Program.cs"
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/Program.cs"}
 lang="c#" />
 
 The `Program.cs` file configures the authentication services to use JWT bearer tokens to authenticate users through the `.AddJwtBearer()` method. The Issuer and Audience settings used by the JWT verification code are set in the `appsettings.json` file under the `Authentication` section. The `options.Events` section configures the JWT bearer authentication to use the `OnMessageReceived` event to read the JWT from the `app.at` cookie if it is present. By default, the JWT bearer authentication will only read the JWT from the `Authorization` header. With this code, the JWT can be passed in either the `Authorization` header or the `app.at` cookie.
@@ -159,7 +132,7 @@ touch Models/PanicResponse.cs
 
 Add the following code to it.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-api/main/complete-application/Models/PanicResponse.cs"
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/Models/PanicResponse.cs"}
             lang="c#"/>
 
 Next, you need an object to show the breakdown from making change. This object will hold a double `total` and Integers `nickels` and `pennies`. In the `Models` folder, create a new class `Change.cs`.
@@ -170,7 +143,7 @@ touch Models/Change.cs
 
 Add the following code to it.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-api/main/complete-application/Models/Change.cs"
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/Models/Change.cs"}
             lang="c#"/>
 
 ### Add Controllers
@@ -183,7 +156,7 @@ touch Controllers/MakeChangeController.cs
 
 Add the following code to it.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-api/main/complete-application/Controllers/MakeChangeController.cs"
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/Controllers/MakeChangeController.cs"}
             lang="c#" />
 
 In this class, a `total` is an HTTP request query parameter that is converted to a `double`, and the `get` method divides the `total` into `nickels` and `pennies` and returns the response object.
@@ -221,7 +194,7 @@ touch Controllers/PanicController.cs
 
 Add the following code to it.
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-dotnet-api/main/complete-application/Controllers/PanicController.cs"
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/Controllers/PanicController.cs"}
             lang="c#" />
 
 This class listens on `/panic` for a POST request and returns a response indicating that the police were called. The attributes are the same as the `MakeChangeController.cs` route, except that this is a `POST` request, so it is named `Post` and has the `[HttpPost]` attribute marking it as such. 
@@ -409,18 +382,7 @@ Enjoy your secured resource server!
 
 ## Next Steps
 
-This quickstart is a great way to get a proof of concept up and running quickly, but to run your API in production, there are some things you're going to want to do.
-
-### FusionAuth Integration
-
-* Rather than call the Login API, you're probably going to want to use the [Authorization Code grant](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant), which keeps all sensitive credentials within the bounds of FusionAuth. You can customize the [hosted login pages](/docs/customize/look-and-feel/).
-* You may want to generate a token using the [Client Credentials grant](/docs/lifecycle/authenticate-users/oauth/#example-client-credentials-grant) if you are calling the API from another service.
-
-### Security
-
-* Customize the [token expiration times and policies](/docs/lifecycle/authenticate-users/oauth/#configure-application-oauth-settings) in FusionAuth
-* [Make sure you know how to securely consume a token](/articles/tokens/building-a-secure-jwt#consuming-a-jwt)
-* Secure your API [using an API gateway](/docs/extend/examples/api-gateways/) rather than at the framework layer.
+<NextStepsApi />
 
 ## Troubleshooting
 
