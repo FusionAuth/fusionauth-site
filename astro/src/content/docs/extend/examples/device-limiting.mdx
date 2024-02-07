@@ -55,24 +55,6 @@ Full implementations of both device limiting methods in the ChangeBank applicati
 -  [User Friendly Guide Full Application](https://github.com/FusionAuth/fusionauth-device-limit-guide-friendly)
 
 
-## Login Requirements
-
-Since the crux of the solution relies on the number of active refresh tokens for a user, you will need to ensure that your FusionAuth application is set up to issue refresh tokens, and that your client application requests them when logging in. 
-
-To ensure that your FusionAuth application is set up to issue refresh tokens, navigate to <strong>Applications -> Edit -> OAuth</strong>. Ensure that <InlineField>Generate refresh tokens</InlineField> is checked. Also ensure that <InlineField>Refresh Token</InlineField> is checked in the <InlineField>Enabled Grants</InlineField> field at the bottom.
-
-To ensure that your client application requests refresh tokens when logging in, [ensure that the `offline_access` scope](/docs/lifecycle/authenticate-users/oauth/) is included in the `scope` parameter of the `/oauth2/authorize` request. If you are constructing the request manually, it should look something like this:
-
-```javascript
-res.redirect(302, `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&scope=offline_access&redirect_uri=http://localhost:${port}/oauth-redirect&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256`)
-```
-If you are using Passport.js, you can include the `offline_access` scope in the `scope` key of the options object passed to the `authenticate` method. It should look something like this:
-
-```javascript
-passport.authenticate('oauth2', { scope: ['offline_access'] })
-```
-For other libraries and languages, consult the documentation to see how to include the `offline_access` scope in the authorization request to FusionAuth.
-
 ## Using the Refresh Token API
 
 Both solutions depend on calling the FusionAuth API to retrieve the active [refresh tokens](/docs/apis/jwt) for a user, using the [JWT Retrieve Refresh Tokens API](/docs/apis/jwt#retrieve-refresh-tokens). This API requires an [API key](/docs/apis/api-keys). You will use it with the GET and DELETE permissions for the `/api/jwt/refresh` API route in this guide.
@@ -86,6 +68,34 @@ Thereafter, the number of filtered active refresh tokens for the particular appl
 <RemoteCode url={frontmatter.codeRootSimple + "/complete-application/src/index.ts"} tags="active-session-count" lang="typescript"/>
 
 The variable `clientId` stores the FusionAuth application ID for the application you are limiting logins for. The `userId` is the ID of the user you are checking the active sessions for.
+
+
+## Login Requirements
+
+Since the crux of the solution relies on counting the number of active refresh tokens for a user to determine how many devices they are logged in on, you will need to ensure that your FusionAuth application is set up to issue refresh tokens, and that your client application requests them when logging in. 
+
+To ensure that your FusionAuth application is set up to issue refresh tokens, navigate to <strong>Applications -> Edit -> OAuth</strong>. Ensure that <InlineField>Generate refresh tokens</InlineField> is checked. Also ensure that <InlineField>Refresh Token</InlineField> is checked in the <InlineField>Enabled Grants</InlineField> field at the bottom.
+
+Your client application will also need to request refresh tokens when logging in. You can do this by adding [the `offline_access` scope](/docs/lifecycle/authenticate-users/oauth/) in the `scope` parameter of the `/oauth2/authorize` request. If you are constructing the request manually, it should look something like this:
+
+```javascript
+res.redirect(302, `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&scope=offline_access&redirect_uri=http://localhost:${port}/oauth-redirect&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256`)
+```
+If you are using Passport.js, you can include the `offline_access` scope in the `scope` key of the options object passed to the `authenticate` method. It should look something like this:
+
+```javascript
+passport.authenticate('oauth2', { scope: ['offline_access'] })
+```
+For other libraries and languages, consult the documentation to see how to include the `offline_access` scope in the authorization request to FusionAuth.
+
+## Logout Requirements
+
+When logging out of FusionAuth with the `/oauth2/logout` endpoint, the refresh token is [not automatically revoked by FusionAuth](https://fusionauth.io/community/forum/topic/270/logout-questions). This means that the refresh token will still be returned from the refresh token API, and will still be counted as an active session or device. To ensure that the refresh token is revoked when the user logs out, you will need to call the [JWT Revoke Refresh Tokens API](/docs/apis/jwt#revoke-refresh-tokens) on logout. 
+
+The best place to do this is in the logout callback configured in <strong>Applications -> Edit -> OAuth</strong> <InlineField>Logout URL</InlineField>. This is the route that the user is redirected to after they have been logged out of FusionAuth. You should also remove any local cookies at the same time. The complete logout return route should look like this:
+
+<RemoteCode url={frontmatter.codeRootFriendly + "/complete-application/src/index.ts"} tags="oauth-logout" lang="typescript"/>
+
 
 ## Simpler Scheme
 
