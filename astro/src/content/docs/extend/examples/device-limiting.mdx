@@ -4,11 +4,13 @@ description: Learn how to limit the number of devices a user can log in to concu
 navcategory: developer
 section: extend
 subcategory: examples
+codeRootSimple: https://raw.githubusercontent.com/FusionAuth/fusionauth-device-limit-guide-simple/main
+codeRootFriendly: https://raw.githubusercontent.com/FusionAuth/fusionauth-device-limit-guide-friendly/main
 ---
 import Aside from 'src/components/Aside.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
-import ScrollRef from 'src/components/ScrollRef.astro';
+import {RemoteCode, RemoteValue} from '@fusionauth/astro-components';
 
 This guide will help you limit concurrent logins on user devices with FusionAuth. Many apps limit the number of devices a user can log in to concurrently. 
 
@@ -81,19 +83,7 @@ Once you have the key, you will be able to use it to call the API to retrieve th
 
 Thereafter, the number of filtered active refresh tokens for the particular application can be used as a proxy for the number of active logins for the user. Calling the API using Node and filtering the results looks something like this:
 
-```javascript
-
-const tokenResponse = await fetch(`${fusionAuthURL}/api/jwt/refresh?userId=${userId}`, {
-  method: 'GET',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `${fusionAPIKey}`
-  }
-});
-const tokens: any = await tokenResponse.json();
-tokens.refreshTokens = tokens.refreshTokens.filter((t: any) => t.applicationId && t.applicationId === clientId);
-const activeSessionCount = tokens.refreshTokens.length;
-``` 
+<RemoteCode url={frontmatter.codeRootSimple + "/complete-application/src/index.ts"} tags="active-session-count" lang="typescript"/>
 
 The variable `clientId` stores the FusionAuth application ID for the application you are limiting logins for. The `userId` is the ID of the user you are checking the active sessions for.
 
@@ -117,35 +107,7 @@ In production you should [add security to the webhook](/docs/extend/events-and-w
 
 In the application, you will need to listen for the `user.login.success` event and check the number of active sessions for the user. Here is an example of how to do this in an Express application, like the ChangeBank application.
 
-```javascript
-
-app.post('/user-login-success', async (req, res, next) => {
-
-  if (req.body.event.applicationId !== clientId) 
-    return res.status(200).json(JSON.stringify({ message: `Not a login event for this application.` }));
-
-  const userId = req.body.event.user.id;
-
-  const tokenResponse = await fetch(`${fusionAuthURL}/api/jwt/refresh?userId=${userId}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `${fusionAPIKey}`
-    }
-  });
-  const tokens: any = await tokenResponse.json();
-  tokens.refreshTokens = tokens.refreshTokens.filter((t: any) => t.applicationId && t.applicationId === clientId);
-  const activeSessionCount = tokens.refreshTokens.length;
-
-  if (activeSessionCount >= maxDeviceCount) {
-    return res.status(403).json(JSON.stringify({ error: 'You are logged in on too many devices at once. Please log out of one of your other devices and try again.'}));
-  } else {
-    return res.status(200).json(JSON.stringify({ message: `You are logged in on ${activeSessionCount +1 } of ${maxDeviceCount} devices.` }));
-  }
-
-});
-
-```
+<RemoteCode url={frontmatter.codeRootSimple + "/complete-application/src/index.ts"} tags="device-limiting" lang="typescript"/>
 
 As described in the [documentation](/docs/extend/events-and-webhooks/events/user-login-success), the event data sent by FusionAuth as JSON in the body of the webhook includes the `applicationId` and `userId` among other information. The `applicationId` is used to check that the login event is for the application you are limiting logins for. The `userId` is used to retrieve the active refresh tokens for the user.
 
@@ -196,48 +158,7 @@ For any route that you would normally check for authentication, you will need to
 
 The middleware function should look similar to this:
 
-```javascript
-/**
-  Middleware to check if the user has exceeded the device limit. Redirects to the device-limit page if so.
- */
-async function checkDeviceLimit(req: any, res: any, next: any) {
-  const deviceLimit = await getActiveDeviceList(req);
-  if (deviceLimit.length >= maxDeviceCount) {
-    return res.redirect(302, '/device-limit');
-  } else {
-    next();
-  }
-}
-
-async function getActiveDeviceList(req: any): Promise<any> {
-
-  const userDetailsCookie = req.cookies[userDetails];
-  const userTokenCookie = req.cookies[userToken];
-  const userId = userDetailsCookie.id;
-  const tokenResponse = await fetch(`${fusionAuthURL}/api/jwt/refresh?userId=${userId}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `${fusionAPIKey}`
-    }
-  });
-  const tokens: any = await tokenResponse.json();
-
-  // Filter tokens that are for this application: 
-  tokens.refreshTokens = tokens.refreshTokens.filter((t: any) => t.applicationId && t.applicationId === clientId);
-  // remove the current session token
-  tokens.refreshTokens = tokens.refreshTokens.filter((t: any) => t.token !== userTokenCookie.refresh_token);
-
-  // Map to a simple object for display, removing token values etc. 
-  return tokens.refreshTokens.map((t: any) => ({
-    id: t.id,
-    deviceName: t.metaData.device.name,
-    startInstant: new Date(t.startInstant).toUTCString(), 
-    ipAddress: t.metaData.lastAccessedAddress
-  }));
-
-}
-```
+<RemoteCode url={frontmatter.codeRootFriendly + "/complete-application/src/index.ts"} tags="get-active-devicelist" lang="typescript"/>
 
 Notice that in the `getActiveDeviceList` function, the current session's refresh token is removed from the list of active sessions. This is because it would not make sense to allow the user to end the current session to continue using the application. The userID is also retrieved from the existing authentication cookie. For this reason, the device limit middleware must always be placed after the user authentication and token validation middleware for any secured route. 
 
@@ -245,11 +166,7 @@ The `getActiveDeviceList` function returns a list of view models containing all 
 
 The middleware function `checkDeviceLimit` can be used on restricted routes, such as the `make-change` and `account` routes in the ChangeBank app, like this:
 
-```javascript
-app.get("/make-change", validateUserToken, checkDeviceLimit, async (req, res) => {
-  res.sendFile(path.join(__dirname, '../templates/make-change.html'));
-});
-```
+<RemoteCode url={frontmatter.codeRootFriendly + "/complete-application/src/index.ts"} tags="make-change-check-devicelimit" lang="typescript"/>
 
 ### Create A Page To Display The User's Current Logins
 
@@ -260,120 +177,21 @@ npm install handlebars
 ```
 Then you can add it to the express app like this:
 
-```javascript
-app.set('views', path.join(__dirname, '../templates'));
-app.set('view engine', 'hbs');
-```
+<RemoteCode url={frontmatter.codeRootFriendly + "/complete-application/src/index.ts"} tags="views-hbs" lang="typescript"/>
 
  You will require a `GET` route to render the `device-limit` page. The route should look something like this:
 
-```javascript
-
-app.get("/device-limit", validateUserToken,  async (req, res) => {
-    const devices = await getActiveDeviceList(req);
-    res.render('device-limit', { devices, maxDeviceCount });
-});
-
-```
+<RemoteCode url={frontmatter.codeRootFriendly + "/complete-application/src/index.ts"} tags="device-limiting-maxcount" lang="typescript"/>
 
 The handlebars template page should look like this:
 
-```html
-<html>
-
-<head>
-  <meta charset="utf-8" />
-  <title>Device Limit - FusionAuth Express Web</title>
-  <link rel="stylesheet" href="/static/css/changebank.css">
-</head>
-
-<body>
-  <div id="page-container">
-    <div id="page-header">
-      <div id="logo-header">
-        <img src="https://fusionauth.io/assets/img/samplethemes/changebank/changebank.svg" />
-        <div class="h-row">
-          <p class="header-email"></p>
-          <a class="button-lg" href="/logout">Logout</a>
-        </div>
-      </div>
-
-      <div id="menu-bar" class="menu-bar">
-        <a class="menu-link" href="/make-change">Make Change</a>
-        <a class="menu-link inactive" href="/account">Account</a>
-      </div>
-    </div>
-
-    <div style="flex: 1;">
-      <div class="column-container">
-        <div class="app-container change-container">
-          <h3>Device Limit</h3>
-          <div class="change-message">
-            <p>You have {{devices.length}} devices currently logged in. </p>
-            <p>You can only have {{maxDeviceCount}} devices logged in at a time. Please select one or more of the devices below to sign out of.</p>
-            <p>You will then be able to continue using the application here.</p>
-          </div>
-
-
-          <form id="device-list" action="/device-limit" method="post">
-            {{#each devices}}
-            <div class="h-row">
-              <label>
-                <input type="checkbox" name="deviceIds[]" value="{{id}}"> {{deviceName}}, logged in at {{startInstant}}
-              </label>
-            </div>
-            {{/each}}
-            <hr />
-            <div class="h-row">
-              <input class="change-submit" type="submit" value="Sign Out Selected Devices" />
-            </div>
-          </form>
-
-
-        </div>
-      </div>
-    </div>
-
-    <script>
-      // Snag cookie user data
-      const user = JSON.parse(decodeURIComponent(document.cookie.split('; ').filter(c => c.includes('userDetails')).at(0).split('=').at(-1)).replace('j:', ''))
-      document.querySelector('.header-email').innerHTML = user.email;
-    </script>
-</body>
-
-</html>
-```
+<RemoteCode url={frontmatter.codeRootFriendly + "/complete-application/templates/device-limit.hbs"} lang="html"/>
 
 ### Revoking A Chosen Session
 
 The web page posts back the selected token IDs to the backend. You will need a route that accepts these token IDs, as well as revokes the selected tokens using the 'DELETE' method on the FusionAUth Refresh Token API. 
 
-```javascript
-app.post("/device-limit", validateUserToken, async (req, res) => {
-
-  // Get the refresh token id from the form
-  const refreshTokenIds = req.body.deviceIds;
-  if (!refreshTokenIds) return res.redirect('/device-limit');
-
-  // revoke the refresh tokens for the selected devices
-  for (const refreshTokenId of refreshTokenIds) {
-    try {
-      const result = await fetch(`${fusionAuthURL}/api/jwt/refresh/${refreshTokenId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `${fusionAPIKey}`
-        }
-      });
-    }
-    catch (err) {
-      console.error(err);
-    }
-  }
-
-  res.redirect('/account');
-});
-```
+<RemoteCode url={frontmatter.codeRootFriendly + "/complete-application/src/index.ts"} tags="device-limiting-validatetoken" lang="typescript"/>
 
 ## Example Applications
 
