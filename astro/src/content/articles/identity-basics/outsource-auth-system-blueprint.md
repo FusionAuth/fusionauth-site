@@ -43,7 +43,7 @@ While less damaging than breaches, outages can still cause reputational damage a
 
 As an example, when Microsoft's Azure Active Directory (AAD) [went down for a good portion of the afternoon late last year](https://www.zdnet.com/article/microsofts-azure-ad-authentication-outage-what-went-wrong/), logins for applications across the internet stopped working. 
 
-When your competitors' authorization systems are down at the same time yours are, nobody blames you for it, but when you're the only company having issues, you suffer reputationally. No matter what your outsourced auth system is (FusionAuth, Cognito, AAD, etc), you can be almost certain that you won't be alone in the event of an outage.
+When your competitors' authorization systems are down at the same time yours are, nobody blames you for it, but when you're the only company having issues, you suffer reputationally. No matter what your outsourced auth system is (FusionAuth, Cognito, Azure AD/Microsoft Entra ID, etc), you can be almost certain that you won't be alone in the event of an outage.
 
 ### Maintainability
 
@@ -100,7 +100,7 @@ Unless you're the CEO, you're going to have a boss. Your boss will likely be a s
 With that in mind, emphasize a few points:
 
 * **Speed to market:** Depending on the features you need, it could literally take months to implement auth in-house, whereas it could take less than a day to incorporate an outsourced solution.
-* **Cost:** There are a few things to consider here, which are covered in the "Cost of in-house vs outsourced auth" section of my post ["Why outsource your auth system?"](/blog/2021/01/20/why-outsource-auth)
+* **Cost:** There are a few things to consider here, which are covered in the ["Cost of in-house vs outsourced auth" section above](#cost-of-in-house-vs-outsourced-auth).
 * **Mitigating risk:** Two of the scariest things to an engineering leader are the risk of implementation time ballooning out of control and the risk of serious security breaches. Outsourced auth can help mitigate both of those concerns. Here, talking through the benefits in detail will be very helpful.
 
 ### Your developers
