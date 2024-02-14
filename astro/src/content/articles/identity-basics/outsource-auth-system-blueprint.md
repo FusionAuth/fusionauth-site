@@ -100,7 +100,7 @@ Unless you're the CEO, you're going to have a boss. Your boss will likely be a s
 With that in mind, emphasize a few points:
 
 * **Speed to market:** Depending on the features you need, it could literally take months to implement auth in-house, whereas it could take less than a day to incorporate an outsourced solution.
-* **Cost:** There are a few things to consider here, which are covered in the "Cost of in-house vs outsourced auth" section of my post ["Why outsource your auth system?"](/blog/2021/01/20/why-outsource-auth)
+* **Cost:** There are a few things to consider here, which are covered in the ["Cost of in-house vs outsourced auth" section above](#cost-of-in-house-vs-outsourced-auth).
 * **Mitigating risk:** Two of the scariest things to an engineering leader are the risk of implementation time ballooning out of control and the risk of serious security breaches. Outsourced auth can help mitigate both of those concerns. Here, talking through the benefits in detail will be very helpful.
 
 ### Your developers

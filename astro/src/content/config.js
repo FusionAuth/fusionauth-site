@@ -43,6 +43,7 @@ const quickstartsCollection = defineCollection({
     featured: z.boolean().default(false),
     faIcon: z.string().optional(),
     color: z.string().optional(),
+    codeRoot: z.string().optional(),
   }),
 });
 
