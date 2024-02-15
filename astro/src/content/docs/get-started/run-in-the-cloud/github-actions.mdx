@@ -38,7 +38,7 @@ You might have the following questions:
 - What happens when FusionAuth releases a new version? How do I upgrade FusionAuth without losing data?
 - How can I test that login still works after upgrading my app or FusionAuth?
 - How do I separate and manage my development and production environments?
-- Where do I keep database passwords safely and include them when deploying?
+- How do I securely incorporate administrative passwords, including database passwords, when deploying?
 
 Automating these tasks is called CI/CD or continuous integration and continuous deployment.
 - CI refers to testing changes to code you push to the main branch to ensure it fits in with the existing system and everything still works.
@@ -91,7 +91,7 @@ FusionAuth is managed by the `docker-compose.yml` and `.env` files, and the `kic
 
 The `app` folder contains a Node.js JavaScript application. The Express server provides a login page that sends the user to FusionAuth, and then to the account page after login. The `tests` folder contains a login test written in [Playwright](https://playwright.dev/docs/intro). Playwright runs tests in a web browser to see if all elements and interactions behave as they would with a real user. The tests can all be run from the terminal, however, so you can test your application on a computer without a graphical environment.
 
-The `.github/workflows/test.yaml` file is the GitHub Actions workflow script. The `app/.github/workflows/playwright.yml` file contains a Playwright-provided script, but this script uses more GitHub resources, has a long timeout, and saves the test results to a file. The `test.yaml` script is written to take advantage of the GitHub Free 2000 CI/CD minutes per month.
+The `.github/workflows/test.yaml` file is the GitHub Actions workflow script. The `app/.github/workflows/playwright.yml` file contains a Playwright-provided script, but this script uses more GitHub resources, has a long timeout, and saves the test results to a file. The `test.yaml` script is written to take advantage of the [GitHub Free 2000 CI/CD minutes per month](https://docs.github.com/en/get-started/learning-about-github/githubs-plans).
 
 <Aside type="note">To learn how FusionAuth runs in Docker, please read the [five-minute guide](/docs/quickstarts/5-minute-docker). To learn how Express connects to FusionAuth, please read this [quickstart](/docs/quickstarts/quickstart-javascript-express-web).</Aside>
 
@@ -117,7 +117,11 @@ In a terminal, run the following command.
 docker compose up
 ```
 
-FusionAuth will start, and you will be able to log in at `http://localhost:9011` with username `admin@example.com` and password `password`. In the Users section of the site, create a new user.
+FusionAuth will start, and you will be able to log in at `http://localhost:9011/admin` with username `admin@example.com` and password `password`. In the Users section of the site, create a new user.
+
+<Aside type="note">
+  After logging in successfully, you should be able to see the FusionAuth version number `1.47.1` at the bottom of the left sidebar.
+</Aside>
 
 Stop Docker in the terminal by pressing Ctrl + C. In the `docker-compose.yml` file, change line 51 to use a new FusionAuth version, `1.48.3`. Run the startup command again.
 
@@ -150,7 +154,7 @@ The FusionAuth application is separate from the FusionAuth database. In this cas
 For more details on upgrading FusionAuth, including non-silent upgrades, please read this [article](/docs/get-started/download-and-install/docker#upgrading).
 
 <Aside type="note">
-FusionAuth also has a paid version that [runs in the cloud](/docs/get-started/run-in-the-cloud/cloud). If you want to avoid the hassle of managing, backing up, and upgrading FusionAuth yourself, this might be the solution for you.
+FusionAuth also has a paid version that [runs in the cloud](/docs/get-started/run-in-the-cloud/cloud). If you want to avoid the hassle of managing, backing up, and upgrading FusionAuth yourself, this might be the solution for you. Tests in this guide will still work after the version of FusionAuth has been upgraded.
 </Aside>
 
 ## Test Your App Login With Playwright
@@ -171,12 +175,12 @@ When changing your application, it would be faster to test that login works auto
 Playwright was created by Microsoft, runs in JavaScript, and allows you to run tests in multiple browsers. It is a popular successor to Selenium, which used Java, and Puppeteer, which was written by Google and focused on Chrome.
 </Aside>
 
-To start the Playwright tests for this app, open a new terminal and run the code below.
+To start the Playwright tests for this app, open a new terminal in the `app` directory and run the code below.
 
 ```bash
 npx playwright install
 npx playwright install-deps
-npx playwright test --project=chromium;
+npx playwright test --project=chromium
 ```
 
 The output should be as below.
@@ -189,7 +193,7 @@ Running 1 test using 1 worker
   1 passed (5.8s)
 ```
 
-The command returns `0` to the terminal if all tests passed, and another number if any tests failed. This allows you (and GitHub Actions) to write shell scripts that perform different tasks if the tests succeed or not.
+The command returns `0` if all tests passed, and another number if any tests failed. This allows you (and GitHub Actions) to write shell scripts that perform different tasks if the tests succeed or not.
 
 To see what is happening visually, run the code below.
 
@@ -197,7 +201,7 @@ To see what is happening visually, run the code below.
 npx playwright test --project=chromium --ui
 ```
 
-You can see that Playwright runs a browser, clicks buttons, and fills in forms.
+This will open the playwright window. Click on the `Run` button next to the test name to execute the test. You can see that Playwright runs a browser, clicks buttons, and fills in forms.
 
 <img src="/img/docs/get-started/run-in-the-cloud/github_actions/playwright.png" alt="Playwright test UI." role="bottom-cropped" />
 
@@ -222,6 +226,10 @@ In the configuration file `playwright.config.js`, you can set which browsers to 
 
 Now that you know how to test your app after a change to it or FusionAuth, let's automate the process in GitHub. Your goal is to have a test run whenever committing to your main branch. GitHub will email you if the test fails.
 
+<Aside type="note">
+ By default, GitHub prevents action workflows from running on forked repositories. To grant permission for the workflow to execute, navigate to the Actions tab on your forked repository and click on the <InlineUIElement>I understand my workflows, go ahead and enable them</InlineUIElement> button on the repository.
+</Aside>
+
 Open the file `.github/workflows/test.yaml`. Line 5 currently reads as follows.
 
 ```yaml
@@ -234,15 +242,13 @@ Change the line to the following.
       - main
 ```
 
-You've renamed the trigger that causes this action to execute, from a nonsense name to the main branch of your application.
+You've renamed the trigger that causes this action to execute, from a nonsense name to the main branch of your application. Save the changes to the file, commit in Git, and push to GitHub, and the test will execute.
 
-By default, GitHub prevents action workflows from running on forked repositories. To grant permission for the workflow to execute, navigate to the Actions tab and click on the <InlineUIElement>I understand my workflows, go ahead and enable them</InlineUIElement> button on the repository. Save, commit in Git, and push to GitHub, and the test will execute.
-
-You can browse to the Actions tab in your GitHub repository to see the test run.
+You can browse to the Actions tab in your GitHub repository and then select <InlineUIElement>Test FusionAuth login</InlineUIElement> on the left sidebar to see the workflow run. The most recent workflow run will appear at the top of the list and you can see further details by clicking on the title of the workflow run items. Clicking on the <InlineUIElement>run-tests</InlineUIElement> job item will reveal further details of the workflow execution steps.
 
 <img src="/img/docs/get-started/run-in-the-cloud/github_actions/passedtest.png" alt="Passed GitHub action test." role="bottom-cropped" />
 
-To test that the test works, change the email in `test.spec.js` to `wrong@example.com` and push to GitHub again. You can now verify that the test does detect a broken login.
+To test that the test works, change the login email in `test.spec.js`, on the line `expect(emailText).toBe('richard@example.com');` change to `expect(emailText).toBe('wrong@example.com');` and push to GitHub again. You can now verify that the test does detect a broken login or invalid credentials.
 
 <img src="/img/docs/get-started/run-in-the-cloud/github_actions/failedtest.png" alt="Failed GitHub action test." role="bottom-cropped" />
 
@@ -250,7 +256,7 @@ If your test runs successfully, you can be certain that your app and FusionAuth 
 
 ## Understand GitHub Actions
 
-GitHub Actions is a service provided by GitHub that allows you to run workflows that can do anything you can write in a script, triggered by different types of events in your repository. GitHub runs your script in a virtual machine. GitHub allocates each user a certain amount of free CPU minutes per month and a set amount of storage, depending on your plan. For more details, see the [pricing page](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions).
+GitHub Actions is a service provided by GitHub that allows you to run workflows that can do anything you can write in a script, triggered by different types of events in your repository. GitHub runs your script in a virtual machine. GitHub allocates each user a certain amount of free CPU minutes per month and a set amount of storage, depending on your plan. For more details, see the [learn GitHub Actions](https://docs.github.com/en/actions/learn-github-actions) documentation and [pricing page](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions).
 
 Let's review the action script to see how it works. All scripts are stored in the `.github/workflows` directory, and the files can be called whatever you like. Here, the file is called `test.yaml`.
 
@@ -275,7 +281,9 @@ Your action uses the push-to-main-branch event.
 
 Then comes the action itself, which is stored in the `jobs` object. This is what will run when the event occurs. Your action has just one job, `run-tests`.
 
-You need to specify the type of operating system the machine will run to execute the job steps. Here, you use `ubuntu-latest`. It is the cheapest runner on GitHub. Windows runners use minutes at twice the rate of Linux, and Mac runners use ten times the rate of Linux.
+<Aside type="note">
+ You need to specify the type of operating system the machine will run to execute the job steps. Here, you use `ubuntu-latest`. It is the cheapest runner on GitHub. Windows runners use minutes at twice the rate of Linux, and Mac runners use ten times the rate of Linux.
+</Aside>
 
 The `services` section specifies that the action requires Docker (where FusionAuth runs).
 
