@@ -65,7 +65,7 @@ If it is inline (for a field), use <AvailableSince since="1.5.0"> - [AvailableSi
 
     ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/719bffe8-2a54-41a2-a339-b3afeda8d499)
 
-Import the ocmponent:
+Import the component:
 
 ```
 import Icon from 'src/components/icon/Icon.astro';
@@ -122,9 +122,8 @@ You can find help for {props.topic} at [help](/help)
   - Markdown syntax will not render inside of a block inside of an expression. You must use html there.
   - Content passed in the `<slot></slot>` of a component will be passed as rendered markdown.
   - you may need to coerce a prop into a boolean to use as a conditional for an expression. Such as `{!!props.message && <span>{props.message}</span>}`;
-- JSON files are their own content collection in astro. You cn reference these using the [JSON component](astro/src/components/JSON.astro)
+- JSON files are their own content collection in astro. You can reference these using the [JSON component](astro/src/components/JSON.astro)
 - We have an alias mapped in [tsconfig](astro/tsconfig.json) that allows you to use absolute references from 'src'. Otherwise, imports must use relative paths.
-- 
 - If a doc pulls code from an example application, use the [RemoteContent](astro/src/components/RemoteContent.astro). You can also pull sections with tags: `<RemoteContent url="https://raw.githubusercontent.com/FusionAuth/fusionauth-react-sdk/main/README.md" tags="forDocSite" />`
 
 ### For API docs
@@ -148,7 +147,7 @@ This is general layout guidance for APIs that have `GET` and `POST` options:
 GET URLs (could have 1-3 of these, show the most common)
 ### GET request parameters (path segment)
 ### GET request parameters (query string)
-##3 GET request headers
+### GET request headers
 
 POST URLs (only will be one, typically)
 ### POST request headers
