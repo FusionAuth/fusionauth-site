@@ -23,6 +23,55 @@ import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/bulk/_ad
 - create sql query to export user, and all details, and hashes
 - write article, use existing bcrypt if possible
 
+Use this docker compose file
+
+```yaml
+# Source: https://hub.docker.com/r/bitnami/wordpress-nginx
+# mkdir db && mkdir wp && sudo chmod -R 777 ./db ./wp     # don't use    sudo chown -R 1001:1001 ./db ./wp;
+# docker compose up
+# sudo chmod -R 777 ./db ./wp
+# Browse to http://localhost/wp-login.php with user,bitnami
+
+version: '2'
+services:
+  mariadb:
+    image: docker.io/bitnami/mariadb:11.2
+    container_name: fawp_db
+    ports:
+      - '3306:3306'
+    volumes:
+      - './db:/bitnami/mariadb'
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - MARIADB_USER=wp
+      - MARIADB_DATABASE=wp
+  wordpress:
+    image: docker.io/bitnami/wordpress-nginx:6
+    container_name: fawp
+    ports:
+      - '80:8080'
+      - '443:8443'
+    volumes:
+      - './wp:/bitnami/wordpress'
+    depends_on:
+      - mariadb
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=yes
+      - WORDPRESS_DATABASE_HOST=mariadb
+      - WORDPRESS_DATABASE_PORT_NUMBER=3306
+      - WORDPRESS_DATABASE_USER=wp
+      - WORDPRESS_DATABASE_NAME=wp
+volumes:
+  mariadb_data:
+    driver: local
+  wordpress_data:
+    driver: local
+```
+
+WP has to two tables related to users: `wp_users` and `wp_usermeta`.
+
 ## Contents to delete
 
 - [TODO](#todo)
