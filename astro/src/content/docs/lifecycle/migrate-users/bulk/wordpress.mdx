@@ -70,7 +70,112 @@ volumes:
     driver: local
 ```
 
+Add a new user
+
+Browse to http://localhost/wp-login.php.
+Login with user and bitnami.
+Settings - General - Membership Anyone can register - Enable - Save Changes.
+Log out.
+http://localhost/wp-login.php
+Register
+Enter any username and email a@example.com.
+
+Browse the database
+
+Browse the database in any database IDE that can connect to MariaDB. [DBeaver](https://dbeaver.io/download/) is a free cross-platform IDE you can use if you don't have one.
+
+Create a new MariaDB connection to localhost, port 3306, database wp, username wp, no password needed. Open the connection and expand the database tables.
+
 WP has to two tables related to users: `wp_users` and `wp_usermeta`.
+
+Below is the data you should have in `wp_users`.
+
+ID|user_login|user_pass                         |user_nicename|user_email      |user_url        |user_registered        |user_activation_key                          |user_status|display_name|
+---|----------|----------------------------------|-------------|----------------|----------------|-----------------------|---------------------------------------------|-----------|------------
+ 1|user      |\$P$BVrdsW/NUuXDi0Od0uUdk2SnJHHmQ01|user         |user@example.com|http://127.0.0.1|2024-02-21 07:09:20.000|                                             |          0|user        |
+ 2|a         |\$P$B/kCzTMDV7ccClaRShJPz8suWQdKc5/|a            |a@example.com   |                |2024-02-21 10:52:53.000|1708512773:\$P$BYELgLl.oz9lv.YRNp7ppBA1GxzOEY0|          0|a           |
+
+ And the data for `wp_usermeta`.
+
+umeta_id|user_id|meta_key                             |meta_value
+--------|-------|-------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1|      1|nickname                             |user                                                                                                                                                                                                                                                           |
+2|      1|first_name                           |UserName                                                                                                                                                                                                                                                       |
+3|      1|last_name                            |LastName                                                                                                                                                                                                                                                       |
+4|      1|description                          |                                                                                                                                                                                                                                                               |
+5|      1|rich_editing                         |true                                                                                                                                                                                                                                                           |
+6|      1|syntax_highlighting                  |true                                                                                                                                                                                                                                                           |
+7|      1|comment_shortcuts                    |false                                                                                                                                                                                                                                                          |
+8|      1|admin_color                          |fresh                                                                                                                                                                                                                                                          |
+9|      1|use_ssl                              |0                                                                                                                                                                                                                                                              |
+10|      1|show_admin_bar_front                 |true                                                                                                                                                                                                                                                           |
+11|      1|locale                               |                                                                                                                                                                                                                                                               |
+12|      1|wp_capabilities                      |a:1:{s:13:"administrator";b:1;}                                                                                                                                                                                                                                |
+13|      1|wp_user_level                        |10                                                                                                                                                                                                                                                             |
+14|      1|dismissed_wp_pointers                |                                                                                                                                                                                                                                                               |
+15|      1|show_welcome_panel                   |1                                                                                                                                                                                                                                                              |
+16|      1|session_tokens                       |a:1:{s:64:"ed6949d03244303edfd56de57f46b77a7300c2c62406ccde3b717b700c4fce4a";a:4:{s:10:"expiration";i:1708684580;s:2:"ip";s:10:"172.25.0.1";s:2:"ua";s:101:"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.||
+17|      1|wp_dashboard_quick_press_last_post_id|4                                                                                                                                                                                                                                                              |
+18|      1|community-events-location            |a:1:{s:2:"ip";s:10:"172.25.0.0";}                                                                                                                                                                                                                              |
+19|      2|nickname                             |a                                                                                                                                                                                                                                                              |
+20|      2|first_name                           |                                                                                                                                                                                                                                                               |
+21|      2|last_name                            |                                                                                                                                                                                                                                                               |
+22|      2|description                          |                                                                                                                                                                                                                                                               |
+23|      2|rich_editing                         |true                                                                                                                                                                                                                                                           |
+24|      2|syntax_highlighting                  |true                                                                                                                                                                                                                                                           |
+25|      2|comment_shortcuts                    |false                                                                                                                                                                                                                                                          |
+26|      2|admin_color                          |fresh                                                                                                                                                                                                                                                          |
+27|      2|use_ssl                              |0                                                                                                                                                                                                                                                              |
+28|      2|show_admin_bar_front                 |true                                                                                                                                                                                                                                                           |
+29|      2|locale                               |                                                                                                                                                                                                                                                               |
+30|      2|wp_capabilities                      |a:1:{s:10:"subscriber";b:1;}                                                                                                                                                                                                                                   |
+31|      2|wp_user_level                        |0                                                                                                                                                                                                                                                              |
+32|      2|default_password_nag                 |1                                                                                                                                                                                                                                                              |
+
+Unfortunately neither the [WordPress Codex](https://codex.wordpress.org/Database_Description) nor the [WordPress Developer Handbook](https://developer.wordpress.org) give definitions of the database fields and their meanings. To be entirely sure you would need to read the WordPress source code. But the details below given by ChatGPT seem obvious enough to trust.
+
+`wp_users` Table
+
+- ID: A unique identifier for each user. It is an auto-incremented integer and serves as the primary key for the table.
+- user_login: The user's username used for logging in to WordPress.
+- user_pass: The hashed password for the user. WordPress uses the wp_hash_password function to create a hash of the user's password.
+- user_nicename: A URL-friendly version of the user's username. It is used in the author slug URL.
+- user_email: The user's email address. It is unique for each user and used for account management and notifications.
+- user_url: The URL of the user's website. This field is optional and can be left blank.
+- user_registered: The date and time when the user registered on the WordPress site. It is stored in the 'YYYY-MM-DD HH:MM:SS' format.
+- user_activation_key: Used for storing a hash that is used to activate the user's account or for password reset purposes.
+- user_status: This field is deprecated and not used by core WordPress functions. It was originally intended for user status but is now typically left at its default value of 0.
+- display_name: The publicly displayed name of the user. This name is shown on the site in places like author posts or comments.
+
+`wp_usermeta` Table
+
+- umeta_id: A unique identifier for each meta entry. It is an auto-incremented integer and serves as the primary key for the table.
+- user_id: The ID of the user to whom the meta entry belongs. It links back to the ID column in the wp_users table.
+- meta_key: The name of the metadata field. WordPress uses this field to store various pieces of user-related information, such as administrative capabilities (wp_capabilities), user roles (wp_user_level), and custom user meta added by themes or plugins.
+- meta_value: The value of the metadata field. The information here can vary widely depending on the meta_key. This field can store serialized arrays or strings, depending on the type of data being stored.
+
+The wp_usermeta table is designed to be highly extensible, allowing for the addition of custom metadata fields related to users, which themes or plugins can utilize without needing to modify the core wp_users table structure. This design allows WordPress to be highly customizable and extendable.
+
+ Entity-Attribute-Value (EAV) model
+
+meta_key values:
+
+- wp_capabilities: Stores the roles assigned to a user in a serialized array. This determines what the user can and cannot do within WordPress.
+- wp_user_level: A legacy way to define user roles and capabilities, primarily kept for backward compatibility. It represents the user's role as a numeric level.
+- nickname: The user's nickname, which can be used publicly in place of their username for display purposes.
+- first_name and last_name: Store the user's first and last name, respectively.
+- description: A short bio or description of the user.
+- rich_editing: Indicates whether the user prefers to use the visual rich editor when writing. The value is either "true" or "false".
+- syntax_highlighting: Indicates whether the user prefers to have syntax highlighting enabled in the code editor. The value is either "true" or "false".
+- comment_shortcuts: Indicates whether the user wishes to use keyboard shortcuts for comment moderation. The value is either "true" or "false".
+- admin_color: The color scheme the user has chosen for the admin dashboard.
+- use_ssl: Whether the user prefers to use SSL when logging into the admin area. The value is either "0" (do not force SSL) or "1" (force SSL).
+- show_admin_bar_front: Determines whether the WordPress admin bar should be displayed to the user when viewing the site. The value is either "true" or "false".
+- locale: The user's preferred language locale for the admin dashboard.
+- wp_dashboard_quick_press_last_post_id: The ID of the last post created using the "Quick Draft" dashboard widget.
+- dismissed_wp_pointers: Tracks the admin pointers dismissed by the user to avoid showing them again.
+- session_tokens: Stores the user's session tokens for maintaining login sessions across different devices.
+- wp_user-settings and wp_user-settings-time: Store user-specific settings for the admin area, such as the true/false status of checkboxes and the timestamp of the last settings update, respectively.
 
 ## Contents to delete
 
