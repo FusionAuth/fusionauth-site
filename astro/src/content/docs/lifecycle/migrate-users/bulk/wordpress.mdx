@@ -177,9 +177,48 @@ meta_key values:
 - session_tokens: Stores the user's session tokens for maintaining login sessions across different devices.
 - wp_user-settings and wp_user-settings-time: Store user-specific settings for the admin area, such as the true/false status of checkboxes and the timestamp of the last settings update, respectively.
 
+Make hasher
+
+Phpass - Md5 - Brcrypt
+
+ $P$BVrdsW/NUuXDi0Od0uUdk2SnJHHmQ01, is a WordPress password hash. WordPress uses a modified version of the portable PHP password hashing framework, Phpass. The hash is structured as follows:
+
+    $P$B: This is the prefix indicating the hash type and the cost parameter. $P$ indicates it's a WordPress Phpass hash. The B after $P$ encodes the cost parameter, which determines the computational cost of the hashing algorithm. WordPress typically uses a cost parameter that results in 2^8 (256) iterations of the hashing algorithm.
+
+    VrdsW/NUuXDi0Od0uUdk: This part is the salt used for hashing. The salt is a random value that is combined with the password to produce a unique hash even for identical passwords. In Phpass, the salt is 8 characters long and is encoded together with the hash.
+
+    2SnJHHmQ01: This is the actual hash value of the password, produced by hashing the password together with the salt, using the MD5 algorithm repeatedly for 2^8 iterations (based on the cost parameter).
+
+MD5 Hashes: Early WordPress versions used MD5 for password hashing. These hashes are easily identifiable because they lack a specific prefix indicating a more modern algorithm. They are 32 characters long, hexadecimal.
+
+Phpass Hashes: When WordPress moved to using Phpass, it started using prefixes to indicate the hashing algorithm and cost. A Phpass hash typically starts with $P$B or similar. The $P$ indicates Phpass, and the character following this prefix (e.g., B) indicates the cost parameter. Phpass can use different algorithms, including bcrypt, but it primarily wraps around MD5 for backward compatibility and portability, ensuring a consistent user experience across different server environments.
+
+### Hash prefixes and what algorithm they indicate
+
+WordPress and the Phpass library use specific prefixes in their password hashes to indicate the algorithm and cost parameters used during the hashing process. Here's a breakdown of the possible hash prefixes you might encounter in a WordPress context and what they indicate about the algorithm:
+
+    MD5 Hashes (No Prefix): Early WordPress versions used plain MD5 hashes for passwords. These hashes are 32 characters long and consist of hexadecimal characters (0-9, a-f). They do not have a prefix.
+
+    $P$ or $P$B: This prefix is used by WordPress to indicate hashes created using the Phpass library with a fallback to MD5. The $P$ indicates Phpass, and the character following this prefix represents the cost parameter of the hash. The actual algorithm is a modified MD5 with multiple iterations to increase security. This is the most common format you'll find in WordPress installations that have not been updated to use newer hashing algorithms.
+
+    $1$: This prefix indicates an MD5-based crypt hash. It's not commonly used in WordPress itself but is supported by the Phpass library. It specifies an MD5 hash that's been processed with a Unix crypt() function.
+
+    $2a$, $2x$, $2y$: These prefixes are associated with bcrypt, a more secure hashing algorithm. The $2a$ version had some security concerns and was succeeded by $2y$ for PHP to address compatibility and security issues. $2x$ was a temporary workaround for a specific bug. WordPress with PHP 5.3.7 or newer might use $2y$ for bcrypt hashes if the server supports it.
+
+    $5$ and $6$: These prefixes indicate SHA-256 and SHA-512 hashing respectively, used with the Unix crypt() function. While supported by Phpass, these are not typically used by WordPress.
+
+    $argon2i$, $argon2id$: These prefixes are for Argon2, a modern and secure hashing algorithm that won a Password Hashing Competition and is recommended for new applications. As of my last update, WordPress does not use Argon2 by default, but PHP 7.2+ supports Argon2i and Argon2id for password hashing.
+
+When migrating user passwords or verifying them on a different system, recognizing these prefixes helps determine the necessary steps to authenticate users correctly. For most WordPress migrations, dealing with $P$ hashes will be the primary concern. To ensure compatibility and security, using a method that can handle these hashes appropriately, potentially upgrading them to a more secure algorithm like bcrypt or Argon2 when users log in, is recommended.
+
+
+
+Maker importer
+
 ## Contents to delete
 
 - [TODO](#todo)
+  - [Hash prefixes and what algorithm they indicate](#hash-prefixes-and-what-algorithm-they-indicate)
 - [Contents to delete](#contents-to-delete)
 - [Introduction](#introduction)
   - [Limitations](#limitations)
