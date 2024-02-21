@@ -442,6 +442,54 @@ Quickstarts are any pages that are going under /docs/quickstarts that are not on
 
 See https://github.com/FusionAuth/fusionauth-example-template/blob/master/QUICKSTART-INSTRUCTIONS.md for instructions on building out a quickstart.
 
+
+## Linting
+
+We're using [Vale](https://vale.sh/) to find misspellings and to standardize terms.
+
+The main configuration file is located at [`.vale.ini`](./.vale.ini), where we specify file extensions to parse (besides the default `.md` one), some custom filters to ignore Astro components and which rules we'll use.
+
+### Rules
+
+- The rules _(or, as Vale calls them, "styles")_ are located at [`.github/vale/styles`](./.github/vale/styles).
+- Right now, we're using [`write-good`](./.github.vale/styles/write-good), a collection of simple rules to avoid common mistakes and awkward sentences.
+- We also have a custom vocabulary at [`.github/vale/styles/config/vocabularies/FusionAuth/accept.txt`](./.github/vale/styles/config/vocabularies/FusionAuth/accept.txt) with known words.
+  - Note that this file can use regular expressions to match words in a case-insensitive manner, as described [in their docs](https://vale.sh/docs/topics/vocab/).
+
+### GitHub Actions
+
+There's [a GitHub Action](./.github/workflows/vale.yml) that runs Vale on added/modified files when opening a pull request. It'll only cover files located at `astro/src/content`, but it won't block merging the PR, as we currently have lots of errors to fix. So, use it as a guide to improve what you are writing.
+
+### Running locally
+
+If you have Docker installed, you can lint files by running the command below.
+
+```shell
+$ cd fusionauth-site
+$ docker run --rm -v "$(pwd)/.vale.ini:/etc/.vale.ini" -v "$(pwd)/.github:/etc/.github" -v "$(pwd)/astro:/docs" -w /docs jdkato/vale --config /etc/.vale.ini src/content/path/to/folder/or/file
+```
+
+If you whether choose to [install Vale locally](https://vale.sh/docs/vale-cli/installation/), make sure you're at the root folder for this repository and run:
+
+```shell
+$ cd fusionauth-site
+$ vale astro/path/to/folder/or/file
+```
+
+If you want to filter by specific rules, you can also pass a `--filter` argument:
+
+```shell
+$ vale --filter=".Name == 'Vale.Spelling'" astro/path/to/file
+```
+
+### What to do with linting errors
+
+Whenever you receive an error, you need to determine if you should:
+
+- Actually fix the word (e.g. if you received an error like _"Use 'Id' instead of 'ID'."_); or
+- Add a known word to [`the vocabulary`](./.github/vale/styles/config/vocabularies/FusionAuth/accept.txt) if it's a language, library, company name, etc. But make sure you have the correct capitalization to avoid having duplicates there; or
+- In case of custom Astro components, you'd probably need to add a new `TokenIgnores` item in [`.vale.ini`](./.vale.ini).
+
 ## Pull request review process
 
 * If a piece of content is technical, it needs a technical review by engineering or devrel.
