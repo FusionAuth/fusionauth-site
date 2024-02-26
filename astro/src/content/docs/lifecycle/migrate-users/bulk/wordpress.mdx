@@ -26,7 +26,8 @@ import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/bulk/_ad
   - [Explore The Users In The Database](#explore-the-users-in-the-database)
     - [wp\_users](#wp_users)
     - [wp\_usermeta](#wp_usermeta)
-  - [Export The Users in SQL](#export-the-users-in-sql)
+  - [Export The Users In SQL](#export-the-users-in-sql)
+  - [Prepare Users For Import To FusionAuth](#prepare-users-for-import-to-fusionauth)
 - [Import Users](#import-users)
   - [Use A WordPress Password Hash Plugin For FusionAuth](#use-a-wordpress-password-hash-plugin-for-fusionauth)
 - [Bulk Migration](#bulk-migration)
@@ -212,7 +213,28 @@ Here are some of meta_key types you might find:
 - session_tokens: Stores the user's session tokens for maintaining login sessions across different devices.
 - wp_user-settings and wp_user-settings-time: Store user-specific settings for the admin area, such as the true/false status of checkboxes and the timestamp of the last settings update, respectively.
 
-### Export The Users in SQL
+### Export The Users In SQL
+
+Clone the GitHub repository https://github.com/ritza-co/fusionauth-import-scripts.git. The `wordpress` directory contains all the scripts you need for this tutorial, and `exampleData` has the outputs of the scripts.
+
+Run the SQL script `src/1_exportWordpressUsers.sql` against your WordPress database to export all the user data as JSON. View the output as text in DBeaver and save the `json_result` column to a file called `users.txt`.
+
+The script exports the `wp_users` table as JSON with all fields related to each user as an array called `meta`.
+
+Your file should look the same as `exampleData/1_wordpressExport/users.txt`. Each row is JSON, but the file as a whole is not JSON. Each row must end with a comma and the whole thing must be wrapped in brackets.
+
+To do this, copy `src/2_convertTextToJson.mjs` into the same directory as your text file and run the code below.
+
+```sh
+node 2_convertTextToJson.mjs
+```
+
+Your output should now be valid JSON and look like the file `exampleData/1_wordpressExport/users.json`.
+
+### Prepare Users For Import To FusionAuth
+
+The next script is the most important. It maps the fields of `users.json` into FusionAuth fields. You may wish to alter this script to change which fields are ignored, or where they are mapped. The script is `3_convertWpUserToFaUser.mjs`.
+
 
 ## Import Users
 
