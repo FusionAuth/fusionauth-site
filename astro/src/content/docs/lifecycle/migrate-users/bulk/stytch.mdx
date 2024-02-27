@@ -14,6 +14,7 @@ import InlineField from 'src/components/InlineField.astro';
 import Aside from '/src/components/Aside.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
 import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/bulk/_additional-support.mdx';
+import Identifiers from 'src/content/docs/lifecycle/migrate-users/bulk/_identifiers.mdx';
 import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/bulk/_mapping-user-attributes.mdx';
 import SocialLoginNote from 'src/content/docs/lifecycle/migrate-users/bulk/_social-login-note.mdx';
 import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/bulk/_social-login-migration.mdx';
@@ -22,14 +23,13 @@ import FinalDestination from 'src/content/docs/lifecycle/migrate-users/bulk/_fin
 import VerifyImport from 'src/content/docs/lifecycle/migrate-users/bulk/_verify-import.mdx';
 import WhatNext from 'src/content/docs/lifecycle/migrate-users/bulk/_what-next.mdx';
 
-
 export const migration_source_name = 'Stytch';
 export const migration_source_dir = 'stytch';
 export const script_supports_social_logins = 'true';
 
 ## Overview
 
-This article explains how to import users from Stytch into FusionAuth. It is a low-level, technical tutorial focusing on transferring password hashes, calling APIs, and preparing data. The article does not explain the high-level process of a migration strategy. This is explained in the [migration overview article](/docs/lifecycle/migrate-users/bulk/general). Be aware of all laws regarding the protection and transfer of personal information in your country.
+This article explains how to import users from Stytch into FusionAuth. It is a low-level, technical tutorial focusing on transferring password hashes, calling APIs, and preparing data. The article does not explain the high-level process of a migration strategy. This is explained in the [migration overview article](/docs/lifecycle/migrate-users/bulk/general). Be aware of all laws regarding the protection and transfer of personal information in your country. TODO
 
 Finally, if you want to import user passwords in addition to user personal details, you need a basic understanding of how password hashing and salts work. FusionAuth has a [hashing article](/articles/security/math-of-password-hashing-algorithms-entropy) that is a good starting point.
 
@@ -38,8 +38,7 @@ Finally, if you want to import user passwords in addition to user personal detai
 - This article explains how to migrate Stytch users from a Consumer Authentication project. It has not been tested with their B2B Saas Authentication project type.
 - This article explains how to import passwords into FusionAuth, but does not deal with other Stytch authentication types: magic links, passkeys, passcodes, mobile biometrics, two-factor authentication, and social logins such as Google OAuth.
 
-
-### Prerequisites
+## Prerequisites
 
 This article is in the form of a tutorial, with data and code examples, showing you exactly how to extract and combine user credentials and information and insert them into your FusionAuth database. To follow this tutorial, you need:
 - [Node.js](https://nodejs.org/en) to run the migration scripts, and npm.
@@ -72,23 +71,11 @@ You can use the [Stytch API](https://stytch.com/docs/api) to export user data.
 
 #### Identifiers
 
-When creating an object with the FusionAuth API, you can specify the Id. It must be a [UUID](/docs/reference/data-types#uuids).
-
-This works for users, applications, and tenants, among others.
-
-### Login UI
-
-Stytch has pre-built UI flows or you can custom build your own with headless SDK methods.
-
-FusionAuth’s login experience is similar. You can choose to
-build your own login pages or use FusionAuth’s hosted login pages. [Read more about these choices](/docs/get-started/core-concepts/integration-points#login-options).
+<Identifiers migration_source_name={migration_source_name}/>
 
 ## Exporting Users
 
-To export users from Stytch, you'll perform the following steps:
-
-1. Request user password hashes from Stytch via email.
-2. Get all user details and combine with hashes.
+To export users from Stytch, you'll request the user password hashes from Stytch via email, and then get all user details via the API and combine them with the hashes.
 
 ### Create Stytch Users
 
@@ -103,12 +90,15 @@ Create a new Stytch project:
 
 Create three example users:
 - Download this tutorial's scripts repository from https://github.com/fusionauth/fusionauth-import-scripts and unzip it, or if you have Git, run the code below.
-  ```bash
+
+{/* TODO delete all the initial blank lines in code snippets in this file once the rendering error that inserts two spaces into the first line is fixed */}
+  ```sh
+
   git clone https://github.com/fusionauth/fusionauth-import-scripts.git
   ```
 - In the file `fusionauth-import-scripts/stytch/js/1_makeStytchUsers.mjs`, change the project Id and secret to match your project.
 - In a terminal, run the code below to create three new users in Stytch using the Stytch JavaScript API.
-  ```bash
+  ```sh
 
   cd fusionauth-import-scripts/stytch/js
   npm update
@@ -135,7 +125,7 @@ Stytch will encrypt the hashes with your public key. Attach this key in a `.pem`
 
 To create a private and public key pair, use the commands below in a terminal.
 
-```shell
+```sh
 
 openssl genpkey -algorithm RSA -out private_key.pem &&
 openssl rsa -pubout -in private_key.pem -out public_key.pem
@@ -155,7 +145,7 @@ Stytch will reply with two files: An encrypted password hash file (`stytch-proje
 
 Decrypt the password file with the commands below.
 
-```shell
+```sh
 
 openssl pkeyutl -decrypt -inkey private_key.pem -in key.bin.enc -out key.bin &&
 openssl enc -d -aes-256-cbc -in stytch-project-test-36510638-652a-4d3d-9a94-f0a7106582fc-hashes-2021-01-11.enc -out stytch_password_hashes.csv -pass file:./key.bin
@@ -190,6 +180,7 @@ Note that our hash algorithm looks correct, but the hashes differ by one charact
 To have the hashes match correctly, you need to replace the `+` and `/` characters in your hash:
 
 ```js
+
 const keyBase64 = derivedKey.toString('base64').replace(/\+/g, '-').replace(/\//g, '_');
 ```
 
@@ -212,7 +203,7 @@ The `3_getUserDetails.mjs` script loops through each user in the `hash.csv` file
 
 - Open `3_getUserDetails.mjs` and set your project Id and secret.
 - Run the code below in a terminal in the `fusionauth-import-scripts/stytch/js` directory.
-  ```bash
+  ```sh
 
   npm update
   node 3_getUserDetails.mjs
@@ -233,13 +224,7 @@ The last lines of the object show the hash and salt that the script added from t
 
 ## Importing Users
 
-Next up, import the user data. Here are the steps we need to take.
-
-1. Set Up FusionAuth
-2. Add the scrypt Hashing Plugin
-3. Import Users
-4. Verify the Import
-5. The Final Destination of Imported Users
+Next you will import the user data. First you need to install a FusionAuth plugin to handle Stytch's password hash algorithm, then import the users, and finally verify the import.
 
 ### Install The Scrypt Password Hash Plugin For FusionAuth
 
@@ -250,7 +235,8 @@ The linked repository has multiple plugin projects. You need to build and instal
 </Aside>
 
 Download and unzip the repository, or use Git in a terminal with the code below.
-```bash
+```sh
+
 git clone https://github.com/fusionauth/fusionauth-contrib.git
 ```
 
@@ -271,7 +257,7 @@ If you make another hash plugin, you will need to make your own test and add you
 
 Build the Java plugin and add it to FusionAuth:
 - Open a terminal and run the code below to build a Docker container for Java, with the repository shared as a volume into the container.
-  ```bash
+  ```sh
 
   cd fusionauth-contrib/.devcontainer
   docker build -t javaimage .
@@ -279,7 +265,7 @@ Build the Java plugin and add it to FusionAuth:
   docker run -it --name javabox -v .:/workspace javaimage
   ```
 - In the Docker container terminal that is now running, run the code below.
-  ```bash
+  ```sh
 
   cd "/workspace/Password Hashing Plugins"
   mvn clean install
@@ -295,14 +281,14 @@ Now copy `fusionauth-example-password-encryptor-0.1.0.jar` to your FusionAuth `p
 
 If you are not running FusionAuth already, or want to test this process on another instance, you can start FusionAuth in Docker.
 - Open a new terminal in the `fusionauth-import-scripts` directory and run the code below.
-  ```bash
+  ```sh
 
   cd stytch/fusionAuthDockerFiles
   docker compose up
   ```
 - FusionAuth will now be running and browsable at `http://localhost:9011`. You can log in with `admin@example.com` and `password`. The container is called `fa`.
 - In the `fusionauth-contrib` terminal where you built the plugin, run the commands below to copy the JAR file into the FusionAuth container `plugins` directory.
-  ```bash
+  ```sh
 
   docker exec fa mkdir /usr/local/fusionauth/plugins
   docker cp "Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar" fa:/usr/local/fusionauth/plugins/fusionauth-example-password-encryptor-0.1.0.jar
@@ -314,7 +300,7 @@ If you are not running FusionAuth already, or want to test this process on anoth
 You now have the users file `users.json` and installed the scrypt plugin. To import the users into FusionAuth you need to run the Node.js import script.
 
 Open a terminal in the `fusionauth-import-scripts` directory and run the code below.
-```bash
+```sh
 
 cd stytch/js
 npm update
@@ -390,6 +376,12 @@ The function `getNullOrUUIDFromUserId()` extracts a standard UUID from the Stytc
 Finally, this script imports users individually. If this is too slow when running the production migration, wrap the `importUsers()` FusionAuth SDK call in a loop that bundles users in batches of 1000.
 
 If you are uncertain what a user attribute in FusionAuth does, read more in the [user guide](/docs/apis/users), as linked in the [general migration guide](/docs/lifecycle/migrate-users/bulk/general) recommended earlier.
+
+### Use A Test Tenant
+
+You can set the TenantId into which you import users to a test tenant.
+
+<FinalDestination migration_source_dir={migration_source_dir} />
 
 ### Import Roles
 
