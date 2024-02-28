@@ -19,9 +19,8 @@ import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/bulk
 import SocialLoginNote from 'src/content/docs/lifecycle/migrate-users/bulk/_social-login-note.mdx';
 import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/bulk/_social-login-migration.mdx';
 import OtherEntitiesIntro from 'src/content/docs/lifecycle/migrate-users/bulk/_other-entities-intro.mdx';
-import FinalDestination from 'src/content/docs/lifecycle/migrate-users/bulk/_final-destination.mdx';
-import VerifyImport from 'src/content/docs/lifecycle/migrate-users/bulk/_verify-import.mdx';
 import WhatNext from 'src/content/docs/lifecycle/migrate-users/bulk/_what-next.mdx';
+import ScrollRef from 'src/components/ScrollRef.astro';
 
 export const migration_source_name = 'Stytch';
 export const migration_source_dir = 'stytch';
@@ -50,7 +49,7 @@ Stytch also has SDKs for [Go, Java, Python, and Ruby](https://stytch.com/docs/sd
 
 ### Obtaining User Data
 
-You can use the [Stytch API](https://stytch.com/docs/api) to export user data.
+You can use the [Stytch API](https://stytch.com/docs/api) to export user data, but you cannot export password hashes via the API. To get them you will need to email the Stytch support as described in the <ScrollRef target="Request User Passwords From Stytch" /> section.
 
 ### Mapping User Attributes
 
@@ -59,7 +58,6 @@ You can use the [Stytch API](https://stytch.com/docs/api) to export user data.
 ### Social Logins
 
 <SocialLoginNote migration_source_name={migration_source_name} script_supports_social_logins={script_supports_social_logins} />
-
 
 <SocialLoginMigration />
 
@@ -150,7 +148,7 @@ Now you have all your user hashes in the file `stytch_password_hashes.csv`. Belo
 
 <RemoteCode
     url={frontmatter.importCodeRoot + "/stytch/exampleData/3_responseDecryption/stytch_password_hashes.csv"}
-    lang="csv"
+    lang="plaintext"
 />
 
 The file header describes the parameters you need to use when running the scrypt hashing algorithm to convert user passwords to match the hashes in this file.
@@ -219,7 +217,7 @@ The last lines of the object show the hash and salt that the script added from t
 
 Next you will import the user data. First you need to install a FusionAuth plugin to handle Stytch's password hash algorithm, then import the users, and finally verify the import.
 
-### Install The Scrypt Password Hash Plugin For FusionAuth
+### Build The Scrypt Password Hash Plugin For FusionAuth
 
 The scrypt hashing algorithm is not [natively supported by FusionAuth](/docs/reference/password-hashes). However, FusionAuth allows [custom plugins](/docs/extend/code/password-hashes/custom-password-hashing). There is a scrypt plugin accompanying this article [in this GitHub repository](https://github.com/FusionAuth/fusionauth-contrib/tree/master/Password%20Hashing%20Plugins).
 
@@ -265,7 +263,7 @@ Build the Java plugin and add it to FusionAuth:
 
 All tests should pass, and the plugin file should be available in `Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar`.
 
-### Deploy The Plugin
+### Set Up FusionAuth And Deploy The Plugin
 
 Now copy `fusionauth-example-password-encryptor-0.1.0.jar` to your FusionAuth `plugins` directory and restart FusionAuth.
 
@@ -304,29 +302,6 @@ faUser.tenantId = UUID;
 ```
 </Aside>
 
-If the migration script ran successfully, you should be able to log in to FusionAuth with one of the imported users:
-- Browse to `http://localhost:9011`.
-- Enter username `user1@example.com` and password `averylongandunguessablepasswordwithlotsofrandominfooofisjoafasnr;,n1`.
-- Logging in should work, but your user will not be able to see anything as it has no administration rights.
-- Log out again and log in with `admin@example.com`.
-- Browse to <InlineUIElement>Users</InlineUIElement> and edit one of the imported users.
-- In the <InlineUIElement>Source</InlineUIElement> tab, you can see all the user details.
-
-### Debug With The FusionAuth Database
-
-If you have errors logging in, use the FusionAuth database directly to see if your users were imported, and check their hashes manually.
-
-You can use any PostgreSQL browser. [DBeaver](https://dbeaver.io/download) is free, cross-platform, and open source. The connection details are in `fusionauth-import-scripts/stytch/fusionAuthDockerFiles/docker-compose.yml` and `.env`.
-
-In DBeaver or your database IDE, create a new PostgreSQL connection with the following details:
-- <InlineField>URL:</InlineField> `jdbc:postgresql://localhost:6432/fusionauth`
-- <InlineField>Host:</InlineField> `localhost`
-- <InlineField>Port:</InlineField> `6432`
-- <InlineField>Database:</InlineField> `fusionauth`
-- <InlineField>Username:</InlineField> `fusionauth`
-- <InlineField>Password:</InlineField> `hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3`
-
-Log in to the database and browse to `Databases/fusionauth/Schemas/public/Tables/identities` and `users`. These two tables will show you the login credentials and user personal information.
 
 ### A Closer Look At The Import Script
 
@@ -362,11 +337,6 @@ Finally, this script imports users individually. If this is too slow when runnin
 
 If you are uncertain what a user attribute in FusionAuth does, read more in the [user guide](/docs/apis/users), as linked in the [general migration guide](/docs/lifecycle/migrate-users/bulk/general) recommended earlier.
 
-### Use A Test Tenant
-
-You can set the TenantId into which you import users to a test tenant.
-
-<FinalDestination migration_source_dir={migration_source_dir} />
 
 ### Import Roles
 
@@ -375,6 +345,32 @@ Stytch does not support user roles and applications as native properties of user
 As discussed in the general migration guide, roles in FusionAuth are stored in a Registration object (a link between a User and an Application).
 
 If you have roles in Stytch you want to import, add them to the `faUser.registrations` array in the import script. This is not included in the tutorial script because every Stytch client will have their own way of linking users and applications in Stytch using JSON.
+
+### Verify the Import
+
+If the migration script ran successfully, you should be able to log in to FusionAuth with one of the imported users:
+- Browse to `http://localhost:9011`.
+- Enter username `user1@example.com` and password `averylongandunguessablepasswordwithlotsofrandominfooofisjoafasnr;,n1`.
+- Logging in should work, but your user will not be able to see anything as it has no administration rights.
+- Log out again and log in with `admin@example.com`.
+- Browse to <InlineUIElement>Users</InlineUIElement> and edit one of the imported users.
+- In the <InlineUIElement>Source</InlineUIElement> tab, you can see all the user details.
+
+#### Debug With The FusionAuth Database
+
+If you have errors logging in, use the FusionAuth database directly to see if your users were imported, and check their hashes manually.
+
+You can use any PostgreSQL browser. [DBeaver](https://dbeaver.io/download) is free, cross-platform, and open source. The connection details are in `fusionauth-import-scripts/stytch/fusionAuthDockerFiles/docker-compose.yml` and `.env`.
+
+In DBeaver or your database IDE, create a new PostgreSQL connection with the following details:
+- <InlineField>URL:</InlineField> `jdbc:postgresql://localhost:6432/fusionauth`
+- <InlineField>Host:</InlineField> `localhost`
+- <InlineField>Port:</InlineField> `6432`
+- <InlineField>Database:</InlineField> `fusionauth`
+- <InlineField>Username:</InlineField> `fusionauth`
+- <InlineField>Password:</InlineField> `hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3`
+
+Log in to the database and browse to `Databases/fusionauth/Schemas/public/Tables/identities` and `users`. These two tables will show you the login credentials and user personal information.
 
 ## What to Do Next
 
