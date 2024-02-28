@@ -3,6 +3,7 @@ title: What Is Identity Proofing?
 description: What is identity proofing and why might you need it?
 author: Deborah Ruck
 icon: /img/icons/identity-proofing.svg
+darkIcon: /img/icons/identity-proofing-dark.svg
 section: Identity Basics
 date: 2021-10-05
 dateModified: 2021-10-05
@@ -56,9 +57,9 @@ Identity proofing provides several ways to verify a user’s identity, such as p
 
 ### Identity Document Verification
 
-Identity document verification can be a physical process or done digitally. Physical identity proofing occurs when a customer performs a face-to-face transaction at a company location and presents identity documents such as an ID card, passport, or driver’s license. A company employee compares the photograph on the documents with the person standing in front of them and validates the information supplied against an authoritative source, such as government or credit records. Once identity is established, documents are copied and physically stored. 
+Identity document verification can be a physical process or done digitally. Physical identity proofing occurs when a customer performs a face-to-face transaction at a company location and presents identity documents such as an Id card, passport, or driver’s license. A company employee compares the photograph on the documents with the person standing in front of them and validates the information supplied against an authoritative source, such as government or credit records. Once identity is established, documents are copied and physically stored. 
 
-Businesses needing to establish real-world identity with online users can verify documentation using a scan of a valid passport or ID along with other verifiable personal information, like an address or phone number. To ensure that scanned documents aren’t stolen, businesses sometimes ask users to submit a selfie of themselves holding the documents. 
+Businesses needing to establish real-world identity with online users can verify documentation using a scan of a valid passport or Id along with other verifiable personal information, like an address or phone number. To ensure that scanned documents aren’t stolen, businesses sometimes ask users to submit a selfie of themselves holding the documents. 
 
 ### Knowledge-Based Authentication
 

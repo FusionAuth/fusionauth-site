@@ -3,6 +3,7 @@ title: Securing Gaming User Accounts With Fraud Detection And Suspicious Activit
 description: When it comes to gaming, saving progress is an essential job. Gaming user accounts do that and much more. However, just like any other virtual account, gaming accounts need to be secured from fraudulent activity as well. In this guide, learn about the significance of securing gaming accounts and the ways in which it can be done.
 author: Rabo James Bature
 icon: /img/icons/securing-gaming-user-accounts.svg
+darkIcon: /img/icons/securing-gaming-user-accounts-dark.svg
 section: Gaming & Entertainment
 # date: 2022-06-01
 # dateModified: 2022-06-01
@@ -50,9 +51,9 @@ Using MFA, you can request one of three types of additional information from use
 
 * Something the user knows, such as the account password or PIN
 * Something the user has, such as a verified digital badge, PC, smartphone, or digital game console
-* Something the user is, such as a biometric ID
+* Something the user is, such as a biometric Id
 
-What kind of additional factor makes sense for your users depends on their demographic and device. You should also make varying kinds of factors available, as the casual game player might want something easy to use like SMS whereas the professional esport player, with a more valuable account, will want a more secure factor such as a biometric ID tied to their phone.
+What kind of additional factor makes sense for your users depends on their demographic and device. You should also make varying kinds of factors available, as the casual game player might want something easy to use like SMS whereas the professional esport player, with a more valuable account, will want a more secure factor such as a biometric Id tied to their phone.
 
 Learn more about [Multi-Factor Authentication](/articles/authentication/multi-factor-authentication).
 

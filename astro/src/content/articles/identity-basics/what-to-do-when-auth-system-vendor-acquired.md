@@ -3,6 +3,7 @@ title: What To Do When Your Auth System Vendor Gets Acquired
 description: Authentication is an integral part of your application, and as such the acquisition of your auth vendor isn't like other acquisitions.
 author: Eze Sunday Eze
 icon: /img/icons/auth-system-acquired.svg
+darkIcon: /img/icons/auth-system-acquired-dark.svg
 section: Identity Basics
 date: 2021-06-22
 dateModified: 2021-06-22
