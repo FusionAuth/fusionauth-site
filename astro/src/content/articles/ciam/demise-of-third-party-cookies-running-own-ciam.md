@@ -4,6 +4,7 @@ description: What is the future of third party cookies and how does that tie int
 section: CIAM
 author: Kuntal Chakraborty
 icon: /img/icons/third-party-cookies-ciam-system.svg
+darkIcon: /img/icons/third-party-cookies-ciam-system-dark.svg
 ---
 
 Third-party cookies track user information like browsing habits, purchases, and other interactions, which helps companies know how to market to their target demographic. By utilizing third-party cookies, companies can track users across multiple websites. However, the collection of personal information raises concern about online privacy. As a result, more and more browsers are allowing users to block third-party cookies.

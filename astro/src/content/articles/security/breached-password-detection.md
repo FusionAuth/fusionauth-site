@@ -3,6 +3,7 @@ title: Breached Password Detection
 description: What is breached password detection and why should you implement it.
 author: Dan Moore
 icon: /img/icons/breached-password-detection.svg
+darkIcon: /img/icons/breached-password-detection-dark.svg
 section: Security
 date: 2020-07-22
 dateModified: 2020-07-22
@@ -49,7 +50,7 @@ In the same vein, [NIST, an American government agency](https://pages.nist.gov/8
 > 
 > * Passwords obtained from previous breach corpuses.
 > * Dictionary words.
-> * Repetitive or sequential characters (e.g. ‘aaaaaa’, ‘1234abcd’).
+> * Repetitive or sequential characters (e.g. `aaaaaa`, `1234abcd`).
 > * Context-specific words, such as the name of the service, the username, and derivatives thereof.
 > 
 > If the chosen secret is found in the list, the CSP or verifier SHALL advise the subscriber that they need to select a different secret, SHALL provide the reason for rejection, and SHALL require the subscriber to choose a different value.
@@ -72,7 +73,7 @@ You can also include lists of common words and character sequences in your datas
 
 ![Password strength](/img/articles/breached-password-detection/password-strength.png)
 
-Whatever you do, please ensure you include 'correcthorsebatterystaple' ([image courtesy of xkcd](https://xkcd.com/license.html)).
+Whatever you do, please ensure you include `correcthorsebatterystaple` ([image courtesy of xkcd](https://xkcd.com/license.html)).
 
 Make sure you are researching these providers and datasets on a regular schedule, since new breaches happen and new providers may appear. You'll also want to comply with any licensing or other requirements the data providers have. Some providers offer these datasets for free, while others may charge or ask for a donation. Make sure you set aside budget for this.
 
@@ -115,7 +116,7 @@ You should enable checks on the first three events to prevent known compromised 
 
 The last one deserves a bit of explanation. Suppose a user signs up on Example.com with a great password. Then they come to your site and sign up with the same great password. They continue to use your site for months, but forget about Example.com. 
 
-Then, Example.com is breached. They may send out a notice, but your user may not receive it or may not change their password. This [study from 2020 (PDF)](https://www.ieee-security.org/TC/SPW2020/ConPro/papers/bhagavatula-conpro20.pdf) covers a small dataset, approximately 250 users over two years. It found that of the approximatly 60 users who had accounts on breached domains, only 13% changed their password within three months of the breach announcement.
+Then, Example.com is breached. They may send out a notice, but your user may not receive it or may not change their password. This [study from 2020 (PDF)](https://www.ieee-security.org/TC/SPW2020/ConPro/papers/bhagavatula-conpro20.pdf) covers a small dataset, approximately 250 users over two years. It found that of the approximately 60 users who had accounts on breached domains, only 13% changed their password within three months of the breach announcement.
 
 If you only check for compromise when the password is created at registration or modified by the end user, you'll end up with users who have credentials that have been leaked by breaches external to your system after account creation. The Example.com breach affected your system through the vector of the reused password. Detect breached passwords whenever a user logs in.
 

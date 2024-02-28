@@ -1,5 +1,5 @@
 ---
-title: Ruby on Rails
+title: Ruby on Rails API
 description: Quickstart Integration of a Ruby on Rails API with FusionAuth
 navcategory: getting-started
 prerequisites: Ruby, bundler and Rails
@@ -10,15 +10,18 @@ icon: /img/icons/ruby-on-rails.svg
 faIcon: fa-gem
 color: red
 cta: EmailListCTA
-coderoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api/main
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api/main
 ---
 import Aside from '../../components/Aside.astro';
-import Diagram from '../../diagrams/quickstarts/resource-server.astro';
+import DockerSpinup from '/src/components/quickstarts/DockerSpinup.astro';
+import Intro from '/src/components/quickstarts/Intro.astro';
+import LoginArchitectureApi from '/src/components/quickstarts/LoginArchitectureApi.astro';
+import NextStepsApi from '/src/components/quickstarts/NextStepsApi.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
 
-In this article, you are going to learn how to integrate a Ruby on Rails API with FusionAuth. You will protect an API resource from unauthorized usage. You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM), a global leader in converting dollars into coins.
-
-The docker compose file and source code for a complete application are available at https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api.
+<Intro technology={frontmatter.technology}
+       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api"
+       api/>
 
 ## Prerequisites
 
@@ -30,11 +33,7 @@ The docker compose file and source code for a complete application are available
 
 ## General Architecture
 
-A client wants access to an API resource at `/resource`. However, it is denied this resource until it acquires an access token from FusionAuth. 
-
-<Diagram />
-
-While the access token is acquired via the Login API above, this is for simplicity of illustration. The token can be, and typically is, acquired through one of the [OAuth grants](/docs/lifecycle/authenticate-users/oauth/).
+<LoginArchitectureApi />
 
 ## Getting Started
 
@@ -51,28 +50,7 @@ cd fusionauth-quickstart-ruby-on-rails-api
 
 ### Run FusionAuth Via Docker
 
-In the root directory of the repo you’ll find a Docker compose file (docker-compose.yml) and an environment variables configuration file (.env). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
-
-```
-docker compose up -d
-```
-
-Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/get-started/download-and-install/development/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to a certain initial state.
-
-<Aside type="note">
-If you ever want to reset the FusionAuth system, delete the volumes created by docker-compose by executing `docker-compose down -v`, then re-run `docker-compose up -d`.
-</Aside>
-
-FusionAuth will be initially configured with these settings:
-
-* Your client Id is: `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`
-* Your client secret is: `super-secret-secret-that-should-be-regenerated-for-production`
-* Your example teller username is `teller@example.com` and your password is `password`. They will have the role of `teller`.
-* Your example customer username is `customer@example.com` and your password is `password`. They will have the role of `customer`.
-* Your admin username is `admin@example.com` and your password is `password`.
-* Your fusionAuthBaseUrl is 'http://localhost:9011/'
-
-You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don't need to.
+<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} api />
 
 ## Create Your Ruby on Rails Resource Server Application
 
@@ -116,7 +94,7 @@ gem 'dotenv-rails'
 
 Your full `Gemfile` will now look like
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/Gemfile"}
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/Gemfile"}
   lang="text"/>
 
 Then, install these new gems, by issuing the following command in your terminal window.
@@ -128,7 +106,7 @@ bundle install
 
 Update `/config/routes.rb` to include the two new routes that will be created for `/make-change` and `/panic`. Your `routes.rb` file should now match the below code.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/config/routes.rb"}
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/config/routes.rb"}
   lang="ruby"/>
 
 ### Add Security
@@ -145,7 +123,7 @@ CLIENT_ID=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
 
 Utilizing the environment variables you just added, you can now setup JSON Web Token (JWT) based authentication. Create a new file  `config/initializers/jwt_rack.rb`. This initializer is used to hold configuration settings that are made after all of the frameworks and plugins are loaded. 
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/config/initializers/jwt_rack.rb"}
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/config/initializers/jwt_rack.rb"}
   lang="ruby"/>
 
 Having this code protects your endpoints from anonymous users and passes the JWT payload to the controller. The JWT payload includes `roles` encoded in the JWT you receive from FusionAuth. The decoded payload of a JWT for a `teller` might look like this:
@@ -174,12 +152,12 @@ Having this code protects your endpoints from anonymous users and passes the JWT
 
 Create a new file for the MakeChangeController `app/controllers/make_change_controller.rb`. This controller will verify that the authenticated user has either the `teller` or `customer` role. It then takes in the url parameter `total` to calculate which coins will be returned in the JSON payload.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/app/controllers/make_change_controller.rb"}
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app/controllers/make_change_controller.rb"}
   lang="ruby"/>
 
 Create a new file for the PanicController `app/controllers/panic_controller.rb`. This controller will verify that the authenticated user has only the `teller` role. It will respond with `Proper role not found for user.` if this role is not found. This route also verifies that this is a `POST` request and if this is not true it will respond with `Only POST method is supported.` If both of these tests are passed the controller will return a successful message of `We've called the police!`.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/app/controllers/panic_controller.rb"}
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app/controllers/panic_controller.rb"}
   lang="ruby"/>
 
 ## Run the API
@@ -368,17 +346,7 @@ Enjoy your secured resource server!
 
 ## Next Steps
 
-This quickstart is a great way to get a proof of concept up and running quickly, but to run your API in production, there are some things you're going to want to do.
-
-### FusionAuth Integration
-
-* Rather than call the Login API, you're probably going to want to use the [Authorization Code grant](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant), which keeps all sensitive credentials within the bounds of FusionAuth. You can customize the [hosted login pages](/docs/customize/look-and-feel/).
-* You may want to generate a token using the [Client Credentials grant](/docs/lifecycle/authenticate-users/oauth/#example-client-credentials-grant) if you are calling the API from another service.
-
-### Security
-* Customize the [token expiration times and policies](/docs/lifecycle/authenticate-users/oauth/#configure-application-oauth-settings) in FusionAuth
-* [Make sure you know how to securely consume a token](/articles/tokens/building-a-secure-jwt#consuming-a-jwt)
-* Secure your API [using an API gateway](/docs/extend/examples/api-gateways/) rather than at the framework layer.
+<NextStepsApi />
 
 ## Troubleshooting
 
@@ -397,7 +365,7 @@ You can always pull down a complete running application and compare what's diffe
 ```
 git clone https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api.git
 cd fusionauth-quickstart-ruby-on-rails-api
-docker-compose up -d
+docker compose up -d
 cd complete-application
 bundle install
 bundle e rails s -p 4001

@@ -65,7 +65,7 @@ If it is inline (for a field), use <AvailableSince since="1.5.0"> - [AvailableSi
 
     ![icons](https://github.com/FusionAuth/fusionauth-site/assets/1877191/719bffe8-2a54-41a2-a339-b3afeda8d499)
 
-Import the ocmponent:
+Import the component:
 
 ```
 import Icon from 'src/components/icon/Icon.astro';
@@ -122,9 +122,8 @@ You can find help for {props.topic} at [help](/help)
   - Markdown syntax will not render inside of a block inside of an expression. You must use html there.
   - Content passed in the `<slot></slot>` of a component will be passed as rendered markdown.
   - you may need to coerce a prop into a boolean to use as a conditional for an expression. Such as `{!!props.message && <span>{props.message}</span>}`;
-- JSON files are their own content collection in astro. You cn reference these using the [JSON component](astro/src/components/JSON.astro)
+- JSON files are their own content collection in astro. You can reference these using the [JSON component](astro/src/components/JSON.astro)
 - We have an alias mapped in [tsconfig](astro/tsconfig.json) that allows you to use absolute references from 'src'. Otherwise, imports must use relative paths.
-- 
 - If a doc pulls code from an example application, use the [RemoteContent](astro/src/components/RemoteContent.astro). You can also pull sections with tags: `<RemoteContent url="https://raw.githubusercontent.com/FusionAuth/fusionauth-react-sdk/main/README.md" tags="forDocSite" />`
 
 ### For API docs
@@ -148,7 +147,7 @@ This is general layout guidance for APIs that have `GET` and `POST` options:
 GET URLs (could have 1-3 of these, show the most common)
 ### GET request parameters (path segment)
 ### GET request parameters (query string)
-##3 GET request headers
+### GET request headers
 
 POST URLs (only will be one, typically)
 ### POST request headers
@@ -211,6 +210,7 @@ Fruits were domesticated at different times.
 - ECMAScript
 - Elasticsearch
 - esport
+- first-party
 - FusionAuth Cloud
 - Google reCAPTCHA
 - Identity Provider
@@ -225,6 +225,7 @@ Fruits were domesticated at different times.
 - self-service
 - server-side
 - Spring Boot
+- third-party
 - two-factor
 - WebAuthn
 - webview
@@ -439,6 +440,54 @@ TBD
 Quickstarts are any pages that are going under /docs/quickstarts that are not on the blog.
 
 See https://github.com/FusionAuth/fusionauth-example-template/blob/master/QUICKSTART-INSTRUCTIONS.md for instructions on building out a quickstart.
+
+
+## Linting
+
+We're using [Vale](https://vale.sh/) to find misspellings and to standardize terms.
+
+The main configuration file is located at [`.vale.ini`](./.vale.ini), where we specify file extensions to parse (besides the default `.md` one), some custom filters to ignore Astro components and which rules we'll use.
+
+### Rules
+
+- The rules _(or, as Vale calls them, "styles")_ are located at [`.github/vale/styles`](./.github/vale/styles).
+- Right now, we're using [`write-good`](./.github.vale/styles/write-good), a collection of simple rules to avoid common mistakes and awkward sentences.
+- We also have a custom vocabulary at [`.github/vale/styles/config/vocabularies/FusionAuth/accept.txt`](./.github/vale/styles/config/vocabularies/FusionAuth/accept.txt) with known words.
+  - Note that this file can use regular expressions to match words in a case-insensitive manner, as described [in their docs](https://vale.sh/docs/topics/vocab/).
+
+### GitHub Actions
+
+There's [a GitHub Action](./.github/workflows/vale.yml) that runs Vale on added/modified files when opening a pull request. It'll only cover files located at `astro/src/content`, but it won't block merging the PR, as we currently have lots of errors to fix. So, use it as a guide to improve what you are writing.
+
+### Running locally
+
+If you have Docker installed, you can lint files by running the command below.
+
+```shell
+$ cd fusionauth-site
+$ docker run --rm -v "$(pwd)/.vale.ini:/etc/.vale.ini" -v "$(pwd)/.github:/etc/.github" -v "$(pwd)/astro:/docs" -w /docs jdkato/vale --config /etc/.vale.ini src/content/path/to/folder/or/file
+```
+
+If you whether choose to [install Vale locally](https://vale.sh/docs/vale-cli/installation/), make sure you're at the root folder for this repository and run:
+
+```shell
+$ cd fusionauth-site
+$ vale astro/path/to/folder/or/file
+```
+
+If you want to filter by specific rules, you can also pass a `--filter` argument:
+
+```shell
+$ vale --filter=".Name == 'Vale.Spelling'" astro/path/to/file
+```
+
+### What to do with linting errors
+
+Whenever you receive an error, you need to determine if you should:
+
+- Actually fix the word (e.g. if you received an error like _"Use 'Id' instead of 'ID'."_); or
+- Add a known word to [`the vocabulary`](./.github/vale/styles/config/vocabularies/FusionAuth/accept.txt) if it's a language, library, company name, etc. But make sure you have the correct capitalization to avoid having duplicates there; or
+- In case of custom Astro components, you'd probably need to add a new `TokenIgnores` item in [`.vale.ini`](./.vale.ini).
 
 ## Pull request review process
 

@@ -56,12 +56,15 @@ const prepContext = (context: DocNavContext, subcategory: string, tertcategory: 
 const recursiveSort = (category: Category) => {
   if (category.entries.length > 0) {
     category.entries.sort((a, b) => a.title.localeCompare(b.title));
-    const top = category.entries.find(entry => entry.topOfNav);
-    if (top) {
+    const topOfNavElements = category.entries.filter(entry => entry.topOfNav);
+
+    // sort these in reverse order so we process the Z elements before the A elements, which means A elements come first
+    topOfNavElements.sort((a, b) => b.title.localeCompare(a.title));
+    topOfNavElements.map((top) => {
       const idx = category.entries.indexOf(top);
       category.entries.splice(idx, 1);
       category.entries.unshift(top);
-    }
+    });
   }
   if (category.subcategories.length > 0) {
     category.subcategories.sort((a, b) => a.name.localeCompare(b.name));
