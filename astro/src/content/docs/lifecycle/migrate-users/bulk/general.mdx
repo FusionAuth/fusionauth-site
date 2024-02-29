@@ -21,15 +21,15 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 
 This guide will help you migrate existing users into FusionAuth. It covers the types of migrations available as well as the phases and activities of a successful user migration.
 
-## Types of Migrations
+## Types Of Migrations
 
-There are three approaches to user data migration. Every migration involves a cutover for a user, where they authenticate with the new system and not with the old one. While each approach differs in implementation details, a good way to consider which is right for you is to look at how many cutovers you want to handle.
+There are three approaches to user data migration. Every migration involves transferring data from the old system to the new system, called backfill, followed by a cutover for a user, where they authenticate with the new system and not with the old one. While each approach differs in implementation details, a good way to consider which is right for you is to look at how many cutovers you want to handle.
 
-You can: 
+You can:
 
-* Migrate everyone at once, also known as a "big bang" migration. With this approach, you have one cutover.
+* Migrate everyone at once, also known as a "big bang" migration or "offline migration". With this approach, you have one cutover.
 * Segment your users and migrate each segment. With this method, you have multiple cutovers, each with a natural chunk of users.
-* Migrate when a user authenticates, also known as a "slow migration". With this choice, there are two cutover points. The first is the application cutover, which happens when you direct users to FusionAuth for authentication. Then, at each user's login, the data is migrated and the user's system of record changes. Therefore there are many data cutover events.
+* Migrate when a user authenticates, also known as a "slow migration", "rolling migration", or "online migration". With this choice, there are two cutover points. The first is the application cutover, which happens when you direct users to FusionAuth for authentication. Then, at each user's login, the data is migrated and the user's system of record changes. Therefore there are many data cutover events.
 
 Each of these approaches migrates user and other account data into FusionAuth from one or more other systems of record. All three options are supported by FusionAuth; pick the one which works best for your situation. Let's examine each approach in more detail.
 
@@ -37,8 +37,8 @@ Each of these approaches migrates user and other account data into FusionAuth fr
 
 With a big bang migration, you are moving all your users at one time. The exact duration varies, but there is a single cutover period. The basic steps are:
 
-* Map user attributes from the old system to the new system. 
-* Build a set of migration scripts or programs. 
+* Map user attributes from the old system to the new system.
+* Build a set of migration scripts or programs.
 * Test it well. Ensure that migration accuracy and duration meet your needs.
 * Plan to modify your applications to point to the new system.
 * When you are ready to migrate, bring your systems down or to a mode where authentication is degraded (read-only or disallowed).
@@ -47,22 +47,23 @@ With a big bang migration, you are moving all your users at one time. The exact 
 
 This approach has strengths:
 
-* If you manage the timing of auth unavailability, the migration can have minimal impact on users. 
+* If you manage the timing of auth unavailability, the migration can have minimal impact on users.
 * It has a fixed timeframe. When you have completed the migration, you're done and can shortly shut down the original system.
 * If you have to decommission the old system by a certain deadline, perhaps due to an upcoming license renewal or other external factors, you can plan to migrate before the deadline.
 * You only have to run two production user auth systems for a short period of time; typically you'll run the original system after the cutover in case you need to roll back.
 * Employees or contractors accessing user data, such as customer service reps, only need to switch their working routines after the migration is performed.
 
-The big bang approach has some challenges, though. 
+The big bang approach has some challenges, though.
 
-* It is common to miss issues during testing because this is a unique procedure. Production systems are often different in subtle ways from testing environments. 
+* It is common to miss issues during testing because this is a unique procedure. Production systems are often different in subtle ways from testing environments.
 * Any problems with the migration impact many users, since all are migrated.
 * The big bang requires you to write code which you'll test intensely, use once and then throw away.
 * The new auth system must be compatible with the old system's password hashing algorithm for the migration to be transparent to the end user. (An alternative is to force all users to reset their password.)
+* New users may not register during migration, nor may users alter their data, or the changes will not be available in the new system. This means migration has to be as fast as possible. Alternatively, you might allow users to continue using the old system during migration, then perform a final synchronization of data once migration is complete and cutover has happened.
 
 In short, this is a high risk, low outage duration, high reward solution.
 
-### Segment by Segment Migration
+### Segment By Segment Migration
 
 Segment by segment migration is the second alternative. It can be thought of as a series of "little bang" migrations. With this approach, you split your user accounts into segments and migrate each segment. Natural division points could be the type of user, source of user data, or applications used.
 
@@ -76,16 +77,16 @@ However, this approach is not without its issues:
 * This will take longer to complete, requiring you to run both old and new systems for longer.
 * You'll need to consider how to handle the cutover from the old system to the new system. Depending on how you segment your users, this could be complicated and require additional development. For example, if you divide your users by type and migrate the admin user segment first, you will need some kind of proxy in front of your auth systems to send admin users to the new system and normal users to the old one.
 
-Segment by segment migration decreases cutover risk, but in exchange requires a longer cutover timeline. 
+Segment by segment migration decreases cutover risk, but in exchange requires a longer cutover timeline.
 
-### Slow Migration
+### User By User (Slow) Migration
 
-This approach is a logical extension of segment by segment migration. Here, each segment is a single user. With a slow migration: 
+This approach is a logical extension of segment by segment migration. Here, each segment is a single user. With a slow migration:
 
-* Map user attributes from the old system to the new system. 
+* Map user attributes from the old system to the new system.
 * Set up a connection between the original auth system and FusionAuth.
 * Modify your application or applications to point to FusionAuth. This is the application cutover point, which may require some downtime.
-* FusionAuth receives all auth requests, but delegates the first such request for each user to the original user management system. 
+* FusionAuth receives all auth requests, but delegates the first such request for each user to the original user management system.
 * The old system returns the information and FusionAuth creates a new user. This is the data "cutover" point for this user.
 * For this user's subsequent authentication requests, FusionAuth is now the system of record. The user has been migrated.
 
@@ -94,19 +95,19 @@ To implement a slow migration, FusionAuth needs to pass the user's auth credenti
 * Since you are only doing a user migration at the time a user authenticates, the blast radius of a mistake is smaller; it's limited to whoever is logging in.
 * You can upgrade your password hash algorithms transparently without requiring anyone to reset their password. FusionAuth supports a [number of different algorithms](/docs/reference/password-hashes) and you can also [bring your own](/docs/extend/code/password-hashes/writing-a-plugin) as well.
 * You don't have to migrate inactive users; this lets you scrub your user base.
-* You can use this opportunity to contact any dormant application users and encourage them to log in. 
+* You can use this opportunity to contact any dormant application users and encourage them to log in.
 * There's less downtime during the application cutover because you aren't moving any data, only switching where users authenticate.
-* You don't have to understand all the moving pieces of the old auth system. You don't have to understand all the business logic which goes into authentication in the old system. 
+* You don't have to understand all the moving pieces of the old auth system. You don't have to understand all the business logic which goes into authentication in the old system.
 
 However, a slow migration isn't the right solution for every application. Issues to be aware of:
 
 * You are passing a user's plaintext password from FusionAuth to the old auth system. Take special care to secure this data in transit. If possible, keep it from traveling over the internet.
-* The old user management solution must be extensible or support a standard like LDAP. You may need to extend it to add an auth API and you need to understand the user account attributes. 
+* The old user management solution must be extensible or support a standard like LDAP. You may need to extend it to add an auth API and you need to understand the user account attributes.
 * You have to run both FusionAuth and the original system for the duration of the migration. Depending on the state of the old user auth management software, this may be painful.
 * Customer service and other internal users may need to access two systems to find a user during the migration period.
 * Rollback from a phased migration is more complex if there are issues, because there are two systems of record, one for migrated users and one for users in the old system.
 
-A slow migration is, in short, a lower risk, long duration choice. 
+A slow migration is, in short, a lower risk, long duration choice.
 
 ## Migration Implementation
 
@@ -120,16 +121,16 @@ The [Core Concepts section](/docs/get-started/core-concepts/) is worth reviewing
 
 * A tenant is a top level object that contains users, applications and groups.
 * Applications have roles. Users authenticate and are authorized to access applications.
-* Groups contain users and may have associated roles. 
+* Groups contain users and may have associated roles.
 * Users have registrations with applications. You can create registrations at the same time you are creating a user.
 
 All entities have a [UUID](/docs/reference/data-types#uuids) identifier. This Id can be specified on creation, but must be a valid UUID. If you have an identifier that is not a valid UUID, one option is to store the old Id in the `data` field of the FusionAuth configuration.
 
-#### Evaluating FusionAuth 
+#### Evaluating FusionAuth
 
-If you haven't already done so, ensure FusionAuth will work with your application or applications. You can [install it in about five minutes](/docs/quickstarts/5-minute-setup-guide) and build out a proof of concept (POC).
+If you haven't already done so, ensure FusionAuth will work with your application or applications. You can [install it in about five minutes](/docs/quickstarts/5-minute-setup-guide) and build a prototype.
 
-A POC is helpful in determining which [login method](/docs/get-started/core-concepts/integration-points#login-options) you should use and how to [theme the hosted login pages](/docs/customize/look-and-feel/) to maintain your application's look and feel. 
+A protoype is helpful in determining which [login method](/docs/get-started/core-concepts/integration-points#login-options) you should use and how to [theme the hosted login pages](/docs/customize/look-and-feel/) to maintain your application's look and feel.
 
 FusionAuth assigns users roles. A user's roles are available in API responses and in the [JWT (JSON Web Token)](/docs/lifecycle/authenticate-users/login-api/json-web-tokens) sent to client applications after successful user authentication. You may need to update your application to look at the `roles` claim to allow or disallow functionality within an application.
 
@@ -139,11 +140,11 @@ If you allow users to register with your application, modify your application to
 
 If you want social sign-on, such as Google, or enterprise identity provider integration, such as SAML, configure and enable those providers as well.
 
-Testing FusionAuth's ability to integrate with your identity provides and existing applications before diving into the migration planning will ensure that when the time comes to cut over to FusionAuth, there won't be any unpleasant surprises. 
+Testing FusionAuth's ability to integrate with your identity provides and existing applications before diving into the migration planning will ensure that when the time comes to cut over to FusionAuth, there won't be any unpleasant surprises.
 
 Next, let's talk about migration planning.
 
-### Migration Planning and Assessment
+### Migration Planning And Assessment
 
 The first step to any successful data migration is planning, and user data migration is no different. You need to know:
 
@@ -151,34 +152,34 @@ The first step to any successful data migration is planning, and user data migra
 * Who uses the data from each source
 * If your application can work with the auth system in a read-only configuration
 * How to connect to each datasource
-* What the user and account data looks like 
+* What the user and account data looks like
 * Special considerations such as SAML migration
-* Which migration approach fits your needs: big bang, segment by segment or slow migration
+* Which migration approach fits your needs: big bang, segment by segment or user by user migration
 
 A full explanation of data migration planning is beyond the scope of this guide. But here are items to consider when moving user data.
 
-Think about the edge cases. What fields are required and optional in the old auth system or systems? FusionAuth requires minimal data about a user; only a password and username or email are required. 
+Think about the edge cases. What fields are required and optional in the old auth system or systems? FusionAuth requires minimal data about a user; only a password and username or email are required.
 
-Is there a clean one-to-one mapping between the original system's auth fields and FusionAuth? The answer is usually "no". Therefore plan to spend some time examining the current system's data and seeing how it maps to FusionAuth's user schema, [as documented](/docs/apis/users). We'll look at an example of a mapping process in the next section. 
+Is there a clean one-to-one mapping between the original system's auth fields and FusionAuth? The answer is usually "no". Therefore plan to spend some time examining the current system's data and seeing how it maps to FusionAuth's user schema, [as documented](/docs/apis/users). We'll look at an example of a mapping process in the next section.
 
 What should you do if you have data which doesn't map cleanly to any of the fields available in FusionAuth? FusionAuth provides a `data` field on a number of entities, including the user entity and application registrations. This `data` field can be used to store arbitrary key value data, and is a good place to save any fields from the old system which don't map well to the FusionAuth user or application registration data models. In fact, it's often useful to store all the original user data in this field, so that you have it should you need it post-migration. Having access to the original, unmigrated data can be helpful in the future. If there was mistranslated data or fields, you'll be able to examine what was present in the old system without accessing it.
 
 Consider how to handle unexpected data during the migration process. You can save off the record for further examination, toss it as malformed, or ignore only fields containing unexpected data. Which choice you make depends on your business needs and the value of each account.
 
-Don't forget to handle relationships between users and other identity-related entities. Groups, application associations, roles, historical data, and anything else from the old system which is tied to a user account. Find out where this data is coming from, if it should be migrated, and where it will end up. Such auxiliary data might be stored in FusionAuth or perhaps a different datastore is a better place. 
+Don't forget to handle relationships between users and other identity-related entities. Groups, application associations, roles, historical data, and anything else from the old system which is tied to a user account. Find out where this data is coming from, if it should be migrated, and where it will end up. Such auxiliary data might be stored in FusionAuth or perhaps a different datastore is a better place.
 
-There are two common types of data involved in a user data migration which are worth closer examination. 
+There are two common types of data involved in a user data migration which are worth closer examination.
 
 The first is user ids. These identifiers are often referenced by other systems, including external ones, and may be used for auditing, analytics or other purposes. You can preserve these user ids in two ways when moving to FusionAuth.
 
-* If the original system has user ids which are [FusionAuth compatible UUIDs](/docs/reference/data-types#uuids), specify that user id when you import each user into FusionAuth.
-* If your user ids are not FusionAuth compatible, store the id in the `user.data` field under a key such as `original_user_id`. You will then be able to search on this value when you need to retrieve a user by their old id.
+* If the original system has user ids which are [FusionAuth compatible UUIDs](/docs/reference/data-types#uuids), specify that user Id when you import each user into FusionAuth.
+* If your user Ids are not FusionAuth compatible, store the Id in the `user.data` field under a key such as `original_user_id`. You will then be able to search on this value when you need to retrieve a user by their old Id.
 
 Next, consider a user's password, and related fields such as a salt or hashing scheme. Dealing with this data depends on your migration approach. For a big bang or segment by segment migration, ensure FusionAuth understands the original system's hashing algorithm [by writing a plugin](/docs/extend/code/password-hashes/custom-password-hashing) if the password was not hashed in one of [FusionAuth's supported algorithms](/docs/reference/password-hashes). For a slow migration, the password will be available for FusionAuth to hash or re-hash. If you have the user's passwords in plain text, FusionAuth can also hash them on import.
 
-If you have user data in multiple systems and are planning to merge the data, map the user fields from all the old system datastores. 
+If you have user data in multiple systems and are planning to merge the data, map the user fields from all the old system datastores.
 
-#### An Example of Data Mapping
+#### An Example Of Data Mapping
 
 Let's examine a data mapping example. Suppose an old auth system has the following user data model (let's ignore `email` and `password` fields, as they won't be necessarily be mapped):
 
@@ -221,7 +222,7 @@ As this example shows, getting ready for a migration consists of many choices an
 
 ### Setting Up FusionAuth
 
-Before you can migrate any user information into FusionAuth, ensure it is set up correctly. While you tested FusionAuth out previously, now it is time to set up a production ready instance. 
+Before you can migrate any user information into FusionAuth, ensure it is set up correctly. While you tested FusionAuth out previously, now it is time to set up a production ready instance.
 
 Determine where your FusionAuth instances should be hosted. You can self host in any data center or cloud provider, or use the managed services offering from FusionAuth, [FusionAuth Cloud](/pricing). Decide on whether you need a [support plan](/pricing), with guaranteed response times. Evaluate if you need any of the [paid plan features](/pricing).
 
@@ -235,7 +236,7 @@ Create one or more tenants. Multiple tenants are useful for allowing someone to 
 
 <img src="/img/docs/lifecycle/migrate-users/bulk/add-tenant.png" alt="Adding a tenant." width="1200" role="bottom-cropped" />
 
-Create one or many applications and add any roles needed for them. Create a FusionAuth application entity for each application whose users you are migrating. An application is anything a user can log in to, whether an API, a commercial product, or a custom web application. Add each of these via the API or navigating to <strong>Applications</strong> in the administrative user interface, then clicking the green plus sign to add the application. 
+Create one or many applications and add any roles needed for them. Create a FusionAuth application entity for each application whose users you are migrating. An application is anything a user can log in to, whether an API, a commercial product, or a custom web application. Add each of these via the API or navigating to <strong>Applications</strong> in the administrative user interface, then clicking the green plus sign to add the application.
 
 <img src="/img/docs/lifecycle/migrate-users/bulk/add-application.png" alt="Adding an application." width="1200" role="bottom-cropped" />
 
@@ -259,19 +260,19 @@ Disable the `user.bulk.create` webhook unless you need FusionAuth to send an eve
 
 Set the HTTP timeout to a large value on your API requests. Exactly how to do this varies based on the tool you're using to make the HTTP request. The import API is currently a synchronous operation, though there are plans to make it asynchronous (see [this GitHub issue for more](https://github.com/FusionAuth/fusionauth-issues/issues/944)).
 
-If you only provide a `password` field, then FusionAuth will assume the password is in plaintext and hash it for you. Hashing a password negatively affects load time, performance and throughput. If you provide the `salt`, `password`, `encryptionScheme` and `factor` values when importing, then FusionAuth assumes the value in the `password` field is a hashed password, and it will not be hashed. 
+If you only provide a `password` field, then FusionAuth will assume the password is in plaintext and hash it for you. Hashing a password negatively affects load time, performance and throughput. If you provide the `salt`, `password`, `encryptionScheme` and `factor` values when importing, then FusionAuth assumes the value in the `password` field is a hashed password, and it will not be hashed.
 
 Deduplicate any emails. In FusionAuth, each email address may be associated with only one user account per tenant.
 
 Stage your data by exporting current user data into JSON files. This will make debugging easier, since you can load one file at a time, and you can repeat a data load if there are issues. It will also be more performant than loading data across a network or from a database.
 
 <Aside type="note">
-The easiest and fastest way to load bulk user data into FusionAuth is to loop over a directory of JSON files that each contain 100,000 users. These JSON files should be clean, have unique emails per tenant and be minified. 
+The easiest and fastest way to load bulk user data into FusionAuth is to loop over a directory of JSON files that each contain 100,000 users. These JSON files should be clean, have unique emails per tenant and be minified.
 
 In FusionAuth testing, this approach resulted in loading 100,000 users in 108 seconds. Performance is, of course, dependent on hardware, network and database constraints, but this should give you a good idea of possible import speed.
 </Aside>
 
-#### Building the Migration Scripts
+#### Building The Migration Scripts
 
 To actually move the data, you'll build out a series of scripts and programs. To begin this process, stand up a FusionAuth instance for testing. To start your FusionAuth instance in a known state every time, you may want to configure [Kickstart](/docs/get-started/download-and-install/development/kickstart). A Kickstart file can serve as a foundation for developers and CI processes in the future as well.
 
@@ -279,13 +280,13 @@ You'll also want to [create an API key](/docs/apis/authentication#managing-api-k
 
 <img src="/img/docs/lifecycle/migrate-users/bulk/api-key-creation.png" alt="Adding an application." width="1200" />
 
-You can write the migration scripts in shell, any of the supported [client library languages](/docs/sdks/), or against the [REST API](/docs/apis/users) in any language supporting HTTP requests. Iterate over all the users in the old system or systems. Build the JSON files. Add a registration for each application to which a user should have access. 
+You can write the migration scripts in shell, any of the supported [client library languages](/docs/sdks/), or against the [REST API](/docs/apis/users) in any language supporting HTTP requests. Iterate over all the users in the old system or systems. Build the JSON files. Add a registration for each application to which a user should have access.
 
 <Aside type="note">
 Make sure you create all your groups, tenants and applications before you import your users. You can do that by specifying them in the Kickstart file or writing scripts to create them.
 </Aside>
 
-If you can't build JSON files on the filesystem for some reason, you may build the JSON in memory. This can be a good approach if you are dynamically merging two data sources, but will be tougher to troubleshoot. 
+If you can't build JSON files on the filesystem for some reason, you may build the JSON in memory. This can be a good approach if you are dynamically merging two data sources, but will be tougher to troubleshoot.
 
 Finally, import the JSON using the `importUsers` method of a FusionAuth client library or by calling the REST API directly. This is [fully documented](/docs/apis/users#import-users).
 
@@ -320,11 +321,11 @@ for file in $JSON_FILE_DIR/*.json; do
 done
 ```
 
-Consult the [documentation for this API](/docs/apis/users#import-users) for more information. 
+Consult the [documentation for this API](/docs/apis/users#import-users) for more information.
 
 If the original system hashes passwords using an algorithm other than those [schemes FusionAuth supports](/docs/reference/password-hashes), write and install a [custom password hashing plugin](/docs/extend/code/password-hashes/custom-password-hashing). In either case, specify the scheme in the user import JSON file. (It is called an `encryptionScheme` for backwards compatibility, but is actually a hashing scheme.)
 
-In FusionAuth, duplicate emails are not allowed within the same tenant. If you may have duplicate emails, de-duplicate them before importing. If you don't want to do so, set the `validateDbConstraints` property to `true` in the import JSON. When this is done, the import API will return a user friendly error message when duplicate addresses are found. 
+In FusionAuth, duplicate emails are not allowed within the same tenant. If you may have duplicate emails, de-duplicate them before importing. If you don't want to do so, set the `validateDbConstraints` property to `true` in the import JSON. When this is done, the import API will return a user friendly error message when duplicate addresses are found.
 
 ```json title="Import Error Message When validateDbConstraints is true"
 {
@@ -358,7 +359,7 @@ The import API expects users to have passwords. If you are migrating some users 
 
 You can assign them a high entropy password such as a UUID for the import and then use the [Forgot Password API](/docs/apis/users#start-forgot-password-workflow). This will send them an email to reset their password.
 
-Another option is to not use the Import API. Instead, import these users one by one using the [User API](/docs/apis/users), which can optionally send a setup password email. 
+Another option is to not use the Import API. Instead, import these users one by one using the [User API](/docs/apis/users), which can optionally send a setup password email.
 
 Note that both methods rely on sending an email to these users. It's worth reviewing how many users will fall into this bucket and to ensure that your email sending infrastructure is capable of handling the requests.
 
@@ -380,13 +381,13 @@ However, you cannot drop the `Default` tenant containing the FusionAuth applicat
 
 When you have an import working well, test your assumptions by pointing applications to FusionAuth for authentication. You've probably made some application changes for the proof of concept, but now test with the real user data that you've just migrated.
 
-#### Performing the Migration
+#### Performing The Migration
 
 When your scripts work in your testbed environment, prepare to do a production migration. Inform all the internal stakeholders. Plan for downtime unless you can run your application with the original user store in a read only mode. How much downtime? You should know based on your testing of the import.
 
-Run the migration on your production dataset, moving the data from the original system to FusionAuth. When the migration is finished, release your application changes. All applications should point to FusionAuth for authentication requests and related user flows, including, but not limited to: 
+Run the migration on your production dataset, moving the data from the original system to FusionAuth. When the migration is finished, release your application changes. All applications should point to FusionAuth for authentication requests and related user flows, including, but not limited to:
 
-* Log in 
+* Log in
 * Registration, if applicable
 * Forgot password
 * Password changes
@@ -397,7 +398,7 @@ Should you need to rollback, revert the changes to your application pointing it 
 
 A segment by segment migration is similar to the above big ban migration, except that you are going to split your user data into segments and migrate each segment. Logical user database segmentation points include by application or by role. However, the planning, mapping and execution are similar, just done for smaller chunks of users and multiple times.
 
-However, the application cutover process with this approach is not as simple. You can't simply send all your users to FusionAuth when you haven't migrated all of them. 
+However, the application cutover process with this approach is not as simple. You can't simply send all your users to FusionAuth when you haven't migrated all of them.
 
 Which users are sent to FusionAuth depends on how you created your segments. If you split on application usage, then update one application to send any authenticating users to FusionAuth. If you split your users based on other attributes, build logic in your application to determine where to send a user when they log in.
 
@@ -413,14 +414,14 @@ Unlike a big bang migration, with a slow migration you need to set a migration c
 
 So, with this approach, you need to decide what "done" means. Some factors to consider:
 
-* How often do people log in? 
+* How often do people log in?
 * Is there a significant long tail of users who visit the application less frequently than the average user?
-* Are there external events such as times of the year or holidays when greater or lesser numbers of users engage with your application? 
-* What are the ramifications of a user being unable to log in? Are there business, compliance, legal, or security concerns? 
+* Are there external events such as times of the year or holidays when greater or lesser numbers of users engage with your application?
+* What are the ramifications of a user being unable to log in? Are there business, compliance, legal, or security concerns?
 * Is loss of timely access to your application an annoyance or a disaster?
 * You will have some users who have not migrated when the slow migration period is over. How will you handle those accounts?
 * How painful is it to operate both FusionAuth and your current authentication system?
-* How valuable is a customer who has not logged in to your application in six months? A year? Three years? 
+* How valuable is a customer who has not logged in to your application in six months? A year? Three years?
 
 Based on these answers, set a goal for a number or proportion of migrated users, the duration of the migration period, or both. If you don't have this, you don't know when to stop the migration. Set a cadence for how often you'll check the number of migrated users and compare it with your goal.
 
@@ -428,7 +429,7 @@ Make sure you can regularly query FusionAuth to know the number of migrated acco
 
 #### Migration Timeline
 
-Communicate a timeline for migration to interested parties. 
+Communicate a timeline for migration to interested parties.
 
 You can calculate a timeline by knowing the following:
 
@@ -436,7 +437,7 @@ You can calculate a timeline by knowing the following:
 
 #### Connect To The Original System
 
-With a slow migration, FusionAuth is connecting to your previous datastore every time a user not currently in FusionAuth authenticates. This connection requires either an HTTP API request or an LDAP call. 
+With a slow migration, FusionAuth is connecting to your previous datastore every time a user not currently in FusionAuth authenticates. This connection requires either an HTTP API request or an LDAP call.
 
 If your current user datastore is an LDAP directory, such as ActiveDirectory or OpenLDAP, then you don't need to do anything special to enable the connection; FusionAuth knows how to communicate with LDAP servers.
 
@@ -452,7 +453,7 @@ This is an example of all the JSON data you could return, but you can omit most 
 
 The password is not included. That password will have been hashed according to your FusionAuth tenant password settings.
 
-The generated JWT will be delivered to the client to present to any resource servers (other API servers, etc). For maximum compatibility, it should have [FusionAuth claim values](/docs/apis/jwt). 
+The generated JWT will be delivered to the client to present to any resource servers (other API servers, etc). For maximum compatibility, it should have [FusionAuth claim values](/docs/apis/jwt).
 
 The JSON response above has a `user.data.migrated` value of `true`. This indicates that this user has been migrated. As mentioned above, adding this custom attribute allows you to query migration progress. You can read more about the [Generic Connector requirements](/docs/lifecycle/migrate-users/connectors/generic-connector) in the documentation.
 
@@ -468,7 +469,7 @@ Configuration varies depending on whether the original datasource is an HTTP API
 
 Configure the connection information, including the URL of the server, the method used to connect to it (LDAPS, STARTTLS), and a system account which can query across all accounts for the directory or section of the directory tree being migrated. You'll also need to specify the user attributes to be queried and returned.
 
-Map each attribute from the LDAP directory into the FusionAuth user object. You do this with an [LDAP Connector Reconcile Lambda](/docs/extend/code/lambdas/ldap-connector-reconcile). 
+Map each attribute from the LDAP directory into the FusionAuth user object. You do this with an [LDAP Connector Reconcile Lambda](/docs/extend/code/lambdas/ldap-connector-reconcile).
 
 <LdapConnectorReconcile />
 
@@ -476,7 +477,7 @@ Make sure you uncomment the lines where `user.data.migrated` is set to `true`, a
 
 ##### Generic
 
-With a Generic Connector, configure the URL endpoint and the security settings. Unlike with the LDAP connector, there is no lambda. The mapping of the original system's user data into the FusionAuth data model is performed instead in the HTTP API logic. 
+With a Generic Connector, configure the URL endpoint and the security settings. Unlike with the LDAP connector, there is no lambda. The mapping of the original system's user data into the FusionAuth data model is performed instead in the HTTP API logic.
 
 Make sure you use TLS and other security measures to connect to this endpoint, since you'll be sending sensitive user information to it. Full configuration details are available in the [Generic Connector documentation](/docs/lifecycle/migrate-users/connectors/generic-connector).
 
@@ -500,13 +501,13 @@ With FusionAuth, proxying authentication requests to the original datasource is 
 
 Make sure to check the <InlineField>Migrate user</InlineField> checkbox. Then, each user will be authenticated against the original user datastore the first time they are seen. Their data will then be migrated to FusionAuth. On subsequent logins, they'll authenticate with FusionAuth. You can learn more about configuring Connector policies in the [Connector documentation](/docs/lifecycle/migrate-users/connectors/).
 
-#### Modify Your Application 
+#### Modify Your Application
 
 Unlike with a big bang approach, there is no protracted downtime. You simply need to release the changes required for users to authenticate against FusionAuth after configuring and testing the connectors. Make sure you record the number of accounts in the old system just before cutover.
 
 Should you need to rollback, revert all changes made to your application which direct users to FusionAuth. If users updated profile data in FusionAuth, you'll need to port those changes back to your original system. A script using the user API will be a good starting point.
 
-After you release this modified version of your application, your users will begin their transparent migration into FusionAuth. 
+After you release this modified version of your application, your users will begin their transparent migration into FusionAuth.
 
 #### Monitor Progress
 
@@ -534,7 +535,7 @@ curl 'https://elasticsearch.piedpiper.com/fusionauth_user/_count?q=data.migrated
 {"count":62900,"_shards":{"total":5,"successful":5,"skipped":0,"failed":0}}
 ```
 
-However you retrieve the number of users migrated, regularly compare it to the number of accounts in the original system before the migration began. This ration will determine if it is time to end the slow migration. 
+However you retrieve the number of users migrated, regularly compare it to the number of accounts in the original system before the migration began. This ration will determine if it is time to end the slow migration.
 
 #### Remove The Proxy
 
@@ -551,8 +552,8 @@ At this point, decide how to handle users who haven't been migrated. You may be 
 You considered this situation while planning your migration, but now, implement the decision. You could:
 
 * Notify them and encourage them to log in. You can contact them with a message such as: "If you don’t log in by DATE, your account will be deleted".
-* Archive or delete the accounts and their corresponding data. When one of these users comes to your site and tries to sign in, they won't have an account and will be forced to re-register, having lost their data. 
-* Move them to FusionAuth via a big bang migration of all unmigrated users. 
+* Archive or delete the accounts and their corresponding data. When one of these users comes to your site and tries to sign in, they won't have an account and will be forced to re-register, having lost their data.
+* Move them to FusionAuth via a big bang migration of all unmigrated users.
 * Extend the time running both systems; that is, set a new goal and continue the slow migration.
 
 You can mix and match these approaches. For example, you could migrate all paying customers, even those who haven't signed in during the migration period. At the same time you could archive the data of free accounts; those potential customers may have been trialing your application and may even have forgotten they have an account.
@@ -564,11 +565,11 @@ What happens when a user forgets their password and attempts to reset it, but yo
 * The user has been migrated and has an account in FusionAuth
 * The user has not been migrated and still only has an account in the legacy system
 
-In either case, when a user submits a forgot password request, FusionAuth will display a message similar to `We've sent you an email containing a link that will allow you to reset your password. Once you receive the email, follow the instructions to change your password.` 
+In either case, when a user submits a forgot password request, FusionAuth will display a message similar to `We've sent you an email containing a link that will allow you to reset your password. Once you receive the email, follow the instructions to change your password.`
 
 An email will only be sent in the first case, where the user exists in FusionAuth. In the second case, the user will never receive an email.
 
-Why, then, is this message displayed for both sets of users? 
+Why, then, is this message displayed for both sets of users?
 
 The answer is that FusionAuth *can't distinguish* between users who have not been migrated and users that don't exist. In order to secure your user data and prevent enumeration attacks, FusionAuth doesn't reveal whether there is a valid account for a given username or email.
 
@@ -580,7 +581,7 @@ The current recommendation is to update the error message to something like:
 
 `We've sent you an email containing a link that will allow you to reset your password. Once you receive the email follow the instructions to change your password. If you don't receive an email, please check your spam folder or contact customer service.`
 
-Make sure you provide a link to a form, phone number or other means of contacting customer service. Customer service representatives can then check to see whether the user is migrated or not. 
+Make sure you provide a link to a form, phone number or other means of contacting customer service. Customer service representatives can then check to see whether the user is migrated or not.
 
 A customer service representative can trigger a password reset email from the appropriate user data store. You can do that from within the FusionAuth administrative user interface.
 
@@ -676,7 +677,7 @@ If you have SAML identity providers (IdPs) to which your existing user account s
 
 When migrating, there is an existing SAML Service Provider (SP). This could be a custom application or another vendor. After migration, you will use FusionAuth as your new SP.
 
-There are two options to update this type of SAML configuration external to FusionAuth. 
+There are two options to update this type of SAML configuration external to FusionAuth.
 
 #### Updating Upstream Configuration
 
@@ -713,7 +714,7 @@ When you are changing the <InlineField>Destination assertion policy</InlineField
 While modifying this setting may be necessary for a migration, you should, as soon as possible, work with the upstream IdPs to modify their configuration to point directly to the FusionAuth ACS URL. This is the safest and most secure configuration.
 </Aside>
 
-At a later time, request each SAML IdP update their configuration to point to the FusionAuth ACS URL. After all upstream providers have been migrated to the latest configuration, set the <InlineField>Destination assertion policy</InlineField> field to <InlineUIElement>Enabled</InlineUIElement>, the most secure setting. 
+At a later time, request each SAML IdP update their configuration to point to the FusionAuth ACS URL. After all upstream providers have been migrated to the latest configuration, set the <InlineField>Destination assertion policy</InlineField> field to <InlineUIElement>Enabled</InlineUIElement>, the most secure setting.
 
 ## Additional Resources
 

@@ -3,6 +3,7 @@ title: Revoking JWTs & JWT Expiration
 description: How to use and revoke JWTs for effective and efficient authorization management. Examples, diagrams & more.
 author: Brian Pontarelli
 icon: /img/icons/revoking-jwts.svg
+darkIcon: /img/icons/revoking-jwts-dark.svg
 section: Tokens
 ---
 
@@ -22,7 +23,7 @@ Here's a diagram that illustrates this architecture:
 <img src="/img/articles/revoking-jwts/jwt-revoke_350.png" alt="Revoking JWTs"/>
 </div>
 
-The Todo Backend in the diagram can use the JWT and the public key to verify the JWT and then pull the user's id (in this case the subject) out of the JWT. The Todo Backend can then use the user's id to perform operations on that user's data. However, because the Todo Backend isn't verifying the JWT with the IdP, it has no idea if an administrator has logged into the IdP and locked or deleted that user's account.
+The ToDo Backend in the diagram can use the JWT and the public key to verify the JWT and then pull the user's Id (in this case the subject) out of the JWT. The ToDo Backend can then use the user's Id to perform operations on that user's data. However, because the ToDo Backend isn't verifying the JWT with the IdP, it has no idea if an administrator has logged into the IdP and locked or deleted that user's account.
 
 ## Reduce the duration of the JWT
 
@@ -54,7 +55,7 @@ The FusionAuth **jwt.refresh-token.revoke** event looks like this:
 }
 ```
 
-Next, let's write a simple Webhook in our application that will receive this event and update the JWTManager. (NOTE: our example has a variable called `applicationId` that is a global variable that stores the id of the application itself - in this case it would be **cc0567da-68a1-45f3-b15b-5a6228bb7146**). Our code below is written in Node.js and uses the [FusionAuth Node client library](https://github.com/FusionAuth/fusionauth-node-client).
+Next, let's write a simple Webhook in our application that will receive this event and update the JWTManager. (NOTE: our example has a variable called `applicationId` that is a global variable that stores the Id of the application itself - in this case it would be **cc0567da-68a1-45f3-b15b-5a6228bb7146**). Our code below is written in Node.js and uses the [FusionAuth Node client library](https://github.com/FusionAuth/fusionauth-node-client).
 
 ```js
 /* Handle FusionAuth event. */
@@ -64,7 +65,7 @@ router.post('/fusionauth-webhook', function(req, res, next) {
 });
 ```
 
-Here is how the JWTManager maintains the list of user ids whose JWTs should be revoked. Our implementation also starts a thread to clean up after itself so we don't run out of memory.
+Here is how the JWTManager maintains the list of user Ids whose JWTs should be revoked. Our implementation also starts a thread to clean up after itself so we don't run out of memory.
 
 ```js
 const JWTManager = {
@@ -72,7 +73,7 @@ const JWTManager = {
 
   /**
    * Checks if a JWT is valid. This assumes that the JWT contains a property named <code>exp</code> that is a
-   * NumericDate value defined in the JWT specification and a property named <code>sub</code> that is the user id the
+   * NumericDate value defined in the JWT specification and a property named <code>sub</code> that is the user Id the
    * JWT belongs to.
    *
    * @param {object} jwt The JWT object.
@@ -84,9 +85,9 @@ const JWTManager = {
   },
 
   /**
-   * Revokes all JWTs for the user with the given id using the duration (in seconds).
+   * Revokes all JWTs for the user with the given Id using the duration (in seconds).
    *
-   * @param {string} userId The user id (usually a UUID as a string).
+   * @param {string} userId The user Id (usually a UUID as a string).
    * @param {Number} durationSeconds The duration of all JWTs in seconds.
    */
   revoke: function(userId, durationSeconds) {
@@ -133,6 +134,7 @@ And finally we configure our Webhook in FusionAuth:
 
 We can now revoke a user's refresh token and FusionAuth will broadcast the event to our Webhook. The Webhook then updates the JWTManager which will cause JWTs for that user to be revoked.
 
-This solution works well even in large systems with numerous backends. It requires the use of refresh tokens and an API that allows refresh tokens to be revoked. The only caveat is to be sure that your JWTManager code cleans up after itself to avoid running out memory.
+This solution works well even in large systems with numerous backends. It requires the use of refresh tokens and an API that allows refresh tokens to be revoked. The only caveat is to be sure that your JWTManager code cleans up after itself to avoid running out memory.
 
-If you are using FusionAuth, you can use the Webhook and Event system to build this feature into your application quickly. We are also writing JWTManager implementations into each of our client libraries so you don't have to write those yourself. At the time of this writing, the Java and Node clients both have a JWTManager you can use. The other languages might have a JWTManager implementation now but if they don't, just submit a support ticket or a Github issue and we will write one for you.
+If you are using FusionAuth, you can use the Webhook and Event system to build this feature into your application quickly. We are also writing JWTManager implementations into each of our client libraries so you don't have to write those yourself. At the time of this writing, the Java and Node clients both have a JWTManager you can use. The other languages might have a JWTManager implementation now but if they don't, just submit a support ticket or a GitHub issue and we will write one for you.
+

@@ -4,6 +4,7 @@ description: The OAuth Device Authorization grant enables game users to authenti
 author: Success Ologunsua
 section: Gaming & Entertainment
 icon: /img/icons/oauth-authorization-grant.svg
+darkIcon: /img/icons/oauth-authorization-grant-dark.svg
 date: 2022-09-01
 dateModified: 2022-09-01
 ---
@@ -98,7 +99,7 @@ This CORS configuration is only necessary because the game is running in the bro
  
 Next, configure and run the demo app project downloaded from the GitHub repository.
 
-Open the project with an editor of your choosing (for example, Visual Studio Code or Sublime), then go to the `main.js` file and modify the `clientId` to match the clientId of your `test Grant` application on FusionAuth.
+Open the project with an editor of your choosing (for example, Visual Studio Code or Sublime), then go to the `main.js` file and modify the `clientId` to match the Client Id of your `test Grant` application on FusionAuth.
 
 ```javascript
 var baseFusionAuthURL = 'http://localhost:9011/oauth2/device_authorize';

@@ -3,6 +3,7 @@ title: Pros And Cons of JWTs
 description: The pros and cons of JWTs and why you should (or shouldn't) use them.
 author: Brian Pontarelli
 icon: /img/icons/pros-cons-jwts.svg
+darkIcon: /img/icons/pros-cons-jwts-dark.svg
 section: Tokens
 # date: 2019-11-04
 # dateModified: 2019-11-04
@@ -42,6 +43,10 @@ To solve this problem, most applications use refresh tokens. Refresh tokens are 
 
 Since JWTs are cryptographically signed, they require a cryptographic algorithm to verify. Cryptographic algorithms are purposefully designed to be slow. The slower the algorithm, the higher the complexity, and the less likely that the algorithm can be cracked using brute-force.
 
+Every signed JWT contains a header, a body or payload, and a signature:
+
+![The components of a JWT, visualized.](/img/shared/json-web-token.png)
+
 On a quad-core MacBook Pro, about 200 JWTs can be created and signed per second using RSA public-private key signing. This number drops dramatically on virtualized hardware like Amazon EC2s. HMAC signing is much faster but lacks the same flexibility and security characteristics. Specifically, if the identity provider uses HMAC to sign a JWT, then all services that want to verify the JWT must have the HMAC secret. This means that all the services can now create and sign JWTs as well. This makes the JWTs less portable (specifically to public services) and less secure.
 
 To give you an idea of the performance characteristics of JWTs and the cryptographic algorithms used, we ran some tests on a quad-core MacBook. Here are some of the metrics and timings we recorded for JWTs:
@@ -67,9 +72,9 @@ Both of these exploits have simple fixes. Specifically, you should never allow J
 
 ## Sessions as an Alternative
 
-Instead of using JWTs or opaque tokens, you always have the option of using sessions. Sessions have been around for over two decades and are proven technology. Sessions generally work through the use of cookies and state that is stored on the server. The cookie contains a string of characters that is the session id. The server contains a large Hash that keys off the session id and stores arbitrary data.
+Instead of using JWTs or opaque tokens, you always have the option of using sessions. Sessions have been around for over two decades and are proven technology. Sessions generally work through the use of cookies and state that is stored on the server. The cookie contains a string of characters that is the session Id. The server contains a large Hash that keys off the session Id and stores arbitrary data.
 
-When a user logs in, the user object is stored in the session and the server sends back a session cookie that contains the session id. Each subsequent request to the server includes the session cookie. The server uses the session cookie to load the user object out of the session Hash. The user object is then used to identify the user making the request. Here are two diagrams that illustrate this concept:
+When a user logs in, the user object is stored in the session and the server sends back a session cookie that contains the session Id. Each subsequent request to the server includes the session cookie. The server uses the session cookie to load the user object out of the session Hash. The user object is then used to identify the user making the request. Here are two diagrams that illustrate this concept:
 
 ### Login
 

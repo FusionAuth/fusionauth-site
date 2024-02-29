@@ -8,6 +8,7 @@ const articlesCollection = defineCollection({
     disableTOC: z.boolean().default(false),
     excludeFromNav: z.boolean().default(false),
     icon: z.string().optional(),
+    darkIcon: z.string().optional(),
     section: z.string(),
     title: z.string(),
     sortTitle: z.string().optional(),
@@ -42,6 +43,7 @@ const quickstartsCollection = defineCollection({
     featured: z.boolean().default(false),
     faIcon: z.string().optional(),
     color: z.string().optional(),
+    codeRoot: z.string().optional(),
   }),
 });
 

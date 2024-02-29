@@ -10,16 +10,19 @@ icon: /img/icons/laravel.svg
 faIcon: fa-block
 color: rose
 cta: EmailListCTA
-coderoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-php-laravel-api/main
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-php-laravel-api/main
 ---
 import Aside from '../../components/Aside.astro';
 import Code from 'astro/components/Code.astro';
-import Diagram from '../../diagrams/quickstarts/resource-server.astro';
+import DockerSpinup from '/src/components/quickstarts/DockerSpinup.astro';
+import Intro from '/src/components/quickstarts/Intro.astro';
+import LoginArchitectureApi from '/src/components/quickstarts/LoginArchitectureApi.astro';
+import NextStepsApi from '/src/components/quickstarts/NextStepsApi.astro';
 import {RemoteCode, RemoteValue} from '@fusionauth/astro-components';
 
-In this tutorial, you are going to learn how to integrate a Laravel resource server with FusionAuth. You will protect an API resource from unauthorized usage. You'll be building it for [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM), a global leader in converting dollars into coins.
-
-The docker compose file and source code for a complete application are available at https://github.com/FusionAuth/fusionauth-quickstart-php-laravel-api.
+<Intro technology={frontmatter.technology}
+       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-php-laravel-api"
+       api/>
 
 ## Prerequisites
 
@@ -28,11 +31,7 @@ The docker compose file and source code for a complete application are available
 
 ## General Architecture
 
-A client wants access to an API resource at `/resource`. However, it is denied this resource until it acquires an access token from FusionAuth.
-
-<Diagram/>
-
-While the access token is acquired via the Login API above, this is for simplicity of illustration. The token can be, and typically is, acquired through one of the [OAuth grants](/docs/v1/tech/oauth/).
+<LoginArchitectureApi />
 
 ## Getting Started
 
@@ -49,32 +48,11 @@ cd fusionauth-quickstart-php-laravel-api
 
 ### Run FusionAuth via Docker
 
-In the root directory of the repo you’ll find a Docker compose file (`docker-compose.yml`) and an environment variables configuration file (`.env`). Assuming you have Docker installed on your machine, you can stand up FusionAuth up on your machine with:
-
-```shell
-docker compose up -d
-```
-
-Here you are using a bootstrapping feature of FusionAuth, called [Kickstart](/docs/get-started/download-and-install/development/kickstart). When FusionAuth comes up for the first time, it will look at the `kickstart/kickstart.json` file and configure FusionAuth to a certain initial state.
-
-<Aside type="note">
-  If you ever want to reset the FusionAuth system, delete the volumes created by Docker Compose by executing `docker compose down -v`, then re-run `docker compose up -d`.
-</Aside>
-
-FusionAuth will be initially configured with these settings:
-
-* Your client Id is <code><RemoteValue url={frontmatter.coderoot + "/kickstart/kickstart.json"} selector="$.variables.applicationId" /></code>
-* Your client secret is <code><RemoteValue url={frontmatter.coderoot + "/kickstart/kickstart.json"} selector="$.variables.clientSecret" /></code>.
-* Your example teller username is <code><RemoteValue url={frontmatter.coderoot + "/kickstart/kickstart.json"} selector="$.variables.tellerEmail" /></code> and the password is <code><RemoteValue url={frontmatter.coderoot + "/kickstart/kickstart.json"} selector="$.variables.tellerPassword" /></code>. They will have the role of `teller`.
-* Your example customer username is <code><RemoteValue url={frontmatter.coderoot + "/kickstart/kickstart.json"} selector="$.variables.customerEmail" /></code> and the password is <code><RemoteValue url={frontmatter.coderoot + "/kickstart/kickstart.json"} selector="$.variables.customerPassword" /></code>. They will have the role of `customer`.
-* Your admin username is <code><RemoteValue url={frontmatter.coderoot + "/kickstart/kickstart.json"} selector="$.variables.adminEmail" /></code> and the password is <code><RemoteValue url={frontmatter.coderoot + "/kickstart/kickstart.json"} selector="$.variables.adminPassword" /></code>.
-* The base URL of FusionAuth is `http://localhost:9011/`.
-
-You can log into the [FusionAuth admin UI](http://localhost:9011/admin) and look around if you want, but with Docker/Kickstart you don't need to.
+<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} api />
 
 ### Expose FusionAuth Instance
 
-To make sure your local FusionAuth instance is accessible to your Laravel app, you need to [expose it to the Internet](/docs/v1/tech/developer-guide/exposing-instance). Write down the URL ngrok gave you as you'll need it soon.
+To make sure your local FusionAuth instance is accessible to your Laravel app, you need to [expose it to the Internet](/docs/get-started/download-and-install/development/exposing-instance). Write down the URL ngrok gave you as you'll need it soon.
 
 ## Create your Laravel Application
 
@@ -84,7 +62,7 @@ We are going to be building an API backend for a banking application called Chan
 - `make-change`: This endpoint will allow you to call GET with a `total` amount and receive a response indicating how many nickels and pennies are needed to make change. Valid roles are `customer` and `teller`.
 - `panic`: Tellers may call this endpoint to call the police in case of an incident. The only valid role is `teller`.
 
-Both endpoints will be protected such that a valid JSON web token (JWT) will be required in the `app.at` cookie in order to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
+Both endpoints will be protected such that a valid JSON web token (JWT) will be required in an `app.at` cookie or the `Authorization` header in order to be accessed. Additionally, the JWT must have a `roles` claim containing the appropriate role to use the endpoint.
 
 <Aside type="note">
   If you simply want to run the application, there is a completed version in the `complete-application` directory. You can install [PHP](https://www.php.net) and [Composer](https://getcomposer.org/) and use the following commands to get it up and running if you do not want to create your own.
@@ -136,11 +114,11 @@ Include FusionAuth's library to add JWT support to the authentication system.
 
 When installing Laravel, it will automatically make a migration to create a `users` table in the database. You'll have to edit the file `database/migrations/2014_10_12_000000_create_users_table.php` to change the default behavior and use UUID for the primary key, remove the need for a password and the remember token.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/database/migrations/2014_10_12_000000_create_users_table.php"} lang="php"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/database/migrations/2014_10_12_000000_create_users_table.php"} lang="php"/>
 
 You'll also need to edit `app/Models/User.php` to make the database changes consistent with your model.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/app/Models/User.php"} lang="php"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app/Models/User.php"} lang="php"/>
 
 You may remove all other migrations, as you won't need them.
 
@@ -168,37 +146,37 @@ mkdir -p app/FusionAuth/Providers
 
 Add a new [User Provider](https://laravel.com/docs/10.x/authentication#adding-custom-user-providers) at `app/FusionAuth/Providers/FusionAuthEloquentUserProvider.php` to create new users when receiving valid JWTs from FusionAuth.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/app/FusionAuth/Providers/FusionAuthEloquentUserProvider.php"} lang="php"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app/FusionAuth/Providers/FusionAuthEloquentUserProvider.php"} lang="php"/>
 
 Now, add an [Authentication Guard](https://laravel.com/docs/10.x/authentication#adding-custom-guards) in `app/FusionAuth/FusionAuthJwtGuard.php` to call that custom method from the User Provider created above.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/app/FusionAuth/FusionAuthJwtGuard.php"} lang="php"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app/FusionAuth/FusionAuthJwtGuard.php"} lang="php"/>
 
 Let Laravel know about these two classes by editing `config/auth.php`.
 
 First, change the `driver` for the `web` Guard to `jwt`:
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/config/auth.php"} tags="guards" lang="php"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/config/auth.php"} tags="guards" lang="php"/>
 
 Now, change the default `provider` to `fusionauth_eloquent`:
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/config/auth.php"} tags="providers" lang="php"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/config/auth.php"} tags="providers" lang="php"/>
 
 Finally, create a [Service Provider](https://laravel.com/docs/10.x/providers) in `app/FusionAuth/Providers/FusionAuthServiceProvider.php` to make sure Laravel will use the newly created classes instead of its defaults.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/app/FusionAuth/Providers/FusionAuthServiceProvider.php"} lang="php"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app/FusionAuth/Providers/FusionAuthServiceProvider.php"} lang="php"/>
 
 ### Update Routes
 
 Change `routes/api.php` to add both `/api/make-change` and `/api/panic` endpoints for your ChangeBank application.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/routes/api.php"} lang="php"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/routes/api.php"} lang="php"/>
 
 ### Add Controllers
 
 Change the base controller at `app/Http/Controllers/Controller.php` to include a helper function to check for roles.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/app/Http/Controllers/Controller.php"} lang="php"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app/Http/Controllers/Controller.php"} lang="php"/>
 
 Create a folder named `ChangeBank` inside `app/Http/Controllers` to hold the two controllers you're going to create.
 
@@ -208,11 +186,11 @@ mkdir app/Http/Controllers/ChangeBank
 
 To respond the `/api/make-change` endpoint, create a file at `app/Http/Controllers/ChangeBank/MakeChangeController.php`. This controller will verify that the authenticated user has either the `teller` or `customer` role. It then takes in the URL parameter `total` to calculate which coins will be returned in the JSON payload.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/app/Http/Controllers/ChangeBank/MakeChangeController.php"} lang="php"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app/Http/Controllers/ChangeBank/MakeChangeController.php"} lang="php"/>
 
 To finish, create a controller at `app/Http/Controllers/ChangeBank/PanicController.php` to handle the `/api/panic` endpoint for users with the `teller` role.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/app/Http/Controllers/ChangeBank/PanicController.php"} lang="php"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app/Http/Controllers/ChangeBank/PanicController.php"} lang="php"/>
 
 ### Validating Issuer and Audience Claims
 
@@ -226,11 +204,11 @@ mkdir app/FusionAuth/Claims
 
 First, create a file named `app/FusionAuth/Claims/Audience.php` that will check if the audience (`aud`) claim actually contains the Client Id for the application you created in FusionAuth.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/app/FusionAuth/Claims/Audience.php"} lang="php"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app/FusionAuth/Claims/Audience.php"} lang="php"/>
 
 Now, create a file called `app/FusionAuth/Claims/Issuer.php` to check if the issuer (`iss`) is actually your FusionAuth instance address.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/app/FusionAuth/Claims/Issuer.php"} lang="php"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app/FusionAuth/Claims/Issuer.php"} lang="php"/>
 
 ### Let Your Code Know about the FusionAuth Instance
 
@@ -238,15 +216,15 @@ Now that you created all these files, you need to pass some details about the Fu
 
 Start by adding the environment variables below to your `.env` file, changing `https://The-Address-Ngrok-Gave-You` to the actual address you copied from ngrok.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/.env"} tags="fusionauth" lang="ini"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/.env"} tags="fusionauth" lang="ini"/>
 
 Now open the `config/app.php` file and browse to the `providers` section. This is a Laravel configuration to automatically load these files when booting your application. Add `App\FusionAuth\Providers\FusionAuthServiceProvider::class` to the end of the `providers` array, like shown below.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/config/app.php"} tags="providers" lang="php"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/config/app.php"} tags="providers" lang="php"/>
 
 In that same `config/app.php` file, add these lines at the end (just before the last line) to pass values from the environment variables to the application.
 
-<RemoteCode url={frontmatter.coderoot + "/complete-application/config/app.php"} tags="fusionauth" lang="php"/>
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/config/app.php"} tags="fusionauth" lang="php"/>
 
 To make the library available for use, publish its configuration by running the command below.
 
@@ -258,14 +236,14 @@ To make the library available for use, publish its configuration by running the 
 
 ### Get a Token
 
-There are [several ways to acquire a token](/docs/v1/tech/oauth/) in FusionAuth, but for this example you will use the [Login API](/docs/v1/tech/apis/login) to keep things simple.
+There are [several ways to acquire a token](/docs/lifecycle/authenticate-users/oauth/) in FusionAuth, but for this example you will use the [Login API](/docs/apis/login) to keep things simple.
 
-First, try requests as the <code><RemoteValue url={frontmatter.coderoot + "/kickstart/kickstart.json"} selector="$.variables.tellerEmail" /></code> user. Based on the configuration this user has the `teller` role and should be able to use both `/api/make-change` and `/api/panic`.
+First, try requests as the <code><RemoteValue url={frontmatter.codeRoot + "/kickstart/kickstart.json"} selector="$.variables.tellerEmail" /></code> user. Based on the configuration this user has the `teller` role and should be able to use both `/api/make-change` and `/api/panic`.
 
-1. Acquire an access token for <code><RemoteValue url={frontmatter.coderoot + "/kickstart/kickstart.json"} selector="$.variables.tellerEmail" /></code> by making the following request
+1. Acquire an access token for <code><RemoteValue url={frontmatter.codeRoot + "/kickstart/kickstart.json"} selector="$.variables.tellerEmail" /></code> by making the following request
 
 <RemoteValue
-  url={frontmatter.coderoot + "/kickstart/kickstart.json"}
+  url={frontmatter.codeRoot + "/kickstart/kickstart.json"}
   selector="$.variables">
   {(variables) => <Code lang="shell" code={`curl --location 'http://localhost:9011/api/login' \\
 --header 'Authorization: ${variables.apiKey}' \\
@@ -291,11 +269,15 @@ Copy the `token` from the response, which should look like this:
 
 ### Make the Request
 
-Make a request to `/api/make-change` with a query parameter `total=5.12` and passing the `token` in an `app.at` cookie.
+Make a request to `/api/make-change` with a query parameter `total=5.12` and pass the `token` in an `app.at` cookie (or as a `Bearer` token in the `Authorization` header).
 
 ```shell
 curl --cookie 'app.at=YOUR_TOKEN' 'http://localhost/api/make-change?total=5.12'
 ```
+
+<Aside type="note">
+  You can replace `--cookie 'app.at=<your_token>'` with `--header 'Authorization: Bearer <your_token>'` if you wish to use the `Authorization` header instead of the `app.at` cookie.
+</Aside>
 
 The response should look similar to below, however it has been formatted here for readability:
 
@@ -344,7 +326,7 @@ Nice, help is on the way!
 Now let's try as `customer@example.com` who has the role `customer`. Acquire a token for `customer@example.com`.
 
 <RemoteValue
-    url={frontmatter.coderoot + "/kickstart/kickstart.json"}
+    url={frontmatter.codeRoot + "/kickstart/kickstart.json"}
     selector="$.variables">
     {(variables) => <Code lang="shell" code={`curl --location 'http://localhost:9011/api/login' \\
 --header 'Authorization: ${variables.apiKey}' \\
@@ -420,17 +402,7 @@ Looks like this user does not have access to this function. Enjoy your secured r
 
 ## Next Steps
 
-This quickstart is a great way to get a proof of concept up and running quickly, but to run your API in production, there are some things you're going to want to do.
-
-### FusionAuth Integration
-
-* Rather than call the Login API, you're probably going to want to use the [Authorization Code grant](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant), which keeps all sensitive credentials within the bounds of FusionAuth. You can customize the [hosted login pages](/docs/customize/look-and-feel/).
-* You may want to generate a token using the [Client Credentials grant](/docs/lifecycle/authenticate-users/oauth/#example-client-credentials-grant) if you are calling the API from another service.
-
-### Security
-* Customize the [token expiration times and policies](/docs/lifecycle/authenticate-users/oauth/#configure-application-oauth-settings) in FusionAuth
-* [Make sure you know how to securely consume a token](/articles/tokens/building-a-secure-jwt#consuming-a-jwt)
-* Secure your API [using an API gateway](/docs/extend/examples/api-gateways/) rather than at the framework layer.
+<NextStepsApi />
 
 ## Troubleshooting
 
@@ -454,3 +426,4 @@ cd complete-application
 composer install
 ./vendor/bin/sail up -d
 ```
+
