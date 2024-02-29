@@ -16,6 +16,7 @@ import InlineField from 'src/components/InlineField.astro';
 import Aside from '/src/components/Aside.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
 
+import Identifiers from 'src/content/docs/lifecycle/migrate-users/bulk/_identifiers.mdx';
 import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/bulk/_mapping-user-attributes.mdx';
 import SocialLoginNote from 'src/content/docs/lifecycle/migrate-users/bulk/_social-login-note.mdx';
 import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/bulk/_social-login-migration.mdx';
@@ -25,7 +26,6 @@ import SetUpFusionauth from 'src/content/docs/lifecycle/migrate-users/bulk/_set-
 import CreateTestTenant from 'src/content/docs/lifecycle/migrate-users/bulk/_create-test-tenant.mdx';
 import CreateTestApplication from 'src/content/docs/lifecycle/migrate-users/bulk/_create-test-application.mdx';
 import CreateApiKeySocial from 'src/content/docs/lifecycle/migrate-users/bulk/_create-api-key-social.mdx';
-import InlineUIElement from 'src/components/InlineUIElement.astro';
 import GetScript from 'src/content/docs/lifecycle/migrate-users/bulk/_get-script.mdx';
 import VerifyImport from 'src/content/docs/lifecycle/migrate-users/bulk/_verify-import.mdx';
 import FinalDestination from 'src/content/docs/lifecycle/migrate-users/bulk/_final-destination.mdx';
@@ -36,45 +36,9 @@ export const migration_source_name = 'WordPress';
 export const migration_source_dir = 'wordpress';
 export const script_supports_social_logins = 'false';
 
-
-- [TODO](#todo)
-- [Overview](#overview)
-- [Prerequisites](#prerequisites)
-- [Planning Considerations](#planning-considerations)
-  - [Obtaining User Data](#obtaining-user-data)
-  - [Mapping User Attributes](#mapping-user-attributes)
-  - [Social Logins](#social-logins)
-  - [Other Entities](#other-entities)
-    - [Identifiers](#identifiers)
-- [Export Users](#export-users)
-  - [Start WordPress](#start-wordpress)
-  - [Add A New User](#add-a-new-user)
-  - [Explore The Users In The Database](#explore-the-users-in-the-database)
-    - [wp\_users](#wp_users)
-    - [wp\_usermeta](#wp_usermeta)
-  - [Export The Users In SQL](#export-the-users-in-sql)
-- [Import Users](#import-users)
-  - [Use A WordPress Password Hash Plugin For FusionAuth](#use-a-wordpress-password-hash-plugin-for-fusionauth)
-  - [Set Up FusionAuth And Deploy The Plugin](#set-up-fusionauth-and-deploy-the-plugin)
-  - [Create Roles For Your Users](#create-roles-for-your-users)
-  - [Prepare Users For Import To FusionAuth](#prepare-users-for-import-to-fusionauth)
-  - [Save The User Details And Hash To FusionAuth](#save-the-user-details-and-hash-to-fusionauth)
-  - [Verify the Import](#verify-the-import)
-    - [Debug With The FusionAuth Database](#debug-with-the-fusionauth-database)
-- [What to Do Next](#what-to-do-next)
-- [Additional Support](#additional-support)
-
-
-## TODO
-- copy sections from stytch for hasher
-- see Cognito migration guide
-- copy over sections
-
 ## Overview
 
 This document will help you migrate users from {frontmatter.technology} to FusionAuth.
-
-This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin.
 
 This guide is a low-level, technical tutorial focusing on transferring password hashes, calling APIs, and preparing data when migrating users from {frontmatter.technology}. To understand how to plan a migration at a higher level, please read the [FusionAuth migration guide](/docs/lifecycle/migrate-users/bulk/general).
 
@@ -90,7 +54,7 @@ To follow this tutorial, you need:
 
 ### Obtaining User Data
 
-{frontmatter.technology} stores all uses in a MySQL database. You will need access to the database to run a SQL extraction script.
+{frontmatter.technology} stores all users in a MySQL database. You will need access to the database to run a SQL extraction script.
 
 ### Mapping User Attributes
 
@@ -108,11 +72,13 @@ To follow this tutorial, you need:
 
 #### Identifiers
 
-<Identifiers migration_source_name={migration_source_name}/>
+When creating an object with the FusionAuth API, you can specify the Id. It must be a [UUID](/docs/reference/data-types#uuids).
+
+This works for users, applications, and tenants, among others.
 
 ## Export Users
 
-In this section you create a sample WordPress database in Docker, understand where the user details are kept in the database, and export them with a SQL script.
+Let's begin the tutorial. In this section you create a sample WordPress database in Docker, understand where the user details are kept in the database, and export them with a SQL script.
 
 ### Start WordPress
 
@@ -179,7 +145,7 @@ Register a new user. Enter any username and email `a@example.com`.
 
 ### Explore The Users In The Database
 
-Browse the database in any database IDE that can connect to MariaDB. [DBeaver](https://dbeaver.io/download) is a free cross-platform IDE you can use if you don't have one.
+Browse the database in any database IDE that can connect to MariaDB. [DBeaver](https://dbeaver.io/download) is a free cross-platform IDE you can use.
 
 Create a new MariaDB connection to `localhost`, port `3306`, database `wp`, username `wp`, with no password needed. Open the connection and expand the database tables.
 
@@ -213,38 +179,38 @@ The `wp_usermeta` table holds all information about a user besides that kept in 
 
 umeta_id|user_id|meta_key                             |meta_value
 --------|-------|-------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-1|      1|nickname                             |user                                                                                                                                                                                                                                                           |
-2|      1|first_name                           |UserName                                                                                                                                                                                                                                                       |
-3|      1|last_name                            |LastName                                                                                                                                                                                                                                                       |
-4|      1|description                          |                                                                                                                                                                                                                                                               |
-5|      1|rich_editing                         |true                                                                                                                                                                                                                                                           |
-6|      1|syntax_highlighting                  |true                                                                                                                                                                                                                                                           |
-7|      1|comment_shortcuts                    |false                                                                                                                                                                                                                                                          |
-8|      1|admin_color                          |fresh                                                                                                                                                                                                                                                          |
-9|      1|use_ssl                              |0                                                                                                                                                                                                                                                              |
-10|      1|show_admin_bar_front                 |true                                                                                                                                                                                                                                                           |
-11|      1|locale                               |                                                                                                                                                                                                                                                               |
-12|      1|wp_capabilities                      |a:1:{s:13:"administrator";b:1;}                                                                                                                                                                                                                                |
-13|      1|wp_user_level                        |10                                                                                                                                                                                                                                                             |
-14|      1|dismissed_wp_pointers                |                                                                                                                                                                                                                                                               |
-15|      1|show_welcome_panel                   |1                                                                                                                                                                                                                                                              |
-16|      1|session_tokens                       |a:1:{s:64:"ed6949d03244303edfd56de57f46b77a7300c2c62406ccde3b717b700c4fce4a";a:4:{s:10:"expiration";i:1708684580;s:2:"ip";s:10:"172.25.0.1";s:2:"ua";s:101:"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.||
-17|      1|wp_dashboard_quick_press_last_post_id|4                                                                                                                                                                                                                                                              |
-18|      1|community-events-location            |a:1:{s:2:"ip";s:10:"172.25.0.0";}                                                                                                                                                                                                                              |
-19|      2|nickname                             |a                                                                                                                                                                                                                                                              |
-20|      2|first_name                           |                                                                                                                                                                                                                                                               |
-21|      2|last_name                            |                                                                                                                                                                                                                                                               |
-22|      2|description                          |                                                                                                                                                                                                                                                               |
-23|      2|rich_editing                         |true                                                                                                                                                                                                                                                           |
-24|      2|syntax_highlighting                  |true                                                                                                                                                                                                                                                           |
-25|      2|comment_shortcuts                    |false                                                                                                                                                                                                                                                          |
-26|      2|admin_color                          |fresh                                                                                                                                                                                                                                                          |
-27|      2|use_ssl                              |0                                                                                                                                                                                                                                                              |
-28|      2|show_admin_bar_front                 |true                                                                                                                                                                                                                                                           |
-29|      2|locale                               |                                                                                                                                                                                                                                                               |
-30|      2|wp_capabilities                      |a:1:{s:10:"subscriber";b:1;}                                                                                                                                                                                                                                   |
-31|      2|wp_user_level                        |0                                                                                                                                                                                                                                                              |
-32|      2|default_password_nag                 |1                                                                                                                                                                                                                                                              |
+1|      1|nickname                             |user
+2|      1|first_name                           |UserName
+3|      1|last_name                            |LastName
+4|      1|description                          |
+5|      1|rich_editing                         |true
+6|      1|syntax_highlighting                  |true
+7|      1|comment_shortcuts                    |false
+8|      1|admin_color                          |fresh
+9|      1|use_ssl                              |0
+10|      1|show_admin_bar_front                 |true
+11|      1|locale                               |
+12|      1|wp_capabilities                      |`a:1:{s:13:"administrator";b:1;}`
+13|      1|wp_user_level                        |10
+14|      1|dismissed_wp_pointers                |
+15|      1|show_welcome_panel                   |1
+16|      1|session_tokens                       |`a:1:{s:64:"ed6949d03244303edfd56de57f46b77a7300c2c62406ccde3b717b700c4fce4a";a:4:{s:10:"expiration";i:1708684580;s:2:"ip";s:10:"172.25.0.1";s:2:"ua";s:101:"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.`
+17|      1|wp_dashboard_quick_press_last_post_id|4
+18|      1|community-events-location            |`a:1:{s:2:"ip";s:10:"172.25.0.0";}`
+19|      2|nickname                             |a
+20|      2|first_name                           |
+21|      2|last_name                            |
+22|      2|description                          |
+23|      2|rich_editing                         |true
+24|      2|syntax_highlighting                  |true
+25|      2|comment_shortcuts                    |false
+26|      2|admin_color                          |fresh
+27|      2|use_ssl                              |0
+28|      2|show_admin_bar_front                 |true
+29|      2|locale                               |
+30|      2|wp_capabilities                      |`a:1:{s:10:"subscriber";b:1;}`
+31|      2|wp_user_level                        |0
+32|      2|default_password_nag                 |1
 
 Below are the column definitions for the table.
 
@@ -290,7 +256,7 @@ npm install
 
 Run the SQL script `src/1_exportWordpressUsers.sql` against your WordPress database to export all the user data as JSON. View the output as text in DBeaver and save the `json_result` column to a file called `users.txt`.
 
-The script exports the `wp_users` table as JSON with all fields related to each user as an array called `meta`.
+The script exports the `wp_users` table as JSON with all `wp_usermeta` fields related to each user as an array called `meta`.
 
 Your file should look the same as `exampleData/1_wordpressExport/users.txt`. Each row is JSON, but the file as a whole is not JSON. Each row must end with a comma and the whole thing must be wrapped in brackets.
 
@@ -381,11 +347,11 @@ If you are not already running FusionAuth or want to test this process on anothe
   docker exec fa mkdir /usr/local/fusionauth/plugins
   docker cp "Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar" fa:/usr/local/fusionauth/plugins/fusionauth-example-password-encryptor-0.1.0.jar
   ```
-- Finally, restart FusionAuth for it to detect the plugin. In the terminal where FusionAuth is running in Docker, press Ctrl + C to stop it, wait, and run `docker compose up` again.
+- Finally, restart FusionAuth for it to detect the plugin: in the terminal where FusionAuth is running in Docker, press Ctrl + C to stop it, wait, and run `docker compose up` again.
 
 ### Create Roles For Your Users
 
-The two users you have export have roles Adminstrator and Subscriber, as seen in the `wp_capabilities` meta field. Create them in FusionAuth. In a terminal in the import scripts directory, run the code below.
+The two users you exported have roles Adminstrator and Subscriber, as seen in the `wp_capabilities` meta field. Create them in FusionAuth. In a terminal in the import scripts directory, run the code below.
 
 ```sh
 cd wordpress/src
@@ -407,7 +373,7 @@ The `getFaUserFromUser()` function does a few things:
 - Uses the name we registered for the hashing algorithm in the Java plugin in `faUser.encryptionScheme = 'example-wordpress-phpass';`.
 - Adds Registrations (a Role link between a User and an Application) for users. You will need to change these Ids to match those of your application when doing a real migration.
 
-There are a few helper functions at the bottom of the file to extract keys and values from the {frontmatter.techonology} `wp_usermeta` object and deserialize them from PHP. These are most useful when working with `wp_capabilities`.
+There are a few helper functions at the bottom of the file to extract keys and values from the {frontmatter.techonology} `wp_usermeta` object and deserialize them from PHP. These are used when working with `wp_capabilities`.
 
 Carefully read this function and make sure that the user information you need is imported correctly. If any information is not needed, you can comment out the related lines.
 
@@ -422,7 +388,7 @@ In the terminal run the code below.
 node 5_import.mjs
 ```
 
-This script uses `@fusionauth/typescript-client` — The FusionAuth SDK for Node.js. It's used ony for a single operation: `fa.importUsers(importRequest);`. For more information, read the [FusionAuth Typescript Client Library](/docs/sdks/typescript) documentation.
+This script uses `@fusionauth/typescript-client` — The FusionAuth SDK for Node.js. It's used ony for a single operation: `fa.importUsers(importRequest)`. For more information, read the [FusionAuth Typescript Client Library](/docs/sdks/typescript) documentation.
 
 Finally, this script imports users individually. If this is too slow when running the production migration, wrap the `importUsers()` FusionAuth SDK call in a loop that bundles users in batches of 1000.
 
@@ -440,7 +406,7 @@ If the migration script ran successfully, you should be able to log in to Fusion
 
 If you have errors logging in, use the FusionAuth database directly to see if your users were imported, and check their hashes manually.
 
-You can use any PostgreSQL browser. DBeaver will work. The connection details are in `fusionauth-import-scripts/stytch/fusionAuthDockerFiles/docker-compose.yml` and `.env`.
+You can use any PostgreSQL browser. DBeaver will work. The connection details are in `fusionauth-import-scripts/wordpress/fusionAuthDockerFiles/docker-compose.yml` and `.env`.
 
 In your database IDE, create a new PostgreSQL connection with the following details:
 - <InlineField>URL:</InlineField> `jdbc:postgresql://localhost:6432/fusionauth`
