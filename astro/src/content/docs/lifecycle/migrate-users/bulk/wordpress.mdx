@@ -6,6 +6,7 @@ subcategory: migrate users
 tertcategory: bulk
 prerequisites: Docker, Node
 technology: WordPress
+hashTechnology: WordPress Phpass
 importCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-import-scripts/wordpress
 javaCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-contrib/wordpress
 ---
@@ -54,6 +55,9 @@ export const script_supports_social_logins = 'false';
   - [Export The Users In SQL](#export-the-users-in-sql)
 - [Import Users](#import-users)
   - [Use A WordPress Password Hash Plugin For FusionAuth](#use-a-wordpress-password-hash-plugin-for-fusionauth)
+  - [Set Up FusionAuth And Deploy The Plugin](#set-up-fusionauth-and-deploy-the-plugin)
+  - [Create Roles For Your Users](#create-roles-for-your-users)
+  - [Save The User Details And Hash To FusionAuth](#save-the-user-details-and-hash-to-fusionauth)
   - [](#)
   - [Prepare Users For Import To FusionAuth](#prepare-users-for-import-to-fusionauth)
 - [Bulk Migration](#bulk-migration)
@@ -303,9 +307,109 @@ Your output should now be valid JSON and look like the file `exampleData/1_wordp
 
 ## Import Users
 
+Now that the user details have been extracted from {frontmatter.technology} you need to add a password hashing plugin to FusionAuth that can support them, map the {frontmatter.technology} fields to FusionAuth fields, and then the import the users in a script.
+
 ### Use A WordPress Password Hash Plugin For FusionAuth
 
-remember to mention restarting docker
+The {frontmatter.hashTechnology} hashing algorithm is not [natively supported by FusionAuth](/docs/reference/password-hashes). However, FusionAuth allows [custom plugins](/docs/extend/code/password-hashes/custom-password-hashing). There is a {frontmatter.hashTechnology} plugin accompanying this article [in this GitHub repository](https://github.com/FusionAuth/fusionauth-contrib/tree/master/Password%20Hashing%20Plugins).
+
+<Aside type="note">
+The linked repository has multiple plugin projects. You need to build and install only the Password Hashing Plugins project.
+</Aside>
+
+Download and unzip the repository, or use Git in a terminal with the code below.
+```sh
+git clone https://github.com/fusionauth/fusionauth-contrib.git
+```
+
+Open the file `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleWordPressPhpassPasswordEncryptor.java`. The content of the file is shown below.
+
+<RemoteCode
+    url={frontmatter.javaCodeRoot + "/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleWordPressPhpassPasswordEncryptor.java"}
+    lang="java"
+/>
+
+Most of the other hashing plugins in this project take a plainext password and Base64 salt and return a Base64 hash. Phpass is more complicated however. The salt is stored inside the hash, as is the hashing algorithm name. Thus the `encrypt` function needs to perform the password hash comparison inside the Phpass algorithm to verify the user's password is correct. The {frontmatter.technology} user import script you will use shortly saves the existing hash to the salt field. If the `checkPassword` function succeeds then the `encrypt` function returns the existing salt. If it fails, the function returns a random number to ensure that the passwords will never match. Only if given a new password with no existing hash will `encrypt` return a new hash.
+
+The `factor` parameter should always be 8.
+
+There are two other files linked to this scrypt plugin that you shouldn't need to alter:
+- `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleWordPressPhpassPasswordEncryptorTest.java`, which holds unit tests for the hasher.
+- `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/guice/MyExampleFusionAuthPluginModule.java`, which makes the hasher file known to FusionAuth.
+
+If you make another hash plugin, you will need to make your own test and add your plugin to the Guice file. This might be the case if your {frontmatter.technology} installation has overridden the default hashing algorithm.
+
+<Aside type="note">
+The {frontmatter.hashTechnology} library uses specific prefixes in password hashes to indicate the algorithm and cost parameters.
+
+- No prefix: Very old {frontmatter.technology} installations might use MD5 hashes. These hashes are 32 characters long and consist of hexadecimal characters.
+- $P$ or $P$B: This prefix indicates Phpass library. The $P$ indicates Phpass, and the character following this prefix represents the cost parameter of the hash. The actual algorithm is a modified MD5 with multiple iterations to increase security. This is the algorithm the Java plugin discussed above uses, and is the default in WordPress in 2024.
+- $1$: This prefix indicates an MD5-based crypt hash processed with a Unix crypt() function.
+- $2a$, $2x$, $2y$: These prefixes are associated with bcrypt.
+- $5$ and $6$: These prefixes indicate SHA-256 and SHA-512 hashing respectively.
+- $argon2i$, $argon2id$: These prefixes are for Argon2.
+</Aside>
+
+Build the Java plugin and add it to FusionAuth:
+- Open a terminal and run the code below to build a Docker container for Java, with the repository shared as a volume into the container.
+  ```sh
+  cd fusionauth-contrib/.devcontainer
+  docker build -t javaimage .
+  cd ..
+  docker run -it --name javabox -v .:/workspace javaimage
+  ```
+- In the Docker container terminal that is now running, run the code below.
+  ```sh
+  cd "/workspace/Password Hashing Plugins"
+  mvn clean install
+  exit
+  ```
+- If you have Java installed locally, you can run the Maven command without Docker.
+
+All tests should pass, and the plugin file should be available in `Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar`.
+
+### Set Up FusionAuth And Deploy The Plugin
+
+Now copy `fusionauth-example-password-encryptor-0.1.0.jar` to your FusionAuth `plugins` directory and restart FusionAuth.
+
+If you are not already running FusionAuth or want to test this process on another instance, you can start FusionAuth in Docker.
+- Open a new terminal in the `fusionauth-import-scripts` directory and run the code below.
+  ```sh
+  cd wordpress/fusionAuthDockerFiles
+  docker compose up
+  ```
+- FusionAuth will now be running and browsable at `http://localhost:9011`. You can log in with `admin@example.com` and `password`. The container is called `fa`.
+- In the `fusionauth-contrib` terminal where you built the plugin, run the commands below to copy the JAR file into the FusionAuth container `plugins` directory.
+  ```sh
+  docker exec fa mkdir /usr/local/fusionauth/plugins
+  docker cp "Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar" fa:/usr/local/fusionauth/plugins/fusionauth-example-password-encryptor-0.1.0.jar
+  ```
+- Finally, restart FusionAuth for it to detect the plugin. In the terminal where FusionAuth is running in Docker, press Ctrl + C to stop it, wait, and run `docker compose up` again.
+
+### Create Roles For Your Users
+
+The two users you have export have roles Adminstrator and Subscriber, as seen in the `wp_capabilities` meta field. Create them in FusionAuth. In a terminal in the
+
+### Save The User Details And Hash To FusionAuth
+
+Now you have the users file `users.json` and the scrypt plugin is installed. To import the users into FusionAuth, you need to run the Node.js import script.
+
+Open a terminal in the `fusionauth-import-scripts` directory and run the code below.
+```sh
+cd stytch/js
+npm update
+node 4_import.mjs
+```
+
+This import script needs only FusionAuth to be running locally on port 9011 and the `users.json` file to exist in the `js` directory. The FusionAuth Kickstart file already set a sample application to match the Ids in `4_import.mjs`. If your FusionAuth installation is different, please edit the Ids in `4_import.js`.
+
+<Aside type="tip">
+You might want to set the user's registration and tenant Id in your production migration.
+```js
+faUser.registrations = Array<UserRegistration>;
+faUser.tenantId = UUID;
+```
+</Aside>
 
 
 ###
