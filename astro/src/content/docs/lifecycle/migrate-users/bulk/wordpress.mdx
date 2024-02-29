@@ -31,11 +31,20 @@ import FinalDestination from 'src/content/docs/lifecycle/migrate-users/bulk/_fin
 import WhatNext from 'src/content/docs/lifecycle/migrate-users/bulk/_what-next.mdx';
 import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/bulk/_additional-support.mdx';
 
+export const migration_source_name = 'WordPress';
+export const migration_source_dir = 'wordpress';
+export const script_supports_social_logins = 'false';
+
 
 - [TODO](#todo)
 - [Overview](#overview)
 - [Prerequisites](#prerequisites)
 - [Planning Considerations](#planning-considerations)
+  - [Obtaining User Data](#obtaining-user-data)
+  - [Mapping User Attributes](#mapping-user-attributes)
+  - [Social Logins](#social-logins)
+  - [Other Entities](#other-entities)
+    - [Identifiers](#identifiers)
 - [Export Users](#export-users)
   - [Start WordPress](#start-wordpress)
   - [Add A New User](#add-a-new-user)
@@ -43,12 +52,15 @@ import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/bulk/_ad
     - [wp\_users](#wp_users)
     - [wp\_usermeta](#wp_usermeta)
   - [Export The Users In SQL](#export-the-users-in-sql)
-  - [Prepare Users For Import To FusionAuth](#prepare-users-for-import-to-fusionauth)
 - [Import Users](#import-users)
   - [Use A WordPress Password Hash Plugin For FusionAuth](#use-a-wordpress-password-hash-plugin-for-fusionauth)
+  - [](#)
+  - [Prepare Users For Import To FusionAuth](#prepare-users-for-import-to-fusionauth)
 - [Bulk Migration](#bulk-migration)
+  - [Verify the Import](#verify-the-import)
+    - [Debug With The FusionAuth Database](#debug-with-the-fusionauth-database)
 - [What to Do Next](#what-to-do-next)
-- [Additional support](#additional-support)
+- [Additional Support](#additional-support)
   - [Hash prefixes and what algorithm they indicate](#hash-prefixes-and-what-algorithm-they-indicate)
 
 
@@ -59,16 +71,43 @@ import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/bulk/_ad
 
 ## Overview
 
-This document will help you migrate from {frontmatter.technology} to FusionAuth.
+This document will help you migrate users from {frontmatter.technology} to FusionAuth.
 
-This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin. For more general migration information, please view the [FusionAuth migration guide](/docs/lifecycle/migrate-users/bulk/general).
+This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin.
 
-There are a number of different ways applications can be integrated with Duende IdentityServer and it would be difficult to cover them all. This guide mentions the typical parts of a bulk migration and focuses on migrating user data from a Duende IdentityServer user database into FusionAuth.
-
+This guide is a low-level, technical tutorial focusing on transferring password hashes, calling APIs, and preparing data when migrating users from {frontmatter.technology}. To understand how to plan a migration at a higher level, please read the [FusionAuth migration guide](/docs/lifecycle/migrate-users/bulk/general).
 
 ## Prerequisites
 
+If you want to import user passwords in addition to user personal details, you need a basic understanding of how password hashing and salts work. FusionAuth has a [hashing article](/articles/security/math-of-password-hashing-algorithms-entropy) that is a good starting point.
+
+To follow this tutorial, you need:
+- [Node.js](https://nodejs.org/en) to run the migration scripts, and npm.
+- [FusionAuth](/download). The easiest way to run it locally is to use [Docker](https://docs.docker.com/get-docker/) with the configuration file provided later in this tutorial.
+
 ## Planning Considerations
+
+### Obtaining User Data
+
+{frontmatter.technology} stores all uses in a MySQL database. You will need access to the database to run a SQL extraction script.
+
+### Mapping User Attributes
+
+<MappingUserAttributes migration_source_name={migration_source_name} />
+
+### Social Logins
+
+<SocialLoginNote migration_source_name={migration_source_name} script_supports_social_logins={script_supports_social_logins} />
+
+<SocialLoginMigration />
+
+### Other Entities
+
+<OtherEntitiesIntro other_migrated_entities="connections or roles" />
+
+#### Identifiers
+
+<Identifiers migration_source_name={migration_source_name}/>
 
 ## Export Users
 
@@ -119,14 +158,16 @@ volumes:
     driver: local
 ```
 
-Open a terminal in the same folder as the file and run the code below to start a MariaDB and WordPress container.
+Open a terminal in the same directories as the file and run the code below to start a MariaDB and WordPress container.
 
 ```sh
 mkdir db && mkdir wp && sudo chmod -R 777 ./db ./wp
 docker compose up
 ```
 
-Browse to http://localhost/wp-login.php. Log in with username `user` and password `bitnami`. This is the administrator username.
+This command creates two directories to hold the data for your WordPress and database files, shared with volumes in the Docker containers.
+
+Browse to http://localhost/wp-login.php. Log in with username `user` and password `bitnami`. This is the WordPress administrator.
 
 ### Add A New User
 
@@ -137,15 +178,15 @@ Register a new user. Enter any username and email `a@example.com`.
 
 ### Explore The Users In The Database
 
-Browse the database in any database IDE that can connect to MariaDB. [DBeaver](https://dbeaver.io/download/) is a free cross-platform IDE you can use if you don't have one.
+Browse the database in any database IDE that can connect to MariaDB. [DBeaver](https://dbeaver.io/download) is a free cross-platform IDE you can use if you don't have one.
 
-Create a new MariaDB connection to localhost, port 3306, database wp, username wp, with no password needed. Open the connection and expand the database tables.
+Create a new MariaDB connection to `localhost`, port `3306`, database `wp`, username `wp`, with no password needed. Open the connection and expand the database tables.
 
-WordPress has to two tables related to users: wp_users and wp_usermeta.
+WordPress has two tables related to users: `wp_users` and `wp_usermeta`.
 
 #### wp_users
 
-Below is the data you should have in wp_users. This table holds the user's identifiers and password hash.
+Below is the data you should have in `wp_users`. This table holds the user's identifiers and password hash.
 
 ID|user_login|user_pass                         |user_nicename|user_email      |user_url        |user_registered        |user_activation_key                          |user_status|display_name|
 ---|----------|----------------------------------|-------------|----------------|----------------|-----------------------|---------------------------------------------|-----------|------------
@@ -167,7 +208,7 @@ Unfortunately neither the [WordPress Codex](https://codex.wordpress.org/Database
 
 #### wp_usermeta
 
-The wp_usermeta table holds all information about a user besides that kept in the wp_users. WordPress plugins can add their own data too. Below is the data you should have in wp_usermeta.
+The `wp_usermeta` table holds all information about a user besides that kept in the `wp_users`. WordPress plugins can add their own data too. Below is the data you should have in `wp_usermeta`.
 
 umeta_id|user_id|meta_key                             |meta_value
 --------|-------|-------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -207,17 +248,17 @@ umeta_id|user_id|meta_key                             |meta_value
 Below are the column definitions for the table.
 
 - umeta_id: A unique identifier for each meta entry. It is an auto-incremented integer and serves as the primary key for the table.
-- user_id: The ID of the user to whom the meta entry belongs. It links back to the ID column in the wp_users table.
-- meta_key: The name of the metadata field. WordPress uses this field to store various pieces of user-related information, such as administrative capabilities (wp_capabilities), user roles (wp_user_level), and custom user meta added by themes or plugins.
+- user_id: The ID of the user to whom the meta entry belongs. It links to the ID column in the `wp_users` table.
+- meta_key: The name of the metadata field. WordPress uses this field to store various pieces of user-related information, such as administrative capabilities (`wp_capabilities`), user roles (`wp_user_level`), and custom user meta added by themes or plugins.
 - meta_value: The value of the metadata field. The information here can vary widely depending on the meta_key. This field can store serialized arrays or strings, depending on the type of data being stored.
 
-The wp_usermeta table uses an Entity-Attribute-Value (EAV) model. Instead of having one column for each type of field to store for a user, new fields are added using a key-value combination.
+The `wp_usermeta` table uses an Entity-Attribute-Value (EAV) model. Instead of having one column for each type of field to store for a user, new fields are added using a key-value combination.
 
 There are some things to note when deciding which fields you want to import to FusionAuth.
-- Blank fields, like description, and should be ignored.
+- Blank fields, like description, can be ignored.
 - Fields that are specific to WordPress, like rich_editing, can be ignored.
-- Some fields are PHP objects serialized into strings, like wp_capabilities with value `a:1:{s:13:"administrator";b:1;}`. This reads as: an array of 1 element containing a string of 13 elements and a boolean of value true. You will need to deserialize these when importing them.
-- Legacy fields, like wp_user_level, can be ignored.
+- Some fields are PHP objects serialized into strings, like `wp_capabilities` with value `a:1:{s:13:"administrator";b:1;}`. This reads as: an array of 1 element containing a string of 13 elements and a boolean of value true. You will need to deserialize these when importing them.
+- Legacy fields, like `wp_user_level`, can be ignored.
 
 Here are some of meta_key types you might find:
 
@@ -239,7 +280,7 @@ Here are some of meta_key types you might find:
 
 Clone the GitHub repository https://github.com/ritza-co/fusionauth-import-scripts.git. The `wordpress` directory contains all the scripts you need for this tutorial, and `exampleData` has the outputs of the scripts.
 
-Install the npm dependencies by running the code below.
+Install the npm dependencies by running the code below in a terminal opened in the repository directory.
 
 ```sh
 cd wordpress/src
@@ -252,13 +293,22 @@ The script exports the `wp_users` table as JSON with all fields related to each 
 
 Your file should look the same as `exampleData/1_wordpressExport/users.txt`. Each row is JSON, but the file as a whole is not JSON. Each row must end with a comma and the whole thing must be wrapped in brackets.
 
-To do this, copy `src/2_convertTextToJson.mjs` into the same directory as your text file and run the code below.
+To do this, copy your `users.txt` file into `src` and run the code below.
 
 ```sh
 node 2_convertTextToJson.mjs
 ```
 
 Your output should now be valid JSON and look like the file `exampleData/1_wordpressExport/users.json`.
+
+## Import Users
+
+### Use A WordPress Password Hash Plugin For FusionAuth
+
+remember to mention restarting docker
+
+
+###
 
 ### Prepare Users For Import To FusionAuth
 
@@ -268,19 +318,50 @@ TODO - try get roles to work
 
 
 
-## Import Users
-
-### Use A WordPress Password Hash Plugin For FusionAuth
-
-remember to mention restarting docker
 
 ## Bulk Migration
+
+### Verify the Import
+
+If the migration script ran successfully, you should be able to log in to FusionAuth with one of the imported users:
+- Browse to `http://localhost:9011`.
+- Enter username `user@example.com` and password `bitnami`.
+- Logging in should work.
+- Log out again and log in with `admin@example.com`.
+- Browse to <InlineUIElement>Users</InlineUIElement> and edit one of the imported users.
+- In the <InlineUIElement>Source</InlineUIElement> tab, you can see all the user details.
+
+#### Debug With The FusionAuth Database
+
+If you have errors logging in, use the FusionAuth database directly to see if your users were imported, and check their hashes manually.
+
+You can use any PostgreSQL browser. DBeaver will work. The connection details are in `fusionauth-import-scripts/stytch/fusionAuthDockerFiles/docker-compose.yml` and `.env`.
+
+In your database IDE, create a new PostgreSQL connection with the following details:
+- <InlineField>URL:</InlineField> `jdbc:postgresql://localhost:6432/fusionauth`
+- <InlineField>Host:</InlineField> `localhost`
+- <InlineField>Port:</InlineField> `6432`
+- <InlineField>Database:</InlineField> `fusionauth`
+- <InlineField>Username:</InlineField> `fusionauth`
+- <InlineField>Password:</InlineField> `hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3`
+
+Log in to the database and browse to `Databases/fusionauth/Schemas/public/Tables/identities` and `users`. These two tables will show you the login credentials and user personal information.
 
 ## What to Do Next
 
 Phpass is a relatively old and weak hashing algorithm, though not terrible. You might want to rehash your users' passwords on their next login with a stronger algorithm. To enable this setting, follow these [instructions](/docs/extend/code/password-hashes/custom-password-hashing#rehashing-user-passwords).
 
-## Additional support
+<WhatNext />
+
+## Additional Support
+
+<AdditionalSupport />
+
+
+
+
+
+--------
 
 
 Make hasher
