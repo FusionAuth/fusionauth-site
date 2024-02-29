@@ -10,6 +10,7 @@ codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-github-actions
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import Aside from '/src/components/Aside.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
+import ScrollRef from 'src/components/ScrollRef.astro';
 import AppDatabaseDiagram from 'src/diagrams/docs/get-started/run-in-cloud/github-actions/app-database.astro';
 import ActionWorkflowDiagram from 'src/diagrams/docs/get-started/run-in-cloud/github-actions/action-workflow.astro';
 import OverviewDiagram from 'src/diagrams/docs/get-started/run-in-cloud/github-actions/overview.astro';
@@ -231,19 +232,19 @@ Now that you know how to test your app after a change to it or FusionAuth, let's
  By default, GitHub prevents action workflows from running on forked repositories. To grant permission for the workflow to execute, navigate to the Actions tab on your forked repository and click on the <InlineUIElement>I understand my workflows, go ahead and enable them</InlineUIElement> button on the repository.
 </Aside>
 
-Open the file `.github/workflows/test.yaml`. Line 5 currently reads as follows.
+In this example we'll trigger the execution of the test by listening to push events on the main branch. Open the file `.github/workflows/test.yaml` in your IDE. The fifth line in the file specifies the branch name that triggers the execution of the action when commits are pushed to it. It currently reads as follows.
 
 ```yaml
       - main_RENAME_THIS_TO_ENABLE_TEST
 ```
 
-Change the line to the following.
+Change this line from a nonsense name to the main branch of your application.
 
 ```yaml
       - main
 ```
 
-You've renamed the trigger that causes this action to execute, from a nonsense name to the main branch of your application. Save the changes to the file, commit in Git, and push to GitHub, and the test will execute.
+Save the changes to the `.github/workflows/test.yaml` file, commit to the main branch of your repository in Git, and push to GitHub. The commit you just pushed will trigger the execution of the test. The test may take a few minutes to run as GitHub configures the necessary resources.
 
 You can browse to the Actions tab in your GitHub repository and then select <InlineUIElement>Test FusionAuth login</InlineUIElement> on the left sidebar to see the workflow run. The most recent workflow run will appear at the top of the list and you can see further details by clicking on the title of the workflow run items. Clicking on the <InlineUIElement>run-tests</InlineUIElement> job item will reveal further details of the workflow execution steps.
 
@@ -363,6 +364,8 @@ After the tests in your action have run successfully, you can deploy your app an
 
 To run a command on your server from within an action, use [SSH for GitHub Actions](https://github.com/appleboy/ssh-action). This action allows you to open a terminal on your server and run commands. Here's how you would change the version number of FusionAuth, and restart it in Docker.
 
+We'll discuss the secrets used in the code below in a later section <ScrollRef target="Secrets And Deployment Environments" />.
+
 ```yaml
 - name: Update FusionAuth and Restart Docker
   uses: appleboy/ssh-action@master
@@ -382,8 +385,6 @@ To run a command on your server from within an action, use [SSH for GitHub Actio
       # restart docker and leave it running
       docker-compose up -d fusionauth-app
 ```
-
-We'll discuss the secrets in a later section.
 
 Let's say you want to deploy a Go application you created. You can do one of the following:
 1. Download the repository of source code to the server and compile it there.
@@ -409,7 +410,7 @@ If this test passes, you can be certain your live website and FusionAuth can sti
 Your organization will probably have several environments (server and database) where your application runs:
 Environment | Purpose
 --- | ---
-Development | Where programmers are free to test new features without fear of breaking anything. Database users are anonymized.
+Development | Where programmers are free to test new features without fear of breaking anything. Database users are obfuscated.
 Test | Where quality assurance testers test the latest release that is scheduled to go live soon.
 Pre-production | An exact duplicate of the production environment, with real sensitive user information. This is used for debugging errors in production. Access is restricted.
 Production | The live site that must always be online. Access is restricted to a system administrator and automated deployment programs.
