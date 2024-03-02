@@ -15,20 +15,12 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 import InlineField from 'src/components/InlineField.astro';
 import Aside from '/src/components/Aside.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
-
 import Identifiers from 'src/content/docs/lifecycle/migrate-users/bulk/_identifiers.mdx';
 import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/bulk/_mapping-user-attributes.mdx';
 import SocialLoginNote from 'src/content/docs/lifecycle/migrate-users/bulk/_social-login-note.mdx';
 import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/bulk/_social-login-migration.mdx';
 import OtherEntitiesIntro from 'src/content/docs/lifecycle/migrate-users/bulk/_other-entities-intro.mdx';
 import ScrollRef from 'src/components/ScrollRef.astro';
-import SetUpFusionauth from 'src/content/docs/lifecycle/migrate-users/bulk/_set-up-fusionauth.mdx';
-import CreateTestTenant from 'src/content/docs/lifecycle/migrate-users/bulk/_create-test-tenant.mdx';
-import CreateTestApplication from 'src/content/docs/lifecycle/migrate-users/bulk/_create-test-application.mdx';
-import CreateApiKeySocial from 'src/content/docs/lifecycle/migrate-users/bulk/_create-api-key-social.mdx';
-import GetScript from 'src/content/docs/lifecycle/migrate-users/bulk/_get-script.mdx';
-import VerifyImport from 'src/content/docs/lifecycle/migrate-users/bulk/_verify-import.mdx';
-import FinalDestination from 'src/content/docs/lifecycle/migrate-users/bulk/_final-destination.mdx';
 import WhatNext from 'src/content/docs/lifecycle/migrate-users/bulk/_what-next.mdx';
 import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/bulk/_additional-support.mdx';
 
@@ -68,7 +60,7 @@ To follow this tutorial, you need:
 
 ### Other Entities
 
-<OtherEntitiesIntro other_migrated_entities="connections or roles" />
+<OtherEntitiesIntro migration_source_name={migration_source_name} other_migrated_entities="connections or roles" />
 
 #### Identifiers
 
@@ -78,15 +70,14 @@ This works for users, applications, and tenants, among others.
 
 ## Export Users
 
-Let's begin the tutorial. In this section you create a sample WordPress database in Docker, understand where the user details are kept in the database, and export them with a SQL script.
+In this section you create a sample WordPress database in Docker, understand where the user details are kept in the database, and export them with a SQL script.
 
 ### Start WordPress
 
-Create a file called `docker-compose.yaml` and insert the code below.
+Create a directory for this project.  In the directory create a file called `docker-compose.yaml` and insert the code below.
 
 ```yaml
 # Source: https://hub.docker.com/r/bitnami/wordpress-nginx
-
 version: '2'
 services:
   mariadb:
@@ -125,7 +116,7 @@ volumes:
     driver: local
 ```
 
-Open a terminal in the same directories as the file and run the code below to start a MariaDB and WordPress container.
+Open a terminal in the same directory as the file and run the code below to start a MariaDB and WordPress container.
 
 ```sh
 mkdir db && mkdir wp && sudo chmod -R 777 ./db ./wp
@@ -134,14 +125,14 @@ docker compose up
 
 This command creates two directories to hold the data for your WordPress and database files, shared with volumes in the Docker containers.
 
-Browse to http://localhost/wp-login.php. Log in with username `user` and password `bitnami`. This is the WordPress administrator.
+Browse to http://localhost/wp-login.php. Log in with username `user` and password `bitnami`. This is the default WordPress administrator configured in the Bitnami docker image we used.
 
 ### Add A New User
 
-If you use WordPress as a user management system you need to allow users to register themselves. To do this, browse to <InlineUIElement>Settings</InlineUIElement> — <InlineUIElement>General</InlineUIElement> — <InlineUIElement>Membership</InlineUIElement>. Enable <InlineUIElement>Anyone can register</InlineUIElement> and click <InlineUIElement>Save Changes</InlineUIElement>.
+If you use WordPress as a user management system you need to allow users to register themselves. To do this, browse to **Settings —> General —> Membership**. Enable <InlineUIElement>Anyone can register</InlineUIElement> and click <InlineUIElement>Save Changes</InlineUIElement>.
 
 Log out at the top right of the page. Browse to http://localhost/wp-login.php.
-Register a new user. Enter any username and email `a@example.com`.
+Register a new user. Enter a username and email `richard@example.com`.
 
 ### Explore The Users In The Database
 
@@ -153,29 +144,29 @@ WordPress has two tables related to users: `wp_users` and `wp_usermeta`.
 
 #### wp_users
 
-Below is the data you should have in `wp_users`. This table holds the user's identifiers and password hash.
+In `wp_users` you will have data similar to the one below. This table holds the user's identifiers and password hash.
 
 ID|user_login|user_pass                         |user_nicename|user_email      |user_url        |user_registered        |user_activation_key                          |user_status|display_name|
 ---|----------|----------------------------------|-------------|----------------|----------------|-----------------------|---------------------------------------------|-----------|------------
  1|user      |\$P$BVrdsW/NUuXDi0Od0uUdk2SnJHHmQ01|user         |user@example.com|http://127.0.0.1|2024-02-21 07:09:20.000|                                             |          0|user        |
- 2|a         |\$P$B/kCzTMDV7ccClaRShJPz8suWQdKc5/|a            |a@example.com   |                |2024-02-21 10:52:53.000|1708512773:\$P$BYELgLl.oz9lv.YRNp7ppBA1GxzOEY0|          0|a           |
+ 2|richard         |\$P$B/kCzTMDV7ccClaRShJPz8suWQdKc5/|richard            |richard@example.com   |                |2024-02-21 10:52:53.000|1708512773:\$P$BYELgLl.oz9lv.YRNp7ppBA1GxzOEY0|          0|a           |
 
-Unfortunately neither the [WordPress Codex](https://codex.wordpress.org/Database_Description) nor the [WordPress Developer Handbook](https://developer.wordpress.org) give definitions of the database fields and their meanings. To be certain of their purpose you would need to read the WordPress source code. But the column definitions below given by ChatGPT seem obvious enough to trust.
+Unfortunately neither the [WordPress Codex](https://codex.wordpress.org/Database_Description) nor the [WordPress Developer Handbook](https://developer.wordpress.org) give definitions of the database fields and their meanings. To be certain of their purpose you would need to read the WordPress source code, but the column definitions below seem obvious enough to trust.
 
-- ID: A unique identifier for each user. It is an auto-incremented integer and serves as the primary key for the table.
-- user_login: The user's username used for logging in to WordPress.
-- user_pass: The hashed password for the user.
-- user_nicename: A URL-friendly version of the user's username. It is used in the author slug URL.
-- user_email: The user's email address. It is unique for each user and used for account management and notifications.
-- user_url: The URL of the user's website. This field is optional and can be left blank.
-- user_registered: The date and time when the user registered on the WordPress site. It is stored in the 'YYYY-MM-DD HH:MM:SS' format.
-- user_activation_key: Used for storing a hash that is used to activate the user's account or for password reset purposes.
-- user_status: This field is deprecated and not used by core WordPress functions. It was originally intended for user status but is now typically left at its default value of 0.
-- display_name: The publicly displayed name of the user. This name is shown on the site in places like author posts or comments.
+- <InlineField>ID:</InlineField> A unique identifier for each user. It is an auto-incremented integer and serves as the primary key for the table.
+- <InlineField>user_login:</InlineField> The user's username used for logging in to WordPress.
+- <InlineField>user_pass:</InlineField> The hashed password for the user.
+- <InlineField>user_nicename:</InlineField> A URL-friendly version of the user's username. It is used in the author slug URL.
+- <InlineField>user_email:</InlineField> The user's email address. It is unique for each user and used for account management and notifications.
+- <InlineField>user_url:</InlineField> The URL of the user's website. This field is optional and can be left blank.
+- <InlineField>user_registered:</InlineField> The date and time when the user registered on the WordPress site. It is stored in the 'YYYY-MM-DD HH:MM:SS' format.
+- <InlineField>user_activation_key:</InlineField> Used for storing a hash that is used to activate the user's account or for password reset purposes.
+- <InlineField>user_status:</InlineField> This field is deprecated and not used by core WordPress functions. It was originally intended for user status but is now typically left at its default value of 0.
+- <InlineField>display_name:</InlineField> The publicly displayed name of the user. This name is shown on the site in places like author posts or comments.
 
 #### wp_usermeta
 
-The `wp_usermeta` table holds all information about a user besides that kept in the `wp_users`. WordPress plugins can add their own data too. Below is the data you should have in `wp_usermeta`.
+The `wp_usermeta` table holds all information about a user besides that kept in the `wp_users` table. WordPress plugins can add their own data too. Below is the data you should have in `wp_usermeta`.
 
 umeta_id|user_id|meta_key                             |meta_value
 --------|-------|-------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -197,7 +188,7 @@ umeta_id|user_id|meta_key                             |meta_value
 16|      1|session_tokens                       |`a:1:{s:64:"ed6949d03244303edfd56de57f46b77a7300c2c62406ccde3b717b700c4fce4a";a:4:{s:10:"expiration";i:1708684580;s:2:"ip";s:10:"172.25.0.1";s:2:"ua";s:101:"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.`
 17|      1|wp_dashboard_quick_press_last_post_id|4
 18|      1|community-events-location            |`a:1:{s:2:"ip";s:10:"172.25.0.0";}`
-19|      2|nickname                             |a
+19|      2|nickname                             |richard
 20|      2|first_name                           |
 21|      2|last_name                            |
 22|      2|description                          |
@@ -214,63 +205,82 @@ umeta_id|user_id|meta_key                             |meta_value
 
 Below are the column definitions for the table.
 
-- umeta_id: A unique identifier for each meta entry. It is an auto-incremented integer and serves as the primary key for the table.
-- user_id: The ID of the user to whom the meta entry belongs. It links to the ID column in the `wp_users` table.
-- meta_key: The name of the metadata field. WordPress uses this field to store various pieces of user-related information, such as administrative capabilities (`wp_capabilities`), user roles (`wp_user_level`), and custom user meta added by themes or plugins.
-- meta_value: The value of the metadata field. The information here can vary widely depending on the meta_key. This field can store serialized arrays or strings, depending on the type of data being stored.
+- <InlineField>umeta_id:</InlineField> A unique identifier for each meta entry. It is an auto-incremented integer and serves as the primary key for the table.
+- <InlineField>user_id:</InlineField> The ID of the user to whom the meta entry belongs. It links to the ID column in the `wp_users` table.
+- <InlineField>meta_key:</InlineField> The name of the metadata field. WordPress uses this field to store various pieces of user-related information, such as administrative capabilities (`wp_capabilities`), user roles (`wp_user_level`), and custom user meta added by themes or plugins.
+- <InlineField>meta_value:</InlineField> The value of the metadata field. The information here can vary widely depending on the meta_key. This field can store serialized arrays or strings, depending on the type of data being stored.
 
 The `wp_usermeta` table uses an Entity-Attribute-Value (EAV) model. Instead of having one column for each type of field to store for a user, new fields are added using a key-value combination.
 
 There are some things to note when deciding which fields you want to import to FusionAuth.
 - Blank fields, like description, can be ignored.
-- Fields that are specific to WordPress, like rich_editing, can be ignored.
+- Fields that are specific to WordPress, like <InlineField>rich_editing</InlineField>, can be ignored.
 - Some fields are PHP objects serialized into strings, like `wp_capabilities` with value `a:1:{s:13:"administrator";b:1;}`. This reads as: an array of 1 element containing a string of 13 elements and a boolean of value true. You will need to deserialize these when importing them.
 - Legacy fields, like `wp_user_level`, can be ignored.
 
-Here are some of meta_key types you might find:
+Here are some of the `meta_key` types you might find:
 
-- wp_capabilities: Stores the roles assigned to a user in a serialized array. This determines what the user can and cannot do within WordPress.
-- wp_user_level: A legacy way to define user roles and capabilities, primarily kept for backward compatibility. It represents the user's role as a numeric level.
-- rich_editing: Indicates whether the user prefers to use the visual rich editor when writing. The value is either "true" or "false".
-- syntax_highlighting: Indicates whether the user prefers to have syntax highlighting enabled in the code editor. The value is either "true" or "false".
-- comment_shortcuts: Indicates whether the user wishes to use keyboard shortcuts for comment moderation. The value is either "true" or "false".
-- admin_color: The color scheme the user has chosen for the admin dashboard.
-- use_ssl: Whether the user prefers to use SSL when logging into the admin area. The value is either "0" (do not force SSL) or "1" (force SSL).
-- show_admin_bar_front: Determines whether the WordPress admin bar should be displayed to the user when viewing the site. The value is either "true" or "false".
-- locale: The user's preferred language locale for the admin dashboard.
-- wp_dashboard_quick_press_last_post_id: The ID of the last post created using the "Quick Draft" dashboard widget.
-- dismissed_wp_pointers: Tracks the admin pointers dismissed by the user to avoid showing them again.
-- session_tokens: Stores the user's session tokens for maintaining login sessions across different devices.
-- wp_user-settings and wp_user-settings-time: Store user-specific settings for the admin area, such as the true/false status of checkboxes and the timestamp of the last settings update, respectively.
+- <InlineField>wp_capabilities:</InlineField> Stores the roles assigned to a user in a serialized array. This determines what the user can and cannot do within WordPress.
+- <InlineField>wp_user_level:</InlineField> A legacy way to define user roles and capabilities, primarily kept for backward compatibility. It represents the user's role as a numeric level.
+- <InlineField>rich_editing:</InlineField> Indicates whether the user prefers to use the visual rich editor when writing. The value is either "true" or "false".
+- <InlineField>syntax_highlighting:</InlineField> Indicates whether the user prefers to have syntax highlighting enabled in the code editor. The value is either "true" or "false".
+- <InlineField>comment_shortcuts:</InlineField> Indicates whether the user wishes to use keyboard shortcuts for comment moderation. The value is either "true" or "false".
+- <InlineField>admin_color:</InlineField> The color scheme the user has chosen for the admin dashboard.
+- <InlineField>use_ssl:</InlineField> Whether the user prefers to use SSL when logging into the admin area. The value is either "0" (do not force SSL) or "1" (force SSL).
+- <InlineField>show_admin_bar_front:</InlineField> Determines whether the WordPress admin bar should be displayed to the user when viewing the site. The value is either "true" or "false".
+- <InlineField>locale:</InlineField> The user's preferred language locale for the admin dashboard.
+- <InlineField>wp_dashboard_quick_press_last_post_id:</InlineField> The ID of the last post created using the "Quick Draft" dashboard widget.
+- <InlineField>dismissed_wp_pointers:</InlineField> Tracks the admin pointers dismissed by the user to avoid showing them again.
+- <InlineField>session_tokens:</InlineField> Stores the user's session tokens for maintaining login sessions across different devices.
+- <InlineField>wp_user-settings</InlineField> and <InlineField>wp_user-settings-time:</InlineField> Store user-specific settings for the admin area, such as the true/false status of checkboxes and the timestamp of the last settings update, respectively.
 
 ### Export The Users In SQL
 
-Clone the GitHub repository https://github.com/ritza-co/fusionauth-import-scripts.git. The `wordpress` directory contains all the scripts you need for this tutorial, and `exampleData` has the outputs of the scripts.
-
-Install the npm dependencies by running the code below in a terminal opened in the repository directory.
+FusionAuth provides export and import scripts under a permissive open source license. To get the scripts, clone the git repository:
 
 ```sh
-cd wordpress/src
+git clone https://github.com/FusionAuth/fusionauth-import-scripts
+```
+
+The `wordpress` directory contains all the scripts you need for this tutorial, and `wordpress/exampleData` has the output of the scripts.
+
+Navigate to the `wordpress/src` directory.
+
+```sh
+cd fusionauth-import-scripts/wordpress/src
+```
+
+Install the required npm dependencies by running the command.
+
+```sh
 npm install
 ```
 
-Run the SQL script `src/1_exportWordpressUsers.sql` against your WordPress database to export all the user data as JSON. View the output as text in DBeaver and save the `json_result` column to a file called `users.txt`.
+Run the SQL script `1_exportWordpressUsers.sql` that is in the `fusionauth-import-scripts/wordpress/src` directory against your WordPress database to export all the user data as JSON. View the output as text in DBeaver and save the `json_result` column to a file called `users.txt`.
+
+<Aside type="note">
+  If you have the `mysql` cli installed you can use a command similar to the one below to export user data from the database to the `users.txt` file. If you use the command to export the data you will also need to remove the column name `json_result` from the first line in the resulting `users.txt` file as well as remove any blank lines.
+
+  ```sh
+  mysql -h 127.0.0.1 -P 3306 -u wp wp --raw < 1_exportWordpressUsers.sql > users.txt
+  ```
+</Aside>
 
 The script exports the `wp_users` table as JSON with all `wp_usermeta` fields related to each user as an array called `meta`.
 
-Your file should look the same as `exampleData/1_wordpressExport/users.txt`. Each row is JSON, but the file as a whole is not JSON. Each row must end with a comma and the whole thing must be wrapped in brackets.
+Your `users.txt` file should now have user data similar to the one in `fusionauth-import-scripts/exampleData/1_wordpressExport/users.txt`. Each row is JSON, but the file as a whole is not JSON. Each row must end with a comma and the whole thing must be wrapped in brackets.
 
-To do this, copy your `users.txt` file into `src` and run the code below.
+To do this, copy your `users.txt` file into `fusionauth-import-scripts/wordpress/src` and run the code below.
 
 ```sh
 node 2_convertTextToJson.mjs
 ```
 
-Your output should now be valid JSON and look like the file `exampleData/1_wordpressExport/users.json`.
+Your output should now be valid JSON and look like the file `fusionauth-import-scripts/exampleData/1_wordpressExport/users.json`.
 
 ## Import Users
 
-Now that the user details have been extracted from {frontmatter.technology} you need to add a password hashing plugin to FusionAuth that can support them, map the {frontmatter.technology} fields to FusionAuth fields, and then the import the users in a script.
+Now that the user details have been extracted from {frontmatter.technology} you need to add a password hashing plugin to FusionAuth that supports the Phpass hashing algorithm used in {frontmatter.technology}, map the {frontmatter.technology} fields to FusionAuth fields, and then import the users using a script.
 
 ### Use A WordPress Password Hash Plugin For FusionAuth
 
@@ -280,7 +290,8 @@ The {frontmatter.hashTechnology} hashing algorithm is not [natively supported by
 The linked repository has multiple plugin projects. You need to build and install only the Password Hashing Plugins project.
 </Aside>
 
-Download and unzip the repository, or use Git in a terminal with the code below.
+Download and unzip the repository, or use Git in a terminal with the command below.
+
 ```sh
 git clone https://github.com/fusionauth/fusionauth-contrib.git
 ```
@@ -292,11 +303,11 @@ Open the file `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/myc
     lang="java"
 />
 
-Most of the other hashing plugins in this project take a plainext password and Base64 salt and return a Base64 hash. Phpass is more complicated however. The salt is stored inside the hash, as is the hashing algorithm name. Thus the `encrypt` function needs to perform the password hash comparison inside the Phpass algorithm to verify the user's password is correct. The {frontmatter.technology} user import script you will use shortly saves the existing hash to the salt field. If the `checkPassword` function succeeds then the `encrypt` function returns the existing salt. If it fails, the function returns a random number to ensure that the passwords will never match. Only if given a new password with no existing hash will `encrypt` return a new hash.
+Most of the other hashing plugins in this project take a plaintext password and Base64 salt and return a Base64 hash. Phpass is more complicated however. The salt is stored inside the hash, as is the hashing algorithm name. Thus the `encrypt` function needs to perform the password hash comparison inside the Phpass algorithm to verify the user's password is correct. The {frontmatter.technology} user import script you will use shortly saves the existing hash to the salt field. If the `checkPassword` function succeeds then the `encrypt` function returns the existing salt. If it fails, the function returns a random number to ensure that the passwords will never match. Only if given a new password with no existing hash will `encrypt` return a new hash.
 
 The `factor` parameter should always be 8.
 
-There are two other files linked to this scrypt plugin that you shouldn't need to alter:
+There are two other files linked to this plugin that you shouldn't need to alter:
 - `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleWordPressPhpassPasswordEncryptorTest.java`, which holds unit tests for the hasher.
 - `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/guice/MyExampleFusionAuthPluginModule.java`, which makes the hasher file known to FusionAuth.
 
@@ -305,23 +316,25 @@ If you make another hash plugin, you will need to make your own test and add you
 <Aside type="note">
 The {frontmatter.hashTechnology} library uses specific prefixes in password hashes to indicate the algorithm and cost parameters.
 
-- No prefix: Very old {frontmatter.technology} installations might use MD5 hashes. These hashes are 32 characters long and consist of hexadecimal characters.
-- $P$ or $P$B: This prefix indicates Phpass library. The $P$ indicates Phpass, and the character following this prefix represents the cost parameter of the hash. The actual algorithm is a modified MD5 with multiple iterations to increase security. This is the algorithm the Java plugin discussed above uses, and is the default in WordPress in 2024.
-- $1$: This prefix indicates an MD5-based crypt hash processed with a Unix crypt() function.
-- $2a$, $2x$, $2y$: These prefixes are associated with bcrypt.
-- $5$ and $6$: These prefixes indicate SHA-256 and SHA-512 hashing respectively.
-- $argon2i$, $argon2id$: These prefixes are for Argon2.
+- **No prefix:** Very old {frontmatter.technology} installations might use MD5 hashes. These hashes are 32 characters long and consist of hexadecimal characters.
+- **$P$ or $P$B:** This prefix indicates Phpass library. The $P$ indicates Phpass, and the character following this prefix represents the cost parameter of the hash. The actual algorithm is a modified MD5 with multiple iterations to increase security. This is the algorithm the Java plugin discussed above uses, and is the default in WordPress in 2024.
+- **$1$:** This prefix indicates an MD5-based crypt hash processed with a Unix crypt() function.
+- **$2a$, $2x$, $2y$:** These prefixes are associated with bcrypt.
+- **$5$ and $6$:** These prefixes indicate SHA-256 and SHA-512 hashing respectively.
+- **$argon2i$, $argon2id$:** These prefixes are for Argon2.
 </Aside>
 
 Build the Java plugin and add it to FusionAuth:
-- Open a terminal and run the code below to build a Docker container for Java, with the repository shared as a volume into the container.
+
+- Open a terminal in the `fusionauth-contrib` directory and run the commands below to build a Docker container for Java, with the repository shared as a volume into the container.
+
   ```sh
-  cd fusionauth-contrib/.devcontainer
+  cd .devcontainer
   docker build -t javaimage .
   cd ..
   docker run -it --name javabox -v .:/workspace javaimage
   ```
-- In the Docker container terminal that is now running, run the code below.
+- In the Docker container terminal that is now running, run the commands below.
   ```sh
   cd "/workspace/Password Hashing Plugins"
   mvn clean install
@@ -341,82 +354,100 @@ If you are not already running FusionAuth or want to test this process on anothe
   cd wordpress/fusionAuthDockerFiles
   docker compose up
   ```
-- FusionAuth will now be running and browsable at `http://localhost:9011`. You can log in with `admin@example.com` and `password`. The container is called `fa`.
+- FusionAuth will now be running and browsable at `http://localhost:9011`. You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and `password`. The container is called `fa`.
 - In the `fusionauth-contrib` terminal where you built the plugin, run the commands below to copy the JAR file into the FusionAuth container `plugins` directory.
   ```sh
   docker exec fa mkdir /usr/local/fusionauth/plugins
   docker cp "Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar" fa:/usr/local/fusionauth/plugins/fusionauth-example-password-encryptor-0.1.0.jar
   ```
-- Finally, restart FusionAuth for it to detect the plugin: in the terminal where FusionAuth is running in Docker, press Ctrl + C to stop it, wait, and run `docker compose up` again.
+- Finally, restart FusionAuth for it to detect the plugin. In the terminal where FusionAuth is running in Docker, press Ctrl + C to stop it, wait, and run `docker compose up` again.
 
 ### Create Roles For Your Users
 
-The two users you exported have roles Adminstrator and Subscriber, as seen in the `wp_capabilities` meta field. Create them in FusionAuth. In a terminal in the import scripts directory, run the code below.
+The two users you exported have roles Administrator and Subscriber, as seen in the `wp_capabilities` meta field. Create the roles in FusionAuth. In a terminal in the `fusionauth-import-scripts/wordpress/src` directory, run the code below.
 
 ```sh
-cd wordpress/src
 node 3_addRoles.mjs
 ```
 
-Now in the FusionAuth web interface, if you browse to <InlineField>Applications</InlineField> — `ExampleNodeApp` — <InlineField>Manage Roles</InlineField>, you can see the roles have been added for your sample Application. This Application was created in the Kickstart file when starting FusionAuth in the Docker compose file.
+Now in the [FusionAuth admin interface](http://localhost:9011/admin), if you browse to **Applications —> WordpressTestImportApp**, click the <InlineUIElement>Manage Roles</InlineUIElement> button, you can see the roles have been added for your sample Application. This Application was created using a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart) defined in `fusionauth-import-scripts/wordpress/fusionAuthDockerFiles/kickstart/kickstart.json`. When FusionAuth comes up for the first time, it will look at the `kickstart.json` file and configure FusionAuth to the specified state.
 
 ### Prepare Users For Import To FusionAuth
 
 The next script, `4_convertWpUserToFaUser.mjs`, is the most important. It maps the fields of `users.json` to FusionAuth fields. You may wish to alter this script to change which fields are ignored, or where they are mapped.
 
-The script uses `stream-json` — a JSON library that can read massive files with millions of users incrementally. It opens `users.json` for reading in the line `new Chain([fs.createReadStream(inputFilename), parser(), new StreamArray(),]);`. For more information, read https://github.com/uhop/stream-json. The `processUsers()` function calls `getFaUserFromUser()` to map the {frontmatter.techonology} user to FusionAuth and then saves them to `faUsers.json`.
+The script uses `stream-json` — a JSON library that can read massive files with millions of users incrementally. It opens the `users.json` file for reading in the line `new Chain([fs.createReadStream(inputFilename), parser(), new StreamArray(),]);`. For more information, read https://github.com/uhop/stream-json. The `processUsers()` function calls `getFaUserFromUser()` to map the {frontmatter.technology} user to FusionAuth and then saves them to a `faUsers.json` file.
 
 The `getFaUserFromUser()` function does a few things:
-- Maps as many matching fields from {frontmatter.techonology} to FusionAuth as possible.
-- Stores all {frontmatter.techonology} user details that don't map to FusionAuth in the `data` field. If there are details you want to include or exlude, alter the `dataToIgnore` list at the top of the file.
+- Maps as many matching fields from {frontmatter.technology} to FusionAuth as possible.
+- Stores all {frontmatter.technology} user details that don't map to FusionAuth in the `data` field. If there are details you want to include or exclude, alter the `dataToIgnore` list at the top of the file.
 - Ignores empty fields and arrays.
 - Uses the name we registered for the hashing algorithm in the Java plugin in `faUser.encryptionScheme = 'example-wordpress-phpass';`.
 - Adds Registrations (a Role link between a User and an Application) for users. You will need to change these Ids to match those of your application when doing a real migration.
 
-There are a few helper functions at the bottom of the file to extract keys and values from the {frontmatter.techonology} `wp_usermeta` object and deserialize them from PHP. These are used when working with `wp_capabilities`.
+There are a few helper functions at the bottom of the file to extract keys and values from the {frontmatter.technology} `wp_usermeta` object and deserialize them from PHP. These are used when working with `wp_capabilities`.
 
 Carefully read this function and make sure that the user information you need is imported correctly. If any information is not needed, you can comment out the related lines.
 
 If you are uncertain what a user attribute in FusionAuth does, read more in the [user guide](/docs/apis/users), as linked in the [general migration guide](/docs/lifecycle/migrate-users/bulk/general) recommended earlier.
 
+In a terminal in the `fusionauth-import-scripts/wordpress/src` directory run the script with the following command.
+
+```sh
+node 4_convertWpUserToFaUser.mjs
+```
+
 ### Save The User Details And Hash To FusionAuth
 
 Now you have the users file `faUsers.json` and the {frontmatter.hashTechnology} plugin is installed. To import the users into FusionAuth, you need to run the Node.js import script.
 
-In the terminal run the code below.
+In a terminal in the `fusionauth-import-scripts/wordpress/src` directory run the command below.
+
 ```sh
 node 5_import.mjs
 ```
 
-This script uses `@fusionauth/typescript-client` — The FusionAuth SDK for Node.js. It's used ony for a single operation: `fa.importUsers(importRequest)`. For more information, read the [FusionAuth Typescript Client Library](/docs/sdks/typescript) documentation.
+This script uses the FusionAuth SDK for Node.js `@fusionauth/typescript-client`. It's used only for a single operation: `fa.importUsers(importRequest)`. For more information, read the [FusionAuth Typescript Client Library](/docs/sdks/typescript) documentation.
 
 Finally, this script imports users individually. If this is too slow when running the production migration, wrap the `importUsers()` FusionAuth SDK call in a loop that bundles users in batches of 1000.
 
 ### Verify the Import
 
-If the migration script ran successfully, you should be able to log in to FusionAuth with one of the imported users:
-- Browse to `http://localhost:9011`.
-- Enter username `user@example.com` and password `bitnami`.
-- Logging in should work.
-- Log out again and log in with `admin@example.com`.
-- Browse to <InlineUIElement>Users</InlineUIElement> and edit one of the imported users.
-- In the <InlineUIElement>Source</InlineUIElement> tab, you can see all the user details.
+If the migration script ran successfully, you should be able to log in to the `WordpressTestImportApp` application with one of the imported users. In the [FusionAuth admin UI](http://localhost:9011/admin) navigate to **Applications —> WordpressTestImportApp**. Click the <InlineUIElement>View</InlineUIElement> button (green magnifying glass) next to the application and note the <InlineField>OAuth IdP login URL</InlineField>
+
+<img src={`/img/docs/lifecycle/migrate-users/bulk/${migration_source_dir}/find-login-url.png`} alt="Application login URL." width="1200" role="bottom-cropped" />
+
+Copy this URL and open it in a new incognito browser window. (If you don’t use an incognito window, the admin user session will interfere with the test.) You should see the login screen. Enter username `user@example.com` and password `bitnami`. Logging in should work.
+
+<Aside type="note">
+  After a successful test login, the user will be redirected to a URL like `https://example.com/?code=FlZF97WIYLNxt4SGD_22qvpRh4fZ6kg_N89ZbBAy1E4&locale=fr&userState=Authenticated`. This occurs because you haven't set up a web application to handle the authorization code redirect yet.
+
+  That is an important next step but is beyond the scope of this document. Consult the [5 minute setup guide](/docs/quickstarts/5-minute-setup-guide) for an example of how to do this.
+</Aside>
+
+
+Next, log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and password `password`. Review the user entries to ensure the data was correctly imported
+
+<img src={`/img/docs/lifecycle/migrate-users/bulk/${migration_source_dir}/list-users.png`} alt="List of imported users." width="1200" role="bottom-cropped" />
+
+You can manage a user by clicking on the <InlineUIElement>Manage</InlineUIElement> button (black button) to the right of the user in the list of users to review the details of the imported user’s profile. In the <InlineUIElement>Source</InlineUIElement> tab, you can see all the user details as a JSON object.
 
 #### Debug With The FusionAuth Database
 
-If you have errors logging in, use the FusionAuth database directly to see if your users were imported, and check their hashes manually.
+If you have errors logging in, you can use the FusionAuth database directly to see if your users were imported, and check their hashes manually.
 
 You can use any PostgreSQL browser. DBeaver will work. The connection details are in `fusionauth-import-scripts/wordpress/fusionAuthDockerFiles/docker-compose.yml` and `.env`.
 
 In your database IDE, create a new PostgreSQL connection with the following details:
+
 - <InlineField>URL:</InlineField> `jdbc:postgresql://localhost:6432/fusionauth`
 - <InlineField>Host:</InlineField> `localhost`
-- <InlineField>Port:</InlineField> `6432`
+- <InlineField>Port:</InlineField> `5432`
 - <InlineField>Database:</InlineField> `fusionauth`
 - <InlineField>Username:</InlineField> `fusionauth`
 - <InlineField>Password:</InlineField> `hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3`
 
-Log in to the database and browse to `Databases/fusionauth/Schemas/public/Tables/identities` and `users`. These two tables will show you the login credentials and user personal information.
+Log in to the database and browse to `Databases/fusionauth/Schemas/public/Tables`. Tables `identities` and `users` will show you the login credentials and user personal information.
 
 ## What to Do Next
 
