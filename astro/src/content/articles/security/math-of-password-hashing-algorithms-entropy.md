@@ -185,7 +185,7 @@ numberOfDays = numberOfHours / 24 = 116,909,722 or 116.9 million
 numberOfYears = numberOfDays / 365 = 320,300
 ```
 
-Not bad. By slowing down the hash computation, we have increased the time from 4 minutes using our Bitcoin rig to 320,300 years. In this comparision you can see the practical difference between using SHA2 and BCrypt. BCrypt is purpose built to be extremely slow in comparison to SHA2 and other more traditional hashing algorithms.
+Not bad. By slowing down the hash computation, we have increased the time from 4 minutes using our Bitcoin rig to 320,300 years. In this comparison you can see the practical difference between using SHA2 and BCrypt. BCrypt is purpose built to be extremely slow in comparison to SHA2 and other more traditional hashing algorithms.
 
 And here lies the debate that the security industry has been having for years:
 
@@ -203,4 +203,4 @@ At the time of this writing, there are still numerous simple algorithms that hav
 
 ## How FusionAuth does it
 
-FusionAuth defaults to `PBKDF2` with `24,000` iterations as the default password hashing scheme. This algorithm is quite complex and with the high number of iterations, it is sufficiently slow such that long and short passwords are challenging to brute force attack. Fusionauth also allow you to change the default algorithm as well as upgrade the algorithm for a user when they log in. This allows you to upgrade your applications password security over time.
+FusionAuth defaults to `PBKDF2` with `24,000` iterations as the default password hashing scheme. This algorithm is quite complex and with the high number of iterations, it is sufficiently slow such that long and short passwords are challenging to brute force attack. FusionAuth also allow you to change the default algorithm as well as upgrade the algorithm for a user when they log in. This allows you to upgrade your applications password security over time.

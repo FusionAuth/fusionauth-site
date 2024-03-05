@@ -32,7 +32,7 @@ Each of these methods of proof is called a 'factor'. Factors must be kept secure
 
 Multi-factor authentication is best understood as requiring two or more factors in order to authenticate a user. MFA is a superset of two factor authentication (2FA). With MFA an arbitrary number of factors of proof can be required. With 2FA, the number of factors is limited to two.
 
-Multi-factor authentication isn't just for online user accounts, though. If you are accessing a safe deposit box in a bank, you need a key (something you have) and a signature (something you are) or an id (another thing you have). However, this article will focus on online MFA.
+Multi-factor authentication isn't just for online user accounts, though. If you are accessing a safe deposit box in a bank, you need a key (something you have) and a signature (something you are) or an Id (another thing you have). However, this article will focus on online MFA.
 
 The majority of user accounts have a password as a factor. You might be working in such a system right now. As engineering teams become more aware of the problem of user account hijacking and its real world consequences, more are allowing or requiring additional factors of authentication. 
 
@@ -169,7 +169,7 @@ The more factors you require, the more secure access is. No online system, howev
 
 Solution availability, security and user experience all play a role in determining what solution is best for your users. When you are incorporating MFA into your application, consider how widely deployed options are among your users or potential audience. 
 
-Below is a diagram displaying estimated relative deployment and security attributes of various factors. When deciding which is right for your application, think about security needs as well as what your users have accessible and can use, unless you will be providing all your users with a factor such as a Yubikey. You can also allow multiple factors and let users select one that works for them.
+Below is a diagram displaying estimated relative deployment and security attributes of various factors. When deciding which is right for your application, think about security needs as well as what your users have accessible and can use, unless you will be providing all your users with a factor such as a YubiKey. You can also allow multiple factors and let users select one that works for them.
 
 <div class="bg-slate-200 w-full">
 <img src="/img/articles/mfa/security-deployment-spectrum.svg" alt="Secure, sure, but is it available?"/>
@@ -243,7 +243,7 @@ Physical devices, such as Yubikeys, can be used for authentication too. These de
 
 These devices differ from the other factors in this category because they cost money. This makes them acceptable for administrators, technical users, or high value accounts. It also makes this factor problematic for a broad user base; they will likely not have such devices.
 
-As a developer, to use this factor, you need to build in support for the device using an SDK or a standard which the device is compatible with, such as WebAuthN. Your users need to ensure they don't lose it and have it available whenever they authenticate.
+As a developer, to use this factor, you need to build in support for the device using an SDK or a standard which the device is compatible with, such as WebAuthn. Your users need to ensure they don't lose it and have it available whenever they authenticate.
 
 ### Knowledge: What You Know
 
@@ -303,9 +303,9 @@ To implement authentication using biometric factors, first choose a solution. Ma
 You could also use biometrics integrated into an operating system. All major operating systems for both mobile phones and computers have some level of biometrics support:
 
 * Android has the [Biometric library](https://developer.android.com/jetpack/androidx/releases/biometric).
-* iOS supports [Face ID and Touch ID](https://developer.apple.com/design/human-interface-guidelines/ios/user-interaction/authentication/).
+* iOS supports [Face Id and Touch Id](https://developer.apple.com/design/human-interface-guidelines/ios/user-interaction/authentication/).
 * Windows has [Windows Hello](https://docs.microsoft.com/en-us/windows-hardware/design/device-experiences/windows-hello), which integrates with hardware such as a fingerprint scanner.
-* MacOS has [Touch ID](https://support.apple.com/guide/mac-help/touch-id-mchl16fbf90a/mac).
+* MacOS has [Touch Id](https://support.apple.com/guide/mac-help/touch-id-mchl16fbf90a/mac).
 
 If you are building web applications, use the [WebAuthn W3C standard](https://www.w3.org/TR/webauthn-2/), which lets the browser access the operating systems biometric implementations. We'll cover this standard in more detail below.
 
@@ -378,7 +378,7 @@ Don't forget to talk to your end users, or at least a subset of them. The factor
 
 If shared secrets need to be captured at authentication or registration, build or buy solutions which allow you to do so. These could be questions and answers, a seed for a TOTP solution, or even registering a physical device. 
 
-Plan for a minimum level of MFA, but allow users who want more to go beyond that. Many security conscious users will want to enable MFA for their accounts; allow them to do so. By building this in, you allow users to self select the level of security which makes sense for them. For example, one person may run their entire life through their gmail account, while another may use it only occasionally as a throwaway email account. In the former case, MFA makes sense; in the latter it does not.
+Plan for a minimum level of MFA, but allow users who want more to go beyond that. Many security conscious users will want to enable MFA for their accounts; allow them to do so. By building this in, you allow users to self select the level of security which makes sense for them. For example, one person may run their entire life through their Gmail account, while another may use it only occasionally as a throwaway email account. In the former case, MFA makes sense; in the latter it does not.
 
 Your MFA policies and configuration should be flexible. You can store MFA requirements in a central location in your application, such as your identity provider, a specialized datastore, or in a configuration file. Be aware that these requirements will evolve as technology and your applications do. New features will be built and some of them may require step up. Different kinds of users may start using the system. This policy configuration should itself be protected and only allow privileged users access.
 

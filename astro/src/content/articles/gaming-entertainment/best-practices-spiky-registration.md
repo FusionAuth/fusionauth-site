@@ -89,7 +89,7 @@ This tip is just as important for better user experience as it is for preserving
 
 Implementing authentication and authorization can be tricky, and if it’s not handled properly, you could face an information leak or full-blown database hack. If you decide to implement your own authentication and authorization service, think carefully about how you store user details. You should also make sure you use appropriate hashing algorithms and that the passwords are effectively salted before being stored in the database. You can read a bit about the underlying math [in this article](/articles/security/math-of-password-hashing-algorithms-entropy).
 
-Explore using a third-party user authentication and authorization service. It helps you focus on what makes your game unique, and it’s especially useful when you want to implement SSO, and social auth. Depending on your platform, you may want to allow a user to log in with a gaming network login, such as the XBox or PlayStation Network. An auth server can help with this integration.
+Explore using a third-party user authentication and authorization service. It helps you focus on what makes your game unique, and it’s especially useful when you want to implement SSO, and social auth. Depending on your platform, you may want to allow a user to log in with a gaming network login, such as the Xbox or PlayStation Network. An auth server can help with this integration.
 
 Using an external auth server ensures that if the gameplay code breaks, the registration continues working, so you can reach out to registered users once the game comes back online. One option for third-party auth is [FusionAuth](/). It keeps your user data secure and provides all the social login integrations your game might need.
 
