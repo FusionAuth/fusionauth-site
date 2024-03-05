@@ -6,7 +6,7 @@
 EXTRA_IN_JSON_NOT_NAMED_CORRECTLY=4 
 
 # fusionauth-example-template and (temporarily) fusionauth-example-vue-sdk
-EXTRA_IN_GH_NOT_DISPLAYABLE=3
+EXTRA_IN_GH_NOT_DISPLAYABLE=2
 
 cat astro/src/content/json/exampleapps.json|jq '.[]|.url' |sed 's/"//g'|sed 's!https://github.com/!!i' > json.list
 COUNT_IN_JSON=`wc -l json.list |sed 's/^ *//' |sed 's/ .*//'`
