@@ -1,5 +1,5 @@
 ---
-title: Exploring The Role Of The Blue Team, Red Team, And Purple Team In Cybersecurity
+title: Exploring The Roles Of The Blue Team, The Red Team, And The Purple Team In Cybersecurity
 description: Learn about the roles and some of the tools of the Blue Team and Red Team, as well as the concept of the Purple Team.
 author: Jennifer Watkins
 icon: /img/icons/auth-providers-zero-trust.svg
