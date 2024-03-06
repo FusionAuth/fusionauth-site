@@ -89,8 +89,7 @@ Despite potential preparation and previous detection by Dinoch's would-be Blue T
 
 The persistence of the Red Team finally led to a breach when they used a single employee's hash to crack into an administrative account, enabling them to send malicious emails from a trusted source. Once a system has been breached, the Blue Team's defensive tactics become even more important to try to limit the damage, prevent data theft and protect sensitive information. 
 
-TODO link 
-An article by Converse Technology emphasizes that a response team should include: forensic, legal, IT, HR, operations, communications, investor relations staff, and management experts. Getting more than a Blue Team involved can further deescalate the attack and highlights the importance for a shared responsibility model. Blue Teams must be skilled in communicating technical information, security risks, and mitigation strategies to various departments of the company. 
+[An article by Converge Technology](https://convergetechmedia.com/how-to-mitigate-and-respond-to-data-breaches/) emphasizes that a response team should include: forensic, legal, IT, HR, operations, communications, investor relations staff, and management experts. Getting more than a Blue Team involved can further deescalate the attack and highlights the importance for a shared responsibility model. Blue Teams must be skilled in communicating technical information, security risks, and mitigation strategies to various departments of the company. 
 
 Once the Blue Team identifies the attack and its source, they are able to isolate compromised systems, disable accounts, change passwords, and move the network offline. Blue Team forensics play an integral role in the identification process, procedures, and attack vectors. Logging, reporting and recovery are all other critical aspects of the Blue Team's responsibilities.
 
