@@ -14,7 +14,7 @@ WebAuthn requires something called an authenticator. What is an authenticator? A
 
 That's a bit tautological, isn't it? Well, yes, but read on for more details. Also, clowns.
 
-[![Download passkeys whitepaper](/img/cta/passkeys-wwh.png)](https://fusionauth.io/tech-papers/why-passkeys-improve-user-security-how-to-implement-them)
+[![Download passkeys whitepaper](/img/cta/passkeys-wwh.png)](/tech-papers/why-passkeys-improve-user-security-how-to-implement-them)
 
 
 ## WebAuthn Overview
