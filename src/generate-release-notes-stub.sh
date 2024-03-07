@@ -30,7 +30,7 @@ gh_issue_list() {
 
     gh issue list --repo FusionAuth/fusionauth-issues -m $milestone --state all -L 250 --label $label --search "sort:created-asc" --json number,body,title --jq ".[]|[.number,.body,.title] | @tsv" |
     while IFS=$'\t' read -r number body title; do
-        generated_copy=`echo $body | awk -F'### Release Notes' '{print $2}'`
+        generated_copy=`echo $body | awk 'BEGIN {FS = "### Release [Nn]otes"} {print $2}'`
         if [[ "${generated_copy}" == "" ]]; then
             generated_copy=${title}
         else

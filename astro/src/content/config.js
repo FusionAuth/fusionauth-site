@@ -59,6 +59,7 @@ const docsCollection = defineCollection({
     nestedHeadings: z.boolean().optional(),
     disableTOC: z.boolean().default(false),
     topOfNav: z.boolean().default(false),
+    idpDisplayName: z.string().optional(),
   }),
 });
 
