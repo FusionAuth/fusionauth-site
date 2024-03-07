@@ -5,6 +5,13 @@ if [[ $# < 1 ]]; then
   exit 1
 fi
 
+which gh > /dev/null
+
+if [[ $? -ne 0 ]]; then
+  echo "GitHub CLI is required to run this script. Try running \"brew install gh\" first."
+  exit 2
+fi
+
 # Issues should be labeled with exactly one of: "bug", "enhancement", "feature", "security", or "internals"
 # Without one of these labels, they won't be included
 # If an issue has multiple labels, it will be repeated
