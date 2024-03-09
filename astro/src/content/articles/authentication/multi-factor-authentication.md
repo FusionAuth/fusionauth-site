@@ -1,13 +1,14 @@
 ---
-title: Multi-Factor Authentication For Developers
-description: What is multi-factor authentication and why is it important?
+title: "Multi-Factor Authentication (MFA): The Ultimate Guide"
+description: What is multi-factor authentication and how it works?
 author: Dan Moore
 section: Authentication
 tags: mfa 2fa multi-factor-authentication two-factor-authentication user-experience customer-experience security policie sms totp factors ap-push tradeoffs open-standards biometric
 icon: /img/icons/multi-factor-authentication.svg
+darkIcon: /img/icons/multi-factor-authentication-dark.svg
 ---
 
-As more of our lives move online, [multi-factor authentication (MFA)](/docs/lifecycle/authenticate-users/multi-factor-authentication) becomes increasingly important as a way of keeping our accounts secure. As a user, you know you should enable MFA on any accounts containing valuable data or which you want to keep safe. 
+As more of our lives move online, multi-factor authentication (MFA) becomes increasingly important as a way of keeping our accounts secure. As a user, you know you should enable MFA on any accounts containing valuable data or which you want to keep safe. 
 
 As a developer or software engineer, MFA may seem a bit mysterious. This article will cover:
 
@@ -31,7 +32,7 @@ Each of these methods of proof is called a 'factor'. Factors must be kept secure
 
 Multi-factor authentication is best understood as requiring two or more factors in order to authenticate a user. MFA is a superset of two factor authentication (2FA). With MFA an arbitrary number of factors of proof can be required. With 2FA, the number of factors is limited to two.
 
-Multi-factor authentication isn't just for online user accounts, though. If you are accessing a safe deposit box in a bank, you need a key (something you have) and a signature (something you are) or an id (another thing you have). However, this article will focus on online MFA.
+Multi-factor authentication isn't just for online user accounts, though. If you are accessing a safe deposit box in a bank, you need a key (something you have) and a signature (something you are) or an Id (another thing you have). However, this article will focus on online MFA.
 
 The majority of user accounts have a password as a factor. You might be working in such a system right now. As engineering teams become more aware of the problem of user account hijacking and its real world consequences, more are allowing or requiring additional factors of authentication. 
 
@@ -44,6 +45,14 @@ When a system supports more than one method or factor of authentication, it supp
 2FA, on the other hand, occurs when a user provides two factors of authentication. This often happens at the moment of login, but can take place at other times. For example, when a particularly sensitive operation like account deletion occurs, an additional factor may be required. One of the two factors is typically a password, but not always.
 
 In general, MFA outlines a system's capabilities, while 2FA describes how many factors are required when authentication is needed.
+
+### What is Adaptive Multi-factor Authentication?
+
+At its core, adaptive MFA is about flexibility and intelligence in security. You can read more about our approach to Adaptive MFA through our [Advanced Threat Detection](/docs/operate/secure-and-monitor/advanced-threat-detection) features. 
+
+Imagine a security system that not only asks for your credentials but also reads the room – where you are, what device you're using, even the time of day. It's like having a doorman who knows not just your face, but also your habits and preferences. If you're logging in from your usual laptop in the comfort of your home office, adaptive MFA might just give you a nod with a simple password check. But if you're trying to access sensitive data from a café in a different city, it might raise an eyebrow and ask for additional proof of identity, like a fingerprint or a one-time code sent to your phone.
+
+What's truly fascinating about adaptive MFA is its dynamic nature. It's not just about adding layers of security; it's about adding the right layers, at the right time. This approach minimizes friction for users, making security feel less like a series of hoops to jump through and more like a smart, responsive ally. It's a dance between convenience and caution, where security measures are tailored in real-time, based on the perceived level of risk. This not only enhances the user experience but also fortifies defenses, ensuring that the keys to the kingdom aren't handed over too easily, nor kept under lock and key unnecessarily.
 
 ## Why Use Multi-factor Authentication (MFA)?
 
@@ -74,6 +83,14 @@ As a developer, you need to balance between the user experience and the risk of 
 </div>
 
 The hard part is the situations where the answer isn't obvious. What are some situations where you should consider requiring multi-factor authentication?
+
+## Why is MFA Important?
+
+MFA is a vital player in the grand game of digital security, a game where the stakes are perpetually high and the rules are ever-changing. MFA is always thinking two steps ahead, ensuring that your data isn't just protected by a single password. In a world brimming with savvy hackers and ever-evolving threats, relying solely on passwords is like leaving your front door unlocked in an unpredictable neighborhood.
+
+MFA introduces layers, and in security, layers are good. Each additional factor makes it exponentially harder for unwanted guests to barge in. By requiring multiple forms of verification MFA ensures that a stolen password alone isn't enough to breach your digital sanctum. This series of checkpoints, each with its own protection, scrutinizes different aspects of a person's identity before allowing them entry.
+
+MFA isn't just an option anymore; it's a necessity in the landscape of digital security. It's about building a resilient defense system that adapts and evolves, just as the threats do. With MFA we're safeguarding trust, reputation, and peace of mind.
 
 ## When To Require Multiple Factors Of Authentication
 
@@ -125,7 +142,21 @@ Such data can help determine if the person behind the authentication request is 
 
 Requiring MFA before access is allowed when suspicious activity occurs provides another check against stolen credentials. That German hacker could have acquired a user's password, but it's harder to steal a one time passcode sent to the user's phone as well.
 
-## Commonly Used Factors For MFA
+## How Does Multi-factor Authentication Work?
+
+MFA orchestrates a symphony of verification methods to ensure that your data is impervious to the sly maneuvers of intruders.
+
+Imagine MFA as a sophisticated security checkpoint, where your identity must be confirmed through a series of proofs - 
+
+* The first proof is something you know, like a password or a PIN.
+* Then comes something you have, such as a smartphone or a security token. 
+* It can even add a third layer – something you are, like a fingerprint or facial recognition.
+
+The beauty of MFA lies in its harmony. Each factor covers the weaknesses of the others, creating a defense that's robust and resilient. When one factor is compromised, the others stand firm. This multi-layered approach ensures that accessing sensitive information isn't just a matter of guessing a password. 
+
+In the digital world, where threats loom large and unseen, MFA is ever watchful, always evolving, ensuring that robust security, but still maintaining convenience. 
+
+## Types of Multi-factor Authentication Methods
 
 Beyond a password, what are other ways a user can prove who they are? As mentioned above, there are four main categories. 
 
@@ -138,7 +169,7 @@ The more factors you require, the more secure access is. No online system, howev
 
 Solution availability, security and user experience all play a role in determining what solution is best for your users. When you are incorporating MFA into your application, consider how widely deployed options are among your users or potential audience. 
 
-Below is a diagram displaying estimated relative deployment and security attributes of various factors. When deciding which is right for your application, think about security needs as well as what your users have accessible and can use, unless you will be providing all your users with a factor such as a Yubikey. You can also allow multiple factors and let users select one that works for them.
+Below is a diagram displaying estimated relative deployment and security attributes of various factors. When deciding which is right for your application, think about security needs as well as what your users have accessible and can use, unless you will be providing all your users with a factor such as a YubiKey. You can also allow multiple factors and let users select one that works for them.
 
 <div class="bg-slate-200 w-full">
 <img src="/img/articles/mfa/security-deployment-spectrum.svg" alt="Secure, sure, but is it available?"/>
@@ -146,7 +177,7 @@ Below is a diagram displaying estimated relative deployment and security attribu
 
 Let's look at each category and examine the factors in more detail.
 
-### What You Have
+### Posession: What You Have
 
 Having possession of a physical object or access to a separate user account can be a secure authentication factor. The out of band communication of a one time code is also a form of "what you have".
 
@@ -212,9 +243,9 @@ Physical devices, such as Yubikeys, can be used for authentication too. These de
 
 These devices differ from the other factors in this category because they cost money. This makes them acceptable for administrators, technical users, or high value accounts. It also makes this factor problematic for a broad user base; they will likely not have such devices.
 
-As a developer, to use this factor, you need to build in support for the device using an SDK or a standard which the device is compatible with, such as WebAuthN. Your users need to ensure they don't lose it and have it available whenever they authenticate.
+As a developer, to use this factor, you need to build in support for the device using an SDK or a standard which the device is compatible with, such as WebAuthn. Your users need to ensure they don't lose it and have it available whenever they authenticate.
 
-### What You Know
+### Knowledge: What You Know
 
 A password is a common factor in this category. Other options here suffer from the same strengths and weaknesses as passwords:
 
@@ -255,7 +286,7 @@ With this technique, a user splits a password into two pieces. One is stored in 
 
 This method protects against the compromise of a password manager or other user side password storage mechanism. However, if the system which stores the hash of a password is compromised, or the password is discovered in transit, a horcrux won't help.
 
-### Who You Are
+### Inherence: Who You Are
 
 Another factor category is "who you are". These factors are tied to your physical body or your behavior; the information must be translated to a digital format and shared securely with the authentication system. As a developer, such biometrics are really intriguing: nothing to forget or lose. Deployment and access varies, however. 
 
@@ -272,9 +303,9 @@ To implement authentication using biometric factors, first choose a solution. Ma
 You could also use biometrics integrated into an operating system. All major operating systems for both mobile phones and computers have some level of biometrics support:
 
 * Android has the [Biometric library](https://developer.android.com/jetpack/androidx/releases/biometric).
-* iOS supports [Face ID and Touch ID](https://developer.apple.com/design/human-interface-guidelines/ios/user-interaction/authentication/).
+* iOS supports [Face Id and Touch Id](https://developer.apple.com/design/human-interface-guidelines/ios/user-interaction/authentication/).
 * Windows has [Windows Hello](https://docs.microsoft.com/en-us/windows-hardware/design/device-experiences/windows-hello), which integrates with hardware such as a fingerprint scanner.
-* MacOS has [Touch ID](https://support.apple.com/guide/mac-help/touch-id-mchl16fbf90a/mac).
+* MacOS has [Touch Id](https://support.apple.com/guide/mac-help/touch-id-mchl16fbf90a/mac).
 
 If you are building web applications, use the [WebAuthn W3C standard](https://www.w3.org/TR/webauthn-2/), which lets the browser access the operating systems biometric implementations. We'll cover this standard in more detail below.
 
@@ -286,7 +317,7 @@ Another example is keystroke pattern recognition; that is, how a user types, the
 
 However, there's wide individual variation, even within a single day, of keystroke patterns, which can be problematic. A [study from 2013](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3835878/) "suggested that keystroke dynamics biometrics are unlikely to replace existing knowledge-based authentication entirely and it is also not robust enough to be a sole biometric authenticator."
 
-### Where You Are
+### Location: Where You Are
 
 This is a relatively uncommon factor of authentication. 
 
@@ -347,7 +378,7 @@ Don't forget to talk to your end users, or at least a subset of them. The factor
 
 If shared secrets need to be captured at authentication or registration, build or buy solutions which allow you to do so. These could be questions and answers, a seed for a TOTP solution, or even registering a physical device. 
 
-Plan for a minimum level of MFA, but allow users who want more to go beyond that. Many security conscious users will want to enable MFA for their accounts; allow them to do so. By building this in, you allow users to self select the level of security which makes sense for them. For example, one person may run their entire life through their gmail account, while another may use it only occasionally as a throwaway email account. In the former case, MFA makes sense; in the latter it does not.
+Plan for a minimum level of MFA, but allow users who want more to go beyond that. Many security conscious users will want to enable MFA for their accounts; allow them to do so. By building this in, you allow users to self select the level of security which makes sense for them. For example, one person may run their entire life through their Gmail account, while another may use it only occasionally as a throwaway email account. In the former case, MFA makes sense; in the latter it does not.
 
 Your MFA policies and configuration should be flexible. You can store MFA requirements in a central location in your application, such as your identity provider, a specialized datastore, or in a configuration file. Be aware that these requirements will evolve as technology and your applications do. New features will be built and some of them may require step up. Different kinds of users may start using the system. This policy configuration should itself be protected and only allow privileged users access.
 

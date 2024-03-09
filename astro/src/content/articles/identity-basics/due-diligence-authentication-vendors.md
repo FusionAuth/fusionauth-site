@@ -3,6 +3,7 @@ title: Performing Due Diligence On Authentication Vendors
 description: What kind of due diligence should you do when evaluating identity as a service vendors?
 author: Mihir Patel
 icon: /img/icons/diligence-auth-vendors.svg
+darkIcon: /img/icons/diligence-auth-vendors-dark.svg
 section: Identity Basics
 date: 2021-02-24
 dateModified: 2021-02-24
@@ -34,7 +35,7 @@ Authentication providers should have strong guardrails to protect your users' co
 1. Ask your vendor to fill out a questionnaire. This is a standard practice to understand security policies established by authentication providers. These questions should cover all security details, for example, how often are passwords reset? How are credentials stored? Where are they stored?
 1. Ask for an encryption policy. It should have guidance on hashing, digital signature policy, and cryptography topics, and these policies should align with your internal security standards. For TLS, the standard is to use [128-bit, 192-bit, or 256-bit encryption](https://www.clickssl.net/blog/128-bit-ssl-encryption-vs-256-bit-ssl-encryption) to prevent unauthorized access to data in transit. Does your authentication provider offer encryption of data at rest?
 1. CVEs happen. How does your vendor respond when a CVE occurs. How quickly is a fix released and how do they communicate the security issues to you?
-1. Understand who will own responsibility in case of a cyber attack. Lawsuits arise when responsibilities are not well understood, so take particular care here. You should have a workflow diagram labeling each section with _vendor's name_ or _your company's name_ to indicate each party's areas of responsibility.
+1. Understand who will own responsibility in case of a cyberattack. Lawsuits arise when responsibilities are not well understood, so take particular care here. You should have a workflow diagram labeling each section with _vendor's name_ or _your company's name_ to indicate each party's areas of responsibility.
 1. During the procurement process, obtain all required security policy documents applicable to your industry or business. Ensure security policies cover [PII](https://www.dol.gov/general/ppii#:~:text=Personal%20Identifiable%20Information%20(PII)%20is%20defined%20as%3A&text=DOL%20internal%20policy%20specifies%20the,to%20which%20they%20have%20access), [HIPAA](https://www.hhs.gov/hipaa/index.html), and [GDPR, Article 33](https://en.wikipedia.org/wiki/General_Data_Protection_Regulation) standards if your business falls under specific industry criteria. You should also obtain [SOC2](https://www.aicpa.org/interestareas/frc/assuranceadvisoryservices/aicpasoc2report.html) reports from any potential AaaS. This auditing procedure ensures that data and privacy are securely managed to protect the interests of your organization and the privacy of your clients.
 
 Of course, we could dive deeper into security due diligence, but the items above should be a minimum place to start.

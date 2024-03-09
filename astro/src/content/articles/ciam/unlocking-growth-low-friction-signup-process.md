@@ -4,6 +4,7 @@ description: What is the overall value of low-friction user signups? This articl
 section: CIAM
 author: Hannah Sutor
 icon: /img/icons/user-signup-process.svg
+darkIcon: /img/icons/user-signup-process-dark.svg
 ---
 
 Customer Identity and Access Management (CIAM) is a critical component of any modern digital business strategy. At its core, CIAM is about providing users with seamless and secure access to digital products and services. Sometimes, when thinking about authentication flows, it can be easy to get caught up in the details. I’d like to take a step back and discuss the overall value of a sometimes overlooked piece of the CIAM puzzle: the value of low-friction user signups.
@@ -50,7 +51,7 @@ Keep in mind your expected audience when considering what types of sign-ups to s
 
 Also important is building accessibility into your signup process. Differences in physical and cognitive abilities must be taken into consideration. For example, memory impairments might be a challenge. For this, you can provide password recovery options or simplified login workflows to ensure that users can successfully sign up and log in. Accounting for differences pays dividends in ensuring your product is inclusive and accessible by all.
 
-Webauthn is an exciting development in the authentication world that adds yet another option for login flexibility. It is a standard that enables users to authenticate themselves using biometrics, such as facial recognition or fingerprint scanning, or a physical security key. The best part about it? It can be used to completely replace a password. Now that Apple, Google, and Microsoft have all added WebAuthn support into their products, passwordless authentication, which once seemed futuristic, is becoming a reality.
+WebAuthn is an exciting development in the authentication world that adds yet another option for login flexibility. It is a standard that enables users to authenticate themselves using biometrics, such as facial recognition or fingerprint scanning, or a physical security key. The best part about it? It can be used to completely replace a password. Now that Apple, Google, and Microsoft have all added WebAuthn support into their products, passwordless authentication, which once seemed futuristic, is becoming a reality.
 
 
 ### Lack of transparency
@@ -68,7 +69,7 @@ It can’t be overstated how important security is as a part of your sign up flo
 
 Some examples of good security practices:
 
-   - Use MFA. Webauthn and TOTP are more secure than SMS or magic links.
+   - Use MFA. WebAuthn and TOTP are more secure than SMS or magic links.
    - Serve pages over SSL
    - Allow a user to choose single a login mechanism that aligns best with their security posture
      - If the user has their account managed centrally, they should use single sign-on

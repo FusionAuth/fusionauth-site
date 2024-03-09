@@ -3,6 +3,7 @@ title: 10 Steps To Secure Your Authentication System
 description: This article will break down some of the essential steps developers need to take to maintain a secure authentication system.
 author: Mihir Patel
 icon: /img/icons/steps-secure-auth-system.svg
+darkIcon: /img/icons/steps-secure-auth-system-dark.svg
 section: Security
 date: 2021-09-09
 dateModified: 2021-09-09

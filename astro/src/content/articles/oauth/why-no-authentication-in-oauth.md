@@ -7,6 +7,7 @@ section: OAuth
 date: 2022-10-19
 dateModified: 2022-10-19
 icon: /img/icons/no-auth-oauth.svg
+darkIcon: /img/icons/no-auth-oauth-dark.svg
 ---
 
 OAuth, a standard for securely delegating authorization information, and OIDC, a profile written on top of it to securely transmit user profile data, both rely on proper user authentication. (A user is also known as the 'resource owner'.) An architectural component known as the authorization server issues tokens, which provide access to data or functionality, only *after* the user has been authenticated to its satisfaction.

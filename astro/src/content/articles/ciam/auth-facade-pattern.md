@@ -4,6 +4,7 @@ description: Introducing a facade in front of customer identity providers adds i
 section: CIAM
 author: Dan Moore
 icon: /img/icons/auth-facade-pattern.svg
+darkIcon: /img/icons/auth-facade-pattern-dark.svg
 ---
 
 When talking about identity architectures in FusionAuth customers, there's a common deployment pattern called the "Auth Facade". This is also commonly referred to as the "Identity Broker" pattern. 
@@ -26,7 +27,7 @@ By the way, this was common before the rise of "software as a service", and the 
 
 ## Why the facade?
 
-At the same time, your customer doesn't want "Yet Another User Database." Instead, stakeholders need your application to authenticate against an existing user datastore. What the store is doesn't really matter, it may be Azure Active Directory, Okta, or another enterprise friendly identity provider. However, there is a common thread; this identity provider is run by your customer's employees and may support OIDC or SAML.
+At the same time, your customer doesn't want "Yet Another User Database." Instead, stakeholders need your application to authenticate against an existing user datastore. What the store is doesn't really matter, it may be Azure Active Directory/Microsoft Entra ID, Okta, or another enterprise friendly identity provider. However, there is a common thread; this identity provider is run by your customer's employees and may support OIDC or SAML.
 
 You could code directly against these providers. But you want your developers focused on building and improving your application, not building auth integrations to these various providers or standards. One painful situation you want to avoid is debugging authentication in prod environments you may not even have access to.
 
@@ -103,7 +104,7 @@ When evaluating auth facade solutions, make sure you can deploy the system into 
 
 Being able to support air gapped or isolated networks is a strong competitive differentiator for your application, especially if it accesses sensitive data.
 
-Ensure your application and the auth facade system are deployable as a unit. Depending on customers' needs, you may want to deploy in a unix friendly package such as an RPM or DEB, a generic software package like a zip file, or, for the clients using Kubernetes, a containerized solution.
+Ensure your application and the auth facade system are deployable as a unit. Depending on customers' needs, you may want to deploy in a Unix-friendly package such as an RPM or DEB, a generic software package like a zip file, or, for the clients using Kubernetes, a containerized solution.
 
 Since auth is a necessary part of your application, but not a differentiator, an auth system that fades into the background is best. This should happen both in the literal sense, with a user interface that matches your applications look and feel, and the figurative sense, so your engineers minimize time spent maintaining or troubleshooting it.
 

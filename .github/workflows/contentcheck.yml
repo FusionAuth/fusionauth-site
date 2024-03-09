@@ -29,7 +29,7 @@ jobs:
         # we ignore "<a href='https://fusionauth.io/docs/v1/tech/tutorials/'>Learn how this app works.</a>" because it is part of a react tutorial
         # we use continue-on-error because grep -v exits with code 1 if it doesn't find anything, but that's what we want.
         run: |
-          find astro/src/content/ -type f -name "*.md*" | xargs grep 'https://fusionauth.io' | grep -v "<a href='https://fusionauth.io/docs/v1/tech/tutorials/'>Learn how this app works.</a>" |grep -v 'homepage "https://fusionauth.io"' | grep -v 'open your browser and navigate to https://fusionauth.io/docs' > absolute.out
+          find astro/src/content/ -type f -name "*.md*" | xargs grep 'https://fusionauth.io' | grep -v 'homepage "https://fusion' | grep -v 'open your browser and navigate to https://fusionauth.io/docs' |grep -v "<a href='https://fusionauth.io/docs/'>Learn how this app works.</a>" > absolute.out
         shell: bash
       - name: Check for absolute URLs referencing FusionAuth.io from file. Keep this next to 'Grep for absolute URLs referencing FusionAuth.io'
         run: |
@@ -38,6 +38,10 @@ jobs:
       - name: Check for old asciidoc styling syntax
         run: |
           exit `find astro/src/content/docs/ -type f | xargs grep ']#'| wc -l |sed 's/[ ]*//g'`
+        shell: bash
+      - name: Check for old doc nav url references
+        run: |
+          exit `find astro/src/content/ -type f | xargs grep 'docs/v1/tech'| wc -l |sed 's/[ ]*//g'`
         shell: bash
       - name: Check for erroneous markdown references
         run: |
@@ -50,6 +54,11 @@ jobs:
       - name: Make sure docs don't use old asciidoc icon references
         run: |
           exit `find astro/src/content/docs/ -type f -print|xargs grep -l 'icon:[a-z]'| wc -l |sed 's/[ ]*//g'`
+        shell: bash
+      - name: check for APIFields with no name
+        run: |
+          echo `grep -R \<APIField astro/src/content/docs | grep -v name`
+          exit `find astro/src/content/docs -type f -print|xargs grep -R \<APIField | grep -v name | wc -l | sed 's/[ ]*//g'`
         shell: bash
       #- name: Check for titles/headers that have incorrect casing
         #run: |

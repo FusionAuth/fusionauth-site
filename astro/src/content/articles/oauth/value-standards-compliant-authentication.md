@@ -7,6 +7,7 @@ section: OAuth
 date: 2021-06-10
 dateModified: 2021-06-10
 icon: /img/icons/value-standards-authentication.svg
+darkIcon: /img/icons/value-standards-authentication-dark.svg
 ---
 
 Software applications regularly need access to data from other services on behalf of their users.
@@ -35,7 +36,7 @@ When you use a standardized protocol, you have the peace of mind that comes with
 
 What would happen if every time you built a new system's authentication system, you had to create it from scratch? You would have to learn the nitty-gritty details of authentication over and over again.
 
-This would lead to a scenario where you couldn't leverage your hardwon knowledge between projects and employers. If you instead use a ubiquitous protocol like OAuth, there may be subtle differences, but you'll understand the general authentication architecture. If you know how standardized protocols work and what use cases they solve, you can bring that knowledge to other projects and companies.
+This would lead to a scenario where you couldn't leverage your hard-won knowledge between projects and employers. If you instead use a ubiquitous protocol like OAuth, there may be subtle differences, but you'll understand the general authentication architecture. If you know how standardized protocols work and what use cases they solve, you can bring that knowledge to other projects and companies.
 
 The same applies when teaching and onboarding new engineers to your team. If you are using a standardized auth protocol, then your new team members are likely to already know about OAuth, SAML, or other standardized protocols. It will be much easier to get these new team members up and running and contributing to these relevant areas of your system.
 
@@ -99,7 +100,7 @@ You've seen that OAuth is a great way to gain access to resources. But it doesn'
 
 ![OIDC tokens build on OAuth tokens.](/img/articles/value-standards/oidc-extends-oauth.png)
 
-OIDC adds an "ID token" to be returned from the final OAuth request in the flow. This confirms the user was in fact authenticated (unlike the access token, as discussed previously) and also gives you a way to access identity-specific information about the current user.
+OIDC adds an "Id token" to be returned from the final OAuth request in the flow. This confirms the user was in fact authenticated (unlike the access token, as discussed previously) and also gives you a way to access identity-specific information about the current user.
 
 Beyond these basic features, OIDC can also enable more advanced features such as [session management](https://openid.net/specs/openid-connect-session-1_0.html), [log-out ability](https://openid.net/specs/openid-connect-rpinitiated-1_0.html), [user registration standard](https://openid.net/specs/openid-connect-prompt-create-1_0.html), and more.
 
@@ -125,7 +126,7 @@ SAML is a great tool for larger organizations to further enhance their users' se
 
 ### FIDO
 
-FIDO stands for "Fast Identity Online." It's a set of protocols created by the [FIDO Alliance](https://fidoalliance.org/), a nonprofit group seeking to expunge the use of passwords. In general, the FIDO protocols allow users to authenticate themselves via special devices or applications that use fingerprint readers, facial recognition, or external devices such as special USB dongles. Many websites are also now supporting [webauthn](https://fidoalliance.org/fido2/fido2-web-authentication-webauthn/), which is a protocol that enables website logins with FIDO.
+FIDO stands for "Fast Identity Online." It's a set of protocols created by the [FIDO Alliance](https://fidoalliance.org/), a nonprofit group seeking to expunge the use of passwords. In general, the FIDO protocols allow users to authenticate themselves via special devices or applications that use fingerprint readers, facial recognition, or external devices such as special USB dongles. Many websites are also now supporting [WebAuthn](https://fidoalliance.org/fido2/fido2-web-authentication-webauthn/), which is a protocol that enables website logins with FIDO.
 
 FIDO works much like SSH keys. Your device will have a FIDO-enabled "authenticator" application that can generate private and public keys between your device and other services. Your device keeps a private key for that service and sends it a public key. Whenever the device reads your fingerprint, for example, the device's authenticator application will verify you are _you_ and then use public key cryptography to authenticate you to that other service.
 
@@ -135,7 +136,7 @@ This means that attackers can't steal your password. It's also much more conveni
 
 FIDO is a great choice for larger organizations that want to keep their users and devices very secure. If an organization chooses to use some type of specialized hardware, such as a [Yubico device](https://www.yubico.com/solutions/passwordless/), that can be a substantial cost. Not only must the devices be purchased, but they must be delivered when employees are onboarded and retrieved when they leave, incurring additional logistical complexity.
 
-However, with growing support for webauthn and built-in facial recognition and fingerprint readers on modern PCs, many cloud-based tools are allowing FIDO-based authentication for their websites, lowering the overall cost of using FIDO. Thanks to FIDO's strong security, you'll often see FIDO used in government, insurance, and healthcare.
+However, with growing support for WebAuthn and built-in facial recognition and fingerprint readers on modern PCs, many cloud-based tools are allowing FIDO-based authentication for their websites, lowering the overall cost of using FIDO. Thanks to FIDO's strong security, you'll often see FIDO used in government, insurance, and healthcare.
 
 ## Conclusion
 
