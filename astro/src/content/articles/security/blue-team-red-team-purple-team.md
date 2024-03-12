@@ -31,7 +31,7 @@ Defensive strategies are not improvised; they require rigorous tools and the imp
 
 Blue Teams can harness simple yet effective tools such as antivirus software to defend systems and networks against viruses and remove malicious elements. Regular updates are essential to maintain the effectiveness of antivirus software, and Blue Teams can ensure consistency by implementing verifiable, automated updates. Additionally, integrating intrusion detection and protection software or hardware (IDS/IPS) can safeguard the network, block suspicious activities, and alert administrators to potential threats.
 
-A more advanced analysis tool that Bue Teams use, is Security Information and Event Management (SIEM) software. SIEM is a central platform that simplifies the task of storing, analyzing and sorting through large amounts of machine data from various sources throughout an enterprise.
+A more advanced analysis tool that Blue Teams use, is Security Information and Event Management (SIEM) software. SIEM is a central platform that simplifies the task of storing, analyzing and sorting through large amounts of machine data from various sources throughout an enterprise.
 
 Splunk is a popular SIEM software that monitors files, detects file changes, listens on ports, and runs scripts to collect log data. With the help of Splunk, Blue Teams can efficiently review machine-generated logs, identify suspicious behaviors, discover potential weaknesses, and respond or mitigate effectively. 
 
