@@ -2,8 +2,8 @@
 title: Exploring The Roles Of The Blue Team, The Red Team, And The Purple Team In Cybersecurity
 description: Learn about the roles and some of the tools of the Blue Team and Red Team, as well as the concept of the Purple Team.
 author: Jennifer Watkins
-icon: /img/icons/auth-providers-zero-trust.svg
-darkIcon: /img/icons/auth-providers-zero-trust-dark.svg
+icon: /img/icons/exploring-the-roles-of-the-blue-team-the-red-team-and-the-purple-team-in-cybersecurity.svg
+darkIcon: /img/icons/exploring-the-roles-of-the-blue-team-the-red-team-and-the-purple-team-in-cybersecurity-dark.svg
 section: Security
 date: 2024-03-05
 dateModified: 2024-03-05
@@ -75,7 +75,7 @@ These clever hackers persisted despite encountering another obstacle: complex an
 
 Visualizing a standard attack framework and the concepts used to illustrate this simulation is a simple way to imagine the process and mindset of a hacker:
 
-TODO image standard attack framework
+![A standard attack framework.](/img/articles/blue-team-red-team-purple-team/standard-attack-framework.png)
 
 ### Hypothetical Blue Team Response
 
@@ -97,7 +97,7 @@ Dinoch's situation highlights the importance of securing not only digital access
 
 Below is a visualization of the NIST incident response lifecycle that Blue Teams follow for structured defensive applications:
 
-TODO image response lifecycle
+![NIST incident response lifecycle.](/img/articles/blue-team-red-team-purple-team/cyber-incident-response-cycle.png)
 
 ## Bridging the Gap: Meet the Purple Team
 
