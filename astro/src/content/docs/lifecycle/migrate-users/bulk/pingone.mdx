@@ -159,11 +159,11 @@ There are two main components you need to set up to enable a slow migration from
 
 You have a few options for setting up an API endpoint.
 
-- Using Microsoft Azure, you can create an [HTTP trigger](https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook-trigger?tabs=python-v2%2Cisolated-process%2Cnodejs-v4%2Cfunctionsv2) on the function app.
+- Using Microsoft Azure, you can create an [HTTP trigger](https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook-trigger?tabs=python-v2%2Cisolated-process%2Cnodejs-v4%2Cfunctionsv2) on an Azure function app.
 - You can use an [API gateway](https://aws.amazon.com/api-gateway/) on AWS.
 - You can create a self-hosted endpoint locally and make it public using a service like [ngrok](https://ngrok.com/).
 
-This guide will show you how to create an ngrok endpoint that will use the Flask API to validate user credentials from FusionAuth login requests and retrieve the user's Ping Identity profile from the PingOne API.
+This guide will show you how to create an ngrok endpoint that will use a Flask API to validate user credentials from FusionAuth login requests and retrieve the user's Ping Identity profile from the PingOne API.
 
 <Aside type="note">
   ngrok can be downloaded at https://ngrok.com. There are free and paid plans available. This guide uses a free plan.
@@ -189,12 +189,42 @@ There are several ways you can set up a Ping Identity authentication stub.
 
 This guide will show you how to use Flask and ngrok.
 
-The authentication stub accepts a login request from FusionAuth over TLS and performs an [ROPC login](https://docs.pingidentity.com/r/en-us/developer/kwc1601508084434) request on Ping Identity, returning the relevant user data via the PingOne API. 
+The authentication stub accepts a login request from FusionAuth over TLS and performs an [ROPC login](https://docs.pingidentity.com/r/en-us/developer/kwc1601508084434) request on Ping Identity, returning the relevant user data via the PingOne API.
 
-Create an OIDC application in your Ping Environment to call from the Flask app by following this [Ping One guide](https://docs.pingidentity.com/r/en-us/pingfederate-pingone-mfa-ik/pingfederate_pingone_mfa_ik_creating_a_web_or_native_application_in_pingone). 
+#### Add The PingOne Authorize Service To Your Environment
 
-- Select "Code" as the "Response Type".
-- Take note of the Client Id of the application to use in the Flask app.
+To connect to the Ping Identity API, add the PingOne Authorize service to your environment and then create a [worker application](https://docs.pingidentity.com/r/en-us/pingone/p1az_adding_worker_app) in the environment. To add the PingOne Authorize service to your environment, go to **Overview → Services** and click the <InlineUIElement>+</InlineUIElement> button. Click <InlineUIElement>+ Add</InlineUIElement> next to PingOne Authorize service to add the service.
+
+<img src={`/img/docs/lifecycle/migrate-users/bulk/${migration_source_dir}/authorise_service.png`} alt="Add PingOne Authorize service to environment." width="1200" />
+
+#### Add A Worker Application For The PingOne Authorize Service
+
+After setting up the PingOne Authorize service in your environment, add a worker application to enable dynamic authorization of API actions for the service. Under **Applications → Applications** click the <InlineUIElement>+</InlineUIElement> button to create a new application. Set the <InlineField>Application Name</InlineField> and select the "Worker" application type. Save the application.
+
+<img src={`/img/docs/lifecycle/migrate-users/bulk/${migration_source_dir}/add_worker.png`} alt="Add worker application to environment." width="1200" />
+
+After saving, enable the application by clicking the toggle button (top right) next to the application name. Give the worker application sufficient permissions to access your user data by assigning the necessary roles, for example, the "Identity Data Admin" role for your environment.
+
+<img src={`/img/docs/lifecycle/migrate-users/bulk/${migration_source_dir}/add_roles.png`} alt="Add roles to worker application." width="1200" />
+
+Generate an access token in the Configuration tab by clicking the <InlineUIElement>Get Access Token</InlineUIElement> and take note of it to use in the Flask application you will create shortly.
+
+<img src={`/img/docs/lifecycle/migrate-users/bulk/${migration_source_dir}/get_access_token.png`} alt="Get access token." width="1200" />
+
+On the Overview tab of the application take note of the <InlineField>Environment ID</InlineField>.
+
+#### Add An OIDC Application In Your Ping Environment
+
+Create an [OIDC application](https://docs.pingidentity.com/r/en-us/pingfederate-pingone-mfa-ik/pingfederate_pingone_mfa_ik_creating_a_web_or_native_application_in_pingone) in your Ping Environment to call from the Flask app. Under **Applications → Applications** click the <InlineUIElement>+</InlineUIElement> button to create a new application. Set the <InlineField>Application Name</InlineField> and select the "OIDC Web App" application type. Save the application. After saving, enable the application by clicking the toggle button (top right) next to the application name.
+
+On the Configuration tab click the pencil edit button to edit the configuration details of the application.
+
+- Select "Code" as the <InlineField>Response Type</InlineField>.
+- Select "Authorization Code" as the <InlineField>Grant Type</InlineField>.
+- Set `https://www.google.com` for the <InlineField>Redirect URIs</InlineField>
+- Take note of the Client Id of the application to use in the Flask app and save the configuration.
+
+<img src={`/img/docs/lifecycle/migrate-users/bulk/${migration_source_dir}/oidc_edit_config.png`} alt="OIDC application configuration" width="1200" />
 
 <Aside type="caution">
   FusionAuth Connectors will send user credentials to Ping Identity via a Python Flask app for demonstration purposes. In production migrations, it is important to secure both the data in transit and the various endpoints that form part of the solution.
@@ -206,17 +236,47 @@ Create an OIDC application in your Ping Environment to call from the Flask app b
 
 ### Set Up Authentication Logic
 
-Create a `pingIdentityAuth.py` file and add the Flask authenticator code below to it.
+<Aside type="note">
+  This section relies on Python being available on your system. Python can be downloaded from  https://www.python.org/downloads/.
+</Aside>
+
+Create a directory to set up the Flask application.
+
+```sh
+mkdir authenticator_app && cd authenticator_app
+```
+
+Set up a virtual environment in the `authenticator_app` directory by running the following command.
+
+```sh
+python -m venv venv
+```
+
+Activate the virtual environment with the command.
+
+```sh
+source venv/bin/activate
+```
+
+Install requirements for the Flask application in the virtual environment with the following command.
+
+```sh
+pip install requests flask
+```
+
+Create a `pingIdentityAuth.py` file and add the Flask authenticator code below to it. Modify the example function code provided as needed and remember to update the domains (for example, `apiPath`) to match the region where the Ping Identity data is hosted.
+
+The following fields need to be populated from your environment:
+
+* `envID`: The Id of the environment the user data will be exported from.
+* `appId`: The Client Id of the OIDC application.
+* `access_token`: The access token you generated when you created the worker application in Ping Identity.
 
 <RemoteCode lang="python" url={codeRoot + "/pingidentity/export/slowmigration/pingIdentityAuth.py"} />
-
-Modify the example function code provided as needed and remember to update the domains (for example, `apiPath`) to match the region where the Ping Identity data is hosted.
 
 This code receives a login request from FusionAuth, attempts to log the user in via ROPC, and then returns a FusionAuth user object on success.
 
 Following successful authentication, the function calls the [PingOne API `users` endpoint](https://apidocs.pingidentity.com/pingone/main/v1/api/#getting-started-with-the-pingone-apis) to get additional user attributes, which are then transformed into a FusionAuth-compatible format.
-
-Make sure that all requirements (like `requests` and `flask`) are installed with pip before you run the script.
 
 Now run the application.
 
@@ -494,11 +554,11 @@ We recommend exporting your user information in JSON format so that you can impo
 
 ### Creating The User File
 
-To connect to the Ping Identity API and export users, create a worker application in your Ping Identity environment. Follow the [steps for adding a worker application](https://docs.pingidentity.com/r/en-us/pingone/p1az_adding_worker_app) in the Ping Identity docs.
+To connect to the Ping Identity API and export users, create a worker application in your Ping Identity environment.  Follow the steps in the <ScrollRef target="Add The PingOne Authorize Service To Your Environment" /> and <ScrollRef target="Add A Worker Application For The PingOne Authorize Service" /> sections.
 
-Give the worker application sufficient permissions to access your user data by assigning the necessary roles, for example, the Environment, Identity Data, and Organization Admin roles. 
+Give the worker application sufficient permissions to access your user data by assigning the necessary roles, for example, the "Identity Data Admin" role for your environment.
 
-Generate an access token in the Configuration tab and make note of it to use in the export application.
+Generate an access token in the Configuration tab and take note of it to use in the export application.
 
 We've created a sample Python export program to export users from a Ping Identity server to a JSON file.
 
@@ -507,13 +567,13 @@ The following fields need to be populated from your environment:
 * `envID`: The Id of the environment the users will be exported from.
 * `access_token`: The access token generated when you created the worker application in Ping Identity.
 
-Clone the code below and make modifications appropriate to your environment and needs. In addition to adding the `envID` and `access_token`, change the `apiPath` to point to the domain of the region where your Ping Identity data is hosted.
+Set up a Python virtual environment as described in the <ScrollRef target="Set Up Authentication Logic" /> section. Install the `requests` requirement for the Python script with `pip install requests`.
+
+Clone the code below to a file named `exportPingUsers.py` and make modifications appropriate to your environment and needs. In addition to adding the `envID` and `access_token`, change the `apiPath` to point to the domain of the region where your Ping Identity data is hosted.
 
 <RemoteCode lang="python" url={codeRoot + "/pingidentity/export/bulk/exportPingUsers.py"} />
 
-Install the `requests` requirement for the Python script with `pip install requests`.
-
-Add the code to a file named `exportPingUsers.py` and then run the script with the following command.
+Run the script with the following command.
 
 ```sh
 python exportPingUsers.py
