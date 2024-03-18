@@ -10,6 +10,30 @@ importCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-import-scr
 javaCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-contrib/frontegg
 ---
 
+- [Overview](#overview)
+- [Prerequisites](#prerequisites)
+- [Planning Considerations](#planning-considerations)
+  - [Obtaining User Data](#obtaining-user-data)
+  - [Mapping User Attributes](#mapping-user-attributes)
+  - [Social Logins](#social-logins)
+  - [Other Entities](#other-entities)
+    - [Identifiers](#identifiers)
+- [Export Users](#export-users)
+  - [{frontmatter.technology} User Structure](#frontmattertechnology-user-structure)
+  - [Add Sample Users](#add-sample-users)
+  - [Export The Users In SQL](#export-the-users-in-sql)
+- [Import Users](#import-users)
+  - [Use A WordPress Password Hash Plugin For FusionAuth](#use-a-wordpress-password-hash-plugin-for-fusionauth)
+  - [Set Up FusionAuth And Deploy The Plugin](#set-up-fusionauth-and-deploy-the-plugin)
+  - [Create Roles For Your Users](#create-roles-for-your-users)
+  - [Prepare Users For Import To FusionAuth](#prepare-users-for-import-to-fusionauth)
+  - [Save The User Details And Hash To FusionAuth](#save-the-user-details-and-hash-to-fusionauth)
+  - [Verify The Import](#verify-the-import)
+    - [Debug With The FusionAuth Database](#debug-with-the-fusionauth-database)
+- [What To Do Next](#what-to-do-next)
+- [Additional Support](#additional-support)
+
+
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import InlineField from 'src/components/InlineField.astro';
 import Aside from '/src/components/Aside.astro';
@@ -69,167 +93,33 @@ This works for users, applications, and tenants, among others.
 
 In this section, you create two sample {frontmatter.technology} users in the web portal and export them with the API.
 
-### Start WordPress
+### {frontmatter.technology} User Structure
 
-Create a directory for this project. In the directory, create a file called `docker-compose.yaml` and insert the code below.
+{frontmatter.technology} has customers (that's you) that are called Vendors. Each Vendor has customers called Users grouped into Tenants. Tenants are grouped into Environments (such as dev, qa, and prod). Below is their illustration of an example.
 
-```yaml
-# Source: https://hub.docker.com/r/bitnami/wordpress-nginx
-version: '2'
-services:
-  mariadb:
-    image: docker.io/bitnami/mariadb:11.2
-    container_name: fawp_db
-    ports:
-      - '3306:3306'
-    volumes:
-      - './db:/bitnami/mariadb'
-    environment:
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
-      - ALLOW_EMPTY_PASSWORD=yes
-      - MARIADB_USER=wp
-      - MARIADB_DATABASE=wp
-  wordpress:
-    image: docker.io/bitnami/wordpress-nginx:6
-    container_name: fawp
-    ports:
-      - '80:8080'
-      - '443:8443'
-    volumes:
-      - './wp:/bitnami/wordpress'
-    depends_on:
-      - mariadb
-    environment:
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
-      - ALLOW_EMPTY_PASSWORD=yes
-      - WORDPRESS_DATABASE_HOST=mariadb
-      - WORDPRESS_DATABASE_PORT_NUMBER=3306
-      - WORDPRESS_DATABASE_USER=wp
-      - WORDPRESS_DATABASE_NAME=wp
-volumes:
-  mariadb_data:
-    driver: local
-  wordpress_data:
-    driver: local
-```
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/frontegg/users.png`} alt="FrontEgg User Structure" width="1200" />
 
-Open a terminal in the same directory as the file and run the code below to start a MariaDB and WordPress container.
+Note that Tenants are called Accounts in the {frontmatter.technology} web portal. FusionAuth also uses Tenants to group users.
 
-```sh
-mkdir db && mkdir wp && sudo chmod -R 777 ./db ./wp
-docker compose up
-```
+Permissions work slightly differently in the two systems. FusionAuth and {frontmatter.technology} both group Permissions into Roles, and assign Roles to Users. A user then has all the permissions associated with that user's roles.
 
-This command creates two directories to hold the data for your WordPress and database files, shared with volumes in the Docker containers.
+However, {frontmatter.technology} also supports assigning permissions to directly to a user, through a feature called Features. FusionAuth does not support this. You will have to map Features to Roles in your migration script if you have used features. Below is a {frontmatter.technology} illustration of their permissions structure (which they called Entitlements).
 
-Browse to http://localhost/wp-login.php. Log in with username `user` and password `bitnami`. This is the default WordPress administrator configured in the Bitnami Docker image we used.
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/frontegg/permissions.png`} alt="FrontEgg Entitlements" width="1200" />
 
-### Add A New User
+### Add Sample Users
 
-If you use WordPress as a user management system, you need to allow users to register themselves. To do this, browse to **Settings —> General —> Membership**. Enable <InlineUIElement>Anyone can register</InlineUIElement> and click <InlineUIElement>Save Changes</InlineUIElement>.
+If you have existing users, you can use them to follow this migration tutorial. If not, add them as described below to follow along with this tutorial.
 
-Log out at the top right of the page. Browse to http://localhost/wp-login.php.
-Register a new user. Enter a username and email `richard@example.com`.
+- Log in to your account at https://portal.frontegg.com.
+- Add any environment, like dev.
+- In the environment settings, note your `Client ID` and `API Key`.
+- In the environment's <InlineField>Backoffice</InlineField> — <InlineField>Accounts</InlineField>, create a new account (tenant) called `a`.
+- In <InlineField>Backoffice</InlineField> — <InlineField>Users</InlineField>, create two new users called `a` and `b` assigned to account `a`. For their email addresses, you can use most web email addresses with an alias. For instance, if you use Gmail or ProtonMail and your address is `me@gmail.com`, you could give the two new users `me+a@gmail.com` and `me+b@gmail.com`.
+- In the hamburger menu on the right for each user, click <InlineField>Edit user & Metadata</InlineField>. Give them some JSON metadata, like `{"country": "france"}` and save.
+- When you receive the welcome emails for these users, verify them by clicking the link.
 
-### Explore The Users In The Database
-
-Browse the database in any database IDE that can connect to MariaDB. [DBeaver](https://dbeaver.io/download) is a free, cross-platform IDE you can use.
-
-Create a new MariaDB connection to `localhost`, port `3306`, database `wp`, username `wp`, with no password needed. Open the connection and expand the database tables.
-
-WordPress has two tables related to users: `wp_users` and `wp_usermeta`.
-
-#### The `wp_users` Table
-
-In `wp_users`, you will have data similar to the example below. This table holds identifiers and a password hash for each user.
-
-ID|user_login|user_pass                         |user_nicename|user_email      |user_url        |user_registered        |user_activation_key                          |user_status|display_name|
----|----------|----------------------------------|-------------|----------------|----------------|-----------------------|---------------------------------------------|-----------|------------
- 1|user      |\$P$BVrdsW/NUuXDi0Od0uUdk2SnJHHmQ01|user         |user@example.com|http://127.0.0.1|2024-02-21 07:09:20.000|                                             |          0|user        |
- 2|richard         |\$P$B/kCzTMDV7ccClaRShJPz8suWQdKc5/|richard            |richard@example.com   |                |2024-02-21 10:52:53.000|1708512773:\$P$BYELgLl.oz9lv.YRNp7ppBA1GxzOEY0|          0|a           |
-
-Unfortunately, neither the [WordPress Codex](https://codex.wordpress.org/Database_Description) nor the [WordPress Developer Handbook](https://developer.wordpress.org) gives definitions of the database fields and their meanings. To be certain of their purpose, you would need to read the WordPress source code, but the column definitions below seem obvious enough to trust.
-
-- <InlineField>ID:</InlineField> A unique identifier for each user. It is an auto-incremented integer and serves as the primary key for the table.
-- <InlineField>user_login:</InlineField> The user's username used for logging in to WordPress.
-- <InlineField>user_pass:</InlineField> The hashed password for the user.
-- <InlineField>user_nicename:</InlineField> A URL-friendly version of the user's username. It is used in the author slug URL.
-- <InlineField>user_email:</InlineField> The user's email address. It is unique for each user and used for account management and notifications.
-- <InlineField>user_url:</InlineField> The URL of the user's website. This field is optional and can be left blank.
-- <InlineField>user_registered:</InlineField> The date and time when the user registered on the WordPress site. It is stored in the 'YYYY-MM-DD HH:MM:SS' format.
-- <InlineField>user_activation_key:</InlineField> Used for storing a hash that is used to activate the user's account or for password reset purposes.
-- <InlineField>user_status:</InlineField> This field is deprecated and not used by core WordPress functions. It was originally intended for user status but is now typically left at its default value of 0.
-- <InlineField>display_name:</InlineField> The publicly displayed name of the user. This name is shown on the site in places like author posts or comments.
-
-#### The `wp_usermeta` Table
-
-The `wp_usermeta` table holds all information about a user besides what is kept in the `wp_users` table. WordPress plugins can add their own data, too. Below is the data you should have in `wp_usermeta`.
-
-umeta_id|user_id|meta_key                             |meta_value
---------|-------|-------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-1|      1|nickname                             |user
-2|      1|first_name                           |UserName
-3|      1|last_name                            |LastName
-4|      1|description                          |
-5|      1|rich_editing                         |true
-6|      1|syntax_highlighting                  |true
-7|      1|comment_shortcuts                    |false
-8|      1|admin_color                          |fresh
-9|      1|use_ssl                              |0
-10|      1|show_admin_bar_front                 |true
-11|      1|locale                               |
-12|      1|wp_capabilities                      |`a:1:{s:13:"administrator";b:1;}`
-13|      1|wp_user_level                        |10
-14|      1|dismissed_wp_pointers                |
-15|      1|show_welcome_panel                   |1
-16|      1|session_tokens                       |`a:1:{s:64:"ed6949d03244303edfd56de57f46b77a7300c2c62406ccde3b717b700c4fce4a";a:4:{s:10:"expiration";i:1708684580;s:2:"ip";s:10:"172.25.0.1";s:2:"ua";s:101:"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.`
-17|      1|wp_dashboard_quick_press_last_post_id|4
-18|      1|community-events-location            |`a:1:{s:2:"ip";s:10:"172.25.0.0";}`
-19|      2|nickname                             |richard
-20|      2|first_name                           |
-21|      2|last_name                            |
-22|      2|description                          |
-23|      2|rich_editing                         |true
-24|      2|syntax_highlighting                  |true
-25|      2|comment_shortcuts                    |false
-26|      2|admin_color                          |fresh
-27|      2|use_ssl                              |0
-28|      2|show_admin_bar_front                 |true
-29|      2|locale                               |
-30|      2|wp_capabilities                      |`a:1:{s:10:"subscriber";b:1;}`
-31|      2|wp_user_level                        |0
-32|      2|default_password_nag                 |1
-
-The column definitions for the table are:
-
-- <InlineField>umeta_id:</InlineField> A unique identifier for each meta entry. It is an auto-incremented integer and serves as the primary key for the table.
-- <InlineField>user_id:</InlineField> The Id of the user the meta entry belongs to. It links to the Id column in the `wp_users` table.
-- <InlineField>meta_key:</InlineField> The name of the metadata field. WordPress uses this field to store various pieces of user-related information, such as administrative capabilities (`wp_capabilities`), user roles (`wp_user_level`), and custom user meta added by themes or plugins.
-- <InlineField>meta_value:</InlineField> The value of the metadata field. The information here can vary widely depending on the meta_key. This field can store serialized arrays or strings, depending on the type of data being stored.
-
-The `wp_usermeta` table uses an entity-attribute-value (EAV) model. Instead of having one column for each type of field to store for a user, new fields are added using key-value combinations.
-
-Some things to note when deciding which fields you want to import to FusionAuth:
-- Blank fields, like description, can be ignored.
-- Fields that are specific to WordPress, like <InlineField>rich_editing</InlineField>, can be ignored.
-- Some fields are PHP objects serialized into strings, like `wp_capabilities` with value `a:1:{s:13:"administrator";b:1;}`. This reads as: An array of one element containing a string of 13 elements and a boolean of value true. You will need to deserialize these when importing them.
-- Legacy fields, like `wp_user_level`, can be ignored.
-
-Here are some of the `meta_key` types you might find:
-
-- <InlineField>wp_capabilities:</InlineField> Stores the roles assigned to a user in a serialized array. This determines what the user can and cannot do in WordPress.
-- <InlineField>wp_user_level:</InlineField> A legacy way to define user roles and capabilities, primarily kept for backward compatibility. It represents the user's role as a numeric level.
-- <InlineField>rich_editing:</InlineField> Indicates whether the user prefers to use the visual rich editor when writing. The value is either "true" or "false".
-- <InlineField>syntax_highlighting:</InlineField> Indicates whether the user prefers to have syntax highlighting enabled in the code editor. The value is either "true" or "false".
-- <InlineField>comment_shortcuts:</InlineField> Indicates whether the user wishes to use keyboard shortcuts for comment moderation. The value is either "true" or "false".
-- <InlineField>admin_color:</InlineField> The color scheme the user has chosen for the admin dashboard.
-- <InlineField>use_ssl:</InlineField> Whether the user prefers to use SSL when logging into the admin area. The value is either "0" (do not force SSL) or "1" (force SSL).
-- <InlineField>show_admin_bar_front:</InlineField> Determines whether the WordPress admin bar should be displayed to the user when viewing the site. The value is either "true" or "false".
-- <InlineField>locale:</InlineField> The user's preferred language locale for the admin dashboard.
-- <InlineField>wp_dashboard_quick_press_last_post_id:</InlineField> The Id of the last post created using the "Quick Draft" dashboard widget.
-- <InlineField>dismissed_wp_pointers:</InlineField> Tracks the admin pointers dismissed by the user to avoid showing them again.
-- <InlineField>session_tokens:</InlineField> Stores the user's session tokens for maintaining login sessions across different devices.
-- <InlineField>wp_user-settings</InlineField> and <InlineField>wp_user-settings-time:</InlineField> Store user-specific settings for the admin area, such as the true or false status of checkboxes and the timestamp of the last settings update, respectively.
+You're now done working on the {frontmatter.technology} web portal and have sample user data to test a migration.
 
 ### Export The Users In SQL
 
