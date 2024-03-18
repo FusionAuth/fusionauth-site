@@ -104,7 +104,7 @@ When evaluating auth facade solutions, make sure you can deploy the system into 
 
 Being able to support air gapped or isolated networks is a strong competitive differentiator for your application, especially if it accesses sensitive data.
 
-Ensure your application and the auth facade system are deployable as a unit. Depending on customers' needs, you may want to deploy in a unix friendly package such as an RPM or DEB, a generic software package like a zip file, or, for the clients using Kubernetes, a containerized solution.
+Ensure your application and the auth facade system are deployable as a unit. Depending on customers' needs, you may want to deploy in a Unix-friendly package such as an RPM or DEB, a generic software package like a zip file, or, for the clients using Kubernetes, a containerized solution.
 
 Since auth is a necessary part of your application, but not a differentiator, an auth system that fades into the background is best. This should happen both in the literal sense, with a user interface that matches your applications look and feel, and the figurative sense, so your engineers minimize time spent maintaining or troubleshooting it.
 

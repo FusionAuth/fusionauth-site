@@ -23,6 +23,7 @@ import IdentityProviderLoginRequestBody from 'src/content/docs/apis/identity-pro
 import IdentityProviderLoginResponseBody from 'src/content/docs/apis/identity-providers/_identity-provider-login-response-body.mdx';
 
 export const idp_display_name = 'LinkedIn';
+export const idp_enforce_email_verified_claim = true;
 export const idp_since = 12300;
 export const idp_linking_strategy = 'LinkByEmail';
 
@@ -32,9 +33,9 @@ export const idp_linking_strategy = 'LinkByEmail';
 This API has been available since 1.23.0
 </Aside>
 
-The LinkedIn identity provider type will use OAuth 2.0 to authenticate a user with LinkedIn. It will also provide a `Login with LinkedIn` button on FusionAuth's login page that will direct a user to the LinkedIn login page. Additionally, after successful user authentication, this identity provider will call LinkedIn's `/v2/me` and `/v2/emailAddress` APIs to load additional details about the user and store them in FusionAuth.
+The LinkedIn identity provider type will use OAuth 2.0 to authenticate a user with LinkedIn. It will also provide a `Login with LinkedIn` button on FusionAuth's login page that will direct a user to the LinkedIn login page. Additionally, after successful user authentication, this identity provider will either call LinkedIn's `/v2/userinfo` API or their `/v2/me` and `/v2/emailAddress` APIs to load additional details about the user and store them in FusionAuth.
 
-The email address returned by the LinkedIn `/v2/emailAddress` API will be used to create or look up the existing user. Additional claims returned by LinkedIn can be used to reconcile the User to FusionAuth by using a LinkedIn Reconcile lambda. Unless you assign a reconcile lambda to this provider, only the `email` address will be used from the available claims returned by LinkedIn.
+The email address returned by the LinkedIn API will be used to create or look up the existing user. Additional claims returned by LinkedIn can be used to reconcile the User to FusionAuth by using a LinkedIn Reconcile lambda. Unless you assign a reconcile lambda to this provider, only the `email` address will be used from the available claims returned by LinkedIn.
 
 <TokenStorageNote idp_long_lived_token_type="access_token"
                   idp_display_name={idp_display_name}
@@ -42,6 +43,21 @@ The email address returned by the LinkedIn `/v2/emailAddress` API will be used t
                   token_name="access_token"
                   return_text="login endpoint" />
 
+
+
+### LinkedIn Identity Provider Scopes
+
+<Aside type="caution">
+LinkedIn has changed their API programs over time.
+</Aside>
+
+Depending on when you created your application in LinkedIn you may need to use a different set of scopes. LinkedIn had an older "compliance" program for signing in with LinkedIn that used their [Profile API](https://learn.microsoft.com/en-us/linkedin/shared/integrations/people/profile-api). The newer program is "Sign In with LinkedIn using OpenID Connect" and uses their [UserInfo API](https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2#api-request-to-retreive-member-details) to query for user details.
+
+Prior to version 1.49.0 FusionAuth only supported the legacy program. The values to use in the <InlineField>scope</InlineField> parameter are `r_emailaddress`, which returns the user's email and either `r_liteprofile` or `r_basicprofile` for the remaining user info.
+
+The newer program will always the `openid` scope and `profile` for the user's profile information and `email` for the user's email.
+
+You will need to upgrade to FusionAuth version 1.49.0 or later to use the LinkedIn identity provider with the newer OpenID Connect program.
 
 ## Create the LinkedIn Identity Provider
 
@@ -52,6 +68,7 @@ The email address returned by the LinkedIn `/v2/emailAddress` API will be used t
 The <InlineField>type</InlineField> in the request JSON is used to determine that you are managing the LinkedIn identity provider.
 
 <LinkedinRequestBody idp_display_name={idp_display_name}
+                     idp_enforce_email_verified_claim={idp_enforce_email_verified_claim}
                      idp_linking_strategy={idp_linking_strategy}
                      idp_since={idp_since}/>
 
@@ -93,6 +110,7 @@ There is only one LinkedIn Identity Provider, so this Identity Provider may be r
 <API method="PUT" uri="/api/identity-provider/6177c09d-3f0e-4d53-9504-3600b1b23f46" authentication={["api-key"]} showPatch={true} title="Update the LinkedIn Identity Provider by Id"/>
 
 <LinkedinRequestBody idp_display_name={idp_display_name}
+                     idp_enforce_email_verified_claim={idp_enforce_email_verified_claim}
                      idp_linking_strategy={idp_linking_strategy}
                      idp_since={idp_since} />
 

@@ -2,12 +2,12 @@
 
 ### Structure
 
-There are two groups of Identity Providers.  The first group are all very similiar, conform fairly well to a Oauth Redirect login flow and require a `client_id` and `client_secret` (except Steam, the only one-off in this group).  The second group are all very different from the first group and each other.
+There are two groups of Identity Providers.  The first group are all very similar, conform fairly well to a OAuth Redirect login flow and require a `client_id` and `client_secret` (except Steam, the only one-off in this group).  The second group are all very different from the first group and each other.
 
-- Oauth IdPs: Epic, Google, Sony, Steam, Twitch, Xbox
-- Others: Apple, External JWT, Facebook, HYPR, LinkedIn, OpenId, Saml V2
+- OAuth IdPs: Epic, Google, Sony, Steam, Twitch, Xbox
+- Others: Apple, External JWT, Facebook, HYPR, LinkedIn, OpenId, SAML V2
 
-For the Oauth group they each have an "Overview" and then include the following tree (only the first 2 levels are listed, there are other, but you will find them as you go) of `adoc` files:
+For the OAuth group they each have an "Overview" and then include the following tree (only the first 2 levels are listed, there are other, but you will find them as you go) of `adoc` files:
 
 - _oauth-idp-operations.mdx
   - _oauth-idp-request-body.mdx

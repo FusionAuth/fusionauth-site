@@ -57,6 +57,28 @@ import UserDataEmailFieldResponse from 'src/content/docs/apis/_user-data-email-f
 
   </>}
 
+  { (props.create_user || props.update_user || props.retrieve_user) && <>
+
+    <APIField name="emailVerificationId" type="String" since="1.27.0">
+      An email verification Id. When present, this will represent the user's current email verification Id.
+
+      When using <code>FormField</code> verification strategy, this is the first part of the pair of verification Ids, and the <InlineField>emailVerificationOneTimeCode</InlineField> is the second part. When <code>ClickableLink</code> is the verification strategy, this value is sensitive in that this value by itself can be used to verify the user's email address.
+
+      When <code>ClickableLink</code> is the verification strategy, you may optionally use this value to use an out of band transport such as your own email service.
+
+      Prior to version <code>1.49.0</code>, this value was only returned when using <code>FormField</code> verification strategy. Beginning in <code>1.49.0</code> the value is always returned when available.
+    </APIField>
+
+    <APIField name="emailVerificationOneTimeCode" type="String" since="1.49.0">
+      An email one time code that will be paired with the <InlineField>emailVerificationId</InlineField>.
+
+      When <code>FormField</code> is the verification strategy, you may optionally use this value to use an out of band transport such as your own email service.
+
+      This value will only be present when using the <code>FormField</code> verification strategy. When present, this is the value the user will need to enter to complete email verification.
+    </APIField>
+
+  </>}
+
   <APIField name="user.active" type="Boolean">
     True if the User is active. False if the User has been deactivated. Deactivated Users will not be able to login.
   </APIField>
@@ -66,9 +88,11 @@ import UserDataEmailFieldResponse from 'src/content/docs/apis/_user-data-email-f
   <APIField name="user.breachedPasswordLastCheckedInstant" type="Long">
     The [instant](/docs/reference/data-types#instants) this user's password was last checked to determine if it is compromised.
   </APIField>
+  { (!props.connector_response) && <>
   <APIField name="user.connectorId" type="UUID" since="1.18.0">
     The unique Id of the [Connector](/docs/lifecycle/migrate-users/connectors/) associated with the System of Record being used to authenticate the user.
   </APIField>
+  </>}
   <APIField name="user.cleanSpeakId" type="UUID">
     This Id is used by FusionAuth when the User's username is sent to CleanSpeak to be moderated (filtered and potentially sent to the approval queue). It is the **content Id** of the username inside CleanSpeak.
   </APIField>
@@ -178,7 +202,7 @@ import UserDataEmailFieldResponse from 'src/content/docs/apis/_user-data-email-f
     An array of locale strings that give, in order, the User's preferred languages for this registration. These are important for email templates and other localizable text.
   </APIField>
   <APIField name="user.registrations[x].roles" type="Array<String>">
-    The list of roles that the User has for this registration.
+    The list of roles that the User has for this registration. The string is the role's `Name` not the role's `Id`, e.g. `admin` or `user-role`.
   </APIField>
   <APIField name="user.registrations[x].timezone" type="String">
     The User's preferred timezone for this registration. The string will be in an [IANA](https://www.iana.org/time-zones) time zone format.
@@ -242,9 +266,6 @@ import UserDataEmailFieldResponse from 'src/content/docs/apis/_user-data-email-f
   </APIField>
   <APIField name="user.twoFactor.methods[x].mobilePhone" type="String">
     The value of the mobile phone for this method. Only present if <InlineField>user.twoFactor.methods``[x]``.method</InlineField> is `sms`.
-  </APIField>
-  <APIField name="user.twoFactor.methods[x].secret" type="String">
-    A base64 encoded secret
   </APIField>
   <APIField name="user.twoFactorDelivery" type="String" deprecated>
     The User's preferred delivery for verification codes during a two factor login request.
