@@ -21,7 +21,8 @@ javaCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-contrib/fron
 - [Export Users](#export-users)
   - [{frontmatter.technology} User Structure](#frontmattertechnology-user-structure)
   - [Add Sample Users](#add-sample-users)
-  - [Export The Users In SQL](#export-the-users-in-sql)
+  - [Export The Users With The API](#export-the-users-with-the-api)
+- [Create Roles In FusionAuth](#create-roles-in-fusionauth)
 - [Import Users](#import-users)
   - [Use A WordPress Password Hash Plugin For FusionAuth](#use-a-wordpress-password-hash-plugin-for-fusionauth)
   - [Set Up FusionAuth And Deploy The Plugin](#set-up-fusionauth-and-deploy-the-plugin)
@@ -119,9 +120,9 @@ If you have existing users, you can use them to follow this migration tutorial. 
 - In the hamburger menu on the right for each user, click <InlineField>Edit user & Metadata</InlineField>. Give them some JSON metadata, like `{"country": "france"}` and save.
 - When you receive the welcome emails for these users, verify them by clicking the link.
 
-You're now done working on the {frontmatter.technology} web portal and have sample user data to test a migration.
+You're now done working with the {frontmatter.technology} web portal and have sample user data to test a migration.
 
-### Export The Users In SQL
+### Export The Users With The API
 
 FusionAuth provides export and import scripts under a permissive open-source license. To get the scripts, clone the Git repository.
 
@@ -129,12 +130,12 @@ FusionAuth provides export and import scripts under a permissive open-source lic
 git clone https://github.com/FusionAuth/fusionauth-import-scripts
 ```
 
-The `wordpress` directory contains all the scripts you need for this tutorial, and `wordpress/exampleData` has the output of the scripts.
+The `frontegg` directory contains all the scripts you need for this tutorial, and `frontegg/exampleData` has the output of the scripts.
 
-Navigate to the `wordpress/src` directory.
+Navigate to the `frontegg/src` directory.
 
 ```sh
-cd fusionauth-import-scripts/wordpress/src
+cd fusionauth-import-scripts/frontegg/src
 ```
 
 Install the required npm dependencies by running the following command.
@@ -143,21 +144,19 @@ Install the required npm dependencies by running the following command.
 npm install
 ```
 
-Run the SQL script `1_exportWordpressUsers.sql` in the `fusionauth-import-scripts/wordpress/src` directory against your WordPress database to export all the user data as JSON. View the output as text in DBeaver and save the `json_result` column to a file called `users.txt`.
+Export your users from {frontmatter.technology} by running the command below. Use your client ID and API key that you noted in the previous section.
 
-<Aside type="note">
-  If you have the `mysql` CLI installed, you can use a command similar to the one below to export user data from the database to the `users.txt` file. If you use the command to export the data, you will need to remove the column name `json_result` from the first line and any blank lines in the resulting `users.txt` file.
+```
+node 1_exportUsers.mjs yourclientid yourapikey
+```
 
-  ```sh
-  mysql -h 127.0.0.1 -P 3306 -u wp wp --raw < 1_exportWordpressUsers.sql > users.txt
-  ```
-</Aside>
+This will create a `users.json` file in the `src` directory. `users.json` should have user data similar to the one in `/exampleData/1_fronteggExport/users.json`.
 
-The script exports the `wp_users` table as JSON with all `wp_usermeta` fields related to each user as an array called `meta`.
+`1_exportUsers.mjs` makes two calls to the {frontmatter.technology} API:
+- `httpClient.get('identity/resources/users/v3')` gets all your users and some basic data on each
+- `httpClient.get('identity/resources/vendor-only/users/v1/' + user.id)` gets comprehensive data for each user, including roles, but not features. There doesn't appear me to be an API method to get features currently.
 
-Your `users.txt` file should now have user data similar to the one in `fusionauth-import-scripts/exampleData/1_wordpressExport/users.txt`. Each row is JSON, but the file as a whole is not JSON. Each row must end with a comma and the file contents must be wrapped in brackets.
-
-Copy your `users.txt` file into `fusionauth-import-scripts/wordpress/src` and run the code below.
+## Create Roles In FusionAuth
 
 ```sh
 node 2_convertTextToJson.mjs
