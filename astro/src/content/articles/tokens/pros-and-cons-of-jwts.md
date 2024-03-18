@@ -72,9 +72,9 @@ Both of these exploits have simple fixes. Specifically, you should never allow J
 
 ## Sessions as an Alternative
 
-Instead of using JWTs or opaque tokens, you always have the option of using sessions. Sessions have been around for over two decades and are proven technology. Sessions generally work through the use of cookies and state that is stored on the server. The cookie contains a string of characters that is the session id. The server contains a large Hash that keys off the session id and stores arbitrary data.
+Instead of using JWTs or opaque tokens, you always have the option of using sessions. Sessions have been around for over two decades and are proven technology. Sessions generally work through the use of cookies and state that is stored on the server. The cookie contains a string of characters that is the session Id. The server contains a large Hash that keys off the session Id and stores arbitrary data.
 
-When a user logs in, the user object is stored in the session and the server sends back a session cookie that contains the session id. Each subsequent request to the server includes the session cookie. The server uses the session cookie to load the user object out of the session Hash. The user object is then used to identify the user making the request. Here are two diagrams that illustrate this concept:
+When a user logs in, the user object is stored in the session and the server sends back a session cookie that contains the session Id. Each subsequent request to the server includes the session cookie. The server uses the session cookie to load the user object out of the session Hash. The user object is then used to identify the user making the request. Here are two diagrams that illustrate this concept:
 
 ### Login
 

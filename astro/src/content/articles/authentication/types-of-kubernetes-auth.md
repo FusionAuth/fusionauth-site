@@ -24,7 +24,7 @@ This is the authentication and authorization discussed in [the Kubernetes docume
 
 As outlined there:
 
-> API requests are tied to either a normal user or a service account, or are treated as anonymous requests. This means every process inside or outside the cluster, from a human user typing kubectl on a workstation, to kubelets on nodes, to members of the control plane, must authenticate when making requests to the API server, or be treated as an anonymous user.
+> API requests are tied to either a normal user or a service account, or are treated as anonymous requests. This means every process inside or outside the cluster, from a human user typing `kubectl` on a workstation, to kubelets on nodes, to members of the control plane, must authenticate when making requests to the API server, or be treated as an anonymous user.
 
 So any API request that needs to read from, add to, or modify Kubernetes configuration must be authenticated (unless the request is available to anonymous users). The Kubernetes documentation outlines all supported options for both service accounts and user accounts, so this article won't cover them in detail.
 
@@ -51,7 +51,7 @@ Here's a [tutorial on setting up Kubernetes RBAC with FusionAuth](/blog/2022/02/
 
 When you have containers running on Kubernetes, there are another two types of auth entirely different from the infrastructure auth outlined above.
 
-![Diagram of todo application in kubernetes." class="img-fluid](/img/articles/types-kubernetes-auth/todo-application-diagram.png)
+![Diagram of todo application in Kubernetes." class="img-fluid](/img/articles/types-kubernetes-auth/todo-application-diagram.png)
 
 For instance, if you are running a todo application like the one diagrammed above, you need to make sure a user Alice has access to Alice's todos and a user Bob has access to Bob's todos, but neither Alice nor Bob should have access to the other's data.
 
@@ -68,7 +68,7 @@ You want to lock down communication between the constituent parts of your applic
  
 Suppose the reminder service from the application above needs information from the todo service. There's a new feature being built. The reminder service will send an email to every user who has a todo with a due date falling in the next 24 hours. Therefore the reminder service needs to query the todo service.
 
-![Diagram of service to service communication application in kubernetes." class="img-fluid](/img/articles/types-kubernetes-auth/todo-application-service-to-service.png)
+![Diagram of service to service communication application in Kubernetes." class="img-fluid](/img/articles/types-kubernetes-auth/todo-application-service-to-service.png)
 
 When building this feature, you'll want to ensure:
 

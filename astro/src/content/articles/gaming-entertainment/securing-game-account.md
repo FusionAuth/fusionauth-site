@@ -51,9 +51,9 @@ Using MFA, you can request one of three types of additional information from use
 
 * Something the user knows, such as the account password or PIN
 * Something the user has, such as a verified digital badge, PC, smartphone, or digital game console
-* Something the user is, such as a biometric ID
+* Something the user is, such as a biometric Id
 
-What kind of additional factor makes sense for your users depends on their demographic and device. You should also make varying kinds of factors available, as the casual game player might want something easy to use like SMS whereas the professional esport player, with a more valuable account, will want a more secure factor such as a biometric ID tied to their phone.
+What kind of additional factor makes sense for your users depends on their demographic and device. You should also make varying kinds of factors available, as the casual game player might want something easy to use like SMS whereas the professional esport player, with a more valuable account, will want a more secure factor such as a biometric Id tied to their phone.
 
 Learn more about [Multi-Factor Authentication](/articles/authentication/multi-factor-authentication).
 
