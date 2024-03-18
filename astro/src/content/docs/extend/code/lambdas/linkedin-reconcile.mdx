@@ -39,31 +39,52 @@ Navigate to <strong>Settings -> Identity Providers</strong> and select your exis
 
 A default LinkedIn reconcile lambda is available in FusionAuth that may be used or modified. The default LinkedIn lambda function is documented below.
 
+Note that in this lambda we handle two different response objects depending on what type of integration with LinkedIn your application is using. See [Set Up Your LinkedIn App Client Credentials](/docs/lifecycle/authenticate-users/identity-providers/social/linkedin#set-up-your-linkedin-app-client-credentials) for more information.
+
+The best way to know which format your user's data is being return in is to use the `console.log` statement and print the `linkedInUser` field to the event log.
+
 ```javascript
 // This is the default LinkedIn reconcile, modify this to your liking.
 function reconcile(user, registration, linkedInUser) {
   // Un-comment this line to see the linkedInUser object printed to the event log
   // console.info(JSON.stringify(linkedInUser, null, ' '));
 
-  user.firstName = linkedInUser.localizedFirstName || user.firstName;
-  user.lastName = linkedInUser.localizedLastName || user.lastName;
+  // Depending on how and when you have set up your LinkedIn application you may get a different response back in the linkedInUser.
+  //
+  // The first checks apply if you are using the "Sign In with LinkedIn using OpenID Connect" with the "openid", "email", and "profile" scopes.
+  // If so FusionAuth will call the LinkedIn UserInfo API.
+  // See https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2#api-request-to-retreive-member-details
+  //
+  // The second checks apply if you are using the legacy program and Profile API with the "r_liteprofile" or "r_basicprofile" scopes.
+  // See https://learn.microsoft.com/en-us/linkedin/shared/integrations/people/profile-api
 
-  // LinkedIn returns several images sizes.
-  // See https://docs.microsoft.com/en-us/linkedin/shared/references/v2/profile/profile-picture
-  var images = linkedInUser.profilePicture['displayImage~'].elements || [];
-  var image100 = images.length >= 1 ? images[0].identifiers[0].identifier : null;
-  var image200 = images.length >= 2 ? images[1].identifiers[0].identifier : null;
-  var image400 = images.length >= 3 ? images[2].identifiers[0].identifier : null;
-  var image800 = images.length >= 4 ? images[3].identifiers[0].identifier : null;
-
-  // Use the largest image.
-  if (images.length > 0) {
-    user.imageUrl = images[images.length];
+  if (linkedInUser.given_name) {
+    user.firstName = linkedInUser.given_name;
+  } else if (linkedInUser.localizedFirstName) {
+    user.firstName = linkedInUser.localizedFirstName;
   }
 
-  // Record the LinkedIn Id
-  registration.data.linkedIn = registration.data.linkedIn || {};
-  registration.data.linkedIn.id = linkedInUser.id;
+  if (linkedInUser.family_name) {
+    user.lastName = linkedInUser.family_name;
+  } else if (linkedInUser.localizedLastName) {
+    user.lastName = linkedInUser.localizedLastName;
+  }
+
+  if (linkedInUser.picture) {
+    // UserInfo will only supply one image size
+    user.imageUrl = linkedInUser.picture;
+  } else if (linkedInUser.profilePicture){
+    // LinkedIn may return several images sizes.
+    // See https://docs.microsoft.com/en-us/linkedin/shared/references/v2/profile/profile-picture
+    // We'll sort the array by descending size and then grab the largest one.
+    var images = linkedInUser.profilePicture['displayImage~'].elements || [];
+    images.sort(function(a, b) {
+      return b.data["com.linkedin.digitalmedia.mediaartifact.StillImage"].displaySize.width - a.data["com.linkedin.digitalmedia.mediaartifact.StillImage"].displaySize.width;
+    });
+    if (images.length > 0) {
+      user.imageUrl = images[0].identifiers[0].identifier;
+    }
+  }
 }
 ```
 

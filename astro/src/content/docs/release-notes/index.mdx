@@ -16,6 +16,104 @@ import ReleaseNoteHeading from 'src/components/docs/release-notes/ReleaseNoteHea
 
 Looking for release notes older than 1.23.0? Look in the [release notes archive](/docs/release-notes/archive). Looking to be [notified of new releases?](/docs/operate/roadmap/releases#release-notifications) <span class="not-prose no-underline"><a class="ml-2" href="/docs/releases.xml"><i class="fas fa-xs fa-rss text-orange-700 text-2xl" width="50px" /></a></span>
 
+<ReleaseNoteHeading version='1.49.1' releaseDate='March 6th, 2024' name="Bugfix Beluga"/>
+
+<DatabaseMigrationWarning/>
+
+### Changed
+* The Nashorn JavaScript engine has been removed from FusionAuth. All Lambda functions will now use the GraalJS engine which has been available since version `1.35.0`. No action is required, but please note that if you had any Lambda functions still configured to use the Nashorn engine they will be migrated to use GraalJS.
+  * Resolves [GitHub Issue #1828](https://github.com/FusionAuth/fusionauth-issues/issues/1828)
+* In prior versions of FusionAuth, if a new themed page was added, until you upgraded your theme by adding this new page, the end user may be shown a page indicate the page was missing. This was shown because it was assumed that a new page would only be shown for a new feature that had not been enabled, and this page would only ever been seen during development. In this release we are adding a new page that may be shown w/out any additional features being enabled. For this reason, we have removed this place holder page, and we will always fall back to the default theme when a page is missing. You will still want to upgrade your theme as part of your upgrade process, but this change will ensure that we will not break any new or existing workflows when a new page is added.
+   * Resolves [GitHub Issue #2443](https://github.com/FusionAuth/fusionauth-issues/issues/2443)
+
+### Security
+* An incorrectly formatted SAML request may cause excessive CPU load.
+  * Resolves [GitHub Issue #1681](https://github.com/FusionAuth/fusionauth-issues/issues/1681)
+* Disable additional JNDI settings in the LDAP connector. This update is proactive, there are no known exploits.
+  * Resolves [GitHub Issue #2605](https://github.com/FusionAuth/fusionauth-issues/issues/2605)
+* Add additional protection against cross-site attacks when FusionAuth is acting as a SAML IdP.
+  * Resolves [GitHub Issue #2611](https://github.com/FusionAuth/fusionauth-issues/issues/2611)
+* Audit log entries added by the FusionAuth admin application may contain sensitive information. Sensitive fields will now be masked when written to the audit log. Please note that this does not affect the Audit Log API, only the use of this API by the FusionAuth admin app.
+  * Resolves [GitHub Issue #2623](https://github.com/FusionAuth/fusionauth-issues/issues/2623)
+* Added additional protection against cross-site attacks when using the self-service account pages.
+  * Resolves [GitHub Issue #2626](https://github.com/FusionAuth/fusionauth-issues/issues/2626)
+
+
+### Fixed
+* The default permissions in AWS RDS PostgreSQL version 15.2 caused the initial configuration of FusionAuth to fail to create the tables required to complete the initial configuration. The required permissions are now being explicitly granted, and the errors reported back to the user have been improved.
+  * Resolves [GitHub Issue #2264](https://github.com/FusionAuth/fusionauth-issues/issues/2264)
+* If a user starts a Forgot Password flow, and clicks on a change password link in an email after the link has expired, the redirect back to the original Forgot Password form will not include the locale parameter. This fix ensures that a locale parameter, when present in the change password link, is preserved through this workflow and allows for localization to remain consistent.
+  * Resolves [GitHub Issue #2328](https://github.com/FusionAuth/fusionauth-issues/issues/2328)
+* When setting up a Facebook IdP, an option was provided in the admin UI to select `Use vendor JavaScript` as a Login method. This option is not applicable and has been removed.
+  * Resolves [GitHub Issue #2351](https://github.com/FusionAuth/fusionauth-issues/issues/2351)
+* Fix the SCIM filter when filtering on `userName eq {username}` to always return a single result.
+  * Resolves [GitHub Issue #2455](https://github.com/FusionAuth/fusionauth-issues/issues/2455)
+* The LinkedIn APIs have changed, and the LinkedIn IdP no longer worked for new LinkedIn applications. This update allows FusionAuth to work with new and legacy LinkedIn applications.
+  * Resolves [GitHub Issue #2496](https://github.com/FusionAuth/fusionauth-issues/issues/2496)
+* The FusionAuth TypeScript client library was incorrectly encoding arrays values into query parameters. This bug was preventing a few specific search queries from working correctly.
+  * Resolves [GitHub Issue #2513](https://github.com/FusionAuth/fusionauth-issues/issues/2513)
+* When using MySQL, the default Admin user form was missing the `First name` field. The field could be added to the form, but was missing in the default version.
+  * Resolves [GitHub Issue #2529](https://github.com/FusionAuth/fusionauth-issues/issues/2529)
+* When an invalid Tenant Id was provided on the `.well-known/openid-configuration` the default configuration was returned. This has been updated to return a `404` status code.
+  * Resolves [GitHub Issue #2538](https://github.com/FusionAuth/fusionauth-issues/issues/2538)
+* When creating a User with a group membership with a specified member Id that was already in use, the requested completed w/out a validation error and the membership was ignored. The API now correctly validates this condition and will return a `400` and a JSON response.
+  * Resolves [GitHub Issue #2586](https://github.com/FusionAuth/fusionauth-issues/issues/2586)
+* When retrieving all refresh tokens for a user, the response may contain the user's SSO token. The SSO token can be identified because it does not contain an `applicationId` and it may not be refreshed. Validation has been improved when using the Refresh Grant, or the Refresh API to ensure FusionAuth correctly fails indicating the token is invalid and may not be refreshed.
+  * Resolves [GitHub Issue #2594](https://github.com/FusionAuth/fusionauth-issues/issues/2594)
+* A regression was introduced in version `1.47.0` to the Change Password themed page. The issue is that the `passwordValidationRules` variable may be `null` on the first render. If you had been referencing this field in your template, the render may fail.
+  * Resolves [GitHub Issue #2616](https://github.com/FusionAuth/fusionauth-issues/issues/2616)
+* The Identity Provider Link API states that a `token` parameter can be accepted during a create. When provided, the token was not being persisted on the link.
+  * Resolves [GitHub Issue #2622](https://github.com/FusionAuth/fusionauth-issues/issues/2622)
+* Fix the "Getting Started" link found in the index page in the default theme.
+  * Resolves [GitHub Issue #2625](https://github.com/FusionAuth/fusionauth-issues/issues/2625)
+* When viewing a User's Consents in the FusionAuth admin UI, if one or more of the consents have been granted by another user that is not a member of their family, an error is shown in the `Given by` column.
+  * Resolves [GitHub Issue #2639](https://github.com/FusionAuth/fusionauth-issues/issues/2639)
+* When you have configured the JWT signing key with the `ES512` algorithm, the generated signature may be intermittently invalid. This means that JWTs may seemingly fail to validate randomly and you may think you are crazy. You are not crazy. If you are using this signing algorithm, it is recommended you use a different algorithm until you are able to upgrade.
+  * Resolves [GitHub Issue #2661](https://github.com/FusionAuth/fusionauth-issues/issues/2661)
+* SCIM PATCH requests may fail to parse if an op path value contains a named schema containing a `.` (dot). This parsing error has been corrected.
+
+  For example: `urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department`
+  * Resolves [GitHub Issue #2667](https://github.com/FusionAuth/fusionauth-issues/issues/2667)
+* When an SCIM create or update request contains schemas for which no properties exist, subsequent PATCH requests to those schema namespaces may fail.
+
+  For example, if the initial request contains a schema `urn:ietf:params:scim:schemas:extension:enterprise:2.0:User` without any properties, the default lambda function used to map this request to FusionAuth was not persisting this schema namespace. Then a subsequent PATCH request to add a member to that namespace such as `urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department` would fail.
+
+  The default SCIM request converter (Lambda function) has been updated to correct this behavior.
+
+  * Resolves [GitHub Issue #2667](https://github.com/FusionAuth/fusionauth-issues/issues/2667)
+
+### Enhancements
+* Link checkers are great. They aim to protect end users from malicious links and phishing attacks. However, they wreak havoc and pain on identity providers using email based workflows to complete passwordless login, or email verification. And FusionAuth is one of those identity providers!
+
+  FusionAuth has employed various tactics over the years to stay ahead of the techniques used by these 3rd party tools. Their techniques continue to evolve making it difficult or impossible to know the difference between a link checker and a real human interacting with the link.
+
+  A new confirmation page has been added that is intended to protect the user, and make our email workflows immune to link checkers.
+
+  For example, when a user initiates a request such as passwordless login, and then completes the request in the same browser, the user will not observe any change. If the user completes the request on a different browser, or completes a request they did not initiate - such as clicking on an email verification link sent when a use is provisioned by an administrator, the user will be prompted to confirm they wish to complete the request.
+
+  If you are using a custom theme, you will want to upgrade your theme to include this new page. Until you complete this upgrade, the default theme will be used for this new page. In the FusionAuth admin UI, the theme page will be named *Confirmation required*.
+  * Resolves [GitHub Issue #2443](https://github.com/FusionAuth/fusionauth-issues/issues/2443)
+* Ensure the Login API never fails validation due to a timing issue with an Application cache. This rarely affects runtime, but this can be useful for testing where you may create an application and immediately perform a login.
+  * Resolves [GitHub Issue #2557](https://github.com/FusionAuth/fusionauth-issues/issues/2557)
+* Add a trusted proxy configuration to the System Configuration. This new configuration allows you to define one or more trusted upstream proxies using an IP address, or range of addresses using a CIDR notation.
+
+  A client IP address will be captured in a login record, sent to webhooks, and used to provide access when IP ACLs are configured. To correctly resolve the client IP address, we often will need to use the `X-Forwarded-For` request header.
+
+  This header is modified when it passes through a proxy. In order to trust the contents of this header and resolve the client IP address, FusionAuth must know if it can trust all proxies implicitly, or to only trust those that are explicitly configured as trusted. The change is to optionally configure FusionAuth to no longer trust any upstream proxy that is not explicitly configured as trusted.
+
+  This new configuration can be found in the FusionAuth admin UI by navigating to `Settings > System > Networking`, or on the System Configuration API.
+
+  * Resolves [GitHub Issue #2624](https://github.com/FusionAuth/fusionauth-issues/issues/2624)
+
+### Internal
+* Update 3rd party dependencies.
+  * Upgrade `org.postgresql:postgresql` `42.6.0` to `42.7.2`
+  * Upgrade `com.fasterxml.jackson` `2.15.2` to `2.15.3`
+  * Upgrade `org.mybatis:mybatis` `3.5.13` to `3.5.15`
+  * Resolves [GitHub Issue #2534](https://github.com/FusionAuth/fusionauth-issues/issues/2534)
+* During a reindex operation, log the progress based upon a fixed time interval instead of every 250k records. This ensures the output is predictable regardless of the reindex performance.
+  * Resolves [GitHub Issue #2565](https://github.com/FusionAuth/fusionauth-issues/issues/2565)
+
 <ReleaseNoteHeading version="1.48.3" releaseDate="December 6th, 2023" />
 
 ### Fixed
@@ -171,6 +269,8 @@ Please be sure to read the notes in the **Changed** section before upgrading.
 ### Known Issues
 * The garbage collection logging change introduced in version `1.47.0` was not compatible with the way the FusionAuth docker image was built. You will need to use version `1.47.1` if you will be using the FusionAuth docker image.
   * Resolved in version `1.47.1` via [GitHub Issue #2392](https://github.com/FusionAuth/fusionauth-issues/issues/2392)
+* The `passwordValidationRules` variable may be `null` on the first render of the Change Password themed page. If you had been referencing this field in your template, the render may fail.
+  * Resolved in version `1.49.1` via [GitHub Issue #2616](https://github.com/FusionAuth/fusionauth-issues/issues/2616)
 
 ### Security
 * A race condition exists when using a refresh token with a one-time-use policy where the same token value could successfully be used twice to obtain a new access token. In practice this would be very difficult to replicate outside of a scripted example.
@@ -904,13 +1004,13 @@ This migration will add an index to the `identity_provider_links` table. It is n
   * Resolved in version `1.40.2` via [GitHub Issue #1905](https://github.com/FusionAuth/fusionauth-issues/issues/1905)
 * A theme issue may exist on a form action and may cause breaking changes when upgrading to this version.
   * If you are upgrading, please verify your theme files accurately create a form action.  The following themes should be updated as follows:
-  ** OAuth authorize -> `action="/oauth2/authorize"`
-  ** Child registration not allowed -> `action="/oauth2/child-registration-not-allowed"`
-  ** OAuth passwordless -> `action="/oauth2/passwordless"`
-  ** OAuth register -> `action="/oauth2/register"`
-  ** OAuth two factor -> `action="/oauth2/two-factor"`
-  ** Change password form -> `action="/password/change"`
-  ** Forgot password -> `action="/password/forgot"`
+   * OAuth authorize -> `action="/oauth2/authorize"`
+   * Child registration not allowed -> `action="/oauth2/child-registration-not-allowed"`
+   * OAuth passwordless -> `action="/oauth2/passwordless"`
+   * OAuth register -> `action="/oauth2/register"`
+   * OAuth two factor -> `action="/oauth2/two-factor"`
+   * Change password form -> `action="/password/change"`
+   * Forgot password -> `action="/password/forgot"`
 
 ### Security
 
