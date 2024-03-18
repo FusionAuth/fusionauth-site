@@ -10,31 +10,6 @@ importCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-import-scr
 javaCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-contrib/frontegg
 ---
 
-- [Overview](#overview)
-- [Prerequisites](#prerequisites)
-- [Planning Considerations](#planning-considerations)
-  - [Obtaining User Data](#obtaining-user-data)
-  - [Mapping User Attributes](#mapping-user-attributes)
-  - [Social Logins](#social-logins)
-  - [Other Entities](#other-entities)
-    - [Identifiers](#identifiers)
-- [Export Users](#export-users)
-  - [{frontmatter.technology} User Structure](#frontmattertechnology-user-structure)
-  - [Add Sample Users](#add-sample-users)
-  - [Export The Users With The API](#export-the-users-with-the-api)
-- [Create Roles In FusionAuth](#create-roles-in-fusionauth)
-- [Import Users](#import-users)
-  - [Use A WordPress Password Hash Plugin For FusionAuth](#use-a-wordpress-password-hash-plugin-for-fusionauth)
-  - [Set Up FusionAuth And Deploy The Plugin](#set-up-fusionauth-and-deploy-the-plugin)
-  - [Create Roles For Your Users](#create-roles-for-your-users)
-  - [Prepare Users For Import To FusionAuth](#prepare-users-for-import-to-fusionauth)
-  - [Save The User Details And Hash To FusionAuth](#save-the-user-details-and-hash-to-fusionauth)
-  - [Verify The Import](#verify-the-import)
-    - [Debug With The FusionAuth Database](#debug-with-the-fusionauth-database)
-- [What To Do Next](#what-to-do-next)
-- [Additional Support](#additional-support)
-
-
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import InlineField from 'src/components/InlineField.astro';
 import Aside from '/src/components/Aside.astro';
@@ -150,194 +125,95 @@ Export your users from {frontmatter.technology} by running the command below. Us
 node 1_exportUsers.mjs yourclientid yourapikey
 ```
 
-This will create a `users.json` file in the `src` directory. `users.json` should have user data similar to the one in `/exampleData/1_fronteggExport/users.json`.
+This will create a `users.json` file in the `src` directory. `users.json` should have user data similar to the one in `exampleData/1_fronteggExport/users.json`.
 
 `1_exportUsers.mjs` makes two calls to the {frontmatter.technology} API:
 - `httpClient.get('identity/resources/users/v3')` gets all your users and some basic data on each
 - `httpClient.get('identity/resources/vendor-only/users/v1/' + user.id)` gets comprehensive data for each user, including roles, but not features. There doesn't appear me to be an API method to get features currently.
 
-## Create Roles In FusionAuth
+## Create Roles For Your Users
+
+If you look at `exampleData/1_fronteggExport/users.json` you'll see the users have two roles, `ReadOnly` and `Admin` in the keys.
+
+```json
+       "tenants": [
+            {
+                "tenantId": "1d378739-a1ac-4a79-9d2f-e7eb53e6dcd7",
+                "roles": [
+                    {
+                        "id": "f4c43bb0-d9ae-4837-8a97-8688abcd8404",
+                        "vendorId": "0d0c5e4b-6c5c-4a85-96fc-7c17b31ee36a",
+                        "tenantId": null,
+                        "key": "ReadOnly",
+                        "name": "Read Only",
+```
+
+You need to add these roles in your FusionAuth application. Users will be linked to an application through a registration object, which includes the role. If the users in your exported data have different role names to the ones in the example data, change them in the script `src/2_addRoles.mjs`. The role UUIDs are random — you can use any you like.
+
+In order to use this script, you need an instance of FusionAuth running. To start FusionAuth, run the commands below in a new terminal.
+
+```
+cd fusionauth-import-scripts/frontegg/fusionAuthDockerFiles
+docker compose up
+```
+
+FusionAuth will now be running and browsable at `http://localhost:9011`. You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and `password`. The container is called `fa`.
+
+Now you can run the role creation script below.
 
 ```sh
 node 2_convertTextToJson.mjs
 ```
 
-Your output should be valid JSON and look like the file `fusionauth-import-scripts/exampleData/1_wordpressExport/users.json`.
+Now in the [FusionAuth admin interface](http://localhost:9011/admin), if you browse to **Applications —> Temp** and click the <InlineUIElement>Manage Roles</InlineUIElement> button, you can see the roles have been added for your sample Application. This Application was created using a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart), defined in `fusionauth-import-scripts/frontegg/fusionAuthDockerFiles/kickstart/kickstart.json`. When FusionAuth comes up for the first time, it will look at the `kickstart.json` file and configure FusionAuth to the specified state.
 
 ## Import Users
 
-Now that the user details have been extracted from {frontmatter.technology}, you need to add a password hashing plugin to FusionAuth that supports the phpass hashing algorithm used in {frontmatter.technology}, map the {frontmatter.technology} fields to FusionAuth fields, and then import the users using a script.
-
-### Use A WordPress Password Hash Plugin For FusionAuth
-
-The {frontmatter.hashTechnology} hashing algorithm is not [natively supported by FusionAuth](/docs/reference/password-hashes). However, FusionAuth allows [custom plugins](/docs/extend/code/password-hashes/custom-password-hashing). There is a {frontmatter.hashTechnology} plugin accompanying this article [in this GitHub repository](https://github.com/FusionAuth/fusionauth-contrib/tree/master/Password%20Hashing%20Plugins).
-
-<Aside type="note">
-The linked repository has multiple plugin projects. You need to build and install only the Password Hashing Plugins project.
-</Aside>
-
-Download and unzip the repository, or use Git in a terminal with the command below.
-
-```sh
-git clone https://github.com/fusionauth/fusionauth-contrib.git
-```
-
-Open the file `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleWordPressPhpassPasswordEncryptor.java`. The content of the file is shown below.
-
-<RemoteCode
-    url={frontmatter.javaCodeRoot + "/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleWordPressPhpassPasswordEncryptor.java"}
-    lang="java"
-/>
-
-Most of the other hashing plugins in this project take a plaintext password and Base64 salt and return a Base64 hash. Phpass is more complicated. The salt is stored inside the hash, as is the hashing algorithm name. Thus the `encrypt` function needs to perform the password hash comparison inside the phpass algorithm to verify the user's password is correct. The {frontmatter.technology} user import script you will use shortly saves the existing hash to the salt field. If the `checkPassword` function succeeds, then the `encrypt` function returns the existing salt. If it fails, the function returns a random number to ensure that the passwords will never match. Only if given a new password with no existing hash will `encrypt` return a new hash.
-
-The `factor` parameter should always be 8.
-
-There are two other files linked to this plugin that you shouldn't need to alter:
-- `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExampleWordPressPhpassPasswordEncryptorTest.java`, which holds unit tests for the hasher.
-- `fusionauth-contrib/Password Hashing Plugins/src/main/java/com/mycompany/fusionauth/plugins/guice/MyExampleFusionAuthPluginModule.java`, which makes the hasher file known to FusionAuth.
-
-If you make another hash plugin, you will need to make your own test and add your plugin to the Guice file. This might be the case if your {frontmatter.technology} installation has overridden the default hashing algorithm.
-
-<Aside type="note">
-The {frontmatter.hashTechnology} library uses specific prefixes in password hashes to indicate the algorithm and cost parameters.
-
-- **No prefix:** Very old {frontmatter.technology} installations might use MD5 hashes. These hashes are 32 characters long and consist of hexadecimal characters.
-- **$P$ or $P$B:** This prefix indicates phpass library. The $P$ indicates phpass, and the character following this prefix represents the cost parameter of the hash. The actual algorithm is a modified MD5 with multiple iterations to increase security. This is the algorithm the Java plugin discussed above uses and is the default in WordPress in 2024.
-- **$1$:** This prefix indicates an MD5-based crypt hash processed with a Unix `crypt()` function.
-- **$2a$, $2x$, $2y$:** These prefixes are associated with bcrypt.
-- **$5$ and $6$:** These prefixes indicate SHA-256 and SHA-512 hashing respectively.
-- **$argon2i$, $argon2id$:** These prefixes are for Argon2.
-</Aside>
-
-Build the Java plugin and add it to FusionAuth:
-
-- Open a terminal in the `fusionauth-contrib` directory and run the commands below to build a Docker container for Java, with the repository shared as a volume into the container.
-
-  ```sh
-  cd .devcontainer
-  docker build -t javaimage .
-  cd ..
-  docker run -it --name javabox -v .:/workspace javaimage
-  ```
-- In the Docker container terminal that is now running, run the commands below.
-  ```sh
-  cd "/workspace/Password Hashing Plugins"
-  mvn clean install
-  exit
-  ```
-- If you have Java installed locally, you can run the Maven command without Docker.
-
-All tests should pass, and the plugin file should be available in `Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar`.
-
-### Set Up FusionAuth And Deploy The Plugin
-
-Now copy `fusionauth-example-password-encryptor-0.1.0.jar` to your FusionAuth `plugins` directory and restart FusionAuth.
-
-If you are not already running FusionAuth or want to test this process on another instance, you can start FusionAuth in Docker.
-- Open a new terminal in the `fusionauth-import-scripts` directory and run the code below.
-  ```sh
-  cd wordpress/fusionAuthDockerFiles
-  docker compose up
-  ```
-- FusionAuth will now be running and browsable at `http://localhost:9011`. You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and `password`. The container is called `fa`.
-- In the `fusionauth-contrib` terminal where you built the plugin, run the commands below to copy the JAR file into the FusionAuth container `plugins` directory.
-  ```sh
-  docker exec fa mkdir /usr/local/fusionauth/plugins
-  docker cp "Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar" fa:/usr/local/fusionauth/plugins/fusionauth-example-password-encryptor-0.1.0.jar
-  ```
-- Finally, restart FusionAuth for it to detect the plugin. In the terminal where FusionAuth is running in Docker, press Ctrl + C to stop it, wait, and run `docker compose up` again.
-
-### Create Roles For Your Users
-
-The two users you exported have the roles Administrator and Subscriber, as seen in the `wp_capabilities` meta field. Create the roles in FusionAuth. In a terminal in the `fusionauth-import-scripts/wordpress/src` directory, run the code below.
-
-```sh
-node 3_addRoles.mjs
-```
-
-Now in the [FusionAuth admin interface](http://localhost:9011/admin), if you browse to **Applications —> WordpressTestImportApp** and click the <InlineUIElement>Manage Roles</InlineUIElement> button, you can see the roles have been added for your sample Application. This Application was created using a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart), defined in `fusionauth-import-scripts/wordpress/fusionAuthDockerFiles/kickstart/kickstart.json`. When FusionAuth comes up for the first time, it will look at the `kickstart.json` file and configure FusionAuth to the specified state.
-
 ### Prepare Users For Import To FusionAuth
 
-The next script, `4_convertWpUserToFaUser.mjs`, is the most important. It maps the fields of `users.json` to FusionAuth fields. You may wish to alter this script to change which fields are ignored, or where they are mapped.
+The next script, `3_convertFeUserToFaUser.mjs`, is the most important. It maps the fields of `users.json` to FusionAuth fields. You may wish to alter this script to change which fields are ignored, or where they are mapped.
 
 The script uses `stream-json`, a JSON library that can incrementally read massive files with millions of users. It opens the `users.json` file for reading in the line `new Chain([fs.createReadStream(inputFilename), parser(), new StreamArray(),]);`. For more information, read https://github.com/uhop/stream-json. The `processUsers()` function calls `getFaUserFromUser()` to map the {frontmatter.technology} user to FusionAuth, and then saves them to an `faUsers.json` file.
 
 The `getFaUserFromUser()` function does a few things:
 - Maps as many matching fields from {frontmatter.technology} to FusionAuth as possible.
-- Stores all {frontmatter.technology} user details that don't map to FusionAuth in the `data` field. If there are details you want to include or exclude, alter the `dataToIgnore` list at the top of the file.
-- Ignores empty fields and arrays.
-- Uses the name we registered for the hashing algorithm in the Java plugin in `faUser.encryptionScheme = 'example-wordpress-phpass';`.
-- Adds Registrations (a Role link between a User and an Application) for users. You will need to change these Ids to match those of your application when doing a real migration.
-
-There are a few helper functions at the bottom of the file to extract keys and values from the {frontmatter.technology} `wp_usermeta` object and deserialize them from PHP. These are used when working with `wp_capabilities`.
+- Create a random UUID in plaintext for the user password. This will require users to create a new password when logging in to your application after migration.
+- Stores all {frontmatter.technology} user details that don't map to FusionAuth in the JSON `data` field. This is where the {frontmatter.technology} Metadata field is saved to.
+- Adds Registrations (a Role link between a User and an Application) for users. You will need to change these Ids to match those of your application when doing a real migration. This section is marked with `TODO`.
 
 Carefully read this function and make sure that the user information you need is imported correctly. If any information is not needed, you can comment out the related lines.
 
 If you are uncertain about what a user attribute in FusionAuth does, read more in the [user guide](/docs/apis/users), as linked in the [general migration guide](/docs/lifecycle/migrate-users/bulk/general) recommended earlier.
 
-In a terminal in the `fusionauth-import-scripts/wordpress/src` directory, run the script with the following command.
+In a terminal in the `fusionauth-import-scripts/frontegg/src` directory, run the script with the following command.
 
 ```sh
-node 4_convertWpUserToFaUser.mjs
+node 3_convertFeUserToFaUser.mjs
 ```
 
 ### Save The User Details And Hash To FusionAuth
 
-Now you have the users file `faUsers.json` and the {frontmatter.hashTechnology} plugin is installed. To import the users into FusionAuth, you need to run the Node.js import script.
+To import the users into FusionAuth, you need to run the Node.js import script.
 
-In a terminal in the `fusionauth-import-scripts/wordpress/src` directory, run the command below.
+In a terminal in the `fusionauth-import-scripts/frontegg/src` directory, run the command below.
 
 ```sh
-node 5_import.mjs
+node 4_import.mjs
 ```
 
 This script uses the FusionAuth SDK for Node.js `@fusionauth/typescript-client`. It's used only for a single operation, `fa.importUsers(importRequest)`. For more information, read the [FusionAuth Typescript Client Library](/docs/sdks/typescript) documentation.
 
-Finally, this script imports users individually. If this is too slow when running the production migration, wrap the `importUsers()` FusionAuth SDK call in a loop that bundles users in batches of 1000.
+This script imports users individually. If this is too slow when running the production migration, wrap the `importUsers()` FusionAuth SDK call in a loop that bundles users in batches of 1000.
 
 ### Verify The Import
 
-If the migration script ran successfully, you should be able to log in to the `WordpressTestImportApp` application with one of the imported users. In the [FusionAuth admin UI](http://localhost:9011/admin), navigate to **Applications —> WordpressTestImportApp**. Click the <InlineUIElement>View</InlineUIElement> button (green magnifying glass) next to the application and note the <InlineField>OAuth IdP login URL</InlineField>.
-
-<img src={`/img/docs/lifecycle/migrate-users/bulk/${migration_source_dir}/find-login-url.png`} alt="Application login URL." width="1200" role="bottom-cropped" />
-
-Copy this URL and open it in a new incognito browser window. (If you don’t use an incognito window, the admin user session will interfere with the test.) You should see the login screen. Enter username `user@example.com` and password `bitnami`. Login should work.
-
-<Aside type="note">
-  After a successful test login, the user will be redirected to a URL like `https://example.com/?code=FlZF97WIYLNxt4SGD_22qvpRh4fZ6kg_N89ZbBAy1E4&locale=fr&userState=Authenticated`. This occurs because you haven't set up a web application to handle the authorization code redirect yet.
-
-  That is an important next step but is beyond the scope of this document. Consult the [5-minute setup guide](/docs/quickstarts/5-minute-setup-guide) for an example of how to do this.
-</Aside>
-
-
-Next, log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and password `password`. Review the user entries to ensure the data was correctly imported.
+Log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and password `password`. Review the user entries for the test application to ensure the data was correctly imported.
 
 <img src={`/img/docs/lifecycle/migrate-users/bulk/${migration_source_dir}/list-users.png`} alt="List of imported users." width="1200" role="bottom-cropped" />
 
 You can manage a user by clicking on the <InlineUIElement>Manage</InlineUIElement> button (black button) to the right of the user in the list of users to review the details of the imported user’s profile. In the <InlineUIElement>Source</InlineUIElement> tab, you can see all the user details as a JSON object.
 
-#### Debug With The FusionAuth Database
-
-If you have errors logging in, you can use the FusionAuth database directly to see if your users were imported, and check their hashes manually.
-
-You can use any PostgreSQL browser. DBeaver will work. The connection details are in `fusionauth-import-scripts/wordpress/fusionAuthDockerFiles/docker-compose.yml` and `.env`.
-
-In your database IDE, create a new PostgreSQL connection with the following details:
-
-- <InlineField>URL:</InlineField> `jdbc:postgresql://localhost:5432/fusionauth`
-- <InlineField>Host:</InlineField> `localhost`
-- <InlineField>Port:</InlineField> `5432`
-- <InlineField>Database:</InlineField> `fusionauth`
-- <InlineField>Username:</InlineField> `fusionauth`
-- <InlineField>Password:</InlineField> `hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3`
-
-Log in to the database and browse to `Databases/fusionauth/Schemas/public/Tables`. Tables `identities` and `users` will show you the login credentials and user personal information.
-
 ## What To Do Next
-
-{frontmatter.hashTechnology} uses a relatively old and weak hashing algorithm, though not terrible. You might want to rehash your users' passwords on their next login with a stronger algorithm. To enable this setting, follow these [instructions](/docs/extend/code/password-hashes/custom-password-hashing#rehashing-user-passwords).
 
 <WhatNext />
 
