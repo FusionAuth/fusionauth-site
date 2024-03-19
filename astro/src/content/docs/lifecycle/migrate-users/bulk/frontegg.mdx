@@ -10,6 +10,29 @@ importCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-import-scr
 javaCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-contrib/frontegg
 ---
 
+- [Overview](#overview)
+- [Prerequisites](#prerequisites)
+- [Planning Considerations](#planning-considerations)
+  - [Obtaining User Data](#obtaining-user-data)
+  - [Mapping User Attributes](#mapping-user-attributes)
+  - [Social Logins](#social-logins)
+  - [Other Entities](#other-entities)
+    - [Identifiers](#identifiers)
+- [Export Users](#export-users)
+  - [{frontmatter.technology} User Structure](#frontmattertechnology-user-structure)
+  - [Add Sample Users](#add-sample-users)
+  - [Export The Users With The API](#export-the-users-with-the-api)
+- [Create Roles For Your Users](#create-roles-for-your-users)
+- [Import Users](#import-users)
+  - [Prepare Users For Import To FusionAuth](#prepare-users-for-import-to-fusionauth)
+  - [Save The User Details And Hash To FusionAuth](#save-the-user-details-and-hash-to-fusionauth)
+  - [Verify The Import](#verify-the-import)
+- [Migrate User Passwords Gradually](#migrate-user-passwords-gradually)
+- [What To Do Next](#what-to-do-next)
+- [Additional Support](#additional-support)
+
+
+
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import InlineField from 'src/components/InlineField.astro';
 import Aside from '/src/components/Aside.astro';
@@ -43,7 +66,16 @@ To follow this tutorial, you need:
 
 ### Obtaining User Data
 
-{frontmatter.technology} allows you to export your users through their API. {frontmatter.technology} does not allow you to export user password hashes. This means you cannot migrate your user passwords into FusionAuth and allow your users to log in as they were before. Your users will have to use the FusionAuth "Forgot password" flow to set a password and log in.
+{frontmatter.technology} allows you to export your user data through their API. But {frontmatter.technology} does not allow you to export user password hashes. This means you cannot migrate your user passwords into FusionAuth and allow your users to log in if you do an offline migration. Your users will have to use the FusionAuth "Forgot password" flow to set a password and log in.
+
+If you are willing to perform a gradual migration, also known as an online migration or slow migration, you can allow your users to log in to {frontmatter.technology} via FusionAuth, and save their passwords to FusionAuth if they are correct. Gradual migrations in FusionAuth use Connectors, a paid feature.
+
+Here is how a full migration process might work:
+1. Export all user data from the {frontmatter.technology} API, except passwords.
+1. Import the data into FusionAuth.
+1. Have a FusionAuth Connector call an intermediary web service you write that calls {frontmatter.technology} with a user's credentials and saves the password to FusionAuth whenever a user logs in. Once you have migrated a large enough fraction of your users' passwords you can switch off the Connector and cancel your {frontmatter.technology} subscription.
+
+This tutorial will follow these steps. If you are content asking your users to reset their passwords, or you use the free version of FusionAuth, you can stop on step two.
 
 ### Mapping User Attributes
 
@@ -85,7 +117,7 @@ However, {frontmatter.technology} also supports assigning permissions to directl
 
 ### Add Sample Users
 
-If you have existing users, you can use them to follow this migration tutorial. If not, add users as described below to follow along with this tutorial.
+If you have existing users, you can use them to follow this migration tutorial. If not, add users as described below.
 
 - Log in to your account at https://portal.frontegg.com.
 - Add any environment, like dev.
@@ -148,7 +180,7 @@ If you look at `exampleData/1_fronteggExport/users.json` you'll see the users ha
                         "name": "Read Only",
 ```
 
-You need to add these roles in your FusionAuth application. Users will be linked to an application through a registration object, which includes the role. If the users in your exported data have different role names to the ones in the example data, change them in the script `src/2_addRoles.mjs`. The role UUIDs are random — you can use any you like.
+You need to add these role names in your FusionAuth application. Users will be linked to an application through a registration object, which includes the role. If the users in your exported data have different role names to the ones in the example data, change them in the script `src/2_addRoles.mjs`. The role UUIDs are random in this script — you can use any you like, including the ones matching the UUIDs of your roles in {frontmatter.technology}.
 
 In order to use this script, you need an instance of FusionAuth running. To start FusionAuth, run the commands below in a new terminal.
 
@@ -212,6 +244,12 @@ This script imports users individually. If this is too slow when running the pro
 Log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and password `password`. Review the user entries for the test application to ensure the data was correctly imported.
 
 You can manage a user by clicking on the <InlineUIElement>Manage</InlineUIElement> button (black button) to the right of the user in the list of users to review the details of the imported user’s profile. In the <InlineUIElement>Source</InlineUIElement> tab, you can see all the user details as a JSON object.
+
+## Migrate User Passwords Gradually
+
+This final step of the tutorial is optional. Here you learn how to create a Connector for FusionAuth to import your users' passwords individually as each user logs in. If you don't need to do this, please skip to the [conclusion section](#what-to-do-next) below.
+
+
 
 ## What To Do Next
 
