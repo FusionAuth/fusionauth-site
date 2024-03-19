@@ -32,6 +32,9 @@ javaCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-contrib/fron
   - [Verify The Import](#verify-the-import)
 - [Migrate User Passwords Gradually](#migrate-user-passwords-gradually)
   - [Create A User With A Password](#create-a-user-with-a-password)
+  - [Configure A Connector Between FusionAuth And {frontmatter.technology}](#configure-a-connector-between-fusionauth-and-frontmattertechnology)
+  - [Build An Authentication Intermediary Web Service](#build-an-authentication-intermediary-web-service)
+  - [Log In With A Test User](#log-in-with-a-test-user)
 - [What To Do Next](#what-to-do-next)
 - [Additional Support](#additional-support)
 
@@ -73,7 +76,7 @@ To follow this tutorial, you need:
 
 {frontmatter.technology} allows you to export your user data through their API. But {frontmatter.technology} does not allow you to export user password hashes. This means you cannot migrate your user passwords into FusionAuth and allow your users to log in if you do an offline migration. Your users will have to use the FusionAuth "Forgot password" flow to set a password and log in.
 
-If you are willing to perform a gradual migration, also known as an online migration or slow migration, you can allow your users to log in to {frontmatter.technology} via FusionAuth, and save their passwords to FusionAuth if they are correct. Gradual migrations in FusionAuth use Connectors, a paid feature.
+If you are willing to perform a gradual migration, also known as an online migration or slow migration, you can allow your users to log in to {frontmatter.technology} via FusionAuth, and save their passwords to FusionAuth if they are correct. Gradual migrations in FusionAuth use Connectors, a paid feature. However, you can test Connectors in your development environment with FusionAuth without paying.
 
 Here is how a full migration process might work:
 1. Export all user data from the {frontmatter.technology} API, except passwords.
@@ -274,14 +277,48 @@ Delete the earlier two users from `faUsers.json` and leave only the object for n
 
 Run `4_import.js` to import this user into FusionAuth.
 
+### Configure A Connector Between FusionAuth And {frontmatter.technology}
+
+You now need to configure FusionAuth to point to an intermediary web service between it and {frontmatter.technology} by using a Connector. For a generic video overview of Connectors, please see this [video](https://www.youtube.com/watch?v=ks-ppMH6WXw).
+
+In your FusionAuth web interface at https://localhost:9011, browse to <InlineUIElement>Settings</InlineUIElement> — <InlineUIElement>Connectors</InlineUIElement>.
+
+Click <InlineUIElement>Add Generic connector</InlineUIElement>.
+
+Enter the field values below.
+
+- <InlineUIElement>Id</InlineUIElement> — <InlineField>b9a215ed-3078-4339-9638-62416fd20837</InlineField>
+- <InlineUIElement>Name</InlineUIElement> — <InlineField>Test</InlineField>
+- <InlineUIElement>Authentication URL</InlineUIElement> — <InlineField>http://host.docker.internal:6252/login</InlineField>
+- Enable <InlineUIElement>Debug enabled</InlineUIElement>
+
+In production, you will want to add some basic authentication to your public web service, but it's unnecessary when using your localhost in this tutorial.
+
+- Browse to <InlineUIElement>Tenants</InlineUIElement>.
+- Click <InlineUIElement>Edit</InlineUIElement> on the default tenant.
+- Click the <InlineUIElement>Connectors</InlineUIElement> tab.
+- Click <InlineUIElement>Add policy</InlineUIElement>.
+- Select the `Test` connector.
+- Enable <InlineUIElement>Migrate user</InlineUIElement> so that the FusionAuth will no longer use {frontmatter.technology} for subsequent logins of the same user.
+- Click <InlineUIElement>Submit</InlineUIElement>.
+- Move the `Test` policy to the top of the list and click the save icon at the top right.
+
+### Build An Authentication Intermediary Web Service
+
+Your FusionAuth instance now points to `http://host.docker.internal:6252/login` for logins of the `test` application. The next step is to write a small service that forwards the user's name and password to {frontmatter.technology} and returns if the login was successful. If it is, then you know the password is correct and can save it, hashed, to FusionAuth.
+
+TODO here
+
+
+### Log In With A Test User
+
 TODO:
+- point connector to web service
 - create web service in node express in import scripts repo (use express quickstart i wrote, not them) that calls frontegg, and then saves user password
 - run locally
-- point connector to web service
-- test login on localhost with user a
-
-- myemailaddress+frontegguserc@simplelogin.com
-- https://app-dgo95bersinj.frontegg.com/oauth
+- test login on localhost with user c
+    - myemailaddress+frontegguserc@simplelogin.com
+  - https://app-dgo95bersinj.frontegg.com/oauth
 
 ## What To Do Next
 
