@@ -1,4 +1,3 @@
-{frontmatter.technology}
 ---
 title: Migrate From FrontEgg
 description: How to migrate your users from FrontEgg to FusionAuth.
@@ -10,35 +9,6 @@ technology: FrontEgg
 importCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-import-scripts/frontegg
 javaCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-contrib/frontegg
 ---
-
-- [{frontmatter.technology}](#frontmattertechnology)
-- [javaCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-contrib/frontegg](#javacoderoot-httpsrawgithubusercontentcomritza-cofusionauth-contribfrontegg)
-- [Overview](#overview)
-- [Prerequisites](#prerequisites)
-- [Planning Considerations](#planning-considerations)
-  - [Obtaining User Data](#obtaining-user-data)
-  - [Mapping User Attributes](#mapping-user-attributes)
-  - [Social Logins](#social-logins)
-  - [Other Entities](#other-entities)
-    - [Identifiers](#identifiers)
-- [Export Users](#export-users)
-  - [{frontmatter.technology} User Structure](#frontmattertechnology-user-structure)
-  - [Add Sample Users](#add-sample-users)
-  - [Export The Users With The API](#export-the-users-with-the-api)
-- [Create Roles For Your Users](#create-roles-for-your-users)
-- [Import Users](#import-users)
-  - [Prepare Users For Import To FusionAuth](#prepare-users-for-import-to-fusionauth)
-  - [Save The User Details And Hash To FusionAuth](#save-the-user-details-and-hash-to-fusionauth)
-  - [Verify The Import](#verify-the-import)
-- [Migrate User Passwords Gradually](#migrate-user-passwords-gradually)
-  - [Create A User With A Password](#create-a-user-with-a-password)
-  - [Configure A Connector Between FusionAuth And {frontmatter.technology}](#configure-a-connector-between-fusionauth-and-frontmattertechnology)
-  - [Build An Authentication Intermediary Web Service](#build-an-authentication-intermediary-web-service)
-  - [Log In With A Test User](#log-in-with-a-test-user)
-- [What To Do Next](#what-to-do-next)
-- [Additional Support](#additional-support)
-
-
 
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import InlineField from 'src/components/InlineField.astro';
@@ -76,7 +46,7 @@ To follow this tutorial, you need:
 
 {frontmatter.technology} allows you to export your user data through their API. But {frontmatter.technology} does not allow you to export user password hashes. This means you cannot migrate your user passwords into FusionAuth and allow your users to log in if you do an offline migration. Your users will have to use the FusionAuth "Forgot password" flow to set a password and log in.
 
-If you are willing to perform a gradual migration, also known as an online migration or slow migration, you can allow your users to log in to {frontmatter.technology} via FusionAuth, and save their passwords to FusionAuth if they are correct. Gradual migrations in FusionAuth use Connectors, a paid feature. However, you can test Connectors in your development environment with FusionAuth without paying.
+If you are willing to perform a gradual migration, also known as an online migration or slow migration, you can allow your users to log in to {frontmatter.technology} via FusionAuth, and save their passwords to FusionAuth if they are correct. Gradual migrations in FusionAuth use Connectors, a paid feature.
 
 Here is how a full migration process might work:
 1. Export all user data from the {frontmatter.technology} API, except passwords.
@@ -271,7 +241,7 @@ The two users you created previously did not have passwords. To create a user wi
 
 Now visit your app URL that you noted earlier, such as `https://app-dgo95bersinj.frontegg.com/oauth/account/sign-up`. Create a new user with an alias like `myemail+frontegguserc@gmail.com` and password `password`.
 
-Import the new user by rerunning the import scripts, `1_exportUsers.mjs` and `3_convertFeUserToFaUser.mjs`.
+Export the new user by rerunning the scripts `1_exportUsers.mjs` and `3_convertFeUserToFaUser.mjs`.
 
 Delete the earlier two users from `faUsers.json` and leave only the object for new user `myemail+frontegguserc@gmail.com`.
 
@@ -279,7 +249,11 @@ Run `4_import.js` to import this user into FusionAuth.
 
 ### Configure A Connector Between FusionAuth And {frontmatter.technology}
 
-You now need to configure FusionAuth to point to an intermediary web service between it and {frontmatter.technology} by using a Connector. For a general overview of Connectors, please see this [video](https://www.youtube.com/watch?v=ks-ppMH6WXw).
+You now need to configure FusionAuth to point to an intermediary web service between it and {frontmatter.technology} by using a Connector.
+
+<Aside type="note">
+For a general overview of Connectors, please see this [video](https://www.youtube.com/watch?v=ks-ppMH6WXw).
+</Aside>
 
 In your FusionAuth web interface at https://localhost:9011, browse to <InlineUIElement>Settings</InlineUIElement> — <InlineUIElement>Connectors</InlineUIElement>.
 
@@ -307,28 +281,58 @@ Your FusionAuth instance now has a connector that points to `http://host.docker.
 
 ### Build An Authentication Intermediary Web Service
 
- The next step is to write the small service available on port 6252 that forwards the user's name and password to {frontmatter.technology} and returns if the login was successful. If it is, then you know the password is correct and can save it, hashed, to FusionAuth.
+ The next step is to write the small service available on port 6252 that forwards the user's name and password to {frontmatter.technology} and returns if the login was successful. If it is successful, then you know the password is correct and can save it, hashed, to FusionAuth.
 
 <Aside type='note'>
 Documentation on the inputs and outputs a connector expects is [here](https://fusionauth.io/docs/lifecycle/migrate-users/connectors/generic-connector).
 </Aside>
 
+The Connector makes a POST request to the URL you specify, and expects a JSON object back containing a `user`. Although the documentation says you need to return only an Id, the Connector will fail unless you also return an email address for the user.
 
+An example web service is in `src/5_connectorService.mjs`.
 
-TODO here
+This file has an Express.js HTTP POST handler that gets the Id and password from the request, in
 
+```js
+app.post('/', async (request, response) => {
+```
+
+forwards them to {frontmatter.technology} by calling
+
+```js
+await isLoginValid(email, request.body.password);
+```
+
+and returns a 404 if they are not valid.
+
+If the credentials are valid, you need to return the user's email and Id stored in the `faUsers.json` file. Unfortunately the {frontmatter.technology} API method you call, `https://docs.frontegg.com/reference/vendoronlyusers_verifyuserpassword`, does not return a user Id. This search is done in
+
+```js
+await getUserDetailsFromFile(email);
+```
+
+Run this web service now using the command below.
+
+```sh
+node 5_connectorService.mjs
+```
 
 ### Log In With A Test User
 
-TODO:
-- create web service in node express in import scripts repo (use express quickstart i wrote, not them) that calls frontegg, and then saves user password
-- run locally
--  curl -X POST http://localhost:6252 -H "Content-Type: application/json" -d '{"password":"p", "loginId":"test@example.com"}'
--  curl -X POST http://localhost:6252 -H "Content-Type: application/json" -d '{"password":"password", "loginId":"myemailaddress+frontegguserc@simplelogin.com"}'
-- test login on localhost with user c
-    - myemailaddress+frontegguserc@simplelogin.com
-  - https://app-dgo95bersinj.frontegg.com/oauth
-  -
+In the FusionAuth web interface, browse to Applications and click the magnifying glass next to the `Test` application. Copy the value of the `OAuth IdP login URL:` into your browser address bar, such as `http://localhost:9011/oauth2/authorize?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&response_type=code&redirect_uri=http%3A%2F%2Fexample.com`. This URL is a login page for the Test application so that you can test the web service and Connector. You cannot use the normal FusionAuth login page, `http://localhost:9011`, because that is only for administrators.
+
+Log in with the username and password you entered earlier, such as `myemail+frontegguserc@gmail.com` and `password`. You should see your web service say on the console `Request received` and be logged in to the FusionAuth sample application page.
+
+If you log out and log in again with the same user, you'll notice that `Request received` does not show in the web service console. This is because FusionAuth is now using its own authentication service as the original user password has been hashed and saved in the FusionAuth database.
+
+The user has been successfully migrated and {frontmatter.technology} is no longer needed for them.
+
+### Debug
+
+If you encounter errors in this process, try the following:
+- View the System Event Logs in the bottom left of the FusionAuth web interface.
+- Check that you see the web service on your localhost from within the Docker container by running a command on your host like `curl -X POST http://localhost:6252 -H "Content-Type: application/json" -d '{"password":"p", "loginId":"test@example.com"}'`
+- Add `console.log('hello')` lines to the `5_connectorService.mjs` file to see where any errors are occurring.
 
 ## What To Do Next
 
