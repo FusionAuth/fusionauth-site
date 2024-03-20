@@ -58,7 +58,7 @@ There is a minimal but complete CI/CD example in this <a href={frontmatter.url}>
 
 <OverviewDiagram />
 
-In GitHub, click <InlineUIElement>Fork</InlineUIElement> and add the repository to your GitHub account. Then run `git clone https://github.com/<your_username>/fusionauth-example-github-actions.git` in a terminal to download it.
+In GitHub, click <InlineUIElement>Fork</InlineUIElement> and add the repository to your GitHub account. Then run `git clone https://github.com/<your_username>/fusionauth-example-github-actions.git` in a terminal to download it. Remember to replace `<your_username>` with your actual GitHub username.
 
 Below is the repository structure.
 
@@ -260,20 +260,20 @@ If your test runs successfully, you can be certain that your app and FusionAuth 
 
 GitHub Actions is a service provided by GitHub that allows you to run workflows that can do anything you can write in a script, triggered by different types of events in your repository. GitHub runs your script in a virtual machine. GitHub allocates each user a certain amount of free CPU minutes per month and a set amount of storage, depending on your plan. For more details, see the [learn GitHub Actions](https://docs.github.com/en/actions/learn-github-actions) documentation and [pricing page](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions).
 
-Let's review the action script to see how it works. All scripts are stored in the `.github/workflows` directory, and the files can be called whatever you like. Here, the file is called `test.yaml`.
+Let's review the GitHub Actions workflow script to see how it works. All scripts are stored in the `.github/workflows` directory, and the files can be called whatever you like. Here, the file is called `test.yaml`.
 
 <RemoteCode url={frontmatter.codeRoot + "/.github/workflows/test.yaml"}
   lang="yaml" />
 
-Each action has a name, which is a human-readable label.
+Each workflow has a name, which is a human-readable label.
 
 ```yaml
 name: Test FusionAuth login
 ```
 
-This is followed by an event, which is all the conditions that trigger the action to execute. Events are stored in the `on` object. The most common ones to use are when pushing a commit or receiving a pull request. For a full list, see the [documentation](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows).
+This is followed by an event, which is all the conditions that trigger the workflow to execute. Events are stored in the `on` object. The most common ones to use are when pushing a commit or receiving a pull request. For a full list, see the [documentation](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows).
 
-Your action uses the push-to-main-branch event.
+Your workflow uses the push-to-main-branch event.
 
 ```yaml
   push:
@@ -281,38 +281,29 @@ Your action uses the push-to-main-branch event.
       - main
 ```
 
-Then comes the action itself, which is stored in the `jobs` object. This is what will run when the event occurs. Your action has just one job, `run-tests`.
+Then comes the workflow `jobs`. This is what will run when the push event occurs. This workflow has just one job, `run-tests`.
 
 <Aside type="note">
  You need to specify the type of operating system the machine will run to execute the job steps. Here, you use `ubuntu-latest`. It is the cheapest runner on GitHub. Windows runners use minutes at twice the rate of Linux, and Mac runners use ten times the rate of Linux.
 </Aside>
 
-The `services` section specifies that the action requires Docker (where FusionAuth runs).
-
-```yaml
-    services:
-      docker:
-        image: docker:19.03.12
-        options: --privileged # container has full access to host
-        ports:
-          - 3000:3000
-          - 9011:9011
-```
+The `steps` section defines a sequence of tasks that are executed during the workflow run.
 
 The steps consist of two types of code:
 - Actions, which are existing tasks in GitHub like checking out a repository or installing Node.js.
 - Custom commands, which run code directly in the machine's terminal.
 
-<Aside type="note">
-Reusable actions in a workflow are different from the workflow itself, but they are both called actions in GitHub. Workflows are declared in YAML files, and reusable actions are public JavaScript or Docker repositories.
-</Aside>
-
-This script starts by checking out your repository and installing Node.js in actions.
+This script starts by checking out your repository then installing FusionAuth and Node.js using the respective actions.
 
 ```yaml
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Start FusionAuth
+        uses: fusionauth/fusionauth-github-action@v1
+        with:
+          FUSIONAUTH_VERSION: "latest" # Optional: provide FusionAuth version number otherwise it defaults to latest
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -320,12 +311,9 @@ This script starts by checking out your repository and installing Node.js in act
           node-version: '18'
 ```
 
-Custom code then starts Docker, installs Node.js modules, runs the app, and runs the tests. Note that steps usually run in serial. To run steps simultaneously, you use `-d` in Docker, and `npm run start &` to start the next step without waiting for the first step to exit. If a step fails, the next step will not run.
+Custom code then installs Node.js modules, runs the app, and runs the tests. Note that steps usually run in serial. To run steps simultaneously, you use `&` to start the next step without waiting for the first step to exit. If a step fails, the next step will not run.
 
 ```yaml
-      - name: Start FusionAuth in Docker
-        run: docker-compose up -d # -d in background
-
       - name: Install npm dependencies
         run: |
           npm install
@@ -342,9 +330,30 @@ Custom code then starts Docker, installs Node.js modules, runs the app, and runs
         working-directory: ./app
 ```
 
+Using the `fusionauth-github-action` is the preferred method to start FusionAuth in the workflow. If you want to start FusionAuth with Docker compose instead of the action you can use the commented out configuration in the `.github/workflows/test.yaml` file (for example if you need customizations such as to use a custom password hashing plugin).
+
+In the commented out workflow configuration the `services` section specifies that the action requires Docker where FusionAuth will run.
+
+```yaml
+    services:
+      docker:
+        image: docker:19.03.12
+        options: --privileged # container has full access to host
+        ports:
+          - 3000:3000
+          - 9011:9011
+```
+
+Then FusionAuth will be started using `docker-compose` as shown below.
+
+```yaml
+       - name: Start FusionAuth in Docker
+         run: docker-compose up -d # -d in background
+```
+
 ## Compile Your App In A GitHub Action
 
-You might have noticed that GitHub did not build your app at any point in this workflow. This is because JavaScript is a dynamic language and does not need to be compiled. If you are using FusionAuth with C#, Go, Rust, or TypeScript, you can easily add another step to your action to compile the code before running the tests. This might look like the code below.
+You might have noticed that GitHub did not build your app at any point in this workflow. This is because JavaScript is a dynamic language and does not need to be compiled. If you are using FusionAuth with C#, Go, Rust, or TypeScript, you can easily add another step to your workflow to compile the code before running the tests. This might look like the code below.
 
 ```yaml
       - name: Compile app
@@ -377,7 +386,7 @@ We'll discuss the secrets used in the code below in a later section <ScrollRef t
       cd /fa_config # assume this is where docker compose file is
 
       # change docker version number
-      sed -i 's|fusionauth/fusionauth-app:.*|fusionauth/fusionauth-app:1.48.3|' docker-compose.yml
+      sed -i 's|fusionauth/fusionauth-app:.*|fusionauth/fusionauth-app:latest|' docker-compose.yml
 
       # pull the latest image from DockerHub before we try to use it
       docker-compose pull fusionauth-app
@@ -444,8 +453,8 @@ Let's summarize what you need to do to test and deploy your application:
 - Write Playwright tests that check your app can log in with FusionAuth and any other essential functionality, including new features that you are releasing.
 - Write a GitHub action that runs these tests when receiving a pull request or pushing code to a branch.
 - Add secrets in GitHub that allow it to access your deployment environment.
-- Add a deployment step to your GitHub action that sends your new release to the server and starts it.
-- Add a final step in the action to test that your Playwright tests work on the deployed server.
+- Add a deployment step to your GitHub action workflow that sends your new release to the server and starts it.
+- Add a final step in the workflow to test that your Playwright tests work on the deployed server.
 - If your tests are successful, switch your public URL over to the latest release.
 
 
