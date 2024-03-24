@@ -49,11 +49,12 @@ To follow this tutorial, you need:
 If you are willing to perform a gradual migration, also known as a slow migration, you can allow your users to log in to {frontmatter.technology} via FusionAuth, and FusionAuth transparently migrates their data. Slow migrations in FusionAuth use [Connectors](/docs/lifecycle/migrate-users/connectors), a paid feature.
 
 Here is how a full migration process might work:
-1. Export all user data from the {frontmatter.technology} API, except passwords.
-2. Import the data into FusionAuth.
-3. Have a FusionAuth Connector call an intermediary web service you write that calls {frontmatter.technology} with a user's credentials and saves the password to FusionAuth whenever a user logs in. Once you have migrated a large enough fraction of your users' passwords you can switch off the Connector and cancel your {frontmatter.technology} subscription.
+1. Export all user data from the {frontmatter.technology} API, except password hashes.
+2. Convert the user data into FusionAuth compatible objects and import the data into FusionAuth.
+3. Have your users use the "Forgot Password" flow to change their passwords.
+4. Alternatively you can have a FusionAuth Connector call an intermediary web service you write that calls {frontmatter.technology} with a user's credentials and saves the password to FusionAuth whenever a user logs in. Once you have migrated a large enough fraction of your users' passwords you can switch off the Connector and cancel your {frontmatter.technology} subscription.
 
-This tutorial will follow these steps. If you are content asking your users to reset their passwords, or you use the free version of FusionAuth, you can stop on step two.
+This tutorial will follow these steps.
 
 ### Mapping User Attributes
 
@@ -108,7 +109,6 @@ If you have existing users, you can use them to follow this migration tutorial. 
 - Log in to your account at https://portal.frontegg.com.
 - Add an environment, like `Development`.
 - In the environment settings, **Environments -> Development -> Env settings** note your <InlineUIElement>Client ID</InlineUIElement>, <InlineUIElement>API Key</InlineUIElement>, and <InlineUIElement>Login URL</InlineUIElement>.
-- Note down the <InlineUIElement>Login URL</InlineUIElement>.
 
 <img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/env-settings.png`} alt="FrontEgg env settings" width="1200" />
 
@@ -172,7 +172,7 @@ If you look at `exampleData/1_fronteggExport/users.json` you'll see the users ha
 
 You need to add these role names in your FusionAuth application. Users will be linked to an application through a registration object, which includes the role. If the users in your exported data have different role names to the ones in the example data, change them in the script `frontegg/src/2_addRoles.mjs`. The role UUIDs are random in this script — you can use any you like, including the ones matching the UUIDs of your roles in {frontmatter.technology}.
 
-In order to use this script, you need an instance of FusionAuth running. To start a local instance FusionAuth running in Docker, run the commands below in a new terminal.
+In order to use this script, you need an instance of FusionAuth running. To start a local instance of FusionAuth running in Docker, run the commands below in a new terminal.
 
 ```sh
 cd fusionauth-import-scripts/frontegg/fusionAuthDockerFiles
@@ -191,8 +191,6 @@ node 2_addRoles.mjs
 Now in the [FusionAuth admin interface](http://localhost:9011/admin), if you browse to **Applications —> Test** and click the <InlineUIElement>Manage Roles</InlineUIElement> button, you can see the roles have been added for your sample Application.
 
 <img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/added-roles.png`} alt="Roles added to the Import application" width="1200" />
-
-This Application was created using a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart), defined in `fusionauth-import-scripts/frontegg/fusionAuthDockerFiles/kickstart/kickstart.json`.
 
 ### Prepare Users For Import To FusionAuth
 
