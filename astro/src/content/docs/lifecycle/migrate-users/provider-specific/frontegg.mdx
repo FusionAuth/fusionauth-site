@@ -320,27 +320,6 @@ Now configure a FusionAuth Connector to point to an intermediary web service bet
 For a general overview of Connectors, please see this [video](https://www.youtube.com/watch?v=ks-ppMH6WXw).
 </Aside>
 
-You have a few options for setting up a publicly available API endpoint.
-
-- Using Microsoft Azure, you can create an [HTTP trigger](https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook-trigger?tabs=python-v2%2Cisolated-process%2Cnodejs-v4%2Cfunctionsv2) on an Azure function app.
-- You can use an [API gateway](https://aws.amazon.com/api-gateway/) on AWS.
-- You can create a self-hosted endpoint locally and make it public using a service like [ngrok](https://ngrok.com/).
-
-This guide will show you how to create an ngrok endpoint that will use a Node.js service to validate user credentials from FusionAuth login requests and retrieve the user's Frontegg profile from the Frontegg API.
-
-<Aside type="note">
-  Download ngrok at https://ngrok.com. There are free and paid plans available. This guide uses a free plan.
-
-  Follow this [quickstart to get ngrok up and running](https://ngrok.com/docs/getting-started/).
-</Aside>
-
-When ngrok is installed, start it with this command.
-
-```sh
-ngrok http 6252
-```
-
-Take note of the URL ngrok prints to your terminal, as you will need it later. It should look something like `https://random-ngrok-string.ngrok-free.app`.
 
 In your [FusionAuth admin UI](https://localhost:9011), browse to **Settings —> Connectors**.
 
@@ -351,14 +330,22 @@ Click the dropdown button on the top right and select <InlineUIElement>Add Gener
 Enter the field values below.
 
 - <InlineField>Name:</InlineField> `FronteggConnector`
-- <InlineField>Authentication URL:</InlineField> URL displayed by ngrok such as `https://random-ngrok-string.ngrok-free.app`
+- <InlineField>Authentication URL:</InlineField> `http://host.docker.internal:6252`. If you are running FusionAuth in directly on your machine and not in Docker you can use `http://localhost:6252`.
 - Adjust the timeout values to higher values to cater for network latency when the API requests are being made
 - Enable <InlineUIElement>Debug enabled</InlineUIElement>
+
+<Aside>
+  You may need to update your hosts file to include an entry for `127.0.0.1 host.docker.internal` if it's not already present. On macOS and Linux you can achieve this by running the following command:
+
+  ```
+  echo "127.0.0.1 host.docker.internal" | sudo tee -a /etc/hosts
+  ```
+</Aside>
 
 <img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/connector.png`} alt="Connector details in FusionAuth" width="1200" />
 
 <Aside type="caution">
-  In production, you will want to add some authentication to the public web service.
+  In production, you will want to add some authentication to the web service.
 </Aside>
 
 Now browse to **Tenants** and do the following.
