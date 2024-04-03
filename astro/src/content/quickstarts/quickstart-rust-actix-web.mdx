@@ -1,0 +1,227 @@
+---
+title: Rust with Actix
+description: Quickstart integration of a Rust Actix web application with FusionAuth.
+navcategory: getting-started
+prerequisites: Docker version 20
+section: web
+cta: EmailListCTA
+language: Rust
+framework: Actix
+icon: /img/icons/rust.svg
+faIcon: fa-rust
+url: https://github.com/FusionAuth/fusionauth-quickstart-rust-actix-web
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-rust-actix-web/main
+---
+import Aside from '/src/components/Aside.astro';
+import {RemoteCode, RemoteValue} from '@fusionauth/astro-components';
+import Intro from '/src/components/quickstarts/Intro.astro';
+import LoginArchitectureWeb from '/src/components/quickstarts/LoginArchitectureWeb.astro';
+import DockerSpinup from '/src/components/quickstarts/DockerSpinup.astro';
+import NextSteps from '/src/components/quickstarts/NextSteps.astro';
+
+
+<Intro technology={'Rust and Actix'}
+       repositoryUrl={frontmatter.url}/>
+
+While this article uses {frontmatter.framework}, the {frontmatter.language} OAuth2 library can also be used in your preferred framework, such as Rocket or Axum.
+
+## Prerequisites
+
+For this quickstart, you'll need:
+
+* [Docker](https://www.docker.com) version 20 or later, which is the quickest way to start FusionAuth. (There are [other ways](/docs/get-started/download-and-install/).)
+* [{frontmatter.language}](https://rustup.rs/#) and Cargo version 1.7 or later.
+* You may also need to install `pkg-config` and `libssl-dev` if they are not already installed on your system.
+
+## General Architecture
+
+<LoginArchitectureWeb />
+
+## Getting Started
+
+Start with getting FusionAuth up and running and creating a new {frontmatter.framework} application.
+
+### Clone The Code
+
+First, grab the code from the repository and change to that folder.
+
+```shell
+git clone https://github.com/FusionAuth/fusionauth-quickstart-rust-actix-web.git
+cd fusionauth-quickstart-rust-actix-web
+mkdir your-application
+```
+
+All shell commands in this guide can be entered in a terminal in this folder. On Windows, you need to replace forward slashes with backslashes in paths.
+
+All the files you'll create in this guide already exist in the `complete-application` subfolder, if you prefer to copy them to `your-application`.
+
+### Run FusionAuth Via Docker
+
+<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} />
+
+### The Basic {frontmatter.framework} Application
+
+While this guide builds a new {frontmatter.framework} project, you can use the same method to integrate your existing project with FusionAuth.
+
+
+<Aside type="note">
+  If you only want to run the application and not create your own, there is a completed version in the `complete-application` directory. You can use the following commands to get it up and running.
+
+  ```shell
+  cd complete-application
+  cargo run
+  ```
+
+  View the application at http://localhost:9012.
+</Aside>
+
+From here on, you'll work in the `your-application` directory. Install the dependencies for the web server with the code below.
+
+```bash
+cd your-application
+cargo init
+cargo add actix-web@4 
+cargo add actix-files@0.6.2 
+cargo add actix-session@0.8.0 --features cookie-session 
+cargo add dotenv@0.15.0 
+cargo add handlebars@4.5 --features dir_source 
+cargo add oauth2@4.4.2 
+cargo add reqwest@0.11 --features json
+cargo add serde@1.0 --features derive
+```
+
+Add the following code to your `src/main.rs` file.
+
+<RemoteCode
+  url={frontmatter.codeRoot + "/complete-application/src/main.rs"}
+  lang="rust" />
+
+The `main` function configures the web server, adds routes to it, and starts it. The function also:
+
+- Uses `dotenv` to allow you to call any values from the `.env` file later in the application.
+- Uses private same-site cookies to store the user's email when logged in. {frontmatter.framework} does not provide an anti-CSRF token as they [believe same-site cookies render it unnecessary](https://github.com/actix/actix-web/issues/147).
+- Adds routes from the main file to the server, and some authentication routes, which you'll add in the next section.
+- Enables the Handlebars library to provide HTML templates.
+
+The remainder of this main file is three routes: index, account, and change. They each check if the user's email is in the HTTP request cookie (meaning the user is logged in), and display an HTML template. The account and change routes send the user's email to the template.
+
+The change route is more complicated. It has two versions: one for GET and one for POST. The POST version checks the request's form to extract a dollar amount, then calls `calculate_change` to convert the dollars to nickels and pennies, and returns them in the state to the Handlebars template.
+
+## Authentication
+
+Authentication in {frontmatter.language} is managed by [OAuth2](https://docs.rs/oauth2/latest/oauth2/).
+
+Create the file `.env` in the `your-application` directory and insert the following lines.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/.env"}/>
+
+This tells {frontmatter.framework} where to find and connect to FusionAuth.
+
+Authentication is handled by `src/auth.rs`. Create that file now and insert the following code.
+
+<RemoteCode
+  url={frontmatter.codeRoot + "/complete-application/src/auth.rs"}
+  lang="rust" />
+
+This code has three routes: `login`, `logout`, and `callback`.
+
+- `logout` clears the user's session and returns them to the home page.
+- `login` uses `get_oauth_client` to read your variables from the `.env` file and get a new client that constructs a URL to call FusionAuth, then redirects the user to that URL.
+- `callback` does most of the work. The user is returned to `callback` after logging in with FusionAuth. The function checks that the PKCE challenge is correct, retrieves the access token, and makes a final call to FusionAuth to get the user's email, which it stores in the session. Now the application considers the user logged in.
+
+{frontmatter.framework} automatically links the user's session to their browser by returning a cookie for the site, which is then included in every subsequent request.
+
+Now that `callback` has set a cookie, you can see how authentication on the other pages is tested. The application:
+
+- Sends the user to the account page if they already have a login cookie on the home page.
+- Sends the user to the home page if they are not logged in on the account page.
+
+## Customization
+
+With authentication done, the last task is to create example pages that a user can browse.
+
+### CSS And HTML
+
+Create a `static` directory within `your-application` directory.
+
+```shell
+mkdir static
+```
+
+Copy images from the example app.
+
+```shell
+cp ../complete-application/static/money.jpg static/money.jpg
+cp ../complete-application/static/changebank.svg static/changebank.svg
+```
+
+Create a stylesheet file `static/changebank.css` and add the following code to it.
+
+<RemoteCode
+  url={frontmatter.codeRoot + "/complete-application/static/changebank.css"}
+  lang="css"/>
+
+Next, create a `templates` directory within `your-application`. Create three pages inside the `templates` directory. First create the home page, `index.html`, and paste the following code into it.
+
+<RemoteCode
+  url={frontmatter.codeRoot + "/complete-application/templates/index.html"}
+  lang="html"/>
+
+The index page contains nothing to note except a link to the login page `<a href="/login">`.
+
+Next, create an `account.html` page and paste the following code into it.
+
+<RemoteCode
+  url={frontmatter.codeRoot + "/complete-application/templates/account.html"}
+  lang="html"/>
+
+The account page displays the user's email from FusionAuth with `<p class="header-email">{{email}}</p>`.
+
+The account page is only visible to logged in users. If a session email is not found, the user is redirected to login.
+
+Finally, create a `change.html` page and paste the following code into it.
+
+<RemoteCode
+  url={frontmatter.codeRoot + "/complete-application/templates/change.html"}
+  lang="html"/>
+
+The HTML at the bottom of the file displays a blank form when the page first loads (GET) or the result of the calculation when returning (POST).
+
+## Run The Application
+
+Run your application.
+
+```bash
+cargo run
+```
+
+Browse to the app at http://localhost:9012. Log in using <code><RemoteValue url={frontmatter.codeRoot + "/kickstart/kickstart.json"} selector="$.variables.userEmail" /></code> and <code><RemoteValue url={frontmatter.codeRoot + "/kickstart/kickstart.json"} selector="$.variables.userPassword" /></code>. The change page allows you to enter a number. If you don't log in, you won't be able to access the change or account pages.
+
+## Next Steps
+
+<NextSteps />
+
+### {frontmatter.language} Authentication
+
+- [Rust OAuth provider](https://docs.rs/oauth2/latest/oauth2/)
+- [Actix](https://actix.rs/)
+
+## Troubleshooting
+
+- I get "This site can’t be reached localhost refused to connect" when I click the login button.
+
+Ensure FusionAuth is running in the Docker container. You should be able to log in as the admin user <code><RemoteValue url={frontmatter.codeRoot + "/kickstart/kickstart.json"} selector="$.variables.adminEmail" /></code> with the password <code><RemoteValue url={frontmatter.codeRoot + "/kickstart/kickstart.json"} selector="$.variables.adminPassword" /></code> at [http://localhost:9011/admin](http://localhost:9011/admin).
+
+- It still doesn't work.
+
+You can always pull down a complete running application and compare what's different.
+
+```shell
+git clone https://github.com/FusionAuth/fusionauth-quickstart-rust-actix-web.git
+cd fusionauth-quickstart-rust-actix-web
+docker compose up
+cd complete-application
+cargo run
+```
+
+Browse to the app at http://localhost:9012.

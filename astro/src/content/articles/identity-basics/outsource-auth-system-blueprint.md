@@ -160,6 +160,8 @@ In talking to people in this area, it still doesn't hurt to emphasize:
 * Standards certifications that your proposed auth system complies with (ISO 27001, SOC2, HIPAA BAAs, etc). 
 * **Actual laws** that your proposed auth system can help you comply with, as mentioned in the legal section above (GDPR/CCPA are big ones!).
 
+You may want to include both [blue team and red team members](/articles/security/blue-team-red-team-purple-team) in this discussion.
+
 ### Infrastructure
 
 If your organization is large enough for a dedicated infrastructure team it's likely that you already have a robust auth solution, but there are cases where you have several internal apps with different auth systems and you want to standardize on a new outsourced auth system. 

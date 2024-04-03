@@ -5,6 +5,13 @@ if [[ $# < 1 ]]; then
   exit 1
 fi
 
+which gh > /dev/null
+
+if [[ $? -ne 0 ]]; then
+  echo "GitHub CLI is required to run this script. Try running \"brew install gh\" first."
+  exit 2
+fi
+
 # Issues should be labeled with exactly one of: "bug", "enhancement", "feature", "security", or "internals"
 # Without one of these labels, they won't be included
 # If an issue has multiple labels, it will be repeated
@@ -30,7 +37,7 @@ gh_issue_list() {
 
     gh issue list --repo FusionAuth/fusionauth-issues -m $milestone --state all -L 250 --label $label --search "sort:created-asc" --json number,body,title --jq ".[]|[.number,.body,.title] | @tsv" |
     while IFS=$'\t' read -r number body title; do
-        generated_copy=`echo $body | awk -F'### Release Notes' '{print $2}'`
+        generated_copy=`echo $body | awk 'BEGIN {FS = "### Release [Nn]otes"} {print $2}'`
         if [[ "${generated_copy}" == "" ]]; then
             generated_copy=${title}
         else

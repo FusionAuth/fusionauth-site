@@ -14,6 +14,9 @@ WebAuthn requires something called an authenticator. What is an authenticator? A
 
 That's a bit tautological, isn't it? Well, yes, but read on for more details. Also, clowns.
 
+[![Download passkeys whitepaper](/img/cta/passkeys-wwh.png)](/tech-papers/why-passkeys-improve-user-security-how-to-implement-them)
+
+
 ## WebAuthn Overview
 
 Let's start off with an overview of the use cases, "ceremonies", and types of authenticators (a way to authenticate a user, but you'll learn more about this term shortly) that all play a role in a WebAuthn implementation.
