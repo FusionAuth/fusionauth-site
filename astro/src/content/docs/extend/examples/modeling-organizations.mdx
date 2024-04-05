@@ -4,19 +4,26 @@ description: Using FusionAuth's Entity Management feature to model organizations
 navcategory: developer
 section: extend
 subcategory: examples
+codeRoot: https://raw.githubusercontent.com/ritza-co/example-modeling-organizations/main
 ---
 
 import PremiumEditionBlurb from 'src/content/docs/_shared/_premium-edition-blurb.astro';
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
 
 A common use-case for B2B businesses is to model their customers and the employees of those customers. This concept isn't limited just to SaaS businesses either as many companies sell products and services to other companies. The employees, contractors, and other types of users at these customers (i.e. other companies) need access to various applications to do their work.
 
-An example of this is a CRM. Let's say you are building a hot new CRM called AwesomeCRM. Your customers will be other businesses and let's say one is called ClownShoes.com. ClownShoes employs 10 salespeople and they will all need access to your CRM. However, each one might have different permissions. To layer in even more complexity, ClownShoes uses an outsourced CRO service called Big Bucks CRO. Jane is a fractional CRO with Big Bucks and she will also need access to your CRM, but she might be working with 10 or more clients, including ClownShoes. You'll need to ensure Jane can access all these accounts and has the correct permissions for each, which might be different for each of her clients.
+An example of this is a CRM. Let's say you are building a hot new CRM called AwesomeCRM. Your customers will be other businesses and let's say one is PiedPiper. PiedPiper employs 10 salespeople and they will all need access to your CRM. However, each one might have different permissions. To layer in even more complexity, PiedPiper uses an outsourced CRO service called Big Bucks CRO. Jane is a fractional CRO with Big Bucks and she will also need access to your CRM, but she might be working with 10 or more clients (like Aviato and Hooli), including PiedPiper. You'll need to ensure Jane can access all these accounts and has the correct permissions for each, which might be different for each of her clients.
 
 As you can see, this structure introduces a lot of complexity. This is where FusionAuth's [Entity Management](/docs/get-started/core-concepts/entity-management) feature comes in handy. Entity Management allows you to create objects (i.e. Entities) and grant Users permissions to them. Users aren't limited to having permissions to just one Entity; instead they can be granted different permissions to different Entities.
 
 <PremiumEditionBlurb />
 
 This guide will walk you through implementing the use-case described above with Entity Management using the FusionAuth APIs, you can also see more in our [core concepts for Entity Management](/docs/get-started/core-concepts/entity-management).
+
+You can also checkout our companion application that implements the concepts in this guide at [https://github.com/fusionauth/example-modeling-organizations](https://github.com/fusionauth/example-modeling-organizations). The application repo includes a Kickstart file with all the settings detailed in this guide and a docker compose file to run FusionAuth locally. If you use the Kickstart and docker compose file, you can skip the setup steps below. Follow the steps in the [companion application's README](https://github.com/fusionauth/example-modeling-organizations/blob/main/README.md) to get setup.
 
 Let's get started.
 
@@ -169,6 +176,30 @@ You can see that the permissions are available in the response. You can extract 
 
 The `grant` object, or some portion of it, can be stored in any number of locations for easy access. You could store it in a cookie (encrypted is preferred), a server-side session, or a database. The [Search Grants API](/docs/apis/entities/grants#search-for-grants) is designed to be queried repeatedly and returned quickly, so depending on the scale of the application and where FusionAuth is deployed, you could also query this API for each request. This has the benefit of ensuring that the User's permissions are always the most current version.
 
+In the companion application, the `grant` object is loaded via a middleware function and appended to the `user` object so it is available in the `req` object for each request. This middleware function is called `loadGrants` and is shown below:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/middleware/loadGrants.js"} tags="loadGrants" lang="javascript"/>
+
+The `loadGrants` function is then added to the Express `app` request pipeline:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app.js"} tags="loadGrantsPipeline" lang="javascript"/>
+
+
+You will notice that the `loadGrants` middelware function first checks if the user is authenticated before trying to retrieve the grants, as the user is needed to find the grants. Therefore immediately before authentication with Passport in the `passport.authenticate` callback pipeline, the `loadGrants` middleware will exit early because the user is not yet available. To tack on the grants to the user object in this special request flow, the `loadGrants` middleware function is added to the `passport.authenticate` callback pipeline:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app.js"} tags="loadGrantsPassport" lang="javascript"/>
+
+
+Once the grant with permissions is loaded, you can use it to authorize actions in your application. For example, you can check if the user has the `billing` permission before allowing them to view the billing page. The companion application uses another custom middleware function called `checkGrantPermissions` to check if the user has the required permission to access a route:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/middleware/checkGrantPermissions.js"} tags="checkGrantPermissions" lang="javascript"/>
+
+This middleware function can then be used on individual routes like:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/routes/billing.js"} tags="billingPost" lang="javascript"/>
+
+You'll notice that [all routes in the companion application](https://github.com/fusionauth/example-modeling-organizations/tree/main/complete-application/routes) are protected by the `checkGrantPermissions` middleware function, with the appropriate permissions required to access the route.
+
 ## Multiple Organizations
 
 The final component that will be covered in this guide is handling multiple organizations for a single user. AwesomeCRM works with many partners and often these partners work with many clients. This means that a user at a partner company might be working with multiple organizations at the same time. To handle this scenario, you need to ensure you can handle multiple results from the [Retrieve Grants](/docs/apis/entities/grants#retrieve-grants) API.
@@ -218,13 +249,25 @@ This response indicates that the User belongs to 3 organizations and has various
 
 ![Company Selection](/img/guides/organizations/account-select.png)
 
+
+You'll notice in the `passport.authenticate` pipeline in the companion app that when the user is authenticated the first time, the first grant is selected as the default entity for the user, and added to the `req.session` object on the `selectedGrant` property.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/app.js"} tags="loadGrantsPassport" lang="javascript"/>
+
+When the user selects another entity to work with on the index page, the `selectedGrant` is updated with the new entity.  
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/routes/index.js"} tags="companyPost" lang="javascript"/>
+
 ## Managing Users
 
 Often applications provide the ability for users to manage other users on their account. This is accomplished in much the same way as described above. To add a user to an organization, you can use the [Grant API](/docs/apis/entities/grants#grant-a-user-or-entity-permissions-to-an-entity). To remove a user from an organization, you can use the [Delete a Grant](/docs/apis/entities/grants#delete-a-grant) API. If you need to adjust the permissions a user has to an organization, you can use the same [Grant API](/docs/apis/entities/grants#grant-a-user-or-entity-permissions-to-an-entity) from above. The Grant API is an upsert, which means that if a grant already exists, it will update its attributes.
 
-## Changing An Organization
+In the companion app, this is demonstrated in the [`routes/users.js` file](https://github.com/ritza-co/example-modeling-organizations/blob/main/complete-application/routes/users.js). There is a trick to getting all users filtered by FusionAuth application. By default, getting users from FusionAuth will return all users in the containing tenant. You will need to use a search query combined with the [user search API](/docs/apis/users#search-for-users) to find all users in the particular application. The companion app demonstrates this in the `GET /users` route, using an [Elasticsearch query](https://fusionauth.io/docs/lifecycle/manage-users/search/user-search-with-elasticsearch) to filter users by application. 
 
-Beyond managing users, some applications provide the ability to rename or modify a user's organization. To update an Entity, you can use the [Update an Entity](/docs/apis/entities/entities#update-an-entity) API. This allows any attribute of the Entity to be updated, including custom data.
+After filtering for the users you want to manage, you can then use the [Grant API search function](/docs/apis/entities/grants#search-for-grants) to retrieve the grants for each user. In the companion application, grants are managed for a single entity (or company) at a time. Since the API returns all grants to all entities associated with a user, the application filters the grants to only show the grant for the selected entity:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/routes/users.js"} tags="getGrantsForAllUsers" lang="javascript"/>
+
 
 ## Custom Data And Search
 
@@ -256,6 +299,17 @@ GET /api/entity/search?queryString=data.address.city:denver
 ```
 
 This uses the [Elasticsearch query string query syntax](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-syntax).
+
+The companion application stores the address of the company in the custom data of the entity, which is displayed on the `Admin` page. The custom data is returned with the entity when it is retrieved from the [Retrieve Entity](/docs/apis/entities/entities#retrieve-an-entity) API, and doesn't need to be loaded separately.
+
+## Changing An Organization
+
+Beyond managing users, some applications provide the ability to rename or modify a user's organization. To update an Entity, you can use the [Update an Entity](/docs/apis/entities/entities#update-an-entity) API. This allows any attribute of the Entity to be updated, including custom data. 
+
+This is demonstrated in the companion app in the [`routes/admin.js` file](https://github.com/ritza-co/example-modeling-organizations/blob/main/complete-application/routes/admin.js). This route can update the entity name as well as the company's address. It's often useful to use the `PATCH` HTTP method for this type of operation, as it allows you to update only the fields that have changed. This applies to the custom data as well.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/routes/admin.js"} tags="updateEntity" lang="javascript"/>
+
 
 ## Conclusion
 
