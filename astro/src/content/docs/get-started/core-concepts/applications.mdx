@@ -6,6 +6,7 @@ subcategory: core concepts
 ---
 import Icon from '../../../../components/icon/Icon.astro';
 import InlineField from 'src/components/InlineField.astro';
+import AdvancedEditionBlurbApi from 'src/content/docs/_shared/_advanced-edition-blurb-api.astro';
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
 import AvailableSince from 'src/components/api/AvailableSince.astro';
@@ -84,7 +85,7 @@ The Roles tab will only be available on the Add Application form. To manage role
 
 <RoleAttributes />
 
-To manage Application Roles after you have added an Application, click the <Icon name="user"/> Manage Roles button on the index page. To edit an Application click the <Icon name="edit"/> edit icon. The following sections will walk you through each panel for the edit action.
+To manage Application Roles after you have added an Application, click the <Icon name="user"/> Manage Roles button on the index page. To manage custom OAuth Scopes after you have added an application, click the <Icon name="code"/> Manage Scopes button on the index page. To edit an Application click the <Icon name="edit"/> edit icon. The following sections will walk you through each panel for the edit action.
 
 <img src="/img/docs/get-started/core-concepts/applications.png" alt="Applications" width="1200" role="shadowed bottom-cropped" />
 
@@ -182,6 +183,9 @@ The OAuth tab allows you to configure the OAuth2 and OpenID Connect settings spe
   <APIField name="Require registration" optional>
     When enabled the user will be required to be registered, or complete registration before redirecting to the configured callback in the authorization code grant or the implicit grant. This configuration does not affect any other grant, and does not affect the API usage.
   </APIField>
+  <APIField name="UserInfo populate lambda" optional since="1.50.0">
+    The lambda to be invoked during the generation of the UserInfo response when provided a token associated with this Application. See [UserInfo populate lambda](/docs/extend/code/lambdas/userinfo-populate).
+  </APIField>
 </APIBlock>
 
 When you enable the `Device` grant you will be shown one additional configuration field:
@@ -195,6 +199,60 @@ When you enable the `Device` grant you will be shown one additional configuratio
     The URL to be returned during the Device Authorization request to be displayed to the end user. This URL will be where the end user navigates in order to complete the device authentication workflow.
 
     Required when the `Device` grant has been enabled.
+  </APIField>
+</APIBlock>
+
+### Scopes
+
+<Aside type="version">
+  Available since 1.50.0
+</Aside>
+
+The Scopes tab allows you to configure OAuth scope settings specific to this Application.
+
+<img src="/img/docs/get-started/core-concepts/application-scopes.png" alt="Application Scopes configuration" width="1200" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Relationship">
+    The application's relationship to the OAuth server.
+
+    The possible values are:
+
+    * `First-party` - The application has the same owner as the authorization server. Consent to requested OAuth scopes is granted implicitly.
+    * `Third-party` - The application is external to the authorization server. Users will be prompted to consent to requested OAuth scopes based on <InlineField>Consent mode</InlineField>.
+  </APIField>
+  <APIField name="Consent mode">
+    Controls the policy for prompting a user to consent to requested OAuth scopes. This field is only visible when the application's <InlineField>Relationship</InlineField> is `Third-party`.
+
+    The possible values are:
+
+    * `Always prompt` - Users are prompted to consent to requested OAuth scopes every time they go through an OAuth workflow.
+    * `Remember decision` - The user's consent selections will be persisted, and they will only be prompted when the OAuth request contains a scope they have not made a selection for. The duration of this persisted choice is controlled by the tenant's <InlineField>Remember OAuth scope consent choice</InlineField> configuration.
+    * `Never prompt` - The user will be never be prompted to consent to requested OAuth scopes. Permission will be granted implicitly as if this were a `First-party` application. This configuration is meant for testing purposes only.
+
+    <AdvancedEditionBlurbApi feature="advanced OAuth scopes"/>
+  </APIField>
+  <APIField name="Unknown scope policy">
+    Controls the policy for handling unknown scopes on an OAuth request.
+
+    The possible values are:
+
+    * `Allow` - Unknown scopes will be allowed on the request, passed through the OAuth workflow, and written to the resulting tokens without consent.
+    * `Remove` - Unknown scopes will be removed from the OAuth workflow, but the workflow will proceed without them.
+    * `Reject` - Unknown scopes will be rejected and cause the OAuth workflow to fail with an error.
+  </APIField>
+  <APIField name="Scope handling policy">
+    Controls the policy for handling of OAuth scopes when populating JWTs and the UserInfo response.
+
+    The possible values are:
+
+    * `Compatibility` - OAuth workflows will populate JWT and UserInfo claims in a backwards compatible manner.
+    * `Strict` - OAuth workflows will populate JWT and UserInfo claims according to specification based on requested and consented scopes.
+  </APIField>
+  <APIField name="Provided scopes">
+    Configuration for standard scopes provided by FusionAuth. Each provided scope is reserved by FusionAuth and can be individually <InlineField>Enabled</InlineField> and <InlineField>Required</InlineField>. A disabled scope will be treated as unknown by FusionAuth. A user must consent to all <InlineField>Required</InlineField> scopes present in an OAuth workflow.
   </APIField>
 </APIBlock>
 
