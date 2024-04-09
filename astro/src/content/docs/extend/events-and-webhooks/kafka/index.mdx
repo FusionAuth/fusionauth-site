@@ -8,6 +8,7 @@ tertcategory: kafka
 # TODO: move kafka example out to a GH repo
 ---
 import KafkaTroubleshooting from 'src/content/docs/extend/events-and-webhooks/kafka/_kafka_troubleshooting.mdx';
+import {RemoteCode} from '@fusionauth/astro-components';
 
 ## Overview
 
@@ -39,119 +40,7 @@ If you're running Kafka alongside FusionAuth (for example, from the same `docker
 
 If your Docker Compose file is as follows:
 
-```
-version: '3'
-
-services:
-  db:
-    image: postgres:12.9
-    environment:
-      PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - db_net
-    restart: unless-stopped
-    volumes:
-      - db_data:/var/lib/postgresql/data
-
-  search:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
-    container_name: search
-    environment:
-      cluster.name: fusionauth
-      bootstrap.memory_lock: "true"
-      discovery.type: single-node
-      ES_JAVA_OPTS: ${ES_JAVA_OPTS}
-    healthcheck:
-      test: [ "CMD", "curl",  "--fail" ,"--write-out", "'HTTP %{http_code}'", "--silent", "--output", "/dev/null", "http://localhost:9200/" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - search_net
-    restart: unless-stopped
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - search_data:/usr/share/elasticsearch/data
-
-  fusionauth:
-    image: fusionauth/fusionauth-app:latest
-    depends_on:
-      - db
-      - search
-      - kafka
-      - zookeeper
-    environment:
-      DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
-      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
-      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
-      DATABASE_USERNAME: ${DATABASE_USERNAME}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
-      FUSIONAUTH_APP_RUNTIME_MODE: development
-      FUSIONAUTH_APP_URL: http://fusionauth:9011
-      SEARCH_SERVERS: http://search:9200
-      SEARCH_TYPE: elasticsearch
-
-    networks:
-      - db_net
-      - search_net
-    restart: unless-stopped
-    ports:
-      - 9011:9011
-    volumes:
-      - fusionauth_config:/usr/local/fusionauth/config
-
-  zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - 2181:2181
-    networks:
-      - db_net
-
-  kafka:
-    image: confluentinc/cp-kafka:latest
-    depends_on:
-      - zookeeper
-    ports:
-      - 9092:9092
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    networks:
-      db_net:
-        aliases:
-          - kafka
- 
-networks:
-  db_net:
-    driver: bridge
-  search_net:
-    driver: bridge
-
-volumes:
-  db_data:
-  fusionauth_config:
-  search_data:
-
-```
-
+<RemoteCode title="Example docker-compose.yml with Kafka" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-docker-compose/main/kafka/docker-compose.yml" lang="yaml" />
 
 Then you would input the following configuration in the FusionAuth UI to configure the Kafka integration.
 

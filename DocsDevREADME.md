@@ -124,7 +124,7 @@ You can find help for {props.topic} at [help](/help)
   - you may need to coerce a prop into a boolean to use as a conditional for an expression. Such as `{!!props.message && <span>{props.message}</span>}`;
 - JSON files are their own content collection in astro. You can reference these using the [JSON component](astro/src/components/JSON.astro)
 - We have an alias mapped in [tsconfig](astro/tsconfig.json) that allows you to use absolute references from 'src'. Otherwise, imports must use relative paths.
-- If a doc pulls code from an example application, use the [RemoteContent](astro/src/components/RemoteContent.astro). You can also pull sections with tags: `<RemoteContent url="https://raw.githubusercontent.com/FusionAuth/fusionauth-react-sdk/main/README.md" tags="forDocSite" />`
+- If a doc pulls code from an example application, use the [RemoteContent](astro/src/components/RemoteContent.astro). You can also pull sections with tags: `<RemoteContent url="https://raw.githubusercontent.com/FusionAuth/fusionauth-javascript-sdk/main/packages/sdk-react/README.md" tags="forDocSite" />`
 
 ### For API docs
 - We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
@@ -133,7 +133,7 @@ You can find help for {props.topic} at [help](/help)
   ```
   This field is required when <InlineField>theOtherField.enabled</InlineField> is set to true.
   ```
-- If a feature is only available when using a paid plan, use the [PremiumEditionBlurbApi](astro/src/content/docs/_shared/_premium-edition-blurb-api.astro) component `<PremiumEditionBlurbApi premium_feature="custom forms" />` fragment for API fields, and [PremiumEditionBlurb](astro/src/content/docs/_shared/_premium-edition-blurb.astro) component for any other location where the feature is mentioned in docs. Only mark the request API fields.
+- If a feature is only available when using a paid plan, use the [PremiumEditionBlurbApi](astro/src/content/docs/_shared/_premium-edition-blurb-api.astro) component `<PremiumEditionBlurbApi feature="custom forms" />` fragment for API fields, and [PremiumEditionBlurb](astro/src/content/docs/_shared/_premium-edition-blurb.astro) component for any other location where the feature is mentioned in docs. Only mark the request API fields.
 - If a feature is only available when using essentials, use the [AdvancedEditionBlurbApi](astro/src/content/docs/_shared/_advanced-edition-blurb-api.astro) component for API fields, and [AdvancedEditionBlurb](astro/src/content/docs/_shared/_advanced-edition-blurb.astro) for any other location where the feature is mentioned in docs. Only mark the request API fields with this.
 - If a feature is only available when using enterprise, use the [EnterpriseEditionBlurbApi](astro/src/content/docs/_shared/_enterprise-edition-blurb-api.astro) component for API fields, and [EnterpriseEditionBlurb](astro/src/content/docs/_shared/_enterprise-edition-blurb.astro) for any other location where the feature is mentioned in docs. Only mark the request API fields with this.
 - If you are working in the `/api/identity-providers` folder there is a `README` there to help you understand the structure and layout of the documentation for the Identity Providers API.

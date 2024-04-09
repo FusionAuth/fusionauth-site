@@ -10,8 +10,8 @@ fi
 #fusionauth-containers, fusionauth-theme-helper, etc
 EXTRA_IN_JSON_NOT_NAMED_CORRECTLY=4 
 
-# fusionauth-example-template and (temporarily) fusionauth-example-vue-sdk
-EXTRA_IN_GH_NOT_DISPLAYABLE=2
+# fusionauth-example-template and (temporarily) fusionauth-example-vue-sdk, fusionauth-quickstart-java-android-fusionauth-sdk 
+EXTRA_IN_GH_NOT_DISPLAYABLE=3
 
 cat astro/src/content/json/exampleapps.json|jq '.[]|.url' |sed 's/"//g'|sed 's!https://github.com/!!i' > json.list
 COUNT_IN_JSON=`wc -l json.list |sed 's/^ *//' |sed 's/ .*//'`
