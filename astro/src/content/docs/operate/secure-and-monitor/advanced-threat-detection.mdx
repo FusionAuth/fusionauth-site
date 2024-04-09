@@ -85,42 +85,7 @@ If the field does not update, please contact FusionAuth support.
 - best practices around rate limiting
 - diagrams around rate limiting
 
-```sh
-local postfix not working. try gmail instead.
-
-docker exec -u root -it fa /bin/bash
-apt update
-apt install vim -y
-apt install postfix -y
-apt install mailutils -y
-#apt install sendmail -y
-postfix start
-
-2
-fa@example.org
-
-echo "This is the body of the email" | mail -s "Subject Here" workaddress@simplelogin.com
-postqueue -p
-
-
-sendmail workaddress@simplelogin.com <<EOF
-Subject: Terminal test
-From: fusionauth@example.com
-
-This is a test email.
-EOF
-
-
-vim /etc/postfix/main.cf
-systemctl restart postfix
-ufw allow smtp
-ufw reload
-```
-
-
-A rate limit is the maximum number of times a user may perform an action in a set duration.
-
-You can set the following limits for each tenant:
+A rate limit is the maximum number of times a user may perform an action in a set duration. You can set the following limits for each tenant:
 
 - Failed login
 - Forgot password
@@ -136,6 +101,30 @@ You can enable or disable each of these and control the number of allowed attemp
 Rate limiting applies whether you are accessing FusionAuth through the web interface or in the terminal using the APIs.
 
 If you need to lock an account after a number of failed logins, consider [user account locking](/docs/lifecycle/authenticate-users/setting-up-user-account-lockout). Using the account lockout feature rather than rate limiting offers additional flexibility in the duration. FusionAuth can also send emails or webhooks when it locks a user's account.
+
+### User experience considerations
+
+In security, it is good practice to give as little information to potential attackers as possible. This is why a website will tell you vaguely on failed login that the username or password is incorrect, rather than admitting that the user is not registered. Similarly, with rate limiting in FusionAuth, the user (or potential attacker) is not notified that rate limiting restrictions have been triggered.
+
+For example, when exceeding the number of incorrect login attempts, any further *correct* login attempts within the duration will still fail — but the user won't be told why. Below is an example.
+
+<img src="/img/docs/operate/secure-and-monitor/user_login_failed.png" alt="How rate limiting appears to the user." width="1200" />
+
+This can be extremely confusing to users, who may waste their time resetting their password with the Forgot Password flow, or waste your time making support requests.
+
+To improve the user experience, you can provide additional information in the messages shown on the various login pages and in email templates warning users about rate limits.
+
+For example, you can browse to `Customizations` -> `Themes`. Edit any of the available tenants, such as the default FusionAuth. In the <InlineField>Messages</InlineField> tab you can change messages shown to users. You could change the following message to the message below it.
+```sh
+[InvalidLogin]=Invalid login credentials.
+```
+
+```
+[InvalidLogin]=Invalid login credentials. If you are certain your password is
+               correct, please wait 60 seconds and retry.
+```
+
+To balance security with usability, you need to decide how much information to reveal to users based on the usage patterns of your system and its security risks.
 
 ## CAPTCHA
 
