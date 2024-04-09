@@ -59,7 +59,7 @@ Open-source projects [may be more secure, especially over time](https://www.info
 
 However, there are also [instances of vulnerabilities remaining open for months](https://github.com/keycloak/keycloak/pull/7612). But if the bug is severe and an open-source project is well supported or popular, the timeline may shrink to days or weeks.
 
-In the end, you (and the maintainers) are ultimately responsible for the security of the software. Just like with maintenance responsibility, if you don't have time for your team to frequently review the security issues as they're reported and fixed and then upgrade your system, this may mean that open source isn't the best option for you.
+In the end, you (and the maintainers) are ultimately responsible for the security of the software. Is [your blue team](/articles/security/blue-team-red-team-purple-team) up for maintaining this system and educating your developers on issues? Just like with maintenance responsibility, if you don't have time for your team to frequently review the security issues as they're reported and fixed and then upgrade your system, this may mean that open source isn't the best option for you.
 
 ### Cost
 
