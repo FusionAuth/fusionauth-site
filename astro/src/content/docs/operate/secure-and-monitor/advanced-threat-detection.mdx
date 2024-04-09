@@ -5,13 +5,15 @@ navcategory: premium
 section: operate
 subcategory: secure and monitor
 ---
-import EnterpriseEditionBlurb from 'src/content/docs/_shared/_enterprise-edition-blurb.astro';
 import Aside from 'src/components/Aside.astro';
-import WebhookList from 'src/content/docs/extend/events-and-webhooks/events/_list-advanced-threat-detection-webhooks.mdx';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
+import EnterpriseEditionBlurb from 'src/content/docs/_shared/_enterprise-edition-blurb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import WebhookList from 'src/content/docs/extend/events-and-webhooks/events/_list-advanced-threat-detection-webhooks.mdx';
 import {YouTube} from '@astro-community/astro-embed-youtube';
 
 ## TODO
+cd ~/code/fusionauth-site/astro && npm install && npm run dev;  # run new astro docs. localhost:3000
 
 - rate limiting
   - what the experience is with custom rate limiting (for the end user)
@@ -59,32 +61,81 @@ Advanced Threat Detection can be enabled when the user creates a license or upda
 This feature also requires increased RAM on the servers running the FusionAuth application, as documented in the [System Requirements](/docs/get-started/download-and-install/system-requirements#compute-ram).
 </Aside>
 
-Advanced Threat Detection includes:
+Advanced Threat Detection features include:
+- Rate limiting (too many failed logins or forgot passwords)
+- CAPTCHA to prevent automated login
+- Location and IP restriction
+- Administrator notifications through emails and webhooks
 
-Each is configurable on a tenant by tenant basis. You can do so via [the Tenant API](/docs/apis/tenants) or by navigating to <Breadcrumb>Tenants -> My Tenant -> Security</Breadcrumb>.
+Each feature is configurable on a tenant by tenant basis. You can do so via [the Tenant API](/docs/apis/tenants) or by navigating to <Breadcrumb>Tenants -> My Tenant -> Security</Breadcrumb>.
 
 Here's a brief video covering some aspects of Advanced Threat Detection:
 
 <YouTube id="pjGxOXamVfk" />
 
+## Enable Advanced Threat Detection
+
+When you enter a licence key into FusionAuth in the web interface at `/admin/reactor`, FusionAuth should contact the licencing server and enable Advanced Threat Detection. If you wait a minute and then refresh the page, <InlineField>Threat Detection</InlineField> should say `Active`.
+
+If the field does not update, please contact FusionAuth support.
+
 ## Customizable Rate Limiting
 
-These are per user rate limits for the following user actions:
+- what the experience is with custom rate limiting (for the end user)
+- best practices around rate limiting
+- diagrams around rate limiting
 
-* Failed login
-* Forgot password
-* Send or resend email verification
-* Passwordless/magic link login
-* Send or resend registration verification
-* Send two-factor code
+```sh
+local postfix not working. try gmail instead.
+
+docker exec -u root -it fa /bin/bash
+apt update
+apt install vim -y
+apt install postfix -y
+apt install mailutils -y
+#apt install sendmail -y
+postfix start
+
+2
+fa@example.org
+
+echo "This is the body of the email" | mail -s "Subject Here" workaddress@simplelogin.com
+postqueue -p
+
+
+sendmail workaddress@simplelogin.com <<EOF
+Subject: Terminal test
+From: fusionauth@example.com
+
+This is a test email.
+EOF
+
+
+vim /etc/postfix/main.cf
+systemctl restart postfix
+ufw allow smtp
+ufw reload
+```
+
+
+A rate limit is the maximum number of times a user may perform an action in a set duration.
+
+You can set the following limits for each tenant:
+
+- Failed login
+- Forgot password
+- Send or resend email verification
+- Passwordless/magic link login
+- Send or resend registration verification
+- Send two-factor code
 
 <img src="/img/docs/operate/secure-and-monitor/rate-limit-settings.png" alt="The rate limiting configuration screen." width="1200" />
 
 You can enable or disable each of these and control the number of allowed attempts within a window before an action will be rate limited. When an action is rate limited, it will not succeed.
 
-When configured, rate limiting applies whether you are using the hosted login pages or the APIs.
+Rate limiting applies whether you are accessing FusionAuth through the web interface or in the terminal using the APIs.
 
-If you need to lock an account after a number of failed logins, consider [user account locking](/docs/lifecycle/authenticate-users/setting-up-user-account-lockout). Using the account lockout feature rather than rate limiting offers additional flexibility in the duration. You can also send emails or fire webhooks when a user's account is locked.
+If you need to lock an account after a number of failed logins, consider [user account locking](/docs/lifecycle/authenticate-users/setting-up-user-account-lockout). Using the account lockout feature rather than rate limiting offers additional flexibility in the duration. FusionAuth can also send emails or webhooks when it locks a user's account.
 
 ## CAPTCHA
 
