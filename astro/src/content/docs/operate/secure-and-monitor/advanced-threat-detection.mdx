@@ -18,7 +18,6 @@ cd ~/code/fusionauth-site/astro && npm install && npm run dev;  # run new astro 
 - rate limiting
   - diagrams around rate limiting
 - captcha
-  - what captcha looks like to the end user
   - when captcha is applied
 - ip addresses
   - talk more about ip acl ranges
@@ -128,7 +127,7 @@ To balance security with usability, you need to decide how much information to r
 
 You can also use CSS and JavaScript to provide more information to users. For more information, please see the [theming documentation](/docs/customize/look-and-feel/).
 
-### What To Limit And For How Long?
+### Limiting best practices
 
 There are three main concerns for rate limiting, from most to least important:
 - Denial of service attacks on your authentication system. These can leave your entire application unusable.
@@ -150,11 +149,9 @@ FusionAuth supports:
 
 FusionAuth does not support Google reCAPTCHA Enterprise. Enterprise is similar to version 3, but with machine learning for your site.
 
-For more information on Google reCAPTCHA, see their [documentation](https://www.google.com/recaptcha/about/).
-
 reCAPTCHA version 3 requires no work from your users and is more pleasant for them than version 2. But version 2 is still useful if you want to be certain that the user has passed a test of humanity, rather than have a mere probability they are human. The other danger with version 3 is that a user might be mistaken as non-human and will have no way to remedy this. Version 2's ease of use makes it better to start with than version 3, unless your users report errors.
 
-hCaptcha is similar to reCAPTCHA, except offered by a company that is not Google. You will need to do your own research to decide which to use, but here are a few of the alleged differences claimed on the Internet:
+hCaptcha is similar to reCAPTCHA, except offered by a company that is not Google. You need to do your own research to decide which to use, but here are a few of the alleged differences claimed on the Internet:
 - hCaptcha keeps less private user information than reCAPTCHA and has a strict privacy policy. reCAPTCHA violates GDPR and is not suitable for European sites.
 - hCaptcha works in every country, whereas China blocks Google.
 - hCaptcha is free for one million verifications per month. hCaptcha Pro costs $99 per month for 100 000 verifications and includes invisible CAPTCHA, theming, and analytics.
@@ -164,6 +161,10 @@ At the beginning of 2024, hCaptcha seems to be the better choice for number of c
 
 <Aside type="note">
 "reCAPTCHA scores run from 0.0 (bot) to 1.0 (person). hCaptcha Enterprise scores are risk scores, and thus they run from 0.0 (no risk) to 1.0 (confirmed threat)." - [hCaptcha documentation](https://docs.hcaptcha.com/switch/)
+</Aside>
+
+<Aside type="danger">
+Be careful when enabling CAPTCHA that your keys in FusionAuth are correct and your domain name in Google or hCaptcha is correct. If you make a mistake you will not be able to log in with your administrator account to make changes because CAPTCHA will fail. You will have to remove CAPTCHA manually by connecting to the FusionAuth database and altering tables. Test on a copy of your live site first.
 </Aside>
 
 ### How To Set Up reCAPTCHA
@@ -182,21 +183,37 @@ The form should look like the image below.
 When you want to delete a CAPTCHA site, browse to the Google administrative console at https://www.google.com/recaptcha/admin, select a site, click settings, and click the tiny delete icon at the top right of the page.
 </Aside>
 
-<Aside type="danger">
-Be careful when enabling reCAPTCHA that your keys in FusionAuth are correct and your domain name in Google is correct. If you make a mistake you will not be able to log in with your administrator account to make changes because CAPTCHA will fail. You will have to remove CAPTCHA manually by connecting to the FusionAuth database and altering tables. Test on a copy of your live site first.
-</Aside>
-
 In the FusionAuth web interface, edit a tenant, and under the heading <InlineField>Captcha Settings</InlineField>, enable <InlineField>Enabled</InlineField>. Enter your chosen reCAPTCHA version and your keys from Google. Leave the threat score at half and adjust it later if necessary. Save the tenant.
 
 If you log out and in again you'll be given a CAPTCHA puzzle for version 2, or be shown nothing if using version 3.
 
 Below is what the user will see when logging in with version 2.
 
-<img src="/img/docs/operate/secure-and-monitor/captcha_login1.png" alt="Login with CAPTCHA" width="1200" />
+<img src="/img/docs/operate/secure-and-monitor/captcha_login1.png" alt="Login with reCAPTCHA" width="1200" />
 
-<img src="/img/docs/operate/secure-and-monitor/captcha_login2.png" alt="Login with CAPTCHA" width="1200" />
+<img src="/img/docs/operate/secure-and-monitor/captcha_login2.png" alt="Login with reCAPTCHA" width="1200" />
 
 ### How To Set Up hCaptcha
+
+Browse to https://dashboard.hcaptcha.com/signup and create an hCaptcha account. hCaptcha will create a site and secret key for you. Unlike reCAPTCHA, hCaptcha will not work on your localhost. Browse to https://dashboard.hcaptcha.com and click on your site to edit its settings. If you are testing on your localhost, enter any URL for the domain, such as `example.com`. Save.
+
+In your machine's `/etc/hosts` file, add the line below redirecting your localhost to the hCaptcha domain and save.
+
+```hosts
+127.0.0.1       example.com
+```
+
+For your operating system, see the instructions at https://docs.hcaptcha.com/#local-development.
+
+Now browse to FusionAuth at http://example.com:9011/admin. Edit a tenant, and under the heading <InlineField>Captcha Settings</InlineField>, enable <InlineField>Enabled</InlineField>. Choose hCaptcha and enter your keys from the site. Leave the threat score at half and adjust it later if necessary. Save the tenant.
+
+If you log out and in again you'll be given a CAPTCHA puzzle.
+
+Below is what the user will see when logging in with.
+
+<img src="/img/docs/operate/secure-and-monitor/hcaptcha_login1.png" alt="Login with hCaptcha" width="1200" />
+
+<img src="/img/docs/operate/secure-and-monitor/hcaptcha_login2.png" alt="Login with hCaptcha" width="1200" />
 
 ## Location Aware Security
 
@@ -232,7 +249,7 @@ You can create an API key to modify configurations, but limit that key to the IP
 
 ## Registration Domain Blocking
 
-If you enable self service registration, users can provide any email address they like.
+If you enable self-service registration, users can provide any email address they like.
 But you may have email domains that have elevated privileges, like your `company.com` domain.
 There may be email addresses for which you want to block registration, like consumer `gmail.com` addresses if your application is aimed at business users.
 
