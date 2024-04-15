@@ -293,5 +293,77 @@ Here's the full list of Advanced Threat Detection webhooks:
 
 For a comprehensive explanation of using webhooks in FusionAuth, please read [the guide](/docs/extend/events-and-webhooks). If you want to call webhooks programmatically, you can do so using the [FusionAuth API](/docs/apis/webhooks).
 
-  - example of email/webhook sent on location aware event
-  - talk about what you could do with the webhook events, include an example: if the forgot password flow has been started 4 times without success, lock the account for a day.
+If you want to see an example webhook, the easiest way is to browse to https://webhook.site and paste the random link they give you, such as https://webhook.site/70a036f9-b2b2-4646-bf58-c64798eea20e, into the <InlineField>URL</InlineField> of a new webhook you create on the <Breadcrumb>Settings -> Webhooks</Breadcrumb> page.
+
+In your tenant's webhooks tab, enable <InlineField>user.login.new-device</InlineField>. Open a new incognito browser window and log in to FusionAuth.
+
+You will see JSON like the following arriving in the logs of webhook.site.
+
+
+```json
+{
+  "event": {
+    "applicationId": "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
+    "authenticationType": "PASSWORD",
+    "connectorId": "e3306678-a53a-4964-9040-1c96f36dda72",
+    "createInstant": 1713179501580,
+    "id": "30caed6b-829f-47a3-8733-ab62a9c2e76b",
+    "info": {
+      "deviceName": "Linux Chrome",
+      "deviceType": "BROWSER",
+      "ipAddress": "172.20.0.1",
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+    },
+    "ipAddress": "172.20.0.1",
+    "tenantId": "d7d09513-a3f5-401c-9685-34ab6c552453",
+    "type": "user.login.new-device",
+    "user": {
+      "active": true,
+      "birthDate": "1985-11-23",
+      "connectorId": "e3306678-a53a-4964-9040-1c96f36dda72",
+      "data": {},
+      "email": "richard@example.com",
+      "firstName": "Fred",
+      "id": "00000000-0000-0000-0000-111111111111",
+      "insertInstant": 1712746261562,
+      "lastLoginInstant": 1713179501579,
+      "lastName": "Flintstone",
+      "lastUpdateInstant": 1712746261562,
+      "memberships": [],
+      "passwordChangeRequired": false,
+      "passwordLastUpdateInstant": 1712746261581,
+      "preferredLanguages": [],
+      "registrations": [
+        {
+          "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
+          "data": {
+            "favoriteColor": "turquoise"
+          },
+          "id": "03ec163e-b4d6-43ba-84f1-963318011e1b",
+          "insertInstant": 1712746261587,
+          "lastLoginInstant": 1712746261587,
+          "lastUpdateInstant": 1712746261587,
+          "preferredLanguages": [],
+          "roles": [],
+          "tokens": {},
+          "usernameStatus": "ACTIVE",
+          "verified": true,
+          "verifiedInstant": 1712746261587
+        }
+      ],
+      "tenantId": "d7d09513-a3f5-401c-9685-34ab6c552453",
+      "twoFactor": {
+        "methods": [],
+        "recoveryCodes": []
+      },
+      "usernameStatus": "ACTIVE",
+      "verified": true,
+      "verifiedInstant": 1712746261562
+    }
+  }
+}
+```
+
+To receive a webhook for a location-aware event, use the `user.login.suspicious` event for your tenant.
+
+Using webhooks in combination with API calls to FusionAuth, you can write a simple web server script to perform a variety of security tasks. For instance, if the script received the event `user.password.breach` it could call FusionAuth to change the user's password to a random UUID. This would force the user to complete the "Forgot password" workflow and choose a safer password.
