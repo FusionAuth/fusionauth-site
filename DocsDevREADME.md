@@ -46,7 +46,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - All links elements should be fully-qualified and never include a slash at the end (i.e. `[users](/docs/apis/users)` not `[users](./users)`)
 - If something is new in a version, mark it with something like this:
 
-  <Aside type="since">
+  <Aside type="version">
     Available Since Version 1.5.0
   </Aside>
 

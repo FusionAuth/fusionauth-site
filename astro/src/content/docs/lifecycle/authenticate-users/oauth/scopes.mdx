@@ -1,0 +1,120 @@
+---
+title: Scopes
+description: Learn about OAuth scope policy configuration, managing custom scopes, and using scopes in an OAuth2 workflow.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: oauth
+---
+import AdvancedEditionBlurb from 'src/content/docs/_shared/_advanced-edition-blurb.astro';
+import ApplicationScopesSettings from 'src/content/docs/_shared/_application-scopes-settings.mdx';
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import OAuthScopeMessageLookup from 'src/content/docs/_shared/_oauth-scope-message-lookup.mdx';
+
+## Overview
+
+<Aside type="version">
+  Available since 1.50.0
+</Aside>
+
+In version `1.50.0` FusionAuth introduced new features around OAuth scope handling to provide more control over requested scopes and allowing you to tailor your application's behavior to match your security requirements.
+
+This page details these new features and explains how you can use them to customize FusionAuth behavior.
+
+## Application configuration
+
+The Scopes tab allows you to configure the application's OAuth scope handling policies.
+
+<img src="/img/docs/lifecycle/authenticate-users/oauth/scope-application.png" alt="Application Scopes Configuration" width="1200" role="shadowed" />
+
+### Form Fields
+
+<ApplicationScopesSettings />
+
+## Scope handling policy
+
+The application's <InlineField>Scope handling policy</InlineField> controls behavior when populating access tokens, Id tokens, and the UserInfo response.
+
+The `Compatibility` option is meant to maintain backwards compatibility on upgrade or when the integration does not support the requirements of `Strict` mode.
+The `Strict` option follows specification recommendations by populating access tokens, Id tokens, and the UserInfo response based on the requested and consented scopes. It also restricts the tokens the [UserInfo](/docs/lifecycle/authenticate-users/oauth/endpoints#userinfo) endpoint will accept. New applications default to the `Strict` policy.
+
+The [JWT populate](/docs/extend/code/lambdas/jwt-populate) and [UserInfo populate](/docs/extend/code/lambdas/userinfo-populate) lambdas can be used to override the claims in both configurations.
+
+The following table describes the differences between the two options in more detail.
+
+|  | Compatibility | Strict |
+| ---- | ---- | ---- |
+| Access token claims | The token contains the `email`, `email_verified`, and `preferred_username` claims for the user when that information is available | The token contains no identifying information about the user other than the `sub` claim, which contains their unique user Id |
+| Id token claims | The token contains the `email`, `email_verified`, and `preferred_username` claims for the user when that information is available | The claims on the token are based on the `scope` parameter from the OAuth workflow. See below for details on the claims included for each scope. |
+| UserInfo request | The endpoint will accept either an access token or Id token on the request. No particular `scope` claim is required on the token. | The endpoint only accepts access tokens on the request. The provided token must contain `openid` in the space-delimited `scope` claim in order to be accepted. |
+| UserInfo response | The response starts with claims from the provided token, removes some that are not relevant to the UserInfo response, and then augments the response based on information available for that user | The claims on the response are based on the `scope` claim of the provided token. See below for details on the claims included for each scope. |
+
+The `Strict` policy uses the requested and consented OAuth scopes to determine which claims to add to the Id token and UserInfo response. The `address`, `email`, `profile`, and `phone` scopes are [provided by FusionAuth](#provided-scopes) and are used to populate claims according to available user data and [Section 5.4 of the OpenID Connect specification](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims).
+
+* `address` - FusionAuth does not include physical addresses in its user data model. A lambda could be used to populate the `address` claim based on custom user data.
+* `email` - populates the `email` and `email_verified` claims
+* `phone` - Populates the `phone_number` claim based on the user's `mobilePhone` value. FusionAuth does not verify phone numbers, so the `phone_number_verified` claim is not included.
+* `profile` - Populates various profile-related data. The following describes how each claim maps to FusionAuth user data.
+
+| Claim | User field |
+| ---- | ---- |
+| `given_name` | `firstName` |
+| `middle_name` | `middleName` |
+| `family_name` | `lastName` |
+| `name` | `fullName` |
+| `preferred_username` | `username` |
+| `birthdate` | `birthDate` |
+| `picture` | `imageUrl` |
+| `locale` | The first value of `preferredLanguages` |
+| `zoneinfo` | `timezone` |
+
+## Provided scopes
+
+FusionAuth provides the following scopes defined by the [OpenID Connect](https://openid.net/specs/openid-connect-core-1_0.html) specification.
+
+* `address`
+* `email`
+* `phone`
+* `profile`
+
+These scope names are reserved and cannot be used to define [custom scopes](/docs/get-started/core-concepts/scopes).
+Each of the scopes can be individually `Enabled` and `Required`.
+Provided scopes that have been disabled are considered unknown and will be handled according to the application's <InlineField>Unknown scope policy</InlineField>.
+
+Provided scopes configured as `Required` must be granted user consent during the OAuth [consent prompt](#consent-prompt) in order to successfully complete the OAuth workflow.
+
+## Consent mode
+
+<AdvancedEditionBlurb />
+
+An application whose <InlineField>Relationship</InlineField> has been configured as `Third-party` (requires license) has the option to prompt users to consent to the requested OAuth scopes in order to complete the OAuth workflow.
+The [consent prompt](#consent-prompt) is a mechanism for users to limit the information shared with third-party applications.
+For example, a third-party application may _require_ the `email` scope in order to access the user's email address and create their account but _optionally_ request the `phone` scope in order to send notifications via SMS.
+Applications can also define [custom scopes](/docs/get-started/core-concepts/scopes) to be requested by third-parties for more fine-grained access control to APIs or actions.
+
+The <InlineField>Consent mode</InlineField> controls when users will be prompted to grant consent to the requested scopes.
+
+* `Always prompt` - The user will be prompted during each OAuth workflow. This is the preferred option because it provides maximum transparency and gives users the chance to adjust the granted scopes each time they authenticate.
+* `Remember decision` - The user's consent grants will be persisted. See below for detail on when users will be prompted again.
+* `Never prompt` - The user will never be prompted to grant consent to requested scopes. This effectively makes the third-party application behave as if it was first-party when it comes to granting consent to requested scopes. This option is meant for testing purposes.
+
+The `Remember decision` option requires some additional context. The duration that a user's decision is persisted can be controlled on the tenant's [Advanced](/docs/get-started/core-concepts/tenants#advanced) tab using the <InlineField>Remember scope consent choice</InlineField> configuration.
+After a user has made a consent decision for an application configured with the `Remember decision` option, the user will only be prompted again when any of the following is true:
+
+* Their persisted choice has expired based on the tenant's configured duration
+* A scope is requested that is not included in their persisted choices
+* An optional scope that was previously declined is requested and now required
+
+## Consent prompt
+
+Users are prompted for consent using the <InlineField>OAuth consent prompt</InlineField> [themed](/docs/customize/look-and-feel/) page.
+
+<img src="/img/docs/lifecycle/authenticate-users/oauth/oauth-consent.png" alt="OAuth Consent Prompt" width="1200" role="bottom-cropped" />
+
+The page informs the user of the requested OAuth scopes. Required scopes are listed first with a checkmark icon and cannot be de-selected. Optional scopes use a checkbox form element to allow the user to decline consent to the corresponding scope.
+
+Clicking the <InlineUIElement>Allow</InlineUIElement> button will complete the OAuth workflow and grant consent to the selected scopes. The consented scopes will be added to the `scope` claim on the resulting tokens. Clicking the <InlineUIElement>Cancel</InlineUIElement> button will terminate the OAuth workflow and send the user to the `redirect_uri` with an [OAuth error](/docs/lifecycle/authenticate-users/oauth/endpoints#oautherror).
+
+<OAuthScopeMessageLookup />
