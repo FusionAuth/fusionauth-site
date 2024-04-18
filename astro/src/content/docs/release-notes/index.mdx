@@ -16,11 +16,46 @@ import ReleaseNoteHeading from 'src/components/docs/release-notes/ReleaseNoteHea
 
 Looking for release notes older than 1.23.0? Look in the [release notes archive](/docs/release-notes/archive). Looking to be [notified of new releases?](/docs/operate/roadmap/releases#release-notifications) <span class="not-prose no-underline"><a class="ml-2" href="/docs/releases.xml"><i class="fas fa-xs fa-rss text-orange-700 text-2xl" width="50px" /></a></span>
 
+<ReleaseNoteHeading version='1.50.0' releaseDate='April 24, 2024' />
+
+<GeneralMigrationWarning >
+  This release makes significant changes to the default behavior of new Applications with regard to scopes in OAuth workflows.
+  The database migration will update existing Applications to behave in a backwards compatible manner.
+  See the OAuth [Scopes](/docs/lifecycle/authenticate-users/oauth/scopes) documentation for more information, in particular the `Relationship`, `Unknown scope policy`, and `Scope handling policy` configurations.
+</GeneralMigrationWarning>
+
+<DatabaseMigrationWarning />
+
+### Changed
+* The `/oauth2/userinfo` endpoint now requires the `aud` claim to be present on the provided token. See the [UserInfo endpoint](/docs/lifecycle/authenticate-users/oauth/endpoints#userinfo) for more detail.
+
+  If you are not using OAuth, and your JWT does not contain the `aud` claim, consider using the [JWT validate](https://fusionauth.io/docs/apis/jwt#validate-a-jwt) API instead
+* Applications now offer an Unknown scope policy configuration. This can be used to enhance security by rejected or removing unknown scopes during an OAuth workflow. See the application [Scopes tab](/docs/get-started/core-concepts/applications#scopes) for more detail.
+* Applications now offer a Scope handling policy configuration. The `Strict` option limits PII in access tokens and populates Id tokens and UserInfo responses based on the requested OAuth scopes. This option also restricts the UserInfo endpoint to accepting only access tokens containing the `openid` scope.
+
+  See [Scope handling policy](/docs/lifecycle/authenticate-users/oauth/scopes#scope-handling-policy) for more detail.
+  * Resolves [GitHub Issue #1582](https://github.com/FusionAuth/fusionauth-issues/issues/1582) and [GitHub Issue #1475](https://github.com/FusionAuth/fusionauth-issues/issues/1475)
+* The [Refresh Token Grant](/docs/lifecycle/authenticate-users/oauth/endpoints#refresh-token-grant-request) request now supports requesting a subset of the original scopes.
+  * Resolves [GitHub Issue #2590](https://github.com/FusionAuth/fusionauth-issues/issues/2590)
+* Support for optional expansion of the `application.roles` and `application.scopes` properties on the Application Search API.
+
+  This change is backwards compatible, but you may optionally request the Search API omit these properties on the response which may improve performance. See the [Application Search](/docs/apis/applications#search-for-applications) API for additional details on using the `expand` request parameter, and the `expandable` response value.
+* The `/oauth2/device/user-code` endpoint now returns the `scope` parameter value that should be used in the interactive portion of the Device Code Grant workflow. See [Device User Code](/docs/lifecycle/authenticate-users/oauth/endpoints#device-user-code) for more detail.
+
+### New
+* Custom OAuth scopes are now supported for applications. See [OAuth Scopes](/docs/apis/scopes) API and [Scopes](/docs/get-started/core-concepts/scopes) for more detail.
+  * Resolves [GitHub Issue #275](https://github.com/FusionAuth/fusionauth-issues/issues/275)
+* Applications can now be configured to prompt users to grant consent to requested OAuth scopes using the `/oauth2/consent` [themed](/docs/customize/look-and-feel/) page. See the OAuth [Scopes](/docs/lifecycle/authenticate-users/oauth/scopes) for more detail.
+  * Resolves [GitHub Issue #411](https://github.com/FusionAuth/fusionauth-issues/issues/411)
+* A new lambda function can be assigned to populate the UserInfo response for an application. See [UserInfo Populate Lambda](/docs/extend/code/lambdas/userinfo-populate) for more detail.
+  * Resolves [GitHub Issue #1647](https://github.com/FusionAuth/fusionauth-issues/issues/1647) and [GitHub Issue #659](https://github.com/FusionAuth/fusionauth-issues/issues/659)
+
+
 <ReleaseNoteHeading version='1.49.2' releaseDate='March 20th, 2024' />
 
 ### New
 * The search index default refresh interval may now be configured. In general this should not be modified, but the configuration option has been added and will default to `1s`. The new configuration is named `fusionauth-app.search.default-refresh-interval`. See the [Configuration](/docs/reference/configuration) reference for additional detail.
-* Resolves [GitHub Issue #2679](https://github.com/FusionAuth/fusionauth-issues/issues/2679)
+  * Resolves [GitHub Issue #2679](https://github.com/FusionAuth/fusionauth-issues/issues/2679)
 
 ### Fixed
 * When configured to use an email verification strategy of `Form Field` without setting the unverified behavior to `Gated` the verification strategy was always functionally using `Clickable Link` which means the user would receive an email with a clickable URL instead of a short code.
@@ -54,7 +89,7 @@ Looking for release notes older than 1.23.0? Look in the [release notes archive]
 * An incorrectly formatted SAML request may cause excessive CPU load.
   * Resolves [GitHub Issue #1681](https://github.com/FusionAuth/fusionauth-issues/issues/1681)
 * Disable additional JNDI settings in the LDAP connector. This update is proactive, there are no known exploits.
-* Resolves [GitHub Issue #2605](https://github.com/FusionAuth/fusionauth-issues/issues/2605)
+  * Resolves [GitHub Issue #2605](https://github.com/FusionAuth/fusionauth-issues/issues/2605)
 * Add additional protection against cross-site attacks when FusionAuth is acting as a SAML IdP.
   * Resolves [GitHub Issue #2611](https://github.com/FusionAuth/fusionauth-issues/issues/2611)
 * Audit log entries added by the FusionAuth admin application may contain sensitive information. Sensitive fields will now be masked when written to the audit log. Please note that this does not affect the Audit Log API, only the use of this API by the FusionAuth admin app.
