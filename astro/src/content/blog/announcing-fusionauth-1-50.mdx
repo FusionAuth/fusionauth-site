@@ -1,0 +1,119 @@
+---
+publish_date: 2024-04-24
+title: Announcing FusionAuth 1.50
+description: This update includes OAuth scopes support, a UserInfo lambda, and an easier setup screen
+authors: Dan Moore
+image: /img/blogs/release-1-50/fusionauth-1-50.png
+categories: Release Updates, Product
+tags: release notes, oauth, scopes, custom scopes, lambdas, userinfo, setup wizards
+excerpt_separator: "{/* more */}"
+---
+import JSON from 'src/components/JSON.astro';
+import Aside from 'src/components/Aside.astro';
+
+FusionAuth version 1.50.0 shipped on April 24, 2024. This version includes OAuth scopes support, a UserInfo lambda, and an easier setup screen, and more.
+
+{/* more */}
+
+I hereby dub 1.50.0 the "Scopes Salamander" release.
+
+![Bug fixes are awesome.](/img/blogs/release-1-50/salamander.png)
+
+All in all, there are 20 issues, enhancements, and bug fixes included in the 1.50.0 release. As always, please see the [release notes](/docs/release-notes/#version-1-50-0) for a full breakdown of the changes between 1.49.2 and 1.50.0, including any schema changes.
+
+Let's look at some of the more notable features.
+
+## OAuth Scopes
+
+OAuth scopes let you create coarse grained sets of permissions that you can ask a user to consent to. This isn't super useful if all of the applications that are delegating authentication and authorization to your identity store are owned by your organization. But if you want to build a platform or ecosystem, where third party developers and organizations are accessing user data held by you on your user's behalf, scopes solve that problem elegantly.
+
+Let's walk through a scenario. Suppose you are building out middle out compression application for music and video. You are going to let users upload videos and you'll compress them and otherwise enhance them.
+
+You build a few apps, including one that allows users to upload and compress videos. On a whim, you build one that changes everyone's face to that of a cute cat. You know, like [the Zoom lawyer](https://www.youtube.com/watch?v=TDNP-SWgn2w). This last app goes viral and you get innundated with requests from third party developers that want access to the videos you hold on your users' behalf. 
+
+While there's a lot that goes into building a third party ecosystem of applications operating on user data, one non-negotiable is clear permissions about what the applications can do. You also want to communicate data or functionality an application is seeking to your end users.
+
+In this case, you create a set of scopes for your application:
+
+* `video:download`
+* `video:upload`
+* `video:delete`
+* `video:search`
+
+You document how developers can ask FusionAuth for these scopes using the `scope` parameter on their authorization request. End users who want to install or use these applications are then presented with a screen like this:
+
+![Consent screen](/img/blogs/release-1-50/consent-example.png)
+
+This screen is [themable and localizable](/docs/customize/look-and-feel/localization).
+
+If there's a third party application which takes a video name, looks up the video, and modifies it to turn everyone into their favorite Lord of the Rings character, they need `video:download`, `video:search`, and `video:upload` permissions. On the other hand, a third party application which looks at videos in aggregate and performs statistics on them only needs `video:search.
+
+Assuming the user consents, each of these applications would get a token with the appropriate scopes. Then, when the application makes requests for data from the Pied Piper APIs, the APIs can check for the appropriate scope before taking action.
+
+The ability to create custom scopes and consent screens allows you to safely and securely extend user data to partners and third party develoeprs.
+
+This release also brings FusionAuth into compliance with a number of specifications, but don't worry, we've also built in backwards compatiblity. The [Scopes documentation](/docs/lifecycle/authenticate-users/oauth/scopes) discusses the configuration.
+
+Creating custom scopes and prompting the user for consent is limited to certain paid plans. Learn more by reviewing [the pricing page](/pricing) or [contacting our sales team](/contact).
+
+## UserInfo Lambda
+
+The [UserInfo endpoint](/docs/lifecycle/authenticate-users/oauth/endpoints#userinfo), as defined in the OIDC specification, takes an access token and returns information about the user. Per the spec:
+
+> The UserInfo Endpoint is an OAuth 2.0 Protected Resource that returns Claims about the authenticated End-User.
+
+FusionAuth has supported this endpoint for six years, but this release allows you to customize the response. You do so using a Lambda, which is assigned per application.
+
+Customizing the UserInfo response allows you to:
+
+* Remove any personally identifiable information (PII) that is not required.
+* Add additional claims needed by callers of the endpoint.
+* Augment the provided claims by calling APIs using [Lambda HTTP Connect](/docs/extend/code/lambdas/#using-lambda-http-connect).
+
+Here's an example lambda which removes PII, but leaves the email domain and the `sub` claims untouched:
+
+```
+function populate(response, user, registration, jwt) {
+  response.email = user.email.replace(/[^@]*@/,"deleted@");
+  response.given_name = "deleted";
+  response.family_name = "deleted";
+  response.birthdate = null;
+}
+```
+
+You can [manage](/docs/extend/code/lambdas/#managing-lambdas) and [test](/docs/extend/code/lambdas/testing) the UserInfo lambda just as you do any other FusionAuth lambda.
+
+## Improved Setup Wizard
+
+The initial experience of FusionAuth can be a bit confusing. There are a lot of "nerd knobs", as [Matt Hathcock, one of our Sales Engineers](/blog/sales-engineering), puts it.
+
+This customization is powerful when you become familiar with it, but can be frustrating when you are first starting out. The change in this release walks new admin users through the following critical aspects of setting up FusionAuth:
+
+* Creating an application, including setting up the redirect URL.
+* Setting up an email/SMTP configuration, which is important for workflows like forgot password.
+* Creating an API key, which is great for automation.
+* Entering a license key, if the user has a paid plan.
+
+Filling out these values is often enough integrate an existing application with FusionAuth.
+
+The goal is to hide complexity for new users, while still allowing folks familiar with FusionAuth all the power of the nerd knobs.
+
+## The Rest Of It
+
+As mentioned above, there were 29 issues, enhancements, and bug fixes included in this release. A selection of the changes not covered above includes:
+
+* A fix for maintenance mode issues with PostgreSQL 15.
+* Updated internal dependencies, including libraries like Jackson and MyBatis.
+* A few fixes for the client libraries, including adding support for JWT authentication in our OpenAPI specification.
+
+Read more about all the changes in the [release notes](/docs/release-notes/#version-1-50-0).
+
+## Upgrade At Will
+
+The [release notes](/docs/release-notes/#version-1-50-0) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified or enhanced.
+
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/operate/deploy/upgrade). 
+
+If you have a FusionAuth Cloud deployment, proceed to the "Hosting" tab on your <a href="https://account.fusionauth.io/account/deployment/" target="_blank">account dashboard</a> and upgrade your instances. If you have any questions about the upgrade, <a href="https://account.fusionauth.io/account/support/" target="_blank">please open a support ticket</a>.
+
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).
