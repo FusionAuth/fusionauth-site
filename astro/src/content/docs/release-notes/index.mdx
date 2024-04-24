@@ -6,6 +6,7 @@ disableTOC: true
 topOfNav: true
 ---
 import DatabaseMigrationWarning from 'src/content/docs/release-notes/__database-migration-warning.mdx';
+import DeprecationWarning from 'src/content/docs/release-notes/__deprecation-warning.astro';
 import GeneralMigrationWarning from 'src/content/docs/release-notes/__general-migration-warning.astro';
 import ReleaseNotesSelector from 'src/components/docs/release-notes/ReleaseNotesSelector.astro';
 import ReleaseNoteHeading from 'src/components/docs/release-notes/ReleaseNoteHeading.astro';
@@ -23,6 +24,14 @@ Looking for release notes older than 1.23.0? Look in the [release notes archive]
   The database migration will update existing Applications to behave in a backwards compatible manner.
   See the OAuth [Scopes](/docs/lifecycle/authenticate-users/oauth/scopes) documentation for more information, in particular the `Relationship`, `Unknown scope policy`, and `Scope handling policy` configurations.
 </GeneralMigrationWarning>
+
+<DeprecationWarning>
+  FusionAuth is deprecating usage of the `/api/user` endpoint with JWT authentication, and this functionality will be removed in a future release. 
+
+  If you are retrieving user information from this API using a JWT, you will need to transition your code to either use the `/oauth2/userinfo` endpoint, or to create your own user data endpoint that calls this API using an API key.
+
+  Removal of support is targeted for the end of 2024.
+</DeprecationWarning>
 
 <DatabaseMigrationWarning />
 
@@ -42,9 +51,28 @@ Looking for release notes older than 1.23.0? Look in the [release notes archive]
   This change is backwards compatible, but you may optionally request the Search API omit these properties on the response which may improve performance. See the [Application Search](/docs/apis/applications#search-for-applications) API for additional details on using the `expand` request parameter, and the `expandable` response value.
 * The `/oauth2/device/user-code` endpoint now returns the `scope` parameter value that should be used in the interactive portion of the Device Code Grant workflow. See [Device User Code](/docs/lifecycle/authenticate-users/oauth/endpoints#device-user-code) for more detail.
 
+### Fixed
+* FusionAuth will now limit passwords to 50 characters when using the bcrypt algorithm, due to limitations in the bcrypt algorithm and further limitations imposed by various implementers. This limit will be enforced regardless of the max length set in the tenant.
+  * Resolves [GitHub Issue #2671](https://github.com/FusionAuth/fusionauth-issues/issues/2671)
+* There are cases where implicit email verification can occur: during registration verification, password change, passwordless authentication, and MFA code validation. In these cases, a configured email verification email was not being sent, and the email verification event was not being generated. The email and event will both be triggered during implicit verification now.
+  * Resolves [GitHub Issue #1651](https://github.com/FusionAuth/fusionauth-issues/issues/1651) and [GitHub Issue #2672](https://github.com/FusionAuth/fusionauth-issues/issues/2672). Thanks to [@ashutoshningot](https://github.com/ashutoshningot) and [@mou](https://github.com/mou), respectively, for the suggestions!
+* When configuring MFA for an application, the `Trust policy` selector is not being shown when MFA is required for the application, but only shown when MFA enabled for optional use. The selector is now shown when the `On login policy` is set to either `Enabled` or `Required`.
+  * Resolves [GitHub Issue #2593](https://github.com/FusionAuth/fusionauth-issues/issues/2593)
+* When using FusionAuth behind a proxy, a missing `X-Forwarded-Proto` header could incorrectly cause a warning of a missing `X-Forwarded-Port` header. These warnings are now reported accurately. Additionally, FusionAuth will now be smarter about determining the forwarded port, taking it from one of multiple sources including `X-Forwarded-Host`, `X-Forwarded-Port`, or inferring it from `X-Forwarded-Proto`.
+  * Resolves [GitHub Issue #2702](https://github.com/FusionAuth/fusionauth-issues/issues/2702)
+* When authentication with an identity provider fails due to misconfiguration, and a user falls back to logging in with a username and password, the `authenticationType` that is reported by FusionAuth is for the original identity provider despite the user having logged in with a username and password. FusionAuth now correctly reports the authentication type as `PASSWORD`. Thanks to [@charlesericjs](https://github.com/charlesericjs) for bringing this to our attention!
+  * Resolves [GitHub Issue #2670](https://github.com/FusionAuth/fusionauth-issues/issues/2670)
+
+
+### Enhancements
+* FusionAuth will now enforce a maximum password length of 256 characters. This decision was made to strike a balance between allowing for very secure passwords, but also for maintaining acceptable performance when using a large number of hash iterations. 
+  * Resolves [GitHub Issue #2688](https://github.com/FusionAuth/fusionauth-issues/issues/2688)
+
 ### New
 * Custom OAuth scopes are now supported for applications. See [OAuth Scopes](/docs/apis/scopes) API and [Scopes](/docs/get-started/core-concepts/scopes) for more detail.
   * Resolves [GitHub Issue #275](https://github.com/FusionAuth/fusionauth-issues/issues/275), thanks to [@badaz](https://github.com/https://github.com/badaz) for the suggestion!
+* Applications may now be designated as third party applications. In addition to the prompting for authorization that comes with the `Custom OAuth Scopes` feature (see above), limitations are being added to how third party applications may interact with FusionAuth.
+  * Resolves [GitHub Issue #2723](https://github.com/FusionAuth/fusionauth-issues/issues/2723)
 * Applications can now be configured to prompt users to grant consent to requested OAuth scopes using the `/oauth2/consent` [themed](/docs/customize/look-and-feel/) page. See the OAuth [Scopes](/docs/lifecycle/authenticate-users/oauth/scopes) for more detail.
   * Resolves [GitHub Issue #411](https://github.com/FusionAuth/fusionauth-issues/issues/411)
 * A new lambda function can be assigned to populate the UserInfo response for an application. See [UserInfo Populate Lambda](/docs/extend/code/lambdas/userinfo-populate) for more detail.
