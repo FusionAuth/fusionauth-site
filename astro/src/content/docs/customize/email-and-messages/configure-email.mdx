@@ -77,6 +77,10 @@ todo - put this above providers
 This information is for starting guidance only - FusionAuth connects seamlessly with many different email providers. A deep exploration of email best practices and providers is outside the scope of this section.
 </Aside>
 
+To avoid breaking the various DNS records of your application's domain, you may want to run FusionAuth locally in Docker and point its SMTP fields to a temporary domain. In the examples below, configuration is shown using a free subdomain created with [ClouDNS](https://www.cloudns.com) The examples use the domain `fusionauth.ddns.net`.
+
+Alternatively, you can create a subdomain on your real account. For example, if your application is hosted at `myapp.com`, you can create `testemail.myapp.com`, and point the SMTP service and FusionAuth there while testing.
+
 ### SendGrid
 
 SendGrid is a commonly used SMTP provider and integrates well with FusionAuth. To setup SendGrid, [follow these instructions](https://docs.sendgrid.com/for-developers/sending-email/integrating-with-the-smtp-api).
@@ -120,7 +124,33 @@ For Gmail, use [application passwords](https://support.google.com/accounts/answe
 
 ### Resend
 
+Resend will allow you to send emails only through a verified domain. You may not send emails through their domain or your localhost.
+
+For an overview of all the records Resend asks you set on your domain, please read their [documenation](https://resend.com/docs/dashboard/domains/introduction).
+
 - Create an account at https://resend.com.
+- Browse to https://resend.com/domains
+- In your website domain manager, add the records from Resend above. Below is an example using the domain `fusionauth.ddns.net`:
+  - If you use cPanel, alter your records at <strong>Domains -> Zone Editor</strong>
+  - Add MX Record:
+    - Click on “Manage” next to your domain.
+    - Select “Add Record” and choose “MX” from the dropdown.
+    - Enter the priority (typically 10 for primary MX record).
+    - Enter the mail server address provided by your email service (you may find it under “Value” or “Point to” in their setup instructions).
+    - Set the TTL (Time to Live) as advised, or use the default (often 14400 seconds or 3600 seconds)
+  - Add TXT Records for SPF and DKIM:
+    - Again, use “Add Record”.
+    - Select “TXT” from the dropdown.
+    - Leave the “Name” field blank or enter @ to denote the root domain.
+    - For SPF, the value might look something like "v=spf1 include:_spf.example.com ~all" (replace with your specific SPF record details).
+    - For DKIM, the value might look something like "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQD..."
+    - Set the TTL as before.
+  - Add TXT Record for DMARC:
+    - Use “Add Record”.
+    - Select “TXT” from the dropdown.
+    - In the “Name” field, enter _dmarc.
+    - In the “Value” field, enter your DMARC policy, like "v=DMARC1; p=none; rua=mailto:your@email.com"
+    - Set the TTL.
 - Browse to https://resend.com/api-keys and create a key with sending access only.
 - Browse to https://resend.com/settings/smtp and note your SMTP details.
 - In your tenant's email tab in the FusionAuth web interface, set the following values:
