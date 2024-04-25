@@ -114,7 +114,7 @@ For Gmail, use [application passwords](https://support.google.com/accounts/answe
 - Copy the values shown for all the fields on this screen to your tenant's email tab in the FusionAuth web interface.
 - Leave <InlineField>Security</InlineField> as `TLS`.
 - Use a <InlineField>Default from address</InlineField> with your Mailersend trial, such as `fa@trial-o89qngkvfrwlwr32.mlsender.net`.
-- Click <InlineField>Send test email</InlineField> to test the settings work, then click the save icon at the top right.
+- Click <InlineField>Send test email</InlineField> to test the settings work, then click the save icon at the top right. Enter your real email address for the test email, so you can test it arrives.
 
 ### Mailgun
 
@@ -124,33 +124,16 @@ For Gmail, use [application passwords](https://support.google.com/accounts/answe
 
 ### Resend
 
-Resend will allow you to send emails only through a verified domain. You may not send emails through their domain or your localhost.
-
-For an overview of all the records Resend asks you set on your domain, please read their [documenation](https://resend.com/docs/dashboard/domains/introduction).
+Resend allows you to send emails only through a verified domain. You may not send emails through their domain or your localhost.
 
 - Create an account at https://resend.com.
 - Browse to https://resend.com/domains
-- In your website domain manager, add the records from Resend above. Below is an example using the domain `fusionauth.ddns.net`:
+- In your website domain manager, add the records from Resend at the link above.
   - If you use cPanel, alter your records at <strong>Domains -> Zone Editor</strong>
-  - Add MX Record:
-    - Click on “Manage” next to your domain.
-    - Select “Add Record” and choose “MX” from the dropdown.
-    - Enter the priority (typically 10 for primary MX record).
-    - Enter the mail server address provided by your email service (you may find it under “Value” or “Point to” in their setup instructions).
-    - Set the TTL (Time to Live) as advised, or use the default (often 14400 seconds or 3600 seconds)
-  - Add TXT Records for SPF and DKIM:
-    - Again, use “Add Record”.
-    - Select “TXT” from the dropdown.
-    - Leave the “Name” field blank or enter @ to denote the root domain.
-    - For SPF, the value might look something like "v=spf1 include:_spf.example.com ~all" (replace with your specific SPF record details).
-    - For DKIM, the value might look something like "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQD..."
-    - Set the TTL as before.
-  - Add TXT Record for DMARC:
-    - Use “Add Record”.
-    - Select “TXT” from the dropdown.
-    - In the “Name” field, enter _dmarc.
-    - In the “Value” field, enter your DMARC policy, like "v=DMARC1; p=none; rua=mailto:your@email.com"
-    - Set the TTL.
+  - Where Resend requires you to create a subdomain, be careful not to change the host value twice. For example, if your host is `fa.dns-dynamic.net` and the MX record value Resend wants is `send.fa`, be sure set the value to `send.fa.dns-dynamic.net`. Don't use `send.fa.fa.dns-dynamic.net` by pasting the value from Resend without checking what suffix your host attaches to the field.
+  - You need to set only the DKIM and SPF fields for testing. The DMARC field is optional and required only for your production server.
+  - TODO <img src="cloudns_resend.png" />
+- Once you have entered the DNS records and saved, return to https://resend.com/domains and start the verification process. It should take a few minutes.
 - Browse to https://resend.com/api-keys and create a key with sending access only.
 - Browse to https://resend.com/settings/smtp and note your SMTP details.
 - In your tenant's email tab in the FusionAuth web interface, set the following values:
@@ -159,16 +142,13 @@ For an overview of all the records Resend asks you set on your domain, please re
   - <InlineField>Username</InlineField>: `resend`
   - <InlineField>Password</InlineField>: Your API key
   - <InlineField>Security</InlineField>: `TLS`
-  - <InlineField>Default from address</InlineField>: `fa@example.com`
+  - <InlineField>Default from address</InlineField>: `fa@fa.dns-dynamic.net` (change this for your domain)
+- Your from address domain name must match the one you registered with Resend or the emails will be rejected.
+- Click <InlineField>Send test email</InlineField> to test the settings work, then click the save icon at the top right. Enter your real email address for the test email, so you can test it arrives.
 
-```text
-Unable to send email via JavaMail
+For an overview of all the records Resend asks you set on your domain, please read their [documenation](https://resend.com/docs/dashboard/domains/introduction).
 
-Prime Messaging Exception
-450 The resend.com domain is not verified. Please, add and verify your domain on https://resend.com/domains
-```
-
-For more information, read the [Resend documentation on SMTP](https://resend.com/docs/send-with-smtp).
+For more general information, read the [Resend documentation on SMTP](https://resend.com/docs/send-with-smtp).
 
 ## TODO
 
@@ -180,7 +160,6 @@ Current docs: https://fusionauth.io/docs/customize/email-and-messages/configure-
 In GitHub https://github.com/ritza-co/fusionauth-site/blob/master/astro/src/content/docs/customize/email-and-messages/configure-email.mdx
 
 workaddress@simplelogin.com
-
 
 ## Fixing errors
 
@@ -212,7 +191,7 @@ Cause: SocketTimeoutException: Read timed out
 
 You probably need to change the port number. Try `587`.
 
-###
+### Domain not verified
 
 ```text
 Unable to send email via JavaMail
@@ -221,11 +200,16 @@ Prime Messaging Exception
 450 The resend.com domain is not verified. Please, add and verify your domain on https://resend.com/domains
 ```
 
+You need to verify your domain with your SMTP provider by settings DNS records on your web host.
+
 ### FusionAuth says a test email was sent but it doesn't arrive
 
 Try the following:
 - Wait longer.
-- Check if your SMTP provider received the request.
+- Check that you entered the target email address correctly.
+- Check if your SMTP provider received the request and the status is not `Bounced`.
 - Check your spam folder in your email client, or other folders if you have filters enabled.
 - Disable webhooks in FusionAuth, in case a failed webhook is causing complications.
+
+
 <InlineField></InlineField>
