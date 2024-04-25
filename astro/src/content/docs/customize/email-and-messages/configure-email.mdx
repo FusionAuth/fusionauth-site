@@ -81,6 +81,17 @@ To avoid breaking the various DNS records of your application's domain, you may 
 
 Alternatively, you can create a subdomain on your real account. For example, if your application is hosted at `myapp.com`, you can create `testemail.myapp.com`, and point the SMTP service and FusionAuth there while testing.
 
+### Which Provider To Pick?
+
+Some providers are easy to test, requiring nothing more than registering with an email address. Others require comprehensive company details, your verified phone number, domain verification, or communicating with support agents. Disregarding price and features, the easiest providers to configure are:
+- Mailersend
+-
+
+The more difficult providers are:
+- Brevo — require phone authentication. Automatically disable your account on sign-up and require you to manually contact to support to have it activated.
+- SendGrid — automatically disable your account on sign-up and require you to manually contact to support to have it activated.
+- Resend — require domain verification through adding DNS records.
+
 ### SendGrid
 
 SendGrid is a commonly used SMTP provider and integrates well with FusionAuth. To setup SendGrid, [follow these instructions](https://docs.sendgrid.com/for-developers/sending-email/integrating-with-the-smtp-api).
@@ -93,18 +104,32 @@ Other resources related to SendGrid are linked below:
 
 Using dedicated IP addresses for any SendGrid account will build email reputation over time (improving email deliverability). And lastly, to control spoofing, phishing, and spam, it is recommended to set up [SPF](https://docs.sendgrid.com/ui/account-and-settings/spf-records) and [DKIM](https://docs.sendgrid.com/ui/account-and-settings/dkim-records) records for the primary email domain (such as `example-company.com`). Emails should also be sent from an address such as `no-reply@example-company.com`.
 
-### Gmail
-
-Gmail is a commonly used SMTP service. Gmail is not recommended for production use, since it has a [number of limits](https://support.google.com/a/answer/166852). However, it can be useful to test email functionality.
-
-For Gmail, use [application passwords](https://support.google.com/accounts/answer/185833), otherwise you may get a generic `Unable to send email via JavaMail / Prime Messaging Exception` error.
-
 ### AWS SES
 
 <strong></strong>
 <InlineField></InlineField>
 
 ### Brevo (Previously Send In Blue)
+
+- Create an account at https://app.brevo.com.
+- If they suspend your account for violating terms of service, contact support on [this page](https://www.brevo.com/contact) to activate it.
+- Browse to https://app.brevo.com/settings/keys/smtp and note your SMTP settings.
+- In your tenant's email tab in the FusionAuth web interface, set the following values:
+  - <InlineField>Host</InlineField>: `smtp-relay.brevo.com`
+  - <InlineField>Port</InlineField>: `587`
+  - <InlineField>Username</InlineField>: Your Brevo account email address
+  - <InlineField>Password</InlineField>: Your SMTP key value from the Brevo settings
+  - <InlineField>Security</InlineField>: `TLS`
+  - <InlineField>Default from address</InlineField>: `fa@fa.dns-dynamic.net` (any address is allowed)
+- Click <InlineField>Send test email</InlineField> to test the settings work, then click the save icon at the top right. Enter your real email address for the test email, so you can test it arrives.
+
+TODO - wait for support to activate account
+
+### Gmail
+
+Gmail is a commonly used SMTP service. Gmail is not recommended for production use, since it has a [number of limits](https://support.google.com/a/answer/166852). However, it can be useful to test email functionality.
+
+For Gmail, use [application passwords](https://support.google.com/accounts/answer/185833), otherwise you may get a generic `Unable to send email via JavaMail / Prime Messaging Exception` error.
 
 ### Mailersend
 
@@ -161,11 +186,11 @@ In GitHub https://github.com/ritza-co/fusionauth-site/blob/master/astro/src/cont
 
 workaddress@simplelogin.com
 
-## Fixing errors
+## Troubleshoot
 
 Below are some common errors you might encounter when configuring SMTP and how to fix them.
 
-### Authentication error
+### Authentication Error
 
 ```text
 Unable to send email via JavaMail
@@ -176,8 +201,18 @@ Prime Messaging Exception
 
 This error indicates that your username or password is probably incorrect. Re-enter them carefully with no excess whitespace and try again.
 
+### Account Suspended
 
-### Socket timeout
+```text
+Unable to send email via JavaMail
+
+Prime Messaging Exception
+502 5.7.0 Your SMTP account is not yet activated. Please contact us at contact@sendinblue.com to request activation.
+```
+
+Some providers automatically disable your account at registration. Contact support at your provider to have it activated.
+
+### Socket Timeout
 
 ```text
 Error:
@@ -191,7 +226,7 @@ Cause: SocketTimeoutException: Read timed out
 
 You probably need to change the port number. Try `587`.
 
-### Domain not verified
+### Domain Not Verified
 
 ```text
 Unable to send email via JavaMail
@@ -202,7 +237,7 @@ Prime Messaging Exception
 
 You need to verify your domain with your SMTP provider by settings DNS records on your web host.
 
-### FusionAuth says a test email was sent but it doesn't arrive
+### Email Doesn't Arrive
 
 Try the following:
 - Wait longer.
