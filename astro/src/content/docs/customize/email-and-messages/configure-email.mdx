@@ -88,26 +88,31 @@ Some providers are easy to test, requiring nothing more than registering with an
 -
 
 The more difficult providers are:
+- AWS SES — require domain verification through adding DNS records. Allows you to email only verified addresses while in the test sandbox.
 - Brevo — require phone authentication. Automatically disable your account on sign-up and require you to manually contact to support to have it activated.
 - SendGrid — automatically disable your account on sign-up and require you to manually contact to support to have it activated.
 - Resend — require domain verification through adding DNS records.
 
-### SendGrid
-
-SendGrid is a commonly used SMTP provider and integrates well with FusionAuth. To setup SendGrid, [follow these instructions](https://docs.sendgrid.com/for-developers/sending-email/integrating-with-the-smtp-api).
-
-Other resources related to SendGrid are linked below:
-
-1. https://docs.sendgrid.com/for-developers/sending-email/getting-started-with-transactional-emails
-2. https://docs.sendgrid.com/for-developers/sending-email/sender-identity
-3. https://docs.sendgrid.com/ui/account-and-settings/how-to-set-up-domain-authentication
-
-Using dedicated IP addresses for any SendGrid account will build email reputation over time (improving email deliverability). And lastly, to control spoofing, phishing, and spam, it is recommended to set up [SPF](https://docs.sendgrid.com/ui/account-and-settings/spf-records) and [DKIM](https://docs.sendgrid.com/ui/account-and-settings/dkim-records) records for the primary email domain (such as `example-company.com`). Emails should also be sent from an address such as `no-reply@example-company.com`.
-
 ### AWS SES
 
-<strong></strong>
-<InlineField></InlineField>
+- Create an account at https://aws.amazon.com.
+- In your account dashboard, search for SES and start the account setup wizard.
+  - Verify your email when AWS emails you.
+  - Add the DNS records AWS SES gives you to your domain's DNS settings. If your web host uses cPanel, alter your records at <strong>Domains -> Zone Editor</strong>.
+  - Be careful not to duplicate the domain name. For example, if your host is `fa.dns-dynamic.net` and the MX record value the SMTP provider wants you to add is `send.fa`, be sure set the value to `send.fa.dns-dynamic.net`. Don't use `send.fa.fa.dns-dynamic.net` by pasting the value without checking what suffix your host attaches to the field.
+  - After a few minutes the SES <strong>Verify sending domain</strong> tab should change from `Verification pending` to `Verified`.
+- Browse to <strong>SMTP settings</strong> in the AWS sidebar and note your SMTP settings.
+- Click <InlineField>Create SMTP credentials</InlineField> and note the settings.
+- In your tenant's email tab in the FusionAuth web interface, set the following values:
+  - <InlineField>Host</InlineField>: `email-smtp.eu-west-1.amazonaws.com` (use your host from the SMTP settings page)
+  - <InlineField>Port</InlineField>: `587`
+  - <InlineField>Username</InlineField>: BKIBQSCRAQJD3X4RI5F7 (use your user name from the SMTP credentials page)
+  - <InlineField>Password</InlineField>: Your SMTP password from the credentials page
+  - <InlineField>Security</InlineField>: `TLS`
+  - <InlineField>Default from address</InlineField>: `fa@fa.dns-dynamic.net` (use your verified domain)
+- Click <InlineField>Send test email</InlineField> to test the settings work. You must send to an email address verified with SES. Use the address you gave when creating your SES account. Click the save icon at the top right.
+
+SES is more complicated than the other SMTP services. If the troubleshooting section at the bottom of this article does not help you, please consult the SES documentation(https://docs.aws.amazon.com/ses/latest/dg/troubleshoot-verification.html).
 
 ### Brevo (Previously Send In Blue)
 
@@ -155,7 +160,7 @@ Resend allows you to send emails only through a verified domain. You may not sen
 - Browse to https://resend.com/domains
 - In your website domain manager, add the records from Resend at the link above.
   - If you use cPanel, alter your records at <strong>Domains -> Zone Editor</strong>
-  - Where Resend requires you to create a subdomain, be careful not to change the host value twice. For example, if your host is `fa.dns-dynamic.net` and the MX record value Resend wants is `send.fa`, be sure set the value to `send.fa.dns-dynamic.net`. Don't use `send.fa.fa.dns-dynamic.net` by pasting the value from Resend without checking what suffix your host attaches to the field.
+  - Be careful not to duplicate the domain name. For example, if your host is `fa.dns-dynamic.net` and the MX record value the SMTP provider wants you to add is `send.fa`, be sure set the value to `send.fa.dns-dynamic.net`. Don't use `send.fa.fa.dns-dynamic.net` by pasting the value without checking what suffix your host attaches to the field.
   - You need to set only the DKIM and SPF fields for testing. The DMARC field is optional and required only for your production server.
   - TODO <img src="cloudns_resend.png" />
 - Once you have entered the DNS records and saved, return to https://resend.com/domains and start the verification process. It should take a few minutes.
@@ -174,6 +179,18 @@ Resend allows you to send emails only through a verified domain. You may not sen
 For an overview of all the records Resend asks you set on your domain, please read their [documenation](https://resend.com/docs/dashboard/domains/introduction).
 
 For more general information, read the [Resend documentation on SMTP](https://resend.com/docs/send-with-smtp).
+
+### SendGrid
+
+SendGrid is a commonly used SMTP provider and integrates well with FusionAuth. To setup SendGrid, [follow these instructions](https://docs.sendgrid.com/for-developers/sending-email/integrating-with-the-smtp-api).
+
+Other resources related to SendGrid are linked below:
+
+1. https://docs.sendgrid.com/for-developers/sending-email/getting-started-with-transactional-emails
+2. https://docs.sendgrid.com/for-developers/sending-email/sender-identity
+3. https://docs.sendgrid.com/ui/account-and-settings/how-to-set-up-domain-authentication
+
+Using dedicated IP addresses for any SendGrid account will build email reputation over time (improving email deliverability). And lastly, to control spoofing, phishing, and spam, it is recommended to set up [SPF](https://docs.sendgrid.com/ui/account-and-settings/spf-records) and [DKIM](https://docs.sendgrid.com/ui/account-and-settings/dkim-records) records for the primary email domain (such as `example-company.com`). Emails should also be sent from an address such as `no-reply@example-company.com`.
 
 ## TODO
 
@@ -237,6 +254,19 @@ Prime Messaging Exception
 
 You need to verify your domain with your SMTP provider by settings DNS records on your web host.
 
+Be aware that DNS records take time to change. If you make a change to a record that your SMTP provider needs to validate, you may have to wait an hour to a day for caches to refresh and use the new value.
+
+### Email Address Not Verified
+
+```text
+Unable to send email via JavaMail
+
+Prime Messaging Exception
+554 Message rejected: Email address is not verified. The following identities failed the check in region EU-WEST-1: address/fa@simplelogin.com
+```
+
+You will probably get this error only with AWS, which requires both your to address to be verified when testing until your SES service leaves the testing sandbox. To fix this error, send the FusionAuth test email to the same address that you verified when creating the SES service in AWS.
+
 ### Email Doesn't Arrive
 
 Try the following:
@@ -247,4 +277,6 @@ Try the following:
 - Disable webhooks in FusionAuth, in case a failed webhook is causing complications.
 
 
+
+<strong></strong>
 <InlineField></InlineField>
