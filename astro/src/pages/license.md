@@ -5,41 +5,39 @@ description: The FusionAuth Customer License Agreement
 ---
 
 <style>
-#main-content {
-    h1 {
-      font-size: 3rem;
-      font-weight: 700;
-      margin: 4rem 6rem;
-      color: rgb(71 85 105);
-    }
-    h2 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin: 3rem 6rem;
-      color: rgb(71 85 105);
-    }
-    h3 {
-      font-size: 1.5rem;
-      font-weight: 200;
-      margin: 1rem 6rem;
-      color: rgb(71 85 105);
-    }
-    p {
-      margin: 4rem 6rem;
-    }
-    ol {
-      counter-reset: item;
-      margin: 0 6rem .7rem;
-    }
-    li {
-      display: block;
-      margin-bottom: 5px;
-      margin-top: 5px;
-    }
-    li:before {
-      content: counters(item, ".") ". ";
-      counter-increment: item;
-    }
+#main-content h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 4rem 6rem;
+  color: rgb(71 85 105);
+}
+#main-content h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 3rem 6rem;
+  color: rgb(71 85 105);
+}
+#main-content h3 {
+  font-size: 1.5rem;
+  font-weight: 200;
+  margin: 1rem 6rem;
+  color: rgb(71 85 105);
+}
+#main-content p {
+  margin: 4rem 6rem;
+}
+#main-content ol {
+  counter-reset: item;
+  margin: 0 6rem .7rem;
+}
+#main-content li {
+  display: block;
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
+#main-content li:before {
+  content: counters(item, ".") ". ";
+  counter-increment: item;
 }
 </style>
 
