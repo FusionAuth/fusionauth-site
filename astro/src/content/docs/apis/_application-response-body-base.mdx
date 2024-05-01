@@ -122,6 +122,9 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
   <APIField name={ props.base_field_name + ".lambdaConfiguration.selfServiceRegistrationValidationId" } type="UUID" since="1.43.0">
     The unique Id of the lambda that will be used to perform additional validation on registration form steps.
   </APIField>
+  <APIField name={ props.base_field_name + ".lambdaConfiguration.userinfoPopulateId" } type="UUID" since="1.50.0">
+    The Id of the Lambda that will be invoked when a UserInfo response is generated for this application.
+  </APIField>
   <APIField name={ props.base_field_name + ".lastUpdateInstant" } type="Long" since="1.18.0">
     The [instant](/docs/reference/data-types#instants) that the Application was last updated in the FusionAuth database.
   </APIField>
@@ -172,6 +175,15 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
   <APIField name={ props.base_field_name + ".oauthConfiguration.clientSecret" } type="String">
     The OAuth client secret.
   </APIField>
+  <APIField name={ props.base_field_name + ".oauthConfiguration.consentMode" } type="String" since="1.50.0">
+    Controls the policy for prompting a user to consent to requested OAuth scopes. This configuration only takes effect when <InlineField>{props.base_field_name + ".oauthConfiguration.relationship"}</InlineField> is `ThirdParty`.
+
+    The possible values are:
+
+    * `AlwaysPrompt` - Always prompt the user for consent.
+    * `RememberDecision` - Remember previous consents; only prompt if the choice expires or if the requested or required scopes have changed. The duration of this persisted choice is controlled by the Tenant's <InlineField>externalIdentifierConfiguration.rememberOAuthScopeConsentChoiceTimeToLiveInSeconds</InlineField> value.
+    * `NeverPrompt` - The user will be never be prompted to consent to requested OAuth scopes. Permission will be granted implicitly as if this were a `FirstParty` application. This configuration is meant for testing purposes only and should not be used in production.
+  </APIField>
   <APIField name={ props.base_field_name + ".oauthConfiguration.debug" } type="Boolean" since="1.25.0">
     Whether or not FusionAuth will log a debug Event Log. This is particular useful for debugging the authorization code exchange with the Token endpoint during an Authorization Code grant.
   </APIField>
@@ -212,14 +224,63 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
 
     <ApplicationOauthconfigurationProofkeyforcodeexchangepolicy />
   </APIField>
+  <APIField name={ props.base_field_name + ".oauthConfiguration.providedScopePolicy.address.enabled" } type="Boolean" since="1.50.0">
+    Whether the `address` OAuth scope provided by FusionAuth is enabled for this application.
+  </APIField>
+  <APIField name={ props.base_field_name + ".oauthConfiguration.providedScopePolicy.address.required" } type="Boolean" since="1.50.0">
+    Whether consent to the `address` OAuth scope provided by FusionAuth is required for this application when present on the OAuth request.
+  </APIField>
+  <APIField name={ props.base_field_name + ".oauthConfiguration.providedScopePolicy.email.enabled" } type="Boolean" since="1.50.0">
+    Whether the `email` OAuth scope provided by FusionAuth is enabled for this application.
+  </APIField>
+  <APIField name={ props.base_field_name + ".oauthConfiguration.providedScopePolicy.email.required" } type="Boolean" since="1.50.0">
+    Whether consent to the `email` OAuth scope provided by FusionAuth is required for this application when present on the OAuth request.
+  </APIField>
+  <APIField name={ props.base_field_name + ".oauthConfiguration.providedScopePolicy.phone.enabled" } type="Boolean" since="1.50.0">
+    Whether the `phone` OAuth scope provided by FusionAuth is enabled for this application.
+  </APIField>
+  <APIField name={ props.base_field_name + ".oauthConfiguration.providedScopePolicy.phone.required" } type="Boolean" since="1.50.0">
+    Whether consent to the `phone` OAuth scope provided by FusionAuth is required for this application when present on the OAuth request.
+  </APIField>
+  <APIField name={ props.base_field_name + ".oauthConfiguration.providedScopePolicy.profile.enabled" } type="Boolean" since="1.50.0">
+    Whether the `profile` OAuth scope provided by FusionAuth is enabled for this application.
+  </APIField>
+  <APIField name={ props.base_field_name + ".oauthConfiguration.providedScopePolicy.profile.required" } type="Boolean" since="1.50.0">
+    Whether consent to the `profile` OAuth scope provided by FusionAuth is required for this application when present on the OAuth request.
+  </APIField>
+  <APIField name={ props.base_field_name + ".oauthConfiguration.relationship" } type="String" since="1.50.0">
+    The application's relationship to the OAuth server.
+
+    The possible values are:
+
+    * `FirstParty` - The application has the same owner as the authorization server. Consent to requested OAuth scopes is granted implicitly.
+    * `ThirdParty` - The application is external to the authorization server. Users will be prompted to consent to requested OAuth scopes based on <InlineField>{props.base_field_name + ".oauthConfiguration.consentMode"}</InlineField>.
+  </APIField>
   <APIField name={ props.base_field_name + ".oauthConfiguration.requireClientAuthentication" } type="Boolean" since="1.3.0" deprecated>
-    Determines if the OAuth 2.0 Token endpoint requires client authentication. If this is enabled, the cloient must provide client credentials when using the Token endpoint. The `client_id` and `client_secret` may be provided using a Basic Authorization HTTP header, or by sending these parameters in the request body using POST data.
+    Determines if the OAuth 2.0 Token endpoint requires client authentication. If this is enabled, the client must provide client credentials when using the Token endpoint. The `client_id` and `client_secret` may be provided using a Basic Authorization HTTP header, or by sending these parameters in the request body using POST data.
 
     <span class="text-red-700">Deprecated in version 1.28.0</span>
     In version 1.28.0 and beyond, client authentication can be managed via <InlineField>{props.base_field_name}.oauthConfiguration.clientAuthenticationPolicy</InlineField>.
   </APIField>
   <APIField name={ props.base_field_name + ".oauthConfiguration.requireRegistration" } type="Boolean" since="1.28.0">
     Determines if the user will be required to be registered, or complete registration before redirecting to the configured callback in the authorization code grant or the implicit grant. This configuration does not affect any other grant, and does not affect the API usage.
+  </APIField>
+  <APIField name={ props.base_field_name + ".oauthConfiguration.scopeHandlingPolicy" } type="String" since="1.50.0">
+    Controls the policy for handling of OAuth scopes when populating JWTs and the UserInfo response.
+
+    The possible values are:
+
+    * `Compatibility` - OAuth workflows will populate JWT and UserInfo claims in a manner compatible with versions of FusionAuth before version 1.50.0.
+    * `Strict` - OAuth workflows will populate token and UserInfo claims according to the OpenID Connect 1.0 specification based on requested and consented scopes.
+  </APIField>
+  <APIField name={ props.base_field_name + ".oauthConfiguration.unknownScopePolicy" } type="String" since="1.50.0">
+    Controls the policy for handling unknown scopes on an OAuth request.
+
+    The possible values are:
+
+    * `Allow` - Unknown scopes will be allowed on the request, passed through the OAuth workflow, and written to the resulting tokens without consent.
+    * `Remove` - Unknown scopes will be removed from the OAuth workflow, but the workflow will proceed without them.
+    * `Reject` - Unknown scopes will be rejected and cause the OAuth workflow to fail with an error.
   </APIField>
   <APIField name={ props.base_field_name + ".passwordlessConfiguration.enabled" } type="Boolean" since="1.5.0">
     Determines if passwordless login is enabled for this application.
@@ -467,6 +528,33 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
     * `Assertion` - The XML signature will be added as a child element of the Assertion.
     * `Response` - The XML signature will be added as a child element of the Response.
   </APIField>
+  <APIField name={ props.base_field_name + ".scopes" } type="Array" since="1.50.0">
+    An array of OAuth Scope objects.
+  </APIField>
+  <APIField name={ props.base_field_name + ".scopes[x].defaultConsentDetail" } type="String" since="1.50.0">
+    The default detail to display on the OAuth consent screen if one cannot be found in the theme.
+  </APIField>
+  <APIField name={ props.base_field_name + ".scopes[x].defaultConsentMessage" } type="String" since="1.50.0">
+    The default message to display on the OAuth consent screen if one cannot be found in the theme.
+  </APIField>
+  <APIField name={ props.base_field_name + ".scopes[x].description" } type="String" since="1.50.0">
+    A description of the OAuth Scope for internal use.
+  </APIField>
+  <APIField name={ props.base_field_name + ".scopes[x].id" } type="UUID" since="1.50.0">
+    The Id of the OAuth Scope.
+  </APIField>
+  <APIField name={ props.base_field_name + ".scopes[x].insertInstant" } type="Long" since="1.50.0">
+    The [instant](/docs/reference/data-types#instants) that the OAuth Scope was added to the FusionAuth database.
+  </APIField>
+  <APIField name={ props.base_field_name + ".scopes[x].lastUpdateInstant" } type="Long" since="1.50.0">
+    The [instant](/docs/reference/data-types#instants) that the OAuth Scope was last updated in the FusionAuth database.
+  </APIField>
+  <APIField name={ props.base_field_name + ".scopes[x].name" } type="String" since="1.50.0">
+    The name of the OAuth Scope. This is the value that will be used to request the scope in OAuth workflows.
+  </APIField>
+  <APIField name={ props.base_field_name + ".scopes[x].required" } type="Boolean" since="1.50.0">
+    Determines if the OAuth Scope is required when requested in an OAuth workflow.
+  </APIField>
   <APIField name={ props.base_field_name + ".state" } type="String" since="1.22.0">
     The current state of the application. The following are valid values:
 
@@ -494,7 +582,12 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
   <APIField name={ props.base_field_name + ".webAuthnConfiguration.reauthenticationWorkflow.enabled" } type="Boolean" since="1.41.0">
     Whether the WebAuthn reauthentication workflow is enabled for this application. This overrides the tenant configuration. Has no effect if <InlineField>{props.base_field_name}.webAuthnConfiguration.enabled</InlineField> is `false`.
   </APIField>
-  <APIField name="total" type="Integer" renderif={!!props.include_total}>
+  <APIField name="expandable" type="Array<String>" since="1.50.0" renderif={!!props.search_result}>
+    The available expandable properties that are not expanded in the response.
+
+    For example, if you set the <InlineField>expand</InlineField> request parameter to `[roles]` then the value of this parameter in the response will be `[scopes]` indicating that the `scopes` property was not expanded.
+  </APIField>
+  <APIField name="total" type="Integer" renderif={!!props.search_result}>
     The total number of Applications matching the search criteria. Use this value along with the <InlineField>numberOfResults</InlineField> and <InlineField>startRow</InlineField> in the Search request to perform pagination.
   </APIField>
 </APIBlock>
@@ -505,7 +598,7 @@ import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignature
 {/*  Multiple applications result */}
 
 {/*  With "total" field */}
-{ props.base_field_name !== 'application' && props.include_total && <JSON title="Example Response JSON for Application Search" src="applications/search-response.json" /> }
+{ props.base_field_name !== 'application' && props.search_result && <JSON title="Example Response JSON for Application Search" src="applications/search-response.json" /> }
 
 {/*  Without "total" field */}
-{ props.base_field_name !== 'application' && !props.include_total && <JSON title="Example Response JSON for all the Applications" src="applications/responses.json" /> }
+{ props.base_field_name !== 'application' && !props.search_result && <JSON title="Example Response JSON for all the Applications" src="applications/responses.json" /> }
