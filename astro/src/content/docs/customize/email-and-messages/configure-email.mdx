@@ -64,6 +64,8 @@ Enable email by clicking on the *Enabled* toggle, and save your settings once yo
 
 ## SMTP best practices
 
+As of 2024, Google [requires SMTP providers to allow users to send only from their own registered domains](https://help.brevo.com/hc/en-us/articles/14925263522578-Prepare-for-Gmail-and-Yahoo-s-new-requirements-for-email-senders). A few email providers listed in this article will allow you to send emails without domain verification, but that number will probably shrink over time.
+
 todo - put this above providers
 
 - general email best practices
@@ -87,11 +89,11 @@ Some providers are easy to test, requiring nothing more than registering with an
 - Mailersend
 - Gmail (requires phone authentication however, and is just for small tests)
 
-The more difficult providers are:
-- AWS SES — require domain verification through adding DNS records. Allows you to email only verified addresses while in the test sandbox.
-- Brevo — require phone authentication. Automatically disable your account on sign-up and require you to manually contact to support to have it activated.
-- SendGrid — automatically disable your account on sign-up and require you to manually contact to support to have it activated.
+The more difficult providers are (from easiest to most complicated):
 - Resend — require domain verification through adding DNS records.
+- AWS SES — require domain verification through adding DNS records. Allows you to email only verified addresses while in the test sandbox.
+- SendGrid — automatically disable your account on sign-up and require you to manually contact to support to have it activated.
+- Brevo — require phone authentication. Automatically disable your account on sign-up and require you to manually contact to support to have it activated. Requires domain authentication and email authentication in your domain.
 
 ### AWS SES
 
@@ -118,6 +120,16 @@ SES is more complicated than the other SMTP services. If the troubleshooting sec
 
 - Create an account at https://app.brevo.com.
 - If they suspend your account for violating terms of service, contact support on [this page](https://www.brevo.com/contact) to activate it.
+- Browse to https://app.brevo.com/senders/domain/list.
+  - Add a domain: `fa.dns-dynamic.net` (or your domain name).
+  - In your website domain manager, add the DNS records from the domain authentication page.
+    - If you use cPanel, alter your records at <strong>Domains -> Zone Editor</strong>
+    - Be careful not to duplicate the domain name. For example, if your host is `fa.dns-dynamic.net` and the MX record value the SMTP provider wants you to add is `send.fa`, be sure set the value to `send.fa.dns-dynamic.net`. Don't use `send.fa.fa.dns-dynamic.net` by pasting the value without checking what suffix your host attaches to the field.
+    - Once you have entered the DNS records and saved, start the verification process on the Brevo page. It should take a minute.
+- Browse to https://app.brevo.com/senders/list.
+  - Add sender: `fa@fa.dns-dynamic.net` (or with your domain name).
+  - If you are using ClouDNS to test, you need to add a [mail forward](https://www.cloudns.net/mail-forwards/) from `fa@fa.dns-dynamic.net` to your real email address to be able to receive the password from Brevo to authenticate you email.
+  - In Brevo, authenticate your email address.
 - Browse to https://app.brevo.com/settings/keys/smtp and note your SMTP settings.
 - In your tenant's email tab in the FusionAuth web interface, set the following values:
   - <InlineField>Host</InlineField>: `smtp-relay.brevo.com`
