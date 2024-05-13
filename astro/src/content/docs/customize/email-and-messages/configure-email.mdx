@@ -14,12 +14,8 @@ TODO REMOVE
 
 - [Overview](#overview)
   - [SMTP Settings](#smtp-settings)
-- [SMTP best practices](#smtp-best-practices)
 - [Security](#security)
-  - [DKIM](#dkim)
-  - [SPF](#spf)
-  - [DMARC](#dmarc)
-- [Reputation](#reputation)
+- [SMTP best practices](#smtp-best-practices)
 - [Which Provider To Choose?](#which-provider-to-choose)
 - [SMTP Providers](#smtp-providers)
   - [AWS SES](#aws-ses)
@@ -96,42 +92,35 @@ Enable email by clicking on the *Enabled* toggle, and save your settings once yo
   </APIField>
 </APIBlock>
 
-## SMTP best practices
-
-As of 2024, Google [requires SMTP providers to allow users to send only from their own registered domains](https://help.brevo.com/hc/en-us/articles/14925263522578-Prepare-for-Gmail-and-Yahoo-s-new-requirements-for-email-senders) to reduce spam. A few email providers listed in this article will allow you to send emails without domain verification, but that number will probably shrink over time.
-
-- Always test new email templates you create by emailing them to yourself on a test FusionAuth server before enabling them in production. Check that fields are populated correctly and your CSS displays correctly in multiple email clients.
-
 ## Security
 
-IP Block lists
-rate limits
-ADSP
+Email receivers (such as Gmail, Yahoo, and ProtonMail) rely on several methods to prevent spam and phishing emails being sent to their users. As of 2024, they have become stricter. Google [requires SMTP providers to allow users to send only from their own registered domains](https://help.brevo.com/hc/en-us/articles/14925263522578-Prepare-for-Gmail-and-Yahoo-s-new-requirements-for-email-senders) to reduce spam. A few email providers listed in this article will allow you to send emails without domain verification, but that number will probably shrink over time.
 
-### DKIM
+Here are the ways email receivers implement security:
+- Rate limits — Emails received too frequently are blocked.
+- IP address block lists — Emails received from dynamic IP addresses, those known to send spam, or those with a low reputation are added to lists that receivers use to reject mail.
+- DNS records of email senders — Emails must have valid records for Sender Policy Framework (SPF) (RFC 7208), Domain Keys Identified Mail (DKIM) (RFC 6376), and Domain-based Message Authentication, Reporting, and Conformance (DMARC) (RFC 7489).
 
-DomainKeys Identified Mail (DKIM) is an email authentication method designed to detect forged sender addresses in email (email spoofing), a technique often used in phishing and email spam. DKIM allows the receiver to check that an email that claimed to have come from a specific domain was indeed authorized by the owner of that domain. DKIM achieves this by affixing a digital signature, linked to a domain name, to each outgoing email message.
+An SPF, DKIM, and DMARC are TXT records you need to add to your DNS records for your domain. Your SMTP provider will tell you what records to add.
 
-In practice, this means your SMTP provider will ask you to add a TXT record to your DNS records for your domain. The record will have a host like `mail._domainkey.fa.dns-dynamic.net` and a public key like `k=rsa;p=MIGfMA0GCSqGSIb3DQEBAQ8c7wIDAQAB`. When the SMTP provider sends an email on your domain's behalf it will sign the `from` address of the email with its private key, which the receiving client can verify against your publicly available DKIM public key.
+An SPF record looks like `v=spf1 ip4:129.6.100.200 ip6:2610:20:6005:100::20 -all`. It lists what IP addresses are permitted to send email on behalf of the domain. Email receivers should reject emails arriving from an IP address other than these.
+
+A DKIM record looks like `k=rsa;p=MIGfMA0GCSqGSIb3DQEBAQ8c7wIDAQAB`. It specifies a public key. The SMTP provider will sign the from address of an email with the corresponding private key. Email receivers should reject emails where the from address signature is not valid.
+
+A DMARC record looks like `v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com`. It specifies what policies the email sender supports (such as unsubscribe), and where to send rejected email for analysis by the sender.
+
+Together, these three records allow an email receiver to be sure the email server and sender are valid, and what responses the sender supports if an invalid email is received that claims to be from the sender.
 
 You might also encounter the term Author Domain Signing Practices (ADSP), which is an optional extension to DKIM, whereby a domain can publish the signing practices it adopts when relaying mail on behalf of associated authors.
 
-### SPF
+## SMTP best practices
 
-Sender Policy Framework (SPF)
-
-### DMARC
-
-Domain-based Message Authentication, Reporting & Conformance (DMARC)
-
-## Reputation
-
-- Bounces (incorrect target email address)
-- Spam complaints ("Mark Email as Spam" feature in email clients)
+- Ensure that you add all three security records discussed in the previous section to your DNS records.
+- Do everything you can to keep sender reputation high. This includes sending as few emails to the user as possible (to avoid emails being marked as spam), and remove from your email lists any non-existent email addresses that bounce.
+- Always test new email templates you create by emailing them to yourself on a test FusionAuth server before enabling them in production. Check that fields are populated correctly and your CSS displays correctly in multiple email clients.
 
 
 - general email best practices
-- setting up your SPF and DKIM records
 - dedicated IP vs. IP pools and IP reputation
 - Anything else that people should consider when setting up SMTP
 -
