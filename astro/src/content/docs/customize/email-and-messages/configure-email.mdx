@@ -9,6 +9,36 @@ import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
 import Aside from 'src/components/Aside.astro';
 
+
+TODO REMOVE
+
+- [Overview](#overview)
+  - [SMTP Settings](#smtp-settings)
+- [SMTP best practices](#smtp-best-practices)
+- [Security](#security)
+- [Reputation](#reputation)
+- [Which Provider To Choose?](#which-provider-to-choose)
+- [SMTP Providers](#smtp-providers)
+  - [AWS SES](#aws-ses)
+  - [Brevo (Previously Send In Blue)](#brevo-previously-send-in-blue)
+  - [Gmail](#gmail)
+  - [Mailersend](#mailersend)
+  - [Mailchimp (Previously Mandrill)](#mailchimp-previously-mandrill)
+  - [Mailgun](#mailgun)
+  - [Postmark](#postmark)
+  - [Resend](#resend)
+  - [SendGrid](#sendgrid)
+- [TODO](#todo)
+- [Troubleshoot](#troubleshoot)
+  - [Authentication Error](#authentication-error)
+  - [Account Suspended](#account-suspended)
+  - [Socket Timeout](#socket-timeout)
+  - [Domain Not Verified](#domain-not-verified)
+  - [Email Address Not Verified](#email-address-not-verified)
+  - [Email Doesn't Arrive](#email-doesnt-arrive)
+
+
+
 ## Overview
 
 Before you can use email templates and other email features, you must first enable and configure an SMTP server.
@@ -64,14 +94,49 @@ Enable email by clicking on the *Enabled* toggle, and save your settings once yo
 
 ## SMTP best practices
 
-As of 2024, Google [requires SMTP providers to allow users to send only from their own registered domains](https://help.brevo.com/hc/en-us/articles/14925263522578-Prepare-for-Gmail-and-Yahoo-s-new-requirements-for-email-senders). A few email providers listed in this article will allow you to send emails without domain verification, but that number will probably shrink over time.
+As of 2024, Google [requires SMTP providers to allow users to send only from their own registered domains](https://help.brevo.com/hc/en-us/articles/14925263522578-Prepare-for-Gmail-and-Yahoo-s-new-requirements-for-email-senders) to reduce spam. A few email providers listed in this article will allow you to send emails without domain verification, but that number will probably shrink over time.
 
-todo - put this above providers
+- Always test new email templates you create by emailing them to yourself on a test FusionAuth server before enabling them in production. Check that fields are populated correctly and your CSS displays correctly in multiple email clients.
+
+DKIM and DMARC SPF
+
+## Security
+
+DomainKeys Identified Mail (DKIM) is an email authentication method designed to detect forged sender addresses in email (email spoofing), a technique often used in phishing and email spam. DKIM allows the receiver to check that an email that claimed to have come from a specific domain was indeed authorized by the owner of that domain. DKIM achieves this by affixing a digital signature, linked to a domain name, to each outgoing email message.
+
+In practice, this means your SMTP provider will ask you to add a TXT record to your DNS records for your domain. The record will have a host like `mail._domainkey.fa.dns-dynamic.net` and a public key like `k=rsa;p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDeMVIzrCa3T14JsNY0IRv5/2V1/v2itlviLQBwXsa7shBD6TrBkswsFUToPyMRWC9tbR/5ey0nRBH0ZVxp+lsmTxid2Y2z+FApQ6ra2VsXfbJP3HE6wAO0YTVEJt1TmeczhEd2Jiz/fcabIISgXEdSpTYJhb0ct0VJRxcg4c8c7wIDAQAB`. When the SMTP provider sends an email on your domain's behalf it will sign the `from` address of the email with its private key, which the receiving client can verify against your publicly available DKIM public key.
+
+## Reputation
+
+- Bounces (incorrect target email address)
+- Spam complaints ("Mark Email as Spam" feature in email clients)
+
 
 - general email best practices
 - setting up your SPF and DKIM records
 - dedicated IP vs. IP pools and IP reputation
 - Anything else that people should consider when setting up SMTP
+-
+## Which Provider To Choose?
+
+Some providers are easy to test, requiring nothing more than registering with an email address. Others require comprehensive company details, your verified phone number, domain verification, or communicating with support agents. Disregarding price and features, the easiest providers to configure are:
+- Mailersend
+- Gmail (requires phone authentication however, and is just for small tests)
+- Mailgun (requires phone authentication, and limited to five to addresses)
+
+The more difficult providers are (from easiest to most complicated):
+- Resend — require domain verification through adding DNS records.
+- AWS SES — require domain verification through adding DNS records. Allows you to email only verified addresses while in the test sandbox.
+- SendGrid/Twilio — automatically disable your account on sign-up and require you to manually contact to support to have it activated. Requires phone authentication.
+- Postmark — require you to have an email address on a custom domain. You cannot use an email alias or public address like Gmail or Yahoo.
+- Brevo — require phone authentication. Automatically disable your account on sign-up and require you to manually contact to support to have it activated. Requires domain authentication and email authentication in your domain. They also want you to have a fully built company website, want you to explain to them how you got your customer's email addresses, and need you to tell them before you start using their service if you need transactional or marketing emails.
+  > Each new account is reviewed by our team before campaigns can be sent out. We review many factors, determined by our algorithms and a manual review. This process helps ensure new users comply with our terms of service and are in a position to be successful using Brevo.
+
+  > Unfortunately, your account did not pass this analysis and we are unable to validate your account. We will unfortunately not be able to communicate more specifics about this decision but we invite you to review our anti-spam policy https://www.brevo.com/legal/antispampolicy/ and our terms of use https://www.brevo.com/legal/termsofuse/.
+
+  https://help.brevo.com/hc/en-us/articles/12163873383186-Authenticate-your-domain-with-Brevo-Brevo-code-DKIM-record-DMARC-record
+
+
 
 ## SMTP Providers
 
@@ -82,24 +147,6 @@ This information is for starting guidance only - FusionAuth connects seamlessly 
 To avoid breaking the various DNS records of your application's domain, you may want to run FusionAuth locally in Docker and point its SMTP fields to a temporary domain. In the examples below, configuration is shown using a free subdomain created with [ClouDNS](https://www.cloudns.com) The examples use the domain `fusionauth.ddns.net`.
 
 Alternatively, you can create a subdomain on your real account. For example, if your application is hosted at `myapp.com`, you can create `testemail.myapp.com`, and point the SMTP service and FusionAuth there while testing.
-
-### Which Provider To Pick?
-
-Some providers are easy to test, requiring nothing more than registering with an email address. Others require comprehensive company details, your verified phone number, domain verification, or communicating with support agents. Disregarding price and features, the easiest providers to configure are:
-- Mailersend
-- Gmail (requires phone authentication however, and is just for small tests)
-
-The more difficult providers are (from easiest to most complicated):
-- Resend — require domain verification through adding DNS records.
-- AWS SES — require domain verification through adding DNS records. Allows you to email only verified addresses while in the test sandbox.
-- SendGrid — automatically disable your account on sign-up and require you to manually contact to support to have it activated.
-- Brevo — require phone authentication. Automatically disable your account on sign-up and require you to manually contact to support to have it activated. Requires domain authentication and email authentication in your domain. They also want you to have a fully built company website, want you to explain to them how you got your customer's email addresses, and need you to tell them before you start using their service if you need transactional or marketing emails.
-  > Each new account is reviewed by our team before campaigns can be sent out. We review many factors, determined by our algorithms and a manual review. This process helps ensure new users comply with our terms of service and are in a position to be successful using Brevo.
-
-  > Unfortunately, your account did not pass this analysis and we are unable to validate your account. We will unfortunately not be able to communicate more specifics about this decision but we invite you to review our anti-spam policy https://www.brevo.com/legal/antispampolicy/ and our terms of use https://www.brevo.com/legal/termsofuse/.
-
-  https://help.brevo.com/hc/en-us/articles/12163873383186-Authenticate-your-domain-with-Brevo-Brevo-code-DKIM-record-DMARC-record
-
 
 ### AWS SES
 
@@ -176,11 +223,20 @@ For Gmail, use [application passwords](https://support.google.com/accounts/answe
 - Use a <InlineField>Default from address</InlineField> with your Mailersend trial, such as `fa@trial-o89qngkvfrwlwr32.mlsender.net`.
 - Click <InlineField>Send test email</InlineField> to test the settings work, then click the save icon at the top right. Enter your real email address for the test email, so you can test it arrives.
 
+### Mailchimp (Previously Mandrill)
+
+TODO
+Sign up for an account at https://login.mailchimp.com/signup/?entrypoint=mandrill&locale=en.
+
 ### Mailgun
 
-### Mandrill
+- Create an account at https://signup.mailgun.com/new/signup.
+- Add your domain under `Sending` in the Mailgun dashboard at https://app.mailgun.com/mg/sending/new-domain.
+- fa.dns-dynamic.net
 
 ### Postmark
+
+TODO use ritza email. no public emails
 
 ### Resend
 
@@ -210,6 +266,24 @@ For an overview of all the records Resend asks you set on your domain, please re
 For more general information, read the [Resend documentation on SMTP](https://resend.com/docs/send-with-smtp).
 
 ### SendGrid
+
+TODO - waiting for twilio/sendgrid to reply
+
+- Register for a SendGrid account at https://login.sendgrid.com/login/identifier.
+- If after verifying your email address, the website says "An error occurred" and you cannot log in, then log in to Twilio.com itself to manage your SendGrid account.
+
+```
+We appreciate your business and want to ensure the security of your account. As part of our ongoing efforts to protect your information, we have temporarily suspended your account until we can confirm some details about your intended use case. We apologize for any inconvenience this may have caused and we are here to assist you in resolving this matter as quickly as possible.
+
+The following accounts were affected:
+Account SID: AC7a63585c292e1f6fa46141eebedc8f00
+
+To reactivate your account, we kindly ask that you reply to this email with the following information:
+
+  - Are you a developer creating an experience to engage with your clients and/or customers on behalf of your company?
+  - What Twilio products do you plan on using? Please outline your use case or what you intend to build.
+  - If you are using Twilio for your business and/or company, please provide a link to the website/app. If available, provide a public source (such as a LinkedIn profile, business registry, or other online verification such as GitHub, and any social media platform) that confirms your association with the brand/company.
+```
 
 SendGrid is a commonly used SMTP provider and integrates well with FusionAuth. To setup SendGrid, [follow these instructions](https://docs.sendgrid.com/for-developers/sending-email/integrating-with-the-smtp-api).
 
@@ -302,7 +376,7 @@ Prime Messaging Exception
 554 Message rejected: Email address is not verified. The following identities failed the check in region EU-WEST-1: address/fa@simplelogin.com
 ```
 
-You will probably get this error only with AWS, which requires both your to address to be verified when testing until your SES service leaves the testing sandbox. To fix this error, send the FusionAuth test email to the same address that you verified when creating the SES service in AWS.
+You will probably get this error only with AWS, which requires your to address to be verified when testing until your SES service leaves the testing sandbox. To fix this error, send the FusionAuth test email to the same address that you verified when creating the SES service in AWS.
 
 ### Email Doesn't Arrive
 
