@@ -9,13 +9,12 @@ import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
 import Aside from 'src/components/Aside.astro';
 
-TODO REMOVE
-
 - [Overview](#overview)
-  - [SMTP Settings](#smtp-settings)
 - [Understand Email Security](#understand-email-security)
 - [Which Provider To Choose?](#which-provider-to-choose)
-- [SMTP Providers](#smtp-providers)
+- [Why Can't You Use A Self-Hosted SMTP Server?](#why-cant-you-use-a-self-hosted-smtp-server)
+- [SMTP Settings](#smtp-settings)
+- [How To Configure SMTP Providers In FusionAuth](#how-to-configure-smtp-providers-in-fusionauth)
   - [AWS SES](#aws-ses)
   - [Brevo (Previously Send In Blue)](#brevo-previously-send-in-blue)
   - [Gmail](#gmail)
@@ -25,29 +24,81 @@ TODO REMOVE
   - [Postmark](#postmark)
   - [Resend](#resend)
   - [SendGrid (Twilio)](#sendgrid-twilio)
-- [Why Can't You Use A Self-Hosted SMTP Server?](#why-cant-you-use-a-self-hosted-smtp-server)
 - [Troubleshoot](#troubleshoot)
   - [Authentication Error](#authentication-error)
   - [Account Suspended](#account-suspended)
   - [Socket Timeout](#socket-timeout)
   - [Domain Not Verified](#domain-not-verified)
   - [Email Address Not Verified](#email-address-not-verified)
-  - [Free Accounts May Send Only To Specified Recipients](#free-accounts-may-send-only-to-specified-recipients)
   - [Email Doesn't Arrive](#email-doesnt-arrive)
 - [SMTP best practices](#smtp-best-practices)
   - [Shared IP addresses](#shared-ip-addresses)
 
 ## Overview
 
-Before you can use email templates and other email features, you must first enable and configure a Simple Mail Transfer Protocol (SMTP) server.
+Before you can use email templates and other email features in FusionAuth, you must first enable and configure a Simple Mail Transfer Protocol (SMTP) server.
 
-To enable and configure the SMTP server navigate to <strong>Tenants -> Email</strong>.
+This guide briefly explains SMTP security and SMTP providers, describes in detail how to configure the most popular SMTP providers with FusionAuth, and lists best practices to consider when working with email.
 
-<img src="/img/docs/customize/email-and-messages/email-settings.png" alt="Email Settings" width="1200" role="shadowed" />
+## Understand Email Security
 
-Enable email by clicking on the *Enabled* toggle, and save your settings once you have completed your configuration.
+Email service providers (ESPs), such as Gmail, Yahoo!, and ProtonMail, rely on several methods to prevent spam and phishing emails being sent to their users. As of 2024, they have become even stricter. Google [requires SMTP providers to allow users to send only from their own registered domains](https://help.brevo.com/hc/en-us/articles/14925263522578-Prepare-for-Gmail-and-Yahoo-s-new-requirements-for-email-senders) to reduce spam. A few email providers listed in this article will allow you to send emails without domain verification, but that number will probably shrink over time.
 
-### SMTP Settings
+Here are the ways email receivers implement security:
+- Rate limits — Emails received too frequently are blocked.
+- IP address block lists — Emails received from dynamic IP addresses, those known to send spam, or those with a low reputation are added to lists that receivers use to reject mail.
+- DNS records of email senders — Emails must have valid records for Sender Policy Framework (SPF) (RFC 7208), Domain Keys Identified Mail (DKIM) (RFC 6376), and Domain-based Message Authentication, Reporting, and Conformance (DMARC) (RFC 7489).
+
+An SPF, DKIM, and DMARC are TXT records you need to add to your DNS records for your domain. Your SMTP provider will tell you what records to add.
+
+An SPF record looks like `v=spf1 ip4:129.6.100.200 ip6:2610:20:6005:100::20 -all`. It lists what IP addresses are permitted to send email on behalf of the domain. Email receivers should reject emails arriving from an IP address other than these.
+
+A DKIM record looks like `k=rsa;p=MIGfMA0GCSqGSIb3DQEBAQ8c7wIDAQAB`. It specifies a public key. The SMTP provider will sign the sender address of an email with the corresponding private key. Email receivers should reject emails where the sender address signature is not valid.
+
+A DMARC record looks like `v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com`. It specifies what policies the email sender supports (such as unsubscribe), and where to send rejected email for analysis by the sender.
+
+Together, these three records allow an email receiver to be sure the email server and sender are valid, and what responses the sender supports if an invalid email is received.
+
+You might also encounter the term Author Domain Signing Practices (ADSP), which is an optional extension to DKIM, whereby a domain can publish the signing practices it adopts when relaying mail on behalf of associated authors.
+
+## Which Provider To Choose?
+
+An SMTP provider is an online service that sends email on your behalf. In return for payment, they guarantee you a service that provides IP addresses with high reputation.
+
+Some providers are easy to test, requiring nothing more than registering with an email address. Others require comprehensive company details, your verified phone number, domain verification, having a professional business website, and communicating with support agents. Disregarding price and features, the easiest providers to configure are:
+- Mailersend — require only an email address.
+- Gmail — require phone authentication, and email is intended only for small tests.
+- Resend — require domain verification.
+- AWS SES — require domain verification. Allows you to email only verified addresses while in the test sandbox.
+- Mailgun — require domain authentication, phone authentication, and limited to five recipient addresses.
+
+The more difficult providers are
+- Brevo
+- Mailchimp (Mandrill)
+- Postmark
+- SendGrid (Twilio)
+
+They automatically disable your account on sign-up and require you to manually contact to support to have it activated. Generally this involves having a business website ready for review, explaining what your purpose in sending email is, and explaining how you obtained your recipients' email addresses.
+
+Be aware that these companies can cancel your account at any time, without explanation. This can cripple your business. Here is an example of an email received by FusionAuth from Brevo while testing:
+
+> Each new account is reviewed by our team before campaigns can be sent out. Unfortunately, your account did not pass this analysis and we are unable to validate your account. We will unfortunately not be able to communicate more specifics about this decision.
+
+Choose an SMTP that you feel is trustworthy very carefully.
+
+## Why Can't You Use A Self-Hosted SMTP Server?
+
+It is possible to send email through an SMTP server you host on your own server, with an application like [Postfix](https://www.postfix.org/documentation.html), [Haraka](https://haraka.github.io/getting_started), [Mailcow](https://docs.mailcow.email/), or [Mail-in-a-Box](https://mailinabox.email/guide.html).
+
+However, this will almost certainly cost you more time and money than paying a dedicated email company to handle mail for you. Below are some things you'll need to handle if you want to self-host:
+- Deliverability: Email service providers block or filter emails from dynamic IP addresses and untrusted servers. You need to maintain IP reputation, implement SPF, DKIM, and DMARC properly, and handle feedback loops with ESPs (bounces and spam requests).
+- Scalability: As email volume grows, you need to scale your infrastructure.
+- Technical expertise: Properly configuring and maintaining an email server requires understanding both the software and the network infrastructure. You need to continuously monitor your server and ensure it is available with 100% uptime.
+- Security: Your server must be secured against unauthorized access and data must be protected against breaches, which requires regular security audits and updates.
+
+## SMTP Settings
+
+Below are descriptions of the SMTP settings you will configure in FusionAuth in the following section.
 
 <APIBlock>
   <APIField name="Host" optional defaults="localhost">
@@ -90,56 +141,21 @@ Enable email by clicking on the *Enabled* toggle, and save your settings once yo
   </APIField>
 </APIBlock>
 
-## Understand Email Security
+## How To Configure SMTP Providers In FusionAuth
 
-Email service providers (ESPs), such as Gmail, Yahoo, and ProtonMail, rely on several methods to prevent spam and phishing emails being sent to their users. As of 2024, they have become stricter. Google [requires SMTP providers to allow users to send only from their own registered domains](https://help.brevo.com/hc/en-us/articles/14925263522578-Prepare-for-Gmail-and-Yahoo-s-new-requirements-for-email-senders) to reduce spam. A few email providers listed in this article will allow you to send emails without domain verification, but that number will probably shrink over time.
+To enable and configure the FusionAuth SMTP server navigate to <strong>Tenants -> Email</strong>.
 
-Here are the ways email receivers implement security:
-- Rate limits — Emails received too frequently are blocked.
-- IP address block lists — Emails received from dynamic IP addresses, those known to send spam, or those with a low reputation are added to lists that receivers use to reject mail.
-- DNS records of email senders — Emails must have valid records for Sender Policy Framework (SPF) (RFC 7208), Domain Keys Identified Mail (DKIM) (RFC 6376), and Domain-based Message Authentication, Reporting, and Conformance (DMARC) (RFC 7489).
+<img src="/img/docs/customize/email-and-messages/email-settings.png" alt="Email Settings" width="1200" role="shadowed" />
 
-An SPF, DKIM, and DMARC are TXT records you need to add to your DNS records for your domain. Your SMTP provider will tell you what records to add.
+Enable email by clicking on the *Enabled* toggle, and save your settings once you have completed your configuration.
 
-An SPF record looks like `v=spf1 ip4:129.6.100.200 ip6:2610:20:6005:100::20 -all`. It lists what IP addresses are permitted to send email on behalf of the domain. Email receivers should reject emails arriving from an IP address other than these.
+To avoid breaking the various DNS records of your application's domain, you may want to run FusionAuth locally in Docker and point its SMTP fields to a temporary subdomain. For example, if your application is hosted at `myapp.com`, you can create `testemail.myapp.com`, and point the SMTP service and FusionAuth there while testing.
 
-A DKIM record looks like `k=rsa;p=MIGfMA0GCSqGSIb3DQEBAQ8c7wIDAQAB`. It specifies a public key. The SMTP provider will sign the sender address of an email with the corresponding private key. Email receivers should reject emails where the sender address signature is not valid.
+In the examples below, configuration is shown using a free subdomain created with [ClouDNS](https://www.cloudns.com). The examples use the domain `fa.dns-dynamic.net`. However, strict SMTP providers will mark a domain like this a spam, and require you to have a trustworthy looking domain and website.
 
-A DMARC record looks like `v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com`. It specifies what policies the email sender supports (such as unsubscribe), and where to send rejected email for analysis by the sender.
+There is a troubleshooting section below this one if you encounter errors while trying to send a test email.
 
-Together, these three records allow an email receiver to be sure the email server and sender are valid, and what responses the sender supports if an invalid email is received.
-
-You might also encounter the term Author Domain Signing Practices (ADSP), which is an optional extension to DKIM, whereby a domain can publish the signing practices it adopts when relaying mail on behalf of associated authors.
-
-## Which Provider To Choose?
-
-Some providers are easy to test, requiring nothing more than registering with an email address. Others require comprehensive company details, your verified phone number, domain verification, or communicating with support agents. Disregarding price and features, the easiest providers to configure are:
-- Mailersend
-- Gmail (requires phone authentication however, and is just for small tests)
-- Resend — require domain verification through adding DNS records.
-- AWS SES — require domain verification through adding DNS records. Allows you to email only verified addresses while in the test sandbox.
-- Mailgun (requires phone authentication, and limited to five to addresses). The only support team that activate our account for testing.
-
-The more difficult providers are (from easiest to most complicated):
-
-- SendGrid/Twilio — automatically disable your account on sign-up and require you to manually contact to support to have it activated. Requires phone authentication.
-- Postmark — require you to have an email address on a custom domain. You cannot use an email alias or public address like Gmail or Yahoo.
-- Brevo — require phone authentication. Automatically disable your account on sign-up and require you to manually contact to support to have it activated. Requires domain authentication and email authentication in your domain. They also want you to have a fully built company website, want you to explain to them how you got your customer's email addresses, and need you to tell them before you start using their service if you need transactional or marketing emails.
-  > Each new account is reviewed by our team before campaigns can be sent out. We review many factors, determined by our algorithms and a manual review. This process helps ensure new users comply with our terms of service and are in a position to be successful using Brevo.
-
-  > Unfortunately, your account did not pass this analysis and we are unable to validate your account. We will unfortunately not be able to communicate more specifics about this decision but we invite you to review our anti-spam policy https://www.brevo.com/legal/antispampolicy/ and our terms of use https://www.brevo.com/legal/termsofuse/.
-
-  https://help.brevo.com/hc/en-us/articles/12163873383186-Authenticate-your-domain-with-Brevo-Brevo-code-DKIM-record-DMARC-record
-
-## SMTP Providers
-
-<Aside type="note">
-This information is for starting guidance only - FusionAuth connects seamlessly with many different email providers. A deep exploration of email best practices and providers is outside the scope of this section.
-</Aside>
-
-To avoid breaking the various DNS records of your application's domain, you may want to run FusionAuth locally in Docker and point its SMTP fields to a temporary domain. In the examples below, configuration is shown using a free subdomain created with [ClouDNS](https://www.cloudns.com) The examples use the domain `fusionauth.ddns.net`.
-
-Alternatively, you can create a subdomain on your real account. For example, if your application is hosted at `myapp.com`, you can create `testemail.myapp.com`, and point the SMTP service and FusionAuth there while testing.
+The SMTP providers are presented in alphabetical order below.
 
 ### AWS SES
 
@@ -279,19 +295,6 @@ TODO - waiting for twilio/sendgrid to reply
 - Register for a SendGrid account at https://login.sendgrid.com/login/identifier.
 - If after verifying your email address, the website says "An error occurred" and you cannot log in, then log in to Twilio.com itself to manage your SendGrid account.
 
-```
-We appreciate your business and want to ensure the security of your account. As part of our ongoing efforts to protect your information, we have temporarily suspended your account until we can confirm some details about your intended use case. We apologize for any inconvenience this may have caused and we are here to assist you in resolving this matter as quickly as possible.
-
-The following accounts were affected:
-Account SID: a0983kn43098a
-
-To reactivate your account, we kindly ask that you reply to this email with the following information:
-
-  - Are you a developer creating an experience to engage with your clients and/or customers on behalf of your company?
-  - What Twilio products do you plan on using? Please outline your use case or what you intend to build.
-  - If you are using Twilio for your business and/or company, please provide a link to the website/app. If available, provide a public source (such as a LinkedIn profile, business registry, or other online verification such as GitHub, and any social media platform) that confirms your association with the brand/company.
-```
-
 SendGrid is a commonly used SMTP provider and integrates well with FusionAuth. To setup SendGrid, [follow these instructions](https://docs.sendgrid.com/for-developers/sending-email/integrating-with-the-smtp-api).
 
 Other resources related to SendGrid are linked below:
@@ -301,16 +304,6 @@ Other resources related to SendGrid are linked below:
 3. https://docs.sendgrid.com/ui/account-and-settings/how-to-set-up-domain-authentication
 
 Using dedicated IP addresses for any SendGrid account will build email reputation over time (improving email deliverability). And lastly, to control spoofing, phishing, and spam, it is recommended to set up [SPF](https://docs.sendgrid.com/ui/account-and-settings/spf-records) and [DKIM](https://docs.sendgrid.com/ui/account-and-settings/dkim-records) records for the primary email domain (such as `example-company.com`). Emails should also be sent from an address such as `no-reply@example-company.com`.
-
-## Why Can't You Use A Self-Hosted SMTP Server?
-
-It is possible to send email through an SMTP server you host on your own server, with an application like [Postfix](https://www.postfix.org/documentation.html), [Haraka](https://haraka.github.io/getting_started), [Mailcow](https://docs.mailcow.email/), or [Mail-in-a-Box](https://mailinabox.email/guide.html).
-
-However, this will almost certainly cost you more time and money than paying a dedicated email company to handle mail for you. Below are some things you'll need to handle if you want to self-host:
-- Deliverability: Email service providers block or filter emails from dynamic IP addresses and untrusted servers. You need to maintain IP reputation, implement SPF, DKIM, and DMARC properly, and handle feedback loops with ESPs (bounces and spam requests).
-- Scalability: As email volume grows, you need to scale your infrastructure.
-- Technical expertise: Properly configuring and maintaining an email server requires understanding both the software and the network infrastructure. You need to continuously monitor your server and ensure it is available with 100% uptime.
-- Security: Your server must be secured against unauthorized access and data must be protected against breaches, which requires regular security audits and updates.
 
 ## Troubleshoot
 
@@ -382,10 +375,6 @@ Prime Messaging Exception
 554 Message rejected: Email address is not verified. The following identities failed the check in region EU-WEST-1: address/fa@simplelogin.com
 ```
 
-You will probably get this error only with AWS, which requires your to address to be verified when testing until your SES service leaves the testing sandbox. To fix this error, send the FusionAuth test email to the same address that you verified when creating the SES service in AWS.
-
-### Free Accounts May Send Only To Specified Recipients
-
 ```text
 Unable to send email via JavaMail
 
@@ -393,7 +382,7 @@ Prime Messaging Exception
 421 Domain fa.dns-dynamic.net is not allowed to send: Free accounts are for test purposes only. Please upgrade or add the address to authorized recipients in Account Settings.
 ```
 
-You will get this error with Mailgun and other providers that limits their free services. To fix it, add your reciepient email address in the allowed list of receivers in the SMTP provider's settings.
+You will probably get this error only with AWS or Mailgun, which requires your sender address to be verified when testing until your service leaves the testing sandbox. To fix this error, send the FusionAuth test email to the same address that you verified when creating the SES service in AWS. In Mailgun, add the address to the list of authorized recipients.
 
 ### Email Doesn't Arrive
 
@@ -431,8 +420,3 @@ Most SMTP providers allow you to send through an individual IP address dedicated
 If an SMTP account starts sending spam and decreases the address's reputation, the SMTP provider will take action — either cancelling the client's account or moving them to a lower reputation IP address pool.
 
 Mailgun recommends one dedicated IP address for every million messages sent per month.
-
-
-TODO remove
-<strong></strong>
-<InlineField></InlineField>
