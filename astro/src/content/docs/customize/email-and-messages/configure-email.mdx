@@ -9,12 +9,11 @@ import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
 import Aside from 'src/components/Aside.astro';
 
-
 TODO REMOVE
 
 - [Overview](#overview)
   - [SMTP Settings](#smtp-settings)
-- [Security](#security)
+- [Understand Email Security](#understand-email-security)
 - [Which Provider To Choose?](#which-provider-to-choose)
 - [SMTP Providers](#smtp-providers)
   - [AWS SES](#aws-ses)
@@ -25,7 +24,7 @@ TODO REMOVE
   - [Mailgun](#mailgun)
   - [Postmark](#postmark)
   - [Resend](#resend)
-  - [SendGrid](#sendgrid)
+  - [SendGrid (Twilio)](#sendgrid-twilio)
 - [Why Can't You Use A Self-Hosted SMTP Server?](#why-cant-you-use-a-self-hosted-smtp-server)
 - [Troubleshoot](#troubleshoot)
   - [Authentication Error](#authentication-error)
@@ -91,7 +90,7 @@ Enable email by clicking on the *Enabled* toggle, and save your settings once yo
   </APIField>
 </APIBlock>
 
-## Security
+## Understand Email Security
 
 Email service providers (ESPs), such as Gmail, Yahoo, and ProtonMail, rely on several methods to prevent spam and phishing emails being sent to their users. As of 2024, they have become stricter. Google [requires SMTP providers to allow users to send only from their own registered domains](https://help.brevo.com/hc/en-us/articles/14925263522578-Prepare-for-Gmail-and-Yahoo-s-new-requirements-for-email-senders) to reduce spam. A few email providers listed in this article will allow you to send emails without domain verification, but that number will probably shrink over time.
 
@@ -273,7 +272,7 @@ For an overview of all the records Resend asks you set on your domain, please re
 
 For more general information, read the [Resend documentation on SMTP](https://resend.com/docs/send-with-smtp).
 
-### SendGrid
+### SendGrid (Twilio)
 
 TODO - waiting for twilio/sendgrid to reply
 
@@ -407,25 +406,33 @@ Try the following:
 
 ## SMTP best practices
 
-This section lists some recommendations by SMTP providers. Your primary aim should be to keep your sender reputation high to avoid emails being marked as spam.
+This section lists some recommendations by SMTP providers for transactional emails. Your primary aim should be to keep your sender reputation high to avoid emails being marked as spam.
 
 - Ensure that you add all SPF, DKIM, DMARC, and MX records to your DNS records.
+- For extra trustworthiness and brand building, set up Brand Indicators for Message Identification (BIMI), which enables email inboxes to display a brand’s logo next to the company’s authenticated email messages.
 - Send emails only to people that have requested to receive them. Always first send a confirmation link to confirm their address is valid.
+- Follow your SMTP providers documentation to configure analytics for your emails (click tracking).
 - Track your emails and adjust your sending based on feedback from ESPs and recipients. Don't send emails to recipients that have unsubscribed or complained of spam. Monitor the results of email sending on your SMTP providers analytics web page.
-- Send as few emails to users as possible to avoid emails being marked as spam.
+- Send as few emails to users as possible to avoid emails being marked as spam. Keep your email content as short as possible to avoid wasting your users' time.
 - Always test new email templates you create by emailing them to yourself on a test FusionAuth server before enabling them in production. Check that fields are populated correctly and your CSS displays correctly in multiple email clients.
+- Always include a link to unsubscribe in your emails.
+- Send multipart emails using both text and HTML, or text only. ESPs do not trust HTML-only email and block images by default. Preview how your emails look with tools like [Litmus](https://www.litmus.com/email-testing).
+- Too many links and images trigger spam flags at ESPs. Misspellings, spammy words (`buy now!`, `Free!`) are big spam flags, as are `ALL CAPS AND EXCLAMATION MARKS!!!!!!!!!!!!!`
+- Don't use URL shortening services for links. Use your domain's full URL.
+- The domains in the `from` field, `return-path` and `message-id` should match the domain you are sending from.
+- Send your transactional email and your marketing email through different IP addresses, as marketing email is more likely to be marked as spam. FusionAuth is entirely transactional email.
+- For similar reasons, send your transactional email and your marketing email through different subdomains. Your domain and your IP address both have reputations with ESPs.
+- Do not use a `noreply` email address as your sender. Instead, route all customer replies to your support team.
 
 ### Shared IP addresses
 
-Most SMTP providers allow you to send through an individual IP address dedicated to your account, or an IP address (or pool of addresses) shared by multiple SMTP accounts. If you are sending low volumes of email (less than 5000 per day), a shared IP address is a good choice. Shared addresses are less expensive than dedicated addresses. The address is already known and trusted by ESPs, so your emails are unlikely to be send to spam folders.
+Most SMTP providers allow you to send through an individual IP address dedicated to your account or an IP address (or pool of addresses) shared by multiple SMTP accounts. If you are sending low volumes of email (less than 5000 per day), a shared IP address is a good choice. Shared addresses are less expensive than dedicated addresses. The address is already known and trusted by ESPs, so your emails are unlikely to be send to spam folders.
 
 If an SMTP account starts sending spam and decreases the address's reputation, the SMTP provider will take action — either cancelling the client's account or moving them to a lower reputation IP address pool.
 
 Mailgun recommends one dedicated IP address for every million messages sent per month.
 
-Send your transactional email and your marketing email through different IP addresses, as marketing email is more likely to be marked as spam. (Since FusionAuth is entirely transactional email, you don't need to take any action here.)
 
-
-
+TODO remove
 <strong></strong>
 <InlineField></InlineField>
