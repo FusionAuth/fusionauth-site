@@ -20,7 +20,7 @@ import Aside from 'src/components/Aside.astro';
   - [Gmail](#gmail)
   - [Mailersend](#mailersend)
   - [Mailchimp (Previously Mandrill)](#mailchimp-previously-mandrill)
-  - [Mailgun](#mailgun)
+  - [Mailgun (Sinch)](#mailgun-sinch)
   - [Postmark](#postmark)
   - [Resend](#resend)
   - [SendGrid (Twilio)](#sendgrid-twilio)
@@ -39,6 +39,8 @@ import Aside from 'src/components/Aside.astro';
 Before you can use email templates and other email features in FusionAuth, you must first enable and configure a Simple Mail Transfer Protocol (SMTP) server.
 
 This guide briefly explains SMTP security and SMTP providers, describes in detail how to configure the most popular SMTP providers with FusionAuth, and lists best practices to consider when working with email.
+
+SMTP providers handle two types of email: marketing (e.g., newsletters and notification of sales) and transactional (e.g., confirmations and password resets). FusionAuth is concerned only with transactional email.
 
 ## Understand Email Security
 
@@ -67,18 +69,18 @@ An SMTP provider is an online service that sends email on your behalf. In return
 
 Some providers are easy to test, requiring nothing more than registering with an email address. Others require comprehensive company details, your verified phone number, domain verification, having a professional business website, and communicating with support agents. Disregarding price and features, the easiest providers to configure are:
 - Mailersend — require only an email address.
-- Gmail — require phone authentication, and email is intended only for small tests.
+- Gmail — require phone authentication, and email is intended only for small tests. Not for production use.
 - Resend — require domain verification.
 - AWS SES — require domain verification. Allows you to email only verified addresses while in the test sandbox.
-- Mailgun — require domain authentication, phone authentication, and limited to five recipient addresses.
+- Mailgun (Sinch) — require domain authentication, phone authentication. Allows you to email only verified addresses while in the test sandbox.
 
-The more difficult providers are
+The more difficult providers are:
 - Brevo
 - Mailchimp (Mandrill)
 - Postmark
 - SendGrid (Twilio)
 
-They automatically disable your account on sign-up and require you to manually contact to support to have it activated. Generally this involves having a business website ready for review, explaining what your purpose in sending email is, and explaining how you obtained your recipients' email addresses.
+The difficult providers automatically disable your account on sign-up and require you to manually contact to support to have it activated. Generally this involves having a business website ready for review, explaining what your purpose in sending email is, and explaining how you obtained your recipients' email addresses.
 
 Be aware that these companies can cancel your account at any time, without explanation. This can cripple your business. Here is an example of an email received by FusionAuth from Brevo while testing:
 
@@ -205,7 +207,7 @@ SES is more complicated than the other SMTP services. If the troubleshooting sec
   - <InlineField>Password</InlineField>: Your SMTP key value from the Brevo settings
   - <InlineField>Security</InlineField>: `TLS`
   - <InlineField>Default from address</InlineField>: `fa@fa.dns-dynamic.net` (any address is allowed)
-- Click <InlineField>Send test email</InlineField> to test the settings work, then click the save icon at the top right. Enter your real email address for the test email, so you can test it arrives.
+- Click <InlineField>Send test email</InlineField> to test the settings work, then click the save icon at the top right. Enter your real email address for the test email, so you can test it arrives. TODO
 
 ### Gmail
 
@@ -224,6 +226,8 @@ For Gmail, use [application passwords](https://support.google.com/accounts/answe
 
 ### Mailersend
 
+ TODO - add domains here like all the others
+
 - Create an account at https://app.mailersend.com.
 - Browse to [Email -> Domains](https://app.mailersend.com/domains) and click <InlineField>Manage</InlineField> on the trial domain they created for you.
 - Under <strong>SMTP</strong>, click <InlineField>Generate new user</InlineField> and then click <InlineField>Manage</InlineField> for the user.
@@ -234,10 +238,46 @@ For Gmail, use [application passwords](https://support.google.com/accounts/answe
 
 ### Mailchimp (Previously Mandrill)
 
-TODO
-Sign up for an account at https://login.mailchimp.com/signup/?entrypoint=mandrill&locale=en.
+Mailchimp is busy integrating their transactional email marketing plugin, Mandrill, into their main brand. At the time of writing, you need to create an account with Mailchimp, then log into Mandrill afterwards.
 
-### Mailgun
+- Sign up for an account at https://login.mailchimp.com/signup/?entrypoint=mandrill&locale=en.
+- If they suspend your account for violating terms of service, click <strong>View issues</strong> at the top of their website, then <InlineField>Resolve</InlineField> at the bottom of the page to contact support.
+- Log in to https://mandrillapp.com/settings/sending-domains and add your domain name in the text bottom at the bottom of the page.
+<!-- - Click your username at the top right of the page and choose <InlineField>Account & billing</InlineField>. Click the <strong>Domains</tab> and <InlineField>Start Authentication</InlineField> of your domain.
+  - Add a domain: `fa.dns-dynamic.net` (or your domain name).
+  - In your website domain manager, add the DNS records from the domain authentication page.
+    - If you use cPanel, alter your records at <strong>Domains -> Zone Editor</strong>
+    - Be careful not to duplicate the domain name. For example, if your host is `fa.dns-dynamic.net` and the MX record value the SMTP provider wants you to add is `send.fa`, be sure set the value to `send.fa.dns-dynamic.net`. Don't use `send.fa.fa.dns-dynamic.net` by pasting the value without checking what suffix your host attaches to the field.
+    - Mailchimp uses CNAME records instead of TXT records for DKIM. They are the only SMTP provider in this guide that does so.
+    - Once you have entered the DNS records and saved, start the verification process on the Mailchimp page. It should take a minute. -->
+- At the bottom of the page click <InlineField>View details</InlineField> for each record that needs to be verified.
+  - In your website domain manager, add the DNS records from the domain authentication page.
+    - If you use cPanel, alter your records at <strong>Domains -> Zone Editor</strong>
+    - To add records to your root domain, use a <InlineField>Host</InlineField> value of `@`.
+    - Be careful not to duplicate the domain name. For example, if your host is `fa.dns-dynamic.net` and the MX record value the SMTP provider wants you to add is `send.fa`, be sure set the value to `send.fa.dns-dynamic.net`. Don't use `send.fa.fa.dns-dynamic.net` by pasting the value without checking what suffix your host attaches to the field.
+    - Once you have entered the DNS records and saved, start the verification process on the Mailchimp page. It should take a minute.
+
+
+- Browse to https://app.brevo.com/senders/list.
+  - Add sender: `fa@fa.dns-dynamic.net` (or with your domain name).
+  - If you are using ClouDNS to test, you need to add a [mail forward](https://www.cloudns.net/mail-forwards/) from `fa@fa.dns-dynamic.net` to your real email address to be able to receive the password from Brevo to authenticate you email.
+  - In Brevo, authenticate your email address.
+- Brevo also requires your domain to link to a website for them to activate your account. You can make one in a few clicks at https://sites.google.com and publish it.
+  - In your DNS manager, such as ClouDNS.com, create a Web Request DNS record. Point it to your example site, such as `https://sites.google.com/view/fa-dns-dynamic-net/home`. Save it as a temporary redirect (302). You might need to wait up to 48 hours for your domain to be linked to the website.
+  - In Google Sites, under settings start the custom domain process.
+  - First verify your domain in ClouDNS by adding the TXT record Google Sites gives you.
+  - Then add a CNAME record with value `fa` and destination `ghs.googlehosted.com.`.
+- Browse to https://app.brevo.com/settings/keys/smtp and note your SMTP settings.
+- In your tenant's email tab in the FusionAuth web interface, set the following values:
+  - <InlineField>Host</InlineField>: `smtp-relay.brevo.com`
+  - <InlineField>Port</InlineField>: `587`
+  - <InlineField>Username</InlineField>: Your Brevo account email address
+  - <InlineField>Password</InlineField>: Your SMTP key value from the Brevo settings
+  - <InlineField>Security</InlineField>: `TLS`
+  - <InlineField>Default from address</InlineField>: `fa@fa.dns-dynamic.net` (any address is allowed)
+- Click <InlineField>Send test email</InlineField> to test the settings work, then click the save icon at the top right. Enter your real email address for the test email, so you can test it arrives. TODO
+
+### Mailgun (Sinch)
 
 - Create an account at https://signup.mailgun.com/new/signup.
 - If you are just testing Mailgun, you can use the sandbox domain name they have created for you to send emails. If you have paid for an account, you should add and verify your company's real domain.
