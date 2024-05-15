@@ -67,20 +67,20 @@ You might also encounter the term Author Domain Signing Practices (ADSP), which 
 
 An SMTP provider is an online service that sends email on your behalf. In return for payment, they guarantee you a service that provides IP addresses with high reputation.
 
-Some providers are easy to test, requiring nothing more than registering with an email address. Others require comprehensive company details, your verified phone number, domain verification, having a professional business website, and communicating with support agents. Disregarding price and features, the easiest providers to configure are:
+Some providers are easy to test, requiring nothing more than registering with an email address. Others require comprehensive company details, your verified phone number, domain verification, having a professional business website, and communicating with support agents. Disregarding prices, which will have changed by the time you read this guide, the easiest providers to configure are:
 - Mailersend — require only an email address.
-- Gmail — require phone authentication, and email is intended only for small tests. Not for production use.
-- Resend — require domain verification.
+- Gmail — require phone verification, and email is intended only for small tests. Not for production use.
+- Postmark — require email and domain verification.
+- Resend — require email and domain verification.
 - AWS SES — require domain verification. Allows you to email only verified addresses while in the test sandbox.
-- Mailgun (Sinch) — require domain authentication, phone authentication. Allows you to email only verified addresses while in the test sandbox.
+- Mailgun (Sinch) — require domain verification, phone verification. Allows you to email only verified addresses while in the test sandbox.
 
 The more difficult providers are:
 - Brevo
 - Mailchimp (Mandrill)
-- Postmark
 - SendGrid (Twilio)
 
-The difficult providers automatically disable your account on sign-up and require you to manually contact to support to have it activated. Generally this involves having a business website ready for review, explaining what your purpose in sending email is, and explaining how you obtained your recipients' email addresses.
+The difficult providers automatically disable your account on sign-up and require you to manually contact to support to have it activated. This involves having a business website ready for review, explaining what your purpose in sending email is, and explaining how you obtained your recipients' email addresses.
 
 Mailchimp was the only SMTP provider that refused to provide FusionAuth an account, without any explanation except accusations of prohibited content.
 
@@ -196,11 +196,6 @@ SES is more complicated than the other SMTP services. If the troubleshooting sec
   - Add sender: `fa@fa.dns-dynamic.net` (or with your domain name).
   - If you are using ClouDNS to test, you need to add a [mail forward](https://www.cloudns.net/mail-forwards/) from `fa@fa.dns-dynamic.net` to your real email address to be able to receive the password from Brevo to authenticate you email.
   - In Brevo, authenticate your email address.
-- Brevo also requires your domain to link to a website for them to activate your account. You can make one in a few clicks at https://sites.google.com and publish it.
-  - In your DNS manager, such as ClouDNS.com, create a Web Request DNS record. Point it to your example site, such as `https://sites.google.com/view/fa-dns-dynamic-net/home`. Save it as a temporary redirect (302). You might need to wait up to 48 hours for your domain to be linked to the website.
-  - In Google Sites, under settings start the custom domain process.
-  - First verify your domain in ClouDNS by adding the TXT record Google Sites gives you.
-  - Then add a CNAME record with value `fa` and destination `ghs.googlehosted.com.`.
 - Browse to https://app.brevo.com/settings/keys/smtp and note your SMTP settings.
 - In your tenant's email tab in the FusionAuth web interface, set the following values:
   - <InlineField>Host</InlineField>: `smtp-relay.brevo.com`
@@ -287,7 +282,23 @@ Mailchimp was the only SMTP provider that refused to provide FusionAuth with an 
 
 ### Postmark
 
-TODO use ritza email. no public emails
+- Create an account at https://account.postmarkapp.com/sign_up and enter your domain name.
+- Confirm your email address.
+- Browse to https://account.postmarkapp.com/signature_domains.
+  - Click <strong>DNS Settings</strong> above your domain name.
+  - In your website domain manager, add the DNS records from the domain authentication page.
+    - If you use cPanel, alter your records at <strong>Domains -> Zone Editor</strong>
+    - Be careful not to duplicate the domain name. For example, if your host is `fa.dns-dynamic.net` and the MX record value the SMTP provider wants you to add is `send.fa`, be sure set the value to `send.fa.dns-dynamic.net`. Don't use `send.fa.fa.dns-dynamic.net` by pasting the value without checking what suffix your host attaches to the field.
+    - Once you have entered the DNS records and saved, start the verification process on the Postmark page. It should take a minute.
+- To see your SMTP settings, browse to https://account.postmarkapp.com/servers, then click <strong>My First Server -> Default Transactional Stream -> Setup Instructions -> SMTP</strong>.
+- In your tenant's email tab in the FusionAuth web interface, set the following values:
+  - <InlineField>Host</InlineField>: `smtp.postmarkapp.com`
+  - <InlineField>Port</InlineField>: `587`
+  - <InlineField>Username</InlineField>: Your username from the settings page
+  - <InlineField>Password</InlineField>: Your password from the settings page
+  - <InlineField>Security</InlineField>: `TLS`
+  - <InlineField>Default from address</InlineField>: Any address is allowed
+- Click <InlineField>Send test email</InlineField> to test the settings work, then click the save icon at the top right. Enter your an email address at your domain for the test email, so you can test it arrives. While in the Postmark sandbox mode before account approval, you may not email addresses outside your domain. These addresses will be shown in the <strong>Activity</strong> tab of your server on Postmark.
 
 ### Resend
 
