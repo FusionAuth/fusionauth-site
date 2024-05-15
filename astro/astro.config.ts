@@ -31,7 +31,7 @@ const config = defineConfig({
     }),
     indexPages(),
     tailwind({
-      applyBaseStyles: false,
+      applyBaseStyles: true,
       nesting: true,
     })
   ],
