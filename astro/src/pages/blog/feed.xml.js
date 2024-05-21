@@ -12,7 +12,7 @@ function convertToRSS(post) {
   }
 }
 
-export async function get(context) {
+export async function GET(context) {
   const blog = await getCollection('blog');
   return rss({
     title: "FusionAuth Blog",
