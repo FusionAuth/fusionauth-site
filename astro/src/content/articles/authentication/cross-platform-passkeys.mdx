@@ -1,0 +1,109 @@
+---
+title: Cross-Platform Compatability - Passkeys in Multi-Device Environments
+description: The security industry has long recognized that passwords are not secure enough as an authentication method. Passwordless authentication is a game changer in terms of security.
+author: Jura Gorohovsky
+section: Authentication
+keywords: passkeys, multi-device, mfa, webauthn, BYOD, FIDO2
+icon: /img/icons/passkeys-multi-device.svg
+darkIcon: /img/icons/passkeys-multi-device-dark.svg
+---
+
+Let's face it: we're living in the multidevice era. [Almost everyone owns a smartphone](https://www.statista.com/statistics/1380075/global-digital-device-ownership/) or two, maybe three.
+
+Phones, laptops, tablets, smartwatches, and smart TVs have become common devices that people switch between every day. You may use a Windows desktop at work and a Macbook at home, wear a Samsung watch, and have an iPhone as your primary phone with a Google Pixel as a backup. The possibilities are endless in terms of the devices we use and the ways we integrate them into our lives.
+
+To log in to the same web applications across devices, people normally use passwords. However, the security industry has long recognized that passwords are not secure enough as an authentication method. [Passwordless authentication](/features/passwordless) is coming, and it's a game changer in terms of security.
+
+However, by default, it binds credentials to a particular device, which is not ideal for multidevice usability. Is it possible to replace passwords with a more secure form of authentication yet maintain the usability of authenticating across devices?
+
+Let's see what [WebAuthn](/articles/authentication/webauthn-explained) and passkeys can bring to the table to address this problem.
+
+## Understanding WebAuthn and Passkeys
+
+WebAuthn (short for Web Authentication) is a [specification](https://www.w3.org/TR/webauthn/) that enables securely authenticating users of web applications running in the browser *without using passwords*.
+
+WebAuthn allows users to register with and log in to web applications using software or hardware authenticators, of which there are two types: _platform authenticators_ (tied to a particular device) and _roaming authenticators_ (pluggable to different devices). [Windows Hello](https://support.microsoft.com/en-us/windows/learn-about-windows-hello-and-set-it-up-dae28983-8242-bb2a-d3d1-87c9d265a5f0) and [iOS Face ID](https://support.apple.com/en-za/HT208109) are two examples of platform authenticators, whereas a [YubiKey](https://www.yubico.com/products/) security key is an example of a roaming authenticator.
+
+Every WebAuthn authenticator uses public-key cryptography. During registration, an authenticator generates a pair of cryptographically linked keys: a public key and a private key. The authenticator keeps the private key to itself and shares the public key with the web application (the *relying party*, in WebAuthn jargon) that is registering the user. When a registered user logs in, the web application uses the public key to verify the authenticity of the authenticator.
+
+The web browser that facilitates communication between the web application and the authenticator is referred to as the *client*.
+
+The WebAuthn credentials created during registration are usually called *passkeys*.
+
+When you create a passkey, you're normally asked to pass the same security check that you're subject to when you unlock your device---that is, use a fingerprint scanner such as [Touch ID](https://support.apple.com/en-lamr/102528), a facial scanner like [Face ID](https://support.apple.com/en-za/HT208109), or your PIN. When you subsequently log in with your passkey, you pass this check all over again, which proves that it's you who's trying to log in and not someone who stole your device. This security check is called *user verification*.
+
+Passkeys may also be subject to *attestation*: when creating a passkey, your device's authenticator sends a certificate to the web application that ensures the public key comes from a trusted source. Most web applications will accept a public key from any authenticator. But in certain scenarios, such as corporate policies or regulatory requirements, they may accept some authenticators and reject others.
+
+Here's what the passkey registration flow looks like:
+
+![WebAuthn registration flow](https://i.imgur.com/o3MyXeJ.png)
+
+And here's what happens when you log in with your passkey:
+
+![WebAuthn authentication flow](https://i.imgur.com/GWf2NVD.png)
+
+In the long run, passkeys are intended to replace passwords (and MFA as we know it) entirely. For now, they can be used both as the primary authentication method and as the second factor in [multifactor authentication](/articles/authentication/multi-factor-authentication) (MFA) setups.
+
+In the latter case, instead of using a standalone authenticator application to generate one-time codes or getting one-time codes via SMS, you use [biometric authentication](/features/passkeys) as a way of proving that you are who you claim to be.
+
+## Delving Deeper: The WebAuthn API
+
+When a web application developer decides to implement passkey authentication on the frontend, they can use the [WebAuthn browser API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API). Built on top of the Credential Manager API, it enables communication between the browser and available authenticators.
+
+To register a new account with a passkey, the frontend of the web application calls the `navigator.credentials.create()` method, passing user information and public-key-generation preferences as well as a challenge generated by the relying party (the application's backend). As soon as the authenticator has generated a private-public key pair, the frontend receives a fulfilled promise with the public key. The frontend then passes the public key over to the backend for validation and storage.
+
+To authenticate an existing user with a passkey, the frontend calls the `navigator.credentials.get()` method. It works similarly, passing to the authenticator a cryptographic challenge, the ID of the public key, and user-verification preferences. The fulfilled promise contains the challenge signed with the authenticator's private key. The frontend then passes the returned object to the backend for validation.
+
+## From Passwords to Passwordless: The Security Evolution
+
+Now, why are WebAuthn and passkeys a big deal? Aren't passwords what we've all grown to love?
+
+Uh, not exactly.
+
+Passwords are difficult to use securely. You need to make them long and strong enough to be secure yet easy to remember. That's a hard balance as it is, even for a single password. But consider that the number of accounts an experienced internet user keeps is in the hundreds. Making sure all these passwords are strong and unique and keeping them in memory is simply unfeasible.
+
+Password managers help, but they are only [used by one out of three](https://www.security.org/digital-safety/password-manager-annual-report/) people and are not immune to [hacking](https://www.theverge.com/2023/2/28/23618353/lastpass-security-breach-disclosure-password-vault-encryption-update). If you reuse a password across several services, a password breach on any of these services will jeopardize the security of your accounts on all of them.
+
+Passwords are just old news, and the security industry has long realized that a replacement is due. WebAuthn and passkeys are that replacement, and they're being rolled out across the software industry as we speak.
+
+Passkeys are especially good at addressing two of the main modern security threats: breaches and phishing:
+
+* **Passkeys are breach resistant.** Even if the web application that you're logging in to with a passkey suffers a data breach, only public keys are revealed. Knowing your public key doesn't enable the attacker to impersonate you.
+
+* **Passkeys are phishing resistant.** Even if you're tricked into visiting a malicious website that mimics a legitimate one, WebAuthn won't allow you to share your credentials with it. The WebAuthn workflow for passkey authentication is designed to make sure a passkey can only be used with the same web application it was created for.
+
+## User Experience and Cross-Platform Compatibility
+
+You've got to give it to them: passkeys are really secure. But the cherry on the cake is that they're also easy to use on any given device. Logging in to any web app with the touch of a finger in less than five seconds? Sounds like a dream come true.
+
+But remember how we're constantly switching between our phones and computers in our multidevice lives? Are passkeys a good fit for this kind of cross-platform use?
+
+They can be, but they're not necessarily straightforward.
+
+First of all, you can use *roaming authenticators* with all your devices. You can connect your YubiKey to a laptop via USB and to your phone via NFC to log in across your devices.
+
+However, security keys are not for everyone. You need to buy them separately, remember to bring them everywhere you go, and pray that you don't lose them---if you do, all your passkeys are gone. Security keys are mainly for security enthusiasts and enterprise users. What if you're neither?
+
+You will probably use *platform authenticators* built into your device's operating system to create passkeys. Some of these authenticators create *device-bound passkeys*. You can use them to log in on the same device, but not on any other. It's very secure but doesn't solve the multidevice usability problem.
+
+Other platform authenticators create *synced passkeys* that don't have this limitation. Synced passkeys implement the [multidevice passkey](https://fidoalliance.org/white-paper-multi-device-fido-credentials/) initiative by Google, Apple, and Microsoft. If you create a synced passkey using an authenticator controlled by one of these vendors, your passkey is stored on your device as well as encrypted and sent to your Google, Microsoft, or iCloud account. It's then synced across all your other devices within that vendor's ecosystem.
+
+This solves the cross-device problem for those who only use devices from the same vendor (such as Apple) and are not concerned with providing too much personal data to one big tech player.
+
+But what if you're using a Windows desktop for work, a Mac laptop for personal matters, and an Android phone for communication?
+
+One solution is to create multiple device-bound passkeys and save them to your account in each web application you need to log in to. This comes with more hassle, but it's feasible: you can create as many passkeys per account as you need. This is also consistent with how passkeys are being introduced across the industry: you normally create a passkey for an account that you already have a password for, and you can use the password as a fallback whenever a passkey is unavailable.
+
+The downside of this approach is that whenever you start using a new device, you need to add new passkeys across your accounts again.
+
+Another solution for cross-device and cross-vendor-ecosystem usage is to use an independent password manager. Prominent password manager vendors like Bitwarden, LastPass, and 1Password all support passkeys, including synchronization across devices. Their value proposition focuses on being able to seamlessly share passkeys across your Mac, iOS, Windows, and Android devices and not being locked to a single big tech vendor ecosystem. You create a single passkey, and it's instantly available everywhere you want to use it---sounds like the user-friendly and secure future of the internet that we all can look forward to.
+
+Syncing passkeys with an independent password manager or your Google, Apple, or Microsoft account is less secure than storing each passkey on one device and never sharing it. The security of all your passkeys then depends on the strength of your Google, Apple, Microsoft, or password manager account.
+
+However, given how the big vendors are dedicated to staying at the top of their security games, syncing passkeys is still more secure than the alternative of using passwords all across the internet, and it's a reasonable security compromise.
+
+## Conclusion
+
+It's 2024, and we can finally see the end of the road for passwords. It will take years to properly implement passkeys across the internet, have users change their habits, and demote passwords to a backup authentication method, but the roadmap is clear.
+
+You can start using passkeys wherever you can today, [as the bravest of us attempt to do](https://www.wired.com/story/stopped-using-passwords-passkeys/), or you can adopt them gradually. Whichever path you take, there are ways to use them across your devices, and these ways will be getting more straightforward and seamless in the next few years as the mass rollout of passkeys continues.
