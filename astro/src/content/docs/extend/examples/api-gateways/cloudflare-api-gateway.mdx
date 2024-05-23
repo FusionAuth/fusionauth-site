@@ -6,6 +6,7 @@ section: extend
 subcategory: examples
 tertcategory: api gateways
 ---
+import Aside from 'src/components/Aside.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import ScrollRef from 'src/components/ScrollRef.astro';
@@ -14,259 +15,69 @@ import FrameworkIntegrationTutorialList from 'src/content/docs/_shared/_framewor
 ## Overview
 
 Cloudflare is a global cloud platform designed to make everything you connect to the Internet secure, private, fast, and reliable. Creating an API Gateway app on Cloudflare is a
-great way to manage, secure, and optimize your APIs. Cloudflare offers several services that can help you achieve this, such as Cloudflare Workers, Cloudflare Gateway, and Cloudflare Load Balancing. 
-This step-by-step guide will help you set up an Cloudflare 'API Gateway' similar to API Gateway's on other providers, on Cloudflare.
+great way to manage, secure, and optimize your APIs. Cloudflare offers several services that can help you achieve this, such as Cloudflare Workers, Cloudflare Gateway, and Cloudflare Load Balancing.
 
 You can set up Cloudflare workers to handle authentication and authorization to a resource through JSON Web Tokens (JWTs) issued to a user by an identity provider. 
 
-In this document, you'll learn how to set up Cloudflare workers and FusionAuth as the identity provider to protect a worker function running on your Cloudflare.
+In this guide, you'll learn how to set up Cloudflare workers and use FusionAuth as the identity provider to protect a worker function running on your Cloudflare.
 
-Please note, there are many ways to accomplish this task, for this guide we chose to use a worker function and create it on the portal Cloudflare. This can also be done using the
-wrangler CLI tools, but this is left as a exercise for the reader. More info in wrangler CLI can be found [here](https://developers.cloudflare.com/workers/wrangler/).
+Please note, there are many ways to accomplish this task, for this guide we chose to use a worker function and create it on the Cloudflare portal. This task can also be accomplished using the
+Wrangler, the Cloudflare Developer Platform command-line interface (CLI). More info on Wrangler CLI can be found [here](https://developers.cloudflare.com/workers/wrangler/).
 
 ## Prerequisites
 
-* A FusionAuth instance running on a publicly accessible URL. You can spin up a [basic FusionAuth Cloud instance](/pricing) or [install it on any server](/docs/get-started/download-and-install). If you are not able to host FusionAuth on a public server, you can tunnel your local instance of FusionAuth through a tool like [ngrok](https://ngrok.com).
-* An [Cloudflare account](https://dash.cloudflare.com/login).
+* A FusionAuth instance running on a publicly accessible URL. You can spin up a [basic FusionAuth Cloud instance](/pricing) or [install it on any server](/docs/get-started/download-and-install). You can also tunnel to your local instance of FusionAuth through a tool like [ngrok](https://ngrok.com).
+* A [Cloudflare account](https://dash.cloudflare.com/login).
 
-### Exposing FusionAuth Publicly
-
-If your FusionAuth instance is already publicly available, you can skip this section. 
-
-If you are hosting FusionAuth locally and want to expose it publicly using ngrok, you can run the following command: 
-
-```shell title="Exposing a local FusionAuth instance through ngrok"
-ngrok http 9011
-```
-
-This assumes your local FusionAuth instance is running on port 9011, which is the default for local FusionAuth installations.
-
-Look for the `Forwarding` line in the output. It should look something like this:
-
-```shell title="Output forwarding address from ngrok"
-Forwarding    https://7817-102-218-66-2.eu.ngrok.io -> http://localhost:9011 
-```
-
-The forwarding address will be publicly accessible and you can use this to replace `<YOUR_FUSIONAUTH_URL>` in this tutorial. 
 
 ## Set Up FusionAuth
 
-Navigate to your FusionAuth instance.
+Navigate to your FusionAuth instance. You need to make sure the JWT issuer setting is correct. Navigate to <strong>Tenants -> Your Tenant</strong> and change the issuer to the URL of your FusionAuth instance. For example you can a value like `https://local.fusionauth.io` if your FusionAuth instance is accessible at `https://local.fusionauth.io`. Note down this value, as you'll set it in the Cloudflare worker function later.
 
-First, you need to make sure the JWT issuer setting is correct. Navigate to <strong>Tenants -> Your Tenant</strong> and change the issuer to the URL of your FusionAuth instance. For example, `https://local.fusionauth.io`. Record this value, as we'll set it in the Cloudflare worker Authorizer later.
+If you are running FusionAuth locally and want to expose it publicly using ngrok, you can run the following command.
 
-Next, you need to configure an application that will issue tokens to access the Cloudflare project.
+```shell
+ngrok http 9011
+```
 
-Navigate to <strong>Applications</strong> and create a new application. Fill out the <InlineField>Name</InlineField> field, then click the <strong>OAuth</strong> tab.
+This assumes your local FusionAuth instance is running on port 9011, which is the default for local FusionAuth installations. Look for the `Forwarding` line in the output. It should look something like this:
 
-Make sure that the <InlineField>Enabled grants</InlineField> checkboxes have the `Authorization Code` and `Refresh Token` grants enabled.
+```
+Forwarding    https://7817-102-218-66-2.eu.ngrok.io -> http://localhost:9011
+```
+
+The ngrok forwarding address will be publicly accessible and you can use this URL inplace of `<YOUR_FUSIONAUTH_URL>` in this guide.
+
+
+Next, you need to configure an application that will issue tokens to access the Cloudflare function. Navigate to <strong>Applications</strong> and create a new application. Fill out the <InlineField>Name</InlineField> field and select a <strong>Tenant</strong> if you have more than one. Click on the <strong>OAuth</strong> tab and make sure that `Authorization Code` and `Refresh Token` grants are enabled under <InlineField>Enabled grants</InlineField>.
 
 Your application should look like this.
 
 <img src="/img/docs/extend/examples/api-gateways/application-configuration.png" alt="The FusionAuth example configuration" width="1200" />
 
-On the <strong>JWT</strong> tab, toggle the <InlineField>Enabled</InlineField> field and set the <InlineField>Access Token signing key</InlineField> and <InlineField>Id Token signing key</InlineField> to `Auto generate a new key on save...`
+On the <strong>JWT</strong> tab, toggle the <InlineField>Enabled</InlineField> switch and set the <InlineField>Access Token signing key</InlineField> and <InlineField>Id Token signing key</InlineField> to `Auto generate a new key on save...`
 
 <img src="/img/docs/extend/examples/api-gateways/jwt-config.png" alt="The JWT configuration" width="1200" role="bottom-cropped" />
 
-Click the <InlineUIElement>Save</InlineUIElement> button.
+Click the <InlineUIElement>Save</InlineUIElement> button to save the application.
 
-Edit the new application. You should see a value in the <InlineField>Client Id</InlineField> field. Copy it and put it in a text file. You'll use it in the <ScrollRef target="Set Up Cloudflare " /> step.
+After saving the application you will be redirected to the page that lists all your applications, click the <InlineUIElement>Edit</InlineUIElement> button next to the application you just created. Note down the <InlineField>Client Id</InlineField> value. You'll use it in the <ScrollRef target="Set Up Cloudflare" /> step.
 
 <img src="/img/docs/extend/examples/api-gateways/application-client-id-client-secret.png" alt="Extracting the Client Id and secret" width="1200" />
 
+For testing you'll need to link a FusionAuth user to your application. You can either use the existing user you use to log into FusionAuth or create a new isolated user.
 
-## Set Up Cloudflare
+To create a new user, navigate to <strong>Users</strong> in the sidebar and click the green <InlineUIElement>+</InlineUIElement> button at the top right of the screen. Choose the appropriate tenant and fill in the <InlineField>Email</InlineField>. To set the password for the user directly without sending an email toggle the <InlineField>Send email to set up password</InlineField> switch. Record this user email and password, as you'll use it to obtain a token.
 
-Navigate to your [Cloudflare dashboard](https://dash.cloudflare.com/login), and login or create an [Cloudflare account](https://developers.cloudflare.com/fundamentals/setup/account/create-account/) if you haven't got one already.
+<img src="/img/docs/extend/examples/api-gateways/new-user.png" alt="Enabling the login API" width="1200" role="bottom-cropped" />
 
+After saving the user, select the <strong>Registrations</strong> tab. Click <InlineUIElement>Add registrations</InlineUIElement> and select the FusionAuth application you set up earlier. Alternatively to link your existing user, navigate to the user list by selecting <strong>Users</strong> on the left sidebar. Find your user and click the <InlineUIElement>Manage</InlineUIElement> action button on the user. Select the <strong>Registrations</strong> tab. Click <InlineUIElement>Add registrations</InlineUIElement> and select the FusionAuth application you set up earlier.
 
-## Create a Worker Function to Secure a cloudflare worker endpoint (API)
-In the left hand side toolbar navigate to the Workers & Pages section and click on overview. 
+<img src="/img/docs/extend/examples/api-gateways/registrations-tab.png" alt="The application registrations tab" width="1200" role="bottom-cropped" />
 
-<img src="/img/docs/extend/examples/api-gateways/cloudflare-workers-pages-overview.png" alt="The Cloudflare Workers & Pages overview" width="1200" />
+You will also need to set up an API Key. On the left sidebar select <strong>Settings -> API Keys</strong>. Click the green <InlineUIElement>+</InlineUIElement> button at the top left to create a new key. Give the key a description, like `API Gateway Key`. Select the tenant that you created the FusionAuth application under.
 
-Click on the `Create Worker` button.
-
-Give a descriptive name to the worker, we will use `privatefunction` (take note of the name as you will need it again later), click on the deploy button at the bottom. 
-For now the default script is fine, we will update it in the next step.
-
-<img src="/img/docs/extend/examples/api-gateways/cloudflare-workers-create-worker.png" alt="Create a cloudflare worker" width="1200" />
-
-We can test that our privateFunction is working by clicking on the preview link provided on the next page. If successful, it will open a new browser tab with 'Hello world in'.
-
-<img src="/img/docs/extend/examples/api-gateways/cloudflare-workers-preview-worker.png" alt="Preview a cloudflare worker" width="1200" />
-
-You should see something similar to the screen below.
-
-<img src="/img/docs/extend/examples/api-gateways/cloudflare-workers-preview-result.png" alt="Cloudflare worker preview result" width="1200" />
-When done close the browser tab and go back to the worker window.
-
-Click on the `Edit Code` button. To replace the `hello world` code with the sample code below to handle our authorization requests to FusionAuth:
-
-<img src="/img/docs/extend/examples/api-gateways/cloudflare-workers-edit-js-code.png" alt="Edit cloudflare worker js" width="1200" />
-
-To replace the existing code of the worker:
-  - Click on the code windows
-  - Select everything and delete it 
-  - Copy and paste the new code below in to the window
-  - Click on the deploy button on the top left
-  - Click on Save and deploy
-
-Note: Remember to update your fusionAuthApiKey ,fusionAuthClientId and fusionAuthUrl
-
-<img src="/img/docs/extend/examples/api-gateways/cloudflare-workers-add-js-code.png" alt="Replace cloudflare worker js" width="1200" />
-
-```javascript title="Worker JS to handle claims requests, and validate the token"
-  
-  // Replace with your FusionAuth API key
-  const fusionAuthApiKey = '<your fusionAuthApiKey>';
-  const fusionAuthClientId = 'your fusionAuthClientId';
-  addEventListener('fetch', event => {
-    event.respondWith(handleRequest(event.request))
-  })
-
-  async function handleRequest(request) {
-    const { pathname } = new URL(request.url)
-
-    // Check if the request is for the /api/claims endpoint
-    if (pathname === '/api/claims') {
-      // Verify the authentication token
-      const authToken = request.headers.get('Authorization')
-      const verificationResponse = await verifyAuthToken(authToken)
-      console.log("ver:",verificationResponse)
-      
-      if (verificationResponse.active === true) {
-      // Extract the claims from the verification response
-        const claims = verificationResponse
-        console.log(verificationResponse)
-        
-        // Call your Worker API function and pass the claims
-        const response = await handleClaimsAPI(claims)
-        return response
-      } else {
-        return new Response('Unauthorized', { status: 401 })
-      }
-    } else {
-      return new Response('Not found', { status: 404 })
-    }
-  }
-
-  async function verifyAuthToken(authToken) {
-    const url = 'https://<your fusion auth public host>/oauth2/introspect'
-    const options = {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${fusionAuthApiKey}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: 
-          `token=${authToken}&client_id=${fusionAuthClientId}`
-    }
-
-  //  console.log('Request options:', options)
-
-    const response = await fetch(url, options)
-    const clonedResponse = response.clone();
-    const responseText = await response.text()
-    console.log('Response status:', response.status)
-    console.log('Response text:', responseText)
-    
-    // Check if the response is JSON
-    try {
-      return await clonedResponse.json();
-    } catch (error) {
-      console.error('Error parsing JSON response:', error)
-      return { error: 'Invalid JSON response' }
-    }
-  }
-
-  async function handleClaimsAPI(claims) {
-    // Your Worker API function logic
-    const response = {
-      statusCode: 200,
-      body: JSON.stringify(claims)
-    }
-    console.log("claims:",claims)
-    return new Response(response.body, { status: response.statusCode })
-  }
-
-```
-
-### Code explanation
-
-This Cloudflare Worker code sets up an API gateway that integrates with FusionAuth for authentication and authorization. 
-Here's a breakdown of what the code does:
-
-<strong>Configuration:</strong>
-- The code starts by defining two constants: fusionAuthApiKey and fusionAuthClientId, which are used for authentication with the FusionAuth API.
-- Replace this with your keys as you set it up in FusionAuth.
-
-<strong>Event Listener:</strong>
-
-- The addEventListener function is used to listen for incoming requests and pass them to the handleRequest function.
-
-<strong>HandleRequest Function:</strong>
-
-This function is the main entry point for handling incoming requests.
-- It checks if the request path is /api/claims. (Other endpoints can be added here using the same technique)
-- If the path matches, it extracts the authentication token from the request headers.
-- It calls the verifyAuthToken function to verify the authentication token with the FusionAuth API.
-- If the token is valid (verificationResponse.active === true), it extracts the claims from the verification response and calls the handleClaimsAPI function, passing the claims as an argument.
-- If the token is invalid, it returns an "Unauthorized" response with a 401 status code.
-- If the request path doesn't match /api/claims, it returns a "Not found" response with a 404 status code.
-
-<strong>Verify Auth Token Function:</strong>
-
-This function is responsible for verifying the authentication token with the FusionAuth API.
-- It constructs the request options, including the FusionAuth API key, client ID, and the authentication token.
-- It sends a POST request to the FusionAuth introspection endpoint (/oauth2/introspect) with the request options. Replace your public fusionAuth url here.
-- If the response is valid JSON, it returns the parsed JSON data.
-- If the response is not valid JSON, it returns an error object.
-
-<strong>HandleClaimsAPI Function:</strong>
-
-This function represents the logic for your API endpoint.
-- It receives the claims from the verified authentication token.
-- In this example, it simply constructs a response object with a 200 status code and the claims as the response body.
-- It returns a new Response object with the response body and status code.
-
-In summary, this Cloudflare Worker sets up an API gateway that accepts requests to the /api/claims endpoint. It verifies the authentication token using the FusionAuth API and, if valid, passes the claims to the handleClaimsAPI function, which represents the logic for your API endpoint. The code handles responses, error cases, and logging for debugging purposes.
-
-After deployment, a new route will be available with the same name as the `privateFunction` as we chose when creating the worker above. 
-
-Your full URL to the claims endpoint should look similar to this: `https://privatefunction.<username>.workers.dev/api/claims`.
-
-If you call this route through a browser, Postman, or curl, you will receive a `401` HTTP status code and an `Unauthorized` message. We'll create a token next with FusionAuth to show how the route can be successfully called.
-
-Call the API gateway with the following curl command to test:
-
-```shell title="Calling the API Gateway endpoint "
-curl --location --request GET '<PUBLIC_WORKER_URL>' 
- 
-```
-
-Where:
-
-* `<public worker url>` is the invoke URL saved earlier.
-
-You should see the function return:
-
-```shell title="Return token from the API call"
-  Unauthorized
-```
-
-## Testing With a Token From FusionAuth
-
-To access the secured worker function, we'll need to get a valid token. Normally, your frontend app would use the Authorization Code grant which would redirect a user to FusionAuth to login, obtain a code, and then exchange that code for a token, using a framework of your choice. [More on the Authorization Code grant.](/docs/lifecycle/authenticate-users/oauth/)
-
-For the purposes of this guide, we'll call the [FusionAuth Login API](/docs/apis/login) on behalf of a user to create a token directly. This is a more straightforward means of getting a token, but the generated token will be similar with either process.
-
-To use the Login API, there are a few settings that need to be changed on FusionAuth. In the side panel in FusionAuth, select <strong>Settings > API Keys</strong>. Click the green <InlineUIElement>+</InlineUIElement> button at the top left to create a new key.
-
-Give the key a meaningful description, like `API Gateway Key`. Select the Tenant that you created the FusionAuth application under (normally `Default`).
-
-Then, under <strong>Endpoints</strong>, allow `POST` on the `/api/login` route. This key will only be allowed to call this endpoint with the `POST` method.
+Then, on <strong>Endpoints</strong>, allow `POST` on the `/api/login` route. This key will only be allowed to call this endpoint with the `POST` method.
 
 <img src="/img/docs/extend/examples/api-gateways/login-api.png" alt="Enabling the login API" width="1200" />
 
@@ -274,22 +85,143 @@ Save the API key. You should now see a list of all API keys. Click on the lock i
 
 <img src="/img/docs/extend/examples/api-gateways/api-key.png" alt="Enabling the login API" width="1200" role="bottom-cropped" />
 
-To test, you'll need to link a FusionAuth user to your application. You can either use the existing admin user you use to log into FusionAuth or create a new isolated user. 
 
-To link your existing user, navigate to the user list through the <strong>Users</strong> menu item in the sidebar. Find your user and click the <InlineUIElement>Manage</InlineUIElement> action button on the user. Click the <strong>Registrations</strong> tab. Click <InlineUIElement>Add registrations</InlineUIElement> and select the FusionAuth application you set up earlier.
+## Set Up Cloudflare
 
-Alternatively, to create a new user, navigate to <strong>Users</strong> in the sidebar and click the green <InlineUIElement>+</InlineUIElement> button at the top right of the screen to create a new user. Choose the appropriate tenant (usually `default`) and fill in the information. You can choose not to send an email to set up the password but rather set it directly when creating the user by toggling the <InlineField>Send email to set up password</InlineField> switch. Record this user email and password, as we'll use it to obtain a token.
+Navigate to your [Cloudflare dashboard](https://dash.cloudflare.com/login), and login or create a [Cloudflare account](https://developers.cloudflare.com/fundamentals/setup/account/create-account/) if you haven't got one already.
 
-After saving the user, click the <strong>Registrations</strong> tab. Click <InlineUIElement>Add registrations</InlineUIElement> and select the FusionAuth application you set up earlier.
 
-<img src="/img/docs/extend/examples/api-gateways/registrations-tab.png" alt="The application registrations tab" width="1200" role="bottom-cropped" />
+### Create a Cloudflare Worker Function
 
-Using curl or Postman, make a POST request to your FusionAuth instance's `/api/login` endpoint. This will return a JWT in the response.
+On the left hand sidebar navigate to <strong>Workers & Pages -> Overview</strong>. Click on the <InlineUIElement>Get Started</InlineUIElement> button if you are setting up a worker for the first time otherwise click on the <InlineUIElement>Create Application</InlineUIElement> button to get to the create worker screen.
 
-The curl call should look like this:
+<img src="/img/docs/extend/examples/api-gateways/cloudflare-workers-pages-overview.png" alt="Cloudflare Workers & Pages overview page" width="1200" />
 
-```shell title="curl command to obtain a JWT token"
-curl --location --request POST 'https://<YOUR_FUSIONAUTH_URL>/api/login' \
+Click on the <InlineUIElement>Create Worker</InlineUIElement> button.
+
+Give a descriptive name to the worker, we will use `privatefunction`. Click on the <InlineUIElement>Deploy</InlineUIElement> button at the bottom to deploy the function.
+For now the default script is fine, you will update it in the next step.
+
+<img src="/img/docs/extend/examples/api-gateways/cloudflare-workers-create-worker.png" alt="Create a cloudflare worker" width="1200" />
+
+You can test that the deployed function is working by clicking on the preview link provided on the next page.
+
+<img src="/img/docs/extend/examples/api-gateways/cloudflare-workers-preview-worker.png" alt="Preview a cloudflare worker" width="1200" />
+
+If successful, it will open a new browser tab with text "Hello world!".
+
+Return to the worker configuration page and click on the <InlineUIElement>Edit Code</InlineUIElement> button. You will replace the initial `hello world` code with the code below to handle authorization requests to FusionAuth. Remember to update the code with your values for your `fusionAuthApiKey`, `fusionAuthClientId` and `fusionAuthUrl`.
+
+
+```javascript title="Worker function to handle claims requests, and validate the token"
+  
+// Replace with your FusionAuth values
+const fusionAuthApiKey = '<fusionAuthApiKey>';
+const fusionAuthClientId = '<fusionAuthClientId>';
+const fusionAuthUrl = '<fusionAuthUrl>';
+
+addEventListener("fetch", (event) => {
+  event.respondWith(handleRequest(event.request));
+});
+
+async function handleRequest(request) {
+  const { pathname } = new URL(request.url);
+
+  // Check if the request is for the /api/claims endpoint
+  if (pathname === "/api/claims") {
+    let authToken = request.headers.get("Authorization");
+    if (authToken && authToken.startsWith("Bearer ")) {
+      authToken = authToken.slice(7);
+    }
+    // Verify the authentication token
+    const verificationResponse = await verifyAuthToken(authToken);
+    if (verificationResponse.active === true) {
+      // Call your Worker API function and pass the claims
+      return handleClaimsAPI(verificationResponse);
+    } else {
+      return new Response("Unauthorized", { status: 401 });
+    }
+  } else {
+    return new Response("Not found", { status: 404 });
+  }
+}
+
+async function verifyAuthToken(authToken) {
+  const url = `${fusionAuthUrl}/oauth2/introspect`;
+  const options = {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${fusionAuthApiKey}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: `token=${authToken}&client_id=${fusionAuthClientId}`,
+  };
+
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      return { error: "Invalid response" };
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error making fetch request:", error);
+    return { error: "Invalid JSON response" };
+  }
+}
+
+async function handleClaimsAPI(claims) {
+  // Your Worker API function logic
+  const response = {
+    statusCode: 200,
+    body: JSON.stringify(claims),
+  };
+  return new Response(response.body, { status: response.statusCode });
+}
+```
+
+This Cloudflare Worker function code sets up an API gateway that integrates with FusionAuth for authentication and authorization. It sets up an API gateway that accepts requests to the `/api/claims` endpoint. It verifies the authentication token using the FusionAuth API and, if it is valid, passes the claims to the `handleClaimsAPI` function, which represents the logic for your API endpoint.
+
+- The `fusionAuthApiKey`, `fusionAuthClientId` and `fusionAuthUrl` values are used to communicate and authenticate with your FusionAuth instance. Replace the values with the values you noted when setting up FusionAuth earlier.
+- The `addEventListener` function is used to listen for incoming requests and pass them to the `handleRequest` function.
+- The `handleRequest` function is the main entry point for handling incoming requests.
+  - It checks if the request path matches `/api/claims`. If the path matches, it extracts the authentication token from the request headers.
+  - It calls the `verifyAuthToken` function to verify the authentication token with the FusionAuth API.
+  - If the token is valid `(verificationResponse.active === true)`, it calls the `handleClaimsAPI` function, passing the response claims as an argument.
+  - If the token is invalid, it returns an "Unauthorized" response with a 401 status code.
+  - If the request path doesn't match `/api/claims`, it returns a "Not found" response with a 404 status code.
+- The `verifyAuthToken` function is responsible for verifying the authentication token with the FusionAuth API.
+  - It constructs the request options, including the FusionAuth API key, client Id, and the authentication token.
+  - It sends a POST request to the FusionAuth introspection endpoint `/oauth2/introspect` with the request options.
+  - If the response is valid JSON, it returns the parsed JSON data.
+  - If the response is not valid JSON, it returns an error object.
+- The `handleClaimsAPI` function represents the logic for your API endpoint.
+  - It receives the claims from the verified authentication token.
+  - In this example, it simply constructs a response object with a 200 status code and the claims as the response body.
+  - It returns a new Response object with the response body and status code.
+
+After entering the code click on the <InlineUIElement>Deploy</InlineUIElement> button on the top right to redeploy the function. A new route will be available and the full URL to the claims endpoint should look similar to the following `https://privatefunction.<username>.workers.dev/api/claims`.
+
+If you make a request to this route through a browser, Postman, or cURL, you will receive a `401` HTTP status code and an `Unauthorized` message. We'll create a token next with FusionAuth to show how the route can be successfully called.
+
+Call the API gateway with the following cURL command to test. Replace `<PUBLIC_WORKER_URL>` with your worker URL which should look like `https://privatefunction.<username>.workers.dev/api/claims`
+
+```shell title="Calling the API Gateway endpoint "
+curl --location --request GET '<PUBLIC_WORKER_URL>'
+```
+
+You should get an `Unauthorized` response.
+
+
+### Testing With A Token From FusionAuth
+
+To access the secured worker function, you'll need to get a valid token. Normally, your frontend app would use the Authorization Code grant flow which would redirect a user to FusionAuth to login, obtain a code, and then exchange that code for a token, using a framework of your choice. [More on the Authorization Code grant.](/docs/lifecycle/authenticate-users/oauth/)
+
+For the purposes of this guide, we'll call the [FusionAuth Login API](/docs/apis/login) on behalf of a user to create a token directly. This is a more straightforward means of getting a token, but the generated token will be similar with either process.
+
+Using cURL or Postman, make a POST request to your FusionAuth instance's `/api/login` endpoint. This will return a JWT in the response.
+
+```shell title="cURL command to obtain a JWT token"
+curl --location --request POST '<YOUR_FUSIONAUTH_URL>/api/login' \
 --header 'Authorization: <API_KEY>' \
 --header 'Content-Type: application/json' \
 --data-raw '  {
@@ -300,17 +232,17 @@ curl --location --request POST 'https://<YOUR_FUSIONAUTH_URL>/api/login' \
   }'
 ```
 
-Where:
+Replace the following values with the ones you noted in the <ScrollRef target="Set Up FusionAuth" /> section.
 
 * `<YOUR_FUSIONAUTH_URL>` is the URL of your FusionAuth installation.
-* `<API_KEY>` is the API key created above, enabled for login.
-* `<USER_EMAIL>` is the email address of the user added above.
-* `<USER_PASSWORD>` is the password of the user added above.
-* `<APPLICATION_ID>` is the Id of the FusionAuth application registered for the user.
+* `<API_KEY>` is the API key created earlier, enabled for login.
+* `<USER_EMAIL>` is the email address of the user added earlier.
+* `<USER_PASSWORD>` is the password of the user added earlier.
+* `<APPLICATION_ID>` is the client Id of the FusionAuth application registered for the user.
 
-The return response from FusionAuth should look similar to the following:
+The response from FusionAuth should look similar to the following.
 
-```json title="Login API Response"
+```json title="FusionAuth Login API Response"
 {
     "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImhDUjA4X3daR2s0OUFlYUFmRDY5ZmJKWmRGTSJ9.eyJhdWQiOiI2M2I3M2Y3Ni03NDAwLTQ4N2QtYjEyMi01NzA1Yjg0OGRhODAiLCJleHAiOjE2NzMzNjYyMDQsImlhdCI6MTY3MzM2MjYwNCwiaXNzIjoiaHR0cHM6Ly9mdXNpb25hdXRoLnJpdHphLmNvIiwic3ViIjoiMzk2MzAwMGYtNjg2ZC00MTY5LWI2MjgtOWM5YzQ1MzRiNzgwIiwianRpIjoiZDk3ZGIyZWYtZjExNS00ZDIxLWFlOTQtMDIyN2RmMGU4YzI5IiwiYXV0aGVudGljYXRpb25UeXBlIjoiUEFTU1dPUkQiLCJlbWFpbCI6ImJvYkBhd3MuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInByZWZlcnJlZF91c2VybmFtZSI6ImJvYmF3cyIsImFwcGxpY2F0aW9uSWQiOiI2M2I3M2Y3Ni03NDAwLTQ4N2QtYjEyMi01NzA1Yjg0OGRhODAiLCJyb2xlcyI6W10sImF1dGhfdGltZSI6MTY3MzM2MjYwNCwidGlkIjoiZjAwNGMxZmUtNDg0Yi05MDJjLWQ3Y2EtYmRiYzQ2NGRhMGI3In0.m7gzXhNLToPNVE1p5Vo2pLgP6WBcPNfS_zZJnJ81mdEgi6-orViz-tU8j0L8wva0-8KlMdy54cq_XjnDnYJ0aX90O4ZE_QVU5NuDDfzXH14wQtKQoIIydsB6ZvQoBt8JNFUHJb9ANLCGnfn6FVQKqPIzye18Gx_7wYSVokw3eLNFyzrq9dwOD5Q8V9gvZmXV2pTokQAtA7qFaadb2dIeFlSEB7wamKiZLXILjeWAeMbbvAAMQZWFh46UJjwr06QTd8PxQmRwDWWznJy1Vs8EAgZA4vkRSWnn3IbiaCtOaL1ANuEex6il7q32ahxj0Ncm9wn0DbDsQE9NB0CCNTSIhA",
     "tokenExpirationInstant": 1673366204805,
@@ -322,70 +254,69 @@ The return response from FusionAuth should look similar to the following:
 
 Copy the `token` value. This is a JWT, which we can use to access the API gateway function.
 
-Now call the API gateway with the following curl command:
+Now call the API gateway with the following cURL command:
 
-```shell title="Calling the API Gateway endpoint with the JWT"
-curl --location --request GET 'https://<GATEWAY_URL>/privateFunction/api/claims' \
+```shell
+curl --location --request GET '<PUBLIC_WORKER_URL>' \
 --header 'Authorization: Bearer <JWT_TOKEN>'
 ```
 
 Where:
 
-* `<GATEWAY_URL>` is the invoke URL saved earlier.
+* `<PUBLIC_WORKER_URL>` is the invoke URL for the claims endpoint saved earlier such as `https://privatefunction.<username>.workers.dev/api/claims`.
 * `<JWT_TOKEN>` is the JWT from the `/api/login` call.
 
 You should see the function return with a reflection of the claims it received:
 
-```json title="Return token from the API call"
+```json
 {
   "active":true,
   "applicationId":"18740210-b386-4679-a626-a84d9abdb8dd",
   "aud":"18740210-b386-4679-a626-a84d9abdb8dd",
   "auth_time":1716133402,
   "authenticationType":  "PASSWORD",
-  "email":"apiuser@email.com",
+  "email":"richard@example.com",
   "email_verified":true,
   "exp":1716137002,
   "iat":1716133402,
-  "iss":"https://fusionauth",
+  "iss":"https://local.fusionauth.io",
   "jti":"64d7e970-d0ff-4bbc-82b4-adc80413818e",
-  "preferred_username":"apiUser",
+  "preferred_username":"richard",
   "roles":[],
   "sub":"588155c8-b1df-4fb6-8c40-5f431e770644",
-  "tid":"31f7e6b3-9c71-4a7f-b1e2-45be0d7067d8"}
+  "tid":"31f7e6b3-9c71-4a7f-b1e2-45be0d7067d8"
+}
 ```
 
 ## Troubleshooting
 
-* If you are running a local instance of FusionAuth, Cloudflare worker will not be able to reach the key sets needed to validate the JWT. You will either need to host FusionAuth on a publicly accessible URL or proxy your local instance through a tool like [ngrok](https://ngrok.com).
-
-* Ensure that your FusionAuth application's <InlineField>Access Token signing key</InlineField> and <InlineField>Id Token signing key</InlineField> on the application's <strong>JWT</strong> tab are asymmetric (RS256).
-
-* The JWT issued by the [FusionAuth Login API](/docs/apis/login) has an expiry. If you wait too long before using it to call the Cloudflare worker, the token will expire and the call will fail. You can resolve this by re-running the curl command to obtain a JWT token and using the new token.
+* If you are running a local instance of FusionAuth, the Cloudflare worker will not be able to reach the key sets needed to validate the JWT. You will either need to host FusionAuth on a publicly accessible URL or proxy your local instance through a tool like [ngrok](https://ngrok.com).
+* Ensure that the generated FusionAuth application's <InlineField>Access Token signing key</InlineField> and <InlineField>Id Token signing key</InlineField> on the application's <strong>JWT</strong> tab are asymmetric (RS256).
+* The JWT issued by the [FusionAuth Login API](/docs/apis/login) has an expiry. If you wait too long before using it to call the Cloudflare worker, the token will expire and the call will fail. You can resolve this by re-running the cURL command to obtain a new JWT token and then use the new token.
 
 ## Next Steps
 
 You can build a complete HTTP API using Cloudflare Workers, Cloudflare Gateway, and Cloudflare Load Balancing, and FusionAuth without managing any servers.
 
-#### Configure Routes
-In the Workers section, you can set up routes to associate your Worker with your domain or subdomains. For example, you can route https://api.yourdomain.com/* to your Worker.
-### Custom Domain 
-If you want to use a custom domain for your API (e.g., api.yourdomain.com), set up a DNS record in the Cloudflare dashboard pointing your subdomain to your-workers-subdomain.workers.dev.
+### Configure Routes
+
+In the Workers section, you can set up routes to associate your Worker with your domain or subdomains. For example, you can route `https://api.yourdomain.com/*` to your Worker.
+
+### Custom Domain
+
+If you want to use a custom domain for your API (e.g., `api.yourdomain.com`), set up a DNS record in the Cloudflare dashboard pointing your subdomain to `your-workers-subdomain.workers.dev`.
 
 Both the above options can be configured on the trigger section below. This is only available if you have a domain setup in the cloudflare environment. Take not that it can take some time to propagate. 
 
 <img src="/img/docs/extend/examples/api-gateways/cloudflare-workers-add-route.png" alt="" width="1200" />
 
-#### Secure Your API with Cloudflare Gateway. 
-- Access Cloudflare Zero Trust 
-- Go to the Zero Trust dashboard in Cloudflare (formerly known as Access) to set up security policies for your API.
+### Secure Your API with Cloudflare Gateway.
 
-Create Gateway Policies:
-- Define policies to restrict access to your API, such as IP filtering, token-based access, or integrating with certain identity providers for alternate web login methods. FusionAuth is not an option here but it can
-manually be added as a login provide here using OpenID connect as in alternate solution.
+- Go to the Zero Trust dashboard in Cloudflare to set up security policies for your API.
+- Define policies to restrict access to your API, such as IP filtering, token-based access, or integrating with certain identity providers for alternate web login methods. FusionAuth is not an option here, but it can manually be added as a login provider using OpenID connect as in alternate solution.
 
-Finally, you can configure FusionAuth to ensure that the user is registered for the Cloudflare application or [fire off webhooks](/docs/extend/events-and-webhooks/) when the user logs in.
+Finally, you can configure FusionAuth to ensure that the user is registered for the Cloudflare application to [fire off webhooks](/docs/extend/events-and-webhooks/) when the user logs in.
 
-You used the FusionAuth API to create a test token on behalf of a user. For a production system, the token will be generated after a user signs in to your application through a frontend. Check out some of the framework integration tutorials to implement that:
+You used the FusionAuth API to create a test token on behalf of a user. For a production system, the token will be generated after a user signs in to your application through an application. Check out some of the framework integration tutorials to implement that:
 
 <FrameworkIntegrationTutorialList />
