@@ -183,6 +183,16 @@ class Search {
 
     if (!this.#pagefind) {
       this.#pagefind = await import("/pagefind/pagefind.js");
+      // some tuning of the search ranking
+      // https://pagefind.app/docs/ranking/
+      await this.#pagefind.options({
+        ranking: {
+          termFrequency: 0.1,
+          termSimilarity: 0.2,
+          pageLength: 0,
+          termSaturation: 1.8,
+        }
+      })
       // prime the filters
       await this.#pagefind.filters();
     }
