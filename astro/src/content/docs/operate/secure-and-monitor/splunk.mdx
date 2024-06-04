@@ -6,7 +6,22 @@ section: operate
 subcategory: secure and monitor
 ---
 import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
 import PrometheusJvmGauges from 'src/content/docs/_shared/_prometheus-jvm-gauges.mdx';
+
+- [TODO](#todo)
+- [Introduction](#introduction)
+- [FusionAuth Metrics](#fusionauth-metrics)
+  - [Audit Log](#audit-log)
+  - [The Event Log](#the-event-log)
+  - [Login Records](#login-records)
+  - [Logs](#logs)
+- [Splunk Setup](#splunk-setup)
+- [Import Data To Splunk With The API](#import-data-to-splunk-with-the-api)
+- [Import Data To Splunk With Logs](#import-data-to-splunk-with-logs)
+- [Import Data To Splunk With OpenTelemetry And Java](#import-data-to-splunk-with-opentelemetry-and-java)
+- [Import Data To Splunk With The Linux Collector](#import-data-to-splunk-with-the-linux-collector)
+
 
 ## TODO
 
@@ -19,6 +34,8 @@ import PrometheusJvmGauges from 'src/content/docs/_shared/_prometheus-jvm-gauges
   - https://dev.splunk.com/enterprise/docs/developapps/manageknowledge/custominputs/
 - Create a basic Dashboard and show the Fusionauth metrics from fusionauth.ritza.co on Splunk
 - Document everything
+- https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/collector-configuration-tutorial/collector-config-tutorial-start.html
+- https://community.splunk.com/t5/Getting-Data-In/Cannot-create-token-or-find-realm/m-p/689536#M114771
 
 ## Introduction
 
@@ -26,20 +43,110 @@ import PrometheusJvmGauges from 'src/content/docs/_shared/_prometheus-jvm-gauges
 
 ## FusionAuth Metrics
 
-TODO list them
+### Audit Log
+
+The Audit Log contains changes to database tables. To see it, browse to <strong>System -> Audit Log</strong>. Below is an entry example:
+
+```
+Id:	47
+Created:	5/16/2024 12:43 PM SAST
+User:	workaddress/fa@simplelogin.com
+Reason:	FusionAuth User Interface
+Message:	Updated the tenant with Id [d7d09513-a3f5-401c-9685-34ab6c552453] and name [Default]
+Old value: JSON
+New value: JSON
+```
+
+### The Event Log
+
+The Event Log contains errors. To see it, browse to <strong>System -> Event Log</strong>. Below is an entry example:
+
+```
+Id:	40
+Created:	5/16/2024 12:43 PM SAST
+Type:	Debug
+
+Email debug information
+
+5/16/2024 10:43:58 AM Z DEBUG: getProvider() returning jakarta.mail.Provider[TRANSPORT,smtp,org.eclipse.angus.mail.smtp.SMTPTransport,Oracle]
+DEBUG SMTP: need username and password for authentication
+DEBUG SMTP: protocolConnect returning false, host=smtp.sendgrid.net, user=apikey, password=<null>
+DEBUG SMTP: useEhlo true, useAuth true
+DEBUG SMTP: trying to connect to host "smtp.sendgrid.net", port 587, isSSL false
+...
+```
+
+```
+Id:	20
+Created:	4/24/2024 02:04 PM SAST
+Type:	Error
+
+Webhook [https://webhook.site/60a036f9-a2a2-4646-bf58-c60778eea20d] returned response code [404] when sending [AuditLogCreate] event with Id [d13865c7-f706-4896-a322-d3f7cc63441a].
+ Response:
+null
+```
+
+### Login Records
+
+<strong>System -> Login Records</strong> lists all user logins to FusionAuth.
+
+User | User Id | Application | Application Id | Time | Location | IP address
+---|---|---|---|---|---|---
+workaddress/fa@simplelogin.com | 00000000-0000-0000-0000-000000000001 | FusionAuth | 3c219e58-ed0e-4b18-ad48-f4f92793ae32 | 6/4/2024 11:17 AM SAST | – | 172.20.0.1
+
+### Logs
+
+<strong>System -> Logs</strong> show nothing if you are running Docker. Instead, the logs are written to the terminal.
 
 ## Splunk Setup
 
 - Sign up for Splunk at https://www.splunk.com/en_us/download/splunk-cloud.html with an email address at a custom domain.
-- Splunk will email you a link to another site with a username and password.
-- Documentation for Splunk Observability is at https://docs.splunk.com/observability/en/get-started/welcome.html.
-- Pricing is at https://www.splunk.com/en_us/products/pricing/observability.html. Infrastructure monitoring, Log observer connect, and Synthetic uptime monitoring are included in the Splunk Infrastructure monthly fee.
+- Splunk will email you a link to another site with a username and password. Note that this is **not** the correct site. Splunk divides its products into completely separate dashboards.
+- Register for the Observability Cloud trial at https://www.splunk.com/en_us/download/o11y-cloud-free-trial.html.
+- Verify your email address with the link in the email they send you. This should also log you in to the Observability dashboard.
+- In the future, you can log in to the dashboard at https://login.signalfx.com.
+
+Documentation for Splunk Observability is at https://docs.splunk.com/observability/en/get-started/welcome.html.
+
+Pricing is at https://www.splunk.com/en_us/products/pricing/observability.html. Infrastructure monitoring, Log observer connect, and Synthetic uptime monitoring are included in the Splunk Infrastructure monthly fee. Each Splunk product has a separate 14 day trial.
 
 <img src='https://docs.splunk.com/observability/en/_images/o11y-cloud-structure1.png' />
 
+- Click <strong>Apps -> Discover Splunk Observability Cloud</strong>
+- Click <InlineField>Connect Accounts</InlineField>
+
 ## Import Data To Splunk With The API
 
-https://docs.splunk.com/observability/en/gdi/other-ingestion-methods/rest-APIs-for-datapoints.html#rest-api-ingest
+Using the Splunk API to import metrics is documented [here](https://docs.splunk.com/observability/en/gdi/other-ingestion-methods/rest-APIs-for-datapoints.html#rest-api-ingest).
+
+[To authenticate API requests that send data to Splunk Observability Cloud, you must use an organization access token, not a user API access token.](https://docs.splunk.com/observability/en/admin/authentication/authentication-tokens/api-access-tokens.html)
+
+- Create an [access token](https://docs.splunk.com/observability/en/admin/authentication/authentication-tokens/org-tokens.html#admin-org-tokens)
+  - Browse to <strong>Settings -> Tokens</strong>
+  - Click <InlineField>Enable Token Authentication</InlineField>
+  - Click <InlineField>Create New Token</InlineField>
+  - Complete the form and remember the token for later use.
+- Get your realm from
+
+https://community.splunk.com/t5/Getting-Data-In/Cannot-create-token-or-find-realm/m-p/689536#M114771
+
+
+```sh
+curl --request POST \
+  --header "Content-Type: application/json" \
+  --header "X-SF-TOKEN: <ORG_TOKEN>" \
+  --data \
+  '{
+      "gauge": [
+          {
+              "metric": "memory.free",
+              "dimensions": { "host": "server1" },
+              "value": 42
+          }
+      ]
+  }' \
+  https://ingest.<REALM>.signalfx.com/v2/datapoint
+```
 
 ## Import Data To Splunk With Logs
 
@@ -54,3 +161,7 @@ https://docs.splunk.com/observability/en/gdi/opentelemetry/opentelemetry.html#ot
 
 https://docs.splunk.com/observability/en/gdi/get-data-in/compute/linux.html#get-started-linux
 
+
+
+<strong></strong>
+<InlineField></InlineField>
