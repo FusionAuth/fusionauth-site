@@ -179,14 +179,31 @@ https://docs.splunk.com/observability/en/gdi/opentelemetry/opentelemetry.html#ot
 
 ## Import Data To Splunk With The OpenTelemetry Linux Collector
 
+```mermaid
+graph LR
+  subgraph G[Docker]
+    H[(Postgresql)]
+  end
+  subgraph C[Docker]
+    D(OpenTelemetry for Java) --> A(FusionAuth)
+  end
+  subgraph E[Docker]
+    B(Splunk OpenTelemetry collector)
+  end
+  A --> H
+  D --> B
+  B --> F(OpenTelemetry web server)
+```
+
+
 This section is a demonstration of Splunk's [OpenTelementry Linux collector tutorial](https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/collector-configuration-tutorial/about-collector-config-tutorial.html#about-collector-configuration-tutorial).
 
 To make the FusionAuth Docker image small, the [Dockerfile](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) makes some changes to the Ubuntu installation that need to be reversed to use OpenTelemetry.
 
-After starting the FusionAuth container with `docker compose up`, open a terminal and attach to the container as the `root` use (the default user is `fusionauth`). Replace `fa` with your container name.
+After starting the FusionAuth container with `docker compose up`, open a terminal and attach to the container as the `root` user (the default user is `fusionauth`). Replace `fa` with your container name.
 
 ```sh
-docker exec -u root -it fa bash
+docker exec -it -u root fa bash
 ```
 
 Now enter the commands below to install OpenTelemetry for Splunk in the container.
@@ -195,13 +212,25 @@ Now enter the commands below to install OpenTelemetry for Splunk in the containe
 mkdir -p /var/lib/apt/lists/partial
 chmod 755 /var/lib/apt/lists/partial
 apt update
+apt install -y ca-certificates
+apt install -y systemctl
+apt install -y curl
+apt install -y software-properties-common
+apt install -y lsb-release
+apt install -y systemd
+apt install -y dialog
 
+export SPLUNK_REALM="us1" # replace with your realm
+export SPLUNK_ACCESS_TOKEN="abSE5G5ZAJ8K34h5a-qXwg" # replace with your access token
+export SPLUNK_MEMORY_TOTAL_MIB="512"
+
+curl -sSL https://dl.signalfx.com/splunk-otel-collector.sh > /tmp/splunk-otel-collector.sh;
+sh /tmp/splunk-otel-collector.sh --realm $SPLUNK_REALM --memory $SPLUNK_MEMORY_TOTAL_MIB -- $SPLUNK_ACCESS_TOKEN
+# The Splunk OpenTelemetry Collector for Linux has been successfully installed.
 ```
 
 
 - https://docs.splunk.com/observability/en/gdi/get-data-in/compute/linux.html#get-started-linux
-
-
 
 <strong></strong>
 <InlineField></InlineField>
