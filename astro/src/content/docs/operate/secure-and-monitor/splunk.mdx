@@ -229,18 +229,18 @@ Splunk's [OpenTelementry Linux collector tutorial](https://docs.splunk.com/obser
 
 Instead, you'll use the OpenTelemetry collector inside the Docker image Splunk has prepared.
 
-Modify the `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. You are now including the [Splunk OpenTelemetry](https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker) container in your compose file.
+Modify the `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. You are now including the [Splunk OpenTelemetry](https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker) container in your compose file. This file also overrides the default CMD in the FusionAuth Dockerfile that starts FusionAuth to instead start bash.
 
 ```docker-compose
-todo copy from file
+todo copy from file and remove secrets
 ```
 
 Run `docker compose up` to start all three containers and open a new terminal. In it, enter the commands below to attach to the [FusionAuth container](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) and restart FusionAuth with OpenTelemetry running and configured to send data to the collector container. Attach to the container as the `root` user (the default user is `fusionauth`). Replace `fa` with your container name.
 
+
 ```sh
 docker exec -it -u root fa bash
-
-# todo stop fusionauth
+"/usr/local/fusionauth/fusionauth-app/bin/start.sh"
 curl https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
 
 export FUSIONAUTH_APP_ADDITIONAL_JAVA_ARGS="-javaagent:$OT_PATH/opentelemetry-javaagent.jar"
@@ -257,6 +257,18 @@ java -javaagent:path/to/opentelemetry-javaagent.jar \
      -Dotel.resource.attributes=service.name=your-service-name \
      -Dotel.traces.exporter=zipkin \
      -jar myapp.jar
+
+docker run --rm -e SPLUNK_ACCESS_TOKEN=12345 -e SPLUNK_REALM=us0 \
+      -p 13133:13133 -p 14250:14250 -p 14268:14268 -p 4317:4317 -p 6060:6060 \
+      -p 7276:7276 -p 8888:8888 -p 9080:9080 -p 9411:9411 -p 9943:9943 \
+      --name otelcol quay.io/signalfx/splunk-otel-collector:latest
+
+java -javaagent:path/to/opentelemetry-javaagent.jar \
+     -Dotel.resource.attributes=service.name=your-service-name \
+     -Dotel.traces.exporter=otlp \
+     -Dotel.exporter.otlp.endpoint=http://otel:4317 \
+     -jar myapp.jar
+
 ```
 
 By default, the OpenTelemetry Java agent sends data to the OpenTelemetry collector at http://localhost:4317. You [changed this](https://opentelemetry.io/docs/zero-code/java/agent/configuration/) to send data to the otel container, at http://otel:4317.
