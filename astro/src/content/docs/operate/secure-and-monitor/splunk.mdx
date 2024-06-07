@@ -359,40 +359,21 @@ ENV PATH=$PATH:$JAVA_HOME/bin
 CMD ["/usr/local/fusionauth/fusionauth-app/bin/start.sh"]
 ```
 
-TODO build this image and use container in dockerfile
-
 ```sh
 docker build --platform linux/amd64 -t faimage .
 ```
 
-Modify the `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. You are now including the [Splunk OpenTelemetry](https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker) container in your compose file. This file also overrides the default CMD in the FusionAuth Dockerfile that starts FusionAuth to instead start bash.
+By default, the OpenTelemetry Java agent sends data to the OpenTelemetry collector at http://localhost:4317. You changed it to send data to the otel container, at http://otel:4317.
+
+Modify the `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. You are now including the [Splunk OpenTelemetry](https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker) container in your compose file.
 
 ```docker-compose
 todo copy from file and remove secrets
 ```
 
-Run `docker compose up` to start all three containers and open a new terminal. In it, enter the commands below to attach to the [FusionAuth container](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) and restart FusionAuth with OpenTelemetry running and configured to send data to the collector container. Attach to the container as the `root` user (the default user is `fusionauth`). Replace `fa` with your container name.
-
-Below is the final command run in `/usr/local/fusionauth/fusionauth-app/bin/start.sh`.
-
-
+Run `docker compose up` to start all three containers and open a new terminal.
 
 ```sh
-docker exec -it -u root fa bash
-mkdir -p /var/lib/apt/lists/partial
-chmod 755 /var/lib/apt/lists/partial
-apt update
-apt install -y ca-certificates
-cd /usr/local/fusionauth
-curl -L -o otel.jar https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar
-
-# replace command in script
-(head -n -1 /usr/local/fusionauth/fusionauth-app/bin/start.sh; echo 'exec "${JAVA_HOME}/bin/java" -javaagent:/usr/local/fusionauth/otel.jar -Dotel.resource.attributes=service.name=fusionauth -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://otel:4317 -cp "${CLASSPATH}" ${JAVA_OPTS} io.fusionauth.app.FusionAuthMain <&- >> "${LOG_DIR}/fusionauth-app.log" 2>&1') > temp.sh;
-mv temp.sh /usr/local/fusionauth/fusionauth-app/bin/start.sh;
-
-
----
-
 export FUSIONAUTH_APP_ADDITIONAL_JAVA_ARGS="-javaagent:/usr/local/fusionauth/otel.jar"
 export OTEL_EXPORTER_OTLP_ENDPOINT=http://otel:1437
 # export OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=$HONEYCOMB_API_KEY
@@ -444,36 +425,8 @@ exec "/opt/openjdk/bin/java" \
 --add-opens=java.base/java.net=ALL-UNNAMED \
 -Xmx512M -Xms512M \
 io.fusionauth.app.FusionAuthMain <&- >> "/usr/local/fusionauth/logs/fusionauth-app.log" 2>&1
-
-
-
 ```
 
-By default, the OpenTelemetry Java agent sends data to the OpenTelemetry collector at http://localhost:4317. You [changed this](https://opentelemetry.io/docs/zero-code/java/agent/configuration/) to send data to the otel container, at http://otel:4317.
-
-
-todo remove old fa container commands below
-```sh
-apt install -y systemctl
-apt install -y curl
-apt install -y software-properties-common
-apt install -y lsb-release
-apt install -y systemd
-apt install -y dialog
-
-
-curl -sSL https://dl.signalfx.com/splunk-otel-collector.sh > /tmp/splunk-otel-collector.sh;
-sh /tmp/splunk-otel-collector.sh --realm $SPLUNK_REALM --memory $SPLUNK_MEMORY_TOTAL_MIB -- $SPLUNK_ACCESS_TOKEN
-# The Splunk OpenTelemetry Collector for Linux has been successfully installed.
-```
-
-
-
-```sh
-exec "/opt/openjdk/bin/java" -cp "lib/HikariCP-5.0.1.jar:lib/angus-activation-2.0.1.jar:lib/angus-core-2.0.2.jar:lib/aopalliance-1.0.0.jar:lib/asm-9.5.0.jar:lib/btf-1.3.0.jar:lib/checker-qual-3.42.0.jar:lib/commons-codec-1.15.0.jar:lib/commons-codec-1.16.0.jar:lib/commons-csv-1.10.0.jar:lib/commons-logging-1.2.0.jar:lib/elasticsearch-rest-client-8.8.2.jar:lib/elasticsearch-rest-client-sniffer-8.8.2.jar:lib/error_prone_annotations-2.18.0.jar:lib/failureaccess-1.0.1.jar:lib/freemarker-2.3.32.jar:lib/fusionauth-2fa-2.1.0.jar:lib/fusionauth-app-1.49.2.jar:lib/fusionauth-database-1.49.2.jar:lib/fusionauth-jwt-5.3.2.jar:lib/fusionauth-plugin-api-1.49.2.jar:lib/fusionauth-samlv2-0.10.1.jar:lib/fusionauth-scim-2.2.1.jar:lib/graal-sdk-22.3.3.jar:lib/guava-32.1.2-jre.jar:lib/guice-6.0.0.jar:lib/httpasyncclient-4.1.5.jar:lib/httpclient-4.5.14.jar:lib/httpcore-4.4.16.jar:lib/httpcore-nio-4.4.16.jar:lib/icu4j-71.1.0.jar:lib/inversoft-api-authentication-0.27.0.jar:lib/inversoft-cache-0.6.0.jar:lib/inversoft-config-0.9.11.jar:lib/inversoft-database-0.10.0.jar:lib/inversoft-domain-0.4.0.jar:lib/inversoft-executor-0.3.0.jar:lib/inversoft-freemarker-0.2.1.jar:lib/inversoft-license-4.3.0.jar:lib/inversoft-maintenance-mode-0.22.1.jar:lib/inversoft-metrics-0.3.0.jar:lib/inversoft-migrator-0.3.0.jar:lib/inversoft-scheduler-0.3.0.jar:lib/inversoft-search-engine-5.4.0.jar:lib/inversoft-support-0.14.0.jar:lib/inversoft-tools-0.31.0.jar:lib/inversoft-validator-0.5.0.jar:lib/istack-commons-runtime-4.1.2.jar:lib/j2objc-annotations-2.8.0.jar:lib/jackson-annotations-2.15.3.jar:lib/jackson-core-2.15.3.jar:lib/jackson-coreutils-2.0.0.jar:lib/jackson-databind-2.15.3.jar:lib/jackson-dataformat-cbor-2.15.3.jar:lib/jackson5-3.0.1.jar:lib/jakarta.activation-2.0.1.jar:lib/jakarta.activation-api-2.1.2.jar:lib/jakarta.inject-api-2.0.1.jar:lib/jakarta.mail-api-2.1.2.jar:lib/jakarta.xml.bind-api-4.0.0.jar:lib/java-error-2.2.3.jar:lib/java-http-0.2.10.jar:lib/javax.inject-1.0.0.jar:lib/jaxb-core-4.0.3.jar:lib/jaxb-runtime-4.0.3.jar:lib/jcl-over-slf4j-2.0.5.jar:lib/js-22.3.3.jar:lib/json-patch-1.13.0.jar:lib/jsr305-3.0.2.jar:lib/kafka-clients-3.6.1.jar:lib/libphonenumber-8.13.18.jar:lib/listenablefuture-9999.0.0-empty-to-avoid-conflict-with-guava.jar:lib/logback-classic-1.4.14.jar:lib/logback-core-1.4.14.jar:lib/lz4-java-1.8.0.jar:lib/maxmind-db-2.0.0.jar:lib/metrics-core-3.2.6.jar:lib/metrics-healthchecks-3.2.6.jar:lib/metrics-jvm-3.2.6.jar:lib/msg-simple-1.2.0.jar:lib/mybatis-3.5.15.jar:lib/mybatis-guice-3.18.0.jar:lib/postgresql-42.7.2.jar:lib/prime-email-0.21.0.jar:lib/prime-mvc-4.22.1.jar:lib/regex-22.3.3.jar:lib/restify-4.2.0.jar:lib/savant-version-2.0.0-RC.6.jar:lib/simpleclient-0.16.0.jar:lib/simpleclient_common-0.16.0.jar:lib/simpleclient_dropwizard-0.16.0.jar:lib/simpleclient_tracer_common-0.16.0.jar:lib/simpleclient_tracer_otel-0.16.0.jar:lib/simpleclient_tracer_otel_agent-0.16.0.jar:lib/slf4j-api-2.0.7.jar:lib/smtp-2.0.2.jar:lib/snappy-java-1.1.10+5.jar:lib/spotbugs-annotations-4.7.3.jar:lib/truffle-api-22.3.3.jar:lib/txw2-4.0.3.jar:lib/zstd-jni-1.5.5-1.jar"  -Dfusionauth.home.directory=/usr/local/fusionauth/fusionauth-app -Dfusionauth.config.directory=/usr/local/fusionauth/config -Dfusionauth.data.directory=/usr/local/fusionauth/data -Dfusionauth.log.directory=/usr/local/fusionauth/logs -Dfusionauth.plugin.directory=/usr/local/fusionauth/plugins -Djava.awt.headless=true -Dcom.sun.org.apache.xml.internal.security.ignoreLineBreaks=true --add-exports=java.base/sun.security.x509=ALL-UNNAMED --add-exports=java.base/sun.security.util=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED -DfusionAuthApp87AFBG16 -Xmx512M -Xms512M io.fusionauth.app.FusionAuthMain <&- >> "/usr/local/fusionauth/logs/fusionauth-app.log" 2>&1
-
-exec "/opt/openjdk/bin/java" -cp "lib/HikariCP-5.0.1.jar:lib/angus-activation-2.0.1.jar:lib/angus-core-2.0.2.jar:lib/aopalliance-1.0.0.jar:lib/asm-9.5.0.jar:lib/btf-1.3.0.jar:lib/checker-qual-3.42.0.jar:lib/commons-codec-1.15.0.jar:lib/commons-codec-1.16.0.jar:lib/commons-csv-1.10.0.jar:lib/commons-logging-1.2.0.jar:lib/elasticsearch-rest-client-8.8.2.jar:lib/elasticsearch-rest-client-sniffer-8.8.2.jar:lib/error_prone_annotations-2.18.0.jar:lib/failureaccess-1.0.1.jar:lib/freemarker-2.3.32.jar:lib/fusionauth-2fa-2.1.0.jar:lib/fusionauth-app-1.49.2.jar:lib/fusionauth-database-1.49.2.jar:lib/fusionauth-jwt-5.3.2.jar:lib/fusionauth-plugin-api-1.49.2.jar:lib/fusionauth-samlv2-0.10.1.jar:lib/fusionauth-scim-2.2.1.jar:lib/graal-sdk-22.3.3.jar:lib/guava-32.1.2-jre.jar:lib/guice-6.0.0.jar:lib/httpasyncclient-4.1.5.jar:lib/httpclient-4.5.14.jar:lib/httpcore-4.4.16.jar:lib/httpcore-nio-4.4.16.jar:lib/icu4j-71.1.0.jar:lib/inversoft-api-authentication-0.27.0.jar:lib/inversoft-cache-0.6.0.jar:lib/inversoft-config-0.9.11.jar:lib/inversoft-database-0.10.0.jar:lib/inversoft-domain-0.4.0.jar:lib/inversoft-executor-0.3.0.jar:lib/inversoft-freemarker-0.2.1.jar:lib/inversoft-license-4.3.0.jar:lib/inversoft-maintenance-mode-0.22.1.jar:lib/inversoft-metrics-0.3.0.jar:lib/inversoft-migrator-0.3.0.jar:lib/inversoft-scheduler-0.3.0.jar:lib/inversoft-search-engine-5.4.0.jar:lib/inversoft-support-0.14.0.jar:lib/inversoft-tools-0.31.0.jar:lib/inversoft-validator-0.5.0.jar:lib/istack-commons-runtime-4.1.2.jar:lib/j2objc-annotations-2.8.0.jar:lib/jackson-annotations-2.15.3.jar:lib/jackson-core-2.15.3.jar:lib/jackson-coreutils-2.0.0.jar:lib/jackson-databind-2.15.3.jar:lib/jackson-dataformat-cbor-2.15.3.jar:lib/jackson5-3.0.1.jar:lib/jakarta.activation-2.0.1.jar:lib/jakarta.activation-api-2.1.2.jar:lib/jakarta.inject-api-2.0.1.jar:lib/jakarta.mail-api-2.1.2.jar:lib/jakarta.xml.bind-api-4.0.0.jar:lib/java-error-2.2.3.jar:lib/java-http-0.2.10.jar:lib/javax.inject-1.0.0.jar:lib/jaxb-core-4.0.3.jar:lib/jaxb-runtime-4.0.3.jar:lib/jcl-over-slf4j-2.0.5.jar:lib/js-22.3.3.jar:lib/json-patch-1.13.0.jar:lib/jsr305-3.0.2.jar:lib/kafka-clients-3.6.1.jar:lib/libphonenumber-8.13.18.jar:lib/listenablefuture-9999.0.0-empty-to-avoid-conflict-with-guava.jar:lib/logback-classic-1.4.14.jar:lib/logback-core-1.4.14.jar:lib/lz4-java-1.8.0.jar:lib/maxmind-db-2.0.0.jar:lib/metrics-core-3.2.6.jar:lib/metrics-healthchecks-3.2.6.jar:lib/metrics-jvm-3.2.6.jar:lib/msg-simple-1.2.0.jar:lib/mybatis-3.5.15.jar:lib/mybatis-guice-3.18.0.jar:lib/postgresql-42.7.2.jar:lib/prime-email-0.21.0.jar:lib/prime-mvc-4.22.1.jar:lib/regex-22.3.3.jar:lib/restify-4.2.0.jar:lib/savant-version-2.0.0-RC.6.jar:lib/simpleclient-0.16.0.jar:lib/simpleclient_common-0.16.0.jar:lib/simpleclient_dropwizard-0.16.0.jar:lib/simpleclient_tracer_common-0.16.0.jar:lib/simpleclient_tracer_otel-0.16.0.jar:lib/simpleclient_tracer_otel_agent-0.16.0.jar:lib/slf4j-api-2.0.7.jar:lib/smtp-2.0.2.jar:lib/snappy-java-1.1.10+5.jar:lib/spotbugs-annotations-4.7.3.jar:lib/truffle-api-22.3.3.jar:lib/txw2-4.0.3.jar:lib/zstd-jni-1.5.5-1.jar"  -Dfusionauth.home.directory=/usr/local/fusionauth/fusionauth-app -Dfusionauth.config.directory=/usr/local/fusionauth/config -Dfusionauth.data.directory=/usr/local/fusionauth/data -Dfusionauth.log.directory=/usr/local/fusionauth/logs -Dfusionauth.plugin.directory=/usr/local/fusionauth/plugins -Djava.awt.headless=true -Dcom.sun.org.apache.xml.internal.security.ignoreLineBreaks=true --add-exports=java.base/sun.security.x509=ALL-UNNAMED --add-exports=java.base/sun.security.util=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED -DfusionAuthApp87AFBG16 -Xmx512M -Xms512M io.fusionauth.app.FusionAuthMain <&- >> "/usr/local/fusionauth/logs/fusionauth-app.log" 2>&1
-```
 
 - https://docs.splunk.com/observability/en/gdi/get-data-in/compute/linux.html#get-started-linux
 
