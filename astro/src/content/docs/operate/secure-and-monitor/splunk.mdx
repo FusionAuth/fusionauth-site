@@ -26,7 +26,6 @@ SEE TODO SECTION AT BOTTOM OF THIS ARTICLE
 - [Mapping FusionAuth Metrics To Splunk Metrics](#mapping-fusionauth-metrics-to-splunk-metrics)
 - [Import Data To Splunk With The API](#import-data-to-splunk-with-the-api)
   - [Write A Custom Service To Send Data To The API](#write-a-custom-service-to-send-data-to-the-api)
-- [Import Data To Splunk With OpenTelemetry And Java](#import-data-to-splunk-with-opentelemetry-and-java)
 - [Import Data To Splunk With The OpenTelemetry Linux Collector](#import-data-to-splunk-with-the-opentelemetry-linux-collector)
   - [OpenTelemetry Dashboard](#opentelemetry-dashboard)
 - [Import Data To Splunk With Logs](#import-data-to-splunk-with-logs)
@@ -171,10 +170,6 @@ The response should be `"OK"`.
 TODO
 Write a node.js service or cronjob with curl or something that gets metrics from fusionauth container and sends them to splunk
 
-## Import Data To Splunk With OpenTelemetry And Java
-
-
-
 ## Import Data To Splunk With The OpenTelemetry Linux Collector
 
 Running FusionAuth and Postgresql in Docker looks like the diagram below.
@@ -226,159 +221,124 @@ Splunk's [OpenTelementry Linux collector tutorial](https://docs.splunk.com/obser
 
 Instead, you'll use the OpenTelemetry collector inside the Docker image Splunk has prepared.
 
-First you need to modify the official FusionAuth Docker image to download OpenTelemetry and change the script that starts FusionAuth. Configuration values for Java OpenTelemetry are described [here](https://opentelemetry.io/docs/languages/java/configuration/).
+First you need to modify the official FusionAuth Docker image to download the OpenTelemetry Java agent and change the script that starts FusionAuth. Configuration values for Java OpenTelemetry are described [here](https://opentelemetry.io/docs/languages/java/configuration).
 
-Create a `Dockerfile` in any directory on your computer and insert the following content (a modified copy of the [official image](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile)).
+Save the `Dockerfile` from the [FusionAuth official image](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) to your computer. Edit the file. Above the paragraph labelled `###### Start FusionAuth App`, insert the code below.
 
 ```Dockerfile
-#
-# FusionAuth App Dockerfile
-#
-# Build:
-#   > docker pull ubuntu:jammy
-#   > docker buildx build --platform=linux/arm64 -t fusionauth/fusionauth-app:1.51.0 .
-#   > docker buildx build --platform=linux/arm64 -t fusionauth/fusionauth-app:latest .
-#
-# Note: Substitute your target platform architecture. The above example is targetting a 64-bit ARM platform.
-#       To target an Intel based platform use --platform=linux/amd64.
-#
-# Run:
-#  > docker run -p 9011:9011 -it fusionauth/fusionauth-app
-#
-# Publish:
-#   > docker push fusionauth/fusionauth-app:1.51.0
-#   > docker push fusionauth/fusionauth-app:latest
-#
-
-###### Setup the java and fusionauth-app base #####################################################
-FROM --platform=$BUILDPLATFORM ubuntu:jammy as build
-
-ARG BUILDPLATFORM
-ARG FUSIONAUTH_VERSION=1.51.0
-ARG JDK_MODULES=java.base,java.compiler,java.desktop,java.instrument,java.logging,java.management,java.naming,java.rmi,java.security.jgss,java.security.sasl,java.sql,java.xml.crypto,jdk.attach,jdk.crypto.ec,jdk.dynalink,jdk.jcmd,jdk.jdi,jdk.localedata,jdk.jpackage,jdk.unsupported,jdk.zipfs
-ARG TARGETPLATFORM
-ARG TARGETARCH
-RUN printf "Building on ${BUILDPLATFORM} for ${TARGETPLATFORM} (${TARGETARCH})."
-RUN case "${BUILDPLATFORM}" in \
-    linux/arm64)\
-        BUILD_JAVA_SUM="eefd3cf3b3dd47ff269fa5b5c10b5e096b163f4e9c1810023abdbc00dc6cc304";\
-        BUILD_JAVA_URL="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_aarch64_linux_hotspot_17.0.8.1_1.tar.gz";\
-        ;;\
-    linux/amd64)\
-        BUILD_JAVA_SUM="c25dfbc334068a48c19c44ce39ad4b8427e309ae1cfa83f23c102e78b8a6dcc0";\
-        BUILD_JAVA_URL="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_x64_linux_hotspot_17.0.8.1_1.tar.gz";\
-        ;;\
-    *)\
-        printf "Unsupported build platform arch: ${BUILDPLATFORM}";\
-        exit 1;\
-        ;;\
-    esac \
-    && case "${TARGETARCH}" in \
-    arm64)\
-        JAVA_SUM="eefd3cf3b3dd47ff269fa5b5c10b5e096b163f4e9c1810023abdbc00dc6cc304";\
-        JAVA_URL="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_aarch64_linux_hotspot_17.0.8.1_1.tar.gz";\
-        ;;\
-    arm)\
-        JAVA_SUM="b1f1d8b7fcb159a0a8029b6c3106d1d16207cecbb2047f9a4be2a64d29897da5";\
-        JAVA_URL="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_arm_linux_hotspot_17.0.8.1_1.tar.gz";\
-        ;;\
-    ppc64le)\
-        JAVA_SUM="00a4c07603d0218cd678461b5b3b7e25b3253102da4022d31fc35907f21a2efd";\
-        JAVA_URL="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_ppc64le_linux_hotspot_17.0.8.1_1.tar.gz";\
-        ;;\
-    s390x)\
-        JAVA_SUM="ffacba69c6843d7ca70d572489d6cc7ab7ae52c60f0852cedf4cf0d248b6fc37";\
-        JAVA_URL="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_s390x_linux_hotspot_17.0.8.1_1.tar.gz";\
-        ;;\
-    amd64)\
-        JAVA_SUM="c25dfbc334068a48c19c44ce39ad4b8427e309ae1cfa83f23c102e78b8a6dcc0";\
-        JAVA_URL="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_x64_linux_hotspot_17.0.8.1_1.tar.gz";\
-        ;;\
-    *)\
-        printf "Unsupported arch: ${TARGETARCH}";\
-        exit 1;\
-        ;;\
-    esac \
-    && apt-get update \
-    && apt-get install -y curl unzip \
-    && mkdir -p /tmp/openjdk \
-    && mkdir -p /tmp/build/openjdk \
-    && curl -LfsSo /tmp/build/openjdk.tar.gz "${BUILD_JAVA_URL}" \
-    && echo "${BUILD_JAVA_SUM} */tmp/build/openjdk.tar.gz" | sha256sum -c - \
-    && curl -LfsSo /tmp/openjdk.tar.gz "${JAVA_URL}" \
-    && echo "${JAVA_SUM} */tmp/openjdk.tar.gz" | sha256sum -c - \
-    && cd /tmp/build/openjdk \
-    && tar -xf /tmp/build/openjdk.tar.gz --strip-components=1 \
-    && cd /tmp/openjdk \
-    && tar -xf /tmp/openjdk.tar.gz --strip-components=1 \
-    && /tmp/build/openjdk/bin/jlink --compress=2 \
-           --module-path /tmp/openjdk/jmods/ \
-           --add-modules ${JDK_MODULES} \
-           --output /opt/openjdk \
-    && curl -LfsSo /tmp/fusionauth-app.zip https://files.fusionauth.io/products/fusionauth/${FUSIONAUTH_VERSION}/fusionauth-app-${FUSIONAUTH_VERSION}.zip \
-    && mkdir -p /usr/local/fusionauth/fusionauth-app \
-    && unzip -nq /tmp/fusionauth-app.zip -d /usr/local/fusionauth
-
-###### Use Ubuntu latest and only copy in what we need to reduce the layer size ###################
-FROM ubuntu:jammy
-RUN apt-get update \
-    && apt-get -y install --no-install-recommends curl \
-    && apt-get -y upgrade \
-    && apt-get -y clean \
-    && rm -rf /var/lib/apt/lists \
-    && useradd -d /usr/local/fusionauth -U fusionauth
-COPY --chown=fusionauth:fusionauth --from=build /opt/openjdk /opt/openjdk
-COPY --chown=fusionauth:fusionauth --from=build /usr/local/fusionauth /usr/local/fusionauth
-
-###### Connect the log file to stdout #############################################################
-RUN mkdir -p /usr/local/fusionauth/logs \
-  && touch /usr/local/fusionauth/logs/fusionauth-app.log \
-  && ln -sf /dev/stdout /usr/local/fusionauth/logs/fusionauth-app.log
-
-##### NEW FOR OPENTELEMETRY !!! ###################################################################
+##### NEW FOR OPENTELEMETRY #######################################################################
 RUN mkdir -p /var/lib/apt/lists/partial \
     && chmod 755 /var/lib/apt/lists/partial \
     && apt update \
     && apt install -y ca-certificates \
     && cd /usr/local/fusionauth \
     && curl -L -o otel.jar https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar \
-    && (head -n -1 /usr/local/fusionauth/fusionauth-app/bin/start.sh; echo 'exec "${JAVA_HOME}/bin/java" -javaagent:/usr/local/fusionauth/otel.jar -Dotel.resource.attributes=service.name=fusionauth -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://otel:4317 -cp "${CLASSPATH}" ${JAVA_OPTS} io.fusionauth.app.FusionAuthMain <&- >> "${LOG_DIR}/fusionauth-app.log" 2>&1') > temp.sh \
+    && (head -n -1 /usr/local/fusionauth/fusionauth-app/bin/start.sh; echo 'exec "${JAVA_HOME}/bin/java" -javaagent:/usr/local/fusionauth/otel.jar -Dotel.resource.attributes=service.name=fusionauth -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://otel:4318 -cp "${CLASSPATH}" ${JAVA_OPTS} io.fusionauth.app.FusionAuthMain <&- >> "${LOG_DIR}/fusionauth-app.log" 2>&1') > temp.sh \
     && mv temp.sh /usr/local/fusionauth/fusionauth-app/bin/start.sh;
 RUN chown fusionauth:fusionauth /usr/local/fusionauth/otel.jar /usr/local/fusionauth/fusionauth-app/bin/start.sh \
     && chmod +x /usr/local/fusionauth/fusionauth-app/bin/start.sh
-
-###### Start FusionAuth App #######################################################################
-LABEL description="Create an image running FusionAuth App. Installs FusionAuth App"
-LABEL maintainer="FusionAuth <dev@fusionauth.io>"
-EXPOSE 9011
-USER fusionauth
-ENV FUSIONAUTH_USE_GLOBAL_JAVA=1
-ENV JAVA_HOME=/opt/openjdk
-ENV PATH=$PATH:$JAVA_HOME/bin
-CMD ["/usr/local/fusionauth/fusionauth-app/bin/start.sh"]
 ```
+
+This code edits `start.sh`, which is the command run when the container starts, to start FusionAuth using OpenTelemetry. The command takes the head of the file (all lines except the last), and writes the new command to the end of the file.
+
+By default, the OpenTelemetry Java agent sends data to the OpenTelemetry collector at http://localhost:4317. You changed it to send data to the Splunk container, at http://otel:4318. (Splunk uses 4317 for RPC, not HTTP).
+
+Build the Dockerfile into a new image to use in place of the official FusionAuth one.
 
 ```sh
 docker build --platform linux/amd64 -t faimage .
 ```
 
-By default, the OpenTelemetry Java agent sends data to the OpenTelemetry collector at http://localhost:4317. You changed it to send data to the otel container, at http://otel:4317.
-
-Modify the `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. You are now including the [Splunk OpenTelemetry](https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker) container in your compose file.
+Modify the `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. You are now including the [Splunk OpenTelemetry](https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker) container in your compose file. Replace the API key and realm with yours.
 
 ```docker-compose
-todo copy from file and remove secrets
+services:
+  db:
+    image: postgres:latest
+    container_name: fa_db
+    ports:
+      - "5432:5432"
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - db_net
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  fa:
+    # image: fusionauth/fusionauth-app:latest
+    image: faimage
+    container_name: fa
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
+      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
+      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
+      FUSIONAUTH_APP_RUNTIME_MODE: ${FUSIONAUTH_APP_RUNTIME_MODE}
+      FUSIONAUTH_APP_URL: http://fusionauth:9011
+      SEARCH_TYPE: database
+      FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}
+    networks:
+      - db_net
+    ports:
+      - 9011:9011
+    volumes:
+      - fusionauth_config:/usr/local/fusionauth/config
+      - ./kickstart:/usr/local/fusionauth/kickstart
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  otel:
+    image: quay.io/signalfx/splunk-otel-collector:latest
+    container_name: fa_otel
+    environment:
+      SPLUNK_ACCESS_TOKEN: "abSG5G6ZAK4K32h1b-qXxy"
+      SPLUNK_REALM: "us1"
+      SPLUNK_LISTEN_INTERFACE: "0.0.0.0"
+      SPLUNK_MEMORY_LIMIT_MIB: "1000"
+      SPLUNK_CONFIG: /config.yaml
+    volumes:
+      - ./config.yaml:/config.yaml
+    networks:
+      - db_net
+    # no host ports are needed as communication is inside the docker network
+    # ports:
+    #   - "13133:13133"
+    #   - "14250:14250"
+    #   - "14268:14268"
+    #   - "4317:4317"
+    #   - "4318:4318"
+    #   - "6060:6060"
+    #   - "7276:7276"
+    #   - "8888:8888"
+    #   - "9080:9080"
+    #   - "9411:9411"
+    #   - "9943:9943"
+
+networks:
+  db_net:
+    driver: bridge
+
+volumes:
+  db_data:
+  fusionauth_config:
 ```
 
-[Configuration](https://docs.splunk.com/observability/en/gdi/opentelemetry/components/otlp-receiver.html#sample-configurations) file for OpenTelemetry container to prepare receivers to receive.
+Save the [sample Splunk configuration file](https://github.com/signalfx/splunk-otel-collector/blob/main/cmd/otelcol/config/collector/gateway_config.yaml) to `config.yaml` on your computer in the same folder as `docker-compose.yaml`. You are using the Splunk Collector in [gateway mode (data forwarding), not agent mode (host monitoring)](https://docs.splunk.com/observability/en/gdi/opentelemetry/opentelemetry.html#collector-intro-deploy).
 
-[Here](https://github.com/signalfx/splunk-otel-collector/blob/main/cmd/otelcol/config/collector/gateway_config.yaml) is a sample gateway configuration file which your Docker compose file configuration section is based on.
-
-Unfortunately the config file says that the OpenTelemetry container supports only tracing, meaning that it can't send metrics or spans. Thus Splunk's support of OpenTelemetry is basically useless.
-
-This is added as an [environment variable](https://docs.splunk.com/observability/en/gdi/opentelemetry/environment-variables.html#collector-env-var) into your Docker compose file.
-
-You are using the Splunk Collector in [gateway mode (data forwarding), not agent mode (host monitoring)](https://docs.splunk.com/observability/en/gdi/opentelemetry/opentelemetry.html#collector-intro-deploy).
+This configuration file path was added as an [environment variable](https://docs.splunk.com/observability/en/gdi/opentelemetry/environment-variables.html#collector-env-var) into the Docker compose file.
 
 First check if the OpenTelemetry container can send data to Splunk. After running the command below, see if any data are visible when you search for `otel` in the <strong>Metric Finder</strong> section of the Splunk website.
 
@@ -390,12 +350,13 @@ If not, correct your secret key and realm in the compose file.
 
 Now that you are sure the Splunk connection works, stop the otel container and run `docker compose up` to start all three containers.
 
-TODO try connect to splunk collector from fusionauth docker container manually.
-
-
 ### OpenTelemetry Dashboard
 
-https://app.us1.signalfx.com/#/dashboards -> OpenTelemetry Collector -> Time to past day
+Create a dashboard to view all the data from FusionAuth.
+
+Browse to https://app.us1.signalfx.com/#/dashboards. Choose the OpenTelemetry Collector dashboard. At the top, set time to past day to ensure that you see all possible values while testing.
+
+While FusionAuth is running, you should see like the image below.
 
 <img src="../../../../../../astro/public/img/docs/operate/secure-and-monitor/splunk1.png" alt="OpenTelemetry dashboard" />
 
