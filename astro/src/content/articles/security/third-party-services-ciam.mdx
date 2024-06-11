@@ -66,7 +66,6 @@ function reconcile(user, registration, jwt, id_token, tokens) {
  user.data.location = jwt.location;
  user.data.rank = jwt.followers > 1000 ? "influencer" : "regular";
 }
-
 ```
 
 Here's what the FusionAuth UI for adding lambda functions looks like:
@@ -115,35 +114,42 @@ For example, in a test [Express](https://expressjs.com/) app, your receiver endp
 
 ```javascript
 app.post('/receive', (req, res) => {
-   const {phoneNumber, textMessage} = req.body;
-   const infobipSmsUrl = 'https://yourbaseurl.api.infobip.com/sms/2/text/advanced';
-   const requestOptions = {
-       method: 'POST',
-       headers: {
-           'Authorization': 'App YOUR_INFOBIP_API_KEY',
-           'Content-Type': 'application/json',
-           'Accept': 'application/json'
-       },
-       body: JSON.stringify({
-           "messages": [
-               {
-                   "destinations": [{"to": `${phoneNumber}`}],
-                   "from": "FusionAuth",
-                   "text": `Your one-time code is "${textMessage}"`
-               }
-           ]
-       })
-   };
-   fetch(infobipSmsUrl, requestOptions)
-       .then(res => res.json())
-       .then(json => {
-           console.log(json);
-           res.status(200).json({message: "Message delivered to Infobip!"})
-       })
-       .catch(err => {
-           console.error('error:' + err);
-           res.status(502).json({message: `Message not delivered to Infobip due to error: ${err}`})
-       });
+  const {
+    phoneNumber,
+    textMessage
+  } = req.body;
+  const infobipSmsUrl = 'https://yourbaseurl.api.infobip.com/sms/2/text/advanced';
+  const requestOptions = {
+    method: 'POST',
+    headers: {
+      'Authorization': 'App YOUR_INFOBIP_API_KEY',
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      "messages": [{
+        "destinations": [{
+          "to": `${phoneNumber}`
+        }],
+        "from": "FusionAuth",
+        "text": `Your one-time code is "${textMessage}"`
+      }]
+    })
+  };
+  fetch(infobipSmsUrl, requestOptions)
+    .then(res => res.json())
+    .then(json => {
+      console.log(json);
+      res.status(200).json({
+        message: "Message delivered to Infobip!"
+      })
+    })
+    .catch(err => {
+      console.error('error:' + err);
+      res.status(502).json({
+        message: `Message not delivered to Infobip due to error: ${err}`
+      })
+    });
 })
 ```
 
