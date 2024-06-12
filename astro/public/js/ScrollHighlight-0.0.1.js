@@ -1,13 +1,15 @@
 document.addEventListener("DOMContentLoaded", function() {
-  // Use a descendant combinator to select all <a> tags under #toc
   const tocLinks = document.querySelectorAll("nav a");
   const headings = document.querySelectorAll("article h2");
+
+  // switch the highlight when the user comes up on the header, not when they are past it
+  const pixelsBeforeBoundingBox = 200;
 
   function onScroll() {
     let currentHeading = headings[0];
 
     for (const heading of headings) {
-      const headingTop = heading.getBoundingClientRect().top;
+      const headingTop = heading.getBoundingClientRect().top - pixelsBeforeBoundingBox;
 
       if (headingTop <= 0) {
         currentHeading = heading;
