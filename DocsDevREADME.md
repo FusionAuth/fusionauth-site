@@ -168,10 +168,10 @@ Example response(s)
 Follow everything in the `Content Style Guidelines` section.
 
 - If updating an blog post, please update the add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
-- If you have a common component that you want to include, make sure the blog is a `.mdx` file and create a component. [Example components](https://github.com/FusionAuth/fusionauth-site/tree/master/astro/src/components/blog) - [Example blog post using a component](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/blog/amazon-cognito-and-fusionauth-comparison.mdx)
+- If you have a common component that you want to include, make sure the blog is a `.mdx` file and create a component. [Example components](https://github.com/FusionAuth/fusionauth-site/tree/main/astro/src/components/blog) - [Example blog post using a component](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/blog/amazon-cognito-and-fusionauth-comparison.mdx)
 - Images should be pulled in using markdown: `![alt text](/path/to/images)`
 - Images for a blog post should go under /astro/public/img/blogs/` in a directory related to the blog title.
-- We use rouge for code formatting. Supported languages are listed here: https://github.com/rouge-ruby/rouge/tree/master/lib/rouge/lexers
+- We use rouge for code formatting. Supported languages are listed here: https://github.com/rouge-ruby/rouge/tree/main/lib/rouge/lexers
 - For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
 - For field names, use double quotes: "Login Identifier Attribute".
 - For values, use back ticks: `userPrincipalName`.
@@ -247,7 +247,7 @@ Varies, but you'll always want to
 
 Don't `push -f` in general. Unless you know what you are doing.
 
-Publishing happens whenever a commit or PR is merged to `master`.
+Publishing happens whenever a commit or PR is merged to `main`.
 
 ## Sizing Window for Screenshots
 
