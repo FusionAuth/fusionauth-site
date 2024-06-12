@@ -34,7 +34,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - Use the oxford comma. Apples, bananas, and oranges are my favorite fruits.
 - Single spaces should be used instead of double spaces after a period.
 - Headers should have the first letter of every word capitalized: `This Is The Header Text`. This is true for all headers (h1, h2, h3, h4). This is also known as [Start Case](https://en.wikipedia.org/wiki/Letter_case).
-- When writing, you have access to Asides. Here's an [example blog post using an Aside](https://github.com/FusionAuth/fusionauth-site/blob/master/astro/src/content/blog/log4j-fusionauth.mdx). You can assign the following values to the type: `tip` for tips. `note` for things for the user to be aware of. `important` for things the user should pay attention to. `warn` for dangerous actions like deleting a tenant.
+- When writing, you have access to Asides. Here's an [example blog post using an Aside](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/blog/log4j-fusionauth.mdx). You can assign the following values to the type: `tip` for tips. `note` for things for the user to be aware of. `important` for things the user should pay attention to. `warn` for dangerous actions like deleting a tenant.
 - For links, don't use the absolute URL for the FusionAuth website (https://fusionauth.io), only relative URLs. This allows us to deploy to our local and staging environments and not get sent over to prod.
 
 ## Docs 
@@ -168,15 +168,15 @@ Example response(s)
 Follow everything in the `Content Style Guidelines` section.
 
 - If updating an blog post, please update the add a meta tag of updated_date: `YYYY-MM-DD` (as opposed to updating the date on the markdown file)
-- If you have a common component that you want to include, make sure the blog is a `.mdx` file and create a component. [Example components](https://github.com/FusionAuth/fusionauth-site/tree/master/astro/src/components/blog) - [Example blog post using a component](https://github.com/FusionAuth/fusionauth-site/blob/master/astro/src/content/blog/amazon-cognito-and-fusionauth-comparison.mdx)
+- If you have a common component that you want to include, make sure the blog is a `.mdx` file and create a component. [Example components](https://github.com/FusionAuth/fusionauth-site/tree/master/astro/src/components/blog) - [Example blog post using a component](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/blog/amazon-cognito-and-fusionauth-comparison.mdx)
 - Images should be pulled in using markdown: `![alt text](/path/to/images)`
 - Images for a blog post should go under /astro/public/img/blogs/` in a directory related to the blog title.
 - We use rouge for code formatting. Supported languages are listed here: https://github.com/rouge-ruby/rouge/tree/master/lib/rouge/lexers
 - For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
 - For field names, use double quotes: "Login Identifier Attribute".
 - For values, use back ticks: `userPrincipalName`.
-- Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/master/.github/known-blog-categories.txt). You can separate categories with commas.
-- Use tags. They are separated with commas. These are freeform, so feel free to add multiple and choose what works. The first one is what is used to show related posts, unless there's a `featuredTag` value in the front matter. You can [learn more about the logic by reviewing the layout](https://github.com/FusionAuth/fusionauth-site/blob/master/astro/src/layouts/Blog.astro).
+- Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/main/.github/known-blog-categories.txt). You can separate categories with commas.
+- Use tags. They are separated with commas. These are freeform, so feel free to add multiple and choose what works. The first one is what is used to show related posts, unless there's a `featuredTag` value in the front matter. You can [learn more about the logic by reviewing the layout](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/layouts/Blog.astro).
 - You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.
 - All references to `stackoverflow.com` should be updated and direct to the community forum at `https://fusionauth.io/community/forum/`
 - When using an aside in the blog, please use the `nodark="true"` attribute.
@@ -312,7 +312,7 @@ end tell
 - To size and compress images without losing too much quality, follow these steps:
 	1. Resize to width of 1600 in Preview.app ( or you can use `sips --resampleWidth 1600 *.png` from the command line)
 	2. Use https://tinypng.com/ to compress the image
-- Use https://local.fusionauth.io and use the correct kickstart to add the Silicon Valley characters ( https://github.com/FusionAuth/fusionauth-example-kickstart/blob/master/fusionauth/kickstart-development.json )
+- Use https://local.fusionauth.io and use the correct kickstart to add the Silicon Valley characters ( https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/fusionauth/kickstart-development.json )
 - Make sure that the same character is used for every screenshot on a page (unless you are demonstrating a view from the admin and also user perspective)
 
 ### Shell script for capturing sceenshots
@@ -405,7 +405,7 @@ Some sections are better suited to being driven by data. Jekyll makes this easy 
 
 * Create a repo. It should have the prefix `fusionauth-example-` and you should add both the owner and devrel teams (as admins) and developer team (as maintainers).
 * Add a readme and a license (apache2). It's great for the readme to point at the blog post, but you can also update the readme after your post is live.
-* Add an entry in https://github.com/FusionAuth/fusionauth-site/blob/master/site/_data/exampleapps.yaml (you can do it on your blog post branch). Note that you can only put an app in one tech group, and that if it is a JavaScript app, use JavaScript, not typescript, as the group name.
+* Add an entry in https://github.com/FusionAuth/fusionauth-site/blob/main/site/_data/exampleapps.yaml (you can do it on your blog post branch). Note that you can only put an app in one tech group, and that if it is a JavaScript app, use JavaScript, not typescript, as the group name.
 
 This will add the example app to the example apps section in the docs.
 
@@ -441,7 +441,7 @@ TBD
 
 Quickstarts are any pages that are going under /docs/quickstarts that are not on the blog.
 
-See https://github.com/FusionAuth/fusionauth-example-template/blob/master/QUICKSTART-INSTRUCTIONS.md for instructions on building out a quickstart.
+See https://github.com/FusionAuth/fusionauth-example-template/blob/main/QUICKSTART-INSTRUCTIONS.md for instructions on building out a quickstart.
 
 
 ## Linting
