@@ -131,8 +131,8 @@ file diff. This may indicate which repo(s) are causing the discrepancy.
 If there is a discrepancy, you have three options to resolve it:
 
   1. Add it to $JSONFILE
-  2. Add it to the IGNORE array, if it's a repo with a non-standard name
-  3. Add it to the EXCLUDE array, if it should be intentionally excluded
+  2. Add it to the EXCLUDE array, if it's intentionally excluded from $JSONFILE
+  3. Add it to the ADD_NAMES array, if it's a repo with a non-standard name
 EOF
 }
 
