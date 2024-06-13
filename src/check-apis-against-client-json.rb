@@ -29,7 +29,7 @@ IGNORED_FIELD_REGEXPS = [
   /^event\.info\.location\.displayString/, # this is a derived field
   /^event\.ipAddress/, # this is a deprecated field
   /^identityProvider\.issuer/, # this is a deprecated field
-  /^identityProvider\.data/, # this is non-exposed field: https://github.com/FusionAuth/fusionauth-java-client/blob/master/src/main/java/io/fusionauth/domain/provider/BaseIdentityProvider.java#L29
+  /^identityProvider\.data/, # this is non-exposed field: https://github.com/FusionAuth/fusionauth-java-client/blob/main/src/main/java/io/fusionauth/domain/provider/BaseIdentityProvider.java#L29
 ]
 # option handling
 options = {}

@@ -12,7 +12,7 @@ export interface LambdaDoc {
    */
   menuIcon: string;
   /**
-   * what is the API type name. Should match the java enum value from https://github.com/FusionAuth/fusionauth-client-builder/blob/master/src/main/domain/io.fusionauth.domain.LambdaType.json
+   * what is the API type name. Should match the java enum value from https://github.com/FusionAuth/fusionauth-client-builder/blob/main/src/main/domain/io.fusionauth.domain.LambdaType.json
    */
   typeText: string;
   /**
