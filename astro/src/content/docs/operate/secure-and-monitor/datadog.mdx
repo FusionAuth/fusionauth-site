@@ -1,0 +1,596 @@
+---
+title: Datadog Setup
+description: Learn how to set up Datadog to work with FusionAuth.
+navcategory: admin
+section: operate
+subcategory: secure and monitor
+---
+import Aside from 'src/components/Aside.astro';
+ 
+## Introduction
+
+In this guide, we will explain how to connect FusionAuth to Datadog with the use of:
+
+- an OpenTelemetry Linux collector.
+- a Datadog Agent inside Fusionauth docker image.
+- a Datadog Agent on a separate host.
+- and adding logs or events using the Datadog API.
+- We will create and set up a Datadog account and create a dashboard to monitor FusionAuth metrics.
+
+> [Datadog integrates and automates infrastructure monitoring, application performance monitoring, log management, real-user monitoring, and many other capabilities to provide unified, real-time observability and security for our customers’ entire technology stack. Datadog is used by organizations of all sizes and across a wide range of industries to enable digital transformation and cloud migration, drive collaboration among development, operations, security and business teams, accelerate time to market for applications, reduce time to problem resolution, secure applications and infrastructure, understand user behavior, and track key business metrics.](https://docs.datadoghq.com/getting_started/application/)
+
+## FusionAuth Metrics
+
+Before reading this guide, please read the [FusionAuth guide to monitoring](https://fusionauth.io/docs/operate/secure-and-monitor/monitor) to understand what metrics are available and choose the ones relevant to your needs.
+
+### Setup Prometheus API access in FusionAuth
+
+Fusionauth exposes metrics in a 'Prometheus Endpoint', to use it we need to generate an API key in FusionAuth and give permission to the "get" request to access it. We will need this later.
+
+To do this:
+
+- Login to your FusionAuth instance.
+- - Navigate to settings.
+- Click on the `API keys` link.
+- On the top right side of the page, click on the green + to add a new API key.
+![Enable-APIKey-Prometheus-Endpoint-FusionAuth](/img/docs/operate/secure-and-monitor/datadog-fusionauth-enableapikey-prometheus-endpoint.png)
+
+- Enter a description for the API to identify it.
+- Scroll down and add the `GET permission` on the endpoint: `/api/prometheus/metrics`.
+- Go back to the previous screen.
+- Click on the Red lock, next to the API key that you generated, to copy the value of the key.
+- Store this key, as you will need it later in the guide.
+  
+![APIKey-FusionAuth](/img/docs/operate/secure-and-monitor/datadog-fusionauth-apikey.png).
+
+## Datadog Metrics and OpenTelemetry Metrics
+
+Please read the following documentation about metrics with Datadog to get a better understanding.
+
+- General introduction on metrics with [Datadog](https://docs.datadoghq.com/metrics/).
+- You can read more on OpenTelemetry metics [here](https://docs.datadoghq.com/opentelemetry/?_ga=2.63663855.1324212944.1718441678-2001470719.1718441677&_gac=1.150758018.1718441678.EAIaIQobChMI1OXNip7dhgMV_UNBAh1xfQDYEAAYASAAEgIBs_D_BwE).
+
+## Datadog Setup
+
+### Sign-up for a free Datadog trial account
+
+- Navigate to Datadog [site](https://www.datadoghq.com/).
+- Click on the 'GET STARTED FREE' link and complete the registration form to get a 14-day trial.
+![Signup-Datadog-Trail](/img/docs/operate/secure-and-monitor/signup-datadog-trial.png)
+- After completing the account registration you will be redirected to the 'agent installation' page.
+
+<Aside type="note">
+  Make a note of the hosting location/region, This will determine the URL you use later, for this guide we use United States (US5-Central),: i.e. us5.datadoghq.com.
+</Aside>
+
+- Continue to the next section.
+
+### Setup the Datadog Agent
+
+The `Datadog Agent` collects metrics and events from your systems and apps. It can be installed anywhere, even on your workstation.
+
+- On the next screen presented, Click on the Ubuntu agent.
+- It will show the code below.
+  
+```bash
+DD_API_KEY=<yourapikey> DD_SITE="us5.datadoghq.com" bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
+```
+
+- We will customize and add it to the Fusionauth dockerfile to install and start the agent for us.
+- make sure your API key and region are correct.
+
+![Install-Datadog-Agent-Ubuntu](/img/docs/operate/secure-and-monitor/install-datadog-agent-ubuntu.png)
+
+<Aside type="note">
+  For more information on manual configuration or troubleshooting, see the "Manual Step-by-Step Instructions on the agent setup page.
+</Aside>
+
+- We will update FusionAuth DockerFile by adding the Ubuntu agent there.
+- To do this, save the `Dockerfile` from the [FusionAuth official image](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) to your computer.
+- Edit the file.
+- Find the the paragraph labelled ###### Start FusionAuth App, add the customized code above.
+  
+```DockerFile
+ ### NEW FOR DATADOG ###
+    RUN mkdir -p /var/lib/apt/lists/partial \
+    && chmod 755 /var/lib/apt/lists/partial \
+    && apt update \
+    && apt install -y ca-certificates curl  sudo \
+    && cd /usr/local/fusionauth \
+    && curl -L -o install_script_agent7.sh https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh \ 
+    && chmod +x /usr/local/fusionauth/install_script_agent7.sh
+
+    ### Install DATADOG Agent App ###
+    ENV DD_API_KEY="<your API key from datadog website>"  
+    ENV DD_SITE="us5.datadoghq.com" #<your site from Datadog website>
+    ENV DD_INSTALL_ONLY=false
+    ENV DD_HOSTNAME="fusionauthdocker"
+    RUN /bin/bash -c "/usr/local/fusionauth/install_script_agent7.sh"
+    
+    ### Copy the OpenMetrics configuration file ###
+    COPY openmetrics.d-conf.yaml /etc/datadog-agent/conf.d/openmetrics.d/conf.yaml
+    
+    # Allow fusionauth user to run datadog-agent service without password
+    RUN echo "fusionauth ALL=(ALL) NOPASSWD: /usr/sbin/service datadog-agent start" > /etc/sudoers.d/fusionauth
+
+    # Ensure correct ownership and permissions for the log directory
+    RUN mkdir -p /usr/local/fusionauth/logs \
+        && chown -R fusionauth:fusionauth /usr/local/fusionauth/logs
+
+    # # Modify FusionAuth start script to start Datadog Agent as root and continue on failure
+    # RUN head -n -1 /usr/local/fusionauth/fusionauth-app/bin/start.sh > temp.sh \
+    # && echo 'sudo service datadog-agent start <&- >>  /dev/null' >> temp.sh \
+    # && mv temp.sh /usr/local/fusionauth/fusionauth-app/bin/start.sh \
+    # && chown fusionauth:fusionauth /usr/local/fusionauth/fusionauth-app/bin/start.sh \
+    # && chmod +x /usr/local/fusionauth/fusionauth-app/bin/start.sh
+
+```
+
+***Code explanation***
+
+- Download the Datadog agent from https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh.
+- Set some extra environment variables to  do the installation.
+- After installing the Datadog agent, we copy the config(openmetrics.d-conf.yaml).This will handle the open metrics integration.
+
+The openmetrics.d-conf.yaml file looks like this:
+
+ ``` yaml
+  init_config:
+    instances:
+    - prometheus_url: http://localhost:9011/api/prometheus/metrics
+    namespace: Fusionauth_docker_metrics_openmetric_agent
+    metrics:
+      - '*'
+    headers:
+      Authorization: '<Your fusion Auth API key with access to Prometheus metrics>'
+      Content-Type: 'application/json'
+```
+
+- Build the Dockerfile into a new image to use in place of the official FusionAuth one.
+
+```sh
+docker build --platform linux/amd64 -t faimage .
+```
+
+- Use the `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide).
+- To start the docker containers use docker-compose
+
+``` bash
+  docker-compose.exe  -f .\docker-compose.yml  up    -d
+
+```
+
+<Aside type="note">
+  The code to autostart the `datadog-agent` is commented out in the sample because the current version of the agent gives a `fail message` when it starts, although it starts successfully.
+  This stops fusion auth from starting in the docker component.
+
+  We can start the agent manually when fusion auth is running with the script below
+  
+  ```bash
+    docker ps   # to get the uid for the FAimage  i.e  0d
+
+    docker  exec -u root -it 0d service datadog-agent start  #start the agent 
+
+    docker  exec -u root -it 0d service datadog-agent status #get the service status :should respond with  * datadog-agent is running
+  ```
+</Aside>
+
+- When the agent is successfully installed and started, on the Datadog website, when your screen refresh, it will indicate that metrics from the agent are received.
+
+![Datadog-Agent-Reporting](/img/docs/operate/secure-and-monitor/datadog-agent-reporting.png)
+
+- Click on finish to continue.
+
+<Aside type="note">
+  - If you navigate to infrastructure on the Datadog website on the left and click on hosts, it will show all the hosts/agents registered.
+  - If you click on the agent block, it will show you the metrics that were received.
+</Aside>
+![Infrastructure-Hosts-Agent](/img/docs/operate/secure-and-monitor/infrastructure-hosts-agent-info.png)
+
+### Creating your first Dashboard
+
+- In the Datadog website, on the `Create Dashboard` tab, click on the `Create Dashboard` button.
+![Datadog-Agent-Reporting](/img/docs/operate/secure-and-monitor/datadog-website-create-dashboard.png)
+
+- Name the dashboard
+- If you have organizations configured, you may select the team. We will ignore it for this guide.
+- You can select your preferred layout, 
+- Click on 'New Dashboard'
+![Datadog-Agent-Reporting](/img/docs/operate/secure-and-monitor/datadog-website-create-new-dashboard.png)
+
+<Aside type="note">
+Here are some of the available metrics, others can be found in the documents attached in the further reading section. When you add more integrations more metrics will be available.
+- datadog.agent.python.version
+- datadog.agent.running
+- datadog.agent.started
+- datadog.agent.retry_queue_duration.by_bytes_per_sec
+- datadog.agent.retry_queue_duration.capacity_bytes
+- datadog.agent.retry_queue_duration.capacity_secs
+- ntp.offset
+- cpu 
+- procss memory usage
+- load average
+- memmory breakdown
+- available swap
+- diskusage by device
+- disk latency 
+- network trafic
+</Aside>
+ 
+Add data to the dashboard.
+
+1. For visualization, we choose TimeSeries
+2. Add the following to Metrics to monitor
+
+- system.net.bytes_rcvd
+- system.net.bytes_sen
+
+On the right side, We change the colour to yellow in the one metric to see the difference.
+
+3. For the `time preference` choose "last 15 minutes"
+4. Give a title to the graph
+5. Click on save.
+![Datadog-Website-New-Dashboard-Configuration](/img/docs/operate/secure-and-monitor/datadog-website-new-dashboard-configuration.png)
+
+We have create out first dashboard page!.
+
+![Datadog-Website-New-Dashboard-Configuration](/img/docs/operate/secure-and-monitor/datadog-website-new-dashboard-preview.png)
+
+## Adding OpenMetrics Integration in Datadog
+
+Fusionauth exposes a Prometheus endpoint, which can be monitored by an "openMetric" Integration in Datadog.
+
+- On the Main Datadog website, click the Integrations tab in the bottom left.
+- Search for open metrics, and click on the tile.
+![Datadog-Website-Integrations-OpenMetrics](/img/docs/operate/secure-and-monitor/datadog-openmetrics-install-integration.png)
+
+The installation consists of 2 parts.
+
+- Click on the installation-button, in the top right on the website.
+- Configured the OpenMetrics Section in the agent.
+  
+<Aside type="note">
+   You must configure an API key to allow Prometheus metrics on the Fusionauth instance. [Setup Prometheus API access in FusionAuth](#setup-prometheus-api-access-in-fusionauth).
+</Aside>
+
+We use the below sample config file to configure the open metrics integrations. It was already copied to the docker container when we [created it](#setup-the-datadog-agent).
+
+``` yaml
+init_config:
+instances:
+  - prometheus_url: http://localhost:9011/api/prometheus/metrics  
+    namespace: Fusionauth_docker_metrics_openmetric_agent #any name that you want reflected in datadog
+    metrics:
+      - '*'
+    headers:
+      Authorization: '<your Datadog API key>'
+      Content-Type: 'application/json'
+```
+
+This file must be copied to the config folder after the installation of the Datadog agent, to send metrics to Datadog.
+
+We added this part to the DockerFile before the section `### start the agent ###` with:
+
+``` bash
+  # Copy the OpenMetrics configuration file
+    COPY openmetrics.d-conf.yaml /etc/datadog-agent/conf.d/openmetrics.d/conf.yaml
+```
+
+When successfully configured, the Datadog container and the Datadog agent should start sending data to Datadog.
+
+Below is a sample of the data sent.
+
+You can add a new dashboard time display these metrics, using the same steps as [Creating Your First Dashboard](#creating-your-first-dashboard).
+
+Use your namespace from the config file i.e. `Fusionauth_docker_metrics_openmetric_agent` to search for metrics to add from this agent.
+![Datadog Openmetrics Dashboard](/img/docs/operate/secure-and-monitor/datadog-openmetrics-dashboard.png)
+
+## Adding the Datadog agent on a remote host to capture prometheus data
+
+The Datadog agent can be installed on a separate machine to monitor Prometheus metrics from a remote fusionauth host. We will install the `Windows datadog agent` on a Windows host and monitor a remote FusionAuth Host.
+
+### Installing prometheus integrations in Datadog
+
+Before Installing and configuring the Prometheus agent, install the Prometheus integrations using similar steps as used in [Adding OpenMetrics Integration in Datadog](#adding-openmetrics-integration-in-datadog),
+but instead of searching for Openmetrics, we search for [Prometheus](https://us5.datadoghq.com/integrations/prometheus?search=Prometheus) and install that.
+
+
+### Setup the windows host
+
+Navigate to the agent download [page](https://us5.datadoghq.com/account/settings/agent/latest?platform=overview).
+
+- Click on on Windows
+- If you have more than one API key, you can select the one to use. We only have one and will use that one
+- Make sure of the region. We use "us5.datadoghq.com", but yours might vary depending on the selection when you created your Datadog [account](#sign-up-for-a-free-datadog-trial-account).
+  
+- Click Download Agent Installer.
+- If asked, choose a folder to save the download, else it will be saved in your default browser-downloads folder.
+- Run the installer (as Administrator) by opening datadog-agent-7-latest.amd64.msi.
+- Follow the prompts, accept the license agreement, and enter your Datadog API key.
+- Enter your Datadog Region: `us5.datadoghq.com` (or yours if it differs).
+- When the installation finishes, you are given the option to launch the Datadog Agent Manager.
+- Launch the Datadog agent Manager.
+
+![Datadog-Agent-Windows-Setup](/img/docs/operate/secure-and-monitor/datadog-agent-windows-setup.png)
+
+- Look for a green button at the top that says "Connected to agent". If not, follow the installation instructions again.
+- Click on checks on the menu and select manage checks.
+- Select Prometheus from the list.
+- Complete the following config for the remote Fusionauth server, in the right-hand pane:
+
+![Datadog-Agent-Prometheus-Config](/img/docs/operate/secure-and-monitor/datadog-agent-prometheus-config.png)
+
+```yaml
+## All options defined here are available to all instances.
+init_config:
+  
+instances:
+    - prometheus_url: https://<your fusionauth host>/api/prometheus/metrics
+      namespace: Prometheus_remote_metrics #namespace to identify requests in datadog
+
+      metrics:
+      - '*'  #you can filter or add specific metrics here , see documentation. 
+      headers:
+        Authorization: '<your Fusionauth apikey>
+        Content-Type: 'application/json'
+```
+
+- Click on Add check to save.
+- Click on Restart Agent.
+- You can confirm on the Checks/`Checksummary` screen if everything is running ok
+
+![Datadog-Agent-Prometheus-Check-Summary](/img/docs/operate/secure-and-monitor/datadog-agent-prometheus-check-summary.png)
+
+Navigate to the Metrics Explorer on the Datadog website to see if we receive these newly added metrics.
+
+- you can use the namespace defined above in the config `Prometheus_remote_metrics` and add metrics in the metric explorer.
+- Choose the last 15 minutes for the period. You will see that data being pulled from the Prometheus fusionauth endpoint, in the graphs visible.
+
+![Datadog-Website-Metrics-Explorer-Prometheus](/img/docs/operate/secure-and-monitor/datadog-website-metrics-explorer-prometheus.png)
+
+- Using the same steps as above [Creating your first Dashboard](#creating-your-first-dashboard), you can easily add these metrics to the dashboards required, or create a new dashboard if needed.
+
+## Sending events with a python app to Datadog
+
+Datadog provides an API whereby you can create cron jobs or services that run on your FusionAuth instance that provide additional/custom events or logs to Datadog.
+
+Below is a sample python application that just checks if a given FusionAuth host is alive/not alive and sent the status event to Datadog.
+
+Run the following command before you try the script:
+```bash
+  pip install requests datadog-api-client
+```
+```python
+import requests
+
+from datadog_api_client import ApiClient, Configuration
+from datadog_api_client.v1.api.events_api import EventsApi
+from datadog_api_client.v1.model.event_create_request import EventCreateRequest
+from datetime import datetime
+
+# Get the current date and time
+now = datetime.now()
+
+
+def is_website_alive(url):
+    try:
+        response = requests.get(url, timeout=10)
+        # Check if the response status code is 200 (OK)
+        if response.status_code == 200:
+            return True
+        else:
+            return False
+    except requests.RequestException as e:
+        # If there was an issue (e.g., network error, timeout), the website is not reachable
+        print(f"Error: {e}")
+        return False
+    
+
+formatted_now = now.strftime("%Y-%m-%d %H:%M:%S")
+
+
+url = "https://<your fusionauth/>"
+if is_website_alive(url):
+    status  = f"[{ formatted_now}] - {url} is alive. "
+else:
+    status = f"[{ formatted_now}] - {url} is not reachable."
+
+#### here you can define your message/event
+body = EventCreateRequest(
+    title="FusionAuthStatusEvent",
+    text=status,
+    tags=[
+        "FusionAuth:StatusEvent",
+    ],
+)
+
+
+
+configuration = Configuration()
+
+configuration.api_key["apiKeyAuth"] = "<your DataDog API KEY>"
+configuration.server_variables["site"] = "us5.datadoghq.com" #your Region
+configuration.api_key["appKeyAuth"] = "<your Application key if needed>"
+
+with ApiClient(configuration) as api_client:
+    api_instance = EventsApi(api_client)
+    response = api_instance.create_event(body=body)
+
+    print(response)
+```
+
+- Navigate to [event overview](https://us5.datadoghq.com/event/overview) on the Datadog website.
+- Click on Explorer you will see the event that we logged with the script.
+
+![DataDog-Custom-Events](/img/docs/operate/secure-and-monitor/datadog-custom-events.png)
+Read more about all the possible API's [here](https://docs.datadoghq.com/api/latest/using-the-api/).
+
+This script can easily be configured with a cron job, or as a service to log different kind of custom events and logs to Datadog.
+
+## Using the OpenTelemetry Collector to send data to Datadog
+
+We can also use the open telemetry java collector to push data from the Fusionauth host to Datadog.
+We will modify the official FusionAuth Docker image to download the OpenTelemetry Java agent and change the script that starts FusionAuth.
+
+- Configuration values for Java OpenTelemetry are described [here](https://opentelemetry.io/docs/languages/java/configuration).
+
+- Save the `Dockerfile` from the [FusionAuth official image](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) to your computer.
+
+-Edit the file. Find the paragraph labelled `###### Start FusionAuth App`, above that insert the code that follows:
+
+```Dockerfile
+##### NEW FOR OPENTELEMETRY #######################################################################
+RUN mkdir -p /var/lib/apt/lists/partial \
+    && chmod 755 /var/lib/apt/lists/partial \
+    && apt update \
+    && apt install -y ca-certificates \
+    && cd /usr/local/fusionauth \
+    && curl -L -o otel.jar https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.4.0/opentelemetry-javaagent.jar\
+    && (head -n -1 /usr/local/fusionauth/fusionauth-app/bin/start.sh; echo 'exec "${JAVA_HOME}/bin/java" -javaagent:/usr/local/fusionauth/otel.jar -Dotel.resource.attributes=service.name=fusionauth -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://otel:4318 -cp "${CLASSPATH}" ${JAVA_OPTS} io.fusionauth.app.FusionAuthMain <&- >> "${LOG_DIR}/fusionauth-app.log" 2>&1') > temp.sh \
+    && mv temp.sh /usr/local/fusionauth/fusionauth-app/bin/start.sh;
+RUN chown fusionauth:fusionauth /usr/local/fusionauth/otel.jar /usr/local/fusionauth/fusionauth-app/bin/start.sh \
+    && chmod +x /usr/local/fusionauth/fusionauth-app/bin/start.sh
+```
+
+***Code explanation***
+
+- This code edits `start.sh`, which start FusionAuth when the container start.
+- The command takes the head of the file (all lines except the last), and writes the new command to the end of the file.
+
+By default, the OpenTelemetry Java agent sends data to the OpenTelemetry collector at http://localhost:4317. We changed it to send data to the  container, at http://otel:4318.
+
+- Build the Dockerfile into a new image to use in place of the official FusionAuth one.
+
+```sh
+docker build --platform linux/amd64 -t faimage .
+```
+
+Modify the `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. 
+You are now including the Opentelemetery collector in your compose file. 
+
+``` yaml
+# OpenTelemetry Collector Contrib
+  otel:
+    image: otel/opentelemetry-collector-contrib:latest
+    volumes:
+      - ./otel-collector.yml:/etc/otel-collector.yml
+    command: ["--config=/etc/otel-collector.yml"]
+    #,"--feature-gates=-exporter.datadogexporter.DisableAPMStats"]
+    ports:
+      - "1888:1888"   # pprof extension
+      - "8888:8888"   # Prometheus metrics exposed by the collector
+      - "8889:8889"   # Prometheus exporter metrics
+      - "13133:13133" # health_check extension
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP gRPC receiver
+      - "55679:55679" # zpages extension
+    environment:
+      - OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=http://otel-collector:4318/v1/logs
+      - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://otel-collector:4318
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318/v1/traces  
+    networks:
+      - db_net
+      
+    depends_on:
+      - db
+      - search
+      - fusionauth
+
+```
+
+We must also configure the otel-collector.yml file for use with this container.
+This file is passed into the container through the docker-compose yaml.
+
+```yaml
+receivers:
+  hostmetrics:
+      scrapers:
+        load:
+        cpu:
+        disk:
+        filesystem:
+        memory:
+        network:
+        paging:
+        # process:
+  otlp:
+    protocols:
+      http:
+        #endpoint: "localhost:4318"
+      grpc:
+        #endpoint: "localhost:4317"
+processors:
+  batch:
+    send_batch_max_size: 100
+    send_batch_size: 10
+    timeout: 10s
+    
+connectors:
+  datadog/connector:
+
+exporters:
+  datadog/exporter:
+    api:
+      site: "us5.datadoghq.com"   #<make sure of your region>
+      key: "<your Datadog API key>" 
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [datadog/connector, datadog/exporter]
+    metrics:
+      receivers: [hostmetrics, otlp, datadog/connector] #// The connector provides the metrics to your metrics pipeline
+      processors: [batch]
+      exporters: [datadog/exporter]
+
+```
+
+- Start the docker-compose with the commands below:
+  
+```bash
+  docker-compose -f ./docker-compose.yaml up -d
+
+#if you want to monitor the progress
+# docker-compose logs --follow
+```
+
+### Visualizing the OpenTelemetery metrics in Datadog
+
+<Aside type="note">
+  To visualize the open-telemetry metrics the OpenTelemetry integration must be [installed](https://us5.datadoghq.com/integrations?integrationId=otel).
+  You can follow the same steps as [Adding OpenMetrics Integration in Datadog](#adding-openmetrics-integration-in-datadog).
+  - Some default dashboards is provided by default for this.
+</Aside>
+
+- Navigate to the dashboards link on the Datadog website.
+- Click on dashboard list.
+- Click on `OpenTelemetry Host Metrics Dashboard`.
+- If you followed the guide correctly you will see som metrics on the graphs.
+
+![DataDog-opentelemetry-Dashboard](/img/docs/operate/secure-and-monitor/dataDog-opentelemetry-dashboard.png)
+
+## Conclusion
+
+We discussed various ways to get data into Datadog from a FusionAuth instance.
+
+- The Datadog agent could be installed and configured with various integrations inside the FusionAuth docker container.
+- The OpenTelemetry collector can be installed inside the docker container to collect data with the Linux collector.
+- The Datadog agent can be installed on an external host to monitor FusionAuth Prometheus Endpoint.
+- We create a Python app using the Datadog-API,to push sample events/logs to Datadog.
+
+We can visualize collected metrics in dashboards created on the Datadog website. It is fair to say many metrics are available from Fusionauth to Datadog. Should you need any others, you can create your own using the API.
+
+## Further Reading
+
+- FusionAuth metrics — https://fusionauth.io/docs/operate/secure-and-monitor/monitor#metrics.
+- OpenTelemetry documentation — https://opentelemetry.io/docs/what-is-opentelemetry.
+- OpenTelemetry Java documentation — https://github.com/open-telemetry/opentelemetry-java-instrumentation
+- Datadog OpenTelemetry documentation — https://docs.datadoghq.com/opentelemetry/collector_exporter/
+- Fusionauth containers — https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile
+- Getting Started with the Datadog Agent - https://docs.datadoghq.com/getting_started/agent/
+- Datadog Ubuntu Agent Install Script Configurations options - https://github.com/DataDog/agent-linux-install-script/blob/main/README.md#agent-configuration-options
+- FusionAuth Docker Install For the 5-Minute Guide - https://fusionauth.io/docs/quickstarts/5-minute-docker
+- Pricing - https://www.datadoghq.com/pricing/
+- Datadog Metrics - https://docs.datadoghq.com/metrics/
+- Datadog Agents - https://docs.datadoghq.com/getting_started/agent/
