@@ -9,11 +9,11 @@ section: Security
 
 Whether you're building a complex SaaS application or an e-commerce platform, handling authentication with a complete prebuilt authentication system like [FusionAuth](/) means you can focus on your product's core functionality and be assured that you and your users are protected by a robust auth solution.
 
-FusionAuth can authenticate users on its own, but in some cases, you might want to integrate with third-party services and identity providers to enhance this functionality. The following are three major reasons you'd want to do so:
+FusionAuth can authenticate users on its own, but in some cases, you might want to integrate with third-party services and [identity providers](/docs/apis/identity-providers/) to enhance this functionality. The following are three major reasons you'd want to do so:
 
 - You want to use third-party identity providers in your application. Depending on your business, you could use a popular social identity provider like Facebook or go with something more industry-specific, like GitHub.
 
-- You want to implement SSO in an internal environment using a third-party identity provider.
+- You want to [implement SSO](/docs/lifecycle/authenticate-users/single-sign-on) in an internal environment using a third-party identity provider.
 
 - You need to implement SMS as a second factor using Twilio or a different SMS provider.
 
@@ -39,7 +39,7 @@ FusionAuth provides quick templates to configure many [identity providers](/docs
 
 For example, if you want to let your users log in with their LinkedIn account, [this is how you can do it](/docs/lifecycle/authenticate-users/identity-providers/social/linkedin):  create a LinkedIn app, set permissions, choose to *Add LinkedIn* inside FusionAuth's identity provider settings, copy over the client credentials from the LinkedIn app, save, and you're done.
 
-![Adding LinkedIn as an identity provider in FusionAuth](https://i.imgur.com/nTwiCZr.png)
+![Adding LinkedIn as an identity provider in FusionAuth](/img/articles/third-party-ciam/TPC-1.png)
 
 ## Using Industry-Specific Identity Providers with a Generic OpenID Connect Template
 
@@ -49,39 +49,28 @@ Let's say your application is targeted at professional software developers, and 
 
 Let's take GitHub, for example. Here's how you can [configure social login via GitHub](/docs/lifecycle/authenticate-users/identity-providers/social/github) using FusionAuth's [generic OpenID Connect provider](/docs/lifecycle/authenticate-users/identity-providers/overview-oidc). The workflow includes creating a new OAuth2 application in your GitHub profile, creating a new OpenID Connect identity provider in FusionAuth, and filling out the provider options.
 
-![Adding GitHub as identity provider](https://i.imgur.com/bIPFNE1.png)
+![Adding GitHub as identity provider](/img/articles/third-party-ciam/TPC-2.png)
 
 Optionally, since GitHub's OpenID Connect implementation is not strictly to spec, you may want to create a custom [reconcile lambda](/docs/extend/code/lambdas/openid-connect-response-reconcile) function that will enable FusionAuth to get more information about the logged-in user than GitHub normally provides.
 
 For example, the following JavaScript lambda function reads the JWT token returned by GitHub and extends FusionAuth's user entry with the name, company, biography, and location defined in the GitHub user profile. It also checks if the GitHub user has over one thousand followers, and if so, it assigns a special "influencer" rank to the FusionAuth user.
 
 ```javascript
-
 function reconcile(user, registration, jwt, id_token, tokens) {
-
  registration.username = jwt.login;
-
  user.imageUrl = jwt.avatar_url;
-
  user.data = user.data || {};
-
  user.data.name = jwt.name;
-
  user.data.company = jwt.company;
-
  user.data.bio = jwt.bio;
-
  user.data.location = jwt.location;
-
  user.data.rank = jwt.followers > 1000 ? "influencer" : "regular";
-
 }
-
 ```
 
 Here's what the FusionAuth UI for adding lambda functions looks like:
 
-![Adding a reconcile lambda for the GitHub identity provider](https://i.imgur.com/ZEHgIYC.png)
+![Adding a reconcile lambda for the GitHub identity provider](/img/articles/third-party-ciam/TPC-3.png)
 
 ## Enabling Single Sign-On in an Organization
 
@@ -89,7 +78,7 @@ Another reason to connect to a third-party identity provider is to prevent your 
 
 If your application serves external users as well, you can pick a different set of public identity providers for their convenience.
 
-You can plug in both [Amazon Cognito](/docs/lifecycle/authenticate-users/identity-providers/enterprise/cognito) and [Azure Active Directory](/docs/lifecycle/authenticate-users/identity-providers/enterprise/azure-ad-oidc) to FusionAuth as OpenID Connect providers using the same [generic OpenID Connect workflow](h/docs/lifecycle/authenticate-users/identity-providers/overview-oidc) shown in the GitHub section above.
+You can plug in both [Amazon Cognito](/docs/lifecycle/authenticate-users/identity-providers/enterprise/cognito) and [Azure Active Directory](/docs/lifecycle/authenticate-users/identity-providers/enterprise/azure-ad-oidc) to FusionAuth as OpenID Connect providers using the same [generic OpenID Connect workflow](/docs/lifecycle/authenticate-users/identity-providers/overview-oidc) shown in the GitHub section above.
 
 ## Implementing SMS-Based Multifactor Authentication
 
@@ -103,7 +92,7 @@ If you want to use Twilio for SMS-based MFA, you need to [create a Twilio messen
 
 Copy the account SID and auth token from your Twilio account, buy a Twilio phone number that will be used to send SMS, and copy it into the **From phone number** field. Once this basic configuration is done, you can tell FusionAuth to send a test message from your Twilio phone number to your own number to verify that the configuration is working.
 
-![Adding a Twilio messenger configuration](https://i.imgur.com/LD8SZkK.png)
+![Adding a Twilio messenger configuration](/img/articles/third-party-ciam/TPC-4.png)
 
 ### Using a Different SMS Provider
 
@@ -119,74 +108,49 @@ Let's say your SMS provider of choice is [Infobip](https://infobip.com). You nee
 
 2\. Create a new [generic messenger](/docs/customize/email-and-messages/generic-messenger) configuration in FusionAuth and specify the URL of your generic message receiver that FusionAuth will send JSON messages to.
 
-![Adding a generic messenger configuration to FusionAuth](https://i.imgur.com/Xhq7I0T.png)
+![Adding a generic messenger configuration to FusionAuth](/img/articles/third-party-ciam/TPC-5.png)
 
 For example, in a test [Express](https://expressjs.com/) app, your receiver endpoint may look like this:
 
 ```javascript
-
 app.post('/receive', (req, res) => {
-
-   const {phoneNumber, textMessage} = req.body;
-
-   const infobipSmsUrl = 'https://yourbaseurl.api.infobip.com/sms/2/text/advanced';
-
-   const requestOptions = {
-
-       method: 'POST',
-
-       headers: {
-
-           'Authorization': 'App YOUR_INFOBIP_API_KEY',
-
-           'Content-Type': 'application/json',
-
-           'Accept': 'application/json'
-
-       },
-
-       body: JSON.stringify({
-
-           "messages": [
-
-               {
-
-                   "destinations": [{"to": `${phoneNumber}`}],
-
-                   "from": "FusionAuth",
-
-                   "text": `Your one-time code is "${textMessage}"`
-
-               }
-
-           ]
-
-       })
-
-   };
-
-   fetch(infobipSmsUrl, requestOptions)
-
-       .then(res => res.json())
-
-       .then(json => {
-
-           console.log(json);
-
-           res.status(200).json({message: "Message delivered to Infobip!"})
-
-       })
-
-       .catch(err => {
-
-           console.error('error:' + err);
-
-           res.status(502).json({message: `Message not delivered to Infobip due to error: ${err}`})
-
-       });
-
+  const {
+    phoneNumber,
+    textMessage
+  } = req.body;
+  const infobipSmsUrl = 'https://yourbaseurl.api.infobip.com/sms/2/text/advanced';
+  const requestOptions = {
+    method: 'POST',
+    headers: {
+      'Authorization': 'App YOUR_INFOBIP_API_KEY',
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      "messages": [{
+        "destinations": [{
+          "to": `${phoneNumber}`
+        }],
+        "from": "FusionAuth",
+        "text": `Your one-time code is "${textMessage}"`
+      }]
+    })
+  };
+  fetch(infobipSmsUrl, requestOptions)
+    .then(res => res.json())
+    .then(json => {
+      console.log(json);
+      res.status(200).json({
+        message: "Message delivered to Infobip!"
+      })
+    })
+    .catch(err => {
+      console.error('error:' + err);
+      res.status(502).json({
+        message: `Message not delivered to Infobip due to error: ${err}`
+      })
+    });
 })
-
 ```
 
 When it receives a JSON message from FusionAuth, this Express endpoint unwraps relevant data---`phoneNumber` and `textMessage`---from the body of the request and uses the `node-fetch` library to send the data over to an Infobip SMS endpoint in a format that Infobip requires.
