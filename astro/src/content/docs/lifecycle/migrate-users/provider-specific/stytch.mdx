@@ -30,7 +30,7 @@ export const script_supports_social_logins = 'true';
 
 This document will help you migrate users from Stytch to FusionAuth. 
 
-There are a number of different ways applications can be integrated with Stych, and it would be difficult to cover them all. This guide is a low-level, technical tutorial focusing on transferring password hashes, calling APIs, and preparing data when migrating users from a Consumer Authentication project. The steps outlined here have not been tested with the Stytch B2B SaaS Authentication project type.
+There are a number of different ways applications can be integrated with Stytch, and it would be difficult to cover them all. This guide is a low-level, technical tutorial focusing on transferring password hashes, calling APIs, and preparing data when migrating users from a Consumer Authentication project. The steps outlined here have not been tested with the Stytch B2B SaaS Authentication project type.
 
 This guide explains how to import passwords into FusionAuth, but does not deal with other Stytch authentication types like magic links, passkeys, passcodes, mobile biometrics, two-factor authentication, and social logins such as Google OAuth.
 
@@ -104,7 +104,7 @@ Create three example users:
 - If any errors occur and you need to delete the users, uncomment the lines with `client.users.delete`, set the user Ids from the dashboard, and rerun the script.
 
 <Aside type="note">
-The `1_makeStytchUsers.mjs` file uses the Stytch JavaScript SDK to create users with three different hashing algorithms. However, the line `client.passwords.authenticate` provides the cleartext password to Stytch, which Stytch uses to rehash the user password using the Scrypt hashing algorithm. At the end of this script, all your users' passwords will be hashed with Scrypt in the Stytch database.
+The `1_makeStytchUsers.mjs` file uses the Stytch JavaScript SDK to create users with three different hashing algorithms. However, the line `client.passwords.authenticate` provides the clear text password to Stytch, which Stytch uses to rehash the user password using the Scrypt hashing algorithm. At the end of this script, all your users' passwords will be hashed with Scrypt in the Stytch database.
 
 Even though you can create passwords for Stytch users with different hashing algorithms ([bcrypt, scrypt, Argon2, MD5, SHA-1, or PBKDF2](https://stytch.com/docs/api/password-migrate)), scrypt is the Stytch-preferred algorithm. Whenever a user logs in, Stytch will verify their password hash using the algorithm it is currently stored with, and then rehash their password using scrypt and discard the old hash. Password rehashing is a common technique used to upgrade security as hashing algorithms evolve.
 
@@ -215,7 +215,7 @@ The last lines of the object show the hash and salt that the script added from t
 
 ## Importing Users
 
-First install a FusionAth plugin to handle the Stytch password hash algorithm, then import the users, and finally verify the import.
+First install a FusionAuth plugin to handle the Stytch password hash algorithm, then import the users, and finally verify the import.
 
 ### Build The Scrypt Password Hash Plugin For FusionAuth
 
@@ -273,13 +273,13 @@ If you are not already running FusionAuth or want to test this process on anothe
   cd stytch/fusionAuthDockerFiles
   docker compose up
   ```
-- FusionAuth will now be running and browsable at `http://localhost:9011`. You can log in with `admin@example.com` and `password`. The container is called `fa`.
+- FusionAuth will now be running and browseable at `http://localhost:9011`. You can log in with `admin@example.com` and `password`. The container is called `fa`.
 - Open a terminal in the `fusionauth-contrib` root directory, where you built the plugin. Run the commands below to copy the JAR file into the FusionAuth container `plugins` directory.
   ```sh
   docker exec fa mkdir /usr/local/fusionauth/plugins
   docker cp "Password Hashing Plugins/target/fusionauth-example-password-encryptor-0.1.0.jar" fa:/usr/local/fusionauth/plugins/fusionauth-example-password-encryptor-0.1.0.jar
   ```
-- Finally, restart FusionAuth for it to detect the plugin. In the terminal where FusionAuth is running in Docker, press Ctrl + C to stop it, wait, and run `docker compose up` again.
+- Finally, restart FusionAuth for it to detect the plugin. In the terminal where FusionAuth is running in Docker, press `control-C` to stop it, wait, and run `docker compose up` again.
 
 ### Save The User Details And Hash To FusionAuth
 
