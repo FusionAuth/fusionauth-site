@@ -14,15 +14,15 @@ import InlineField from 'src/components/InlineField.astro';
 - [Import Data To Splunk With The OpenTelemetry Linux Collector](#import-data-to-splunk-with-the-opentelemetry-linux-collector)
   - [OpenTelemetry Dashboard](#opentelemetry-dashboard)
 - [FusionAuth Metrics](#fusionauth-metrics)
-  - [Audit Log](#audit-log)
-  - [The Event Log](#the-event-log)
-  - [Login Records](#login-records)
-  - [Logs](#logs)
 - [Mapping FusionAuth Metrics To Splunk Metrics](#mapping-fusionauth-metrics-to-splunk-metrics)
 - [Write A Custom Service To Send Data To The API](#write-a-custom-service-to-send-data-to-the-api)
 - [Import Data To Splunk With Logs](#import-data-to-splunk-with-logs)
 - [Further Reading](#further-reading)
 - [TODO](#todo)
+  - [Audit Log](#audit-log)
+  - [The Event Log](#the-event-log)
+  - [Login Records](#login-records)
+  - [Logs](#logs)
 
 
 ## Introduction
@@ -140,7 +140,7 @@ graph LR
     end
   end
   C --> G
-  C --> B
+  C --> E
   E --> F(Splunk web server)
   style I fill:#111
 ```
@@ -293,6 +293,71 @@ While FusionAuth is running, you should see like the image below.
 
 Now you know how to send Splunk Java metrics with OpenTelemetry and custom metrics with the API. Let's next consider what custom metrics you would want to send, how to map them to the various Splunk metric categories, and how to write code that uploads the metrics automatically while FusionAuth is running.
 
+Unfortunately FusionAuth has too [many metrics](https://fusionauth.io/docs/operate/secure-and-monitor/monitor#metrics) to discuss in this article. You will need to decide which are important for you to monitor by reading the documentation.
+
+In this guide, you'll learn how to create a program that uses the FusionAuth API to get a metric, then upload it to Splunk. You can add any other metrics you want to this system.
+
+
+
+## Mapping FusionAuth Metrics To Splunk Metrics
+
+Splunk has two sets of documentation, the [primary](https://docs.splunk.com/observability/en) and the [developer](https://dev.splunk.com/observability/docs). You need to read only the former to use Splunk with FusionAuth.
+
+[TODO](https://docs.splunk.com/observability/en/metrics-and-metadata/metric-types.html#metric-types)
+
+## Write A Custom Service To Send Data To The API
+
+Earlier you used a new Docker container to run an OpenTelemetry collector to receive data from FusionAuth. In this section you are going to create another Docker contained to call the FusionAuth API and send the metrics to Splunk.
+
+The system looks like the diagram below.
+
+```mermaid
+graph TD
+  subgraph I[Your server]
+    direction LR
+    subgraph G[Docker]
+      H[(Postgresql)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph E[Docker]
+      B(Custom metric getter code)
+    end
+  end
+  C --> G
+  E -- API call --> C
+  E -- API call --> F(Splunk web server)
+  style I fill:#111
+```
+
+## Import Data To Splunk With Logs
+
+TODO
+
+## Further Reading
+
+- FusionAuth metrics — https://fusionauth.io/docs/operate/secure-and-monitor/monitor#metrics.
+- OpenTelemetry documentation — https://opentelemetry.io/docs/what-is-opentelemetry.
+- OpenTelemetry Java documentation — https://github.com/open-telemetry/opentelemetry-java-instrumentation
+- Splunk OpenTelemetry Java documentation — https://docs.splunk.com/observability/en/gdi/get-data-in/application/java/get-started.html#get-started-java
+- https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile
+- Docker OpenTelemetryCollector - https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker
+- Ports exposed by OpenTelemetry container - https://docs.splunk.com/observability/en/gdi/opentelemetry/exposed-endpoints.html
+
+## TODO
+
+- Ritza brief - https://docs.google.com/document/d/1g5O1V4aHyHgqwJTt5lbPnz9rYRTJqRkYf3z2-KhcHiw/edit
+- create splunk account (get richard@ritzademo.com login from richard cooke)
+- read monitor docs and connect every single link - api, log files
+  - What Fusionauth data makes sense in a Splunk context? Only metrics or also logs etc?
+  - How does Fusionauth feed data to Splunk? Pull, Push? Both options?
+  - https://dev.splunk.com/enterprise/docs/developapps/manageknowledge/custominputs/
+- Create a basic Dashboard and show the Fusionauth metrics from fusionauth.ritza.co on Splunk
+- Document everything
+- images go in /astro/public/img/docs/operate/secure-and-monitor/splunk1.png
+
+
 ### Audit Log
 
 The Audit Log contains changes to database tables. To see it, browse to <strong>System -> Audit Log</strong>. Below is an entry example:
@@ -347,44 +412,6 @@ workaddress/fa@simplelogin.com | 00000000-0000-0000-0000-000000000001 | FusionAu
 ### Logs
 
 <strong>System -> Logs</strong> show nothing if you are running Docker. Instead, the logs are written to the terminal.
-
-
-## Mapping FusionAuth Metrics To Splunk Metrics
-
-Splunk has two sets of documentation, the [primary](https://docs.splunk.com/observability/en) and the [developer](https://dev.splunk.com/observability/docs). You need to read only the former to use Splunk with FusionAuth.
-
-[TODO](https://docs.splunk.com/observability/en/metrics-and-metadata/metric-types.html#metric-types)
-
-## Write A Custom Service To Send Data To The API
-
-TODO
-Write a node.js service or cronjob with curl or something that gets metrics from fusionauth container and sends them to splunk
-
-## Import Data To Splunk With Logs
-
-TODO
-
-## Further Reading
-
-- FusionAuth metrics — https://fusionauth.io/docs/operate/secure-and-monitor/monitor#metrics.
-- OpenTelemetry documentation — https://opentelemetry.io/docs/what-is-opentelemetry.
-- OpenTelemetry Java documentation — https://github.com/open-telemetry/opentelemetry-java-instrumentation
-- Splunk OpenTelemetry Java documentation — https://docs.splunk.com/observability/en/gdi/get-data-in/application/java/get-started.html#get-started-java
-- https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile
-- Docker OpenTelemetryCollector - https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker
-- Ports exposed by OpenTelemetry container - https://docs.splunk.com/observability/en/gdi/opentelemetry/exposed-endpoints.html
-
-## TODO
-
-- Ritza brief - https://docs.google.com/document/d/1g5O1V4aHyHgqwJTt5lbPnz9rYRTJqRkYf3z2-KhcHiw/edit
-- create splunk account (get richard@ritzademo.com login from richard cooke)
-- read monitor docs and connect every single link - api, log files
-  - What Fusionauth data makes sense in a Splunk context? Only metrics or also logs etc?
-  - How does Fusionauth feed data to Splunk? Pull, Push? Both options?
-  - https://dev.splunk.com/enterprise/docs/developapps/manageknowledge/custominputs/
-- Create a basic Dashboard and show the Fusionauth metrics from fusionauth.ritza.co on Splunk
-- Document everything
-- images go in /astro/public/img/docs/operate/secure-and-monitor/splunk1.png
 
 <strong></strong>
 <InlineField></InlineField>
