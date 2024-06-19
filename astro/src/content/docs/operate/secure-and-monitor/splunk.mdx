@@ -7,27 +7,19 @@ subcategory: secure and monitor
 ---
 import Aside from 'src/components/Aside.astro';
 import InlineField from 'src/components/InlineField.astro';
-import PrometheusJvmGauges from 'src/content/docs/_shared/_prometheus-jvm-gauges.mdx';
-
-
-
-SEE TODO SECTION AT BOTTOM OF THIS ARTICLE
-
-
-
 
 - [Introduction](#introduction)
+- [Splunk Setup](#splunk-setup)
+- [Import Data To Splunk With The API](#import-data-to-splunk-with-the-api)
+- [Import Data To Splunk With The OpenTelemetry Linux Collector](#import-data-to-splunk-with-the-opentelemetry-linux-collector)
+  - [OpenTelemetry Dashboard](#opentelemetry-dashboard)
 - [FusionAuth Metrics](#fusionauth-metrics)
   - [Audit Log](#audit-log)
   - [The Event Log](#the-event-log)
   - [Login Records](#login-records)
   - [Logs](#logs)
-- [Splunk Setup](#splunk-setup)
 - [Mapping FusionAuth Metrics To Splunk Metrics](#mapping-fusionauth-metrics-to-splunk-metrics)
-- [Import Data To Splunk With The API](#import-data-to-splunk-with-the-api)
-  - [Write A Custom Service To Send Data To The API](#write-a-custom-service-to-send-data-to-the-api)
-- [Import Data To Splunk With The OpenTelemetry Linux Collector](#import-data-to-splunk-with-the-opentelemetry-linux-collector)
-  - [OpenTelemetry Dashboard](#opentelemetry-dashboard)
+- [Write A Custom Service To Send Data To The API](#write-a-custom-service-to-send-data-to-the-api)
 - [Import Data To Splunk With Logs](#import-data-to-splunk-with-logs)
 - [Further Reading](#further-reading)
 - [TODO](#todo)
@@ -39,64 +31,7 @@ This guide explains how to connect FusionAuth to Splunk through Docker with the 
 
 > [Splunk Observability Cloud is a Software as a Service (SaaS) solution for infrastructure monitoring (Splunk IM), application performance monitoring (Splunk APM), real user monitoring (Splunk RUM), and synthetic monitoring (Splunk Synthetic Monitoring). Splunk Observability Cloud also provides a direct integration with logs ingested in Splunk Cloud Platform and Splunk Enterprise through Log Observer Connect.](https://docs.splunk.com/observability/en/get-started/service-description.html)
 
-## FusionAuth Metrics
-
-Before reading this guide, please read the [FusionAuth guide to monitoring](https://fusionauth.io/docs/operate/secure-and-monitor/monitor) to understand what metrics are available and choose the ones relevant to your needs.
-
-### Audit Log
-
-The Audit Log contains changes to database tables. To see it, browse to <strong>System -> Audit Log</strong>. Below is an entry example:
-
-```
-Id:	47
-Created:	5/16/2024 12:43 PM SAST
-User:	workaddress/fa@simplelogin.com
-Reason:	FusionAuth User Interface
-Message:	Updated the tenant with Id [d7d09513-a3f5-401c-9685-34ab6c552453] and name [Default]
-Old value: JSON
-New value: JSON
-```
-
-### The Event Log
-
-The Event Log contains errors. To see it, browse to <strong>System -> Event Log</strong>. Below is an entry example:
-
-```
-Id:	40
-Created:	5/16/2024 12:43 PM SAST
-Type:	Debug
-
-Email debug information
-
-5/16/2024 10:43:58 AM Z DEBUG: getProvider() returning jakarta.mail.Provider[TRANSPORT,smtp,org.eclipse.angus.mail.smtp.SMTPTransport,Oracle]
-DEBUG SMTP: need username and password for authentication
-DEBUG SMTP: protocolConnect returning false, host=smtp.sendgrid.net, user=apikey, password=<null>
-DEBUG SMTP: useEhlo true, useAuth true
-DEBUG SMTP: trying to connect to host "smtp.sendgrid.net", port 587, isSSL false
-...
-```
-
-```
-Id:	20
-Created:	4/24/2024 02:04 PM SAST
-Type:	Error
-
-Webhook [https://webhook.site/60a036f9-a2a2-4646-bf58-c60778eea20d] returned response code [404] when sending [AuditLogCreate] event with Id [d13865c7-f706-4896-a322-d3f7cc63441a].
- Response:
-null
-```
-
-### Login Records
-
-<strong>System -> Login Records</strong> lists all user logins to FusionAuth.
-
-User | User Id | Application | Application Id | Time | Location | IP address
----|---|---|---|---|---|---
-workaddress/fa@simplelogin.com | 00000000-0000-0000-0000-000000000001 | FusionAuth | 3c219e58-ed0e-4b18-ad48-f4f92793ae32 | 6/4/2024 11:17 AM SAST | – | 172.20.0.1
-
-### Logs
-
-<strong>System -> Logs</strong> show nothing if you are running Docker. Instead, the logs are written to the terminal.
+Before reading this guide, please read the [FusionAuth guide to monitoring](https://fusionauth.io/docs/operate/secure-and-monitor/monitor) to understand what metrics are available.
 
 ## Splunk Setup
 
@@ -113,12 +48,6 @@ Documentation for Splunk Observability is at https://docs.splunk.com/observabili
 Pricing is at https://www.splunk.com/en_us/products/pricing/observability.html. Infrastructure monitoring, Log observer connect, and Synthetic uptime monitoring are included in the Splunk Infrastructure monthly fee. Each Splunk product has a separate 14 day trial.
 
 <img src='../../../../../../astro/public/img/docs/operate/secure-and-monitor/splunk2.png' alt='https://docs.splunk.com/observability/en/_images/o11y-cloud-structure1.png' />
-
-## Mapping FusionAuth Metrics To Splunk Metrics
-
-Splunk has two sets of documentation, the [primary](https://docs.splunk.com/observability/en) and the [developer](https://dev.splunk.com/observability/docs). You need to read only the former to use Splunk with FusionAuth.
-
-[TODO](https://docs.splunk.com/observability/en/metrics-and-metadata/metric-types.html#metric-types)
 
 ## Import Data To Splunk With The API
 
@@ -165,12 +94,11 @@ The response should be `"OK"`.
 - Click <InlineField>memory.free</InlineField>
 - You should see the data point created by the command above on the chart. If you can't, try switching to the Column chart view, or run the command again with a different value.
 
-### Write A Custom Service To Send Data To The API
-
-TODO
-Write a node.js service or cronjob with curl or something that gets metrics from fusionauth container and sends them to splunk
+In a later section you'll learn how to use this API to import data from your FusinAuth instance.
 
 ## Import Data To Splunk With The OpenTelemetry Linux Collector
+
+Instead of sending metrics manually to Splunk, you can send them automatically with OpenTelemetry. OpenTelemetry is a protocol and software that is dedicated to monitoring, measuring, processing, collecting, and sending metrics.
 
 Running FusionAuth and Postgresql in Docker looks like the diagram below.
 
@@ -192,7 +120,7 @@ graph LR
 
 (You might also run ElasticSearch in another Docker container, but it's unnecessary.)
 
-You can also start FusionAuth inside Docker with [OpenTelemetry for Java](https://github.com/open-telemetry/opentelemetry-java-instrumentation). OpenTelemetry (or Otel) sends the metrics it reads to a collector. The OpenTelemetry collector runs in a separate Docker container, and in turn sends the metrics to Splunk for recording. This follows the Docker principle of one process per container.
+You can also start FusionAuth inside Docker with [OpenTelemetry for Java](https://github.com/open-telemetry/opentelemetry-java-instrumentation) (FusionAuth is a Java application). OpenTelemetry (or Otel) sends the metrics it reads to a collector. The OpenTelemetry collector runs in a separate Docker container, and in turn sends the metrics to Splunk for recording. This follows the Docker principle of one process per container.
 
 This architecture is shown in the diagram below.
 
@@ -226,7 +154,7 @@ First you need to modify the official FusionAuth Docker image to download the Op
 Save the `Dockerfile` from the [FusionAuth official image](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) to your computer. Edit the file. Above the paragraph labelled `###### Start FusionAuth App`, insert the code below.
 
 ```Dockerfile
-##### NEW FOR OPENTELEMETRY #######################################################################
+##### NEW FOR OPENTELEMETRY #################################
 RUN mkdir -p /var/lib/apt/lists/partial \
     && chmod 755 /var/lib/apt/lists/partial \
     && apt update \
@@ -249,7 +177,7 @@ Build the Dockerfile into a new image to use in place of the official FusionAuth
 docker build --platform linux/amd64 -t faimage .
 ```
 
-Modify the `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. You are now including the [Splunk OpenTelemetry](https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker) container in your compose file. Replace the API key and realm with yours.
+Modify the `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. You are now including the [Splunk OpenTelemetry](https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker) container in your compose file. Replace the API key and realm with yours in the `otel` service.
 
 ```docker-compose
 services:
@@ -360,6 +288,78 @@ While FusionAuth is running, you should see like the image below.
 
 <img src="../../../../../../astro/public/img/docs/operate/secure-and-monitor/splunk1.png" alt="OpenTelemetry dashboard" />
 
+
+## FusionAuth Metrics
+
+Now you know how to send Splunk Java metrics with OpenTelemetry and custom metrics with the API. Let's next consider what custom metrics you would want to send, how to map them to the various Splunk metric categories, and how to write code that uploads the metrics automatically while FusionAuth is running.
+
+### Audit Log
+
+The Audit Log contains changes to database tables. To see it, browse to <strong>System -> Audit Log</strong>. Below is an entry example:
+
+```
+Id:	47
+Created:	5/16/2024 12:43 PM SAST
+User:	workaddress/fa@simplelogin.com
+Reason:	FusionAuth User Interface
+Message:	Updated the tenant with Id [d7d09513-a3f5-401c-9685-34ab6c552453] and name [Default]
+Old value: JSON
+New value: JSON
+```
+
+### The Event Log
+
+The Event Log contains errors. To see it, browse to <strong>System -> Event Log</strong>. Below is an entry example:
+
+```
+Id:	40
+Created:	5/16/2024 12:43 PM SAST
+Type:	Debug
+
+Email debug information
+
+5/16/2024 10:43:58 AM Z DEBUG: getProvider() returning jakarta.mail.Provider[TRANSPORT,smtp,org.eclipse.angus.mail.smtp.SMTPTransport,Oracle]
+DEBUG SMTP: need username and password for authentication
+DEBUG SMTP: protocolConnect returning false, host=smtp.sendgrid.net, user=apikey, password=<null>
+DEBUG SMTP: useEhlo true, useAuth true
+DEBUG SMTP: trying to connect to host "smtp.sendgrid.net", port 587, isSSL false
+...
+```
+
+```
+Id:	20
+Created:	4/24/2024 02:04 PM SAST
+Type:	Error
+
+Webhook [https://webhook.site/60a036f9-a2a2-4646-bf58-c60778eea20d] returned response code [404] when sending [AuditLogCreate] event with Id [d13865c7-f706-4896-a322-d3f7cc63441a].
+ Response:
+null
+```
+
+### Login Records
+
+<strong>System -> Login Records</strong> lists all user logins to FusionAuth.
+
+User | User Id | Application | Application Id | Time | Location | IP address
+---|---|---|---|---|---|---
+workaddress/fa@simplelogin.com | 00000000-0000-0000-0000-000000000001 | FusionAuth | 3c219e58-ed0e-4b18-ad48-f4f92793ae32 | 6/4/2024 11:17 AM SAST | – | 172.20.0.1
+
+### Logs
+
+<strong>System -> Logs</strong> show nothing if you are running Docker. Instead, the logs are written to the terminal.
+
+
+## Mapping FusionAuth Metrics To Splunk Metrics
+
+Splunk has two sets of documentation, the [primary](https://docs.splunk.com/observability/en) and the [developer](https://dev.splunk.com/observability/docs). You need to read only the former to use Splunk with FusionAuth.
+
+[TODO](https://docs.splunk.com/observability/en/metrics-and-metadata/metric-types.html#metric-types)
+
+## Write A Custom Service To Send Data To The API
+
+TODO
+Write a node.js service or cronjob with curl or something that gets metrics from fusionauth container and sends them to splunk
+
 ## Import Data To Splunk With Logs
 
 TODO
@@ -371,7 +371,7 @@ TODO
 - OpenTelemetry Java documentation — https://github.com/open-telemetry/opentelemetry-java-instrumentation
 - Splunk OpenTelemetry Java documentation — https://docs.splunk.com/observability/en/gdi/get-data-in/application/java/get-started.html#get-started-java
 - https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile
-- Docker OpenTelemtryCollector - https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker
+- Docker OpenTelemetryCollector - https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker
 - Ports exposed by OpenTelemetry container - https://docs.splunk.com/observability/en/gdi/opentelemetry/exposed-endpoints.html
 
 ## TODO
