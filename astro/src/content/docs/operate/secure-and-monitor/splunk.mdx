@@ -35,10 +35,7 @@ Before reading this guide, please read the [FusionAuth guide to monitoring](http
 
 ## Splunk Setup
 
-@Tatenda, change the links below and clarify to readers if you don't actually need the first one, I think I took unnecessary steps.
-
-- Sign up for Splunk at https://www.splunk.com/en_us/download/splunk-cloud.html with an email address at a custom domain.
-- Splunk will email you a link to another site with a username and password. Note that this is **not** the correct site. Splunk divides its products into completely separate dashboards.
+- Don't sign up for Splunk on their homepage[https://www.splunk.com/en_us/download/splunk-cloud.html]. This is **not** the correct site. Splunk divides its products into completely separate dashboards.
 - Register for the Observability Cloud trial at https://www.splunk.com/en_us/download/o11y-cloud-free-trial.html.
 - Verify your email address with the link in the email they send you. This should also log you in to the Observability dashboard.
 - In the future, you can log in to the dashboard at https://login.signalfx.com.
@@ -297,8 +294,6 @@ Unfortunately FusionAuth has too [many metrics](https://fusionauth.io/docs/opera
 
 In this guide, you'll learn how to create a program that uses the FusionAuth API to get a metric, then upload it to Splunk. You can add any other metrics you want to this system.
 
-
-
 ## Mapping FusionAuth Metrics To Splunk Metrics
 
 Splunk has two sets of documentation, the [primary](https://docs.splunk.com/observability/en) and the [developer](https://dev.splunk.com/observability/docs). You need to read only the primary to use Splunk with FusionAuth.
@@ -329,6 +324,44 @@ graph TD
   E -- API call --> C
   E -- API call --> F(Splunk web server)
   style I fill:#111
+```
+
+Create a file called `metricDockerfile.yaml`. Insert the content below, replacing your access token and realm.
+
+```dockerfile
+FROM --platform=linux/amd64 alpine:3.19
+RUN apk add --no-cache curl
+RUN <<EOF
+
+mkdir /app
+echo "#!/bin/sh"                                              >  /app/app.sh
+echo "curl --request POST \\"                                 >> /app/app.sh
+echo "--header \"Content-Type: application/json\" \\"         >> /app/app.sh
+echo "--header \"X-SF-TOKEN: YOURTOKEN\" \\"                  >> /app/app.sh
+echo "--data \\"                                              >> /app/app.sh
+echo "'{"                                                     >> /app/app.sh
+echo "    \"gauge\": ["                                       >> /app/app.sh
+echo "        {"                                              >> /app/app.sh
+echo "            \"metric\": \"memory.docker\","             >> /app/app.sh
+echo "            \"dimensions\": { \"host\": \"server2\" }," >> /app/app.sh
+echo "            \"value\": 42"                              >> /app/app.sh
+echo "        }"                                              >> /app/app.sh
+echo "    ]"                                                  >> /app/app.sh
+echo "}' \\"                                                  >> /app/app.sh
+echo "https://ingest.YOURREALM.signalfx.com/v2/datapoint"     >> /app/app.sh
+chmod +x /app/app.sh
+
+EOF
+# ENTRYPOINT ["/app/app.sh"]
+CMD /bin/sh
+```
+
+Build the container with the command below.
+
+```sh
+docker build -f metricDockerfile.yaml --platform linux/amd64 -t metricimage .
+docker run --name metricbox metricimage
+docker run -it --name javabox -v javaimage
 ```
 
 ## Import Data To Splunk With Logs
