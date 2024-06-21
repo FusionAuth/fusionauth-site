@@ -296,7 +296,7 @@ In this guide, you'll learn how to create a program that uses the FusionAuth API
 
 ## Mapping FusionAuth Metrics To Splunk Metrics
 
-Splunk has two sets of documentation, the [primary](https://docs.splunk.com/observability/en) and the [developer](https://dev.splunk.com/observability/docs). You need to read only the primary to use Splunk with FusionAuth.
+Splunk has two sets of documentation, the [primary](https://docs.splunk.com/observability/en) and the [developer](https://dev.splunk.com/observability/docs). You need to read only the primary to use Splunk with FusionAuth. The only exception is the [documentation on the data format](https://dev.splunk.com/observability/reference/api/ingest_data/latest#endpoint-send-metrics) expected by Splunk if you're uploading data with their REST API.
 
 [TODO](https://docs.splunk.com/observability/en/metrics-and-metadata/metric-types.html#metric-types)
 
@@ -339,54 +339,65 @@ Create a file called `app.sh`. Insert the content below, replacing your Splunk a
 ```sh
 #!/bin/sh
 
-set -e  # exit on error
+# exit on error
+set -e
+
+# get login records from fusionauth
 endpoint="http://fa:9011/api/system/login-record/export"
 key="33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod"
 appId="3c219e58-ed0e-4b18-ad48-f4f92793ae32"
-dateFormat=$(echo -n "yyyy-MM-dd'T'HH:mm:ss" | jq -sRr @uri)
+dateFormat=$(echo -n "yyyy-MM-dd'T'HH:mm:ss.SSS" | jq -sRr @uri)
 end=$(date +%s)000
 start=$(($end - 3600000))
 params="applicationId=${appId}&dateTimeSecondsFormat=${dateFormat}&start=${start}&end=${end}"
 url="${endpoint}?${params}"
 echo "curl -H \"Authorization: ${key}\" -o record.zip \"$url\""
-exit 0
 curl -H "Authorization: ${key}" -o record.zip "$url"
-
 unzip record.zip -o
 cat login_records.csv
 
+# for each record, get the unix time
 tail -n +2 login_records.csv | while IFS=',' read -r userId time rest; do
   userId=$(echo "$userId" | tr -d ' "' )
-  time=$(echo "$time" | tr -d ' "')
-  echo "User Id: $userId"
-  echo "Time: $time"
+
+  time=$(echo "$time" | tr -d ' "')                      # 2024-06-21T05:14:56.123
+  time=$(echo "$time" | tr 'T' ' ')                      # 2024-06-21 05:14:56.123
+  echo "User $userId logged in at $time"
+  sec="$(date -d "$(echo $time | cut -d '.' -f 1)" +%s)" # 1718946896
+  ms="$(echo $time | cut -d '.' -f 2)"                   # 123
+
+  # make the POST data
+  data=$(cat <<EOF
+{
+	"counter": ["
+		{"
+			"metric": "login.success","
+			"dimensions": { "host": "testServer" },"
+			"value": "1"
+			"timestamp": "$sec$ms"
+        }"
+    ]"
+}
+EOF
+)
+
+  # send data to Splunk API
+  curl --request POST -H "X-SF-TOKEN: cmA" -H "Content-Type: application/json" -d "$data" "https://ingest.us1.signalfx.com/v2/datapoint"
+
 done
-
-
-# curl --request POST \
-# --header "Content-Type: application/json" \
-# --header "X-SF-TOKEN: C1-ff_BwOOfnEFs-gkv31g" \
-# --data \
-# '{"
-#     "gauge": ["
-#         {"
-#             "metric": "memory.docker","
-#             "dimensions": { "host": "server2" },"
-#             "value": 42"
-#         }"
-#     ]"
-# }' \
-# "https://ingest.us1.signalfx.com/v2/datapoint"
 ```
 
-This script gets all login records in the last 12 hours to be sure the zip file has some data. In reality, replace 3600000 by 10000 so that every ten seconds when the script runs it gets only the latest records. Note that FusionAuth confusingly uses milliseconds since 1970, instead of the epoch standard of seconds since 1970, so the script has to append `000` to the normal Unix time.
+
+https://docs.splunk.com/observability/en/gdi/other-ingestion-methods/rest-APIs-for-datapoints.html
+
+This script gets all login records in the last 12 hours to be sure the zip file has some data. In reality, replace 3600000 by 10000 so that every ten seconds when the script runs it gets only the latest records. Note that FusionAuth uses milliseconds instead of the epoch standard of seconds, so the script has to append `000` to the normal Unix time.
 
 The file returned from FusionAuth unzips to `login_records.csv`, which looks like the data below.
 
 "User Id " | "Time " | "Application Id " | "IP Address " | "City " | "Country " | "Zipcode " | "Region " | "Latitude " | "Longitude "
 ---|---|---|---|---|---|---|---|---|---
-00000000-0000-0000-0000-000000000001 | 2024-06-21T05:14:56 | 3c219e58-ed0e-4b18-ad48-f4f92793ae32 | 172.20.0.1 |  |  |  |  |  |
-00000000-0000-0000-0000-000000000001 | 2024-06-21T05:07:06 | 3c219e58-ed0e-4b18-ad48-f4f92793ae32 | 172.20.0.1 |  |  |  |  |  |
+00000000-0000-0000-0000-000000000001 | 2024-06-21T05:14:56.123 | 3c219e58-ed0e-4b18-ad48-f4f92793ae32 | 172.20.0.1 |  |  |  |  |  |
+00000000-0000-0000-0000-000000000001 | 2024-06-21T05:07:06.406 | 3c219e58-ed0e-4b18-ad48-f4f92793ae32 | 172.20.0.1 |  |  |  |  |  |
 
 The records in this file look different to those in the FusionAuth console. Only Ids are given here, not email addresses or application names.
 
@@ -396,11 +407,11 @@ Create a file called `metricDockerfile.yaml`. Insert the content below.
 
 ```dockerfile
 FROM --platform=linux/amd64 alpine:3.19
-RUN apk add --no-cache curl jq
+RUN apk add --no-cache curl jq vim
 COPY app.sh /app.sh
 RUN chmod +x app.sh
-#CMD /bin/sh
-CMD watch -n 10 /app.sh```
+CMD watch -t -n 10 /app.sh
+```
 
 Build the container with the command below.
 
@@ -418,10 +429,11 @@ TODO
 
 ## Further Reading
 
-- FusionAuth metrics — https://fusionauth.io/docs/operate/secure-and-monitor/monitor#metrics.
-- OpenTelemetry documentation — https://opentelemetry.io/docs/what-is-opentelemetry.
+- FusionAuth metrics — https://fusionauth.io/docs/operate/secure-and-monitor/monitor#metrics
+- OpenTelemetry documentation — https://opentelemetry.io/docs/what-is-opentelemetry
 - OpenTelemetry Java documentation — https://github.com/open-telemetry/opentelemetry-java-instrumentation
 - Splunk OpenTelemetry Java documentation — https://docs.splunk.com/observability/en/gdi/get-data-in/application/java/get-started.html#get-started-java
+- Splunk REST API - https://dev.splunk.com/observability/reference/api/ingest_data/latest#endpoint-send-metrics
 - https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile
 - Docker OpenTelemetryCollector - https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker
 - Ports exposed by OpenTelemetry container - https://docs.splunk.com/observability/en/gdi/opentelemetry/exposed-endpoints.html
