@@ -97,7 +97,7 @@ Each time you make a CSS change, you can run `sb int` in `fusionauth-style` and 
 
 #### Releasing CSS changes
 
-Before you merge your site changes with CSS dependencies to master:
+Before you merge your site changes with CSS dependencies to `main`:
 
 * do a CSS version release, which will bump the version (see instructions in that repo for more)
 * update the version number in `site/_includes/_head.liquid`
@@ -110,9 +110,9 @@ Before you merge your site changes with CSS dependencies to master:
 
 📝 _This section is only useful if you work for FusionAuth. Sorry!_
 
-Only `master` is ever released. You should work on a feature branch so that nothing is inadvertently released, but you must merge to `master` before you release. On every project, including this site, `master` should always be completely clean and able to be released at anytime.
+Only `main` is ever released. You should work on a feature branch so that nothing is inadvertently released, but you must merge to `main` before you release. On every project, including this site, `main` should always be completely clean and able to be released at anytime.
 
-Deploying happens automatically via a GitHub action when `master` is updated.
+Deploying happens automatically via a GitHub action when `main` is updated.
 
 ## Deploying Redirect Rules
 
