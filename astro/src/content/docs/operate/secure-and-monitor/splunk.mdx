@@ -326,43 +326,91 @@ graph TD
   style I fill:#111
 ```
 
-Create a file called `metricDockerfile.yaml`. Insert the content below, replacing your access token and realm.
+All the APIs that give you event data are documented [here](https://fusionauth.io/docs/apis). Let's get the login records every ten seconds and them to Splunk. The login API is documented [here](https://fusionauth.io/docs/apis/login#request-6). Note that the documentation says the date format is the standard Java type, but it actually doesn't support the constants like `ISO_LOCAL_DATE_TIME`. You have to manually enter the format string you want.
+
+Unfortunately all the APIs export events as ZIP files — you can't get JSON or YAML data in memory. So you are going to have to create a script that gets the zip file, extracts it, reads it, formats the entries for Splunk, and uploads them.
+
+Browse to FusionAuth, which if you are running through the default Docker setup is at http://localhost:9011. Log in and look for your application Id in <strong>System -> Login Records</strong>.
+
+Next, reveal and note the default unrestricted API key at <strong>Settings -> API Keys</strong>.
+
+Create a file called `app.sh`. Insert the content below, replacing your Splunk access token, Splunk realm, and FusionAuth application Id.
+
+```sh
+#!/bin/sh
+
+set -e  # exit on error
+endpoint="http://fa:9011/api/system/login-record/export"
+key="33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod"
+appId="3c219e58-ed0e-4b18-ad48-f4f92793ae32"
+dateFormat=$(echo -n "yyyy-MM-dd'T'HH:mm:ss" | jq -sRr @uri)
+end=$(date +%s)000
+start=$(($end - 3600000))
+params="applicationId=${appId}&dateTimeSecondsFormat=${dateFormat}&start=${start}&end=${end}"
+url="${endpoint}?${params}"
+echo "curl -H \"Authorization: ${key}\" -o record.zip \"$url\""
+exit 0
+curl -H "Authorization: ${key}" -o record.zip "$url"
+
+unzip record.zip -o
+cat login_records.csv
+
+tail -n +2 login_records.csv | while IFS=',' read -r userId time rest; do
+  userId=$(echo "$userId" | tr -d ' "' )
+  time=$(echo "$time" | tr -d ' "')
+  echo "User Id: $userId"
+  echo "Time: $time"
+done
+
+
+# curl --request POST \
+# --header "Content-Type: application/json" \
+# --header "X-SF-TOKEN: C1-ff_BwOOfnEFs-gkv31g" \
+# --data \
+# '{"
+#     "gauge": ["
+#         {"
+#             "metric": "memory.docker","
+#             "dimensions": { "host": "server2" },"
+#             "value": 42"
+#         }"
+#     ]"
+# }' \
+# "https://ingest.us1.signalfx.com/v2/datapoint"
+```
+
+This script gets all login records in the last 12 hours to be sure the zip file has some data. In reality, replace 3600000 by 10000 so that every ten seconds when the script runs it gets only the latest records. Note that FusionAuth confusingly uses milliseconds since 1970, instead of the epoch standard of seconds since 1970, so the script has to append `000` to the normal Unix time.
+
+The file returned from FusionAuth unzips to `login_records.csv`, which looks like the data below.
+
+"User Id " | "Time " | "Application Id " | "IP Address " | "City " | "Country " | "Zipcode " | "Region " | "Latitude " | "Longitude "
+---|---|---|---|---|---|---|---|---|---
+00000000-0000-0000-0000-000000000001 | 2024-06-21T05:14:56 | 3c219e58-ed0e-4b18-ad48-f4f92793ae32 | 172.20.0.1 |  |  |  |  |  |
+00000000-0000-0000-0000-000000000001 | 2024-06-21T05:07:06 | 3c219e58-ed0e-4b18-ad48-f4f92793ae32 | 172.20.0.1 |  |  |  |  |  |
+
+The records in this file look different to those in the FusionAuth console. Only Ids are given here, not email addresses or application names.
+
+The second half of the script reads in the CSV file, discards the header, and send the user Id and time of each login to Splunk.
+
+Create a file called `metricDockerfile.yaml`. Insert the content below.
 
 ```dockerfile
 FROM --platform=linux/amd64 alpine:3.19
-RUN apk add --no-cache curl
-RUN <<EOF
-
-mkdir /app
-echo "#!/bin/sh"                                              >  /app/app.sh
-echo "curl --request POST \\"                                 >> /app/app.sh
-echo "--header \"Content-Type: application/json\" \\"         >> /app/app.sh
-echo "--header \"X-SF-TOKEN: YOURTOKEN\" \\"                  >> /app/app.sh
-echo "--data \\"                                              >> /app/app.sh
-echo "'{"                                                     >> /app/app.sh
-echo "    \"gauge\": ["                                       >> /app/app.sh
-echo "        {"                                              >> /app/app.sh
-echo "            \"metric\": \"memory.docker\","             >> /app/app.sh
-echo "            \"dimensions\": { \"host\": \"server2\" }," >> /app/app.sh
-echo "            \"value\": 42"                              >> /app/app.sh
-echo "        }"                                              >> /app/app.sh
-echo "    ]"                                                  >> /app/app.sh
-echo "}' \\"                                                  >> /app/app.sh
-echo "https://ingest.YOURREALM.signalfx.com/v2/datapoint"     >> /app/app.sh
-chmod +x /app/app.sh
-
-EOF
-# ENTRYPOINT ["/app/app.sh"]
-CMD /bin/sh
-```
+RUN apk add --no-cache curl jq
+COPY app.sh /app.sh
+RUN chmod +x app.sh
+#CMD /bin/sh
+CMD watch -n 10 /app.sh```
 
 Build the container with the command below.
 
 ```sh
 docker build -f metricDockerfile.yaml --platform linux/amd64 -t metricimage .
-docker run --name metricbox metricimage
-docker run -it --name javabox -v javaimage
 ```
+
+TODO docker compose file
+
+If you have trouble calling the FusionAuth API, review the [troubleshooting tips](https://fusionauth.io/docs/apis/#troubleshooting).
 
 ## Import Data To Splunk With Logs
 
