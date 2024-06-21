@@ -77,7 +77,7 @@ shift $((OPTIND-1))
 
 printOut "-- checking if imagemagick is installed..."
 
-which -s convert
+which -s magick
 status=$?
 if [ $status -eq 1 ]; then
   echo "Installing imagemagick..."
@@ -171,8 +171,7 @@ printOut "-- Checking image properties"
 printFileAttribs
 
 printOut "-- Resizing screenshot"
-magick=`which magick`
-$magick ${absFile} -geometry 1600x ${absFile}
+magick ${absFile} -geometry 1600x ${absFile}
 
 # move to destination folder
 if [ "${destination}" != "" ]; then
