@@ -14,6 +14,8 @@ import InlineField from 'src/components/InlineField.astro';
 - [Import Data To Splunk With The OpenTelemetry Linux Collector](#import-data-to-splunk-with-the-opentelemetry-linux-collector)
   - [OpenTelemetry Dashboard](#opentelemetry-dashboard)
 - [FusionAuth Metrics](#fusionauth-metrics)
+  - [Counts, Not Details](#counts-not-details)
+  - [Which Metrics To Monitor](#which-metrics-to-monitor)
 - [Mapping FusionAuth Metrics To Splunk Metrics](#mapping-fusionauth-metrics-to-splunk-metrics)
 - [Write A Custom Service To Send Data To The API](#write-a-custom-service-to-send-data-to-the-api)
 - [Import Data To Splunk With Logs](#import-data-to-splunk-with-logs)
@@ -26,7 +28,7 @@ import InlineField from 'src/components/InlineField.astro';
 
 ## Introduction
 
-This guide explains how to connect FusionAuth to Splunk through Docker with the OpenTelemetry Connector and using the SplunkAPI, as well as which FusionAuth metrics map to what categories in Splunk and how to create a simple dashboard to show them.
+This guide explains how to connect FusionAuth to Splunk through Docker with the OpenTelemetry Connector and by using the SplunkAPI, as well as which FusionAuth metrics are useful in Splunk, and how to create a simple dashboard to show them.
 
 > [Splunk Observability Cloud is a Software as a Service (SaaS) solution for infrastructure monitoring (Splunk IM), application performance monitoring (Splunk APM), real user monitoring (Splunk RUM), and synthetic monitoring (Splunk Synthetic Monitoring). Splunk Observability Cloud also provides a direct integration with logs ingested in Splunk Cloud Platform and Splunk Enterprise through Log Observer Connect.](https://docs.splunk.com/observability/en/get-started/service-description.html)
 
@@ -298,17 +300,53 @@ While FusionAuth is running, you should see a dashboard like the image below.
 
 ## FusionAuth Metrics
 
-Now you know how to send Splunk Java metrics with OpenTelemetry and custom metrics with the API. Let's next consider what custom metrics you would want to send, how to map them to the various Splunk metric categories, and how to write code that uploads the metrics automatically while FusionAuth is running.
+Now you know how to send Splunk Java metrics with OpenTelemetry, let's next consider what custom metrics you would want to send and how to write code that uploads the metrics automatically while FusionAuth is running.
 
-Unfortunately FusionAuth has too [many metrics](https://fusionauth.io/docs/operate/secure-and-monitor/monitor#metrics) to discuss in this article. You will need to decide which are important for you to monitor by reading the documentation.
+### Counts, Not Details
 
-In this guide, you'll learn how to create a program that uses the FusionAuth API to get a metric, then upload it to Splunk. You can add any other metrics you want to this system.
+Note that Splunk is designed to monitor aggregate data — in other words, counts of events. Splunk can group those counts over time, and by dimension (location, server, or application). Splunk is **not** designed to monitor individual events with details — error messages, or the names of the most purchased products on your site.
+
+For FusionAuth, this means you should use Splunk to check **how many** people are logging in over time, not **which** people. Think of it like this: if your data can become a gauge or bar chart, it's the right sort of data.
+
+While it's true that Splunk does have a log file tracking product, and many other services, this article is discussing only the Observability Cloud.
+
+### Which Metrics To Monitor
+
+Unfortunately FusionAuth has too [many metrics](https://fusionauth.io/docs/operate/secure-and-monitor/monitor#metrics) to discuss in this article. You will need to decide which are important for you to monitor by reading the documentation. You can also create a FusionAuth webhook to notify a local Docker container to send the event to Splunk.
+
+A useful metric to start with is login counts. If this number drops from the average, it's a good sign something might be wrong with your system. In this guide, you'll learn how to create a program that uses the FusionAuth API to get the login count, then upload it to Splunk.
+
+You can add any other metrics you want to this system.
 
 ## Mapping FusionAuth Metrics To Splunk Metrics
 
 Splunk has two sets of documentation, the [primary](https://docs.splunk.com/observability/en) and the [developer](https://dev.splunk.com/observability/docs). You need to read only the primary to use Splunk with FusionAuth. The only exception is the [documentation on the data format](https://dev.splunk.com/observability/reference/api/ingest_data/latest#endpoint-send-metrics) expected by Splunk if you're uploading data with their REST API.
 
 [TODO](https://docs.splunk.com/observability/en/metrics-and-metadata/metric-types.html#metric-types)
+
+Gauge
+
+Value of a measurement at a specific point in time
+
+CPU utilization percentage of a server
+
+Cumulative counter
+
+Total number of occurrences or items since the measurement began
+
+Total number of Splunk Infrastructure Monitoring API calls served since starting the web server
+
+Counter
+
+Number of new occurrences or items since the last measurement
+
+The number of packets that fail to reach their destinations over each 24-hour period
+
+Histograms
+
+Distribution of measurements across time. Splunk Observability Cloud supports explicit bucket histograms.
+
+Response time (performance) or successful screen loads (availability)
 
 ## Write A Custom Service To Send Data To The API
 
