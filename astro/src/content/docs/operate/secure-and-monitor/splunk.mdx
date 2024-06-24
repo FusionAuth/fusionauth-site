@@ -9,8 +9,8 @@ import Aside from 'src/components/Aside.astro';
 import InlineField from 'src/components/InlineField.astro';
 
 - [Introduction](#introduction)
-- [Splunk Setup](#splunk-setup)
-- [Import Data To Splunk With The API](#import-data-to-splunk-with-the-api)
+- [Create A Splunk Account](#create-a-splunk-account)
+- [Test Your Splunk Access Token](#test-your-splunk-access-token)
 - [Import Data To Splunk With The OpenTelemetry Linux Collector](#import-data-to-splunk-with-the-opentelemetry-linux-collector)
   - [OpenTelemetry Dashboard](#opentelemetry-dashboard)
 - [FusionAuth Metrics](#fusionauth-metrics)
@@ -24,18 +24,18 @@ import InlineField from 'src/components/InlineField.astro';
   - [Login Records](#login-records)
   - [Logs](#logs)
 
-
 ## Introduction
 
-This guide explains how to connect FusionAuth to Splunk through Docker with the OpenTelemetry Connector and using the SplunkAPI, as well as which FusionAuth metrics map to what categories in Splunk and how to create a simple dashboard to them.
+This guide explains how to connect FusionAuth to Splunk through Docker with the OpenTelemetry Connector and using the SplunkAPI, as well as which FusionAuth metrics map to what categories in Splunk and how to create a simple dashboard to show them.
 
 > [Splunk Observability Cloud is a Software as a Service (SaaS) solution for infrastructure monitoring (Splunk IM), application performance monitoring (Splunk APM), real user monitoring (Splunk RUM), and synthetic monitoring (Splunk Synthetic Monitoring). Splunk Observability Cloud also provides a direct integration with logs ingested in Splunk Cloud Platform and Splunk Enterprise through Log Observer Connect.](https://docs.splunk.com/observability/en/get-started/service-description.html)
 
 Before reading this guide, please read the [FusionAuth guide to monitoring](https://fusionauth.io/docs/operate/secure-and-monitor/monitor) to understand what metrics are available.
 
-## Splunk Setup
+## Create A Splunk Account
 
-- Don't sign up for Splunk on their homepage[https://www.splunk.com/en_us/download/splunk-cloud.html]. This is **not** the correct site. Splunk divides its products into completely separate dashboards.
+First, register for a Splunk account:
+- Don't sign up for Splunk on their homepage - https://www.splunk.com/en_us/download/splunk-cloud.html. This is **not** the correct site. Splunk divides its products into completely separate dashboards.
 - Register for the Observability Cloud trial at https://www.splunk.com/en_us/download/o11y-cloud-free-trial.html.
 - Verify your email address with the link in the email they send you. This should also log you in to the Observability dashboard.
 - In the future, you can log in to the dashboard at https://login.signalfx.com.
@@ -44,11 +44,13 @@ Documentation for Splunk Observability is at https://docs.splunk.com/observabili
 
 Pricing is at https://www.splunk.com/en_us/products/pricing/observability.html. Infrastructure monitoring, Log observer connect, and Synthetic uptime monitoring are included in the Splunk Infrastructure monthly fee. Each Splunk product has a separate 14 day trial.
 
+The diagram from Splunk below shows what the Observability Cloud can monitor.
+
 <img src='../../../../../../astro/public/img/docs/operate/secure-and-monitor/splunk2.png' alt='https://docs.splunk.com/observability/en/_images/o11y-cloud-structure1.png' />
 
-## Import Data To Splunk With The API
+## Test Your Splunk Access Token
 
-Using the Splunk API to import metrics is documented [here](https://docs.splunk.com/observability/en/gdi/other-ingestion-methods/rest-APIs-for-datapoints.html#rest-api-ingest).
+The first way you are going to interact with Splunk is to test uploading custom data with their API. (Importing metrics with the API is documented [here](https://docs.splunk.com/observability/en/gdi/other-ingestion-methods/rest-APIs-for-datapoints.html#rest-api-ingest)). For this your need an access token.
 
 <Aside type='note'>
 [To authenticate API requests that send data to Splunk Observability Cloud, you must use an organization access token, not a user API access token.](https://docs.splunk.com/observability/en/admin/authentication/authentication-tokens/api-access-tokens.html)
@@ -63,13 +65,17 @@ Using the Splunk API to import metrics is documented [here](https://docs.splunk.
   - Expand the `Default` access token
   - Click <InlineField>Show Token</InlineField> and note the token
 
+<Aside type="note">
+If you mistakenly expose your default token secret there is unfortunately no way to change the value. Instead you have to disable the token from the menu on the Tokens page on the right. Then you need to create a new token of type `Ingest` to work with the API.
+</Aside>
+
 Test that you can import data with the terminal command below.
-  - Replace `<ORG_TOKEN>` with your token and `<REALM>` with your realm.
+  - Replace `yourtoken` with your token at the top and `us1` with your realm at the bottom.
 
 ```sh
 curl --request POST \
   --header "Content-Type: application/json" \
-  --header "X-SF-TOKEN: <ORG_TOKEN>" \
+  --header "X-SF-TOKEN: yourtoken" \
   --data \
   '{
       "gauge": [
@@ -80,24 +86,24 @@ curl --request POST \
           }
       ]
   }' \
-  https://ingest.<REALM>.signalfx.com/v2/datapoint
+  https://ingest.us1.signalfx.com/v2/datapoint
 ```
 
 The response should be `"OK"`.
 
-- Return to the Observability dashboard home.
+- Return to the Observability dashboard home page.
 - Browse to <strong>Metric Finder</strong>.
 - Enter `memory` in the text box and click <InlineField>Search metrics</InlineField>
 - Click <InlineField>memory.free</InlineField>
 - You should see the data point created by the command above on the chart. If you can't, try switching to the Column chart view, or run the command again with a different value.
 
-In a later section you'll learn how to use this API to import data from your FusinAuth instance.
+In a later section you'll learn how to use this API to import real data from your FusionAuth instance.
 
 ## Import Data To Splunk With The OpenTelemetry Linux Collector
 
-Instead of sending metrics manually to Splunk, you can send them automatically with OpenTelemetry. OpenTelemetry is a protocol and software that is dedicated to monitoring, measuring, processing, collecting, and sending metrics.
+Instead of sending metrics manually to Splunk, you can send them automatically with OpenTelemetry. OpenTelemetry is both a protocol and software that is dedicated to monitoring, measuring, processing, collecting, and sending metrics. In this section you are going to add OpenTelemetry to your normal FusionAuth instance.
 
-Running FusionAuth and Postgresql in Docker looks like the diagram below.
+Running FusionAuth and Postgresql in Docker usually looks like the diagram below.
 
 ```mermaid
 graph LR
@@ -146,7 +152,11 @@ Splunk's [OpenTelementry Linux collector tutorial](https://docs.splunk.com/obser
 
 Instead, you'll use the OpenTelemetry collector inside the Docker image Splunk has prepared.
 
-First you need to modify the official FusionAuth Docker image to download the OpenTelemetry Java agent and change the script that starts FusionAuth. Configuration values for Java OpenTelemetry are described [here](https://opentelemetry.io/docs/languages/java/configuration).
+First you need to modify the official FusionAuth Docker image to download the OpenTelemetry Java agent and change the script that starts FusionAuth.
+
+<Aside type="note">
+Configuration values for Java OpenTelemetry are described [here](https://opentelemetry.io/docs/languages/java/configuration).
+</Aside>
 
 Save the `Dockerfile` from the [FusionAuth official image](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) to your computer. Edit the file. Above the paragraph labelled `###### Start FusionAuth App`, insert the code below.
 
@@ -164,9 +174,9 @@ RUN chown fusionauth:fusionauth /usr/local/fusionauth/otel.jar /usr/local/fusion
     && chmod +x /usr/local/fusionauth/fusionauth-app/bin/start.sh
 ```
 
-This code edits `start.sh`, which is the command run when the container starts, to start FusionAuth using OpenTelemetry. The command takes the head of the file (all lines except the last), and writes the new command to the end of the file.
+This script first updates Ubuntu to reinstall basic software that FusionAuth removed to save space. The script then downloads the OpenTelemetry Java app, then edits `start.sh`, which is the command run when the container starts, to start FusionAuth using OpenTelemetry. The edit command takes the head of the `start.sh` file (all lines except the last), and writes the new command to the end of the file.
 
-By default, the OpenTelemetry Java agent sends data to the OpenTelemetry collector at http://localhost:4317. You changed it to send data to the Splunk container, at http://otel:4318. (Splunk uses 4317 for RPC, not HTTP).
+By default, the OpenTelemetry Java agent sends data to the OpenTelemetry collector at http://localhost:4317. The script changed it to send data to the Splunk container, at http://otel:4318. (Splunk uses 4317 for RPC, not HTTP).
 
 Build the Dockerfile into a new image to use in place of the official FusionAuth one.
 
@@ -174,7 +184,7 @@ Build the Dockerfile into a new image to use in place of the official FusionAuth
 docker build --platform linux/amd64 -t faimage .
 ```
 
-Modify the `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. You are now including the [Splunk OpenTelemetry](https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker) container in your compose file. Replace the API key and realm with yours in the `otel` service.
+Use the modified `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. You are now including the [Splunk OpenTelemetry](https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker) container in your compose file. Replace the API key and realm with yours in the `otel` service. Note that the `fa` `image` has also changed.
 
 ```docker-compose
 services:
@@ -261,27 +271,27 @@ volumes:
   fusionauth_config:
 ```
 
-Save the [sample Splunk configuration file](https://github.com/signalfx/splunk-otel-collector/blob/main/cmd/otelcol/config/collector/gateway_config.yaml) to `config.yaml` on your computer in the same folder as `docker-compose.yaml`. You are using the Splunk Collector in [gateway mode (data forwarding), not agent mode (host monitoring)](https://docs.splunk.com/observability/en/gdi/opentelemetry/opentelemetry.html#collector-intro-deploy).
+Save the [sample Splunk configuration file](https://github.com/signalfx/splunk-otel-collector/blob/main/cmd/otelcol/config/collector/gateway_config.yaml) to `config.yaml` on your computer in the same folder as `docker-compose.yaml`. You are using the Splunk Collector in [gateway mode (data forwarding), not agent mode (host monitoring)](https://docs.splunk.com/observability/en/gdi/opentelemetry/opentelemetry.html#collector-intro-deploy). The host monitoring is done by the Java agent running in the FusionAuth Docker instance.
 
-This configuration file path was added as an [environment variable](https://docs.splunk.com/observability/en/gdi/opentelemetry/environment-variables.html#collector-env-var) into the Docker compose file.
+This configuration file path was added as an [environment variable](https://docs.splunk.com/observability/en/gdi/opentelemetry/environment-variables.html#collector-env-var) in the Docker compose file above as `config.yaml`.
 
-First check if the OpenTelemetry container can send data to Splunk. After running the command below, see if any data are visible when you search for `otel` in the <strong>Metric Finder</strong> section of the Splunk website.
+First check if the OpenTelemetry container can send data to Splunk. After running the command below, see if any data are visible when you search for `otel` in the <strong>Metric Finder</strong> section of the Splunk website. Even when FusionAuth is not running, the collector will send basic data to Splunk.
 
 ```sh
 docker compose up otel
 ```
 
-If not, correct your secret key and realm in the compose file.
+If no data is sent, correct your secret key and realm in the compose file.
 
-Now that you are sure the Splunk connection works, stop the otel container and run `docker compose up` to start all three containers.
+Now that you are sure the Splunk connection works, stop the otel container with <kbd>ctrl</kbd>+<kbd>c</kbd> and run `docker compose up` to start all three containers. It may take 30 seconds for all the containers to start, but after that, the terminal output should show data being sent to Splunk.
 
 ### OpenTelemetry Dashboard
 
 Create a dashboard to view all the data from FusionAuth.
 
-Browse to https://app.us1.signalfx.com/#/dashboards. Choose the OpenTelemetry Collector dashboard from the <strong>Built-in dashboard groups</strong>. (This dashboard will appear as an option only if you have set up the Docker collector above). At the top, set time to past day to ensure that you see all possible values while testing.
+Browse to https://app.us1.signalfx.com/#/dashboards. Choose the OpenTelemetry Collector dashboard from the <strong>Built-in dashboard groups</strong>. (This dashboard will appear as an option only if you have set up the Docker collector in the previous section). At the top, set time to past day to ensure that you see all possible values while testing.
 
-While FusionAuth is running, you should see like the image below.
+While FusionAuth is running, you should see a dashboard like the image below.
 
 <img src="../../../../../../astro/public/img/docs/operate/secure-and-monitor/splunk1.png" alt="OpenTelemetry dashboard" />
 
@@ -423,7 +433,11 @@ Build the container with the command below.
 docker build -f metricDockerfile.yaml --platform linux/amd64 -t metricimage .
 ```
 
+docker exec -it fametric sh
+-v
 TODO docker compose file
+clear; docker build -f metricDockerfile.yaml --platform linux/amd64 -t metricimage .; docker compose up
+
 
 If you have trouble calling the FusionAuth API, review the [troubleshooting tips](https://fusionauth.io/docs/apis/#troubleshooting).
 
