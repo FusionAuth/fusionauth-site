@@ -7,24 +7,9 @@ subcategory: secure and monitor
 ---
 import Aside from 'src/components/Aside.astro';
 import InlineField from 'src/components/InlineField.astro';
-
-- [Introduction](#introduction)
-- [Create A Splunk Account](#create-a-splunk-account)
-- [Test Your Splunk Access Token](#test-your-splunk-access-token)
-- [Import Data To Splunk With The OpenTelemetry Linux Collector](#import-data-to-splunk-with-the-opentelemetry-linux-collector)
-  - [OpenTelemetry Dashboard](#opentelemetry-dashboard)
-- [FusionAuth Metrics](#fusionauth-metrics)
-  - [Counts, Not Details](#counts-not-details)
-  - [Which Metrics To Monitor](#which-metrics-to-monitor)
-- [Mapping FusionAuth Metrics To Splunk Metrics](#mapping-fusionauth-metrics-to-splunk-metrics)
-- [Write A Custom Service To Send Data To The API](#write-a-custom-service-to-send-data-to-the-api)
-- [Import Data To Splunk With Logs](#import-data-to-splunk-with-logs)
-- [Further Reading](#further-reading)
-- [TODO](#todo)
-  - [Audit Log](#audit-log)
-  - [The Event Log](#the-event-log)
-  - [Login Records](#login-records)
-  - [Logs](#logs)
+import Diagram1 from 'splunk_diagram1.astro';
+import Diagram2 from 'splunk_diagram2.astro';
+import Diagram3 from 'splunk_diagram3.astro';
 
 ## Introduction
 
@@ -48,7 +33,7 @@ Pricing is at https://www.splunk.com/en_us/products/pricing/observability.html. 
 
 The diagram from Splunk below shows what the Observability Cloud can monitor.
 
-<img src='../../../../../../astro/public/img/docs/operate/secure-and-monitor/splunk2.png' alt='https://docs.splunk.com/observability/en/_images/o11y-cloud-structure1.png' />
+<img src='/img/docs/operate/secure-and-monitor/splunk2.png' alt='https://docs.splunk.com/observability/en/_images/o11y-cloud-structure1.png' />
 
 ## Test Your Splunk Access Token
 
@@ -107,21 +92,7 @@ Instead of sending metrics manually to Splunk, you can send them automatically w
 
 Running FusionAuth and Postgresql in Docker usually looks like the diagram below.
 
-```mermaid
-graph LR
-  subgraph I[Your server]
-    direction LR
-    subgraph G[Docker]
-      H[(Postgresql)]
-    end
-    subgraph C[Docker]
-      direction BT
-      A(FusionAuth)
-    end
-  end
-  C --> G
-  style I fill:#111
-```
+<Diagram1></Diagram1>
 
 (You might also run ElasticSearch in another Docker container, but it's unnecessary.)
 
@@ -129,26 +100,7 @@ You can also start FusionAuth inside Docker with [OpenTelemetry for Java](https:
 
 This architecture is shown in the diagram below.
 
-```mermaid
-graph LR
-  subgraph I[Your server]
-    direction LR
-    subgraph G[Docker]
-      H[(Postgresql)]
-    end
-    subgraph C[Docker]
-      direction BT
-      D(OpenTelemetry for Java) --> A(FusionAuth)
-    end
-    subgraph E[Docker]
-      B(Splunk OpenTelemetry collector)
-    end
-  end
-  C --> G
-  C --> E
-  E --> F(Splunk web server)
-  style I fill:#111
-```
+<Diagram2></Diagram2>
 
 Splunk's [OpenTelementry Linux collector tutorial](https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/collector-configuration-tutorial/about-collector-config-tutorial.html#about-collector-configuration-tutorial) is designed for a physical machine running systemd. Docker containers don't use systemd as they are designed to host a single process only.
 
@@ -295,7 +247,7 @@ Browse to https://app.us1.signalfx.com/#/dashboards. Choose the OpenTelemetry Co
 
 While FusionAuth is running, you should see a dashboard like the image below.
 
-<img src="../../../../../../astro/public/img/docs/operate/secure-and-monitor/splunk1.png" alt="OpenTelemetry dashboard" />
+<img src="/img/docs/operate/secure-and-monitor/splunk1.png" alt="OpenTelemetry dashboard" />
 
 
 ## FusionAuth Metrics
@@ -332,43 +284,22 @@ Cumulative counter | Total number of occurrences or items since the measurement 
 Counter | Number of new occurrences or items since the last measurement
 Histogram | Distribution of measurements across time. Splunk Observability Cloud supports explicit bucket histograms.
 
-Let's consider the number of user logins every 10 seconds as an example. If you have only a few users, you could monitor the number every hour or even every day instead.
+Let's consider the number of user logins every ten seconds as an example. If you have only a few users, you could monitor the number every hour or even every day instead.
 
-You could send the number to Splunk as a gauge. Monitoring this would involve seeing that the gauge number on the dashboard doesn't change much.
-
-You could send the number of logins to Splunk as a cumulative counter. Monitoring this would involve seeing that the number is steadily increasing.
-
-You could send the number of logins as a counter. In this case, it would function the same as a gauge.
-
-Using a histogram isn't necessary for such simple data.
+- You could send the number to Splunk as a gauge. Monitoring this would involve seeing that the gauge number on the dashboard doesn't change much.
+- You could send the number of logins to Splunk as a cumulative counter. Monitoring this would involve seeing that the number is steadily increasing.
+- You could send the number of logins as a counter. In this case, the metric would function the same as a gauge.
+- Using a histogram isn't necessary for such simple data.
 
 ## Write A Custom Service To Send Data To The API
 
-Earlier you used a new Docker container to run an OpenTelemetry collector to receive data from FusionAuth. In this section you are going to create another Docker contained to call the FusionAuth API and send the metrics to Splunk.
+Earlier you used a new Docker container to run an OpenTelemetry collector to receive data from FusionAuth. In this section you are going to create another Docker container to call the FusionAuth API and send the metrics to Splunk.
 
 The system looks like the diagram below.
 
-```mermaid
-graph TD
-  subgraph I[Your server]
-    direction LR
-    subgraph G[Docker]
-      H[(Postgresql)]
-    end
-    subgraph C[Docker]
-      A(FusionAuth)
-    end
-    subgraph E[Docker]
-      B(Custom metric getter code)
-    end
-  end
-  C --> G
-  E -- API call --> C
-  E -- API call --> F(Splunk web server)
-  style I fill:#111
-```
+<Diagram3></Diagram3>
 
-All the APIs that give you event data are documented [here](https://fusionauth.io/docs/apis). Let's get the login records every ten seconds and them to Splunk. The login API is documented [here](https://fusionauth.io/docs/apis/login#request-6). Note that the documentation says the date format is the standard Java type, but it actually doesn't support the constants like `ISO_LOCAL_DATE_TIME`. You have to manually enter the format string you want.
+Let's get the login records every ten seconds and them to Splunk. All the FusionAuth APIs that give you event data are documented [here](https://fusionauth.io/docs/apis). The login API is documented [here](https://fusionauth.io/docs/apis/login#request-6). Note that the documentation says the date format is the standard Java type, but it actually doesn't support the constants like `ISO_LOCAL_DATE_TIME`. You have to manually enter the format string you want.
 
 Unfortunately all the APIs export events as ZIP files — you can't get JSON or YAML data in memory. So you are going to have to create a script that gets the zip file, extracts it, reads it, formats the entries for Splunk, and uploads them.
 
@@ -376,7 +307,7 @@ Browse to FusionAuth, which if you are running through the default Docker setup 
 
 Next, reveal and note the default unrestricted API key at <strong>Settings -> API Keys</strong>.
 
-Create a file called `app.sh`. Insert the content below, replacing your Splunk access token, Splunk realm, and FusionAuth application Id.
+Create a file called `app.sh`. Insert the content below, replacing your FusionAuth API key, and FusionAuth application Id at the top, and your Splunk access token and Splunk realm at the bottom.
 
 ```sh
 #!/bin/sh
@@ -398,45 +329,36 @@ curl -H "Authorization: ${key}" -o record.zip "$url"
 unzip record.zip -o
 cat login_records.csv
 
-# for each record, get the unix time
+# for each record, get the unix time in ms
 tail -n +2 login_records.csv | while IFS=',' read -r userId time rest; do
   userId=$(echo "$userId" | tr -d ' "' )
-
   time=$(echo "$time" | tr -d ' "')                      # 2024-06-21T05:14:56.123
   time=$(echo "$time" | tr 'T' ' ')                      # 2024-06-21 05:14:56.123
-  echo "User $userId logged in at $time"
   sec="$(date -d "$(echo $time | cut -d '.' -f 1)" +%s)" # 1718946896
   ms="$(echo $time | cut -d '.' -f 2)"                   # 123
 
   # make the POST data
   data=$(cat <<EOF
 {
-	"counter": ["
-		{"
-			"metric": "login.success","
-			"dimensions": { "host": "testServer" },"
-			"value": "1"
-			"timestamp": "$sec$ms"
-        }"
-    ]"
+  "cumulative_counter": [
+    {
+       "metric": "login.success",
+       "dimensions": { "host": "testServer" },
+       "value": 1,
+       "timestamp": ${sec}${ms}
+    }
+  ]
 }
 EOF
 )
 
   # send data to Splunk API
-  curl --request POST -H "X-SF-TOKEN: cmA" -H "Content-Type: application/json" -d "$data" "https://ingest.us1.signalfx.com/v2/datapoint"
+  curl --request POST -H "X-SF-TOKEN: yourToken" -H "Content-Type: application/json" -d "$data" "https://ingest.us1.signalfx.com/v2/datapoint"
 
 done
 ```
 
-TODO fix json in script. use -v with curl to see why it doesn't work
-then figure out how to readd otel dashboard, mention + at top right. try rerun otel in docker compse again
-discuss metrics vs detailed data in splunk
-
-
-https://docs.splunk.com/observability/en/gdi/other-ingestion-methods/rest-APIs-for-datapoints.html
-
-This script gets all login records in the last 12 hours to be sure the zip file has some data. In reality, replace 3600000 by 10000 so that every ten seconds when the script runs it gets only the latest records. Note that FusionAuth uses milliseconds instead of the epoch standard of seconds, so the script has to append `000` to the normal Unix time.
+This script gets all login records in the last hours to be sure the zip file has some data. In reality, replace 3600000 by 10000 so that every ten seconds when the script runs it gets only the latest records. Note that FusionAuth uses milliseconds instead of the epoch standard of seconds, so the script has to append `000` to the normal Unix time.
 
 The file returned from FusionAuth unzips to `login_records.csv`, which looks like the data below.
 
@@ -447,7 +369,7 @@ The file returned from FusionAuth unzips to `login_records.csv`, which looks lik
 
 The records in this file look different to those in the FusionAuth console. Only Ids are given here, not email addresses or application names.
 
-The second half of the script reads in the CSV file, discards the header, and send the user Id and time of each login to Splunk.
+The second half of the script reads in the CSV file, discards the header, and sends a value of 1 and time of each login to Splunk.
 
 Create a file called `metricDockerfile.yaml`. Insert the content below.
 
@@ -465,17 +387,51 @@ Build the container with the command below.
 docker build -f metricDockerfile.yaml --platform linux/amd64 -t metricimage .
 ```
 
-docker exec -it fametric sh
--v
-TODO docker compose file
-clear; docker build -f metricDockerfile.yaml --platform linux/amd64 -t metricimage .; docker compose up
+Edit your `docker-compose.yaml` file and add the new service below.
 
+```dockerfile
+  fametric:
+    image: metricimage
+    container_name: fametric
+    networks:
+      - db_net
+```
+
+Now run all the containers with `docker compose up`.
+
+The output should be as below. Since you logged in in the last hour, there will be one row in the exported file. And one value will be sent to Splunk.
+
+```sh
+curl -H "Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" -o record.zip "http://fa:9011/api/system/login-record/export?applicationId=3c219e58-ed0e-4b18-ad48-f4f92793ae32&dateTimeSecondsFormat=yyyy-MM-dd%27T%27HH%3Amm%3Ass.SSS&start=1719216315000&end=1719219915000"
+fametric  |   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+fametric  |                                  Dload  Upload   Total   Spent    Left  Speed
+100   310    0   310    0     0  41026      0 --:--:-- --:--:-- --:--:-- 44285
+fametric  | Archive:  record.zip
+fametric  |   inflating: login_records.csv
+fametric  | "User Id ","Time ","Application Id ","IP Address ","City ","Country ","Zipcode ","Region ","Latitude ","Longitude "
+fametric  | 00000000-0000-0000-0000-000000000001,2024-06-24T02:19:04.054,3c219e58-ed0e-4b18-ad48-f4f92793ae32,172.20.0.1,,,,,,
+fametric  |   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+fametric  |                                  Dload  Upload   Total   Spent    Left  Speed
+100   173  100     4  100   169      2    112  0:00:02  0:00:01  0:00:01   114
+```
+
+On your Splunk web interface, browse to <strong>Metric Finder</strong>. Search for `login.success`. Click on the result and on the resulting chart, set the time to `-1d` and the chart type to column.
+
+If the metric has not uploaded correctly, you can debug the container by running in a new terminal: `docker exec -it fametric sh`.
+
+Once in the container, you can alter the script with `vim /app.sh`. Add `-v` to the `curl` command to see verbose output. Run the script with `/app.sh`.
 
 If you have trouble calling the FusionAuth API, review the [troubleshooting tips](https://fusionauth.io/docs/apis/#troubleshooting).
 
-## Import Data To Splunk With Logs
+If you alter `app.sh` in your host machine and want to rerun the containers, use the command below.
 
-TODO
+```sh
+clear; docker build -f metricDockerfile.yaml --platform linux/amd64 -t metricimage .; docker compose up
+```
+
+You can other FusionAuth API calls to `app.sh` to get other metrics to send to Splunk in the same way.
+
+You now how to send Java runtime information to Splunk through OpenTelemetry, how to send any custom data to Splunk with a custom script, and how to see both metric types on a dashboard in the Splunk web interface.
 
 ## Further Reading
 
@@ -483,78 +439,7 @@ TODO
 - OpenTelemetry documentation — https://opentelemetry.io/docs/what-is-opentelemetry
 - OpenTelemetry Java documentation — https://github.com/open-telemetry/opentelemetry-java-instrumentation
 - Splunk OpenTelemetry Java documentation — https://docs.splunk.com/observability/en/gdi/get-data-in/application/java/get-started.html#get-started-java
-- Splunk REST API - https://dev.splunk.com/observability/reference/api/ingest_data/latest#endpoint-send-metrics
+- Splunk REST API — https://dev.splunk.com/observability/reference/api/ingest_data/latest#endpoint-send-metrics
 - https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile
-- Docker OpenTelemetryCollector - https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker
-- Ports exposed by OpenTelemetry container - https://docs.splunk.com/observability/en/gdi/opentelemetry/exposed-endpoints.html
-
-## TODO
-
-- Ritza brief - https://docs.google.com/document/d/1g5O1V4aHyHgqwJTt5lbPnz9rYRTJqRkYf3z2-KhcHiw/edit
-- create splunk account (get richard@ritzademo.com login from richard cooke)
-- read monitor docs and connect every single link - api, log files
-  - What Fusionauth data makes sense in a Splunk context? Only metrics or also logs etc?
-  - How does Fusionauth feed data to Splunk? Pull, Push? Both options?
-  - https://dev.splunk.com/enterprise/docs/developapps/manageknowledge/custominputs/
-- Create a basic Dashboard and show the Fusionauth metrics from fusionauth.ritza.co on Splunk
-- Document everything
-- images go in /astro/public/img/docs/operate/secure-and-monitor/splunk1.png
-
-
-### Audit Log
-
-The Audit Log contains changes to database tables. To see it, browse to <strong>System -> Audit Log</strong>. Below is an entry example:
-
-```
-Id:	47
-Created:	5/16/2024 12:43 PM SAST
-User:	workaddress/fa@simplelogin.com
-Reason:	FusionAuth User Interface
-Message:	Updated the tenant with Id [d7d09513-a3f5-401c-9685-34ab6c552453] and name [Default]
-Old value: JSON
-New value: JSON
-```
-
-### The Event Log
-
-The Event Log contains errors. To see it, browse to <strong>System -> Event Log</strong>. Below is an entry example:
-
-```
-Id:	40
-Created:	5/16/2024 12:43 PM SAST
-Type:	Debug
-
-Email debug information
-
-5/16/2024 10:43:58 AM Z DEBUG: getProvider() returning jakarta.mail.Provider[TRANSPORT,smtp,org.eclipse.angus.mail.smtp.SMTPTransport,Oracle]
-DEBUG SMTP: need username and password for authentication
-DEBUG SMTP: protocolConnect returning false, host=smtp.sendgrid.net, user=apikey, password=<null>
-DEBUG SMTP: useEhlo true, useAuth true
-DEBUG SMTP: trying to connect to host "smtp.sendgrid.net", port 587, isSSL false
-...
-```
-
-```
-Id:	20
-Created:	4/24/2024 02:04 PM SAST
-Type:	Error
-
-Webhook [https://webhook.site/60a036f9-a2a2-4646-bf58-c60778eea20d] returned response code [404] when sending [AuditLogCreate] event with Id [d13865c7-f706-4896-a322-d3f7cc63441a].
- Response:
-null
-```
-
-### Login Records
-
-<strong>System -> Login Records</strong> lists all user logins to FusionAuth.
-
-User | User Id | Application | Application Id | Time | Location | IP address
----|---|---|---|---|---|---
-workaddress/fa@simplelogin.com | 00000000-0000-0000-0000-000000000001 | FusionAuth | 3c219e58-ed0e-4b18-ad48-f4f92793ae32 | 6/4/2024 11:17 AM SAST | – | 172.20.0.1
-
-### Logs
-
-<strong>System -> Logs</strong> show nothing if you are running Docker. Instead, the logs are written to the terminal.
-
-<strong></strong>
-<InlineField></InlineField>
+- Docker OpenTelemetryCollector — https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker
+- Ports exposed by OpenTelemetry container — https://docs.splunk.com/observability/en/gdi/opentelemetry/exposed-endpoints.html
