@@ -311,16 +311,16 @@ end tell
 	- Highlights should be red rectangle with line weight 5
 - To size and compress images without losing too much quality, follow these steps:
 	1. Resize to width of 1600 in Preview.app ( or you can use `sips --resampleWidth 1600 *.png` from the command line)
-	2. Use https://tinypng.com/ to compress the image
+	2. Crop the image vertically to only display the necessary content.
 - Use https://local.fusionauth.io and use the correct kickstart to add the Silicon Valley characters ( https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/fusionauth/kickstart-development.json )
 - Make sure that the same character is used for every screenshot on a page (unless you are demonstrating a view from the admin and also user perspective)
+- The shrink-images GitHub Action will call https://tinypng.com/ to compress the images that you commit.
 
 ### Shell script for capturing sceenshots
 fa-screenshot.sh is located under `fusionauth-site/src/`. With this script you can automate following tasks:
 - Sizing and moving the Safari window
 - Capturing the screenshot
 - Resizing the screenshot image
-- Compressing the image using either pngquant or Tiny PNG
 - Moving the image to an appropriate folder
 
 ```bash
