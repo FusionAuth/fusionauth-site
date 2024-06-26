@@ -26,7 +26,7 @@ This guide will show you how to connect FusionAuth to Datadog, including instruc
 - Setting up an OpenTelemetry Linux collector to receive, process, and export telemetry data.
 - Adding export logs or events with a Python app using the Datadog API.
 
-Look at the [FusionAuth guide to monitoring](/docs/operate/secure-and-monitor/monitor) to get an overview of available metrics and choose the ones relevant to your needs. For an overview of the metrics you can collect with Datadog, review the [Datadog](https://docs.datadoghq.com/metrics/) and [OpenTelemetry](https://docs.datadoghq.com/opentelemetry/?_ga=2.63663855.1324212944.1718441678-2001470719.1718441677&_gac=1.150758018.1718441678.EAIaIQobChMI1OXNip7dhgMV_UNBAh1xfQDYEAAYASAAEgIBs_D_BwE) documentation.
+Look at the [FusionAuth guide to monitoring](/docs/operate/secure-and-monitor/monitor) to get an overview of available metrics and choose the ones relevant to your needs. For an overview of the metrics you can collect with Datadog, review the [Datadog](https://docs.datadoghq.com/metrics/) and [OpenTelemetry in Datadog](https://docs.datadoghq.com/opentelemetry/?_ga=2.63663855.1324212944.1718441678-2001470719.1718441677&_gac=1.150758018.1718441678.EAIaIQobChMI1OXNip7dhgMV_UNBAh1xfQDYEAAYASAAEgIBs_D_BwE) documentation.
 
 ## Set Up Prometheus API Access In FusionAuth
 
@@ -70,7 +70,7 @@ If you prefer to manually install the agent, expand the <InlineUIElement>Manual 
 
 ## Set Up The Datadog Agent Using Docker
 
-Now you will build a FusionAuth Docker image that has the Datadog Agent installed using the installation command.
+Now you will build a FusionAuth Docker image that has the Datadog Agent installed using the installation command from the instructions page.
 
 First, save the Dockerfile from the [FusionAuth containers repo](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) to your computer. Edit the Dockerfile file and insert the following lines above the comment "###### Start FusionAuth App".
 
@@ -86,7 +86,7 @@ RUN mkdir -p /var/lib/apt/lists/partial \
 
 ### Install Datadog Agent app ###
 ENV DD_API_KEY="<your API key from Datadog website>"
-ENV DD_SITE="us5.datadoghq.com" #<your site from Datadog website>
+ENV DD_SITE="us5.datadoghq.com" #<Your Datadog site domain>
 ENV DD_INSTALL_ONLY=false
 ENV DD_HOSTNAME="fusionauthdocker"
 RUN /bin/bash -c "/usr/local/fusionauth/install_script_agent7.sh"
@@ -101,7 +101,7 @@ RUN echo "fusionauth ALL=(ALL) NOPASSWD: /usr/sbin/service datadog-agent start" 
 RUN mkdir -p /usr/local/fusionauth/logs \
     && chown -R fusionauth:fusionauth /usr/local/fusionauth/logs
 
-# # Modify FusionAuth start script to start Datadog Agent as root and continue on failure
+## Modify FusionAuth start script to start Datadog Agent as root and continue on failure
 # RUN head -n -1 /usr/local/fusionauth/fusionauth-app/bin/start.sh > temp.sh \
 # && echo 'sudo service datadog-agent start <&- >>  /dev/null' >> temp.sh \
 # && mv temp.sh /usr/local/fusionauth/fusionauth-app/bin/start.sh \
@@ -109,8 +109,7 @@ RUN mkdir -p /usr/local/fusionauth/logs \
 # && chmod +x /usr/local/fusionauth/fusionauth-app/bin/start.sh
 ```
 
-
-This configuration downloads the Datadog Agent from https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh and sets the environment variables to complete the installation. Once the Datadog Agent is installed, the config `openmetrics.d-conf.yaml` is copied into the image to handle the OpenMetrics integration.
+This configuration downloads the Datadog Agent installation script from https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh and sets the environment variables to complete the installation. Once the Datadog Agent is installed, the config `openmetrics.d-conf.yaml` is copied into the image to handle the OpenMetrics integration.
 
 Now create an `openmetrics.d-conf.yaml` file in the same folder as the Dockerfile and add the following configuration to it:
 
@@ -128,7 +127,7 @@ instances:
 ```
 
 <Aside type="note">
- If you have restarted you FusionAuth instance you need to regenerate the API Key as mentioned <ScrollRef target="Set Up Prometheus API Access In FusionAuth" />
+ If you have restarted you FusionAuth instance you need to regenerate the API Key using the steps mentioned in <ScrollRef target="Set Up Prometheus API Access In FusionAuth" /> section.
 </Aside>
 
 Build the Dockerfile into a new image to use in place of the official FusionAuth image.
@@ -231,14 +230,14 @@ Click <InlineUIElement>Checks</InlineUIElement> in the left sidebar and select <
 
 <img src="/img/docs/operate/secure-and-monitor/datadog/datadog-agent-prometheus-config.png" alt="Datadog agent prometheus config" role="bottom-cropped" width="1200" />
 
-Add the following config for the remote FusionAuth server to the right-hand pane:
+Add the following config details for the remote FusionAuth server to the right-hand pane:
 
 ```yaml
 ## All options defined here are available to all instances.
 init_config:
   
 instances:
-  - prometheus_url: https://<Your FusionAuth host>/api/prometheus/metrics
+  - prometheus_url: https://<Your FusionAuth domain>/api/prometheus/metrics
     namespace: Prometheus_remote_metrics # namespace to identify requests in Datadog
     metrics:
       - '*'  # you can filter or add specific metrics here, see documentation.
@@ -249,7 +248,7 @@ instances:
 
 Save the config by clicking <InlineUIElement>Add check</InlineUIElement>.
 
-Restart the agent. Select <InlineUIElement>Checks</InlineUIElement> from the sidebar to visit the checks summary page and confirm that the agent is running.
+Restart the agent. Select <InlineUIElement>Checks</InlineUIElement> from the sidebar to visit the checks summary page and confirm that the collector is running.
 
 <img src="/img/docs/operate/secure-and-monitor/datadog/datadog-agent-prometheus-check-summary.png" alt="Datadog agent prometheus check summary" role="bottom-cropped" width="1200" />
 
@@ -299,7 +298,7 @@ def is_website_alive(url):
 formatted_now = now.strftime("%Y-%m-%d %H:%M:%S")
 
 
-url = "https://<Your FusionAuth host>"
+url = "https://<Your FusionAuth domain>"
 if is_website_alive(url):
     status  = f"[{ formatted_now}] - {url} is alive. "
 else:
@@ -313,7 +312,6 @@ body = EventCreateRequest(
         "FusionAuth:StatusEvent",
     ],
 )
-
 
 
 configuration = Configuration()
