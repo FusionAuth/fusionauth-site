@@ -108,6 +108,11 @@ def make_api_path(type)
     return base + type
   end
 
+  # theme has two endpoints now, one for simple and one for advanced
+  if type == "theme"
+    return [base + "themes/advanced-themes", base + "themes/simple-themes"]
+  end
+
   if type == "identity-provider-link"
     return base + "identity-providers/links"
   end
@@ -289,16 +294,33 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
 
   unless page_content
     # if we are in leaf object, we don't need to pull the page content
-    api_url = options[:siteurl] + "/docs/"+make_api_path(todash(t))
-    if options[:verbose]
-      puts "retrieving " + api_url
+
+    # almost always a single string, but could be an array in rare cases (themes)
+    api_path = make_api_path(todash(t))
+
+    api_urls = []
+    if api_path.is_a?(Array)
+      api_path.each do | path |
+        url = options[:siteurl] + "/docs/"+path
+        api_urls << url
+      end
+    else 
+      url = options[:siteurl] + "/docs/"+api_path
+      api_urls << url
     end
-
-    page_content = open_url(api_url)
-    unless page_content
-      puts "Could not retrieve: " + api_url
-
-      exit(false)
+    page_content = ""
+    api_urls.each do | api_url |
+      if options[:verbose]
+        puts "retrieving " + api_url
+      end
+  
+      tmp_page_content = open_url(api_url)
+      page_content = tmp_page_content + page_content
+      unless page_content
+        puts "Could not retrieve: " + api_url
+  
+        exit(false)
+      end
     end
   end
   
@@ -344,7 +366,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
       end
     elsif enums.include? full_field_name or nested_attributes.include? full_field_name
       if options[:verbose]
-        puts "not traversing #{full_field_name}, but checking if it is in the content of #{api_url}"
+        puts "not traversing #{full_field_name}, but checking if it is in the content of #{api_path}"
       end
       if ! page_content.include? full_field_name 
         missing_fields.append({full_field_name: full_field_name, type: field_type})
