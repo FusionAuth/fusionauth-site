@@ -137,7 +137,7 @@ printOut "-- Resizing safari window..."
 osascript <<EOD
 set theApp to "Safari"
 
-set appHeight to 1200
+set appHeight to 1100
 set appWidth to 1080
 
 tell application "Finder"
