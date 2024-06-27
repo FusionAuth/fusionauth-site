@@ -137,7 +137,7 @@ printOut "-- Resizing safari window..."
 osascript <<EOD
 set theApp to "Safari"
 
-set appHeight to 1100
+set appHeight to 1200
 set appWidth to 1080
 
 tell application "Finder"
@@ -200,4 +200,3 @@ compressUsingTinyPNG
 if [ "${destination}" != "" ]; then
     mv ${absFile} ${destination}/${filename}
 fi
-
