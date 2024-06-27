@@ -1,5 +1,5 @@
 ---
-title: Configure the SMTP Server
+title: Configure The SMTP Server
 description: Learn how to enable and configure the SMTP server.
 section: customize
 subcategory: email and messages
@@ -11,87 +11,458 @@ import InlineField from 'src/components/InlineField.astro';
 
 ## Overview
 
-Before email templates and other email features may be utilized, you must first enable and configure an SMTP server.
+Before you can use email templates and other email features in FusionAuth, you must first enable and configure a Simple Mail Transfer Protocol (SMTP) server.
 
 <Aside type="note">
-FusionAuth doesn't come bundled with an SMTP server, but expects one to be configured to enable all email based functionality ("bring your own SMTP server" or BYOSS). This design choice allows you to:
+  FusionAuth doesn't come bundled with an SMTP server, but expects one to be configured to enable all email based functionality ("bring your own SMTP server" or BYOSS). This design choice allows you to:
 
-* use whatever email sending service you'd like (some are listed below, but FusionAuth will work with any providers with an SMTP API)
-* send email from your own IPs with reputation you control
-* skip configuring an SMTP server if you are not sending email from FusionAuth
+  * use whatever email sending service you'd like (some are listed below, but FusionAuth will work with any providers with an SMTP API)
+  * send email from your own IPs with reputation you control
+  * skip configuring an SMTP server if you are not sending email from FusionAuth
 </Aside>
 
-To enable and configure the SMTP server navigate to <strong>Tenants -> Email</strong>.
+This guide briefly explains SMTP security and SMTP providers, describes in detail how to configure the most popular SMTP providers with FusionAuth, and lists best practices to consider when working with email.
 
-<img src="/img/docs/customize/email-and-messages/email-settings.png" alt="Email Settings" width="1200" role="shadowed" />
+SMTP providers handle two types of email: marketing (like newsletters and sale advertisements) and transactional (like account notifications and password resets). FusionAuth is concerned only with transactional email.
 
-Enable email by clicking on the *Enabled* toggle, and save your settings once you have completed your configuration.
+## Understand Email Security
 
+Email service providers (ESPs) such as Gmail, Yahoo Mail, and Proton Mail rely on several methods to prevent spam and phishing emails from being sent to their users. As of 2024, these methods have become even stricter. Google [requires SMTP providers to allow users to send only from their own registered domains](https://help.brevo.com/hc/en-us/articles/14925263522578-Prepare-for-Gmail-and-Yahoo-s-new-requirements-for-email-senders) to reduce spam.
 
-### SMTP Settings
+Here are the ways ESPs implement email security:
+- **Rate limits:** Emails that are received too frequently or show sudden spikes in volume are blocked.
+- **IP address block lists:** Emails received from dynamic IP addresses, those known to send spam, or those with a low reputation are added to lists that receivers use to reject mail.
+- **DNS records of email senders:** Emails must have valid records for Sender Policy Framework (SPF) (RFC 7208), Domain Keys Identified Mail (DKIM) (RFC 6376), and Domain-based Message Authentication, Reporting, and Conformance (DMARC) (RFC 7489).
+
+SPF, DKIM, and DMARC are TXT records you need to add to the DNS records for your domain. Your SMTP provider will tell you what records to add.
+
+- An SPF record looks like `v=spf1 ip4:129.6.100.200 ip6:2610:20:6005:100::20 -all` and lists the IP addresses permitted to send email on behalf of the domain. ESPs should reject emails arriving from an IP address other than these.
+- A DKIM record looks like `k=rsa;p=MIGfMA0GCSqGSIb3DQEBAQ8c7wIDAQAB` and specifies a public key. The SMTP provider will sign the sender address of an email with the corresponding private key. ESPs should reject emails with an invalid sender address signature.
+- A DMARC record looks like `v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com` and specifies the policies supported by the email sender and where to send rejected email for analysis by the sender.
+
+Together, these three records allow an ESP to know that the email server and sender are valid and what responses the sender supports if an invalid email is received.
+
+You might also encounter the term Author Domain Signing Practices (ADSP), an optional extension to DKIM that enables a domain to publish the signing practices it adopts when relaying mail on behalf of associated authors.
+
+## Which Provider To Choose?
+
+An SMTP provider is an online service that sends email on your behalf. In return for payment, an SMTP provider guarantees you a service that provides IP addresses with a high reputation.
+
+Some providers are easy to test, requiring nothing more than registering with an email address. Others require comprehensive company details, your verified phone number, domain verification, having a professional business website, and communicating with support agents. The easiest providers to configure are:
+- MailerSend — Requires only an email address.
+- Gmail — Requires phone verification, and email is intended only for small tests. Not for production use.
+- AWS SES — Requires email and domain verification.
+- Postmark — Requires email and domain verification.
+- Resend — Requires email and domain verification.
+
+Postmark had especially clear documentation and an easy setup experience.
+
+The more difficult providers are:
+- Brevo
+- Mailgun (Sinch)
+- SendGrid (Twilio)
+
+These providers automatically disable your account on signup and require you to contact their support to have it activated. This involves having a business website ready for review, explaining what your purpose in sending email is, and explaining how you obtained your recipients' email addresses. However, Mailgun and Brevo support were friendly and quick, and unlocked the FusionAuth test account after reasonable discussion. SendGrid is the most onerous provider, with full company details needed for every sender address.
+
+The worst provider is Mailchimp (Mandrill). Mailchimp was the only SMTP provider that refused to provide FusionAuth an account, giving no explanation and accusing us of sharing prohibited content. Mailchimp support was poor — entirely automated, and no human could be contacted.
+
+Be aware that providers can cancel your account at any time, without explanation or a chance to appeal. This can cripple your business.
+
+Choose an SMTP provider that you feel is trustworthy. At the time of writing, these were the scores on https://www.trustpilot.com for each provider in this guide:
+
+| Provider             | Score     | Link                                                |
+|----------------------|-----------|-----------------------------------------------------|
+| Mailgun (Sinch)      | 4.4       | https://www.trustpilot.com/review/mailgun.com       |
+| Brevo                | 4.2       | https://www.trustpilot.com/review/www.brevo.com     |
+| Postmark             | 3.5       | https://www.trustpilot.com/review/postmarkapp.com   |
+| Resend               | 3.2       | https://www.trustpilot.com/review/resend.com        |
+| MailerSend           | 2.8       | https://www.trustpilot.com/review/mailersend.com    |
+| Mailchimp (Mandrill) | 1.3       | https://www.trustpilot.com/review/www.mailchimp.com |
+| SendGrid (Twilio)    | 1.2       | https://www.trustpilot.com/review/sendgrid.com      |
+| AWS SES              | No review |                                                     |
+
+These scores, especially the low ones for Mailchimp and SendGrid, are consistent with the experiences we had writing this guide.
+
+When comparing pricing, note that some providers charge a flat monthly fee, and some charge only for the number of emails you send. One provider might be cheaper than another for small volumes of email, but more expensive for large volumes.
+
+## Can You Use A Self-Hosted SMTP Server?
+
+It is possible to send email through an SMTP server hosted on your server using an application like [Postfix](https://www.postfix.org/documentation.html), [Haraka](https://haraka.github.io/getting_started), [mailcow](https://docs.mailcow.email/), or [Mail-in-a-Box](https://mailinabox.email/guide.html). Hosting your own server will cost you nothing more than a few dollars a month for a cloud server, or nothing if you already have a server for other applications.
+
+However, over time, hosting your own SMTP server will almost certainly cost you more time and money than paying a dedicated email company to handle mail for you. Below are some things you'll need to handle if you want to self-host:
+- Deliverability: Email service providers block or filter emails from dynamic IP addresses and untrusted servers. You need to maintain IP reputation, implement SPF, DKIM, and DMARC properly, and handle feedback loops with ESPs (bounces and spam requests).
+- Scalability: As email volume grows, you need to scale your infrastructure.
+- Technical expertise: Properly configuring and maintaining an email server requires understanding both the software and the network infrastructure. You need to continuously monitor your server and ensure it is available with 100% uptime.
+- Security: Your server must be secured against unauthorized access and data must be protected against breaches, requiring regular security audits and updates.
+
+Using your own SMTP server is appropriate if you are using FusionAuth for a hobby project or a small team where all users know to check their spam folders.
+
+## SMTP Settings
+
+Below are descriptions of the SMTP settings you will configure in FusionAuth in the following section.
 
 <APIBlock>
   <APIField name="Host" optional defaults="localhost">
     The hostname of the SMTP server. This will be provided by your SMTP provider.
   </APIField>
   <APIField name="Port" optional defaults="25">
-    The port of the SMTP server. This will be provided by your SMTP provider. Ports `25`, `465` and `587` are the well known ports used by SMTP, it is possible your provider will utilize a different port.
+    The port of the SMTP server. This will be provided by your SMTP provider. Ports `25`, `465`, and `587` are well-known ports used by SMTP, but your provider may use a different port.
 
-    In most cases you will be using TLS to connect to your SMTP server, and the port will generally be `587` or `465`.
+    In most cases, you will use TLS to connect to your SMTP server and the port will be `587` or `465`.
   </APIField>
   <APIField name="Username" optional>
-    The username used to authenticate to the SMTP server. This will be provided by your SMTP provider.
+    The username used to authenticate with the SMTP server. This will be provided by your SMTP provider.
   </APIField>
   <APIField name="Change password" optional>
-    When enabled, you may modify the SMTP password, when the <InlineField>Password</InlineField> field is not displayed the current password will not be modified.
+    When enabled, you may modify the password used to authenticate with the SMTP server. When the <InlineField>Password</InlineField> field is not displayed, the current password cannot be modified.
   </APIField>
   <APIField name="Password" required>
-    The new password to use for the outgoing SMTP mail server authentication. This field is only required when <InlineField>Change password</InlineField> is checked.
+    The new password to use for outgoing SMTP mail server authentication. This field is only required when <InlineField>Change password</InlineField> is checked.
   </APIField>
   <APIField name="Security" optional>
     The security type when using an SSL connection to the SMTP server. This value should be provided by your SMTP provider.
 
-    Generally speaking, if using port `25` you will select `None`, if using port of `465` you will select `SSL` and if using port `587` you will select `TLS`. It is possible your provider will be different, follow your providers instruction.
+    Generally, you will select `None` if using port `25`, `SSL` if using port `465`, and `TLS` if using port `587`. Your provider may be different; follow your provider's instructions.
 
     * `None`
     * `SSL`
     * `TLS`
   </APIField>
   <APIField name="Default from address" optional>
-    The default From Address used in sending emails when a from address is not provided for an individual email template. This is an email address (i.e. **jared@piedpiper.com**).
+    The default `From Address` used when sending emails if a from address is not provided for an individual email template. This is an email address (for example, **jared@piedpiper.com**).
   </APIField>
   <APIField name="Default from name" optional>
-    The default From Name used in sending emails when a from name is not provided on an individual email template. This is the display name part of the email address (i.e. **Jared Dunn**  &lt;jared@piedpiper.com>).
+    The default `From Name` used when sending emails if a from name is not provided on an individual email template. This is the display name part of the email address (for example, **Jared Dunn**  &lt;jared@piedpiper.com>).
   </APIField>
   <APIField name="Additional headers" optional since="1.32.0">
-    One or more line separated SMTP headers to be added to each outgoing email. The header name and value should be separated by an equals sign. (i.e. `X-SES-CONFIGURATION-SET=Value`).
+    One or more line-separated SMTP headers to be added to each outgoing email. The header name and value should be separated by an equals sign, for example, `X-SES-CONFIGURATION-SET=Value`.
   </APIField>
   <APIField name="Debug enabled" optional since="1.37.0">
     When enabled, SMTP and JavaMail debug information will be output to the Event Log.
   </APIField>
 </APIBlock>
 
-## SMTP Providers
+## How To Configure SMTP Providers In FusionAuth
+
+To enable and configure the FusionAuth SMTP server, navigate to <strong>Tenants -> Edit -> Email</strong>.
+
+<img src="/img/docs/customize/email-and-messages/email-settings.png" alt="Email Settings" width="1200" role="shadowed" />
+
+Enable email by clicking on the *Enabled* toggle, and save your settings once you have completed your configuration.
+
+To avoid disrupting your application's current DNS records, you may want to point FusionAuth SMTP fields to a temporary subdomain. For example, if your application is hosted at `myapp.com`, you can create `testemail.myapp.com`, and point the SMTP service and FusionAuth there while testing.
+
+Strict SMTP providers require you to have a trustworthy-looking domain and website before they activate your account.
+
+There is a troubleshooting section below this one if you encounter errors while trying to send a test email.
 
 <Aside type="note">
-This information is for starting guidance only. FusionAuth connects seamlessly with many different email providers. A deep exploration of email best practices and providers is outside the scope of this document.
+The DNS records you need to add for SMTP will usually be of type `TXT`. A value of `@` for the <InlineField>Host</InlineField> of a record means the domain itself, and is a common default value.
 </Aside>
 
-### SendGrid
+<Aside type="caution">
+Be careful not to duplicate the domain name when entering DNS records. For example, if your host is `myapp.com` and the TXT record value the SMTP provider wants you to add is `send.myapp`, be sure the final value is `send.myapp.com`, and not `send.myapp.myapp.com`. Check the suffix your host attaches to the field.
+</Aside>
 
-SendGrid is a commonly used SMTP provider and integrates well with FusionAuth. To setup SendGrid, [follow these instructions](https://docs.sendgrid.com/for-developers/sending-email/integrating-with-the-smtp-api).
+<Aside type="note">
+If your DNS provider uses cPanel, alter your records at <strong>Domains -> Zone Editor</strong>.
+</Aside>
 
-Other resources related to SendGrid are linked below:
+The SMTP providers are presented in alphabetical order below.
 
-1. https://docs.sendgrid.com/for-developers/sending-email/getting-started-with-transactional-emails
-2. https://docs.sendgrid.com/for-developers/sending-email/sender-identity
-3. https://docs.sendgrid.com/ui/account-and-settings/how-to-set-up-domain-authentication
+### AWS SES
+- Create an account at https://aws.amazon.com.
+- In your account dashboard, search for SES and start the account setup wizard by clicking <strong>Get set up</strong> on the left sidebar.
+  - Add your email and domain.
+  - Verify your email when AWS emails you a link.
+  - Add the DNS records AWS SES gives you to your domain's DNS settings.
+  - After a few minutes, the SES <strong>Verify sending domain</strong> status should change from `Verification pending` to `Verified`.
+- Browse to <strong>SMTP settings</strong> in the AWS sidebar.
+- Click <InlineField>Create SMTP credentials</InlineField> and note the created SMTP credentials.
+- In your tenant's email tab in the FusionAuth web interface, set the following values:
+  - <InlineField>Host</InlineField>: `email-smtp.eu-west-1.amazonaws.com` (use your host from the SMTP settings page)
+  - <InlineField>Port</InlineField>: `587`
+  - <InlineField>Username</InlineField>: Your username from the SMTP credentials page
+  - <InlineField>Password</InlineField>: Your SMTP password from the credentials page
+  - <InlineField>Security</InlineField>: `TLS`
+  - <InlineField>Default from address</InlineField>: `me@myapp.com` (use your verified domain)
+- Click <InlineField>Send test email</InlineField> to test that the settings work. You must send to an email address verified with SES. Use the address you gave when creating your SES account.
+- Click the save icon at the top right.
 
-Using dedicated IP addresses for any SendGrid account will build email reputation over time (improving email deliverability). And lastly, to control spoofing, phishing, and spam, it is recommended to set up [SPF](https://docs.sendgrid.com/ui/account-and-settings/spf-records) and [DKIM](https://docs.sendgrid.com/ui/account-and-settings/dkim-records) records for the primary email domain (such as `example-company.com`). Emails should also be sent from an address such as `no-reply@example-company.com`.
+SES is more complicated than the other SMTP services. If the troubleshooting section at the bottom of this article does not help you, please consult the [SES documentation](https://docs.aws.amazon.com/ses/latest/dg/troubleshoot-verification.html).
+
+### Brevo (Previously Sendinblue)
+
+- Create an account at https://app.brevo.com.
+- If Brevo suspends your account for violating the terms of service, contact support on [this page](https://www.brevo.com/contact) to activate it.
+- Browse to https://app.brevo.com/senders/domain/list.
+  - Add your domain name.
+  - In your website domain manager, add the DNS records from the domain authentication page.
+  - Once you have entered the DNS records and saved, start the verification process on the Brevo page. It should take a minute.
+- Browse to https://app.brevo.com/senders/list.
+  - Add sender: `me@myapp.com` (use your domain name).
+  - In Brevo, authenticate your email address.
+- Browse to https://app.brevo.com/settings/keys/smtp and note your SMTP settings.
+- In your tenant's email tab in the FusionAuth web interface, set the following values:
+  - <InlineField>Host</InlineField>: `smtp-relay.brevo.com`
+  - <InlineField>Port</InlineField>: `587`
+  - <InlineField>Username</InlineField>: Your Brevo SMTP login from the settings page
+  - <InlineField>Password</InlineField>: Your SMTP key value from the settings page
+  - <InlineField>Security</InlineField>: `TLS`
+  - <InlineField>Default from address</InlineField>: Any address is allowed
+- Click <InlineField>Send test email</InlineField> to test that the settings work, then click the save icon at the top right.
 
 ### Gmail
 
-Gmail is a commonly used SMTP service. Gmail is not recommended for production use, since it has a [number of limits](https://support.google.com/a/answer/166852). However, it can be useful to test email functionality.
+As well as being a popular ESP, Gmail can be used by programs to send email through SMTP. Gmail is not recommended for production use, since it has a [number of limits](https://support.google.com/a/answer/166852). However, it can be useful to test email functionality.
 
-For Gmail, use [application passwords](https://support.google.com/accounts/answer/185833), otherwise you may get a generic `Unable to send email via JavaMail / Prime Messaging Exception` error.
+For Gmail, use [application passwords](https://support.google.com/accounts/answer/185833) or you may get a generic `Unable to send email via JavaMail / Prime Messaging Exception` error. The application passwords support article says you need to enable two-factor authentication, then create an app password on the security tab. However, there is no `App password` setting on the tab. You need to browse to https://myaccount.google.com/apppasswords manually to create one.
 
+- In your tenant's email tab in the FusionAuth web interface, set the following values:
+  - <InlineField>Host</InlineField>: `smtp.gmail.com`
+  - <InlineField>Port</InlineField>: `587`
+  - <InlineField>Username</InlineField>: Your full Gmail address (including @gmail.com)
+  - <InlineField>Password</InlineField>: Your app password (including spaces)
+  - <InlineField>Security</InlineField>: `TLS`
+  - <InlineField>Default from address</InlineField>: Your full Gmail address
+- Click <InlineField>Send test email</InlineField> to test that the settings work, then click the save icon at the top right.
+
+### Mailchimp (Previously Mandrill)
+
+Mailchimp is currently integrating its transactional email marketing plugin, Mandrill, into its main brand. At the time of writing, you need to create an account with Mailchimp, then log in to Mandrill afterwards.
+
+Mailchimp refused to provide FusionAuth with an account while writing this article. The steps below should work, but we were unable to send a test email to be certain.
+
+- Sign up for an account at https://login.mailchimp.com/signup/?entrypoint=mandrill&locale=en.
+- If Mailchimp suspends your account for violating the terms of service, click <strong>View issues</strong> at the top of the Mailchimp website, then <InlineField>Resolve</InlineField> at the bottom of the page to contact support.
+- Log in to https://mandrillapp.com/settings/sending-domains and add your domain name in the text field at the bottom of the page.
+- At the bottom of the page click <InlineField>View details</InlineField> for each record that needs to be verified.
+  - In your website domain manager, add the DNS records from the domain authentication page.
+  - Once you have entered the DNS records and saved, start the verification process on the Mailchimp page. It should take a minute.
+- Browse to https://mandrillapp.com/settings/index and note your SMTP settings. Create a new API key at the bottom of the page.
+- In your tenant's email tab in the FusionAuth web interface, set the following values:
+  - <InlineField>Host</InlineField>: `smtp.mandrillapp.com`
+  - <InlineField>Port</InlineField>: `587`
+  - <InlineField>Username</InlineField>: Enter anything
+  - <InlineField>Password</InlineField>: Your API key
+  - <InlineField>Security</InlineField>: `TLS`
+  - <InlineField>Default from address</InlineField>: Use an address at your domain
+- Click <InlineField>Send test email</InlineField> to test that the settings work, then click the save icon at the top right.
+
+### MailerSend
+
+- Create an account at https://app.mailersend.com.
+- Browse to [Email -> Domains](https://app.mailersend.com/domains) and click <InlineField>Manage</InlineField> on the trial domain MailerSend created for you.
+- Under <strong>SMTP</strong>, click <InlineField>Generate new user</InlineField> and then enter the SMTP name for the user.
+- MailerSend will generate the user credentials and you can save them.
+- In your tenant's email tab in the FusionAuth web interface, set the following values:
+  - <InlineField>Host</InlineField>: `smtp.mailersend.net`
+  - <InlineField>Port</InlineField>: `587`
+  - <InlineField>Username</InlineField>: Your username from the User page
+  - <InlineField>Password</InlineField>: Your password from the User page
+  - <InlineField>Security</InlineField>: `TLS`
+  - <InlineField>Default from address</InlineField>: Use your MailerSend trial, such as `fa@trial-o89qngkvfrwlwr32.mlsender.net`
+- Click <InlineField>Send test email</InlineField> to test that the settings work, then click the save icon at the top right.
+- To use your real domain, browse to [Email -> Domains](https://app.mailersend.com/domains).
+  - Click <InlineField>Add domain</InlineField>.
+  - On the <strong>Domain verification</strong> page, you are given DNS records to add to your domain.
+  - In your domain manager website, add these records.
+  - Once you have entered the DNS records and saved, start the verification process at the bottom of the MailerSend page. It should take a minute and you will be emailed when verification is done.
+  - Click <InlineField>Generate new user</InlineField> for this domain and use the SMTP details in FusionAuth.
+
+### Mailgun (Sinch)
+
+- Create an account at https://signup.mailgun.com/new/signup.
+- If you are only testing Mailgun, you can use the sandbox domain name Mailgun creates for you to send emails. If you have paid for an account, you should add and verify your company's real domain.
+- Add your domain name under <strong>Sending -> Add new domain</strong> in the Mailgun dashboard at https://app.mailgun.com/mg/sending/new-domain.
+  - In your domain manager website, add the DNS records from the domain authentication page.
+  - Once you have entered the DNS records and saved, start the verification process on the Mailgun page. It should take a minute.
+- If you are using an unpaid account, you need to add authorized email receivers. Browse to <strong>Domains -> Overview</strong> and ensure the sandbox domain is selected. Add the email address where you want to receive a test email from FusionAuth.
+  - Click the verification link in the email you receive to authorize your address.
+- Browse to https://app.mailgun.com/mg/sending/domains. Click the gear icon to the right of your domain name and select <InlineField>Settings</InlineField> to browse to a page like https://app.mailgun.com/app/sending/domains/myapp.com/settings. Select the <InlineField>SMTP credentials</InlineField> tab.
+- In your tenant's email tab in the FusionAuth web interface, set the following values:
+  - <InlineField>Host</InlineField>: `smtp.mailgun.org`
+  - <InlineField>Port</InlineField>: `587`
+  - <InlineField>Username</InlineField>: Your login name. If using an unpaid account you must use the sandbox domain.
+  - <InlineField>Password</InlineField>: Get this by pushing <InlineField>Reset password</InlineField> in Mailgun and copying the value you are given.
+  - <InlineField>Security</InlineField>: `TLS`
+  - <InlineField>Default from address</InlineField>: Use your Username value from above
+- Click <InlineField>Send test email</InlineField> to test that the settings work, then click the save icon at the top right. Enter your authorized email address for the test email, so you can test it arrives.
+
+### Postmark
+
+- Create an account at https://account.postmarkapp.com/sign_up and enter your domain name.
+- Verify your email address.
+- Browse to https://account.postmarkapp.com/signature_domains.
+  - Click <strong>DNS Settings</strong> above your domain name.
+  - In your domain manager website, add the DNS records from the domain authentication page.
+  - Once you have entered the DNS records and saved, start the verification process on the Postmark page. It should take a minute.
+- To see your SMTP settings, browse to https://account.postmarkapp.com/servers, then click <strong>My First Server -> Default Transactional Stream -> Setup Instructions -> SMTP</strong>.
+- In your tenant's email tab in the FusionAuth web interface, set the following values:
+  - <InlineField>Host</InlineField>: `smtp.postmarkapp.com`
+  - <InlineField>Port</InlineField>: `587`
+  - <InlineField>Username</InlineField>: Your username from the settings page
+  - <InlineField>Password</InlineField>: Your password from the settings page
+  - <InlineField>Security</InlineField>: `TLS`
+  - <InlineField>Default from address</InlineField>: Any address is allowed
+- Click <InlineField>Send test email</InlineField> to test that the settings work, then click the save icon at the top right.
+
+While in the Postmark sandbox mode before account approval, you may not send emails to addresses outside your domain. These addresses will be shown in the <strong>Activity</strong> tab of your server on Postmark.
+
+### Resend
+
+- Create an account at https://resend.com.
+- Browse to https://resend.com/domains.
+- In your website domain manager, add the records from Resend at the link above.
+  - You need to set only the DKIM and SPF fields for testing. The DMARC field is optional and required only for your production server.
+  - Once you have entered the DNS records and saved, return to https://resend.com/domains and start the verification process. It should take a few minutes.
+- Browse to https://resend.com/api-keys and create a key with sending access only.
+- Browse to https://resend.com/settings/smtp and note your SMTP details.
+- In your tenant's email tab in the FusionAuth web interface, set the following values:
+  - <InlineField>Host</InlineField>: `smtp.resend.com`
+  - <InlineField>Port</InlineField>: `587`
+  - <InlineField>Username</InlineField>: `resend`
+  - <InlineField>Password</InlineField>: Your API key
+  - <InlineField>Security</InlineField>: `TLS`
+  - <InlineField>Default from address</InlineField>: Use an email address at your domain
+- Click <InlineField>Send test email</InlineField> to test that the settings work, then click the save icon at the top right.
+
+For an overview of all the records Resend asks you to set on your domain, please read their [documentation](https://resend.com/docs/dashboard/domains/introduction). For more general information, read the [Resend documentation on SMTP](https://resend.com/docs/send-with-smtp).
+
+### SendGrid (Twilio)
+
+- Create an account at https://signup.sendgrid.com.
+- Verify your email address.
+- Browse to https://app.sendgrid.com/settings/sender_auth/senders/new and create a new sender.
+  - Enter all company details and click <InlineField>Create</InlineField>.
+  - Verify your sender email address.
+- Browse to https://app.sendgrid.com/settings/sender_auth and under <strong>Authenticate Your Domain</strong>, click <InlineField>Get Started</InlineField>.
+  - In your domain manager website, add the DNS records from the domain authentication page.
+  - Once you have entered the DNS records and saved, start the verification process on the SendGrid page. It should take a minute.
+- To see your SMTP settings, browse to https://app.sendgrid.com/guide/integrate/langs/smtp.
+  - Create an API key.
+- In your tenant's email tab in the FusionAuth web interface, set the following values:
+  - <InlineField>Host</InlineField>: `smtp.sendgrid.net`
+  - <InlineField>Port</InlineField>: `587`
+  - <InlineField>Username</InlineField>: apikey
+  - <InlineField>Password</InlineField>: Your API key from the settings page
+  - <InlineField>Security</InlineField>: `TLS`
+  - <InlineField>Default from address</InlineField>: Your verified sender created earlier
+- Click <InlineField>Send test email</InlineField> to test that the settings work, then click the save icon at the top right.
+
+## Troubleshoot
+
+Below are some common errors you might get when configuring SMTP and how to fix them.
+
+### Authentication Error
+
+```text
+Unable to send email via JavaMail
+
+Prime Messaging Exception
+535 Authentication failed.
+```
+
+This error indicates that your username or password is incorrect. Re-enter them carefully with no excess whitespace and try again.
+
+If the error looks like the one below, you need to set up a [Google application password](https://support.google.com/accounts/answer/185833).
+
+```text
+Prime Messaging Exception
+535-5.7.8 Username and Password not accepted. For more information, go to
+535 5.7.8  https://support.google.com/mail/?p=BadCredentials
+```
+
+### Account Suspended
+
+```text
+Unable to send email via JavaMail
+
+Prime Messaging Exception
+502 5.7.0 Your SMTP account is not yet activated. Please contact us at contact@sendinblue.com to request activation.
+```
+
+Some providers automatically disable your account at registration. Contact support at your provider to have it activated.
+
+### Socket Timeout
+
+```text
+Error:
+
+Unable to send email via JavaMail
+
+Prime Messaging Exception
+Exception reading response
+Cause: SocketTimeoutException: Read timed out
+```
+
+You may need to change the port number. Try `587`.
+
+### Domain Not Verified
+
+```text
+Unable to send email via JavaMail
+
+Prime Messaging Exception
+450 The resend.com domain is not verified. Please, add and verify your domain on https://resend.com/domains
+```
+
+You need to verify your domain with your SMTP provider by setting DNS records on your web host.
+
+Be aware that DNS records take time to change. If you make a change to a record that your SMTP provider needs to validate, you may have to wait an hour to a day for caches to refresh before you can use the new value.
+
+### Email Address Not Verified
+
+```text
+Unable to send email via JavaMail
+
+Prime Messaging Exception
+554 Message rejected: Email address is not verified. The following identities failed the check in region EU-WEST-1: address/fa@simplelogin.com
+```
+
+```text
+Unable to send email via JavaMail
+
+Prime Messaging Exception
+421 Domain fa.dns-dynamic.net is not allowed to send: Free accounts are for test purposes only. Please upgrade or add the address to authorized recipients in Account Settings.
+```
+
+This error is only likely if you use AWS or Mailgun, which require your sender address to be verified when testing until your service leaves the testing sandbox. To fix this error, send the FusionAuth test email to the same address that you verified when creating the SES service in AWS or add the address to the list of authorized recipients in Mailgun.
+
+### Email Doesn't Arrive
+
+Try the following:
+- Wait longer.
+- Check that you entered the receiver email address correctly.
+- Email an address that is authorized and verified by your SMTP provider, such as the one on your authenticated domain that you used to register your account. Check if the provider has an authorized recipient section and add the address there.
+- Check if your SMTP provider received the request and the status is not `Bounced`.
+- Check your spam folder in your email client, or other folders if you have filters enabled.
+- Disable webhooks in FusionAuth, in case a failed webhook is causing complications.
+
+## SMTP Best Practices
+
+This section lists some recommendations by SMTP providers for transactional emails. Your primary aim should be to keep your sender reputation high to avoid emails being marked as spam.
+
+- Ensure that you add all SPF, DKIM, DMARC, and MX records to your DNS records.
+- For extra trustworthiness and brand building, set up Brand Indicators for Message Identification (BIMI), which enables email inboxes to display a brand’s logo next to the company’s authenticated email messages.
+- Send emails only to people who have requested to receive them. Always first send a confirmation link to confirm their address is valid.
+- Follow your SMTP provider's documentation to configure analytics for your emails (click tracking).
+- Track your emails and adjust your sending based on feedback from ESPs and recipients. Don't send emails to recipients who have unsubscribed or complained of spam. Monitor the results of email sending on your SMTP provider's analytics web page.
+- Send as few emails to users as possible to avoid emails being marked as spam. Keep your email content as short as possible to avoid wasting your users' time.
+- Always include a link to unsubscribe in your emails.
+- Always test new email templates by emailing them to yourself on a test FusionAuth server before enabling them in production. Check that fields are populated correctly.
+- Send multipart emails using both text and HTML or text only. ESPs do not trust HTML-only email and block images by default. Preview how your emails look with tools like [Litmus](https://www.litmus.com/email-testing).
+- Too many links and images trigger spam flags at ESPs. Misspellings and spammy words ("buy now!", "Free!") are spam flags, as are ALL CAPS AND EXCLAMATION MARKS!!!!!!!!!!!!!
+- Don't use URL shortening services for links. Use your domain's full URL.
+- The domains in the `from` field, `return-path`, and `message-id` should match the domain you are sending from.
+- Send transactional and marketing emails through different IP addresses, as marketing email is more likely to be marked as spam. FusionAuth uses only transactional email.
+- For similar reasons, send your transactional email and your marketing email through different subdomains. Your domain and your IP address both have reputations with ESPs.
+- Do not use a `noreply` email address as your sender. Instead, route all customer replies to your support team.
+
+### Shared IP Addresses
+
+Most SMTP providers allow you to send through an individual IP address dedicated to your account or an IP address (or pool of addresses) shared by multiple SMTP accounts. If you are sending low volumes of email (less than 5000 per day), a shared IP address is a good choice. Shared addresses are less expensive than dedicated addresses. The address is already known and trusted by ESPs, so your emails are unlikely to be sent to spam folders.
+
+If an SMTP account starts sending spam and decreases the address's reputation, the SMTP provider will take action, either canceling the client's account or moving them to a lower-reputation IP address pool.
+
+Mailgun recommends one dedicated IP address for every million messages sent per month.
