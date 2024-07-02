@@ -4,13 +4,14 @@ description: Learn about how FusionAuth handles logout and session management.
 navcategory: developer
 section: lifecycle
 subcategory: authenticate users
-codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-express-web/main
-centralizedCodeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node-centralized-sessions/main
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-example-node-centralized-sessions/main
 ---
 import Aside from 'src/components/Aside.astro';
 import Field from 'src/components/Field.astro';
+import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
+import JSON from 'src/components/JSON.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
 import ApplicationManagedSessionsStart from 'src/diagrams/docs/lifecycle/authenticate-users/application-managed-sessions-start.astro';
 import ApplicationManagedSessionInvalid from 'src/diagrams/docs/lifecycle/authenticate-users/application-managed-session-invalid.astro';
@@ -56,9 +57,9 @@ Both of these applications delegate authentication to FusionAuth. Let's explore 
 
 There are three types of sessions mentioned in this document:
 
-* An **application session**. This is created after FusionAuth has authenticated a user and the application has completed the token exchange. How this session works (cookie, database entry) is specific to the web or mobile application.
-* A **FusionAuth SSO session**. This is created when a user checks <InlineUIElement>Keep me signed in </InlineUIElement>, or that element is automatically checked. This session is only available when using the [hosted login pages](/docs/get-started/core-concepts/integration-points#hosted-login-pages).
-* A **centralized session**. This is representation of an application session registered with FusionAuth. This is done with a refresh token and works with either an API or the hosted login pages.
+* An **application session** is created after FusionAuth has authenticated a user and the application has completed the token exchange. How this session works (cookie, database entry) is specific to the web or mobile application.
+* A **FusionAuth SSO session** is created when a user checks <InlineUIElement>Keep me signed in </InlineUIElement>, or that element is automatically checked. This session is only available when using the [hosted login pages](/docs/get-started/core-concepts/integration-points#hosted-login-pages).
+* A **centralized session** is equivalent to a refresh token and is a representation of an application session registered with FusionAuth. This session is available using the API or the hosted login pages.
 
 ## Types Of Session Management
 
@@ -72,7 +73,11 @@ This has a number of benefits. With centralized session management, you can:
 
 The downside is that it is more complicated and requires tighter integration with FusionAuth's APIs.
 
-The alternative is to use application managed sessions using the front channel logout. In this situation, FusionAuth doesn't know about the state of the application sessions and relies on the applications to manage them. No sessions will appear on the <Breadcrumb>Sessions</Breadcrumb> tab and you won't be able to revoke sessions via API, though you will still be able to request session revocation, as you'll see later. With this option session timeouts are managed by each application.
+The alternative is to use application managed sessions using the front channel logout. In this situation, FusionAuth doesn't know about the state of the application sessions and relies on the applications to manage them. It has the following attributes:
+
+* No sessions will appear on the <Breadcrumb>Sessions</Breadcrumb> tab.
+* You won't be able to revoke sessions via API, though you will still be able to request session revocation. 
+* Session timeouts are managed by each application.
 
 ### Similarities
 
@@ -105,14 +110,15 @@ Let's walk through some scenarios.
 
 Let's consider a centralized session store and how that would be implemented.
 
-* Make sure to set up the ChangeBank and ChangeBank Forum applications correctly. Make sure the Application has the <InlineUIElement>Refresh Grant</InlineUIElement> toggled. The <InlineUIElement>Generate refresh tokens</InlineUIElement> setting must be enabled as well.
-TODO Screenshot
-* Each time you build the authorization URL, request these scopes:
+* Make sure to set up the ChangeBank and ChangeBank Forum applications correctly. Make sure the Application has the <InlineField>Refresh token</InlineField> checkbox toggled in the <InlineUIElement>Enabled Grants</InlineUIElement> section. The <InlineField>Generate refresh tokens</InlineField> setting must be enabled as well.
+![Configuration of an application to allow the Refresh grant to be used.](/img/docs/lifecycle/authenticate-users/application-configuration-centralized-session-oauth.png)
+* Each time you build the authorization URL, request the following scopes. Your `scope` parameter will look something like this: `...&scope=openid%20offline_access&`.
   * `offline_access` which creates the refresh token
   * `openid` which asks for an Id token
-* In the ChangeBank and ChangeBank Forum applications, create an **application session** using whatever session solution your web or mobile app framework suggests. Find and store the refresh token Id in this session. This is available in the `sid` parameter in the Id token. It is also available in the access token, but you should prefer the Id token because the Id token should be consumed by the client, whereas the access token is presented for resource access. You should prefer the refresh token Id instead of the refresh token value because the Id will not change even when using one-time use refresh tokens.
-* Whenever a request comes in to either application, make a call to the [Retrieve Refresh Tokens API](/docs/apis/jwt#retrieve-refresh-tokens) to check for the status of the refresh token. This can be done either against the REST API or using one of [the FusionAuth client libraries](/docs/sdks). You'll pass the Id of the refresh token.
-* When a user logs out from ChangeBank, revoke the refresh token. You can use the [Revoke Refresh Tokens API](/docs/apis/jwt#revoke-refresh-tokens).
+* In the ChangeBank and ChangeBank Forum applications, create an **application session** using whatever session solution your web or mobile app framework suggests. Find and store the refresh token Id in this session. The Id is available in the `sid` parameter in the Id token. It is also available in the access token. You should prefer the refresh token Id instead of the refresh token value because the Id will not change even when using one-time use refresh tokens.
+  * You could also store this Id in a HttpOnly cookie instead of in a session.
+* Whenever a request comes in to either application, call the [Retrieve Refresh Tokens API](/docs/apis/jwt#retrieve-refresh-tokens) to check for the status of the refresh token. This can be done either against the REST API or using one of [the FusionAuth client libraries](/docs/sdks). Pass the Id of the refresh token. If the refresh token doesn't exist or is invalid, deny access and invalidate the application session.
+* When a user logs out from either application, revoke the refresh token. You can use the [Revoke Refresh Tokens API](/docs/apis/jwt#revoke-refresh-tokens). You could revoke one or more refresh tokens based on your business logic. See [Flexible Revocation](#flexible-revocation) for more.
 
 ### Login Request Flow
 
@@ -130,13 +136,13 @@ TODO Screenshot
 
 As mentioned above on each request, you need to check whether or not the refresh token associated with the authentication event on the current device is valid. One way to approach that is with middleware. Here's you you can add middleware to an Express application which will check refresh token validity.
 
-<RemoteCode url={frontmatter.centralizedCodeRoot + "/changebankforum/src/index.ts"}
+<RemoteCode url={frontmatter.codeRoot + "/changebankforum/src/index.ts"}
   lang="ts"
   tags="redirectmiddleware"/>
 
 The `redirectFunction` is defined in a separate file, which retrieves the Id of the refresh token as a cookie. In this case the refresh token Id is stored as a cookie, but it could also be stored in a session.
 
-<RemoteCode url={frontmatter.centralizedCodeRoot + "/changebankforum/src/redirectMiddleware.js"}
+<RemoteCode url={frontmatter.codeRoot + "/changebankforum/src/redirectMiddleware.js"}
   lang="ts"
   />
 
@@ -158,29 +164,46 @@ Handling this kind of complex, flexible revocation scenario is an example of the
 
 Here's example code for the Changebank logout, where all tokens for the user are revoked.
 
-<RemoteCode url={frontmatter.centralizedCodeRoot + "/changebank/src/index.ts"}
+<RemoteCode url={frontmatter.codeRoot + "/changebank/src/index.ts"}
   lang="ts"
   tags="endsession"/>
 
 Here's example typescript code for the Changebank Forum logout. Here you revoke only the refresh token whose Id was previously stored.
 
-<RemoteCode url={frontmatter.centralizedCodeRoot + "/changebankforum/src/index.ts"}
+<RemoteCode url={frontmatter.codeRoot + "/changebankforum/src/index.ts"}
   lang="ts"
   tags="endsession"/>
 
 TODO review inlinue ui element vs field
 
-There are other possibilities too, beyond complex logout. You can also revoke refresh tokens from other systems using the SDKs and APIs. For example, if you are building or augumenting a customer service application, you could add a button to 'log the user out' to the user details screen. Or if you encountered a [suspicious login based on a FusionAuth webhook](/docs/extend/events-and-webhooks/events/user-login-suspicious), you could revoke the refresh tokens for the user and force them to re-authenticate to ChangeBank but not to the ChangeBank Forum.
+There are other possibilities too, beyond complex single-user logout. Since, you can revoke refresh tokens from other systems using the SDKs and APIs, you can code up custom session expiration logic. Scenarios include:
+
+* When building or augumenting a customer service application, adding a button to 'log the user out' to the user details screen.
+* If you encountered a [suspicious login based on a FusionAuth webhook](/docs/extend/events-and-webhooks/events/user-login-suspicious), you could revoke the refresh tokens for the user and force them to re-authenticate to ChangeBank but not to the ChangeBank Forum.
+* You could revoke the refresh tokens for all users in a group or with a custom attribute if one logs out.
+* You can revoke access for a set of users on a schedule, forcing them to login once a week or once every two weeks.
 
 ### Use With The Login API
 
-You can also create refresh tokens and use centralized sessions with the [Login API](/docs/apis/login). This is useful if you don't want to use the hosted login pages. To use this, configure the Application to allow refresh tokens using the Login API.
+You can also create refresh tokens and use centralized sessions with the [Login API](/docs/apis/login). This is useful if you don't want to use the hosted login pages for your login workflows, but instead want to create your own user interface.
 
-TODO screenshot
+To get refresh tokens with the Login API, configure the Application to allow refresh tokens using the Login API. Make sure the Application has the <InlineField>Enable JWT refres</InlineField> checkbox toggled. The <InlineField>Generate refresh tokens</InlineField> setting must be enabled as well.
+
+![Configuration of an application to allow the Login API to issue refresh tokens.](/img/docs/lifecycle/authenticate-users/application-configuration-centralized-session-login-api.png)
 
 You'll need to build the same refresh token validity check and revocation logic as above into the logout functionality of your application.
 
 ### Timeouts And Session Lifetimes
+
+A session can be created by using the Login API, as long as <InlineField>[Generate refresh tokens](/docs/get-started/core-concepts/applications#security)</InlineField> is enabled, or by completing the [OAuth Authorization Code grant](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant) when the `offline_access` scope is requested.
+
+A session will end when:
+
+* It expires.
+* It is deleted using the [JWT APIs](/docs/apis/jwt#revoke-refresh-tokens).
+* Optionally, as a result of a user changing their password or having their account locked.
+
+When a refresh token is no longer valid, the associated refresh token can't be used to create new JWTs. The JWTs themselves are valid until they expire.
 
 The timeout of refresh tokens are controlled at the Tenant level, under <Breadcrumb>Tenants -> Your Tenant -> JWT</Breadcrumb> in the <InlineUIElement>Refresh token settings</InlineUIElement>. They can be set to the second. Timeouts can be overriden at the Application level as well.
 
@@ -278,6 +301,8 @@ Here's [an example application with application managed sessions](https://github
 
 Let's discuss the FusionAuth SSO session. This session is managed by FusionAuth and is only available if you are using the hosted login pages. It is not available if you are using APIs, though there is an [open feature request](https://github.com/fusionauth/fusionauth-issues/issues/1515).
 
+You can use FusionAuth with or without the SSO session. If you do not use the SSO session, users will be required to authenticate every time their application session expires or if they switch to a different application.
+
 To enable the SSO session, set the `rememberDevice` parameter on the login page to `true`. This value can be enabled by the end user (using a checkbox), or hard coded as a hidden field in the form. You'll also need configure a lifetime for this session, under <Breadcrumb>Tenants -> Your Tenant -> OAuth</Breadcrumb>. The <InlineUIElement>Session Timeout</InlineUIElement> should be set to a non-zero number.
 
 <Aside type="note">
@@ -300,19 +325,23 @@ Always make sure to revoke the SSO session, as represented by a refresh token, i
 
 ### Capturing Additional Information At Login
 
-You can pass additional information about the FusionAuth SSO session by using the `metaData.device.description` attribute. This can be added as a hidden form field. 
-
-Here's an example:
+You can pass additional information about the login when using the FusionAuth SSO session by using the `metaData.device.description` attribute. This is added as a hidden form field. Here's an example of what you'd add to the login form if you wanted to capture `yourdatahere`:
 
 ```
 [@helpers.hidden name="metaData.device.description" value="yourdatahere" /]
 ```
 
-This metadata is only available to the SSO session and is not stored in any other refresh tokens. The values can be read by retrieving the SSO refresh token, which is a refresh token with no associated application Id. 
+You can also write JavaScript on the hosted login pages ([only when using advanced themes](https://fusionauth.io/docs/customize/look-and-feel/advanced-theme-editor)) 
+
+This metadata is only available to the SSO session and is not stored in any other refresh tokens. The values can be read by retrieving the SSO refresh token, which is a refresh token with no associated application Id. Here's an example of what that looks like:
+
+<JSON title="Example Response JSON For a Single Refresh Token With Custom Data" src="jwt/refresh-token-custom-data-get-response.json" />
 
 TODO do we want to document this? people already depend on this workaround.
 
-### Session Timeout
+### Session Timeouts and Lifetime
+
+An SSO session will end if you log out of SSO using Front-Channel Logout or if the session expires.
 
 As mentioned above, the liftime of the SSO session is configured at the Tenant level. You can configure it by navigating to <Breadcrumb>Tenants -> Your Tenant -> General</Breadcrumb> and updating the <Field>OAuth session timeout</Field> timeout. Because the SSO session lets users log into all applications, there is no Application level override of the SSO session value.
 
@@ -360,4 +389,3 @@ You can logout using the /api/logout endpoint. This is designed for situations w
 * The [Applications Core Concepts](/docs/get-started/core-concepts/applications) covers many of these settings.
 * The [Single Sign-on guide](/docs/lifecycle/authenticate-users/single-sign-on) discusses FusionAuth SSO session usage in detail.
 
-TODO update https://fusionauth.io/docs/get-started/core-concepts/users and maybe point folks here
