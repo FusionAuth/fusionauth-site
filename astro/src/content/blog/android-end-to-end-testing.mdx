@@ -19,21 +19,29 @@ Using OAuth2 with a browser popup for Authentication can be tricky to use during
 
 We made some efforts in the development of the FusionAuth Android SDK and made the test available in the [Android Kotlin - Fusionauth SDK Quickstart](/docs/quickstarts/quickstart-android-kotlin-native) too.
 
-In this blog, we go in to detail on how to create the test with a real FusionAuth backend and what to look for in an automated testing environment. The latest details you can find in [Android Kotlin - Fusionauth SDK Quickstart - Testing](https://github.com/FusionAuth/fusionauth-quickstart-kotlin-android-native/blob/main/TESTING.md) documentation.
+In this blog, we go in to detail on why to implement a end to end test, how to create the test with a real FusionAuth backend and what to look for in an automated testing environment. The latest details on the live implementation you can find in [Android Kotlin - Fusionauth SDK Quickstart - Testing](https://github.com/FusionAuth/fusionauth-quickstart-kotlin-android-native/blob/main/TESTING.md) documentation.
 
 # Why
 
-tbd
+Implementing FusionAuth as the authentication and authorization platform allows you to seamlessly integrate various features across your application. This includes essentials like identity management, authentication, and authorization, as well as advanced functionalities such as detailed user profiles, role management, or custom registrations. Consequently, many user-facing functionalities provided in the Android App will heavily depend on FusionAuth.
+
+To ensure reliability of our Android SDK, we wanted to verify that all SDK functionalities integrated into our Android App are working correctly with each new FusionAuth release and across multiple versions of Android. This is done in an automated fashion, ensuring that every new update is thoroughly tested for compatibility and functionality.
+
+And once the end to end test suite has been thoroughly run against a variety of updates and releases over the time of development. We can be confident to use it as well as a fail/pass criteria for any pull request and a test before the release workflows in the GitHub project.
 
 # How
 
-Using OAuth2 with a browser popup for Authentication can be tricky to use during automated testing in an [Android Emulator](https://developer.android.com/studio/run/emulator). We made some efforts in the development of the FusionAuth Android SDK and made the test available in this Quickstart as well.
+Initially, the test needed to function within the IDE, where development occurs. By automating the frequent manual clicks performed by an SDK developer when testing the Android app, we converted these interactions into a script. This script can be executed repeatedly, ensuring consistent and efficient testing.
 
-In this doc, we go in to detail on how to create the test with a real FusionAuth backend and what to look for in an automated testing environment.
+During that stage we need to consider that testing OAuth2 with a browser popup for Authentication in combination with a Android App can be tricky during automated testing in an [Android Emulator](https://developer.android.com/studio/run/emulator) and requires some testing libraries which are capable of both.
+
+In the second step we add this test in to GitHub workflows to fully automate it on every new pull request and release. Where we need to choose the different GitHub actions to implement the workflow. As well as choose the right dependabot configuration to help with automated dependency management.
+
+This involves additional consideration, ensuring the tests function reliably across different Android versions which involves repeatedly setting up multiple emulators and testing environments to test in various scenarios.
 
 # What
 
-tbd
+In this section we now focus on what we had to do to build the automated test. We first needed to understand the specific test cases and required test data, along with the necessary prerequisites for successful automated execution. Additionally, we ensured that in the event of a failure, sufficient data would be collected for effective debugging.
 
 ## Test Cases
 
@@ -77,6 +85,12 @@ To be able to test the different scenarios FusionAuth will be initially configur
 * And an example user without access `erlich@example.com` to the `Example Android App`
 * Your FusionAuth admin username is `admin@example.com` and your password is `password`.
 * Your fusionAuthBaseUrl to access FusionAuth is `http://localhost:9011/`
+
+### Why 10.0.2.2
+
+tbd
+
+Explain the details behind the specific IP https://developer.android.com/studio/run/emulator-networking
 
 ## Test Automation
 
@@ -176,6 +190,84 @@ The constants used in the test include:
 - `TIMEOUT_MILLIS`: The duration for which the test waits for the UI elements to appear in the system, expressed in milliseconds.
 
 Please note that the username, password, and timeouts would typically be environment-specific and not part of the test code.
+
+## GitHub Automation
+
+tbd
+
+### Workflow
+
+tbd
+
+#### Create and start FusionAuth containers used by E2E test
+
+```
+- name: Start FusionAuth
+  uses: fusionauth/fusionauth-github-action@v1
+  with:
+    FUSIONAUTH_VERSION: ${{ env.fusionauth-docker-image-version }}
+    FUSIONAUTH_APP_KICKSTART_DIRECTORY_PATH: fusionauth/${{ env.fusionauth-docker-image-version }}/kickstart
+```
+
+#### Android Emulator Runner
+
+```
+- name: run tests
+  uses: reactivecircus/android-emulator-runner@v2
+  with:
+    api-level: ${{ matrix.api-level }}
+    target: ${{ matrix.target }}
+    arch: ${{ matrix.arch }}
+    script: |
+      adb shell pm clear com.android.chrome
+      adb shell am set-debug-app --persistent com.android.chrome
+      adb shell 'echo "chrome --disable-fre --no-default-browser-check --no-first-run" > /data/local/tmp/chrome-command-line'
+      adb emu screenrecord start --time-limit 300 ./recording_video.webm
+      ./gradlew connectedAndroidTest
+```
+
+#### Upload E2E Test recording
+
+```
+- name: Upload recording
+  uses: actions/upload-artifact@v4.3.3
+  if: ${{ failure() }}
+  with:
+    name: 'E2E Test recording - ${{ matrix.api-level }} ${{ matrix.target }} ${{ matrix.arch }} ${{ env.fusionauth-docker-image-version }}'
+    path: recording_video.webm
+```
+
+### Dependabot
+
+tbd
+
+#### Maintain dependencies for GitHub Actions
+
+```
+- package-ecosystem: "github-actions"
+  directory: "/" # Uses default location of GitHub Workflows
+  schedule:
+    interval: "weekly"
+  groups:
+    prod-github-actions:
+      dependency-type: "production"
+    dev-github-actions:
+      dependency-type: "development"
+```
+
+#### Maintain dependencies for Gradle
+
+```
+- package-ecosystem: "gradle"
+  directory: "/"
+  schedule:
+    interval: "weekly"
+  groups:
+    gradle-minor-dependencies:
+      update-types:
+        - "minor"
+        - "patch"
+```
 
 ## Conclusion
 
