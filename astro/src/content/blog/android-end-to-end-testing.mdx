@@ -9,9 +9,8 @@ tags: android, sdk, testing, oauth, automation, github workflow
 excerpt_separator: "{/* more */}"
 ---
 
+import RemoteContent from 'src/components/RemoteContent.astro';
 import Aside from '/src/components/Aside.astro';
-import {RemoteCode} from '@fusionauth/astro-components';
-import LoginArchitecture from '/src/diagrams/blog/custom-scopes-in-third-party-applications/login-diagram.astro';
 
 Using OAuth2 with a browser popup for Authentication can be tricky to use during automated testing in an [Android Emulator](https://developer.android.com/studio/run/emulator).
 
@@ -75,22 +74,14 @@ All the relevant data for testing is defined in FusionAuth which includes multip
 
 ### Kickstart Details
 
-To be able to test the different scenarios FusionAuth will be initially configured with these settings:
+<RemoteContent url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-kotlin-android-native/main/TESTING.md"
+    tags="forDocSiteKickstart" />
 
-* An update to the Tenant Theme including the ChangeBank Theme to make the look and feel of the login the same as the ChangeBank App.
-* The Tenant Issuer will be set to `http://10.0.2.2:9011` to allow for testing with [Android Emulator](https://developer.android.com/studio/run/emulator).
-* Two Applications `Example Android App` and `Secondary Application` to test users with and without access to the Android App.
-* Your client secret is: `super-secret-secret-that-should-be-regenerated-for-production`
-* You will have three example usernames available with slightly different user profiles `richard@example.com`, `monica@example.com` and `gilfoyle@example.com`. All having access to `Example Android App` where the password for all three is `password`.
-* And an example user without access `erlich@example.com` to the `Example Android App`
-* Your FusionAuth admin username is `admin@example.com` and your password is `password`.
-* Your fusionAuthBaseUrl to access FusionAuth is `http://localhost:9011/`
+#### Why 10.0.2.2
 
-### Why 10.0.2.2
+Usually the Tenant Issuer is set to your developer machine or localhost, but in the case of Android Emulator this work slightly differently as its a virtual machine. [Set up Android Emulator networking](https://developer.android.com/studio/run/emulator-networking) explains in more details how it works, and in our case we want to use the android emulator to standardise the development environment and more importantly be able to create a test automation in GitHub workflows.
 
-tbd
-
-Explain the details behind the specific IP https://developer.android.com/studio/run/emulator-networking
+And in the case of Android Emulator case 10.0.2.2 is a special alias to your host loopback interface (127.0.0.1 on your development machine) where FusionAuth is running. Or in the case of the GitHub the virtual machine the workflow runs on.
 
 ## Test Automation
 
@@ -193,17 +184,31 @@ Please note that the username, password, and timeouts would typically be environ
 
 ## GitHub Automation
 
-tbd
+Once the automation in Android Studio works as expected we can continue to automate the workflows in GitHub.
 
 ### Workflow
 
-tbd
+In the case of the Android SDK we created 3 different workflows:
+
+| Name | Android | FusionAuth | Purpose |
+|---|---|---|---|
+| e2e-test-fusionauth-latest-android-latest.yml | Latest Android API Level | Latest FusionAuth Version (Latest Tag) | Weekly Testing |
+| e2e-test-fusionauth-latest-android-matrix.yml | Last 5 Android API Level | Latest FusionAuth Version (SemVer Tag) | Pull Request Testing |
+| e2e-test-fusionauth-matrix-android-latest.yml | Latest Android API Level | Last 6 Months of FusionAuth (SemVer Tags) | Pre-Release and Release Testing |
+
+The Weekly Testing makes sure that as soon as a new version of FusionAuth is released it gets automatically tested. Where the Pull Request Testing makes sure that any changes are backward compatible with multiple versions of Android and the latest successfully tested FusionAuth version. And the Pre-Release and Release Testing will make sure a certain level of backward compatibility with FusionAuth is guaranteed.
+
+With the Latest Android API Level we follow the minimum requirement of [Target API level requirements for Google Play apps](https://support.google.com/googleplay/android-developer/answer/11926878).
+
+In all the workflows we use certain actions to setup and run the end-to-end test in GitHub.
 
 #### Create and start FusionAuth containers used by E2E test
 
+As we are testing against a real FusionAuth backend we use the [fusionauth-action](https://github.com/marketplace/actions/fusionauth-action) to create a running instance.
+
 ```
 - name: Start FusionAuth
-  uses: fusionauth/fusionauth-github-action@v1
+  uses: fusionauth/fusionauth-github-action@v1.0.4
   with:
     FUSIONAUTH_VERSION: ${{ env.fusionauth-docker-image-version }}
     FUSIONAUTH_APP_KICKSTART_DIRECTORY_PATH: fusionauth/${{ env.fusionauth-docker-image-version }}/kickstart
@@ -211,9 +216,11 @@ tbd
 
 #### Android Emulator Runner
 
+Running the Android emulator, configuring chrome, recording and running the test is done using [Android Emulator Runner](https://github.com/marketplace/actions/android-emulator-runner).
+
 ```
 - name: run tests
-  uses: reactivecircus/android-emulator-runner@v2
+  uses: reactivecircus/android-emulator-runner@v2.31.0
   with:
     api-level: ${{ matrix.api-level }}
     target: ${{ matrix.target }}
@@ -228,6 +235,8 @@ tbd
 
 #### Upload E2E Test recording
 
+And we upload the screen recording in case of a failure with [Upload a Build Artifact](https://github.com/marketplace/actions/upload-a-build-artifact) for additional context while debugging.
+
 ```
 - name: Upload recording
   uses: actions/upload-artifact@v4.3.3
@@ -239,9 +248,15 @@ tbd
 
 ### Dependabot
 
-tbd
+Once the end-to-end tests are fully automated in GitHub workflows which get triggered on each pull request to main, the next step is to create a dependabot configuration with [grouped dependencies](https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file#groups) checks for github-actions and gradle.
+
+This helps to verify changes to the github workflows itself and automatically test them as dependabot creates pull requests with all dependencies updated at once. Which is even more important if it comes to gradle dependencies, where updates are frequently published for a whole group of packages at once.
 
 #### Maintain dependencies for GitHub Actions
+
+For GitHub Actions we create a dependabot configuration to check dev and prod dependencies weekly. All thought that at the moment all actions are treated as prod dependencies by dependabot this behaviour could change in the future and we leave both in to make sure both are caught.
+
+The benefit of versioning your GitHub Actions to MAJOR.MINOR.PATCH is a more stable testing environment, and dependabot handles the otherwise problematic disadvantage of not having to keep the tests up to date manually.
 
 ```
 - package-ecosystem: "github-actions"
@@ -256,6 +271,10 @@ tbd
 ```
 
 #### Maintain dependencies for Gradle
+
+For Gradle we decided to start with a simple rule to create a weekly check which groups all minor and patch releases together into one pull request and separate major version changes in individual PRs. It is important to know that once dependabot uses a dependency in a Pull Request it won't be used in another PR at the same time.
+
+This way we have a simple configuration which handles most of the cases without needing to go in to detail of gradle dependency management. And major versions most of the time have breaking changes which require manual interventions anyway.
 
 ```
 - package-ecosystem: "gradle"
