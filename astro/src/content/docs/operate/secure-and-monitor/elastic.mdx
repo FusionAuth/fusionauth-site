@@ -22,13 +22,17 @@ This guide explains how to connect FusionAuth to Elastic through Docker with the
 
 Before continuing with this guide, please go through the [FusionAuth guide to monitoring](/docs/operate/secure-and-monitor/monitor) to get an overview of the available metrics and choose the ones relevant to your needs.
 
-## Are Elastic Products Open Source?
+To learn more about the Elastic Observability platform, refer to the documentation [here](https://www.elastic.co/guide/en/observability/current/index.html). Pricing of the platform is available [here](https://www.elastic.co/pricing). The Standard (lowest) pricing tier includes observability features, including handling logs and metrics.
 
-Before 2021, Elastic products (ElasticSearch, Logstatch, and Kibana) were open source software. In 2021, Elastic changed their licenses to [Elastic License 2.0](https://www.elastic.co/licensing/elastic-license/faq) to prevent cloud hosts (AWS, Google, Azure) from selling managed Elastic services that compete with the Elastic Cloud.
+## Cloud Host or Self Host?
 
-While not officially open source, the Elastic License 2.0 still allows free and open (gratis and libre) use of most Elastic products, as long as you are not selling them as your own service. So you can host the Elastic stack on your own server instead of buying Elastic Cloud. However, using premium features, like alerts and integrations, will still need payment to Elastic.
+Before 2021, Elastic products (ElasticSearch, Logstatch, and Kibana) were open source software. In 2021, Elastic changed their licenses to [Elastic License 2.0](https://www.elastic.co/licensing/elastic-license/faq) to prevent cloud hosts (AWS, Google, Azure) from freely selling managed Elastic services that compete with [Elastic Cloud](https://www.elastic.co/cloud/shared-responsibility).
+
+While not officially open source, the Elastic License 2.0 still allows free and open (gratis and libre) use of most Elastic products, as long as you are not selling them as your own service. So you can host the Elastic stack on your own server instead of buying Elastic Cloud. However, using [certain premium features](https://www.elastic.co/subscriptions), like AI and integrations, will still need payment to Elastic.
 
 This guide assumes you are using the paid Elastic Cloud for monitoring. If you are instead self-hosting the Elastic Stack, you should still be able to follow the guide, but you will need to change connections that point to Elastic Cloud to point to your own server.
+
+When reading Elastic documentation, such as their [getting started guide](https://www.elastic.co/guide/en/observability/current/logs-metrics-get-started.html), which tells you "you need an Elastic Stack deployment", remember that that does not mean you need to deploy the stack alongside your application or FusionAuth instance. Their guide means that you need to have the Elastic Stack installed *somewhere*, which is probably going to be on their Elastic Cloud.
 
 ## Create An Elastic Account
 
@@ -38,15 +42,9 @@ First, register for an Elastic account:
 - Verify your email address with the link in the email Elastic sends you.
 - Enter your details in the registration page and create a new deployment called `fa`. Note that your two-week free trial starts when you create the deployment.
 
-To learn more about the Elastic Observability platform, refer to the documentation [here](https://www.elastic.co/guide/en/observability/current/index.html). Pricing of the platform is available [here](https://www.elastic.co/pricing). The Standard (lowest) pricing tier includes observability features, including handling logs and metrics.
-
 ## Create An Elastic API Key
 
-You need an API key to upload data with the Elastic API. Importing metrics with the API is documented [here](https://docs.splunk.com/observability/en/gdi/other-ingestion-methods/rest-APIs-for-datapoints.html#rest-api-ingest).
-
-<Aside type='note'>
-[To authenticate API requests that send data to Elastic Observability Cloud, you must use an organization access token, not a user API access token.](https://docs.splunk.com/observability/en/admin/authentication/authentication-tokens/api-access-tokens.html)
-</Aside>
+You need an API key to upload data to Elastic.
 
 - Browse to https://cloud.elastic.co/account/keys.
 - Click "Create API Key".
@@ -54,32 +52,24 @@ You need an API key to upload data with the Elastic API. Importing metrics with 
 - Click "Create API Key".
 - Save the key for later use. Be careful never to commit the key to git, which can expose it on the Internet.
 
-Test that you can import data with the terminal command below. Replace `yourtoken` with your token in the `X-SF-TOKEN` header and `us1` with your realm in the last line.
+## Import Data Into Elastic
 
-```sh
-curl --request POST \
-  --header "Content-Type: application/json" \
-  --header "X-SF-TOKEN: yourtoken" \
-  --data \
-  '{
-      "gauge": [
-          {
-              "metric": "memory.free",
-              "dimensions": { "host": "server1" },
-              "value": 42
-          }
-      ]
-  }' \
-  https://ingest.us1.signalfx.com/v2/datapoint
-```
+(From https://www.elastic.co/guide/en/starting-with-the-elasticsearch-platform-and-its-solutions/8.14/getting-started-observability.html#observability-gs-prereqs)
 
-The response should be `"OK"`.
+[Elastic Agent](https://www.elastic.co/guide/en/fleet/current/fleet-overview.html) is an application that you install on your server that monitors it and send information to Elastic Cloud to display on the dashboard. Fleet is todo. ElasticSearch is todo. Kibana is todo.
 
-Return to the Observability dashboard home page and browse to <strong>Metric Finder</strong>. Enter `memory` in the text box and click <InlineUIElement>Search metrics</InlineUIElement>. Click <InlineUIElement>memory.free</InlineUIElement>. You should see the data point created by the above command on the chart. If you don't, try switching to the Column chart view or running the command again with a different value.
+[Component diagram](https://www.elastic.co/guide/en/fleet/current/images/agent-architecture.png)
 
-<img src='/img/docs/operate/secure-and-monitor/splunk/metric_finder.png' alt='Data point created in metric finder on Elastic' />
+- Browse to home page of your Elastic Cloud web interface and click "Add integrations".
+<img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic1.png' alt='' />
+- Search for and select `system`.
+<img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic2.png' alt='' />
+- Click "Add system".
+- At the bottom of the page, click "Install Elastic Agent".
+- TODO HERE
 
-In a later section, you'll learn how to use this API to import real data from your FusionAuth instance.
+
+
 
 ## Import Data To Elastic With The OpenTelemetry Linux Collector
 
