@@ -1,6 +1,6 @@
 ---
-title: What are Magic Links and How to Use Them
-description: "Magic Links: A Guide to Passwordless Authentication"
+title: Magic Links - A Guide to Passwordless Authentication
+description: "Magic links offer secure, passwordless authentication, enhancing user experience and security. Learn more in and improve your access control today!"
 author: Brad McCarty
 icon: /img/icons/magic-links.svg
 darkIcon: /img/icons/magic-links-dark.svg
