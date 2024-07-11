@@ -1,0 +1,266 @@
+---
+publish_date: 2024-07-08 
+title: Building a downloadable product in 2024
+description: In this tutorial, you'll create User Actions to coordinate events around a customer purchase.
+authors: Dan Moore
+categories: Education
+tags: download, product, architecture, air gapping
+image: /img/blogs/fusionauth-user-actions/user-actions.png
+excerpt_separator: "{/* more */}"
+---
+
+In this article, you'll learn about the architecture and software design choices necessary to create a downloadable developer tool, such as FusionAuth. FusionAuth the product is designed to be [downloaded and run locally](/download). While you can pay FusionAuth, the company, to run FusionAuth, the product, [for you in the cloud](/docs/get-started/run-in-the-cloud/cloud) as a SaaS offering, many users run FusionAuth on their own servers or laptops.
+
+This article will focus on developer tools that integrate to accelerate application development, rather than tools like an IDE which are standalone. Examples include:
+
+* message queue
+* analytics tool
+* authorization as a service
+* a database
+
+{/* more */}
+
+But first, why would you do this? Isn't the future SaaS, where you are consuming software as a service over the internet?
+
+## Why Build A Downloadable Developer Tool
+
+There are a number of reasons to build a downloadable, self-hostable developer tool that integrates with other parts of an application.
+
+### Control
+
+The main reason to build a downloadable product is to allow your users to have more control. Developers like control. With a SaaS solution, especially one built using a typical multi-tenant SaaS architecture, developers have limited control. Things that they don't have control over include, but are not limited to:
+
+* data locality
+* performance
+* software versions
+* availability
+
+You can work around some of these limits. For example, APIs can be versioned and you can offer a SaaS in multiple geographic areas. But there will be some limits to this; if you are running a SaaS you are unlikely to be able to stand up a server in Greece or Zimbabwe. TODO brandur article about API versioning as does AWS). For the typical SaaS offering, developers don't have as much control as they do if they self-host.
+
+If you, on the other hand, offer a downloadable piece of software that can be hosted on any Linux or Windows server, developers regain control. Users can run the product on their own hardware, using their own datastores, in their own network. If there's a performance issue, they can troubleshoot it. If they want to minimize network hops between your product and their service, they can configure the network properly. If the service or product is unavailable, they have control over the fix. If they want to pin your product to a certain version, they can do so by not upgrading. They can treat the product like a library dependency, switching versions when it is convenient.
+
+There are privacy benefits too. The customer, by examining the network, can know exactly what data is sent to the product company. By locking down ext or preventing any data from being sent.
+
+Data locality is one aspect of control that is becoming more important, though how criticial it is depends on the data your product holds. For personally identifiable information about customers in certain localities, such as Europe or California, you want to know exactly where the data is going. Not doing so can lead to harsh penalties.
+
+If you have a product that operates on large amounts of data or highly proprietary and closely held data, it can be easier to bring the product to the data, rather than force the customer to bring data to the product. Building a downloadable product enables this delivery mechanism.
+
+**By operating a product themselves, customers have control.**
+
+There are other benefits as well.
+
+### CI/CD Simplicity
+
+While many CI/CD environments are connected to the internet, having them be self contained makes it easier to stand up many copies. Each test run can configure the local software installation just as it needs to and independently run the tests. A SaaS solution can be slower and more fragile to test against, because you are going over the network and configuration may collide with other developers' needs.
+
+### Your Customer's Budget
+
+If users are running a downloadable product in their own environment, they can control costs in the same way they do for their own software. This may include using solutions to optimize compute or network. 
+
+### Your Budget
+
+As the seller of the developer tool you can also decrease your costs. You sell the product, but they run it. This means that the expenses of operating it fall on your customer.
+
+### Discovery
+
+By offering a downloadable product in various developer friendly installation formats, you can let developers discover and integrate with your product without ever talking to anybody. This lets developers find out if your solution will work for them, using their own hardware and in their own environments, at near zero cost to you.
+
+Some of these installation formats include:
+
+* Homebrew
+* Docker
+* RPMs/DEBs
+* Windows Installation Packages
+* MacOS Disk Images
+* Ruby Gems
+* Maven Packages
+
+You'll need to discuss how to make money from these users somehow; that'll be examined later on in this post.
+
+### Business Continuity
+
+Self-hosting decreases business continuity risks for your customers. If your company fails, is acquired or otherwise ceases to operate, customers can continue to run your product. It won't necessarily be an easy one, as the product won't improve. But if they depend on your product for critical business processes, your users can keep your product running for a while as they search for an alternative.
+
+They can schedule this migration work when it makes sense, depending on the level of integration effort. 
+
+If they are using a pure SaaS that becomes unavailabl, customers lose access to the functionality as soon as the product company's bills go unpaid or the plug gets pulled. Customers are also at the mercy of the SaaS companies export functionality to gain access to their data.
+
+### Monetization 
+
+While there are a number of ways to monetize a downloadable development tool, three are common:
+
+* support
+* advanced features
+* hosting
+
+Each of these have strengths and weaknesses.
+
+Support is easy to offer; allow some users to pay for access to a slack channel, ticketing system or email address. However, support requires an investment in employees and doesn't scale linearly.
+
+Advanced features scale really well, but require significant investment to offer. They also require a licensing system.
+
+With hosting, single tenant SaaS is a natural fit. You can offer customer controlled upgrades or a fully managed SaaS, depending on what your customer needs and how stable the integration interfaces are. However, you are now responsible for uptime, performance and other aspects of operating software.
+
+### Offline Or Limited Network Support
+
+When you have a downloadable product, you can more easily support for offline or limited network use cases. Some of these use cases include:
+
+* Better, more independent development machines. By using a downloadable tool, developers can have the entire application, with all its components, running on their laptop. While locations that are truly 100% offline are becoming fewer (thanks Starlink!) it can still be quite freeing to not rely on an external service. Local services are quicker to stand up and easier to develop against.
+* Out of the ordinary production use cases that require air gapping. There are places that don't have internet connectivity or where internet connectivity is limited. This includes commercial situations like cruise ships and kiosks, as well as high security situations where data is precious. TODO If you have a downloadable product that doesn't need internet connectivity to function, you can serve customers in these situations.
+
+Let's talk about how to build a downloadable product as well as how to communicate the strengths and weaknesses to your users.
+
+## What To Think About When Thinking About Building A Downloadable Product
+
+There are a number of things to consider from a technical perspective when building a downloadable, self-hostable product. But front and center are dependencies.
+
+### Dependencies
+
+Keep required dependencies to a minimum. This will make your users' lives easier when they are deploying and operating the product, as well as making your life easier when you are supporting your users. For instance, FusionAuth requires the following components if you are self-hosting:
+
+* A relational database
+* Elasticsearch or OpenSearch (optional)
+* A proxy (optional)
+
+That's it. Now, it's not like SaaS companies are incorporating all kinds of unneeded functionality or datastores, but they have more flexibility. If they need a message queue or multiple datastores for additional functionality, the operational burden can be discussed internally, prioritized and implemented. Asking your customers to learn how to run a NoSQL datastore or message queue, on the other hand, impacts your total market. So you'll want to keep your required architectural components minimal.
+
+If you can bundle all of these with your product, that's even better. Bundle your runtime too so that you don't have to worry about minor version incompatibilities. FusionAuth bundles a knowne version of Java and nothing else is supported.
+
+Finally, a non-technical consideration is that if you are using GPL libraries and you provide a binary to your customers, you now have to provide them with source code. SaaS TODO companies have the workaround of delivering features but not executables. This is something to consider as you look at your dependencies.
+
+### Deployments
+
+This points to another complexity of downloadable software. In contrast to SaaS, where deployment can be complex, you want deployment to be simple for your users. The installation becomes critical, because it is the first experience your user has with your software. This means that you have to have great installation documentation, which needs to handle all the methods you want to allow.
+
+You'll want to allow a variety of installation methods, too. What methods you support depends on where you expect your customer to run your software, but you'll want to consider:
+
+* Hardware options such as VMs, containers and bare metal
+* Operating systems, such as Windows, MacOS and Linux
+* Delivery mechanisms such as homebrew, RPMs and Docker
+* Dependencies of the major components, including cloud versions
+
+If possible, abstract as many of these away as you can by using a VM like the JVM or a cross compiling language like golang.
+
+### The Network Is The Computer
+
+You'll also need to consider network dependencies. Above you learned about how a downloadable product offers benefits of no or minimal network access. Depending on your product, you may make foundational or basic functionality available with no network access, but require it for enhanced capabilities. This can include both pulling down a license information to ensure the product has been purchased. In some cases you'll want to offer a true air gapped experience. You'll need to think about how you'd verify license purchase in this scenario.
+
+Downloading data to enable additional functionality also requires network traffic, and you'll need to build in retry logic if a disk is full or a network is spotty. For example, FusionAuth has a corpus of breached passwords that is too large to ship as part of the downloadable executable. How to build and offer such hybrid functionality like this is more of a business decision than a technical one.
+
+### Tooling
+
+There are a lot of tools you can integrate to help you build your product better. There are applications which can help you track usage, find and squash bugs, gate features, or even integrate core, undifferentiated functionality like notifications. Many of these are built for SaaS products and are SaaS themselves. They expect network connectivity and a server-side deployment model.
+
+Sorry, these are no longer for you. You can definitely look to them for inspiration and seek out downloadable options, but anything that is a SaaS is off-limits. The exception is if you limit such tooling to hybrid situations where you know there is network access.  TODO not sure about this.
+
+### Releasing
+
+With a SaaS product, you can roll versions forward or roll backward fairly easily. This is often done using CI/CD and so can be automated.
+
+You can canary, where you send a subset of your users through new code and determine if anything breaks. This can be managed via networking rules at a load balancer or by using other tools. With blue/green deployments you can even, if your architecture and datastore handle it, stand up an entirely separate application and shift traffic gently over to it (or away from it if the new code isn't performing as it should).
+
+Releasing a downloadable product is more serious and more of a one-way path. Because you have limited control over how your customers deploy you (remember, as a downloadable product developer, you gave that power to them), you have a limited ability to force an upgrade or a downgrade. This means that when you do a release you need to make sure that it meets certain quality standards. This further implies rigourous testing across all the supported platforms, architectural components and deployment scenarios. This is above and beyond the feature and bugfix testing that are required of any solid softward product, be it downloadable or delivered as a SaaS.
+
+You can work around some of these limitations with effort, however. For instance, you could build in an automatic upgrade the way that Chrome does. If you do this, make sure you handle network connectivity issues and that your users understand they are installing a downloadable tool that will automatically upgrade functionality. It could also handle an automatic downgrade, if for example the product needed to be rolled back. But you'll have to build in the tooling and infrastructure to handle such changes. 
+
+You can also emulate canarying by offering beta or early access programs to let customers self-select into running versions of your software not available to the wider public. This happens at the discretion of your customer, and isn't as easy as configuring a load balancer.
+
+### Database Schemas
+
+If you don't bundle your database, you get a simpler deployment mechanism and a better operating experience for your customer. They can share their database expertise across multiple applications. But the tradeoff is that you need to have some schema management mechanism. This needs to be performant on a spectrum of database size. Since you don't know how much data your customers have in your product, you'll need to test with small and large amounts of data.
+
+If you offer rollbacks, you'll need to make sure the schema changes don't destroy or degrade any data that would make a rollback impossible, such as dropping a column or changing the column to a datatype with less fidelity.
+
+### Usage
+
+Ever used tooling which lets you know what features are used by which users? And which users in a new cohort are similar to users who purchased in the past? The tooling that is foundational to the operational efficiencies of SaaS vendors everywhere. Again, that tooling is not for you, unless you build some kind of usage reporting. The more you report, the less privacy you can tout. Which, if you'll recall, is one of the benefits of downloadable software.
+
+The best course of action here is to capture only what you need to improve the product, be clear about what you are recording, and have a bright line between the usage data and any private data that may be stored in your system. For example, you may want to record that feature X is being used, but not the details of the data which feature X is operating on.
+
+Usage reporting may be required for monetization purposes, as well, depending on the product.
+
+### Support
+
+Though it is a common monetization strategy, support is more difficult with a downloadable product. For one, you'll be dealing not just with heterogenous feature usage, which every developer tool has TODO hyrums law, but heterogenous deployment environments as well.
+
+How do you stand up an environment to replicate an issue? Sometimes you can do it on your own, but sometimes hopping on a call with a customer is the most efficient way to do this. Again, the more you can bundle, the better off you are, but bundling degrades customer control, especially if you are bundling a major architectural componet such as a database.
+
+You'll need to think about if and when to backport bug fixes, which increases development complexity. This includes security fixes too.
+
+You'll have people on a variety of versions of your software and you'll need to think about how to support them. How far back will you support your users? How about customers who are paying you?
+
+Consider creating a long term support (LTS) plan to let your users upgrade to known supported versions and stick to them for a longer period of time. Critical downloadable products share a lot of similarities with programming languages. Your users may be similarly hesitant to invest to regularly upgrading your product. Features can incent that, but once your product meets their needs, they may resist upgrading.
+
+### Release Communication
+
+You'll need to also think about how to communicate that new versions are availalble and how to install them. Compare that to SaaS, where you might need to highlight new *features* but the latest version of the software is avaiable to all users without any effort on their part. At FusionAuth, we offer an RSS feed, an generic new version email list, and a security focused email list, as well as customer outreach when appropriate. 
+
+All of these are dimensions of product development that you'll need to consider when building a downloadable product. Many of them are easier or non-existent issues if you are building a SaaS.
+
+### Upgrades And Availability
+
+When upgrading a SaaS solution, you have a lot of control. With modern cloud environments, you can often perform a true blue green deployment, where you stand up an entire copy of needed infrastructure and redirect traffic to the new version. As a purveyor of a downloadable product, you don't have the luxury. This means you need to document and build your systems such that your users have a clear idea of the impact of production upgrades. There are several approaches, including separating the control and data plane functionality and maintaining strict n-1 version backwards compatibility.
+
+These all need to be documented and made available to the operators of your software.
+
+### Customer Enablement
+
+The above are all considerations you and your engineering team need to think about when building a downloadable product. But what else does your customer need to succeed?
+
+Operating software can be difficult. This is why many folks want to outsource it and consume services as a SaaS. However, many teams already self-host other parts of their application, so they have skills around operating software at the scale and performance they need. If you are building a downloadable product, make sure you enable such teams.
+
+This includes detailed documentation around:
+
+* installation
+* scaling
+* performance tuning
+* monitoring
+* troubleshooting
+* system requirements
+* infrastructure integrations
+* tooling integrations
+* upgrades
+
+You'll need to make this documentation as thorough, accurate and complete as you can. However, the universe of possible combinations of how your software can be installed or operated is nearly infinite. You can try to limit the effort by picking the most common integrations and complementary software components.
+
+Clearly document changes too. You can do this in lo-fi ways such as semver or high fidelity ways like release notes. Provide a way for your users to be notified of changes easily. Methods that can work:
+
+* notification within your application, if there is a UI
+* user messages if there is a CLI
+* an email list
+* an RSS feed
+
+You'll want to support some form of configuration management, such as the ability to configure your application via scripting or Terraform. Having this lets your customers manage version changes in a way similar to how they manage other parts of their application infrastructure.
+
+## What Kind Of Software Makes Sense
+
+Not every type of developer tool makes sense to build as a downloadable solution. But if your product:
+
+* has an offline use case
+* appeals to customers familiar with operating software
+* solves a critical problem
+* integrates with existing well known components
+* offers functionality used by a large number of applications
+
+then your product might be a fit.
+
+## What About Open Source Software
+
+A self-hostable solution can be open source software (OSS) but does not have to be.
+
+By offering a free-as-in-beer version of your software, you can gain many of the marketing and distribution benefits of open source without the business model risks, which include:
+
+* others reselling your product
+* forks if the community disagrees with your product decisions
+* limited monetization options
+
+On the other hand, you won't get the glamour and building a community will be much harder. You'll probably have to compete with other OSS solutions because most developer tools have an OSS option.
+
+There have been enough re-licenses recently that developers know that just because a solution starts open source doesn't mean it will stay that way. Leaning into the argument that you are building a sustainable business may be enough for some users, but nothing short of full OSS will satisfy some developers.
+
+Either way, be prepared to defend your decision.
+
+## Conclusion
+
+There is unique value in building a self-hostable developer tool, but there are corresponding challenges as well. If you are purely self-hostable, you are limited to a certain kind of customer who can and wants to operate their own infrastructure, but they'll need the tooling and documentation to support that desire. You hae a variety of monetization options, but some cut your margins.
+
