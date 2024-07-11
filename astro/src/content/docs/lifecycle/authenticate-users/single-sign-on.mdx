@@ -57,50 +57,27 @@ Above, note that FusionAuth automatically logs the user out of the Hooli applica
 
 ## Prerequisites
 
-To walk through this guide, you will need to have FusionAuth, ngrok and Node installed.
-
-You can [install FusionAuth in any number of ways](/docs/get-started/download-and-install/), but if [you have Docker installed](/docs/get-started/download-and-install/docker), you can get up and running quickly.
-
-[Ngrok](https://ngrok.com/download) is used to proxy local applications.
+To walk through this guide, you will need to have FusionAuth and Node installed. For FusionAuth installation instructions, please visit [the 5 minute setup guide](/docs/quickstarts/5-minute-setup-guide).
 
 ## Set Up The Domains
 
-In order to properly exercise single sign-on, applications need to live on different domains. You'll be starting two different applications on different hosts using ngrok, one on port 3000 and one on port 3001.
+In order to properly exercise single sign-on, applications need to live on different domains, or at least different paths. If you, for instance, set up two Node applications at `localhost:3000` and `localhost:3001`, browser sessions won't be separated and the SSO functionality won't work as intended. Cookies typically don't differ based on ports, so you'll see confusing behavior.
 
-Open up a terminal window and run this command:
+You can, however, easily set up two local domains. Edit your hosts file; on macOS, this file lives at `/etc/hosts`. Look for a line starting with `127.0.0.1`, which is the address of your computer.
 
-```sh
-ngrok http 3000
+Add the following text to that line:
+
+```ini title="Additions to the /etc/hosts file"
+ hooli.local piedpiper.local
 ```
 
-The particular hostnames will be different, but you should see a screen similar to this:
+You want it to look something like this after editing:
 
-```
-Session Status                online
-Account                       dan@example.com (Plan: Free)
-Update                        update available (version 3.12.1, Ctrl-U to update)
-Version                       3.3.1
-Latency                       49ms
-Web Interface                 http://127.0.0.1:4040
-Forwarding                    https://d50a-73-14-173-49.ngrok-free.app -> http://localhost:3000
-
-Connections                   ttl     opn     rt1     rt5     p50     p90
-                              0       0       0.00    0.00    0.00    0.00   
+```ini title="The modified localhost line in /etc/hosts file"
+127.0.0.1       localhost hooli.local piedpiper.local
 ```
 
-Copy the string starting with `https://` in the forwarding line and paste it into a text file. In this case, it would be `https://d50a-73-14-173-49.ngrok-free.app`. You'll need that value later on.
-
-Later, when you have the code running, you can type `https://d50a-73-14-173-49.ngrok-free.app/` into your browser's address bar and the Node application will serve the request.
-
-Do the same for the second application, running on port 3001.
-
-```sh
-ngrok http 3001
-```
-
-Copy the string starting with `https://` in the forwarding line and paste it into a text file. You'll need that value later on as well.
-
-You are not going to use [ngrok to set up FusionAuth to run on a public facing domain](/docs/get-started/download-and-install/development/exposing-instance) because this example works without doing so.
+Later, when you have the code running, you can type `http://piedpiper.local:3000` or `http://hooli.local:3001` into your browser's address bar and the local Node application will serve the request.
 
 ## Configure The Applications In FusionAuth
 
@@ -121,23 +98,22 @@ The <InlineField>Authorized redirect URL</InlineField> lists all the valid redir
 For the Pied Piper application, the configuration values will be:
 
 * <InlineField>Name</InlineField>: Pied Piper
-* <InlineField>Authorized redirect URL</InlineField>: `<the value from ngrok for the first application>/oauth-redirect`. It will look similar to `https://d50a-73-14-173-49.ngrok-free.app/oauth-redirect`
-* <InlineField>Logout URL</InlineField>: `<the value from ngrok for the first application>/endsession`. It will look similar to `https://d50a-73-14-173-49.ngrok-free.app/endsession`
+* <InlineField>Authorized redirect URL</InlineField>: `http://piedpiper.local:3000/oauth-redirect`
+* <InlineField>Logout URL</InlineField>: `http://piedpiper.local:3000/endsession`
 
 For the Hooli application, the values will be:
 
 * <InlineField>Name</InlineField>: Hooli
-* <InlineField>Authorized redirect URL</InlineField>: `<the value from ngrok for the second application>/oauth-redirect`.
-* <InlineField>Logout URL</InlineField>: `<the value from ngrok for the second application>/endsession`
+* <InlineField>Authorized redirect URL</InlineField>: `http://hooli.local:3001/oauth-redirect`
+* <InlineField>Logout URL</InlineField>: `http://hooli.local:3001/endsession`
 
 All of these will be configured on the <Breadcrumb>OAuth</Breadcrumb> tab. 
 
 Here's what the Pied Piper application might look like when properly configured:
 
-TODO screenshot
 <img src="/img/docs/lifecycle/authenticate-users/add-application-docs.png" alt="Example of configured application." width="1200" />
 
-Click "Save" each time.
+Click "Save" for each application.
 
 View each application by clicking the green magnifying glass when looking at the list of applications and note the `Client Id` and `Client Secret` values:
 
@@ -213,7 +189,7 @@ Here's the `.env` file, which should be placed at `.env`:
   lang="properties" 
   title="The .env File" />
 
-The `clientId` and `clientSecret` are the values noted in the administrative user interface when you created the application in FusionAuth and set in the `.env` file. The `fusionAuthURL` value needs to match your FusionAuth location, typically `http://localhost:9011`. If the FusionAuth server is running at a different hostname, update that. You'll need to update the `hostName` value to be your ngrok hostname.
+This contains configuration settings such as the Client Id and Client Secret. Make sure to update it with the correct values you've copied in the [Configure The Applications In FusionAuth](#configure-the-applications-in-fusionauth) section.
 
 Next, build out the `indexRouter` code referenced from the `app.js` file above.
 
@@ -234,7 +210,9 @@ This code handles a number of paths. Let's look at the code in more detail.
   lang="javascript" 
   title="Constants section" />
 
-The top of the `index.js` file has configuration values pulled from the environments and required constants. 
+The top of the `index.js` file has configuration values and some needed constants. 
+
+The `clientId` and `clientSecret` are the values noted in the administrative user interface when you created the application in FusionAuth. The `fusionAuthURL` value needs to match your FusionAuth location, typically `http://localhost:9011`. If the FusionAuth server is running at a different hostname, update that.
 
 The first argument to the FusionAuth client creation is `noapikeyneeded` because the client interactions this application performs do not require an API key. If you extend these applications to update user data or make other privileged API calls, you'll need to change that value to a [real API key](/docs/apis/authentication#managing-api-keys).
 
@@ -244,7 +222,7 @@ The first argument to the FusionAuth client creation is `noapikeyneeded` because
   lang="javascript" 
   title="Home page route" />
 
-In this SSO implementation, users can't view the homepage if they aren't signed in. This is a design choice based on your application. The code checks for the presence of a user in the session and if it isn't present, the user is redirected to the FusionAuth login page. 
+In this SSO implementation, users can't view the homepage if they aren't signed in. This is a design choice you can make. The code checks for the presence of a user in the session and if it isn't present, the user is redirected to the FusionAuth login page. 
 
 <RemoteCode
   url={frontmatter.codeRoot + "/pied-piper/routes/index.js"}
@@ -315,7 +293,7 @@ There is some CSS in this application too; the CSS is available in the GitHub re
 
 ### Start It Up
 
-Start the Pied Piper application on port 3000 after you've created the above files.
+Start the Pied Piper application on port 3000 after you've built the above files.
 
 ```shell script title="Starting up the Pied Piper application"
 PORT=3000 npm start
@@ -328,8 +306,8 @@ Next, create the sibling Hooli application.
 In real life, these applications would have different functionality. For this guide, they are going to be similar. The only changes you need to make for the Hooli application are:
 
 * Put the same files in a directory called `hooli`.
-* Update `.env` to use the Hooli values for the title (to 'Hooli'), hostname (the ngrok value for the second application), and the Client Id and Client Secret (from the admin UI application screen).
-* Change the layout so that the menu links to the Pied Piper application.
+* Change `index.js` constants to use the Hooli values for the title (to 'Hooli'), hostname (`hooli.local`), port (`3001`), and the Client Id and Client Secret (from the admin UI application screen).
+* Change the layout so that the menu links to the Pied Piper application. Make sure to include the port.
 
 <RemoteCode
   url={frontmatter.codeRoot + "/hooli/views/layout.pug"}
@@ -348,7 +326,7 @@ And that's it. You've just created a second application. Congrats!
 
 Here's how you can test the work you've just done:
 
-* Visit the ngrok URL for the Pied Piper application. You'll be redirected to the FusionAuth login screen. 
+* Visit `http://piedpiper.local:3000`. You'll be redirected to the FusionAuth login screen. 
 * Check <InlineUIElement>Keep Me Signed In</InlineUIElement>
 * Log in.  You'll be greeted with a welcome message by the Pied Piper app.
 * Click on the 'Hooli' link and you'll be automatically signed in to that application. 
@@ -356,6 +334,10 @@ Here's how you can test the work you've just done:
 Here's a demo video of the single sign-on process from the end user perspective:
 
 <YouTube id="KxxLLoS74Ks" />
+
+### Caveat
+
+If you are testing these applications with a modern browser, logout won't work due to browser quirks when you are running over `http`. However, if you set up TLS and change the redirects to happen over `https`, then logout works.
 
 ## Other Scenarios
 
