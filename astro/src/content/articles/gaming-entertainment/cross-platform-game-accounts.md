@@ -8,6 +8,7 @@ darkIcon: /img/icons/cross-platform-gaming-accounts-dark.svg
 # date: 2022-10-01
 # dateModified: 2022-10-01
 ---
+import Breadcrumb from 'src/components/Breadcrumb.astro';
 
 More and more games are launching across two or more platforms. One of the prime reasons why game developers go cross-platform is to leverage a larger market. Being able to sell products to a whole new set of users is an incredible win for game developers, and demand for cross-play from gamers is [increasing as well](https://blog.unity.com/games/why-demand-for-cross-platform-multiplayer-games-is-growing-2021).
 
@@ -164,7 +165,7 @@ To create a tenant, open the "Tenants" tab on the side pane and click the plus b
 
 ### Create an Application
 
-On the left-hand side of your dashboard, navigate to "Applications" and click the green plus icon in the top right to create a new application associated with `GameGuruTenant`.
+On the left-hand side of your dashboard, navigate to <Breadcrumb>Applications</Breadcrumb> and click the green plus icon in the top right to create a new application associated with `GameGuruTenant`.
 
 You can leave the default settings in place. A UUID is auto-generated for you. Feel free to click through tabs like OAuth, CleanSpeak, and Email to customize anything you think you’ll need.
 
@@ -179,7 +180,7 @@ You also need to add some roles for this apps use case:
 
 Most FusionAuth APIs [require authentication](/docs/apis/authentication) when making requests. This is done by adding an `Authorization` header to the request with an API key associated with your application.
 
-On the side pane, click "Settings" and then "API Keys" and click the plus button on the top right corner.
+On the side pane, click <Breadcrumb>Settings -> API Keys</Breadcrumb> and click the plus button on the top right corner.
 
 This API key will only be associated with the above tenant `GameGuruTenant`.
 

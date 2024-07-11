@@ -1,4 +1,6 @@
-Next, register the user for the application. Navigate to the "Users" tab and find your user. Click on the black "Manage
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+
+Next, register the user for the application. Navigate to the <Breadcrumb>Users</Breadcrumb> tab and find your user. Click on the black "Manage
 User" button under the "Action" heading in the list. You'll end up at the details page:
 
 ![The user details screen, where you can register them.](/img/blogs/includes/fusionauth/register-user.png)
