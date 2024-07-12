@@ -134,20 +134,47 @@ Fleet is the web app that tracks all Agents on all servers. It allows you set Ag
 While this design is the simplest to implement, it violates the principle of one process per Docker container. This means it is possible for the EA process to die, while the container and FA process keep running, which will cause confusion when viewing the dashboard.
 
 Here's how to implement this design:
-- Browse to the home page of your Elastic Cloud web interface and click "Add integrations".
-<img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic1.png' alt='Elastic home' />
-- Search for and select `system`.
-<img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic2.png' alt='Add integration' />
-- Click "Add system".
-- At the bottom of the page, click "Install Elastic Agent".
-- Copy the text to install the "Linux Tar" version of the agent, which will be similar to the commands below, but with different parameters. Remove `sudo` from the last line.
+- Browse to the home page of your Elastic Cloud web interface.
+- In the sidebar, at the bottom, click <strong>Management -> Fleet</strong>.
+- Click the "Agent policies" tab, then click "Create agent policy".
+- Give it the name `efa` (ElasticFusionAuth). Review the advanced options if you like, but leave their defaults unchanged.
+- Click "Create agent policy".
+- Back on the agent policy list page, click the name of your new policy, "efa".
+- Under the "Integrations" tab, the "System" integration should show. Click the name of the integration to open a page to edit it. If you don't see the system integration, click "Add integration" to the right, search for `System`, and add it.
+  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic2.png' alt='Add integration' />
+- Disable "Collect events from the Windows event log" and leave the system collection and metric collection toggles enabled. Since your Docker instance runs Ubuntu there is no need for Windows events.
+- Return to the Agents tab of the Fleet page. And click "Add Agent".
+- Choose your newly created agent policy in the dropdown that appears for step 1.
+- Copy the text to install the "Linux Tar" version of the agent in step 3, which will be similar to the commands below, but with different parameters.
   ```sh
   curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.14.2-linux-x86_64.tar.gz
   tar xzvf elastic-agent-8.14.2-linux-x86_64.tar.gz
   cd elastic-agent-8.14.2-linux-x86_64
-  sudo ./elastic-agent install --url=https://905e427463b64.fleet.us-central1.gcp.cloud.es.io:443 --enrollment-token=YOURTOKEN
+  sudo ./elastic-agent install --url=https://9025e4274afd63b55h64.fleet.us-central1.gcp.cloud.es.io:443 --enrollment-token=a2lB5aA1dUJ4d2daRmlNcVozang6WbgaTk5FUsE43dw==
   ```
-- Enrollment Token: This token is a security measure provided by the Fleet server when you create an agent policy in the Fleet UI of Kibana. It contains all the necessary information encoded within it to facilitate the secure registration of an Elastic Agent with the Fleet server. This process avoids the need for exposing an API key directly in the command or configuration files.Purpose of the Token: The enrollment token simplifies the process of setting up and securing communications between the Elastic Agent and the Fleet server. It includes permissions and configuration details required by the agent to operate correctly and securely.
+- The last line is the most important. First, remove `sudo`, because your container user will already be root. Note the subdomain of the the URL, which is your unique Elastic Cloud home. Note also the enrollment token, which is your secret key to use Elastic. Keep the token secure and safe, and never commit it to GitHub where it can be publicly exposed.
+
+---
+
+- Now you are going to leave the Elastic site and work in a terminal on your own computer. Install [Docker](https://docs.docker.com/get-docker/) if you don't have it on your machine.
+- Save the Dockerfile from the [FusionAuth containers repository](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) to your computer.
+- Rename to the file to `elastic.dockerfile`.
+- Edit the file and insert the following lines above the comment "###### Start FusionAuth App".
+  ```dockerfile
+  ###### New for Elastic #################################
+  RUN mkdir -p /var/lib/apt/lists/partial \
+    && chmod 755 /var/lib/apt/lists/partial \
+    && apt update \
+    && apt install -y ca-certificates \
+    && apt install nano -y \
+    && mkdir -p /elastic \
+    && curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.14.3-linux-x86_64.tar.gz \
+    && tar xzvf elastic-agent-8.14.3-linux-x86_64.tar.gz --strip-components=1 -C /elastic \
+    && yes | /elastic/elastic-agent install --url=https://905e42746359ac5.fleet.us-central1.gcp.cloud.es.io:443 --enrollment-token=M29DFhVUVowUQ== \
+  ```
+- Change the URL and token in the last line to match your values from the Elastic website. Update the version number of the agent if yours is newer.
+- Replace the last line of the file, `CMD ["/usr/local/fusionauth/fusionauth-app/bin/start.sh"]` with
+
 - docker build  --no-cache --platform linux/amd64 -t efaimage -f elastic.dockerfile .
 - docker run -it --user root --name efa efaimage bash
 - docker exec -it -u root efa bash
@@ -172,7 +199,6 @@ The error below means the [Elastic Agent thinks you are using a local version of
 
 - add java agent apm - https://2ec4bc66a0bf4531ad2d793f7147ee24.us-central1.gcp.cloud.es.io:9243/app/integrations/edit-integration/elastic-cloud-apm?from=fleet-policy-list
 
-Save the Dockerfile from the [FusionAuth containers repo](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) to your computer. Edit the Dockerfile file and insert the following lines above the comment "###### Start FusionAuth App".
 
 ```Dockerfile
 #
@@ -702,3 +728,5 @@ You can follow the process described here to add other FusionAuth API calls to `
 - [FusionAuth Dockerfile](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile)
 - [Docker OpenTelemetry Collector](https://docs.splunk.com/observability/en/gdi/opentelemetry/collector-linux/install-linux-manual.html#linux-docker)
 - [Ports exposed by OpenTelemetry container](https://docs.splunk.com/observability/en/gdi/opentelemetry/exposed-endpoints.html)
+
+<strong></strong>
