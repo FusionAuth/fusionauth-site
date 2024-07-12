@@ -177,11 +177,76 @@ Here's how to implement this design:
 - Change the URL and token in the third last line to match your values from the Elastic website. Update the version number of the agent if yours is newer.
 - Replace the last line of the file, `CMD ["/usr/local/fusionauth/fusionauth-app/bin/start.sh"]` with `CMD /opt/Elastic/Agent/elastic-agent run & /usr/local/fusionauth/fusionauth-app/bin/start.sh`. Now both the Elastic Agent and FusionAuth will run when the container starts.
 - docker build  --no-cache --platform linux/amd64 -t efaimage -f elastic.dockerfile .
--
+- Use the modified `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. It uses the `efaimage` you just build for FusionAuth.
+  ```yaml
+  services:
+    db:
+      image: postgres:latest
+      container_name: fa_db
+      ports:
+        - "5432:5432"
+      environment:
+        PGDATA: /var/lib/postgresql/data/pgdata
+        POSTGRES_USER: ${POSTGRES_USER}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      healthcheck:
+        test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+        interval: 5s
+        timeout: 5s
+        retries: 5
+      networks:
+        - db_net
+      volumes:
+        - db_data:/var/lib/postgresql/data
+
+    fa:
+      image: efaimage
+      container_name: fa
+      depends_on:
+        db:
+          condition: service_healthy
+      environment:
+        DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
+        DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
+        DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
+        DATABASE_USERNAME: ${DATABASE_USERNAME}
+        DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+        FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
+        FUSIONAUTH_APP_RUNTIME_MODE: ${FUSIONAUTH_APP_RUNTIME_MODE}
+        FUSIONAUTH_APP_URL: http://fusionauth:9011
+        SEARCH_TYPE: database
+      networks:
+        - db_net
+      ports:
+        - 9011:9011
+      volumes:
+        - fusionauth_config:/usr/local/fusionauth/config
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
+
+  networks:
+    db_net:
+      driver: bridge
+
+  volumes:
+    db_data:
+    fusionauth_config:
+  ```
+- Also create a `.env` file with the default content below.
+  ```text
+  DATABASE_USERNAME=fusionauth
+  DATABASE_PASSWORD=hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3
+  FUSIONAUTH_APP_MEMORY=512M
+  FUSIONAUTH_APP_RUNTIME_MODE=development
+  OPENSEARCH_JAVA_OPTS="-Xms512m -Xmx512m"
+  POSTGRES_USER=postgres
+  POSTGRES_PASSWORD=postgres
+  ```
+- `docker compose up`
 
 <Aside type="tip">
 ```sh
-docker rm efa; docker rmi efaimage; docker build  --no-cache --platform linux/amd64 -t efaimage -f elastic.dockerfile .
+docker rm fa; docker rm efa; docker rmi efaimage; docker build  --no-cache --platform linux/amd64 -t efaimage -f elastic.dockerfile .
 docker run -it --user root --name efa efaimage bash
 docker exec -it -u root efa bash
 docker stop efa
