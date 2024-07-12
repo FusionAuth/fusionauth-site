@@ -22,6 +22,7 @@ import CentralizedSessionsRequests from 'src/diagrams/docs/lifecycle/authenticat
 import CentralizedSessionsLogout from 'src/diagrams/docs/lifecycle/authenticate-users/centralized-sessions-logout.astro';
 import CentralizedSessionsSessionInvalid from 'src/diagrams/docs/lifecycle/authenticate-users/centralized-sessions-session-invalid.astro';
 import SSOLogout from 'src/diagrams/docs/lifecycle/authenticate-users/sso-logout.astro';
+import SessionsExpiration from 'src/content/docs/lifecycle/authenticate-users/_sessions-expiration.mdx';
 
 ## Overview
 
@@ -352,7 +353,7 @@ You can use FusionAuth with or without the FusionAuth SSO session. If you do not
 
 To enable the SSO session, set the `rememberDevice` parameter on the login page to `true`. This is the <InlineUIElement>Keep me signed in </InlineUIElement> checkbox in the default theme. This parameter can be set by the end user with a a checkbox, or hard coded as a hidden field in the login form.
 
-You may want to customize the lifetime for this session, under <Breadcrumb>Tenants -> Your Tenant -> OAuth</Breadcrumb>. The <InlineUIElement>Session Timeout</InlineUIElement> should be set to a positive integer. The unit is seconds.
+You may want to customize the lifetime for this session, under <Breadcrumb>Tenants -> Your Tenant -> OAuth</Breadcrumb>. The <InlineUIElement>Session Timeout</InlineUIElement> should be set to a positive integer. The unit is seconds. Since the FusionAuth SSO session lets users log into every application in a tenant, there is no application level override of the SSO session duration.
 
 <Aside type="note">
 In this context, SSO or single sign-on, is the ability of a user to switch between different applications without authenticating each time. It is accomplished by delegating authentication to FusionAuth. [Here's a guide walking through this functionality in more detail](/docs/lifecycle/authenticate-users/single-sign-on).
@@ -372,9 +373,9 @@ You can pass additional information about the login when using the FusionAuth SS
 [@helpers.hidden name="metaData.device.description" value="yourdatahere" /]
 ```
 
-You can write JavaScript to run on the login page [only when using advanced themes](https://fusionauth.io/docs/customize/look-and-feel/advanced-theme-editor), so the hidden field value could be dynamically set. For example, you could pull a value from the URL parameter list and place it in that hidden field.
+You can write JavaScript to run on the login page [only when using advanced themes](/docs/customize/look-and-feel/advanced-theme-editor), so the hidden field value could be dynamically set. For example, you could pull a value from the URL parameter list and place it in that hidden field.
 
-Metadata is only available to the FusionAuth SSO session. It is not stored in any other refresh tokens generated during a user authentication.
+This metadata is only available to the FusionAuth SSO session. It is not stored in any other refresh tokens generated during a user authentication.
 
 TODO is this something we want to document 
 
@@ -390,27 +391,21 @@ The FusionAuth SSO session allows transparent authentication on one browser or d
 * the user is logged out by being sent to the Front-Channel logout endpoint
 * the refresh token representing the FusionAuth SSO session is revoked via an API call or the admin UI 
 
-Always make sure to revoke the SSO session, as represented by the refresh token, if you want to truly log the user out.
-
-As mentioned above, the lifetime of the SSO session is configured at the Tenant level. You can configure it by navigating to <Breadcrumb>Tenants -> Your Tenant -> General</Breadcrumb> and updating the <Field>OAuth session timeout</Field> timeout. 
-
-Since the FusionAuth SSO session lets users log into every application in a tenant, there is no application level override of the SSO session duration.
-
 <Aside type="note">
 Previous to version 1.52, setting the SSO session to a low value and enabling other post authentication workflows such as an OAuth consent screen could cause a login workflow to be restarted. See this [GitHub issue for more details](https://github.com/FusionAuth/fusionauth-issues/issues/2736).
 </Aside>
+
+<SessionsExpiration />
 
 ### Disabling FusionAuth SSO
 
 If you don't want FusionAuth SSO to be enabled, set the `rememberDevice` parameter to `false` in the login page. In this case, there will be no SSO session. You can also set the <InlineUIElement>Session Timeout</InlineUIElement> to zero. 
 
-#### Selectively Disabling FusionAuth SSO
-
 You may want to selectively disable the FusionAuth SSO session. For example, if you have five applications which delegrate authentication to FusionAuth, you might want to let users transparently log in between four of them, but have one that is not available to be SSOed into. Let's say that four of the applications are consumer facing, but the fifth is a business application.
 
 Options to implement this behavior include:
 
-* Place the business application in a separate FusionAuth tenant. This works, but now your users need to manage two separate logins and there might be credential drift. You can work around this by having users who need access to the business application adn the consumer facing applications use the same Identity Provider to log in across tenants.
+* Place the business application in a separate FusionAuth tenant. This works, but now your users need to manage two separate logins and there might be credential drift. You can work around this by having users who need access to the business application and the consumer facing applications use the same Identity Provider to log in across tenants.
 * Require registration for the business application and turning off self-service registration for that application. Then you'll need to add a registration for all users who need access to the business application manually or using the API.
 
 ## Session Analytics
@@ -461,8 +456,5 @@ Using this endpoint is not a common use case.
 * The [Single Sign-on guide](/docs/lifecycle/authenticate-users/single-sign-on) discusses FusionAuth SSO session usage in detail.
 
 
-TODO 
-
 TODO https://github.com/FusionAuth/fusionauth-site/issues/2551
 
-TODO maybe abstract https://fusionauth.io/docs/lifecycle/authenticate-users/single-sign-on#additional-configuration
