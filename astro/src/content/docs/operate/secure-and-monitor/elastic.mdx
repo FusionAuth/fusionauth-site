@@ -14,31 +14,56 @@ import Diagram1 from 'src/components/docs/operate/secure-and-monitor/ElasticDiag
 import Diagram2 from 'src/components/docs/operate/secure-and-monitor/ElasticDiagram2.astro';
 import Diagram3 from 'src/components/docs/operate/secure-and-monitor/ElasticDiagram3.astro';
 
-## Overview
+- [Introduction](#introduction)
+- [Cloud Host Or Self Host?](#cloud-host-or-self-host)
+- [Too Many Elastic Possibilities](#too-many-elastic-possibilities)
+- [Create An Elastic Account](#create-an-elastic-account)
+- [Create An Elastic API Key - TODO remove as unnecessary](#create-an-elastic-api-key---todo-remove-as-unnecessary)
+- [Import Data Into Elastic](#import-data-into-elastic)
+- [Import Data To Elastic With The OpenTelemetry Linux Collector](#import-data-to-elastic-with-the-opentelemetry-linux-collector)
+  - [OpenTelemetry Dashboard](#opentelemetry-dashboard)
+- [FusionAuth Metrics](#fusionauth-metrics)
+  - [Counts, Not Details](#counts-not-details)
+  - [Which Metrics To Monitor](#which-metrics-to-monitor)
+- [Mapping FusionAuth Metrics To Elastic Metrics](#mapping-fusionauth-metrics-to-elastic-metrics)
+- [Write A Custom Service To Send Data To The API](#write-a-custom-service-to-send-data-to-the-api)
+- [Further Reading](#further-reading)
 
-[Elastic Observability Cloud](https://docs.splunk.com/observability/en/get-started/service-description.html) is a Software as a Service (SaaS) solution for infrastructure monitoring (Elastic IM), application performance monitoring (Elastic APM), real user monitoring (Elastic RUM), and synthetic monitoring (Elastic Synthetic Monitoring). Elastic Observability Cloud also provides a direct integration with logs ingested in Elastic Cloud Platform and Elastic Enterprise through Log Observer Connect.
+## Introduction
 
-This guide explains how to connect FusionAuth to Elastic through Docker with the OpenTelemetry Collector using the Elastic API, as well as which FusionAuth metrics are useful in Elastic and how to create a simple dashboard to show them.
+[Elastic](https://www.elastic.co) is a company known for managing the ELK stack: ElasticSearch, Logstash, and Kibana. These products allow you to import (ingest) data, including observability data like logs and server metrics, organize them, and monitor them.
+
+This guide explains how to connect FusionAuth to Elastic in various ways, as well as which FusionAuth metrics are useful in Elastic, and how to create a simple dashboard to show them.
 
 Before continuing with this guide, please go through the [FusionAuth guide to monitoring](/docs/operate/secure-and-monitor/monitor) to get an overview of the available metrics and choose the ones relevant to your needs.
 
-To learn more about the Elastic Observability platform, refer to the documentation [here](https://www.elastic.co/guide/en/observability/current/index.html). Pricing of the platform is available [here](https://www.elastic.co/pricing). The Standard (lowest) pricing tier includes observability features, including handling logs and metrics.
+To learn more about the Elastic Observability platform, refer to the documentation [here](https://www.elastic.co/guide/en/observability/current/index.html). Pricing of the platform is available [here](https://www.elastic.co/pricing). The Standard (lowest) pricing tier includes sufficient observability features, including handling logs and metrics.
 
-## Cloud Host or Self Host?
+## Cloud Host Or Self Host?
 
-Before 2021, Elastic products (ElasticSearch, Logstatch, and Kibana) were open source software. In 2021, Elastic changed their licenses to [Elastic License 2.0](https://www.elastic.co/licensing/elastic-license/faq) to prevent cloud hosts (AWS, Google, Azure) from freely selling managed Elastic services that compete with [Elastic Cloud](https://www.elastic.co/cloud/shared-responsibility).
+Before 2021, Elastic products were open source software. In 2021, Elastic changed their licenses to [Elastic License 2.0](https://www.elastic.co/licensing/elastic-license/faq) to prevent cloud hosts (AWS, Google, Azure) from freely selling managed Elastic services that compete with [Elastic Cloud](https://www.elastic.co/cloud/shared-responsibility).
 
 While not officially open source, the Elastic License 2.0 still allows free and open (gratis and libre) use of most Elastic products, as long as you are not selling them as your own service. So you can host the Elastic stack on your own server instead of buying Elastic Cloud. However, using [certain premium features](https://www.elastic.co/subscriptions), like AI and integrations, will still need payment to Elastic.
 
 This guide assumes you are using the paid Elastic Cloud for monitoring. If you are instead self-hosting the Elastic Stack, you should still be able to follow the guide, but you will need to change connections that point to Elastic Cloud to point to your own server.
 
-When reading Elastic documentation, such as their [getting started guide](https://www.elastic.co/guide/en/observability/current/logs-metrics-get-started.html), which tells you "you need an Elastic Stack deployment", remember that that does not mean you need to deploy the stack alongside your application or FusionAuth instance. Their guide means that you need to have the Elastic Stack installed *somewhere*, which is probably going to be on their Elastic Cloud.
+When reading Elastic documentation, such as their [getting started guide](https://www.elastic.co/guide/en/observability/current/logs-metrics-get-started.html), which tells you "you need an Elastic Stack deployment", remember that that does not mean you need to deploy the entire ELK stack locally alongside your application or FusionAuth instance. Their guide means that you need to have the Elastic Stack installed *somewhere*, which is probably going to be on their Elastic Cloud.
 
-## Elastic Options
+## Too Many Elastic Possibilities
 
-- use agent in same container as app
-- use agent in separate container and allow access to docker socket
-- use opentelemetry
+An Elastic Agent sends data from your server to the Elastic Cloud for processing and monitoring. To use the Cloud, you first have to install the Elastic Agent on your server.
+
+There are various ways of doing so:
+- Put the Elastic Agent in the same Docker container as FusionAuth.
+- Put the Elastic Agent in a separate container and give it access to the private Docker management data for other containers.
+- Install a local [OpenTelemetry](https://opentelemetry.io/) agent that sends data to Elastic, instead of using the Elastic Agent.
+- Call the Elastic API directly from a local service, instead of using the Elastic Agent.
+
+Elastic can import and visualize different types of data, including server performance, application (FusionAuth) performance, and logs.
+
+As well as monitoring FusionAuth with Elastic, you can use Elastic to monitor your custom application too, by following steps similar to the ones in this guide.
+
+These are an overwhelming number of ways to use Elastic. But by the end of this guide you should be able to pick the simplest combination that suits the needs of your system architecture.
 
 ## Create An Elastic Account
 
@@ -48,7 +73,7 @@ First, register for an Elastic account:
 - Verify your email address with the link in the email Elastic sends you.
 - Enter your details in the registration page and create a new deployment called `fa`. Note that your two-week free trial starts when you create the deployment.
 
-## Create An Elastic API Key
+## Create An Elastic API Key - TODO remove as unnecessary
 
 You need an API key to upload data to Elastic.
 
@@ -67,9 +92,9 @@ You need an API key to upload data to Elastic.
 [Component diagram](https://www.elastic.co/guide/en/fleet/current/images/agent-architecture.png)
 
 - Browse to home page of your Elastic Cloud web interface and click "Add integrations".
-<img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic1.png' alt='' />
+<img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic1.png' alt='Elastic home' />
 - Search for and select `system`.
-<img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic2.png' alt='' />
+<img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic2.png' alt='Add integration' />
 - Click "Add system".
 - At the bottom of the page, click "Install Elastic Agent".
 - Copy the text to install the "Linux Tar" version of the agent, which will be similar to the commands below, but with different parameters. Remove `sudo` from the last line.
@@ -92,7 +117,10 @@ You need an API key to upload data to Elastic.
 - Sidebar - Management - Fleet - Agent policies - Create agent policy - Advanced - Default to Elastic Cloud internal output
 - Installs to  /opt/Elastic/Agent including elastic-agent.yml
 - /elastic/elastic-agent run NO, use elastic-agent run
-- <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic3.png' alt='' />
+- <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic3.png' alt='Agent overview' />
+- In the sidebar, browse to <strong>Analytics -> Dashboards</strong>. Search for and display `Host overview`.
+- <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic4.png' alt='Server dashboard' />
+- /Library/Elastic/Agent/elastic-agent uninstall
 
 The error below means the [Elastic Agent thinks you are using a local version of the Elastic stack, and not Elastic Cloud](https://www.elastic.co/guide/en/fleet/current/fleet-faq.html#which-es-kibana-ports-are-needed).
 ```json
