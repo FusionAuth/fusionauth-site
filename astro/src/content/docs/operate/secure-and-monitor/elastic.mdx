@@ -167,17 +167,27 @@ Here's how to implement this design:
     && apt update \
     && apt install -y ca-certificates \
     && apt install nano -y \
-    && mkdir -p /elastic \
     && curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.14.3-linux-x86_64.tar.gz \
+    && mkdir -p /elastic \
     && tar xzvf elastic-agent-8.14.3-linux-x86_64.tar.gz --strip-components=1 -C /elastic \
-    && yes | /elastic/elastic-agent install --url=https://905e42746359ac5.fleet.us-central1.gcp.cloud.es.io:443 --enrollment-token=M29DFhVUVowUQ== \
+    && yes | /elastic/elastic-agent install --url=https://66359ac5.fleet.us-central1.gcp.cloud.es.io:443 --enrollment-token=laXJ5dE43dw== \
+    && chown -R fusionauth:fusionauth /opt/Elastic/Agent \
+    && chmod +x /opt/Elastic/Agent/elastic-agent
   ```
-- Change the URL and token in the last line to match your values from the Elastic website. Update the version number of the agent if yours is newer.
-- Replace the last line of the file, `CMD ["/usr/local/fusionauth/fusionauth-app/bin/start.sh"]` with
-
+- Change the URL and token in the third last line to match your values from the Elastic website. Update the version number of the agent if yours is newer.
+- Replace the last line of the file, `CMD ["/usr/local/fusionauth/fusionauth-app/bin/start.sh"]` with `CMD /opt/Elastic/Agent/elastic-agent run & /usr/local/fusionauth/fusionauth-app/bin/start.sh`. Now both the Elastic Agent and FusionAuth will run when the container starts.
 - docker build  --no-cache --platform linux/amd64 -t efaimage -f elastic.dockerfile .
-- docker run -it --user root --name efa efaimage bash
-- docker exec -it -u root efa bash
+-
+
+<Aside type="tip">
+```sh
+docker rm efa; docker rmi efaimage; docker build  --no-cache --platform linux/amd64 -t efaimage -f elastic.dockerfile .
+docker run -it --user root --name efa efaimage bash
+docker exec -it -u root efa bash
+docker stop efa
+```
+</Aside>
+
 - When you return to the Elastic web interface it should now say "Agent enrollment confirmed".
 - Click "Add the integration".
 - On the settings page:
