@@ -20,7 +20,8 @@ import Diagram3 from 'src/components/docs/operate/secure-and-monitor/ElasticDiag
 - [Create An Elastic Account](#create-an-elastic-account)
 - [Create An Elastic API Key - TODO remove as unnecessary](#create-an-elastic-api-key---todo-remove-as-unnecessary)
 - [Monitor FusionAuth With Elastic In The Same Container](#monitor-fusionauth-with-elastic-in-the-same-container)
-- [Import Data To Elastic With The OpenTelemetry Linux Collector](#import-data-to-elastic-with-the-opentelemetry-linux-collector)
+- [Monitor FusionAuth With Elastic In Another Container](#monitor-fusionauth-with-elastic-in-another-container)
+- [Monitor the FusionAuth Application With Elastic](#monitor-the-fusionauth-application-with-elastic)
   - [OpenTelemetry Dashboard](#opentelemetry-dashboard)
 - [FusionAuth Metrics](#fusionauth-metrics)
   - [Counts, Not Details](#counts-not-details)
@@ -166,18 +167,20 @@ Here's how to implement this design:
     && chmod 755 /var/lib/apt/lists/partial \
     && apt update \
     && apt install -y ca-certificates \
-    && apt install nano -y \
+    && apt install nano sudo -y \
+    && echo "fusionauth ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/fusionauth \
     && curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.14.3-linux-x86_64.tar.gz \
     && mkdir -p /elastic \
     && tar xzvf elastic-agent-8.14.3-linux-x86_64.tar.gz --strip-components=1 -C /elastic \
-    && yes | /elastic/elastic-agent install --url=https://66359ac5.fleet.us-central1.gcp.cloud.es.io:443 --enrollment-token=laXJ5dE43dw== \
-    && chown -R fusionauth:fusionauth /opt/Elastic/Agent \
-    && chmod +x /opt/Elastic/Agent/elastic-agent
+    && yes | /elastic/elastic-agent install --url=https://9059ac5.fleet.us-central1.gcp.cloud.es.io:443 --enrollment-token=lBSVldsaUlMRnoyZGh2Zw==
   ```
-- Change the URL and token in the third last line to match your values from the Elastic website. Update the version number of the agent if yours is newer.
-- Replace the last line of the file, `CMD ["/usr/local/fusionauth/fusionauth-app/bin/start.sh"]` with `CMD /opt/Elastic/Agent/elastic-agent run & /usr/local/fusionauth/fusionauth-app/bin/start.sh`. Now both the Elastic Agent and FusionAuth will run when the container starts.
-- docker build  --no-cache --platform linux/amd64 -t efaimage -f elastic.dockerfile .
-- Use the modified `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. It uses the `efaimage` you just build for FusionAuth.
+- Change the URL and token in the last line to match your values from the Elastic website. Update the version number of the agent if yours is newer.
+- Replace the last line of the file, `CMD ["/usr/local/fusionauth/fusionauth-app/bin/start.sh"]` with `CMD sudo /opt/Elastic/Agent/elastic-agent run & /usr/local/fusionauth/fusionauth-app/bin/start.sh`. Now both the Elastic Agent and FusionAuth will run when the container starts. The Agent has to run as root as it [reads data sources that only a superuser can access](https://www.elastic.co/guide/en/fleet/current/elastic-agent-installation.html). Even though the Dockerfile unzips the Agent to `/agent/`, the agent installs to `/opt/Elastic/Agent/`.
+- Build the image with the command below.
+  ```sh
+  docker build --platform linux/amd64 -t efaimage -f elastic.dockerfile .
+  ```
+- Use the modified `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. It uses the `efaimage` you just built for FusionAuth.
   ```yaml
   services:
     db:
@@ -201,7 +204,7 @@ Here's how to implement this design:
 
     fa:
       image: efaimage
-      container_name: fa
+      container_name: efa
       depends_on:
         db:
           condition: service_healthy
@@ -242,171 +245,52 @@ Here's how to implement this design:
   POSTGRES_USER=postgres
   POSTGRES_PASSWORD=postgres
   ```
-- `docker compose up`
+- Now run the FusionAuth with `docker compose up`.
+- When you return to the Elastic web interface it should now say "Agent enrollment confirmed".
+- You should also see the agent appear in the Fleet dashboard and the status should change to `Healthy`.
+    <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic3.png' alt='Agent overview' />
+- In the sidebar, browse to <strong>Analytics -> Dashboards</strong>. Search for and display `Host overview`.
+  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic4.png' alt='Server dashboard' />
+
+Well done, you have successfully installed a monitoring agent for your FusionAuth machine and can now monitor it online.
 
 <Aside type="tip">
-```sh
-docker rm fa; docker rm efa; docker rmi efaimage; docker build  --no-cache --platform linux/amd64 -t efaimage -f elastic.dockerfile .
-docker run -it --user root --name efa efaimage bash
-docker exec -it -u root efa bash
-docker stop efa
+If you get errors when running FusionAuth, or the Agent does not appearin Fleet, you will need to open a terminal in the container to find the problem.
+
+Change the last line of the Dockerfile to the line below, to stop FusionAuth and the Agent starting, so you can test manually.
+
+```Dockerfile
+CMD tail -f /dev/null
 ```
+
+To rebuild the Dockerfile after changes, run the command below.
+
+```sh
+docker rm fa; docker rm efa; docker rmi efaimage; docker build --platform linux/amd64 -t efaimage -f elastic.dockerfile .
+```
+
+To run the container and enter it as root, use the command below.
+
+```sh
+docker run -it --user root --name efa efaimage bash
+```
+
+Start the Agent with `/opt/Elastic/Agent/elastic-agent run` and use `cat /var/log/elastic-agent.err` to look for errors. If you see the agent trying to connect to `127.0.0.1:9200`, it is not because the URL is configured incorrectly. The 127 address is just a fallback when the Agent cannot connect to the server, usually due to it not running as root.
 </Aside>
 
-- When you return to the Elastic web interface it should now say "Agent enrollment confirmed".
-- Click "Add the integration".
-- On the settings page:
-  - Disable "Collect events from the Windows event log".
-  - Under "Advanced options", enter an "Integration name" of `DockerFA1`.
-  - Click "Confirm incoming data"
-- Sidebar - Management - Fleet - Agent policies - Create agent policy - Advanced - Default to Elastic Cloud internal output
-- Installs to  /opt/Elastic/Agent including elastic-agent.yml
-- /elastic/elastic-agent run NO, use elastic-agent run
-- <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic3.png' alt='Agent overview' />
-- In the sidebar, browse to <strong>Analytics -> Dashboards</strong>. Search for and display `Host overview`.
-- <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic4.png' alt='Server dashboard' />
-- /Library/Elastic/Agent/elastic-agent uninstall
+## Monitor FusionAuth With Elastic In Another Container
 
-The error below means the [Elastic Agent thinks you are using a local version of the Elastic stack, and not Elastic Cloud](https://www.elastic.co/guide/en/fleet/current/fleet-faq.html#which-es-kibana-ports-are-needed).
-```json
-{"log.level":"error","@timestamp":"2024-07-11T15:32:00.028Z","message":"Error dialing dial tcp 127.0.0.1:9200: connect: connection refused","component":{"binary":"metricbeat","dataset":"elastic_agent.metricbeat","id":"system/metrics-default","type":"system/metrics"},"log":{"source":"system/metrics-default"},"service.name":"metricbeat","ecs.version":"1.6.0","log.logger":"esclientleg","log.origin":{"file.line":38,"file.name":"transport/logging.go","function":"github.com/elastic/elastic-agent-libs/transport/httpcommon.(*HTTPTransportSettings).RoundTripper.LoggingDialer.func1"},"network":"tcp","address":"127.0.0.1:9200","ecs.version":"1.6.0"}
-```
+
+## Monitor the FusionAuth Application With Elastic
 
 - add java agent apm - https://2ec4bc66a0bf4531ad2d793f7147ee24.us-central1.gcp.cloud.es.io:9243/app/integrations/edit-integration/elastic-cloud-apm?from=fleet-policy-list
 
 
-```Dockerfile
-#
-# FusionAuth App Dockerfile
-#
-# Build:
-#   > docker pull ubuntu:jammy
-#   > docker buildx build --platform=linux/arm64 -t fusionauth/fusionauth-app:1.51.1 .
-#   > docker buildx build --platform=linux/arm64 -t fusionauth/fusionauth-app:latest .
-#
-# Note: Substitute your target platform architecture. The above example is targetting a 64-bit ARM platform.
-#       To target an Intel based platform use --platform=linux/amd64.
-#
-# Run:
-#  > docker run -p 9011:9011 -it fusionauth/fusionauth-app
-#
-# Publish:
-#   > docker push fusionauth/fusionauth-app:1.51.1
-#   > docker push fusionauth/fusionauth-app:latest
-#
 
-###### Setup the java and fusionauth-app base #####################################################
-FROM --platform=$BUILDPLATFORM ubuntu:jammy as build
 
-ARG BUILDPLATFORM
-ARG FUSIONAUTH_VERSION=1.51.1
-ARG JDK_MODULES=java.base,java.compiler,java.desktop,java.instrument,java.logging,java.management,java.naming,java.rmi,java.security.jgss,java.security.sasl,java.sql,java.xml.crypto,jdk.attach,jdk.crypto.ec,jdk.dynalink,jdk.jcmd,jdk.jdi,jdk.localedata,jdk.jpackage,jdk.unsupported,jdk.zipfs
-ARG TARGETPLATFORM
-ARG TARGETARCH
-RUN printf "Building on ${BUILDPLATFORM} for ${TARGETPLATFORM} (${TARGETARCH})."
-RUN case "${BUILDPLATFORM}" in \
-    linux/arm64)\
-        BUILD_JAVA_SUM="eefd3cf3b3dd47ff269fa5b5c10b5e096b163f4e9c1810023abdbc00dc6cc304";\
-        BUILD_JAVA_URL="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_aarch64_linux_hotspot_17.0.8.1_1.tar.gz";\
-        ;;\
-    linux/amd64)\
-        BUILD_JAVA_SUM="c25dfbc334068a48c19c44ce39ad4b8427e309ae1cfa83f23c102e78b8a6dcc0";\
-        BUILD_JAVA_URL="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_x64_linux_hotspot_17.0.8.1_1.tar.gz";\
-        ;;\
-    *)\
-        printf "Unsupported build platform arch: ${BUILDPLATFORM}";\
-        exit 1;\
-        ;;\
-    esac \
-    && case "${TARGETARCH}" in \
-    arm64)\
-        JAVA_SUM="eefd3cf3b3dd47ff269fa5b5c10b5e096b163f4e9c1810023abdbc00dc6cc304";\
-        JAVA_URL="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_aarch64_linux_hotspot_17.0.8.1_1.tar.gz";\
-        ;;\
-    arm)\
-        JAVA_SUM="b1f1d8b7fcb159a0a8029b6c3106d1d16207cecbb2047f9a4be2a64d29897da5";\
-        JAVA_URL="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_arm_linux_hotspot_17.0.8.1_1.tar.gz";\
-        ;;\
-    ppc64le)\
-        JAVA_SUM="00a4c07603d0218cd678461b5b3b7e25b3253102da4022d31fc35907f21a2efd";\
-        JAVA_URL="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_ppc64le_linux_hotspot_17.0.8.1_1.tar.gz";\
-        ;;\
-    s390x)\
-        JAVA_SUM="ffacba69c6843d7ca70d572489d6cc7ab7ae52c60f0852cedf4cf0d248b6fc37";\
-        JAVA_URL="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_s390x_linux_hotspot_17.0.8.1_1.tar.gz";\
-        ;;\
-    amd64)\
-        JAVA_SUM="c25dfbc334068a48c19c44ce39ad4b8427e309ae1cfa83f23c102e78b8a6dcc0";\
-        JAVA_URL="https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.8.1%2B1/OpenJDK17U-jdk_x64_linux_hotspot_17.0.8.1_1.tar.gz";\
-        ;;\
-    *)\
-        printf "Unsupported arch: ${TARGETARCH}";\
-        exit 1;\
-        ;;\
-    esac \
-    && apt-get update \
-    && apt-get install -y curl unzip \
-    && mkdir -p /tmp/openjdk \
-    && mkdir -p /tmp/build/openjdk \
-    && curl -LfsSo /tmp/build/openjdk.tar.gz "${BUILD_JAVA_URL}" \
-    && echo "${BUILD_JAVA_SUM} */tmp/build/openjdk.tar.gz" | sha256sum -c - \
-    && curl -LfsSo /tmp/openjdk.tar.gz "${JAVA_URL}" \
-    && echo "${JAVA_SUM} */tmp/openjdk.tar.gz" | sha256sum -c - \
-    && cd /tmp/build/openjdk \
-    && tar -xf /tmp/build/openjdk.tar.gz --strip-components=1 \
-    && cd /tmp/openjdk \
-    && tar -xf /tmp/openjdk.tar.gz --strip-components=1 \
-    && /tmp/build/openjdk/bin/jlink --compress=2 \
-           --module-path /tmp/openjdk/jmods/ \
-           --add-modules ${JDK_MODULES} \
-           --output /opt/openjdk \
-    && curl -LfsSo /tmp/fusionauth-app.zip https://files.fusionauth.io/products/fusionauth/${FUSIONAUTH_VERSION}/fusionauth-app-${FUSIONAUTH_VERSION}.zip \
-    && mkdir -p /usr/local/fusionauth/fusionauth-app \
-    && unzip -nq /tmp/fusionauth-app.zip -d /usr/local/fusionauth
 
-###### Use Ubuntu latest and only copy in what we need to reduce the layer size ###################
-FROM ubuntu:jammy
-RUN apt-get update \
-    && apt-get -y install --no-install-recommends curl \
-    && apt-get -y upgrade \
-    && apt-get -y clean \
-    && rm -rf /var/lib/apt/lists \
-    && useradd -d /usr/local/fusionauth -U fusionauth
-COPY --chown=fusionauth:fusionauth --from=build /opt/openjdk /opt/openjdk
-COPY --chown=fusionauth:fusionauth --from=build /usr/local/fusionauth /usr/local/fusionauth
 
-###### Connect the log file to stdout #############################################################
-RUN mkdir -p /usr/local/fusionauth/logs \
-  && touch /usr/local/fusionauth/logs/fusionauth-app.log \
-  && ln -sf /dev/stdout /usr/local/fusionauth/logs/fusionauth-app.log
-
-##### New for Elastic #################################
-RUN mkdir -p /var/lib/apt/lists/partial \
-    && chmod 755 /var/lib/apt/lists/partial \
-    && apt update \
-    && apt install -y ca-certificates \
-    && cd /usr/local/fusionauth \
-    && curl -L -o otel.jar https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar \
-    && (head -n -1 /usr/local/fusionauth/fusionauth-app/bin/start.sh; echo 'exec "${JAVA_HOME}/bin/java" -javaagent:/usr/local/fusionauth/otel.jar -Dotel.resource.attributes=service.name=fusionauth -Dotel.traces.exporter=otlp -Dotel.exporter.otlp.endpoint=http://otel:4318 -cp "${CLASSPATH}" ${JAVA_OPTS} io.fusionauth.app.FusionAuthMain <&- >> "${LOG_DIR}/fusionauth-app.log" 2>&1') > temp.sh \
-    && mv temp.sh /usr/local/fusionauth/fusionauth-app/bin/start.sh;
-RUN chown fusionauth:fusionauth /usr/local/fusionauth/otel.jar /usr/local/fusionauth/fusionauth-app/bin/start.sh \
-    && chmod +x /usr/local/fusionauth/fusionauth-app/bin/start.sh
-
-###### Start FusionAuth App #######################################################################
-LABEL description="Create an image running FusionAuth App. Installs FusionAuth App"
-LABEL maintainer="FusionAuth <dev@fusionauth.io>"
-EXPOSE 9011
-USER fusionauth
-ENV FUSIONAUTH_USE_GLOBAL_JAVA=1
-ENV JAVA_HOME=/opt/openjdk
-ENV PATH=$PATH:$JAVA_HOME/bin
-CMD ["/usr/local/fusionauth/fusionauth-app/bin/start.sh"]
-```
-
-## Import Data To Elastic With The OpenTelemetry Linux Collector
-
-Instead of sending metrics manually to Elastic, you can send them automatically with OpenTelemetry. OpenTelemetry is both a protocol and software that is dedicated to monitoring, measuring, processing, collecting, and sending metrics. In this section, you will add OpenTelemetry to your normal FusionAuth instance.
-
+---
 
 You can also start FusionAuth inside Docker with [OpenTelemetry for Java](https://github.com/open-telemetry/opentelemetry-java-instrumentation). OpenTelemetry sends the metrics it reads to a collector. The OpenTelemetry Collector runs in a separate Docker container and sends the metrics to Elastic for recording. This follows the Docker principle of one process per container.
 
