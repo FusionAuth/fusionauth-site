@@ -19,7 +19,7 @@ import Diagram3 from 'src/components/docs/operate/secure-and-monitor/ElasticDiag
 - [Too Many Elastic Possibilities](#too-many-elastic-possibilities)
 - [Create An Elastic Account](#create-an-elastic-account)
 - [Create An Elastic API Key - TODO remove as unnecessary](#create-an-elastic-api-key---todo-remove-as-unnecessary)
-- [Import Data Into Elastic](#import-data-into-elastic)
+- [Monitor FusionAuth With Elastic In The Same Container](#monitor-fusionauth-with-elastic-in-the-same-container)
 - [Import Data To Elastic With The OpenTelemetry Linux Collector](#import-data-to-elastic-with-the-opentelemetry-linux-collector)
   - [OpenTelemetry Dashboard](#opentelemetry-dashboard)
 - [FusionAuth Metrics](#fusionauth-metrics)
@@ -51,7 +51,7 @@ When reading Elastic documentation, such as their [getting started guide](https:
 
 ## Too Many Elastic Possibilities
 
-An Elastic Agent sends data from your server to the Elastic Cloud for processing and monitoring. To use the Cloud, you first have to install the Elastic Agent on your server.
+[Elastic Agent](https://www.elastic.co/guide/en/fleet/current/fleet-overview.html) sends data from your server to the Elastic Cloud for processing and monitoring. To use the Cloud, you first have to install the Elastic Agent on your server.
 
 There are various ways of doing so:
 - Put the Elastic Agent in the same Docker container as FusionAuth.
@@ -83,15 +83,58 @@ You need an API key to upload data to Elastic.
 - Click "Create API Key".
 - Save the key for later use. Be careful never to commit the key to git, which can expose it on the Internet.
 
-## Import Data Into Elastic
+## Monitor FusionAuth With Elastic In The Same Container
 
-(From https://www.elastic.co/guide/en/starting-with-the-elasticsearch-platform-and-its-solutions/8.14/getting-started-observability.html#observability-gs-prereqs)
+Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below (you might also run OpenSearch in another Docker container).
 
-[Elastic Agent](https://www.elastic.co/guide/en/fleet/current/fleet-overview.html) is an application that you install on your server that monitors it and send information to Elastic Cloud to display on the dashboard. Fleet is todo. ElasticSearch is todo. Kibana is todo.
+```mermaid
+graph TB
+  subgraph I[Your server]
+    direction TB
+    subgraph G[Docker]
+      H[(Postgresql)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+  end
+  C --> G
+  style I fill:#999
+```
 
-[Component diagram](https://www.elastic.co/guide/en/fleet/current/images/agent-architecture.png)
+In this section you are going to install Elastic Agent in the same container as FusionAuth. The aim is to have a design like the diagram below.
 
-- Browse to home page of your Elastic Cloud web interface and click "Add integrations".
+```mermaid
+graph TD
+  subgraph E[Elastic Server]
+    J(Kibana) --> B(ElasticSearch)
+    J --> F(Fleet)
+  end
+  subgraph I[Your server]
+    subgraph G[Docker]
+      H[(Postgresql)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+      D(Elastic Agent)
+    end
+  end
+  A --> G
+  D --> E
+  style I fill:#999
+  style E fill:#999
+```
+
+FusionAuth and Postgresql are unchanged. The Elastic Agent in the FA container monitors the container (not the FA app), and uploads the data to ElasticSearch, where it is indexed and saved.
+
+Kibana is a web interface the you access to view dashboards of the Agent's container's health. Note that Elastic Agent is not yet monitoring FA in this design, but if the container dies or suffers CPU or RAM overuse, that will show in the Kibana dashboard.
+
+Fleet is the web app that tracks all Agents on all servers. It allows you set Agent Policies that tell the Agents remotely what data they should and shouldn't upload. You can also use Fleet to delete or edit existing Agents.
+
+While this design is the simplest to implement, it violates the principle of one process per Docker container. This means it is possible for the EA process to die, while the container and FA process keep running, which will cause confusion when viewing the dashboard.
+
+Here's how to implement this design:
+- Browse to the home page of your Elastic Cloud web interface and click "Add integrations".
 <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic1.png' alt='Elastic home' />
 - Search for and select `system`.
 <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic2.png' alt='Add integration' />
@@ -263,23 +306,6 @@ CMD ["/usr/local/fusionauth/fusionauth-app/bin/start.sh"]
 
 Instead of sending metrics manually to Elastic, you can send them automatically with OpenTelemetry. OpenTelemetry is both a protocol and software that is dedicated to monitoring, measuring, processing, collecting, and sending metrics. In this section, you will add OpenTelemetry to your normal FusionAuth instance.
 
-Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below (you might also run OpenSearch in another Docker container).
-
-```mermaid
-graph LR
-  subgraph I[Your server]
-    direction LR
-    subgraph G[Docker]
-      H[(Postgresql)]
-    end
-    subgraph C[Docker]
-      direction BT
-      A(FusionAuth)
-    end
-  end
-  C --> G
-  style I fill:#999
-```
 
 You can also start FusionAuth inside Docker with [OpenTelemetry for Java](https://github.com/open-telemetry/opentelemetry-java-instrumentation). OpenTelemetry sends the metrics it reads to a collector. The OpenTelemetry Collector runs in a separate Docker container and sends the metrics to Elastic for recording. This follows the Docker principle of one process per container.
 
