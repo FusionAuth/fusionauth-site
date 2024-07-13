@@ -1,10 +1,12 @@
 import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
 
 To set up the application, navigate to the [FusionAuth admin UI](http://localhost:9011/admin) and select <Breadcrumb>Applications</Breadcrumb> on the left-hand navigation bar:
 
 ![Set up the application.](/img/blogs/includes/fusionauth/set-up-the-application.png)
 
-Then click on the "+" button on the top right of the <Breadcrumb>Applications</Breadcrumb> page and fill in the "Name" field with a name of your choosing (here, it's **"your_application"**):
+Then click on the <InlineUIElement>+</InlineUIElement> button on the top right of the <Breadcrumb>Applications</Breadcrumb> page and fill in the <InlineField>Name</InlineField> field with a name of your choosing (here, it's **"your_application"**):
 
 ![Name your application.](/img/blogs/includes/fusionauth/name-the-application.png)
 

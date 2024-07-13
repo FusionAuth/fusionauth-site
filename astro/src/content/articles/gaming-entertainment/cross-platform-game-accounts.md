@@ -9,6 +9,8 @@ darkIcon: /img/icons/cross-platform-gaming-accounts-dark.svg
 # dateModified: 2022-10-01
 ---
 import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
 
 More and more games are launching across two or more platforms. One of the prime reasons why game developers go cross-platform is to leverage a larger market. Being able to sell products to a whole new set of users is an incredible win for game developers, and demand for cross-play from gamers is [increasing as well](https://blog.unity.com/games/why-demand-for-cross-platform-multiplayer-games-is-growing-2021).
 
@@ -142,10 +144,10 @@ When you first run the commands, your database is probably not set up, meaning t
 
 You need to enter the following:
 
-- The superuser credentials for your database
-- The name of the host of your database
+- <InlineField>The superuser credentials for your database</InlineField>
+- <InlineField>The name of the host of your database</InlineField>
 
-Click "Submit". 
+Click <InlineUIElement>Submit</InlineUIElement>. 
 
 > If you do encounter the error ***Exception in thread main java.lang.NoClassDefFoundError: com/inversoft/mysql/MySQLHelper***, make sure you've [installed the MySQL driver](/docs/get-started/download-and-install/database#install-mysql-connector).
 
