@@ -11,35 +11,35 @@ excerpt_separator: "{/* more */}"
 
 import RemoteContent from 'src/components/RemoteContent.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
-import Aside from '/src/components/Aside.astro';
+import Aside from 'src/components/Aside.astro';
 
 Utilizing OAuth2 with a browser popup for authentication can be challenging when implementing automated testing in an [Android Emulator](https://developer.android.com/studio/run/emulator).
 
 {/* more */}
 
-We've invested some effort while developing the FusionAuth Android SDK and made the tests available in the [Android Kotlin - Fusionauth SDK Quickstart](/docs/quickstarts/quickstart-android-kotlin-native).
+We've invested some effort implementing a fully automated end-to-end test while developing the FusionAuth Android SDK and made the tests available in the [Android Kotlin - Fusionauth SDK Quickstart](/docs/quickstarts/quickstart-android-kotlin-native) as well.
 
-In this blog, we explore the importance of implementing end-to-end testing, how to create a test using a real FusionAuth backend and discuss key considerations for an automated testing environment For the most up-to-date information on our live implementation, please visit: [Android Kotlin - Fusionauth SDK Quickstart - Testing](https://github.com/FusionAuth/fusionauth-quickstart-kotlin-android-native/blob/main/TESTING.md).
+In this blog, we explore the importance of implementing end-to-end testing, how to create a test using a real FusionAuth backend and discuss key considerations for an automated testing environment. For the most up-to-date information on our live implementation, please visit: [Android Kotlin - Fusionauth SDK Quickstart - Testing](https://github.com/FusionAuth/fusionauth-quickstart-kotlin-android-native/blob/main/TESTING.md).
 
-# Why
+# Why Do We Need End-To-End Testing
 
-Implementing FusionAuth as the authentication and authorization platform enables seamless integration of various features throughout your application. This includes essential functions such as identity management, authentication and authorization, as well as advanced capabilities such as detailed user profiles, role management and custom registrations. As a result, numerous user-facing functionalities within the Android App will rely significantly on FusionAuth.
+Implementing FusionAuth as the authentication and authorization platform enables seamless integration of various features throughout your application. This includes essential functions such as identity management, authentication and authorization, as well as advanced capabilities such as detailed user profiles, role management or custom registrations. As a result, numerous user-facing functionalities within the Android App will rely on FusionAuth.
 
 To ensure the reliability of our Android SDK, we aim to verify that all SDK functionalities integrated into our Android App work correctly with each new FusionAuth release and across multiple versions of Android. This testing is automated, ensuring thorough checks for compatibility and functionality with every new update.
 
-Once the end-to-end test suite has been thoroughly executed against various updates and releases throughout the development cycle, we can be confident to use it as well as a pass criteria for any pull request and as a test before the release workflow in the GitHub project.
+Once the end-to-end test suite has been thoroughly executed against various updates and releases throughout the development cycle, we can be confident to use it as well as a pass criteria for any pull request and as a test before the release workflows in the GitHub project.
 
-# How
+# How Did We Plan To Achieve This
 
-Initially, the test needed to operate within the IDE where development takes place. To automate the frequent manual clicks performed by an SDK developer when testing the Android app, we converted these interactions into a script. This script can be executed repeatedly, ensuring consistent and efficient testing.
+Initially, the test needed to operate within the IDE where development takes place. To automate the frequent manual clicks performed by an SDK developer performs when testing the Android app, we first convert these interactions into a test script. This script can be executed repeatedly in the IDE, ensuring consistent and efficient testing.
 
 During this stage, it's crucial to consider that testing OAuth2 with a browser popup for authentication in conjunction with an Android app can be challenging when conducting automated testing in an [Android Emulator](https://developer.android.com/studio/run/emulator). This requires the use of testing libraries capable of handling both scenarios effectively.
 
 In the second step, we integrate this test into GitHub workflows to fully automate it for every new pull request and release. This involves selecting appropriate GitHub actions to implement the workflow and configuring Dependabot to assist with automated dependency management.
 
-This requires careful consideration to ensure that the tests function reliably across different Android versions. Setting up multiple emulators and testing environments repeatedly is essential to cover various scenarios effectively.
+This requires careful consideration to ensure that the tests function reliably across different Android versions. Setting up multiple emulators and testing environments repeatedly is essential to cover various scenarios.
 
-# What
+# What Are The Specifics For The End-To-End Test Implementation
 
 In this section, our focus shifts to the steps taken to build the automated test. Initially, we needed to understand the specific test cases and gather the required test data, along with ensuring all necessary prerequisites for successful automated execution. Furthermore, we implemented measures to ensure adequate data collection in case of test failures, facilitating effective debugging.
 
@@ -80,9 +80,9 @@ All the relevant data for testing is defined in FusionAuth including multiple fl
 
 #### Why 10.0.2.2
 
-Typically, the Tenant Issuer is set to your developer machine or localhost. However, with the Android Emulator being a virtual machine, this setup works slightly differently. [Set up Android Emulator networking](https://developer.android.com/studio/run/emulator-networking) explains in more details how it works. In our case, using the Android emulator allows us to standardize the development environment and enables the creation of test automation in GitHub workflows.
+Typically, the Tenant Issuer is set to your developer machine or localhost. However, with the Android Emulator being a virtual machine, this setup works slightly differently. [Set up Android Emulator networking](https://developer.android.com/studio/run/emulator-networking) explains in more details how it works. In our case, using the Android Emulator allows us to standardize the development environment and enables the creation of test automation in GitHub workflows.
 
-In the case of the Android Emulator, 10.0.2.2 serves as a special alias to your host loopback interface (127.0.0.1 on your development machine), where FusionAuth is running. Similarly, in the case of GitHub workflows, it refers to the virtual machine on which the workflow is executed.
+In the case of the Android Emulator, 10.0.2.2 serves as a special alias to your host loopback interface (127.0.0.1 on your development machine), where FusionAuth is running. Similarly, in the case of GitHub workflows, it refers to the virtual machine on which the workflow job is executed.
 
 ## Test Automation
 
@@ -94,11 +94,13 @@ With the test cases and test data defined, we have to specify additional prerequ
 
 #### Emulator Image
 
-Starting the emulator requires the right image for the test; we’re using the `google_apis` images for the last 5 API level.
+Starting the emulator requires the correct image for the test; we’re using the `google_apis` images for the last 5 API level.
+
+TODO: Android Studio screenshot.
 
 Specifically, we are using API levels 29, 30, 31, 33 and 34. API level 32 is omitted because it is a special [Android 12L release](https://blog.google/products/android/12l-larger-screens/) designed for tablets and foldables with different layouts, which is not a focus for our testing.
 
-Android Studio provides tools to configure and handle emulators directly within the IDE. Alternatively, you can also manage it in the [emulator commandline](https://developer.android.com/studio/run/emulator-commandline).
+Android Studio provides tools to configure and handle emulators directly within the IDE. Alternatively, you can also manage it in the [emulator commandline](https://developer.android.com/studio/run/emulator-commandline). These tools and command line options differ depending on the chosen image.
 
 When automating tests using a test matrix, it's crucial to note that starting from API Level 31, the architecture changes to `x86_64` from the previous `x86`.
 
@@ -126,7 +128,7 @@ adb shell am set-debug-app --persistent com.android.chrome
 adb shell 'echo "chrome --disable-fre --no-default-browser-check --no-first-run" > /data/local/tmp/chrome-command-line'
 ```
 
-This setup is required only once for your emulator but becomes crucial during fully automated testing scenarios in a workflow where the emulator is set up from scratch for each test.
+This setup is required only once for your emulator used in local development but becomes crucial during fully automated testing scenarios in a workflow where the emulator is set up from scratch for each test.
 
 With Android Studio, you can start the emulator and manually open Chrome to bypass the modals, or utilize the `adb` command ([Android Debug Bridge](https://developer.android.com/tools/adb)) located in your Android SDK installation:
 
@@ -136,7 +138,7 @@ $HOME/Android/Sdk/platform-tools/adb
 
 #### Recording
 
-Although there are extensive log details available in your IDE and automated workflow to aid in debugging a failed test, it is beneficial to observe the test directly in the emulator or record the test as a video for additional debugging input and context.
+Although there are extensive log details available in your IDE and automated workflow to aid in debugging a failed test, it is beneficial to observe the test directly in the emulator or [record the test as a video in your workflow](https://github.com/FusionAuth/fusionauth-android-sdk/actions/runs/9051467294) for additional debugging input and context.
 
 If you automate your test in a workflow, you can include this command before starting the test:
 
@@ -225,7 +227,7 @@ Since we are testing against a real FusionAuth backend, we utilize the [fusionau
 
 #### Android Emulator Runner
 
-Running the Android emulator, configuring chrome, recording and executing the test is done using [Android Emulator Runner](https://github.com/marketplace/actions/android-emulator-runner).
+Running the Android Emulator, configuring chrome, recording and executing the test is done using [Android Emulator Runner](https://github.com/marketplace/actions/android-emulator-runner).
 
 ```
 - name: run tests
@@ -244,7 +246,7 @@ Running the Android emulator, configuring chrome, recording and executing the te
 
 #### Upload E2E Test recording
 
-And in case of a failure, we upload the screen recording with [Upload a Build Artifact](https://github.com/marketplace/actions/upload-a-build-artifact) for additional context during debugging.
+And in case of a failure, we upload the screen recording with [Upload a Build Artifact](https://github.com/marketplace/actions/upload-a-build-artifact) for [additional context during debugging](https://github.com/FusionAuth/fusionauth-android-sdk/actions/runs/9051467294).
 
 ```
 - name: Upload recording
@@ -257,13 +259,13 @@ And in case of a failure, we upload the screen recording with [Upload a Build Ar
 
 ### Dependabot
 
-Once the end-to-end tests are fully automated in GitHub workflows, which are triggered on each pull request to main, the next step is to create a Dependabot configuration with grouped [grouped dependencies](https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file#groups) for GitHub Actions and Gradle.
+Once the end-to-end tests are fully automated in GitHub workflows, which are triggered on each pull request to main, the next step is to create a Dependabot configuration with [grouped dependencies](https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file#groups) for GitHub Actions and Gradle.
 
 This setup helps verify changes to the GitHub workflows themselves by automatically testing them. Dependabot creates pull requests with all dependencies updated at once, which is especially crucial for Gradle dependencies where updates are frequently released for a group of packages simultaneously.
 
 #### Maintain dependencies for GitHub Actions
 
-For GitHub Actions, we create a Dependabot configuration to check both development and production dependencies on a weekly basis. Although currently all actions are treated as production dependencies by Dependabot, this behavior could change in the future. Therefore, we include both to ensure comprehensive coverage.
+For GitHub Actions, we create a Dependabot configuration to check both development and production dependencies on a weekly basis. Although currently all actions are treated as production dependencies by Dependabot, this behavior could change in the future. Therefore, we include both to ensure coverage.
 
 Versioning your GitHub Actions to MAJOR.MINOR.PATCH provides a more stable testing environment. Dependabot addresses the otherwise problematic disadvantage of manually keeping tests up to date.
 
@@ -301,7 +303,7 @@ This approach simplifies our configuration to handle most cases without diving i
 
 Implementing FusionAuth enables seamless integration of various features, ranging from basic identity management to advanced functionalities such as detailed user profiles and role management. Given that user-facing functionalities heavily depend on FusionAuth, it is crucial to verify the correct operation of all features with each new release. Automated end-to-end testing ensures comprehensive validation of compatibility and functionality.
 
-Although automating end-to-end testing for an Android app with OAuth can be complex, we successfully integrated it for our SDK.
+Although automating end-to-end testing for an Android app with OAuth can be complex, we successfully make use of it for our SDK.
 
 Our end-to-end test suite has been tested against numerous updates and releases during the SDK development. It serves as a pass criterion for pull requests and pre-release checks in our GitHub project. With this setup, we have successfully and proactively identified functional issues, including one related to [compatibility with the new scope feature of FusionAuth](https://github.com/FusionAuth/fusionauth-android-sdk/pull/60) and another with [external libraries](https://github.com/FusionAuth/fusionauth-android-sdk/pull/88).
 
