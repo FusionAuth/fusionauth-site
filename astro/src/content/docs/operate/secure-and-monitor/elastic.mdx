@@ -319,19 +319,34 @@ Below are the instructions to implement this design. They follow from the work y
 
 - Browse the home page of Elastic Cloud.
 - Click "Add integrations". Search for and add Docker.
+- Give it the name `fadocker`.
+- At the bottom of the page, name the new policy `fadockerpolicy`.
+- Click "Save and continue".
+- Click "Add Elastic Agent to your hosts". You need the URL and token given on the page that shows, but you won't need the installation commands. Elastic already provides a prebuilt Docker image you can use instead.
 - Change the Docker compose file you used in the previous section to replace the custom `efa` image with the normal FA image.
   ```yaml
   fa:
     image: fusionauth/fusionauth-app:latest
   ```
-- Add a new service to the compose file for the EA image.
+- (Note that you could continue using the `efa` image if you wanted to. Elastic allows you to run as many agents as you want, and will collect data from all of them.)
+- Add a new service to the compose file for the EA image. Replace your URL and enrollment token in the markup below from the values on the Elastic web page.
   ```yaml
-  ea:
-    image: eaimage
-    container_name: ea
+  faelastic:
+    image: elastic/elastic-agent:8.14.3
+    container_name: faelastic
+    user: root
     networks:
       - db_net
+    environment:
+      - FLEET_ENROLL=1
+      - FLEET_ENROLLMENT_TOKEN=YTRBMBa1RvUQ==
+      - FLEET_URL=https://905ec5.fleet.us-central1.gcp.cloud.es.io:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
   ```
+- (`/var/run/docker.sock` will work on Linux and Macos hosts, but might not work on Windows. If you encounter socket problems on Windows, please read [this article](https://tomgregory.com/aws/running-docker-in-docker-on-windows/) and try prefixing your local socket path with an extra slash.)
+- In the Elastic Cloud web interface, browse to the sidebar and then <strong>Analytics -> Dashboards -> [Metrics Docker]Overview</strong>. You should be able to see details about all your Docker containers now.
+  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic5.png' alt='Docker dashboard' />
 
 ## Monitor the FusionAuth Application With Elastic
 
