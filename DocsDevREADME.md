@@ -172,7 +172,7 @@ Follow everything in the `Content Style Guidelines` section.
 - Images should be pulled in using markdown: `![alt text](/path/to/images)`
 - Images for a blog post should go under /astro/public/img/blogs/` in a directory related to the blog title.
 - We use rouge for code formatting. Supported languages are listed here: https://github.com/rouge-ruby/rouge/tree/master/lib/rouge/lexers
-- For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
+- For site navigation, use Breadcrumb: Navigate to <Breadcrumb>Tenants</Breadcrumb> and then to the <Breadcrumb>Password</Breadcrumb> tab.
 - For field names, use double quotes: "Login Identifier Attribute".
 - For values, use back ticks: `userPrincipalName`.
 - Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/main/.github/known-blog-categories.txt). You can separate categories with commas.
