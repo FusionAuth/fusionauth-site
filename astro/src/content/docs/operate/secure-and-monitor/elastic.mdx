@@ -20,8 +20,13 @@ import Diagram3 from 'src/components/docs/operate/secure-and-monitor/ElasticDiag
 - [Create An Elastic Account](#create-an-elastic-account)
 - [Create An Elastic API Key - TODO remove as unnecessary](#create-an-elastic-api-key---todo-remove-as-unnecessary)
 - [Monitor FusionAuth With Elastic In The Same Container](#monitor-fusionauth-with-elastic-in-the-same-container)
+  - [How To Debug The Container](#how-to-debug-the-container)
 - [Monitor FusionAuth With Elastic In Another Container](#monitor-fusionauth-with-elastic-in-another-container)
 - [Monitor the FusionAuth Application With Elastic](#monitor-the-fusionauth-application-with-elastic)
+- [Use otel container](#use-otel-container)
+- [Send custom metrics through api](#send-custom-metrics-through-api)
+- [Self host ELK](#self-host-elk)
+- [Other options](#other-options)
   - [OpenTelemetry Dashboard](#opentelemetry-dashboard)
 - [FusionAuth Metrics](#fusionauth-metrics)
   - [Counts, Not Details](#counts-not-details)
@@ -254,8 +259,9 @@ Here's how to implement this design:
 
 Well done, you have successfully installed a monitoring agent for your FusionAuth machine and can now monitor it online.
 
-<Aside type="tip">
-If you get errors when running FusionAuth, or the Agent does not appearin Fleet, you will need to open a terminal in the container to find the problem.
+### How To Debug The Container
+
+If you get errors when running FusionAuth, or the Agent does not appear in Fleet, you will need to open a terminal in the container to find the problem.
 
 Change the last line of the Dockerfile to the line below, to stop FusionAuth and the Agent starting, so you can test manually.
 
@@ -276,18 +282,76 @@ docker run -it --user root --name efa efaimage bash
 ```
 
 Start the Agent with `/opt/Elastic/Agent/elastic-agent run` and use `cat /var/log/elastic-agent.err` to look for errors. If you see the agent trying to connect to `127.0.0.1:9200`, it is not because the URL is configured incorrectly. The 127 address is just a fallback when the Agent cannot connect to the server, usually due to it not running as root.
-</Aside>
 
 ## Monitor FusionAuth With Elastic In Another Container
 
+Running Elastic Agent and FA in the same container required altering the FA Dockerfile, which means you have to alter the file and rebuild the image every time you want to use a new version of FA.
+
+If you run EA in a separate container you avoid this problem, but you need to have full control over the machine running Docker in order to give EA access to restricted Docker data. This may not be possible on some cloud hosts.
+
+Running EA in a separate container to FA is a design shown in the diagram below.
+
+```mermaid
+graph TD
+  subgraph E[Elastic Server]
+    J(Kibana) --> B(ElasticSearch)
+    J --> F(Fleet)
+  end
+  subgraph I[Your server]
+    subgraph G[Docker]
+      H[(Postgresql)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph K[Docker]
+      D(Elastic Agent)
+    end
+  end
+  K --> E
+  K --> C
+  C --> G
+  style I fill:#999
+  style E fill:#999
+```
+
+Below are the instructions to implement this design. They follow from the work you did in the previous section.
+
+- Change the Docker compose file you used in the previous section to replace the custom `efa` image with the normal FA image.
+  ```yaml
+  fa:
+    image: fusionauth/fusionauth-app:latest
+  ```
+- Add a new service to the compose file for the EA image.
+  ```yaml
+  ea:
+    image: eaimage
+    container_name: ea
+    networks:
+      - db_net
+  ```
 
 ## Monitor the FusionAuth Application With Elastic
 
+https://www.elastic.co/guide/en/observability/current/_step_3_install_apm_agents.html
+
+
 - add java agent apm - https://2ec4bc66a0bf4531ad2d793f7147ee24.us-central1.gcp.cloud.es.io:9243/app/integrations/edit-integration/elastic-cloud-apm?from=fleet-policy-list
 
+## Use otel container
 
+https://www.elastic.co/guide/en/observability/8.14/apm-open-telemetry.html
 
+## Send custom metrics through api
 
+https://www.elastic.co/guide/en/observability/8.14/apm-api-events.html
+
+## Self host ELK
+
+## Other options
+
+Regularly request FA HTTP page with Heartbeat container
+https://www.elastic.co/guide/en/beats/heartbeat/current/heartbeat-overview.html
 
 
 ---
