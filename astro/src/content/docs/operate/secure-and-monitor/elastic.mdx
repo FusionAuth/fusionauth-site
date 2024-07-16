@@ -15,20 +15,18 @@ import Diagram2 from 'src/components/docs/operate/secure-and-monitor/ElasticDiag
 import Diagram3 from 'src/components/docs/operate/secure-and-monitor/ElasticDiagram3.astro';
 
 - [Introduction](#introduction)
-- [Cloud Host Or Self Host?](#cloud-host-or-self-host)
+- [Cloud-Hosted Or Self-Hosted?](#cloud-hosted-or-self-hosted)
 - [Too Many Elastic Possibilities](#too-many-elastic-possibilities)
 - [Create An Elastic Account](#create-an-elastic-account)
 - [Create An Elastic API Key - TODO remove as unnecessary](#create-an-elastic-api-key---todo-remove-as-unnecessary)
-- [Monitor FusionAuth With Elastic In The Same Container](#monitor-fusionauth-with-elastic-in-the-same-container)
+- [Monitor FusionAuth With Elastic In The Same Container Or Without Docker](#monitor-fusionauth-with-elastic-in-the-same-container-or-without-docker)
   - [How To Debug The Container](#how-to-debug-the-container)
 - [Monitor FusionAuth With Elastic In Another Container](#monitor-fusionauth-with-elastic-in-another-container)
-- [Monitor the FusionAuth Application With Elastic](#monitor-the-fusionauth-application-with-elastic)
-- [Send custom metrics through api](#send-custom-metrics-through-api)
-- [FusionAuth Metrics](#fusionauth-metrics)
-  - [Counts, Not Details](#counts-not-details)
+- [Monitor the FusionAuth Application Directly With Elastic](#monitor-the-fusionauth-application-directly-with-elastic)
+- [Send Custom FA Metrics To the ElasticSearch API](#send-custom-fa-metrics-to-the-elasticsearch-api)
   - [Which Metrics To Monitor](#which-metrics-to-monitor)
-- [Mapping FusionAuth Metrics To Elastic Metrics](#mapping-fusionauth-metrics-to-elastic-metrics)
-- [Write A Custom Service To Send Data To The API](#write-a-custom-service-to-send-data-to-the-api)
+  - [Write A Custom Service To Send Data To The API](#write-a-custom-service-to-send-data-to-the-api)
+  - [Mapping FusionAuth Metrics To Elastic Metrics](#mapping-fusionauth-metrics-to-elastic-metrics)
 - [Self-host ELK](#self-host-elk)
 - [Further Reading](#further-reading)
 
@@ -42,11 +40,11 @@ Before continuing with this guide, please go through the [FusionAuth guide to mo
 
 To learn more about the Elastic Observability platform, refer to the documentation [here](https://www.elastic.co/guide/en/observability/current/index.html). Pricing of the platform is available [here](https://www.elastic.co/pricing). The Standard (lowest) pricing tier includes sufficient observability features, including handling logs and metrics.
 
-## Cloud Host Or Self Host?
+## Cloud-Hosted Or Self-Hosted?
 
 Before 2021, Elastic products were open source software. In 2021, Elastic changed their licenses to [Elastic License 2.0](https://www.elastic.co/licensing/elastic-license/faq) to prevent cloud hosts (AWS, Google, Azure) from freely selling managed Elastic services that compete with [Elastic Cloud](https://www.elastic.co/cloud/shared-responsibility).
 
-While not officially open source, the Elastic License 2.0 still allows free and open (gratis and libre) use of most Elastic products, as long as you are not selling them as your own service. So you can host the Elastic stack on your own server instead of buying Elastic Cloud. However, using [certain premium features](https://www.elastic.co/subscriptions), like AI and integrations, will still need payment to Elastic.
+While not officially open source, the Elastic License 2.0 still allows free and open (gratis and libre) use of most Elastic products, as long as you are not selling them as your own service. So you can host the Elastic stack on your own server instead of buying Elastic Cloud. However, using [certain premium features](https://www.elastic.co/subscriptions), like AI, will still need payment to Elastic.
 
 This guide assumes you are using the paid Elastic Cloud for monitoring. If you are instead self-hosting the Elastic Stack, you should still be able to follow the guide, but you will need to change connections that point to Elastic Cloud to point to your own server.
 
@@ -86,7 +84,7 @@ You need an API key to upload data to Elastic.
 - Click "Create API Key".
 - Save the key for later use. Be careful never to commit the key to git, which can expose it on the Internet.
 
-## Monitor FusionAuth With Elastic In The Same Container
+## Monitor FusionAuth With Elastic In The Same Container Or Without Docker
 
 Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below (you might also run OpenSearch in another Docker container).
 
@@ -134,7 +132,26 @@ Kibana is a web interface the you access to view dashboards of the Agent's conta
 
 Fleet is the web app that tracks all Agents on all servers. It allows you set Agent Policies that tell the Agents remotely what data they should and shouldn't upload. You can also use Fleet to delete or edit existing Agents.
 
-While this design is the simplest to implement, it violates the principle of one process per Docker container. This means it is possible for the EA process to die, while the container and FA process keep running, which will cause confusion when viewing the dashboard.
+This design is useful when you don't have full control over the Docker environment, as you may not have on some cloud hosts. However, the design violates the principle of one process per Docker container. This means it is possible for the EA process to die, while the container and FA process keep running, which will cause confusion when viewing the dashboard.
+
+Running EA on the same server as FA is also useful when you aren't using Docker — when you are running FusionAuth directly on your server. In this case, your system will look like the diagram below.
+
+```mermaid
+graph TD
+  subgraph E[Elastic Server]
+    J(Kibana) --> B(ElasticSearch)
+    J --> F(Fleet)
+  end
+  subgraph I[Your server]
+    H[(Postgresql)]
+    A(FusionAuth)
+    D(Elastic Agent)
+  end
+  A --> H
+  D --> E
+  style I fill:#999
+  style E fill:#999
+```
 
 Here's how to implement this design:
 - Browse to the home page of your Elastic Cloud web interface.
@@ -155,13 +172,13 @@ Here's how to implement this design:
   cd elastic-agent-8.14.2-linux-x86_64
   sudo ./elastic-agent install --url=https://9025e4274afd63b55h64.fleet.us-central1.gcp.cloud.es.io:443 --enrollment-token=a2lB5aA1dUJ4d2daRmlNcVozang6WbgaTk5FUsE43dw==
   ```
-- The last line is the most important. First, remove `sudo`, because your container user will already be root. Note the subdomain of the the URL, which is your unique Elastic Cloud home. Note also the enrollment token, which is your secret key to use Elastic. Keep the token secure and safe, and never commit it to GitHub where it can be publicly exposed.
+- The last line is the most important. Note the subdomain of the the URL, which is your unique Elastic Cloud home. Note also the enrollment token, which is your secret key to use Elastic. Keep the token secure and safe, and never commit it to GitHub where it can be publicly exposed.
 
 ---
 
 - Now you are going to leave the Elastic site and work in a terminal on your own computer. Install [Docker](https://docs.docker.com/get-docker/) if you don't have it on your machine.
 - Save the Dockerfile from the [FusionAuth containers repository](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) to your computer.
-- Rename to the file to `elastic.dockerfile`.
+- Rename the file to `elastic.dockerfile`.
 - Edit the file and insert the following lines above the comment "###### Start FusionAuth App".
   ```dockerfile
   ###### New for Elastic #################################
@@ -247,14 +264,14 @@ Here's how to implement this design:
   POSTGRES_USER=postgres
   POSTGRES_PASSWORD=postgres
   ```
-- Now run the FusionAuth with `docker compose up`.
+- Run FusionAuth with `docker compose up`.
 - When you return to the Elastic web interface it should now say "Agent enrollment confirmed".
 - You should also see the agent appear in the Fleet dashboard and the status should change to `Healthy`.
     <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic3.png' alt='Agent overview' />
 - In the sidebar, browse to <strong>Analytics -> Dashboards</strong>. Search for and display `Host overview`.
   <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic4.png' alt='Server dashboard' />
 
-Well done, you have successfully installed a monitoring agent for your FusionAuth machine and can now monitor it online.
+You have successfully installed a monitoring agent for your FusionAuth machine and can now monitor it online.
 
 ### How To Debug The Container
 
@@ -284,7 +301,7 @@ Start the Agent with `/opt/Elastic/Agent/elastic-agent run` and use `cat /var/lo
 
 Running Elastic Agent and FA in the same container required altering the FA Dockerfile, which means you have to alter the file and rebuild the image every time you want to use a new version of FA.
 
-If you run EA in a separate container you avoid this problem, but you need to have full control over the machine running Docker in order to give EA access to restricted Docker data. This may not be possible on some cloud hosts.
+If you run EA in a separate container you avoid this problem, but you need to have full control over the machine running Docker in order to give EA access to restricted Docker data (the Docker socket). This may not be possible on some cloud hosts.
 
 Running EA in a separate container to FA is a design shown in the diagram below.
 
@@ -325,7 +342,7 @@ Below are the instructions to implement this design. They follow from the work y
   fa:
     image: fusionauth/fusionauth-app:latest
   ```
-- (Note that you could continue using the `efa` image if you wanted to. Elastic allows you to run as many agents as you want, and will collect data from all of them.)
+  - Note that you could continue using the `efa` image if you wanted to. Elastic allows you to run as many agents as you want, and will collect data from all of them.
 - Add a new service to the compose file for the EA image. Replace your URL and enrollment token in the markup below from the values on the Elastic web page.
   ```yaml
   faelastic:
@@ -341,19 +358,21 @@ Below are the instructions to implement this design. They follow from the work y
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
   ```
-- (`/var/run/docker.sock` will work on Linux and Macos hosts, but might not work on Windows. If you encounter socket problems on Windows, please read [this article](https://tomgregory.com/aws/running-docker-in-docker-on-windows/) and try prefixing your local socket path with an extra slash.)
+  - (`/var/run/docker.sock` will work on Linux and Macos hosts, but might not work on Windows. If you encounter socket problems on Windows, please read [this article](https://tomgregory.com/aws/running-docker-in-docker-on-windows/) and try prefixing your local socket path with an extra slash.)
 - In the Elastic Cloud web interface, browse to the sidebar and then <strong>Analytics -> Dashboards -> [Metrics Docker]Overview</strong>. You should be able to see details about all your Docker containers now.
   <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic5.png' alt='Docker dashboard' />
 
-## Monitor the FusionAuth Application With Elastic
+TODO ADD LOG UPLOAD TO THIS AGENT
 
-You've learnt how to monitor the FusionAuth container now in two different ways. Since a Docker container will exit if the process it runs exits, this monitoring might be enough for you. But if you want to monitor details about the FA app itself, there are various ways to do it:
-- Use a specialized Elastic service, like Heartbeat, to connect to the FA HTTP server and see if it returns correctly. You can install Heartbeat in a container, like we did for EA in the previous section, and point it to the FA URL. A guide on Heartbeat is [here](https://www.elastic.co/guide/en/beats/heartbeat/current/heartbeat-overview.html).
+## Monitor the FusionAuth Application Directly With Elastic
+
+You've learnt how to monitor the FusionAuth container now in two different ways. Since a Docker container will exit if the process it runs exits, this monitoring will tell you if FusionAuth dies, which might be enough for you to know. But if you want to monitor details about the FA app itself, there are various approaches:
 - Use an [Elastic APM (application perfomance monitoring) app for Java](https://www.elastic.co/guide/en/observability/current/_step_3_install_apm_agents.html) inside the FA container to monitor the Java Virtual Machine. Since monitoring Java won't give you any useful information that monitoring the container doesn't already, you can ignore this idea. There is a guide to running FusionAuth with a Java monitoring app by altering the Dockerfile in the [FusionAuth Splunk guide](./splunk) if you would like to try.
 - Use an [OpenTelemetry Java monitoring agent](https://github.com/open-telemetry/opentelemetry-java-instrumentation) to send information about FA to Elastic. This is similar to previous point - OpenTelemetry won't provide any useful information that container monitoring doesn't already. Using OpenTelemery is also shown in the [FusionAuth Splunk guide](./splunk). Elastic has a guide to Java [here](https://www.elastic.co/guide/en/observability/8.14/apm-open-telemetry.html) that you can use in conjunction with the Splunk guide.
+- Use a specialized Elastic service, like Heartbeat, to connect to the FA HTTP server and see if it returns correctly. You can install Heartbeat in a container, like we did for EA in the previous section, and point it to the FA URL. A guide on Heartbeat is [here](https://www.elastic.co/guide/en/beats/heartbeat/current/heartbeat-overview.html).
 - Send custom metrics from FusionAuth to Elastic. This is the most complex option, as you need to write a custom service to request FA metrics, extract them from the given zip file, and upload them to Elastic through their API. However, this is the only way to get precise information about FA if you want that level of detail. This option will be discussed in the next section.
 
-## Send custom metrics through api
+## Send Custom FA Metrics To the ElasticSearch API
 
 In this section, you will create another Docker container to call the FusionAuth API and send the metrics to Elastic.
 
@@ -382,20 +401,6 @@ graph TD
   style I fill:#999
 ```
 
-https://www.elastic.co/guide/en/observability/8.14/apm-api-events.html
-
-## FusionAuth Metrics
-
-Now you know how to send Elastic Java metrics with OpenTelemetry, let's consider what custom metrics you would want to send and how to write code that uploads the metrics automatically while FusionAuth is running.
-
-### Counts, Not Details
-
-Note that Elastic is designed to monitor aggregate data, in other words, counts of events. Elastic can group those counts over time and by dimension (location, server, or application). Elastic is **not** designed to monitor individual events with details like error messages or the names of the most purchased products on your site.
-
-For FusionAuth, this means you should use Elastic to check **how many** people are logging in over time, not **which** people. Think of it like this: If your data can be used in a gauge or bar chart, it's the right type of data.
-
-While it's true that Elastic does have a log file tracking product and many other services, this article discusses only the Observability Cloud.
-
 ### Which Metrics To Monitor
 
 FusionAuth has too [many metrics](/docs/operate/secure-and-monitor/monitor#metrics) to discuss in this article. You will need to decide which are important for you to monitor by reading the documentation.
@@ -406,32 +411,7 @@ A useful metric to start with is login counts. If this number drops from the ave
 
 You can add any other metrics you want to this system.
 
-## Mapping FusionAuth Metrics To Elastic Metrics
-
-Elastic has two sets of documentation, the [primary](https://docs.splunk.com/observability/en) and the [developer](https://dev.splunk.com/observability/docs) documentation. You need to read only the primary documentation to use Elastic with FusionAuth. The only exception is the [documentation on the data format](https://dev.splunk.com/observability/reference/api/ingest_data/latest#endpoint-send-metrics) expected by Elastic if you're uploading data with their REST API.
-
-Elastic has four different [metric types](https://docs.splunk.com/observability/en/metrics-and-metadata/metric-types.html#metric-types):
-
-| Type               | Description                                                                                               |
-|--------------------|-----------------------------------------------------------------------------------------------------------|
-| Gauge              | Value of a measurement at a specific point in time.                                                        |
-| Cumulative counter | Total number of occurrences or items since the measurement began.                                          |
-| Counter            | Number of new occurrences or items since the last measurement.                                             |
-| Histogram          | Distribution of measurements across time. Elastic Observability Cloud supports explicit bucket histograms. |
-
-Let's consider the number of user logins every ten seconds as an example. If you have only a few users, you could monitor the number every hour or even every day instead.
-
-You could send the number of logins to Elastic as a:
-
-- Gauge: Monitoring this would involve seeing that the gauge number on the dashboard doesn't change much.
-- Cumulative counter: Monitoring this would involve seeing that the number is steadily increasing.
-- Counter: In this case, the metric would function the same as a gauge.
-
-Using a histogram isn't necessary for such simple data.
-
-## Write A Custom Service To Send Data To The API
-
-Previously, this guide showed you how to use a new Docker container to run an OpenTelemetry Collector to receive data from FusionAuth.
+### Write A Custom Service To Send Data To The API
 
 Let's get the login records every ten seconds and send them to Elastic. All the FusionAuth APIs that give you event data are documented [here](/docs/apis). The login records API is documented [here](/docs/apis/login#request-6). Note that the documentation says the date format is the standard Java type, but some constants like `ISO_LOCAL_DATE_TIME` are not supported. You need to enter the format string you want manually.
 
@@ -493,6 +473,8 @@ EOF
 
 done
 ```
+
+https://www.elastic.co/guide/en/observability/8.14/apm-api-events.html
 
 This script gets all login records in the last hours to be sure the zip file has some data. In reality, replace 3600000 with 10000 so that when the script runs every ten seconds, it gets only the latest records. Note that FusionAuth uses milliseconds instead of the epoch standard of seconds, so the script has to append `000` to the normal Unix time.
 
@@ -564,6 +546,30 @@ clear; docker build -f metricDockerfile --platform linux/amd64 -t metricimage .;
 ```
 
 You can follow the process described here to add other FusionAuth API calls to `app.sh` to get other metrics to send to Elastic.
+
+
+### Mapping FusionAuth Metrics To Elastic Metrics
+
+Elastic has two sets of documentation, the [primary](https://docs.splunk.com/observability/en) and the [developer](https://dev.splunk.com/observability/docs) documentation. You need to read only the primary documentation to use Elastic with FusionAuth. The only exception is the [documentation on the data format](https://dev.splunk.com/observability/reference/api/ingest_data/latest#endpoint-send-metrics) expected by Elastic if you're uploading data with their REST API.
+
+Elastic has four different [metric types](https://docs.splunk.com/observability/en/metrics-and-metadata/metric-types.html#metric-types):
+
+| Type               | Description                                                                                               |
+|--------------------|-----------------------------------------------------------------------------------------------------------|
+| Gauge              | Value of a measurement at a specific point in time.                                                        |
+| Cumulative counter | Total number of occurrences or items since the measurement began.                                          |
+| Counter            | Number of new occurrences or items since the last measurement.                                             |
+| Histogram          | Distribution of measurements across time. Elastic Observability Cloud supports explicit bucket histograms. |
+
+Let's consider the number of user logins every ten seconds as an example. If you have only a few users, you could monitor the number every hour or even every day instead.
+
+You could send the number of logins to Elastic as a:
+
+- Gauge: Monitoring this would involve seeing that the gauge number on the dashboard doesn't change much.
+- Cumulative counter: Monitoring this would involve seeing that the number is steadily increasing.
+- Counter: In this case, the metric would function the same as a gauge.
+
+Using a histogram isn't necessary for such simple data.
 
 ## Self-host ELK
 
