@@ -27,6 +27,7 @@ import Diagram3 from 'src/components/docs/operate/secure-and-monitor/ElasticDiag
   - [Create An Elastic API Key](#create-an-elastic-api-key)
   - [Create An ElasticSearch Index](#create-an-elasticsearch-index)
   - [Write A Custom Service To Send Data To The API](#write-a-custom-service-to-send-data-to-the-api)
+  - [View The Metrics in Kibana](#view-the-metrics-in-kibana)
   - [Mapping FusionAuth Metrics To Elastic Metrics](#mapping-fusionauth-metrics-to-elastic-metrics)
 - [Self-host ELK](#self-host-elk)
 - [Final System Architecture](#final-system-architecture)
@@ -433,12 +434,8 @@ curl -X PUT "${elasticUrl}/falogins" -H "Authorization: ApiKey ${elasticKey}" -H
 {
   "mappings": {
     "properties": {
-      "timestamp": {
-        "type": "date"
-      },
-      "value": {
-        "type": "integer"
-      }
+      "timestamp": { "type": "date" },
+      "value": { "type": "text" }
     }
   }
 }'
@@ -468,8 +465,6 @@ Let's review the index in Elastic Cloud.
 
 You can now see the type of data that the index will accept. You can create indexes manually instead of using the API if you like. Creating mappings manually will show you all the types of fields that ElasticSearch supports.
 
-
-
 ### Write A Custom Service To Send Data To The API
 
 Let's get the login records every ten seconds and send them to Elastic. All the FusionAuth APIs that give you event data are documented [here](/docs/apis). The login records API is documented [here](/docs/apis/login#request-6). Note that the documentation says the date format is the standard Java type, but some constants like `ISO_LOCAL_DATE_TIME` are not supported. You need to enter the format string you want manually.
@@ -488,23 +483,23 @@ Create a file called `app.sh`. Insert the content below, replacing your FusionAu
 # exit on error
 set -e
 
-# get login records from FusionAuth
-endpoint="http://fa:9011/api/system/login-record/export"
-# FusionAuth API key
-key="33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod"
-# FusionAuth application Id
-appId="3c219e58-ed0e-4b18-ad48-f4f92793ae32"
+# get login records from fusionauth
+faUrl="http://localhost:9011/api/system/login-record/export" # "http://fa:9011/api/system/login-record/export"
+faKey="33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod"
+faAppId="3c219e58-ed0e-4b18-ad48-f4f92793ae32"
+elasticKey="WGdNxOUkwQQ=="
+elasticUrl="https://c36cbc1.us-central1.gcp.cloud.es.io:443"
 dateFormat=$(echo -n "yyyy-MM-dd'T'HH:mm:ss.SSS" | jq -sRr @uri)
 end=$(date +%s)000
 start=$(($end - 3600000))
-params="applicationId=${appId}&dateTimeSecondsFormat=${dateFormat}&start=${start}&end=${end}"
-url="${endpoint}?${params}"
-echo "curl -H \"Authorization: ${key}\" -o record.zip \"$url\""
-curl -H "Authorization: ${key}" -o record.zip "$url"
-unzip record.zip -o
+params="applicationId=${faAppId}&dateTimeSecondsFormat=${dateFormat}&start=${start}&end=${end}"
+url="${faUrl}?${params}"
+echo "curl -H \"Authorization: ${faKey}\" -o record.zip \"$url\""
+curl -H "Authorization: ${faKey}" -o record.zip "$url"
+unzip -o record.zip
 cat login_records.csv
 
-# for each record, get the unix time in ms
+# for each record, get the user and  unix time in ms
 tail -n +2 login_records.csv | while IFS=',' read -r userId time rest; do
   userId=$(echo "$userId" | tr -d ' "' )
   time=$(echo "$time" | tr -d ' "')                      # 2024-06-21T05:14:56.123
@@ -515,20 +510,14 @@ tail -n +2 login_records.csv | while IFS=',' read -r userId time rest; do
   # make the POST data
   data=$(cat <<EOF
 {
-  "cumulative_counter": [
-    {
-       "metric": "login.success",
-       "dimensions": { "host": "testServer" },
-       "value": 1,
-       "timestamp": ${sec}${ms}
-    }
-  ]
+  "timestamp": ${sec}${ms},
+  "value": "${userId}"
 }
 EOF
 )
 
   # send data to Elastic API
-  curl --request POST -H "X-SF-TOKEN: yourToken" -H "Content-Type: application/json" -d "$data" "https://ingest.us1.signalfx.com/v2/datapoint"
+  curl -X POST "${elasticUrl}/falogins/_doc" -H "Authorization: ApiKey ${elasticKey}" -H "Content-Type: application/json" -d "$data"
 
 done
 ```
@@ -574,7 +563,7 @@ Edit your `docker-compose.yaml` file and add the new service as follows.
 
 Now run all the containers with `docker compose up`.
 
-The output should be as below. Since you logged in in the last hour, there will be one row in the exported file and one value will be sent to Elastic.
+The output should be as below. Since you logged in in the last hour, there will be one row in the exported file and one value will be sent to Elastic. If you don't see any rows displayed on the screen, log in to FusionAuth again.
 
 ```sh
 curl -H "Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" -o record.zip "http://fa:9011/api/system/login-record/export?applicationId=3c219e58-ed0e-4b18-ad48-f4f92793ae32&dateTimeSecondsFormat=yyyy-MM-dd%27T%27HH%3Amm%3Ass.SSS&start=1719216315000&end=1719219915000"
@@ -604,6 +593,10 @@ clear; docker build -f metricDockerfile --platform linux/amd64 -t metricimage .;
 
 You can follow the process described here to add other FusionAuth API calls to `app.sh` to get other metrics to send to Elastic.
 
+### View The Metrics in Kibana
+
+- In the Elastic Cloud web interface, open the sidebar and browse to <strong>Search -> Elasticsearch -> Indices -> falogins -> Documents</strong>.
+  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic8.png' alt='Elasticsearch data' />
 
 ### Mapping FusionAuth Metrics To Elastic Metrics
 
