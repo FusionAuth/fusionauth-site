@@ -26,10 +26,10 @@ import Diagram6 from 'src/components/docs/operate/secure-and-monitor/elasticDiag
   - [How To Debug The Container](#how-to-debug-the-container)
 - [Monitor FusionAuth With Elastic In Another Container](#monitor-fusionauth-with-elastic-in-another-container)
 - [Monitor the FusionAuth Application Directly With Elastic](#monitor-the-fusionauth-application-directly-with-elastic)
-- [Send Custom FusionAuth Metrics To The ElasticSearch API](#send-custom-fusionauth-metrics-to-the-elasticsearch-api)
+- [Send Custom FusionAuth Metrics To The Elasticsearch API](#send-custom-fusionauth-metrics-to-the-elasticsearch-api)
   - [Which Metrics To Monitor](#which-metrics-to-monitor)
   - [Create An Elastic API Key](#create-an-elastic-api-key)
-  - [Create An ElasticSearch Index](#create-an-elasticsearch-index)
+  - [Create An Elasticsearch Index](#create-an-elasticsearch-index)
   - [Write A Custom Service To Send Data To The API](#write-a-custom-service-to-send-data-to-the-api)
   - [View The Metrics In Kibana](#view-the-metrics-in-kibana)
 - [Final System Architecture](#final-system-architecture)
@@ -38,7 +38,7 @@ import Diagram6 from 'src/components/docs/operate/secure-and-monitor/elasticDiag
 
 ## Introduction
 
-[Elastic](https://www.elastic.co) is a company known for managing the ELK stack: ElasticSearch, Logstash, and Kibana. These products allow you to import (ingest) data, including observability data like logs and server metrics, organize them, and monitor them.
+[Elastic](https://www.elastic.co) is a company known for managing the ELK stack: Elasticsearch, Logstash, and Kibana. These products allow you to import (ingest) data, including observability data like logs and server metrics, organize them, and monitor them.
 
 This guide explains how to connect FusionAuth to Elastic in various ways, as well as which FusionAuth metrics are useful in Elastic, and how to create a simple dashboard to show them.
 
@@ -90,7 +90,7 @@ In this section you are going to install Elastic Agent in the same container as 
 
 <Diagram2></Diagram2>
 
-FusionAuth and Postgresql are unchanged. The Elastic Agent in the FusionAuth container monitors the container (not the FusionAuth app), and uploads the data to ElasticSearch, where it is indexed and saved.
+FusionAuth and Postgresql are unchanged. The Elastic Agent in the FusionAuth container monitors the container (not the FusionAuth app), and uploads the data to Elasticsearch, where it is indexed and saved.
 
 Kibana is a web interface that provides dashboards of the Agent's container's health. Note that Elastic Agent is not yet monitoring FusionAuth in this design, but if the container dies or suffers CPU or RAM overuse, that will show in the Kibana dashboard.
 
@@ -304,10 +304,10 @@ You've learnt how to monitor the FusionAuth container now in two different ways.
 - Use a specialized Elastic service, like Heartbeat, to connect to the FusionAuth HTTP server and see if it returns correctly. You can install Heartbeat in a container, like we did for Elastic Agent in the previous section, and point it to the FusionAuth URL. A guide on Heartbeat is [here](https://www.elastic.co/guide/en/beats/heartbeat/current/heartbeat-overview.html).
 - Send custom metrics from FusionAuth to Elastic. This is the most complex option, as you need to write a custom service to request FusionAuth metrics, extract them from the given zip file, and upload them to Elastic through their API. However, this is the only way to get precise information about FusionAuth if you want that level of detail. This option will be discussed in the next section.
 
-## Send Custom FusionAuth Metrics To The ElasticSearch API
+## Send Custom FusionAuth Metrics To The Elasticsearch API
 
 There are three possible ways to send custom data to Elastic:
-- Write your own service to run continuously, get data, and send it by calling the ElasticSearch API.
+- Write your own service to run continuously, get data, and send it by calling the Elasticsearch API.
 - Build a custom private module for [MetricBeat](https://www.elastic.co/beats/metricbeat) in Go, compile the module with MetricBeat, and deploy the output to a container. MetricBeat is similar to Elastic Agent. It is an Elastic service that runs continuously, calling whatever integration it's configured with. To write a custom module (integration), follow the [Elastic developer documentation](https://www.elastic.co/guide/en/beats/devguide/current/metricbeat-dev-overview.html).
 - Deploy MetricBeat with the stock [HTTP module](https://www.elastic.co/guide/en/beats/metricbeat/current/metricbeat-module-http.html) in a container. The HTTP module can call any custom API you want. Write a little web service in another container as an interface between MetricBeat and FusionAuth. This service will get whatever metrics you want from FusionAuth and return them in the HTTP response.
 
@@ -331,7 +331,7 @@ You can add any other metrics you want to this service.
 
 ### Create An Elastic API Key
 
-Earlier you used an enrollment token tied to a specific Agent Policy to configure your Elastic Agent. Now to call the ElasticSearch API directly you need an API key.
+Earlier you used an enrollment token tied to a specific Agent Policy to configure your Elastic Agent. Now to call the Elasticsearch API directly you need an API key.
 
 - In the Elastic Cloud web interface, open the sidebar and browse to <strong>Search -> Elasticsearch</strong>.
 - Click "Endpoints & API keys"
@@ -341,9 +341,9 @@ Earlier you used an enrollment token tied to a specific Agent Policy to configur
 - Click "Create API Key".
 - Save the key securely for later use. Never to commit the key to git, which can expose it on the Internet.
 
-### Create An ElasticSearch Index
+### Create An Elasticsearch Index
 
-To prepare ElasticSearch for data upload, open a terminal and run the three commands below, after setting your API key and URL for the first two commands. The API key is the value of the `encoded` field from the JSON in Elastic, not the `api_key` field.
+To prepare Elasticsearch for data upload, open a terminal and run the three commands below, after setting your API key and URL for the first two commands. The API key is the value of the `encoded` field from the JSON in Elastic, not the `api_key` field.
 
 ```sh
 export elasticKey="WGdLQ=="
@@ -381,7 +381,7 @@ Let's review the index in Elastic Cloud.
 - Click the "Mappings" tab.
   <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic7.png' alt='Index mappings' />
 
-You can now see the type of data that the index will accept. You can create indexes manually instead of using the API if you like. Creating mappings manually will show you all the types of fields that ElasticSearch supports.
+You can now see the type of data that the index will accept. You can create indexes manually instead of using the API if you like. Creating mappings manually will show you all the types of fields that Elasticsearch supports.
 
 ### Write A Custom Service To Send Data To The API
 
@@ -510,7 +510,7 @@ You can follow the process described here to add other FusionAuth API calls to `
 
 ### View The Metrics In Kibana
 
-The final step to use your metrics is to create a dashboard to view them in Kibana. You are going to show recent logins on a timeline to indicate the health of FusionAuth. Since the `UserId` field is free text and thus not aggregatable, you will not be able to visualize it, but it will be available for search if you need to run queries against users in ElasticSearch.
+The final step to use your metrics is to create a dashboard to view them in Kibana. You are going to show recent logins on a timeline to indicate the health of FusionAuth. Since the `UserId` field is free text and thus not aggregatable, you will not be able to visualize it, but it will be available for search if you need to run queries against users in Elasticsearch.
 
 - In the Elastic Cloud web interface, open the sidebar and browse to <strong>Search -> Elasticsearch -> Indices -> falogins -> Documents</strong>. You should see data in the table. If not, please run `app.sh` manually and debug where it is failing, paying attention to all API keys and URLs.
   <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic8.png' alt='Elasticsearch data' />
@@ -542,4 +542,4 @@ Now that you are able to monitor FusionAuth in Elastic, you should enable Elasti
 
 - [FusionAuth metrics](/docs/operate/secure-and-monitor/monitor#metrics)
 - [Getting started with Docker and Elastic](https://www.elastic.co/blog/getting-started-with-the-elastic-stack-and-docker-compose)
-- [ElasticSearch REST API](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html)
+- [Elasticsearch REST API](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html)
