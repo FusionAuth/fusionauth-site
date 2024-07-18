@@ -18,23 +18,6 @@ import Diagram4 from 'src/components/docs/operate/secure-and-monitor/elasticDiag
 import Diagram5 from 'src/components/docs/operate/secure-and-monitor/elasticDiagram5.astro';
 import Diagram6 from 'src/components/docs/operate/secure-and-monitor/elasticDiagram6.astro';
 
-- [Introduction](#introduction)
-- [Cloud-Hosted Or Self-Hosted?](#cloud-hosted-or-self-hosted)
-- [Too Many Elastic Possibilities](#too-many-elastic-possibilities)
-- [Create An Elastic Account](#create-an-elastic-account)
-- [Monitor FusionAuth With Elastic In The Same Container Or Without Docker](#monitor-fusionauth-with-elastic-in-the-same-container-or-without-docker)
-  - [How To Debug The Container](#how-to-debug-the-container)
-- [Monitor FusionAuth With Elastic In Another Container](#monitor-fusionauth-with-elastic-in-another-container)
-- [Monitor the FusionAuth Application Directly With Elastic](#monitor-the-fusionauth-application-directly-with-elastic)
-- [Send Custom FusionAuth Metrics To The Elasticsearch API](#send-custom-fusionauth-metrics-to-the-elasticsearch-api)
-  - [Which Metrics To Monitor](#which-metrics-to-monitor)
-  - [Create An Elastic API Key](#create-an-elastic-api-key)
-  - [Create An Elasticsearch Index](#create-an-elasticsearch-index)
-  - [Write A Custom Service To Send Data To The API](#write-a-custom-service-to-send-data-to-the-api)
-  - [View The Metrics In Kibana](#view-the-metrics-in-kibana)
-- [Final System Architecture](#final-system-architecture)
-- [Next Steps](#next-steps)
-- [Further Reading](#further-reading)
 
 ## Introduction
 
@@ -54,7 +37,7 @@ While not officially open source, the Elastic License 2.0 still allows free and 
 
 This guide assumes you are using the paid Elastic Cloud for monitoring. If you are instead self-hosting Elastic, you should still be able to follow the guide, but you will need to change connections that point to Elastic Cloud to point to your own server. To install Elastic yourself in Docker, follow the first half of this [guide](https://www.elastic.co/blog/getting-started-with-the-elastic-stack-and-docker-compose), up to before MetricBeat.
 
-When reading Elastic documentation, such as their [getting started guide](https://www.elastic.co/guide/en/observability/current/logs-metrics-get-started.html), which tells you "you need an Elastic Stack deployment", remember that that does not mean you need to deploy the entire ELK stack locally alongside your application or FusionAuth instance. Their guide means that you need to have the Elastic Stack installed *somewhere*, which is probably going to be on their Elastic Cloud.
+When reading Elastic documentation, such as their [getting started guide](https://www.elastic.co/guide/en/observability/current/logs-metrics-get-started.html), which tells you "you need an Elastic Stack deployment", remember that this does not mean you need to deploy the entire ELK stack locally alongside your application or FusionAuth instance. Their guide means that you need to have the Elastic Stack installed *somewhere*, which is probably going to be on their Elastic Cloud.
 
 ## Too Many Elastic Possibilities
 
@@ -90,11 +73,11 @@ In this section you are going to install Elastic Agent in the same container as 
 
 <Diagram2></Diagram2>
 
-FusionAuth and Postgresql are unchanged. The Elastic Agent in the FusionAuth container monitors the container (not the FusionAuth app), and uploads the data to Elasticsearch, where it is indexed and saved.
+FusionAuth and PostgreSQL are unchanged. The Elastic Agent in the FusionAuth container monitors the container (not the FusionAuth app), and uploads the data to Elasticsearch, where it is indexed and saved.
 
 Kibana is a web interface that provides dashboards of the Agent's container's health. Note that Elastic Agent is not yet monitoring FusionAuth in this design, but if the container dies or suffers CPU or RAM overuse, that will show in the Kibana dashboard.
 
-Fleet is the web app that tracks all Agents on all servers. It allows you set Agent Policies that tell the Agents remotely what data they should and shouldn't upload. You can also use Fleet to delete or edit existing Agents.
+Fleet is the web app that tracks all Agents on all servers. It allows you to set Agent Policies that tell the Agents remotely what data they should and shouldn't upload. You can also use Fleet to delete or edit existing Agents.
 
 This design is useful when you don't have full control over the Docker environment, as you may not have on some cloud hosts. However, the design violates the principle of one process per Docker container. This means it is possible for the Elastic Agent process to die, while the container and FusionAuth process keep running, which will cause confusion when viewing the dashboard.
 
@@ -104,26 +87,26 @@ Running Elastic Agent on the same server as FusionAuth is also useful when you a
 
 Here's how to implement this design:
 - Browse to the home page of your Elastic Cloud web interface.
-- In the sidebar, at the bottom, click <strong>Management -> Fleet</strong>.
-- Click the "Agent policies" tab, then click "Create agent policy".
-- Give it the name `efa` (ElasticFusionAuth). Review the advanced options if you like, but leave their defaults unchanged.
-- Click "Create agent policy".
+- In the sidebar, at the bottom, click <Breadcrumb>Management -> Fleet</Breadcrumb>.
+- Select the "Agent policies" tab, then click <InlineUIElement>Create agent policy</InlineUIElement>.
+- Give it the name `efa`. Review the advanced options if you like, but leave their defaults unchanged.
+- Click <InlineUIElement>Create agent policy</InlineUIElement>.
 - Back on the agent policy list page, click the name of your new policy, "efa".
-- Under the "Integrations" tab, the "System" integration should show. Click the name of the integration to open a page to edit it. If you don't see the system integration, click "Add integration" to the right, search for `System`, and add it.
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic2.png' alt='Add integration' />
-- Disable "Collect events from the Windows event log" and leave the system collection and metric collection toggles enabled. Since your Docker instance runs Ubuntu there is no need for Windows events.
-- Return to the Agents tab of the Fleet page. And click "Add Agent".
+- Under the "Integrations" tab, the "System" integration should show. Click the name of the integration to open a page to edit it. If you don't see the system integration, click <InlineUIElement>Add integration</InlineUIElement> to the right, search for `System`, and add it.
+<img src='/img/docs/operate/secure-and-monitor/elastic/elastic2.png' alt='Add System integration in Elastic' width="1200" role="bottom-cropped" />
+- Disable <InlineUIElement>Collect events from the Windows event log</InlineUIElement> and leave the system collection and metric collection toggles enabled. Since your Docker instance runs Ubuntu there is no need for Windows events.
+- Click on <InlineUIElement>Save integration</InlineUIElement> bottom right.
+- Return to the "Agents" tab of the Fleet page. And click <InlineUIElement>Add Agent</InlineUIElement>.
 - Choose your newly created agent policy in the dropdown that appears for step 1.
 - Copy the text to install the "Linux Tar" version of the agent in step 3, which will be similar to the commands below, but with different parameters.
   ```sh
   curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.14.2-linux-x86_64.tar.gz
   tar xzvf elastic-agent-8.14.2-linux-x86_64.tar.gz
   cd elastic-agent-8.14.2-linux-x86_64
-  sudo ./elastic-agent install --url=https://9025e4274afd63b55h64.fleet.us-central1.gcp.cloud.es.io:443 --enrollment-token=a2lB5aA1dUJ4d2daRmlNcVozang6WbgaTk5FUsE43dw==
+  sudo ./elastic-agent install --url=https://9025e4274.fleet.us-central1.gcp.cloud.es.io:443 --enrollment-token=a2lB5aA1dUagaTk5FUsE743dw==
   ```
-- The last line is the most important. Note the subdomain of the the URL, which is your unique Elastic Cloud home. Note also the enrollment token, which is your secret key to use Elastic. Keep the token secure and safe, and never commit it to GitHub where it can be publicly exposed.
+- The last line is the most important. Note the subdomain of the URL, which is your unique Elastic Cloud home. Note also the enrollment token, which is your secret key to use Elastic. Keep the token secure and safe, and never commit it to GitHub where it can be publicly exposed.
 
----
 
 - Now you are going to leave the Elastic site and work in a terminal on your own computer. Install [Docker](https://docs.docker.com/get-docker/) if you don't have it on your machine.
 - Save the Dockerfile from the [FusionAuth containers repository](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) to your computer.
@@ -148,7 +131,7 @@ Here's how to implement this design:
   ```sh
   docker build --platform linux/amd64 -t efaimage -f elastic.dockerfile .
   ```
-- Use the modified `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. It uses the `efaimage` you just built for FusionAuth.
+- Use the modified `docker-compose.yml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. It uses the `efaimage` image you just built for FusionAuth.
   ```yaml
   services:
     db:
@@ -213,12 +196,12 @@ Here's how to implement this design:
   POSTGRES_USER=postgres
   POSTGRES_PASSWORD=postgres
   ```
-- Run FusionAuth with `docker compose up`.
+- Start FusionAuth with `docker compose up`.
 - When you return to the Elastic web interface it should now say "Agent enrollment confirmed".
 - You should also see the agent appear in the Fleet dashboard and the status should change to `Healthy`.
-    <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic3.png' alt='Agent overview' />
-- In the sidebar, browse to <strong>Analytics -> Dashboards</strong>. Search for and display `Host overview`.
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic4.png' alt='Server dashboard' />
+<img src='/img/docs/operate/secure-and-monitor/elastic/elastic3.png' alt='Fleet Agent overview in Elastic' width="1200" role="bottom-cropped" />
+- In the sidebar, browse to <Breadcrumb>Analytics -> Dashboards</Breadcrumb>. Search for and display `Host overview`.
+<img src='/img/docs/operate/secure-and-monitor/elastic/elastic4.png' alt='Host overview dashboard in Elastic' width="1200" role="bottom-cropped" />
 
 You have successfully installed a monitoring agent for your FusionAuth machine and can now monitor it online.
 
@@ -259,18 +242,18 @@ Running Elastic Agent in a separate container to FusionAuth is shown in the diag
 Below are the instructions to implement this design. They follow from the work you did in the previous section.
 
 - Browse to the Elastic web interface.
-- Click "Add integrations". Search for and add Docker.
+- Click <InlineUIElement>Add integrations</InlineUIElement> on the sidebar. Search for and add Docker.
 - Give it the name `fadocker`.
 - At the bottom of the page, name the new policy `fadockerpolicy`.
-- Click "Save and continue".
-- Click "Add Elastic Agent to your hosts". You need the URL and token given on the page that shows, but you won't need the installation commands. Elastic already provides a prebuilt Docker image you can use instead.
-- Change the Docker compose file you used in the previous section to replace the custom `efa` image with the normal FusionAuth image.
+- Click <InlineUIElement>Save and continue</InlineUIElement>.
+- Click <InlineUIElement>Add Elastic Agent to your hosts</InlineUIElement>. You need the URL and token given on the page that shows, but you won't need the installation commands. Elastic already provides a prebuilt Docker image you can use instead.
+- Change the Docker compose file you used in the previous section to replace the custom `efaimage` image with the normal FusionAuth image.
   ```yaml
   fa:
     image: fusionauth/fusionauth-app:latest
   ```
-  - Note that you could continue using the `efa` image if you wanted to. Elastic allows you to run as many agents as you want, and will collect data from all of them.
-- Add a new service to the compose file for the Elastic Agent image. Replace your URL and enrollment token in the markup below from the values on the Elastic web page.
+  - Note that you could continue using the `efaimage` image if you wanted to. Elastic allows you to run as many agents as you want, and will collect data from all of them.
+- Add a new service to the compose file for the Elastic Agent image. Replace your URL and enrollment token in the markup below with the values from the Elastic web page.
   ```yaml
   faelastic:
     image: elastic/elastic-agent:8.14.3
@@ -286,21 +269,21 @@ Below are the instructions to implement this design. They follow from the work y
       - /var/run/docker.sock:/var/run/docker.sock:ro    # `ro` makes the folder readonly in the container to protect your real machine
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
   ```
-  - `/var/run/docker.sock` allows Elastic Agent to view Docker metrics about other containers. It will work on Linux and Macos hosts, but might not work on Windows. If you encounter socket problems on Windows, please read [this article](https://tomgregory.com/aws/running-docker-in-docker-on-windows/) and try prefixing your local socket path with an extra slash.
+  - `/var/run/docker.sock` allows Elastic Agent to view Docker metrics about other containers. It will work on Linux and macOS hosts, but might not work on Windows. If you encounter socket problems on Windows, please read [this article](https://tomgregory.com/aws/running-docker-in-docker-on-windows/) and try prefixing your local socket path with an extra slash.
   - `/var/lib/docker/containers` allows Elastic Agent to read the logs of other containers.
 - Run the Elastic Agent container first, so that it will see some log information from other containers when they start. First run `docker compose up faelastic`.
-- In the Elastic Cloud web interface, browse to the sidebar and then <strong>Observability -> Stream</strong>.
+- In the Elastic Cloud web interface, browse to the sidebar and then <Breadcrumb>Observability -> Logs -> Stream</Breadcrumb>.
 - Run the other Docker containers with `docker compose up db fa`
 - You should be able to see the FusionAuth log output appearing in the Elastic web interface.
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic10.png' alt='Logs view' />
+<img src='/img/docs/operate/secure-and-monitor/elastic/elastic10.png' alt='Log stream from Docker containers in Elastic' width="1200" role="bottom-cropped" />
 - Browse to the sidebar and then <strong>Analytics -> Dashboards -> [Metrics Docker]Overview</strong>. You should be able to see details about all your Docker containers now.
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic5.png' alt='Docker dashboard' />
+<img src='/img/docs/operate/secure-and-monitor/elastic/elastic5.png' alt='Docker metrics overview in Elastic' width="1200" role="bottom-cropped" />
 
 ## Monitor the FusionAuth Application Directly With Elastic
 
 You've learnt how to monitor the FusionAuth container now in two different ways. Since a Docker container will exit if the process it runs exits, this monitoring will tell you if FusionAuth dies, which might be enough for you to know. But if you want to monitor details about the FusionAuth app itself, there are various approaches:
-- Use an [Elastic APM (application perfomance monitoring) app for Java](https://www.elastic.co/guide/en/observability/current/_step_3_install_apm_agents.html) inside the FusionAuth container to monitor the Java Virtual Machine. Since monitoring Java won't give you any useful information that monitoring the container doesn't already, you can ignore this idea. There is a guide to running FusionAuth with a Java monitoring app by altering the Dockerfile in the [FusionAuth Splunk guide](./splunk) if you would like to try.
-- Use an [OpenTelemetry Java monitoring agent](https://github.com/open-telemetry/opentelemetry-java-instrumentation) to send information about FusionAuth to Elastic. This is similar to previous point - OpenTelemetry won't provide any useful information that container monitoring doesn't already. Using OpenTelemery is also shown in the [FusionAuth Splunk guide](./splunk). Elastic has a guide to Java [here](https://www.elastic.co/guide/en/observability/8.14/apm-open-telemetry.html) that you can use in conjunction with the Splunk guide.
+- Use an [Elastic APM (application performance monitoring) app for Java](https://www.elastic.co/guide/en/observability/current/_step_3_install_apm_agents.html) inside the FusionAuth container to monitor the Java Virtual Machine. Since monitoring Java won't give you any useful information that monitoring the container doesn't already, you can ignore this idea. There is a guide to running FusionAuth with a Java monitoring app by altering the Dockerfile in the [FusionAuth Splunk guide](./splunk) if you would like to try.
+- Use an [OpenTelemetry Java monitoring agent](https://github.com/open-telemetry/opentelemetry-java-instrumentation) to send information about FusionAuth to Elastic. This is similar to previous point - OpenTelemetry won't provide any useful information that container monitoring doesn't already. Using OpenTelemetry is also shown in the [FusionAuth Splunk guide](./splunk). Elastic has a guide to Java [here](https://www.elastic.co/guide/en/observability/8.14/apm-open-telemetry.html) that you can use in conjunction with the Splunk guide.
 - Use a specialized Elastic service, like Heartbeat, to connect to the FusionAuth HTTP server and see if it returns correctly. You can install Heartbeat in a container, like we did for Elastic Agent in the previous section, and point it to the FusionAuth URL. A guide on Heartbeat is [here](https://www.elastic.co/guide/en/beats/heartbeat/current/heartbeat-overview.html).
 - Send custom metrics from FusionAuth to Elastic. This is the most complex option, as you need to write a custom service to request FusionAuth metrics, extract them from the given zip file, and upload them to Elastic through their API. However, this is the only way to get precise information about FusionAuth if you want that level of detail. This option will be discussed in the next section.
 
@@ -333,12 +316,12 @@ You can add any other metrics you want to this service.
 
 Earlier you used an enrollment token tied to a specific Agent Policy to configure your Elastic Agent. Now to call the Elasticsearch API directly you need an API key.
 
-- In the Elastic Cloud web interface, open the sidebar and browse to <strong>Search -> Elasticsearch</strong>.
-- Click "Endpoints & API keys"
+- In the Elastic Cloud web interface, open the sidebar and browse to <Breadcrumb>Search -> Elasticsearch</Breadcrumb>.
+- Click <InlineUIElement>Endpoints & API keys</InlineUIElement>.
 - Note your endpoint and cloud ID values.
-- Click "New API key".
+- Click <InlineUIElement>New API key</InlineUIElement>.
 - Give it a name and enable "Security Privileges" and "Metadata".
-- Click "Create API Key".
+- Click <InlineUIElement>Create API Key</InlineUIElement>.
 - Save the key securely for later use. Never to commit the key to git, which can expose it on the Internet.
 
 ### Create An Elasticsearch Index
@@ -359,7 +342,7 @@ curl -X PUT "${elasticUrl}/falogins" -H "Authorization: ApiKey ${elasticKey}" -H
 }'
 
 # Result:
-# {"acknowledged":true,"shards_acknowledged":true,"index":"logins"}
+# {"acknowledged":true,"shards_acknowledged":true,"index":"falogins"}
 ```
 
 These commands should have created an index (think of an index as a database table) to which you can upload FusionAuth metrics. If you receive an authentication or 404 error please check your URL and API key settings.
@@ -375,11 +358,11 @@ curl "${elasticUrl}/falogins" -H "Authorization: ApiKey "${elasticKey}"" -H "Con
 
 Let's review the index in Elastic Cloud.
 
-- Browse to the web interface, open the sidebar, and browse to <strong>Management -> Stack Management -> Index Management</strong>.
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic6.png' alt='Indexes' />
+- Browse to the web interface, open the sidebar, and browse to <Breadcrumb>Management -> Stack Management -> Index Management</Breadcrumb>.
+<img src='/img/docs/operate/secure-and-monitor/elastic/elastic6.png' alt='Index management in Elastic' width="1200" role="bottom-cropped" />
 - You should see "falogins" in the list. Click it.
 - Click the "Mappings" tab.
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic7.png' alt='Index mappings' />
+<img src='/img/docs/operate/secure-and-monitor/elastic/elastic7.png' alt='Index mappings in Elastic' width="1200" role="bottom-cropped" />
 
 You can now see the type of data that the index will accept. You can create indexes manually instead of using the API if you like. Creating mappings manually will show you all the types of fields that Elasticsearch supports.
 
@@ -466,10 +449,10 @@ CMD watch -t -n 10 /app.sh
 Build the container with the command below.
 
 ```sh
-docker build -f metricDockerfile.yaml --platform linux/amd64 -t metricimage .
+docker build -f metricDockerfile --platform linux/amd64 -t metricimage .
 ```
 
-Edit your `docker-compose.yaml` file and add the new service as follows.
+Edit your `docker-compose.yml` file and add the new service as follows.
 
 ```
   fametric:
@@ -512,16 +495,16 @@ You can follow the process described here to add other FusionAuth API calls to `
 
 The final step to use your metrics is to create a dashboard to view them in Kibana. You are going to show recent logins on a timeline to indicate the health of FusionAuth. Since the `UserId` field is free text and thus not aggregatable, you will not be able to visualize it, but it will be available for search if you need to run queries against users in Elasticsearch.
 
-- In the Elastic Cloud web interface, open the sidebar and browse to <strong>Search -> Elasticsearch -> Indices -> falogins -> Documents</strong>. You should see data in the table. If not, please run `app.sh` manually and debug where it is failing, paying attention to all API keys and URLs.
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic8.png' alt='Elasticsearch data' />
-- In the sidebar browse to <strong>Analytics -> Dashboards -> Create visualization</strong>.
+- In the Elastic Cloud web interface, open the sidebar and browse to <Breadcrumb>Search -> Elasticsearch -> Indices -> falogins -> Documents</Breadcrumb>. You should see data in the table. If not, please run `app.sh` manually and debug where it is failing, paying attention to all API keys and URLs.
+  <img src='/img/docs/operate/secure-and-monitor/elastic/elastic8.png' alt='Login rate data from the FusionAuth' width="1200" role="bottom-cropped" />
+- In the sidebar browse to <Breadcrumb>Analytics -> Dashboards -> Create dashboard -> Create visualization</Breadcrumb>.
 - In the index combobox in the top left, change from `logs-*` to `falogins`.
-- Click the "+" button next to "timestamp" to add it to the dashboard.
+- Click the <InlineUIElement>+</InlineUIElement> button next to "timestamp" to add it to the dashboard.
 - Change the time in the top right to "Today".
 - Change the visualization type to "Bar vertical".
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic9.png' alt='Login rate dashboard' />
-- Click "Save and return".
-- Click "Save"
+  <img src='/img/docs/operate/secure-and-monitor/elastic/elastic9.png' alt='Login rate dashboard in Elastic' width="1200" role="bottom-cropped" />
+- Click <InlineUIElement>Save and return</InlineUIElement>.
+- Click <InlineUIElement>Save</InlineUIElement>.
 - Give the dashboard a name like `FusionAuth login rate` and save.
 
 You now have a dashboard to monitor the health of FusionAuth. Following the process in this section, you can extract any metrics you want from the FusionAuth API, create an index for them in Elastic, upload the metrics in a Docker container, and create a dashboard for them in Kibana.
