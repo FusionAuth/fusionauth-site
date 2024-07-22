@@ -23,8 +23,9 @@ import Diagram6 from 'src/components/docs/operate/secure-and-monitor/elasticDiag
   - [What Is OpenTelemetry?](#what-is-opentelemetry)
   - [What Is Prometheus?](#what-is-prometheus)
   - [What Is Grafana?](#what-is-grafana)
+  - [What Is Grafana Loki?](#what-is-grafana-loki)
+  - [What Is Elasticsearch and Logstash](#what-is-elasticsearch-and-logstash)
   - [What Is Jaeger?](#what-is-jaeger)
-  - [What Is Elasticsearch and LogStash](#what-is-elasticsearch-and-logstash)
 - [Introduction To Slack](#introduction-to-slack)
 - [Integrations Versus Workflows?](#integrations-versus-workflows)
 - [Cloud-Hosted Or Self-Hosted?](#cloud-hosted-or-self-hosted)
@@ -61,7 +62,6 @@ This monitoring system requires five activities:
 
 While you can use stock Docker monitoring apps to monitor Docker containers and collect logs, you always need to write custom code or [webhooks](https://fusionauth.io/docs/apis/webhooks) to get FusionAuth specific information, like numbers of successful logins.
 
-Slack, Discord, Threema, or WhatsApp.
 
 ### What Is OpenTelemetry?
 
@@ -71,25 +71,50 @@ You can either use an OpenTelemetry library as a module in your code, which you 
 
 You could also collect metrics about your application another way and send them to an OpenTelemetry Collector service through OTLP (OpenTelemetry Protocol), a standardized way of exchanging telemetry data between services. The Collector acts a central point to receive all metrics, potentially do some simple filtering, and forward the metrics to other services.
 
-OpenTelemetry does not handle data aggregation, storage, or visualization (dashboards).
+OpenTelemetry does not handle storage, data aggregation (counting things), or visualization (dashboards).
+
+For example, you could run the OpenTelemetry Java agent before running your app. The agent would monitor RAM use of your app as a metric and send it to an OpenTelemetry collector, which would forward the metric to another service for saving, counting, and displaying in a dashboard.
 
 ### What Is Prometheus?
 
-[Prometheus](https://prometheus.io/docs/introduction/overview) is a database specifically designed to store metrics efficiently, as well as provide data through a custom query language. Prometheus also provides dashboards and alerts, but its dashboards are not as sophisticated as Grafana.
+[Prometheus](https://prometheus.io/docs/introduction/overview) is a database specifically designed to store metrics efficiently, as well as provide data through a custom query language. Prometheus also provides alerts through its [AlertManager](https://github.com/prometheus/alertmanager) and simplistic charts, but for proper dashboards you need Grafana. Prometheus also provides some instrumentation tools to obtain metrics for networks, machines, and some [programming languages](https://prometheus.io/docs/instrumenting/clientlibs/).
 
-MORE
+Prometheus should [not be used to store logs](https://prometheus.io/docs/introduction/faq/#how-to-feed-logs-into-prometheus).
+
+For example, you could run the Prometheus network monitoring agent, which would monitor the amount of data travelling your network every second as a metric, and save it to the Prometheus database. You could then run an ad hoc query to visualize the network usage in the last hour as a chart with the Prometheus web interface.
 
 ### What Is Grafana?
 
 [Grafana](https://grafana.com/grafana) is an open-source dashboard app, that can be self-hosted, or cloud-hosted with a fee. Grafana does not aggregate or process data itself, but can call data providers to get your metrics with aggregation, if the provider supports a query language that does aggregation. Grafana can also trigger [alerts](https://grafana.com/docs/grafana/latest/alerting/fundamentals/).
 
+For example, you could create a dashboard in Grafana that queries Prometheus every few seconds to get the network usage over the last hour and display it as a chart.
+
+### What Is Grafana Loki?
+
+Although Grafana does not store data, Grafana Loki, a separate tool that is part of the Grafana brand, does store data. Loki receives and stores logs. It has a similar purpose to Elasticsearch.
+
+Unlike Logstash, Loki does not do significant processing to logs it receives. So it can run faster, but provides less data for indexed searching.
+
+For example, you redirect the output of your app's logs from the Docker container standard output to Loki for storing.
+
+### What Is Elasticsearch and Logstash
+
+Elasticsearch is a database to store indexed non-relational data, which provides a query tool to search the data. You can either save logs directly to Elasticsearch or first process and index them by sending the logs to Logstash, which forwards the processed logs to Elasticsearch for saving.
+
+Both tools are managed by the Elastic company, and are designed to integrate with the Elastic dashboard tool, Kibana.
+
+You could use Elasticsearch similar to both Prometheus and Loki, in the same way as their examples.
+
 ### What Is Jaeger?
 
+[Jaeger](https://www.jaegertracing.io/docs/1.59/) is a monitoring tool made by [Uber](https://www.uber.com/en-IE/blog/distributed-tracing) to understand user requests across distributed microservices. You don't need to use Jaeger with FusionAuth since FusionAuth is a single service.
 
 
-### What Is Elasticsearch and LogStash
 
-zipkin kibana loki
+
+zipkin
+opensearch for logs , and vs elastic search
+Slack, Discord, Threema, or WhatsApp.
 
 There are FusionAuth guides on monitoring FusionAuth with dedicated monitoring services like Elastic Cloud and Splunk.
 
