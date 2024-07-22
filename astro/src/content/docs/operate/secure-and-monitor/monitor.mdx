@@ -18,7 +18,7 @@ import LoadTestingTips from 'src/content/docs/get-started/run-in-the-cloud/_load
 	- [Application Events](#application-events)
 	- [Metrics](#metrics)
 		- [Prometheus Endpoint](#prometheus-endpoint)
-- [Overview Of Popular Monitoring Tools And Services](#overview-of-popular-monitoring-tools-and-services)
+- [Overview Of Popular Monitoring Tools](#overview-of-popular-monitoring-tools)
 	- [What Is OpenTelemetry?](#what-is-opentelemetry)
 	- [What Is Prometheus?](#what-is-prometheus)
 	- [What Is Grafana?](#what-is-grafana)
@@ -27,8 +27,9 @@ import LoadTestingTips from 'src/content/docs/get-started/run-in-the-cloud/_load
 	- [What Are OpenSearch And OpenSearch Dashboard?](#what-are-opensearch-and-opensearch-dashboard)
 	- [What Are Jaeger, Zipkin, and Grafana Tempo?](#what-are-jaeger-zipkin-and-grafana-tempo)
 	- [What Tools Are Available To Send Alerts To Administrators?](#what-tools-are-available-to-send-alerts-to-administrators)
+	- [What Can You Do With A Custom Script?](#what-can-you-do-with-a-custom-script)
 	- [Monitoring Tools Compared](#monitoring-tools-compared)
-- [Which Tools Should You Use For Monitoring?](#which-tools-should-you-use-for-monitoring)
+- [Which Tools Should You Choose?](#which-tools-should-you-choose)
 - [Load Testing](#load-testing)
 	- [Tips](#tips)
 
@@ -117,7 +118,7 @@ You can also enable JMX metrics as outlined in the [Troubleshooting documentatio
 
 The default system metrics are also available in a Prometheus compatible form. [This tutorial](/docs/operate/secure-and-monitor/prometheus) explains how to set up Prometheus to monitor FusionAuth metrics.
 
-## Overview Of Popular Monitoring Tools And Services
+## Overview Of Popular Monitoring Tools
 
 This section introduces the most common monitoring tools. At the end of the section is a table showing where each tool fits in the five activities (measuring, processing, storing, displaying, alerting).
 
@@ -182,19 +183,35 @@ Some of monitoring components discussed in the previous sections are able to sen
 - Computer chat apps: of which the most popular are Slack and Discord. They can be used to receive alert messages in a specific chat channel for free. Slack and Discord clients can be installed on your phone to be sure you never miss an alert.
 - Phone chat apps: of which the most popular are WhatsApp and Threema. While WhatsApp requires a phone number to sign up, Threema needs no phone number, but requires you to buy the mobile app for a small once-time fee. Both services charge a fee for business to send messages to users.
 
+Grafana also has a tool called OnCall, which consolidates and redirects multiple alerts from multiple systems. If you have support staff that monitor an alert system in shifts, rather than wait to receive an email, this might be useful to you.
+
+### What Can You Do With A Custom Script?
+
+As a simple and free alternative to all the tools above, you could write a small web service in JavaScript, Go, or Python to continuously call the FusionAuth website or API, and if it fails, send an alert to the administrator.
+
+If you want to monitor any FusionAuth metrics directly, instead of just the FusionAuth container, you will need to write a custom script to call the FusionAuth API anyway.
+
 ### Monitoring Tools Compared
 
-```mermaid
-timeline
-    Measuring : OpenTelemetry : Prometheus
-    Processing : Logstash
-    Storing : Prometheus (no logs): Elasticsearch : Loki (logs)
-    Displaying : Grafana : Kibana
-    Alerting (send) : Prometheus (AlertManager)
-    Alerting (receive) : Email : Slack : Discord : WhatsApp : Threema
-```
+The diagram below shows which tools are available for each type of activity in the monitoring flow.
 
-## Which Tools Should You Use For Monitoring?
+Remember that Prometheus, Loki, and Grafana all work together, in the same way all the Elastic products work together.
+
+&nbsp; | Measure | Process | Store | Display | Alert (send) | Alert (receive)
+--- | --- | --- | --- | --- | --- | ---
+FusionAuth webhooks | ⛔ | ⛔ | ⛔ | ⛔ | ✅ | ⛔
+Custom script | ✅ | ⛔ | ⛔ | ⛔ | ✅ | ⛔
+OpenTelemetry | ✅ | ✅ | ⛔ | ⛔ | ⛔ | ⛔
+Elastic | ✅ Elastic Agent or Beats | ✅ Logstash | ✅ Elasticsearch| ✅ Kibana | ✅ Kibana | ⛔
+Prometheus | ✅ | ✅ | ✅ | ✔️ | ✅ AlertManager| ⛔
+Grafana | ⛔ | ⛔ | ⛔ | ✅ | ✅ OnCall | ⛔
+Loki (logs only) | ⛔| ✅ | ✅ | ⛔ | ⛔ | ⛔
+OpenSearch | ✅ | ✅ | ✅ | ✅ OpenSearch Dashboard | ✅ OpenSearch Dashboard | ⛔
+Email, Slack, Discord, WhatsApp, Threema | ⛔ | ⛔ | ⛔ | ⛔ | ⛔ | ✅
+
+There are other paid hosted services not discussed in this article, like Splunk (integration guide with FusionAuth [here](/docs/operate/secure-and-monitor/splunk)) and DataDog, that have their own tools (that usually implement the OpenTelemetry Protocol).
+
+## Which Tools Should You Choose?
 
 There are FusionAuth guides on monitoring FusionAuth with dedicated monitoring services like Elastic Cloud and Splunk.
 
