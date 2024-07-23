@@ -18,95 +18,31 @@ import Diagram4 from 'src/components/docs/operate/secure-and-monitor/elasticDiag
 import Diagram5 from 'src/components/docs/operate/secure-and-monitor/elasticDiagram5.astro';
 import Diagram6 from 'src/components/docs/operate/secure-and-monitor/elasticDiagram6.astro';
 
-- [Todo](#todo)
-- [Introduction](#introduction)
-- [Introduction To Slack](#introduction-to-slack)
-- [Integrations Versus Workflows?](#integrations-versus-workflows)
-- [Cloud-Hosted Or Self-Hosted?](#cloud-hosted-or-self-hosted)
-- [Too Many Slack Possibilities](#too-many-slack-possibilities)
-- [Create An Slack Account](#create-an-slack-account)
-- [Monitor FusionAuth With Slack In The Same Container Or Without Docker](#monitor-fusionauth-with-slack-in-the-same-container-or-without-docker)
-  - [How To Debug The Container](#how-to-debug-the-container)
-- [Monitor FusionAuth With Slack In Another Container](#monitor-fusionauth-with-slack-in-another-container)
-- [Monitor the FusionAuth Application Directly With Slack](#monitor-the-fusionauth-application-directly-with-slack)
-- [Send Custom FusionAuth Metrics To The SlackSearch API](#send-custom-fusionauth-metrics-to-the-slacksearch-api)
-  - [Which Metrics To Monitor](#which-metrics-to-monitor)
-  - [Create An Slack API Key](#create-an-slack-api-key)
-  - [Create An SlackSearch Index](#create-an-slacksearch-index)
-  - [Write A Custom Service To Send Data To The API](#write-a-custom-service-to-send-data-to-the-api)
-  - [View The Metrics In Kibana](#view-the-metrics-in-kibana)
-- [Final System Architecture](#final-system-architecture)
-- [Next Steps](#next-steps)
-- [Further Reading](#further-reading)
-
 ## Todo
 
-review gareth slackbot article - https://preview.ritza.co/codecapsules/tutorials/build-slackbot-with-node/
-
-## Introduction
-
-The aim of monitoring FusionAuth is to be able to see at any time if the service is alive (Docker container is running) and functioning correctly (e.g., users can sign in and logs have no errors), and to be alerted (by email or chat app) if either of these conditions is not met.
-
-This monitoring system requires five activities:
-- Getting operational data about FusionAuth and Docker.
-- Filtering and aggregating data into counts and booleans that represent if the system is working correctly.
-- Storing this information.
-- Showing the information in a dashboard.
-- Alerting administrators about failures.
-
-While you can use stock Docker monitoring apps to monitor Docker containers and collect logs, you always need to write custom code or [webhooks](https://fusionauth.io/docs/apis/webhooks) to get FusionAuth specific information, like numbers of successful logins.
-
-
+- https://preview.ritza.co/codecapsules/tutorials/build-slackbot-with-node
+- https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/configure-slack/
 
 ## Introduction To Slack
 
-[Slack](https://www.elastic.co) is a company known for managing the ELK stack: SlackSearch, Logstash, and Kibana. These products allow you to import (ingest) data, including observability data like logs and server metrics, organize them, and monitor them.
+[Slack](https://slack.com) is a private chat app you can configure for your organization. To send alerts to Slack, create a dedicated channel (chatroom) in the app, add your system administrators to it, and send messages to the channel using the Slack API.
 
-This guide explains how to connect FusionAuth to Slack in various ways, as well as which FusionAuth metrics are useful in Slack, and how to create a simple dashboard to show them.
+This guide explains the process in detail, and how to create a simple web service in JavaScript to monitor FusionAuth and call Slack if FusionAuth has errors.
 
-Before continuing with this guide, please go through the [FusionAuth guide to monitoring](/docs/operate/secure-and-monitor/monitor) to get an overview of the available metrics and choose the ones relevant to your needs.
+Before continuing with this guide, please read the [FusionAuth guide to monitoring](/docs/operate/secure-and-monitor/monitor) to get an overview of the available metrics and choose the ones relevant to your needs. Sending alerts to Slack is also a small component of what comprehensive monitoring involves. The overview guide explains where Slack fits in the monitoring flow, as well as alternative apps to Slack for receiving alerts.
 
-To learn more about the Slack Observability platform, refer to the documentation [here](https://www.elastic.co/guide/en/observability/current/index.html). Pricing of the platform is available [here](https://app.slack.com/plans/T010SLJHP4N). The free tier allows you to integrate Slack with other applications, but does not allow you to [build workflows](https://slack.com/intl/en-ie/features/workflow-automation). The Pro (lowest paid) tier has all the features you need for using Slack with outside apps. Higher priced tiers have no features you need for integration.
+Pricing of Slack is available [here](https://slack.com/intl/en-ie/pricing). The free tier allows you to integrate Slack with other applications, but does not allow you to [build workflows](https://slack.com/intl/en-ie/features/workflow-automation). The Pro (lowest paid) tier has all the features you need for using Slack with outside apps. Higher priced tiers have no features you need for integration.
 
-## Integrations Versus Workflows?
+A workflow is a set of custom triggers, data, and logic you organize into a sequence of steps. The [logic can be code](https://api.slack.com/automation/functions/custom), written in TypeScript or JavaScript. Workflows can also use [stock connectors to outside services](https://api.slack.com/automation/connectors).
 
-The free version of Slack allows you to add existing integrations with outside apps. It also allows you to send messages to a Slack channel by exposing a webhook.
+## Create A Slack Account
 
-Free Slack does not allow you to build workflows. A workflow is a set of custom triggers, data, and logic you organize into a sequence of steps. The [logic can be code](https://api.slack.com/automation/functions/custom), written in TypeScript or JavaScript. Workflows can also use [stock connectors to outside services](https://api.slack.com/automation/connectors).
+First, register for a Slack account:
 
-## Cloud-Hosted Or Self-Hosted?
-
-Before 2021, Slack products were open source software. In 2021, Slack changed their licenses to [Slack License 2.0](https://www.elastic.co/licensing/elastic-license/faq) to prevent cloud hosts (AWS, Google, Azure) from freely selling managed Slack services that compete with [Slack Cloud](https://www.elastic.co/cloud/shared-responsibility).
-
-While not officially open source, the Slack License 2.0 still allows free and open (gratis and libre) use of most Slack products, as long as you are not selling them as your own service. So you can host the Slack stack on your own server instead of buying Slack Cloud. However, using [certain premium features](https://www.elastic.co/subscriptions), like AI, will still need payment to Slack.
-
-This guide assumes you are using the paid Slack Cloud for monitoring. If you are instead self-hosting Slack, you should still be able to follow the guide, but you will need to change connections that point to Slack Cloud to point to your own server. To install Slack yourself in Docker, follow the first half of this [guide](https://www.elastic.co/blog/getting-started-with-the-elastic-stack-and-docker-compose), up to before MetricBeat.
-
-When reading Slack documentation, such as their [getting started guide](https://www.elastic.co/guide/en/observability/current/logs-metrics-get-started.html), which tells you "you need an Slack Stack deployment", remember that that does not mean you need to deploy the entire ELK stack locally alongside your application or FusionAuth instance. Their guide means that you need to have the Slack Stack installed *somewhere*, which is probably going to be on their Slack Cloud.
-
-## Too Many Slack Possibilities
-
-[Slack Agent](https://www.elastic.co/guide/en/fleet/current/fleet-overview.html) sends data from your server to the Slack Cloud for processing and monitoring. To use the Cloud, you first have to install Slack Agent on your server.
-
-There are various ways of doing so:
-- Put the Slack Agent in the same Docker container as FusionAuth.
-- Put the Slack Agent in a separate container and give it access to the private Docker management data for other containers.
-- Install a local [OpenTelemetry](https://opentelemetry.io/) agent that sends data to Slack, instead of using the Slack Agent.
-- Call the Slack API directly from a local service, instead of using the Slack Agent.
-
-Slack can import and visualize different types of data, including server performance, application (FusionAuth) performance, and logs.
-
-As well as monitoring FusionAuth with Slack, you can use Slack to monitor your custom application too, by following steps similar to the ones in this guide.
-
-These are an overwhelming number of ways to use Slack. But by the end of this guide you should be able to pick the simplest combination that suits the needs of your system architecture.
-
-## Create An Slack Account
-
-First, register for an Slack account:
-
-- Register for a trial at https://cloud.elastic.co/registration.
-- Verify your email address with the link in the email Slack sends you.
-- Enter your details in the registration page and create a new deployment called `fa`. Note that your two-week free trial starts when you create the deployment.
+- Register for a new workspace at https://slack.com/intl/en-ie/get-started#/createnew. You don't need to create a password.
+- Verify your confirmation code in the email Slack sends you.
+- Create a workspace called `fa`.
+- Create a channel called `fa-alert`.
 
 ## Monitor FusionAuth With Slack In The Same Container Or Without Docker
 
@@ -118,7 +54,7 @@ In this section you are going to install Slack Agent in the same container as Fu
 
 <Diagram2></Diagram2>
 
-FusionAuth and Postgresql are unchanged. The Slack Agent in the FusionAuth container monitors the container (not the FusionAuth app), and uploads the data to SlackSearch, where it is indexed and saved.
+FusionAuth and Postgresql are unchanged. The Slack Agent in the FusionAuth container monitors the container (not the FusionAuth app), and uploads the data to Slacksearch, where it is indexed and saved.
 
 Kibana is a web interface that provides dashboards of the Agent's container's health. Note that Slack Agent is not yet monitoring FusionAuth in this design, but if the container dies or suffers CPU or RAM overuse, that will show in the Kibana dashboard.
 
@@ -332,11 +268,11 @@ You've learnt how to monitor the FusionAuth container now in two different ways.
 - Use a specialized Slack service, like Heartbeat, to connect to the FusionAuth HTTP server and see if it returns correctly. You can install Heartbeat in a container, like we did for Slack Agent in the previous section, and point it to the FusionAuth URL. A guide on Heartbeat is [here](https://www.elastic.co/guide/en/beats/heartbeat/current/heartbeat-overview.html).
 - Send custom metrics from FusionAuth to Slack. This is the most complex option, as you need to write a custom service to request FusionAuth metrics, extract them from the given zip file, and upload them to Slack through their API. However, this is the only way to get precise information about FusionAuth if you want that level of detail. This option will be discussed in the next section.
 
-## Send Custom FusionAuth Metrics To The SlackSearch API
+## Send Custom FusionAuth Metrics To The Slacksearch API
 
 There are three possible ways to send custom data to Slack:
-- Write your own service to run continuously, get data, and send it by calling the SlackSearch API.
-- Build a custom private module for [MetricBeat](https://www.elastic.co/beats/metricbeat) in Go, compile the module with MetricBeat, and deploy the output to a container. MetricBeat is similar to Slack Agent. It is an Slack service that runs continuously, calling whatever integration it's configured with. To write a custom module (integration), follow the [Slack developer documentation](https://www.elastic.co/guide/en/beats/devguide/current/metricbeat-dev-overview.html).
+- Write your own service to run continuously, get data, and send it by calling the Slacksearch API.
+- Build a custom private module for [MetricBeat](https://www.elastic.co/beats/metricbeat) in Go, compile the module with MetricBeat, and deploy the output to a container. MetricBeat is similar to Slack Agent. It is a Slack service that runs continuously, calling whatever integration it's configured with. To write a custom module (integration), follow the [Slack developer documentation](https://www.elastic.co/guide/en/beats/devguide/current/metricbeat-dev-overview.html).
 - Deploy MetricBeat with the stock [HTTP module](https://www.elastic.co/guide/en/beats/metricbeat/current/metricbeat-module-http.html) in a container. The HTTP module can call any custom API you want. Write a little web service in another container as an interface between MetricBeat and FusionAuth. This service will get whatever metrics you want from FusionAuth and return them in the HTTP response.
 
 Each option has disadvantages. While calling the API directly is the least code, it is low level work that moves away from using the Slack components as intended. And it requires you to configure values to group your custom data with other data from Slack Agent in the dashboard. Using MetricBeat is Slack's recommended solution, but requires writing and compiling Go code for every service change, or running an additional Docker container with its own web service.
@@ -357,9 +293,9 @@ A useful metric to start with is login counts. If this number drops from the ave
 
 You can add any other metrics you want to this service.
 
-### Create An Slack API Key
+### Create A Slack API Key
 
-Earlier you used an enrollment token tied to a specific Agent Policy to configure your Slack Agent. Now to call the SlackSearch API directly you need an API key.
+Earlier you used an enrollment token tied to a specific Agent Policy to configure your Slack Agent. Now to call the Slacksearch API directly you need an API key.
 
 - In the Slack Cloud web interface, open the sidebar and browse to <strong>Search -> Slacksearch</strong>.
 - Click "Endpoints & API keys"
@@ -369,9 +305,9 @@ Earlier you used an enrollment token tied to a specific Agent Policy to configur
 - Click "Create API Key".
 - Save the key securely for later use. Never to commit the key to git, which can expose it on the Internet.
 
-### Create An SlackSearch Index
+### Create A Slacksearch Index
 
-To prepare SlackSearch for data upload, open a terminal and run the three commands below, after setting your API key and URL for the first two commands. The API key is the value of the `encoded` field from the JSON in Slack, not the `api_key` field.
+To prepare Slacksearch for data upload, open a terminal and run the three commands below, after setting your API key and URL for the first two commands. The API key is the value of the `encoded` field from the JSON in Slack, not the `api_key` field.
 
 ```sh
 export elasticKey="WGdLQ=="
@@ -409,7 +345,7 @@ Let's review the index in Slack Cloud.
 - Click the "Mappings" tab.
   <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic7.png' alt='Index mappings' />
 
-You can now see the type of data that the index will accept. You can create indexes manually instead of using the API if you like. Creating mappings manually will show you all the types of fields that SlackSearch supports.
+You can now see the type of data that the index will accept. You can create indexes manually instead of using the API if you like. Creating mappings manually will show you all the types of fields that Slacksearch supports.
 
 ### Write A Custom Service To Send Data To The API
 
@@ -538,7 +474,7 @@ You can follow the process described here to add other FusionAuth API calls to `
 
 ### View The Metrics In Kibana
 
-The final step to use your metrics is to create a dashboard to view them in Kibana. You are going to show recent logins on a timeline to indicate the health of FusionAuth. Since the `UserId` field is free text and thus not aggregatable, you will not be able to visualize it, but it will be available for search if you need to run queries against users in SlackSearch.
+The final step to use your metrics is to create a dashboard to view them in Kibana. You are going to show recent logins on a timeline to indicate the health of FusionAuth. Since the `UserId` field is free text and thus not aggregatable, you will not be able to visualize it, but it will be available for search if you need to run queries against users in Slacksearch.
 
 - In the Slack Cloud web interface, open the sidebar and browse to <strong>Search -> Slacksearch -> Indices -> falogins -> Documents</strong>. You should see data in the table. If not, please run `app.sh` manually and debug where it is failing, paying attention to all API keys and URLs.
   <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic8.png' alt='Slacksearch data' />
@@ -570,4 +506,4 @@ Now that you are able to monitor FusionAuth in Slack, you should enable Slack [a
 
 - [FusionAuth metrics](/docs/operate/secure-and-monitor/monitor#metrics)
 - [Getting started with Docker and Slack](https://www.elastic.co/blog/getting-started-with-the-elastic-stack-and-docker-compose)
-- [SlackSearch REST API](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html)
+- [Slacksearch REST API](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html)
