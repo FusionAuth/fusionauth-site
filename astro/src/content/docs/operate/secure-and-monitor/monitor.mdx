@@ -9,36 +9,11 @@ import Aside from 'src/components/Aside.astro';
 import LoadTestingIntro from 'src/content/docs/get-started/run-in-the-cloud/_load-testing-intro.mdx';
 import LoadTestingTips from 'src/content/docs/get-started/run-in-the-cloud/_load-testing-tips.mdx';
 
-- [Overview](#overview)
-	- [What Is Monitoring?](#what-is-monitoring)
-- [What FusionAuth Metrics Can Be Monitored?](#what-fusionauth-metrics-can-be-monitored)
-	- [Log Files](#log-files)
-	- [Application Logging](#application-logging)
-	- [Log File Formats](#log-file-formats)
-	- [Application Events](#application-events)
-	- [Metrics](#metrics)
-		- [Prometheus Endpoint](#prometheus-endpoint)
-- [Overview Of Popular Monitoring Tools](#overview-of-popular-monitoring-tools)
-	- [What Is OpenTelemetry?](#what-is-opentelemetry)
-	- [What Is Prometheus?](#what-is-prometheus)
-	- [What Is Grafana?](#what-is-grafana)
-	- [What Is Grafana Loki?](#what-is-grafana-loki)
-	- [What Are Elasticsearch, Logstash, and Kibana (ELK)?](#what-are-elasticsearch-logstash-and-kibana-elk)
-	- [What Are OpenSearch And OpenSearch Dashboard?](#what-are-opensearch-and-opensearch-dashboard)
-	- [What Are Jaeger, Zipkin, and Grafana Tempo?](#what-are-jaeger-zipkin-and-grafana-tempo)
-	- [What Tools Are Available To Send Alerts To Administrators?](#what-tools-are-available-to-send-alerts-to-administrators)
-	- [What Can You Do With A Custom Script?](#what-can-you-do-with-a-custom-script)
-	- [Monitoring Tools Compared](#monitoring-tools-compared)
-- [Which Tools Should You Choose?](#which-tools-should-you-choose)
-	- [A Sample Of Monitoring Tool Choices](#a-sample-of-monitoring-tool-choices)
-- [Load Testing](#load-testing)
-	- [Tips](#tips)
-
 ## Overview
 
 Once you've installed FusionAuth and your applications use it for authentication, you have to ensure FusionAuth remains online and usable. There is an ecosystem of tools, protocols, and paid services to monitor applications and provide telemetry (remote measurement) that you need to understand.
 
-This overview article will introduce you to various metrics (measurements) you can extract from FusionAuth, common monitoring tools to process, store, and visualize them, and explain which tools and services to choose for your requirements. Your needs will depend on how much information you need about the state of FusionAuth, how much time you are willing to spend setting up and maintaining your monitoring system, and how much you are willing to pay for monitoring cloud services.
+This overview article will introduce you to various metrics (measurements) you can extract from FusionAuth, common monitoring tools to process, store, and visualize them, and explain which tools and services to choose for your requirements. Your needs will depend on how much information you need about the state of FusionAuth, how much time you are willing to spend setting up and maintaining your monitoring system, and how much you are willing to pay for cloud services.
 
 ### What Is Monitoring?
 
@@ -59,7 +34,7 @@ The table below lists metadata FusionAuth offers for monitoring purposes.
 
 | Name | Contains | Ingestion Options | More Information |
 | --- | --- | --- | --- |
-| Metrics | System metrics, such as JVM buffers, memory and threads.  | Can be consumed via API and available in Prometheus compatible format.  | [More info](/docs/operate/secure-and-monitor/monitor#metrics) |
+| Metrics | System metrics, such as JVM buffers, memory, and threads.  | Can be consumed via API and available in Prometheus compatible format.  | [More info](/docs/operate/secure-and-monitor/monitor#metrics) |
 | System Logs | Exceptions, stack traces, database connection issues, Elasticsearch connection issues. Minimal tracing capability unless debug logging is enabled. Logs are also written to the Docker standard output (terminal). | Can be exported as a zip file via API.  | [More info](/docs/operate/troubleshooting/troubleshooting#system-log-ui) |
 | Audit Logs | Created by the admin user interface actions. This is just an API, so a customer can also call this API. This is a free form API, and the audit log contents are whatever you put in.  | This can be consumed via web hook or API.  | [More info](/docs/apis/audit-logs) |
 | Event Logs | Debug information for external integrations with IdPs, SMTP etc. In general, runtime errors that are typically not caused by FusionAuth and cannot be communicated well at runtime. Examples: a template rendering error in a custom theme, an exception connecting to SMTP due to bad credentials, a failure in a SAML exchange, a connection to a webhook is failing.  | This can be consumed via web hook or API.  | [More info](/docs/operate/troubleshooting/troubleshooting#event-log) |
@@ -129,7 +104,7 @@ This section introduces the most common monitoring tools. At the end of the sect
 
 You can either use an OpenTelemetry library as a module in your code, which you call manually to send it application-specific metrics (instrumentation), or you can use a stock OpenTelemetry instrumentation agent, like the Java Virtual Machine agent, that collects general information about your application as it runs.
 
-You could also collect metrics about your application another way and send them to an OpenTelemetry Collector service through OTLP (OpenTelemetry Protocol), a standardized way of exchanging telemetry data between services. The Collector acts a central point to receive all metrics, potentially do some simple filtering, and forward the metrics to other services.
+You could also collect metrics about your application through another tool and send them to an OpenTelemetry Collector service through OTLP (OpenTelemetry Protocol), a standardized way of exchanging telemetry data between tools. The Collector acts a central point to receive all metrics, potentially do some simple filtering, and forward the metrics to other services.
 
 OpenTelemetry does not handle storage, data aggregation (counting things), or visualization (dashboards).
 
@@ -141,7 +116,7 @@ There is a guide to monitoring FusionAuth with OpenTelemetry [here](/docs/operat
 
 [Prometheus](https://prometheus.io/docs/introduction/overview) is a database specifically designed to store metrics efficiently, as well as provide data through a custom query language. Prometheus also provides alerts through its [AlertManager](https://github.com/prometheus/alertmanager) and simplistic charts, but for proper dashboards you need Grafana. Prometheus also provides some instrumentation tools to obtain metrics for networks, machines, and some [programming languages](https://prometheus.io/docs/instrumenting/clientlibs/).
 
-Prometheus should [not be used to store logs](https://prometheus.io/docs/introduction/faq/#how-to-feed-logs-into-prometheus).
+Prometheus can be used for all activities in the monitoring chain, though some at a very basic level, but should [not be used to store logs](https://prometheus.io/docs/introduction/faq/#how-to-feed-logs-into-prometheus).
 
 For example, you could run the Prometheus network monitoring agent, which would monitor the amount of data travelling your network every second as a metric, and save it to the Prometheus database. You could then run an ad hoc query to visualize the network usage in the last hour as a chart with the Prometheus web interface.
 
@@ -153,9 +128,9 @@ For example, you could create a dashboard in Grafana that queries Prometheus eve
 
 ### What Is Grafana Loki?
 
-Although Grafana does not store data, Grafana [Loki](https://grafana.com/oss/loki/), a separate tool that is part of the Grafana brand, does store data. Loki receives and stores logs. It has a similar purpose to Elasticsearch.
+Although Grafana does not store data, Grafana [Loki](https://grafana.com/oss/loki/), a separate tool that is part of the Grafana brand, does store data. Loki receives and stores logs. It has a similar purpose to Elasticsearch and Logstash (explained in the next section).
 
-Unlike Logstash, Loki does not do significant processing to logs it receives. So it can run faster, but provides less data for indexed searching.
+Unlike Logstash, Loki does not do significant processing to logs it receives. So Loki can run faster, but provides less data for indexed searching.
 
 For example, you could redirect the output of your app's logs from the Docker container standard output to Loki for storing.
 
@@ -169,7 +144,9 @@ You could use Elasticsearch similarly to both Prometheus and Loki, in the same w
 
 ### What Are OpenSearch And OpenSearch Dashboard?
 
-[OpenSearch and OpenSearch Dashboard](https://opensearch.org/faq) are the open source versions of the ElasticSearch and Kibana tools. OpenSearch was forked from Elastic at version 7.10 and is maintained by AWS. Note that while not strictly open source for all uses, Elastic products are both free for almost all use and the code is available (gratis and libre). Only reselling Elastic products as a hosted service in competition with Elastic Cloud is disallowed.
+[OpenSearch and OpenSearch Dashboard](https://opensearch.org/faq) are the open source versions of the ElasticSearch and Kibana tools. OpenSearch was forked from Elastic at version 7.10 and is maintained by AWS.
+
+Note that while not strictly open source for all uses, Elastic products are both free for almost all use and the code is available (gratis and libre). Only reselling Elastic products as a hosted service in competition with Elastic Cloud is disallowed. So until the features of Elastic and OpenSearch diverge significantly, you can treat them as equivalents for your monitoring purposes.
 
 ### What Are Jaeger, Zipkin, and Grafana Tempo?
 
@@ -180,7 +157,7 @@ You could use Elasticsearch similarly to both Prometheus and Loki, in the same w
 ### What Tools Are Available To Send Alerts To Administrators?
 
 Some of monitoring components discussed in the previous sections are able to send system administrators alerts when their apps fail. There are three general places an alert can be sent to:
-- Email: for which you will probably need you to pay a subscription to a mail sender service, unless your Internet provider allows you access the SMTP protocol.
+- Email: for which you will probably need you to pay a subscription to a mail sender service, unless your Internet provider allows you access to the SMTP protocol.
 - Computer chat apps: of which the most popular are Slack and Discord. They can be used to receive alert messages in a specific chat channel for free. Slack and Discord clients can be installed on your phone to be sure you never miss an alert.
 - Phone chat apps: of which the most popular are WhatsApp and Threema. While WhatsApp requires a phone number to sign up, Threema needs no phone number, but requires you to buy the mobile app for a small one-time fee. Both services charge a fee for businesses to send messages to users.
 
@@ -190,52 +167,59 @@ Grafana also has a tool called OnCall, which consolidates and redirects multiple
 
 As a simple and free alternative to all the tools above, you could write a small web service in JavaScript, Go, or Python to continuously call the FusionAuth website or API, and if it fails, send an alert to the administrator.
 
-If you want to monitor any FusionAuth metrics directly, instead of just the FusionAuth container, you will need to write a custom script to call the FusionAuth API anyway.
+If you want to monitor any FusionAuth metrics directly, instead of monitoring only the FusionAuth container, you will need to write a custom script to call the FusionAuth API anyway.
 
 ### Monitoring Tools Compared
 
-The diagram below shows which tools are available for each type of activity in the monitoring flow.
+The table below shows which tools are available for each type of activity in the monitoring flow.
 
 Remember that Prometheus, Loki, and Grafana all work together, in the same way all the Elastic products work together.
 
 &nbsp; | Measure | Process | Store | Display | Alert (send) | Alert (receive)
 --- | --- | --- | --- | --- | --- | ---
-FusionAuth webhooks | ⛔ | ⛔ | ⛔ | ⛔ | ✅ | ⛔
-Custom script | ✅ | ⛔ | ⛔ | ⛔ | ✅ | ⛔
+FusionAuth webhooks | ✅ | ⛔ | ⛔ | ⛔ | ⛔ | ⛔
+Custom script | ✅ | ✅ | ⛔ | ⛔ | ✅ | ⛔
 OpenTelemetry | ✅ | ✅ | ⛔ | ⛔ | ⛔ | ⛔
 Elastic | ✅ Elastic Agent or Beats | ✅ Logstash | ✅ Elasticsearch| ✅ Kibana | ✅ Kibana | ⛔
+OpenSearch | ✅ | ✅ | ✅ | ✅ OpenSearch Dashboard | ✅ OpenSearch Dashboard | ⛔
 Prometheus | ✅ | ✅ | ✅ | ✔️ | ✅ AlertManager| ⛔
 Grafana | ⛔ | ⛔ | ⛔ | ✅ | ✅ OnCall | ⛔
 Loki (logs only) | ⛔| ✅ | ✅ | ⛔ | ⛔ | ⛔
-OpenSearch | ✅ | ✅ | ✅ | ✅ OpenSearch Dashboard | ✅ OpenSearch Dashboard | ⛔
 Email, Slack, Discord, WhatsApp, Threema | ⛔ | ⛔ | ⛔ | ⛔ | ⛔ | ✅
 
 There are other paid hosted services not discussed in this article, like Splunk (integration guide with FusionAuth [here](/docs/operate/secure-and-monitor/splunk)) and DataDog, that have their own tools (that usually implement the OpenTelemetry Protocol).
 
 ## Which Tools Should You Choose?
 
-Which combination of monitoring tools, you choose is based on:
-- How much you need to know about your system. Do you want to know only that FusionAuth is running, or monitor the login count per hour?
+Which combination of monitoring tools you choose is based on:
+- How much you need to know about your system (coverage). Do you want to know only that FusionAuth is running, or monitor the login count per hour?
 - How much time you want to spend building and maintaining a monitoring system. Less time means you'll have less information about your system, and possibly spend more on specialized monitoring cloud services that handle maintenance for you.
 - How much money you want to spend. If you want to pay as little as possible, there are free tools available for all aspects of monitoring, but you will have to install them on your own server and monitor them too.
 
+If you already use a paid cloud monitoring service, they probably have all the components you need to monitor FusionAuth. Continue using that.
+
 ### A Sample Of Monitoring Tool Choices
 
-Below are some examples of how you could monitor FusionAuth.
+Below are some examples of how you could monitor FusionAuth. The table gives an example configuration, how much of FusionAuth usability it covers, how expensive it is, and what its flaws are.
 
-TODO
+System | Coverage | Cost | Notes
+---|---|---|---
+A custom web service that either checks the FusionAuth container is running, or calls the FusionAuth API to check there are no errors. If either condition is not met, the service alerts the administrator by posting a message to Slack or Discord. | You can make the service check as many or few metrics as you want. | Free | You need to write custom code. You won't have a dashboard or a store of historical performance data and logs.
+Install the ElasticSearch/OpenSearch stack in Docker on your server. Monitor your Docker container cluster with ElasticAgent. | Low. You know only if your container is running or not. | Free | Setting up the Elastic stack yourself is initially complex and time-consuming. You will automatically have dashboards available in Kibana.
+As above, the Elastic stack, but also save logs to Elasticsearch, and write a custom web service to upload FusionAuth metrics via the Elastic API | Very high. You will know every detail about your instance and can search stored data. | Free | A large amount of work needed.
+As above, the Elastic stack with custom code, but use Elastic Cloud as your paid monitoring host. | Very high | High | Much less work needed than self-hosting, and no need to worry about a failing monitoring service you need to maintain.
+Run Prometheus in a container and point it to the stock FusionAuth endpoints for Prometheus. | Medium | Free | Simple to set up. Will provide you with a simple dashboard, metric storage, and alerts, all provide by Prometheus alone.
+As above, Prometheus with FusionAuth endpoints, but save logs with Grafana Loki, and create comprehensive permanent dashboards with Grafana. | High | Free | More complex to set up and maintain, but will provide very detailed information with high quality usability for administrators.
+A custom web service to extract FusionAuth metrics, plus the tools of a paid monitoring service like DataDog, Splunk, etc... | High | High | You will need to write a custom web service here, because no monitoring service integrates naturally with FusionAuth. The service's existing monitoring components should cover everything else you need: container monitoring, log indexing. If you are a large firm that already uses a paid service for your other software, this is the easiest choice.
 
-table of option, cost, effort, detail
+Alerting can be done by configuring a trigger in any of the systems above, that sends a message to your chat app of preference via its API (e.g., Slack API). Most paid services, like Elastic Cloud, will have stock Slack integrations that don't require you to code an API call yourself.
 
-- Custom webservice
+### Monitoring monitors
 
-The simplest would be to run Elastic Docker monitoring agent and make an alert in Elastic to post to Slack. But cloud-hosted is not cheap and self-hosted is not simple.
-
-If you want zero cost then:
-
-If you want to monitor the FA Docker container you have to have the monitor outside its container, or the monitor will die when FA dies. So a little script in a separate container that checks on the health of the FA container and messages Slack if FA container dies.
-
-You can't really monitor from inside FA app using webhooks (for e.g. login success), because that Slack channel will be a wall of text. There needs to be an interface service to filter and aggregrate the data. So you have to have a separate a web service container that gets info like logins
+Remember for all the self-hosted monitoring systems, if the system dies you won't be alerted — nothing monitors the monitor. To overcome this you will need to:
+- Pay an external monitoring service instead of self-hosting.
+- Use a simple heartbeat monitoring service that checks only that your hosted monitoring service is contactable.
+- Write a service to monitor the monitor on a separate self-hosted server.
 
 ## Load Testing
 
