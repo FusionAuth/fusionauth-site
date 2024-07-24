@@ -11,12 +11,8 @@ import IconButton from 'src/components/IconButton.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
-import Diagram1 from 'src/components/docs/operate/secure-and-monitor/elasticDiagram1.astro';
-import Diagram2 from 'src/components/docs/operate/secure-and-monitor/elasticDiagram2.astro';
-import Diagram3 from 'src/components/docs/operate/secure-and-monitor/elasticDiagram3.astro';
-import Diagram4 from 'src/components/docs/operate/secure-and-monitor/elasticDiagram4.astro';
-import Diagram5 from 'src/components/docs/operate/secure-and-monitor/elasticDiagram5.astro';
-import Diagram6 from 'src/components/docs/operate/secure-and-monitor/elasticDiagram6.astro';
+import Diagram1 from 'src/components/docs/operate/secure-and-monitor/slackDiagram1.astro';
+import Diagram2 from 'src/components/docs/operate/secure-and-monitor/slackDiagram2.astro';
 
 ## Todo
 
@@ -35,9 +31,68 @@ Pricing of Slack is available [here](https://slack.com/intl/en-ie/pricing). The 
 
 A workflow is a set of custom triggers, data, and logic you organize into a sequence of steps. The [logic can be code](https://api.slack.com/automation/functions/custom), written in TypeScript or JavaScript. Workflows can also use [stock connectors to outside services](https://api.slack.com/automation/connectors).
 
-## Understand The System Architecture
+## Understand The System Design
 
+Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below (you might also run OpenSearch in another Docker container).
 
+<Diagram1></Diagram1>
+
+```mermaid
+graph LR
+  subgraph I[Your server]
+    direction TB
+    subgraph G[Docker]
+      H[(Postgresql)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph E[Docker]
+      F(Your app)
+    end
+  end
+  D(🧑‍💻 User)
+  D --> F
+  D --> A
+  C --> G
+  F --> A
+  style I fill:#999
+```
+
+In this guide you are going to create a tiny web service in its own container to monitor FusionAuth. It will call Slack if the FusionAuth logs API is not contactable, or if the logs contain an error message. The new design will look like the diagram below.
+
+<Diagram2></Diagram2>
+
+```mermaid
+graph LR
+  X(Slack)
+  subgraph I[Your server]
+    subgraph G[Docker]
+      H[(Postgresql)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph E[Docker]
+      B(Custom web service monitor)
+    end
+    subgraph J[Docker]
+      F(Your app)
+    end
+  end
+  D(🧑‍💻 User)
+  K(👩‍🚒 Administrator)
+  D --> F
+  D --> A
+  C --> G
+  F --> A
+  B --> |API call| C
+  B --> |API call| X
+  K --> X
+  style I fill:#999
+  style E fill:#944
+  style X fill:#944
+```
 
 ## Create A Slack Account
 
@@ -82,6 +137,23 @@ You now have a token you can use in a web service that monitors FusionAuth to po
 ## Write A Web Service To Monitor FusionAuth
 
 TODO
+
+
+
+---
+---
+---
+
+
+
+
+
+
+
+
+
+
+
 
 
 
