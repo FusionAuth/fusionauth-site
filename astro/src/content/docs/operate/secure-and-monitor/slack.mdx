@@ -42,7 +42,7 @@ graph LR
   subgraph I[Your server]
     direction TB
     subgraph G[Docker]
-      H[(Postgresql)]
+      H[(PostgreSQL)]
     end
     subgraph C[Docker]
       A(FusionAuth)
@@ -68,7 +68,7 @@ graph LR
   X(Slack)
   subgraph I[Your server]
     subgraph G[Docker]
-      H[(Postgresql)]
+      H[(PostgreSQL)]
     end
     subgraph C[Docker]
       A(FusionAuth)
@@ -132,104 +132,17 @@ curl -d "text=Test alert from FusionAuth." -d "channel=C123456" -H "Authorizatio
 
 ![Test message](../../../../../public/img/docs/operate/secure-and-monitor/slack1.webp)
 
-You now have a token you can use in a web service that monitors FusionAuth to post a message to Slack if FusionAuth fails. Let's write that web service next.
+You now have a token you can use in a web service that monitors FusionAuth to post a message to Slack if FusionAuth fails.
 
-## Write A Web Service To Monitor FusionAuth
+## Run FusionAuth
 
-TODO
+In this section you are going to run FusionAuth.
 
-
-
----
----
----
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## Monitor FusionAuth With Slack In The Same Container Or Without Docker
-
-Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below (you might also run OpenSearch in another Docker container).
-
-<Diagram1></Diagram1>
-
-In this section you are going to install Slack Agent in the same container as FusionAuth. The aim is to have a design like the diagram below.
-
-<Diagram2></Diagram2>
-
-FusionAuth and Postgresql are unchanged. The Slack Agent in the FusionAuth container monitors the container (not the FusionAuth app), and uploads the data to Slacksearch, where it is indexed and saved.
-
-Kibana is a web interface that provides dashboards of the Agent's container's health. Note that Slack Agent is not yet monitoring FusionAuth in this design, but if the container dies or suffers CPU or RAM overuse, that will show in the Kibana dashboard.
-
-Fleet is the web app that tracks all Agents on all servers. It allows you set Agent Policies that tell the Agents remotely what data they should and shouldn't upload. You can also use Fleet to delete or edit existing Agents.
-
-This design is useful when you don't have full control over the Docker environment, as you may not have on some cloud hosts. However, the design violates the principle of one process per Docker container. This means it is possible for the Slack Agent process to die, while the container and FusionAuth process keep running, which will cause confusion when viewing the dashboard.
-
-Running Slack Agent on the same server as FusionAuth is also useful when you aren't using Docker — when you are running FusionAuth directly on your server. In this case, your system will look like the diagram below.
-
-<Diagram3></Diagram3>
-
-Here's how to implement this design:
-- Browse to the home page of your Slack Cloud web interface.
-- In the sidebar, at the bottom, click <strong>Management -> Fleet</strong>.
-- Click the "Agent policies" tab, then click "Create agent policy".
-- Give it the name `efa` (SlackFusionAuth). Review the advanced options if you like, but leave their defaults unchanged.
-- Click "Create agent policy".
-- Back on the agent policy list page, click the name of your new policy, "efa".
-- Under the "Integrations" tab, the "System" integration should show. Click the name of the integration to open a page to edit it. If you don't see the system integration, click "Add integration" to the right, search for `System`, and add it.
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic2.png' alt='Add integration' />
-- Disable "Collect events from the Windows event log" and leave the system collection and metric collection toggles enabled. Since your Docker instance runs Ubuntu there is no need for Windows events.
-- Return to the Agents tab of the Fleet page. And click "Add Agent".
-- Choose your newly created agent policy in the dropdown that appears for step 1.
-- Copy the text to install the "Linux Tar" version of the agent in step 3, which will be similar to the commands below, but with different parameters.
-  ```sh
-  curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.14.2-linux-x86_64.tar.gz
-  tar xzvf elastic-agent-8.14.2-linux-x86_64.tar.gz
-  cd elastic-agent-8.14.2-linux-x86_64
-  sudo ./elastic-agent install --url=https://9025e4274afd63b55h64.fleet.us-central1.gcp.cloud.es.io:443 --enrollment-token=a2lB5aA1dUJ4d2daRmlNcVozang6WbgaTk5FUsE43dw==
-  ```
-- The last line is the most important. Note the subdomain of the the URL, which is your unique Slack Cloud home. Note also the enrollment token, which is your secret key to use Slack. Keep the token secure and safe, and never commit it to GitHub where it can be publicly exposed.
-
----
-
-- Now you are going to leave the Slack site and work in a terminal on your own computer. Install [Docker](https://docs.docker.com/get-docker/) if you don't have it on your machine.
-- Save the Dockerfile from the [FusionAuth containers repository](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) to your computer.
-- Rename the file to `elastic.dockerfile`.
-- Edit the file and insert the following lines above the comment "###### Start FusionAuth App".
-  ```sh
-  ###### New for Slack #################################
-  RUN mkdir -p /var/lib/apt/lists/partial \
-    && chmod 755 /var/lib/apt/lists/partial \
-    && apt update \
-    && apt install -y ca-certificates \
-    && apt install nano sudo -y \
-    && echo "fusionauth ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/fusionauth \
-    && curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.14.3-linux-x86_64.tar.gz \
-    && mkdir -p /elastic \
-    && tar xzvf elastic-agent-8.14.3-linux-x86_64.tar.gz --strip-components=1 -C /elastic \
-    && yes | /elastic/elastic-agent install --url=https://9059ac5.fleet.us-central1.gcp.cloud.es.io:443 --enrollment-token=lBSVldsaUlMRnoyZGh2Zw==
-  ```
-- Change the URL and token in the last line to match your values from the Slack website. Update the version number of the agent if yours is newer.
-- Replace the last line of the file, `CMD ["/usr/local/fusionauth/fusionauth-app/bin/start.sh"]` with `CMD sudo /opt/Slack/Agent/elastic-agent run & /usr/local/fusionauth/fusionauth-app/bin/start.sh`. Now both the Slack Agent and FusionAuth will run when the container starts. The Agent has to run as root as it [reads data sources that only a superuser can access](https://www.elastic.co/guide/en/fleet/current/elastic-agent-installation.html). Even though the Dockerfile unzips the Agent to `/agent/`, the agent installs to `/opt/Slack/Agent/`.
-- Build the image with the command below.
-  ```sh
-  docker build --platform linux/amd64 -t efaimage -f elastic.dockerfile .
-  ```
-- Use the modified `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below. It uses the `efaimage` you just built for FusionAuth.
+- Install [Docker](https://docs.docker.com/get-docker/) if you don't have it on your machine.
+- Use the modified `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below.
   ```yaml
   services:
-    db:
+    fa_db:
       image: postgres:latest
       container_name: fa_db
       ports:
@@ -249,8 +162,8 @@ Here's how to implement this design:
         - db_data:/var/lib/postgresql/data
 
     fa:
-      image: efaimage
-      container_name: efa
+      image: fusionauth:latest
+      container_name: fa
       depends_on:
         db:
           condition: service_healthy
@@ -270,8 +183,12 @@ Here's how to implement this design:
         - 9011:9011
       volumes:
         - fusionauth_config:/usr/local/fusionauth/config
-      extra_hosts:
-        - "host.docker.internal:host-gateway"
+
+    fa_mon:
+      image: famonimage
+      container_name: fa_mont
+      networks:
+        - db_net
 
   networks:
     db_net:
@@ -291,7 +208,32 @@ Here's how to implement this design:
   POSTGRES_USER=postgres
   POSTGRES_PASSWORD=postgres
   ```
-- Run FusionAuth with `docker compose up`.
+
+Notice the last service in the compose file, `fa_mon`, doesn't exist yet. This is the monitoring web app you will build in the next section.
+
+- Run the FusionAuth database with `docker compose up fa_db`.
+- Run the FusionAuth database with `docker compose up fa`.
+- Browse to http://localhost:9011 and check you can log in with username `admin` and password `password`.
+
+## Write A Web Service To Monitor FusionAuth
+
+TODO
+
+
+
+---
+---
+---
+
+
+
+
+
+
+
+---
+
+
 - When you return to the Slack web interface it should now say "Agent enrollment confirmed".
 - You should also see the agent appear in the Fleet dashboard and the status should change to `Healthy`.
     <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic3.png' alt='Agent overview' />
