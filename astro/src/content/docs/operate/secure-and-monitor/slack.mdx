@@ -23,7 +23,7 @@ import Diagram2 from 'src/components/docs/operate/secure-and-monitor/slackDiagra
 
 [Slack](https://slack.com) is a private chat app you can configure for your organization. To send alerts to Slack, create a dedicated channel (chatroom) in the app, add your system administrators to it, and send messages to the channel using the Slack API.
 
-This guide explains the process in detail, and how to create a simple web service in JavaScript to monitor FusionAuth and call Slack if FusionAuth has errors.
+This guide explains the process in detail, and how to create a simple shell script to monitor FusionAuth and call Slack if FusionAuth has errors.
 
 Before continuing with this guide, please read the [FusionAuth guide to monitoring](/docs/operate/secure-and-monitor/monitor) to get an overview of the available metrics and choose the ones relevant to your needs. Sending alerts to Slack is also a small component of what comprehensive monitoring involves. The overview guide explains where Slack fits in the monitoring flow, as well as alternative apps to Slack for receiving alerts.
 
@@ -59,7 +59,7 @@ graph LR
   style I fill:#999
 ```
 
-In this guide you are going to create a tiny web service in its own container to monitor FusionAuth. It will call Slack if the FusionAuth logs API is not contactable, or if the logs contain an error message. The new design will look like the diagram below.
+In this guide you are going to create a tiny service in its own container to monitor FusionAuth. It will call Slack if the FusionAuth logs API is not contactable, or if the logs contain an error message. The new design will look like the diagram below.
 
 <Diagram2></Diagram2>
 
@@ -74,7 +74,7 @@ graph LR
       A(FusionAuth)
     end
     subgraph E[Docker]
-      B(Custom web service monitor)
+      B(Custom monitoring service)
     end
     subgraph J[Docker]
       F(Your app)
@@ -118,7 +118,7 @@ To be able to send messages to Slack, you need an API key. To get an API key, yo
 - Click <InlineElement>Install to Workspace</InlineElement>.
 - On the page that opens, click <InlineElement>Allow</InlineElement>. (Back in your Slack chat app page, the `fabot` app should now be visible in the user list.)
 - Click <InlineElement>OAuth & Permissions</InlineElement> in the sidebar.
-- Note your <InlineElement>Bot User OAuth Token</InlineElement> (`xoxb-something`) for later use.
+- Note your <InlineElement>Bot User OAuth Token</InlineElement> (`xoxb-something`) for later use. Keep it secret and do not commit it to git.
 - Check that your bot has permissions for `chat:write` and `chat:write.public`.
 
 Open a terminal and run the command below, using your bot token and channel ID. The response should start with `"ok"`.
@@ -213,14 +213,19 @@ In this section you are going to run FusionAuth.
   POSTGRES_PASSWORD=postgres
   ```
 
-Notice the last service in the compose file, `fa_mon`, doesn't exist yet and is commented out. This is the monitoring web app you will build in the next section.
+Notice the last service in the compose file, `fa_mon`, doesn't exist yet and is commented out. This is the monitoring script you will build in the next section.
 
 - Run FusionAuth with `docker compose up`.
 - Browse to http://localhost:9011 and check you can log in with `admin@example.com` and `password`.
 
-## Write A Web Service To Monitor FusionAuth
+## Write A Service To Monitor FusionAuth
 
 TODO
+
+https://fusionauth.io/docs/apis/event-logs
+not that useful. lamda, smtp, email template, webhook errors. all important, but will miss basic errors like cannot connect to database that will show in the system log.
+
+cannot get system logs when fa runs in docker https://fusionauth.io/docs/apis/system#export-system-logs
 
 
 
@@ -558,6 +563,9 @@ A relatively simple but adequate monitoring architecture with Slack might look a
 In this design, the Slack Agent monitors all Docker infrastructure and the FusionAuth logs, while the custom metric service provides fine-grained FusionAuth data to Slack to monitor the app itself.
 
 ## Next Steps
+
+- write service in your fav lang
+- create a channel the service writes to every time it runs so you know it's up
 
 Now that you are able to monitor FusionAuth in Slack, you should enable Slack [alerts](https://www.elastic.co/kibana/alerting) to notify you by email or in Slack if something goes wrong, like a massive decrease in login rates, a Docker container restarting, or a log output containing `error`.
 
