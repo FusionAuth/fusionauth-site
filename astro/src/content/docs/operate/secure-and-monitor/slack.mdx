@@ -142,53 +142,57 @@ In this section you are going to run FusionAuth.
 - Use the modified `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below.
   ```yaml
   services:
-    fa_db:
-      image: postgres:latest
-      container_name: fa_db
-      ports:
-        - "5432:5432"
-      environment:
-        PGDATA: /var/lib/postgresql/data/pgdata
-        POSTGRES_USER: ${POSTGRES_USER}
-        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      healthcheck:
-        test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-        interval: 5s
-        timeout: 5s
-        retries: 5
-      networks:
-        - db_net
-      volumes:
-        - db_data:/var/lib/postgresql/data
+  fa_db:
+    image: postgres:latest
+    container_name: fa_db
+    ports:
+      - "5432:5432"
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - db_net
+    volumes:
+      - db_data:/var/lib/postgresql/data
 
-    fa:
-      image: fusionauth:latest
-      container_name: fa
-      depends_on:
-        db:
-          condition: service_healthy
-      environment:
-        DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
-        DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
-        DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
-        DATABASE_USERNAME: ${DATABASE_USERNAME}
-        DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-        FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
-        FUSIONAUTH_APP_RUNTIME_MODE: ${FUSIONAUTH_APP_RUNTIME_MODE}
-        FUSIONAUTH_APP_URL: http://fusionauth:9011
-        SEARCH_TYPE: database
-      networks:
-        - db_net
-      ports:
-        - 9011:9011
-      volumes:
-        - fusionauth_config:/usr/local/fusionauth/config
+  fa:
+    image: fusionauth/fusionauth-app:latest
+    container_name: fa
+    depends_on:
+      fa_db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:postgresql://fa_db:5432/fusionauth
+      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
+      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
+      FUSIONAUTH_APP_RUNTIME_MODE: ${FUSIONAUTH_APP_RUNTIME_MODE}
+      FUSIONAUTH_APP_URL: http://fusionauth:9011
+      SEARCH_TYPE: database
+      FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}
+    networks:
+      - db_net
+    ports:
+      - 9011:9011
+    volumes:
+      - fusionauth_config:/usr/local/fusionauth/config
+      - ./kickstart:/usr/local/fusionauth/kickstart
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
-    fa_mon:
-      image: famonimage
-      container_name: fa_mont
-      networks:
-        - db_net
+  # fa_mon:
+  #   image: famonimage
+  #   container_name: fa_mont
+  #   networks:
+  #     - db_net
 
   networks:
     db_net:
@@ -209,11 +213,10 @@ In this section you are going to run FusionAuth.
   POSTGRES_PASSWORD=postgres
   ```
 
-Notice the last service in the compose file, `fa_mon`, doesn't exist yet. This is the monitoring web app you will build in the next section.
+Notice the last service in the compose file, `fa_mon`, doesn't exist yet and is commented out. This is the monitoring web app you will build in the next section.
 
-- Run the FusionAuth database with `docker compose up fa_db`.
-- Run the FusionAuth database with `docker compose up fa`.
-- Browse to http://localhost:9011 and check you can log in with username `admin` and password `password`.
+- Run FusionAuth with `docker compose up`.
+- Browse to http://localhost:9011 and check you can log in with `admin@example.com` and `password`.
 
 ## Write A Web Service To Monitor FusionAuth
 
