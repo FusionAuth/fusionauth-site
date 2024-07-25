@@ -142,57 +142,59 @@ In this section you are going to run FusionAuth.
 - Use the modified `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below.
   ```yaml
   services:
-  fa_db:
-    image: postgres:latest
-    container_name: fa_db
-    ports:
-      - "5432:5432"
-    environment:
-      PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - db_net
-    volumes:
-      - db_data:/var/lib/postgresql/data
+    fa_db:
+      image: postgres:latest
+      container_name: fa_db
+      ports:
+        - "5432:5432"
+      environment:
+        PGDATA: /var/lib/postgresql/data/pgdata
+        POSTGRES_USER: ${POSTGRES_USER}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      healthcheck:
+        test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+        interval: 5s
+        timeout: 5s
+        retries: 5
+      networks:
+        - db_net
+      volumes:
+        - db_data:/var/lib/postgresql/data
 
-  fa:
-    image: fusionauth/fusionauth-app:latest
-    container_name: fa
-    depends_on:
-      fa_db:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: jdbc:postgresql://fa_db:5432/fusionauth
-      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
-      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
-      DATABASE_USERNAME: ${DATABASE_USERNAME}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
-      FUSIONAUTH_APP_RUNTIME_MODE: ${FUSIONAUTH_APP_RUNTIME_MODE}
-      FUSIONAUTH_APP_URL: http://fusionauth:9011
-      SEARCH_TYPE: database
-      FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}
-    networks:
-      - db_net
-    ports:
-      - 9011:9011
-    volumes:
-      - fusionauth_config:/usr/local/fusionauth/config
-      - ./kickstart:/usr/local/fusionauth/kickstart
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    fa:
+      image: fusionauth/fusionauth-app:latest
+      container_name: fa
+      depends_on:
+        fa_db:
+          condition: service_healthy
+      environment:
+        DATABASE_URL: jdbc:postgresql://fa_db:5432/fusionauth
+        DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
+        DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
+        DATABASE_USERNAME: ${DATABASE_USERNAME}
+        DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+        FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
+        FUSIONAUTH_APP_RUNTIME_MODE: ${FUSIONAUTH_APP_RUNTIME_MODE}
+        FUSIONAUTH_APP_URL: http://fusionauth:9011
+        SEARCH_TYPE: database
+        FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}
+      networks:
+        - db_net
+      ports:
+        - 9011:9011
+      volumes:
+        - fusionauth_config:/usr/local/fusionauth/config
+        - ./kickstart:/usr/local/fusionauth/kickstart
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
 
-  # fa_mon:
-  #   image: famonimage
-  #   container_name: fa_mont
-  #   networks:
-  #     - db_net
+    # fa_mon:
+    #  image: famonimage
+    #  container_name: fa_mon
+    #  networks:
+    #    - db_net
+    #  volumes:
+    #    - /var/run/docker.sock:/var/run/docker.sock:ro # allow readonly access to fa docker logs
 
   networks:
     db_net:
@@ -201,8 +203,8 @@ In this section you are going to run FusionAuth.
   volumes:
     db_data:
     fusionauth_config:
-  ```
-- Also create a `.env` file with the default content below.
+    ```
+  - Also create a `.env` file with the default content below.
   ```text
   DATABASE_USERNAME=fusionauth
   DATABASE_PASSWORD=hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3
@@ -217,15 +219,17 @@ Notice the last service in the compose file, `fa_mon`, doesn't exist yet and is 
 
 - Run FusionAuth with `docker compose up`.
 - Browse to http://localhost:9011 and check you can log in with `admin@example.com` and `password`.
+- Create an API key by navigating to <Breadcrumb>Settings -> API Keys</Breadcrumb> and clicking the <IconButton icon="plus" color="green" /> button. Enter a <InlineField>Description</InlineField> for the API key and click on the <IconButton icon="save" color="blue" /> button to save the API key. On the API Keys list page, click the red lock <IconButton icon="lock" color="red" /> next to the newly generated key to reveal the key value and copy and save it.
 
 ## Write A Service To Monitor FusionAuth
 
-TODO
+The monitoring overview guide explains what metadata you can get from FusionAuth. For the purposes of alerts, you are interested only in errors. Errors are obtained in two places:
+- System logs. These cannot be obtained from an [API call](https://fusionauth.io/docs/apis/system#export-system-logs) because FusionAuth writes the system logs to the Docker standard out when running in Docker, instead of to a file. The system logs expose fundamental errors, like FusionAuth missing a database connection.
+- Event logs. These contain more complicated errors relating to lambda functions, SMTP, email templates, and webhooks. Event logs can be called through [their API](https://fusionauth.io/docs/apis/event-logs#search-event-logs).
 
-https://fusionauth.io/docs/apis/event-logs
-not that useful. lamda, smtp, email template, webhook errors. all important, but will miss basic errors like cannot connect to database that will show in the system log.
+Let's write a script that runs every 30 seconds to get both system logs and event logs in the last 31 seconds. If either set of logs contain an error, or if an error occurs getting the logs, send an alert to Slack.
 
-cannot get system logs when fa runs in docker https://fusionauth.io/docs/apis/system#export-system-logs
+Create a file called `app.bash`. Insert the content below, replacing your FusionAuth API key, and your Slack API key and Slack URL.
 
 ```bash
 #!/bin/bash
@@ -235,12 +239,11 @@ alertKey="xoxb-something"
 alertUrl="C0T7"
 faUrl="http://fa:9011"
 faKey="33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod"
-faAppId="3c219e58-ed0e-4b18-ad48-f4f92793ae32"
 
 # send an alert if this script errors
 trap 'handleError' ERR
 handleError() {
-  curl -d "text=Monitor cannot connect to FusionAuth." -d "channel=$alertUrl" -H "Authorization: Bearer $alertKey" -X POST https://slack.com/api/chat.postMessage
+  curl -d "text=Monitor cannot connect to FusionAuth" -d "channel=$alertUrl" -H "Authorization: Bearer $alertKey" -X POST https://slack.com/api/chat.postMessage
 }
 
 # get system logs with error or exception in the last 31 seconds. take first line.
@@ -252,7 +255,7 @@ if [ ! -z "$errorLog" ]; then
   curl -d "text=System log has error:                      $errorLog" -d "channel=$alertUrl" -H "Authorization: Bearer $alertKey" -X POST https://slack.com/api/chat.postMessage
 fi
 
-# get event logs with errors in the last 31 seconds - https://fusionauth.io/docs/apis/event-logs#search-event-logs
+# get event logs with errors in the last 31 seconds
 dateFormat=$(echo -n "yyyy-MM-dd'T'HH:mm:ss.SSS" | jq -sRr @uri)
 end=$(date +%s)000
 start=$(($end - 31000))
@@ -271,358 +274,44 @@ total=$(echo "$eventLogs" | jq '.total')
 if [[ $total -gt 0 ]]; then
   curl -d "text=Event log has error:                     $eventLogs" -d "channel=$alertUrl" -H "Authorization: Bearer $alertKey" -X POST https://slack.com/api/chat.postMessage
 fi
-
-done
 ```
 
----
----
----
+The script above first gets system logs by reading the `fa` container's output from Docker (exposed in the Dockerfile `/var/run/docker.sock:/var/run/docker.sock:ro`). If there is any log containing `error` or `exception`, the script uses `curl` to send a message to Slack.
 
+The script then gets the event logs of type `Error` and messages Slack if it finds any. Note that FusionAuth uses milliseconds instead of the epoch standard of seconds, so the script has to append `000` to the normal Unix time.
 
+If any general error occurs while the script runs, the error is caught by `trap` and the script messages Slack.
 
-
-
-
-
----
-
-
-- When you return to the Slack web interface it should now say "Agent enrollment confirmed".
-- You should also see the agent appear in the Fleet dashboard and the status should change to `Healthy`.
-    <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic3.png' alt='Agent overview' />
-- In the sidebar, browse to <strong>Analytics -> Dashboards</strong>. Search for and display `Host overview`.
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic4.png' alt='Server dashboard' />
-
-You have successfully installed a monitoring agent for your FusionAuth machine and can now monitor it online.
-
-### How To Debug The Container
-
-If you get errors when running FusionAuth, or the Agent does not appear in Fleet, you will need to open a terminal in the container to find the problem.
-
-Change the last line of the Dockerfile to the line below, to stop FusionAuth and the Agent starting, so you can test manually.
+Create a file called `Dockerfile.yaml`. Insert the content below.
 
 ```sh
-CMD tail -f /dev/null
-```
-
-To rebuild the Dockerfile after changes, run the command below.
-
-```sh
-docker rm fa; docker rm efa; docker rmi efaimage; docker build --platform linux/amd64 -t efaimage -f elastic.dockerfile .
-```
-
-To run the container and enter it as root, use the command below.
-
-```sh
-docker run -it --user root --name efa efaimage bash
-```
-
-Start the Agent with `/opt/Slack/Agent/elastic-agent run` and use `cat /var/log/elastic-agent.err` to look for errors. If you see the agent trying to connect to `127.0.0.1:9200`, it is not because the URL is configured incorrectly. The 127 address is just a fallback when the Agent cannot connect to the server, usually due to it not running as root.
-
-## Monitor FusionAuth With Slack In Another Container
-
-Running Slack Agent and FusionAuth in the same container required altering the FusionAuth Dockerfile, which means you have to alter the file and rebuild the image every time you want to use a new version of FusionAuth.
-
-If you run Slack Agent in a separate container you avoid this problem, but you need to have full control over the machine running Docker in order to give Slack Agent access to restricted Docker data (the Docker socket). This may not be possible on some cloud hosts.
-
-Running Slack Agent in a separate container to FusionAuth is shown in the diagram below.
-
-<Diagram4></Diagram4>
-
-Below are the instructions to implement this design. They follow from the work you did in the previous section.
-
-- Browse to the Slack web interface.
-- Click "Add integrations". Search for and add Docker.
-- Give it the name `fadocker`.
-- At the bottom of the page, name the new policy `fadockerpolicy`.
-- Click "Save and continue".
-- Click "Add Slack Agent to your hosts". You need the URL and token given on the page that shows, but you won't need the installation commands. Slack already provides a prebuilt Docker image you can use instead.
-- Change the Docker compose file you used in the previous section to replace the custom `efa` image with the normal FusionAuth image.
-  ```yaml
-  fa:
-    image: fusionauth/fusionauth-app:latest
-  ```
-  - Note that you could continue using the `efa` image if you wanted to. Slack allows you to run as many agents as you want, and will collect data from all of them.
-- Add a new service to the compose file for the Slack Agent image. Replace your URL and enrollment token in the markup below from the values on the Slack web page.
-  ```yaml
-  faelastic:
-    image: elastic/elastic-agent:8.14.3
-    container_name: faelastic
-    user: root
-    networks:
-      - db_net
-    environment:
-      - FLEET_ENROLL=1
-      - FLEET_ENROLLMENT_TOKEN=YTRBMBa1RvUQ==
-      - FLEET_URL=https://905ec5.fleet.us-central1.gcp.cloud.es.io:443
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro    # `ro` makes the folder readonly in the container to protect your real machine
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-  ```
-  - `/var/run/docker.sock` allows Slack Agent to view Docker metrics about other containers. It will work on Linux and Macos hosts, but might not work on Windows. If you encounter socket problems on Windows, please read [this article](https://tomgregory.com/aws/running-docker-in-docker-on-windows/) and try prefixing your local socket path with an extra slash.
-  - `/var/lib/docker/containers` allows Slack Agent to read the logs of other containers.
-- Run the Slack Agent container first, so that it will see some log information from other containers when they start. First run `docker compose up faelastic`.
-- In the Slack Cloud web interface, browse to the sidebar and then <strong>Observability -> Stream</strong>.
-- Run the other Docker containers with `docker compose up db fa`
-- You should be able to see the FusionAuth log output appearing in the Slack web interface.
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic10.png' alt='Logs view' />
-- Browse to the sidebar and then <strong>Analytics -> Dashboards -> [Metrics Docker]Overview</strong>. You should be able to see details about all your Docker containers now.
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic5.png' alt='Docker dashboard' />
-
-## Monitor the FusionAuth Application Directly With Slack
-
-You've learnt how to monitor the FusionAuth container now in two different ways. Since a Docker container will exit if the process it runs exits, this monitoring will tell you if FusionAuth dies, which might be enough for you to know. But if you want to monitor details about the FusionAuth app itself, there are various approaches:
-- Use an [Slack APM (application perfomance monitoring) app for Java](https://www.elastic.co/guide/en/observability/current/_step_3_install_apm_agents.html) inside the FusionAuth container to monitor the Java Virtual Machine. Since monitoring Java won't give you any useful information that monitoring the container doesn't already, you can ignore this idea. There is a guide to running FusionAuth with a Java monitoring app by altering the Dockerfile in the [FusionAuth Splunk guide](./splunk) if you would like to try.
-- Use an [OpenTelemetry Java monitoring agent](https://github.com/open-telemetry/opentelemetry-java-instrumentation) to send information about FusionAuth to Slack. This is similar to previous point - OpenTelemetry won't provide any useful information that container monitoring doesn't already. Using OpenTelemery is also shown in the [FusionAuth Splunk guide](./splunk). Slack has a guide to Java [here](https://www.elastic.co/guide/en/observability/8.14/apm-open-telemetry.html) that you can use in conjunction with the Splunk guide.
-- Use a specialized Slack service, like Heartbeat, to connect to the FusionAuth HTTP server and see if it returns correctly. You can install Heartbeat in a container, like we did for Slack Agent in the previous section, and point it to the FusionAuth URL. A guide on Heartbeat is [here](https://www.elastic.co/guide/en/beats/heartbeat/current/heartbeat-overview.html).
-- Send custom metrics from FusionAuth to Slack. This is the most complex option, as you need to write a custom service to request FusionAuth metrics, extract them from the given zip file, and upload them to Slack through their API. However, this is the only way to get precise information about FusionAuth if you want that level of detail. This option will be discussed in the next section.
-
-## Send Custom FusionAuth Metrics To The Slacksearch API
-
-There are three possible ways to send custom data to Slack:
-- Write your own service to run continuously, get data, and send it by calling the Slacksearch API.
-- Build a custom private module for [MetricBeat](https://www.elastic.co/beats/metricbeat) in Go, compile the module with MetricBeat, and deploy the output to a container. MetricBeat is similar to Slack Agent. It is a Slack service that runs continuously, calling whatever integration it's configured with. To write a custom module (integration), follow the [Slack developer documentation](https://www.elastic.co/guide/en/beats/devguide/current/metricbeat-dev-overview.html).
-- Deploy MetricBeat with the stock [HTTP module](https://www.elastic.co/guide/en/beats/metricbeat/current/metricbeat-module-http.html) in a container. The HTTP module can call any custom API you want. Write a little web service in another container as an interface between MetricBeat and FusionAuth. This service will get whatever metrics you want from FusionAuth and return them in the HTTP response.
-
-Each option has disadvantages. While calling the API directly is the least code, it is low level work that moves away from using the Slack components as intended. And it requires you to configure values to group your custom data with other data from Slack Agent in the dashboard. Using MetricBeat is Slack's recommended solution, but requires writing and compiling Go code for every service change, or running an additional Docker container with its own web service.
-
-For simplicity’s sake you will use option one in this guide. In this section you will create a custom service in Docker to call the FusionAuth API and send the metrics to Slack API directly.
-
-The design looks like the diagram below.
-
-<Diagram5></Diagram5>
-
-### Which Metrics To Monitor
-
-FusionAuth has too [many metrics](/docs/operate/secure-and-monitor/monitor#metrics) to discuss in this article. You will need to decide which are important for you to monitor by reading the documentation.
-
-In addition to the metrics available through the various FusionAuth APIs, you can create your own metrics using any event that can trigger a [webhook](/docs/extend/events-and-webhooks). This webhook can call another Docker container you create that listens for incoming events and forwards them to Slack.
-
-A useful metric to start with is login counts. If this number drops from the average, it's a good sign something might be wrong with your system. In this guide, you'll learn how to create a program that uses the FusionAuth API to get the login count, then upload it to Slack.
-
-You can add any other metrics you want to this service.
-
-### Create A Slack API Key
-
-Earlier you used an enrollment token tied to a specific Agent Policy to configure your Slack Agent. Now to call the Slacksearch API directly you need an API key.
-
-- In the Slack Cloud web interface, open the sidebar and browse to <strong>Search -> Slacksearch</strong>.
-- Click "Endpoints & API keys"
-- Note your endpoint and cloud ID values.
-- Click "New API key".
-- Give it a name and enable "Security Privileges" and "Metadata".
-- Click "Create API Key".
-- Save the key securely for later use. Never to commit the key to git, which can expose it on the Internet.
-
-### Create A Slacksearch Index
-
-To prepare Slacksearch for data upload, open a terminal and run the three commands below, after setting your API key and URL for the first two commands. The API key is the value of the `encoded` field from the JSON in Slack, not the `api_key` field.
-
-```sh
-export elasticKey="WGdLQ=="
-export elasticUrl="https://c301.us-central1.gcp.cloud.es.io:443"
-curl -X PUT "${elasticUrl}/falogins" -H "Authorization: ApiKey ${elasticKey}" -H "Content-Type: application/json" -d'
-{
-  "mappings": {
-    "properties": {
-      "timestamp": { "type": "date" },
-      "value": { "type": "text" }
-    }
-  }
-}'
-
-# Result:
-# {"acknowledged":true,"shards_acknowledged":true,"index":"logins"}
-```
-
-These commands should have created an index (think of an index as a database table) to which you can upload FusionAuth metrics. If you receive an authentication or 404 error please check your URL and API key settings.
-
-Check that the index exists by running the command below.
-
-```sh
-curl "${elasticUrl}/falogins" -H "Authorization: ApiKey "${elasticKey}"" -H "Content-Type: application/json"
-
-# Result:
-# {"falogins":{"aliases":{},"mappings":{"properties":{"timestamp":{"type":"date"},"value":{"type":"integer"}}},"settings":{"index":{"routing":{"allocation":{"include":{"_tier_preference":"data_content"}}},"number_of_shards":"1","provided_name":"falogins","creation_date":"1721213253232","number_of_replicas":"1","uuid":"JXwp3mzBTJqkQH6sNkEvPg","version":{"created":"8505000"}}}}}
-```
-
-Let's review the index in Slack Cloud.
-
-- Browse to the web interface, open the sidebar, and browse to <strong>Management -> Stack Management -> Index Management</strong>.
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic6.png' alt='Indexes' />
-- You should see "falogins" in the list. Click it.
-- Click the "Mappings" tab.
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic7.png' alt='Index mappings' />
-
-You can now see the type of data that the index will accept. You can create indexes manually instead of using the API if you like. Creating mappings manually will show you all the types of fields that Slacksearch supports.
-
-### Write A Custom Service To Send Data To The API
-
-Let's get the login records every ten seconds and send them to Slack. All the FusionAuth APIs that give you event data are documented [here](/docs/apis). The login records API is documented [here](/docs/apis/login#request-6). Note that the documentation says the date format is the standard Java type, but some constants like `ISO_LOCAL_DATE_TIME` are not supported. You need to enter the format string you want manually.
-
-Unfortunately, all the APIs export events as zip files — you will not get JSON or YAML data in memory. So you will need to create a script that gets the zip file, extracts it, reads it, formats the entries for Slack, and uploads them.
-
-Browse to FusionAuth, which is at http://localhost:9011 if you are running through the default Docker setup. Log in and look for your application Id in <Breadcrumb>System -> Login Records</Breadcrumb>.
-
-Next, create an API key by navigating to <Breadcrumb>Settings -> API Keys</Breadcrumb> and clicking the <IconButton icon="plus" color="green" /> button. Enter a <InlineField>Description</InlineField> for the API key and click on the <IconButton icon="save" color="blue" /> button to save the API key. On the API Keys list page, click the red lock <IconButton icon="lock" color="red" /> next to the newly generated key to reveal the key value and copy and save it.
-
-Create a file called `app.sh`. Insert the content below, replacing your FusionAuth API key, FusionAuth application Id, and your Slack API key and Slack URL.
-
-```sh
-#!/bin/sh
-
-# exit on error
-set -e
-
-# get login records from fusionauth
-faUrl="http://fa:9011/api/system/login-record/export" # use "http://localhost:9011... for testing this script outside of Docker
-faKey="33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod"
-faAppId="3c219e58-ed0e-4b18-ad48-f4f92793ae32"
-elasticKey="WGdNxOUkwQQ=="
-elasticUrl="https://c36cbc1.us-central1.gcp.cloud.es.io:443"
-dateFormat=$(echo -n "yyyy-MM-dd'T'HH:mm:ss.SSS" | jq -sRr @uri)
-end=$(date +%s)000
-start=$(($end - 3600000))
-params="applicationId=${faAppId}&dateTimeSecondsFormat=${dateFormat}&start=${start}&end=${end}"
-url="${faUrl}?${params}"
-echo "curl -H \"Authorization: ${faKey}\" -o record.zip \"$url\""
-curl -H "Authorization: ${faKey}" -o record.zip "$url"
-unzip -o record.zip
-cat login_records.csv
-
-# for each record, get the user and  unix time in ms
-tail -n +2 login_records.csv | while IFS=',' read -r userId time rest; do
-  userId=$(echo "$userId" | tr -d ' "' )
-  time=$(echo "$time" | tr -d ' "')                      # 2024-06-21T05:14:56.123
-  time=$(echo "$time" | tr 'T' ' ')                      # 2024-06-21 05:14:56.123
-  sec="$(date -d "$(echo $time | cut -d '.' -f 1)" +%s)" # 1718946896
-  ms="$(echo $time | cut -d '.' -f 2)"                   # 123
-
-  # make the POST data
-  data=$(cat <<EOF
-{
-  "timestamp": ${sec}${ms},
-  "value": "${userId}"
-}
-EOF
-)
-
-  # send data to Slack API
-  curl -X POST "${elasticUrl}/falogins/_doc" -H "Authorization: ApiKey ${elasticKey}" -H "Content-Type: application/json" -d "$data"
-
-done
-```
-
-This script gets all login records in the last hour to be sure the zip file has some data. In reality, replace 3600000 with 10000 so that when the script runs every ten seconds, it gets only the latest records. Note that FusionAuth uses milliseconds instead of the epoch standard of seconds, so the script has to append `000` to the normal Unix time.
-
-The file returned from FusionAuth unzips to `login_records.csv`, which looks like the data below.
-
-| "User Id "                           | "Time "                 | "Application Id "                    | "IP Address " | "City " | "Country " | "Zipcode " | "Region " | "Latitude " | "Longitude " |
-|--------------------------------------|-------------------------|--------------------------------------|---------------|---------|------------|------------|-----------|-------------|--------------|
-| ba81f3e2-3b0f-4d64-930f-38298de9dc0d | 2024-06-21T05:14:56.123 | 3c219e58-ed0e-4b18-ad48-f4f92793ae32 | 172.20.0.1    |         |            |            |           |             |              |
-| ba81f3e2-3b0f-4d64-930f-38298de9dc0d | 2024-06-21T05:07:06.406 | 3c219e58-ed0e-4b18-ad48-f4f92793ae32 | 172.20.0.1    |         |            |            |           |             |              |
-
-The records in this file look different from those in the FusionAuth console. Only Ids are given here, not email addresses or application names.
-
-The second half of the script reads in the CSV file, discards the header, and sends the user ID and the time of each login to Slack.
-
-Create a file called `metricDockerfile`. Insert the content below.
-
-```
 FROM --platform=linux/amd64 alpine:3.19
-RUN apk add --no-cache curl jq nano
-COPY app.sh /app.sh
-RUN chmod +x app.sh
-CMD watch -t -n 10 /app.sh
+RUN apk add --no-cache curl nano jq bash docker-cli
+COPY app.bash /app.bash
+CMD watch -t -n 30 /app.bash # run this script every 30 seconds forever
 ```
 
 Build the container with the command below.
 
 ```sh
-docker build -f metricDockerfile.yaml --platform linux/amd64 -t metricimage .
+docker build -f Dockerfile.yaml --platform linux/amd64 -t famonimage .
 ```
 
-Edit your `docker-compose.yaml` file and add the new service as follows.
-
-```
-  fametric:
-    image: metricimage
-    container_name: fametric
-    networks:
-      - db_net
-```
+Edit your `docker-compose.yaml` file and uncomment the `fa_mon` container.
 
 Now run all the containers with `docker compose up`.
 
-The output should be as below. Since you logged in in the last hour, there will be one row in the exported file and one value will be sent to Slack. If you don't see any rows displayed on the screen, log in to FusionAuth again.
-
-```sh
-curl -H "Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" -o record.zip "http://fa:9011/api/system/login-record/export?applicationId=3c219e58-ed0e-4b18-ad48-f4f92793ae32&dateTimeSecondsFormat=yyyy-MM-dd%27T%27HH%3Amm%3Ass.SSS&start=1721215014000&end=1721218614000"
-fametric  |   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-fametric  |                                  Dload  Upload   Total   Spent    Left  Speed
-100   319    0   319    0     0  42962      0 --:--:-- --:--:-- --:--:-- 45571
-fametric  | Archive:  record.zip
-fametric  |   inflating: login_records.csv
-fametric  | "User Id ","Time ","Application Id ","IP Address ","City ","Country ","Zipcode ","Region ","Latitude ","Longitude "
-fametric  | 00000000-0000-0000-0000-000000000001,2024-07-17T05:26:05.740,3c219e58-ed0e-4b18-ad48-f4f92793ae32,172.21.0.1,,,,,,
-fametric  | 00000000-0000-0000-0000-000000000001,2024-07-17T05:25:59.800,3c219e58-ed0e-4b18-ad48-f4f92793ae32,172.21.0.1,,,,,,
-
-```
-
-If the metric has not uploaded correctly, you can debug the container by running `docker exec -it fametric sh` in a new terminal. Once in the container, you can alter the script with `nano /app.sh`. Add `-v` to the `curl` command to see verbose output. Run the script with `/app.sh`.
-
-If you have trouble calling the FusionAuth API, review the [troubleshooting tips](/docs/apis/#troubleshooting).
-
-If you alter `app.sh` in your host machine and want to rerun the containers, use the command below.
-
-```sh
-clear; docker build -f metricDockerfile --platform linux/amd64 -t metricimage .; docker compose up
-```
-
-You can follow the process described here to add other FusionAuth API calls to `app.sh` to get other metrics to send to Slack.
-
-### View The Metrics In Kibana
-
-The final step to use your metrics is to create a dashboard to view them in Kibana. You are going to show recent logins on a timeline to indicate the health of FusionAuth. Since the `UserId` field is free text and thus not aggregatable, you will not be able to visualize it, but it will be available for search if you need to run queries against users in Slacksearch.
-
-- In the Slack Cloud web interface, open the sidebar and browse to <strong>Search -> Slacksearch -> Indices -> falogins -> Documents</strong>. You should see data in the table. If not, please run `app.sh` manually and debug where it is failing, paying attention to all API keys and URLs.
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic8.png' alt='Slacksearch data' />
-- In the sidebar browse to <strong>Analytics -> Dashboards -> Create visualization</strong>.
-- In the index combobox in the top left, change from `logs-*` to `falogins`.
-- Click the "+" button next to "timestamp" to add it to the dashboard.
-- Change the time in the top right to "Today".
-- Change the visualization type to "Bar vertical".
-  <img src='../../../../../public/img/docs/operate/secure-and-monitor/elastic/elastic9.png' alt='Login rate dashboard' />
-- Click "Save and return".
-- Click "Save"
-- Give the dashboard a name like `FusionAuth login rate` and save.
-
-You now have a dashboard to monitor the health of FusionAuth. Following the process in this section, you can extract any metrics you want from the FusionAuth API, create an index for them in Slack, upload the metrics in a Docker container, and create a dashboard for them in Kibana.
-
-## Final System Architecture
-
-A relatively simple but adequate monitoring architecture with Slack might look as follows.
-
-<Diagram6></Diagram6>
-
-In this design, the Slack Agent monitors all Docker infrastructure and the FusionAuth logs, while the custom metric service provides fine-grained FusionAuth data to Slack to monitor the app itself.
+If you have trouble calling the FusionAuth API, review the [troubleshooting tips](/docs/apis/#troubleshooting). To debug the script more quickly, you can run it on your physical machine instead of inside Docker. Change the FusionAuth URL at the top from `fa` to `localhost` when doing so.
 
 ## Next Steps
 
-- write service in your fav lang
-- create a channel the service writes to every time it runs so you know it's up
-- monitor posgtres too
+Now that you have a simple way to check that FusionAuth is error free, and alert you if it's not, there are a few ways to make the system more sophisticated.
 
-Now that you are able to monitor FusionAuth in Slack, you should enable Slack [alerts](https://www.elastic.co/kibana/alerting) to notify you by email or in Slack if something goes wrong, like a massive decrease in login rates, a Docker container restarting, or a log output containing `error`.
+- Change the monitoring service from a simple bash script to a web service in your favorite programming language. This will improve error handling and make it more easily maintainable for your team.
+- Make the monitor check the PostgreSQL container logs in addition to the FusionAuth logs.
+- Create a `monitor-up` channel the service writes to every time it runs, so you know it's up. Currently, if the service dies, you'll never know. If you are on a paid Slack subscription, to avoid becoming desensitized to a spam channel that tells you the service is running every 30 seconds, create a workflow that writes to the alert channel if the `monitor-up` hasn't received a message in the last minute.
+- If you want visibility into the performance of FusionAuth, not just errors, you'll need a comprehensive monitoring service. Please read out guide to Elastic or Prometheus to mmake one.
 
 ## Further Reading
 
 - [FusionAuth metrics](/docs/operate/secure-and-monitor/monitor#metrics)
-- [Getting started with Docker and Slack](https://www.elastic.co/blog/getting-started-with-the-elastic-stack-and-docker-compose)
-- [Slacksearch REST API](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html)
-
-
-<InlineUIElement></InlineUIElement>
-<InlineField></InlineField>
-<Breadcrumb></Breadcrumb>
