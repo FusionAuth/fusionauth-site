@@ -14,20 +14,15 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 import Diagram1 from 'src/components/docs/operate/secure-and-monitor/slackDiagram1.astro';
 import Diagram2 from 'src/components/docs/operate/secure-and-monitor/slackDiagram2.astro';
 
-## Todo
-
-- https://preview.ritza.co/codecapsules/tutorials/build-slackbot-with-node
-- https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/configure-slack/
-
 ## Introduction To Slack
 
 [Slack](https://slack.com) is a private chat app you can configure for your organization. To send alerts to Slack, create a dedicated channel (chatroom) in the app, add your system administrators to it, and send messages to the channel using the Slack API.
 
-This guide explains the process in detail, and how to create a simple shell script to monitor FusionAuth and call Slack if FusionAuth has errors.
+This guide explains the process in detail, and how to create a simple script to monitor FusionAuth and call Slack if FusionAuth has errors.
 
 Before continuing with this guide, please read the [FusionAuth guide to monitoring](/docs/operate/secure-and-monitor/monitor) to get an overview of the available metrics and choose the ones relevant to your needs. Sending alerts to Slack is also a small component of what comprehensive monitoring involves. The overview guide explains where Slack fits in the monitoring flow, as well as alternative apps to Slack for receiving alerts.
 
-Pricing of Slack is available [here](https://slack.com/intl/en-ie/pricing). The free tier allows you to integrate Slack with other applications, but does not allow you to [build workflows](https://slack.com/intl/en-ie/features/workflow-automation). The Pro (lowest paid) tier has all the features you need for using Slack with outside apps. Higher priced tiers have no features you need for integration.
+Pricing of Slack is available [here](https://slack.com/intl/en-ie/pricing). The free tier allows you to integrate Slack with other applications, and works with this guide, but does not allow you to [build workflows](https://slack.com/intl/en-ie/features/workflow-automation). The Pro (lowest paid) tier has all the features you need for using Slack with outside apps. Higher priced tiers have no features you need for integration.
 
 A workflow is a set of custom triggers, data, and logic you organize into a sequence of steps. The [logic can be code](https://api.slack.com/automation/functions/custom), written in TypeScript or JavaScript. Workflows can also use [stock connectors to outside services](https://api.slack.com/automation/connectors).
 
@@ -132,7 +127,7 @@ curl -d "text=Test alert from FusionAuth." -d "channel=C123456" -H "Authorizatio
 
 ![Test message](../../../../../public/img/docs/operate/secure-and-monitor/slack1.webp)
 
-You now have a token you can use in a web service that monitors FusionAuth to post a message to Slack if FusionAuth fails.
+You now have a token you can use in a service that monitors FusionAuth to post a message to Slack if FusionAuth fails.
 
 ## Run FusionAuth
 
@@ -143,7 +138,7 @@ In this section you are going to run FusionAuth.
   ```yaml
   services:
     fa_db:
-      image: postgres:latest
+      image: postgres:16.3
       container_name: fa_db
       ports:
         - "5432:5432"
@@ -162,7 +157,7 @@ In this section you are going to run FusionAuth.
         - db_data:/var/lib/postgresql/data
 
     fa:
-      image: fusionauth/fusionauth-app:latest
+      image: fusionauth/fusionauth-app:1.51.2
       container_name: fa
       depends_on:
         fa_db:
@@ -229,7 +224,7 @@ The monitoring overview guide explains what metadata you can get from FusionAuth
 
 Let's write a script that runs every 30 seconds to get both system logs and event logs in the last 31 seconds. If either set of logs contain an error, or if an error occurs getting the logs, send an alert to Slack.
 
-Create a file called `app.bash`. Insert the content below, replacing your FusionAuth API key, and your Slack API key and Slack URL.
+Create a file called `app.bash`. Insert the content below, replacing your FusionAuth API key, and your Slack API key and Slack URL at the top.
 
 ```bash
 #!/bin/bash
@@ -299,9 +294,9 @@ docker build -f Dockerfile.yaml --platform linux/amd64 -t famonimage .
 
 Edit your `docker-compose.yaml` file and uncomment the `fa_mon` container.
 
-Now run all the containers with `docker compose up`.
+Now run all the containers with `docker compose down; docker compose up`.
 
-If you have trouble calling the FusionAuth API, review the [troubleshooting tips](/docs/apis/#troubleshooting). To debug the script more quickly, you can run it on your physical machine instead of inside Docker. Change the FusionAuth URL at the top from `fa` to `localhost` when doing so.
+To force an error to check if the service works, run `docker compose down fa`. You should see a message in Slack that the monitor could not reach FusionAuth. If not, debug the script by running it on your physical machine instead of inside Docker. Change the FusionAuth URL at the top from `fa` to `localhost` when doing so. If you have trouble calling the FusionAuth API, review the [troubleshooting tips](/docs/apis/#troubleshooting).
 
 ## Next Steps
 
@@ -309,8 +304,8 @@ Now that you have a simple way to check that FusionAuth is error free, and alert
 
 - Change the monitoring service from a simple bash script to a web service in your favorite programming language. This will improve error handling and make it more easily maintainable for your team.
 - Make the monitor check the PostgreSQL container logs in addition to the FusionAuth logs.
-- Create a `monitor-up` channel the service writes to every time it runs, so you know it's up. Currently, if the service dies, you'll never know. If you are on a paid Slack subscription, to avoid becoming desensitized to a spam channel that tells you the service is running every 30 seconds, create a workflow that writes to the alert channel if the `monitor-up` hasn't received a message in the last minute.
-- If you want visibility into the performance of FusionAuth, not just errors, you'll need a comprehensive monitoring service. Please read out guide to Elastic or Prometheus to mmake one.
+- Create a `monitor-up` channel the service writes to every time it runs, so you know it's up. Currently, if the service dies, you'll never know. If you are on a paid Slack subscription, to avoid becoming desensitized to a spam channel that tells you the service is running every 30 seconds, create a workflow that writes to the alert channel if the `monitor-up` channel hasn't received a message in the last minute.
+- If you want visibility into the performance of FusionAuth, not just errors, you'll need a comprehensive monitoring service. Please read the FusionAuth guides to Elastic or Prometheus to make one.
 
 ## Further Reading
 
