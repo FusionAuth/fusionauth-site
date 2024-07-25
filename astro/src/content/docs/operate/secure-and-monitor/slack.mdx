@@ -227,7 +227,53 @@ not that useful. lamda, smtp, email template, webhook errors. all important, but
 
 cannot get system logs when fa runs in docker https://fusionauth.io/docs/apis/system#export-system-logs
 
+```bash
+#!/bin/bash
 
+# settings
+alertKey="xoxb-something"
+alertUrl="C0T7"
+faUrl="http://fa:9011"
+faKey="33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod"
+faAppId="3c219e58-ed0e-4b18-ad48-f4f92793ae32"
+
+# send an alert if this script errors
+trap 'handleError' ERR
+handleError() {
+  curl -d "text=Monitor cannot connect to FusionAuth." -d "channel=$alertUrl" -H "Authorization: Bearer $alertKey" -X POST https://slack.com/api/chat.postMessage
+}
+
+# get system logs with error or exception in the last 31 seconds. take first line.
+systemLogs=$(docker logs fa --since 31s)
+errorLog=$(echo "$systemLogs" | grep -i 'error\|exception' | head -n 1)
+
+# alert slack if there is an error log
+if [ ! -z "$errorLog" ]; then
+  curl -d "text=System log has error:                      $errorLog" -d "channel=$alertUrl" -H "Authorization: Bearer $alertKey" -X POST https://slack.com/api/chat.postMessage
+fi
+
+# get event logs with errors in the last 31 seconds - https://fusionauth.io/docs/apis/event-logs#search-event-logs
+dateFormat=$(echo -n "yyyy-MM-dd'T'HH:mm:ss.SSS" | jq -sRr @uri)
+end=$(date +%s)000
+start=$(($end - 31000))
+params="message=%2A&start={$start}&end={$end}&type=Error"  # %2A is *
+url="${faUrl}/api/system/event-log/search?${params}"
+eventLogs=$(curl -sS -H "Authorization: ${faKey}" "$url")
+
+# alert slack if getting event logs failed
+if [[ "$eventLogs" != "{\"eventLogs\":"* ]]; then
+    curl -d "text=Monitor cannot get events logs" -d "channel=$alertUrl" -H "Authorization: Bearer $alertKey" -X POST https://slack.com/api/chat.postMessage
+    exit 1
+fi
+
+# alert slack if there is an error log
+total=$(echo "$eventLogs" | jq '.total')
+if [[ $total -gt 0 ]]; then
+  curl -d "text=Event log has error:                     $eventLogs" -d "channel=$alertUrl" -H "Authorization: Bearer $alertKey" -X POST https://slack.com/api/chat.postMessage
+fi
+
+done
+```
 
 ---
 ---
@@ -566,6 +612,7 @@ In this design, the Slack Agent monitors all Docker infrastructure and the Fusio
 
 - write service in your fav lang
 - create a channel the service writes to every time it runs so you know it's up
+- monitor posgtres too
 
 Now that you are able to monitor FusionAuth in Slack, you should enable Slack [alerts](https://www.elastic.co/kibana/alerting) to notify you by email or in Slack if something goes wrong, like a massive decrease in login rates, a Docker container restarting, or a log output containing `error`.
 
