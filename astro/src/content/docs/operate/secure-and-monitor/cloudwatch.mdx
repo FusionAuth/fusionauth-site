@@ -7,6 +7,7 @@ subcategory: secure and monitor
 ---
 import Aside from 'src/components/Aside.astro';
 import ScrollRef from 'src/components/ScrollRef.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
 import IconButton from 'src/components/IconButton.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
@@ -39,12 +40,12 @@ In your AWS console, navigate to <Breadcrumb>Services -> IAM -> Roles</Breadcrum
 
 <img src="/img/docs/operate/secure-and-monitor/cloudwatch/navigate-iam-roles.png" alt="Create an AWS Role" role="bottom-cropped" width="1200" />
 
-Click the <InlineUIElement>Create role</InlineUIElement> button in the top left.  
+Click the <InlineUIElement>Create role</InlineUIElement> button in the top left.  
 
-- Under "Select type of trusted entity", choose "AWS service". 
-- Under "use cases", choose "EC2",and then click <InlineUIElement>Next</InlineUIElement>.
-- In the list of policies, select the check box next to `CloudWatchAgentServerPolicy`. If necessary, use the search box to find the policy. Click <InlineUIElement>Next</InlineUIElement>.
-- To use Systems Manager to install or configure the CloudWatch agent, select the box next to `AmazonSSMManagedInstanceCore`. This AWS-managed policy enables an instance to use the Systems Manager service core functionality. If necessary, use the search box to find the policy. This policy isn't required if you start and configure the agent only through the command line. 
+- On the "Select trusted entity" step 1, choose "AWS service" on the "Trusted entity type".
+- Under "Use case", choose "EC2",and then click <InlineUIElement>Next</InlineUIElement>.
+- In the list of policies, select the checkbox next to `CloudWatchAgentServerPolicy`. If necessary, use the search box to find the policy.
+- To use Systems Manager to install or configure the CloudWatch agent, select the checkbox next to `AmazonSSMManagedInstanceCore`. This AWS-managed policy enables an instance to use the Systems Manager service core functionality. If necessary, use the search box to find the policy. This policy isn't required if you start and configure the agent only through the command line.  Click <InlineUIElement>Next</InlineUIElement>.
 - Enter the name `CloudWatchAgentServerRole` and a description, and click on <InlineUIElement>Create role</InlineUIElement>.
 
 <img src="/img/docs/operate/secure-and-monitor/cloudwatch/create-aws-cloudwatchagnetrole.png" alt="Create an AWS Role Details" role="bottom-cropped" width="1200" />
@@ -58,46 +59,44 @@ In your AWS console, navigate to <Breadcrumb>Services -> IAM -> Users</Breadcrum
 Click the <InlineUIElement>Create user</InlineUIElement> button in the top left. 
 
 - Enter `CloudWatchAgentUser` as the name and click <InlineUIElement>Next</InlineUIElement>.
-- For permissions, choose `Attach existing policies directly`.
-- In the list of policies, select the check box next to `CloudWatchAgentServerPolicy`, `CloudWatchFullAccess`, and `CloudWatchFullAccessV2`. If necessary, use the search box to find the policies. 
+- For permissions, choose "Attach policies directly".
+- In the list of policies, select the checkbox next to `CloudWatchAgentServerPolicy`, `CloudWatchFullAccess`, and `CloudWatchFullAccessV2`. If necessary, use the search box to find the policies.
 - To use Systems Manager to install or configure the CloudWatch agent, select the box next to `AmazonSSMManagedInstanceCore`. This AWS-managed policy enables an instance to use the Systems Manager service core functionality. If necessary, use the search box to find the policy. This policy isn't required if you start and configure the agent only through the command line. 
 - Click <InlineUIElement>Next</InlineUIElement> and then <InlineUIElement>Create user</InlineUIElement>.
 
-Add the `PutRetentionPolicy` to the CloudWatch agent user.
+Add a `PutRetentionPolicy` to the CloudWatch agent user.
 
-- On the Users overview page, click on the `CloudWatchAgentUser` name. 
+- On the Users overview page, click on the `CloudWatchAgentUser` name.
+- Click the <InlineUIElement>Add permissions</InlineUIElement> dropdown and choose <InlineUIElement>Create inline policy</InlineUIElement>.
+- On the next screen, choose <InlineUIElement>JSON</InlineUIElement> on the "Policy editor" and replace the JSON with the code below.
 
-<img src="/img/docs/operate/secure-and-monitor/cloudwatch/edit-aws-cloudwatchagent-user.png" alt="Edit an AWS user Details" role="bottom-cropped" width="1200" />
-
-- Click <InlineUIElement>AddPermission</InlineUIElement> and choose `inline policy`. 
-- On the next screen, choose `JSON` and replace the JSON with the code below.
-
-``` json
+```json
 {
-	"Version": "2012-10-17",
-	"Statement": [
-		{
-			"Effect": "Allow",
-			"Action": "logs:PutRetentionPolicy",
-			"Resource": "*"
-		}
-	]
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "logs:PutRetentionPolicy",
+            "Resource": "*"
+        }
+    ]
 }
 ```
 
- - Click <InlineUIElement>Next</InlineUIElement>.
+- Click <InlineUIElement>Next</InlineUIElement>.
+- Give the policy a name and click <InlineUIElement>Create policy</InlineUIElement>.
 
 Generate an access key for the CloudWatch agent user. 
 
-- Click on <InlineUIElement>Create access key</InlineUIElement> on the User overview page.
-- Select `Application running outside AWS` and click <InlineUIElement>Next</InlineUIElement>.
+- Click on <InlineUIElement>Create access key</InlineUIElement> on the `CloudWatchAgentUser` overview page.
+- Select "Application running outside AWS" and click <InlineUIElement>Next</InlineUIElement>.
 - Click <InlineUIElement>Create access key</InlineUIElement>.
 
 The access keys will look something like this:
 
 ```sh
-    access key :AKIAAMTW3505274M4W76
-    secret access UK7YaBBK68PXdGQJRk2UXXso4p6gEeEQxQz855D2
+aws_access_key_id = your_key_id
+aws_secret_access_key = your_access_key
 ```
 
 Save the access and secret access keys to use later.
@@ -113,9 +112,10 @@ In this section, you will need the region your AWS account uses. Get your region
 
 </Aside>
 
-Save the Dockerfile from the [FusionAuth containers repo](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) to your computer. 
+Save the Dockerfile from the [FusionAuth containers repo](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) to your working directory on your computer.
 
-Edit the Dockerfile and insert the following lines above the comment "###### Start FusionAuth App". Replace `eu-north-1` with the region your AWS account uses. If the incorrect region is used here, it may take a long time to download when you build the Docker image.
+
+Edit the Dockerfile and replace line 92 `&& apt-get -y install --no-install-recommends curl \`  with `&& apt-get -y install --no-install-recommends curl unzip ca-certificates sudo \`. Insert the following lines above the comment "###### Start FusionAuth App". Replace `eu-north-1` with the region your AWS account uses. If the incorrect region is used here, it may take a long time to download when you build the Docker image.
 
 ```
 ### NEW FOR CloudWatch ###
@@ -125,7 +125,7 @@ RUN curl -O https://amazoncloudwatch-agent-eu-north-1.s3.eu-north-1.amazonaws.co
     && rm ./amazon-cloudwatch-agent.deb
 
 
-    # Add fusionauth user to sudo group
+# Add FusionAuth user to sudo group
 RUN usermod -aG sudo fusionauth
 RUN echo "fusionauth ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
@@ -137,64 +137,9 @@ ENV RUN_IN_CONTAINER=True
 ### END CloudWatch ###
 ```
 
-This configuration downloads the CloudWatch agent installation package, sets the environment variables, and grants the FusionAuth user some permissions to complete the installation. 
+This configuration downloads the CloudWatch agent installation package, sets the environment variables, and grants the FusionAuth user some permissions to complete the installation.
 
-Once the CloudWatch agent is installed, the configuration `cloudwatch-config.json` is copied into the image to handle the CloudWatch integration.
-
-Now create a `cloudwatch-config.json` file in the same folder as the Dockerfile and add the following configuration to it.
-
-```json
-{
-  "agent": {
-    "metrics_collection_interval": 60,
-    "region": "${AWS_REGION}",
-    "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
-   "debug": false,
-    "run_as_user": "fusionauth"
-  },
-  "logs": {
-    "logs_collected": {
-      "files": {
-        "collect_list": [
-          {
-            "file_path": "/usr/local/fusionauth/logs/fusionauth-app.log",
-            "log_group_name": "fusionauth-logs",
-            "log_stream_name": "fusionauth-app"
-          },
-          {
-            "file_path": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
-            "log_group_name": "cloudwatch-logs",
-            "log_stream_name": "fusionauth-app"
-          },
-          {
-           
-            "file_path": "/var/log/bootstrap.log",
-            "log_group_name": "host-bootstrap-logs",
-            "log_stream_name": "fusionauth-app"
-          }        ]
-      }
-    }
-  },
-  "metrics": {
-    "namespace": "FusionAuth",
-    "metrics_collected": {
-      "cpu": {
-        "resources": ["*"],
-        "measurement": ["usage_active", "usage_system", "usage_user"]
-      },
-      "mem": {
-        "measurement": ["used", "total", "used_percent"]
-      },
-      "net": {
-        "resources": ["*"],
-        "measurement": ["bytes_sent", "bytes_recv", "packets_sent", "packets_recv"]
-      }
-    }
-  }
-}
-```
-
-In the above configuration, you set up the region for the CloudWatch agent, some logs to collect and display, and the metrics we are interested in. The <InlineField>log_group_name</InlineField> and <InlineField>log_stream_name</InlineField> values are specified for the log files and the `FusionAuth` namespace for the metrics.
+Replace the last line in the Dockerfile `CMD ["/usr/local/fusionauth/fusionauth-app/bin/start.sh"]` with the following `CMD ["/bin/sh", "-c", "/opt/aws/amazon-cloudwatch-agent/bin/start-amazon-cloudwatch-agent & /usr/local/fusionauth/fusionauth-app/bin/start.sh"]`.
 
 Build the Dockerfile into a new image instead of the official FusionAuth image.
 
@@ -202,13 +147,85 @@ Build the Dockerfile into a new image instead of the official FusionAuth image.
 docker build --platform linux/amd64 -t faimage .
 ```
 
-Next, save the [`docker-compose.yaml`](https://github.com/FusionAuth/fusionauth-containers/blob/main/docker/fusionauth/docker-compose.yml) and sample [`.env`](https://github.com/FusionAuth/fusionauth-containers/blob/main/docker/fusionauth/.env) files from the FusionAuth containers repo.
+Now create a `cloudwatch-config.json` file in the same folder as the Dockerfile and add the following configuration to it.
 
-In the `docker-compose.yaml` file, change the line `image: fusionauth/fusionauth-app:latest` to point to the image you have just built, `image: faimage:latest`.
+```json
+{
+    "agent": {
+        "metrics_collection_interval": 60,
+        "region": "${AWS_REGION}",
+        "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
+        "debug": false,
+        "run_as_user": "fusionauth"
+    },
+    "logs": {
+        "logs_collected": {
+            "files": {
+                "collect_list": [
+                    {
+                        "file_path": "/usr/local/fusionauth/logs/fusionauth-app.log",
+                        "log_group_name": "fusionauth-logs",
+                        "log_stream_name": "fusionauth-app"
+                    },
+                    {
+                        "file_path": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
+                        "log_group_name": "cloudwatch-logs",
+                        "log_stream_name": "fusionauth-app"
+                    },
+                    {
+                        "file_path": "/var/log/bootstrap.log",
+                        "log_group_name": "host-bootstrap-logs",
+                        "log_stream_name": "fusionauth-app"
+                    }
+                ]
+            }
+        }
+    },
+    "metrics": {
+        "namespace": "FusionAuth",
+        "metrics_collected": {
+            "cpu": {
+                "resources": [
+                    "*"
+                ],
+                "measurement": [
+                    "usage_active",
+                    "usage_system",
+                    "usage_user"
+                ]
+            },
+            "mem": {
+                "measurement": [
+                    "used",
+                    "total",
+                    "used_percent"
+                ]
+            },
+            "net": {
+                "resources": [
+                    "*"
+                ],
+                "measurement": [
+                    "bytes_sent",
+                    "bytes_recv",
+                    "packets_sent",
+                    "packets_recv"
+                ]
+            }
+        }
+    }
+}
+```
 
-In the `fusionauth` service, replace the `volumes:` section with the code configuration below.
+In the above configuration, you set up the region for the CloudWatch agent, some logs to collect and display, and the metrics we are interested in. The <InlineField>log_group_name</InlineField> and <InlineField>log_stream_name</InlineField> values are specified for the log files and the `FusionAuth` namespace for the metrics.
 
-``` yaml
+Next, save the [`docker-compose.yml`](https://github.com/FusionAuth/fusionauth-containers/blob/main/docker/fusionauth/docker-compose.yml) and sample [`.env`](https://github.com/FusionAuth/fusionauth-containers/blob/main/docker/fusionauth/.env) files from the FusionAuth containers repo.
+
+In the `docker-compose.yml` file, change the line `image: fusionauth/fusionauth-app:latest` to point to the image you have just built, `image: faimage:latest`.
+
+On the `fusionauth` service, replace the `volumes:` section with the code configuration below.
+
+```yaml
 volumes:
       - fusionauth_config:/usr/local/fusionauth/config
       # NEW FOR CLOUDWATCH
@@ -219,8 +236,8 @@ volumes:
 
 In the `environment:` section under the `fusionauth:` service, add the following environment variable for the AWS region.
 
-``` yaml
- environment:
+```yaml
+environment:
       DATABASE_URL: jdbc:postgresql://db:5432/fusionauth
       DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
       DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
@@ -232,7 +249,6 @@ In the `environment:` section under the `fusionauth:` service, add the following
       SEARCH_SERVERS: http://search:9200
       SEARCH_TYPE: elasticsearch
       AWS_REGION: eu-north-1  # Replace with your AWS region, e.g., us-west-2    NEW for cloudwatch
-    healthcheck:
 ```
 	
 Now, in the same folder as the Dockerfile, create a `.aws` folder with a file called `credentials` using the command below.
@@ -245,7 +261,13 @@ touch credentials
 
 Add the AWS access keys you created previously to the `credentials` file.
 
-To start the services, run the following command in the terminal you used to save the `docker-compose.yaml` file.
+```sh
+[AmazonCloudWatchAgent]
+aws_access_key_id = your_key_id
+aws_secret_access_key = your_access_key
+```
+
+To start the services, run the following command in the terminal you used to save the `docker-compose.yml` file.
 
 ```sh
 docker compose up -d
@@ -255,19 +277,17 @@ docker compose up -d
 
 Let's create a dashboard on CloudWatch to visualize the data received from FusionAuth.
 
-In the AWS UI, navigate to <Breadcrumb>Services -> CloudWatch -> Dashboard</Breadcrumb>. 
-
-<img src="/img/docs/operate/secure-and-monitor/cloudwatch/navigate-cloudwatch-dashboard-home.png" alt="Navigate to Dashboards" role="bottom-cropped" width="1200" />
+In the AWS UI, navigate to <Breadcrumb>Services -> CloudWatch -> Dashboards</Breadcrumb>.
 
 Click <InlineUIElement>Create dashboard</InlineUIElement>. Give the dashboard a <InlineField>Name</InlineField>, for example, `FusionAuthDashboard`, and click <InlineUIElement>Create dashboard</InlineUIElement>.
-
-<img src="/img/docs/operate/secure-and-monitor/cloudwatch/select-dashboard-options.png" alt="Select Options For The Dashboards" role="bottom-cropped" width="1200" />
 
 On the next screen, you have a few options to choose from to configure the dashboard Widget:
 
 - For <InlineField>Data source types</InlineField>, choose `CloudWatch`.
-- For <InlineField>Data type</InlineField>, choose `Metrics`. 
-- For <InlineField>Widget type</InlineField>, choose `Line</InlineField>. 
+- For <InlineField>Data type</InlineField>, choose `Metrics`.
+- For <InlineField>Widget type</InlineField>, choose `Line`.
+
+<img src="/img/docs/operate/secure-and-monitor/cloudwatch/select-dashboard-options.png" alt="Select Options For The Dashboards" role="bottom-cropped" width="1200" />
 
 Click <InlineUIElement>Next</InlineUIElement>.
 
@@ -279,7 +299,7 @@ Click on the `FusionAuth` namespace, then click on <InlineField>CPU</InlineField
 
 <img src="/img/docs/operate/secure-and-monitor/cloudwatch/create-dashboard-widget.png" alt="Create The Dashboards" role="bottom-cropped" width="1200" />
 
-Using the same method as above, you can also add logs to the dashboard. Click on the "+" in the right-hand corner to add another widget.
+Using the same method as above, you can also add logs to the dashboard. Click on the <InlineUIElement>+</InlineUIElement> in the right-hand corner to add another widget.
 
 On the create widget screen, configure the dashboard logs widget as follows:
 
@@ -316,8 +336,6 @@ To export login information from FusionAuth, you need to allow the custom collec
 - Click the <IconButton icon="save" color="blue" /> button to save the API key.
 - After saving the API key, click the red lock <IconButton icon="lock" color="red" /> next to the key to reveal and copy the value of the key. Store this key, as you will need it later.
 
-<img src="/img/docs/operate/secure-and-monitor/cloudwatch/cloudwatch-fusionauth-apikey.png" alt="FusionAuth API Key" role="bottom-cropped" width="1200" />
-
 ## FusionAuth Metrics
 
 FusionAuth offers a wide range of [metrics](/docs/operate/secure-and-monitor/monitor#metrics), which are detailed in the documentation. It's up to you to determine which metrics are important for your monitoring needs.
@@ -338,15 +356,15 @@ All the FusionAuth APIs providing event data are documented [here](/docs/apis), 
 
 The FusionAuth APIs export events as zip files — you will not get JSON or YAML data in memory. The application will get the zip file, extract it, read it, format the entries for CloudWatch, and upload them.
 
-Since FusionAuth API access is needed, see the section on [setting up FusionAuth API access for the collector](#set-up-fusionauth-api-access-for-collector).
+Since FusionAuth API access is needed, see the section on <ScrollRef target="Set Up FusionAuth API Access For The Collector" />.
 
 You will also need to get your FusionAuth app Id. In the FusionAuth UI, navigate to <InlineUIElement>Applications</InlineUIElement> and copy and save the Id for your application. 
 
 <img src="/img/docs/operate/secure-and-monitor/cloudwatch/cloudwatch-fusionauth-applications-id.png" alt="FusionAuth API Key" role="bottom-cropped" width="1200" />
 
-In the script below, be sure to set your AWS region, AWS access and secret access keys, and your FusionAuth app Id.
+Save the following Python script to a file `cloudwatch_logger.py` in a new folder.
 
-``` python
+```python
 import boto3
 import watchtower
 import logging
@@ -466,9 +484,7 @@ if __name__ == "__main__":
     main()
 ```
 
-Save the Python application in a new folder and give it the name `cloudwatch_logger.py`.
-
-Add a new Dockerfile in the same folder with the following command.
+Add a new Dockerfile in the same folder with the following command.
 
 ```sh 
 touch Dockerfile
@@ -489,7 +505,7 @@ COPY cloudwatch_logger.py .
 CMD ["python", "cloudwatch_logger.py"]
 ```
 
-This Dockerfile will create a new container that will run the `cloudwatcher.py` application and export and upload the login data from FusionAuth to CloudWatch. The application requires some packages, Watchtower, and Boto3, which are used for communicating with AWS CloudWatch. 
+This Dockerfile will create a new container that will run the `cloudwatch_logger.py` application and export and upload the login data from FusionAuth to CloudWatch. The application requires some packages, Watchtower, and Boto3, which are used for communicating with AWS CloudWatch.
 
 Add the `requirements.txt` file to the same folder.
 
@@ -516,16 +532,9 @@ touch config
 
 Add the AWS access keys you created earlier to the credentials file:
 
-```sh
-DATABASE_USERNAME=fusionauth
-DATABASE_PASSWORD=hkaLBMBRVnyYeYeq=3W11w2e4Avpy0Wd503s3
-FUSIONAUTH_APP_MEMORY=512M
-FUSIONAUTH_APP_RUNTIME_MODE=development
-OPENSEARCH_JAVA_OPTS="-Xms512m -Xmx512m"
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-AWS_ACCESS_KEY_ID=AKIA4MTWJ505Z74W4W76
-AWS_SECRET_ACCESS_KEY=UK7YaBBK68PXdGQJRk2UXXso4p6gEeEQxQ2855D2
+```
+AWS_ACCESS_KEY_ID=your_key_id
+AWS_SECRET_ACCESS_KEY=your_access_key
 ```
 
 Add the following region info in the configuration file (remember to use the region for your AWS account):
@@ -539,11 +548,17 @@ Although these credentials are similar to the AWS credentials that were set up e
 
 The configuration above is for this guide only, and you must replace it with your own.
 
-Finally, add the changes to the FusionAuth `docker-compose` file. You will need to change the region, access key, secret access key, and FusionAuth app Id to your values.
+Build the `Dockerfile` with the following command.
+
+```sh
+docker build --platform linux/amd64 -t cloudwatch-logger .
+```
+
+Finally, add the following service to the FusionAuth `docker-compose.yml` file. You will need to change the region, access key, secret access key, FusionAuth API key and FusionAuth app Id to your values.
 
 ```yaml
 cloudwatch-logger: # NEW for custom logging
-  build: .
+  image: cloudwatch-logger:latest
   environment:
     - AWS_REGION=eu-north-1
     - FA_ENDPOINT=http://fusionauth:9011/api/system/login-record/export
@@ -565,15 +580,9 @@ cloudwatch-logger: # NEW for custom logging
     - fusionauth
 ```
 
-You can add this to the same `docker-compose` file we used earlier, as we only add a new service that runs in conjunction with the other FusionAuth services.
+You can add this to the same `docker-compose.yml` file we used earlier, as we only add a new service that runs in conjunction with the other FusionAuth services.
 
-Build the `Dockerfile` with the following command.
-
-```sh
-docker build --platform linux/amd64 -t cloudwatch-logger .
-```
-
-To start the services, run the following command in the terminal you used to save the `docker-compose.yaml` file.
+To start the services, run the following command in the terminal you used to save the `docker-compose.yml` file.
 
 ```sh
 docker compose up -d
@@ -583,7 +592,7 @@ docker compose up -d
 
 Now you can set up a dashboard to visualize data collected by the custom logger.
 
-In your AWS console, navigate to <Breadcrumb>CloudWatch -> Dashboards</Breadcrumb>. Add a new dashboard, name it `CloudWatchLogger`, and click <InlineUIElement>Create dashboard</InlineUIElement>. 
+In your AWS console, navigate to <Breadcrumb>CloudWatch -> Dashboards</Breadcrumb>. Add a new dashboard, name it `CloudWatchLogger`, and click <InlineUIElement>Create dashboard</InlineUIElement>. 
 
 Select `Logs` for <InlineField>Data type</InlineField> and keep the defaults for the remaining options. Click <InlineUIElement>Next</InlineUIElement>.
 
@@ -595,7 +604,7 @@ You should see some info being plotted on the screen. If you don't, log in to yo
 
 <img src="/img/docs/operate/secure-and-monitor/cloudwatch/create-dashboard-widget-custom-logger.png" alt="Create A Custom Logger Dashboard Widget" role="bottom-cropped" width="1200" />
 
-Click <InlineUIElement>Create Widget</InlineUIElement> in the top-right corner and click <InlineUIElement>Save</InlineUIElement> to save the dashboard.
+Click <InlineUIElement>Create widget</InlineUIElement> in the top-right corner and click <InlineUIElement>Save</InlineUIElement> to save the dashboard.
 
 You should see your logger info being reflected.
 
@@ -606,15 +615,13 @@ You can set up widgets for other endpoints and metrics similarly.
 
 ## Monitoring FusionAuth In An AWS EC2 Instance
 
-Navigate to the EC2 dashboard in the AWS console.
-
-<img src="/img/docs/operate/secure-and-monitor/cloudwatch/navigate-ec2.png" alt="Navigate To EC2" role="bottom-cropped" width="1200" />
+Navigate to the EC2 dashboard in the AWS console  <Breadcrumb>Services -> EC2</Breadcrumb>.
 
 To create a virtual server, click <InlineUIElement>Launch new instance</InlineUIElement>. Give the server a <InlineUIElement>Name</InlineUIElement> and select "Amazon Linux" as the operating system. You can use the default "Architecture". For the instance type, select `t3.medium`, which is the lowest memory allocation that FusionAuth Docker will successfully start on.
 
 <img src="/img/docs/operate/secure-and-monitor/cloudwatch/create-ecs-instance-settings-1.png" alt="Create EC2 Instance-1" role="bottom-cropped" width="1200" />
 
-Next, generate a key pair to access the server via SSH. Click <InlineUIElement>Create new key pair</InlineUIElement>. Enter a name for the keypair, choose "RSA" as the keypair type, and `.pem` as the file format. Click on create key pair. 
+Next, generate a key pair to access the server via SSH. Click <InlineUIElement>Create new key pair</InlineUIElement>. Enter a name for the keypair, choose "RSA" as the keypair type, and `.pem` as the file format. Click on <InlineUIElement>Create key pair</InlineUIElement>.
  
 <img src="/img/docs/operate/secure-and-monitor/cloudwatch/create-key-pair.png" alt="Create Key Pair" role="bottom-cropped" width="1200" />
 
@@ -634,7 +641,7 @@ Navigate to the EC2 instance overview screen and click on the newly created inst
 
 We need to set port 9011 to allow traffic to FusionAuth.
 
-Select the security tab in the middle and click the <InlineUIElement>launch-wizard</InlineUIElement>. 
+Select the security tab in the middle and click the security group under "Security Groups".
 
 Click <InlineUIElement>Edit inbound rules</InlineUIElement>. Select `Custom TCP` as the <InlineUIElement>Type</InlineUIElement>. Set `9011` for the <InlineUIElement>Port range</InlineUIElement> and select `My IP` as the source for testing purposes. Click <InlineUIElement>Save rules</InlineUIElement>. 
 
@@ -642,15 +649,21 @@ Click <InlineUIElement>Edit inbound rules</InlineUIElement>. Select `Custom TCP`
 
 Return to the instance screen and make sure the instance is running.
 
-Now, find the public IP on the Instance overview screen, then log in to the console by typing the following in the terminal, replacing `ec2-user@16.16.204.161` with your public IP:
+Now, find the public IP on the Instance overview screen, then log in to the console by typing the following in the terminal, replacing `16.16.204.161` with your public IP and `test.pem` with the name of you downloaded key pair file.
+
+First change the permissions of the key file if they are too open
 
 ```sh
- ssh -i   .\kp-1.pem ec2-user@16.16.204.161
+chmod 600 test.pem
+```
+
+Then you can use it to ssh into the instance with the following command
+
+```sh
+ssh -i  test.pem ec2-user@16.16.204.161
 ```
 
 Answer "yes" to the fingerprint question and you will be connected to your EC2 server in the terminal.
-
-<img src="/img/docs/operate/secure-and-monitor/cloudwatch/connected-ec2.png" alt="EC2 connected" role="bottom-cropped" width="1200" />
 
 The following shell commands will set up the EC2 instance with Docker, `docker-compose`, and Vim, and create the necessary files and folders for the FusionAuth installation.
 
@@ -697,11 +710,11 @@ Add the CloudWatch agent access keys.
 
 ```
 [default]
-aws_access_key_id=AKIA4MTWJ505Z74W4W76
-aws_secret_access_key=UK7YaBBK68PXGQJRk2UXXso4p6gEeEQxQz855D2
+aws_access_key_id=your_key_id
+aws_secret_access_key=your_access_key
 ```
 
-Save the file.
+Save the file by pressing `esc` and typing `:wq` then pressing `Enter` on your keyboard.
 
 Next, edit the configuration file.
 
@@ -709,7 +722,7 @@ Next, edit the configuration file.
 vim  ~/fusionauth-project/.aws/config
 ```
 
-Add your region.
+Add your region. Remember to replace `eu-north-1` with your actual region.
 
 ```sh
 [default]
@@ -740,23 +753,22 @@ AWS_SECRET_ACCESS_KEY=UK7YaBBK68PXdGQJRk2UXXso4p6gEeEQxQ2855D2
 
 Save the file.
 
-Since there are no changes to the configuration files, you can use the same `CloudWatch-config.json`, Dockerfile, and `docker-compose.yml` files from the on-prem Docker example we used to [set up a collector to receive data from FusionAuth](#set-up-a-collector-to-receive-data-from-fusionauth). 
+Since there are no changes to the configuration files, you can use the same `cloudwatch-config.json`, Dockerfile, and `docker-compose.yml` files from the on-prem Docker example we used to <ScrollRef target="Set Up A Collector To Receive Data From FusionAuth" />.
 
 Using SCP, copy the FusionAuth files over from the working directory you used to set up the collector to the EC2 instance using the same `.pem` file and the AWS EC2 folder we created for the FusionAuth project.
 
-``` sh
-
-scp -i .\kp-1.pem   .\cloudwatch-config.json  ec2-user@16.16.204.161:~/fusionauth-project/
+```sh
+scp -i ./test.pem   ./cloudwatch-config.json  ec2-user@16.16.204.161:~/fusionauth-project/
 #enter
-scp -i .\kp-1.pem   .\Dockerfile  ec2-user@16.16.204.161:~/fusionauth-project/
-enter
-scp -i .\kp-1.pem   .\docker-compose.yml  ec2-user@16.16.204.161:~/fusionauth-project/
+scp -i ./test.pem   ./Dockerfile  ec2-user@16.16.204.161:~/fusionauth-project/
+#enter
+scp -i ./test.pem   ./docker-compose.yml  ec2-user@16.16.204.161:~/fusionauth-project/
 ```
  
 SSH back into your EC2 instance to build the FusionAuth image and start the services with `docker-compose`. 
 
 ```sh
-ssh -i   .\kp-1.pem ec2-user@16.16.204.161
+ssh -i   ./test.pem ec2-user@16.16.204.161
 cd fusionauth-project/
 #enter
 docker build --platform linux/amd64 -t faimage .
@@ -765,7 +777,7 @@ docker-compose  up -d
 #enter
 ```
 
-Now navigate to  http://16.16.204.161:9011/ (use user EC2 instance public IP here), and configure your FusionAuth instance on EC2.
+Now navigate to  `http://your_instance_public_ip:9011/` (use your EC2 instance public IP here), as configured in your FusionAuth instance on EC2.
 
 If you return to the CloudWatch dashboard and add widgets to monitor the EC2 FusionAuth instance, you will find data is now being pushed to CloudWatch from the EC2 Docker instance.
 
