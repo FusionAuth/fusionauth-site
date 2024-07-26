@@ -23,7 +23,7 @@ adjust repo in splunk and elastic articles too
 
 [Slack](https://slack.com) is a private chat app you can configure for your organization. To send alerts to Slack, create a dedicated channel (chatroom) in the app, add your system administrators to it, and send messages to the channel using the Slack API.
 
-This guide explains the process in detail, and how to create a simple script to monitor FusionAuth and call Slack if FusionAuth has errors.
+This guide explains the process in detail, and how to create a simple script to monitor FusionAuth and call Slack if FusionAuth has errors. Since sending a message to Slack is just an HTTP call through curl with an API token, you can use the same script in this guide to send messages to services like Discord and WhatsApp too. Change the Slack URL and token to whatever service you are using.
 
 Before continuing with this guide, please read the [FusionAuth guide to monitoring](/docs/operate/secure-and-monitor/monitor) to get an overview of the available metrics and choose the ones relevant to your needs. Sending alerts to Slack is also a small component of what comprehensive monitoring involves. The overview guide explains where Slack fits in the monitoring flow, as well as alternative apps to Slack for receiving alerts.
 
@@ -37,62 +37,9 @@ Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below
 
 <Diagram1></Diagram1>
 
-```mermaid
-graph LR
-  subgraph I[Your server]
-    direction TB
-    subgraph G[Docker]
-      H[(PostgreSQL)]
-    end
-    subgraph C[Docker]
-      A(FusionAuth)
-    end
-    subgraph E[Docker]
-      F(Your app)
-    end
-  end
-  D(🧑‍💻 User)
-  D --> F
-  D --> A
-  C --> G
-  F --> A
-  style I fill:#999
-```
-
 In this guide you are going to create a tiny service in its own container to monitor FusionAuth. It will call Slack if the FusionAuth logs API is not contactable, or if the logs contain an error message. The new design will look like the diagram below.
 
 <Diagram2></Diagram2>
-
-```mermaid
-graph LR
-  X(Slack)
-  subgraph I[Your server]
-    subgraph G[Docker]
-      H[(PostgreSQL)]
-    end
-    subgraph C[Docker]
-      A(FusionAuth)
-    end
-    subgraph E[Docker]
-      B(Custom monitoring service)
-    end
-    subgraph J[Docker]
-      F(Your app)
-    end
-  end
-  D(🧑‍💻 User)
-  K(👩‍🚒 Administrator)
-  D --> F
-  D --> A
-  C --> G
-  F --> A
-  B --> |API call| C
-  B --> |API call| X
-  K --> X
-  style I fill:#999
-  style E fill:#944
-  style X fill:#944
-```
 
 ## Create A Slack Account
 
@@ -139,87 +86,10 @@ You now have a token you can use in a service that monitors FusionAuth to post a
 In this section you are going to run FusionAuth.
 
 - Install [Docker](https://docs.docker.com/get-docker/) if you don't have it on your machine.
-- Use the modified `docker-compose-yaml` file from the FusionAuth [five-minute guide](/docs/quickstarts/5-minute-setup-guide) to have the content below.
-  ```yaml
-  services:
-    fa_db:
-      image: postgres:16.3
-      container_name: fa_db
-      ports:
-        - "5432:5432"
-      environment:
-        PGDATA: /var/lib/postgresql/data/pgdata
-        POSTGRES_USER: ${POSTGRES_USER}
-        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      healthcheck:
-        test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-        interval: 5s
-        timeout: 5s
-        retries: 5
-      networks:
-        - db_net
-      volumes:
-        - db_data:/var/lib/postgresql/data
-
-    fa:
-      image: fusionauth/fusionauth-app:1.51.2
-      container_name: fa
-      depends_on:
-        fa_db:
-          condition: service_healthy
-      environment:
-        DATABASE_URL: jdbc:postgresql://fa_db:5432/fusionauth
-        DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
-        DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
-        DATABASE_USERNAME: ${DATABASE_USERNAME}
-        DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-        FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
-        FUSIONAUTH_APP_RUNTIME_MODE: ${FUSIONAUTH_APP_RUNTIME_MODE}
-        FUSIONAUTH_APP_URL: http://fusionauth:9011
-        SEARCH_TYPE: database
-        FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}
-      networks:
-        - db_net
-      ports:
-        - 9011:9011
-      volumes:
-        - fusionauth_config:/usr/local/fusionauth/config
-        - ./kickstart:/usr/local/fusionauth/kickstart
-      extra_hosts:
-        - "host.docker.internal:host-gateway"
-
-    # fa_mon:
-    #  image: famonimage
-    #  container_name: fa_mon
-    #  networks:
-    #    - db_net
-    #  volumes:
-    #    - /var/run/docker.sock:/var/run/docker.sock:ro # allow readonly access to fa docker logs
-
-  networks:
-    db_net:
-      driver: bridge
-
-  volumes:
-    db_data:
-    fusionauth_config:
-    ```
-  - Also create a `.env` file with the default content below.
-  ```text
-  DATABASE_USERNAME=fusionauth
-  DATABASE_PASSWORD=hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3
-  FUSIONAUTH_APP_MEMORY=512M
-  FUSIONAUTH_APP_RUNTIME_MODE=development
-  OPENSEARCH_JAVA_OPTS="-Xms512m -Xmx512m"
-  POSTGRES_USER=postgres
-  POSTGRES_PASSWORD=postgres
-  ```
-
-Notice the last service in the compose file, `fa_mon`, doesn't exist yet and is commented out. This is the monitoring script you will build in the next section.
-
+- Download and extract the files from this FusionAuth kickstart [repository](TATENDA_TODO). (This example FusionAuth instance is based on the [five-minute guide](/docs/quickstarts/5-minute-setup-guide).)
 - Run FusionAuth with `docker compose up`.
 - Browse to http://localhost:9011 and check you can log in with `admin@example.com` and `password`.
-- Create an API key by navigating to <Breadcrumb>Settings -> API Keys</Breadcrumb> and clicking the <IconButton icon="plus" color="green" /> button. Enter a <InlineField>Description</InlineField> for the API key and click on the <IconButton icon="save" color="blue" /> button to save the API key. On the API Keys list page, click the red lock <IconButton icon="lock" color="red" /> next to the newly generated key to reveal the key value and copy and save it.
+- This FusionAuth installation already has an API key you can use to call the FusionAuth API. But in a new installation, you will need to create your own API key. Create an API key by navigating to <Breadcrumb>Settings -> API Keys</Breadcrumb> and clicking the <IconButton icon="plus" color="green" /> button. Enter a <InlineField>Description</InlineField> for the API key and click on the <IconButton icon="save" color="blue" /> button to save the API key. On the API Keys list page, click the red lock <IconButton icon="lock" color="red" /> next to the newly generated key to reveal the key value and copy and save it.
 
 ## Write A Service To Monitor FusionAuth
 
@@ -265,7 +135,7 @@ eventLogs=$(curl -sS -H "Authorization: ${faKey}" "$url")
 
 # alert slack if getting event logs failed
 if [[ "$eventLogs" != "{\"eventLogs\":"* ]]; then
-    curl -d "text=Monitor cannot get events logs" -d "channel=$alertUrl" -H "Authorization: Bearer $alertKey" -X POST https://slack.com/api/chat.postMessage
+    curl -d "text=Monitor cannot get event logs" -d "channel=$alertUrl" -H "Authorization: Bearer $alertKey" -X POST https://slack.com/api/chat.postMessage
     exit 1
 fi
 
@@ -297,11 +167,31 @@ Build the container with the command below.
 docker build -f Dockerfile.yaml --platform linux/amd64 -t famonimage .
 ```
 
-Edit your `docker-compose.yaml` file and uncomment the `fa_mon` container.
+Edit your `docker-compose.yaml` file and add the `fa_mon` service below.
+
+```yaml
+  fa_mon:
+   image: famonimage
+   container_name: fa_mon
+   networks:
+     - db_net
+   volumes:
+     - /var/run/docker.sock:/var/run/docker.sock:ro # allow readonly access to fa docker logs
+```
 
 Now run all the containers with `docker compose down; docker compose up`.
 
-To force an error to check if the service works, run `docker compose down fa`. You should see a message in Slack that the monitor could not reach FusionAuth. If not, debug the script by running it on your physical machine instead of inside Docker. Change the FusionAuth URL at the top from `fa` to `localhost` when doing so. If you have trouble calling the FusionAuth API, review the [troubleshooting tips](/docs/apis/#troubleshooting).
+To force an error to check if the service works, run `docker compose down fa`. You should see a message in Slack that the monitor could not reach FusionAuth. If not, debug the script by running it on your physical machine instead of inside Docker with `./app.bash`. Change the FusionAuth URL at the top from `fa` to `localhost` when doing so. If you have trouble calling the FusionAuth API, review the [troubleshooting tips](/docs/apis/#troubleshooting).
+
+### Example Errors
+
+Below are some example errors that the monitoring script will alert you to.
+
+- First, the administrator says he is going to turn off FusionAuth. When the monitor runs, it cannot connect to FusionAuth and alerts Slack.
+- Then the administrator starts FusionAuth, but with an incorrect database connection string. Now the monitor can reach FusionAuth, but alerts Slack that FusionAuth fails to return logs when asked.
+- Finally, an event log error is shown when a faulty webhook occurs.
+
+![Test message](../../../../../public/img/docs/operate/secure-and-monitor/slack2.webp)
 
 ## Next Steps
 
