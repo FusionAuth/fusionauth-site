@@ -94,6 +94,10 @@ Generate an access key for the CloudWatch agent user.
 
 The access keys will look something like this:
 
+<Aside type='note'>
+Inplace of `your_key_id` and `your_access_key` use your actual AWS credential values in all occurrences in this guide.
+</Aside>
+
 ```sh
 aws_access_key_id = your_key_id
 aws_secret_access_key = your_access_key
@@ -115,7 +119,18 @@ In this section, you will need the region your AWS account uses. Get your region
 Save the Dockerfile from the [FusionAuth containers repo](https://github.com/FusionAuth/fusionauth-containers/blob/master/docker/fusionauth/fusionauth-app/Dockerfile) to your working directory on your computer.
 
 
-Edit the Dockerfile and replace line 92 `&& apt-get -y install --no-install-recommends curl \`  with `&& apt-get -y install --no-install-recommends curl unzip ca-certificates sudo \`. Insert the following lines above the comment "###### Start FusionAuth App". Replace `eu-north-1` with the region your AWS account uses. If the incorrect region is used here, it may take a long time to download when you build the Docker image.
+Edit the Dockerfile and replace line 92 `&& apt-get -y install --no-install-recommends curl \`  with `&& apt-get -y install --no-install-recommends curl unzip ca-certificates sudo \`. This adds the `unzip`, `sudo` and `ca-certificates` packages to the image.
+
+Replace the section marked the comment "###### Connect the log file to stdout" with the following configuration.
+
+```
+###### Connect the log file to stdout #############################################################
+RUN mkdir -p /usr/local/fusionauth/logs \
+  && touch /usr/local/fusionauth/logs/fusionauth-app.log \
+  && chown -R fusionauth:fusionauth /usr/local/fusionauth/logs/
+```
+
+Insert the following lines above the comment "###### Start FusionAuth App". Replace `eu-north-1` with the region your AWS account uses. If the incorrect region is used here, it may take a long time to download when you build the Docker image.
 
 ```
 ### NEW FOR CloudWatch ###
@@ -311,7 +326,7 @@ Click <InlineUIElement>Next</InlineUIElement>.
 
 <img src="/img/docs/operate/secure-and-monitor/cloudwatch/create-log-table-widget.png" alt="Add A Log Table To The Dashboards" role="bottom-cropped" width="1200" />
 
-Click <InlineUIElement>Browse log groups</InlineUIElement> and select a log group or stream configured in the CloudWatch agent configuration, like `cloudwatch-logs`. Click <InlineUIElement>Run query</InlineUIElement>. If data has been received on the selected stream, it will show in the "Logs" section. Click <InlineUIElement>Create Widget</InlineUIElement> to add the new log table to the dashboard. 
+Click <InlineUIElement>Browse log groups</InlineUIElement> and select a log group or stream configured in the CloudWatch agent configuration, like `fusionauth-logs`. Click <InlineUIElement>Run query</InlineUIElement>. If data has been received on the selected stream, it will show in the "Logs" section. Click <InlineUIElement>Create Widget</InlineUIElement> to add the new log table to the dashboard.
 
 This is how the dashboard will look when data is received.
 
@@ -714,7 +729,7 @@ aws_access_key_id=your_key_id
 aws_secret_access_key=your_access_key
 ```
 
-Save the file by pressing `esc` and typing `:wq` then pressing `Enter` on your keyboard.
+Save the file by pressing `Esc` and typing `:wq` then pressing `Enter` on your keyboard.
 
 Next, edit the configuration file.
 
@@ -747,8 +762,6 @@ FUSIONAUTH_APP_RUNTIME_MODE=development
 OPENSEARCH_JAVA_OPTS="-Xms512m -Xmx512m"
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
-AWS_ACCESS_KEY_ID=AKIA4MTWJ505Z74W4W76
-AWS_SECRET_ACCESS_KEY=UK7YaBBK68PXdGQJRk2UXXso4p6gEeEQxQ2855D2
 ```
 
 Save the file.
@@ -761,7 +774,11 @@ Using SCP, copy the FusionAuth files over from the working directory you used to
 scp -i ./test.pem   ./cloudwatch-config.json  ec2-user@16.16.204.161:~/fusionauth-project/
 #enter
 scp -i ./test.pem   ./Dockerfile  ec2-user@16.16.204.161:~/fusionauth-project/
-#enter
+```
+
+Comment out the `cloudwatch-logger:` service you added to `docker-compose.yml` file earlier and also copy the file to the instance.
+
+```sh
 scp -i ./test.pem   ./docker-compose.yml  ec2-user@16.16.204.161:~/fusionauth-project/
 ```
  
