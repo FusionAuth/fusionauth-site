@@ -221,6 +221,9 @@ class Search {
 
   async #handleResults(results) {
     if (this.#searchInput.value.trim() !== '' && results && results.length > 0) {
+      const spinner = this.#spinner;
+      this.#searchResults.innerHTML = '';
+      this.#searchResults.appendChild(spinner);
       let html = '';
       (await Promise.all(results.slice(0, 100).map(result => result.data()))).forEach(data => {
         html += `<li class="group" data-widget="search-result">
@@ -246,6 +249,16 @@ class Search {
         </div>
       </li>`;
     }
+  }
+
+  get #spinner() {
+    const div = document.createElement('div');
+    div.classList.add('flex', 'items-center', 'justify-center', 'w-full', 'h-full');
+    div.innerHTML = `
+      <img src="/img/gif/dark/bouncing-balls.gif" alt="Loading..." class="h-12 w-12 dark:block hidden" />
+      <img src="/img/gif/light/bouncing-balls.gif" alt="Loading..." class="h-12 w-12 dark:hidden" />
+    `;
+    return div;
   }
 }
 
