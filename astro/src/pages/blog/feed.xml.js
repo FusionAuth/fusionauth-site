@@ -7,7 +7,7 @@ function convertToRSS(post) {
     pubDate: post.data.updated_date || post.data.publish_date || '2024-08-11',
     description: post.data.description || 'uh-oh, no desc',
     // Compute RSS link from post `slug`
-    // This example assumes all posts are rendered as `/blog/[slug]` routes
+    // This example assumes all posts are rendered as `/articles/[slug]**` routes
     link: `/blog/${post.slug}`,
   }
 }
