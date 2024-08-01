@@ -13,6 +13,7 @@ import LdapConnectorReconcile from 'src/content/docs/_shared/lambda/_ldap-connec
 import MfaMigration from 'src/content/docs/lifecycle/authenticate-users/_mfa-migration.mdx';
 import PremiumEditionBlurb from 'src/content/docs/_shared/_premium-edition-blurb.astro';
 import SlowMigrationTimeline from 'src/content/docs/lifecycle/migrate-users/provider-specific/_slow-migration-timeline.mdx';
+import PerformanceTips from 'src/content/docs/lifecycle/migrate-users/_performance-tips.mdx';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 
@@ -253,23 +254,7 @@ Below, find out how to migrate all your user data into FusionAuth with one cutov
 
 Because you have downtime with this approach, you're going to want to import users quickly. Tweak these FusionAuth settings and perform the following tasks to do so.
 
-If you have tens of millions of users and are self-hosting, consider [switching to the database search engine](/docs/lifecycle/manage-users/search/switch-search-engines). With that option, FusionAuth won't sync user data to Elasticsearch during the import. If you require Elasticsearch for advanced searching capabilities, switch back to Elasticsearch after the migration is complete. This option is not available when using [FusionAuth Cloud](/docs/get-started/run-in-the-cloud/cloud).
-
-Disable the `user.bulk.create` webhook unless you need FusionAuth to send an event with all the created users to another system.
-
-Set the HTTP timeout to a large value on your API requests. Exactly how to do this varies based on the tool you're using to make the HTTP request. The import API is currently a synchronous operation, though there are plans to make it asynchronous (see [this GitHub issue for more](https://github.com/FusionAuth/fusionauth-issues/issues/944)).
-
-If you only provide a `password` field, then FusionAuth will assume the password is in plaintext and hash it for you. Hashing a password negatively affects load time, performance and throughput. If you provide the `salt`, `password`, `encryptionScheme` and `factor` values when importing, then FusionAuth assumes the value in the `password` field is a hashed password, and it will not be hashed.
-
-Deduplicate any emails. In FusionAuth, each email address may be associated with only one user account per tenant.
-
-Stage your data by exporting current user data into JSON files. This will make debugging easier, since you can load one file at a time, and you can repeat a data load if there are issues. It will also be more performant than loading data across a network or from a database.
-
-<Aside type="note">
-The easiest and fastest way to load bulk user data into FusionAuth is to loop over a directory of JSON files that each contain 100,000 users. These JSON files should be clean, have unique emails per tenant and be minified.
-
-In FusionAuth testing, this approach resulted in loading 100,000 users in 108 seconds. Performance is, of course, dependent on hardware, network and database constraints, but this should give you a good idea of possible import speed.
-</Aside>
+<PerformanceTips />
 
 #### Building The Migration Scripts
 
@@ -730,21 +715,15 @@ Take advantage of the iteration speed you get by running locally.
 
 After you have made sure that your user data is clean, then test against your production system. Here, it makes sense to start with a subset of your users to get an estimate of timing. It's important to test against production or a production replica, as testing against an environment that doesn't have equivalent CPU, memory or network bandwidth, won't provide helpful results.
 
-Testing loading 100k or 1M users will help you estimate the time needed for all your users.
+Testing loading 100k or 1M users will help you estimate the time needed for all your users. Load these test users in a separate tenant so you can easily test and drop users in batches.
 
 After this you'll know how long it will take to load all of your users. You can then break up your user population into groups, loading 1M, 5M or 10M at a time.
 
 #### Performance Tips
 
-For best performance, do the following:
+<PerformanceTips />
 
-* Minimize the number of network hops; load the data from a server on the same network.
-* Run with the `validateDBConstraints` set to `false`.
-* Have batches of files on the filesystem for the load (vs pulling from another database via a query). This may not be possible if you are joining two different identity stores together.
-* Make sure the JSON is minified.
-* Load password hashes, not plaintext passwords.
-* Load in a separate tenant so you can easily test and drop users in batches.
-* Load in batches of 10k.
+#### Importing To FusionAuth Cloud
 
 TODO break this out to be included in FA cloud docs
 For FusionAuth Cloud, the following additional recommendations apply:
