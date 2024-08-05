@@ -1,6 +1,6 @@
 ---
 title: Monitor With Slack
-description: Learn How To Monitor FusionAuth With Slack.
+description: Learn how to monitor FusionAuth with Slack.
 navcategory: admin
 section: operate
 subcategory: secure and monitor
@@ -14,17 +14,19 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 import Diagram1 from 'src/components/docs/operate/secure-and-monitor/slackDiagram1.astro';
 import Diagram2 from 'src/components/docs/operate/secure-and-monitor/slackDiagram2.astro';
 
-## Introduction To Slack
+## Overview
 
-[Slack](https://slack.com) is a private chat app you can configure for your organization. To send alerts to Slack, create a dedicated channel (chatroom) in the app, add your system administrators to it, and send messages to the channel using the Slack API.
+[Slack](https://slack.com) is a private chat app you can configure to use in your organization. To send alerts to Slack, create a dedicated channel (chat room) in the app, add your system administrators, and send messages to the channel using the Slack API.
 
-This guide explains the process in detail, and how to create a simple script to monitor FusionAuth and call Slack if FusionAuth has errors. Since sending a message to Slack is just an HTTP call through curl with an API token, you can use the same script in this guide to send messages to services like Discord and WhatsApp too. Change the Slack URL and token to whatever service you are using.
+This guide explains how to create a simple script to monitor FusionAuth and call Slack if FusionAuth has errors. Since sending a message to Slack is just an HTTP call made with curl and an API token, you can modify the script in this guide to send messages to services like Discord or WhatsApp. Change the Slack URL and token to whichever service you are using.
 
-Before continuing with this guide, please read the [FusionAuth guide to monitoring](/docs/operate/secure-and-monitor/monitor) to get an overview of the available metrics and choose the ones relevant to your needs. Sending alerts to Slack is also a small component of what comprehensive monitoring involves. The overview guide explains where Slack fits in the monitoring flow, as well as alternative apps to Slack for receiving alerts.
+Please read the [FusionAuth guide to monitoring](/docs/operate/secure-and-monitor/monitor) to get an overview of the available metrics and choose the ones relevant to your needs. Sending alerts to Slack is a small component of comprehensive monitoring. The overview explains where Slack fits into the monitoring flow, and provides alternative apps for receiving alerts instead of Slack.
 
-Pricing of Slack is available [here](https://slack.com/intl/en-ie/pricing). The free tier allows you to integrate Slack with other applications, and works with this guide, but does not allow you to [build workflows](https://slack.com/intl/en-ie/features/workflow-automation). The Pro (lowest paid) tier has all the features you need for using Slack with outside apps. Higher priced tiers have no features you need for integration.
+Review Slack fees on the [Slack pricing page](https://slack.com/intl/en-ie/pricing). You can follow this guide and integrate Slack with other applications with the free tier, but you will need at least a Pro subscription to [build workflows](https://slack.com/intl/en-ie/features/workflow-automation). 
 
 A workflow is a set of custom triggers, data, and logic you organize into a sequence of steps. The [logic can be code](https://api.slack.com/automation/functions/custom), written in TypeScript or JavaScript. Workflows can also use [stock connectors to outside services](https://api.slack.com/automation/connectors).
+
+The Pro (lowest paid) tier has all the features you need to use Slack with outside apps. Higher-priced tiers have no features you need for integration.
 
 ## Understand The System Design
 
@@ -32,7 +34,7 @@ Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below
 
 <Diagram1></Diagram1>
 
-In this guide you are going to create a tiny service in its own container to monitor FusionAuth. It will call Slack if the FusionAuth logs API is not contactable, or if the logs contain an error message. The new design will look like the diagram below.
+In this guide, you will create a tiny service in its own container to monitor FusionAuth and call Slack if the FusionAuth logs API is not contactable, or if the logs contain an error message. The new design will look like the diagram below.
 
 <Diagram2></Diagram2>
 
@@ -48,7 +50,7 @@ First, register for a Slack account:
 
 ## Create A Slack App
 
-To be able to send messages to Slack, you need an API key. To get an API key, you need to create a [Slack app](https://api.slack.com/tutorials/tracks/posting-messages-with-curl).
+To send messages to Slack, you need an API key. To get an API key, you need to create a [Slack app](https://api.slack.com/tutorials/tracks/posting-messages-with-curl).
 
 - Browse to https://api.slack.com/tutorials/tracks/posting-messages-with-curl and click <InlineUIElement>Create app</InlineUIElement>. (If this tutorial page doesn't exist in the future, create an app in the [apps homepage](https://api.slack.com/apps).)
 - Choose the `fa` workspace and click <InlineUIElement>Next</InlineUIElement>.
@@ -56,12 +58,12 @@ To be able to send messages to Slack, you need an API key. To get an API key, yo
 - Change the <InlineField>name</InlineField> and <InlineField>display_name</InlineField> to `fabot`.
 - Click <InlineUIElement>Next</InlineUIElement>.
 - Click <InlineUIElement>Create</InlineUIElement>.
-- You will be redirected to the "Welcome to your app’s configurations" page. Click on <InlineUIElement>Got It</InlineUIElement>.
+- You will be redirected to the "Welcome to your app's configurations" page. Click on <InlineUIElement>Got It</InlineUIElement>.
 - Click <InlineUIElement>Install to Workspace</InlineUIElement>.
 - On the page that opens, click <InlineUIElement>Allow</InlineUIElement>. (Back in your Slack chat app page, the `fabot` app should now be visible in the user list.)
 - Click <InlineUIElement>OAuth & Permissions</InlineUIElement> in the sidebar.
-- Note your <InlineField>Bot User OAuth Token</InlineField> (`xoxb-something`) for later use. Keep it secret and do not commit it to git.
-- Check that your bot has permissions for `chat:write` and `chat:write.public` on the "Scopes" section.
+- Note your <InlineField>Bot User OAuth Token</InlineField> (`xoxb-something`) for later use. Keep it secret and do not commit it to Git.
+- Check that your bot has permissions for `chat:write` and `chat:write.public` in the "Scopes" section.
 
 Open a terminal and run the command below, using your bot token and channel ID. The response should start with `"ok"`.
 
@@ -78,24 +80,25 @@ You now have a token you can use in a service that monitors FusionAuth to post a
 
 ## Run FusionAuth
 
-In this section you are going to run FusionAuth.
+Now run FusionAuth.
 
 - Install [Docker](https://docs.docker.com/get-docker/) if you don't have it on your machine.
 - Save the [`docker-compose.kickstart-nosearch.yml`](https://github.com/FusionAuth/fusionauth-containers/tree/main/docker/fusionauth/docker-compose.kickstart-nosearch.yml) file (rename the downloaded file to `docker-compose.yml`) and [`.env`](https://github.com/FusionAuth/fusionauth-containers/blob/main/docker/fusionauth/.env) file from the FusionAuth containers repo to your working directory on your computer.
-- In the same working directory create a folder called `kickstart` and save the [`kickstart-quickstart.json`](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/fusionauth/kickstart-quickstart.json) file to it ( rename the downloaded file to `kickstart.json`).
+- In the same working directory, create a folder called `kickstart` and save the [`kickstart-quickstart.json`](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/fusionauth/kickstart-quickstart.json) file to it (rename the downloaded file to `kickstart.json`).
 - Run FusionAuth with `docker compose up`.
 - Browse to http://localhost:9011/admin and check you can log in with `admin@example.com` and `password`.
-- This FusionAuth installation will already be configured with an API key you can use to call the FusionAuth API as defined in the `kickstart/kickstart.json` file. But in a new installation, you will need to create your own API key. Create an API key by navigating to <Breadcrumb>Settings -> API Keys</Breadcrumb> and clicking the <IconButton icon="plus" color="green" /> button. Enter a <InlineField>Description</InlineField> for the API key and click on the <IconButton icon="save" color="blue" /> button to save the API key. On the API Keys list page, click the red lock <IconButton icon="lock" color="red" /> next to the newly generated key to reveal the key value and copy and save it.
+
+This FusionAuth installation will already be configured with an API key you can use to call the FusionAuth API as defined in the `kickstart/kickstart.json` file. But in a new installation, you will need to create your own API key. Create an API key by navigating to <Breadcrumb>Settings -> API Keys</Breadcrumb> and clicking the <IconButton icon="plus" color="green" /> button. Enter a <InlineField>Description</InlineField> for the API key and click on the <IconButton icon="save" color="blue" /> button to save the API key. On the API Keys list page, click the red lock <IconButton icon="lock" color="red" /> next to the newly generated key to reveal the key value and copy and save it.
 
 ## Write A Service To Monitor FusionAuth
 
-The monitoring overview guide explains what metadata you can get from FusionAuth. For the purposes of alerts, you are interested only in errors. Errors are obtained in two places:
+The monitoring overview explains what metadata you can get from FusionAuth. For alerts, you are interested only in errors. Errors are obtained in two places:
 - System logs. These cannot be obtained from an [API call](/docs/apis/system#export-system-logs) because FusionAuth writes the system logs to the Docker standard out when running in Docker, instead of to a file. The system logs expose fundamental errors, like FusionAuth missing a database connection.
-- Event logs. These contain more complicated errors relating to lambda functions, SMTP, email templates, and webhooks. Event logs can be called through [their API](/docs/apis/event-logs#search-event-logs).
+- Event logs. These contain more complicated errors relating to lambda functions, SMTP, email templates, and webhooks. Event logs can be called through [the Event Logs API](/docs/apis/event-logs#search-event-logs).
 
-Let's write a script that runs every 30 seconds to get both system logs and event logs in the last 31 seconds. If either set of logs contain an error, or if an error occurs getting the logs, send an alert to Slack.
+Let's write a script that runs every 30 seconds to get the system and event logs from the last 31 seconds. If either set of logs contains an error or an error occurs in getting the logs, an alert will be sent to Slack.
 
-Create a file called `app.sh`. Insert the content below, replacing your FusionAuth API key, and your Slack API key and Slack channel Id at the top.
+Create a file called `app.sh`. Insert the content below, using your FusionAuth and Slack API keys and Slack channel ID at the top.
 
 ```bash
 #!/bin/bash
@@ -177,7 +180,7 @@ Edit your `docker-compose.yml` file and add the `fa_mon` service below.
 
 Now run all the containers with `docker compose down; docker compose up`.
 
-To force an error to check if the service works, run `docker compose down fa`. You should see a message in Slack that the monitor could not reach FusionAuth. If not, debug the script by running it on your physical machine instead of inside Docker with `./app.sh`. Change the FusionAuth URL at the top from `fa` to `localhost` when doing so. If you have trouble calling the FusionAuth API, review the [troubleshooting tips](/docs/apis/#troubleshooting).
+To force an error to check whether the service works, run `docker compose down fa`. You should see a message in Slack that the monitor could not reach FusionAuth. If not, debug the script by running it on your physical machine instead of inside Docker with `./app.sh`. Change the FusionAuth URL at the top from `fa` to `localhost` when doing so. If you have trouble calling the FusionAuth API, review the [troubleshooting tips](/docs/apis/#troubleshooting).
 
 ### Example Errors
 
@@ -191,10 +194,10 @@ Below are some example errors that the monitoring script will alert you to.
 
 ## Next Steps
 
-Now that you have a simple way to check that FusionAuth is error free, and alert you if it's not, there are a few ways to make the system more sophisticated.
+Now that you have a simple way to check that FusionAuth is error-free and alert you if it's not, there are a few ways to make the system more sophisticated.
 
 - Change the monitoring service from a simple bash script to a web service in your favorite programming language. This will improve error handling and make it more easily maintainable for your team.
-- Make the monitor check the PostgreSQL container logs in addition to the FusionAuth logs.
+- Have the monitor check the PostgreSQL container logs in addition to the FusionAuth logs.
 - Create a `monitor-up` channel the service writes to every time it runs, so you know it's up. Currently, if the service dies, you'll never know. If you are on a paid Slack subscription, to avoid becoming desensitized to a spam channel that tells you the service is running every 30 seconds, create a workflow that writes to the alert channel if the `monitor-up` channel hasn't received a message in the last minute.
 - If you want visibility into the performance of FusionAuth, not just errors, you'll need a comprehensive monitoring service. Please read the FusionAuth guides to Elastic or Prometheus to make one.
 
