@@ -175,7 +175,7 @@ Follow everything in the `Content Style Guidelines` section.
 - For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
 - For field names, use double quotes: "Login Identifier Attribute".
 - For values, use back ticks: `userPrincipalName`.
-- Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/main/.github/known-blog-categories.txt). You can separate categories with commas.
+- Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/main/config/contentcheck/known-blog-categories.txt). You can separate categories with commas.
 - Use tags. They are separated with commas. These are freeform, so feel free to add multiple and choose what works. The first one is what is used to show related posts, unless there's a `featuredTag` value in the front matter. You can [learn more about the logic by reviewing the layout](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/layouts/Blog.astro).
 - You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.
 - All references to `stackoverflow.com` should be updated and direct to the community forum at `https://fusionauth.io/community/forum/`
@@ -452,9 +452,9 @@ The main configuration file is located at [`.vale.ini`](./.vale.ini), where we s
 
 ### Rules
 
-- The rules _(or, as Vale calls them, "styles")_ are located at [`.github/vale/styles`](./.github/vale/styles).
-- Right now, we're using [`write-good`](./.github.vale/styles/write-good), a collection of simple rules to avoid common mistakes and awkward sentences.
-- We also have a custom vocabulary at [`.github/vale/styles/config/vocabularies/FusionAuth/accept.txt`](./.github/vale/styles/config/vocabularies/FusionAuth/accept.txt) with known words.
+- The rules _(or, as Vale calls them, "styles")_ are located at [`config/vale/styles`](./config/vale/styles).
+- Right now, we're using [`write-good`](./config/vale/styles/write-good), a collection of simple rules to avoid common mistakes and awkward sentences.
+- We also have a custom vocabulary at [`config/vale/styles/config/vocabularies/FusionAuth/accept.txt`](./config/vale/styles/config/vocabularies/FusionAuth/accept.txt) with known words.
   - Note that this file can use regular expressions to match words in a case-insensitive manner, as described [in their docs](https://vale.sh/docs/topics/vocab/).
 
 ### GitHub Actions
@@ -488,7 +488,7 @@ $ vale --filter=".Name == 'Vale.Spelling'" astro/path/to/file
 Whenever you receive an error, you need to determine if you should:
 
 - Actually fix the word (e.g. if you received an error like _"Use 'Id' instead of 'ID'."_); or
-- Add a known word to [`the vocabulary`](./.github/vale/styles/config/vocabularies/FusionAuth/accept.txt) if it's a language, library, company name, etc. But make sure you have the correct capitalization to avoid having duplicates there; or
+- Add a known word to [`the vocabulary`](./config/vale/styles/config/vocabularies/FusionAuth/accept.txt) if it's a language, library, company name, etc. But make sure you have the correct capitalization to avoid having duplicates there; or
 - In case of custom Astro components, you'd probably need to add a new `TokenIgnores` item in [`.vale.ini`](./.vale.ini).
 
 ## Pull request review process

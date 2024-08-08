@@ -1,6 +1,6 @@
 ---
-title: "Multi-Factor Authentication (MFA): The Ultimate Guide"
-description: What is multi-factor authentication and how it works?
+title: "What is Multi-Factor Authentication (MFA) and How it Works"
+description: Learn what MFA is, why it's crucial, the available factors, and when to consider requiring multi-factor authentication for enhanced security.
 author: Dan Moore
 section: Authentication
 tags: mfa 2fa multi-factor-authentication two-factor-authentication user-experience customer-experience security policie sms totp factors ap-push tradeoffs open-standards biometric

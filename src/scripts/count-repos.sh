@@ -34,7 +34,8 @@ function get_json_repos() {
   # Repos that will be returned by the `gh` commands below, but are
   # intentionally excluded from JSONFILE for... reasons?
   local EXCLUDE=(
-    "fusionauth-example-ruby-on-rails-custom-scopes"
+    "fusionauth-example-example-qr-codes"
+    "fusionauth-example-node-centralized-sessions"
     "fusionauth-example-template"
     "fusionauth-example-vue-sdk"
     "fusionauth-quickstart-kotlin-android-native"
