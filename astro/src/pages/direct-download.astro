@@ -1,64 +1,146 @@
 ---
-import Layout from 'src/layouts/Developer.astro';
+import { getDocNavContext } from '../tools/docs';
+import Layout from 'src/layouts/Docs.astro';
+import DirectDownloads from '../content/docs/get-started/_direct-downloads-preamble.mdx';
 
-const title = 'FusionAuth Direct Downloads - FusionAuth';
+const title = 'Direct FusionAuth Downloads';
 const description = 'Download any package for any platform anytime you want.';
+
+const navContext = await getDocNavContext('get started');
+
+const frontmatter = {section: 'get started'};
 ---
-<Layout {title} {description}>
-  <section class="white py-24">
-    <div class="container w-[540px] md:w-[720px] lg:w-[960px] xl:w-[1140px] mx-auto">
-      <div class="row center mb-10 justify-center flex flex-row items-stretch flex-wrap">
-        <div class="col-xs-12 col-lg-7 centered text-center basis-11/12 lg:basis-1/2">
-          <h1 class="text-5xl font-bold text-slate-600 mb-3 mx-3">Direct FusionAuth Downloads</h1>
-          <p class="my-6 mx-0">
-            All releases, all platforms. Download, install and get started. If you have questions or issues, join our active <a class="text-blue-500 visited:text-indigo-500" href="/community">developer community</a>, or take a look at our<a class="text-blue-500 visited:text-indigo-500" href="/pricing"> hosting and support plans</a>.
-          </p>
-          <p>For system requirements or help with the installation, <a class="text-blue-500 visited:text-indigo-500" href="/docs">read our documentation.</a></p>
-        </div>
-      </div>
-      <div class="row center my-20 justify-center flex flex-row items-stretch flex-wrap">
-        <div class="col-xs-12 col-md-6 col-lg-4 newsletter">
-          <strong>Subscribe for developer updates</strong>
-          <div style="display: flex; flex-direction: column; align-items: stretch;">
-            <form action="https://fusionauth.us1.list-manage.com/subscribe/post?u=e49fa3727e80f8a81984ec45e&amp;id=82607f973e" method="POST" target="_blank">
-              <!-- bot check -->
-              <div style="position: absolute; left: -5000px;" aria-hidden="true">
-                <input type="text" name="b_e49fa3727e80f8a81984ec45e_82607f973e" tabindex="-1" value="">
-              </div>
-              <div style="display: flex; flex-direction: row; align-items: flex-end;">
-                <input type="text" maxlength="256" name="EMAIL" data-name="Email" placeholder="EMAIL" id="Email-3" required class="px-2" style="display: block; width: 100%; height: 38px; border-radius: 5px 0 0 5px; border: 1px solid transparent; border-right-width: 0; background-color: #eaeef6;">
-                <input type="submit" data-wait="Please wait..." value="SUBMIT" class="bg-orange-500 rounded text-white" style="display: inline-block; height: 38px; width: 130px; border-radius: 0 5px 5px 0; border: 1px solid transparent; border-left-width: 0;">
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div id="downloads" class="col-xs downloads">
-          <div class="mobile-warning">
-            <p>
-              You will probably want to visit this page on your workstation to download FusionAuth.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+<script>
+  // dynamically generate the download links
+  const render = (versionsResp) => {
+    let archived = false;
+    const releases = versionsResp.versions.map(version => {
+      if (version === '1.22.2') {
+        archived = true;
+      }
+      const idVersion = version.replace(/\./g, '_');
+      const mVersion = version.replace(/-/g, '.');
+      const anchor = version.replace(/\./g, '-');
+      const releaseNotesLink = archived
+          ? `/docs/release-notes/archive#version-${anchor}`
+          : `/docs/release-notes#version-${anchor}`;
 
-  <section class="white block box-border py-24">
-    <div class="container w-[540px] md:w-[720px] lg:w-[960px] xl:w-[1140px] mx-auto">
-      <div class="row center mb-10 justify-center flex flex-row items-stretch flex-wrap">
-        <div class="col-xs-12 col-lg-7 centered text-center basis-11/12 lg:basis-1/2">
-          <img class="mx-auto my-4" width="42" src="/img/landing/gear-question-mark.svg" alt="Questions?">
-          <h2>Questions or Issues?</h2>
-          <p>
-            If you have questions or issues, join our active <a class="text-blue-500 visited:text-indigo-500" href="/community">Developer Community</a>, or take a look at our <a class="text-blue-500 visited:text-indigo-500" href="/pricing">Hosting and Support Plans</a>.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
+      return { idVersion, mVersion, releaseNotesLink, version };
+    });
 
-  <script type="text/javascript" src="/js/DirectDownloads-0.1.12.js" defer></script>
+    const mappedHtml = releases.map(release => `
+    <div id=${release.idVersion} class="mt-5">
+      <h3>${release.version}
+      <div class="mb-6 text-sm">
+        <a href=${release.releaseNotesLink}>Release Notes</a>
+        <span>|</span>
+        <a href="/docs/get-started/download-and-install/packages">Installation Guide</a>
+      </div>
+      </h3>
+      
+      <div>
+      <a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-app-${release.version}.zip">
+        fusionauth-app-${release.version}.zip
+      </a>
+      &nbsp;
+      <span>
+        [<a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-app-${release.version}.zip.sha256">sha256</a>]
+      </span>
+      <br>
+      <a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-app_${release.version}-1_all.deb">
+        fusionauth-app_${release.version}-1_all.deb
+      </a>
+      &nbsp;
+      <span>
+        [<a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-app_${release.version}-1_all.deb.sha256">sha256</a>]
+      </span>
+      <br>
+      <a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-app-${release.mVersion}-1.noarch.rpm">
+        fusionauth-app-${release.mVersion}-1.noarch.rpm
+      </a>
+      &nbsp;
+      <span>
+        [<a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-app-${release.mVersion}-1.noarch.rpm.sha256">sha256</a>]
+      </span>
+      <br>
+      <br>
+      <a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-search-${release.version}.zip">
+        fusionauth-search-${release.version}.zip
+      </a>
+      &nbsp;
+      <span>
+        [<a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-search-${release.version}.zip.sha256">sha256</a>]
+      </span>
+      <br>
+      <a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-search_${release.version}-1_all.deb">
+        fusionauth-search_${release.version}-1_all.deb
+      </a>
+      &nbsp;
+      <span>
+        [<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-search_${release.version}-1_all.deb.sha256">sha256</a>]
+      </span>
+      <br>
+      <a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-search-${release.mVersion}-1.noarch.rpm">
+        fusionauth-search-${release.mVersion}-1.noarch.rpm
+      </a>
+      &nbsp;
+      <span>
+        [<a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-search-${release.mVersion}-1.noarch.rpm.sha256">sha256</a>]
+      </span>
+      <br>
+      <br>
+      <a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-database-schema-${release.version}.zip">
+        fusionauth-database-schema-${release.version}.zip
+      </a>
+      &nbsp;
+      <span>
+        [<a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-database-schema-${release.version}.zip.sha256">sha256</a>]
+      </span>
+      &nbsp;
+      (<a href="/docs/get-started/download-and-install/fusionauth-app#advanced-installation">See Advanced Installation</a>)
+    </div>
+    `).join('\n');
+
+    document.getElementById('downloads-container').innerHTML = mappedHtml;
+
+    const toc = releases.map(release => `
+    <li>
+      <div class="group" data-widget="scroll-spy-item">
+        <a href=#${release.idVersion} class="block font-medium text-slate-600 text-sm dark:text-slate-400 dark:group-[.active]:text-indigo-400 dark:hover:text-slate-100 group-[.active]:text-indigo-600 hover:text-slate-900">
+          ${release.version}
+        </a>
+      </div>
+    </li>
+    `).join('\n');
+
+    document.getElementById('toc-list').innerHTML = toc;
+  };
+
+  // check if we have a saved copy in local storage
+  const cachedResponse = localStorage.getItem('io.fusionauth.downloads');
+  if (cachedResponse) {
+    render(JSON.parse(cachedResponse));
+  }
+
+  // go get the latest
+  const versionResp = await fetch('https://account.fusionauth.io/api/version');
+  const versions = await versionResp.json() as { versions: string[]; };
+  versions.versions.reverse();
+
+  // update the page
+  render(versions);
+
+  // save it
+  localStorage.setItem('io.fusionauth.downloads', JSON.stringify(versions));
+</script>
+<Layout {title} {description} {navContext} {frontmatter} noSideNav={true}>
+  <DirectDownloads />
+  <div id="downloads-container"> </div>
+  <section class="mt-12">
+    <h2>Questions or Issues? <img class="inline my-0" width="42" src="/img/landing/gear-question-mark.svg" alt="Questions?"></h2>
+    <p>
+      If you have questions or issues, join our active <a class="text-blue-500 visited:text-indigo-500" href="/community">Developer Community</a>, or take a look at our <a class="text-blue-500 visited:text-indigo-500" href="/pricing">Hosting and Support Plans</a>.
+    </p>
+  </section>
 </Layout>
 

@@ -1,3 +1,4 @@
+import AdvancedEditionBlurbApi from 'src/content/docs/_shared/_advanced-edition-blurb-api.astro';
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
 import DeprecatedSince from 'src/components/api/DeprecatedSince.astro';
@@ -13,7 +14,6 @@ import ApplicationOauthconfigurationClientauthenticationpolicy from 'src/content
 import ApplicationOauthconfigurationProofkeyforcodeexchangepolicy from 'src/content/docs/apis/_application-oauthConfiguration-proofKeyForCodeExchangePolicy.mdx';
 import Xmlsignaturec14nmethodDescription from 'src/content/docs/apis/_xmlSignatureC14nMethod-description.mdx';
 import Xmlsignaturec14nmethodValues from 'src/content/docs/_shared/_xmlSignatureC14nMethod-values.mdx';
-import AdvancedEditionBlurbApi from 'src/content/docs/_shared/_advanced-edition-blurb-api.astro';
 
 #### Request Body
 
@@ -50,7 +50,7 @@ import AdvancedEditionBlurbApi from 'src/content/docs/_shared/_advanced-edition-
 
     When this value is not defined, the value defined by <InlineField>tenant.externalIdentifierConfiguration.twoFactorTrustIdTimeToLiveInSeconds</InlineField> is utilized. When this value is defined it will override the tenant configured value.
 
-    This configuration is only utilized when <InlineField>application.multiFactorConfiguration.loginPolicy</InlineField> is enabled.
+    This configuration is only utilized when <InlineField>application.multiFactorConfiguration.loginPolicy</InlineField> is `Enabled` or `Required`.
   </APIField>
   <APIField name="application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange" type="Boolean" optional since="1.45.0">
     When enabled a user will be required to provide their current password when changing their password on a self-service account form.
@@ -139,6 +139,9 @@ import AdvancedEditionBlurbApi from 'src/content/docs/_shared/_advanced-edition-
 
     <PremiumEditionBlurbApi feature="custom forms" />
   </APIField>
+  <APIField name="application.lambdaConfiguration.userinfoPopulateId" type="UUID" optional since="1.50.0">
+    The Id of the Lambda that will be invoked when a UserInfo response is generated for this application.
+  </APIField>
   <APIField name="application.loginConfiguration.allowTokenRefresh" type="Boolean" optional since="1.5.0">
     Indicates if a JWT may be refreshed using a Refresh Token for this application. This configuration is separate from issuing new Refresh Tokens which is controlled by the `generateRefreshTokens` parameter. This configuration indicates specifically if an existing Refresh Token may be used to request a new JWT using the [Refresh API](/docs/apis/jwt#refresh-a-jwt).
 
@@ -174,7 +177,7 @@ import AdvancedEditionBlurbApi from 'src/content/docs/_shared/_advanced-edition-
     The Id of the SMS template that is used when notifying a user to complete a multi-factor authentication request.
   </APIField>
   <APIField name="application.multiFactorConfiguration.trustPolicy" type="String" optional since="1.37.0">
-    When <InlineField>application.multiFactorConfiguration.loginPolicy</InlineField> is set to `Enabled`, this trust policy is utilized when determining if a user must complete a two-factor challenge during login.
+    When <InlineField>application.multiFactorConfiguration.loginPolicy</InlineField> is set to `Enabled` or `Required`, this trust policy is utilized when determining if a user must complete a two-factor challenge during login.
 
     For example, a normal two-factor login flow will result in a trust Id being returned if you set <InlineField>trustComputer</InlineField> equal to `true` when completing a Two Factor Login. The returned Trust identifier can be used on subsequent Login requests to keep from being required to complete a Two-Factor login. This configuration determines if that trust value can be utilized for another application.
 
@@ -241,6 +244,15 @@ import AdvancedEditionBlurbApi from 'src/content/docs/_shared/_advanced-edition-
   <APIField name="application.oauthConfiguration.clientSecret" type="String" optional>
     The OAuth 2.0 client secret. If you leave this blank during a POST, a secure secret will be generated for you. If you leave this blank during PUT, the previous value will be maintained. For both POST and PUT you can provide a value and it will be stored.
   </APIField>
+  <APIField name="application.oauthConfiguration.consentMode" type="String" optional since="1.50.0" defaults="AlwaysPrompt">
+    Controls the policy for prompting a user to consent to requested OAuth scopes. This configuration only takes effect when <InlineField>application.oauthConfiguration.relationship</InlineField> is `ThirdParty`.
+
+    The possible values are:
+
+    * `AlwaysPrompt` - Always prompt the user for consent.
+    * `RememberDecision` - Remember previous consents; only prompt if the choice expires or if the requested or required scopes have changed. The duration of this persisted choice is controlled by the Tenant's <InlineField>externalIdentifierConfiguration.rememberOAuthScopeConsentChoiceTimeToLiveInSeconds</InlineField> value.
+    * `NeverPrompt` - The user will be never be prompted to consent to requested OAuth scopes. Permission will be granted implicitly as if this were a `FirstParty` application. This configuration is meant for testing purposes only and should not be used in production.
+  </APIField>
   <APIField name="application.oauthConfiguration.debug" type="Boolean" optional since="1.25.0">
     Whether or not FusionAuth will log a debug Event Log. This is particular useful for debugging the authorization code exchange with the Token endpoint during an Authorization Code grant.
   </APIField>
@@ -281,6 +293,40 @@ import AdvancedEditionBlurbApi from 'src/content/docs/_shared/_advanced-edition-
 
     <ApplicationOauthconfigurationProofkeyforcodeexchangepolicy />
   </APIField>
+  <APIField name="application.oauthConfiguration.providedScopePolicy.address.enabled" type="Boolean" optional since="1.50.0" defaults="true">
+    Whether the `address` OAuth scope provided by FusionAuth is enabled for this application.
+  </APIField>
+  <APIField name="application.oauthConfiguration.providedScopePolicy.address.required" type="Boolean" optional since="1.50.0">
+    Whether consent to the `address` OAuth scope provided by FusionAuth is required for this application when present on the OAuth request.
+  </APIField>
+  <APIField name="application.oauthConfiguration.providedScopePolicy.email.enabled" type="Boolean" optional since="1.50.0" defaults="true">
+    Whether the `email` OAuth scope provided by FusionAuth is enabled for this application.
+  </APIField>
+  <APIField name="application.oauthConfiguration.providedScopePolicy.email.required" type="Boolean" optional since="1.50.0">
+    Whether consent to the `email` OAuth scope provided by FusionAuth is required for this application when present on the OAuth request.
+  </APIField>
+  <APIField name="application.oauthConfiguration.providedScopePolicy.phone.enabled" type="Boolean" optional since="1.50.0" defaults="true">
+    Whether the `phone` OAuth scope provided by FusionAuth is enabled for this application.
+  </APIField>
+  <APIField name="application.oauthConfiguration.providedScopePolicy.phone.required" type="Boolean" optional since="1.50.0">
+    Whether consent to the `phone` OAuth scope provided by FusionAuth is required for this application when present on the OAuth request.
+  </APIField>
+  <APIField name="application.oauthConfiguration.providedScopePolicy.profile.enabled" type="Boolean" optional since="1.50.0" defaults="true">
+    Whether the `profile` OAuth scope provided by FusionAuth is enabled for this application.
+  </APIField>
+  <APIField name="application.oauthConfiguration.providedScopePolicy.profile.required" type="Boolean" optional since="1.50.0">
+    Whether consent to the `profile` OAuth scope provided by FusionAuth is required for this application when present on the OAuth request.
+  </APIField>
+  <APIField name="application.oauthConfiguration.relationship" type="String" optional since="1.50.0" defaults="FirstParty">
+    The application's relationship to the OAuth server.
+
+    The possible values are:
+
+    * `FirstParty` - The application has the same owner as the authorization server. Consent to requested OAuth scopes is granted implicitly.
+    * `ThirdParty` - The application is external to the authorization server. Users will be prompted to consent to requested OAuth scopes based on the application object's <InlineField>oauthConfiguration.consentMode</InlineField> value.
+
+    <AdvancedEditionBlurbApi feature="third-party applications"/>
+  </APIField>
   <APIField name="application.oauthConfiguration.requireClientAuthentication" type="Boolean" optional deprecated>
     Determines if the OAuth 2.0 Token endpoint requires client authentication. If this is enabled, the client must provide client credentials when using the Token endpoint. The `client_id` and `client_secret` may be provided using a Basic Authorization HTTP header, or by sending these parameters in the request body using POST data.
 
@@ -289,6 +335,23 @@ import AdvancedEditionBlurbApi from 'src/content/docs/_shared/_advanced-edition-
   </APIField>
   <APIField name="application.oauthConfiguration.requireRegistration" type="Boolean" optional since="1.28.0">
     When enabled the user will be required to be registered, or complete registration before redirecting to the configured callback in the authorization code grant or the implicit grant. This configuration does not affect any other grant, and does not affect the API usage.
+  </APIField>
+  <APIField name="application.oauthConfiguration.scopeHandlingPolicy" type="String" optional since="1.50.0" defaults="Strict">
+    Controls the policy for handling of OAuth scopes when populating JWTs and the UserInfo response.
+
+    The possible values are:
+
+    * `Compatibility` - OAuth workflows will populate JWT and UserInfo claims in a manner compatible with versions of FusionAuth before version 1.50.0.
+    * `Strict` - OAuth workflows will populate token and UserInfo claims according to the OpenID Connect 1.0 specification based on requested and consented scopes.
+  </APIField>
+  <APIField name="application.oauthConfiguration.unknownScopePolicy" type="String" optional since="1.50.0" defaults="Reject">
+    Controls the policy for handling unknown scopes on an OAuth request.
+
+    The possible values are:
+
+    * `Allow` - Unknown scopes will be allowed on the request, passed through the OAuth workflow, and written to the resulting tokens without consent.
+    * `Remove` - Unknown scopes will be removed from the OAuth workflow, but the workflow will proceed without them.
+    * `Reject` - Unknown scopes will be rejected and cause the OAuth workflow to fail with an error.
   </APIField>
   <APIField name="application.passwordlessConfiguration.enabled" type="Boolean" optional since="1.5.0">
     Determines if passwordless login is enabled for this application.
@@ -369,22 +432,22 @@ import AdvancedEditionBlurbApi from 'src/content/docs/_shared/_advanced-edition-
   <APIField name="application.registrationDeletePolicy.unverified.numberOfDaysToRetain" type="Integer" optional since="1.13.0">
     The number of days from registration a user's registration will be retained before being deleted for not completing registration verification. This field is required when <InlineField>application.registrationDeletePolicy.enabled</InlineField> is set to `true`.  Value must be greater than 0.
   </APIField>
-  <APIField name="application.roles" type="Array" optional>
+  <APIField name="application.roles" type="Array" optional renderif={!!props.is_create}>
     An array of Role objects.
   </APIField>
-  <APIField name="application.roles[x].description" type="String" optional>
+  <APIField name="application.roles[x].description" type="String" optional renderif={!!props.is_create}>
     A description for the role.
   </APIField>
-  <APIField name="application.roles[x].id" type="UUID" optional>
+  <APIField name="application.roles[x].id" type="UUID" optional renderif={!!props.is_create}>
     The Id of the Role.
   </APIField>
-  <APIField name="application.roles[x].name" type="String" required>
+  <APIField name="application.roles[x].name" type="String" required renderif={!!props.is_create}>
     The name of the Role.
   </APIField>
-  <APIField name="application.roles[x].isDefault" type="Boolean" optional>
+  <APIField name="application.roles[x].isDefault" type="Boolean" optional renderif={!!props.is_create}>
     Whether or not the Role is a default role. A default role is automatically assigned to a user during registration if no roles are provided.
   </APIField>
-  <APIField name="application.roles[x].isSuperRole" type="Boolean" optional>
+  <APIField name="application.roles[x].isSuperRole" type="Boolean" optional renderif={!!props.is_create}>
     Whether or not the Role is a considered to be a super user role. This is a marker to indicate that it supersedes all other roles. FusionAuth will attempt to enforce this contract when using the web UI, it is not enforced programmatically when using the API.
   </APIField>
   <APIField name="application.samlv2Configuration.assertionEncryptionConfiguration.digestAlgorithm" type="String" optional since="1.47.0">
@@ -561,6 +624,28 @@ import AdvancedEditionBlurbApi from 'src/content/docs/_shared/_advanced-edition-
 
     In most cases the default configuration will be adequate. If you encounter a SAML v2 Service Provider that requires the signature to be a child of the Response, use this configuration to change the signature location. Prior to version `1.21.0`, the XML signature was always located as a child element of the Assertion when the response was successful.
   </APIField>
+  <APIField name="application.scopes" type="Array" optional since="1.50.0" renderif={!!props.is_create}>
+    An array of OAuth Scope objects.
+    <AdvancedEditionBlurbApi feature="advanced OAuth scopes" />
+  </APIField>
+  <APIField name="application.scopes[x].defaultConsentDetail" type="String" optional since="1.50.0" renderif={!!props.is_create}>
+    The default detail to display on the OAuth consent screen if one cannot be found in the theme.
+  </APIField>
+  <APIField name="application.scopes[x].defaultConsentMessage" type="String" optional since="1.50.0" renderif={!!props.is_create}>
+    The default message to display on the OAuth consent screen if one cannot be found in the theme.
+  </APIField>
+  <APIField name="application.scopes[x].description" type="String" optional since="1.50.0" renderif={!!props.is_create}>
+    A description of the OAuth Scope for internal use.
+  </APIField>
+  <APIField name="application.scopes[x].id" type="UUID" optional since="1.50.0" renderif={!!props.is_create}>
+    The Id of the OAuth Scope.
+  </APIField>
+  <APIField name="application.scopes[x].name" type="String" required since="1.50.0" renderif={!!props.is_create}>
+    The name of the OAuth Scope. This is the value that will be used to request the scope in OAuth workflows.
+  </APIField>
+  <APIField name="application.scopes[x].required" type="Boolean" optional since="1.50.0" renderif={!!props.is_create}>
+    Determines if the OAuth Scope is required when requested in an OAuth workflow.
+  </APIField>
   <APIField name="application.themeId" type="UUID" optional since="1.27.0">
     The unique Id of the theme to be used to style the login page and other end user templates.
 
@@ -591,6 +676,6 @@ import AdvancedEditionBlurbApi from 'src/content/docs/_shared/_advanced-edition-
   </APIField>
 </APIBlock>
 
-{ props.includeRoles && <JSON title="Example Request JSON" src="applications/post-request.json" /> }
+{ props.is_create && <JSON title="Example Request JSON" src="applications/post-request.json" /> }
 
-{ !props.includeRoles && <JSON title="Example Request JSON" src="applications/put-request.json" /> }
+{ !props.is_create && <JSON title="Example Request JSON" src="applications/put-request.json" /> }

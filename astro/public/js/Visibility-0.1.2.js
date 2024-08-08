@@ -15,7 +15,7 @@ class Visibility {
       navbtns.forEach(btn => {
         const id = btn.dataset.element;
         const nav = document.getElementById(id);
-        if (!nav.classList.contains('hidden') && !nav.contains(event.target)) {
+        if (nav && !nav.classList.contains('hidden') && !nav.contains(event.target)) {
           nav.classList.add('hidden');
         }
       });
