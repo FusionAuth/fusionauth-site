@@ -1,0 +1,418 @@
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import InlineField from 'src/components/InlineField.astro';
+import PropertyMemory from 'src/content/docs/reference/_property-memory.mdx';
+
+export const addlJavaArgsText = 'Any additional arguments that you want to pass to the Java VM where this service will run.';
+
+<APIBlock>
+  <APIField name="database.connection-healthcheck-99percent-ms" type="Integer" defaults="250">
+    This ensures that the average time it takes FusionAuth to get a database connection from the connection pool does not go above the specified value. If this value is exceeded, then the `/api/status` API will return a non-200 status code. This usually means that the database is under heavy load or is having issues.
+  </APIField>
+
+  <APIField name="database.connection-timeout" type="Integer" defaults="2,000">
+    The number of milliseconds that FusionAuth will attempt to connect to the database before failing.
+  </APIField>
+
+  <APIField name="database.idle-timeout" type="Integer" defaults="120,000">
+    The number of milliseconds that FusionAuth will leave an idle database connection in its connection pool before recreating it.
+  </APIField>
+
+  <APIField name="database.max-lifetime" type="Integer" defaults="240,000">
+    The number of milliseconds that FusionAuth will allow a database connection to live before it is destroyed and recreated.
+  </APIField>
+
+  <APIField name="database.minimum-idle" type="Integer" defaults="unset">
+    The minimum number of idle connections that FusionAuth will keep in the connection pool. This ensures that the pool always has that number of connections. By default, this is not set, so the connection pool will be a fixed size of the value of the `maximum-pool-size` configuration option.
+  </APIField>
+
+  <APIField name="database.maximum-pool-size" type="Integer" defaults="10">
+    The maximum number of database connections that FusionAuth will keep in the connection pool.
+  </APIField>
+
+  <APIField name="database.mysql.enforce-utf8mb4" type="String" defaults="true">
+    When set to `true` and using MySQL, a 4 byte UTF compatible character set configuration is enforced at startup.
+
+    If this validation is not desired or not it is not possible to modify your MySQL configuration to satisfy the validation, disable this check by setting this value to `false`. If this is `false`, any attempt to store a 4 byte unicode character will cause the `INSERT` or `UPDATE` request to fail. The initial MySQL UTF-8 implementation only supported up to characters up to 3 bytes in length; utf8mb4 extends this to 4 byte characters.
+  </APIField>
+
+  <APIField name="database.password" type="String">
+    The password that FusionAuth will use to connect to the database. If you are using [Silent Mode](/docs/get-started/download-and-install/silent-mode) or [Setup Wizard](/docs/get-started/run-in-the-cloud/setup-wizard), then this password might be used when the `database.user` is automatically created for you, depending on your database server and configuration options.
+
+    This password must be secure (long, lots of different characters, high entropy, all the characteristics of a good password) if you let FusionAuth create the database user for you.
+  </APIField>
+
+  <APIField name="database.root.password" type="String">
+    The password that FusionAuth will use to connect to the database server as part of [Silent Mode](/docs/get-started/download-and-install/silent-mode) or [Setup Wizard](/docs/get-started/run-in-the-cloud/setup-wizard) if it cannot connect using the `database.username` and `database.password` values. This should be the password for a user that has superuser privileges to the database. For example, many PostgreSQL servers will provide you with a password for the `postgres` user. Similarly, MySQL servers sometimes leave the password blank for the `mysql` user.
+
+    This configuration option allows FusionAuth to create its own database and schema and also create the user specified by `database.username` with the password specified by `database.password`. This setting is useful for Docker and other containers where FusionAuth needs to bootstrap itself without any user interaction.
+  </APIField>
+
+  <APIField name="database.root.username" type="String">
+    The password that FusionAuth will use to connect to the database server as part of [Silent Mode](/docs/get-started/download-and-install/silent-mode) or [Setup Wizard](/docs/get-started/run-in-the-cloud/setup-wizard) if it cannot connect using the `database.username` and `database.password` values. This should be the username that has superuser privileges to the database. For example, many PostgreSQL servers use the username of `postgres` for the superuser account. Similarly, MySQL servers often use the username `mysql` for the superuser account.
+
+    This configuration option allows FusionAuth to create its own database and schema and also create the user specified by `database.username` with the password specified by `database.password`. This setting is useful for Docker and other containers where FusionAuth needs to bootstrap itself without any user interaction.
+
+    <span class="text-red-700">Deprecated names:</span>
+
+    - `database.root.user`
+  </APIField>
+
+  <APIField name="database.url" type="String">
+    The JDBC URL that FusionAuth can use to connect to the configured database.
+
+    Consider the examples below and review each part of the URL string as you may need to adjust it for your configuration.
+  
+    > jdbc:postgresql://db:5432/fusionauth
+    
+    - Database type: PostgreSQL
+    - Database host: db
+    - Database port: 5432
+    - Database name: fusionauth
+
+    In the example above, notice we have specified the PostgreSQL jdbc type, a host of `db`, a port `5432` and a database name of `fusionauth`. The host is the service name of the database configuration, in this case it is named `db`.
+
+    > jdbc:mysql://db:3306/fusionauth?serverTimezone=UTC
+    
+      - Database type: MySQL
+      - Database host: db
+      - Database port: 3306
+      - Database name: fusionauth
+      - Server timezone: UTC
+    
+    In the example above, notice we have specified the MySQL jdbc type, a host of `db`, a port `3306`, a database name of `fusionauth`, and the server timezone `UTC`.
+    
+    If you are using MySQL, you must include the `serverTimezone=UTC` parameter in the URL. The `?` character is the same as a standard URL parameter, so if you have additional parameters, you should only have a single `?` and parameters should be separated by `&`.
+
+    You may also wish to connect to a remote database, in that case you will provide your own JDBC string URL specifying the remote database host and port.
+
+    Some MySQL services such as Microsoft Azure may require a specific version of TLS to connect successfully. At the time of writing this note, the MySQL connector will not attempt to utilize TLSv1.2 by default, so when connecting to a service that requires this version you will need to explicitly request this version of TLS on the connection string. For example, appending this `enabledTLSProtocols=TLSv1.2` to the connection string will allow you to successfully connect to an Azure managed MySQL database. See [MySQL Connector : Connecting Securely UsingSSL](https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-using-ssl.html) for additional information.
+  </APIField>
+
+  <APIField name="database.username" type="String">
+    The database user that FusionAuth will use to connect to the database. If you are using [Silent Mode](/docs/get-started/download-and-install/silent-mode) or [Setup Wizard](/docs/get-started/run-in-the-cloud/setup-wizard), then this user might be automatically created for you, depending on your database server and configuration options. If this user is created as part of [Silent Mode](/docs/get-started/download-and-install/silent-mode) or [Setup Wizard](/docs/get-started/run-in-the-cloud/setup-wizard), it will also be the owner of the database and schema for FusionAuth.
+
+    <span class="text-red-700">Deprecated names:</span>
+
+    - `database.user`
+  </APIField>
+
+  <APIField name="fusionauth-app.additional-java-args" type="String">
+    {addlJavaArgsText}
+    
+    <span class="text-red-700">Deprecated names:</span>
+
+    - `fusionauth.additional-java-args`
+  </APIField>
+
+  <APIField name="fusionauth-app.ajp.port" type="Integer" defaults="9019" deprecated>
+    The port number that FusionAuth will use to accept AJP requests.
+
+    <p class="text-red-700">Deprecated names:</p>
+
+    - `fusionauth-app.ajp-port`
+
+    <span class="text-red-700">Deprecated in version `1.37.0`.</span>
+  </APIField>
+
+
+  <APIField name="fusionauth-app.http.cookie-same-site-policy" type="String" since="1.16.0" deprecated>
+    The value to use in the Same-Site cookie attribute for cookies set by FusionAuth.  Possible values are:
+    
+    - `None`
+    - `Lax`
+    - `Strict`
+
+    <span class="text-red-700">Deprecated names:</span>
+    
+    - `fusionauth.cookie.same.site.policy`
+    - `fusionauth-app.cookie-same-site-policy`
+    - `fusionauth-app.http.cookie.same-site-policy`
+    
+    <span class="text-red-700">Deprecated in version `1.37.0`.</span>
+  </APIField>
+
+  <APIField name="fusionauth-app.entity-search-index.name" type="String" defaults="fusionauth_entity" since="1.22.0">
+    The name of the Elasticsearch index that will be created by FusionAuth to index entities.
+  </APIField>
+
+  <APIField name="fusionauth-app.http-local.port" type="Integer" defaults="9012" since="1.36.0">
+    The port number that FusionAuth will use to make HTTP requests to itself over localhost. This is port is only used by FusionAuth itself, when making an API call, or using any browser based connections to FusionAuth, please use the port configured by <InlineField>fusionauth-app.http.port</InlineField>.
+  </APIField>
+
+  <APIField name="fusionauth-app.http.max-header-size" type="Integer" defaults="10240" since="1.17.0" deprecated>
+    The maximum size of the HTTP header in bytes.
+    
+    <span class="text-red-700">Deprecated names:</span>
+
+    - `fusionauth.http.max.header-size`
+    - `fusionauth-app.http-max-header-size`
+
+    <span class="text-red-700">Deprecated in version `1.37.0`, the default value is now `64k`.</span>
+  </APIField>
+
+  <APIField name="fusionauth-app.http.port" type="Integer" defaults="9011">
+    The port number that FusionAuth will use to accept HTTP requests.
+
+    <span class="text-red-700">Deprecated names:</span>
+
+    - `fusionauth-app.http-port`
+  </APIField>
+
+  <APIField name="fusionauth-app.https.enabled" type="Boolean" defaults="false" since="1.43.0">
+    Set to true to enable the HTTPS server. When enabled, a certificate chain and private key set as either filenames or content as described below.
+
+    See <InlineField>fusionauth-app.https.certificate</InlineField>, <InlineField>fusionauth-app.https.certificate-file</InlineField>, <InlineField>fusionauth-app.https.private-key</InlineField> and <InlineField>fusionauth-app.https.private-key-file</InlineField>.
+  </APIField>
+
+  <APIField name="fusionauth-app.https.port" type="Integer" defaults="9013">
+    The port number that FusionAuth will use to accept HTTPS requests.
+
+    <span class="text-red-700">Deprecated names:</span>
+
+    - `fusionauth-app.https-port`
+  </APIField>
+
+  <APIField name="fusionauth-app.https.certificate-file" type="String" since="1.43.0">
+    The fully-qualified filename containing the certificate chain of the HTTPS server, in PEM format. Ensure that this file contains the server certificate and all intermediate certificates up to, but not including, the root CA certificate.
+  </APIField>
+
+  <APIField name="fusionauth-app.https.private-key-file" type="String" since="1.43.0">
+    The fully-qualified filename containing the private key corresponding to the HTTPS server certificate, in PKCS#8 PEM format. Keys in this format are wrapped inside of a `-----BEGIN PRIVATE KEY-----` block.
+  </APIField>
+
+  <APIField name="fusionauth-app.https.certificate" type="String" since="1.43.0">
+    The raw content of the certificate chain of the HTTPS server, in PEM format. Ensure that this contains the server certificate and all intermediate certificates up to, but not including, the root CA certificate.
+    
+    Note, this property will take precedence over <InlineField>fusionauth-app.https.certificate-file</InlineField> if both values are set.
+    
+    When specifying this in the `fusionauth.properties` file, ensure each line ends with an escaped newline character (`\n`) and a continuation character (`\`). For example:
+    
+    ```text title="fusionauth.properties"
+    fusionauth-app.https.certificate=-----BEGIN CERTIFICATE-----\n\
+    MIIF0DCCA7igAwIBAgIIJ4oFgYxh2howDQYJKoZIhvcNAQELBQAwYTELMAkGA1UE\n\
+    &lt;snip>
+    Ma1apQ==\n\
+    -----END CERTIFICATE-----\n
+    -----BEGIN CERTIFICATE-----\n\
+    &lt;snip>
+    -----END CERTIFICATE-----\n
+    ```
+  </APIField>
+
+  <APIField name="fusionauth-app.https.private-key" type="String" since="1.43.0">
+    The raw PKCS#8 PEM-formatted private key content. Keys in this format are wrapped inside of a `-----BEGIN PRIVATE KEY-----` block.
+
+    Note, this property will take precedence over <InlineField>fusionauth-app.https.private-key-file</InlineField> if both values are set.
+
+    When specifying this in the `fusionauth.properties` file, ensure each line ends with an escaped newline character (`\n`) and a continuation character (`\`). For example:
+
+    ```text title="fusionauth.properties"
+    fusionauth-app.https.private-key=-----BEGIN PRIVATE KEY-----\n\
+    MIIYnyo8ePdRyOzBExOrJMfUpDnShAoGBAJKYYqYNdtbOsv2INOIxjcDlQa90tb\n\
+    &lt;snip>
+    MV1fpQ==\n\
+    -----END PRIVATE KEY-----\n
+    ```
+  </APIField>
+
+  <APIField name="fusionauth-app.http.read-timeout" type="Integer" defaults="20,000" since="1.37.0">
+    The HTTP read timeout in milliseconds that the server will wait to read data from an incoming request.
+  </APIField>
+
+  <APIField name="fusionauth-app.kickstart.file" type="String">
+    The path to the FusionAuth Kickstart JSON file.
+    
+    <span class="text-red-700">Deprecated environment variable names:</span>
+    - `FUSIONAUTH_KICKSTART`
+  </APIField>
+
+  <APIField name="fusionauth-app.local-metrics.enabled" type="Boolean" defaults="false" since="1.46.0">
+    Set to `true` to allow unauthenticated access to `/api/prometheus/metrics` and `/api/status` from `localhost`. This can be used to allow the scraping of health and metrics data by local collector agents without the need to provide an API key.
+  </APIField>
+
+  <APIField name="fusionauth-app.management.port" type="Integer" defaults="9010" deprecated>
+    The port number used for internal Tomcat administration.
+
+    <span class="text-red-700">Deprecated names:</span>
+    - `fusionauth-app.management-port`
+
+    <span class="text-red-700">Deprecated in version `1.37.0`.</span>
+  </APIField>
+
+  <APIField name="fusionauth-app.memory" type="String" defaults="512M">
+    <PropertyMemory />
+
+    <span class="text-red-700">Deprecated names:</span>
+
+    - `fusionauth.memory`
+  </APIField>
+
+  <APIField name="fusionauth-app.reindex-batch-size" type="Integer" defaults="1000">
+    The number of users to process per batch for a reindex operation.
+  </APIField>
+
+  <APIField name="fusionauth-app.reindex-thread-count" type="Integer" defaults="2">
+    The number of threads to process batches of users on for a reindex operation.
+  </APIField>
+
+  <APIField name="fusionauth-app.runtime-mode" type="String" defaults="development" since="1.16.0">
+    The FusionAuth runtime mode. The runtime mode causes some features to be modified based upon this configuration.
+
+    The possible values are:
+
+    - `development`
+    - `production`
+    
+    When in the `development` runtime mode, maintenance mode will interactively assist you configuring the database and connecting to Elasticsearch if configured. Once you move FusionAuth into production, it is recommended that you modify the runtime mode to `production`. When in `production` runtime mode maintenance mode will no longer be available to you which means you can be certain that your end users will not find themselves on the database upgrade panel during an Upgrade. When in `production` mode you will either need to leverage [Silent Mode](/docs/get-started/download-and-install/silent-mode) to automatically apply database migrations or you will need to apply the database migrations yourself (either by hand or via a script of some sort).
+
+    <span class="text-red-700">Deprecated names:</span>
+    - `fusionauth.runtime-mode`
+  </APIField>
+
+  <APIField name="fusionauth-app.search.default-refresh-interval" type="String" defaults="1s" since="1.49.2">
+    The default search index `refresh_interval`. Bulk operations (bulk user import and reindex) may temporarily relax this value for better performance and then set it back to this value. This value specifies the delay before updated User and Entity data are available to search requests. Must be a valid [Elasticsearch Date/Time Interval Value](https://www.elastic.co/guide/en/elasticsearch/reference/current/sql-functions-datetime.html), however setting this variable is not recommended.
+  </APIField>
+
+  <APIField name="fusionauth-app.silent-mode" type="Boolean" defaults="true" since="1.19.0">
+    Determines if FusionAuth should use [Silent Mode] during the startup process. Previous to version `1.19.0`, Silent Mode was only available when the [<InlineField>fusionauth-app.runtime-mode</InlineField>](/docs/get-started/download-and-install/silent-mode) was `development`. This has been changed so that FusionAuth can now automatically apply database migrations during the startup process.
+  </APIField>
+
+  <APIField name="fusionauth-app.url" type="String" since="1.4.0">
+    The FusionAuth App URL that is used to communicate with other FusionAuth nodes. This value is defaulted if not specified to use a localhost address or a site local if available. Unless you have multiple FusionAuth nodes the generated value should always work. You may need to manually specify this value if you have multiple FusionAuth nodes and the only way the nodes can communicate is on a public network.
+  </APIField>
+
+  <APIField name="fusionauth-app.user-search-index.name" type="String" defaults="fusionauth_user" since="1.22.0">
+    The name of the Elasticsearch index that will be created by FusionAuth to index users.
+  </APIField>
+
+  <APIField name="fusionauth-search.additional-java-args" type="String">
+    {addlJavaArgsText}
+
+    <span class="text-red-700">Deprecated names:</span>
+
+    - `fusionauthsearch.additional.java.args`
+  </APIField>
+
+  <APIField name="fusionauth-search.data-directory" type="String (Path)">
+    The location on disk where FusionAuth Search will store its data. This value is defaulted if not specified and generally should not be modified.
+    
+    <span class="text-red-700">Deprecated names:</span>
+
+    - `fusionauthsearch.data.directory`
+  </APIField>
+
+  <APIField name="fusionauth-search.hosts" type="String" defaults="_local_">
+    This parameter indicates which address or network interfaces to bind during service startup. The default value will cause the service to bind  any loopback address on the system such as `127.0.0.1`.
+    
+    This default value is sufficient for running FusionAuth and the Search Engine on the same server. If you run FusionAuth Search on a separate system than FusionAuth App you will need to modify this value. You may specify a single hostname or IP address or one of the special values in any combination.
+
+    Special values include:
+
+    - `_[networkInterface]_` - Addresses of a network interface, for example `_en0_`
+    - `_local_` - Any loopback address on the system, for example `127.0.0.1`
+    - `_site_` - Any site-local addresses on the system, for example `192.168.0.1`
+    - `_global_` - Any globally-scoped addresses on the system, for example `8.8.8.8`
+    
+    The following is an example to bind to `localhost` as well as any site local addresses on the system such as `192.168.1.42`.
+
+    > `fusionauth-search.hosts=_local_,_site_`
+
+    <span class="text-red-700">Deprecated names:</span>
+
+    - `fusionauthsearch.hosts`
+  </APIField>
+
+  <APIField name="fusionauth-search.http.port" type="Integer" defaults="9021">
+    The port number that the Search Engine will use to accept HTTP requests. This value is also utilized by FusionAuth to make HTTP requests to the FusionAuth Search.
+    
+    <span class="text-red-700">Deprecated names:</span>
+
+    - `fusionauth-search.http-port`
+  </APIField>
+
+  <APIField name="fusionauth-search.memory" type="String (Memory)" defaults="512M">
+    <PropertyMemory />
+
+    <span class="text-red-700">Deprecated names:</span>
+
+    - `fusionauthsearch.memory`
+  </APIField>
+
+  <APIField name="fusionauth-search.servers" type="String" defaults="localhost:9020" deprecated>
+    A comma separated list of stand-alone search engine servers that will be used by FusionAuth. The port specified on the server should be the Search Engine Transport port, not the HTTP port.
+
+    The following is an example of a configuration for two separate search engines, one running on localhost and the other on a remote system.
+
+    > `fusionauth-search.servers=localhost:9020,search2.example.com:9020`
+
+    This configuration value is used by the FusionAuth Search and the FusionAuth App services. Even when running FusionAuth App without FusionAuth Search on the same server this configuration value will need to be provided.
+
+    <span class="text-red-700">Deprecated in version `1.16.0`.</span>
+  </APIField>
+
+  <APIField name="fusionauth-search.transport.port" type="Integer" defaults="9020">
+    The port that the search engine will use for optimized TCP communications instead of HTTP communications. This port is used internally by the search engine to communicate between clustered nodes.
+    
+    <span class="text-red-700">Deprecated names:</span>
+
+    - `fusionauth-search.transport-port`
+    - `fusionauthsearch.transport.port`
+  </APIField>
+
+  <APIField name="proxy.host" type="String" since="1.31.0">
+    The hostname of your HTTP proxy.
+    
+    This option configures an egress HTTP proxy for any connections FusionAuth makes.
+  </APIField>
+
+  <APIField name="proxy.port" type="Integer" since="1.31.0">
+    The port number of your HTTP proxy. This value is required when setting <InlineField>proxy.host</InlineField>.
+  </APIField>
+
+  <APIField name="proxy.username" type="String" since="1.31.0">
+    The username used to authenticate. If your proxy does not require authentication you may omit this value.
+  </APIField>
+
+  <APIField name="proxy.password" type="String" since="1.31.0">
+    The password used to authenticate to your HTTP proxy. This value is required when setting <InlineField>proxy.username</InlineField>.
+  </APIField>
+
+  <APIField name="search.servers" type="String" defaults="http://localhost:9021">
+    A comma separated list of URLs that will be used by FusionAuth to connect to the search engine. The port specified on the URL should be the Search Engine HTTP port. (see `fusionauth-search.http-port`) It is not recommended to ever run the FusionAuth Search open to the public internet.
+
+    The following is an example of a configuration for two separate search engines, one running on localhost and the other is on a remote system.
+    
+    > `search.servers=http://localhost:9021,http://search2.example.com:9021`
+
+    The following is an example of a configuration using basic auth for authentication with the search engine.
+
+    `search.servers=https://user:password@search.example.com:9021`
+
+    <span class="text-red-700">Deprecated names:</span>
+
+    - `fusionauth-app.search-servers`
+  </APIField>
+
+  <APIField name="search.sniffer" type="Boolean" defaults="false" since="1.19.8">
+    Set to `true` if you want to use the Elasticsearch sniffer configuration. If you are using a managed Elasticsearch service, or running Elasticsearch inside of a container, you should leave this value set to `false`.
+    
+    This configuration can be helpful to allow FusionAuth to use a single connection to `localhost` and then allow the Elasticsearch REST client to discover all other nodes in the Elasticsearch cluster.
+  </APIField>
+
+  <APIField name="search.type" type="String" defaults="database" since="1.16.0">
+    The search engine type.  The possible values are:
+
+    - `database`
+    - `elasticsearch`
+    
+    When configuring the search engine type to `elasticsearch`, you must configure the <InlineField>search.servers</InlineField> property as well.
+
+    <span class="text-red-700">Deprecated names:</span>
+
+    - `fusionauth-app.search-engine-type`
+    - `fusionauth.search.engine`
+    - `fusionauth.search.engine.type`
+  </APIField>
+
+</APIBlock>
