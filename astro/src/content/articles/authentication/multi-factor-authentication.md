@@ -1,6 +1,6 @@
 ---
-title: "Multi-Factor Authentication (MFA): The Ultimate Guide"
-description: What is multi-factor authentication and how it works?
+title: "What is Multi-Factor Authentication (MFA) and How it Works"
+description: Learn what MFA is, why it's crucial, the available factors, and when to consider requiring multi-factor authentication for enhanced security.
 author: Dan Moore
 section: Authentication
 tags: mfa 2fa multi-factor-authentication two-factor-authentication user-experience customer-experience security policie sms totp factors ap-push tradeoffs open-standards biometric
@@ -48,11 +48,13 @@ In general, MFA outlines a system's capabilities, while 2FA describes how many f
 
 ### What is Adaptive Multi-factor Authentication?
 
-At its core, adaptive MFA is about flexibility and intelligence in security. You can read more about our approach to Adaptive MFA through our [Advanced Threat Detection](/docs/operate/secure-and-monitor/advanced-threat-detection) features. 
+At its core, adaptive MFA is about flexibility and intelligence in security. 
 
 Imagine a security system that not only asks for your credentials but also reads the room – where you are, what device you're using, even the time of day. It's like having a doorman who knows not just your face, but also your habits and preferences. If you're logging in from your usual laptop in the comfort of your home office, adaptive MFA might just give you a nod with a simple password check. But if you're trying to access sensitive data from a café in a different city, it might raise an eyebrow and ask for additional proof of identity, like a fingerprint or a one-time code sent to your phone.
 
 What's truly fascinating about adaptive MFA is its dynamic nature. It's not just about adding layers of security; it's about adding the right layers, at the right time. This approach minimizes friction for users, making security feel less like a series of hoops to jump through and more like a smart, responsive ally. It's a dance between convenience and caution, where security measures are tailored in real-time, based on the perceived level of risk. This not only enhances the user experience but also fortifies defenses, ensuring that the keys to the kingdom aren't handed over too easily, nor kept under lock and key unnecessarily.
+
+You can also use the same principles for initial authentication (for instance, requiring a CAPTCHA if a user logs in from a new device). Read more about adaptive approaches in our [Advanced Threat Detection](/docs/operate/secure-and-monitor/advanced-threat-detection) features. 
 
 ## Why Use Multi-factor Authentication (MFA)?
 

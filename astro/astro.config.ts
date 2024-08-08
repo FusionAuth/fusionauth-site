@@ -31,9 +31,8 @@ const config = defineConfig({
     }),
     indexPages(),
     tailwind({
-      config: {
-        applyBaseStyles: false
-      }
+      applyBaseStyles: true,
+      nesting: true,
     })
   ],
   markdown: {
@@ -42,6 +41,7 @@ const config = defineConfig({
     ],
     rehypePlugins: [
         // Tweak GFM task list syntax
+        // @ts-ignore
         rehypeTasklistEnhancer(),
     ]
   },

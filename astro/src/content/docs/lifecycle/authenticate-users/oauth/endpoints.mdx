@@ -21,7 +21,8 @@ import ClientCredentialsScopesOmitted from 'src/content/docs/lifecycle/authentic
 import ClientCredentialsScopesSingleEntity from 'src/content/docs/lifecycle/authenticate-users/oauth/_client_credentials_scopes_single_entity.mdx';
 import ClientCredentialsScopesMultipleEntities from 'src/content/docs/lifecycle/authenticate-users/oauth/_client_credentials_scopes_multiple_entities.mdx';
 import ClientCredentialsPermissionsExplanation from 'src/content/docs/lifecycle/authenticate-users/oauth/_client_credentials_permissions_explanation.mdx';
-import UserInfoResponse from 'src/content/docs/_shared/_user-info-response.mdx';
+import UserInfoAudClaimLimits from 'src/content/docs/_shared/_userinfo-aud-claim-limits.mdx';
+import UserInfoResponse from 'src/content/docs/_shared/_userinfo-response.mdx';
 import JSON from 'src/components/JSON.astro';
 
 ## Overview
@@ -119,7 +120,7 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
     This parameter may contain multiple scopes space separated.
     For example, the value of `openid offline_access` provides two scopes on the request.
 
-    Available scopes:
+    These scopes modify the behavior of the endpoint:
 
     * `openid` - This scope is used to request an `id_token` be returned in the response
     * `offline_access` - This scope is used to request a `refresh_token` be returned in the response
@@ -237,7 +238,7 @@ To begin the Implicit Grant you will redirect to the Authorization endpoint from
   <APIField name="scope" type="String" optional>
     If you are using OpenID Connect, the request must contain this parameter and at minimum it must contain `openid`.
 
-    Available scopes:
+    These scopes modify the behavior of the endpoint:
 
     * `openid` - This scope is used to request an `id_token` be returned in the response
   </APIField>
@@ -318,6 +319,8 @@ Location: https://piedpiper.com/callback#
 
     * `Authenticated` - The user is successfully authenticated for the requested application.
     * `AuthenticatedNotRegistered` - The user is successfully authenticated, but not registered for the requested application.
+    * `AuthenticatedNotVerified` - The user is successfully authenticated, but the user's email address has not been verified.
+    * `AuthenticatedRegistrationNotVerified` - The user is successfully authenticated and registered, but the registration has not been verified for the requested application.
   </APIField>
 </APIBlock>
 
@@ -707,22 +710,15 @@ _Response Codes_
   </APIField>
 </APIBlock>
 
-```json title="Example JSON Response"
-{
-  "access_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo",
-  "expires_in" : 3600,
-  "id_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo",
-  "refresh_token": "ze9fi6Y9sMSf3yWp3aaO2w7AMav2MFdiMIi2GObrAi-i3248oo0jTQ",
-  "refresh_token_id": "4c8927f1-95cd-4bf8-9534-066389ffff5e",
-  "scope": "openid offline_access",
-  "token_type" : "Bearer",
-  "userId" : "3b6d2f70-4821-4694-ac89-60333c9c4165"
-}
-```
+<JSON title="Example JSON Response" src="oauth/authorization_code_grant_response.json" />
 
 ### Refresh Token Grant Request
 
 If you will be using the Refresh Token Grant, you will make a request to the Token endpoint to exchange the user's refresh token for an access token.
+
+<Aside type="note">
+  In version `1.50.0` and later a refresh token containing unknown scopes will be revoked when used for a Refresh Token Grant if the <InlineField>oauthConfiguration.unknownScopePolicy</InlineField> value of the associated application is `Reject`.
+</Aside>
 
 <API method="POST" uri="/oauth2/token"/>
 
@@ -776,81 +772,10 @@ Ensure you are sending these parameters as form encoded data in the request body
   </APIField>
   <APIField name="scope" type="String" optional>
     This parameter is optional and if omitted, the same scope requested during the authorization request will be used.
-    If provided the scopes must match those requested during the initial authorization request.
-  </APIField>
-  <APIField name="user_code" type="String" optional since="1.11.0">
-    The end-user verification code.
-    This code is required if using this endpoint to approve the Device Authorization.
-  </APIField>
-</APIBlock>
+    If provided, the scopes must be a space-delimited subset of those requested during the initial authorization request.
+    The refresh token maintains the set of scopes from the initial authorization request even if a subset of scopes is requested during a Refresh Token Grant.
 
-```plaintext options="wrap" title="Example HTTP Request"
-POST /oauth2/token HTTP/1.1
-Host: piedpiper.fusionauth.io
-Content-Type: application/x-www-form-urlencoded
-Cookie: access_token=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IkFuYV91STRWbWxiMU5YVXZ0cV83SjZKZFNtTSJ9.eyJleHAiOjE1ODgzNTM0NjAsImlhdCI6MTU4ODM1MzQwMCwiaXNzIjoiZnVzaW9uYXV0aC5pbyIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMS0wMDAwLTAwMDAwMDAwMDAwMCIsImF1dGhlbnRpY2F0aW9uVHlwZSI6IlBBU1NXT1JEIiwiZW1haWwiOiJ0ZXN0MEBmdXNpb25hdXRoLmlvIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInByZWZlcnJlZF91c2VybmFtZSI6InVzZXJuYW1lMCJ9.ZoIHTo3Pv0DpcELeX_wu-ZB_rd988jefZc2Ozu9_p59kttwqMm5PV8IDbgxJw9xcq9TFoNG8e_B6renoc11JC54UbiyeXBjF7EH01n9LDz-zTGqu9U72470Z4E7IPAHcyvJIBx4Mp9sgsEYAUm9Tb8ChudqNHhn6ZnXYI7Sew7CtGlu62f10wdBYGX0soYARHBv9CwhJC3-gsD2HLmqHAP_XhrpaYPNr5EAvmCHlM-JlTiEQ9bXwSc4gv-XbPQWamwy8Kcdb-g0EEAml_dC_b2CduwwYg0EoPQB3tQxzTUQzADi7K6q0CtQXv2_1VrRi6aQ4lt7v7t-Na39wGry_pA
-Accept: */*
-Content-Length: 436
-client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&grant_type=refresh_token&refresh_token=ze9fi6Y9sMSf3yWp3aaO2w7AMav2MFdiMIi2GObrAi-i3248oo0jTQ
-```
-
-### Refresh Token Grant Request
-
-If you will be using the Refresh Token Grant, you will make a request to the Token endpoint to exchange the user's refresh token for an access token.
-
-<API method="POST" uri="/oauth2/token"/>
-
-#### Request Cookies
-
-<APIBlock>
-  <APIField name="access_token" type="String" optional since="1.16.0">
-    The previously issued encoded access token.
-    When provided on the request, this value will be relayed in the related JWT Refresh webhook event within the `original` field.
-    If both the cookie and request parameter are provided, the cookie will take precedence.
-  </APIField>
-</APIBlock>
-
-#### Request Headers
-
-<APIBlock>
-  <AuthorizationHeader />
-  <APIField name="Content-Type" type="String" required>
-    This value must be set to `application/x-www-form-urlencoded`.
-  </APIField>
-</APIBlock>
-
-#### Request Parameters
-
-Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
-
-<APIBlock>
-  <APIField name="access_token" type="String" optional since="1.16.0">
-    The previously issued encoded access token.
-    When provided on the request, this value will be relayed in the related JWT Refresh webhook event within the `original` field.
-  </APIField>
-  <APIField name="client_id" type="String" optional>
-    The unique client identifier.
-    The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
-
-    This parameter is optional when the `Authorization` header is provided.
-    When the `Authorization` header is not provided, this parameter is then required.
-    Prior to version `1.3.1` this parameter was always required.
-  </APIField>
-  <APIField name="client_secret" type="String" optional since="1.5.0">
-    The client secret.
-    This parameter is optional when the `Authorization` header is provided.
-    Please see the [the Client Secret table](#client-secret) for more details.
-  </APIField>
-  <APIField name="grant_type" type="String" required>
-    The grant type to be used.
-    This value must be set to `refresh_token`
-  </APIField>
-  <APIField name="refresh_token" type="String" required>
-    The refresh token that you would like to use to exchange for an access token.
-  </APIField>
-  <APIField name="scope" type="String" optional>
-    This parameter is optional and if omitted, the same scope requested during the authorization request will be used.
-    If provided the scopes must match those requested during the initial authorization request.
+    Prior to version `1.50.0` the scopes must match those requested during the initial authorization request if provided.
   </APIField>
   <APIField name="user_code" type="String" optional since="1.11.0">
     The end-user verification code.
@@ -907,15 +832,7 @@ _Response Codes_
   </APIField>
 </APIBlock>
 
-```json title="Example JSON Response"
-{
-  "access_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo",
-  "expires_in" : 3600,
-  "id_token" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo",
-  "token_type" : "Bearer",
-  "userId" : "3b6d2f70-4821-4694-ac89-60333c9c4165"
-}
-```
+<JSON title="Example JSON Response" src="oauth/refresh_token_grant_response.json" />
 
 ### Client Credentials Grant Request
 
@@ -1061,7 +978,7 @@ Ensure you are sending these parameters as form encoded data in the request body
     This parameter may contain multiple scopes space separated.
     For example, the value of `openid offline_access` provides two scopes on the request.
 
-    Available scopes:
+    These scopes modify the behavior of the endpoint:
 
     * `openid` - This scope is used to request an `id_token` be returned in the response
     * `offline_access` - This scope is used to request a `refresh_token` be returned in the eventual <ScrollRef target="Token" /> response.
@@ -1120,16 +1037,7 @@ _Response Codes_
   </APIField>
 </APIBlock>
 
-```json title="Example JSON Response"
-{
-  "device_code": "e6f_lF1rG_yroI0DxeQB5OrLDKU18lrDhFXeQqIKAjg",
-  "expires_in": 600,
-  "interval": 5,
-  "user_code": "FBGLLF",
-  "verification_uri": "https://piedpiper.com/device",
-  "verification_uri_complete": "https://piedpiper.com/device?user_code=FBGLLF"
-}
-```
+<JSON title="Example JSON Response" src="oauth/device_authorization_grant_response.json" />
 
 ### Device User Code
 
@@ -1197,39 +1105,6 @@ Ensure you are sending these parameters as form encoded data in the request body
   </APIField>
 </APIBlock>
 
-#### Request Headers
-
-<APIBlock>
-  <AuthorizationHeader />
-  <APIField name="Content-Type" type="String" required>
-    This value must be set to `application/x-www-form-urlencoded`.
-  </APIField>
-</APIBlock>
-
-#### Request Parameters
-
-Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
-
-<APIBlock>
-  <APIField name="client_id" type="String" optional>
-    The unique client identifier.
-    The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
-
-    This parameter is optional when the `Authorization` header is provided.
-    When the `Authorization` header is not provided, this parameter is then required.
-    Prior to version `1.46.0` this parameter was always required.
-  </APIField>
-  <APIField name="client_secret" type="String" optional>
-    The client secret.
-    This parameter is optional when the `Authorization` header is provided.
-    Please see the [the Client Secret table](#client-secret) for more details.
-  </APIField>
-  <APIField name="user_code" type="String" required>
-    The end-user verification code.
-    This is the code that a user entered during the Device Authorization grant which you are requesting to be validated.
-  </APIField>
-</APIBlock>
-
 ### Response
 
 _Response Codes_
@@ -1278,6 +1153,13 @@ _Response Codes_
 
     This is the value that FusionAuth will use to uniquely link a FusionAuth User to a user in the 3rd party identity provider.
   </APIField>
+  <APIField name="scope" type="String" since="1.50.0">
+    The value that should be used for the <InlineField>scope</InlineField> parameter during the interactive portion of the Device Code Grant.
+    The value contains the same scopes as the [Device Authorize](#device-authorize) request with the following scopes excluded:
+    * `openid`
+    * `offline_access`
+    * `idp-link:` prefixed scopes
+  </APIField>
   <APIField name="tenantId" type="UUID">
     The unique Id of the Tenant.
   </APIField>
@@ -1286,26 +1168,7 @@ _Response Codes_
   </APIField>
 </APIBlock>
 
-```json title="Example JSON Response"
-{
-  "client_id": "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
-  "deviceInfo": {
-    "description": "Johny's Xbox"
-    "name": "Xbox",
-    "type": "Console"
-  },
-  "expires_in": 600,
-  "pendingIdPLink": {
-    "displayName": "jmoney42",
-    "identityProviderId": "af53ab21-34c3-468a-8ba2-ecb3905f67f2",
-    "identityProviderName": "Xbox",
-    "identityProviderType": "Xbox",
-    "identityProviderUserId": "af53ab21-34c3-468a-8ba2-ecb3905f67f2"
-  },
-  "tenantId": "5f35237d-d036-4aaa-a917-17039d4697e6",
-  "user_code": "FBGLLF"
-}
-```
+<JSON title="Example JSON Response" src="oauth/device_user_code_response.json" />
 
 ### Device Validate
 
@@ -1447,25 +1310,7 @@ _Response Codes_
   </APIField>
 </APIBlock>
 
-```json title="Example JSON Response"
-{
-  "deviceGrantStatus": "Approved",
-  "deviceInfo": {
-    "description": "Johny's Xbox"
-    "name": "Xbox",
-    "type": "Console"
-  },
-  "identityProviderLink": {
-    "displayName": "jmoney42",
-    "identityProviderId": "af53ab21-34c3-468a-8ba2-ecb3905f67f2",
-    "identityProviderName": "Xbox",
-    "identityProviderType": "Xbox",
-    "identityProviderUserId": "af53ab21-34c3-468a-8ba2-ecb3905f67f2"
-  },
-  "tenantId": "5f35237d-d036-4aaa-a917-17039d4697e6",
-  "userId": "3b6d2f70-4821-4694-ac89-60333c9c4165",
-}
-```
+<JSON title="Example JSON Response" src="oauth/device_approve_response.json" />
 
 ## Introspect
 
@@ -1610,29 +1455,9 @@ This is an example response body when the provided `access_token` was issued on 
   </APIField>
 </APIBlock>
 
-```json title="Example JSON Response for a valid token"
-{
-  "active": true,
-  "applicationId": "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
-  "aud": "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
-  "authenticationType": "PASSWORD",
-  "email": "test0@fusionauth.io",
-  "email_verified": true,
-  "exp": 1487975407000,
-  "iat": 1487971807000,
-  "iss": "acme.com",
-  "roles": [
-    "admin"
-  ],
-  "sub": "858a4b01-62c8-4c2f-bfa7-6d018833bea7"
-}
-```
+<JSON title="Example JSON Response for a valid token" src="oauth/introspect_valid_token_response.json" />
 
-```json title="Example JSON Response for an invalid token"
-{
-  "active": false
-}
-```
+<JSON title="Example JSON Response for an invalid token" src="oauth/introspect_invalid_token_response.json" />
 
 #### Response Body
 
@@ -1674,27 +1499,18 @@ This is an example response body when the provided `access_token` was issued as 
   </APIField>
 </APIBlock>
 
-```json title="Example JSON Response for a valid token"
-{
-  "active": true,
-  "aud": "3c219e58-ed0e-4b18-ad48-f4f92793ae32",
-  "exp": 1487975407000,
-  "iat": 1487971807000,
-  "iss": "acme.com",
-  "sub": "858a4b01-62c8-4c2f-bfa7-6d018833bea7"
-}
-```
+<JSON title="Example JSON Response for an valid token" src="oauth/introspect_client_credentials_grant_response.json" />
 
-```json title="Example JSON Response for an invalid token"
-{
-  "active": false
-}
-```
+<JSON title="Example JSON Response for an invalid token" src="oauth/introspect_invalid_token_response.json" />
 
-## Userinfo
+## UserInfo
 
-This is an implementation of the OpenId Connect Userinfo endpoint as defined by the [OpenId Connect Section 5.3](http://openid.net/specs/openid-connect-core-1_0.html#UserInfo).
+This is an implementation of the OpenId Connect UserInfo endpoint as defined by the [OpenId Connect Section 5.3](http://openid.net/specs/openid-connect-core-1_0.html#UserInfo).
 This endpoint may be called using the `GET` or the `POST` HTTP method.
+
+<Aside type="note">
+  In version `1.50.0` and later, the UserInfo response can be customized with a lambda using the <InlineField>oauthConfiguration.userinfoPopulateLambda</InlineField> value of the application object. See [UserInfo populate lambda](/docs/extend/code/lambdas/userinfo-populate).
+</Aside>
 
 ### Request
 
@@ -1717,10 +1533,28 @@ Returns the Claims about the authenticated End-User.
     ```
     Authorization: Bearer [access_token]
     ```
+
+    <Aside type="caution">
+      <UserInfoAudClaimLimits />
+    </Aside>
+
+    <Aside type="note">
+      In version `1.50.0` and later when the application's <InlineField>oauthConfiguration.scopeHandlingPolicy</InlineField> is set to `Strict`, to use a token with this endpoint, the token must:
+
+      * Be an access token
+      * Contain the `openid` scope in the `scope` claim
+    </Aside>
   </APIField>
 </APIBlock>
 
 ### Response
+
+<Aside type="note">
+  In version `1.50.0` and later the UserInfo response changes based on the <InlineField>oauthConfiguration.scopeHandlingPolicy</InlineField> value of the application object.
+
+  * In `Strict` mode the response claims are populated based on the `scope` values of the provided token and available information on the User object. This behavior more closely aligns with the OpenID Connect 1.0 specification recommendations.
+  * In `Compatibility` mode the response claims are populated based on available information on the User object only and include some claims from the provided token. This is behavior allows for backwards compatibility with versions of FusionAuth before 1.50.0.
+</Aside>
 
 _Response Codes_
 
@@ -1809,14 +1643,7 @@ Errors are either returned in a JSON response body, or as redirect parameters de
 When an error is returned from an OAuth endpoint as a JSON body the following structure can be expected in the response.
 The `change_password_id` field will only be present on the response if a password change is required.
 
-```json title="Example JSON Response"
-{
-  "change_password_id": "a65f7ac3-e4ce-4bf6-bbb0-576189c4d965",
-  "error": "change_password_required",
-  "error_description": "The user is required to change their password.",
-  "error_reason": "change_password_breached"
-}
-```
+<JSON title="Example JSON Response" src="oauth/oauth_error_password_change_response.json" />
 
 ### Redirect Parameters
 
@@ -1833,7 +1660,7 @@ Location: https://piedpiper.com/callback?
 
 ### Error Fields
 
-Regardless of the way the error is returned to your, the field definitions are the same.
+Regardless of the way the error is returned to you, the field definitions are the same.
 Each possible value <InlineField>error</InlineField> and <InlineField>error_reason</InlineField> is documented below.
 
 
@@ -1846,18 +1673,22 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
 
     The possible values are:
 
+    * `access_denied`
     * `authorization_pending`
     * `change_password_required`
     * `expired_token`
+    * `invalid_client`
     * `invalid_grant`
     * `invalid_request`
     * `invalid_scope`
     * `invalid_token`
+    * `not_licensed`
     * `server_error`
     * `two_factor_required`
     * `unauthorized_client`
     * `unsupported_grant_type`
     * `unsupported_response_type`
+    * `unsupported_token_type`
   </APIField>
   <APIField name="error_description" type="String">
     The human-readable OAuth error description.
@@ -1875,6 +1706,7 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `access_token_failed_processing`
     * `access_token_invalid`
     * `access_token_malformed`
+    * `access_token_required`
     * `access_token_unavailable_for_processing`
     * `auth_code_not_found`
     * `change_password_administrative`
@@ -1883,27 +1715,32 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `change_password_validation`
     * `client_authentication_missing`
     * `client_id_mismatch`
+    * `consent_canceled`
     * `grant_type_disabled`
     * `invalid_additional_client_id`
-    * `invalid_client_authentication_scheme`
     * `invalid_client_authentication`
+    * `invalid_client_authentication_scheme`
     * `invalid_client_id`
     * `invalid_device_code`
+    * `invalid_entity_permission_scope`
     * `invalid_grant_type`
     * `invalid_id_token_hint`
     * `invalid_origin`
-    * `invalid_pkce_code_challenge_method`
+    * `invalid_origin_opaque`
     * `invalid_pkce_code_challenge`
+    * `invalid_pkce_code_challenge_method`
     * `invalid_pkce_code_verifier`
     * `invalid_post_logout_redirect_uri`
     * `invalid_redirect_uri`
     * `invalid_response_mode`
     * `invalid_response_type`
+    * `invalid_target_entity_scope`
     * `invalid_user_code`
-    * `invalid_user_id`
     * `invalid_user_credentials`
+    * `invalid_user_id`
     * `login_prevented`
     * `missing_client_id`
+    * `missing_client_secret`
     * `missing_code`
     * `missing_code_challenge`,
     * `missing_code_verifier`,
@@ -1911,12 +1748,17 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `missing_grant_type`
     * `missing_redirect_uri`
     * `missing_refresh_token`
+    * `missing_required_scope`
     * `missing_response_type`
     * `missing_token`
     * `missing_user_code`
+    * `missing_user_id`
     * `missing_verification_uri`
+    * `not_licensed`
     * `refresh_token_not_found`
+    * `refresh_token_type_not_supported`
     * `unknown`
+    * `unknown_scope`
     * `user_code_expired`
     * `user_expired`
     * `user_locked`
