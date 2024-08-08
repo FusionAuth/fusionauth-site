@@ -65,7 +65,7 @@ The response for this API contains the System Configuration.
 
 <API method="PUT" uri="/api/system-configuration" authentication={["api-key"]} showPatch={true} title="Update the System Configuration"/>
 
-<SystemConfigurationRequestBody api_endpoint="/api/system-configuration" />
+<SystemConfigurationRequestBody />
 
 ### Response
 
@@ -261,12 +261,10 @@ FusionAuth also supports a system status check [using Prometheus](/docs/operate/
 ### Response
 The JSON response from the Status API is complex and subject to change. The only exception is the `version` key.
 
-`version` will not change and will be returned as below. As a reminder, an API key is required to obtain this value unless explicitly allowed from `localhost`.
-```javascript
+The `version` key will not change and will be returned as below. As a reminder, an API key is required to obtain this value unless explicitly allowed from `localhost`.
+```json
 {
-{/* .. */}
-    "version": "1.26.1"
-{/* .. */}
+  "version": "1.26.1"
 }
 ```
 
@@ -274,14 +272,40 @@ The specific contents of the JSON body are not documented here. If you choose to
 
 _Response Codes_
 
-| Code | Description                                                                                                                                                                                                                                                                                                                          |
-|------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 200  | The FusionAuth is functioning properly                                                                                                                                                                                                                                                                                               |
-| 452  | The FusionAuth is failing to make a JDBC connection to the configured database.                                                                                                                                                                                                                                                      |
-| 453  | The FusionAuth database connection pool connectivity is below the healthy threshold. Additional information may be available in the JSON response which is retrieved when using an API key.                                                                                                                                          |
-| 454  | The FusionAuth database connectivity pool connectivity is below the healthy threshold. Additional information may be available in the JSON response which is retrieved when using an API key.                                                                                                                                        |
-| 460  | FusionAuth is using Elasticsearch and the search service is reporting an unhealthy cluster status. In a cluster with 2+ nodes, this means the cluster status is being reported as `yellow` or `red`. In a single-node Elasticsearch configuration this means the cluster status is `red.`                                            |
-| 500  | The FusionAuth server is not functioning properly. This could indicate that the database connectivity failed or one or more services within FusionAuth failed. Consult the FusionAuth [Troubleshooting](/docs/operate/troubleshooting/troubleshooting) to learn more about the failure or contact FusionAuth support for assistance. |
+| Code | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+|------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | FusionAuth is functioning properly                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 452  | FusionAuth is failing to make a JDBC connection to the configured database.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 453  | The FusionAuth database connection pool connectivity is below the healthy threshold. This means requests are waiting too long to obtain a connection to the database. Additional information may be available in the JSON response which is retrieved when using an API key.                                                                                                                                                                                                                                                                  |
+| 454  | The FusionAuth database connection pool connectivity is below the healthy threshold. Additional information may be available in the JSON response which is retrieved when using an API key.<br/><br/> As of version `1.51.1` this status code will no longer be returned based upon the connectivity health check. In practice you only need to monitor for `452` to ensure FusionAuth is able to connect to the database.                                                                                                                    |
+| 460  | FusionAuth is using Elasticsearch and the search service is reporting an unhealthy cluster status. In a cluster with 2+ nodes, this means the cluster status is being reported as `yellow` or `red`. In a single-node Elasticsearch configuration this means the cluster status is `red.`<br/><br/> As of version `1.51.1` this status code will no longer be returned based upon the Elasticsearch health check. If you are using an external Elasticsearch or OpenSearch service, you will want to monitor that separately from FusionAuth. |
+| 500  | FusionAuth is not functioning properly. This could indicate that the database connectivity failed or one or more services within FusionAuth failed. Consult the FusionAuth [Troubleshooting](/docs/operate/troubleshooting/troubleshooting) to learn more about the failure or contact FusionAuth support for assistance.                                                                                                                                                                                                                     |
+
+## Retrieve System Health
+
+<Aside type="version">
+  This API has been available since 1.51.1
+</Aside>
+
+The Health API is used to monitor the health of the FusionAuth service. This endpoint is specifically intended for use by a load balancer to understand when FusionAUth is available, live and ready for requests. Prefer this endpoint to the Status API when using it for a load balancer or a Kubernetes readiness check.
+
+This API does not require an API key.
+
+### Request
+
+<API method="GET" uri="/api/health" authentication={["none"]} title="Return the system health"/>
+
+### Response
+
+This API does not return a JSON response body.
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                   |
+|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | FusionAuth is functioning properly and can accept requests.                                                                                                   |
+| 500  | FusionAuth is not functioning properly. This will generally indicate that FusionAuth is not able to communicate with the database or complete I/O operations. |
+
 
 ## Retrieve System Version
 

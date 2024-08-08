@@ -83,7 +83,7 @@ ecc decode
  12.728000   0.008000  12.736000 ( 12.751313)
 ```
 
-Don't look at the absolute numbers, they're going to change based on the programming language, what's happening on the system during a benchmark run, and CPU horsepower. Instead, focus on the ratios. RSA encoding took approximately 9 times as long as HMAC encoding. ECC took almost two and a half times as long to encode and twice as long to decode. The code is [available](https://github.com/FusionAuth/fusionauth-example-ruby-jwt/blob/master/benchmark_algos.rb) if you'd like to take a look. Symmetric signatures are faster than asymmetric options. 
+Don't look at the absolute numbers, they're going to change based on the programming language, what's happening on the system during a benchmark run, and CPU horsepower. Instead, focus on the ratios. RSA encoding took approximately 9 times as long as HMAC encoding. ECC took almost two and a half times as long to encode and twice as long to decode. The code is [available](https://github.com/FusionAuth/fusionauth-example-ruby-jwt/blob/main/benchmark_algos.rb) if you'd like to take a look. Symmetric signatures are faster than asymmetric options. 
 
 However, the shared secret required for options like HMAC has security implications. The token consumer can create a JWT indistinguishable from a token built by the creator, because both have access to the algorithm and the shared secret.
 
