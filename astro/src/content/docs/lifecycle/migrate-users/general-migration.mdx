@@ -13,6 +13,7 @@ import LdapConnectorReconcile from 'src/content/docs/_shared/lambda/_ldap-connec
 import MfaMigration from 'src/content/docs/lifecycle/authenticate-users/_mfa-migration.mdx';
 import PremiumEditionBlurb from 'src/content/docs/_shared/_premium-edition-blurb.astro';
 import SlowMigrationTimeline from 'src/content/docs/lifecycle/migrate-users/provider-specific/_slow-migration-timeline.mdx';
+import PerformanceTips from 'src/content/docs/lifecycle/migrate-users/_performance-tips.mdx';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 
@@ -129,7 +130,7 @@ All entities have a [UUID](/docs/reference/data-types#uuids) identifier. This Id
 
 If you haven't already done so, ensure FusionAuth will work with your application or applications. You can [install it in about five minutes](/docs/quickstarts/5-minute-setup-guide) and build a prototype.
 
-A protoype is helpful in determining which [login method](/docs/get-started/core-concepts/integration-points#login-options) you should use and how to [theme the hosted login pages](/docs/customize/look-and-feel/) to maintain your application's look and feel.
+A prototype is helpful in determining which [login method](/docs/get-started/core-concepts/integration-points#login-options) you should use and how to [theme the hosted login pages](/docs/customize/look-and-feel/) to maintain your application's look and feel.
 
 FusionAuth assigns users roles. A user's roles are available in API responses and in the [JWT (JSON Web Token)](/docs/lifecycle/authenticate-users/login-api/json-web-tokens) sent to client applications after successful user authentication. You may need to update your application to look at the `roles` claim to allow or disallow functionality within an application.
 
@@ -253,23 +254,7 @@ Below, find out how to migrate all your user data into FusionAuth with one cutov
 
 Because you have downtime with this approach, you're going to want to import users quickly. Tweak these FusionAuth settings and perform the following tasks to do so.
 
-If you have tens of millions of users and are self-hosting, consider [switching to the database search engine](/docs/lifecycle/manage-users/search/switch-search-engines). With that option, FusionAuth won't sync user data to Elasticsearch during the import. If you require Elasticsearch for advanced searching capabilities, switch back to Elasticsearch after the migration is complete. This option is not available when using [FusionAuth Cloud](/docs/get-started/run-in-the-cloud/cloud).
-
-Disable the `user.bulk.create` webhook unless you need FusionAuth to send an event with all the created users to another system.
-
-Set the HTTP timeout to a large value on your API requests. Exactly how to do this varies based on the tool you're using to make the HTTP request. The import API is currently a synchronous operation, though there are plans to make it asynchronous (see [this GitHub issue for more](https://github.com/FusionAuth/fusionauth-issues/issues/944)).
-
-If you only provide a `password` field, then FusionAuth will assume the password is in plaintext and hash it for you. Hashing a password negatively affects load time, performance and throughput. If you provide the `salt`, `password`, `encryptionScheme` and `factor` values when importing, then FusionAuth assumes the value in the `password` field is a hashed password, and it will not be hashed.
-
-Deduplicate any emails. In FusionAuth, each email address may be associated with only one user account per tenant.
-
-Stage your data by exporting current user data into JSON files. This will make debugging easier, since you can load one file at a time, and you can repeat a data load if there are issues. It will also be more performant than loading data across a network or from a database.
-
-<Aside type="note">
-The easiest and fastest way to load bulk user data into FusionAuth is to loop over a directory of JSON files that each contain 100,000 users. These JSON files should be clean, have unique emails per tenant and be minified.
-
-In FusionAuth testing, this approach resulted in loading 100,000 users in 108 seconds. Performance is, of course, dependent on hardware, network and database constraints, but this should give you a good idea of possible import speed.
-</Aside>
+<PerformanceTips />
 
 #### Building The Migration Scripts
 
@@ -656,7 +641,7 @@ But if you are trying to migrate an expected mass of new users and want to use F
 
 ## Special Considerations
 
-Beyond migrating users, there may be other important data to import from a previous user identity datastore.
+Beyond migrating users, there may be other important data to import from a previous user identity datastore, or aspects to consider.
 
 ### Migrating Refresh Tokens
 
@@ -712,6 +697,57 @@ While modifying this setting may be necessary for a migration, you should, as so
 </Aside>
 
 At a later time, request each SAML IdP update their configuration to point to the FusionAuth ACS URL. After all upstream providers have been migrated to the latest configuration, set the <InlineField>Destination assertion policy</InlineField> field to <InlineUIElement>Enabled</InlineUIElement>, the most secure setting.
+
+### Migrating Large Numbers Of Users
+
+Migrating tens or hundreds of millions of users is more complex than migrating 1000 users, if for no other reason than it takes more time.
+
+This is general guidance, but feel free to [contact us](/contact) if you'd like more specific guidance about planning for such a migration. 
+
+It is useful to break the load into different phases, where you load against different instances based on goals. The ability to run FusionAuth locally lets you:
+
+* Confirm that encryption scheme/salt/factor configuration works. Make sure you can load a test user and log in with their known password.
+* Set `validateDBConstraints` to true to make sure that the data loads properly. Enabling this value lets the import API offer useful error messages if there are constraints violated, such as duplicate usernames for users in the same tenant.
+* Make sure the JSON structure is correct and that you are loading the user with the correct profile data, group memberships and account registrations.
+* Drop the database when you are done with a test load. This is quicker than deleting a tenant.
+
+Take advantage of the iteration speed you get by running locally.
+
+After you have made sure that your user data is clean, then test against your production system. Here, it makes sense to start with a subset of your users to get an estimate of timing. It's important to test against production or a production replica, as testing against an environment that doesn't have equivalent CPU, memory or network bandwidth, won't provide helpful results.
+
+Testing loading 100k or 1M users will help you estimate the time needed for all your users. Load these test users in a separate tenant so you can easily test and drop users in batches.
+
+After this you'll know how long it will take to load all of your users. You can then break up your user population into groups, loading 1M, 5M or 10M at a time.
+
+#### Performance Tips
+
+<PerformanceTips />
+
+#### Importing To FusionAuth Cloud
+
+For FusionAuth Cloud, the following additional recommendations apply:
+
+* You can't run the import API code in the same network due to security concerns. You can stand up an EC2 instance in the same AWS region to minimize network latency.
+* Provide a static IP address to the FusionAuth team so they can allow list your instance. This prevents your requests from being rate limited.
+* If you receive 429 error messages, you are being rate limited. Double check you are using an IP address on the allow list.
+* If you receive 504 error messages, you are exhausting the resources of your deployment. Increase the size or your deployment or add in pauses.
+
+
+#### What If I Have A Moving Target
+
+What should you do if you have calculated it will take you two days to load all your users, but you'll have significant numbers of new users or users who have modified their profiles during that time frame?
+
+Use timestamps to break the load up into phases based on the last modified timestamp for each user. Here's the steps to take:
+
+* Run through all the local steps above with the bulk of your users.
+* Record the timestamp, call it BULK_TIMESTAMP.
+* Pull all the users who have a last modified time before `BULK_TIMESTAMP` and load them.
+* Pull all users who have a created time after `BULK_TIMESTAMP` and load them.
+* Pull all users who have a created time before `BULK_TIMESTAMP` but an updated time after `BULK_TIMESTAMP` and process them, updating their profile data if changed. If their password has changed, you'll need to either initiate a password reset for these users or let them initiate the password process themselves. 
+
+Depending on how long it takes you to run a bulk load, you may need to repeat this cycle a few times.
+
+If you don't have timestamps, things get more complicated, but you may be able to split users deterministically into groups, track users in a separate datastore, or add a `processed_timestamp` column to your existing user datastore to achieve the same goal.
 
 ## Additional Resources
 
