@@ -14,20 +14,6 @@ function printFileAttribs() {
   printOut "Current size of the screenshot is : "`echo ${attributes} | cut -d' ' -f7`
 }
 
-function compressUsingTinyPNG() {
-  echo "-- Using TinyPNG for compression"
-
-  API_KEY=`printenv | grep TINYPNG_API_KEY | awk -F '=' '{print $2}'`
-  if [ "${API_KEY}" == "" ]; then
-    echo "Error : TinyPNG API key not found in environment. Not continuing. Please set TINYPNG_API_KEY".
-    exit 1
-  else
-    compressedFile=`curl -s --user api:${API_KEY} --data-binary @${absFile} -i https://api.tinify.com/shrink | grep -i location | awk '{print $2}' | sed 's/.$//'`
-    printOut "-- Downloading from TinyPNG : ${compressedFile}"
-    curl -s -X GET "${compressedFile}" --output ${absFile}
-  fi
-}
-
 function printOut() {
   if [ ${verbose} == "yes" ]; then
     echo
@@ -53,18 +39,14 @@ HELP_USAGE
 }
 
 verbose="no"
-useTP="no"
 filename=`date +'%y%m%d-%H%M%S'`
 destination=""
 xAxis=640
 url=""
-while getopts ":stx:f:u:d:h" options; do
+while getopts ":vx:f:u:d:h" options; do
     case "${options}" in
         v)
             verbose="yes"
-            ;;
-        t)
-            useTP="yes"
             ;;
         x)
             xAxis=${OPTARG}
@@ -95,7 +77,7 @@ shift $((OPTIND-1))
 
 printOut "-- checking if imagemagick is installed..."
 
-which -s convert
+which -s magick
 status=$?
 if [ $status -eq 1 ]; then
   echo "Installing imagemagick..."
@@ -104,21 +86,12 @@ else
   printOut "imagemagick is installed"
 fi
 
-printOut "-- Checking whether pngquant is installed"
-which -s pngquant
-status=$?
-if [ $status -eq 1 ]; then
-  echo "Installing pngquant"
-  brew install pngquant
-else
-  printOut "pngquant is installed"
-fi
 
-if [ `defaults read "Apple Global Domain" AppleReduceDesktopTinting` == "0" ]; then
-  echo "Window will not have a gray background."
-  echo "Go to System Setting -> Appearance"
-  echo "And disable 'Allow wallpaper tinting in windows'"
-  exit 1;
+if [ $(defaults read "Apple Global Domain" AppleReduceDesktopTinting 2>/dev/null || echo -n 0) == "0" ]; then
+  echo "Disabling wallpaper tinting in windows to get a consistent gray background."
+  echo "To revert this change, execute 'defaults write \"Apple Global Domain\" AppleReduceDesktopTinting 0'"
+  echo "or go to System Settings -> Appearance and enable 'Allow wallpaper tinting in windows'."
+  defaults write "Apple Global Domain" AppleReduceDesktopTinting 1
 fi
 
 
@@ -163,6 +136,14 @@ tell application theApp
 end tell
 EOD
 
+osaret=$?
+
+if [ $osaret != 0 ]; then
+  echo "osascript failed. Check permissions under System Settings -> Privacy & Security for both Accessibility and Automation."
+  exit 1
+fi
+
+
 if [ "x$url" != "x" ]; then
   osascript<<EOD
 tell application "Safari" to set the URL of the front document to "$url"
@@ -190,14 +171,9 @@ printOut "-- Checking image properties"
 printFileAttribs
 
 printOut "-- Resizing screenshot"
-convert=`which convert`
-$convert -geometry 1600x ${absFile} ${absFile}
-
-printOut "-- Compressing png"
-compressUsingTinyPNG
+magick ${absFile} -geometry 1600x ${absFile}
 
 # move to destination folder
 if [ "${destination}" != "" ]; then
     mv ${absFile} ${destination}/${filename}
 fi
-
