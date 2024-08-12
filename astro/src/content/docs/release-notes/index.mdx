@@ -8,14 +8,117 @@ topOfNav: true
 import DatabaseMigrationWarning from 'src/content/docs/release-notes/__database-migration-warning.mdx';
 import DeprecationWarning from 'src/content/docs/release-notes/__deprecation-warning.astro';
 import GeneralMigrationWarning from 'src/content/docs/release-notes/__general-migration-warning.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
 import ReleaseNotesSelector from 'src/components/docs/release-notes/ReleaseNotesSelector.astro';
 import ReleaseNoteHeading from 'src/components/docs/release-notes/ReleaseNoteHeading.astro';
+import InlineField from 'src/components/InlineField.astro';
 
 <ReleaseNotesSelector />
 
-[//]: # (Are you a dev? Check the _README.md)
+{/*
+   Hey, developer! Read this please! Also see some additional detail in the _README.md if it is still relevant.
+
+   If you are adding a new release note, please read.
+
+   1. If you have a db migration, add the <DatabaseMigrationWarning /> to the release note.
+   2. If you have a db migration, and add the version to operate/deploy/upgrade.mdx in the `Out-of-Band Database Upgrades` section.
+   3. Add the following sections, removing any that are empty, but keeping this order:
+     - Known Issues
+     - Security
+     - Changed
+     - New
+     - Fixed
+     - Enhancements
+     - Internal
+*/}
 
 Looking for release notes older than 1.23.0? Look in the [release notes archive](/docs/release-notes/archive). Looking to be [notified of new releases?](/docs/operate/roadmap/releases#release-notifications) <span class="not-prose no-underline"><a class="ml-2" href="/docs/releases.xml"><i class="fas fa-xs fa-rss text-orange-700 text-2xl" width="50px" /></a></span>
+
+<ReleaseNoteHeading version='1.52.0' releaseDate='August 8th, 2024' />
+
+<GeneralMigrationWarning>
+  When using the User Registrations API, the `data` field for the FusionAuth application with Id `3c219e58-ed0e-4b18-ad48-f4f92793ae32` may now contain a `preferences` object. This object is reserved and should not be modified.
+</GeneralMigrationWarning>
+
+<DeprecationWarning>
+  **Group Member API**
+
+  The `user` field on the Group Member API responses is being deprecated.
+
+  This field was not documented, and has never been populated on the API response. However, because this field was generated and part of the domain in FusionAuth client libraries, we are providing a deprecation notice in case this may affect your integration. Client library users should remove references at your earliest convenience.
+
+  Removal of this field is targeted for the end of 2024.
+
+  **Docker architectures**
+
+  We are planning to discontinue publishing Docker images for the following architectures: `linux/arm/v7`, `linux/ppc64le`, and `linux/s390x`. The rationale behind this decision is that we do not believe they are actively being used, and we would like to move to the GraalVM Java distribution which does not provide builds for these architectures.
+   * https://hub.docker.com/r/fusionauth/fusionauth-app
+
+  We plan to stop publishing docker images for these architectures at the end of 2024. If you are actively using any of these architectures, please let us know how this could affect you by contacting support or reaching out to sales.
+</DeprecationWarning>
+
+### Security
+
+* When detecting impossible travel or similarly suspicious login events, it is possible that not all device trust cookies were correctly revoked.  These are now automatically revoked.
+  * Resolves [GitHub Issue #2753](https://github.com/FusionAuth/fusionauth-issues/issues/2753)
+
+### New
+* A free community license is now available, which adds WebAuthn (Passkeys) to the community edition. All those with a Community license will now find a license key in their [FusionAuth account plan](https://account.fusionauth.io/account/plan) page. And there was much rejoicing! 🥳
+  * Resolves [GitHub Issue #2662](https://github.com/FusionAuth/fusionauth-issues/issues/2662)
+  * Resolves [GitHub Issue #2663](https://github.com/FusionAuth/fusionauth-issues/issues/2663)
+
+### Fixed
+* Clicking the toggle checkbox element in the admin UI quickly may cause the checkbox state to be inverted. This can be easily fixed by refreshing the page. You should now be able to click as fast as you want! Go forth and click!
+  * Resolves [GitHub Issue #2718](https://github.com/FusionAuth/fusionauth-issues/issues/2718)
+
+* Attempting to sort API keys by key value in the admin UI by clicking the key value header would result in an error.
+  * Resolves [GitHub Issue #2738](https://github.com/FusionAuth/fusionauth-issues/issues/2738)
+
+* When using the API Key API and specifying an invalid `tenantId` on the request in order to create a tenant-scoped API key, the request fails with a `500` status code. This error has been corrected, and an appropriate validation error is now returned.
+  * Resolves [GitHub Issue #2749](https://github.com/FusionAuth/fusionauth-issues/issues/2749)
+
+* The date picker that was being used for birthdates and custom date fields was not styled correctly based upon the selected theme. The date picker has been changed to the browser-default date picker, which should work much better on mobile devices. This picker style will now be used in themed hosted login pages, as well as the admin UI for searching a date range or selecting a birthdate. This change should not affect any existing advanced theme that may still use the older style date picker. See the updated `_helpers.ftl` file in the default theme to see the changes if you want to incorporate them into existing themes.
+  * Resolves [GitHub Issue #2770](https://github.com/FusionAuth/fusionauth-issues/issues/2770)
+
+* Adding custom message keys to your theme messages using the admin UI was failing to persist these changed messages. The UI for editing messages in the simple theme editor has also been improved to make it easier to understand which messages have been modified.
+  * Resolves [GitHub Issue #2778](https://github.com/FusionAuth/fusionauth-issues/issues/2778)
+
+* When the <InlineUIElement>Browser preview</InlineUIElement> button was used to open a new tab for simple themes in the admin UI the page would render without any applied CSS when using the Firefox browser.  Sorry Firefox users, we ask for your forgiveness. 😔
+  * Resolves [GitHub Issue #2794](https://github.com/FusionAuth/fusionauth-issues/issues/2794)
+
+* The default `orderBy` parameter value for the [Group Member Search API](/docs/apis/groups#search-for-group-members) did not provide a consistent ordering of results because the default sort was on `insertInstant ASC` which may not always be unique. This API is used by the SCIM Groups Resource API which then can cause inconsistent results for the SCIM client. The default `orderBy` is now set to `insertInstant ASC, userId ASC, groupId ASC` to ensure a consistent result between API calls.
+  * Resolves [GitHub Issue #2798](https://github.com/FusionAuth/fusionauth-issues/issues/2798)
+
+* When using the simple theme editor in the admin UI, the color picker did not always render next to the input field. The color picker will now always correctly render adjacent to the input field you select.
+  * Resolves [GitHub Issue #2803](https://github.com/FusionAuth/fusionauth-issues/issues/2803)
+
+* Newlines and tabs were not rendered when viewing audit entries in the view dialog from the admin UI. If you are using new lines or tabs in your audit log messages, you may now enjoy viewing them in all their intended glory!
+  * Resolves [GitHub Issue #2808](https://github.com/FusionAuth/fusionauth-issues/issues/2808)
+
+* When using the interactive maintenance mode to upgrade your database schema, it is possible that you had to click the <InlineUIElement>Submit</InlineUIElement> button twice to exit maintenance mode. This was only a cosmetic issue but may be annoying of confusing to the user. We are sorry if you had to click the <InlineUIElement>Submit</InlineUIElement> button twice. 😬
+  * Resolves [GitHub Issue #2815](https://github.com/FusionAuth/fusionauth-issues/issues/2815)
+
+### Enhancements
+* Add the new health check endpoint (`/api/health`) that was added in `1.51.1` to the client libraries.
+  * Resolves [GitHub Issue #2804](https://github.com/FusionAuth/fusionauth-issues/issues/2804)
+
+### Internal
+* For users in FusionAuth Cloud, attempting to save a Simple theme may result in an error.
+  * Resolves [GitHub Issue #2777](https://github.com/FusionAuth/fusionauth-issues/issues/2777)
+
+* An equals (`=`) sign in query parameter value was not being parsed correctly. There are no known issues related to this bug as generally speaking an equals (`=`) sign will be URL encoded as `%3D`. However, because it is legal use an equals (`=`) sign un-encoded in a query string name or query string value, this has been corrected.
+  * Resolves [GitHub Issue #2792](https://github.com/FusionAuth/fusionauth-issues/issues/2792)
+
+* An unused template was removed from the self-service login workflow. In practice this page was never rendered and was not included in the theme configuration. This change should not impact anyone using themes.
+  * Resolves [GitHub Issue #2818](https://github.com/FusionAuth/fusionauth-issues/issues/2818)
+
+* Update dependencies.
+  * Upgrade `org.freemarker:freemarker` `2.3.32` -> `2.3.33`
+  * Upgrade `org.primeframework:prime-mvc` `4.22.7` -> `4.22.12`
+  * Upgrade `org.apache.kafka:kafka-clients` `3.6.1` -> `3.7.1`
+  * Upgrade `com.fasterxml.jackson.*` `2.15.4` -> `2.17.2`
+  * Upgrade base docker image `ubuntu:jammy (22.04)` -> `ubuntu:noble (24.04)`
+  * Resolves [GitHub Issue #2726](https://github.com/FusionAuth/fusionauth-issues/issues/2726)
 
 <ReleaseNoteHeading version='1.51.2' releaseDate='July 3, 2024' />
 
@@ -23,6 +126,7 @@ Looking for release notes older than 1.23.0? Look in the [release notes archive]
 
 * A XSS (Cross-Site Scripting) vulnerability was identified in the FusionAuth admin UI.
   * Resolves [GitHub Issue #2801](https://github.com/FusionAuth/fusionauth-issues/issues/2801)
+
 
 <ReleaseNoteHeading version='1.51.1' releaseDate='June 12, 2024' />
 
@@ -44,6 +148,8 @@ Update dependencies.
   * Resolves [GitHub Issue #2786](https://github.com/FusionAuth/fusionauth-issues/issues/2786)
 
 <ReleaseNoteHeading version='1.51.0' releaseDate='May 28, 2024' name="Theming Toucan" />
+
+<DatabaseMigrationWarning />
 
 ### Fixed
 * In version `1.45.0` we added a hosted OAuth backend capability, allowing a developer to write a front end-only application, but still take advantage of an authorization code grant workflow by leveraging the backend provided by FusionAuth. Multi-segment domain suffixes (e.g. `.co.uk`) are not handled correctly by this hosted backend when setting the domain on cookies. Cookie domains are now set properly.
@@ -70,6 +176,8 @@ Update dependencies.
 
 <ReleaseNoteHeading version='1.50.1' releaseDate='April 25, 2024' />
 
+<DatabaseMigrationWarning />
+
 ### Fixed
 * FusionAuth added a First Time Setup wizard in 1.50.0. This release fixes a couple of usability items related to the new wizard.
   * Items related to the first time setup wizard are being show after upgrades, when the intent was to only show them for new installations. These are now only being shown for unconfigured FusionAuth instances.
@@ -82,6 +190,20 @@ Update dependencies.
   This release makes significant changes to the default behavior of new Applications with regard to scopes in OAuth workflows.
   The database migration will update existing Applications to behave in a backwards compatible manner.
   See the OAuth [Scopes](/docs/lifecycle/authenticate-users/oauth/scopes) documentation for more information, in particular the `Relationship`, `Unknown scope policy`, and `Scope handling policy` configurations.
+</GeneralMigrationWarning>
+
+<GeneralMigrationWarning>
+  If you are using IFRAMEs to access the FusionAuth hosted login pages please check that the IFRAME `src` is from the same domain as the FusionAuth pages.
+
+  [FusionAuth uses cookies](/docs/reference/cookies) to manage user state with the `SameSite` attribute set to `Lax` or `Strict`. Browsers will block `Set-Cookie` headers on cross-domain requests.
+
+  This release introduces a new redirect into the OAuth flows to `/oauth2/consent` as part of the OAuth [Scopes](/docs/lifecycle/authenticate-users/oauth/scopes)
+  feature. This redirect will occur during each browser-based interactive OAuth workflow. Prior to this version it was possible to complete an OAuth code grant
+  flow without cookies being set as long as there were no additional redirects to FusionAuth before the final redirect to the configured
+  <InlineField>redirect_url</InlineField>. As a result it did not matter if the `Set-Cookie` headers were blocked. The redirect with the code would still work.
+
+  However, in this version the browser will not be able to send the FusionAuth cookies required to maintain user state along with the redirect to
+  `/oauth2/consent` and the login flow will fail. The user will be redirected back to `/oauth2/authorize` and will be unable to log in.
 </GeneralMigrationWarning>
 
 <DeprecationWarning>
@@ -2384,4 +2506,3 @@ The `/` path of FusionAuth no longer automatically forwards to the admin login. 
 ### Client libraries
 * Enhancements to the .NET Core client library to better support requests in a multi-tenant environment and to use the `IDictionary` reference instead of `Dictionary`.
   * Resolves [GitHub Issue #1049](https://github.com/FusionAuth/fusionauth-issues/issues/1049) and [GitHub Issue #1050](https://github.com/FusionAuth/fusionauth-issues/issues/1050), thanks to [@atrauzzi](https://github.com/atrauzzi) for sharing his .NET Core expertise!
-
