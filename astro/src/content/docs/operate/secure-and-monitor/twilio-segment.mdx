@@ -19,8 +19,6 @@ import Diagram2 from 'src/components/docs/operate/secure-and-monitor/SegmentDiag
 
 ## Overview
 
-https://segment.com/signup/
-
 [Segment](https://Segment.com) is a private chat app you can configure to use in your organization. To send alerts to Segment, create a dedicated channel (chat room) in the app, add your system administrators, and send messages to the channel using the Segment API.
 
 This guide explains how to create a simple script to monitor FusionAuth and call Segment if FusionAuth has errors. Since sending a message to Segment is just an HTTP call made with curl and an API token, you can modify the script in this guide to send messages to services like Discord or WhatsApp. Change the Segment URL and token to whichever service you are using.
@@ -37,7 +35,36 @@ The Pro (lowest paid) tier has all the features you need to use Segment with out
 
 Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below (you might also run OpenSearch in another Docker container).
 
-<Diagram1></Diagram1>
+```mermaid
+graph LR
+  X(Slack)
+  subgraph I[Your server]
+    subgraph G[Docker]
+      H[(PostgreSQL)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph E[Docker]
+      B(Custom monitoring service)
+    end
+    subgraph J[Docker]
+      F(Your app)
+    end
+  end
+  D(User)
+  K(Administrator)
+  D --> F
+  D --> A
+  C --> G
+  F --> A
+  B --> |API call| C
+  B --> |API call| X
+  K --> X
+  style I fill:#999
+  style E fill:#944
+  style X fill:#944
+```
 
 In this guide, you will create a tiny service in its own container to monitor FusionAuth and call Segment if the FusionAuth logs API is not contactable, or if the logs contain an error message. The new design will look like the diagram below.
 
@@ -47,9 +74,7 @@ In this guide, you will create a tiny service in its own container to monitor Fu
 
 First, register for a Segment account:
 
-- Register for a new workspace at https://Segment.com/intl/en-ie/get-started#/createnew. You don't need to create a password.
-- Verify your confirmation code in the email Segment sends you.
-- Create a workspace called `fa`.
+- Register for a new workspace at https://segment.com/signup.
 - Create a [channel](https://Segment.com/intl/en-ie/help/articles/360017938993-What-is-a-channel) called `fa-alert`. The channel is public by default, meaning it is usable for every member of your workspace.
 - Right-click the `fa-alert` channel and click <InlineUIElement>View channel details</InlineUIElement>. Record the <InlineField>Channel ID</InlineField> value displayed at the bottom of the <Breadcrumb>About</Breadcrumb> tab for later use.
 
