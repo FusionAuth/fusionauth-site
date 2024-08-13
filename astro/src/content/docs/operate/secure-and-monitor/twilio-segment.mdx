@@ -19,17 +19,9 @@ import Diagram2 from 'src/components/docs/operate/secure-and-monitor/SegmentDiag
 
 ## Overview
 
-[Segment](https://Segment.com) is a private chat app you can configure to use in your organization. To send alerts to Segment, create a dedicated channel (chat room) in the app, add your system administrators, and send messages to the channel using the Segment API.
+[Twilio Segment](https://segment.com) is an online service that consolidates information about your users from multiple sources. For instance, you might collect purchasing information from your website, interaction patterns from your mobile app, customer feedback through your support channels, and engagement data from email marketing.
 
-This guide explains how to create a simple script to monitor FusionAuth and call Segment if FusionAuth has errors. Since sending a message to Segment is just an HTTP call made with curl and an API token, you can modify the script in this guide to send messages to services like Discord or WhatsApp. Change the Segment URL and token to whichever service you are using.
-
-Please read the [FusionAuth guide to monitoring](/docs/operate/secure-and-monitor/monitor) to get an overview of the available metrics and choose the ones relevant to your needs. Sending alerts to Segment is a small component of comprehensive monitoring. The overview explains where Segment fits into the monitoring flow, and provides alternative apps for receiving alerts instead of Segment.
-
-Review Segment fees on the [Segment pricing page](https://Segment.com/intl/en-ie/pricing). You can follow this guide and integrate Segment with other applications with the free tier, but you will need at least a Pro subscription to [build workflows](https://Segment.com/intl/en-ie/features/workflow-automation).
-
-A workflow is a set of custom triggers, data, and logic you organize into a sequence of steps. The [logic can be code](https://api.Segment.com/automation/functions/custom), written in TypeScript or JavaScript. Workflows can also use [stock connectors to outside services](https://api.Segment.com/automation/connectors).
-
-The Pro (lowest paid) tier has all the features you need to use Segment with outside apps. Higher-priced tiers have no features you need for integration.
+This guide shows you how to send FusionAuth data to Segment. Specifically, when a new user signs up to FusionAuth, they are added to Segment. And for any FusionAuth user whose email address matches an email address in Segment, when the user updates their profile in FusionAuth, the information is sent to Segment.
 
 ## Understand The System Design
 
@@ -37,7 +29,6 @@ Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below
 
 ```mermaid
 graph LR
-  X(Slack)
   subgraph I[Your server]
     subgraph G[Docker]
       H[(PostgreSQL)]
@@ -45,30 +36,43 @@ graph LR
     subgraph C[Docker]
       A(FusionAuth)
     end
-    subgraph E[Docker]
-      B(Custom monitoring service)
+    subgraph J[Docker]
+      F(Your app)
+    end
+  end
+  D(User)
+  D --> F
+  D --> A
+  C --> G
+  F --> A
+  style I fill:#999
+```
+
+In this guide, you will use webhooks to send data from FusionAuth to Segment.This design looks like the diagram below.
+
+```mermaid
+graph LR
+  X(Segment)
+  subgraph I[Your server]
+    subgraph G[Docker]
+      H[(PostgreSQL)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
     end
     subgraph J[Docker]
       F(Your app)
     end
   end
   D(User)
-  K(Administrator)
   D --> F
   D --> A
   C --> G
   F --> A
-  B --> |API call| C
-  B --> |API call| X
-  K --> X
+  A --> |Webhook| X
   style I fill:#999
-  style E fill:#944
   style X fill:#944
 ```
-
-In this guide, you will create a tiny service in its own container to monitor FusionAuth and call Segment if the FusionAuth logs API is not contactable, or if the logs contain an error message. The new design will look like the diagram below.
-
-<Diagram2></Diagram2>
 
 ## Create A Segment Account
 
