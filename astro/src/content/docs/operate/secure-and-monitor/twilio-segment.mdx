@@ -117,10 +117,42 @@ TODO DELETE THIS PARAGRAPH This FusionAuth installation will already be configur
   - [x] user.registration.update.complete
   - [x] user.update.complete
 - Click Save at the top right of the page.
+- Browse to Settings -> Webhooks.
+- Click the + at the top right.
+- Enter Id `9a99c2f2-4c3c-4501-8b4f-c394bc896f63`.
+- Enter URL `http://fa_seg`.
+- Click Save at the top right. All events are enabled by default and you don't need to worry about security because the receiving service will run on the same Docker network as FusionAuth.
+- You can click Test on the created webhook now to see example JSON for all the events that will be sent.
 
-
-afadf
 ## Send FusionAuth Webhook Data To Segment
+
+Write a web service that receives the webhook calls from FusionAuth, filters them by event, and forwards relevant ones to Segment, by following the steps below.
+
+- Create a file called `app.js` in the same directory as your `docker-compose.yml` file from the FusionAuth kickstart example project. You are going to use Node.js for the adapter web service in this guide, but the code is simple enough for you to change it to your favorite language easily.
+- Add the content below to `app.js`.
+  ```js
+
+  ```
+- Edit the `docker-compose.yml` file from the FusionAuth kickstart example project to have the new service below.
+  ```yaml
+  fa_seg:
+    image: segimage
+    container_name: fa_seg
+    networks:
+      - db_net
+  ```
+- Create the file `Dockerfile` with the content below.
+  ```sh
+  FROM --platform=linux/amd64 alpine:3.19
+  RUN apk add --no-cache curl nano node bash # docker-cli jq
+  RUN mkdir /app; cd /app; npm install express;
+  COPY app.js /app.js
+  CMD /app.js
+  ```
+- Run
+  ```sh
+  docker build --no-cache --platform linux/amd64 -t segimage .
+  ```
 
 
 
