@@ -48,11 +48,16 @@ graph LR
   style I fill:#999
 ```
 
-In this guide, you will use [webhooks](/docs/extend/events-and-webhooks) to send data from FusionAuth to Segment. Unfortunately, FusionAuth does not allow you to set which events trigger which webhooks. Instead, any event will trigger **all** webhooks. So you have to write an adapter web service that receives the webhook call from FusionAuth, checks what event caused the call, and forwards the appropriate information to Segment. This design looks like the diagram below.
+In this guide, you will use [webhooks](/docs/extend/events-and-webhooks) to send data from FusionAuth to Segment. Unfortunately, FusionAuth does not allow you to set which events trigger which webhooks. Instead, any event will trigger **all** webhooks. So you have to write an adapter web service that receives the webhook call from FusionAuth, checks what event caused the call, and forwards the appropriate information to Segment.
+
+While Segment stores all the events you sent it, you can't query Segment's store to extract information. Instead, Segment is intended as a communications hub, that receives data from multiple **sources**, filters, adjusts, and merges the data, and sends it to multiple **destinations**. The easiest destination to configure is a PostgreSQL database.
+
+This design looks like the diagram below.
 
 ```mermaid
 graph LR
   X(Segment)
+  Y[(PostgreSQL)]
   subgraph I[Your server]
     subgraph G[Docker]
       H[(PostgreSQL)]
@@ -74,38 +79,78 @@ graph LR
   F --> A
   A --> |Webhook| B
   B --> |API call| X
+  X --> Y
   style I fill:#999
   style X fill:#944
   style E fill:#944
+  style Y fill:#944
 ```
+
+If you already use Segment, you will have your own data warehouse configured, and that's fine. Once you've finished following this guide, using a fresh warehouse for testing, you can add your production warehouse as a destination to the new FusionAuth source.
+
+You're going to follow the following steps in the next sections:
+- Create a free cloud-hosted PostgreSQL database.
+- Create a Segment account and connect the database as a destination and FusionAuth as a source.
+- Create a filtering web service to receive FusionAuth webhooks and forward some event types to Segment.
+- Run FusionAuth, create a new user, and log in with that user to test the whole system.
+
+## Create An Aiven.io PostgreSQL database
+
+In this section you'll create a free fresh database to act as a Segment destination. If you already have a server with a public IP address and PostgreSQL installed, you can use that instead.
+
+- Browse to https://aiven.io and click <InlineUIElement>Get started for free</InlineUIElement>.
+- Sign up for a new account and create a new database. Follow the wizard to the end and wait for the new database instance to start.
+- The screenshot belows a project called <InlineField>fauth</Inlinefield> and a database called <InlineField>fa</InlineField>.
+  ![Aiven database connection details](segmentAivenDatabase.webp)
+- The Aiven overview page shown above lists all the details you need to create a PostgreSQL connection: host, port, database, username, and password. You can test your connection in a cross-platform database IDE like [DBeaver](https://dbeaver.io/download). The details shown in the new connection window below match the ones in the Aiven list above, and will be similar for your database.
+- ![DBeaver](segmentDbeaver.webp)
+
+This is all you need for a Segment destination.
+
+There are other options, but FusionAuth doesn't recommend them:
+- Neon.tech created a database that had connection errors from Segment ("Endpoint ID does not exist").
+- Render.com needs you to enter credit card details.
+- Google Sheets can be used as a destination, but requires you to manually create multiple mappings between your source event types and the flat format requirement for a spreadsheet. It's far more tedious than using an automated relational database.
 
 ## Create A Segment Account
 
-First, register for a Segment account:
+If you don't have a Segment account, register for one:
 
 - Register for a new workspace at https://segment.com/signup.
-- https://app.segment.com.
-- <Breadcrumb>Connections - Sources</Breadcrumb>.
-- <InlineUIElement>Add source</InlineUIElement>.
-- Choose <InlineUIElement>HTTP API</InlineUIElement>. (The API is documented [here](https://segment.com/docs/connections/sources/catalog/libraries/server/http-api)).
+- Browse to https://app.segment.com.
+
+Add FusionAuth as a source:
+
+- Click <Breadcrumb>Connections -> Sources</Breadcrumb> in the sidebar.
+- Click <InlineUIElement>Add source</InlineUIElement>.
+- Choose <InlineUIElement>HTTP API</InlineUIElement>. (The Segment API is documented [here](https://segment.com/docs/connections/sources/catalog/libraries/server/http-api)).
 - Give it the <InlineUIElement>Name</InlineUIElement> `fa`.
-- <InlineUIElement>Add Source</InlineUIElement>.
+- Click <InlineUIElement>Add Source</InlineUIElement>.
 - Note your <InlineUIElement>Write Key</InlineUIElement>. Keep it secret and do not commit it to GitHub.
+
+Add PostgreSQL as a destination:
+
+- Click <Breadcrumb>Connections -> Destinations</Breadcrumb> in the sidebar.
+- Click <InlineUIElement>Add destination</InlineUIElement>.
+- Choose PostgreSQL
+- Add your connection details from Aiven and test the connection.
+- Save and continue.
+
+![Synchronize warehouse](segmentSyncWarehouse.webp)
 
 ## Run FusionAuth
 
-Now run FusionAuth.
+Run FusionAuth.
 
 - Install [Docker](https://docs.docker.com/get-docker/) if you don't have it on your machine.
 - Clone the [FusionAuth example Docker Compose repository](https://github.com/FusionAuth/fusionauth-example-docker-compose) to your computer.
 - In your terminal, navigate to the `light` directory in the repo.
-- Run FusionAuth with `docker compose up`.
-- Browse to http://localhost:9011/admin and check you can log in with `admin@example.com` and `password`.
-
-TODO DELETE THIS PARAGRAPH This FusionAuth installation will already be configured with an API key you can use to call the FusionAuth API as defined in the `kickstart/kickstart.json` file. But in a new installation, you will need to create your own API key. Create an API key by navigating to <Breadcrumb>Settings -> API Keys</Breadcrumb> and clicking the <IconButton icon="plus" color="green" /> button. Enter a <InlineField>Description</InlineField> for the API key and click on the <IconButton icon="save" color="blue" /> button to save the API key. On the API Keys list page, click the red lock <IconButton icon="lock" color="red" /> next to the newly generated key to reveal the key value and copy and save it.
+- You will work in this directory for the rest of this guide, creating files and running terminal commands.
 
 ## Enable Webhooks
 
+- Run `docker compose up` to start FusionAuth and the webhook service.
+- Browse to http://localhost:9011/admin and check you can log in with `admin@example.com` and `password`.
 - In FusionAuth web interface, browse to Tenants.
 - Edit the Default tenant.
 - Click the Webhooks tab.
@@ -122,7 +167,7 @@ TODO DELETE THIS PARAGRAPH This FusionAuth installation will already be configur
 - Click Save at the top right. All events are enabled by default and you don't need to worry about security because the receiving service will run on the same Docker network as FusionAuth.
 - You can click Test on the created webhook now to see example JSON for all the events that will be sent.
 
-## Send FusionAuth Webhook Data To Segment
+## Create A Filtering Web Service
 
 Write a web service that receives the webhook calls from FusionAuth, filters them by event, and forwards relevant ones to Segment, by following the steps below.
 
@@ -168,20 +213,6 @@ Write a web service that receives the webhook calls from FusionAuth, filters the
   ```
 - Segment [API returns a successful status code even for most errors](https://segment.com/docs/connections/sources/catalog/libraries/server/http-api/#errors). Check the debugger log on the Segment website if your data is not showing in the Segments events list.
 
-## Add A Destination
-
-- Create a free PostgreSQL database at https://neon.tech. or aiven.io or render.com
-- Destinations
-- Add destination
-- PostgreSQL
-- Neon gives connection error "Endpoint ID does not exist"
-- Trying render.com
--
-
-- TODO remove
-- Google Sheet
-- gs
-- **See, edit, create, and delete all your Google Sheets spreadsheets. Learn more**
 
 
 ## Next Steps
@@ -202,5 +233,6 @@ Write a web service that receives the webhook calls from FusionAuth, filters the
 
 
 
+<InlineField></Inlinefield>
 <InlineUIElement></InlineUIElement>
 <Breadcrumb></Breadcrumb>
