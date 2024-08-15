@@ -21,7 +21,7 @@ import Diagram2 from 'src/components/docs/operate/secure-and-monitor/SegmentDiag
 
 [Twilio Segment](https://segment.com) is an online service that consolidates information about your users from multiple sources. For instance, you might collect purchasing information from your website, interaction patterns from your mobile app, customer feedback through your support channels, and engagement data from email marketing.
 
-This guide shows you how to send FusionAuth data to Segment. Specifically, when a new user signs up to FusionAuth, they are added to Segment. When the user logs in to FusionAuth, the event is saved in Segment. And for any FusionAuth user whose email address matches an email address in Segment, when the user updates their profile in FusionAuth, the information is sent to Segment.
+This guide shows you how to send FusionAuth data to Segment. Specifically, when a user is created or updated in FusionAuth, they are added to Segment with all their metadata. When the user logs in to FusionAuth, the event is saved in Segment.
 
 ## Understand The System Design
 
@@ -94,7 +94,7 @@ You're going to follow the following steps in the next sections:
 - Create a filtering web service to receive FusionAuth webhooks and forward some event types to Segment.
 - Run FusionAuth, create a new user, and log in with that user to test the whole system.
 
-## Create An Aiven.io PostgreSQL database
+## Create A PostgreSQL Database In Aiven
 
 In this section you'll create a free fresh database to act as a Segment destination. If you already have a server with a public IP address and PostgreSQL installed, you can use that instead.
 
@@ -244,13 +244,10 @@ The code above has three important functions:
 
 If you want to test sending an event to Segment manually, you can run the curl command below, using your `writeKey`.
   ```sh
-  curl --location 'https://api.segment.io/v1/track' \
-  --header 'Content-Type: application/json' \
-  --data-raw '{
-    "event": "happy-path-a3ef8a6f-0482-4694-bc4d-4afba03a0eab",
-    "email": "test@example.org",
-    "userId": "123",
-    "writeKey": "DmBXIN4JnwqBnTqXccT"
+  curl -v --location 'https://api.segment.io/v1/track'   --header 'Content-Type: application/json'   --data-raw '{
+      "event": "user.login.success",
+      "userId": "00000000-0000-0000-0000-000000000001",
+      "writeKey": "8iVzf6"
   }'
   ```
 
@@ -258,15 +255,13 @@ Segment [API returns a successful status code even for most errors](https://segm
 
 ## Run FusionAuth
 
-Now that Segment is prepared and you have a script to send events, you can finally start FusionAuth and begin testing.
-
-TODO here down:
+Now that Segment is prepared and you have a service to send events, you can finally start FusionAuth and begin testing.
 
 - Install [Docker](https://docs.docker.com/get-docker/) if you don't have it on your machine.
 - Clone the [FusionAuth example Docker Compose repository](https://github.com/FusionAuth/fusionauth-example-docker-compose) to your computer.
-- In your terminal, navigate to the `light` directory in the repo.
-- You will work in this directory for the rest of this guide, creating files and running terminal commands.
-- Edit the `docker-compose.yml` file from the FusionAuth kickstart example project to have the new service below.
+- In your terminal, navigate to the `light` directory in the repository. You will work in this directory for the rest of this guide, creating files and running terminal commands.
+- Copy the `app.mjs` script from earlier into this directory too.
+- Edit the `docker-compose.yml` file from the FusionAuth kickstart example project to add the new service below. The service will be a Node.js container that runs your `app.mjs` script.
   ```yaml
   fa_seg:
     image: segimage
@@ -277,19 +272,21 @@ TODO here down:
 - Create the file `Dockerfile` with the content below.
   ```sh
   FROM --platform=linux/amd64 alpine:3.19
-  RUN apk add --no-cache curl nano node bash # docker-cli jq
-  RUN mkdir /app; cd /app; npm install express;
-  COPY app.js /app.js
-  CMD /app.js
+  RUN apk add --no-cache curl node npm bash
+  RUN mkdir /app; cd /app; npm install express axios;
+  COPY app.mjs /app/app.mjs
+  CMD node /app/app.mjs
   ```
-- Run
+- Run the command below to build the `segimage` image with the script.
   ```sh
   docker build --no-cache --platform linux/amd64 -t segimage .
   ```
+- Start FusionAuth and the filtering service with `docker compose up`.
 
 ## Enable Webhooks
 
-- Run `docker compose up` to start FusionAuth and the webhook service.
+Now that FusionAuth is running, you can enable webhooks so that events start to flow from FusionAuth into the filtering service.
+
 - Browse to http://localhost:9011/admin and check you can log in with `admin@example.com` and `password`.
 - In FusionAuth web interface, browse to Tenants.
 - Edit the Default tenant.
@@ -302,31 +299,51 @@ TODO here down:
 - Click Save at the top right of the page.
 - Browse to Settings -> Webhooks.
 - Click the + at the top right.
-- Enter Id `9a99c2f2-4c3c-4501-8b4f-c394bc896f63`.
 - Enter URL `http://fa_seg`.
-- Click Save at the top right. All events are enabled by default and you don't need to worry about security because the receiving service will run on the same Docker network as FusionAuth.
-- You can click Test on the created webhook now to see example JSON for all the events that will be sent.
+- Click Save at the top right. All events are enabled by default. You don't need to worry about security because the receiving service will run on the same Docker network as FusionAuth.
+- (You can click Test on the created webhook now to see example JSON for all the events that will be sent.)
 
+## Test The System
 
+- Log out of FusionAuth and back in again.
+- In the terminal you should see a notification from the filtering script:
+  ```sh
+  fa_seg  | Received event of type: user.login.success
+  ```
+- In Segment you should see your event arriving. You may have to refresh the page. If you cannot see your event, consult the troubleshooting section at the end of this guide.
+  ![Segment event debugger](segmentEventReceived.webp)
+- If you connected DBeaver to your PostgreSQL database earlier, you should be able to refresh your tables and see that data has arrived in the destination.
+
+You've tested the `track` event in Segment. To test the `identify` event, you're going to create a new user.
+
+- Browse to http://localhost:9011/admin/user and create a new user with any details you want.
+  ![New FusionAuth user](segmentNewUser.webp)
+- In the terminal you should see a notification from the filtering script:
+  ```sh
+  fa_seg  | Received event of type: user.create.complete
+  ```
+- The event should show in the Segment event list as type `identify`, but might not propagate into PostgreSQL until Segment synchronizes its store with the warehouse in a few hours time.
 
 ## Next Steps
 
- docker build -t segimage .; docker rm segbox; docker run -it -p 80:80 --name segbox segimage bash;
- http://host.docker.internal
- http://fa_seg
- node /app/app.mjs
+Now that your FusionAuth user data is available in your data warehouse you can write a SQL query on either user Id or email address to match user data in FusionAuth to user activity sent to Segment from your other apps.
 
-  clear; curl -v --location 'https://api.segment.io/v1/track'   --header 'Content-Type: application/json'   --data-raw '{
-      "event": "user.login.success",
-      "userId": "00000000-0000-0000-0000-000000000001",
-      "writeKey": "8iVzf6"
-  }'
+At this stage you might want to:
+- Add more event types to the filtering script.
+- Change the user data sent to Segment (being mindful of your users' data privacy).
+- Forward the data to your real destinations instead of the test PostgreSQL instance.
 
+## Troubleshooting
 
-## Further Reading
+If you don't see events arrive in Segment, try the following:
 
+- Run the curl command manually to send events to Segment.
+- Check all the URL details and key is correct.
+- Check the event debug log in Segment to see if events are being reject for a flaw in the JSON, while still returning HTTP code 200.
 
-
-<InlineField></Inlinefield>
-<InlineUIElement></InlineUIElement>
-<Breadcrumb></Breadcrumb>
+If curl works, but the Node script fails, try debug in your physical machine instead of in Docker.
+- Install Node.js.
+- Change the webhook URL in FusionAuth settings from `http://fa_seg:3000` to `http://host.docker.internal`.
+- Open the `app.mjs` script in Visual Studio Code.
+- Change `app.listen(80, '0.0.0.0', ` to `app.listen(3000, '0.0.0.0', `
+- Run the script from the VS Code debug sidebar to see where errors are occurring.
