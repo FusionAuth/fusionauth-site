@@ -3,7 +3,7 @@ title: Connecting FusionAuth To Twilio Segment
 description: Populate your Segment user data with FusionAuth data.
 navcategory: admin
 section: extend
-subcategory:
+subcategory: examples
 ---
 import Aside from 'src/components/Aside.astro';
 import IconButton from 'src/components/IconButton.astro';
@@ -35,9 +35,9 @@ This design looks like the diagram below.
 
 If you already use Segment, you will have your own data warehouse configured, and that's fine. Once you've finished following this guide, using a fresh warehouse for testing, you can add your production warehouse as a destination to the new FusionAuth source.
 
-You're going to follow the following steps in the next sections:
+You're going to follow the steps below in the next sections:
 - Create a free cloud-hosted PostgreSQL database.
-- Create a Segment account and connect the database as a destination and FusionAuth as a source.
+- Create a free Segment account and connect the database as a destination and FusionAuth as a source.
 - Create a filtering web service to receive FusionAuth webhooks and forward some event types to Segment.
 - Run FusionAuth, create a new user, and log in with that user to test the whole system.
 
@@ -47,17 +47,17 @@ In this section you'll create a free fresh database to act as a Segment destinat
 
 - Browse to https://aiven.io and click <InlineUIElement>Get started for free</InlineUIElement>.
 - Sign up for a new account and create a new database. Follow the wizard to the end and wait for the new database instance to start.
-- The screenshot belows a project called <InlineField>fauth</Inlinefield> and a database called <InlineField>fa</InlineField>.
-  ![Aiven database connection details](segmentAivenDatabase.webp)
+- The screenshot belows a project called <InlineField>fauth</InlineField> and a database called <InlineField>fa</InlineField>.
+  ![Aiven database connection details](/img/docs/extend/examples/segmentAivenDatabase.webp)
 - The Aiven overview page shown above lists all the details you need to create a PostgreSQL connection: host, port, database, username, and password. You can test your connection in a cross-platform database IDE like [DBeaver](https://dbeaver.io/download). The details shown in the new connection window below match the ones in the Aiven list above, and will be similar for your database.
-- ![DBeaver](segmentDbeaver.webp)
+- ![DBeaver](/img/docs/extend/examples/segmentDbeaver.webp)
 
 This is all you need for a Segment destination.
 
 There are other options, but FusionAuth doesn't recommend them:
 - Neon.tech created a database that had connection errors from Segment ("Endpoint ID does not exist").
 - Render.com needs you to enter credit card details.
-- Google Sheets can be used as a destination, but requires you to manually create multiple mappings between your source event types and the flat format requirement for a spreadsheet. It's far more tedious than using an automated relational database.
+- Google Sheets can be used as a destination, but requires you to manually create multiple mappings between your source event types and the flat format requirement for a spreadsheet. It's more tedious than using an automated relational database.
 
 ## Create A Segment Account
 
@@ -83,7 +83,7 @@ Add PostgreSQL as a destination:
 - Add your connection details from Aiven and test the connection.
 - Save and continue.
 
-![Synchronize warehouse](segmentSyncWarehouse.webp)
+![Synchronize warehouse](/img/docs/extend/examples/segmentSyncWarehouse.webp)
 
 ## Create A Filtering Web Service
 
@@ -186,8 +186,8 @@ Now you'll write a web service that receives the webhook calls from FusionAuth, 
 
 The code above has three important functions:
 - An Express.js POST method that listens to all incoming FusionAuth webhooks, but responds only to ones you care about, like the line: `(req.body.event.type == 'user.create.complete')`.
-- `callSegmentIdentify()`, which calls the Segment `identify` method to update user information. The call is made only FusionAuth update completed webhooks. User data goes in the `traits` property.
-- `callSegmentTrack()`, which calls the Segment `track` method to associate an event with user. In this script you're tracking only logins, but you could add any event you want. Data about the event goes in the `properties` property. There isn't any to add for a successful login.
+- `callSegmentIdentify()`, which calls the Segment `identify` method to update user information. The call is made only for FusionAuth update completed webhooks. User data goes in the `traits` property.
+- `callSegmentTrack()`, which calls the Segment `track` method to associate an event with user. In this script you're tracking only logins, but you could add any event you want. Data about the event goes in the `properties` property. There isn't any data to add for a successful login.
 
 If you want to test sending an event to Segment manually, you can run the curl command below, using your `writeKey`.
   ```sh
@@ -207,7 +207,7 @@ Now that Segment is prepared and you have a service to send events, you can fina
 - Install [Docker](https://docs.docker.com/get-docker/) if you don't have it on your machine.
 - Clone the [FusionAuth example Docker Compose repository](https://github.com/FusionAuth/fusionauth-example-docker-compose) to your computer.
 - In your terminal, navigate to the `light` directory in the repository. You will work in this directory for the rest of this guide, creating files and running terminal commands.
-- Copy the `app.mjs` script from earlier into this directory too.
+- Copy the `app.mjs` script from earlier into this directory.
 - Edit the `docker-compose.yml` file from the FusionAuth kickstart example project to add the new service below. The service will be a Node.js container that runs your `app.mjs` script.
   ```yaml
   fa_seg:
@@ -258,13 +258,13 @@ Now that FusionAuth is running, you can enable webhooks so that events start to 
   fa_seg  | Received event of type: user.login.success
   ```
 - In Segment you should see your event arriving. You may have to refresh the page. If you cannot see your event, consult the troubleshooting section at the end of this guide.
-  ![Segment event debugger](segmentEventReceived.webp)
+  ![Segment event debugger](/img/docs/extend/examples/segmentEventReceived.webp)
 - If you connected DBeaver to your PostgreSQL database earlier, you should be able to refresh your tables and see that data has arrived in the destination.
 
 You've tested the `track` event in Segment. To test the `identify` event, you're going to create a new user.
 
 - Browse to http://localhost:9011/admin/user and create a new user with any details you want.
-  ![New FusionAuth user](segmentNewUser.webp)
+  ![New FusionAuth user](/img/docs/extend/examples/segmentNewUser.webp)
 - In the terminal you should see a notification from the filtering script:
   ```sh
   fa_seg  | Received event of type: user.create.complete
@@ -273,7 +273,7 @@ You've tested the `track` event in Segment. To test the `identify` event, you're
 
 ## Next Steps
 
-Now that your FusionAuth user data is available in your data warehouse you can write a SQL query on either user Id or email address to match user data in FusionAuth to user activity sent to Segment from your other apps.
+Now that your FusionAuth user data is available in your data warehouse, you can write a SQL query on either user Id or email address to match user data in FusionAuth to user activity sent to Segment from your other apps.
 
 At this stage you might want to:
 - Add more event types to the filtering script.
@@ -290,7 +290,7 @@ If you don't see events arrive in Segment, try the following:
 
 If curl works, but the Node script fails, try debug in your physical machine instead of in Docker.
 - Install Node.js.
-- Change the webhook URL in FusionAuth settings from `http://fa_seg:3000` to `http://host.docker.internal`.
+- Change the webhook URL in FusionAuth settings from `http://fa_seg` to `http://host.docker.internal:3000`.
 - Open the `app.mjs` script in Visual Studio Code.
 - Change `app.listen(80, '0.0.0.0', ` to `app.listen(3000, '0.0.0.0', `
 - Run the script from the VS Code debug sidebar to see where errors are occurring.
