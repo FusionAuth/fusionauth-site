@@ -65,7 +65,7 @@ graph LR
     subgraph C[Docker]
       A(FusionAuth)
     end
-	subgraph E[Docker]
+    subgraph E[Docker]
       B(Filtering web service)
     end
     subgraph J[Docker]
@@ -138,44 +138,134 @@ Add PostgreSQL as a destination:
 
 ![Synchronize warehouse](segmentSyncWarehouse.webp)
 
+## Create A Filtering Web Service
+
+Now you'll write a web service that receives the webhook calls from FusionAuth, filters them by event, and forwards relevant ones to Segment, by following the steps below.
+
+- Create a file called `app.mjs`. You are going to use Node.js for the adapter web service in this guide, but the code is simple enough for you to easily code it in your favorite language.
+- Add the content below to `app.mjs`. Set your `_writeKey` from Segment.
+  ```js
+  import express from 'express';
+  import axios   from 'axios';
+
+  const _writeKey = '8iVzf647lDo07';
+  const _apiUrl   = 'https://api.segment.io';
+
+  const app = express();
+  app.use(express.json());
+
+  app.post('/', (req, res) => {
+      try {
+          console.log(`Received event of type: ${req.body.event.type}`);
+          if (req.body.event.type == 'user.create.complete') callSegmentIdentify(req.body);
+          if (req.body.event.type == 'user.email.update')    callSegmentIdentify(req.body);
+          if (req.body.event.type == 'user.login.success')   callSegmentTrack(req.body);
+          if (req.body.event.type == 'user.update.complete') callSegmentIdentify(req.body);
+          res.send('Event processed');
+      }
+      catch (error) {
+          console.log('Invalid request data');
+          console.dir(error);
+          res.status(500).send('Internal server error');
+      }
+  });
+
+  app.listen(80, '0.0.0.0', () => {console.log('Server running on port 80');});
+
+  function convertToDate(timestamp) {
+      if (!timestamp) return '';
+      return new Date(timestamp).toISOString();
+  }
+
+  async function callSegmentIdentify(body) {
+      const data = {
+          'writeKey': _writeKey,
+          'event': body.event.type,
+          'userId': body.event.user.id,
+          "timestamp": convertToDate(body.event.createInstant),
+          "context": {
+              'ip': body.event.ipAddress,
+              'deviceName': body.event.info.deviceName,
+              'deviceType': body.event.info.deviceType,
+              'userAgent': body.event.info.userAgent,
+          },
+          "traits": {
+              'data': body.event.data,
+              "email": body.event.user.email,
+              "firstName": body.event.user.firstName,
+              "lastName": body.event.user.lastName,
+              'active': body.event.user.active,
+              'birthDate': body.event.user.birthDate,
+              'connectorId': body.event.user.connectorId,
+              'insertInstant': body.event.user.insertInstant,
+              'lastLoginInstant': body.event.user.lastLoginInstant,
+              'lastUpdateInstant': body.event.user.lastUpdateInstant,
+              'memberships': body.event.memberships,
+              'passwordChangeRequired': body.event.user.passwordChangeRequired,
+              'passwordLastUpdateInstant': body.event.user.passwordLastUpdateInstant,
+              'preferredLanguages': body.event.preferredLanguages,
+              'registrations': body.event.registrations,
+              'tenantId': body.event.user.tenantId,
+              'twoFactor': body.event.twoFactor,
+              'usernameStatus': body.event.user.usernameStatus,
+              'verified': body.event.user.verified,
+              'verifiedInstant': body.event.user.verifiedInstant
+          },
+      };
+      await axios.post(`${_apiUrl}/v1/identify`, data, { headers: { 'Content-Type': 'application/json' } })
+          .catch(error => console.dir(error));
+  }
+
+  async function callSegmentTrack(body) {
+    const data = {
+        'writeKey': _writeKey,
+        'event': body.event.type,
+        'userId': body.event.user.id,
+        "timestamp": convertToDate(body.createInstant),
+        "properties": { /* none yet */ },
+        "context": {
+            'ip': body.event.ipAddress,
+            'deviceName': body.event.info.deviceName,
+            'deviceType': body.event.info.deviceType,
+            'userAgent': body.event.info.userAgent,
+            'applicationId' : body.event.applicationId,
+        },
+    };
+    await axios.post(`${_apiUrl}/v1/track`, data, { headers: { 'Content-Type': 'application/json' } })
+        .catch(error => console.dir(error));
+  }
+  ```
+- The Segment API endpoint URL might differ depending on whether you created your workspace in the USA or EU. Either https://events.eu1.segmentapis.com or https://api.segment.io/v1.
+
+The code above has three important functions:
+- An Express.js POST method that listens to all incoming FusionAuth webhooks, but responds only to ones you care about, like the line: `(req.body.event.type == 'user.create.complete') `
+- `callSegmentIdentify()`, which calls the Segment `identify` method to update user information. The call is made only FusionAuth update completed webhooks.
+- `callSegmentTrack()`, which calls the Segment `track` method to associate an event with user. In this script you're tracking only logins, but you could add any event you want.
+
+If you want to test sending an event to Segment manually, you can run the curl command below, using your `writeKey`.
+  ```sh
+  curl --location 'https://api.segment.io/v1/track' \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "event": "happy-path-a3ef8a6f-0482-4694-bc4d-4afba03a0eab",
+    "email": "test@example.org",
+    "userId": "123",
+    "writeKey": "DmBXIN4JnwqBnTqXccT"
+  }'
+  ```
+
+Segment [API returns a successful status code even for most errors](https://segment.com/docs/connections/sources/catalog/libraries/server/http-api/#errors). Check the debugger log on the Segment website if your data is not showing in the Segments events list.
+
 ## Run FusionAuth
 
-Run FusionAuth.
+Now that Segment is prepared and you have a script to send events, you can finally start FusionAuth and begin testing.
+
+TODO here down:
 
 - Install [Docker](https://docs.docker.com/get-docker/) if you don't have it on your machine.
 - Clone the [FusionAuth example Docker Compose repository](https://github.com/FusionAuth/fusionauth-example-docker-compose) to your computer.
 - In your terminal, navigate to the `light` directory in the repo.
 - You will work in this directory for the rest of this guide, creating files and running terminal commands.
-
-## Enable Webhooks
-
-- Run `docker compose up` to start FusionAuth and the webhook service.
-- Browse to http://localhost:9011/admin and check you can log in with `admin@example.com` and `password`.
-- In FusionAuth web interface, browse to Tenants.
-- Edit the Default tenant.
-- Click the Webhooks tab.
-- Enable the webhooks for the events:
-  - [x] user.create.complete
-  - [x] user.email.update
-  - [x] user.login.success
-  - [x] user.update.complete
-- Click Save at the top right of the page.
-- Browse to Settings -> Webhooks.
-- Click the + at the top right.
-- Enter Id `9a99c2f2-4c3c-4501-8b4f-c394bc896f63`.
-- Enter URL `http://fa_seg`.
-- Click Save at the top right. All events are enabled by default and you don't need to worry about security because the receiving service will run on the same Docker network as FusionAuth.
-- You can click Test on the created webhook now to see example JSON for all the events that will be sent.
-
-## Create A Filtering Web Service
-
-Write a web service that receives the webhook calls from FusionAuth, filters them by event, and forwards relevant ones to Segment, by following the steps below.
-
-- Create a file called `app.js` in the same directory as your `docker-compose.yml` file from the FusionAuth kickstart example project. You are going to use Node.js for the adapter web service in this guide, but the code is simple enough for you to change it to your favorite language easily.
-- Add the content below to `app.js`.
-  ```js
-
-  ```
 - Edit the `docker-compose.yml` file from the FusionAuth kickstart example project to have the new service below.
   ```yaml
   fa_seg:
@@ -197,21 +287,25 @@ Write a web service that receives the webhook calls from FusionAuth, filters the
   docker build --no-cache --platform linux/amd64 -t segimage .
   ```
 
+## Enable Webhooks
 
-
-- The Segment API endpoint URL will differ depending on whether you created your workspace in the USA or EU. Either https://events.eu1.segmentapis.com or https://api.segment.io/v1.
-- writeKey authentication
-  ```sh
-	curl --location 'https://api.segment.io/v1/track' \
-	--header 'Content-Type: application/json' \
-	--data-raw '{
-		"event": "happy-path-a3ef8a6f-0482-4694-bc4d-4afba03a0eab",
-		"email": "test@example.org",
-		"userId": "123",
-		"writeKey": "DmBXIN4JnwqBnTqXccTF0wBnLXNQmFtk"
-	}'
-  ```
-- Segment [API returns a successful status code even for most errors](https://segment.com/docs/connections/sources/catalog/libraries/server/http-api/#errors). Check the debugger log on the Segment website if your data is not showing in the Segments events list.
+- Run `docker compose up` to start FusionAuth and the webhook service.
+- Browse to http://localhost:9011/admin and check you can log in with `admin@example.com` and `password`.
+- In FusionAuth web interface, browse to Tenants.
+- Edit the Default tenant.
+- Click the Webhooks tab.
+- Enable the webhooks for the events:
+  - [x] user.create.complete
+  - [x] user.email.update
+  - [x] user.login.success
+  - [x] user.update.complete
+- Click Save at the top right of the page.
+- Browse to Settings -> Webhooks.
+- Click the + at the top right.
+- Enter Id `9a99c2f2-4c3c-4501-8b4f-c394bc896f63`.
+- Enter URL `http://fa_seg`.
+- Click Save at the top right. All events are enabled by default and you don't need to worry about security because the receiving service will run on the same Docker network as FusionAuth.
+- You can click Test on the created webhook now to see example JSON for all the events that will be sent.
 
 
 
