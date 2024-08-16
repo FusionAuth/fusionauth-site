@@ -35,7 +35,6 @@ function get_json_repos() {
   # intentionally excluded from JSONFILE for... reasons?
   local EXCLUDE=(
     "fusionauth-example-example-qr-codes"
-    "fusionauth-example-node-centralized-sessions"
     "fusionauth-example-template"
     "fusionauth-example-vue-sdk"
     "fusionauth-quickstart-kotlin-android-native"
