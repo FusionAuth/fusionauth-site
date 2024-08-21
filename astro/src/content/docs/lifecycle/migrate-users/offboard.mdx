@@ -21,7 +21,8 @@ import Diagram2 from 'src/components/docs/extend/segmentDiagram2.astro';
 - [Database Schema Documentation](#database-schema-documentation)
 - [What To Export?](#what-to-export)
 - [Export To Keycloak Example](#export-to-keycloak-example)
-- [Database Export Command](#database-export-command)
+- [How To Migrate](#how-to-migrate)
+- [How To Handle Differing Password Hashing Algorithms](#how-to-handle-differing-password-hashing-algorithms)
 - [Online Migration Techniques](#online-migration-techniques)
 
 ## Introduction
@@ -84,15 +85,15 @@ Some data, like users, applications, and roles, will probably be available in mo
 To understand the user-related data tables in the database, you need to be familiar with [FusionAuth core concepts](/docs/get-started/core-concepts). Below is a visual summary of the object hierarchy.
 
 ```mermaid
-graph BT
+graph LR
     Users --> Registrations
     Registrations --> Applications
+    Registrations --> Roles
     Users --> Groups
     Users --> Tenants
     Users --> Roles
     Groups --> Tenants
     Groups --> Roles
-    Groups --> Applications
     Roles --> Applications
     Applications --> Tenants
 ```
@@ -118,7 +119,21 @@ docker run -p 9012:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin
 - browse to localhost:9012
 - tenant -> realm. application -> client.
 
-## Database Export Command
+## How To Migrate
+
+There are dozens of alternative authentication services to FusionAuth. This guide can offer only general advice to migrate to any of them. Each service allows you to import users (and sometimes other data) in one of three ways:
+
+- **Direct database import through SQL statements** — These services tend to be free or open source. Examples include Keycloak, the Janssen project from Gluu, or Authelia. While free services don't have the funding to pay developers to write user-migration plugins, they allow you complete access to edit your database and insert whatever data you want. In these cases, you would write a SQL script against the FA database that generates a SQL script that is a set of INSERT statements that writes users to the target database.
+- **API** — Services that are more sophisticated than needing you to write custom SQL, will provide an API. Instead of writing SQL to generate SQL, write SQL to export a YAML or JSON file of your users. Then write a script in bash, Python, or Node.js that loops through the file and calls the target service API to create a new user for each existing user.
+- **Plugins** — Some of the more powerful services provide dedicated import plugins that will import your users for you, given a JSON file or database connection. This case is similar to the API one above, requiring you to write SQL to generate a specific JSON file of users. Services that do this tend to have cloud-only offerings, that don't allow you direct access to the database.
+
+TODO add brand examples to API and plugins
+
+From top to bottom, these options decrease in complexity, but also decrease in customization. In other words, if you have direct database access, you can map a lot more of your existing user data into the target system, but also have more work to do, and more chance of making database entries that cause errors in the service.
+
+## How To Handle Differing Password Hashing Algorithms
+
+
 
 ## Online Migration Techniques
 
