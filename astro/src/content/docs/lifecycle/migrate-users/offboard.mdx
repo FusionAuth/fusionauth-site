@@ -117,7 +117,7 @@ If you want to browse the diagram above in DBeaver, you can download the ERD fil
 
 ## How To Migrate
 
-There are dozens of alternative authentication services to FusionAuth. This guide can offer only general advice to migrate to any of them. Ultimately, migration is the process of copying data about your users from the FA database in its format, to the new system's database in its format, mapping tables and columns appropriately. Each service allows you to import users (and sometimes other data) in one of three ways:
+There are dozens of alternative authentication services to FusionAuth. This guide can offer only general advice to migrate to any of them. Ultimately, migration is the process of copying data about your users from your database in the FA format, to the new system's database in its format, mapping tables and columns appropriately. Each service allows you to import users (and sometimes other data) in different ways:
 
 - **Direct database import through SQL statements** — These services tend to be free or open source. Examples include Keycloak, the Janssen project from Gluu, Authentic, or Authelia. While free services don't have the funding to pay developers to write user-migration plugins, they allow you complete access to edit your database and insert whatever data you want. In these cases, you would write a SQL script against the FA database that generates a SQL script that is a set of INSERT statements that writes users to the target database.
 - **API** — Most services will also provide an API, allowing you to manage users from a terminal. Examples include AWS Cognito, Firebase, Keycloak, Gluu/Janssen, Auth0, FrontEgg, Stytch, and Authentik. Instead of writing SQL to generate SQL, write SQL to export a JSON, or YAML file of your users. Then write a script in bash, Python, or Node.js that loops through the file and calls the target service API to create a new user for each existing user.
@@ -221,9 +221,20 @@ If you need to map FA columns to columns in the new database, use SQL syntax lik
 
 ## How To Handle Differing Password Hashing Algorithms
 
-PasswordHashProvider
+The major difficulty migrating between any authentication services is how each service handles password hashing.
+
+Passwords are not stored in plaintext in databases. Instead, the password is irreversibly hashed into a sequence of bytes. Sometimes the password is first combined with random bytes, called a salt, before hashing. The salt must be kept with the hash. There are a multitude of different algorithms that hash passwords. Some algorithms include the salt with the hash.
+
+By default FA uses [Salted PBKDF2 HMAC SHA-256](/docs/reference/password-hashes#salted-pbkdf2-hmac-sha-256). If the new service also uses this hash algorithm, you have no work to do. If the new service uses a different algorithm, you have two choices:
+- Do not migrate passwords. Require all your users to "change" their password before logging in, through the forgot password email mechanism. This requires little work from you, but is poor user experience.
+- Set the hashing algorithm field for the user in the new service, if the service supports the algorithm. If the service doesn't, it's possible that the service supports hashing extensions. This means that you can write your own code that implements the hash algorithm to check the user's password at login, and add it to the service as an extension. For example, here's how [custom hashing works](https://fusionauth.io/docs/extend/code/password-hashes/custom-password-hashing) in FA. Check if your new service supports something similar.
+
+A lot of services also have the option to overwrite the hash and algorithm of the migrated user with the service's default algorithm after first login. You should enable this so all users are consistently stored.
+
+Finally, be aware that FusionAuth users can have different hashing algorithms — don't assume all users use PBKDF2, check the `encryption_scheme` field. This difference will occur only if FusionAuth users were migrated into the database from another system, or if a previous administrator configured FusionAuth to use an algorithm differing from the default.
 
 ## Social Logins like Facebook, Google, Or GitHub
+
 
 
 ## Online Migration Techniques
