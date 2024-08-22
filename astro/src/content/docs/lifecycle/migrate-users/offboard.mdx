@@ -19,8 +19,10 @@ import Diagram2 from 'src/components/docs/extend/segmentDiagram2.astro';
 - [Browse The Database](#browse-the-database)
 - [Online And Offline Migrations](#online-and-offline-migrations)
 - [What To Export?](#what-to-export)
-- [Export To Keycloak Example](#export-to-keycloak-example)
 - [How To Migrate](#how-to-migrate)
+- [Example SQL](#example-sql)
+  - [Direct Database Import Through SQL Statements](#direct-database-import-through-sql-statements)
+  - [API or Plugins](#api-or-plugins)
 - [How To Handle Differing Password Hashing Algorithms](#how-to-handle-differing-password-hashing-algorithms)
 - [Social Logins like Facebook, Google, Or GitHub](#social-logins-like-facebook-google-or-github)
 - [Online Migration Techniques](#online-migration-techniques)
@@ -113,14 +115,6 @@ Here is the full list of FA database tables you should look at for export: `appl
 If you want to browse the diagram above in DBeaver, you can download the ERD file [here](../../../../../public/img/docs/lifecycle/migrate-users/offboard/databaseDiagram.erd).
 </Aside>
 
-## Export To Keycloak Example
-
-```sh
-docker run -p 9012:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:25.0.4 start-dev
-```
-- browse to localhost:9012
-- tenant -> realm. application -> client.
-
 ## How To Migrate
 
 There are dozens of alternative authentication services to FusionAuth. This guide can offer only general advice to migrate to any of them. Each service allows you to import users (and sometimes other data) in one of three ways:
@@ -129,7 +123,102 @@ There are dozens of alternative authentication services to FusionAuth. This guid
 - **API** — Most services will also provide an API, allowing you to manage users from a terminal. Examples include AWS Cognito, Firebase, Keycloak, Gluu/Janssen, Auth0, FrontEgg, Stytch, and Authentik. Instead of writing SQL to generate SQL, write SQL to export a JSON, or YAML file of your users. Then write a script in bash, Python, or Node.js that loops through the file and calls the target service API to create a new user for each existing user.
 - **Plugins** — Some of the more powerful services provide dedicated import plugins that will import your users for you, given a CSV or JSON file or a database connection. Examples include AWS Cognito, Auth0, and Frontegg. This case is similar to the API one above, requiring you to write SQL to generate a file of users. Services that do this tend to have cloud-only offerings, that don't allow you direct access to the database.
 
-From top to bottom, these options decrease in complexity, but also decrease in customization. In other words, if you have direct database access, you can map a lot more of your existing user data into the target system, but also have more work to do, and more chance of making database entries that cause errors in the service.
+From top to bottom, these options decrease in complexity, but also decrease in customization. In other words, if you have direct database access, you can map more of your existing user data into the target system, but you also have more work to do, and more chance of making database entries that cause errors in the service.
+
+## Example SQL
+
+Let's look at an example SQL queries for each of the three approaches in the previous section. Consider exporting a list of users, containing: user Id, first name, email, password, hash, salt, and encryption scheme. You can see from the database diagram shown earlier that you need to join the `users` table on the `identities` table to find these fields.
+
+Below is the SQL to get this data.
+
+```sql
+SELECT
+	u.id, u.first_name,
+	i.email, i.encryption_scheme, i.password, i.salt, i.factor
+FROM
+	identities AS i
+	JOIN users AS u
+		ON u.id = i.users_id
+
+-- OUTPUT:
+
+id | first_name| email | encryption_scheme | password | salt | factor
+
+00000000-0000-0000-0000-111111111111 | Fred | richard@example.com |salted-pbkdf2-hmac-sha256|ULoj1fuENZ+QvRqoaOhZ2YX6vuI7uqi7pY0a1EcE32Q= |u8ikPE4m35czpQArp2lDLYDGpIIo+FC+wiNzCclLRbw= | 24000
+
+00000000-0000-0000-0000-000000000001 | Dinesh | admin@example.com |salted-pbkdf2-hmac-sha256|VBSc35CHt/4udxuL+ctb+MY+inWUGr4gMvZSwhvJ8iI= |l5LWrb6/YBIR3USJTFdDHIGYBaDWvqN1uqSRGhDfQHM= | 24000
+
+a58ebb5e-a207-4653-824c-b7f41a73c63c | Test | test@example.com |salted-pbkdf2-hmac-sha256|3JK/aB+MBHtFXvxCvoVqZ4cl5wTkiV843dwA/HKGKBM= |s1ElWordVlDuCjuy1rhHz5i2GPdGp9NcVCfx+jSFRic= | 24000
+```
+
+### Direct Database Import Through SQL Statements
+
+To change this SQL query to generate SQL insert queries, use the format below. Here you assume that the database you're writing into has a single table called `user`.
+
+```sql
+SELECT format
+(
+	'INSERT INTO user (id, first_name, email, encryption_scheme, password, salt, factor) VALUES (%L, %L, %L, %L, %L, %L, %s);',
+	u.id, u.first_name, i.email, i.encryption_scheme, i.password, i.salt, i.factor
+)
+FROM
+	identities AS i
+JOIN
+	users AS u ON
+	u.id = i.users_id;
+
+-- OUTPUT:
+
+format
+
+INSERT INTO user (id, first_name, email, encryption_scheme, password, salt, factor) VALUES ('00000000-0000-0000-0000-111111111111', 'Fred', 'richard@example.com', 'salted-pbkdf2-hmac-sha256', 'ULoj1fuENZ+QvRqoaOhZ2YX6vuI7uqi7pY0a1EcE32Q=', 'u8ikPE4m35czpQArp2lDLYDGpIIo+FC+wiNzCclLRbw=', 24000);
+
+INSERT INTO user (id, first_name, email, encryption_scheme, password, salt, factor) VALUES ('00000000-0000-0000-0000-000000000001', 'Dinesh', 'admin@example.com', 'salted-pbkdf2-hmac-sha256', 'VBSc35CHt/4udxuL+ctb+MY+inWUGr4gMvZSwhvJ8iI=',  'l5LWrb6/YBIR3USJTFdDHIGYBaDWvqN1uqSRGhDfQHM=', 24000);
+
+INSERT INTO user (id, first_name, email, encryption_scheme, password, salt, factor) VALUES ('a58ebb5e-a207-4653-824c-b7f41a73c63c', 'Test', 'test@example.com', 'salted-pbkdf2-hmac-sha256', '3JK/aB+MBHtFXvxCvoVqZ4cl5wTkiV843dwA/HKGKBM=', 's1ElWordVlDuCjuy1rhHz5i2GPdGp9NcVCfx+jSFRic=', 24000);
+```
+
+You can now save the output of your this to a SQL file and then run that file on your new database.
+
+### API or Plugins
+
+To generate a JSON file to give to user import plugins, or to loop through in your own code that calls the new service's API, run the original SQL query from the start of this section. In the DBeaver query output at the bottom of this screen, click `Export data` and follow the wizard, choosing `JSON` as the output format.
+
+```JSON
+{
+"SELECT \n\tu.id, u.first_name,\n\ti.email, i.encryption_scheme, i.password, i.salt, i.factor \nFROM \n\tidentities AS i\n\tJOIN users AS u \n\t\tON u.id = i.users_id": [
+	{
+		"id" : "00000000-0000-0000-0000-111111111111",
+		"first_name" : "Fred",
+		"email" : "richard@example.com",
+		"encryption_scheme" : "salted-pbkdf2-hmac-sha256",
+		"password" : "ULoj1fuENZ+QvRqoaOhZ2YX6vuI7uqi7pY0a1EcE32Q=",
+		"salt" : "u8ikPE4m35czpQArp2lDLYDGpIIo+FC+wiNzCclLRbw=",
+		"factor" : 24000
+	},
+	{
+		"id" : "00000000-0000-0000-0000-000000000001",
+		"first_name" : "Dinesh",
+		"email" : "admin@example.com",
+		"encryption_scheme" : "salted-pbkdf2-hmac-sha256",
+		"password" : "VBSc35CHt\/4udxuL+ctb+MY+inWUGr4gMvZSwhvJ8iI=",
+		"salt" : "l5LWrb6\/YBIR3USJTFdDHIGYBaDWvqN1uqSRGhDfQHM=",
+		"factor" : 24000
+	},
+	{
+		"id" : "a58ebb5e-a207-4653-824c-b7f41a73c63c",
+		"first_name" : "Test",
+		"email" : "test@example.com",
+		"encryption_scheme" : "salted-pbkdf2-hmac-sha256",
+		"password" : "3JK\/aB+MBHtFXvxCvoVqZ4cl5wTkiV843dwA\/HKGKBM=",
+		"salt" : "s1ElWordVlDuCjuy1rhHz5i2GPdGp9NcVCfx+jSFRic=",
+		"factor" : 24000
+	}
+]}
+```
+
+If you need to map FA columns to columns in the new database, use SQL syntax like: `SELECT u.first_name as name`. Or you could do the mapping in the Python or Node.js code itself.
+
 
 ## How To Handle Differing Password Hashing Algorithms
 
