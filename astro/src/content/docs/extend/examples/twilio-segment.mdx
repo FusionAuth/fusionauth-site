@@ -27,13 +27,13 @@ Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below
 
 In this guide, you will use [webhooks](/docs/extend/events-and-webhooks) to send data from FusionAuth to Segment. Unfortunately, FusionAuth does not allow you to set which events trigger which webhooks. Instead, any event will trigger **all** webhooks. So you have to write an adapter web service that receives the webhook call from FusionAuth, checks what event caused the call, and forwards the appropriate information to Segment.
 
-While Segment stores all the events you sent it, you can't query Segment's store to extract information. Instead, Segment is intended as a communications hub, that receives data from multiple **sources**, filters, adjusts, and merges the data, and sends it to multiple **destinations**. The easiest destination to configure is a PostgreSQL database.
+While Segment stores all the events you send, you can't query Segment's store to extract information. Instead, Segment is intended as a communications hub that receives data from multiple **sources**, filters, adjusts, and merges the data, and sends it to multiple **destinations**. The easiest destination to configure is a PostgreSQL database.
 
 This design looks like the diagram below.
 
 <Diagram2></Diagram2>
 
-If you already use Segment, you will have your own data warehouse configured, and that's fine. Once you've finished following this guide, using a fresh warehouse for testing, you can add your production warehouse as a destination to the new FusionAuth source.
+If you already use Segment, you will have your own data warehouse configured, and that's fine. Once you've finished following this guide, using a fresh warehouse for testing, you can add your production warehouse as a destination for the new FusionAuth source.
 
 You're going to follow the steps below in the next sections:
 - Create a free cloud-hosted PostgreSQL database.
@@ -43,21 +43,21 @@ You're going to follow the steps below in the next sections:
 
 ## Create A PostgreSQL Database In Aiven
 
-In this section you'll create a free fresh database to act as a Segment destination. If you already have a server with a public IP address and PostgreSQL installed, you can use that instead.
+In this section, you'll create a free fresh database to act as a Segment destination. If you already have a server with a public IP address and PostgreSQL installed, you can use that instead.
 
 - Browse to https://aiven.io and click <InlineUIElement>Get started for free</InlineUIElement>.
 - Sign up for a new account and create a new database. Follow the wizard to the end and wait for the new database instance to start.
 - The screenshot below shows a project called `fa` and a database called `defaultdb`.
   ![Aiven database connection details](/img/docs/extend/examples/segment/segmentAivenDatabase.png)
 - The Aiven overview page shown above lists all the details you need to create a PostgreSQL connection: host, port, database, username, and password. You can test your connection in a cross-platform database IDE like [DBeaver](https://dbeaver.io/download) or [Azure Data Studio](https://learn.microsoft.com/en-us/azure-data-studio/download-azure-data-studio?tabs=win-install%2Cwin-user-install%2Credhat-install%2Cwindows-uninstall%2Credhat-uninstall#download-azure-data-studio) (ADS). If you use ADS, install the PostgreSQL extension in the sidebar before trying to create a database connection. The details shown in the new connection window below match the ones in the Aiven list above, and will be similar for your database.
-- ![DBeaver](/img/docs/extend/examples/segment/segmentDbeaver.png)
+  ![DBeaver](/img/docs/extend/examples/segment/segmentDbeaver.png)
 
 This is all you need for a Segment destination.
 
-There are other options, but they maybe a bit more difficult to use:
+Other options are available, but they may be a bit more difficult to use:
 - Neon.tech created a database that had connection errors from Segment ("Endpoint ID does not exist").
-- Render.com needs you to enter credit card details.
-- Google Sheets can be used as a destination, but requires you to manually create multiple mappings between your source event types and the flat format requirement for a spreadsheet. It's more tedious than using an automated relational database.
+- Render.com needs credit card details.
+- Google Sheets can be used as a destination, but requires manually-created multiple mappings between source event types and the flat format requirement for a spreadsheet. It's more tedious than using an automated relational database.
 
 ## Create A Segment Account
 
@@ -71,7 +71,7 @@ Add FusionAuth as a source:
 - Click <Breadcrumb>Connections -> Sources</Breadcrumb> in the sidebar.
 - Click <InlineUIElement>Add source</InlineUIElement>.
 - Choose <InlineUIElement>HTTP API</InlineUIElement> and click <InlineUIElement>Add Source</InlineUIElement>. (The Segment API is documented [here](https://segment.com/docs/connections/sources/catalog/libraries/server/http-api)).
-- Give it the <InlineField>Name</InlineField> `fa`.
+- Give the source the <InlineField>Name</InlineField> `fa`.
 - Click <InlineUIElement>Add Source</InlineUIElement>.
 - Note your <InlineField>Write Key</InlineField>. Keep it secret and do not commit it to GitHub.
 
@@ -87,9 +87,9 @@ Add PostgreSQL as a destination:
 
 ## Create A Filtering Web Service
 
-Now you'll write a web service that receives the webhook calls from FusionAuth, filters them by event, and forwards relevant ones to Segment, by following the steps below.
+Follow the steps below to write a web service that receives the webhook calls from FusionAuth, filters them by event, and forwards relevant events to Segment.
 
-- Create a file called `app.mjs`. You are going to use Node.js for the adapter web service in this guide, but the code is simple enough for you to easily code it in your favorite language.
+- Create a file called `app.mjs`. You will use Node.js for the adapter web service in this guide, but the code is simple enough to easily code it in your favorite language.
 - Add the content below to `app.mjs`. Set your `_writeKey` from Segment.
   ```js
   import express from 'express';
@@ -185,11 +185,11 @@ Now you'll write a web service that receives the webhook calls from FusionAuth, 
 - The Segment API endpoint URL might differ depending on whether you created your workspace in the USA or EU. Either https://events.eu1.segmentapis.com or https://api.segment.io/v1.
 
 The code above has three important functions:
-- An Express.js POST method that listens to all incoming FusionAuth webhooks, but responds only to ones you care about, like the line: `(req.body.event.type == 'user.create.complete')`.
-- `callSegmentIdentify()`, which calls the Segment `identify` method to update user information. The call is made only for FusionAuth update completed webhooks. User data goes in the `traits` property.
-- `callSegmentTrack()`, which calls the Segment `track` method to associate an event with user. In this script you're tracking only logins, but you could add any event you want. Data about the event goes in the `properties` property. There isn't any data to add for a successful login.
+- An Express POST method listens to all incoming FusionAuth webhooks but responds only to those you care about, like the line `(req.body.event.type == 'user.create.complete')`.
+- `callSegmentIdentify()` calls the Segment `identify` method to update user information. The call is made only for FusionAuth update completed webhooks. User data goes in the `traits` property.
+- `callSegmentTrack()` calls the Segment `track` method to associate an event with a user. This script only tracks logins, but you could add any event you need. Data about the event goes in the `properties` property. There isn't any data to add for a successful login.
 
-If you want to test sending an event to Segment manually, you can run the curl command below, using your `writeKey`.
+If you want to test sending an event to Segment manually, you can run the curl command below using your `writeKey`.
   ```sh
   curl -v --location 'https://api.segment.io/v1/track'   --header 'Content-Type: application/json'   --data-raw '{
       "event": "user.login.success",
@@ -198,16 +198,16 @@ If you want to test sending an event to Segment manually, you can run the curl c
   }'
   ```
 
-Segment [API returns a successful status code even for most errors](https://segment.com/docs/connections/sources/catalog/libraries/server/http-api/#errors). Check the debugger log on the Segment website if your data is not showing in the Segments events list.
+The Segment API [returns a successful status code for most errors](https://segment.com/docs/connections/sources/catalog/libraries/server/http-api/#errors). Check the debugger log on the Segment website if your data does not show in the Segment events list.
 
 ## Run FusionAuth
 
-Now that Segment is prepared and you have a service to send events, you can finally start FusionAuth and begin testing.
+Now that Segment is prepared and you have a service to send events, you can start FusionAuth and begin testing.
 
 - Install [Docker](https://docs.docker.com/get-docker/) if you don't have it on your machine.
 - Clone the [FusionAuth example Docker Compose repository](https://github.com/FusionAuth/fusionauth-example-docker-compose) to your computer.
 - In your terminal, navigate to the `light` directory in the repository. You will work in this directory for the rest of this guide, creating files and running terminal commands.
-- Copy the `app.mjs` script from earlier into this directory.
+- Copy the previously created `app.mjs` script into this directory.
 - Edit the `docker-compose.yml` file from the FusionAuth kickstart example project to add the new service below. The service will be a Node.js container that runs your `app.mjs` script.
   ```yaml
   fa_seg:
@@ -235,47 +235,58 @@ Now that Segment is prepared and you have a service to send events, you can fina
 Now that FusionAuth is running, you can enable webhooks so that events start to flow from FusionAuth into the filtering service.
 
 - Browse to http://localhost:9011/admin and check you can log in with `admin@example.com` and `password`.
-- In FusionAuth web interface, browse to Tenants.
-- Edit the Default tenant.
+- In the FusionAuth web interface, browse to Tenants.
+- Edit the default tenant.
 - Click the <Breadcrumb>Webhooks</Breadcrumb> tab.
-- Enable the webhooks for the events:
+- Enable webhooks for the events:
   - [x] user.create.complete
   - [x] user.email.update
   - [x] user.login.success
   - [x] user.update.complete
 - Click <IconButton icon="save" color="blue"/> at the top right of the page.
 - Browse to <Breadcrumb>Settings -> Webhooks</Breadcrumb>.
-- Click the <IconButton icon="add" color="green"/> at the top right.
-- Enter URL `http://fa_seg`.
+- Click <IconButton icon="add" color="green"/> at the top right.
+- Enter the URL `http://fa_seg`.
 - Click <IconButton icon="save" color="blue"/> at the top right. All events are enabled by default. You don't need to worry about security because the receiving service will run on the same Docker network as FusionAuth.
-- (You can click Test on the created webhook now to see example JSON for all the events that will be sent.)
+
+You can click Test on the created webhook now to see example JSON for all the events that will be sent.
 
 ## Test The System
 
-- Log out of FusionAuth and back in again.
-- In the terminal you should see a notification from the filtering script:
-  ```sh
-  fa_seg  | Received event of type: user.login.success
-  ```
-- In Segment you should see your event arriving. You may have to refresh the page. If you cannot see your event, consult the troubleshooting section at the end of this guide.
-  ![Segment event debugger](/img/docs/extend/examples/segment/segmentEventReceived.png)
-- If you connected DBeaver to your PostgreSQL database earlier, you should be able to refresh your tables and see that data has arrived in the destination.
+First test the `track` event in Segment.
 
-You've tested the `track` event in Segment. To test the `identify` event, you're going to create a new user.
+Log out of FusionAuth and log in again.
 
-- Browse to http://localhost:9011/admin/user and create a new user with any details you want.
-  ![New FusionAuth user](/img/docs/extend/examples/segment/segmentNewUser.png)
-- In the terminal you should see a notification from the filtering script:
-  ```sh
-  fa_seg  | Received event of type: user.create.complete
-  ```
-- The event should show in the Segment event list as type `identify`, but might not propagate into PostgreSQL until Segment synchronizes its store with the warehouse in a few hours time.
+In the terminal, you should see a notification from the filtering script:
+```sh
+fa_seg  | Received event of type: user.login.success
+```
+
+In Segment, you should see your event arriving. You may have to refresh the page. If you cannot see your event, consult the troubleshooting section at the end of this guide.
+
+![Segment event debugger](/img/docs/extend/examples/segment/segmentEventReceived.png)
+
+If you connected DBeaver to your PostgreSQL database earlier, you should be able to refresh your tables and see that data has arrived in the destination table.
+
+To test the `identify` event, create a new user.
+
+Browse to http://localhost:9011/admin/user and create a new user with any details.
+
+![New FusionAuth user](/img/docs/extend/examples/segment/segmentNewUser.png)
+
+In the terminal, you should see a notification from the filtering script:
+
+```sh
+fa_seg  | Received event of type: user.create.complete
+```
+
+The event should show in the Segment event list as an `identify` type. The new event might not propagate to PostgreSQL until the Segment store is synchronized with the warehouse in a few hours.
 
 ## Next Steps
 
-Now that your FusionAuth user data is available in your data warehouse, you can write a SQL query on either user Id or email address to match user data in FusionAuth to user activity sent to Segment from your other apps.
+Now that your FusionAuth user data is available in your data warehouse, you can write a SQL query on user Id or email address to match user data in FusionAuth to user activity sent to Segment from your other apps.
 
-At this stage you might want to:
+At this stage, you might want to:
 - Add more event types to the filtering script.
 - Change the user data sent to Segment (being mindful of your users' data privacy).
 - Forward the data to your real destinations instead of the test PostgreSQL instance.
@@ -285,12 +296,12 @@ At this stage you might want to:
 If you don't see events arrive in Segment, try the following:
 
 - Run the curl command manually to send events to Segment.
-- Check all the URL details and key is correct.
-- Check the event debug log in Segment to see if events are being reject for a flaw in the JSON, while still returning HTTP code 200.
+- Check that the URL details and key are correct.
+- Check the event debug log in Segment to see if events are being rejected due to a flaw in the JSON, even though an HTTP 200 code is returned.
 
-If curl works, but the Node script fails, try debug in your physical machine instead of in Docker.
+If curl works but the Node.js script fails, try debugging on your physical machine instead of in Docker.
 - Install Node.js.
 - Change the webhook URL in FusionAuth settings from `http://fa_seg` to `http://host.docker.internal:3000`.
 - Open the `app.mjs` script in Visual Studio Code.
-- Change `app.listen(80, '0.0.0.0', ` to `app.listen(3000, '0.0.0.0', `
-- Run the script from the VS Code debug sidebar to see where errors are occurring.
+- Change `app.listen(80, '0.0.0.0', ` to `app.listen(3000, '0.0.0.0', `.
+- Run the script from the VS Code debug sidebar to see where errors occur.
