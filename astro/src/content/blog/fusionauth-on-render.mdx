@@ -15,9 +15,11 @@ In this tutorial, you will install FusionAuth on [Render](https://render.com/) u
 
 {/* more */}
 
+In the below video I walk through each step of the process, this blog post is an abbreviated version of the video for you to reference key points.
+
 <YouTube id="6SRbGrQ5ets" />
 
-## What is Render
+## What Is Render
 
 [Render](https://render.com/) is a platform for deploying and running [containerized applications](/docs/get-started/download-and-install/docker). 
 
@@ -33,39 +35,39 @@ It offers a number of features that make it attractive to developers, including:
 
 To follow along with this tutorial, you need to have a Render account, which you can sign up for [here](https://dashboard.render.com/register). 
 
-## Setting Up PostgreSQL on Render
+## Setting Up PostgreSQL On Render
 
-First things first, we need to set up our PostgreSQL database.
+First things first, you need to set up our PostgreSQL database.
 
-### Create a New PostgreSQL Database
+### Create A New PostgreSQL Database
 
 1. Go to your Render dashboard and create a new PostgreSQL instance.
-2. Name this instance `FusionAuth Example`.
+2. Name this instance `fusionauth-example`.
     
     ![PostgreSQL](/img/blogs/fusionauth-on-render/1-fusionauth-render.jpg)
-3. Choose `us-east` as the region.
+3. Choose `Ohio (US East)` as the region.
 4. Select `PostgreSQL 16`, which is great for hobby projects.
-5. Set it to the `Free` tier for now. If this doesn't work out, we can upgrade later.
+5. Set it to the `Free` tier for now. This will work for any development work, you will want to upgrade if utilizing the database in production, mainly for the zero downtime aspects.
     
 ![PostgreSQL Instance Type](/img/blogs/fusionauth-on-render/2-fusionauth-render.jpg)
 
-Now, let's create the database. While it’s setting up, we can proceed with setting up FusionAuth.
+Now, let's create the database. While it’s setting up, you can proceed with setting up FusionAuth.
 
-## Setting Up FusionAuth on Render
+## Setting Up FusionAuth On Render
 
-### Create a New Web Service for FusionAuth
+### Create A New Web Service For FusionAuth
 
-Next, we need to set up FusionAuth as a web service.
+Next, you need to set up FusionAuth as a web service.
 
 1. In your Render dashboard, create a new web service.
-2. Use an existing image. We’ll deploy this from Docker.
+2. Use an existing image, hosted on docker.
 3. Specify the image: `docker.io/fusionauth/fusionauth-app:latest`.
     
-    ```dockerfile
-    docker.io/fusionauth/fusionauth-app:latest
-    ```
-4. Choose `us-east` as the region again.
-5. For initial testing and development, set the service to the `Free` tier.
+```plaintext
+docker.io/fusionauth/fusionauth-app:latest
+```
+4. Choose `Ohio (US East)` as the region again.
+5. For initial testing and development, set the service to the `Free` tier (there is a limitation with this that I show in the video at a later point).
     
 ### Configure Environment Variables
 
@@ -78,40 +80,46 @@ Here’s a list:
 - `DATABASE_URL`: PostgreSQL database URL
 - `DATABASE_USERNAME`: Database username
 - `DATABASE_PASSWORD`: Database password
-- `FUSIONAUTH_APP_MEMORY`: Memory used for Java App
+- `FUSIONAUTH_APP_MEMORY`: Memory used for Java App (only required for limited workloads)
 - `FUSIONAUTH_APP_RUNTIME_MODE`: Development Mode or Production
-- `OPENSEARCH_JAVA_OPTS`: Java Options
+- `OPENSEARCH_JAVA_OPTS`: Java Options (only required for limited workloads)
 - `POSTGRES_USER`: Postgres user
 - `POSTGRES_PASSWORD`: Postgres password
 
-We’ll copy these from an existing FusionAuth instance. Pull this information from your PostgreSQL setup, and apply it to these environment variables.
+Pull this information from your PostgreSQL setup, and apply it to these environment variables.
 
+Example values below
 ```plaintext
 DATABASE_URL=jdbc:postgresql://hostname:5432/fusionauth-example
+DATABASE_USERNAME=fusionauth_example_user
+DATABASE_PASSWORD=2Ss7JqaLDSCrjSFwqoLAWyvn2q8764654
+FUSIONAUTH_APP_MEMORY=512M
+FUSIONAUTH_APP_RUNTIME_MODE=development
+OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
 ```
 
-FusionAuth uses Java. Allocate sufficient memory and set development mode:
-
-```plaintext
-OPENSEARCH_JAVA_OPTS=-Xmx512M Xmx512M
-```
-
-### Deploy the Web Service
+### Deploy The Web Service
 
 Click the `Deploy Web Service` button. Wait for the deployment process to complete. You’ll see a loading screen as the service starts.
 
 ![Logs showing in Render](/img/blogs/fusionauth-on-render/6-fusionauth-render.jpg)
 
+Once the logs show `HTTP server listening on port [9011]` you will be ready to access the web service.
+
 ### Enter Maintenance Mode
 
 Once the service starts, FusionAuth enters maintenance mode to configure settings:
 
-1. Open the URL provided by Render. It might be slow if it’s on a small server.
+1. Open the URL provided by Render. It will be slow since this is a very small server.
 2. The setup screen should appear pre-filled based on your environment variables. Click `Submit`.
 
 ![Maintenance Mode for FusionAuth](/img/blogs/fusionauth-on-render/5-fusionauth-render.jpg)
 
 ### Create Admin User
+
+The next screen that appears will be the FusionAuth Setup Wizard, which will allow you to create the admin user.
 
 Create your admin user in FusionAuth:
 
@@ -121,18 +129,21 @@ Create your admin user in FusionAuth:
     
 ![FusionAuth Setup Wizard](/img/blogs/fusionauth-on-render/7-fusionauth-render.jpg)
 
-### Access the Admin Dashboard
+### Access The Admin Dashboard
 
-After setting up the admin user, navigate to the admin dashboard. Here, you might see issues like incorrect requested origins. This is where our proxy setup comes in handy.
+After setting up the admin user, navigate to the admin dashboard (this should redirect automatically). Here, you might see issues like incorrect requested origins. This is where your proxy setup comes will be needed to address the errors.
+You can read more about why a proxy is needed in the [FusionAuth and Proxies](/docs/operate/deploy/proxy-setup) doc.
 
 ## Setting Up a Proxy for FusionAuth
 
+In the below image you can see on the left the proxy version without erros and the non-proxy version with erros on the right.
+
 ![FusionAuth with and without Proxy](/img/blogs/fusionauth-on-render/10-fusionauth-render.png)
 
-To resolve configuration issues related to origins and CORS, we’ll set up a proxy using a simple Node.js application.
+To resolve configuration issues related to origins and CORS, you will set up a proxy using a simple Node.js application.
 
 1. Clone the [fusionauth-render-proxy](https://github.com/alex-fusionauth/fusionauth-render-proxy.git) repository from GitHub.
-2. Review the code which mainly utilizes Express.js.
+2. Review the code which mainly utilizes Node.js with Express.js.
     
 ```javascript
 const proxy = require("express-http-proxy");
@@ -169,9 +180,9 @@ server.headersTimeout = 120 * 1000;
 ```
 3. Deploy this application to Render under a new web service named `FusionAuth Render Proxy`. 
 
-### Configure Proxy Environment Variables
+### Configure Proxy Environment Variable
 
-Add the following environment variables:
+Add the following environment variable:
 
 - `RENDER_FUSIONAUTH_INTERNAL_URL`: Internal URL of your FusionAuth service `fusionauth-app:latest`
 
@@ -183,7 +194,7 @@ RENDER_FUSIONAUTH_INTERNAL_URL=fusionauth-app-latest-wczm:9011
 
 ## Complete the Setup
 
-Go back to your FusionAuth dashboard, and everything should now be proxied correctly. The proxy URL will be like listed under your proxy instance.
+Go back to your FusionAuth dashboard, and everything should now be proxied correctly. The proxy URL will be  listed under your proxy web service and should be similar to `https://fusionauth-render-proxy.onrender.com/`.
 
 ### Example Application Integration
 
@@ -193,8 +204,16 @@ If you have a React app or any other frontend application, update your endpoints
 const API_URL = 'https://fusionauth-render-proxy.onrender.com';
 ```
 
+Below is an example URL for the Login Endpoint found in your Application Details.
+
+```plaintext
+https://fusionauth-render-proxy.onrender.com/oauth2/authorize?client_id=910c4cf4-c26e-4677-887f-62ada8897555&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fauth%2Fcallback%2Ffusionauth
+```
+
 ## Conclusion and Next Steps
 
 You’ve successfully set up FusionAuth on Render with a proxy and PostgreSQL backend! This setup is great for development and hobby projects. For production, consider scaling up your instances and monitoring performance.
+
+For even easier setup and maintenance I would recommend using FusionAuth on our [Hosted Community Plan](/pricing?step=plan&hosting=basic-cloud) to get started.
 
 Feel free to explore more [FusionAuth tutorials](/docs/quickstarts) and make sure your environment is tailored to your needs.
