@@ -34,7 +34,7 @@ The Relying Party is a central player in the WebAuthn ecosystem, representing th
 
 ### Client to Authenticator Protocol
 
-The Client to Authenticator Protocol serves as the communication bridge between the Browser and the authenticator device.This ensures the authentication process is seamless, and effective.  Whether it's the biometric sensors on your smartphone or a specialized security key like a Ubikey, the Client to Authenticator Protocol facilitates the exchange of information, making it possible to verify your identity with confidence.
+The Client to Authenticator Protocol serves as the communication bridge between the Browser and the authenticator device.This ensures the authentication process is seamless, and effective.  Whether it's the biometric sensors on your smartphone or a specialized security key like a Yubikey, the Client to Authenticator Protocol facilitates the exchange of information, making it possible to verify your identity with confidence.
 
 ### Platform and Browser Support
 
