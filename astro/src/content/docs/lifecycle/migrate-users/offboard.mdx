@@ -1,6 +1,6 @@
 ---
 title: "Offboard: Leaving FusionAuth"
-description: Learn how to export your data from FusionAuth to migrate to another authentication service
+description: Learn how to export your data from FusionAuth to migrate to another authentication service.
 section: lifecycle
 subcategory: migrate users
 ---
@@ -14,26 +14,26 @@ import Diagram1 from 'src/diagrams/docs/lifecycle/migrate-users/offboardDiagram.
 
 ## Introduction
 
-This guide explains how to export your user data from FusionAuth to prepare it for migration to another system. Reasons for exporting your data include:
-- Swapping from FusionAuth to another authentication service.
-- Wondering if you start using FusionAuth how easy it is to leave.
-- Wanting to export your users into a data warehouse for analytical investigation.
+This guide explains how to export user data from FusionAuth to prepare it for migration to another system. This information may be useful for you to:
+- Export user data to a data warehouse for analysis.
+- Assess how easy migrating from FusionAuth would be before signing up.
+- Switch from FusionAuth to another authentication service.
 
-You can follow along with this guide to try some examples of exporting your data. You will start a new FusionAuth instance with a sample user and run SQL queries. If you already use FusionAuth, you can export your data from your existing instance.
+You can follow this guide to try some examples of exporting data. You will start a new FusionAuth instance with a sample user and run SQL queries. If you already use FusionAuth, you can export your data from your existing instance.
 
-To learn about authentication migration in general, please see the [generic migration guide](/docs/lifecycle/migrate-users/genericmigration.mdx) and the [migration overview](/docs/lifecycle/migrate-users). The principles in these guides that explain how to migrate **to** FusionAuth can also be used to migrate **from** FusionAuth to another service. It is important to be aware of the different migration strategies to choose from, especially online and offline migrations (static versus dynamic migrations).
+To learn about authentication migration in general, please see the [generic migration guide](/docs/lifecycle/migrate-users/genericmigration) and the [migration overview](/docs/lifecycle/migrate-users). The principles in these guides that explain how to migrate **to** FusionAuth can also be used to migrate **from** FusionAuth to another service. It is important to understand the different migration strategies, especially online and offline migrations (static versus dynamic migrations).
 
 FusionAuth might also have a specific guide on migrating from the service you want to migrate to, listed [here](/docs/lifecycle/migrate-users/provider-specific/). If so, check the steps in the guide to see if there are any important differences between the two services that you need to plan for.
 
 <Aside type='note'>
-For integration of FusionAuth data with complementary services, such as exporting to a customer data warehouse with [Twilio Segment](/docs/extend/examples/twilio-segment), or using monitoring services like [Prometheus](/docs/operate/secure-and-monitor/prometheus) or [Elastic](/docs/operate/secure-and-monitor/elastic), please see those guides.
+For integrating FusionAuth data with complementary services, such as exporting to a customer data warehouse with [Twilio Segment](/docs/extend/examples/twilio-segment) or using a monitoring service like [Prometheus](/docs/operate/secure-and-monitor/prometheus) or [Elastic](/docs/operate/secure-and-monitor/elastic), please see those guides.
 
-You should use different techniques, like webhooks and APIs, for sending to data such services, instead of the bulk database export discussed in this guide.
+You should use different techniques, like webhooks and APIs, for sending data to such services, instead of the bulk database export discussed in this guide.
 </Aside>
 
 ## Start A Sample Instance Of FusionAuth
 
-In this section you will run a new instance of self-hosted FusionAuth with Docker.
+To run a new self-hosted FusionAuth instance with Docker:
 
 - Install [Docker](https://docs.docker.com/get-docker/) if you don't have it on your machine.
 - Clone the [FusionAuth example Docker Compose repository](https://github.com/FusionAuth/fusionauth-example-docker-compose) to your computer.
@@ -44,63 +44,65 @@ In this section you will run a new instance of self-hosted FusionAuth with Docke
 
 ## Browse The Database
 
-While the FusionAuth Java code is closed-source, your database data is always freely available to you, unadulterated. You should not edit the data manually and risk breaking your system, but reading the data is fine. To browse your database, you can use a free cross-platform database IDE like [DBeaver](https://dbeaver.io/download) or [Azure Data Studio](https://learn.microsoft.com/en-us/azure-data-studio/download-azure-data-studio?tabs=win-install%2Cwin-user-install%2Credhat-install%2Cwindows-uninstall%2Credhat-uninstall#download-azure-data-studio)(ADS). If you use ADS, install the PostgreSQL extension in the sidebar before creating a database connection.
+While the FusionAuth Java code is closed-source, your database data is always freely available to you, unadulterated. You should not edit the data manually and risk breaking your system, but reading the data is fine. You can browse your database using a free, cross-platform database IDE like [DBeaver](https://dbeaver.io/download) or [Azure Data Studio](https://learn.microsoft.com/en-us/azure-data-studio/download-azure-data-studio?tabs=win-install%2Cwin-user-install%2Credhat-install%2Cwindows-uninstall%2Credhat-uninstall#download-azure-data-studio)(ADS). If you use ADS, install the PostgreSQL extension in the sidebar before creating a database connection.
 
-If you are using [FusionAuth Cloud](https://fusionauth.io/docs/get-started/run-in-the-cloud/cloud#accessing-user-data) (the paid cloud-hosted version of FusionAuth), you need to manually request a backup file of your database by contacting support. After receiving the backup file, import it into a PostgreSQL instance on your computer so that you can explore the data and schema.
+If you use [FusionAuth Cloud](/docs/get-started/run-in-the-cloud/cloud#accessing-user-data) (the paid, cloud-hosted version of FusionAuth), please contact support to request a backup file of your database. Import the backup file you receive from FusionAuth into a PostgreSQL instance on your computer to explore the data and schema.
 
-Below is an example screenshot of the FusionAuth PostgreSQL database from the example repository in the previous section, using a connection string with port `5432`, database `fusionauth`, and password `hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3`. If you want to connect to FusionAuth on a remote server, change the <InlineField>Host</InlineField> from `localhost` to your server name. The image shows the main user data table, `identities`.
+The screenshot below shows DBeaver connected to the FusionAuth PostgreSQL database from the example repository using a connection string with port `5432`, database `fusionauth`, username `fusionauth`, and password `hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3`. To connect to FusionAuth on a remote server, change the <InlineField>Host</InlineField> from `localhost` to your server name. The image shows the main user data table, `identities`.
 
-![Browse tables](../../../../../public/img/docs/lifecycle/migrate-users/offboard/offboardDBeaver.webp)
+![Browse tables](/img/docs/lifecycle/migrate-users/offboard/offboardDBeaver.png)
 
-## Online And Offline Migrations
+## Offline And Online Migrations
 
-Now that you know how to access your data, you can write a database export script to extract the values you want and import them into your new authentication system. However, you need to consider new users, and users that update their details, after you have exported your database but before the users have joined your new system.
+Now that you know how to access your data, you can write a database export script to extract the values you want and import them into your new authentication system. However, you need to consider new users and users that update their details after you have exported your database but before the users have joined your new system.
 
 You have three strategy options:
-- Offline migration: You take your application offline. Migrate your user data to the new system. Switch your application from pointing to FusionAuth for authentication to the new authentication system. Bring your application online again. This process could take from a few minutes to a few hours.
-- Online migration: You use webhooks and the FusionAuth API to migrate users individually from FusionAuth to the new system. As each user logs in, a webhook event fires, triggering a script you write to migrate the user's data and mark them as using the new system for future logins instead of FusionAuth. This is massively more complex than an offline migration.
-- Hybrid migration: Perform an offline migration without taking your application offline. Use webhooks to send any information that changes during the migration process to update your new system. This is called dual-write — where you update changes to users in both FusionAuth and the new authentication service, until the time you disable FusionAuth completely.
+- Offline migration: Take the application offline. Migrate the user data to the new system. Switch the application from pointing to FusionAuth for authentication to the new authentication system. Bring the application online again. This process could take a few minutes to a few hours.
+- Online migration: Use webhooks and the FusionAuth API to migrate users individually from FusionAuth to the new system. As each user logs in, a webhook event fires, triggering a script you write to migrate the user's data and mark them as using the new system for future logins instead of FusionAuth. This is a more complex approach than an offline migration.
+- Hybrid migration: Perform an offline migration without taking the application offline. Use webhooks to send any information that changes during the migration process to update the new system. This approach is called dual-write and involves updating changes to users in both FusionAuth and the new authentication service until FusionAuth is disabled.
 
-An offline migration is the simplest option to perform for most systems, but you need to warn your users your system will be offline for an hour at a convenient time. You will have to use a form of online migration if your database is huge and your application cannot afford to ever be offline.
+An offline migration is the simplest to perform for most systems, but you need to warn users that the system will be offline for a period at a convenient time. You will need to use a form of online migration if your database is extensive or your application cannot afford to be offline.
 
 Whichever option you choose, you will need to test the process thoroughly before running it against the live application.
 
 ## What To Export?
 
-FusionAuth does not have any dedicated documentation that explains the database schema. The schema is discussed briefly in this guide, and hopefully most tables are relatively obvious from their column names. If you need help understanding something in particular, please ask the FusionAuth programmers on the [Slack channel](https://fusionauth.io/community).
+FusionAuth does not have any dedicated documentation that explains the database schema. The schema is discussed briefly in this guide and most tables' purposes should be clear from their column names. If you need help understanding something in particular, please ask the FusionAuth programmers on the [Slack channel](/community).
 
-Some data types, like users, applications, and roles, are used in most authentication services. But some data is so specific to FusionAuth there is no point in trying to migrate it with a script. This includes settings for webhooks, connectors, lambdas, and user actions. There is also no point in exporting logs like daily login counts and FusionAuth instance settings like themes, because your new authentication service won't use them. You will need to manually reproduce actions and styles like these in whatever format the new service specifies.
+Some data types, like users, applications, and roles, are used in most authentication services. But some data is so specific to FusionAuth that there is no point in trying to migrate it with a script. This includes settings for webhooks, connectors, lambdas, and user actions. There is also no point in exporting logs like daily login counts and FusionAuth instance settings like themes, because your new authentication service won't use them. You will need to manually reproduce actions and styles like these in whichever format the new service specifies.
 
-To understand the user-related data tables in the database, you need to be familiar with [FusionAuth core concepts](/docs/get-started/core-concepts). Please read that guide before continuing. Below is a visual summary of the organisation.
+To understand the user-related data tables in the database, please read the [FusionAuth core concepts](/docs/get-started/core-concepts) guide before continuing. Below is a visual summary of the organization.
 
 <Diagram1 />
 
-In addition to the objects above, you also want to migrate identity providers, like Google OAuth, as well as user consents and email templates.
+In addition to the objects above, you may want to migrate identity providers like Google OAuth, user consents, and email templates.
 
 Below is the full database diagram for the tables you need to export. Though it has more fields than the diagram above, it is the same design. (You can open the SVG in a new tab to zoom in.)
 
-![Database diagram](../../../../../public/img/docs/lifecycle/migrate-users/offboard/databaseDiagram.svg)
+![Database diagram](/img/docs/lifecycle/migrate-users/offboard/databaseDiagram.svg)
+
+<Aside type="note">
+To browse the database diagram in DBeaver, you can download the ERD file [here](/img/docs/lifecycle/migrate-users/offboard/databaseDiagram.erd).
+</Aside>
 
 Here is the full list of FusionAuth database tables you should look at for export: `application_roles`, `applications`, `consents`, `email_templates`, `group_application_roles`, `group_members`, `groups`, `identities`, `identity_provider_links`, `identity_providers`, `identity_providers_applications`
 `identity_providers_tenants`, `tenants`, `user_comments`, `user_consents`, `user_consents_email_plus`, `user_registrations`, `user_registrations_application_roles`, `users`.
 
-<Aside type="note">
-If you want to browse the diagram above in DBeaver, you can download the ERD file [here](../../../../../public/img/docs/lifecycle/migrate-users/offboard/databaseDiagram.erd).
-</Aside>
-
 ## How To Migrate
 
-There are dozens of alternative authentication services to FusionAuth. This guide can offer only general advice to migrate to any of them. Ultimately, migration is the process of copying data about your users from your database in the FusionAuth format, to the new system's database in its format, mapping tables and columns appropriately. Each service allows you to import users (and sometimes other data) in different ways:
+There are dozens of alternative authentication services to FusionAuth. This guide provides general advice for migrating to any of them. Ultimately, migration is the process of copying data about users from a database in the FusionAuth format to the new system's database in its format, mapping tables and columns appropriately. Each service allows you to import users (and sometimes other data) in different ways:
 
-- **Direct database import through SQL statements** — These services tend to be free or open source. Examples include Keycloak, the Janssen project from Gluu, Authentic, or Authelia. While free services don't have the funding to pay developers to write user-migration plugins, they allow you complete access to edit your database and insert whatever data you want. In these cases, you would write a SQL script against the FusionAuth database that generates a SQL script that is a set of INSERT statements that writes users to the target database.
-- **API** — Most services will also provide an API, allowing you to manage users from a terminal. Examples include AWS Cognito, Firebase, Keycloak, Gluu/Janssen, Auth0, FrontEgg, Stytch, and Authentik. Instead of writing SQL to generate SQL, write SQL to export a JSON or YAML file of your users. Then write a script in bash, Python, or Node.js that loops through the file and calls the target service API to create a new user for each existing user.
-- **Plugins** — Some of the more powerful services provide dedicated import plugins that will import your users for you, given a CSV or JSON file or a database connection. Examples include AWS Cognito, Auth0, and Frontegg. This case is similar to the API one above, requiring you to write SQL to generate a file of users. Services that do this tend to have cloud-only offerings, that don't allow you direct access to the database.
+- **Direct database import through SQL statements** — These services tend to be free or open-source. Examples include Keycloak, the Janssen project from Gluu, Authentic, and Authelia. While free services don't have the funding to pay developers to write user-migration plugins, they allow you complete access to edit your database and insert any data you need. In these cases, you would write a SQL script against the FusionAuth database that generates a SQL script that is a set of INSERT statements that writes users to the target database.
+- **API** — Most services will also provide an API, allowing you to manage users from a terminal. Examples include AWS Cognito, Firebase, Keycloak, Gluu, Janssen, Auth0, Frontegg, Stytch, and authentik. Instead of writing SQL to generate SQL, write SQL to export a JSON or YAML file of users. Then write a script in bash, Python, or Node.js that loops through the file and calls the target service API to create a new user for each existing user.
+- **Plugins** — Some of the more powerful services provide dedicated import plugins that will import users for you, given a CSV or JSON file or a database connection. Examples include AWS Cognito, Auth0, and Frontegg. To use a plugin, you'll need to write SQL to generate a file of users. Services that do this tend to have cloud-only offerings that don't allow you direct access to the database.
 
-From top to bottom, these options decrease in complexity, but also decrease in customization. In other words, if you have direct database access, you can map more of your existing user data into the target system, but you also have more work to do, and more chance of making database entries that cause errors in the service.
+From top to bottom, these options decrease in complexity but also decrease in customization. In other words, if you have direct database access, you can map more of your existing user data into the target system, but you also have more work to do and more chance of making database entries that cause errors in the service.
 
 ## Example SQL
 
-Let's look at an example SQL queries for each of the three approaches in the previous section. Consider exporting a list of users, containing: user Id, first name, email, password, hash, salt, and encryption scheme. You can see from the database diagram shown earlier that you need to join the `users` table on the `identities` table to find these fields.
+Let's look at example SQL queries for the three migration approaches. 
+
+Consider exporting a list of users containing user Id, first name, email, password, hash, salt, and encryption scheme. As illustrated in the database diagram above, you need to join the `users` table on the `identities` table to find these fields.
 
 Below is the SQL to get this data.
 
@@ -126,7 +128,7 @@ a58ebb5e-a207-4653-824c-b7f41a73c63c | Test | test@example.com |salted-pbkdf2-hm
 
 ### Direct Database Import Through SQL Statements
 
-To change this SQL query to generate SQL insert queries, use the format below. Here you assume that the database you're writing into has a single table called `user`.
+Assuming the database you're writing to has a single table called `user`, you can change the SQL query to generate SQL insert queries using the format below. 
 
 ```sql
 SELECT format
@@ -151,11 +153,11 @@ INSERT INTO user (id, first_name, email, encryption_scheme, password, salt, fact
 INSERT INTO user (id, first_name, email, encryption_scheme, password, salt, factor) VALUES ('a58ebb5e-a207-4653-824c-b7f41a73c63c', 'Test', 'test@example.com', 'salted-pbkdf2-hmac-sha256', '3JK/aB+MBHtFXvxCvoVqZ4cl5wTkiV843dwA/HKGKBM=', 's1ElWordVlDuCjuy1rhHz5i2GPdGp9NcVCfx+jSFRic=', 24000);
 ```
 
-You can now save the output to a SQL file and then run that file on your new database.
+Save the output to a SQL file, and then run the file on the new database.
 
-### API or Plugins
+### API Or Plugins
 
-To generate a JSON file to give to user import plugins, or to loop through in your own code that calls the new service's API, run the original SQL query from the start of this section. In the DBeaver query output at the bottom of this screen, click `Export data` and follow the wizard, choosing `JSON` as the output format.
+To generate a JSON file to give to user-import plugins or loop through in code that calls the new service's API, run the original SQL query from the start of this section. In the DBeaver query output, click `Export data` and follow the wizard, choosing `JSON` as the output format.
 
 ```JSON
 {
@@ -190,37 +192,37 @@ To generate a JSON file to give to user import plugins, or to loop through in yo
 ]}
 ```
 
-If you need to rename FusionAuth columns to columns in the new database, use SQL syntax like: `SELECT u.first_name as name`. Or you could do the mapping in the Python or Node.js code itself.
+If you need to rename FusionAuth columns to columns in the new database, use SQL syntax, like `SELECT u.first_name as name`. Alternatively, you could do the mapping in the Python or Node.js code.
 
 ## How To Handle Differing Password Hashing Algorithms
 
-The major difficulty migrating between any authentication services is how each service handles password hashing.
+The biggest challenge in moving from one authentication service to another is how each service handles password hashing.
 
-Passwords are not stored in plaintext in databases. Instead, the password is irreversibly hashed into a sequence of bytes. Sometimes the password is first combined with random bytes, called a salt, before hashing. The salt must be kept with the hash. There are a multitude of different algorithms that hash passwords. Some algorithms include the salt in the same field as the hash.
+Passwords are not stored in plaintext in databases. Instead, each password is irreversibly hashed into a sequence of bytes. Sometimes the password is combined with random bytes, called a salt, before hashing. The salt must be kept with the hash. Many different algorithms hash passwords. Some algorithms include the salt in the same field as the hash.
 
-By default FusionAuth uses [Salted PBKDF2 HMAC SHA-256](/docs/reference/password-hashes#salted-pbkdf2-hmac-sha-256). If the new service also uses this hash algorithm, you have no work to do. If the new service uses a different algorithm, you have two choices:
-- Do not migrate passwords. Require all your users to "change" their password before logging in, through the forgot-password email mechanism. This requires little work from you, but is poor user experience.
-- Set the hashing algorithm field for the user in the new service, if the service supports the algorithm. If the service doesn't, it's possible that the service supports hashing extensions. This means that you can write your own code that implements the hash algorithm to check the user's password at login, and add it to the service as an extension. For example, here's how [custom hashing works](https://fusionauth.io/docs/extend/code/password-hashes/custom-password-hashing) in FusionAuth. Check if your new service supports something similar.
+By default, FusionAuth uses [Salted PBKDF2 HMAC SHA-256](/docs/reference/password-hashes#salted-pbkdf2-hmac-sha-256). If the new service also uses this hash algorithm, you have no work to do. If the new service uses a different algorithm, you have two choices:
+- Do not migrate passwords. Require all your users to change their password before logging in using the forgot-password email mechanism. This requires little work from you, but is a poor user experience.
+- Set the hashing algorithm field for the user in the new service, if the service supports the algorithm. If the service doesn't support the algorithm, it may support hashing extensions. This means that you can write your own code that implements the hashing algorithm to check the user's password at login, and add the code to the service as an extension. For example, here's how [custom hashing works](/docs/extend/code/password-hashes/custom-password-hashing) in FusionAuth. Check if your new service supports similar capabilities.
 
-A lot of services also have the option to overwrite the hash and algorithm of the migrated user with the service's default algorithm after first login. You should enable this, so all users are consistently stored.
+Many services provide the option to overwrite the hash and algorithm of the migrated user with the service's default algorithm after first login. You should enable this, so all users are consistently stored.
 
-Finally, be aware that FusionAuth users can have different hashing algorithms — don't assume all users use PBKDF2, check the `encryption_scheme` field. This difference will occur only if FusionAuth users were migrated into the database from another system, or if a previous administrator configured FusionAuth to use an algorithm differing from the default.
+Finally, be aware that FusionAuth users can have different hashing algorithms — don't assume all users use PBKDF2, check the `encryption_scheme` field. This difference will occur only if FusionAuth users were migrated into the database from another system, or if a previous administrator configured FusionAuth to use a different algorithm than the default.
 
 ## Social Logins Like Facebook And Google
 
-[Social logins](https://fusionauth.io/docs/lifecycle/authenticate-users/identity-providers) are stored in the `identity_provider_links` table, which links `identity_providers` (like Google or Apple) with `users`. Generally, a user's email address is retrieved from the identity providers, and the address is stored in the `identities` table.
+[Social logins](/docs/lifecycle/authenticate-users/identity-providers) are stored in the `identity_provider_links` table, which links `identity_providers` (like Google or Apple) with `users`. Generally, a user's email address is retrieved from the identity providers, and the address is stored in the `identities` table.
 
-If you are changing only your authentication gateway, and keep the same domain name for your application, and the same provider client Id and key, social logins should continue working without a problem. At worst, the users will be required to log in again with their Google account. This requires only a couple of clicks, and is not a bad user experience, unlike requiring users to complete a forgot-password workflow.
+If you are changing only your authentication gateway and the domain name for your application and the identity provider client Id and key remain the same, social logins should continue to work. At worst, users will be required to log in again with their Google account. This requires only a few clicks and is not a bad user experience, unlike requiring users to complete a forgot-password workflow.
 
 ## Online Migration Techniques
 
-If you cannot do a bulk migration and take your application offline, you need to know how to migrate individual users. FusionAuth provides two useful tools for this: [webhooks](https://fusionauth.io/docs/extend/events-and-webhooks) and [APIs](https://fusionauth.io/docs/apis).
+If you cannot do a bulk migration and take your application offline, you need to know how to migrate individual users. FusionAuth provides two useful tools for this, [webhooks](/docs/extend/events-and-webhooks) and [APIs](/docs/apis).
 
-(You could even do a bulk migration with the [users](https://fusionauth.io/docs/apis/users#search-for-users) API instead of a database script, but it would be slower unless your database is small).
+It is possible to do a bulk migration using the [users](/docs/apis/users#search-for-users) API instead of a database script, but it would be slower unless your database is small.
 
-Online migration generally involves choosing relevant FusionAuth [events](https://fusionauth.io/docs/extend/events-and-webhooks/events), and using those to trigger a webhook that calls a web service you've written. The web service can then call the relevant API to get user data, and call the API of the authentication service you are migrating to, to update user data.
+Online migration generally involves choosing relevant FusionAuth [events](/docs/extend/events-and-webhooks/events), and using those to trigger a webhook that calls a web service you've written. The web service can then call the relevant API to get user data, and call the API of the authentication service you are migrating to, to update user data.
 
-For example, you might do a bulk migration of some users into the target system, but continue using FusionAuth. If a user logs in to FusionAuth and updates their last name, you would want the "user update" event to fire, and trigger a call to your web service. Your service could then call the `GET /api/user/{userId}` API and get the user's new last name. Finally, the service would call the new gateway's API to update the user, ensuring that user data remains synchronized between both databases until the final transition to the new gateway occurs.
+For example, you might do a bulk migration of some users into the target system, but continue using FusionAuth. If a user logs in to FusionAuth and updates their last name, you would want the "user update" event to fire and trigger a call to your web service. Your service could then call the `GET /api/user/{userId}` API and get the user's new last name. Finally, the service would call the new gateway's API to update the user, ensuring that user data remains synchronized between both databases until the final transition to the new gateway occurs.
 
 
 
