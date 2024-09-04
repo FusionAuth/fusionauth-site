@@ -179,7 +179,7 @@ Below is a diagram displaying estimated relative deployment and security attribu
 
 Let's look at each category and examine the factors in more detail.
 
-### Posession: What You Have
+### Possession: What You Have
 
 Having possession of a physical object or access to a separate user account can be a secure authentication factor. The out of band communication of a one time code is also a form of "what you have".
 
