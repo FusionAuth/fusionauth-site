@@ -72,7 +72,7 @@ The user management aspect of a CIAM system enables administrators to update use
 
 To ensure user privacy, it’s important to limit who can see customer information. Allowing customers to manage their own identity reduces the necessity of company admins having access to that data. A CIAM system can also integrate with other applications (like CRMs) or data stores and provide a single centralised view of your customers.
 
-With the flexible architecture of a CIAM system, you don't have to worry about spending time and money on a separate identity management solution. FusionAuth, for example, provides an [intuitive user management feature](/features/user-management).
+With the flexible architecture of a CIAM system, you don't have to worry about spending time and money on a separate identity management solution. FusionAuth, for example, provides an [intuitive user management feature](/platform/user-management).
 
 #### Profile Management
 
