@@ -1,0 +1,52 @@
+---
+title: Monitor With OpenTelemetry
+description: Learn How To Monitor FusionAuth With OpenTelemetry.
+navcategory: admin
+section: operate
+subcategory: secure and monitor
+---
+import Aside from 'src/components/Aside.astro';
+
+FusionAuth is a Java application. You can use the [OpenTelemetry](https://github.com/open-telemetry/opentelemetry-java-instrumentation) project to instrument it. Doing so can assist troubleshooting performance issues and make it easier to run.
+
+<Aside type="note">
+As of FusionAuth version 1.37.0, FusionAuth has switched to a lighter weight HTTP server backend. The `java-http` server does not have out of the box instrumentation from the `opentelemetry-javaagent.jar`. In versions 1.37.0 or later, you can not get request traces from FusionAuth.
+
+See [this open GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/1665) for more discussion and to upvote or comment.
+</Aside>
+
+FusionAuth has no custom tracing spans embedded, but it can be set up as an OpenTelemetry exporter. Doing so provides useful data about types of requests, database queries, and more.
+
+<img src="/img/docs/operate/secure-and-monitor/opentelemetry-display.png" alt="Exploring telemetry using Honeycomb." width="1200" />
+
+### Set Up the Exporter
+
+Download the [Java OpenTelemetry agent](https://github.com/open-telemetry/opentelemetry-java-instrumentation). Make it available to the FusionAuth instance. If you are using a zip/deb/rpm, put it in a directory. If using docker, mount the host directory to the container.
+Set an environment variable `OT_PATH` to point to the directory.
+
+Next, you need to configure FusionAuth to use the agent by passing the correct Java command line switches. There are a couple of ways to do this.
+
+You can use Java system properties, environment variables, or edit the `fusionauth.properties` configuration file. See the [configuration reference](/docs/reference/configuration) for more info. For this example, environment variables will be used.
+
+Set this environment variable and make sure it is available when you start FusionAuth (in a startup script, `.bashrc`, etc.):
+
+```shell title="Enabling OpenTelemetry export"
+export FUSIONAUTH_APP_ADDITIONAL_JAVA_ARGS="-javaagent:$OT_PATH/opentelemetry-javaagent.jar"
+```
+
+Next, configure OpenTelemetry to point to your collector.
+Here's an example of the environment variables to set to use [HoneyComb](https://www.honeycomb.io/) as your collector. The specific variables needed will vary based on your chosen solution; please consult the collector's documentation.
+
+```shell title="Configuring OpenTelemetry collector"
+# from https://docs.honeycomb.io/getting-data-in/opentelemetry/java-distro/#using-opentelemetry-without-the-honeycomb-distribution
+export OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io
+export OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=$HONEYCOMB_API_KEY
+export OTEL_TRACES_EXPORTER=otlp
+export OTEL_SERVICE_NAME=fusionauth-test
+export OTEL_TRACES_SAMPLER=traceidratio
+export OTEL_TRACES_SAMPLER_ARG=0.5
+export OTEL_RESOURCE_ATTRIBUTES=SampleRate=2
+export OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_CLIENT_REQUEST=X-FusionAuth-TenantId
+```
+
+Start FusionAuth and enjoy your new insights.
