@@ -1,0 +1,69 @@
+---
+title: Login Validation Lambda
+description: An overview of the login validation lambda.
+navcategory: customization
+section: extend
+subcategory: code
+tertcategory: lambdas
+---
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+
+When a user is logging in, FusionAuth performs various validation steps, such as checking credentials, validating a passwordless login request, or confirming that an MFA code is good. You can extend this functionality with your own checks by using a login validation lambda.
+
+The login validation lambda has access to the user record, the user's registration for the application they're trying to authenticate to, information about the authentication method the user is using, and with paid plans, any external data accessible via Lambda HTTP Connect.
+
+You can assign a login validation lambda to a tenant by editing the tenant's Security settings.
+
+When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+
+## Lambda Structure
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+```javascript
+function validate(result, user, registration, context) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `validate` that takes four parameters. The parameters that the lambda is passed are:
+
+* `result` - An [Errors](/docs/apis/errors) object used for communicating validation errors
+* `user` - the FusionAuth User object. This is read-only.
+* `registration` - the FusionAuth UserRegistration object. This is read-only.
+* `context` - a FusionAuth LoginLambdaValidationContext object, which contains the authentication type being used, and information about the identity provide being used, if any
+
+The `user` and `registration` objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The `context` object has the following structure:
+
+```json
+{
+  "authenticationType": "...",
+  "identityProvider": {
+    "id": "...",
+    "name": "...",
+    "identityProviderType": "..."
+  },
+}
+```
+
+To deny a login attempt, simply add one or more field or general errors to the result. The error schema can be found in the [FusionAuth API error documentation](https://fusionauth.io/docs/apis/errors .
+
+## Assigning The Lambda
+
+Once a lambda is created, you must assign it to a Tenant. See the <Breadcrumb>Security</Breadcrumb> tab in the Tenant configuration.
+
+## Example Lambda
+
+Here is an example of a simple Lambda that prevents login attempts by users whose accounts are past due. Note that it would be your responsibility to set the `accountStatus` in a user's data using the FusionAuth API.
+
+```javascript
+function validate(result, user, registration, context) {
+
+  if (user.data.accountStatus === 'pastDue') {
+    result.errors.generalErrors = [{
+      code: "[LoginRestricted]",
+      message: "Account is past due, please contact accounts payable."
+    }];
+  }
+}
+```
