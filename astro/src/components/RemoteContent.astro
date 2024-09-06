@@ -4,6 +4,11 @@
  */
 import { Markdown } from "astro-remote";
 import CodeBlock from "./CodeBlock.astro";
+import { Code} from 'astro/components';
+// @ts-ignore
+import { codeToHtml, getHighlighter } from 'shiki'
+
+import { marked, Marked } from 'marked';
 
 export interface Props {
   /**
@@ -83,12 +88,39 @@ function selectLines(
     return content;
   }
 }
+
+const highlighter = await getHighlighter({
+  themes:['github-dark'],
+  langs: ['jsx', 'bash'],
+});
+
+const remark = new Marked();
+remark.use(
+    {
+      extensions: [{
+        name: 'code',
+
+        renderer: (token) => {
+          try {
+            // @ts-ignore
+            return highlighter.codeToHtml(token.text, {
+              lang: token.lang,
+              theme: 'github-dark',
+            })
+          } catch (e) {
+            console.error(e);
+            return '';
+          }
+        },
+
+        async: false
+      }]
+    }
+);
+
+const html = remark.parse(remoteSelectedContent);
 ---
 
 <article>
-  <Markdown
-    content={remoteSelectedContent}
-    sanitize={{ allowComponents: true }}
-    components={{ CodeBlock }}
-  />
+  <Fragment set:html={html} />
 </article>
