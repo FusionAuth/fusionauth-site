@@ -15,9 +15,11 @@ import Diagram1 from 'src/components/docs/operate/secure-and-monitor/prometheusD
 
 ## Introduction
 
-This guide explains how monitor FusionAuth events and logs with the open-source tools Prometheus and Loki, as well as create a dashboard with Grafana, and send you alerts when problems occur.
+This guide explains how monitor FusionAuth events and logs with the open-source tools [Prometheus](https://prometheus.io/docs/introduction/overview) and [Loki](https://grafana.com/oss/loki), as well as create a dashboard with [Grafana](https://grafana.com/grafana), and send you alerts when problems occur.
 
 Please read the [FusionAuth monitoring overview](/docs/operate/secure-and-monitor/monitor) before proceeding. The overview explains what FusionAuth metrics are, what activities comprise a complete monitoring workflow, and what Prometheus, Loki, and Grafana are.. Review [alternative monitoring services](/docs/operate/secure-and-monitor/monitor#overview-of-popular-monitoring-tools) in the overview to ensure that Prometheus is the right tool for your needs.
+
+While in this guide you set up Prometheus in Docker containers on your local machine, there is also a paid cloud-hosted alternative at [Grafana Cloud](https://grafana.com/auth/sign-up/create-user).
 
 ## Architecture
 
@@ -37,14 +39,40 @@ graph LR
       F(Your app)
     end
   end
-  D --> F
-  D --> A
+  D --> J
+  D --> C
   C --> G
-  F --> A
+  F --> C
   style I fill:#999
 ```
 
 This diagram shows three components that could die and need monitoring: the PostgreSQL database, FusionAuth, and your app (web server) that directs users to FusionAuth for login. In this guide, you will monitor only FusionAuth and PostgreSQL, but you can use similar techniques to monitor your app too.
+
+```mermaid
+graph LR
+  D(User)
+  subgraph I[Your server]
+    subgraph G[Docker]
+      H[(PostgreSQL)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph E[Docker]
+      B(Prometheus)
+    end
+    subgraph J[Docker]
+      F(Your app)
+    end
+  end
+  D --> J
+  D --> C
+  C --> G
+  F --> C
+  C --> |Prometheus pulls from FusionAuth| E
+  style I fill:#999
+  style E fill:#944
+```
 
 ## Send Custom FusionAuth Metrics To The Elasticsearch API
 
@@ -105,3 +133,7 @@ Now that you can monitor FusionAuth in Elastic, you should enable Elastic [alert
 
 - [Monitoring overview](/docs/operate/secure-and-monitor/monitor)
 - [FusionAuth metrics](/docs/operate/secure-and-monitor/monitor#metrics)
+- [Prometheus](https://prometheus.io/docs/introduction/overview)
+- [Loki](https://grafana.com/oss/loki)
+- [Grafana](https://grafana.com/grafana)
+- [Grafana Cloud](https://grafana.com/auth/sign-up/create-user)
