@@ -1,0 +1,179 @@
+---
+title: Webhook Event Logs
+description: Learn about the APIs for searching and retrieving webhook event and attempt logs.
+section: apis
+---
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+import JSON from 'src/components/JSON.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import WebhookAttemptLogResponseBody from 'src/content/docs/apis/_webhook-attempt-log-response-body.mdx';
+import WebhookEventLogResponseBody from 'src/content/docs/apis/_webhook-event-log-response-body.mdx';
+import WebhookEventLogSearchResponseBody from 'src/content/docs/apis/_webhook-event-log-search-response-body.mdx';
+
+## Overview
+
+<Aside type="version">
+This API has been available since 1.53.0
+</Aside>
+
+The Webhook Event Log contains a record of [Events](/docs/extend/events-and-webhooks/events) sent by FusionAuth, including request payloads. It also records attempts to send the event payload to [Webhook](/docs/extend/events-and-webhooks) and [Kafka](/docs/extend/events-and-webhooks/kafka) endpoints.
+
+Test events sent through the FusionAuth admin UI are not recorded in the Webhook Event Log.
+
+This page contains the APIs that are used to retrieve Webhook Event Logs and associated attempt details. Here are the APIs:
+
+## Retrieve a Webhook Event Log
+
+### Request
+
+<API method="GET" uri="/api/system/webhook-event-log/{logId}" authentication={["api-key"]} title="Retrieve a Webhook Event Log by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="logId" type="UUID" required>
+    The unique Id of the Webhook Event Log to retrieve.
+  </APIField>
+</APIBlock>
+
+### Response
+
+<StandardGetResponseCodes never_search_error />
+
+<WebhookEventLogResponseBody />
+
+## Retrieve a Webhook Attempt Log
+
+### Request
+
+<API method="GET" uri="/api/system/webhook-attempt-log/{logId}" authentication={["api-key"]} title="Retrieve a Webhook Attempt Log by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="logId" type="UUID" required>
+    The unique Id of the Webhook Attempt Log to retrieve.
+  </APIField>
+</APIBlock>
+
+### Response
+
+<StandardGetResponseCodes never_search_error />
+
+<WebhookAttemptLogResponseBody />
+
+## Search Webhook Event Logs
+
+### Request
+
+<API method="GET" uri="/api/system/webhook-event-log/search?event={event}&start={start}&end={end}&eventType={eventType}" authentication={["api-key"]} title="Searches the Webhook Event Logs using the given search criteria"/>
+
+When calling the API using a `GET` request you will send the search criteria on the URL using request parameters. In order to simplify the example URL above, not every possible parameter is shown, however using the provided pattern you may add any of the documented request parameters to the URL.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="event" type="String" optional>
+    The string to search in the Webhook Event Log request body for. This can contain wildcards using the asterisk character (`*`). If no wildcards are present, this parameter value will be interpreted as `*value*`.
+  </APIField>
+  <APIField name="eventResult" type="String" optional>
+    The overall result of a [transactional](/docs/extend/events-and-webhooks/events#transaction-compatibility) event. Possible values are:
+     * `Running` - The default state after an event is fired.
+     * `Succeeded` - The transactional event was successful, and pending database changes were committed. Non-transactional events are transitioned to this state immediately after the event payload is sent to all recipients regardless of the response.
+     * `Failed` - The transactional event was unsuccessful, and pending database changes were rolled back.
+  </APIField>
+  <APIField name="eventType" type="String" optional>
+    The event type.
+  </APIField>
+  <APIField name="numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="orderBy" type="String" optional defaults="sequence DESC">
+    The database column to order the search results on plus the order direction.
+
+    The possible values are:
+
+     * `eventResult` - the overall result of the event
+     * `eventType` - the event type
+     * `id` - the unique Id of the Webhook Event Log
+     * `insertInstant` - the [instant](/docs/reference/data-types#instants) when the Webhook Event Log was created
+     * `lastAttemptInstant` - the [instant](/docs/reference/data-types#instants) when the last attempt was made to deliver the event
+     * `linkedObjectId` - the unique Id of the object associated with this event
+     * `sequence` - the system-assigned event sequence
+
+    For example, to order the results by the insert instant in a descending order, the value would be provided as `insertInstant DESC`. The final string is optional can be set to `ASC` or `DESC`.
+  </APIField>
+  <APIField name="start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="startRow" type="Integer" optional defaults="0">
+    The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+  </APIField>
+</APIBlock>
+
+<API method="POST" uri="/api/system/webhook-event-log/search" authentication={["api-key"]} title="Searches the Webhook Event Logs using the given search criteria"/>
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="search.end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="search.event" type="String" optional>
+    The string to search in the Webhook Event Log request body for. This can contain wildcards using the asterisk character (`*`). If no wildcards are present, this parameter value will be interpreted as `*value*`.
+  </APIField>
+  <APIField name="search.eventResult" type="String" optional>
+    The overall result of a [transactional](/docs/extend/events-and-webhooks/events#transaction-compatibility) event. Possible values are:
+     * `Running` - The default state after an event is fired.
+     * `Succeeded` - The transactional event was successful, and pending database changes were committed. Non-transactional events are transitioned to this state immediately after the event payload is sent to all recipients regardless of the response.
+     * `Failed` - The transactional event was unsuccessful, and pending database changes were rolled back.
+  </APIField>
+  <APIField name="search.eventType" type="String" optional>
+    The event type.
+  </APIField>
+  <APIField name="search.numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="search.orderBy" type="String" optional defaults="sequence DESC">
+    The database column to order the search results on plus the order direction.
+
+    The possible values are:
+
+     * `eventResult` - the overall result of the event
+     * `eventType` - the event type
+     * `id` - the unique Id of the Webhook Event Log
+     * `insertInstant` - the [instant](/docs/reference/data-types#instants) when the Webhook Event Log was created
+     * `lastAttemptInstant` - the [instant](/docs/reference/data-types#instants) when the last attempt was made to deliver the event
+     * `linkedObjectId` - the unique Id of the object associated with this event
+     * `sequence` - the system-assigned event sequence
+
+    For example, to order the results by the insert instant in a descending order, the value would be provided as `insertInstant DESC`. The final string is optional can be set to `ASC` or `DESC`.
+  </APIField>
+  <APIField name="search.start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="search.startRow" type="Integer" optional defaults="0">
+    The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Request" src="webhook-event-logs/search-post-request.json" />
+
+### Response
+
+The response for this API contains the Webhook Event Logs matching the search criteria in paginated format.
+
+<StandardGetResponseCodes never_search_error />
+
+<WebhookEventLogSearchResponseBody />
+
+<JSON title="Example JSON Response" src="webhook-event-logs/search-response.json" />
