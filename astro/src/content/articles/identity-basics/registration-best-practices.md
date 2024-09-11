@@ -69,7 +69,7 @@ If a form field is optional, clearly mark it so. Even better, don't ask for opti
 
 Provide clear error messages when data fails to validate. Use both client side validation, which is faster, and server side validation, which is tamper proof. On the topic of tampering, ensure any form is submitted over TLS. You want to keep submitted information confidential and secure.
 
-Make use of the full suite of HTML elements. Dropdowns and radio buttons are powerful, but number and email input fields leverage browsers' built-in validation and should be used as well. If you aren't sure what's supported, use tools like [caniuse.com](https://caniuse.com/) to verify compatibility.
+Make use of the full suite of HTML elements. Dropdowns and radio buttons are powerful, but number and email input fields leverage browsers' built-in validation and should be used as well. If you aren't sure what's supported, use tools like [Caniuse](https://caniuse.com/) to verify compatibility.
 
 ### Registration forms are unique
 
