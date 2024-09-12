@@ -48,6 +48,8 @@ graph LR
 
 This diagram shows three components that could die and need monitoring: the PostgreSQL database, FusionAuth, and your app (web server) that directs users to FusionAuth for login. In this guide, you will monitor only FusionAuth and PostgreSQL, but you can use similar techniques to monitor your app.
 
+In this guide you will add Prometheus to monitor your FusionAuth instance. It will poll FusionAuth every fifteen seconds to see if any errors have occured.
+
 ```mermaid
 graph LR
   D(User)
@@ -69,7 +71,7 @@ graph LR
   D --> C
   C --> G
   F --> C
-  C --> |Prometheus pulls metrics from FusionAuth| E
+  E --> |Prometheus pulls metrics from FusionAuth| C
   style I fill:#999
   style E fill:#944
 ```
@@ -83,7 +85,11 @@ git clone https://github.com/FusionAuth/fusionauth-example-docker-compose.git
 cd light
 ```
 
-Add three new services to the bottom of `docker-compose.yaml` before the `volumes:` section, with the code below. You are using the Docker images from Docker Hub for [Prometheus](https://hub.docker.com/r/ubuntu/prometheus), Loki, and Grafana.
+Add a new service to the bottom of `docker-compose.yaml` before the `volumes:` section, with the code below. You are using the Docker image from Docker Hub for [Prometheus].
+
+```yaml
+
+```
 
 The metrics FA exposes to Prometheus change over time. There are some basic Java Virtual Machine (JVM) metrics listed [here](https://fusionauth.io/docs/apis/system#retrieve-system-metrics-using-prometheus). To see exactly what is available on your instance of FusionAuth, run the command below.
 
@@ -152,15 +158,42 @@ Browse to the channel to be notified of errors at https://ntfy.sh/fusionauthprom
 
 Now let's configure Prometheus to do this.
 
-The Prometheus documentation doesn't say it explicitly, but the Prometheus AlertManager is **not** included with Prometheus. You need to run AlertManager separately. Again, you'll use the [Ubuntu Docker container](https://hub.docker.com/r/ubuntu/alertmanager). This container has a `/prometheus` directory, but the container doesn't run Prometheus.
+The Prometheus documentation doesn't say it explicitly, but the Prometheus AlertManager is **not** included with Prometheus. You need to run AlertManager separately. Again, you'll use the [Ubuntu Docker container](https://hub.docker.com/r/ubuntu/alertmanager). This container has a `/etc/prometheus` directory, but the container doesn't run Prometheus.
 
 
+<Aside type="warning">
+At the time of writing, FusionAuth found an error in the the Ubuntu container documentation. The AlertManager configuration file path is actually `/etc/alertmanager/alertmanager.yml` not `/etc/prometheus/alertmanager.yml`
+</Aside>
 
 `increase(prime_mvc_____errors_total[1m])`
 
 ```sh
 docker exec -it faProm /bin/bash
+
+promtool check config /etc/prometheus/prometheus.yml
+
+
+docker exec -it faAlert /bin/bash
+
+exit
+
+docker compose up alertmanager
+
+
+#test alert manager manually
+curl -X POST -H "Content-Type: application/json" -d '[{"labels":{"alertname":"TestAlert"}}]' http://localhost:9093/api/v2/alerts
+
+
+in reality you want:
+
+increase(prime_mvc_____errors_total[1m]) > 0
 ```
+
+## TODO
+
+custom metrics
+loki
+grafana
 
 ## Send Custom FusionAuth Metrics To The Elasticsearch API
 
@@ -229,3 +262,6 @@ Now that you can monitor FusionAuth in Elastic, you should enable Elastic [alert
 - [Grafana Cloud](https://grafana.com/auth/sign-up/create-user)
 - [Ubuntu Prometheus Container](https://hub.docker.com/r/ubuntu/prometheus)
 -
+
+## TODO
+- FA
