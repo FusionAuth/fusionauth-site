@@ -342,7 +342,7 @@ Update dependencies.
 
   If you are using a custom theme, you will want to upgrade your theme to include this new page. Until you complete this upgrade, the default theme will be used for this new page. In the FusionAuth admin UI, the theme page will be named *OAuth consent prompt*.
 
-  The new consent prompt themed page requires a macro to be defined in the *Helpers* template in order to render scope consent form fields. You can find the new macro in the updated default theme or copy the macro below.
+  The new consent prompt themed page requires the `scopeConsentField` macro and `resolveScopeMessaging` function to be defined in the *Helpers* template in order to render scope consent form fields. You can find the new macro and function in the updated default theme or copy them below.
   ```html
   [#macro scopeConsentField application scope type]
     [#-- Resolve the consent message and detail for the provided scope --]
@@ -374,6 +374,25 @@ Update dependencies.
       [@hidden name="scopeConsents['${scope}']" value="true" /]
     [/#if]
   [/#macro]
+
+  [#function resolveScopeMessaging messageType application scopeName default]
+    [#-- Application specific, tenant specific, not application/tenant specific, then default --]
+    [#local message = theme.optionalMessage("[{application}${application.id}]{scope-${messageType}}${scopeName}") /]
+    [#local resolvedMessage = message != "[{application}${application.id}]{scope-${messageType}}${scopeName}" /]
+    [#if !resolvedMessage]
+       [#local message = theme.optionalMessage("[{tenant}${application.tenantId}]{scope-${messageType}}${scopeName}") /]
+       [#local resolvedMessage = message != "[{tenant}${application.tenantId}]{scope-${messageType}}${scopeName}" /]
+    [/#if]
+    [#if !resolvedMessage]
+      [#local message = theme.optionalMessage("{scope-${messageType}}${scopeName}") /]
+      [#local resolvedMessage = message != "{scope-${messageType}}${scopeName}" /]
+    [/#if]
+    [#if !resolvedMessage]
+      [#return default /]
+    [#else]
+      [#return message /]
+    [/#if]
+  [/#function]
   ```
   * Resolves [GitHub Issue #411](https://github.com/FusionAuth/fusionauth-issues/issues/411)
 * A new lambda function has been introduced that can be used to customize the UserInfo response for an application. See [UserInfo Populate Lambda](/docs/extend/code/lambdas/userinfo-populate) for more detail.
