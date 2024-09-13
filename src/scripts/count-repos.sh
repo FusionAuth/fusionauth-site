@@ -9,7 +9,7 @@ set -o pipefail
 
 MYDIR=$(cd -- "$(dirname "$0")" || exit >/dev/null 2>&1; pwd -P)
 export MYDIR
-cd "${MYDIR}" || exsit
+cd "${MYDIR}" || exit
 
 JSONFILE="../../astro/src/content/json/exampleapps.json"
 SUM_JSON=0  # Count of repos from JSONFILE
