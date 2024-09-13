@@ -24,7 +24,7 @@ Release notes should have the following sections. Omit any sections with no entr
 ### Known Issues
 ### Security
 ### Changed
+### New
 ### Fixed
 ### Enhancements
-### New
 ### Internal
