@@ -9,7 +9,7 @@ set -o pipefail
 
 MYDIR=$(cd -- "$(dirname "$0")" || exit >/dev/null 2>&1; pwd -P)
 export MYDIR
-cd "${MYDIR}" || exit
+cd "${MYDIR}" || exsit
 
 JSONFILE="../../astro/src/content/json/exampleapps.json"
 SUM_JSON=0  # Count of repos from JSONFILE
@@ -35,7 +35,6 @@ function get_json_repos() {
   # intentionally excluded from JSONFILE for... reasons?
   local EXCLUDE=(
     "fusionauth-example-qr-codes"
-    "fusionauth-example-modeling-organizations"
     "fusionauth-example-template"
     "fusionauth-example-vue-sdk"
     "fusionauth-quickstart-kotlin-android-native"
