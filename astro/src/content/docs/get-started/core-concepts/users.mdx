@@ -12,6 +12,7 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 import Aside from 'src/components/Aside.astro';
 import LoginEvents from 'src/content/docs/_shared/_login_events.mdx';
 import DataFieldDataTypeChanges from 'src/content/docs/_shared/_data-field-data-type-changes.mdx';
+import CrossTenantUserAccess from 'src/content/docs/get-started/core-concepts/_cross-tenant-access.mdx';
 import Diagram from 'src/diagrams/docs/get-started/core-concepts/_users-tenants-relation.astro';
 import Icon from 'src/components/icon/Icon.astro';
 import { YouTube } from '@astro-community/astro-embed-youtube';
@@ -24,7 +25,7 @@ The user itself is easy enough to understand; it represents your end user, your 
 
 Here's a brief video covering some aspects of users:
 
-<YouTube id="cXvvcOOAp6U" />
+<YouTube id="Dcdp-dGFwpI" />
 
 ## Core Concepts Relationships
 
@@ -36,7 +37,7 @@ Below is a visual reminder of the relationships between FusionAuth's primary cor
 
 This page describes the admin UI for creating and managing users.
 
-{/*  These are not capitalized because we are matching the exact names for the tabs in the admin ui. */}
+{/*  These are not capitalized because we are matching the exact names for the tabs in the admin UI. */}
 
 ### List of Users
 
@@ -632,9 +633,7 @@ You can search for users across tenants using the User Search API.
 An example use case is a private label todo SaaS application, where you want a user to sign up for two or more different instances of your SaaS and not know that there is a shared identity store behind them.
 For example, richard@piedpiper.com can sign up for the Pied Piper Todo application and the Hooli Todo Application with the same email address, but different passwords, MFA methods, and more.
 
-One issue is that if you have admin users, such as customer support representatives, which need cross-tenant access, you can't keep their accounts in sync.
-One option is to set up an administrative identity server, whether that is a second instance of FusionAuth, Google GSuite, or Azure AD/Microsoft Entra ID.
-Have the customer service representatives authenticate with it.
+<CrossTenantUserAccess />
 
 Learn more about [Tenants](/docs/get-started/core-concepts/tenants).
 
@@ -745,39 +744,43 @@ For more information see [Extended Pagination](/docs/lifecycle/manage-users/sear
 
 Often you want to segment or separate your users.
 You have options to do so in FusionAuth.
-They each have different tradeoffs.
-The options are:
+They each have tradeoffs.
+Here's a table with the strengths and challenges of each option.
 
-{/* TODO table? */}
+| Option     | Strengths | Challenges    |
+|------------|-----------|---------------|
+| [Tenants](#tenants) | True separation of users, API keys, connectors and other user related configuration  | Cross-tenant user access, users can't be moved between tenants without resetting password |
+| [Applications and Registrations](#applications-and-registrations) | Inherits settings from containing tenant, can separate users based on registration, with paid plan can configure application specific themes, unlimited roles| If FusionAuth SSO enabled user can SSO between each application, must check tokens in application |
+| [Groups](#groups) | Contained in a tenant, can apply application roles to all members | Can't apply registrations to all members of a group, need lambda API call to add membership to tokens |
+| [Entities And Grants](#entities-and-grants) | Fine grained permissions, searchable, can cross-cut tenants and applications, can manage permissions between users and entities or entities and entities | Requires proprietary APIs to manage, no inheritance of permissions, need lambda API call to add membership to tokens |
+| [User.data](#the-userdata-field) | Searchable, arbitrary JSON that you control, easily added to tokens | Pure data so all authorization decisions need to be made by your application, need to be careful with data types |
 
 ### Tenants
 
 Each FusionAuth tenant is a logical grouping of users, configuration and applications.
 Users are tenant scoped.
-This means a user with the same identifier (email, username, etc) in two different tenants is a different user.
-They can have different passwords, different identity provider links and different attributes.
-You can search for users across tenants using the User Search API.
+This means a user with the same identifier (email, username, etc) in two different tenants is a different account.
+They can have different passwords, identity provider links and profile attributes.
+You can search for users across tenants using the [User Search API](/docs/apis/users#search-for-users).
 
-An example use case is a private label todo SaaS application, where you want a user to sign up for two or more different instances of your SaaS and not know that there is a shared identity store behind them.
+An example use case is a private label SaaS application for managing todos and tasks. You want a user to sign up for two or more different instances of your SaaS and never know that there is a shared identity store behind them.
 For example, richard@piedpiper.com can sign up for the Pied Piper Todo application and the Hooli Todo Application with the same email address, but different passwords, MFA methods and more.
 
-One issue is that if you have admin users, such as customer support representatives, which need cross-tenant access, you can't keep their accounts in sync.
-One option is to set up an administrative identity server, whether that is a second instance of FusionAuth, Google GSuite, or Azure AD/Microsoft Entra ID.
-Have the customer service representatives authenticate with it.
+<CrossTenantUserAccess />
 
 Learn more about [Tenants](/docs/get-started/core-concepts/tenants).
 
 ### Applications and Registrations
 
-Applications in FusionAuth represent something you can log in to.
-They are tenant scoped.
-You associate a user with an application via a registration.
+Applications in FusionAuth are anything a user can log in to: mobile applications, webapps, COTS applications, APIs and desktop applications.
+Applications are tenant scoped.
+You associate a user with an application using a registration.
 You may also optionally associate one or more roles with each user's registration.
 
 An example use case is a single company, where you have a forum, a todo application and an accounting application.
 If you have three users, Richard, Monica and Jared, you can grant Richard access to all three applications, Monica access to the forum and todo applications, and Jared access to the accounting application.
 
-Prohibit a user from logging into an application for which they are not registered by checking the claims in the token or enabling the <InlineField>Require registration</InlineField> setting for the application.
+Prevent a user from logging into an application for which they are not registered by [checking the claims in the token](/docs/get-started/core-concepts/authentication-authorization) and enabling the <InlineField>Require registration</InlineField> setting for the application.
 
 Applications also may have associated Identity Providers, such as Google or OIDC providers.
 When so configured, a user may log in to an application with the Identity Provider.
@@ -826,21 +829,21 @@ To implement this, you'd represent each GitHub organization as an entity in Fusi
 It is very common to have an interstitial page when using entities.
 (This page is custom built and is not provided by FusionAuth.)
 The user logs in to an application, and is then presented with a list of entities to which they've been granted permissions.
-The user selects an entity and then acts within the confines of that entity.
+The user selects an entity and then interacts with the permissions they have been granted to that entity.
 
 You can search for all users granted access to a given entity.
 You can search for all entities for which a user has a grant.
 
-One issue is that to search for grants on a user, you must use FusionAuth's proprietary APIs.
+To search for grants on a user, you must use FusionAuth's proprietary APIs.
 Additionally, since entities cannot be 'logged into', they don't have any relationship with external Identity Providers.
 
 Learn more about [Entities and Grants](/docs/get-started/core-concepts/entity-management).
 
 #### Entities Compared to Applications
 
-Entities, grants and permissions are analogous to applications, registrations and roles, but you can't log into an entity.
+Entities, grants and permissions are analogous to applications, registrations and roles, but you can't log in to an entity.
 
-Entities may also be useful if you have two or more applications in FusionAuth, but you want to group access in an orthogonal way while still allowing users to assume different roles.
+Entities may also be useful if you have two or more applications in FusionAuth, but you want to control access in an orthogonal way while still allowing users to assume different roles.
 
 Suppose you have a point of sales application and a scheduling application for your retail chain.
 You have ten stores.
@@ -848,26 +851,28 @@ You want to allow employees to log in to each of these applications, but you wan
 But if they move between stores to cover for a shift or because of a transfer, you want to handle that use case as well.
 This means you can't use tenants to model stores.
 
-You could model the point of sales and scheduling applications as applications.
+To solve this, model the point of sales and scheduling applications as applications.
 Each store would be an entity, and after the user has logged into an application, you'd show them the stores to which they'd have access.
 
-You could also provide different roles in different stores. 
-The scheduling software could know that Richard would have access to the scheduling application as a manager for store A but only as an employee for store B.
+With entities, you can give users different levels of access in different stores. 
+The scheduling software can query the FusionAuth API or examine the token and allow Richard access to the scheduling application as a manager for store A but only as an employee for store B.
 
-If you were to model this using only applications, you'd have to have twenty applications in FusionAuth (two for each store) and keeping those configurations synchronized might be difficult.
-And if you added more applications or stores, you'd face a combinatorial explosion of applications.
+If you were to model this using only applications, you'd need twenty applications in FusionAuth (two for each store). Keeping those configurations synchronized might be difficult.
+And if you added more applications, you'd face a combinatorial explosion of applications.
 
 ### The user.data Field
 
-You can add arbitrary JSON to the `user.data` field, such as `org_type` and `org_id` fields. You can do this using the [User API](/docs/apis/users) on user creation.
+You can add arbitrary JSON to the `user.data` field. You can do this using the [User API](/docs/apis/users), in the admin UI with [custom admin forms](/docs/lifecycle/manage-users/admin-forms) or allow users to do so using [self-service account management](/docs/lifecycle/manage-users/account-management/). The `user.data` fields can be read in a [JWT Populate Lambda](/docs/extend/code/lambdas/jwt-populate) and pushed into the tokens generated during authentication.
 
-The `user.data` fields can then be read in a [JWT Populate Lambda](/docs/extend/code/lambdas/jwt-populate) and pushed into the tokens generated during authentication.
+The downstream application can examine the tokens and determine access.
 
-The downstream application can examine the tokens and determine which organizations a user has access to.
-
-A variant of this is using [Lambda HTTP Connect](/docs/extend/code/lambdas/#using-lambda-http-connect) which can pass a user Id to an external service during authentication and retrieve user attributes such as an `org_id`. This has the advantage of avoiding synchronization at the cost of requiring a paid plan and increased latency during the authentication event. The exact amount of latency depends on the responsiveness of the called API.
+A variant of this is using [Lambda HTTP Connect](/docs/extend/code/lambdas/#using-lambda-http-connect) which can pass a user Id to an external service during authentication and retrieve user attributes. This has the advantage of avoiding synchronization at the cost of increased latency during the authentication event. The exact amount of latency depends on API responsiveness.
 
 This approach works well when you want FusionAuth to handle authentication but keep all user segmentation logic in your application.
+
+An example use case for `user.data` is if you have custom authorization logic in your application based on user profile data such as `org_id` and `org_type`. At authentication time, push these attributes into your token using a JWT populate lambda. Then pass the token to your client, and have the client present the token to your application. The application can then examine the `org_id` and `org_type` profile attributes and make an authorization decision based on that custom logic.
+
+Learn more about [Searching user data](/docs/lifecycle/manage-users/search/user-search-with-elasticsearch) and the [JWT Populate Lambda](/docs/extend/code/lambdas/jwt-populate).
 
 #### The user.data Schema
 

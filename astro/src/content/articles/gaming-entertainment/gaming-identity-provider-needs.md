@@ -42,7 +42,7 @@ Many popular games allow players to customize the appearance of their gaming per
 
 A customized authentication flow can also improve the player’s experience. The user doesn’t need to know that authentication is being handled by a third-party service. Branding and customization features allow you to customize login and registration pages, “forgot password” screens, emails, and messages, giving users a more consistent and familiar experience. 
 
-[Customization features](/platform/customizable) can also include localization and multiple language support to help you adapt content for specific regions, as well as APIs that allow you to build additional tools on top of the core authentication system to meet custom business requirements. 
+[Customization features](/platform/extensibility) can also include localization and multiple language support to help you adapt content for specific regions, as well as APIs that allow you to build additional tools on top of the core authentication system to meet custom business requirements. 
 
 ### Shorter Development Timelines
 
@@ -66,7 +66,7 @@ Major gaming and esports events can result in hundreds of thousands of authentic
 
 Your identity provider should be able to scale to millions of users without slowing down. Scalable systems increase reliability, helping you to avoid outages during big game launches and to maintain continuous uptime during tournaments.
 
-A flexible identity solution can easily handle dramatic spikes in resource demand. It should be able to scale as games and platforms increase in popularity so that you maintain a smooth customer experience even when demand spikes. Identity providers that support containerization and orchestration technologies like Docker and Kubernetes allow you to take advantage of [auto-scaling features](/platform/scalable) to easily scale identity management to handle steady growth or spikes in demand. 
+A flexible identity solution can easily handle dramatic spikes in resource demand. It should be able to scale as games and platforms increase in popularity so that you maintain a smooth customer experience even when demand spikes. Identity providers that support containerization and orchestration technologies like Docker and Kubernetes allow you to take advantage of [auto-scaling features](/platform/enterprise) to easily scale identity management to handle steady growth or spikes in demand. 
 
 ### Cross-Save or Cross-Progression Support 
 
