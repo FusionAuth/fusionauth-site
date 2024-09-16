@@ -22,16 +22,39 @@ interface QuickStartSection {
 
 const qsSections: QuickStartSection[] = [
   {
-      key: 'five-minute',
-      icon: '/img/icons/qs-main.svg',
+    key: 'intro',
+    icon: '/img/icons/qs-main.svg',
+    faIcon: 'fa-code-simple',
+    color: 'indigo',
+    title: 'First Steps',
+    anchorTag: 'intro',
+    desc: '',
+    articles: [
+    ],
+  },
+  {
+    key: 'install',
+    icon: '/img/icons/digit-one.svg',
+    faIcon: 'fa-code-simple',
+    color: 'indigo',
+    title: 'Launch FusionAuth',
+    anchorTag: 'install',
+    desc: 'Launch FusionAuth from docker, the cloud, or on your local system.',
+    articles: [
+    ],
+  },
+  {
+      key: 'setup',
+      icon: '/img/icons/digit-two.svg',
       faIcon: 'fa-code-simple',
       color: 'indigo',
-      title: '5-minute Guides',
-      anchorTag: '5-minute',
-      desc: 'Guides for getting up and running quickly',
+      title: 'Run Fusionauth',
+      anchorTag: 'setup',
+      desc: 'Setup your Fusionauth installation integrated with a complete application or through the APIs.',
       articles: [
       ],
   },
+
   {
     key: 'web',
     icon: '/img/icons/web-application.svg',
