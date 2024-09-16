@@ -339,12 +339,106 @@ If you wait a minute then browse to https://ntfy.sh/fusionauthprometheus, you sh
 
 AlertManager sent raw JSON to Ntfy, that includes the `annotations` fields from the `prometheusRules.yml` configuration. If you want a neater looking notification, read about [templates](https://prometheus.io/docs/alerting/latest/notifications) in Prometheus.
 
+## Use Grafana To Create A Dashboard
+
+If you want a dashboard available that shows a set of charts about FusionAuth, instead of a single Prometheus query, you need to use Grafana. In this section, you'll run Grafana in Docker and create a simple dashboard to monitor FusionAuth.
+
+Below is a diagram of the system design with the new components.
+
+```mermaid
+graph LR
+  D(User)
+  subgraph I[Your server]
+    subgraph G[Docker]
+      H[(PostgreSQL)]
+    end
+    subgraph C[Docker]
+      A(FusionAuth)
+    end
+    subgraph E[Docker]
+      B(Prometheus)
+    end
+    subgraph J[Docker]
+      F(Your app)
+    end
+    subgraph M[Docker]
+      O(Grafana)
+    end
+  end
+  D --> J
+  D --> C
+  C --> G
+  F --> C
+  E --> |Prometheus pulls metrics from FusionAuth| C
+  M --> E
+  style I fill:#999
+  style E fill:#944
+  style M fill:#944
+```
+
+Add the new service below to `docker-compose.yml`.
+
+```yaml
+  grafana:
+    image: ubuntu/grafana:11.0.0-22.04_stable
+    container_name: faGraf
+    depends_on:
+      - prometheus
+    ports:
+      - 9091:3000
+    volumes:
+      - ./prometheusGrafanaConfig.ini:/etc/grafana/grafana-config.ini
+      - ./prometheusGrafana/:/data/
+      # - ./prometheusGrafanaProvisioning/:/conf/
+```
+
+This configuration uses the [Ubuntu Grafana container](https://hub.docker.com/r/ubuntu/grafana), to be consistent with the Ubuntu containers used earlier.
+
+None of the three volumes in the configuration above are needed for this example, but you will want to use them in production.
+
+- The Grafana configuration file, `/etc/grafana/grafana-config.ini`, sets values for things like security, proxies, and servers. These values are explained in the [configuration documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana). Note that the documentation lists various places the configuration file can be kept. This file name will differ between Docker images and operating systems. By default, the filename, `/etc/grafana/grafana.ini`, is different to the one in this container, `grafana-config.ini`. If you use a different image for Grafana, look at the Docker logs in the terminal to see where Grafana looks for configuration files when starting.
+- The `/data` volume holds the database storage of Grafana, so the app will persist data if you restart the container.
+- The `/conf` allows you to provision infrastructure automatically, such as datasources for Grafana to monitor, and dashboards to create. Leave the volume commented out for now. If you uncomment it without having correct files in your local directory, Grafana will fail to start. To create provisioning files, read the [documentation](https://grafana.com/docs/grafana/latest/administration/provisioning) and look at all the sample files in `/conf/provisioning/` when the container is running.
+
+Run `docker compose up` to start Grafana (or just `docker compose up grafana` if FusionAuth is already running).
+
+Log in to Grafana at http://localhost:9091, with username and password `admin`.
+
+![Grafana](../../../../../public/img/docs/operate/secure-and-monitor/prometheus/prometheusGrafana.webp)
+
+If you want to change the login settings in production, create the local file `prometheusGrafanaConfig.ini` with the example content below.
+
+```ini
+[security]
+admin_user = admin2
+```
+
+Run `docker exec -it faGraf /bin/bash` to log into the container and view sample files. For example, when in the container, run `more /conf/sample.ini` to see all configuration values. Lines starting with `;` are commented out.
+
+Add a dashboard in the Grafana web interface:
+- Click <InlineUIElement>Add your first data source</InlineUIElement> on the home page in the middle.
+- Click <InlineUIElement>Prometheus</InlineUIElement> to add the default Prometheus connection.
+- In the Prometheus <InlineField>Connection</InlineField> enter the IP address of the Docker container, `http://prometheus:9090`.
+- Click <InlineUIElement>Save & test</InlineUIElement>. At this point Grafana should be able to successfully connect to Prometheus. (Note that this connection retrieves the FusionAuth metrics, which is what we want, not metrics about Prometheus itself.)
+- Click <InlineUIElement>Dashboards</InlineUIElement> in the sidebar, and then <InlineUIElement>New dashboard on the right</InlineUIElement>.
+- Click <InlineUIElement>Add visualization</InlineUIElement>.
+- Select <InlineUIElement>prometheus</InlineUIElement> data source
+- Click <InlineUIElement>Add a visualization</InlineUIElement> and enter the value `prime_mvc_____errors_total` in the <InlineField>Metrics browser field</InlineField> at the bottom. Save the visualization.
+- Add another visualization with the value `prime_mvc___admin_login__requests` and save.
+- Save the dashboard and give it the name `FusionAuth dashboard`. You can rearrange the charts if you want. The dashboard should look like the image below.
+
+![Grafana dashboard](../../../../../public/img/docs/operate/secure-and-monitor/prometheus/prometheusDashboard.webp)
+
+You can add any other metrics you want as visualizations. Search for metrics in the browser related to user `login` or `oauth` to keep track of how your system is used.
+
+If you edit the dashboard as a whole, you'll see a tab called JSON Model. This contains the full configuration text for the dashboard you created, which can be used in the provisioning files mentioned earlier to automatically recreate the dashboard in a new instance of Grafana.
+
+You can also create a new dashboard by importing a standard template from the Grafana repository. However, there is no FusionAuth template currently, and FusionAuth does not export all Java metrics necessary to use the [JVM template](https://grafana.com/grafana/dashboards/8563-jvm-dashboard/).
 
 ## TODO
 
-custom metrics
 loki
-grafana
+custom metrics
 
 ## Send Custom FusionAuth Metrics To The Elasticsearch API
 
@@ -424,11 +518,13 @@ Now that you can monitor FusionAuth in Elastic, you should enable Elastic [alert
 - [Prometheus alert templates](https://prometheus.io/docs/alerting/latest/notifications)
 - [Loki](https://grafana.com/oss/loki)
 - [Grafana](https://grafana.com/grafana)
+- [Grafana Ubuntu Docker image](https://hub.docker.com/r/ubuntu/grafana)
 - [Grafana Cloud](https://grafana.com/auth/sign-up/create-user)
 - [Ubuntu Prometheus Container](https://hub.docker.com/r/ubuntu/prometheus)
 
 ## TODO
 - FA
 - PR
-<InlineUIElement></InlineUIElement>
 <kbd></kbd>
+<InlineField></InlineField>
+<InlineUIElement></InlineUIElement>
