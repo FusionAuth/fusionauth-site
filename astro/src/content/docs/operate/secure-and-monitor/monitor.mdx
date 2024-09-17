@@ -11,119 +11,226 @@ import LoadTestingTips from 'src/content/docs/get-started/run-in-the-cloud/_load
 
 ## Overview
 
-Once you've installed FusionAuth and integrated it with your applications, you have to run it. 
-For that you need insight into how the system is performing. 
-There are a number of ways to gain this insight.
+Once you've installed FusionAuth and your applications use it for authentication, you'll want to ensure FusionAuth remains online and operational. An ecosystem of tools, protocols, and paid services are available to monitor applications and provide telemetry (remote measurement) to help you maintain FusionAuth's availability and performance. 
 
-## Monitoring Summary Table
+This overview article will introduce you to various metrics (measurements) you can extract from FusionAuth and common monitoring tools to process, store, and visualize them.
 
-Here's an overview table of monitoring options.
+Your choice of tools and services will depend on the specific information you need about the state of FusionAuth, the time you are willing to spend setting up and maintaining your monitoring system, and your budget for cloud services.
 
-*Monitoring Overview*
-| Name | Contains | Ingestion Options | More Information |
-| --- | --- | --- | --- |
-| System Logs | Exceptions, stack traces, database connection issues, Elasticsearch connection issues. Minimal tracing capability unless debug logging is enabled.  | Can be exported as a zip file via API.  | [More info](/docs/operate/troubleshooting/troubleshooting#system-log-ui) |
-| Audit Logs | Created by the admin user interface actions. This is just an API, so a customer can also call this API. This is a free form API, and the audit log contents are whatever you put in.  | This can be consumed via web hook or API.  | [More info](/docs/apis/audit-logs) |
-| Event Logs | Debug information for external integrations with IdPs, SMTP etc. In general, runtime errors that are typically not caused by FusionAuth and cannot be communicated well at runtime. Examples: a template rendering error in a custom theme, an exception connecting to SMTP due to bad credentials, a failure in a SAML exchange, a connection to a webhook is failing.  | This can be consumed via web hook or API.  | [More info](/docs/operate/troubleshooting/troubleshooting#event-log) |
-| Login records | Each successful login is recorded here. Includes IP information, application, user, and timestamp.  | Can be consumed via API. This record itself is not sent through a webhook, but a login success or login failure can be consumed via a web hook.  | [More info](/docs/apis/login#export-login-records) |
-| Webhooks | Triggered by events as documented, sending is configurable. Contains IP and location information when available.  | Can be sent to an HTTP endpoint or a Kafka topic.  | [More info](/docs/extend/events-and-webhooks/) |
-| Metrics | System metrics, such as JVM buffers, memory and threads.  | Can be consumed via API and available in Prometheus compatible format.  | [More info](/docs/operate/secure-and-monitor/monitor#metrics) |
+### What Is Monitoring?
 
-## Log Files
+The aim of monitoring FusionAuth is to be able to see at any time if the service is alive (Docker container is running) and functioning correctly (users can sign in and logs have no errors), and to be alerted (by email or chat app) if either of these conditions is not met.
 
-The system log files will be placed in the `logs` directory under the FusionAuth installation unless you are running FusionAuth in a container. In the latter case, the log output will be sent to STDOUT by default.
-You may also set up a [Docker logging driver](https://docs.docker.com/config/containers/logging/configure/) to direct log files elsewhere.
+A complete monitoring system involves five activities:
+
+- Measuring — Getting operational data about FusionAuth and Docker.
+- Processing — Filtering, indexing, and aggregating data into counts and booleans that represent whether the system is working correctly.
+- Storing — Storing metrics, logs, and aggregates.
+- Displaying — Showing the information in a dashboard. (A query language might do the aggregation here instead of the processing step.)
+- Alerting — Notifying administrators when services degrade or fail.
+
+While you can use stock Docker-monitoring apps to monitor Docker containers and collect logs, you will need to write custom code or [webhooks](/docs/apis/webhooks) to get FusionAuth-specific information, like the number of successful logins.
+
+## What FusionAuth Metrics Can Be Monitored?
+
+The table below lists the metadata available from FusionAuth for monitoring purposes.
+
+| Name          | Contains                                                                                                                                                                                                                                                                                                                                                                                               | Ingestion Options                                                                                                                              | More Information                                                         |
+|---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
+| Metrics       | System metrics, such as JVM buffers, memory, and threads.                                                                                                                                                                                                                                                                                                                                              | Can be consumed via API, available in Prometheus-compatible format.                                                                            | [More info](/docs/operate/secure-and-monitor/monitor#metrics)            |
+| System Logs   | Exceptions, stack traces, database connection issues, Elasticsearch connection issues. Minimal tracing capability unless debug logging is enabled. Logs are also written to the Docker standard output (terminal).                                                                                                                                                                                     | Can be exported as a ZIP file via API.                                                                                                         | [More info](/docs/operate/troubleshooting/troubleshooting#system-log-ui) |
+| Audit Logs    | Created by admin user interface actions. This is a basic API, so customers can also call it. A free-form API, the audit log can contain whatever data you specify.                                                                                                                                                                                                                                     | Can be consumed via webhook or API.                                                                                                            | [More info](/docs/apis/audit-logs)                                       |
+| Event Logs    | Debug information for external integrations with IdPs, SMTP, and other external services. In general, runtime errors that are typically not caused by FusionAuth and cannot be communicated well at runtime. For example, a template rendering error in a custom theme, an exception connecting to SMTP due to bad credentials, a failure in a SAML exchange, or a connection to a webhook is failing. | Can be consumed via webhook or API.                                                                                                            | [More info](/docs/operate/troubleshooting/troubleshooting#event-log)     |
+| Login records | Each successful login is recorded here. Includes IP information, application, user, and timestamp.                                                                                                                                                                                                                                                                                                     | Can be consumed via API. This record itself is not sent through a webhook, but a login success or login failure can be consumed via a webhook. | [More info](/docs/apis/login#export-login-records)                       |
+| Webhooks      | Triggered by events as documented, sending is configurable. Contains IP and location information when available.                                                                                                                                                                                                                                                                                       | Can be sent to an HTTP endpoint or a Kafka topic.                                                                                              | [More info](/docs/extend/events-and-webhooks/)                           |
+
+Except for webhooks, items are provided as a ZIP file when requested by an API call. Webhooks are pushed from FusionAuth to a URL you specify, not called in an API by a monitoring tool.
+
+The next few subsections detail each of these items.
+
+### Log Files
+
+The system log files will be placed in the `logs` directory under the FusionAuth installation unless you are running FusionAuth in a container. In that case, the log output will be sent to `stdout` by default. You may also set up a [Docker logging driver](https://docs.docker.com/config/containers/logging/configure/) to direct log files elsewhere.
 
 System logs running in non-containerized instances can also be exported via the [Export System Logs API](/docs/apis/system#export-system-logs).
 
 [Learn more about FusionAuth log files](/docs/operate/troubleshooting/troubleshooting#logs).
 
-## Application Logging
+### Application Logging
 
-There are a few different APIs exposing FusionAuth application specific information you may want to ingest into your monitoring system:
+A few different APIs expose FusionAuth application-specific information you may want to ingest into your monitoring system:
 
 * [FusionAuth administrative user interface audit logs](/docs/apis/audit-logs)
 * [Logs and errors from asynchronous code execution](/docs/apis/event-logs)
 * [Login records](/docs/apis/login#export-login-records)
 
-In general these are APIs you will have to poll to ingest.
+In general, these are APIs you will have to poll to ingest.
 
-## Log File Formats
+### Log File Formats
 
-*Log File Information*
-| Log Type | Export Format | Timezone | Date Format | API Docs |
-| --- | --- | --- | --- | --- |
-| Audit Logs | Zipped CSV | Specified by the `zoneId` parameter | Specified by the `dateTimeSecondsFormat` parameter, defaults to `M/d/yyyy hh:mm:ss a z` | [API](/docs/apis/audit-logs) |
-| Event Logs | JSON | UTC | [Instant](/docs/reference/data-types#instants) | [API](/docs/apis/event-logs) |
-| Login Records | Zipped CSV | Specified by the `zoneId` parameter | Specified by the `dateTimeSecondsFormat` parameter, defaults to `M/d/yyyy hh:mm:ss a z` | [API](/docs/apis/login#export-login-records) |
-| System Logs | Zipped directory of files. Log entries separated by newlines, but may be unstructured (stack traces, etc).  | For log entries, the timezone of the server. The `zoneId` parameter, if provided, is used to build the filename.  | `yyyy-MM-dd h:mm:ss.SSS a` | [API](/docs/apis/system#export-system-logs) |
+
+| Log Type      | Export Format                                                                                                      | Timezone                                                                                                         | Date Format                                                                             | API Docs                                     |
+|---------------|--------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|----------------------------------------------|
+| Audit Logs    | Zipped CSV                                                                                                         | Specified by the `zoneId` parameter                                                                              | Specified by the `dateTimeSecondsFormat` parameter, defaults to `M/d/yyyy hh:mm:ss a z` | [API](/docs/apis/audit-logs)                 |
+| Event Logs    | JSON                                                                                                               | UTC                                                                                                              | [Instant](/docs/reference/data-types#instants)                                          | [API](/docs/apis/event-logs)                 |
+| Login Records | Zipped CSV                                                                                                         | Specified by the `zoneId` parameter                                                                              | Specified by the `dateTimeSecondsFormat` parameter, defaults to `M/d/yyyy hh:mm:ss a z` | [API](/docs/apis/login#export-login-records) |
+| System Logs   | Zipped directory of files. Log entries separated by newlines, but may be unstructured (for example, stack traces). | For log entries, the timezone of the server. The `zoneId` parameter, if provided, is used to build the filename. | `yyyy-MM-dd h:mm:ss.SSS a`                                                              | [API](/docs/apis/system#export-system-logs)  |
 
 <Aside type="note">
-There are currently no plugins for ingesting FusionAuth logs into a log management system. A polling script using a [client library](/docs/sdks/) is usually sufficient. Please [file an issue](https://github.com/FusionAuth/fusionauth-issues/issues) if this does not meet your use case.
+There are currently no plugins for ingesting FusionAuth logs into a log management system. A polling script using a [client library](/docs/sdks/) is usually sufficient. Please [file an issue](https://github.com/FusionAuth/fusionauth-issues/issues) if this does not meet your needs.
 </Aside>
 
-## Application Events
+### Application Events
 
-There are a number of events, such as a failed authentication or an account deletion, that you may want to ingest into your monitoring system. These are available as webhooks. 
+You may want to ingest application events such as failed authentication or account deletion into your monitoring system. These are available as webhooks.
 
 Here's [the list of all available events](/docs/extend/events-and-webhooks/events/).
 
-## Metrics
+### Metrics
 
-You can pull system metrics from the [System API](/docs/apis/system#retrieve-system-status). The format of these metrics are evolving and thus are not documented.
+You can pull system metrics from the [System API](/docs/apis/system#retrieve-system-status). The format of these metrics is evolving and thus not documented.
 
-You can also enable JMX metrics as outlined in the [Troubleshooting documentation](/docs/operate/troubleshooting/troubleshooting#enabling-jmx).
+You can also enable JMX metrics as outlined in the [troubleshooting documentation](/docs/operate/troubleshooting/troubleshooting#enabling-jmx).
 
-### Prometheus Endpoint
+#### Prometheus Endpoint
 
-The default system metrics are also available in a Prometheus compatible form. [This tutorial explains how to set up Prometheus to scrape the FusionAuth metrics](/docs/operate/secure-and-monitor/prometheus).
+Default system metrics are also available in a Prometheus-compatible form. [This tutorial](/docs/operate/secure-and-monitor/prometheus) explains how to set up Prometheus to monitor FusionAuth metrics.
 
-## OpenTelemetry
+## Overview Of Popular Monitoring Tools
 
-FusionAuth is a Java application. You can use the [OpenTelemetry](https://github.com/open-telemetry/opentelemetry-java-instrumentation) project to instrument it. Doing so can assist troubleshooting performance issues and make it easier to run.
+This section introduces the most common monitoring tools. The table at the end of the section illustrates each tool's suitability for the five monitoring activities: measuring, processing, storing, displaying, and alerting.
 
-FusionAuth has no custom tracing spans embedded, but it can be set up as an OpenTelemetry exporter. Doing so provides useful data about types of requests, database queries, and more.
+### What Is OpenTelemetry?
 
-<img src="/img/docs/operate/secure-and-monitor/opentelemetry-display.png" alt="Exploring telemetry using Honeycomb." width="1200" />
+[OpenTelemetry](https://opentelemetry.io/docs) is an open-source framework (suite of apps) and a protocol for collecting information about a running application.
 
-### Set Up the Exporter
+You can either use an OpenTelemetry library as a module in your code, which you call manually to send it application-specific metrics (instrumentation), or you can use a stock OpenTelemetry instrumentation agent, like the Java Virtual Machine agent, that collects general information about your application as it runs.
 
-Download the [Java OpenTelemetry agent](https://github.com/open-telemetry/opentelemetry-java-instrumentation). Make it available to the FusionAuth instance. If you are using a zip/deb/rpm, put it in a directory. If using docker, mount the host directory to the container.
-Set an environment variable `OT_PATH` to point to the directory.
+You could also collect metrics about your application through another tool and send them to an OpenTelemetry Collector service through OTLP (OpenTelemetry Protocol), a standardized way of exchanging telemetry data between tools. The collector acts as a central point to receive all metrics, potentially do some simple filtering, and forward the metrics to other services.
 
-Next, you need to configure FusionAuth to use the agent by passing the correct Java command line switches. There are a couple of ways to do this.
+OpenTelemetry does not handle storage, data aggregation (counting things), or visualization (dashboards).
 
-You can use Java system properties, environment variables, or edit the `fusionauth.properties` config file. See the [configuration reference](/docs/reference/configuration) for more info. For this example, environment variables will be used.
+For example, you could run the OpenTelemetry Java agent before running your app. The agent would monitor the RAM use of your app as a metric and send it to an OpenTelemetry Collector, which would forward the metric to another service for saving, counting, and displaying in a dashboard.
 
-Set this environment variable and make sure it is available when you start FusionAuth (in a startup script, `.bashrc`, etc):
+Read the [guide to monitoring FusionAuth with OpenTelemetry](/docs/operate/secure-and-monitor/opentelemetry).
 
-```shell title="Enabling OpenTelemetry export"
-export FUSIONAUTH_APP_ADDITIONAL_JAVA_ARGS="-javaagent:$OT_PATH/opentelemetry-javaagent.jar"
-```
+### What Is Prometheus?
 
-Next, configure OpenTelemetry to point to your collector. 
-Here's an example of the environment variables to set to use [HoneyComb](https://www.honeycomb.io/) as your collector. The specific variables needed will vary based on your chosen solution; please consult the collector's documentation. 
+[Prometheus](https://prometheus.io/docs/introduction/overview) is a monitoring and alerting toolkit with a built-in time series database designed to efficiently store metrics and provide data through a custom query language. Prometheus offers instrumentation tools to collect metrics from networks, machines, and some [programming languages](https://prometheus.io/docs/instrumenting/clientlibs/). While Prometheus includes basic charting capabilities, more advanced dashboards require integration with Grafana. You can use the Prometheus [Alertmanager](https://github.com/prometheus/alertmanager) to handle alerts. 
 
-```shell title="Configuring OpenTelemetry collector"
-# from https://docs.honeycomb.io/getting-data-in/opentelemetry/java-distro/#using-opentelemetry-without-the-honeycomb-distribution
-export OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io
-export OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=$HONEYCOMB_API_KEY
-export OTEL_TRACES_EXPORTER=otlp
-export OTEL_SERVICE_NAME=fusionauth-test
-export OTEL_TRACES_SAMPLER=traceidratio
-export OTEL_TRACES_SAMPLER_ARG=0.5
-export OTEL_RESOURCE_ATTRIBUTES=SampleRate=2
-export OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_CLIENT_REQUEST=X-FusionAuth-TenantId
-```
+Prometheus can be used for all activities in the monitoring chain, though some at a very basic level, but should [not be used to store logs](https://prometheus.io/docs/introduction/faq/#how-to-feed-logs-into-prometheus).
 
-Start FusionAuth up and enjoy your new insights.
+For example, you could run the Prometheus network monitoring agent to monitor the amount of data traveling your network every second as a metric and save the data to the Prometheus database. You could then run an adhoc query to visualize the network usage in the last hour as a chart with the Prometheus web interface.
+
+### What Is Grafana?
+
+[Grafana](https://grafana.com/grafana) is an open-source dashboard app that can be self-hosted or cloud-hosted with a fee. Grafana does not aggregate or process data but can retrieve aggregated metrics from data providers that support a query language capable of aggregation. Grafana can also trigger [alerts](https://grafana.com/docs/grafana/latest/alerting/fundamentals/).
+
+For example, you could create a dashboard in Grafana that queries Prometheus every few seconds to get the network usage over the last hour and display it as a chart.
+
+### What Is Grafana Loki?
+
+Although Grafana does not store data, [Grafana Loki](https://grafana.com/oss/loki/), a separate tool that is part of the Grafana brand, does store data. Loki receives and stores logs. It has a similar purpose to Elasticsearch and Logstash (explained in the next section).
+
+Unlike Logstash, Loki does not do significant processing to the logs it receives. So Loki can run faster, but provides less data for indexed searching.
+
+For example, you could redirect the output of your app's logs from the Docker container standard output to Loki for storing.
+
+### What Are Elasticsearch, Logstash, And Kibana (ELK)?
+
+Elasticsearch is a database that stores and searches indexed non-relational data. You can either save logs directly to Elasticsearch, or first send logs to Logstash for processing and indexing, which forwards the processed logs to Elasticsearch for saving.
+
+Both tools are managed by the Elastic company and are designed to integrate with the Elastic dashboard tool, Kibana.
+
+You could use Elasticsearch similarly to both Prometheus and Loki, in the same way as their examples.
+
+### What Are OpenSearch And OpenSearch Dashboard?
+
+[OpenSearch and OpenSearch Dashboard](https://opensearch.org/faq) are the open-source versions of the ElasticSearch and Kibana tools. OpenSearch was forked from Elastic at version 7.10 and is maintained by AWS.
+
+Note that while not strictly open source for all uses, both Elastic products are free for most uses and the code is available (gratis and libre). Only reselling Elastic products as a hosted service in competition with Elastic Cloud is disallowed. So until the features of Elastic and OpenSearch diverge significantly, you can treat them as equivalents for your monitoring purposes.
+
+### What Are Jaeger, Zipkin, and Grafana Tempo?
+
+[Jaeger](https://www.jaegertracing.io/docs/1.59/) is an open-source monitoring tool made by [Uber](https://www.uber.com/en-IE/blog/distributed-tracing) to understand user requests across distributed microservices. You don't need to use Jaeger with FusionAuth since FusionAuth is a single service.
+
+[Zipkin](https://zipkin.io/), made by Twitter, is similar to Jaeger but was developed earlier. [Grafana Tempo](https://grafana.com/oss/tempo/) is another similar tool, and is the most modern of the three distributed tracing options.
+
+### What Tools Are Available To Send Alerts To Administrators?
+
+Some of the monitoring components discussed in the previous sections can alert system administrators when applications fail. Alerts can be sent to:
+
+- Email: You will probably need to subscribe to a mail sender service to receive email alerts, unless your internet provider allows you access to the SMTP protocol.
+- Computer chat apps: Computer chat apps like Slack and Discord can receive alert messages in a specific channel for free. Slack and Discord clients can be installed on your phone to be sure you never miss an alert.
+- Phone chat apps: For example, WhatsApp and Threema. WhatsApp requires a phone number to sign up. Threema does not need a phone number but requires you to buy the mobile app for a small one-time fee. Both services charge a fee for businesses to send messages to users.
+
+Grafana's OnCall tool consolidates and redirects multiple alerts from various systems. This might be a good option for you if you have support staff that monitor an alert system in shifts rather than wait to receive an email.
+
+### What Can You Do With A Custom Script?
+
+As a simple and free alternative to all the tools above, you could write a small web service in JavaScript, Go, or Python to continuously call the FusionAuth website or API, and if it fails, send an alert to the administrator.
+
+If you want to monitor any FusionAuth metrics directly instead of only the FusionAuth container, you will need to write a custom script to call the FusionAuth API anyway.
+
+### Monitoring Tools Compared
+
+The table below shows which tools are available for each type of activity in the monitoring flow.
+
+Remember that Prometheus, Loki, and Grafana all work together, in the same way all the Elastic products work together.
+
+| &nbsp;                                   | Measure                      | Process        | Store               | Display                    | Alert (send)               | Alert (receive) |
+|------------------------------------------|------------------------------|----------------|---------------------|----------------------------|----------------------------|-----------------|
+| FusionAuth webhooks                      | Yes                          | No             | No                  | No                         | No                         | No              |
+| Custom script                            | Yes                          | Yes            | No                  | No                         | Yes                        | No              |
+| OpenTelemetry                            | Yes                          | Yes            | No                  | No                         | No                         | No              |
+| Elastic                                  | Yes (Elastic Agent or Beats) | Yes (Logstash) | Yes (Elasticsearch) | Yes (Kibana)               | Yes (Kibana)               | No              |
+| OpenSearch                               | Yes                          | Yes            | Yes                 | Yes (OpenSearch Dashboard) | Yes (OpenSearch Dashboard) | No              |
+| Prometheus                               | Yes                          | Yes            | Yes                 | Yes                        | Yes (Alertmanager)         | No              |
+| Grafana                                  | No                           | No             | No                  | Yes                        | Yes (OnCall)               | No              |
+| Loki (logs only)                         | No                           | Yes            | Yes                 | No                         | No                         | No              |
+| Email, Slack, Discord, WhatsApp, Threema | No                           | No             | No                  | No                         | No                         | Yes             |
+
+There are other paid and hosted monitoring services that aren't discussed in this article, like Splunk (integration guide with FusionAuth [here](/docs/operate/secure-and-monitor/splunk)) and Datadog, which have their own tools and typically implement the OpenTelemetry Protocol.
+
+## Which Tools Should You Choose?
+
+Which combination of monitoring tools you choose is based on:
+- How much you need to know about your system (coverage). Do you want to know only that FusionAuth is running, or monitor the login count per hour?
+- How much time you want to spend building and maintaining a monitoring system. Less time means you'll have less information about your system, and possibly spend more on specialized monitoring cloud services that handle maintenance for you.
+- How much money you want to spend. If you want to pay as little as possible, there are free tools available for all aspects of monitoring, but you will have to install them on your own server and monitor them too.
+
+If you already use a paid cloud monitoring service, it probably has all the components you need to monitor FusionAuth. Continue using that.
+
+### A Sample Of Monitoring Tool Choices
+
+Below are some examples of how you could monitor FusionAuth. The table gives an example configuration, how much of FusionAuth usability it covers, how expensive it is, and what its flaws are.
+
+| System                                                                                                                                                                                                                                               | Coverage                                                                              | Cost | Notes                                                                                                                                                                                                                                                                                                                                                       |
+|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| A custom web service that either checks the FusionAuth container is running or calls the FusionAuth API to check there are no errors. If either condition is not met, the service alerts the administrator by posting a message to Slack or Discord. | You can make the service check as many or as few metrics as you want.                 | Free | You need to write custom code. You won't have a dashboard or a store of historical performance data and logs.                                                                                                                                                                                                                                               |
+| Install the ElasticSearch or OpenSearch stack in Docker on your server. Monitor your Docker container cluster with ElasticAgent.                                                                                                                     | Low. You know only if your container is running or not.                               | Free | Setting up the Elastic stack yourself is initially complex and time-consuming. You will automatically have dashboards available in Kibana.                                                                                                                                                                                                                  |
+| As above, the Elastic stack, but also save logs to Elasticsearch, and write a custom web service to upload FusionAuth metrics via the Elastic API                                                                                                    | Very high. You will know every detail about your instance and can search stored data. | Free | Substantial work needed.                                                                                                                                                                                                                                                                                                                                    |
+| As above, the Elastic stack with custom code, but use Elastic Cloud as your paid monitoring host.                                                                                                                                                    | Very high                                                                             | High | Much less work needed than self-hosting, and no need to worry about a failing monitoring service you need to maintain.                                                                                                                                                                                                                                      |
+| Run Prometheus in a container and point it to the stock FusionAuth endpoints for Prometheus.                                                                                                                                                         | Medium                                                                                | Free | Simple to set up. Will provide you with a simple dashboard, metric storage, and alerts, all provided by Prometheus alone.                                                                                                                                                                                                                                   |
+| As above, Prometheus with FusionAuth endpoints, but save logs with Grafana Loki, and create comprehensive permanent dashboards with Grafana.                                                                                                         | High                                                                                  | Free | More complex to set up and maintain, but will provide very detailed information with high-quality usability for administrators.                                                                                                                                                                                                                             |
+| A custom web service to extract FusionAuth metrics, plus the tools of a paid monitoring service like Datadog or Splunk.                                                                                                                              | High                                                                                  | High | You will need to write a custom web service as no monitoring service integrates naturally with FusionAuth. The service's existing monitoring components should cover everything else you need, such as container monitoring and log indexing. If you are a large firm that already uses a paid service for your other software, this is the easiest choice. |
+
+In any of these systems, you can configure a trigger to send alerts to your preferred chat app using its API, for example, to a Slack channel using the Slack API. Most paid services, like Elastic Cloud, will have stock Slack integrations that won't need you to code an API call yourself.
+
+### Monitoring Monitors
+
+Remember that if you're using a self-hosted monitoring system, you won't be alerted if the system dies — nothing monitors the monitor. To overcome this you will need to:
+
+- Pay for an external monitoring service instead of self-hosting.
+- Use a simple heartbeat monitoring service that checks only that your hosted monitoring service is contactable.
+- Write a service to monitor the monitor on a separate self-hosted server.
 
 ## Load Testing
 
-{/*  shared with cloud guide */}
+{/* shared with cloud guide */}
 <LoadTestingIntro />
 
 ### Tips
 
-{/*  shared with cloud guide */}
+{/* shared with cloud guide */}
 <LoadTestingTips />
