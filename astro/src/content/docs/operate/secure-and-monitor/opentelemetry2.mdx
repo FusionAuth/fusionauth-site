@@ -91,9 +91,9 @@ graph LR
 
 This guide focuses on OpenTelemetry, not Prometheus and Grafana, and so uses the OpenTelemetry Collector. However, as of 2024, Grafana has released their own open-source version of an OpenTelemetry collector, called [Alloy](https://grafana.com/oss/alloy-opentelemetry-collector), that supports all Prometheus protocols and all OpenTelemetry protocols. It is component-based and has features that OT Collector does not. You might well prefer to use Alloy instead of OT Collector in your project.
 
+![Grafana Alloy](../../../../../public/img/docs/operate/secure-and-monitor/opentelemetry/alloy.png)
+
 ## Run OpenTelemetry With Docker To Monitor FusionAuth
-
-
 
 Clone the sample [FusionAuth kickstart repository](https://github.com/FusionAuth/fusionauth-example-docker-compose) with the command below.
 
@@ -108,6 +108,7 @@ Add a new service to the bottom of `docker-compose.yaml` before the `volumes:` s
   prometheus:
     image: ubuntu/prometheus:2.52.0-22.04_stable
     container_name: faProm
+    platform: linux/amd64
     depends_on:
       - fa
     ports:
@@ -115,9 +116,14 @@ Add a new service to the bottom of `docker-compose.yaml` before the `volumes:` s
     volumes:
       - ./prometheusConfig.yml:/etc/prometheus/prometheus.yml
       - ./prometheusDb:/prometheus
+    networks:
+      - db_net
 ```
 
 This service says that Prometheus will start after FusionAuth, that you can browse to it on port 9090, and that it will save its database and configuration file in persistent directories on your machine.
+
+
+https://hub.docker.com/r/otel/opentelemetry-collector
 
 
 The FusionAuth kickstart configuration files created a superuser API key that Prometheus uses as `password`. In production to be more secure, rather create an API key that has only the `GET` permission for the `/api/prometheus/metrics` endpoint.
