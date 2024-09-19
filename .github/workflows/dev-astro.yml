@@ -1,6 +1,5 @@
-# Sample workflow for building and deploying an Astro site to GitHub Pages
 #
-# To get started with Astro see: https://docs.astro.build/en/getting-started/
+# Build the astro-based artifacts and deploy them to the dev website S3 bucket
 #
 name: Dev astro deployment
 env:
@@ -37,7 +36,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.PUBLISHER_ROLE_ARN }}
           role-session-name: site_publisher_session
@@ -53,8 +52,4 @@ jobs:
       - name: CloudFront request handler and cache invalidation
         working-directory: .
         run: |
-          CLOUDFRONT_FUNCTION_ETAG=$(aws cloudfront describe-function --name fusionauth-website-request-handler --query 'ETag' --output text)
-          CLOUDFRONT_FUNCTION_ETAG=$(aws cloudfront update-function --name fusionauth-website-request-handler --function-code fileb://src/cloudfront/functions/fusionauth-website-request-handler.js --function-config Comment="Request handler for the FusionAuth website",Runtime="cloudfront-js-1.0" --if-match ${CLOUDFRONT_FUNCTION_ETAG} --query 'ETag' --output text)
-          aws cloudfront publish-function --name fusionauth-website-request-handler --if-match ${CLOUDFRONT_FUNCTION_ETAG}
           aws cloudfront create-invalidation --distribution-id ${{ secrets.DEV_DISTRIBUTION_ID }} --paths "/*"
-
