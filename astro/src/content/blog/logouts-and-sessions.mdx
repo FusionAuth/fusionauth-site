@@ -1,0 +1,97 @@
+---
+publish_date: 2024-09-19
+title: Session Management Options
+description: What types of session management solutions are available with FusionAuth?
+authors: Dan Moore
+image: /img/blogs/session-management-options/session-management-options.png
+categories: Education
+tags: session management, logout, session revocation, javascript, example apps
+excerpt_separator: "{/* more */}"
+---
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+
+FusionAuth supports two approaches to application session management: centralized session management and application managed sessions. Each has their strengths and weaknesses. 
+For an in-depth look at session management using FusionAuth, check out the [Logout And Session Management guide](/docs/lifecycle/authenticate-users/logout-session-management) which dives into these approaches in much more detail.
+
+In this post, you'll look at centralized session management and application managed sessions and learn about their strengths and weaknesses.
+
+{/* more */}
+
+## What Is A Session
+
+But first, let's talk about what a session is.  A user session refers to the period during which a user interacts with a web application, mobile application or website.
+
+A session typically begins when the user first accesses the site and ends when the user either:
+
+* terminates the session by logging out
+* remains inactive for a predefined period; an idle timeout
+
+Sessions often contain useful data about a user to allow an application to provide functionality, but they also allow a web server, which communicates using the stateless HTTP protocol, to correlate multiple requests into a user interaction.
+
+When an application is integrated with FusionAuth, there are three types of relevant sessions.
+
+* An **application session** is created after FusionAuth has authenticated a user, the application has completed the token exchange, and the user has been logged in to the application. The application almost always creates a session. How exactly this session works (a cookie, value stored in redis, or a database row) is specific to each web, desktop, or mobile application.
+* A **FusionAuth SSO session** is created when a user checks <InlineUIElement>Keep me signed in </InlineUIElement>. This session is available only when using the [hosted login pages](/docs/get-started/core-concepts/integration-points#hosted-login-pages) and a browser or webview. This session gives your application transparent, automatic user authentication when a user on a device switches between different web or mobile applications.
+* A **centralized session** is a FusionAuth refresh token. It represents an application session managed by FusionAuth. This session can be read or revoked using the FusionAuth API. It is created by a user login event and both the hosted login pages and the Login API support this type of session.
+
+These sessions interact when your user is logging in to and moving between different applications.
+
+## Session Management Options With FusionAuth
+
+You can choose to use centralized session management or application managed sessions with FusionAuth.
+
+An easy way to choose is to ask "do I want my FusionAuth instance to track sessions for each application?".
+
+If the answer is "yes", then you want centralized session management. If the answer is "no", then application managed sessions will work for you. Let's dig into these options a bit more.
+
+## Centralized Session Management
+
+With centralized session management, you leverage FusionAuth refresh tokens to represent a session. The user must go through an authentication event to get the refresh token, but then the lifetime and validity is managed by FusionAuth. You typically store the provided refresh token in each application and check its validity on every request.
+
+With centralized session management, you can:
+
+* capture all kinds of information about users’ sessions across different applications such as session lifetime, device, or IP address
+* log users out of application using the FusionAuth admin UI, the SDKs, or the API
+* remove user sessions according to business logic you write; for example, if they have been idle for 4 hours on a weekday log them out, but let them be idle for up to 12 hours on a weekend
+* have different session lifetimes for each application a user can log into, but configure and manage those lifetimes using FusionAuth
+
+The downside of centralized sessions is some implementation complexity and reliance on FusionAuth’s APIs.
+
+If you'd like to see an example application built using centralized session management, check out [this example application written in JavaScript](https://github.com/FusionAuth/fusionauth-example-node-centralized-sessions/).
+
+## Application Managed Sessions
+
+An alternative to centralized sessions is application managed sessions. FusionAuth still manages authentication, but each application manages their session individually. With this approach, FusionAuth doesn’t keep track of session lifetime or any other characteristics. Instead, FusionAuth relies on the applications to manage the user session. These sessions are terminated with [Front-Channel Logout](/docs/lifecycle/authenticate-users/oauth/endpoints#logout) rather than the API.
+
+With application managed sessions, you:
+
+* will see no values appear on the Sessions tab under the user details screen in the admin UI, except perhaps the FusionAuth SSO session
+* can't use the API to view, terminate or manage application sessions
+* won’t have any control over session timeouts; instead, each timeout is managed by the application in question
+* cannot revoke application sessions via the API
+
+If you'd like to see an example application built using application managed sessions, including logout functionality, check out [this example application written in JavaScript](https://github.com/FusionAuth/fusionauth-example-node-sso/).
+
+## Picking The Right Solution
+
+While the choice depends on your application needs, this table outlining major differences between centralized sessions and application managed sessions illustrates some of the tradeoffs of each approach.
+
+| Feature | Centralized Sessions | Application Managed Sessions | 
+| -------- | ------- | ------- |
+| Implementation level of effort | Medium | Low |
+| Revoke sessions across all applications in a tenant on logout | Yes | Yes |
+| Revoke sessions for one application on logout | Yes | Yes |
+| Revoke sessions for more than one and fewer than all applications on logout | Yes | No |
+| Fine grained session revocation, including via API | Yes | No | 
+| Precise control of session timeout | Yes | No | 
+| Central view of sessions in FusionAuth | Yes | No | 
+| Call to FusionAuth required each time a user interacts with your application | Yes | No | 
+| Works with FusionAuth SSO, including revocation | Yes | Yes |
+| Works with non browser based applications, such as APIs | Yes | No |
+| Session revocation webhooks available | Yes | No |
+
+## Finishing Up
+
+Sessions are a critical part of your application infrastructure and an important part of the authentication and logout process. FusionAuth provides flexibility to use the right session management approach. 
+
+To learn more, including code examples and the different types of logout, read the [Logout And Session Management guide](/docs/lifecycle/authenticate-users/logout-session-management). This document dives into these approaches in much more detail.
