@@ -47,13 +47,17 @@ There are three ways you can use OpenTelemetry to export metrics about FusionAut
 - Run an OpenTelemetry exporter inside the FusionAuth Docker container to monitor the JVM (Java Virtual Machine) in which FusionAuth runs. The FusionAuth team does not recommend this approach. You have to alter the provided Docker image to include the Java agent, and alter image every time FusionAuth releases an update. The metrics the JVM provides also do not provide any useful information beyond that provided by monitoring the container itself.
 - Write a custom script to request metrics from the FusionAuth API and forward them to an OpenTelemetry collector. This will allow you to monitor specific FusionAuth metrics, like application errors and user login rates.
 
-OpenTelemetry is a communication protocol for transferring metrics, and a set of tools. But it doesn't allow you to view or analyze metrics. For that, you need a tool like Prometheus or Elasticsearch. It's also common for cloud-hosted monitoring tools, like ElasticCloud or Splunk, to receive OpenTelemetry metrics, or provide their own OpenTelemetry exporting tools. (There are guides to these cloud services in the documentation sidebar).
+OpenTelemetry is a communication protocol for transferring metrics, and a set of tools. But it doesn't allow you to store, view, or analyze metrics. For that, you need a tool like Prometheus or Elasticsearch. It's also common for cloud-hosted monitoring tools, like ElasticCloud or Splunk, that receive OpenTelemetry metrics to provide their own OpenTelemetry exporting tools. (There are guides to these cloud services in the documentation sidebar).
 
 If you are not using a paid cloud service, you will need to install Prometheus to view the OpenTelemetry metrics. That installation is explained briefly in this guide, but please also work through the [Prometheus monitoring guide](./prometheus.mdx) too. Note that you don't need OpenTelemetry to monitor FusionAuth with Prometheus — FusionAuth natively exports metrics on an URL Prometheus can poll.
 
 OpenTelemetry also monitors more than Prometheus — OpenTelemetry can trace an entire web request across services, instead of recording only a metric at a point in time.
 
 So why use OpenTelemetry if you are not using a paid monitoring service, do not need to trace requests inside FusionAuth, and could just use Prometheus by itself? For most FusionAuth users, there probably isn't any reason to use OpenTelemetry — Prometheus alone should be enough to monitor that FusionAuth is up, and running correctly. The only advantage running an OpenTelemetry collector brings is to allow you write a script that requests custom metrics (like user login counts) from the FusionAuth API and send them through the OpenTelemetry collector to Prometheus. This allows you to get more detail about specific FusionAuth processes that you can't get from Prometheus alone. Finally, know that OpenTelemetry, being newer than Prometheus, can accept metrics in the Prometheus format — allowing you to point an OpenTelemetry collector directly to the FusionAuth Prometheus metrics endpoint.
+
+<Aside type="note">
+If you're wondering how Prometheus can poll the OT Collector for metrics if the Collector doesn't store metrics, it's because the Collector does keep recent metrics it received in RAM. The Collector doesn't store them for long however, and does not persist metrics to disk.
+</Aside>
 
 Use an [OpenTelemetry Java monitoring agent](https://github.com/open-telemetry/opentelemetry-java-instrumentation) to send information about FusionAuth to Elastic. This is similar to the previous point - OpenTelemetry won't provide any useful information that container monitoring doesn't already. Using OpenTelemetry is also shown in the [FusionAuth Splunk guide](./splunk). Elastic has a guide to Java [here](https://www.elastic.co/guide/en/observability/8.14/apm-open-telemetry.html) that you can use with the Splunk guide.
 
@@ -97,6 +101,8 @@ graph LR
   style K fill:#944
   style P fill:#944
 ```
+
+
 
 This guide focuses on OpenTelemetry, not Prometheus and Grafana, and so uses the OpenTelemetry Collector. However, as of 2024, Grafana has released their own open-source version of an OpenTelemetry collector, called [Alloy](https://grafana.com/oss/alloy-opentelemetry-collector), that supports all Prometheus protocols and all OpenTelemetry protocols. It is component-based and has features that OT Collector does not. You might well prefer to use Alloy instead of OT Collector in your project.
 
@@ -191,6 +197,8 @@ exit
 ```
 
 ![Prometheus metrics](../../../../../public/img/docs/operate/secure-and-monitor/opentelemetry/prometheus.webp)
+
+8888 exposes OT Collector own metrics
 
 ## Run A Bash Script To Send Custom Metrics To OT Collector
 
