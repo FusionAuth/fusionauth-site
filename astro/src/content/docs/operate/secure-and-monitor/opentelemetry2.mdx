@@ -17,6 +17,7 @@ import Diagram1 from 'src/components/docs/operate/secure-and-monitor/opentelemet
 - [Architecture To Include OpenTelemetry With FusionAuth](#architecture-to-include-opentelemetry-with-fusionauth)
 - [Run OpenTelemetry With Docker To Monitor FusionAuth](#run-opentelemetry-with-docker-to-monitor-fusionauth)
 - [Run A Bash Script To Send Custom Metrics To OT Collector](#run-a-bash-script-to-send-custom-metrics-to-ot-collector)
+- [Which Custom Metrics To Monitor?](#which-custom-metrics-to-monitor)
 - [Next Steps](#next-steps)
 - [Further Reading](#further-reading)
 - [TODO](#todo)
@@ -203,6 +204,144 @@ exit
 ## Run A Bash Script To Send Custom Metrics To OT Collector
 
 todo
+
+local debug for your own script
+
+chmod +x app.sh
+
+otel -> localhost
+fa -> localhost
+
+count_over_time(login_event[5h])
+
+sum(count_over_time(login_event{exported_job="fusionauth", instance="otel:8889", job="otel"}[5h]))
+sum without(user_id) (count_over_time(login_event{exported_job="fusionauth", instance="otel:8889", job="otel"}[5h]))
+/5
+
+`app.sh`
+
+```sh
+#!/bin/sh
+
+# exit on error
+set -e
+
+# get login records from fusionauth
+otelUrl="http://otel:4318/v1/metrics"
+faUrl="http://fa:9011/api/system/login-record/export"
+faKey="33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod"
+appId="3c219e58-ed0e-4b18-ad48-f4f92793ae32"
+dateFormat=$(echo -n "yyyy-MM-dd'T'HH:mm:ss.SSS" | jq -sRr @uri)
+end=$(date +%s)000
+start=$(($end - 60000))  # milliseconds
+params="applicationId=${appId}&dateTimeSecondsFormat=${dateFormat}&start=${start}&end=${end}"
+url="${faUrl}?${params}"
+echo "curl -H \"Authorization: ${faKey}\" -o record.zip \"$url\""
+curl -H "Authorization: ${faKey}" -o record.zip "$url"
+unzip -o record.zip
+cat login_records.csv
+
+# for each record, get the user and  unix time in ms
+tail -n +2 login_records.csv | while IFS=',' read -r userId time rest; do
+  userId=$(echo "$userId" | tr -d ' "' )
+  time=$(echo "$time" | tr -d ' "')                      # 2024-06-21T05:14:56.123
+  time=$(echo "$time" | tr 'T' ' ')                      # 2024-06-21 05:14:56.123
+  sec="$(date -d "$(echo $time | cut -d '.' -f 1)" +%s)" # 1718946896
+  ms="$(echo $time | cut -d '.' -f 2)"                   # 123
+
+  # Make OTLP JSON payload
+   json_payload=$(cat <<EOF
+{
+  "resource_metrics": [{
+    "resource": {
+      "attributes": [
+        {"key": "service.name", "value": {"stringValue": "fusionauth"}},
+        {"key": "host", "value": {"stringValue": "fusionauth"}}
+      ]
+    },
+    "scope_metrics": [{
+      "metrics": [{
+        "name": "login_event",
+        "gauge": {
+          "dataPoints": [{
+            "asInt": 1,
+            "timeUnixNano": "${sec}${ms}000000",
+            "attributes": [
+                {"key": "user_id", "value": {"stringValue": "$userId"}}
+            ]
+          }]
+        }
+      }]
+    }]
+  }]
+}
+EOF
+)
+
+  # Send data to OTEL Collector
+  curl -X POST -H "Content-Type: application/json" -d "$json_payload" $otelUrl
+done
+```
+
+```sh
+FROM --platform=linux/amd64 alpine:3.19
+RUN apk add --no-cache curl nano jq bash docker-cli
+COPY app.sh /app.sh
+CMD watch -t -n 60 /app.sh
+```
+
+- Build the image with the command below.
+  ```sh
+  docker build --platform linux/amd64 -t scriptimage .
+  ```
+
+`collectorConfig.yml`
+
+```yml
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'fusionauth'
+          scrape_interval: 15s
+          scheme: http
+          metrics_path: api/prometheus/metrics
+          static_configs:
+            - targets: ['fa:9011']
+          basic_auth:
+            username: "apikey"
+            password: "33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod"
+
+exporters:
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+
+service:
+  pipelines:
+    metrics:
+      receivers: [prometheus, otlp]
+      exporters: [prometheus]
+```
+
+`docker-compose.yml`
+
+```yml
+  script:
+    image: scriptimage
+    container_name: faScript
+    platform: linux/amd64
+    depends_on:
+      - fa
+      - otel
+    networks:
+      - db_net
+```
+
+## Which Custom Metrics To Monitor?
 
 ## Next Steps
 
