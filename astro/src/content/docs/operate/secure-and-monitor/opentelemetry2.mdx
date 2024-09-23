@@ -20,7 +20,6 @@ import Diagram1 from 'src/components/docs/operate/secure-and-monitor/opentelemet
 - [Which Custom Metrics To Monitor?](#which-custom-metrics-to-monitor)
 - [Next Steps](#next-steps)
 - [Further Reading](#further-reading)
-- [TODO](#todo)
 
 
 ## Introduction
@@ -189,7 +188,7 @@ service:
       exporters: [prometheus]
 ```
 
-The Collector describes pulling metrics from apps it monitors (`receivers`) and allowing other apps to pull from it (`exporters`). In this case, the Collector pulls metrics from FusionAuth in the Prometheus format every 15 seconds on `http://fa:9011/api/prometheus/metrics` using the API key set in the kickstart configuration file. Only one exporter is exposed — metrics in the Prometheus format on port `8889`. For more information see the [documentation](https://opentelemetry.io/docs/collector/configuration/).
+The Collector describes pulling metrics from apps it monitors (`receivers`) and allowing other apps to pull from it (`exporters`). In this case, the Collector pulls metrics from FusionAuth in the Prometheus format every 15 seconds on `http://fa:9011/api/prometheus/metrics` using the API key set in the kickstart configuration file. Only one exporter is exposed — metrics in the Prometheus format on port `8889` (OT Collector exposes metrics about itself on port `8888`). For more information see the [documentation](https://opentelemetry.io/docs/collector/configuration/).
 
 The FusionAuth kickstart configuration files created a superuser API key. In production to be more secure, rather create an API key that has only the `GET` permission for the `/api/prometheus/metrics` endpoint.
 
@@ -213,24 +212,41 @@ To check that metrics are being pulled correctly, enter `up` on the Prometheus g
 
 ## Run A Bash Script To Send Custom Metrics To OT Collector
 
-8888 exposes OT Collector own metrics
+FusionAuth provides only some information on its Prometheus endpoint. If there is information you are looking for that you cannot find in Prometheus, such as details about user logins, you need to extract it yourself in a custom script. You'll do write a custom script in this section.
 
-todo
+First you need to update your `collectorConfig.yml` file to allow receiving `otlp` (OT Protocol) metrics on port `4318` at the top, and add OTLP to the list of receivers at the bottom. The update file content is shown below.
 
-local debug for your own script
+```yml
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'fusionauth'
+          scrape_interval: 15s
+          scheme: http
+          metrics_path: api/prometheus/metrics
+          static_configs:
+            - targets: ['fa:9011']
+          basic_auth:
+            username: "apikey"
+            password: "33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod"
 
-chmod +x app.sh
+exporters:
+  prometheus:
+    endpoint: "0.0.0.0:8889"
 
-otel -> localhost
-fa -> localhost
+service:
+  pipelines:
+    metrics:
+      receivers: [prometheus, otlp]
+      exporters: [prometheus]
+```
 
-count_over_time(login_event[5h])
-
-sum(count_over_time(login_event{exported_job="fusionauth", instance="otel:8889", job="otel"}[5h]))
-sum without(user_id) (count_over_time(login_event{exported_job="fusionauth", instance="otel:8889", job="otel"}[5h]))
-/5
-
-`app.sh`
+Next, create the custom metric script, the file `app.sh` with the content below.
 
 ```sh
 #!/bin/sh
@@ -238,7 +254,7 @@ sum without(user_id) (count_over_time(login_event{exported_job="fusionauth", ins
 # exit on error
 set -e
 
-# get login records from fusionauth
+# SECTION 1. get login records from fusionauth
 otelUrl="http://otel:4318/v1/metrics"
 faUrl="http://fa:9011/api/system/login-record/export"
 faKey="33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod"
@@ -253,7 +269,7 @@ curl -H "Authorization: ${faKey}" -o record.zip "$url"
 unzip -o record.zip
 cat login_records.csv
 
-# for each record, get the user and  unix time in ms
+# SECTION 2. for each record, get the user and  unix time in ms
 tail -n +2 login_records.csv | while IFS=',' read -r userId time rest; do
   userId=$(echo "$userId" | tr -d ' "' )
   time=$(echo "$time" | tr -d ' "')                      # 2024-06-21T05:14:56.123
@@ -295,7 +311,11 @@ EOF
 done
 ```
 
-`Dockerfile`
+All of `SECTION 1` above is just to download a file of user login records from FusionAuth. The URL `api/system/login-record/export` is called the timespan from sixty seconds ago until now. The records are downloaded as a ZIP file and extracted.
+
+`SECTION 2` opens the unzipped CSV file with `tail`, loops through it with `while`, and converts every line to a JSON object of the time the user logged in, and their user Id. Still in the loop, the script uses `curl` to post the JSON data off to the OT Collector on the `otelUrl`.
+
+Build this script into an image by creating a file called `Dockerfile` with the content below. The last line runs the script every sixty seconds.
 
 ```sh
 FROM --platform=linux/amd64 alpine:3.19
@@ -304,44 +324,12 @@ COPY app.sh /app.sh
 CMD watch -t -n 60 /app.sh
 ```
 
-- Build the image with the command below.
-  ```sh
-  docker build --platform linux/amd64 -t scriptimage .
-  ```
-
-`collectorConfig.yml`
-
-```yml
-receivers:
-  otlp:
-    protocols:
-      http:
-        endpoint: 0.0.0.0:4318
-  prometheus:
-    config:
-      scrape_configs:
-        - job_name: 'fusionauth'
-          scrape_interval: 15s
-          scheme: http
-          metrics_path: api/prometheus/metrics
-          static_configs:
-            - targets: ['fa:9011']
-          basic_auth:
-            username: "apikey"
-            password: "33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod"
-
-exporters:
-  prometheus:
-    endpoint: "0.0.0.0:8889"
-
-service:
-  pipelines:
-    metrics:
-      receivers: [prometheus, otlp]
-      exporters: [prometheus]
+Build the image with the command below.
+```sh
+docker build --platform linux/amd64 -t scriptimage .
 ```
 
-`docker-compose.yml`
+Use the new image in your `docker-compose.yml` configuration by adding the service below.
 
 ```yml
   script:
@@ -355,17 +343,34 @@ service:
       - db_net
 ```
 
+Run everything with `docker compose up`, or just `docker compose up script` if the other containers are already running. Check in the terminal that there are no errors in the Docker logs. Log out of FusionAuth and back in, so that the custom script will retrieve a login metric for last sixty seconds.
+
+If the OT Collector and custom script worked correctly, when you browse to Prometheus you should now be able to see the metric `login_event` in the graph.
+
+Since the metrics are separated by user Id, you will see to many lines on the screen to be useful for monitoring. Use Prometheus queries like the following three to aggregate the metrics over time and group them across users.
+
+```prometheus
+count_over_time(login_event[5h])
+
+sum(count_over_time(login_event{exported_job="fusionauth", instance="otel:8889", job="otel"}[5h]))
+
+sum without(user_id) (count_over_time(login_event{exported_job="fusionauth", instance="otel:8889", job="otel"}[5h])) /5
+```
+
+If you cannot see the custom metrics, it's faster to debug the script locally on your machine without Docker. To do so, you need to make the script executable by running `chmod +x app.sh`. You also have to change the two container URLs to `localhost` at the top of the script:
+- `otelUrl="http://otel:4318` → `otelUrl="http://localhost:4318`
+- `faUrl="http://fa:9011` → `faUrl="http://localhost:9011`
+
+Now you can run the script with `./app.sh` and add `echo` statements to debug each section.
+
 ## Which Custom Metrics To Monitor?
 
 ## Next Steps
 
-promemetheus, grafana, loki, elastic
+OT is a tool that doesn't stand alone. Read the FusionAuth guides to [Prometheus](./prometheus.mdx) and [Elastic](./elastic.mdx) to choose a complete system that provides a dashboard with alerts to use in conjunction with OT.
 
 ## Further Reading
 
 - [FusionAuth monitoring overview](/docs/operate/secure-and-monitor/monitor)
 - [FusionAuth metrics](/docs/operate/secure-and-monitor/monitor#metrics)
 - [OT Collector configuration documentation](https://opentelemetry.io/docs/collector/configuration)
-
-## TODO
-OT
