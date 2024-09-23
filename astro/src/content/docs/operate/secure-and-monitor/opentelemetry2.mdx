@@ -93,8 +93,8 @@ graph LR
   D --> C
   C --> G
   F --> C
-  E --> |polls| K
-  E --> |polls| P
+  K --> |pushes metrics to| P
+  E --> |pulls metrics from| P
   P --> |pull Prometheus metrics from| C
   K --> |pull custom metrics from| C
   style I fill:#999
@@ -103,13 +103,13 @@ graph LR
   style P fill:#944
 ```
 
-
-
 This guide focuses on OpenTelemetry, not Prometheus and Grafana, and so uses the OpenTelemetry Collector. However, as of 2024, Grafana has released their own open-source version of an OpenTelemetry collector, called [Alloy](https://grafana.com/oss/alloy-opentelemetry-collector), that supports all Prometheus protocols and all OpenTelemetry protocols. It is component-based and has features that OT Collector does not. You might well prefer to use Alloy instead of OT Collector in your project.
 
 ![Grafana Alloy](../../../../../public/img/docs/operate/secure-and-monitor/opentelemetry/alloy.png)
 
 ## Run OpenTelemetry With Docker To Monitor FusionAuth
+
+In this section you will run FusionAuth, poll metrics from it with OpenTelemetry, and store those metrics in Prometheus.
 
 Clone the sample [FusionAuth kickstart repository](https://github.com/FusionAuth/fusionauth-example-docker-compose) with the command below.
 
@@ -118,7 +118,9 @@ git clone https://github.com/FusionAuth/fusionauth-example-docker-compose.git
 cd light
 ```
 
-Add a new service to the bottom of `docker-compose.yaml` before the `volumes:` section, with the code below.
+The `docker-compose.yml` file currently starts FusionAuth and its database.
+
+Add the two new services to the bottom of `docker-compose.yml` before the `volumes:` section, with the code below.
 
 ```yml
   otel:
@@ -129,6 +131,7 @@ Add a new service to the bottom of `docker-compose.yaml` before the `volumes:` s
       - fa
     ports:
       - 8889:8889
+      - 4318:4318
     volumes:
       - ./collectorConfig.yml:/etc/otel-collector-config.yml
     networks:
@@ -150,7 +153,15 @@ Add a new service to the bottom of `docker-compose.yaml` before the `volumes:` s
       - db_net
 ```
 
-`collectorConfig.yml`
+This service says that the [Prometheus image](https://hub.docker.com/r/ubuntu/prometheus) will start after OT Collector, that you can browse to Prometheus on port `9090`, and that it will save its database and configuration file in persistent directories on your machine.
+
+The OT image comes from https://hub.docker.com/r/otel/opentelemetry-collector. There is also a [contrib](https://hub.docker.com/r/otel/opentelemetry-collector-contrib) image you can use instead. The image is bigger, and contains more components that interoperate with other OT tools you might want to use.
+
+The `ports` exposed in the configuration are `8889`, which is where Prometheus pulls metrics from OT Collector, and `4138`, which will be used in the next section for the Collector to receive custom metrics.
+
+All containers in the configuration file are on the same network `db_net`.
+
+The `volumes` and `command` lines provide a configuration file to the Collector. Let's make that file, `collectorConfig.yml`, now, with the content below.
 
 ```yml
 receivers:
@@ -178,30 +189,31 @@ service:
       exporters: [prometheus]
 ```
 
-This service says that Prometheus will start after FusionAuth, that you can browse to it on port 9090, and that it will save its database and configuration file in persistent directories on your machine.
+The Collector describes pulling metrics from apps it monitors (`receivers`) and allowing other apps to pull from it (`exporters`). In this case, the Collector pulls metrics from FusionAuth in the Prometheus format every 15 seconds on `http://fa:9011/api/prometheus/metrics` using the API key set in the kickstart configuration file. Only one exporter is exposed — metrics in the Prometheus format on port `8889`. For more information see the [documentation](https://opentelemetry.io/docs/collector/configuration/).
 
+The FusionAuth kickstart configuration files created a superuser API key. In production to be more secure, rather create an API key that has only the `GET` permission for the `/api/prometheus/metrics` endpoint.
 
-https://hub.docker.com/r/otel/opentelemetry-collector
-https://opentelemetry.io/docs/collector/configuration/
+The last step is to create `prometheusConfig.yml` with the content below, which tells Prometheus to pull metrics from the Collector every fifteen seconds.
 
-
-The FusionAuth kickstart configuration files created a superuser API key that Prometheus uses as `password`. In production to be more secure, rather create an API key that has only the `GET` permission for the `/api/prometheus/metrics` endpoint.
+```yml
+global:
+  evaluation_interval: 30s
+scrape_configs:
+  - job_name: otel
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['otel:8889']
+```
 
 Run all the containers with `docker compose up`. You should be able to log in to FusionAuth at http://localhost:9011 with email address `admin@example.com` and password `password`, and to Prometheus at http://localhost:9090.
 
-```sh
-docker exec -it faProm /bin/bash
-
-promtool check config /etc/prometheus/prometheus.yml
-
-exit
-```
+To check that metrics are being pulled correctly, enter `up` on the Prometheus graph page and see if any values appear after a minute. If you see nothing, check the Docker log files in the terminal.
 
 ![Prometheus metrics](../../../../../public/img/docs/operate/secure-and-monitor/opentelemetry/prometheus.webp)
 
-8888 exposes OT Collector own metrics
-
 ## Run A Bash Script To Send Custom Metrics To OT Collector
+
+8888 exposes OT Collector own metrics
 
 todo
 
