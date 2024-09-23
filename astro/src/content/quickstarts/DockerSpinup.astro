@@ -1,0 +1,59 @@
+---
+import Aside from 'src/components/Aside.astro';
+import Code from 'astro/components/Code.astro';
+import { RemoteValue } from '@fusionauth/astro-components';
+
+export interface Props {
+  /**
+   * Full URI to extract values from kickstart.json
+   * e.g. https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json
+   */
+  kickstartUri: string;
+
+  /**
+   * Flag that indicates whether this in API quickstart or not (default)
+   */
+  api?: boolean;
+}
+
+const { kickstartUri, api = false } = Astro.props as Props;
+---
+<p>You'll find a Docker Compose file (<code>docker-compose.yml</code>) and an environment variables configuration file (<code>.env</code>) in the root directory of the repo.</p>
+
+<p>Assuming you have Docker installed, you can stand up FusionAuth on your machine with the following.</p>
+
+<Code lang="shell" code="docker compose up -d" />
+
+<p>Here you are using a bootstrapping feature of FusionAuth called <a href="/docs/get-started/download-and-install/development/kickstart">Kickstart</a>. When FusionAuth comes up for the first time, it will look at the <code>kickstart/kickstart.json</code> file and configure FusionAuth to your specified state.</p>
+
+<Aside type="note">
+    <p>If you ever want to reset the FusionAuth application, you need to delete the volumes created by Docker Compose by executing <code style="white-space: nowrap">docker compose down -v</code>, then re-run <code>docker compose up -d</code>.</p>
+</Aside>
+
+<p>FusionAuth will be initially configured with these settings:</p>
+
+<ul>
+    <li>Your client Id is <code><RemoteValue url={kickstartUri} selector="$.variables.applicationId" /></code>.</li>
+    <li>Your client secret is <code><RemoteValue url={kickstartUri} selector={($) => $.variables.clientSecret || $.requests.find(r => r.url === '/api/application/#{applicationId}').body.application.oauthConfiguration.clientSecret} /></code>.</li>
+    {(api)
+      ? (
+        <li>Your example teller username is <code><RemoteValue url={kickstartUri} selector="$.variables.tellerEmail" /></code> and the password is <code><RemoteValue url={kickstartUri} selector="$.variables.tellerPassword" /></code>. They will have the role of <code>teller</code>.</li>
+        <li>Your example customer username is <code><RemoteValue url={kickstartUri} selector="$.variables.customerEmail" /></code> and the password is <code><RemoteValue url={kickstartUri} selector="$.variables.customerPassword" /></code>. They will have the role of <code>customer</code>.</li>
+      )
+      : (
+        <li>Your example username is <code><RemoteValue url={kickstartUri} selector="$.variables.userEmail" /></code> and the password is <code><RemoteValue url={kickstartUri} selector="$.variables.userPassword" /></code>.</li>
+      )
+    }
+    <li>Your admin username is <code><RemoteValue url={kickstartUri} selector="$.variables.adminEmail" /></code> and the password is <code><RemoteValue url={kickstartUri} selector="$.variables.adminPassword" /></code>.</li>
+    <li>The base URL of FusionAuth is <code>http://localhost:9011/</code>.</li>
+</ul>
+
+<p>You can log in to the <a href="http://localhost:9011/admin">FusionAuth admin UI</a> and look around if you want to, but with Docker and Kickstart, everything will already be configured correctly.</p>
+
+<Aside type="note">
+    <p>If you want to see where the FusionAuth values came from, they can be found in the <a href="http://localhost:9011/admin">FusionAuth app</a>. The tenant Id is found on the Tenants page. To see the Client Id and Client Secret, go to the Applications page and click the <code>View</code> icon under the actions for the ChangeBank application. You'll find the Client Id and Client Secret values in the <code>OAuth configuration</code> section.</p>
+</Aside>
+
+<Aside type="caution">
+    <p>The <code>.env</code> file contains passwords. In a real application, always add this file to your <code>.gitignore</code> file and never commit secrets to version control.</p>
+</Aside>
