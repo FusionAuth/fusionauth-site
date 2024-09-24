@@ -54,7 +54,7 @@ Developers can be a particularly stubborn group when it comes to efforts like th
 And if the development team is split as to which solution they think is best, a free trial like this can help opinions converge around the best solution in practice, rather than wasting time on arguments of opinion. One common attempt to resolve a split between solutions is to just have more demo meetings from vendors and opinion-charged internal meetings. This often leads to frustration and the vendor selection process stalling out all together.
 
 As an alternative, consider dividing the development team based on who backs which solution and having each side develop a small prototype to demo to the team. This will quickly bring to light any challenges with one solution or the other and allow for much more productive conversations after the trial is over.
-
+[![FusionAuth free trial](/img/articles/try-before-buy/fusionauth-free-trial.png)](/download)
 ## How To Effectively Trial Software
 
 It's not enough to simply have a free trial of a potential authentication solution. For your trial to be useful, you need to run it effectively in order to be sure that you've tested for all of your potential use cases and gotten all the information you need to make a more informed decision.
