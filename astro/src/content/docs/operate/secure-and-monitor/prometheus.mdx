@@ -1,6 +1,6 @@
 ---
 title: Monitor with Prometheus and Grafana
-description: Learn how to monitor FusionAuth with Prometheus, Grafana, and Ntfy.
+description: Learn how to monitor FusionAuth with Prometheus, Loki, Grafana, and Ntfy.
 navcategory: admin
 section: operate
 subcategory: secure and monitor
@@ -17,7 +17,7 @@ import Diagram5 from 'src/components/docs/operate/secure-and-monitor/prometheusD
 
 ## Introduction
 
-This guide explains how to monitor FusionAuth events and metrics with the open-source tools [Prometheus](https://prometheus.io/docs/introduction/overview) and [Grafana](https://grafana.com/grafana), and send you alerts when problems occur.
+This guide explains how to monitor FusionAuth logs and metrics with the open-source tools [Prometheus](https://prometheus.io/docs/introduction/overview), [Loki](https://grafana.com/docs/loki), and [Grafana](https://grafana.com/grafana), and send you alerts when problems occur.
 
 Please read the [FusionAuth monitoring overview](/docs/operate/secure-and-monitor/monitor) before proceeding. The overview explains what FusionAuth metrics are, what activities comprise a complete monitoring workflow, and what Prometheus, Loki, and Grafana are. Review [alternative monitoring services](/docs/operate/secure-and-monitor/monitor#overview-of-popular-monitoring-tools) in the overview to ensure that Prometheus is the right tool for your needs.
 
@@ -350,17 +350,30 @@ You can also create a new dashboard by importing a standard template from the Gr
 
 [Loki](https://grafana.com/docs/loki) indexes only the metadata of a log line (its time and attributes such as the server that sent it) and not its content. This is unlike Elasticsearch or OpenSearch, which indexes the log content too. Loki therefore uses far less disk space than OpenSearch but is not quickly searchable. The no-indexing choice Loki made is better for most applications, where you need only to monitor logs for errors and to store logs for auditing purposes.
 
-Loki can run as a single app in a single Docker container, or as separate components in multiple containers. In [monolithic mode](https://grafana.com/docs/loki/latest/get-started/deployment-modes) Loki can handle up to 20GB per day. This is enough for FusionAuth and is what you'll set up in this guide.
+Loki can run as a single app in a single Docker container, or as separate components in multiple containers. In [monolithic mode](https://grafana.com/docs/loki/latest/get-started/deployment-modes) Loki can handle up to 20 GB per day. This is enough for FusionAuth and is what you'll use in this guide.
 
 Below is a diagram showing all the [components](https://grafana.com/docs/loki/latest/get-started/components) Loki runs in a single container.
 
 ![Loki architecture](../../../../../public/img/docs/operate/secure-and-monitor/prometheus/prometheusLokiArchitecture.svg)
+
+<Aside type="note">
+When FusionAuth runs in Docker it writes logs to the terminal, and does not save them to a file or provide them via the [API](/docs/apis/system#export-system-logs). This means that the logs are also not available in the [web interface](/docs/operate/troubleshooting/troubleshooting#logs).
+</Aside>
 
 You can query logs in Grafana, or in the terminal with the Loki API or LogCLI.
 
 FA -> (Alloy log collector OR Promtail) -> Loki log store <- Grafana reads logs
 
 Logs get pushed to Loki by another tool, unlike Prometheus, which pulls metrics itself.
+
+sudo cat /var/lib/docker/containers/7789a4bdb6a4a40b380f347830a7bc3106f86734578150dd843004a0ec276d2f/7789a4bdb6a4a40b380f347830a7bc3106f86734578150dd843004a0ec276d2f-json.log
+
+/var/lib/docker/<container-id>/<container-id>-json.log
+
+directory must be created first, with uid:gid 10001:10001
+user root
+
+
 
 Logs are monitored for errors to trigger alerts with a component called [ruler](https://grafana.com/docs/loki/latest/alert).
 
@@ -380,15 +393,13 @@ is used because otherwise default user loki won't create folders on local machin
 browse to http://localhost:3100/ready to check loki is up
 
 
-
-
 ## Next Steps
 
-In addition to monitoring FusionAuth metrics, you might also want to monitor log output (shown in the terminal in Docker). Download and install a [Loki](https://grafana.com/docs/loki/latest/get-started/overview/?pg=oss-loki&plcmt=resources) Docker [image](https://hub.docker.com/r/ubuntu/loki) for this.
+In addition to monitoring the Prometheus metrics provided by FusionAuth, you also might want to know various custom metrics, such as user login rates and successes. To do this, read the FusionAuth guide to [OpenTelemetry](./opentelemetry) and how to use it create a bash script to collect any metric the FusionAuth API offers.
 
 ## Final System Architecture
 
-If you combine the Prometheus, AlertManager, Grafana, and Ntfy infrastructure shown in this guide, and add Loki too, your architecture will look as follows.
+If you combine the Prometheus, AlertManager, Grafana, Loki, and Ntfy infrastructure shown in this guide, your architecture will look as follows.
 
 <Diagram5></Diagram5>
 
