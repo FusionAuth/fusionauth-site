@@ -1,6 +1,6 @@
 ---
-title: Monitor with Prometheus and Grafana
-description: Learn how to monitor FusionAuth with Prometheus, Grafana, and Ntfy.
+title: Monitor With Prometheus And Grafana
+description: Learn how to monitor FusionAuth with Prometheus, Grafana, and ntfy.
 navcategory: admin
 section: operate
 subcategory: secure and monitor
@@ -17,11 +17,11 @@ import Diagram5 from 'src/components/docs/operate/secure-and-monitor/prometheusD
 
 ## Introduction
 
-This guide explains how to monitor FusionAuth events and metrics with the open-source tools [Prometheus](https://prometheus.io/docs/introduction/overview) and [Grafana](https://grafana.com/grafana), and send you alerts when problems occur.
+This guide explains how to monitor FusionAuth events and metrics with the open-source tools [Prometheus](https://prometheus.io/docs/introduction/overview) and [Grafana](https://grafana.com/grafana), and receive alerts when problems occur.
 
-Please read the [FusionAuth monitoring overview](/docs/operate/secure-and-monitor/monitor) before proceeding. The overview explains what FusionAuth metrics are, what activities comprise a complete monitoring workflow, and what Prometheus, Loki, and Grafana are. Review [alternative monitoring services](/docs/operate/secure-and-monitor/monitor#overview-of-popular-monitoring-tools) in the overview to ensure that Prometheus is the right tool for your needs.
+Please read the [FusionAuth monitoring overview](/docs/operate/secure-and-monitor/monitor) for details on FusionAuth metrics, the activities in a complete monitoring workflow, and what Prometheus, Loki, and Grafana are. Review the [alternative monitoring services](/docs/operate/secure-and-monitor/monitor#overview-of-popular-monitoring-tools) in the overview to ensure that Prometheus is the right tool for your needs.
 
-While in this guide you set up Prometheus in Docker containers on your local machine, there is also a paid cloud-hosted alternative at [Grafana Cloud](https://grafana.com/auth/sign-up/create-user).
+This guide will show you how to set up Prometheus in Docker containers on your local machine. However, a paid, cloud-hosted alternative is also available from [Grafana Cloud](https://grafana.com/auth/sign-up/create-user).
 
 ## Initial Architecture
 
@@ -29,7 +29,7 @@ Running FusionAuth and PostgreSQL in Docker usually looks like the diagram below
 
 <Diagram1></Diagram1>
 
-This diagram shows three components that could die and need monitoring: the PostgreSQL database, FusionAuth, and your app (web server) that directs users to FusionAuth for login. In this guide, you will monitor only FusionAuth. To do so, you will add Prometheus to monitor your FusionAuth instance. Prometheus will poll FusionAuth every fifteen seconds to see if any errors have occurred.
+This diagram shows three components that could die and need monitoring: the PostgreSQL database, FusionAuth, and the app (web server) that directs users to FusionAuth for login. In this guide, you'll focus on monitoring FusionAuth by adding Prometheus to your setup. Prometheus will poll your FusionAuth instance for errors every fifteen seconds.
 
 <Diagram2></Diagram2>
 
@@ -42,7 +42,7 @@ git clone https://github.com/FusionAuth/fusionauth-example-docker-compose.git
 cd fusionauth-example-docker-compose/light
 ```
 
-Add a new service to the bottom of `docker-compose.yaml` before the `networks:` section, with the code below. You are using the Ubuntu Docker image from Docker Hub for [Prometheus](https://hub.docker.com/r/ubuntu/prometheus).
+Add the following code to `docker-compose.yaml` near the end, before the `networks:` section, to define a new service. The service uses the Ubuntu Docker image from Docker Hub for [Prometheus](https://hub.docker.com/r/ubuntu/prometheus).
 
 ```yaml
   prometheus:
@@ -60,9 +60,9 @@ Add a new service to the bottom of `docker-compose.yaml` before the `networks:` 
       - ./prometheusDb:/prometheus
 ```
 
-This service says that Prometheus will start after FusionAuth, that you can browse to it on port 9090, and that it will save its database and configuration file in persistent directories on your machine.
+This service definition specifies that Prometheus starts after FusionAuth, is accessible on port 9090, and saves its database and configuration file in persistent directories on your machine.
 
-Create the Prometheus configuration file, called `prometheusConfig.yml`, containing the content below.
+Create a `prometheusConfig.yml` configuration file containing the content below.
 
 ```yaml
 global:
@@ -79,9 +79,9 @@ scrape_configs:
       password: "33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod"
 ```
 
-This configuration says that metrics will be gathered from FusionAuth every fifteen seconds. Prometheus will evaluate the metrics only every thirty seconds. The FusionAuth kickstart configuration files created a superuser API key that Prometheus uses as `password`. In production to be more secure, rather create an API key that has only the `GET` permission for the `/api/prometheus/metrics` endpoint.
+This configures Prometheus to collect metrics from FusionAuth every 15 seconds and evaluate the metrics every 30 seconds. Prometheus uses the superuser API key, created by the FusionAuth kickstart configuration files, as `password`. For improved security in production, create an API key that has only `GET` permissions for the `/api/prometheus/metrics` endpoint.
 
-If you prefer to allow unauthenticated access to the Prometheus metrics endpoint in FusionAuth from any local scraper, you may set `fusionauth-app.local-metrics.enabled=true`. See the FusionAuth [configuration reference](/docs/reference/configuration) for more information.
+If you prefer to allow unauthenticated access to the Prometheus metrics endpoint in FusionAuth from any local scraper, you can set `fusionauth-app.local-metrics.enabled=true`. See the FusionAuth [configuration reference](/docs/reference/configuration) for more information.
 
 <Aside type="note">
 To learn more about configuring Prometheus, see the [documentation](https://prometheus.io/docs/prometheus/latest/configuration/configuration).
@@ -89,7 +89,7 @@ To learn more about configuring Prometheus, see the [documentation](https://prom
 
 Run all the containers with `docker compose up`. You should be able to log in to FusionAuth at http://localhost:9011 with email address `admin@example.com` and password `password`, and to Prometheus at http://localhost:9090.
 
-If you want to check that Prometheus has accepted your configuration file as valid, you can enter the container and use `promtool` to validate the YAML file.
+To check that Prometheus has accepted your configuration file as valid, enter the container and use `promtool` to validate the YAML file.
 
 ```sh
 docker exec -it faProm /bin/bash
@@ -99,7 +99,7 @@ promtool check config /etc/prometheus/prometheus.yml
 exit
 ```
 
-The metrics FusionAuth exposes to Prometheus change over time. There are some basic Java Virtual Machine (JVM) metrics listed [here](/docs/apis/system#retrieve-system-metrics-using-prometheus). To see exactly what is available on your instance of FusionAuth, run the command below.
+The metrics FusionAuth exposes to Prometheus change over time. Some basic Java Virtual Machine (JVM) metrics are listed [here](/docs/apis/system#retrieve-system-metrics-using-prometheus). You can see exactly what metrics are available on your FusionAuth instance by running the command below.
 
 ```sh
 curl -u "apikey:33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" 0.0.0.0:9011/api/prometheus/metrics
@@ -130,47 +130,49 @@ Check what metrics Prometheus scraped from FusionAuth in the [Prometheus web int
 
 ![Prometheus metrics](/img/docs/operate/secure-and-monitor/prometheus/prometheusMetrics.png)
 
-Check that FusionAuth is running in the [Prometheus web interface](http://localhost:9090/targets) by browsing to <Breadcrumb>Menu -> Status -> Targets</Breadcrumb>.
+In the [Prometheus web interface](http://localhost:9090/targets), check that FusionAuth is running by browsing to <Breadcrumb>Menu -> Status -> Targets</Breadcrumb>.
 
 ![Prometheus targets](/img/docs/operate/secure-and-monitor/prometheus/prometheusTargets.png)
 
-See charts of FusionAuth metrics in the [Prometheus web interface](http://localhost:9090/graph?g0.expr=HikariPool_1_pool_Usage&g0.tab=0&g0.display_mode=lines&g0.show_exemplars=0&g0.range_input=15m&g0.end_input=2024-09-10%2011%3A11%3A02&g0.moment_input=2024-09-10%2011%3A11%3A02) by browsing to <Breadcrumb>Menu -> Graph</Breadcrumb>. In the text box you can push <kbd>Ctrl + Spacebar</kbd> to view all metrics and functions available to you. Try entering `Database_primary_pool_Usage` and clicking <InlineUIElement>Execute</InlineUIElement>.
+See charts of FusionAuth metrics in the [Prometheus web interface](http://localhost:9090/graph?g0.expr=HikariPool_1_pool_Usage&g0.tab=0&g0.display_mode=lines&g0.show_exemplars=0&g0.range_input=15m&g0.end_input=2024-09-10%2011%3A11%3A02&g0.moment_input=2024-09-10%2011%3A11%3A02) by browsing to <Breadcrumb>Menu -> Graph</Breadcrumb>. Push <kbd>Ctrl + Spacebar</kbd> in the text box to view all the metrics and functions available. Try entering `Database_primary_pool_Usage` and clicking <InlineUIElement>Execute</InlineUIElement>.
 
 ![Prometheus targets](/img/docs/operate/secure-and-monitor/prometheus/prometheusChart.png)
 
 To monitor all FusionAuth errors, use the expression `prime_mvc_____errors_total`. A useful metric to monitor is simply called `up`, which has the value `1` if Prometheus successfully scraped its target.
 
 <Aside type="tip">
-At this point you have set up Prometheus and can monitor FusionAuth successfully, and you can stop here. In the rest of this guide, you'll enhance this system by including alerts and a better dashboard.
+At this point, Prometheus is set up and you can monitor FusionAuth. The rest of this guide will show you how to enhance the system with alerts and an improved dashboard.
 </Aside>
 
-## Run AlertManager To Send Alerts
+## Run Alertmanager To Send Alerts
 
-Let's set up a service to notify you whenever errors occur in FusionAuth. To do this, you'll check if the counter `prime_mvc_____errors_total` has increased in the last minute. If it has, then FusionAuth will send a message to a channel that your company can monitor.
+Let's set up a service to notify you when errors occur in FusionAuth. 
 
-This channel could be Discord, Slack, email, or SMS. But the simplest and cheapest alert service is [ntfy.sh](https://ntfy.sh/). It's free, but all channels are public, so don't broadcast secrets.
+The service will check if the `prime_mvc_____errors_total` counter has increased in the last minute. If it has, FusionAuth will send a message to a channel that your company can monitor, for example, on Discord or Slack, or by email or SMS.
 
-To see how Ntfy works, run the command below in a terminal.
+The simplest and cheapest alert service is [ntfy.sh](https://ntfy.sh/). ntfy is free, but all channels are public, so don't broadcast secrets.
+
+To see how ntfy works, run the command below in a terminal.
 
 ```sh
 curl -H "Title: Error" -d "A FusionAuth error occurred in the last minute" ntfy.sh/fusionauthprometheus
 ```
 
-Browse to the channel to see messages at https://ntfy.sh/fusionauthprometheus.
+Browse to the channel at https://ntfy.sh/fusionauthprometheus to see messages.
 
-Now let's configure Prometheus to send errors automatically. To do so, you'll use the Prometheus component called [AlertManager](https://prometheus.io/docs/alerting/latest/overview).
+Now let's configure Prometheus to send errors automatically using the Prometheus [Alertmanager](https://prometheus.io/docs/alerting/latest/overview) component.
 
-The Prometheus documentation doesn't say it explicitly, but the Prometheus AlertManager is not included with Prometheus. You need to run AlertManager separately. Again, you'll use the [Ubuntu Docker container](https://hub.docker.com/r/ubuntu/alertmanager).
+The Prometheus documentation doesn't say it explicitly, but Alertmanager is not included with Prometheus and must be run separately. This guide runs Alertmanager using the [Ubuntu Docker container](https://hub.docker.com/r/ubuntu/alertmanager).
 
 <Aside type="caution">
-At the time of writing, FusionAuth found an error in the the Ubuntu container documentation. The AlertManager configuration file path is actually `/etc/alertmanager/alertmanager.yml` not `/etc/prometheus/alertmanager.yml`
+At the time of writing, FusionAuth found an error in the Ubuntu container documentation. The Alertmanager configuration file path is actually `/etc/alertmanager/alertmanager.yml` not `/etc/prometheus/alertmanager.yml`.
 </Aside>
 
 Below is a diagram of the system design with the new components.
 
 <Diagram3></Diagram3>
 
-Update your `docker-compose.yml` file to include the new AlertManager container, and point the existing Prometheus container to it, with the code below.
+Add the code below to the `docker-compose.yml` file to include the new Alertmanager container and point the existing Prometheus container to it.
 
 ```yaml
   alertmanager:
@@ -201,7 +203,7 @@ Update your `docker-compose.yml` file to include the new AlertManager container,
       - ./prometheusDb:/prometheus
 ```
 
-Update `prometheusConfig.yml` too, as Prometheus needs to know the URL of the AlertManager service, and the rules around when to send alerts.
+Update `prometheusConfig.yml` to provide Prometheus with the URL of the Alertmanager service and define the rules for when alerts should be sent.
 
 ```yaml
 global:
@@ -225,7 +227,7 @@ alerting:
             - "alertmanager:9093"
 ```
 
-Create the `prometheusRules.yml` file below. (The `expr`ession rule here checks the requests metric, not errors metric, to be sure that a notification is sent in this prototype. In reality you could use an error metric like `increase(prime_mvc_____errors_total[1m]) > 0`.)
+Create the `prometheusRules.yml` file below. 
 
 ```yaml
 groups:
@@ -241,7 +243,9 @@ groups:
           description: A FusionAuth error occurred in the last minute
 ```
 
-Finally, create a configuration file for the AlertManager, called `prometheusAlertConfig.yml`.
+Here, the `expr` expression rule checks the requests metric, not the errors metric, to be sure that a notification is sent in this prototype. In reality, you could use an error metric like `increase(prime_mvc_____errors_total[1m]) > 0`.
+
+Finally, create a `prometheusAlertConfig.yml` configuration file for the Alertmanager.
 
 ```yaml
 route:
@@ -254,30 +258,32 @@ receivers:
 ```
 
 <Aside type="tip">
-You can rename all these configuration files, as long as you update the filenames in the `docker-compose.yaml` file too.
+You can rename all these configuration files, as long as you update the filenames in the `docker-compose.yaml` file, too.
 </Aside>
 
-Push <kbd>Ctrl + C</kbd> in the terminal and run `docker compose up` again to start everything. Check in the terminal logs that the alert manager started successfully. If not, check the configuration file carefully, and try to restart the service individually with `docker compose up alertmanager`.
+Push <kbd>Ctrl + C</kbd> in the terminal, and then run `docker compose up` again to start everything. Check the terminal logs to confirm that Alertmanager started successfully. If it didn't, check the configuration file and try to restart the service individually with `docker compose up alertmanager`.
 
-Check that the alert manager can connect to Ntfy manually by running the command below in a new terminal.
+Confirm that Alertmanager can connect to ntfy manually by running the command below in a new terminal.
 
 ```sh
 curl -X POST -H "Content-Type: application/json" -d '[{"labels":{"alertname":"TestAlert"}}]' http://localhost:9093/api/v2/alerts
 ```
 
-If you browse to http://localhost:9093, you should see the alert has arrived. You should also browse to the Status page to check that AlertManager has successfully loaded your configuration file.
+If you browse to http://localhost:9093, you should see the alert has arrived. Browse to the Status page to check that AlertManager has successfully loaded the configuration file.
 
 ![Prometheus AlertManager](/img/docs/operate/secure-and-monitor/prometheus/prometheusAlert.png)
 
-If you wait a minute then browse to https://ntfy.sh/fusionauthprometheus, you should see that Prometheus scraped FusionAuth, saw that requests were greater than zero, sent an alert to AlertManager, and AlertManager sent the alert to Ntfy.
+If you wait a minute and then browse to https://ntfy.sh/fusionauthprometheus, you should see that Prometheus scraped FusionAuth, registered that requests were greater than zero, and sent an alert to Alertmanager, and that Alertmanager sent the alert to ntfy.
 
-![Ntfy.sh alerts](/img/docs/operate/secure-and-monitor/prometheus/prometheusNtfy.png)
+![ntfy.sh alerts](/img/docs/operate/secure-and-monitor/prometheus/prometheusNtfy.png)
 
-AlertManager sent raw JSON to Ntfy, that includes the `annotations` fields from the `prometheusRules.yml` configuration. If you want a neater looking notification, read about [templates](https://prometheus.io/docs/alerting/latest/notifications) in Prometheus.
+Alertmanager sent ntfy raw JSON that includes the `annotations` fields from the `prometheusRules.yml` configuration. If you would like notifications to look neater, read about [templates](https://prometheus.io/docs/alerting/latest/notifications) in Prometheus.
 
 ## Run Grafana To Create A Dashboard
 
-If you want a dashboard available that shows a set of charts about FusionAuth, instead of a single Prometheus query, you need to use Grafana. In this section, you'll run Grafana in Docker and create a simple dashboard to monitor FusionAuth.
+To display FusionAuth metrics in a set of charts in a dashboard instead of a single Prometheus query, you can use Grafana.
+
+This section will show you how to run Grafana in Docker and create a simple dashboard to monitor FusionAuth.
 
 Below is a diagram of the system design with the new components.
 
@@ -302,57 +308,57 @@ Add the new service below to `docker-compose.yml`.
       # - ./prometheusGrafanaProvisioning/:/conf/
 ```
 
-This configuration uses the [Ubuntu Grafana container](https://hub.docker.com/r/ubuntu/grafana), to be consistent with the Ubuntu containers used earlier.
+This configuration uses the [Ubuntu Grafana container](https://hub.docker.com/r/ubuntu/grafana) to maintain consistency with the Ubuntu containers used previously.
 
 None of the three volumes in the configuration above are needed for this example, but you will want to use them in production.
 
-- The Grafana configuration file, `/etc/grafana/grafana-config.ini`, sets values for things like security, proxies, and servers. These values are explained in the [configuration documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana). Note that the documentation lists various places the configuration file could live inside the container. This path will differ between Docker images and operating systems. By default, the filename, `/etc/grafana/grafana.ini`, is different to the one in this container, `grafana-config.ini`. If you use a different image for Grafana, look at the Docker logs in the terminal to see where Grafana looks for configuration files when starting.
-- The `/data` volume holds the database storage of Grafana, so the app will persist data if you restart the container.
-- The `/conf` allows you to provision infrastructure automatically, such as datasources for Grafana to monitor, and dashboards to create. Leave the volume commented out for now. If you uncomment it without having correct files in your local directory, Grafana will fail to start. To create provisioning files, read the [documentation](https://grafana.com/docs/grafana/latest/administration/provisioning) and look at all the sample files in `/conf/provisioning/` when the container is running.
+- The `/etc/grafana/grafana-config.ini` Grafana configuration file specifies values for settings like security, proxies, and servers. These values are explained in the [configuration documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana). Note that the documentation lists various places the configuration file could live inside the container. This path will differ between Docker images and operating systems. By default, the filename `/etc/grafana/grafana.ini` is different from the `grafana-config.ini` in this container. If you use a different image for Grafana, look at the Docker logs in the terminal to see where Grafana looks for configuration files when starting.
+- The `/data` volume stores the Grafana database so that data persists if you restart the container.
+- The `/conf` directory allows you to automatically provision infrastructure like datasources for Grafana to monitor and dashboards to create. Leave the volume commented out for now. If you uncomment it without having the correct files in your local directory, Grafana will fail to start. To create provisioning files, read the [documentation](https://grafana.com/docs/grafana/latest/administration/provisioning) and look at all the sample files in `/conf/provisioning/` when the container is running.
 
-Run `docker compose up` to start Grafana (or just `docker compose up grafana` if FusionAuth is already running).
+Run `docker compose up` to start Grafana (or `docker compose up grafana` if FusionAuth is already running).
 
-Log in to Grafana at http://localhost:9091, with username and password `admin`.
+Log in to Grafana at http://localhost:9091 with username and password `admin`.
 
 ![Grafana](/img/docs/operate/secure-and-monitor/prometheus/prometheusGrafana.png)
 
-If you want to change the login settings in production, create the local file `prometheusGrafanaConfig.ini` with the example content below.
+To change the login settings in production, create the local file `prometheusGrafanaConfig.ini` with the example content below.
 
 ```ini
 [security]
 admin_user = admin2
 ```
 
-Run `docker exec -it faGraf /bin/bash` to log into the container and view sample files. For example, when in the container, run `more /conf/sample.ini` to see all configuration values. Lines starting with `;` are commented out.
+Run `docker exec -it faGraf /bin/bash` to log in to the container and view sample files. For example, when in the container, run `more /conf/sample.ini` to see all configuration values. Lines starting with `;` are commented out.
 
 Add a dashboard in the Grafana web interface:
 
-- Click <InlineUIElement>Add your first data source</InlineUIElement> on the home page in the middle.
+- Click <InlineUIElement>Add your first data source</InlineUIElement> in the center of the home page.
 - Click <InlineUIElement>Prometheus</InlineUIElement> to add the default Prometheus connection.
-- In the Prometheus <InlineField>Connection</InlineField> enter the URL of the Docker container, `http://prometheus:9090`.
-- Click <InlineUIElement>Save & test</InlineUIElement>. At this point Grafana should be able to successfully connect to Prometheus. (Note that this connection retrieves the FusionAuth metrics, which is what we want, not metrics about Prometheus itself.)
+- In the Prometheus <InlineField>Connection</InlineField>, enter the URL of the Docker container, `http://prometheus:9090`.
+- Click <InlineUIElement>Save & test</InlineUIElement>. Grafana should now be able to connect to Prometheus. (Note that this connection retrieves the FusionAuth metrics, which is what we want, not metrics about Prometheus itself.)
 - Click <InlineUIElement>Dashboards</InlineUIElement> in the sidebar, and then <InlineUIElement>New dashboard</InlineUIElement> on the right.
 - Click <InlineUIElement>Add visualization</InlineUIElement>.
-- Select <InlineUIElement>prometheus</InlineUIElement> data source.
-- Enter the value `prime_mvc_____errors_total` in the <InlineField>Metric</InlineField> browser field at the bottom. Click <InlineUIElement>Run queries</InlineUIElement>, change the panel <InlineField>Title</InlineField> and then click <InlineUIElement>Apply</InlineUIElement> to save the visualization.
+- Select <InlineUIElement>prometheus</InlineUIElement> as the data source.
+- Enter the value `prime_mvc_____errors_total` in the <InlineField>Metric</InlineField> browser field at the bottom. Click <InlineUIElement>Run queries</InlineUIElement>, change the panel <InlineField>Title</InlineField>, and then click <InlineUIElement>Apply</InlineUIElement> to save the visualization.
 - Add another visualization with the value `prime_mvc___admin_login__requests` and save.
-- Save the dashboard and give it the name `FusionAuth dashboard`. You can rearrange the charts if you want. The dashboard should look like the image below.
+- Save the dashboard and give it the name `FusionAuth dashboard`. You can rearrange the charts if you would like to. The dashboard should look like the image below.
 
 ![Grafana dashboard](/img/docs/operate/secure-and-monitor/prometheus/prometheusDashboard.png)
 
-You can add any other metrics you want as visualizations. Search for metrics in the browser related to user `login` or `oauth` to keep track of how your system is used.
+You can add any other metrics as visualizations. In the browser, search for metrics related to user `login` or `oauth` to keep track of how your system is used.
 
-If you edit the dashboard as a whole, you'll see a tab called JSON Model. This contains the full configuration text for the dashboard you created, which can be used in the provisioning files mentioned earlier to automatically recreate the dashboard in a new instance of Grafana.
+If you edit the dashboard as a whole, The JSON Model tab contains the full configuration text for your dashboard, which you can use in the provisioning files referred to earlier to automatically recreate the dashboard in a new instance of Grafana.
 
-You can also create a new dashboard by importing a standard template from the Grafana repository. However, there is no FusionAuth template currently, and FusionAuth does not export all Java metrics necessary to use the [JVM template](https://grafana.com/grafana/dashboards/8563-jvm-dashboard/).
+You can also create a new dashboard by importing a standard template from the Grafana repository. However, there is no FusionAuth template currently, and FusionAuth does not export all the Java metrics necessary to use the [JVM template](https://grafana.com/grafana/dashboards/8563-jvm-dashboard/).
 
 ## Next Steps
 
-In addition to monitoring FusionAuth metrics, you might also want to monitor log output (shown in the terminal in Docker). Download and install a [Loki](https://grafana.com/docs/loki/latest/get-started/overview/?pg=oss-loki&plcmt=resources) Docker [image](https://hub.docker.com/r/ubuntu/loki) for this.
+In addition to monitoring FusionAuth metrics, you might want to monitor log output (shown in the terminal in Docker). Download and install a [Loki](https://grafana.com/docs/loki/latest/get-started/overview/?pg=oss-loki&plcmt=resources) Docker [image](https://hub.docker.com/r/ubuntu/loki) for this.
 
 ## Final System Architecture
 
-If you combine the Prometheus, AlertManager, Grafana, and Ntfy infrastructure shown in this guide, and add Loki too, your architecture will look as follows.
+If you combine the Prometheus, Alertmanager, Grafana, and ntfy infrastructure shown in this guide with Loki, your architecture will look as follows.
 
 <Diagram5></Diagram5>
 
@@ -367,6 +373,6 @@ If you combine the Prometheus, AlertManager, Grafana, and Ntfy infrastructure sh
 - [Prometheus alert templates](https://prometheus.io/docs/alerting/latest/notifications)
 - [Loki](https://grafana.com/docs/loki/latest/get-started/overview/?pg=oss-loki)
 - [Grafana](https://grafana.com/grafana)
-- [Ubuntu AlertManager image](https://hub.docker.com/r/ubuntu/alertmanager)
+- [Ubuntu Alertmanager image](https://hub.docker.com/r/ubuntu/alertmanager)
 - [Ubuntu Grafana image](https://hub.docker.com/r/ubuntu/grafana)
 - [Ubuntu Prometheus image](https://hub.docker.com/r/ubuntu/prometheus)
