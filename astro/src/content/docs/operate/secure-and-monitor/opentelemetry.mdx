@@ -6,10 +6,6 @@ section: operate
 subcategory: secure and monitor
 ---
 import Aside from 'src/components/Aside.astro';
-import IconButton from 'src/components/IconButton.astro';
-import Breadcrumb from 'src/components/Breadcrumb.astro';
-import InlineField from 'src/components/InlineField.astro';
-import InlineUIElement from 'src/components/InlineUIElement.astro';
 import WhatIsOpenTelemetry from 'src/components/docs/operate/secure-and-monitor/whatIsOpentelemetry.mdx';
 import Diagram1 from 'src/components/docs/operate/secure-and-monitor/opentelemetryDiagram1.astro';
 import Diagram2 from 'src/components/docs/operate/secure-and-monitor/opentelemetryDiagram2.astro';
@@ -43,7 +39,7 @@ Since you don't have access to the source code of FusionAuth, there are three wa
 
 In this guide, you'll set up the last two options.
 
-If you are not using a paid cloud service, you will need to install Prometheus to view the OpenTelemetry metrics. That installation is explained briefly in this guide, but please also work through the [Prometheus monitoring guide](./prometheus.mdx) too. OpenTelemetry also monitors more than Prometheus — OpenTelemetry can trace an entire web request across services, instead of recording only a metric at a point in time.
+If you are not using a paid cloud service, you will need to install Prometheus to view the OpenTelemetry metrics. That installation is explained briefly in this guide, but please also work through the [Prometheus monitoring guide](/docs/operate/secure-and-monitor/prometheus) too. OpenTelemetry also monitors more than Prometheus — OpenTelemetry can trace an entire web request across services, instead of recording only a metric at a point in time.
 
 So why use OpenTelemetry if you are not using a paid monitoring service, do not need to trace requests inside FusionAuth, and could just use Prometheus by itself? For most FusionAuth users, there probably isn't any reason to use OpenTelemetry — Prometheus alone should be enough to monitor that FusionAuth is up, and running correctly. The only advantage running an OpenTelemetry collector brings is to allow you to write a script that requests custom metrics (like user login counts) from the FusionAuth API and send them through the OpenTelemetry collector to Prometheus. This allows you to get more detail about specific FusionAuth processes that you can't get from Prometheus alone.
 
@@ -57,7 +53,7 @@ In the following sections of this guide you will run: an OpenTelemetry collector
 
 This guide focuses on OpenTelemetry, not Prometheus and Grafana, and so uses the OpenTelemetry Collector. However, as of 2024, Grafana has released their own free and open-source version of an OpenTelemetry collector, called [Alloy](https://grafana.com/oss/alloy-opentelemetry-collector), that supports all Prometheus protocols and all OpenTelemetry protocols. It is component-based and has features that OpenTelemetry Collector does not. You might well prefer to use Alloy instead of OpenTelemetry Collector in your project.
 
-![Grafana Alloy](../../../../../public/img/docs/operate/secure-and-monitor/opentelemetry/alloy.png)
+![Grafana Alloy](/img/docs/operate/secure-and-monitor/opentelemetry/alloy.png)
 
 ## Run OpenTelemetry With Docker To Monitor FusionAuth
 
@@ -67,12 +63,12 @@ Clone the sample [FusionAuth kickstart repository](https://github.com/FusionAuth
 
 ```sh
 git clone https://github.com/FusionAuth/fusionauth-example-docker-compose.git
-cd light
+cd fusionauth-example-docker-compose/light
 ```
 
 The `docker-compose.yml` file currently starts FusionAuth and its database.
 
-Add the two new services to the bottom of `docker-compose.yml` before the `volumes:` section, with the code below.
+Add the two new services to the bottom of `docker-compose.yml` before the `networks:` section, with the code below.
 
 ```yml
   otel:
@@ -89,7 +85,6 @@ Add the two new services to the bottom of `docker-compose.yml` before the `volum
     networks:
       - db_net
     command: ["--config=/etc/otel-collector-config.yml"]
-
 
 
   prometheus:
@@ -147,7 +142,7 @@ The Collector describes pulling metrics from apps it monitors (`receivers`) and 
 The FusionAuth kickstart configuration files created a superuser API key. In production to be more secure, rather create an API key that has only the `GET` permission for the `/api/prometheus/metrics` endpoint.
 </Aside>
 
-The last step is to create `prometheusConfig.yml` with the content below, which tells Prometheus to pull metrics from the Collector every fifteen seconds.
+The last step is to create the `prometheusConfig.yml` file with the content below, which tells Prometheus to pull metrics from the Collector every fifteen seconds.
 
 ```yml
 global:
@@ -163,7 +158,7 @@ Run all the containers with `docker compose up`. You should be able to log in to
 
 To check that metrics are being pulled correctly, enter `up` on the Prometheus graph page and see if any values appear after a minute. If you see nothing, check the Docker log files in the terminal.
 
-![Prometheus metrics](../../../../../public/img/docs/operate/secure-and-monitor/opentelemetry/prometheus.webp)
+![Prometheus metrics](/img/docs/operate/secure-and-monitor/opentelemetry/prometheus.png)
 
 ## Run A Bash Script To Send Custom Metrics To OpenTelemetry Collector
 
@@ -209,7 +204,7 @@ Next, create the custom metric script, the file `app.sh`, with the content below
 # exit on error
 set -e
 
-# SECTION 1. get login records from fusionauth
+# SECTION 1. get login records from FusionAuth
 otelUrl="http://otel:4318/v1/metrics"
 faUrl="http://fa:9011/api/system/login-record/export"
 faKey="33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod"
@@ -275,10 +270,12 @@ Build this script into an image by creating a file called `Dockerfile` with the 
 FROM --platform=linux/amd64 alpine:3.19
 RUN apk add --no-cache curl nano jq bash docker-cli
 COPY app.sh /app.sh
+RUN chmod +x /app.sh
 CMD watch -t -n 60 /app.sh
 ```
 
 Build the image with the command below.
+
 ```sh
 docker build --platform linux/amd64 -t scriptimage .
 ```
@@ -303,7 +300,7 @@ If the OpenTelemetry Collector and custom script worked correctly, when you brow
 
 Since the metrics are separated by user Id, you will see too many lines on the screen to be useful for monitoring. Use Prometheus queries like the following three to aggregate the metrics over time and group them across users.
 
-```prometheus
+```
 count_over_time(login_event[5h])
 
 sum(count_over_time(login_event{exported_job="fusionauth", instance="otel:8889", job="otel"}[5h]))
@@ -314,6 +311,7 @@ sum without(user_id) (count_over_time(login_event{exported_job="fusionauth", ins
 Alternatively, you can remove the `attributes` property in the JSON section of `app.sh`, so that the `login_event` sent to the Collector has no user information.
 
 If you cannot see the custom metrics arriving in Prometheus, it's faster to debug the script locally on your machine without Docker. To do so, you need to make the script executable by running `chmod +x app.sh`. You also have to change the two container URLs to `localhost` at the top of the script:
+
 - `otelUrl="http://otel:4318` → `otelUrl="http://localhost:4318`
 - `faUrl="http://fa:9011` → `faUrl="http://localhost:9011`
 
@@ -331,7 +329,7 @@ A useful metric to start with is login counts. If this number drops from the ave
 
 ## Next Steps
 
-OpenTelemetry is a tool that doesn't stand alone. Read the FusionAuth guides to [Prometheus](./prometheus.mdx) and [Elastic](./elastic.mdx) to choose a complete system that provides a dashboard with alerts to use in conjunction with OpenTelemetry.
+OpenTelemetry is a tool that doesn't stand alone. Read the FusionAuth guides to [Prometheus](/docs/operate/secure-and-monitor/prometheus) and [Elastic](/docs/operate/secure-and-monitor/elastic) to choose a complete system that provides a dashboard with alerts to use in conjunction with OpenTelemetry.
 
 ## Further Reading
 
