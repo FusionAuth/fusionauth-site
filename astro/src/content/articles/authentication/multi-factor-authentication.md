@@ -276,7 +276,7 @@ As a developer, avoid this factor. If you must implement it, let the user provid
 
 Like all factors, you could use this option as part of defense in depth solution, in combination with other factors.
 
-Counsel your users to answer these questions wisely. Frankly, they should pick fake answers. For example, if a question is "what was your first pet's name", and their first pet's name was Fluffy, pick anything other than "Fluffy". Anything. Perhaps "fido" or "killer". 
+Counsel your users to answer these questions wisely. Frankly, they should pick fake answers. For example, if a question is "what was your first pet's name", and their first pet's name was Fluffy, pick anything other than "Fluffy". Anything. Perhaps "spot" or "killer". 
 
 If the user is saving these answers in a password manager, I would even suggest "h941TphXOL3h0ws7M0U2" or "relevance-middle-yellow-horoscope". The goal is to prevent someone from learning the name of a childhood pet from a Facebook post and using that information to gain illicit access. 
 
