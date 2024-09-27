@@ -348,7 +348,7 @@ You can also create a new dashboard by importing a standard template from the Gr
 
 ## Store Logs In Loki
 
-The final monitoring component you might want use is storing logs. The Grafana tool for this is [Loki](https://grafana.com/docs/loki). Loki indexes only the metadata of a log line (its time and attributes such as the server that sent it) and not its content. This is unlike Elasticsearch or OpenSearch, which indexes the log content too. Loki therefore uses far less disk space than OpenSearch but is not quickly searchable. The no-indexing choice Loki made is better for most applications, where you need only to monitor logs for errors and to store logs for auditing purposes.
+The final monitoring component you might want use is [Grafana Loki](https://grafana.com/docs/loki) for storing logs. Loki indexes only the metadata of a log line (its time and attributes such as the server that sent it) and not its content. This is unlike Elasticsearch or OpenSearch, which indexes the log content too. Loki therefore uses far less disk space than OpenSearch but is not quickly searchable. The no-indexing choice Loki made is better for most applications, where you need only to monitor logs for errors and to store logs for auditing purposes, and don't need to run frequent queries against old logs.
 
 Loki can run as a single app in a single Docker container, or as separate components in multiple containers. In [monolithic mode](https://grafana.com/docs/loki/latest/get-started/deployment-modes) Loki can handle up to 20 GB per day. This is enough for FusionAuth and is what you'll use in this guide.
 
@@ -356,9 +356,9 @@ Below is a diagram showing all the [components](https://grafana.com/docs/loki/la
 
 ![Loki architecture](../../../../../public/img/docs/operate/secure-and-monitor/prometheus/prometheusLokiArchitecture.svg)
 
-You can query logs in Grafana, or in the terminal with the Loki API or LogCLI.
+You can query logs in Grafana, or in the terminal with the Loki API or [LogCLI](https://grafana.com/docs/loki/latest/query/logcli).
 
-Loki is only a log store, and will not fetch logs itself. Tools to send Loki logs include: Promtail (the original sending tool), OpenTelemetry, and Alloy (a new OpenTelemetry-compliant tool from Grafana). For more options, see the [documentation](https://grafana.com/docs/loki/latest/send-data). In this guide, you use Promtail.
+Loki is only a log store, and will not fetch logs itself. Tools to send logs to Loki include: Promtail (the original sending tool), OpenTelemetry, and Alloy (a new OpenTelemetry-compliant tool from Grafana). For more options, see the [documentation](https://grafana.com/docs/loki/latest/send-data). In this guide, you use Promtail.
 
 <Aside type="note">
 When FusionAuth runs in Docker it writes logs to the terminal, and does not save them to a file or provide them via the [API](/docs/apis/system#export-system-logs). This means that the logs are also not available in the [web interface](/docs/operate/troubleshooting/troubleshooting#logs).
@@ -399,7 +399,7 @@ The `faLoki` port 3100 is open so that Grafana can query it in dashboards. The `
 
 The `faPromtail` service waits for Loki to start, with `depends_on: faLoki`. It has volumes for a configuration file, and to have access to the log files saved by Docker, and the Docker socket file.
 
-You should also change the `fa` service to make FusionAuth wait for `Promtail` to run before FusionAuth starts. OtherUse the code below.
+You should also change the `fa` service to make FusionAuth wait for `Promtail` to run before FusionAuth starts. Otherwise, Loki will not record potential FusionAuth starting errors. Use the code below.
 
 ```yml
     depends_on:
@@ -409,7 +409,7 @@ You should also change the `fa` service to make FusionAuth wait for `Promtail` t
         condition: service_healthy
 ```
 
-You can leave the `prometheusLokiConfig.yml` volume in the configuration commented out. The default values are fine. But if you want to use Loki with Alertmanager, you should create the file with the contents below (where only the last line is different from the default. Below, the Alertmanager URL now points to the Docker service for the `ruler` ([rules manager](https://grafana.com/docs/loki/latest/alert)).
+You can leave the `prometheusLokiConfig.yml` volume in the configuration commented out. The default values are fine. But if you want to use Loki with Alertmanager, you should create the file with the contents below (where only the last line differs from the default). Below, the Alertmanager URL now points to the Docker service for the `ruler` ([rules manager](https://grafana.com/docs/loki/latest/alert)).
 
 ```yml
 auth_enabled: false
@@ -443,7 +443,7 @@ ruler:
   alertmanager_url: http://alertmanager:9093
 ```
 
-The `prometheusPromtailConfig.yml` file important. It controls which containers Promtail will get logs for. Create the file and add the content below.
+The `prometheusPromtailConfig.yml` file controls which containers Promtail will get logs from. It is documented [here](https://grafana.com/docs/loki/latest/send-data/promtail/configuration). Create the file and add the content below.
 
 ```yml
 server:
@@ -473,10 +473,10 @@ scrape_configs:
 
 The `clients` URL points to the Loki Docker service where Promtail will send logs. The `scrape_configs` section describes how Promtail will get logs.
 
-[`docker_sd_configs`](https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#docker_sd_configs) is one way for Promtail to get logs (along with local file logs and Kubernetes). It follows the Prometheus [configuration format](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#docker_sd_config), which uses the Docker [container reference format](https://docs.docker.com/reference/api/engine/version/v1.40/#operation/ContainerList). Note that while your container and service name in the Docker process list might be `fa`, the name exposed in the Docker API is actually `/fa`. You can see the `/` used in the settings above. To see this is true in Docker, run `docker inspect fa`. You'll the container name is actually `"Name": "/fa"`.
+[`docker_sd_configs`](https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#docker_sd_configs) is one way for Promtail to get logs (along with local file logs and Kubernetes). It follows the Prometheus [configuration format](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#docker_sd_config), which uses the Docker [container reference format](https://docs.docker.com/reference/api/engine/version/v1.40/#operation/ContainerList). Note that while your container and service name in the Docker process list is `fa`, the name exposed in the Docker API is actually `/fa`. You can see the `/` used in the settings above. To see this is true in Docker, run `docker inspect fa`. You'll the container name is actually `"Name": "/fa"`.
 
 
-Everything is ready. Run `docker compose up` to start all monitoring components. Browse to http://localhost:3100/ready to check Loki is up.
+Log monitoring is ready. Run `docker compose up` to start all monitoring components. Browse to http://localhost:3100/ready to check Loki is up.
 
 - Browse to Grafana and choose <InlineUIElement>Data sources</InlineUIElement> in the sidebar.
 - Choose <InlineUIElement>Add data source</InlineUIElement> and select Loki.
@@ -511,6 +511,7 @@ If you combine the Prometheus, AlertManager, Grafana, Loki, and Ntfy infrastruct
 - [Prometheus alerts](https://prometheus.io/docs/alerting/latest/overview)
 - [Prometheus alert templates](https://prometheus.io/docs/alerting/latest/notifications)
 - [Loki](https://grafana.com/docs/loki/latest/get-started/overview/?pg=oss-loki)
+- [Promtail](https://grafana.com/docs/loki/latest/send-data/promtail/configuration)
 - [Grafana](https://grafana.com/grafana)
 - [Ubuntu AlertManager image](https://hub.docker.com/r/ubuntu/alertmanager)
 - [Ubuntu Grafana image](https://hub.docker.com/r/ubuntu/grafana)
