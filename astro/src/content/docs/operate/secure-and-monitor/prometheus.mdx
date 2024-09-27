@@ -1,5 +1,5 @@
 ---
-title: Monitor with Prometheus and Grafana
+title: Monitor with Prometheus, Loki, and Grafana
 description: Learn how to monitor FusionAuth with Prometheus, Loki, Grafana, and Ntfy.
 navcategory: admin
 section: operate
@@ -358,13 +358,13 @@ Below is a diagram showing all the [components](https://grafana.com/docs/loki/la
 
 You can query logs in Grafana, or in the terminal with the Loki API or [LogCLI](https://grafana.com/docs/loki/latest/query/logcli).
 
-Loki is only a log store, and will not fetch logs itself. Tools to send logs to Loki include: Promtail (the original sending tool), OpenTelemetry, and Alloy (a new OpenTelemetry-compliant tool from Grafana). For more options, see the [documentation](https://grafana.com/docs/loki/latest/send-data). In this guide, you use Promtail.
+Loki is only a log store, and will not fetch logs itself. Tools to send logs to Loki include: Promtail (the original sending tool), OpenTelemetry, and Alloy (a new OpenTelemetry-compliant tool from Grafana). For more options, see the [documentation](https://grafana.com/docs/loki/latest/send-data). In this guide, you use Promtail for simplicity and stability.
 
 <Aside type="note">
 When FusionAuth runs in Docker it writes logs to the terminal, and does not save them to a file or provide them via the [API](/docs/apis/system#export-system-logs). This means that the logs are also not available in the [web interface](/docs/operate/troubleshooting/troubleshooting#logs).
 </Aside>
 
-To start using Loki, add the services below to your `docker-compose.yml` file. You are now using Grafana images because Ubuntu has none for Promtail.
+To use Loki, add the services below to your `docker-compose.yml` file. You are now using Grafana images because Ubuntu has no images for Promtail.
 
 ```yml
   faLoki:
@@ -395,9 +395,9 @@ To start using Loki, add the services below to your `docker-compose.yml` file. Y
       - db_net
 ```
 
-The `faLoki` port 3100 is open so that Grafana can query it in dashboards. The `prometheusLoki` volume persists log storage across container restarts. The `prometheusLokiConfig.yml` volume allow you to adjust Loki settings. Unlike the Ubuntu images, Grafana images don't use the root user. This means that the user in the container won't have permissions to create files on the Docker host machine. In production, you can inspect the running container to see what user it has, then create the `prometheusLoki` directory and assign its owner as the container user Id. But for this prototype it's faster to set the container user to `user: root` instead, so it can directly write to the shared volume. `target=all` runs the Loki container in monolithic mode.
+The `faLoki` port 3100 is open so that Grafana can query it. The `prometheusLoki` volume persists log storage across container restarts. The `prometheusLokiConfig.yml` volume allows you to adjust Loki settings. Unlike the Ubuntu images, Grafana images don't use the root user. This means that the user in the container won't have permissions to create files on the Docker host machine. In production, you can inspect the running container to see what user it has, then create the `prometheusLoki` directory, and assign the directory owner as the container user. But for this prototype it's faster to set the container user to `user: root` instead, so the container can directly write to the shared volume. `target=all` runs the Loki container in monolithic mode.
 
-The `faPromtail` service waits for Loki to start, with `depends_on: faLoki`. It has volumes for a configuration file, and to have access to the log files saved by Docker, and the Docker socket file.
+The `faPromtail` service waits for Loki to start, with `depends_on: faLoki`. It has volumes for a configuration file, and access to the log files saved by Docker and the Docker socket file.
 
 You should also change the `fa` service to make FusionAuth wait for `Promtail` to run before FusionAuth starts. Otherwise, Loki will not record potential FusionAuth starting errors. Use the code below.
 
@@ -456,28 +456,28 @@ clients:
 scrape_configs:
   - job_name: docker
     docker_sd_configs:
-      - host: "unix:///var/run/docker.sock"
+      - host: unix:///var/run/docker.sock
         refresh_interval: 15s
         filters:
           - name: name
-            values: [/fa]
+            values: [^fa$]
     relabel_configs:
       - source_labels: ['__meta_docker_container_name']
-        regex: '^/?fa$'
-        action: keep
-      - source_labels: ['__meta_docker_container_name']
-        regex: '^/?(.*)$'
-        replacement: '${1}'
+        regex: '/(.*)'
         target_label: 'container'
 ```
 
 The `clients` URL points to the Loki Docker service where Promtail will send logs. The `scrape_configs` section describes how Promtail will get logs.
 
-[`docker_sd_configs`](https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#docker_sd_configs) is one way for Promtail to get logs (along with local file logs and Kubernetes). It follows the Prometheus [configuration format](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#docker_sd_config), which uses the Docker [container reference format](https://docs.docker.com/reference/api/engine/version/v1.40/#operation/ContainerList). Note that while your container and service name in the Docker process list is `fa`, the name exposed in the Docker API is actually `/fa`. You can see the `/` used in the settings above. To see this is true in Docker, run `docker inspect fa`. You'll the container name is actually `"Name": "/fa"`.
+[`docker_sd_configs`](https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#docker_sd_configs) is one way for Promtail to get logs (along with local file logs and Kubernetes). It follows the Prometheus [configuration format](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#docker_sd_config), which uses the Docker [container reference format](https://docs.docker.com/reference/api/engine/version/v1.40/#operation/ContainerList).
 
+The `filters` section excludes all containers from having their logs stored other than FusionAuth, which has the regular expression container name `^fa$` (start, fa, end). There is no `/` in this name. If you instead used a filter of `fa`, the logs of `faDb` would also be stored.
+
+The `relabel_configs` section maps the Docker container name to the logs `container` metadata, so you can search for it when querying the logs. Note that while your container and service name in the Docker process list is `fa`, the name exposed in the Docker API is actually `/fa`. You can see the `/` used in the `regex` above. To see this is true in Docker, run `docker inspect fa`. You'll the container name is actually `"Name": "/fa"`.
 
 Log monitoring is ready. Run `docker compose up` to start all monitoring components. Browse to http://localhost:3100/ready to check Loki is up.
 
+Now let's view the logs in Grafana:
 - Browse to Grafana and choose <InlineUIElement>Data sources</InlineUIElement> in the sidebar.
 - Choose <InlineUIElement>Add data source</InlineUIElement> and select Loki.
 - The only setting to change is <InlineField>URL</InlineField>. Enter `http://faLoki:3100`.
