@@ -14,29 +14,30 @@ cta: EmailListCTA
 ---
 import Aside from '/src/components/Aside.astro';
 import DockerSpinup from '/src/components/quickstarts/DockerSpinup.astro';
+import LocalInstall from '/src/components/quickstarts/LocalInstall.astro';
 import HostedBackendWarning from 'src/content/docs/_shared/_hosted-backend-warning.md';
 import Intro from '/src/components/quickstarts/Intro.astro';
 import LoginArchitectureSdk from '/src/components/quickstarts/LoginArchitectureSdk.astro';
 import NextSteps from '/src/components/quickstarts/NextSteps.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
 import QuickstartTshirtCTA from '/src/components/quickstarts/QuickstartTshirtCTA.astro'
+import ReactViteConfig from '_react-quickstart-vite-config.md'
 
 <Intro technology={frontmatter.technology}
        repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-javascript-react-web"/>
-
-## Prerequisites
-* [Node v18](https://nodejs.org/en): This will be used to run the React application.
-* [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](/docs/get-started/download-and-install)).
-
-This app has been tested with Node v18 and React v18.2.0. This example should work with other compatible versions of Node and React.
 
 ## General Architecture
 
 <LoginArchitectureSdk />
 
+## Prerequisites
+* [Node v18](https://nodejs.org/en): This will be used to run the React application.
+
+This app has been tested with Node v18 and React v18.2.0. This example should work with other compatible versions of Node and React.
+
 ## Getting Started
 
-In this section, you'll get FusionAuth up and running and use React CLI to create a new application.
+In this section, you'll get FusionAuth up and running.
 
 ### Clone the Code
 First off, grab the code from the repository and change into that directory.
@@ -46,28 +47,51 @@ git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-react-w
 cd fusionauth-quickstart-javascript-react-web
 ```
 
-### Run FusionAuth via Docker
+### Launch FusionAuth with Docker or a Local Install
 
 <DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} />
+<LocalInstall kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} />
+
+## Use the Pre-Built Option
+If you just want to use the pre-built application from the code, the path is quick and easy.  
+
+```
+cd complete-application
+npm install
+npm run dev
+```
+
+Then you can access your application at http://localhost:3000.
+
+If you want to understand the path to building the application, keep reading.
+
+## Build the Application from Scratch
 
 ### Create a basic React application
 
-Now you are going to create a basic React application using the [Vite](https://vitejs.dev/). While this section builds a simple React application, you can use the same configuration to integrate your existing React application with FusionAuth.
+Now you are going to create a basic React application using [Vite](https://vitejs.dev/). While this section builds a simple React application, you can use the same configuration to integrate your existing React application with FusionAuth.
 
 ```shell
-npm create vite@latest changebank -- --template react-ts && cd changebank
+npm create vite@latest changebank -- --template react-ts
 ```
 <Aside type="note">
-    The FusionAuth server is configured with the valid redirect URI of localhost:3000. Ensure your changebank app runs on this port by adding `server: { port: 3000 }` to your `vite.config.ts`.
+    The FusionAuth server is configured with the valid redirect URI of localhost:3000. Ensure your changebank app runs on this port by adding `server: { port: 3000 }` to your `vite.config.ts` as shown below.
 </Aside>
 
+| File | Code |
+|--------------------------|-----------------------------------------------|
+| vite.config.ts    | <RemoteCode url="https://raw.githubusercontent.com/synedra/fusionauth-first-steps-launch/main/complete-application/vite.config.ts" lang="typescript"  />                |
+
+
 We are going to use the [Hosted Backend](/docs/apis/hosted-backend) feature of FusionAuth, so you don't need to worry about setting up a backend server.
+
 
 <Aside type="caution">
 While this example uses localhost for your application and FusionAuth, there are complications if you plan to deploy using FusionAuth Cloud.
 
   <HostedBackendWarning />
 </Aside>
+
 
 Install the FusionAuth React SDK, and React Router, which we'll use to manage the routes in our application:
 
@@ -77,61 +101,70 @@ npm install @fusionauth/react-sdk react-router-dom
 
 Next, you'll need to configure the SDK with your FusionAuth URL, client Id, and redirect URI. You can do this by updating `src/main.tsx`:
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/main.tsx"
-            lang="tsx"/>
+First, copy the main.tsx file from the existing repository.
+
+```shell
+cp ../fusionauth-quickstart-javascript-react-web/complete-application/src/main.tsx src
+```
+
+The configuration variables you need to set are in the following section of the code:
+
+| File | Code |
+|--------------------------|-----------------------------------------------|
+|  src/main.tsx: These values are set to match the localhost fusionauth instance running in docker or on your own system.   | <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/main.tsx#L10-L22" lang="tsx"/> |
 
 We also set up the `BrowserRouter` from React Router, which will allow us to use the `Routes` and `Route` component to define the routes later.
 
-Our example application is going to have a home page and an account page. The account page will be protected and only visible to logged in users.
+| File | Code |
+|--------------------------|-----------------------------------------------|
+| src/main.tsx    | <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/main.tsx#L23-L32" lang="tsx"/> |
 
-#### Create a Home Page
-
-The next step is to get a basic home page up and running. We’ll take this opportunity to copy in all the images and CSS style files that you’ll need for the application.
+#### Copy assets into the directory
 
 Run the following copy commands to copy these files from the quickstart repo into your project. This assumes that you checked the quickstart repo out into the parent directory. If that’s not the case, replace the `..` below with your actual repo location.
 
 ```shell
 cp -r ../complete-application/src/assets src && \
-cp -r ../complete-application/src/index.css src
+cp -r ../complete-application/src/index.css src && \
+cp -r ../complete-application/src/pages src && \
+cp -r ../complete-application/src/components src
 ```
 
-The home page will be a simple page with a welcome message and a login link. Create a new directory `pages` under `src`, in that directory create a new file `src/pages/HomePage.tsx`:
+#### Create a Home Page
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/pages/HomePage.tsx"
-            lang="tsx"/>
+The next step is to get a basic home page up and running. We’ll take this opportunity to copy in all the images and CSS style files that you’ll need for the application.
+
+| File | Code |
+|--------------------------|-----------------------------------------------|
+| The home page will be a simple page with a welcome message and a login link. Open the src/pages/HomePage.tsx file in your editor. | <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/pages/HomePage.tsx" lang="tsx"/> |
 
 #### Create an Account Page
 
-The account page will be a simple page that displays a random balance for the logged in user. Create a new file `src/pages/AccountPage.tsx`:
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/pages/AccountPage.tsx"
-            lang="tsx"/>
+| File | Code |
+|--------------------------|-----------------------------------------------|
+| The account page will be a simple page that displays a random balance for the logged in user. Open the src/pages/AccountPage.tsx file in your editor. | <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/pages/AccountPage.tsx" lang="tsx"/> |
 
 #### Create A Make Change Page
 
-The make change page will be a simple page that displays an input field for the user to enter a dollar amount and a button to convert that amount into coins. Create a new file `src/pages/MakeChangePage.tsx`:
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/pages/MakeChangePage.tsx"
-            lang="tsx"/>
+| File | Code |
+|--------------------------|-----------------------------------------------|
+| The make change page will be a simple page that displays an input field for the user to enter a dollar amount and a button to convert that amount into coins. Open the src/pages/MakeChangePage.tsx file in your editor. | <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/pages/MakeChangePage.tsx" lang="tsx"/> |
 
 ## Authentication
 
 You now have created a basic React application with a home page and an account page.
 
-Depending on the user's authentication state, the login or logout button should be displayed in the header. For this create a new directory `components` in `src` and a new file `src/components/LogoHeader.tsx`:
+| File | Code |
+|--------------------------|-----------------------------------------------|
+| Depending on the user's authentication state, the login or logout button should be displayed in the header. Open the src/components/LogoHeader.tsx file in your editor. | <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/components/LogoHeader.tsx" lang="tsx"/> |
 
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/components/LogoHeader.tsx"
-            lang="tsx"/>
+| File | Code |
+|--------------------------|-----------------------------------------------|
+| Additionally, we want to display different menu items. Open the src/components/MenuBar.tsx file in your editor. | <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/components/MenuBar.tsx" lang="tsx"/> |
 
-Additionally, we want to display different menu items. For this create a new file `src/components/MenuBar.tsx`:
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/components/MenuBar.tsx"
-            lang="tsx"/>
-
-The next step is to tie it all together. Update the `src/App.tsx` file by replacing its content with the following code:
-
-<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/App.tsx"
-            lang="tsx"/>
+| File | Code |
+|--------------------------|-----------------------------------------------|
+| The next step is to tie it all together. Open the src/App.tsx file in your editor. | <RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-react-web/main/complete-application/src/App.tsx" lang="tsx"/> |
 
 ## Running the Application
 
@@ -141,7 +174,7 @@ You can now run the application with the following command:
 npm start
 ```
 
-You can now open up an incognito window and navigate to http://localhost:3000. You will be greeted with the home page. Log in with the user account you created when setting up FusionAuth, and you'll be redirected to the account page.
+You can now open up an browser window and navigate to http://localhost:3000. You will be greeted with the home page. Log in with the user account you created when setting up FusionAuth, and you'll be redirected to the account page.
 
 <Aside type="note">
     The username and password of the `example user` can be found in the <a href="#run-fusionauth-via-docker">FusionAuth via Docker</a> section at the top of this article.
