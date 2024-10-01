@@ -36,8 +36,7 @@ The Collector can also process the values it receives before exporting them.
 Since you don't have access to the FusionAuth source code, there are three ways you can use OpenTelemetry to export FusionAuth metrics:
 
 - Run an OpenTelemetry exporter inside the FusionAuth Docker container to monitor the Java Virtual Machine (JVM) in which FusionAuth runs. The FusionAuth team does not recommend this approach. You have to alter the provided Docker image to include the Java agent and to alter the image every time FusionAuth releases an update. The metrics the JVM provides also do not provide any useful information beyond the data provided by monitoring the container itself.
-- Run an OpenTelemetry exporter in its own Docker container on your host. Usually, the OpenTelemetry container needs to have administrative permissions to the Docker engine to get metrics about the  FusionAuth container status. This will allow you to know whether FusionAuth is up and to receive basic metrics about the health of the container, like CPU and RAM use. However, OpenTelemetry can read metrics in the older Prometheus format provided by FusionAuth, so in this case, you don't actually require administrative permissions.
-Run an OpenTelemetry exporter in its own Docker container on your host. This will allow you to know whether FusionAuth is up and receive basic container health metrics, like CPU and RAM use.  Usually, the OpenTelemetry container requires administrative permissions to the Docker engine to get metrics about the FusionAuth container status, but OpenTelemetry can read metrics in the older Prometheus format provided by FusionAuth, so administrative permissions aren't required in this case.
+- Run an OpenTelemetry exporter in its own Docker container on your host. This will allow you to know whether FusionAuth is up and receive basic container health metrics, like CPU and RAM use.  Usually, the OpenTelemetry container requires administrative permissions to the Docker engine to get metrics about the FusionAuth container status, but OpenTelemetry can read metrics in the older Prometheus format provided by FusionAuth, so administrative permissions aren't required in this case.
 - Write a custom script to request metrics from the FusionAuth API and forward them to an OpenTelemetry collector. This will allow you to monitor specific FusionAuth metrics, like application errors and user login rates.
 
 In this guide, you'll set up the last two options.
@@ -271,7 +270,7 @@ done
 
 All of `SECTION 1` above is used to download a file of user login records from FusionAuth. The URL, `api/system/login-record/export`, is called with a timespan from one minute ago until now. The records are downloaded as a ZIP file and extracted.
 
-`SECTION 2` opens the unzipped CSV file with `tail`, loops through it with `while`, converts every line to a JSON object of the time the user logged in and their user ID, and still in the loop, uses `curl` to post the JSON data to the OpenTelemetry Collector on the `otelUrl`.
+`SECTION 2` opens the unzipped CSV file with `tail`, loops through it with `while`, converts every line to a JSON object of the time the user logged in and their user Id, and still in the loop, uses `curl` to post the JSON data to the OpenTelemetry Collector on the `otelUrl`.
 
 Build this script into an image by creating a file called `Dockerfile` with the content below. The last line runs the script every sixty seconds.
 
@@ -307,7 +306,7 @@ Run everything with `docker compose up`, or if the other containers are already 
 
 If the OpenTelemetry Collector and custom script worked correctly, when you browse to Prometheus you should now be able to see the `login_event` metric in the graph.
 
-Since the metrics are separated by user ID, there are too many lines on the screen to be useful for monitoring. Use Prometheus queries like the following three to aggregate the metrics over time and group them across users.
+Since the metrics are separated by user Id, there are too many lines on the screen to be useful for monitoring. Use Prometheus queries like the following three to aggregate the metrics over time and group them across users.
 
 ```
 count_over_time(login_event[5h])
