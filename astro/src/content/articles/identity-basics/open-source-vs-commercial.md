@@ -115,7 +115,7 @@ It may take longer to find bugs than it would with an open-source product where 
 
 One of the more notable differences between open source and commercial solutions is cost. Because of the benefits detailed above, there is usually a cost to a commercial solution, whereas many open-source solutions are provided free of charge and maintained by the community. 
 
-However, some commercial software offers free tiers with limited support. For example, Auth0 allows you a certain number of users for free. FusionAuth has a community edition allowing you an unlimited number of users if you self-host.
+However, some commercial software offers free tiers with limited support. For example, Auth0 allows you a certain number of users for free. FusionAuth has a Community plan allowing you an unlimited number of users if you self-host.
 
 Another item to consider is the pricing structure of the commercial solution. Some commercial products may prove cost-effective to large corporations, with high usage, but terribly improbable for a startup wanting a lowering buy-in point. Or more commonly, commercial providers provide different tiers depending on usage. This may make some use cases untenable as your product scales.
 
