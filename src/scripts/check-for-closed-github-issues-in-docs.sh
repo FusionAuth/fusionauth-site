@@ -29,5 +29,5 @@ for issue in `sort -un numbers`; do
   fi
 done
 
-echo $CLOSED_COUNT
+echo -n $CLOSED_COUNT
 
