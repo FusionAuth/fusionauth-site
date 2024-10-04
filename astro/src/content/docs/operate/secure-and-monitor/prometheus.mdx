@@ -348,13 +348,13 @@ You can also create a new dashboard by importing a standard template from the Gr
 
 ## Store Logs In Loki
 
-The final monitoring component you might want use is [Grafana Loki](https://grafana.com/docs/loki) for storing logs. Loki indexes only the metadata of a log line (its time and attributes such as the server that sent it) and not its content. This is unlike Elasticsearch or OpenSearch, which indexes the log content too. Loki therefore uses far less disk space than OpenSearch but is not quickly searchable. The no-indexing choice Loki made is better for most applications, where you need only to monitor logs for errors and to store logs for auditing purposes, and don't need to run frequent queries against old logs.
+The final monitoring component you might want to use is [Grafana Loki](https://grafana.com/docs/loki) for storing logs. Loki indexes only the metadata of a log line (its time and attributes such as the server that sent it) and not its content. This is unlike Elasticsearch or OpenSearch, which indexes the log content too. Loki therefore uses far less disk space than OpenSearch but is not quickly searchable. The no-indexing choice Loki made is better for most applications, where you need only to monitor logs for errors and to store logs for auditing purposes, and don't need to run frequent queries against old logs.
 
 Loki can run as a single app in a single Docker container, or as separate components in multiple containers. In [monolithic mode](https://grafana.com/docs/loki/latest/get-started/deployment-modes) Loki can handle up to 20 GB per day. This is enough for FusionAuth and is what you'll use in this guide.
 
 Below is a diagram showing all the [components](https://grafana.com/docs/loki/latest/get-started/components) Loki runs in a single container.
 
-![Loki architecture](../../../../../public/img/docs/operate/secure-and-monitor/prometheus/prometheusLokiArchitecture.svg)
+![Loki architecture](/img/docs/operate/secure-and-monitor/prometheus/prometheusLokiArchitecture.svg)
 
 You can query logs in Grafana, or in the terminal with the Loki API or [LogCLI](https://grafana.com/docs/loki/latest/query/logcli).
 
@@ -405,11 +405,11 @@ You should also change the `fa` service to make FusionAuth wait for `Promtail` t
     depends_on:
       faPromtail:
         condition: service_started
-      faDb:
+      fa_db:
         condition: service_healthy
 ```
 
-You can leave the `prometheusLokiConfig.yml` volume in the configuration commented out. The default values are fine. But if you want to use Loki with Alertmanager, you should create the file with the contents below (where only the last line differs from the default). Below, the Alertmanager URL now points to the Docker service for the `ruler` ([rules manager](https://grafana.com/docs/loki/latest/alert)).
+You can comment out the `prometheusLokiConfig.yml` volume in the `faLoki` service configuration to use default values. The default values are fine. But if you want to use Loki with Alertmanager, you should create the file with the contents below (where only the last line differs from the default). Below, the Alertmanager URL now points to the Docker service for the `ruler` ([rules manager](https://grafana.com/docs/loki/latest/alert)).
 
 ```yml
 auth_enabled: false
@@ -471,15 +471,15 @@ The `clients` URL points to the Loki Docker service where Promtail will send log
 
 [`docker_sd_configs`](https://grafana.com/docs/loki/latest/send-data/promtail/configuration/#docker_sd_configs) is one way for Promtail to get logs (along with local file logs and Kubernetes). It follows the Prometheus [configuration format](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#docker_sd_config), which uses the Docker [container reference format](https://docs.docker.com/reference/api/engine/version/v1.40/#operation/ContainerList).
 
-The `filters` section excludes all containers from having their logs stored other than FusionAuth, which has the regular expression container name `^fa$` (start, fa, end). There is no `/` in this name. If you instead used a filter of `fa`, the logs of `faDb` would also be stored.
+The `filters` section excludes all containers from having their logs stored other than FusionAuth, which has the regular expression container name `^fa$` (start, fa, end). There is no `/` in this name. If you instead used a filter of `fa`, the logs of `fa_db` would also be stored.
 
-The `relabel_configs` section maps the Docker container name to the logs `container` metadata, so you can search for it when querying the logs. Note that while your container and service name in the Docker process list is `fa`, the name exposed in the Docker API is actually `/fa`. You can see the `/` used in the `regex` above. To see this is true in Docker, run `docker inspect fa`. You'll the container name is actually `"Name": "/fa"`.
+The `relabel_configs` section maps the Docker container name to the logs `container` metadata, so you can search for it when querying the logs. Note that while your container and service name in the Docker process list is `fa`, the name exposed in the Docker API is actually `/fa`. You can see the `/` used in the `regex` above. To see this is true in Docker, run `docker inspect fa`. You'll see the container name is actually `"Name": "/fa"`.
 
 Log monitoring is ready. Run `docker compose up` to start all monitoring components. Browse to http://localhost:3100/ready to check Loki is up.
 
 Now let's view the logs in Grafana:
-- Browse to Grafana and choose <InlineUIElement>Data sources</InlineUIElement> in the sidebar.
-- Choose <InlineUIElement>Add data source</InlineUIElement> and select Loki.
+- Browse to Grafana and choose <Breadcrumb>Connections -> Data sources</Breadcrumb> in the sidebar.
+- Choose <InlineUIElement>Add new data source</InlineUIElement> and select <InlineUIElement>Loki</InlineUIElement>.
 - The only setting to change is <InlineField>URL</InlineField>. Enter `http://faLoki:3100`.
 - Click <InlineUIElement>Save and test</InlineUIElement>. If Grafana cannot detect Loki, check that your URL matches your Docker compose file and there are no errors in the Docker terminal.
 - Click <InlineUIElement>Explore</InlineUIElement> in the sidebar to start browsing your Loki logs.
@@ -487,13 +487,13 @@ Now let's view the logs in Grafana:
 - Press <InlineUIElement>Run query</InlineUIElement> to view the logs.
 - You can also filter logs and make complex queries. For example, try `{container="fa"} |~ "(ERROR|WARN)"`.
 
-![Prometheus metrics](../../../../../public/img/docs/operate/secure-and-monitor/prometheus/prometheusLoki.png)
+![Prometheus metrics](/img/docs/operate/secure-and-monitor/prometheus/prometheusLoki.png)
 
 Now that Loki stores FusionAuth logs, you can add log widgets to your Grafana dashboard, and use either Grafana or Loki directly to send alerts to Alertmanager.
 
 ## Next Steps
 
-In addition to monitoring the Prometheus metrics provided by FusionAuth, you also might want to know various custom metrics, such as user login rates and successes. To do this, read the FusionAuth guide to [OpenTelemetry](./opentelemetry) and how to use it create a bash script to collect any metric the FusionAuth API offers.
+In addition to monitoring the Prometheus metrics provided by FusionAuth, you also might want to know various custom metrics, such as user login rates and successes. To do this, read the FusionAuth guide to [OpenTelemetry](./opentelemetry) and how to use it to create a bash script to collect any metric the FusionAuth API offers.
 
 ## Final System Architecture
 
