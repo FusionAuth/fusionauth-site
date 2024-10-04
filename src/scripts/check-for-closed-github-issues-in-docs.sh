@@ -1,5 +1,10 @@
 #!/bin/bash
 
+VERBOSE=""
+if [ "$1" == "-v" ]; then
+  VERBOSE="true"
+fi
+
 rm -f numbers
 
 # find all the issue numbers in the docs
@@ -17,7 +22,9 @@ for issue in `sort -un numbers`; do
   status=$(gh issue view "$issue" --repo "$repo" --json state --jq '.state')
   
   if [ "$status" == "CLOSED" ]; then
-    #echo "Issue #$issue is CLOSED"
+    if [ "$VERBOSE" == "true" ]; then
+      echo "Issue #$issue is CLOSED"
+    fi
     CLOSED_COUNT=$((CLOSED_COUNT + 1)) # Increment the closed issue count
   fi
 done
