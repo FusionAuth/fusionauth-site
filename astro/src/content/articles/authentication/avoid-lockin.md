@@ -58,11 +58,11 @@ It's crucial to build integration tests around this kind of abstraction. Having 
 
 Generally, you don't implement one solution while actively planning to swap it out in the future. Because of this, it is easy to accidentally put on the proverbial blinders and only focus on what is right in front of you without seeing the bigger picture and the long-term ramifications of certain design decisions. 
 
-This can lead to situations where implementations become too specific to the current vendor and are prohibitively expensive to change in the future. "If only we had known we were going to switch providers, we would have done things differently." Factoring in and budgeting for a Plan B or future migration can mitigate such tunnel vision.
+This can lead to situations where implementations become too specific to the current vendor and are prohibitively expensive to change in the future. "If only we had known we were going to switch providers, we would have done things differently." Factoring in and budgeting for a plan B or future migration can mitigate such tunnel vision.
 
 This works by identifying an alternative solution - whether it be another provider or building it in-house - and keeping it in mind when designing things and makings decisions. You should work it into your project's future budget and just accept it as potentially necessary.
 
-Sure, you hope never to invoke Plan B - and the cost it would entail. Still, if you built everything with this eventuality in mind, your decision-making process is likely to be more deliberative and ultimately less tightly coupled to your chosen vendor. Factoring in the potential resource cost will also help you avoid ending up in a position where you must migrate but don't have the budget. 
+Sure, you hope never to invoke plan B - and the cost it would entail. Still, if you built everything with this eventuality in mind, your decision-making process is likely to be more deliberative and ultimately less tightly coupled to your chosen vendor. Factoring in the potential resource cost will also help you avoid ending up in a position where you must migrate but don't have the budget. 
 
 This is a similar principle to the test-first mindset. If you write your code with testing as a foremost concern, the output will likely be different - and more testable by nature - than if you conducted testing as an afterthought. Making architectural decisions while mindfully being aware of possible future migrations can lead to more robust system design and easier migrations in the future.
 
