@@ -1,4 +1,4 @@
-## Running builds
+# Running builds
 Almost all of the content for site now lives under the [astro](./astro) directory and is built by astro. You can run the site by cd-ing into the astro directory and running npm scripts from there or by running savant targets from the top level.
 
 The build targets are
@@ -456,10 +456,11 @@ The main configuration file is located at [`.vale.ini`](./.vale.ini), where we s
 - Right now, we're using [`write-good`](./config/vale/styles/write-good), a collection of simple rules to avoid common mistakes and awkward sentences.
 - We also have a custom vocabulary at [`config/vale/styles/config/vocabularies/FusionAuth/accept.txt`](./config/vale/styles/config/vocabularies/FusionAuth/accept.txt) with known words.
   - Note that this file can use regular expressions to match words in a case-insensitive manner, as described [in their docs](https://vale.sh/docs/topics/vocab/).
+- Anything marked as code (with backticks) is ignored, so if you have a UUID or config string, surrounding it with backticks is a good way to satisfy vale.
 
 ### GitHub Actions
 
-There's [a GitHub Action](./.github/workflows/vale.yml) that runs Vale on added/modified files when opening a pull request. It'll only cover files located at `astro/src/content`, but it won't block merging the PR, as we currently have lots of errors to fix. So, use it as a guide to improve what you are writing.
+There's [a GitHub Action](./.github/workflows/vale.yml) that runs Vale on added/modified files when opening a pull request. It'll only cover files located at `astro/src/content` and `astro/src/components`. It will block merging the PR.
 
 ### Running locally
 
@@ -496,4 +497,5 @@ Whenever you receive an error, you need to determine if you should:
 * If a piece of content is technical, it needs a technical review by engineering or devrel.
 * Typo fixes don't need review.
 * If a piece of content is significant (blog post, guide, article) give it the label `content` and it will be published to a slack channel for marketing awareness.
+
 

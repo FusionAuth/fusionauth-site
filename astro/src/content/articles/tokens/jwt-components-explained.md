@@ -133,7 +133,7 @@ When code is presented with a JWT, it should verify certain claims. At a minimum
 
 * `iss` identifies the issuer of the JWT. It doesn't matter exactly what this string is (UUID, domain name, URL or something else) as long as the issuer and consumer of the JWT agree on valid values, and that the consumer validates the claim matches a known good value.
 * `aud` identifies the audience of the token, that is, who should be consuming it. `aud` may be a scalar or an array value. Again, the issuer and the consumer of the JWT should agree on the specific values considered acceptable.
-* `nbf` and `exp`. These claims determine the timeframe for which the token is valid. The `nbf` claim can be useful if you are issuing a token for future use. The `exp` claim, a time beyond which the JWT is no longer valid, should always be set. Unlike other claims, these have a defined value format: seconds since the unix epoch.
+* `nbf` and `exp`. These claims determine the timeframe for which the token is valid. The `nbf` claim can be useful if you are issuing a token for future use. The `exp` claim, a time beyond which the JWT is no longer valid, should always be set. Unlike other claims, these have a defined value format: seconds since the UNIX epoch.
 
 In addition to these, verify business domain specific claims. For instance, someone consuming the above JWT could deny access when `authenticationType` is an unknown value.
 

@@ -1,0 +1,275 @@
+---
+title: Migrate From A Generic Authentication System
+description: How to migrate users from your custom authentication system to FusionAuth.
+section: lifecycle
+subcategory: migrate users
+prerequisites: Docker
+technology: a custom authentication provider
+---
+
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import InlineField from 'src/components/InlineField.astro';
+import Aside from '/src/components/Aside.astro';
+import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/provider-specific/_mapping-user-attributes.mdx';
+import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-migration.mdx';
+import OtherEntitiesIntro from 'src/content/docs/lifecycle/migrate-users/provider-specific/_other-entities-intro.mdx';
+import ScrollRef from 'src/components/ScrollRef.astro';
+import WhatNext from 'src/content/docs/lifecycle/migrate-users/provider-specific/_what-next.mdx';
+import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_additional-support.mdx';
+
+export const migration_source_dir = 'generic';
+export const script_supports_social_logins = 'false';
+
+## Overview
+
+This document will help you migrate users from {frontmatter.technology} to FusionAuth.
+
+This guide is a low-level, technical tutorial focusing on transferring password hashes, calling APIs, and preparing data when migrating users from {frontmatter.technology}. For more information on how to plan a migration at a higher level, please read the [FusionAuth migration guide](/docs/lifecycle/migrate-users/general-migration).
+
+## Prerequisites
+
+If you want to import user passwords in addition to user personal details, you need a basic understanding of how password hashing and salts work. FusionAuth has a [hashing article](/articles/security/math-of-password-hashing-algorithms-entropy) that is a good starting point.
+
+To follow this tutorial, you need [Docker](https://docs.docker.com/get-docker/) to run an example web application and the migration scripts.
+
+<Aside>
+  You may need to update your hosts file to include an entry for `127.0.0.1 host.docker.internal` if it's not already present. On macOS and Linux, you can add the entry with the following command.
+
+  ```
+  echo "127.0.0.1 host.docker.internal" | sudo tee -a /etc/hosts
+  ```
+</Aside>
+
+If you prefer to run scripts directly on your machine, you will need Node.js installed locally. You will also need to change occurrences of `db` and `host.docker.internal` to `localhost` in all the scripts.
+
+## Planning Considerations
+
+### Mapping User Attributes
+
+<MappingUserAttributes migration_source_name={'exported'} />
+
+### Social Logins
+
+<SocialLoginMigration />
+
+### Other Entities
+
+<OtherEntitiesIntro migration_source_name={'your Custom Authentication System'} other_migrated_entities="connections or roles" />
+
+* If your application makes use of roles, FusionAuth has [roles](/docs/get-started/core-concepts/roles) that are configured on an application-by-application basis and made available in a token after successful authentication.
+* In FusionAuth, you can manage a set of users via a [Tenant](/docs/get-started/core-concepts/tenants).
+* If your application sends emails like forgotten password notifications, FusionAuth has this functionality, and [the templates are customizable](/docs/customize/email-and-messages/).
+* In FusionAuth,  custom user attributes are stored on the `user.data` field and are dynamic, searchable, and unlimited in size. Any valid JSON value may be stored in this field.
+* If your application uses multi-factor authentication (MFA), FusionAuth [supports MFA](/docs/lifecycle/authenticate-users/multi-factor-authentication), and you can enable it for a tenant and configure it for a user at any time.
+
+#### Identifiers
+
+When you create an object with the FusionAuth API, you can specify the Id. It must be a [UUID](/docs/reference/data-types#uuids). This works for users, applications, tenants, and others.
+
+## Exporting Users
+
+Let's consider a minimal web application to demonstrate how to migrate users and authentication to FusionAuth. This example app only has a sign-in page, a restricted account details page, and a PostgreSQL database with a single table to hold user passwords.
+
+
+### Create An Example Application With Custom Authentication
+
+To get the code used in this tutorial, clone the Git repository below.
+
+```sh
+git clone https://github.com/FusionAuth/fusionauth-import-scripts
+```
+
+The `generic` directory contains all the code you need for this tutorial, and `generic/exampleData` contains the output of the scripts.
+
+Navigate to the `generic/src` directory.
+
+```sh
+cd fusionauth-import-scripts/generic/src
+```
+
+Start a Docker container for the app and database by running the command below in a terminal.
+
+```sh
+docker compose --file 1_appDockerCompose.yaml up
+```
+
+### Create The User Table
+
+Now that the database is running, you need to create a table to hold users. Open a new terminal in the `fusionauth-import-scripts/generic/src` directory and run the command below.
+
+```sh
+docker exec --interactive --tty app sh
+```
+
+This will connect to the app container running in Docker and start an interactive terminal. You will run all the JavaScript scripts in this interactive Docker terminal. Run the code below in this terminal to create the user table.
+
+```sh
+cd /workspace
+npm install
+node 2_createUser.mjs
+```
+
+The `2_createUser.mjs` script creates a table with the text fields `email`, `hash`, and `salt`.
+
+If you want to see the table, browse the database in any database IDE that can connect to PostgreSQL. [DBeaver](https://dbeaver.io/download) is a free, cross-platform IDE you can use.
+
+Create a new connection to `localhost`, port `7770`, database `p`, username `p`, and password `p`. Open the connection and expand the database tables to see the `user` table.
+
+### Run The Web App
+
+Run the command below in the interactive Docker terminal to start the minimal Express web app.
+
+```sh
+node 3_webApp.mjs
+```
+
+Browse to `http://localhost:7771/account`. This is a restricted page. Since you are not authenticated, you are not able to view it.
+
+Browse to `http://localhost:7771`. On the authentication page displayed, enter a random email like `user@example.com` and password `password`.
+
+The user will be created in the database, and you will be redirected to the account page. Now you will be able to see the page as you have a cookie in your browser with the user's email address.
+
+Open `3_webApp.mjs` and take a look. It has two GET routes to display the home page and account page. The POST route for the home page is more complex. It does the following:
+- Checks if username and password have been entered.
+- Queries the database to see if the email exists.
+  - If the email exists, compares the password hash in the database with the hash of the password entered.
+  - If not, creates the user and saves their password hashed with a random UUID salt.
+
+The `getHash` function at the bottom of the file creates a password hash using SHA256. This is a simple algorithm, [supported natively by FusionAuth](/docs/reference/password-hashes#salted-sha-256). If your real application uses an uncommon hashing algorithm, you can [write a custom hashing plugin for FusionAuth](/docs/extend/code/password-hashes/writing-a-plugin).
+
+In the interactive Docker terminal, click Ctrl + C to stop the application server.
+
+### Create A Users File
+
+Run the command below in the interactive Docker terminal to export your users to the file `users.json`.
+
+```sh
+node 4_exportUsers.mjs
+```
+
+In reality, you could create a JSON file of users from your application in whatever language suits you — most likely a SQL script run directly against your database.
+
+The next script, `5_convertUserToFaUser.mjs`, is the most important. It maps the fields of `users.json` to FusionAuth fields. The tiny example app has only email and password, so you will want to alter this script significantly for your real app. The attributes of the User object in FusionAuth are [well documented here](/docs/apis/users).
+
+The script uses `stream-json`, a JSON library that can incrementally read massive files with millions of users. It opens the `users.json` file for reading in the line `new Chain([fs.createReadStream(inputFilename), parser(), new StreamArray(),]);`. For more information, read https://github.com/uhop/stream-json. The `processUsers()` function calls `getFaUserFromUser()` to map your user to FusionAuth, and then saves them to an `faUsers.json` file.
+
+The `getFaUserFromUser()` function does a few things:
+- Maps as many matching fields from your app to FusionAuth as possible.
+- Stores all user details that don't map to FusionAuth in the `data` field.
+- Uses the hashing algorithm name in `faUser.encryptionScheme = 'salted-sha256';`. The salt is converted to Base64 to meet FusionAuth requirements.
+- Adds Registrations (a Role link between a User and an Application) for users. You will need to change these Ids to match those of your application when doing a real migration.
+
+If you are uncertain about what a user attribute in FusionAuth does, read more in the [user guide](/docs/apis/users), as linked in the [general migration guide](/docs/lifecycle/migrate-users/general-migration).
+
+In the interactive Docker terminal, run the script with the following command.
+
+```sh
+node 5_convertUserToFaUser.mjs
+```
+
+Your output should be valid JSON and look like the file `fusionauth-import-scripts/generic/exampleData/faUsers.json`.
+
+## Importing Users
+
+If you are not already running FusionAuth or want to test this process on another instance, you can start FusionAuth in Docker.
+
+Open a new terminal in the `fusionauth-import-scripts` directory and run the commands below.
+
+```sh
+cd generic/fusionAuthDockerFiles
+docker compose up
+```
+
+FusionAuth will now be running and accessible at `http://localhost:9011`. You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and `password`. The container is called `fa`.
+
+This configuration makes use of a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart), defined in `fusionauth-import-scripts/generic/fusionAuthDockerFiles/kickstart/kickstart.json`. When FusionAuth comes up for the first time, it will look at the `kickstart.json` file and configure FusionAuth to the specified state. In summary, the defined Kickstart sets up an API Key, an admin user to log in with, a theme, and a Test application in FusionAuth.
+
+Now you have the users file `faUsers.json`, and FusionAuth is running. To import the users into FusionAuth, you need to run the Node.js import script.
+
+In the interactive Docker terminal, run the command below.
+
+```sh
+node 6_importUsers.mjs
+```
+
+This script uses the FusionAuth SDK for Node.js `@fusionauth/typescript-client`. It's used only for a single operation, `fa.importUsers(importRequest)`. For more information, read the [FusionAuth TypeScript Client Library](/docs/sdks/typescript) documentation.
+
+This script imports users individually. If this is too slow when running the production migration, wrap the `importUsers()` FusionAuth SDK call in a loop that bundles users in batches of 1000.
+
+### Verify The Import
+
+If the migration script ran successfully, you should be able to log in to the `Test` application with one of the imported users. In the [FusionAuth admin UI](http://localhost:9011/admin), navigate to **Applications —> Test**. Click the <InlineUIElement>View</InlineUIElement> button (green magnifying glass) next to the application and note the <InlineField>OAuth IdP login URL</InlineField>.
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/find-login-url.png`} alt="Application login URL." width="1200" role="bottom-cropped" />
+
+Copy this URL and open it in a new incognito browser window. (If you don’t use an incognito window, the admin user session will interfere with the test.) You should see the login screen. Enter username `user@example.com` and password `password`. Login should work.
+
+<Aside type="note">
+  After a successful test login, the user will be redirected to a URL like `https://example.com/?code=2aUqU0ZhQCjtz0fnrFL_i7wxhIAh7cTfxAXEIpJE-5w&locale=en&userState=AuthenticatedNotRegistered`.
+
+  This occurs because you haven't set up a web application to handle the authorization code redirect yet. This will be done in the <ScrollRef target="Use FusionAuth As Your Authentication Provider" /> section.
+</Aside>
+
+Next, log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and password `password`. Review the user entries to ensure the data was correctly imported.
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/list-users.png`} alt="List of imported users." width="1200" role="bottom-cropped" />
+
+Click the <InlineUIElement>Manage</InlineUIElement> button (black button) to the right of a user in the list of users to review the details of the imported user’s profile. In the <InlineUIElement>Source</InlineUIElement> tab, you can see all the user details as a JSON object.
+
+#### Debug With The FusionAuth Database
+
+If you have errors logging in, you can use the FusionAuth database directly to see if your users were imported, and check their hashes manually.
+
+You can use any PostgreSQL browser. DBeaver will work. The connection details are in the files `docker-compose.yml` and `.env` in the `fusionauth-import-scripts/generic/fusionAuthDockerFiles/` directory.
+
+In your database IDE, create a new PostgreSQL connection with the following details:
+
+- <InlineField>URL:</InlineField> `jdbc:postgresql://localhost:5432/fusionauth`
+- <InlineField>Host:</InlineField> `localhost`
+- <InlineField>Port:</InlineField> `5432`
+- <InlineField>Database:</InlineField> `fusionauth`
+- <InlineField>Username:</InlineField> `fusionauth`
+- <InlineField>Password:</InlineField> `hkaLBM3RVnyYeYeqE3WI1w2e4Avpy0Wd5O3s3`
+
+Log in to the database and browse to `Databases/fusionauth/Schemas/public/Tables`. The `identities` and `users` tables will show the login credentials and user personal information.
+
+## Use FusionAuth As Your Authentication Provider
+
+Now that your users have been migrated into FusionAuth, how do you authenticate them in your app?
+
+The first step is to set your OAuth callback URL in the [FusionAuth admin UI](http://localhost:9011/admin). Under **Applications** edit your `Test` application and set the <InlineField>Authorized redirect URLs</InlineField> to `http://localhost:7771/callback`.
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/authorised-redirect.png`} alt="Authorised redirect URL." width="1200" role="bottom-cropped" />
+
+Now run the command below in the interactive Docker terminal to see the original Express app rewritten to use FusionAuth for authentication.
+
+```sh
+node 7_webAppWithFa.mjs
+```
+
+Browse to `http://localhost:7771`. You'll see that the sign-in page has been replaced by FusionAuth. You can style this page however you like. For more information, see the full [quickstart guide for Express](/docs/quickstarts/quickstart-javascript-express-web).
+
+The new application code looks very similar to the original, except that the login and hashing code has been replaced by OAuth 2.0 calls to FusionAuth via the Node.js [Passport library](https://www.npmjs.com/package/passport).
+
+<Aside type='caution'>
+ Note that the `authOptions` object defined at the bottom stores secrets directly in the code. In reality, you should move these to a `.env` file that is not checked into GitHub. Be sure to use `host.docker.internal` instead of `localhost` for URLs that call a server directly (browser URLs still use `localhost`).
+</Aside>
+
+### Delete The Docker Containers
+
+Push Ctrl + C in all terminals to stop the Docker instances. Run the code below on your host machine to remove the Docker containers and images if you are done testing.
+
+```sh
+docker rm app app_db fa fa_db
+docker rmi postgres:16.2-alpine3.19 node:alpine3.19 fusionauth/fusionauth-app:latest postgres:16.0-bookworm
+```
+
+## What To Do Next
+
+The sample application uses a relatively old and weak hashing algorithm, though not terrible. You might want to rehash your users' passwords on their next login with a stronger algorithm. To enable this setting, follow these [instructions](/docs/extend/code/password-hashes/custom-password-hashing#rehashing-user-passwords).
+
+<WhatNext />
+
+## Additional Support
+
+<AdditionalSupport />
