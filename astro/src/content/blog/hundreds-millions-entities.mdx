@@ -1,5 +1,5 @@
 ---
-publish_date: 2024-09-04
+publish_date: 2024-10-04
 title: Hundreds Of Millions Of Entities
 description: How Does FusionAuth Handle Large Numbers Of Entities?
 authors: Dan Moore
@@ -11,13 +11,13 @@ excerpt_separator: "{/* more */}"
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import Aside from 'src/components/Aside.astro';
 
-Recently we load tested a FusionAuth Cloud deployment to see how it handled large numbers of entities. The goal was to have hundreds of millions of entities, associate users with them, and see if the system still performed well with and without pushing entity data into a token.
+Recently we load tested a FusionAuth Cloud deployment to see how it handled large numbers of entities. The goal was to have hundreds of millions of entities, associate users with them, and see if the system still performed well with and without pushing entity data into a token during a login.
 
 {/* more */}
 
 ## The Use Case
 
-This particular situation might come up in a B2B2B scenario where:
+This large number of entities comes up in a business-to-business-to-business (B2B2B) scenario where:
 
 * the FusionAuth customer has customers have their own customers
 * users can belong to one or many companies
@@ -25,17 +25,17 @@ This particular situation might come up in a B2B2B scenario where:
 
 That's a bit abstract, so let's outline a scenario.
 
-Cosmo's Clown Store, which [previously added passkeys](/articles/authentication/webauthn-explained), has grown so large it is going to franchise. Within each franchise, there are employees, stores and departments. Each employee will have some relationship to a store (such as being a worker or a manager) and possibly a relationship to a department (purchasing, HR, marketing). The latter only happens when a franchise has more than two stores. There also might be a number of Cosmo's Clown Store customers who would be users without any such relationship.
+Cosmo's Clown Store, which [previously added passkeys](/articles/authentication/webauthn-explained), has grown so large it is going to franchise. Within each franchise, there are employees, stores and departments. Each employee will have some relationship to a store (such as being a worker or a manager) and possibly a relationship to a department (purchasing, HR, marketing). The latter only occurs when a franchise has more than two stores. There also might be a number of Cosmo's Clown Store customers who would be users without any such relationship.
 
-As part of the franchise agreement, Cosmo's Clown Store offers multiple applications to help franchisees manage their stores, including Clownwear Central (an ERP), Tell It To The Nose (a community management tool), and Juggling Your Hours (a timesheet application). All employees have varying levels of access to these tools, and an employee might be a manager at one store with ERP access, and part time help at another store, with only Juggling Your Hours access.
+As part of the franchise agreement, Cosmo's Clown Store offers multiple applications to help franchisees manage their stores, including Clownwear Central (an ERP system), Tell It To The Nose (a community management tool), and Juggling Your Hours (a timesheet application). All employees have varying levels of access to these tools, and an employee might be a manager at one store with ERP access, and part time help at another store, with only Juggling Your Hours access.
 
-Relationships like these can be modeled with entities, and FusionAuth can, as we will see, handle a large number of them efficiently.
+Relationships like these can be modeled with entities, and FusionAuth can handle a large amount of them efficiently.
 
 ## The Deployment
 
-The deployment being tested is an HA (High Availability) running three extra large nodes.
+The deployment that was tested is an HA (High Availability) running three extra large nodes.
 
-It is running FusionAuth 1.52.1, the latest release at the time we started the load test.
+It runs FusionAuth 1.52.1, the latest release at the time we started the load test.
 
 ## Setting Up The Test
 
@@ -50,15 +50,15 @@ In this cloud deployment of FusionAuth, we loaded:
 * Each entity had ten attributes, nine are five characters long and one is between 100 and 1000 characters long.
 * 1 lambda which pulls information from the entities associated with a user.
 
-We also associated a user in each tenant with ten entities and 1,000 users with one association. 
+We also associated a user in each tenant with ten entities and 1,000 users with one. 
 
 This data was loaded with a variety of scripts, some using the [Typescript client library](/docs/sdks/typescript) and others [calling the REST API](/docs/apis/) directly.
 
-The entities were loaded one at a time; there is no way to bulk load entities in FusionAuth at this time. We saw loading rates of between 47,000 and 75,000 entities loaded per minute.
+The entities were loaded one at a time. There is no way to bulk load entities in FusionAuth at this time. We saw loading rates of between 47,000 and 75,000 entities loaded per minute. They were loaded from a server in a different account but the same region as the HA server.
 
-The users were imported using the [User Import API](/docs/apis/users#import-users) in batches of 1000. The goal was not to test the number of users FusionAuth deployments support, but rather to have enough users to simulate decent scale.
+The users were imported using the [User Import API](/docs/apis/users#import-users) in batches of 1000. The goal was not to stress test the number of users a FusionAuth deployment can support, but rather to have enough users to simulate decent scale.
 
-The lambda which augmented the access token with entity data looked like this:
+The [JWT Populate lambda](/docs/extend/code/lambdas/jwt-populate), which augmented the access token with entity data, looked like this:
 
 ```javascript
 function populate(jwt, user, registration) {
@@ -76,7 +76,6 @@ function populate(jwt, user, registration) {
   if (response.status === 200) {
     var jsonResponse = JSON.parse(response.body);
     var value = jsonResponse.grants[0].entity.data.attr2;
-    console.log(value);
     jwt.entityValue = value;
   } else {
     jwt.entityValue = "n/a";
@@ -84,13 +83,19 @@ function populate(jwt, user, registration) {
 }
 ```
 
-In a real world scenario you probably would do additional logic around the entity attributes or add more of them to the token. In this case we're simply extracting the second attribute, whatever it is, and adding it to the token.
+This code:
+
+* loads the first entity grant
+* extracts the second attribute of the associated entity, whatever it is
+* adds that attribute the token
+
+In a real world scenario you would have additional logic around the entities or attributes. You might add more of the values to the token. 
 
 ## Setup Timeline
 
-The above setup took a fair bit of calendar time. We used an `m7g.2xlarge` instance running in the same region as the FusionAuth deployment, but in a different account. Due to experiments, timeouts and other issues, the data loading took about 5 days to load ~98% of the entities using multiple node scripts. The users were created over 11 days, some of which overlapped with the entity loading. It took about 6 days to assign the users to the entities as outlined above. 
+The above setup took a fair bit of calendar time. We used an `m7g.2xlarge` instance running in the same region as the FusionAuth deployment, but in a different account. Due to experiments and other issues, the data loading took about 5 days to load ~98% of the entities. The users were created over 11 days, some of which overlapped with the entity loading. It took about 6 days to assign the users to the entities as outlined above. 
 
-Two bumps occurred during the load process. Both of these remind us that there is no such thing as "the cloud", only other people's computers.
+Two bumps occurred during the load process. Both remind us that there is no such thing as "the cloud", only other people's computers.
 
 <img src="/img/blogs/hundreds-millions-entities/always-has-been.png" alt="Meme of astronauts saying the cloud has always been other people's computers" width="1200" />
 
@@ -181,17 +186,21 @@ Caused by: java.net.ConnectException: Connection refused
         ... 14 common frames omitted 
 ```
 
-The database disk filling up caused a hard failure of FusionAuth. We determined the disk was full by reviewing our monitoring systems. If this had been a customer deployment, we would have been alerted well prior to failure and taken steps to resolve it. Since this was a testing instance, the alerts were silenced.
+The database disk filling up caused FusionAuth to fail.
+
+We determined the disk was full by reviewing our monitoring systems. If this had been a customer deployment, we would have been alerted well prior to failure and taken steps to resolve it. Since this was a testing instance, the alerts were silenced.
 
 Luckily, the fix was simple. All we had to do was increase the size of the database file system.
 
-Doing so also led to better performance in general. This instance was not using provisioned IOPS, so the IO performance is tied to the disk size.
+Doing so also led to better performance in general. This instance was not using provisioned IOPS, so the I/O performance is tied to the disk size.
 
 From 100,000,000 to around 250,000,000 entities, the system worked great. Then the next disk space issue reared its ugly head.
 
 ### Elasticsearch Space
 
-Entities are searchable in FusionAuth. Just like users, there's a `data` field which holds arbitrary JSON. This field can be searched using [Elasticsearch syntax](/docs/apis/entities/entities#search-for-entities). But adding in many entities caused the servers hosting the indices to run out of disk space. We started seeing errors around 250M entities.
+Entities are searchable in FusionAuth. Just like users, there's a `data` field which holds arbitrary JSON. This field can be searched using [Elasticsearch syntax](/docs/apis/entities/entities#search-for-entities). The above lambda uses these search capabilities 
+
+But adding in a lot entities caused the servers hosting the search indices to run out of disk space. We started seeing errors at around 250M entities.
 
 Here's the error, which you can find in the `fusionauth-search.log` log file.
 
@@ -201,7 +210,7 @@ Here's the error, which you can find in the `fusionauth-search.log` log file.
 
 You will also receive `503` error messages when you try to create new entities, and the operation will fail.
 
-The answer to this was to increase the disk size of the system managing the indices. 
+Again, the answer was simple: increase the disk size of the system managing the indices. 
 
 ## Performance Testing Results
 
@@ -218,30 +227,32 @@ The results:
 | Users with grant  | 50,000    | 701 seconds | 72.24 | 
 | Users with no grant  | 50,000   | 611 seconds | 81.79 |
 
-Even though there was an approximately 11% decrease in the number of logins/second when the entity search occurred, 72.24 logins/second is pretty good. That rate translates to 187,246,080 logins/month. That is a lot of logins.
+Even though there was an approximately 11% decrease in the number of logins/second when the entity search occurred, 72.24 logins/second is pretty good. That rate translates to 187,246,080 logins/month.
 
-## Caveats
+That is a lot of logins.
+
+### Caveats
 
 FusionAuth, like all software, is limited by the hardware available.
 
-These tests were run on a deployment that anybody can buy, with the exception of increased disk sizes.
+These tests were run on a deployment that anybody can [buy today](/pricing), with the exception of increased disk sizes.
 
 If you are interested in running FusionAuth with more entities and are worried about performance, please [contact our sales team](/contact) and we'll be happy to build a custom deployment that meets your needs.
 
 ## Other Stuff
 
-It is fun to play around with big numbers.
+After loading this data, we looked at related operations.
 
 If you are wondering how long it takes to [reindex](/docs/lifecycle/manage-users/search/search#reindexing-elasticsearch) 15M users or 461M entities, wonder no more.
 
 * A user reindex took 20.6 hours (729,000/hour).
-* The entity reindex took 102.2 hours (4.5 million/hour). This re-index exposed some performance optimization opportunities. Here's the [GitHub tracking issue](https://github.com/FusionAuth/fusionauth-issues/issues/2896).
+* The entity reindex took 102.2 hours (4.5 million/hour). This re-index exposed some performance optimization opportunities. Here's the [GitHub tracking issue](https://github.com/FusionAuth/fusionauth-issues/issues/2896) and also required an expansion of the disk space for our search nodes.
 
-Also, it took about 6 minutes to upgrade from 1.52.1 to 1.53.2.
+It took about 6 minutes to upgrade from 1.52.1 to 1.53.2. The timing of any upgrade depends on the [database migrations being run](/docs/get-started/download-and-install/fusionauth-app#advanced-installation) and the size of the data in the affected tables.
 
 ## Summing Up
 
 FusionAuth is performant and responsive even when holding huge numbers of entities and a significant number of users.
 
-However, retrieving entity data in a lambda is not cost free. There was a 11.7% decrease in the logins/second supported when associated entity values are added to the access token.
+However, retrieving entity data in a lambda is not cost free. There was a 11.7% decrease in the number of logins per second  when an associated entity value is added to the access token.
 
