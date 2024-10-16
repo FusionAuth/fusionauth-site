@@ -67,7 +67,7 @@ If you work for a large organization, you may need to federate your user managem
 
 Of course, nothing is perfect. There are challenges with this approach as well. Some technical, some not so much. 
 
-First off is the [SSO tax](https://sso.tax/). Many third party applications don't support auth delegation until you are on an enterprise plan. Investigate required applications to see if and how they can act as a RP or SP to a centralized user management system before you decide to pursue the bottleneck architecture. 
+First off is the [SSO tax](https://sso.tax/). Many third party applications don't support auth delegation until you are on the enterprise tier. Investigate required applications to see if and how they can act as a RP or SP to a centralized user management system before you decide to pursue the bottleneck architecture. 
 
 Another organizational challenge is ensuring developers and end users actually use the organization's user management system. Some may want to use their old, familiar authentication solutions. Encourage everyone to work within these constraints by making adoption as easy as possible and clearly explaining the benefits. Providing examples of successful integrations can help with both of these.
 
