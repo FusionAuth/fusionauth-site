@@ -9,11 +9,22 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  check_links:
-    # The type of runner that the job will run on
+  test_send_mail:
     runs-on: ubuntu-latest
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: ${{secrets.MAIL_HOST}}
+        server_port: ${{secrets.MAIL_PORT}}
+        secure: true
+        username: ${{secrets.MAIL_USERNAME}}
+        password: ${{secrets.MAIL_PASSWORD}}
+        subject: Failed linkcheck
+        to: dan@fusionauth.io
+        from: FusionAuth GitHub Actions
+        body: Linkcheck failed.
+  check_links:
+    runs-on: ubuntu-latest
     steps:
       # linkcheck
       - uses: actions/checkout@v4
@@ -21,3 +32,20 @@ jobs:
         with:
           arguments: https://fusionauth.io/ --skip-file config/linkcheck/linkcheck-skip.txt --connection-failures-as-warnings
         name: linkcheck
+      - name: Send mail
+  send_mail_on_failure:
+    needs: check_links
+    runs-on: ubuntu-latest
+    if: ${{ failure() }}
+    steps:
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: ${{secrets.MAIL_HOST}}
+        server_port: ${{secrets.MAIL_PORT}}
+        secure: true
+        username: ${{secrets.MAIL_USERNAME}}
+        password: ${{secrets.MAIL_PASSWORD}}
+        subject: Failed linkcheck
+        to: dan@fusionauth.io
+        from: FusionAuth GitHub Actions
+        body: Linkcheck failed.
