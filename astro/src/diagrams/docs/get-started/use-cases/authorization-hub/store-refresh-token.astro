@@ -1,0 +1,40 @@
+---
+import Diagram from "src/components/mermaid/SequenceDiagram.astro";
+const { alt } = Astro.props;
+
+//language=Mermaid
+const diagram = `
+sequenceDiagram
+    participant User as Logged In User/Browser
+    participant App
+    participant FusionAuth
+    participant IdentityProvider as YouTube
+
+    User ->> App : Request 'Connect With YouTube' Page
+    App ->> App : Generates Connect With YouTube Authorize URL Using 'idp_hint'
+    App ->> User : Returns 'Connect With YouTube' Page
+    User ->> App : Clicks On 'Connect With YouTube'
+    App ->> User : Redirects to FusionAuth
+    User ->> FusionAuth : Requests Login Page
+    FusionAuth ->> FusionAuth : Examines 'idp_hint'
+    FusionAuth ->> User : Redirects to YouTube
+    User ->> IdentityProvider : Requests Login Page
+    IdentityProvider ->> User : Returns Login Page
+    User ->> IdentityProvider : Enter Credentials
+    IdentityProvider ->> IdentityProvider : Validate Credentials
+    IdentityProvider ->> User : Redirect To FusionAuth With Identity Provider Authorization Code
+    User ->> FusionAuth : Requests Page, Has YouTube Authorization Code
+    FusionAuth ->> IdentityProvider : Exchange Authorization Code For YouTube Tokens
+    IdentityProvider ->> FusionAuth : Returns YouTube Tokens
+    FusionAuth ->> FusionAuth : Stores YouTube Refresh Token On Link
+    FusionAuth ->> User : Redirect To Redirect URI With FusionAuth Authorization Code
+    User ->> App : Request Redirect URI, Has FusionAuth Authorization Code
+    App ->> FusionAuth : Request FusionAuth Tokens
+    FusionAuth ->> App : Return FusionAuth Tokens
+    App ->> App : Redirect To 'Connect With YouTube' Page
+    App ->> FusionAuth : Request User's Links Using API
+    FusionAuth ->> App : Return User's Links
+    App ->> User : Display 'Connected' Message
+`;
+---
+<Diagram code={diagram} alt={alt} />
