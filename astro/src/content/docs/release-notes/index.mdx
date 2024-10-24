@@ -34,16 +34,40 @@ import IssueResolvedVia from 'src/components/docs/release-notes/ReleaseNoteIssue
      - Fixed
      - Enhancements
      - Internal
+
+   For fixed bugs, provide the following information to the reader
+   1. What it is and Why they care
+   2. What specific situation and configuration causes the issue that we've fixed
+   3. What symptom(s) they will observe if they have or may hit this condition
 */}
 
 Looking for release notes older than 1.23.0? Look in the [release notes archive](/docs/release-notes/archive). Looking to be [notified of new releases?](/docs/operate/roadmap/releases#release-notifications) <span class="not-prose no-underline"><a class="ml-2" href="/docs/releases.xml"><i class="fas fa-xs fa-rss text-orange-700 text-2xl" width="50px" /></a></span>
 
-<ReleaseNoteHeading version='1.53.3' releaseDate='October 23, 2024'/>
+<ReleaseNoteHeading version='1.53.3' releaseDate='October 24, 2024'/>
 
 ### Fixed
-* <Issue issue="2764">The CSRF token for federated login added in version `1.47.0` is not applied when all identity providers configured for an application use managed domains, and the OAuth authorize request for the application includes an `idp_hint` parameter.</Issue>
+* <Issue issue="2764">
+  In order to better protect 3rd party logins via SAML v2, OpenID Connect, and other 3rd party identity providers, a CSRF (cross site request forgery) token was added in version 1.47.0. This token was not being used when all identity providers configured for the requested client_id were also configured to use managed domains, and the authorize request also contained the idp_hint request parameter.
 
-* <Issue issue="2893,2472">FusionAuth is not honoring the `rememberDevice` setting set by a user when performing a federated login. This setting tells FusionAuth whether it should establish an SSO session for the user. FusionAuth will look for this value in the following order: the selection previously made by the user (stored in a cookie); the checkbox on interactive login pages; a new `rememberDevice` query parameter that can be supplied to the `/oauth2/authorize`, `/oauth2/register`, and IdP-initiated login endpoints.</Issue>
+  In this specific configuration, because the token was not being utilized, the login workflow would fail with an error.
+  </Issue>
+
+* <Issue issue="2893">
+  When using the hosted login pages, the end user is generally shown a checkbox named `Keep me signed in`, which indicates whether the user wishes to create an SSO session after logging in.
+
+  When using an external identity provider along with an `idp_hint` or `login_hint` parameter, a user may be taken directly to the identity provider, bypassing the page with this checkbox. In this case, the user will not have the option of making a choice to establish or not establish an SSO session.
+
+  This behavior has been improved in order to provide additional control on how the SSO session should be created.
+
+  FusionAuth will now use the following order of operations in this non-interactive workflow to decide if the SSO session should be created.
+
+  1. The user's previous selection, if available. This past choice will have been stored in an HTTP only cookie.
+  2. The optionally supplied `rememberDevice` query parameter.
+
+  In the event that the user has never seen the login page, the value of the `rememberDevice` query parameter will be the deciding factor. A value of `true` indicates that an SSO session should be created and a value of `false` indicates that an SSO session should not be created. If this parameter is omitted, the default behavior will be to create the SSO session.
+
+  For more information on using the `idp_hint` and `login_hint` parameters, see the [Identity Providers Overview](https://fusionauth.io/docs/lifecycle/authenticate-users/identity-providers/) documentation.
+  </Issue>
 
 
 <ReleaseNoteHeading version='1.53.2' releaseDate='September 12, 2024'/>
@@ -672,12 +696,13 @@ Please be sure to read the notes in the **Changed** section before upgrading.
 <DatabaseMigrationWarning />
 
 ### Known Issues
-* The garbage collection logging change introduced in version `1.47.0` was not compatible with the way the FusionAuth docker image was built. You will need to use version `1.47.1` if you will be using the FusionAuth docker image.
-  * Resolved in version `1.47.1` via [GitHub Issue #2392](https://github.com/FusionAuth/fusionauth-issues/issues/2392)
-* The `passwordValidationRules` variable may be `null` on the first render of the Change Password themed page. If you had been referencing this field in your template, the render may fail.
-  * Resolved in version `1.49.1` via [GitHub Issue #2616](https://github.com/FusionAuth/fusionauth-issues/issues/2616)
-* The CSRF token used with federated login is not being applied when all configured IdPs for an application use managed domains and an `/oauth2/authorize` request for the application includes an `idp_hint` parameter.
-  * Resolved in version `1.53.3` via [GitHub Issue #2764](https://github.com/FusionAuth/fusionauth-issues/issues/2764)
+* <IssueResolvedVia resolvedIn="1.47.1" viaIssue="2392">
+  The garbage collection logging change introduced in version `1.47.0` was not compatible with the way the FusionAuth docker image was built. You will need to use version `1.47.1` if you will be using the FusionAuth docker image.
+  </IssueResolvedVia>
+* <IssueResolvedVia resolvedIn="1.49.1" viaIssue="2616">
+  The `passwordValidationRules` variable may be `null` on the first render of the Change Password themed page. If you had been referencing this field in your template, the render may fail.
+  </IssueResolvedVia>
+* <IssueResolvedVia resolvedIn="1.53.3" viaIssue="2764">The CSRF token used with federated login is not being applied when all configured IdPs for an application use managed domains and an `/oauth2/authorize` request for the application includes an `idp_hint` parameter.</IssueResolvedVia>
 
 ### Security
 * A race condition exists when using a refresh token with a one-time-use policy where the same token value could successfully be used twice to obtain a new access token. In practice this would be very difficult to replicate outside of a scripted example.
