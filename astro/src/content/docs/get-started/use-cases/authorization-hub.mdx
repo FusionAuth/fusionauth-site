@@ -1,0 +1,135 @@
+---
+title: Social Login Authorization Hub
+description: What is a Social Login Authorization Hub?
+section: get started
+subcategory: use cases
+---
+import Aside from 'src/components/Aside.astro';
+import StoreRefreshTokensDiagram from 'src/diagrams/docs/get-started/use-cases/authorization-hub/store-refresh-token.astro';
+import RetrieveAccessTokenDiagram from 'src/diagrams/docs/get-started/use-cases/authorization-hub/retrieve-access-token.astro';
+import AuthorizationHubDescription from 'src/content/docs/get-started/use-cases/_authorization-hub-description.mdx';
+
+## Overview
+
+<AuthorizationHubDescription />
+
+## Problem 
+
+You have a site that leverages social providers, using their APIs to provide functionality to your users.
+
+This means you need to manage your users' access tokens in one place, as well as easily add new social providers as you support them. 
+
+This use case includes managing tokens for social providers such as:
+
+* Google
+* YouTube
+* Facebook
+* Instagram
+* LinkedIn
+* Microsoft Entra Id
+* Other social providers supporting OIDC
+
+## Solution
+
+Use FusionAuth as your authorization hub, offering a centralized repository for social login long lived tokens. 
+
+You can use FusionAuth to:
+
+* be an interface for social providers, easy to configure and updated as the providers change their functionality
+* safely hold and store the long-lived tokens for each user, and make they available via a secure API
+
+This is an example of [the Third-Party Service Authorization Mode](/docs/lifecycle/authenticate-users/oauth/modes#third-party-service-authorization).
+
+## Prerequisites
+
+This use case assumes you have configured your application or applications to delegate authentication to FusionAuth via the Authorization Code grant and the hosted login pages.
+
+You can implement this use case with FusionAuth APIs, specifically the `Complete the Login` [Identity Provider APIs](/docs/apis/identity-providers/). That implementation is beyond the scope of this document.
+
+## Example Application
+
+Suppose you have a video posting site. You want to:
+
+* let a user upload a video to your site
+* enhance the video using a fun algorithm
+* upload the video to the YouTube, Facebook and Instagram accounts of this user
+
+FusionAuth can help with parts of this process, including storing the tokens needed to upload the video.
+
+## Actors/Components
+
+* your user and their client (mobile app or browser)
+* your application
+* the social provider(s)
+  * their identity services
+  * APIs you want to access, for functionality such as video upload
+* FusionAuth
+
+## Implementation Steps
+
+This is a two phase implementation.
+
+<Aside type="note">
+This document refers to various APIs, but you can also use the [client libraries](/docs/sdks) to interact with FusionAuth.
+</Aside>
+
+### Connecting Accounts
+
+First, you need to let your users connect their accounts.
+
+* Select the social providers whose APIs you need to call. Let's say you want to let a user connect to YouTube, so you'd configure a Google connection (see [Edge Cases](#edge-cases) for a note about the Google Identity Provider).
+  * Make sure you configure the Identity Providers with the proper scopes. You'll want the scopes for any APIs you'll be calling at the social provider, as well as a refresh token scope. For example, to upload to YouTube, you'll want the `https://www.googleapis.com/auth/youtube.upload` scope and make sure you include the `access_type=offline` parameter. Consult the social provider for specifics on the correct scopes.
+* Set up the social providers in FusionAuth and enable them in the Application configuration.
+* Create a 'Connect Your Account' page that you'll display to users who are logged in.
+* Add the 'Connect To YouTube', 'Connect To Facebook', or other appropriate buttons to this page.
+  * The for these buttons is similar to what you'd add to let someone authenticate using a social provider, but you want to use the `idp_hint` parameter. The link look likes this: `https://local.fusionauth.io/oauth2/authorize?client_id=85a03867-dccf-4882-adde-1a79aeec50df&response_type=code&redirect_uri=https%3A%2F%2Fexample.com%2F/connectaccount&idp_hint=82339786-3dff-42a6-aac6-1f1ceecb6c46` 
+* The user will connect their YouTube or other accounts by clicking on this link.
+* You should display all accounts the user has connected by using the [Links API](/docs/apis/identity-providers/links#retrieve-a-link). You can also offer the ability to disconnect a user from a provider if you so choose by unlinking the user and the identity provider.
+
+Here's a sequence diagram for requesting and storing the refresh token.
+
+<StoreRefreshTokensDiagram alt="Requesting and storing the refresh token." />
+
+### Accessing Social Provider APIs
+
+Next, after users have connected accounts and your application needs to interact with the social providers, it should take these steps.
+
+* Retrieve the [Identity Provider link](/docs/apis/identity-providers/links#retrieve-a-link) using the user's Id and Identity Provider Id.
+* The Link object has the long lived token stored in the `token` field.
+* Provide this `token` to the social provider's token endpoint for a new access token.
+* Use the access token to make authenticated requests to the social provider's APIs to, for example, upload a video to YouTube.
+
+Here's a sequence diagram for requesting and storing the refresh token.
+
+<RetrieveAccessTokenDiagram alt="Getting the access token." />
+
+## Expected Outcome
+
+You have a central, secure repository of long-lived or refresh tokens for your users. You can easily display the connections for each user, allowing them to revoke any. Your application can take the long-lived tokens and exchange them for access tokens, which can be used to 
+
+## Edge Cases
+
+When the long lived token stored in FusionAuth expires or is revoked by the user or social provider, any request you make of the social provider's token endpoint will fail. At that point, the user will need to re-authorize and refresh the link.
+
+For Google, use the OIDC Identity Provider, which allows you to request a refresh token, rather than the Google identity provider, which only offers you the Id token. The OIDC Identity Provider offers more flexibility for this use case. [Learn more](/docs/lifecycle/authenticate-users/identity-providers/social/google#custom-parameters).
+
+Currently you cannot query user link attributes using the [User Search API](/docs/lifecycle/manage-users/search/user-search-with-elasticsearch). This means that you can't query FusionAuth to, for example, find out how many users have connected to a certain social provider. Please [follow this GitHub issue for more, including workarounds](https://github.com/FusionAuth/fusionauth-issues/issues/2791).
+
+## Other Example Scenarios
+
+These include:
+
+* A social media posting site, which integrates with various social media platforms to post content.
+* An application which ingests Google or Microsoft Outlook calendars to provide syncing or reminder services.
+* A photo sharing site that accesses users photos stored in Google and Facebook and lets users comment on them.
+
+In each of these cases there's a dependency on a third party platform which is accessed via API to provide core app functionality.
+
+## Additional Documentation
+
+* [The Third-Party Service Authorization Mode](/docs/lifecycle/authenticate-users/oauth/modes#third-party-service-authorization)
+* [List of supported social identity providers](/docs/lifecycle/authenticate-users/identity-providers/#social-identity-providers)
+* [List of SDKs](/docs/sdks)
+* [Identity link APIs](/docs/apis/identity-providers/links)
+* [Google API documentation](https://developers.google.com/identity/protocols/oauth2)
+* [Facebook API documentation](https://developers.facebook.com/docs/graph-api/overview)
