@@ -10,6 +10,7 @@ darkIcon: /img/icons/webauthn-explained-dark.svg
 
 - [Introduction](#introduction)
 - [Understand user login](#understand-user-login)
+- [Understand machine login](#understand-machine-login)
 - [Why Not Use Only A Username And Password For Machine Authorization?](#why-not-use-only-a-username-and-password-for-machine-authorization)
 - [Further Reading](#further-reading)
 - [TODO](#todo)
@@ -23,18 +24,24 @@ This article explains how to use OAuth 2.0 and FusionAuth for service to service
 Let's start by summarizing how OAuth normally works for user login. You've most likely used FA for local login or third-party login. With local login, FA stores usernames and password hashes. With third-party login, another organization, like Google, handles authentication and FA is merely an intermediary. Either way, the authentication flow works as follows:
 
 - A user (resource owner) clicks "Log in" on your website (client).
-- Your site redirects the user to the URL of the authorization server, which could either be FA directly, or another redirection to Google. This URL includes parameters for the Id of your site (client Id), the URL the user's browser should be sent to after logging in (redirect URI), the response type of code, and the permissions your site is requesting on behalf of the user (scopes).
+- Your site redirects the user to the URL (authorization endpoint) of the authorization server, which could either be FA directly, or another redirection to Google. This URL includes parameters for the Id of your site (client Id), the URL the user's browser should be sent to after logging in (redirect URI), the response type of code, and the permissions your site is requesting on behalf of the user (scopes).
 - The user logs in and consents to the permissions requested on a page provided by the server.
 - The authorization server redirects the browser back to your site (using the redirect URI), with a temporary authorization code.
-- Your site then starts a separate HTTP call to the server directly. This is more secure than using the browser. Now your site can ask the server for a key (access token) to access the user's resources in future calls. In this call your site sends the temporary authorization code, your client Id, and your client secret. The server might instead return a refresh token with a long duration, which can be used to request access tokens with short durations. This enhances security and limits the damage caused if an attacker manages to steal an access token.
+- Your site then starts a separate HTTP call to the server directly (to the token endpoint). This is more secure than using the browser. Now your site can ask the server for a key (access token) to access the user's resources in future calls. In this call your site sends the temporary authorization code, your client Id, and your client secret. The server might instead return a refresh token with a long duration, which can be used to request access tokens with short durations. This enhances security and limits the damage caused if an attacker manages to steal an access token.
 
 The protocol above is called a flow, specifically the authorization code flow. What the flow returns is called a grant — access to the requested scopes. The grant is represented by data like the client credentials and the access token. The word grant is often used interchangeably with the word flow, but that isn't strictly correct.
 
 For a detailed overview of all OAuth flows, please read the [FusionAuth modern guide to OAuth](https://fusionauth.io/resources/the-modern-guide-to-oauth.pdf).
 
+## Understand machine login
+
+Let's move on from discussing users to discussing services. The OA flow for calling an API from a machine with no user login page is called the client credentials flow.
+
+- Your app calls the token endpoint of the authorization server, passing your `client_id`, `client_secret`, and `grant_type` with value `client_credentials`.
+
 ## Why Not Use Only A Username And Password For Machine Authorization?
 
-Let's move on from discussing users to discussing services. When you've called an API, you've most likely used a username and password — which might be called an access token or an API key. This is simple and secure, so why complicate it by using OAuth when you don't need to worry about users anyway?
+When you've called an API, you've most likely used a username and password — which might be called an access token or an API key. This is simple and secure, so why complicate it by using OAuth when you don't need to worry about users anyway?
 
 Credential Management & Rotation
 
