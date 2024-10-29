@@ -15,10 +15,24 @@ This page contains notes on changes in recent versions of FusionAuth that requir
 
 Version `1.53.3` includes a change to persist the value of the `Keep me signed in` checkbox, which indicates whether the user wishes to create an SSO session after login, through an external identity provider workflow. If the Google IdP's `loginMethod` is configured as `UsePopup` or `UseVendorJavaScript`, existing custom advanced themes require an update to incorporate the fix for the Google IdP. You can update the template via the API using `theme.templates.helpers` or by modifying the *Helpers* template in the admin UI.
 
-To allow the `Keep me signed in` value to be persisted through a Google IdP login in an existing custom advanced theme, remove the `data-login_uri` attribute from the `div` with Id `g_id_onload` in the `googleButton` macro and add the following attribute in its place:
+To allow the `Keep me signed in` value to be persisted through a Google IdP login in an existing custom advanced theme, remove the `data-login_uri` attribute and its value from the `div` with Id `g_id_onload` in the `googleButton` macro and add the `data-callback` attribute in its place.
+
+Replace
 
 ```html
-data-callback="googleLoginCallback"
+<div id="g_id_onload" [#list identityProvider.lookupAPIProperties(clientId)!{} as attribute, value] data-${attribute}="${value}" [/#list]
+     data-client_id="${identityProvider.lookupClientId(clientId)}"
+     data-login_uri="${currentBaseURL}/oauth2/callback?state=${idpRedirectState}&identityProviderId=${identityProvider.id}" >
+</div>
+```
+
+with
+
+```html
+<div id="g_id_onload" [#list identityProvider.lookupAPIProperties(clientId)!{} as attribute, value] data-${attribute}="${value}" [/#list]
+     data-client_id="${identityProvider.lookupClientId(clientId)}"
+     data-callback="googleLoginCallback" >
+</div>
 ```
 
 ## Version 1.52.0
