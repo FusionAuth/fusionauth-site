@@ -29,6 +29,8 @@ The ToDo Backend in the diagram can use the JWT and the public key to verify the
 
 The most common solution is to reduce the duration of the JWT and revoke the refresh token so that the user can't generate a new JWT. With this setup, the JWT's expiration duration is set to something short (5-10 minutes) and the refresh token is set to something long (2 weeks or 2 months). At any time, an administrator can revoke the refresh token which means that the user must re-authenticate to get a new JWT. That is unless they happen to have a valid JWT.
 
+[![A call to action image displaying a link to download an ebook on this topic.](/img/cta/jwt-guide-cta.png 'Download this article as an ebook')](/ebooks/breaking-down-json-web-tokens?utm_medium=cta&utm_source=articles&utm_campaign=jwt_ebook)
+
 Here's where things get tricky. That user basically has 5 to 10 minutes to use the JWT before it expires. Once it expires, they'll use their current refresh token to try and get a new JWT. Since the refresh token has been revoked, this operation will fail and they'll be forced to login again.
 
 It's this 5 to 10 minute window that freaks everyone out. So, how do we fix it?
