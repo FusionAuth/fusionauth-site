@@ -24,18 +24,18 @@ const qsSections: QuickStartSection[] = [
   
   {
     key: 'install',
-    icon: '/img/icons/digit-one.svg',
+    icon: '/img/icons/download-fusionauth.svg',
     faIcon: 'fa-code-simple',
     color: 'indigo',
-    title: 'Launch FusionAuth',
+    title: 'Install and Launch FusionAuth',
     anchorTag: 'install',
-    desc: 'Launch FusionAuth from docker, the cloud, or on your local system.',
+    desc: 'Install and launch FusionAuth from docker, the cloud, or on your local system.',
     articles: [
     ],
   },
   {
       key: 'setup',
-      icon: '/img/icons/digit-two.svg',
+      icon: '/img/icons/configure.svg',
       faIcon: 'fa-code-simple',
       color: 'indigo',
       title: 'Run Fusionauth',
