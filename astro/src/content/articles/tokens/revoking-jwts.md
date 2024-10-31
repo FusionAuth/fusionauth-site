@@ -19,7 +19,7 @@ There is not a simple solution because JWTs are designed to be portable, decoupl
 
 Here's a diagram that illustrates this architecture:
 
-<div class="bg-slate-200 flex justify-center p-4 w-full">
+<div class="flex justify-center p-4 w-full">
 <img src="/img/articles/revoking-jwts/jwt-revoke_350.png" alt="Revoking JWTs"/>
 </div>
 
