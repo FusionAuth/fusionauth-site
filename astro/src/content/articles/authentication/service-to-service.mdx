@@ -13,7 +13,8 @@ import PremiumEditionBlurbApi from 'src/content/docs/_shared/_premium-edition-bl
 - [Introduction](#introduction)
 - [Understand user login](#understand-user-login)
 - [Understand machine login](#understand-machine-login)
-- [A FusionAuth Example](#a-fusionauth-example)
+- [Designing A FusionAuth Example](#designing-a-fusionauth-example)
+  - [update customer type - can't](#update-customer-type---cant)
 - [Why Not Use Only A Username And Password For Machine Authorization?](#why-not-use-only-a-username-and-password-for-machine-authorization)
 - [Further Reading](#further-reading)
 - [TODO](#todo)
@@ -48,24 +49,69 @@ Let's move on from discussing users to discussing services. The OA flow for call
 
 This flow is much simpler than the user flow earlier, but there are still some design choices to be aware of. Both the client and the resource server have to trust the authorization server. So both parties must be registered users of the authorization server. Additionally, the resource server needs to trust that when any call is made to it with an access token, that that access token represents the permissions granted by a client. So the authorization server must sign the access token (encrypt a hash of the token with its private key). Without a signature, any client could create an access token claiming whatever permissions they wanted.
 
-## A FusionAuth Example
+## Designing A FusionAuth Example
 
-todo - read entities in fusionauth docs
+Imagine you are a backup service that allows customers to save files in your storage. Your free service allows a customer to store up to 100 MB and your premium service allows more than that. You have two customers currently: North University and North Hospital. Customers will authenticate with your API using the client credentials flow. This flow is provided in FusionAuth by Entities, not Users. Please read the [documentation on Entities and Entity Types](https://fusionauth.io/docs/get-started/core-concepts/entity-management) before proceeding.
 
-entities, entity types
-your app must know what uuids apps are, must check signature
+Let's look at the implications of this scenario using FusionAuth:
+
+- Your customers don't have to register on FusionAuth, or have any knowledge of it. It is only your service that needs be aware of FusionAuth, and that the Ids of customers and permissions between FusionAuth and the service database agree.
+- When receiving an API call, your service needs to check only that the access token is signed by FusionAuth, that the caller is trying to access its own resorces, and the caller has permissions to perform the requested operation on those resources.
+- A customer will change between free and premium. When working with individual users in FusionAuth, you could use roles, but entities do not support roles. How can you model this?
+
+You can't use entity types for free and premium — one type for customers and one for premium customers — because you cannot change the type of an entity once it is created. Nor can entity types have default permissions to other entity types. Permissions are defined only between two entities.
+
+Instead, you have two options:
+- Write a script that calls the [FusionAuth Entity API](https://fusionauth.io/docs/apis/entities/entities#update-an-entity) and updates all permissions for an entity. Note that you will have to track which permissions premium customers should have and which permissions free customers should have, and which customers are of which type, outside FusionAuth. FusionAuth will have no concept of different customer types.
+- Use the entity API to add a custom attribute of `premium` to premium customers. Then write a [Lambda](https://fusionauth.io/docs/extend/code/lambdas/client-credentials-jwt-populate) to check if the customer has the `premium` attribute at login, and add extra permissions to the JWT if it does. This option is more complex than the previous, but allows you to keep all customer type and permission information in one place, in FusionAuth.
+
+Below is a diagram of the system you'll build in the next section.
+
+```mermaid
+
+```
+
 api entity type and customer entity type
+
+<Aside type="note">
+entities cannot be used with users, only with other entities. https://github.com/FusionAuth/fusionauth-issues/issues/1295. so you can't model hospitals as entities, and have patients, admission staff, and doctors as users with different permissions to medical records at different hospitals.
+</Aside>
+
+### update customer type - can't
+
+update type from customer to api
+
+33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod
+
+40450891-0231-49c4-839b-b2c444f57f9c
+NorthUniversity
+40450891-0231-49c4-839b-b2c444f57f9c
+EmQ3FL-rDqHuESnJCmZacFK3sKQbOKX-gQYnC5pPLio
+
+PUT /api/entity/{entityId}
+
+```sh
+curl -X PUT \
+  -H "Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "entity": {
+      "clientId": "40450891-0231-49c4-839b-b2c444f57f9c",
+      "clientSecret": "EmQ3FL-rDqHuESnJCmZacFK3sKQbOKX-gQYnC5pPLio",
+      "type": {
+        "id": "ba94d545-230b-4e9c-95f9-af87c8e97f80"
+      },
+      "name": "NorthUniversity"
+    }
+  }' \
+  "http://localhost:9011/api/entity/40450891-0231-49c4-839b-b2c444f57f9c"
+```
+
+## Why Not Use Only A Username And Password For Machine Authorization?
 
 advantages - manage permissions from apps to other apps in fusionauth web interface
 
-use attributes (cli) and lambdas to manage permissions (roles). or write script to add and remove permissions
 
-
-
-
-
-
-## Why Not Use Only A Username And Password For Machine Authorization?
 
 When you've called an API, you've most likely used a username and password — which might be called an access token or an API key. This is simple and secure, so why complicate it by using OAuth when you don't need to worry about users anyway?
 
