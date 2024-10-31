@@ -21,6 +21,7 @@ interface QuickStartSection {
 }
 
 const qsSections: QuickStartSection[] = [
+  
   {
     key: 'install',
     icon: '/img/icons/download-fusionauth.svg',
@@ -85,6 +86,17 @@ const qsSections: QuickStartSection[] = [
     title: 'Backend/API',
     anchorTag: 'api',
     desc: 'An API or service protected by FusionAuth and access tokens',
+    articles: [
+    ],
+  },
+  {
+    key: 'examples',
+    icon: '/img/icons/web-application.svg',
+    faIcon: 'fa-binary',
+    color: 'green',
+    title: 'Examples',
+    anchorTag: 'examples',
+    desc: 'Example apps',
     articles: [
     ],
   },

@@ -1,3 +1,4 @@
+<details><summary>Using FusionAuth Cloud</summary>
 When developing against a FusionAuth Cloud instance with a hostname ending in `fusionauth.io`, unless your application shares the same domain of `fusionauth.io` attempts to use these endpoints will fail with a `403` status code. 
 
 These endpoints do not work correctly for cross origin requests. Cross origin requests occur when the application making the request to FusionAuth is using a separate domain. For example, if your application URL is `app.acme.com` and the FusionAuth URL is `acme.fusionauth.io` requests from your application to FusionAuth will be considered cross origin.
@@ -11,3 +12,4 @@ If this configuration is not possible, use one of these alternative methods:
 * Configure a [custom domain name for the FusionAuth Cloud instance](/docs/get-started/run-in-the-cloud/cloud#updating-with-existing-custom-domains) (limited to certain plans).
 
 Modifying FusionAuth CORS configuration options does not fix this issue because the cookies that FusionAuth writes will not be accessible cross domain.
+</details>
