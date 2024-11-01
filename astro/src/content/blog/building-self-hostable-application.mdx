@@ -1,0 +1,437 @@
+---
+publish_date: 2024-09-25
+title: Building A Self-hostable Product
+description: What do you need to consider when building and releasing a self-hostable product?
+authors: Dan Moore
+categories: Education
+tags: download, product, architecture, air-gapping, engineering, self-host
+image: /img/blogs/self-hostable-application/building-a-self-hostable-product.png
+excerpt_separator: "{/* more */}"
+---
+
+In this article, you'll learn about the architecture, business model, and software design choices necessary to create a self-hostable developer tool.
+
+{/* more */}
+
+FusionAuth, the product, is designed to be [downloaded and run locally](/download). While you can pay FusionAuth, the company, to run FusionAuth, the product, [for you in the cloud](/docs/get-started/run-in-the-cloud/cloud) as a SaaS offering, many users run FusionAuth on their own servers or laptops.
+
+This article will focus on developer tools that are sold and require integration with an existing application, rather than standalone developer tools such as an IDE or products given away for free. 
+
+Examples of the types of tools that this post applies to include:
+
+* a message queue
+* an analytics engine
+* an authorization as a service solution
+* a database
+* an identity provider offering authentication
+
+But first, why would you go down this path? 
+
+<img src="/img/blogs/self-hostable-application/two-paths.png" alt="A person choosing between building SaaS and self-hostable software." width="1200"/>
+
+Doesn't the future belong to software-as-a-service (SaaS), where developers integrate functionality using APIs delivered over the Internet? Aren't self-hostable products straight out of the early 2000s, when Sourceforge.net and Freshmeat.net were how people got software? Back then, weren't they just called 'software', not 'downloadable software' or 'self-hostable software'?
+
+## Why Build A Self-Hostable Developer Tool
+
+There are a number of reasons to build a self-hostable developer tool which integrates with other applications.
+
+### Offer Control To Your Users
+
+The main reason is to allow developers more control. Developers like control, because they are responsible for the overall performance and functionality of their applications. If they can't control a critical part of their application infrastructure, when their application breaks, they can't fix it. That is extremely frustrating.
+
+With a SaaS solution, especially one built using a typical multi-tenant SaaS architecture, developers have a certain level of control, but it is limited. When using a SaaS offering developers cede some or all of the following aspects of their application:
+
+* data locality
+* performance
+* software versions
+* availability
+
+As a SaaS provider, you can work around some limits. For example, [APIs can be versioned](https://stripe.com/blog/api-versioning) and you can offer data storage in multiple geographic areas. But there are limits. You are unlikely to be able to stand up a server in Greece or Zimbabwe, for example. With the typical SaaS offering, developers simply will not have as much control as they can if they self-host. Of course there's a tradeoff; more on that below.
+
+As a devtools provider, if you offer software that can be hosted on any Linux or Windows server, developers retain more control. Users can run the product on their own hardware, using their own datastores, in their own network. 
+
+If there's a performance issue, they can troubleshoot it. If they want to minimize network hops between your product and their service, they configure the network. If the service or product has fallen over due to load, they can stand up more servers or throttle traffic. 
+
+If they need to pin your product to a certain version, they can skip an upgrade, and treat the product like a library dependency.
+
+<img src="/img/blogs/self-hostable-application/control.png" alt="A Winnie the Pooh meme emphasizing control." width="1200"/>
+
+#### Privacy Guarantees
+
+There are privacy benefits as well. The customer, by examining the network, source code, or documentation, can know exactly what data is sent to the company providing the product. By locking down external connections or preventing any data from being sent, the privacy of the data can be ensured.
+
+A developer can also guarantee encryption of data at rest or in transit when running software locally.
+
+SaaS providers can, and do, offer up legal guarantees for privacy of data. Facebook, while not a devtools company, [has fired employees for reading private messages](https://www.vice.com/en/article/bjp9zv/facebook-employees-look-at-user-data). But running the software locally makes violations impossible.
+
+#### Data Locality
+
+Data locality is an aspect of control that is increasingly important. How critical it is depends on the type of data your application holds. For customers' personally identifiable information (PII) in certain locations, such as Europe or California, you want to know exactly where the data is going. Not doing so can lead to harsh penalties due to GDPR or other regulations.
+
+It isn't just PII, though. If you have a product that operates on large amounts of data or highly proprietary and closely held information, it is easier to bring the product to the data, rather than entice or force the customer to bring data to the product. Building a self-hostable product enables this, by letting your customers run your application in their environment.
+
+#### Anonymity
+
+By making a developer tool self-hostable, you let developers test the product and learn how to use it without requiring them to provide any information. This lowers the level of effort required for evaluation. It is also a marketing differentiator. It can frustrate marketing teams, which are accustomed to having more information about potential users.
+
+**By operating a product themselves, you can offer customers control over their data.** That can be appealing to developers and customers.
+
+There are other benefits beyond offering control to your customers.
+
+### CI Simplicity
+
+If the entire application is self contained, you can stand it up in a CI environment, such as GitHub Actions or CircleCI. Each test can configure the installed local software to a precise, known state and independently run.
+
+FusionAuth solves for this use case with [Kickstart](/docs/get-started/download-and-install/development/kickstart), a custom configuration language that calls APIs on system boot. Your product can use a similar pattern or offer APIs, scripts or infrastructure as code (IaC) to allow configuration of the correct state.
+
+In this situation, with a number of developers running against a single account, a SaaS solution can be slower and more fragile. Developers are making requests over the network from a CI runner, which is a different environment than their laptops. Configuring a SaaS service may collide with other developers' tests. You can work around this with many accounts at the SaaS provider, but then you have to manage and/or pay for them.
+
+### Discovery And Distribution
+
+By offering a self-hostable product with developer friendly installation methods, devs can discover and integrate your product without ever talking to anybody. This lets developers evaluate your solution, using their own hardware and in their own environments, at near zero cost to you.
+
+Some of these installation methods include:
+
+* Homebrew
+* Docker
+* RPMs/DEBs
+* Windows Installation Packages
+* MacOS Disk Images
+* Ruby Gems
+* Maven Packages
+* Hyperscaler marketplaces
+
+Not all of these apply to every self-hosted dev tool, but you should be thinking about these distribution and discovery methods.
+
+Using these free, anonymous distribution methods makes making money more complicated. The business model challenges of self-hostable software are discussed below.
+
+### Business Continuity
+
+Just as self-hostable software increases control for developers, it can do the same for businesses. Self-hosting lowers business continuity risk. If your company fails, is acquired or otherwise ceases to operate, customers can continue to run your product.
+
+Doing so isn't a long-term solution, since the product won't improve. But if a business depends on your solution for critical processes, they can keep it running as they evaluate alternatives. After they find a solution, they can migrate on their schedule, which will depend on integration effort, security risks, feature gaps, and other concerns.
+
+Contrast this with the scenario where the company behind a pure SaaS product fails or is acquired. Customers only retain access to the application or component due to the company's or acquirer's goodwill, respectively. That can be a tough pill to swallow if a component is critical.
+
+Finally, if a company wants to switch architectural components, self-hosting gives them options, because they have access to the data. Whereas SaaS products may or may not have full-featured export functionality.
+
+### Offline Or Limited Network Support
+
+When you have a self-hostable product, you can offer offline or limited network availability. Some use cases that benefit from this functionality include:
+
+* Better, more independent development environments. By using self-hostable components, developers can run the entire application, with all its components, running on their laptop without using mocks. While locations that are truly 100% offline are becoming rarer (thanks Starlink!) it is quite freeing to not rely on a remote API or service. Local services are quicker to stand up and easier to develop against.
+* Locations that don't have internet connectivity or have limited internet connectivity, such as cruise ships and kiosks.
+* High security scenarios handling sensitive data.
+
+If you have a self-hostable product that doesn't need internet connectivity to function, you can serve customers in these situations.
+
+### Your Customer's Budget
+
+If users are running a self-hostable architectural component in their own environment, they can control costs just as they do for their own application.
+
+This may include optimizing compute or network, turning off development environments, or scaling the solution up or down to meet their needs as they change seasonally or over time.
+
+### Your Budget
+
+Self-hostable software can also decrease your expenses. You sell the product, but they run it. The cost of operating it is borne by your customer. That control doesn't come for free, after all.
+
+If you have valuable functionality packaged and sold as self-hostable software, the margins can be quite nice.
+
+Whew. Hopefully you're convinced there's value in self-hostable software. Now, let's talk about what to consider when building a self-hostable architectural component.
+
+## What To Think About When Thinking About Building A Self-Hostable Product
+
+There's a lot to consider when building a self-hostable product. But front and center are your dependencies.
+
+<img src="/img/blogs/self-hostable-application/running-product.png" alt="Little girl running with text 'what does your product need to run?'." width="1200"/>
+
+What dependencies does your product need to run?
+
+### Dependencies
+
+To make sure you minimize adoption friction, keep your required dependency list as small as possible. This makes your users' lives easier when deploying and operating the product. It will also make support easier.
+
+For instance, FusionAuth requires the following components if you are self-hosting:
+
+* A relational database
+* An optional Elasticsearch or OpenSearch instance
+* An optional proxy 
+
+That's it.
+
+Let's contrast this with a SaaS application. Such applications don't carelessly incorporate unneeded components or datastores, but if the engineering team sees a need, they have flexibility to use them. It might be a remote message queue like Kafka, a specialized datastore like Pinecone, or even using S3. The tradeoff between functionality and the operational burden of these services can be evaluated and usage implemented.
+
+On the other hand, asking your customers to learn how to run a NoSQL datastore or message queue to use your product, imposes costs on them that they might not want to bear. Keep your required dependencies minimal.
+
+If you use a runtime like the JVM, bundle that as well. Doing so means you don't have to worry about version incompatibilities. FusionAuth bundles a known version of Java; nothing else is supported. Limiting the environment your application runs in will decrease support costs and increase customer satisfaction.
+
+If you can bundle all your dependencies with your product, that's even better. The more third party components you bundle, the tighter you can control your dependencies. 
+
+This does come at the cost of flexibility.
+
+For example, consider a situation where your product depends on a relational database. If you don't bundle your database, deployment is simpler. Specify what database and versions you support and require your customer provide such a database. If they use a supported database, they can leverage database operating expertise across multiple applications. If they don't currently use a supported database, they will either not buy your product or they will expand their support. This means you want to target widely used solutions if you are not bundling.
+
+Which ones? Ask your potential customers. FusionAuth supports MySQL and PostgreSQL. If you are targeting enterprises, Oracle might be a better fit. If you are targeting embedded developers, SQLite is a good choice.
+
+With a database in particular, provide a schema management mechanism. If you support multiple databases, the schema you ship must support each one. Don't use advanced features of one database which are not available in others. You'll also want to test performance across supported versions of all databases.
+
+On the other hand, if you bundle the database, then you get the same benefits as bundling the runtime: more control, fewer compatibility issues, simpler installation. But the end user can't necessarily use their experience running databases for your product.
+
+For every third party component, think about whether you should bundle it and make life easier for your support team and your user at install time, or unbundle it to make operating your software easier for your self-hosting customer.
+
+#### The GPL
+
+If you are using any components or libraries licensed under the GPL or similar licenses, and you provide a binary to your customers, you must provide them with source code access as well. An example of this is the Java MySQL library, which is GPL. You can work around this by documenting how to download and install GPL dependencies.
+
+SaaS companies don't have to worry about the GPL, because they deliver features but not executable code.
+
+### Deployment Processes
+
+There is another technical hurdle when delivering self-hostable software. In contrast to SaaS, where the deployment process is often 'access this API' or 'log in to this application', with a self-hosted solution installation will be more complex. However, make installation and deployment of your product as simple as possible.
+
+Installation is the first experience a developer has with your software. Write detailed installation documentation. Ensure it covers all the paths you support. Above, the variety of supported distribution mechanisms was mentioned as a positive because you get free distribution of your tool via Maven, Docker, etc. Well, such methods are not totally free--the documentation you write and update to support them is the price you pay.
+
+The best installation experience is not documentation, it's installation scripts or other executable methods. Plan to support multiple installation paths. What particular methods on where you expect your customer to run your software, but you'll want to consider:
+
+* Hardware options such as virtual machines, containers and bare metal
+* Operating systems, such as Windows, MacOS and Linux
+* Delivery mechanisms such as Homebrew, RPMs and Docker
+* Dependencies of the major components, including cloud versions
+
+You can sometimes abstract away hardware and operating system differences by using a VM like the JVM or a cross compiled language like golang.
+
+### The Network Is The Computer
+
+Access to the network is a dependency as well, even if it is often assumed. Unlike a SaaS solution, a self-hostable product can work without network access. 
+
+Lean into this as a differentiator for your product.
+
+For technical reasons, you might require network access for some functionality. Capabilities such as retrieving a license or large amounts of data for advanced features. Downloading data to enable functionality requires network traffic. For example, FusionAuth has a corpus of breached passwords that is too large to ship as part of the self-hostable executable and is part of a paid feature. Build in robust retry logic so if a disk is full or a network is spotty, the data can still be downloaded. 
+
+If you want to offer a true air-gapped experience, where no network access is required, then consider how to offer such features or verify a license is legitimate.
+
+### Tooling
+
+As a developer you are aware of the many tools and architectural components available to help you build a better product. These let you add easily add functionality such as:
+
+* understanding feature usage like HotJar
+* finding bugs like Sentry
+* feature flagging like LaunchDarkly
+* notifications like Knock
+* webhook processing like Svix
+
+Many of these solutions are built as SaaS products and served via APIs or SDKs expecting a network. Make sure you understand which type any tool you evaluate is.
+
+If it requires a network then, sorry, it is no longer an option. You can look to these tools for inspiration, but anything that expects to be used only in a SaaS is typically off-limits for a self-hostable product.
+
+### Releasing
+
+With a SaaS product, you can roll versions forward or backward relatively easily. This is often done using CI/CD. If it isn't perfectly automated, you have control over your server side code. Client side JavaScript may be cached and mobile apps will have a longer timeframe for updating, due to the review processes. Thanks Apple!
+
+With server side control, you can canary your changes and test in the real world. By sending a subset of users through new code paths, you can test if anything breaks without your entire user base being impacted, using tools like [GitHub scientist](https://github.com/github/scientist). With blue/green deployments you can, if your architecture and datastore support it, stand up an entirely separate application instance and shift traffic over to it, ever so gently. Or, for that matter, away from it, if the new code breaks something.
+
+Releasing a self-hostable product is different.
+
+<img src="/img/blogs/self-hostable-application/hits-different.png" alt="A person with a fork and the headline 'it just hits different' and the words deployment process and dependencies above the fork." width="1200"/>
+
+You have limited control over how and when your customers deploy. Remember, as a self-hostable product developer, you gave that power to them. But now you have limited ability to upgrade or downgrade the customer. 
+
+So, when you release you need to be certain that the software has as few flaws as possible. You need rigorous testing across all the supported platforms, architectural components and deployment scenarios. This effort is above and beyond the feature and bugfix testing required of any solid software product, whether self-hostable or SaaS.
+
+You can work around some limitations, though. For instance, you could build in automatic upgrades like the Chrome browser. If you do this, handle network connectivity issues and ensure your users understand they are installing a self-hostable tool that will automatically upgrade. It's one thing to have that in your browser, but with a devtool like a message queue or database, it's riskier. Your developer customer must understand exactly what will happen to the components their application depends on.
+
+You can also build in support for upgrade rollbacks. Plan to spend time on the tooling and infrastructure to handle such changes in a robust, self-contained manner. 
+
+An easier canarying option is offering beta or early access programs to let customers self-select into running versions of your software. These versions won't be available to the wider public nor will they be as bug-free as the generally available releases. Early access installs then happen at the discretion of your customer but still can provide valuable feedback. 
+
+Release complexity means you must document and build systems such that your users have a clear idea of the impact of production upgrades. This is a common software problem and there are several approaches, including separating the control and data planes and maintaining strict n-1 version backwards compatibility.
+
+If you offer rollbacks and depend on a RDBMS, make sure schema changes don't destroy or degrade data that would make a rollback impossible. These include dropping a column or changing the column to a data type with less fidelity.
+
+Whatever your release strategy, don't forget the documentation! The developers who build on top of your self-hostable product will need it when they want to upgrade to take advantage of new functionality.
+
+### Release Communication
+
+In addition to the nuts and bolts of the release process and customer impact, you have to let your user base know about it. After all, if they don't know, they won't upgrade.
+
+You must communicate to the user that a new release of your package is available. At FusionAuth, we offer:
+
+* an RSS feed
+* a generic new version email list
+* a security focused email list
+* automated or manual direct customer outreach (when appropriate)
+
+Another option is in-app nagging. Err, I mean reminding. Depending on how your users interact with your tool, this may be effective. However, if your tool is driven via API or command line, your thoughtful reminders may never be seen.
+
+Plan to spend some time building out appropriate communication mechanisms.
+
+### Performance
+
+Spend time testing performance across multiple environments before every release, to make sure there are no performance regressions.
+
+Dimensions to test include:
+
+* the amount of data in the system
+* hardware variations
+* dependency versions
+* major architectural components you support (such as different databases)
+
+### Understanding Product Usage
+
+Ever used tooling which lets you know what features of your product are used by which users? Or which users in a new cohort are similar to users who purchased in the past? Such tooling helps SaaS vendors everywhere understand their customers better and operate more efficiently. Surprise! That tooling is not for you when you are working on a self-hostable product. Not unless you build it.
+
+Even if you do build it, be wary of reporting too much data, or any data that might make your customers uncomfortable. The more you report, the higher the impact on your users' privacy, and increased privacy is a valuable aspect of self-hosting.
+
+Capture only what you need to improve the product, be clear about what you are recording, and have a bright line between the usage data and private data stored in your system. For example, if you had a queue system with retries, recording that feature is being used is okay. But recording the entire message being retried is not. Be clear with your customers about what you are gathering and why. Offer them a chance to turn it off. 
+
+Self-hosting customers can go beyond turning it off and block network access, which will disable usage statistics reporting. Acknowledging that up-front may lead to less data, but more trust.
+
+Users in the wild will have different resources and constraints than you might expect. When they run your software, they will find issues. Provide channels for manual and automated communication to capture these issues. You can then evaluate, prioritize and fix them.
+
+<img src="/img/blogs/self-hostable-application/users-find-way.png" alt="A meme with Jeff Goldblum stating 'users will find a way'." width="1200"/>
+
+Some level of reporting may also be required to charge your customers, if usage based pricing is part of your business model.
+
+### Support
+
+Offering great customer support is more difficult with a self-hostable product than with a SaaS product. You are not only answering questions about how to use your product, but how to install and operate it. Some of these aspects may, as mentioned above, be niche or twist your product in unexpected ways. In fact developers often depend on undocumented but observable features; [see Hyrum's Law](https://www.hyrumslaw.com/). On top of all that, you also need to support heterogeneous deployment environments.
+
+In such a world, how do you stand up a testbed environment to replicate an issue? Often hopping on a call with a customer to see their deployment environment is more effective. 
+
+The more you can bundle, the easier it is to replicate issues, because more of your product is known and in your control.
+
+Another wrinkle. Unless you go with the Chrome auto-upgrade model, you'll have customers and users using different versions. Think about how to support them. How old a version will you support? What if a customer is paying you a lot of money?
+
+#### LTS
+
+When a self-hostable product has enough versions, think about creating a long term support (LTS) plan similar to what Linux distributions or programming languages have. An LTS lets developers using your tool upgrade to certain versions and remain on them for a long time. Critical self-hostable products share a lot of similarities with programming languages. Your users may be hesitant to invest to regularly upgrade your product. New features can encourage upgrading, but once your product meets their needs, they won't bother.
+
+Since all your customers and users are not running the same version of your software, backporting bug fixes becomes a thing. Doing this increases development complexity, but offers more stability. Backports can include security fixes as well as selected bugs.
+
+What will you backport? What will you fix forward? Are there fixes that go only to LTSes? These are all questions you must confront at some point during your self-hostable tool journey.
+
+## Customer Enablement
+
+The above are topics you and your engineering team must consider when building a self-hostable product. But other than technical considerations, what else does your customer need to succeed?
+
+Operating software is difficult. That is why many people prefer SaaS solutions, which trade control for ease of operation. But often teams run segments of their application, whether in a cloud or on their own hardware. These applications operate at the scale and performance their company needs. So, for a certain subset of customers, the ability to have the control is worth the price of operating, since they are already doing it anyway. To help reduce that pain, enable your customer with great documentation.
+
+This includes detailed docs around:
+
+* installation
+* scaling
+* performance tuning
+* monitoring
+* troubleshooting
+* system requirements
+* infrastructure integrations
+* tooling integrations
+* upgrades
+
+Make these docs as thorough, accurate and complete as you can. They are part of the product experience. Clearly tag them with the applicable version, because capabilities and requirements change as software evolves.
+
+The possible combinations of how your software can be installed or operated is nearly infinite. Try to limit the effort by documenting common integrations and complementary software components. For instance, FusionAuth works with any proxy, but offers a [repository](https://github.com/fusionauth/fusionauth-contrib) with common configurations for NGINX, CloudFront, and more.
+
+Clearly document changes as part of release notes. You can use lo-fi methods for communicating changes such as adhering to [semantic versioning AKA SemVer](https://semver.org/) or high fidelity methods such as [old-style release notes](/docs/release-notes/). 
+
+### Configuration Management
+
+Organizations that can confidently self-host critical infrastructure usually leverage configuration management or IaC. They want to configure your product or application via an API or tooling such as Terraform or Pulumi. 
+
+Offering this functionality allows your customers to manage changes to your product in the same way they manage other changes to their application infrastructure.
+
+Terraform and/or OpenTofu are the biggest players in this space, but plan to have an answer to the question "how can we configure your product across environments and time"?
+
+### Professional Services
+
+Ah, the bane of every software company's gross margins. But, that aside, professional services help your customer implement your product quickly and effectively. It also can help you make money in early days, and help you understand customer problems that your product helps solve.
+
+If you don't want to build out your own professional services organization, build relationships with consulting companies who can. However, both parties in this experience want the other to bring them customers and make them money. These relationships can be difficult to kickstart, but can work if the time horizon is long enough and the mutual commitment is there. There's a reason value added resellers (VAR) have been a channel for software sales for decades.
+
+## What Kind Of Software Makes Sense
+
+Not every type of developer tool makes sense as a self-hostable solution. But if your product has three or more of the following attributes:
+
+* has an offline use case
+* appeals to customers familiar with operating software
+* solves a critical problem
+* integrates with existing applications or components
+* substitutes for an existing solution
+* offers functionality used by a large number of applications
+
+Then a self-hostable solution might be just the ticket.
+
+## Monetization 
+
+If you want to sell your self-hostable product, you have a few options.
+
+<img src="/img/blogs/self-hostable-application/show-me-business-model.png" alt="Jerry Maguire yelling 'show me the business model' into a telephone." width="1200"/>
+
+* premium support, possibly with an SLA
+* advanced features, access which can be managed by a software license
+* hosting, where you run the product for the user and they consume it as a SaaS
+* if your product is GPL or similar, selling the same code it under a commercial friendly license
+* offering custom development or professional services, as mentioned above
+
+Each of these have strengths and weaknesses.
+
+Premium support is relatively easy to offer. You can allow customers to pay for access to a Slack channel, ticketing system or email address that has priority over other support mechanisms. However, this requires employees, hiring and training. It doesn't scale as well as other parts of a software business. For a self-hostable product, support can be complex to offer, as discussed above.
+
+Advanced features can scale revenue without increasing costs, but require significant upfront investment to build out. They also require a licensing system. This typically requires network access, which removes the offline benefits. You also want to make sure the core product is usable without the advanced features. Pick carefully which features are advanced and which are not.
+
+With hosting, a single tenant SaaS is a natural fit for a self-hostable product. You can offer customer controlled upgrades or a fully managed SaaS, depending on customer needs and integration interface stability. However, this isn't free money. You are now responsible for uptime, performance and other aspects of operating software. 
+
+A 'you host or we host' option allows you to offer some of the benefits of SaaS without losing all the benefits of a self-hosted solution. This can be appealing for customers. They can either start out self-hosted for control or cost and migrate to SaaS when they are ready, or they can start out SaaS to get up and running quickly and migrate to self-hosted when they have a team ready to operate the software and want more control.
+
+Offering a more commercial friendly secondary license is a great way to make money if your license is problematic with commercial usage. It worked well for MySQL.
+
+Custom development and professional services offer an income stream that assists adoption and ensures customer success. But you have to hire and staff that team, and the margins, like support, are lower.
+
+Your business model may change as your self-hostable software improves. For instance, initially you may want to do custom development, but if you then build out a hosting offering, you might downplay the custom development in favor of the higher margin hosting business. 
+
+Whatever you do, communicate the changes to your customers clearly.
+
+### What About Open Source
+
+A self-hostable architectural component *can* be open source software (OSS), but that is not required. OSS has many benefits:
+
+* increased community feedback
+* bug fixes
+* lower-friction adoption
+* the OSS halo
+
+There are alternatives too. You can offer a free-as-in-beer version of your software. By doing so, you gain many of the marketing and distribution benefits of open source without business model risks. You can also use a non-OSS license, such as the Business Source License.
+
+The risks of offering your product as open source include:
+
+* others reselling your product
+* forks if the community disagrees with product decisions
+* limited monetization options
+
+On the other hand, if you are not OSS, you won't get the halo effect, you'll have a harder time building trust, you won't get as many contributions, and building a community is more difficult.
+
+There have been enough re-licenses recently, such as Elasticsearch and Terraform, that developers know that just because a product is open source at the beginning doesn't mean it will stay that way. Leaning into the argument that you are building a sustainable business may be enough for some users, but for others nothing short of full OSS will satisfy.
+
+That's okay, you don't need to build a product for everyone. Either way, be prepared to defend your decision.
+
+## Conclusion
+
+There is unique value in building a self-hostable developer tool.
+
+* You can serve a certain kind of customer who can and wants to operate their own infrastructure.
+* There are use cases that you can meet.
+* You can meet technical and business needs in a way that SaaS can't.
+* There are a wider set of distribution channels available.
+
+There are corresponding technical challenges as well:
+
+* Customers need supporting tooling and documentation.
+* You need to minimize dependencies, but not too much.
+* Support needs to handle heterogeneous environments and older versions.
+* Engineering needs to adjust to releases that can't be rolled back and more limited tooling.
+
+Finally, you have a variety of monetization options, with varying complexity and margins.
+
+Self-hosting is making a comeback for customers who value control, data locality and have the skills to operate software. 
+
+Now you know what to think about when building robust self-hostable software.

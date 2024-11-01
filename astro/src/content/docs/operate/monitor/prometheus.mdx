@@ -19,24 +19,32 @@ Prometheus is a tool to monitor metrics and setup alerts in the case that some m
 <PrometheusJvmGauges />
 
 ### Setup
-Setting this up with FusionAuth is easy. The only requirement to hookup FusionAuth is to direct Prometheus to the FusionAuth Prometheus endpoints. We used the following configuration for a FusionAuth instance running locally on the docker host. (You can reach docker host IP via `host.docker.internal` on mac and windows docker.)
+Setting this up with FusionAuth is easy. To monitor FusionAuth with Prometheus, point your Prometheus server to the FusionAuth Prometheus endpoints. Below is an example of Prometheus configuration for a FusionAuth instance running locally on the docker host. You can reach the host via the `host.docker.internal` hostname on MacOS and Windows.
+
+<Aside type="caution">
+These instructions are for monitoring FusionAuth with Prometheus when you are self-hosting.
+
+FusionAuth Cloud deployments with more than one compute node round-robin requests to the Prometheus endpoint. Using this endpoint to monitor such a deployment is not recommended.
+
+[Learn more about this issue here](https://github.com/FusionAuth/fusionauth-issues/issues/2379).
+</Aside>
 
 ## Configuration
-The Prometheus endpoint is configured with the YAML file. You can learn more about the Prometheus configuration [here](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#). Prometheus does not provide functionality to authenticate using custom HTTP headers. As a workaround, we are using API key as password using "basic auth" authorization method.
 
-In order to authenticate using basic auth please use string "apikey" as the username and a valid API key as the password. The API key must have `GET` permission for the `/api/prometheus/metrics` endpoint.
+The Prometheus endpoint is configured with the YAML file. [Learn more about the Prometheus configuration](https://prometheus.io/docs/prometheus/latest/configuration/configuration/).
+
+Prometheus does not provide functionality to authenticate using custom HTTP headers.
+
+To authenticate, use basic auth. Use the value `apikey` as the username and an API key as the password. The API key must have `GET` permission for the `/api/prometheus/metrics` endpoint. Refer to the [Authentication](/docs/apis/authentication) document for more details about API keys.
 
 If you prefer to allow unauthenticated access to this endpoint from local scrapers, you may set `fusionauth-app.local-metrics.enabled=true`. See the  [configuration reference](/docs/reference/configuration) for more info.
 
-All other configuration is standard Prometheus `scrape_config`.
+All other configuration in the YAML file is standard Prometheus `scrape_config` configuration.
 
-Please refer to the [Authentication](/docs/apis/authentication#) document for more details about API keys.
-
-
-```yaml title="prometheus.yaml"
+```yaml title="Sample prometheus.yaml"
 scrape_configs:
   - job_name: FusionAuth
-    scrape_interval: 5s
+    scrape_interval: 60s
     scheme: https
     metrics_path: api/prometheus/metrics
     static_configs:
@@ -46,10 +54,11 @@ scrape_configs:
       password: "Jw4cGzKpzxcEsqnqFKw3m7jUvgeS-jtUvn8B0TDBxgQ="
 ```
 
+Start Prometheus:
 
-We then started Prometheus with
 ```bash
 docker run -v $(pwd)/prometheus.yaml:/etc/prometheus/prometheus.yml -p 9090:9090 prom/prometheus
 ```
 
+Your Prometheus dashboard will look something like this.
 <img src="/img/docs/operate/secure-and-monitor/prometheus-graph.png" alt="Prometheus Graph View" width="1200" role="shadowed" />
