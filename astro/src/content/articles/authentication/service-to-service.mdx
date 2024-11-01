@@ -163,6 +163,64 @@ The university now has permissions to add and update files through the API.
 You are ready to get access tokens from FusionAuth as a Customer, and verify tokens as the API.
 
 - Create a file called `customer.mjs`.
+- Add the code below to get the access token for NorthUniversity.
+  ```js
+  import axios from "axios";
+
+  async function getAccessToken() {
+    try {
+      const formData = new URLSearchParams();
+      formData.append("grant_type", "client_credentials");
+      formData.append("client_id", "40450891-0231-49c4-839b-b2c444f57f9c");
+      formData.append("client_secret", "EmQ3FL-rDqHuESnJCmZacFK3sKQbOKX-gQYnC5pPLio");
+      formData.append("scope", "read create update");
+
+      const response = await axios({
+        method: "post",
+        url: "http://localhost:9011/oauth2/token",
+        headers: { "Content-Type": "application/x-www-form-urlencoded"},
+        data: formData,
+      });
+
+      console.log("Access Token:", response.data.access_token);
+      return response.data;
+    } catch (error) {
+      console.error("Error getting access token:", error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  await getAccessToken();
+  ```
+- Run the command below in a terminal to make the JavaScript above get a token.
+  ```sh
+  docker run --rm --network host -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  \
+  "npm install axios && node customer.mjs"
+
+  # Output
+  # Access Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJjbGllbnRfY3JlZGVudGlhbHMiXSwia2lkIjoiOGE3NWQ3YzkzIn0.eyJleHAiOjE3MzA0NjQ1MzIsImlhdCI6MTczMDQ2MDkzMiwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiI0MDQ1MDg5MS0wMjMxLTQ5YzQtODM5Yi1iMmM0NDRmNTdmOWMiLCJqdGkiOiI0ZWRkOGRjMy04YjAwLTQ2YTktOWZhNy1lNTY2YmE2ZGU4ZDUiLCJ0aWQiOiJkN2QwOTUxMy1hM2Y1LTQwMWMtOTY4NS0zNGFiNmM1NTI0NTMifQ.a46p7gVAHKOM4yPIPrvc_WzEd7AdToWPwR0Xguaoxyg
+  ```
+- Paste the token from your terminal into the textbox on the page at https://fusionauth.io/dev-tools/jwt-decoder.
+  ![Decoded JWT](../../../../public/img/articles/authentication/service-to-service/jwt.webp)
+- Below is what each of the fields means:
+  ```js
+  {
+    "alg": "HS256",      // Algorithm used for signing the token (HMAC SHA-256)
+    "typ": "JWT",        // Type of token (JSON Web Token)
+    "gty": [             // Grant type used to obtain this token
+      "client_credentials"
+    ],
+    "kid": "8a75d7c93"   // Key ID - identifies which key was used to sign this token
+  }
+  {
+    "exp": 1730464532,   // Expiration time (Unix timestamp when token expires)
+    "iat": 1730460932,   // Issued At (Unix timestamp when token was issued)
+    "iss": "acme.com",   // Issuer (who created and signed this token)
+    "sub": "40450891-0231-49c4-839b-b2c444f57f9c",  // Subject (whom the token refers to, in this case the client ID)
+    "jti": "4edd8dc3-8b00-46a9-9fa7-e566ba6de8d5",  // JWT ID (unique identifier for this token)
+    "tid": "d7d09513-a3f5-401c-9685-34ab6c552453"   // Tenant ID (if using multi-tenancy)
+  }
+  ```
 
 
 
