@@ -15,8 +15,11 @@ import PremiumEditionBlurbApi from 'src/content/docs/_shared/_premium-edition-bl
 - [Understand OAuth Machine Login](#understand-oauth-machine-login)
 - [Designing A FusionAuth Example](#designing-a-fusionauth-example)
 - [Why Not Use Only A Username And Password For Machine Authorization?](#why-not-use-only-a-username-and-password-for-machine-authorization)
-- [curl Command To Update An Entity](#curl-command-to-update-an-entity)
 - [Set Up A FusionAuth Machine-To-Machine OAuth Example](#set-up-a-fusionauth-machine-to-machine-oauth-example)
+  - [Create Entity Types](#create-entity-types)
+  - [Create Entities](#create-entities)
+  - [Create Customer Code](#create-customer-code)
+- [curl Command To Update An Entity](#curl-command-to-update-an-entity)
 - [Further Reading](#further-reading)
 - [TODO](#todo)
 
@@ -90,6 +93,79 @@ Before looking at how to code this example, you might be wondering: why bother w
 - Basic authentication with a password usually gives an API caller full rights to do anything. With OAuth, you can issue a token with only certain permissions. In FusionAuth, you will need to create multiple entities to do this. For instance, you might create North Hospital Imaging and North Hospital Admissions as different entities with slightly different FileAPI permissions.
 - Access tokens can be logged individually. You can see which service accessed what resource and when. With basic authentication, different services sharing the same customer username and password are indistinguishable.
 
+## Set Up A FusionAuth Machine-To-Machine OAuth Example
+
+TODO fusionauth light docker compose
+
+### Create Entity Types
+
+- Browse to the FusionAuth web interface at http://localhost:9011.
+- Authorize your paid FusionAuth features in Reactor.
+- In the sidebar, open `Entity Management - Entity Types`.
+- Click the `Add` button to create a new type.
+- Enter `Customer` for `Name`. (You don't need to enter a specific UUID, because you won't be altering entity types in scripts.)
+- Click `Save` at the top right.
+- You have just created a new Entity Type, Customer, that will be the type of all your customers using your API.
+- Add a new type with the name `API`.
+- This time, before saving, add the following permissions in the permissions tab: `Create`, `Read`, `Update`, `StoreLargeData`.
+- Save.
+
+![Entity types in FusionAuth](../../../../public/img/articles/authentication/service-to-service/types.webp)
+
+### Create Entities
+
+- In the sidebar, open `Entity Management - Entites`.
+- Click the `Add` button to create a new entity.
+- Enter the following values:
+  - `Id` - `09a00bb3-5099-4eff-af10-a1c139e847f9`
+  - `Name` - `FileApi`
+  - `Client Id` - `09a00bb3-5099-4eff-af10-a1c139e847f9`
+  - `Client Secret` - `fDt7Pn5s3FymamBobVUxUtDwggxNpW1iyaujCOZjX6E`
+  - `Entity Type` - `API`
+- Save.
+
+![FileApi](../../../../public/img/articles/authentication/service-to-service/fileapi.webp)
+
+- Click the `Add` button to create a new entity.
+- Enter the following values:
+  - `Id` - `de085100-893e-463d-9641-a96c265b1f6c`
+  - `Name` - `NorthHospital`
+  - `Client Id` - `de085100-893e-463d-9641-a96c265b1f6c`
+  - `Client Secret` - `_snp1-t_0ec5Tm9gj3RBoH-LNmZlqS4mVorcBPoF5go`
+  - `Entity Type` - `Customer`
+- Save.
+
+- Click the `Add` button to create a new entity.
+- Enter the following values:
+  - `Id` - `40450891-0231-49c4-839b-b2c444f57f9c`
+  - `Name` - `NorthUniversity`
+  - `Client Id` - `40450891-0231-49c4-839b-b2c444f57f9c`
+  - `Client Secret` - `EmQ3FL-rDqHuESnJCmZacFK3sKQbOKX-gQYnC5pPLio`
+  - `Entity Type` - `Customer`
+- Save.
+
+Note that the client Ids and FusionAuth Ids are the same for each entity by default. This makes it easier to match entities between your API database and FusionAuth.
+
+You are not saying anything about premium customers yet, except to have the `StoreLargeData` attribute in the API type.
+
+### Create Customer Code
+
+You are now ready to get access tokens from FusionAuth as a Customer, and verify tokens as the API.
+
+
+
+- create customer.js
+  - create js to call api and get access token
+  - see token on jwt.io and fusionauth equivalent website, check if can verify token against local host
+- create server.js
+  - use express to receive a single file storage call
+  - create js to verify token in api
+  - unwrap token to see claims
+- create curl script to update customer permissions
+- create curl script to add or remove `premium` attribute
+  - create lambda to change access token permissions based on the attribute
+
+
 ## curl Command To Update An Entity
 
 update type from customer to api
@@ -119,21 +195,6 @@ curl -X PUT \
   }' \
   "http://localhost:9011/api/entity/40450891-0231-49c4-839b-b2c444f57f9c"
 ```
-
-## Set Up A FusionAuth Machine-To-Machine OAuth Example
-
-- create entity types API and Customer
-- create entities FileAPI NorthHospital and NorthUniversity
-- create customer.js
-  - create js to call api and get access token
-  - see token on jwt.io and fusionauth equivalent website, check if can verify token against local host
-- create server.js
-  - use express to receive a single file storage call
-  - create js to verify token in api
-  - unwrap token to see claims
-- create curl script to update customer permissions
-- create curl script to add or remove `premium` attribute
-  - create lambda to change access token permissions based on the attribute
 
 
 ## Further Reading
