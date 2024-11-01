@@ -14,8 +14,8 @@ import PremiumEditionBlurbApi from 'src/content/docs/_shared/_premium-edition-bl
 - [Understand user login](#understand-user-login)
 - [Understand machine login](#understand-machine-login)
 - [Designing A FusionAuth Example](#designing-a-fusionauth-example)
-  - [update customer type - can't](#update-customer-type---cant)
 - [Why Not Use Only A Username And Password For Machine Authorization?](#why-not-use-only-a-username-and-password-for-machine-authorization)
+- [curl Command To Update An Entity](#curl-command-to-update-an-entity)
 - [Further Reading](#further-reading)
 - [TODO](#todo)
 
@@ -51,33 +51,45 @@ This flow is much simpler than the user flow earlier, but there are still some d
 
 ## Designing A FusionAuth Example
 
-Imagine you are a backup service that allows customers to save files in your storage. Your free service allows a customer to store up to 100 MB and your premium service allows more than that. You have two customers currently: North University and North Hospital. Customers will authenticate with your API using the client credentials flow. This flow is provided in FusionAuth by Entities, not Users. Please read the [documentation on Entities and Entity Types](https://fusionauth.io/docs/get-started/core-concepts/entity-management) before proceeding.
+Imagine you sell a file backup service that allows customers to save files in your storage. Your free service allows a customer to store up to 1 GB and your premium service allows more than that. You have two customers currently: North University and North Hospital. You want to start using OAuth authentication through FusionAuth. Customers will authenticate with your API using the client credentials flow. This flow is provided in FusionAuth by Entities, not Users. Please read the [documentation on Entities and Entity Types](https://fusionauth.io/docs/get-started/core-concepts/entity-management) before proceeding.
 
-Let's look at the implications of this scenario using FusionAuth:
+Let's look at the implications of this scenario:
 
-- Your customers don't have to register on FusionAuth, or have any knowledge of it. It is only your service that needs be aware of FusionAuth, and that the Ids of customers and permissions between FusionAuth and the service database agree.
-- When receiving an API call, your service needs to check only that the access token is signed by FusionAuth, that the caller is trying to access its own resorces, and the caller has permissions to perform the requested operation on those resources.
+- Your customers don't have to register on FusionAuth, or have any knowledge of it. To them, it is merely a generic OAuth endpoint they call to get an access token. It is only your service that needs to be aware of FusionAuth, and have the Ids of customers and permissions between FusionAuth and the service database agree.
+- When receiving an API call, your service needs to check that the access token is signed by FusionAuth, that the caller is trying to access its own resorces, and the caller has permissions to perform the requested operation on those resources.
 - A customer will change between free and premium. When working with individual users in FusionAuth, you could use roles, but entities do not support roles. How can you model this?
 
 You can't use entity types for free and premium — one type for customers and one for premium customers — because you cannot change the type of an entity once it is created. Nor can entity types have default permissions to other entity types. Permissions are defined only between two entities.
 
 Instead, you have two options:
 - Write a script that calls the [FusionAuth Entity API](https://fusionauth.io/docs/apis/entities/entities#update-an-entity) and updates all permissions for an entity. Note that you will have to track which permissions premium customers should have and which permissions free customers should have, and which customers are of which type, outside FusionAuth. FusionAuth will have no concept of different customer types.
-- Use the entity API to add a custom attribute of `premium` to premium customers. Then write a [Lambda](https://fusionauth.io/docs/extend/code/lambdas/client-credentials-jwt-populate) to check if the customer has the `premium` attribute at login, and add extra permissions to the JWT if it does. This option is more complex than the previous, but allows you to keep all customer type and permission information in one place, in FusionAuth.
+- Use the entity API to add a custom attribute of `premium` to premium customers. Then write a [Lambda](https://fusionauth.io/docs/extend/code/lambdas/client-credentials-jwt-populate) in FusionAuth to check if the customer has the `premium` attribute at login, and if so, add extra permissions to the access token returned to the customer This option is more complex than the previous, but allows you to keep all customer type and permission information in one place, in FusionAuth.
 
-Below is a diagram of the system you'll build in the next section.
+Below is a diagram of the system you'll build in this guide, using two entity types: API and Customer.
 
 ```mermaid
-
+graph LR
+  n1("NorthHospital (Customer)") --> |Send token, store files| n2("FileApi (API)")
+  n3("NorthUniversity (Customer)") --> |Send token, store files| n2
+  n4(FusionAuth)
+  n1 --> |Get token| n4
+  n2 --> |Verify token token|n4
+  n3 --> |Get token|n4
 ```
 
-api entity type and customer entity type
-
 <Aside type="note">
-entities cannot be used with users, only with other entities. https://github.com/FusionAuth/fusionauth-issues/issues/1295. so you can't model hospitals as entities, and have patients, admission staff, and doctors as users with different permissions to medical records at different hospitals.
+Entities can be used only with other entities, [not with users](https://github.com/FusionAuth/fusionauth-issues/issues/1295). So you can't model hospitals as entities, and have patients, admission staff, and doctors as users with different permissions to medical records at different hospitals. For that situation, you need to have a hospital as an application, with doctors and patients as roles for users. You would also need to add the hospital as an entity if you wanted external services to call it as an API. But the hospital as an entity and the hospital as an application are completely separate, and changes to each would need to be duplicated.
 </Aside>
 
-### update customer type - can't
+## Why Not Use Only A Username And Password For Machine Authorization?
+
+Before looking at how to code this example, you might be wondering: why bother with the complexity of OAuth and access tokens, instead of giving customers a username and password? Firstly, calling an endpoint to get an access token, and sending that with API calls instead of the password directly, is only one extra step. So it's not much more work for customers. There are also several advantages:
+- You can manage entities and permissions in one place — the FusionAuth web interface.
+- Customers can store the client secret (password) very securely, and give only the access token to services that make API calls. In the event this token is exposed to attackers, it can be immediately revoked through an OAuth endpoint, without needing to change the client secret. Since access tokens expire, you also have password rotation by default.
+- Basic authentication with a password usually gives an API caller full rights to do anything. With OAuth, you can issue a token with only certain permissions. In FusionAuth, you will need to create multiple entities to do this. For instance, you might create North Hospital Imaging and North Hospital Admissions as different entities with slightly different FileAPI permissions.
+- Access tokens can be logged individually. You can see which service accessed what resource and when. With basic authentication, different services sharing the same customer username and password are indistinguishable.
+
+## curl Command To Update An Entity
 
 update type from customer to api
 
@@ -106,54 +118,6 @@ curl -X PUT \
   }' \
   "http://localhost:9011/api/entity/40450891-0231-49c4-839b-b2c444f57f9c"
 ```
-
-## Why Not Use Only A Username And Password For Machine Authorization?
-
-advantages - manage permissions from apps to other apps in fusionauth web interface
-
-
-
-When you've called an API, you've most likely used a username and password — which might be called an access token or an API key. This is simple and secure, so why complicate it by using OAuth when you don't need to worry about users anyway?
-
-Credential Management & Rotation
-
-- With basic auth, changing passwords requires updating all services using them
-- OAuth allows you to rotate client secrets without service downtime
-- You can revoke specific tokens without changing the main credentials
-
-Fine-grained Access Control
-
-- OAuth scopes let you limit what each service can do
-Example: Service A might only need "read" access to users, while Service B - needs "write" access
-- Basic auth is usually all-or-nothing access
-
-Audit Trail & Monitoring
-
-- OAuth tokens can be tracked individually
-You can see which service accessed what and when
-- With basic auth, multiple services sharing the same credentials are - indistinguishable
-
-Standardized Security
-
-- OAuth is a well-tested protocol with industry best practices
-Many security tools and platforms are built to work with OAuth
-- Basic auth lacks features like token expiration and scope control
-
-Scalability
-
-- As your system grows, OAuth makes it easier to manage hundreds of service-to-service connections
-- Each service can have its own client credentials with specific permissions
-- Basic auth becomes a maintenance nightmare at scale
-
-
-
-
-- Client Credentials Grant flow, where the client application directly requests an access token using its client ID and secret. There is no user involved.
-- Access tokens often have much shorter expiration times compared to user-granted OAuth tokens, since there is no user to re-authenticate.
-- The client authentication can use a pre-established client ID and secret (symmetric key), or leverage public/private key pairs (asymmetric keys) for higher security.
-
-
-
 
 ## Further Reading
 
