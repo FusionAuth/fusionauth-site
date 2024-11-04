@@ -106,13 +106,19 @@ TODO fusionauth light docker compose
 - In the sidebar, open `Entity Management - Entity Types`.
 - Click the `Add` button to create a new type.
 - Enter `Customer` for `Name`. (You don't need to enter a specific UUID, because you won't be altering entity types in scripts.)
+- In the JWT tab, enabled `Enabled` and set the `Access token signing key` to `RS256`.
 - Click `Save` at the top right.
 - You have just created a new Entity Type, Customer, that will be the type of all your customers using your API.
 - Add a new type with the name `API`.
+- You don't need to change the JWT signing algorithm here, because the API doesn't ever create access tokens - it only verifies tokens from clients.
 - This time, before saving, add the following permissions in the permissions tab: `Create`, `Read`, `Update`, `StoreLargeData`.
 - Save.
 
 ![Entity types in FusionAuth](../../../../public/img/articles/authentication/service-to-service/types.webp)
+
+<Aside type="note">
+All OAuth providers expose their public keys at the standard endpoint: http://localhost:9011/.well-known/jwks.json (on different domains though, of course). FusionAuth exposes apps' public keys at this endpoint, such as the `RS256` one you used above. This public key is used for any service to check that an access token it received was truly signed by FusionAuth. But FusionAuth doesn't expose the default signing key, an `HS256` one, so you actually can't use the default key for access tokens. This is why you changed the JWT key in the instructions above.
+</Aside>
 
 ### Create Entities
 
@@ -195,8 +201,10 @@ You are ready to get access tokens from FusionAuth as a Customer, and verify tok
   ```
 - Run the command below in a terminal to make the JavaScript above get a token.
   ```sh
+  docker run --rm -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  \
+  "npm install axios jsonwebtoken jwks-rsa"
   docker run --rm --network host -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  \
-  "npm install axios && node customer.mjs"
+  "node customer.mjs"
 
   # Output
   # Access Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJjbGllbnRfY3JlZGVudGlhbHMiXSwia2lkIjoiOGE3NWQ3YzkzIn0.eyJleHAiOjE3MzA0NjQ1MzIsImlhdCI6MTczMDQ2MDkzMiwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiI0MDQ1MDg5MS0wMjMxLTQ5YzQtODM5Yi1iMmM0NDRmNTdmOWMiLCJqdGkiOiI0ZWRkOGRjMy04YjAwLTQ2YTktOWZhNy1lNTY2YmE2ZGU4ZDUiLCJ0aWQiOiJkN2QwOTUxMy1hM2Y1LTQwMWMtOTY4NS0zNGFiNmM1NTI0NTMifQ.a46p7gVAHKOM4yPIPrvc_WzEd7AdToWPwR0Xguaoxyg
@@ -223,8 +231,6 @@ You are ready to get access tokens from FusionAuth as a Customer, and verify tok
   }
   ```
 
-TODO make a call to the API with this token
-
 ### Authenticate The Access Token
 
 The API needs to authenticate the access token is really from FusionAuth, rather than being sent by an attacker.
@@ -243,13 +249,10 @@ The API needs to authenticate the access token is really from FusionAuth, rather
   }
   ```
 
-
-- create customer.js
-  - create js to call api and get access token
-  - see token on jwt.io and fusionauth equivalent website, check if can verify token against local host
 - create server.js
   - use express to receive a single file storage call
-  - create js to verify token in api
+  - create js to verify token in api - FIX error that won't allow you to use server client id to call the introspect endpoint
+  -
   - unwrap token to see claims
 - create curl script to update customer permissions
 - create curl script to add or remove `premium` attribute
@@ -290,6 +293,8 @@ curl -X PUT \
 ## Further Reading
 
 - [FusionAuth modern guide to OAuth](https://fusionauth.io/resources/the-modern-guide-to-oauth.pdf)
+- https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints
+- https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints#introspect
 
 ## TODO
 
