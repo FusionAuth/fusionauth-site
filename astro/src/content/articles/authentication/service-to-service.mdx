@@ -22,6 +22,8 @@ import PremiumEditionBlurbApi from 'src/content/docs/_shared/_premium-edition-bl
   - [Create Customer Code To Get Access Token](#create-customer-code-to-get-access-token)
   - [Authenticate The Access Token](#authenticate-the-access-token)
 - [curl Command To Update An Entity](#curl-command-to-update-an-entity)
+- [Check The Updated Permissions](#check-the-updated-permissions)
+- [Write A Lambda Function To Add The StoreLargeData Permission To Premium Customers](#write-a-lambda-function-to-add-the-storelargedata-permission-to-premium-customers)
 - [Further Reading](#further-reading)
 - [TODO](#todo)
 
@@ -249,40 +251,77 @@ The API needs to authenticate the access token is really from FusionAuth, rather
   }
   ```
 
-- create curl script to update customer permissions
-- create curl script to add or remove `premium` attribute
-  - create lambda to change access token permissions based on the attribute
-
-
 ## curl Command To Update An Entity
 
-update type from customer to api
+Let's run a script to remove the `Read` permission for the API from North University and give it the premium functionality of `StoreLargeData`. Removing the read permission will allow you to test if access tokens really work. The documentation for the grants (permissions) API is [here](https://fusionauth.io/docs/apis/entities/grants#grant-a-user-or-entity-permissions-to-an-entity).
 
-33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod
-
-40450891-0231-49c4-839b-b2c444f57f9c
-NorthUniversity
-40450891-0231-49c4-839b-b2c444f57f9c
-EmQ3FL-rDqHuESnJCmZacFK3sKQbOKX-gQYnC5pPLio
-
-PUT /api/entity/{entityId}
+For all APIs, you would expect that the URL refers to the object you are updating, such as `http://localhost:9011/api/entity/09a00bb3-5099-4eff-af10-a1c139e847f9` updating the FileAPI in the code below. But in this FusionAuth API, it's backwards — the Id in the URL is where the permissions point to, and the Id of the object that's actually being updated is inside the JSON, `"recipientEntityId": "40450891-0231-49c4-839b-b2c444f57f9c" `.
 
 ```sh
 curl -X PUT \
   -H "Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" \
   -H "Content-Type: application/json" \
   -d '{
-    "entity": {
-      "clientId": "40450891-0231-49c4-839b-b2c444f57f9c",
-      "clientSecret": "EmQ3FL-rDqHuESnJCmZacFK3sKQbOKX-gQYnC5pPLio",
-      "type": {
-        "id": "ba94d545-230b-4e9c-95f9-af87c8e97f80"
-      },
-      "name": "NorthUniversity"
+    "grant": {
+      "permissions": [
+        "Create",
+        "Update",
+        "StoreLargeData"
+      ],
+      "recipientEntityId": "40450891-0231-49c4-839b-b2c444f57f9c"
     }
+  }' \
+  "http://localhost:9011/api/entity/09a00bb3-5099-4eff-af10-a1c139e847f9/grant"
+```
+
+The script above is a manual way to change a customer's permissions from free to premium.
+
+Next you're going to run another script to add the `premium` attribute to the North University entity. This allows you to manually add permissions to the access token in a lambda, as discussed earlier. This API is documented [here](https://fusionauth.io/docs/apis/entities/entities#update-an-entity).
+
+```sh
+curl -X PATCH \
+  -H "Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "entity": { "data": { "premium": true } }
   }' \
   "http://localhost:9011/api/entity/40450891-0231-49c4-839b-b2c444f57f9c"
 ```
+
+If you view North University in the FusionAuth web interface entities screen, you'll see it now has updated data and permissions.
+
+## Check The Updated Permissions
+
+Run the customer script from before and you will now see it immediately fail, as expected, because the university requests read permissions to the file API, but they were removed in FusionAuth.
+
+```sh
+docker run --rm --network host -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  \
+  "node customer.mjs"
+
+# Output: error_description: 'Invalid target-entity scope. The permission names [Read] are invalid.',
+```
+
+In `customer.js`, replace the request for the read permission, `"target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:Read",` with the large data permission, `"target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:StoreLargeData",`, and rerun the code. It should run successfully again, and in the decoded token you can see the access token now have premium permissions.
+
+## Write A Lambda Function To Add The StoreLargeData Permission To Premium Customers
+
+TODO put this in fusionauth web interface and test
+
+```js
+function populate(jwt, recipientEntity, targetEntities, permissions) {
+  if (recipientEntity.data && recipientEntity.data.premiumAccount) {
+    jwt.premiumAccount = true;
+    if (typeof targetEntities === "object") {
+      var targetId = Object.keys(targetEntities)+""; //convert to string
+      jwt.permissions[targetId].push("StoreLargeData");
+    }
+  }
+}
+```
+
+- create curl script to update customer permissions
+- create curl script to add or remove `premium` attribute
+  - create lambda to change access token permissions based on the attribute
 
 
 ## Further Reading
