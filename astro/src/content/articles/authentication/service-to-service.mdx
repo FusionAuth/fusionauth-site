@@ -24,6 +24,7 @@ import PremiumEditionBlurbApi from 'src/content/docs/_shared/_premium-edition-bl
 - [curl Command To Update An Entity](#curl-command-to-update-an-entity)
 - [Check The Updated Permissions](#check-the-updated-permissions)
 - [Write A Lambda Function To Add The StoreLargeData Permission To Premium Customers](#write-a-lambda-function-to-add-the-storelargedata-permission-to-premium-customers)
+- [Test The Lambda Code](#test-the-lambda-code)
 - [Further Reading](#further-reading)
 - [TODO](#todo)
 
@@ -315,7 +316,7 @@ In `customer.js`, replace the request for the read permission, `"target-entity:0
     if (recipientEntity.data && recipientEntity.data.premium) {
       if (typeof targetEntities === "object") {
         var targetId = Object.keys(targetEntities)+""; //convert to string
-        jwt.permissions[targetId].push("StoreLargeData");
+        jwt.scope += ' target-entity:' + targetId + ':StoreLargeData';
       }
     }
   }
@@ -327,6 +328,41 @@ In `customer.js`, replace the request for the read permission, `"target-entity:0
 - Click Save at the top right.
 
 Now FusionAuth will run your custom code whenever returning an access token to a client. If the entity has the attribute `premium`, which you added earlier, then the client will be given the `StoreLargeData` permission to the entity it is requesting permission for.
+
+## Test The Lambda Code
+
+Before testing that the lambda populates `StoreLargeData` for North University, you first need to remove the permission you added earlier using the script. Return to the entities screen in FusionAuth and remove the permission there.
+
+In `customer.mjs`, you also need to remove `target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:StoreLargeData`, because that permission is no longer explicitly set for the entity. If you try to request it from FusionAuth, you will receive an error. Instead, the lambda function will now automatically append the large data permission to any premium customers.
+
+Run the customer script in the terminal again. Note below the permission added the end of the `scope` line by the lambda.
+
+```sh
+docker run --rm --network host -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  \
+  "node customer.mjs"
+
+# Output:
+
+Access Token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJjbGllbnRfY3JlZGVudGlhbHMiXSwia2lkIjoibnFSODVDNG9YTHpPX05vNnBDTEc4VEE3dW1ZIn0.eyJhdWQiOiIwOWEwMGJiMy01MDk5LTRlZmYtYWYxMC1hMWMxMzllODQ3ZjkiLCJleHAiOjE3MzA4MDI5NjMsImlhdCI6MTczMDgwMjkwMywiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiI0MDQ1MDg5MS0wMjMxLTQ5YzQtODM5Yi1iMmM0NDRmNTdmOWMiLCJqdGkiOiI2MzRmOGVkNy00Mjg1LTRkODktOTIyYS03OTZiYjExNDVmNzciLCJzY29wZSI6InRhcmdldC1lbnRpdHk6MDlhMDBiYjMtNTA5OS00ZWZmLWFmMTAtYTFjMTM5ZTg0N2Y5OkNyZWF0ZSB0YXJnZXQtZW50aXR5OjA5YTAwYmIzLTUwOTktNGVmZi1hZjEwLWExYzEzOWU4NDdmOTpVcGRhdGUgdGFyZ2V0LWVudGl0eTowOWEwMGJiMy01MDk5LTRlZmYtYWYxMC1hMWMxMzllODQ3Zjk6U3RvcmVMYXJnZURhdGEiLCJ0aWQiOiJkN2QwOTUxMy1hM2Y1LTQwMWMtOTY4NS0zNGFiNmM1NTI0NTMiLCJwZXJtaXNzaW9ucyI6eyIwOWEwMGJiMy01MDk5LTRlZmYtYWYxMC1hMWMxMzllODQ3ZjkiOlsiVXBkYXRlIl19fQ.OKVjv5ygZX5wYjilkStco3QClc4zdOyObFu5NPfMonZsfAoMnWaIQbOvy7NN30P5YpRfJCfY5TWS4vwUJKbRZum8xnihkj7lIMYLfWt6lCbEIEH08PVU_X1MxKD1nlsDJNsvuqPzyhpFXUYNRXtlOJyGc7D-qD4tQ_vjMjlhfIL0fru1m7yte7RO7FUMHCd3vbyU8ZbG8JL74ahpijkGpWcusO96ouYbWAnvDYJu_2OHDbI5Yo1CPtQW9dNELbBXzjk4vFe4BCp46LsEH9m2lc-yj82EJ-ICr6LJ_Gi17sFD_slLAYREYP8bGTOD6Hu_kcuPWoZsrmKU515CsGaI0A
+{
+  aud: '09a00bb3-5099-4eff-af10-a1c139e847f9',
+  exp: 1730802963,
+  iat: 1730802903,
+  iss: 'acme.com',
+  sub: '40450891-0231-49c4-839b-b2c444f57f9c',
+  jti: '634f8ed7-4285-4d89-922a-796bb1145f77',
+  scope: 'target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:Create target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:Update target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:StoreLargeData',
+  tid: 'd7d09513-a3f5-401c-9685-34ab6c552453',
+  permissions: { '09a00bb3-5099-4eff-af10-a1c139e847f9': [ 'Update' ] },
+  active: true
+}
+
+xray.jpg stored successfully
+```
+
+<Aside type="hint">
+If you encounter errors in lambdas, you can enable the debug switch, add `console.log(` statements, and see their output in System -> Event log.
+<Aside>
 
 ## Further Reading
 
