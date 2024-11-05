@@ -305,24 +305,28 @@ In `customer.js`, replace the request for the read permission, `"target-entity:0
 
 ## Write A Lambda Function To Add The StoreLargeData Permission To Premium Customers
 
-TODO put this in fusionauth web interface and test
-
-```js
-function populate(jwt, recipientEntity, targetEntities, permissions) {
-  if (recipientEntity.data && recipientEntity.data.premiumAccount) {
-    jwt.premiumAccount = true;
-    if (typeof targetEntities === "object") {
-      var targetId = Object.keys(targetEntities)+""; //convert to string
-      jwt.permissions[targetId].push("StoreLargeData");
+- In the FA web interface sidebar, browse to Customizations -> Lambdas.
+- Click the + button at the top right.
+- For name, enter `PremiumPermissions`.
+- For type, choose `Client credentials JWT populate`
+- Enter the code below and save the new lambda.
+  ```js
+  function populate(jwt, recipientEntity, targetEntities, permissions) {
+    if (recipientEntity.data && recipientEntity.data.premium) {
+      if (typeof targetEntities === "object") {
+        var targetId = Object.keys(targetEntities)+""; //convert to string
+        jwt.permissions[targetId].push("StoreLargeData");
+      }
     }
   }
-}
-```
+  ```
+- Browse to Tenants in the sidebar.
+- Click the Edit button for the default tenant.
+- Select the OAuth tab.
+- For Client credentials populate lambda, select PremiumPermissions lambda you just created.
+- Click Save at the top right.
 
-- create curl script to update customer permissions
-- create curl script to add or remove `premium` attribute
-  - create lambda to change access token permissions based on the attribute
-
+Now FusionAuth will run your custom code whenever returning an access token to a client. If the entity has the attribute `premium`, which you added earlier, then the client will be given the `StoreLargeData` permission to the entity it is requesting permission for.
 
 ## Further Reading
 
