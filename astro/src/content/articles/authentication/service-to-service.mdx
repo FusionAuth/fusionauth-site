@@ -259,20 +259,50 @@ Normally, you make an HTTP to a call to the API with the access token, but in th
 
 ### Create Server Code To Authenticate The Access Token
 
-The API needs to authenticate the access token is really from FusionAuth, rather than being sent by an attacker.
+- Create a file called `api.mjs`. This will access as the server that receives the file upload request and the access token from the customer. The API needs to authenticate the access token is really from FusionAuth, rather than being sent by an attacker. If the token is legitimately from FusionAuth, and contains the permissions to add a file, the operation will succeed.
+- Add the code below to `api.mjs`.
+```js
+import axios from "axios";
+import jwksClient from "jwks-rsa";
+import jwt from "jsonwebtoken";
 
+export async function storeFile(filename, token) {
+  const verifiedToken = await verifyToken(token);
+  if (verifiedToken.active &&
+      verifiedToken.scope.includes("target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:Create")
+  )
+    console.log("\n" + filename + " stored successfully for " + verifiedToken.sub);
+  else
+    console.log("\nError: invalid token");
+}
 
+async function verifyToken(token) {
+  const header = jwt.decode(token, { complete: true }).header;
+  const client = jwksClient({jwksUri: "http://localhost:9011/.well-known/jwks.json"});
+  const key = await client.getSigningKey(header.kid);
+  const decodedToken = await jwt.verify(token, key.getPublicKey());
+  decodedToken.active = decodedToken.exp > Math.floor(Date.now() / 1000);
+  console.log(decodedToken);
+  return decodedToken;
+}
+```
 
-  ```js
-  Token verification result: {
-    active: true,
-    exp: 1730466482,
-    iat: 1730462882,
-    iss: 'acme.com',
-    jti: '7cc7151c-aa32-4d4b-b602-072a8584f052',
-    sub: '40450891-0231-49c4-839b-b2c444f57f9c',
-    tid: 'd7d09513-a3f5-401c-9685-34ab6c552453'
-  }
+The server has two functions. The first, exported function that the client calls, takes a token and check if it is valid. If so, the server prints that the file was saved successfully. A valid token has three properties:
+- It is correctly signed by FA.
+- It has not expired yet.
+- It has the `Create` permission for the `FileAPI` Id.
+
+You can see the code above checks all three. Note that the function does not need to check the customer's Id, because this is not a situation where one customer has access to another customer's files.
+
+The other function in the code, `verifyToken()`, uses two JWT helper libraries. It gets the public key of FA from the localhost URL, and uses it to check that the access token was signed correctly. It also checks that the current time is less than the expiry date of the access token.
+
+Let's run both the customer and server to see if they work.
+
+- Uncomment the first and last lines of `customer.mjs`, so it will call the server.
+- Run the customer code again to see if the file is uploaded to the server successfully.
+  ```sh
+  docker run --rm --network host -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  \
+  "node customer.mjs"
   ```
 
 ## curl Command To Update An Entity
@@ -325,7 +355,7 @@ docker run --rm --network host -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  \
 # Output: error_description: 'Invalid target-entity scope. The permission names [Read] are invalid.',
 ```
 
-In `customer.js`, replace the request for the read permission, `"target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:Read",` with the large data permission, `"target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:StoreLargeData",`, and rerun the code. It should run successfully again, and in the decoded token you can see the access token now have premium permissions.
+In `customer.mjs`, replace the request for the read permission, `"target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:Read",` with the large data permission, `"target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:StoreLargeData",`, and rerun the code. It should run successfully again, and in the decoded token you can see the access token now have premium permissions.
 
 ## Write A Lambda Function To Add The StoreLargeData Permission To Premium Customers
 
