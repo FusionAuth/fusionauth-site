@@ -24,7 +24,7 @@ import Aside from 'src/components/Aside.astro';
   - [Create Entities](#create-entities)
   - [Add Permissions To Customers](#add-permissions-to-customers)
   - [Create Customer Code To Get Access Token](#create-customer-code-to-get-access-token)
-  - [Authenticate The Access Token](#authenticate-the-access-token)
+  - [Create Server Code To Authenticate The Access Token](#create-server-code-to-authenticate-the-access-token)
 - [curl Command To Update An Entity](#curl-command-to-update-an-entity)
 - [Check The Updated Permissions](#check-the-updated-permissions)
 - [Write A Lambda Function To Add The StoreLargeData Permission To Premium Customers](#write-a-lambda-function-to-add-the-storelargedata-permission-to-premium-customers)
@@ -181,11 +181,11 @@ The university now has permissions to add and update files through the API. The 
 
 ### Create Customer Code To Get Access Token
 
-You are ready to get access tokens from FusionAuth as a Customer, and verify tokens as the API.
+You are ready to get access tokens from FusionAuth as a customer, and verify tokens as the service provider (also called server or API).
 
-- Create a file called `customer.mjs`.
-- Add the code below to get the access token for NorthUniversity.
+Create a file called `customer.mjs` and add the code below to get the access token for NorthUniversity.
   ```js
+  //import { storeFile } from "./api.mjs";
   import axios from "axios";
 
   async function getAccessToken() {
@@ -193,37 +193,49 @@ You are ready to get access tokens from FusionAuth as a Customer, and verify tok
       const formData = new URLSearchParams();
       formData.append("grant_type", "client_credentials");
       formData.append("client_id", "40450891-0231-49c4-839b-b2c444f57f9c");
-      formData.append("client_secret", "EmQ3FL-rDqHuESnJCmZacFK3sKQbOKX-gQYnC5pPLio");
-      formData.append("scope", "read create update");
+      formData.append("client_secret","EmQ3FL-rDqHuESnJCmZacFK3sKQbOKX-gQYnC5pPLio");
+      formData.append("scope", "target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:Read   target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:Create   target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:Update");
 
       const response = await axios({
         method: "post",
         url: "http://localhost:9011/oauth2/token",
-        headers: { "Content-Type": "application/x-www-form-urlencoded"},
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
         data: formData,
       });
 
       console.log("Access Token:", response.data.access_token);
       return response.data.access_token;
     } catch (error) {
-      console.error("Error getting access token:", error.response?.data || error.message);
+      console.error(
+        "Error getting access token:",
+        error.response?.data || error.message,
+      );
       throw error;
     }
   }
 
-  await getAccessToken();
+  const token = await getAccessToken();
+  //storeFile("xray.jpg", token);
   ```
-- Run the command below in a terminal to make the JavaScript above get a token.
+
+This code uses the Axios library to make HTTP calls simpler. It has one function, `getAccessToken()`, that calls the FA `/oauth2/token` endpoint to get an access token. Note the form parameters given in this function. Here you are saving the secret key directly in the code, which is not safe in reality. In a real application, you should save keys in a `.env` file that you don't commit to Git.
+
+Finally, note the `scope` parameter. If you excluded this line, you have an access token that provided authentication only, with no permissions to (authorization) to do anything. FA requires all scopes to be requested in the format shown — with `target-entity` and the Id of the API yu want access to.
+
+Normally, you make an HTTP to a call to the API with the access token, but in this simplistic example, you simply import the API as another file, and call the `storeFile` method directly. This means you don't have to bother writing an HTTP request handler for this test. Since, the API doesn't exist yet, the first and last lines of the code are commented out for now.
+
+- Run the command below in a new terminal to make the JavaScript above get a token a display it. Here you run Node.js in a Docker container to isolate it from the rest of your machine for safety's sake.
   ```sh
   docker run --rm -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  \
   "npm install axios jsonwebtoken jwks-rsa"
+
   docker run --rm --network host -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  \
   "node customer.mjs"
 
   # Output
   # Access Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJjbGllbnRfY3JlZGVudGlhbHMiXSwia2lkIjoiOGE3NWQ3YzkzIn0.eyJleHAiOjE3MzA0NjQ1MzIsImlhdCI6MTczMDQ2MDkzMiwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiI0MDQ1MDg5MS0wMjMxLTQ5YzQtODM5Yi1iMmM0NDRmNTdmOWMiLCJqdGkiOiI0ZWRkOGRjMy04YjAwLTQ2YTktOWZhNy1lNTY2YmE2ZGU4ZDUiLCJ0aWQiOiJkN2QwOTUxMy1hM2Y1LTQwMWMtOTY4NS0zNGFiNmM1NTI0NTMifQ.a46p7gVAHKOM4yPIPrvc_WzEd7AdToWPwR0Xguaoxyg
   ```
-- Paste the token from your terminal into the textbox on the page at https://fusionauth.io/dev-tools/jwt-decoder.
+- Paste the returned token from your terminal into the text box on the page at https://fusionauth.io/dev-tools/jwt-decoder. Since an access token is plaintext encoded as Base64 bytes, no key is needed to display the original contents.
   ![Decoded JWT](../../../../public/img/articles/authentication/service-to-service/jwt.webp)
 - Below is what each of the fields means:
   ```js
@@ -245,7 +257,7 @@ You are ready to get access tokens from FusionAuth as a Customer, and verify tok
   }
   ```
 
-### Authenticate The Access Token
+### Create Server Code To Authenticate The Access Token
 
 The API needs to authenticate the access token is really from FusionAuth, rather than being sent by an attacker.
 
