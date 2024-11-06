@@ -1,6 +1,6 @@
 ---
-title: How service to service OAuth differs from user to service OAuth
-description: How service to service OAuth differs from user to service OAuth
+title: How service-to-service OAuth differs from user-to-service OAuth
+description: How service-to-service OAuth differs from user-to-service OAuth
 author: Richard Cooke
 section: Authentication
 tags: oauth, oauth2, service
@@ -16,15 +16,15 @@ import Aside from 'src/components/Aside.astro';
 
 ## Introduction
 
-This article explains how to use OAuth 2.0 and FusionAuth for service-to-service communication, also known as machine-to-machine OAuth. In other words, how to provide and call an API programmatically, with no user logging in on a webpage.
+This article explains how to use OAuth 2.0 and FusionAuth for service-to-service authentication, also known as machine-to-machine OAuth. In other words, how to provide and call an API programmatically, with no user logging in on a webpage.
 
 <PremiumEditionBlurbApi />
 
 ## Understand OAuth User Login
 
-Let's start by summarizing how OAuth normally works for user login, which you're more familiar with than machine OAuth. You've most likely used FusionAuth for local login or third-party login. With local login, FusionAuth stores usernames and password hashes. With third-party login, another organization, like Google, handles authentication and FusionAuth is merely an intermediary. Either way, the authentication flow works as follows:
+Let's start by summarizing how OAuth normally works for user login, which you're more familiar with than machine OAuth. You've most likely used FusionAuth or another service for local login or third-party login. With local login, FusionAuth stores usernames and password hashes itself. With third-party login, another organization, like Google, handles authentication and FusionAuth is merely an intermediary. Either way, the authentication flow works as follows:
 
-- A user (resource owner) clicks "Log in" on your website (client).
+- A user (resource owner) clicks <InlineUIElement>Log in</InlineUIElement> on your website (client).
 - Your site redirects the user to the URL (authorization endpoint) of the authorization server, which could either be FusionAuth directly, or another redirection to Google. This URL includes parameters for the Id of your site (client Id), the URL the user's browser should be sent to after logging in (redirect URI), the response type of code, and the permissions (scopes) your site is requesting on behalf of the user.
 - The user logs in and consents to the permissions requested on a page provided by the server.
 - The authorization server redirects the browser back to your site (using the redirect URI), with a temporary authorization code.
@@ -50,15 +50,15 @@ Imagine you sell a file backup service that allows customers to save files in yo
 
 Let's look at the implications of this scenario:
 
-- Your customers don't have to register on FusionAuth, or use the web interface. To them, FusionAuth is merely a generic OAuth endpoint they call to get an access token. However, both your server and all clients need to know their Ids in FusionAuth, ,the Ids of the API to which they want access, and which permissions they have.
-- When receiving an API call, your service needs to check that the access token is signed by FusionAuth, that the caller is trying to access its own resorces, and the caller has permissions to perform the requested operation on those resources.
+- Your customers don't have to register on FusionAuth themselves   or use the web interface. To them, FusionAuth is merely a generic OAuth endpoint they call to get an access token. However, both your server and all clients need to know their Ids in FusionAuth, the Ids of the API to which they want access, and which permissions they have.
+- When receiving an API call, your service needs to check that the access token is signed by FusionAuth, that the caller is trying to access its own resources, and the caller has permissions to perform the requested operation on those resources.
 - A customer will change between free and premium. When working with individual users in FusionAuth, you could use roles, but entities do not support roles. How can you model this?
 
-You can't use entity types for free and premium — one type for customers and one for premium customers — because you cannot change the type of an entity once it is created. Nor can entity types have default permissions to other entity types. Permissions are defined only between two entities.
+You can't use entity types for free and premium — one type for customers and one for premium customers — because you cannot change the type of an entity once it is created. Nor can entity types have default permissions to other entity types. Permissions are defined only between two entities, not types.
 
 Instead, you have two options:
-- Write a script that calls the [FusionAuth Entity API](https://fusionauth.io/docs/apis/entities/entities#update-an-entity) and updates all permissions for an entity. Note that you will have to track which permissions premium customers should have and which permissions free customers should have, and which customers are of which type, outside FusionAuth. FusionAuth will have no concept of different customer types.
-- Use the entity API to add a custom attribute of `premium` to premium customers. Then write a [Lambda](https://fusionauth.io/docs/extend/code/lambdas/client-credentials-jwt-populate) in FusionAuth to check if the customer has the `premium` attribute at login, and if so, add extra permissions to the access token returned to the customer. This option is more complex than the previous one, but allows you to keep all customer type and permission information in one place, in FusionAuth.
+1. Write a script that calls the [FusionAuth Entity API](https://fusionauth.io/docs/apis/entities/entities#update-an-entity) and updates all permissions for an entity. Note that you will have to track which permissions premium customers should have and which permissions free customers should have, and which customers are of which type, outside FusionAuth. FusionAuth will have no concept of different customer types.
+1. Use the entity API to add a custom attribute of `premium` to premium customers. Then write a [Lambda](https://fusionauth.io/docs/extend/code/lambdas/client-credentials-jwt-populate) in FusionAuth to check if the customer has the `premium` attribute at login, and if so, add extra permissions to the access token returned to the customer. This option is more complex than the previous one, but allows you to keep all customer type and permission information in one place, in FusionAuth.
 
 Below is a diagram of the system you'll build in this guide, using two entity types: API and Customer.
 
@@ -101,21 +101,23 @@ Open a terminal in the `light` subdirectory. All commands will be run here.
 - First, start FusionAuth by running `docker compose up`, and wait a minute for all services to initialize.
 - In a web browser, browse to the FusionAuth web interface at http://localhost:9011.
 - In the sidebar, browse to <Breadcrumb>Reactor</Breadcrumb>, and authorize your paid FusionAuth features by entering your key.
-- In the sidebar, open </Breadcrumb>Entity Management -> Entity Types</Breadcrumb>.
+- In the sidebar, open <Breadcrumb>Entity Management -> Entity Types</Breadcrumb>.
 - Click the <InlineUIElement>Add</InlineUIElement> button to create a new type.
 - Enter `Customer` for <InlineField>Name</InlineField>. (You don't need to enter a specific UUID, because you won't be altering entity types in scripts.)
-- In the <InlineUIElement>JWT</InlineUIElement> tab, enabled <InlineUIElement>Enabled<InlineUIElement> and set the <InlineUIElement>Access token signing key<InlineUIElement> to `RS256`.
-- Click <InlineUIElement>Save<InlineUIElement> at the top right.
+- In the <InlineUIElement>JWT</InlineUIElement> tab, enabled <InlineUIElement>Enabled</InlineUIElement> and set the <InlineUIElement>Access token signing key</InlineUIElement> to `RS256`.
+- Click <InlineUIElement>Save</InlineUIElement> at the top right.
 - You have just created a new Entity Type, `Customer`, that will be the type of all customers using your API, both premium and free.
 - Repeating the steps above, add a new entity type with the name `API`.
   - You don't need to change the JWT signing algorithm here, because the API doesn't ever create access tokens — it only verifies tokens from clients.
-  - This time, before saving, add the following permissions in the <InlineUIElement>Permissions<InlineUIElement> tab: `Create`, `Read`, `Update`, `StoreLargeData`.
+  - This time, before saving, add the following permissions in the <InlineUIElement>Permissions</InlineUIElement> tab: `Create`, `Read`, `Update`, `StoreLargeData`.
   - Save.
 
 ![Entity types in FusionAuth](../../../../public/img/articles/authentication/service-to-service/types.webp)
 
 <Aside type="note">
-All OAuth providers expose their public keys at the standard endpoint: http://localhost:9011/.well-known/jwks.json (on different domains though, of course). FusionAuth exposes apps' public keys at this endpoint, such as the `RS256` one you used above. This public key is used for any service to check that an access token it received was truly signed by FusionAuth. But FusionAuth doesn't expose the default signing key, an `HS256` one, so you actually can't use the default key for access tokens. This is why you changed the JWT key in the instructions above.
+All OAuth providers expose their public keys at the standard endpoint: http://localhost:9011/.well-known/jwks.json (on different domains though, of course). FusionAuth exposes apps' public keys at this endpoint, such as the `RS256` one you used above. This public key is used for any service to check that an access token it received was truly signed by FusionAuth.
+
+But FusionAuth doesn't expose the default signing key, an `HS256` one, so you actually can't use the default key for access tokens. This is why you changed the JWT key in the instructions above.
 </Aside>
 
 ### Create Entities
@@ -156,7 +158,7 @@ This API entity represents the single server that all customers will upload file
 Note that the client Ids and FusionAuth Ids are the same for each entity by default. This makes it easier to match entities between your API database and FusionAuth.
 </Aside>
 
-You are not saying anything about premium customers yet, except to have the `StoreLargeData` attribute in the API type.
+You are not saying anything about premium customers yet, except to have the `StoreLargeData` attribute in the API type for future use.
 
 ### Add Permissions To Customers
 
@@ -208,11 +210,11 @@ Create a file called `customer.mjs` and add the code below to get the access tok
 
 This code uses the Axios library to make HTTP calls simpler. It has one function, `getAccessToken()`, that calls the FusionAuth `/oauth2/token` endpoint to get an access token. Note the form parameters given in this function. Here you are saving the secret key directly in the code, which is not safe in reality. In a real application, you should save keys in a `.env` file that you don't commit to Git.
 
-Finally, note the `scope` parameter. If you excluded this line, you have an access token that provided authentication only, with no permissions to (authorization) to do anything. FusionAuth requires all scopes to be requested in the format shown — with `target-entity` and the Id of the API yu want access to.
+Finally, note the `scope` parameter. If you excluded this line, you would have an access token that provided authentication only, with no permissions (authorization) to do anything. FusionAuth requires all scopes to be requested in the format shown — with `target-entity` and the Id of the API you want access to.
 
-Normally, you make an HTTP to a call to the API with the access token, but in this simplistic example, you simply import the API as another file, and call the `storeFile` method directly. This means you don't have to bother writing an HTTP request handler for this test. Since, the API doesn't exist yet, the first and last lines of the code are commented out for now.
+Normally, you make an HTTP to a call to the API with the access token, but in this simplistic example, you simply import the API as another file, and call the `storeFile` method directly. This means you don't have to bother writing an HTTP request handler for this test. (Since the API doesn't exist yet, the first and last lines of the code are commented out for now).
 
-- Run the command below in a new terminal to make the JavaScript above get a token a display it. Here you run Node.js in a Docker container to isolate it from the rest of your machine for safety's sake.
+- Run the command below in a new terminal to make the JavaScript above get a token and display it. Here you run Node.js in a Docker container to isolate it from the rest of your machine for safety's sake.
   ```sh
   docker run --rm -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  \
   "npm install axios jsonwebtoken jwks-rsa"
@@ -247,7 +249,7 @@ Normally, you make an HTTP to a call to the API with the access token, but in th
 
 ### Create Server Code To Authenticate The Access Token
 
-- Create a file called `api.mjs`. This will act as the server that receives the file upload request and the access token from the customer. The API needs to authenticate the access token is really from FusionAuth, rather than being sent by an attacker. If the token is legitimately from FusionAuth, and contains the permissions to add a file, the operation will succeed.
+- Create a file called `api.mjs`. This will act as the server that receives the file upload request and the access token from the customer. The API needs to authenticate the access token is really from FusionAuth, rather than being sent by an attacker.
 - Add the code below to `api.mjs`.
 ```js
 import axios from "axios";
@@ -257,8 +259,7 @@ import jwt from "jsonwebtoken";
 export async function storeFile(filename, token) {
   const verifiedToken = await verifyToken(token);
   if (verifiedToken.active &&
-      verifiedToken.scope.includes("target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:Create")
-  )
+      verifiedToken.scope.includes("target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:Create"))
     console.log("\n" + filename + " stored successfully for " + verifiedToken.sub);
   else
     console.log("\nError: invalid token");
@@ -436,9 +437,9 @@ Access Token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJjbGllbnRfY3JlZGVudG
 xray.jpg stored successfully
 ```
 
-<Aside type="hint">
+<Aside type="tip">
 If you encounter errors in lambdas, you can enable the debug switch, add `console.log(` statements, and see their output in System -> Event log.
-<Aside>
+</Aside>
 
 You've now seen both ways of managing permissions for different types of customers in FusionAuth, and can choose whichever you think is more appropriate for your situation. Using one or the other does not lock you into that approach. You can always switch later if things become more complex.
 
