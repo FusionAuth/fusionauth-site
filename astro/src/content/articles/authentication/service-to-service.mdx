@@ -14,24 +14,6 @@ import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import Aside from 'src/components/Aside.astro';
 
-- [Introduction](#introduction)
-- [Understand OAuth User Login](#understand-oauth-user-login)
-- [Understand OAuth Machine Login](#understand-oauth-machine-login)
-- [Designing A FusionAuth Example](#designing-a-fusionauth-example)
-- [Why Not Use Only A Username And Password For Machine Authorization?](#why-not-use-only-a-username-and-password-for-machine-authorization)
-- [Set Up A FusionAuth Machine-To-Machine OAuth Example](#set-up-a-fusionauth-machine-to-machine-oauth-example)
-  - [Create Entity Types](#create-entity-types)
-  - [Create Entities](#create-entities)
-  - [Add Permissions To Customers](#add-permissions-to-customers)
-  - [Create Customer Code To Get Access Token](#create-customer-code-to-get-access-token)
-  - [Create Server Code To Authenticate The Access Token](#create-server-code-to-authenticate-the-access-token)
-- [curl Command To Update An Entity](#curl-command-to-update-an-entity)
-- [Check The Updated Permissions](#check-the-updated-permissions)
-- [Write A Lambda Function To Add The StoreLargeData Permission To Premium Customers](#write-a-lambda-function-to-add-the-storelargedata-permission-to-premium-customers)
-- [Test The Lambda Code](#test-the-lambda-code)
-- [Further Reading](#further-reading)
-- [TODO](#todo)
-
 ## Introduction
 
 This article explains how to use OAuth 2.0 and FusionAuth for service-to-service communication, also known as machine-to-machine OAuth. In other words, how to provide and call an API programmatically, with no user logging in on a webpage.
@@ -40,10 +22,10 @@ This article explains how to use OAuth 2.0 and FusionAuth for service-to-service
 
 ## Understand OAuth User Login
 
-Let's start by summarizing how OAuth normally works for user login, which you're more familiar with than machine OAuth. You've most likely used FA for local login or third-party login. With local login, FA stores usernames and password hashes. With third-party login, another organization, like Google, handles authentication and FA is merely an intermediary. Either way, the authentication flow works as follows:
+Let's start by summarizing how OAuth normally works for user login, which you're more familiar with than machine OAuth. You've most likely used FusionAuth for local login or third-party login. With local login, FusionAuth stores usernames and password hashes. With third-party login, another organization, like Google, handles authentication and FusionAuth is merely an intermediary. Either way, the authentication flow works as follows:
 
 - A user (resource owner) clicks "Log in" on your website (client).
-- Your site redirects the user to the URL (authorization endpoint) of the authorization server, which could either be FA directly, or another redirection to Google. This URL includes parameters for the Id of your site (client Id), the URL the user's browser should be sent to after logging in (redirect URI), the response type of code, and the permissions (scopes) your site is requesting on behalf of the user.
+- Your site redirects the user to the URL (authorization endpoint) of the authorization server, which could either be FusionAuth directly, or another redirection to Google. This URL includes parameters for the Id of your site (client Id), the URL the user's browser should be sent to after logging in (redirect URI), the response type of code, and the permissions (scopes) your site is requesting on behalf of the user.
 - The user logs in and consents to the permissions requested on a page provided by the server.
 - The authorization server redirects the browser back to your site (using the redirect URI), with a temporary authorization code.
 - Your site then starts a separate HTTP call to the server directly (to the token endpoint). This is more secure than using the browser, where the access token might be stolen. Now your site can ask the server for a key (access token) to access the user's resources in future calls. In this call your site sends the temporary authorization code, your client Id, and your client secret. The server might instead return a refresh token with a long duration, which can be used to request access tokens with short durations. This enhances security and limits the damage caused if an attacker manages to steal an access token.
@@ -102,7 +84,13 @@ Before looking at how to code this example, you might be wondering: why bother w
 - Basic authentication with a password usually gives an API caller full rights to do anything. With OAuth, you can issue a token with only certain permissions.
 - Access tokens can be logged individually. You can see which service accessed what resource and when. With basic authentication, different services sharing the same customer username and password are indistinguishable.
 
-## Set Up A FusionAuth Machine-To-Machine OAuth Example
+<Aside type="note">
+You'll read the terms "verify" and "validate" a lot. "Verify" means that something is true, in other words, authentic or genuine. The person is who she says she is.
+
+"Validate" means to check if something is correct, in other words, has the correct syntax and structure, and has the correct permissions to do what is being asked.
+</Aside>
+
+## Write A FusionAuth Machine-To-Machine OAuth Example
 
 In this section, you'll learn how to set up FusionAuth to create the API and customer example. This guide needs only Docker. To follow along, download and unzip the repository (or use `git clone`) at https://github.com/FusionAuth/fusionauth-example-docker-compose.
 
@@ -218,9 +206,9 @@ Create a file called `customer.mjs` and add the code below to get the access tok
   //storeFile("xray.jpg", token);
   ```
 
-This code uses the Axios library to make HTTP calls simpler. It has one function, `getAccessToken()`, that calls the FA `/oauth2/token` endpoint to get an access token. Note the form parameters given in this function. Here you are saving the secret key directly in the code, which is not safe in reality. In a real application, you should save keys in a `.env` file that you don't commit to Git.
+This code uses the Axios library to make HTTP calls simpler. It has one function, `getAccessToken()`, that calls the FusionAuth `/oauth2/token` endpoint to get an access token. Note the form parameters given in this function. Here you are saving the secret key directly in the code, which is not safe in reality. In a real application, you should save keys in a `.env` file that you don't commit to Git.
 
-Finally, note the `scope` parameter. If you excluded this line, you have an access token that provided authentication only, with no permissions to (authorization) to do anything. FA requires all scopes to be requested in the format shown — with `target-entity` and the Id of the API yu want access to.
+Finally, note the `scope` parameter. If you excluded this line, you have an access token that provided authentication only, with no permissions to (authorization) to do anything. FusionAuth requires all scopes to be requested in the format shown — with `target-entity` and the Id of the API yu want access to.
 
 Normally, you make an HTTP to a call to the API with the access token, but in this simplistic example, you simply import the API as another file, and call the `storeFile` method directly. This means you don't have to bother writing an HTTP request handler for this test. Since, the API doesn't exist yet, the first and last lines of the code are commented out for now.
 
@@ -287,14 +275,14 @@ async function verifyToken(token) {
 }
 ```
 
-The server has two functions. The first, exported function that the client calls, takes a token and check if it is valid. If so, the server prints that the file was saved successfully. A valid token has three properties:
-- It is correctly signed by FA.
+The server has two functions. The first, exported, function that the client calls, takes a token and checks if it is valid. If so, the server prints that the file was saved successfully. A valid token has three properties:
+- It is correctly signed by FusionAuth.
 - It has not expired yet.
 - It has the `Create` permission for the `FileAPI` Id.
 
-You can see the code above checks all three. Note that the function does not need to check the customer's Id, because this is not a situation where one customer has access to another customer's files.
+You can see the code above checks all three criteria. (Note that the function does not need to check the customer's Id, because this is not a situation where one customer has access to another customer's files.)
 
-The other function in the code, `verifyToken()`, uses two JWT helper libraries. It gets the public key of FA from the localhost URL, and uses it to check that the access token was signed correctly. It also checks that the current time is less than the expiry date of the access token.
+The other function in the code, `verifyToken()`, uses two JWT helper libraries. The function gets the public key of FusionAuth from the localhost URL, and uses it to check that the access token was signed correctly. It also checks that the current time is less than the expiry date of the access token.
 
 Let's run both the customer and server to see if they work.
 
@@ -305,28 +293,50 @@ Let's run both the customer and server to see if they work.
   "node customer.mjs"
   ```
 
-## curl Command To Update An Entity
+## A Better Way To Verify A Token — Introspection
 
-Let's run a script to remove the `Read` permission for the API from North University and give it the premium functionality of `StoreLargeData`. Removing the read permission will allow you to test if access tokens really work. The documentation for the grants (permissions) API is [here](https://fusionauth.io/docs/apis/entities/grants#grant-a-user-or-entity-permissions-to-an-entity).
+Verifying a token by manually looking at JWT signatures, as the code above does, is not standard in OAuth. Instead, all OAuth servers should allow anyone to verify a token by passing the token to the standard `introspect` endpoint. Example code to do this is given below.
 
-For all APIs, you would expect that the URL refers to the object you are updating, such as `http://localhost:9011/api/entity/09a00bb3-5099-4eff-af10-a1c139e847f9` updating the FileAPI in the code below. But in this FusionAuth API, it's backwards — the Id in the URL is where the permissions point to, and the Id of the object that's actually being updated is inside the JSON, `"recipientEntityId": "40450891-0231-49c4-839b-b2c444f57f9c" `.
-
-```sh
-curl -X PUT \
-  -H "Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "grant": {
-      "permissions": [
-        "Create",
-        "Update",
-        "StoreLargeData"
-      ],
-      "recipientEntityId": "40450891-0231-49c4-839b-b2c444f57f9c"
-    }
-  }' \
-  "http://localhost:9011/api/entity/09a00bb3-5099-4eff-af10-a1c139e847f9/grant"
+```js
+async function verifyTokenThroughIntrospectionEndpoint(token) {
+  const response = await axios({
+    method: "post",
+    url: "http://localhost:9011/oauth2/introspect",
+    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    data: `token=${token}&client_id=40450891-0231-49c4-839b-b2c444f57f9c&client_secret=EmQ3FL-rDqHuESnJCmZacFK3sKQbOKX-gQYnC5pPLio`
+  });
+  console.log("\nToken verification result:", response.data);
+  return response.data;
+}
 ```
+
+Unfortunately, FusionAuth does not implement this endpoint correctly. In the code above, you have to send the customer's secret key along with the token to be verified. But the server is the one that wants to verify the key, and the server doesn't have access to the customer's secrets. So the server can't verify any access tokens with this endpoint, as it should be able to. If you try passing the server's secret key to FusionAuth it doesn't work either.
+
+## Update An Entity's Permissions Using curl
+
+Now that you know all the steps of machine OAuth in FusionAuth, let's consider the complexities of changing permissions for the case of a premium customer. If you don't need to know this for your situation, you can end the tutorial here.
+
+Let's run a script to remove the `Read` permission for the API from North University and give it the premium functionality of `StoreLargeData`. Removing the read permission will show you what FusionAuth does if an entity requests a permission it doesn't have. You're going to use the FusionAuth API in the terminal to make these updates.
+
+The documentation for the grants (permissions) API is [here](https://fusionauth.io/docs/apis/entities/grants#grant-a-user-or-entity-permissions-to-an-entity). For any APIs you would expect that the URL refers to the object you are updating, such as `http://localhost:9011/api/entity/09a00bb3-5099-4eff-af10-a1c139e847f9` updating the FileAPI in the code below. But in this FusionAuth API, it's backwards — the Id in the URL is where the permissions point to, and the Id of the object that's actually being updated is inside the JSON, `"recipientEntityId": "40450891-0231-49c4-839b-b2c444f57f9c" ` (North University).
+
+- Run the curl command below to change the permissions `NorthUniversity` has to `FileApi`. (The API key in the header of this request was automatically created by the Kickstart file for this FusionAuth demonstration instance.)
+  ```sh
+  curl -X PUT \
+    -H "Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "grant": {
+        "permissions": [
+          "Create",
+          "Update",
+          "StoreLargeData"
+        ],
+        "recipientEntityId": "40450891-0231-49c4-839b-b2c444f57f9c"
+      }
+    }' \
+    "http://localhost:9011/api/entity/09a00bb3-5099-4eff-af10-a1c139e847f9/grant"
+  ```
 
 The script above is a manual way to change a customer's permissions from free to premium.
 
@@ -344,9 +354,11 @@ curl -X PATCH \
 
 If you view North University in the FusionAuth web interface entities screen, you'll see it now has updated data and permissions.
 
+In reality, you'll want to use one of the scripts above, not both, as they accomplish the same thing in different ways.
+
 ## Check The Updated Permissions
 
-Run the customer script from before and you will now see it immediately fail, as expected, because the university requests read permissions to the file API, but they were removed in FusionAuth.
+Run the customer script from before and you will now see it immediately fail, as expected, because the university requests read permissions to the File API, but they were removed in FusionAuth.
 
 ```sh
 docker run --rm --network host -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  \
@@ -355,14 +367,25 @@ docker run --rm --network host -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  \
 # Output: error_description: 'Invalid target-entity scope. The permission names [Read] are invalid.',
 ```
 
-In `customer.mjs`, replace the request for the read permission, `"target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:Read",` with the large data permission, `"target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:StoreLargeData",`, and rerun the code. It should run successfully again, and in the decoded token you can see the access token now have premium permissions.
+In `customer.mjs`, replace the request for the read permission, `"target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:Read",` with the large data permission, `"target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:StoreLargeData",`, and rerun the code. It should run successfully again, and in the decoded token you can see the access token now has the `StoreLargeData` permission, as shown below.
 
-## Write A Lambda Function To Add The StoreLargeData Permission To Premium Customers
+```js
+{
+  aud: '09a00bb3-5099-4eff-af10-a1c139e847f9',
+  ...
+  scope: 'target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:Create      target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:Update     target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:StoreLargeData',
+  ...
+}
+```
 
-- In the FA web interface sidebar, browse to Customizations -> Lambdas.
-- Click the + button at the top right.
-- For name, enter `PremiumPermissions`.
-- For type, choose `Client credentials JWT populate`
+You now know how to use the first method of changing permissions — manually updating them with a script. In the next section, you'll see the other way: how to check if a customer has the `premium` attribute you just added, and set the relevant permissions directly in FusionAuth for each access request.
+
+## Write A Lambda Function To Add The `StoreLargeData` Permission To Premium Customers
+
+- In the FusionAuth web interface sidebar, browse to <Breadcrumb>Customizations -> Lambdas</Breadcrumb>.
+- Click the <InlineUIElement>+</InlineUIElement> button at the top right.
+- For <InlineUIElement>Name</InlineUIElement>, enter `PremiumPermissions`.
+- For <InlineUIElement>Type</InlineUIElement>, choose `Client credentials JWT populate`.
 - Enter the code below and save the new lambda.
   ```js
   function populate(jwt, recipientEntity, targetEntities, permissions) {
@@ -374,17 +397,17 @@ In `customer.mjs`, replace the request for the read permission, `"target-entity:
     }
   }
   ```
-- Browse to Tenants in the sidebar.
-- Click the Edit button for the default tenant.
-- Select the OAuth tab.
-- For Client credentials populate lambda, select PremiumPermissions lambda you just created.
-- Click Save at the top right.
+- Browse to <Breadcrumb>Tenants</Breadcrumb> in the sidebar.
+- Click the <InlineUIElement>Edit</InlineUIElement> button for the default tenant.
+- Select the <InlineUIElement>OAuth</InlineUIElement> tab.
+- For <InlineUIElement>Client credentials populate lambda</InlineUIElement>, select `PremiumPermissions` lambda you just created.
+- Click <InlineUIElement>Save</InlineUIElement> at the top right.
 
 Now FusionAuth will run your custom code whenever returning an access token to a client. If the entity has the attribute `premium`, which you added earlier, then the client will be given the `StoreLargeData` permission to the entity it is requesting permission for.
 
 ## Test The Lambda Code
 
-Before testing that the lambda populates `StoreLargeData` for North University, you first need to remove the permission you added earlier using the script. Return to the entities screen in FusionAuth and remove the permission there.
+Before testing that the lambda populates `StoreLargeData` for North University, you first need to remove the permission you added earlier using the script. Return to the entities screen in FusionAuth and remove the `StoreLargeData` permission there for North University.
 
 In `customer.mjs`, you also need to remove `target-entity:09a00bb3-5099-4eff-af10-a1c139e847f9:StoreLargeData`, because that permission is no longer explicitly set for the entity. If you try to request it from FusionAuth, you will receive an error. Instead, the lambda function will now automatically append the large data permission to any premium customers.
 
@@ -417,25 +440,10 @@ xray.jpg stored successfully
 If you encounter errors in lambdas, you can enable the debug switch, add `console.log(` statements, and see their output in System -> Event log.
 <Aside>
 
+You've now seen both ways of managing permissions for different types of customers in FusionAuth, and can choose whichever you think is more appropriate for your situation. Using one or the other does not lock you into that approach. You can always switch later if things become more complex.
+
 ## Further Reading
 
 - [FusionAuth modern guide to OAuth](https://fusionauth.io/resources/the-modern-guide-to-oauth.pdf)
-- https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints
-- https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints#introspect
-
-## TODO
-
-OA OAuth
-FA FusionAuth
-
-FIX error that won't allow you to use server client id to call the introspect endpoint
-
-    client credentials grant
-    how to create/manage scopes
-    how to think about on behalf of calls
-    token expiration time
-    what kind of signing key to use (symmetric? asymmetric?)
-
-<Breadcrumb>
-<InlineField>
-<InlineUIElement>
+- [FusionAuth OAuth endpoints](https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints)
+- [FusionAuth OAuth introspection endpoint](https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/endpoints#introspect)
