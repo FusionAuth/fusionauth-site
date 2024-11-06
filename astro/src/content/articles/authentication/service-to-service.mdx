@@ -9,6 +9,10 @@ darkIcon: /img/icons/webauthn-explained-dark.svg
 ---
 
 import PremiumEditionBlurbApi from 'src/content/docs/_shared/_premium-edition-blurb-api.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import Aside from 'src/components/Aside.astro';
 
 - [Introduction](#introduction)
 - [Understand OAuth User Login](#understand-oauth-user-login)
@@ -30,19 +34,19 @@ import PremiumEditionBlurbApi from 'src/content/docs/_shared/_premium-edition-bl
 
 ## Introduction
 
-This article explains how to use OAuth 2.0 and FusionAuth for service to service communication (which you can call machine OA). In other words, how to both provide and call an API programmatically, with no user logging in on a webpage.
+This article explains how to use OAuth 2.0 and FusionAuth for service-to-service communication, also known as machine-to-machine OAuth. In other words, how to provide and call an API programmatically, with no user logging in on a webpage.
 
 <PremiumEditionBlurbApi />
 
 ## Understand OAuth User Login
 
-Let's start by summarizing how OAuth normally works for user login. You've most likely used FA for local login or third-party login. With local login, FA stores usernames and password hashes. With third-party login, another organization, like Google, handles authentication and FA is merely an intermediary. Either way, the authentication flow works as follows:
+Let's start by summarizing how OAuth normally works for user login, which you're more familiar with than machine OAuth. You've most likely used FA for local login or third-party login. With local login, FA stores usernames and password hashes. With third-party login, another organization, like Google, handles authentication and FA is merely an intermediary. Either way, the authentication flow works as follows:
 
 - A user (resource owner) clicks "Log in" on your website (client).
 - Your site redirects the user to the URL (authorization endpoint) of the authorization server, which could either be FA directly, or another redirection to Google. This URL includes parameters for the Id of your site (client Id), the URL the user's browser should be sent to after logging in (redirect URI), the response type of code, and the permissions (scopes) your site is requesting on behalf of the user.
 - The user logs in and consents to the permissions requested on a page provided by the server.
 - The authorization server redirects the browser back to your site (using the redirect URI), with a temporary authorization code.
-- Your site then starts a separate HTTP call to the server directly (to the token endpoint). This is more secure than using the browser. Now your site can ask the server for a key (access token) to access the user's resources in future calls. In this call your site sends the temporary authorization code, your client Id, and your client secret. The server might instead return a refresh token with a long duration, which can be used to request access tokens with short durations. This enhances security and limits the damage caused if an attacker manages to steal an access token.
+- Your site then starts a separate HTTP call to the server directly (to the token endpoint). This is more secure than using the browser, where the access token might be stolen. Now your site can ask the server for a key (access token) to access the user's resources in future calls. In this call your site sends the temporary authorization code, your client Id, and your client secret. The server might instead return a refresh token with a long duration, which can be used to request access tokens with short durations. This enhances security and limits the damage caused if an attacker manages to steal an access token.
 
 The protocol above is called a flow, specifically the authorization code flow. What the flow returns is called a grant — access to the requested scopes. The grant is represented by data like the client credentials and the access token. The word grant is often used interchangeably with the word flow, but that isn't strictly correct.
 
@@ -50,7 +54,7 @@ For a detailed overview of all OAuth flows, please read the [FusionAuth modern g
 
 ## Understand OAuth Machine Login
 
-Let's move on from discussing users to discussing services, or machine-to-machine OAuth. The flow for calling an API from a machine with no user login page is called the client credentials flow.
+Let's move on from discussing users to discussing services. In OAuth, the flow for calling an API from a machine with no user login page is called the client credentials flow.
 
 - Your app makes a POST request to the token endpoint of the authorization server, passing your `client_id`, `client_secret`, and `grant_type` with value `client_credentials` as form data.
 - Since the app is requesting access to its own resources, not the resources of another user, no consent is required.
@@ -64,7 +68,7 @@ Imagine you sell a file backup service that allows customers to save files in yo
 
 Let's look at the implications of this scenario:
 
-- Your customers don't have to register on FusionAuth, or have any knowledge of it. To them, it is merely a generic OAuth endpoint they call to get an access token. It is only your service that needs to be aware of FusionAuth, and have the Ids of customers and permissions between FusionAuth and the service database agree.
+- Your customers don't have to register on FusionAuth, or use the web interface. To them, FusionAuth is merely a generic OAuth endpoint they call to get an access token. However, both your server and all clients need to know their Ids in FusionAuth, ,the Ids of the API to which they want access, and which permissions they have.
 - When receiving an API call, your service needs to check that the access token is signed by FusionAuth, that the caller is trying to access its own resorces, and the caller has permissions to perform the requested operation on those resources.
 - A customer will change between free and premium. When working with individual users in FusionAuth, you could use roles, but entities do not support roles. How can you model this?
 
@@ -72,7 +76,7 @@ You can't use entity types for free and premium — one type for customers and o
 
 Instead, you have two options:
 - Write a script that calls the [FusionAuth Entity API](https://fusionauth.io/docs/apis/entities/entities#update-an-entity) and updates all permissions for an entity. Note that you will have to track which permissions premium customers should have and which permissions free customers should have, and which customers are of which type, outside FusionAuth. FusionAuth will have no concept of different customer types.
-- Use the entity API to add a custom attribute of `premium` to premium customers. Then write a [Lambda](https://fusionauth.io/docs/extend/code/lambdas/client-credentials-jwt-populate) in FusionAuth to check if the customer has the `premium` attribute at login, and if so, add extra permissions to the access token returned to the customer This option is more complex than the previous, but allows you to keep all customer type and permission information in one place, in FusionAuth.
+- Use the entity API to add a custom attribute of `premium` to premium customers. Then write a [Lambda](https://fusionauth.io/docs/extend/code/lambdas/client-credentials-jwt-populate) in FusionAuth to check if the customer has the `premium` attribute at login, and if so, add extra permissions to the access token returned to the customer. This option is more complex than the previous one, but allows you to keep all customer type and permission information in one place, in FusionAuth.
 
 Below is a diagram of the system you'll build in this guide, using two entity types: API and Customer.
 
@@ -82,12 +86,12 @@ graph LR
   n3("NorthUniversity (Customer)") --> |Send token, store files| n2
   n4(FusionAuth)
   n1 --> |Get token| n4
-  n2 --> |Verify token token|n4
+  n2 --> |Verify token|n4
   n3 --> |Get token|n4
 ```
 
 <Aside type="note">
-Entities can be used only with other entities, [not with users](https://github.com/FusionAuth/fusionauth-issues/issues/1295). So you can't model hospitals as entities, and have patients, admission staff, and doctors as users with different permissions to medical records at different hospitals. For that situation, you need to have a hospital as an application, with doctors and patients as roles for users. You would also need to add the hospital as an entity if you wanted external services to call it as an API. But the hospital as an entity and the hospital as an application are completely separate, and changes to each would need to be duplicated.
+Entities can be used only with other entities, [not with users](https://github.com/FusionAuth/fusionauth-issues/issues/1295). So you can't model hospitals as entities, and have patients, admission staff, and doctors as users with different permissions to medical records at different hospitals. For that situation, you need to have a hospital as an application, with doctors and patients as roles for users. You would also need to add the hospital as an entity if you wanted external services to call it as an API. But the hospital as an entity and the hospital as an application are completely separate in FusionAuth, and changes to each would need to be duplicated.
 </Aside>
 
 ## Why Not Use Only A Username And Password For Machine Authorization?
@@ -95,27 +99,30 @@ Entities can be used only with other entities, [not with users](https://github.c
 Before looking at how to code this example, you might be wondering: why bother with the complexity of OAuth and access tokens, instead of giving customers a username and password? Firstly, calling an endpoint to get an access token, and sending that with API calls instead of the password directly, is only one extra step. So it's not much more work for customers. There are also several advantages:
 - You can manage entities and permissions in one place — the FusionAuth web interface.
 - Customers can store the client secret (password) very securely, and give only the access token to services that make API calls. In the event this token is exposed to attackers, it can be immediately revoked through an OAuth endpoint, without needing to change the client secret. Since access tokens expire, you also have password rotation by default.
-- Basic authentication with a password usually gives an API caller full rights to do anything. With OAuth, you can issue a token with only certain permissions. In FusionAuth, you will need to create multiple entities to do this. For instance, you might create North Hospital Imaging and North Hospital Admissions as different entities with slightly different FileAPI permissions.
+- Basic authentication with a password usually gives an API caller full rights to do anything. With OAuth, you can issue a token with only certain permissions.
 - Access tokens can be logged individually. You can see which service accessed what resource and when. With basic authentication, different services sharing the same customer username and password are indistinguishable.
 
 ## Set Up A FusionAuth Machine-To-Machine OAuth Example
 
-TODO fusionauth light docker compose
+In this section, you'll learn how to set up FusionAuth to create the API and customer example. This guide needs only Docker. To follow along, download and unzip the repository (or use `git clone`) at https://github.com/FusionAuth/fusionauth-example-docker-compose.
+
+Open a terminal in the `light` subdirectory. All commands will be run here.
 
 ### Create Entity Types
 
-- Browse to the FusionAuth web interface at http://localhost:9011.
-- Authorize your paid FusionAuth features in Reactor.
-- In the sidebar, open `Entity Management - Entity Types`.
-- Click the `Add` button to create a new type.
-- Enter `Customer` for `Name`. (You don't need to enter a specific UUID, because you won't be altering entity types in scripts.)
-- In the JWT tab, enabled `Enabled` and set the `Access token signing key` to `RS256`.
-- Click `Save` at the top right.
-- You have just created a new Entity Type, Customer, that will be the type of all your customers using your API.
-- Add a new type with the name `API`.
-- You don't need to change the JWT signing algorithm here, because the API doesn't ever create access tokens - it only verifies tokens from clients.
-- This time, before saving, add the following permissions in the permissions tab: `Create`, `Read`, `Update`, `StoreLargeData`.
-- Save.
+- First, start FusionAuth by running `docker compose up`, and wait a minute for all services to initialize.
+- In a web browser, browse to the FusionAuth web interface at http://localhost:9011.
+- In the sidebar, browse to <Breadcrumb>Reactor</Breadcrumb>, and authorize your paid FusionAuth features by entering your key.
+- In the sidebar, open </Breadcrumb>Entity Management -> Entity Types</Breadcrumb>.
+- Click the <InlineUIElement>Add</InlineUIElement> button to create a new type.
+- Enter `Customer` for <InlineField>Name</InlineField>. (You don't need to enter a specific UUID, because you won't be altering entity types in scripts.)
+- In the <InlineUIElement>JWT</InlineUIElement> tab, enabled <InlineUIElement>Enabled<InlineUIElement> and set the <InlineUIElement>Access token signing key<InlineUIElement> to `RS256`.
+- Click <InlineUIElement>Save<InlineUIElement> at the top right.
+- You have just created a new Entity Type, `Customer`, that will be the type of all customers using your API, both premium and free.
+- Repeating the steps above, add a new entity type with the name `API`.
+  - You don't need to change the JWT signing algorithm here, because the API doesn't ever create access tokens — it only verifies tokens from clients.
+  - This time, before saving, add the following permissions in the <InlineUIElement>Permissions<InlineUIElement> tab: `Create`, `Read`, `Update`, `StoreLargeData`.
+  - Save.
 
 ![Entity types in FusionAuth](../../../../public/img/articles/authentication/service-to-service/types.webp)
 
@@ -125,48 +132,52 @@ All OAuth providers expose their public keys at the standard endpoint: http://lo
 
 ### Create Entities
 
-- In the sidebar, open `Entity Management - Entites`.
-- Click the `Add` button to create a new entity.
+- In the sidebar, open <Breadcrumb>Entity Management -> Entites</Breadcrumb>.
+- Click the <InlineUIElement>Add</InlineUIElement> button to create a new entity.
 - Enter the following values:
-  - `Id` - `09a00bb3-5099-4eff-af10-a1c139e847f9`
-  - `Name` - `FileApi`
-  - `Client Id` - `09a00bb3-5099-4eff-af10-a1c139e847f9`
-  - `Client Secret` - `fDt7Pn5s3FymamBobVUxUtDwggxNpW1iyaujCOZjX6E`
-  - `Entity Type` - `API`
+  - <InlineField>Id</InlineField> — `09a00bb3-5099-4eff-af10-a1c139e847f9`
+  - <InlineField>Name</InlineField> — `FileApi`
+  - <InlineField>Client Id</InlineField> — `09a00bb3-5099-4eff-af10-a1c139e847f9`
+  - <InlineField>Client Secret</InlineField> — `fDt7Pn5s3FymamBobVUxUtDwggxNpW1iyaujCOZjX6E`
+  - <InlineField>Entity Type</InlineField> — `API`
 - Save.
+
+This API entity represents the single server that all customers will upload files to.
 
 ![FileApi](../../../../public/img/articles/authentication/service-to-service/fileapi.webp)
 
-- Click the `Add` button to create a new entity.
+- Click the <InlineUIElement>Add</InlineUIElement> button to create a new entity.
 - Enter the following values:
-  - `Id` - `de085100-893e-463d-9641-a96c265b1f6c`
-  - `Name` - `NorthHospital`
-  - `Client Id` - `de085100-893e-463d-9641-a96c265b1f6c`
-  - `Client Secret` - `_snp1-t_0ec5Tm9gj3RBoH-LNmZlqS4mVorcBPoF5go`
-  - `Entity Type` - `Customer`
+  - <InlineField>Id</InlineField> — `de085100-893e-463d-9641-a96c265b1f6c`
+  - <InlineField>Name</InlineField> — `NorthHospital`
+  - <InlineField>Client Id</InlineField> — `de085100-893e-463d-9641-a96c265b1f6c`
+  - <InlineField>Client Secret</InlineField> — `_snp1-t_0ec5Tm9gj3RBoH-LNmZlqS4mVorcBPoF5go`
+  - <InlineField>Entity Type</InlineField> — `Customer`
 - Save.
 
-- Click the `Add` button to create a new entity.
+- Click the <InlineUIElement>Add</InlineUIElement> button to create a new entity.
 - Enter the following values:
-  - `Id` - `40450891-0231-49c4-839b-b2c444f57f9c`
-  - `Name` - `NorthUniversity`
-  - `Client Id` - `40450891-0231-49c4-839b-b2c444f57f9c`
-  - `Client Secret` - `EmQ3FL-rDqHuESnJCmZacFK3sKQbOKX-gQYnC5pPLio`
-  - `Entity Type` - `Customer`
+  - <InlineField>Id</InlineField> - `40450891-0231-49c4-839b-b2c444f57f9c`
+  - <InlineField>Name</InlineField> - `NorthUniversity`
+  - <InlineField>Client Id</InlineField> - `40450891-0231-49c4-839b-b2c444f57f9c`
+  - <InlineField>Client Secret</InlineField> - `EmQ3FL-rDqHuESnJCmZacFK3sKQbOKX-gQYnC5pPLio`
+  - <InlineField>Entity Type</InlineField> - `Customer`
 - Save.
 
+<Aside type="note">
 Note that the client Ids and FusionAuth Ids are the same for each entity by default. This makes it easier to match entities between your API database and FusionAuth.
+</Aside>
 
 You are not saying anything about premium customers yet, except to have the `StoreLargeData` attribute in the API type.
 
 ### Add Permissions To Customers
 
-- In the Entities screen, click `Manage` for `NorthUniversity`.
-- In the `Entity grants` tab at the bottom, click `Add`.
-- Type `api` in the search box and select `FileApi`.
-- Enable all permissions except `StoreLargeData` and click `Save`.
+- In the <InlineUIElement>Entities</InlineUIElement> screen, click <InlineUIElement>Manage</InlineUIElement> for `NorthUniversity`.
+- In the <InlineUIElement>Entity grants</InlineUIElement> tab at the bottom, click <InlineUIElement>Add</InlineUIElement>.
+- Type `api` in the search box and select <InlineUIElement>FileApi</InlineUIElement>.
+- Enable all permissions except `StoreLargeData` and click <InlineUIElement>Save</InlineUIElement>.
 
-The university now has permissions to add and update files through the API.
+The university now has permissions to add and update files through the API. The hospital has no permissions. Both customers are free customers, not premium, and don't have the `StoreLargeData` permission.
 
 ### Create Customer Code To Get Access Token
 
@@ -383,4 +394,6 @@ FIX error that won't allow you to use server client id to call the introspect en
     token expiration time
     what kind of signing key to use (symmetric? asymmetric?)
 
-Have this playlist which helps some: https://www.youtube.com/watch?v=rT-VTtgligI&list=PLUOVyt5DYPpNzRdTKrio0P0a4mktqLPN9
+<Breadcrumb>
+<InlineField>
+<InlineUIElement>
