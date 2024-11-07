@@ -1,17 +1,19 @@
 ---
-title: Fusionauth Swift SDK for iOS (Beta)
+title: iOS Swift - FusionAuth SDK (Beta)
 description: Quickstart integration of a Swift-based iOS app with FusionAuth Swift SDK for iOS
 navcategory: getting-started
 prerequisites: Xcode, Git
 section: native
 technology: iOS
 language: Swift
-icon: /img/icons/ios.svg
+icon: /img/icons/swift-iOS-mobile.svg
 faIcon: fa-ios
 color: indigo
 cta: EmailListCTA
 codeRoot: https://raw.githubusercontent.com/sonderformat-llc/fusionauth-quickstart-swift-ios-native/main
 ---
+import Aside from '/src/components/Aside.astro';
+import IconButton from '/src/components/IconButton.astro';
 import Breadcrumb from '/src/components/Breadcrumb.astro';
 import InlineUIElement from '/src/components/InlineUIElement.astro';
 import InlineField from '/src/components/InlineField.astro';
@@ -72,11 +74,21 @@ Add the [FusionAuth Swift SDK as a dependency](https://github.com/sonderformat-l
 
 ### Configure FusionAuth
 
-Create `Quickstart/AuthorizationManager+Initialization.swift` to use the values provisioned by Kickstart.
+First, create a new property list file to store the configuration values. Select <Breadcrumb>File -> New -> File from Template</Breadcrumb> from the menu bar. Select <InlineUIElement>Property List</InlineUIElement> as the template. Click <InlineUIElement>Next</InlineUIElement>. Set the name of the file to `FusionAuth.plist`. Make sure that the `Quickstart` subfolder is selected. Click <InlineUIElement>Create</InlineUIElement>.
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/Quickstart/AuthorizationManager%2BInitialization.swift"} lang="swift"/>
+Right-click on the `Quickstart/FusionAuth.plist` file in the project navigator and select <InlineUIElement>Open As -> Source Code</InlineUIElement>. Copy and paste the following code into the file to use the values provisioned by Kickstart.
 
-And updating the quickstart app `Quickstart/QuickstartApp.swift` to use the `AuthorizationManager`.
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/Quickstart/FusionAuth.plist"} lang="xml"/>
+
+In this example we are using a `ObservableObject` to store and listen to changes in the `FusionAuthState` object. This object will be used to determine which view to display based on the user's authentication state.
+
+Create a new Swift file to store the `FusionAuthState` object. Select <Breadcrumb>File -> New -> File from Template</Breadcrumb> from the menu bar. Select <InlineUIElement>Swift File</InlineUIElement> as the template. Click <InlineUIElement>Next</InlineUIElement>. Set the name of the file to `FusionAuthStateObject.swift`. Click <InlineUIElement>Create</InlineUIElement>.
+
+Replace the contents of the `Quickstart/FusionAuthStateObject.swift` file with the following code.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/Quickstart/FusionAuthStateObject.swift"} lang="swift"/>
+
+Finally, update the quickstart app `Quickstart/QuickstartApp.swift` to use the `AuthorizationManager` and register `FusionAuthStateObject` as an environment object.
 
 <RemoteCode url={frontmatter.codeRoot + "/complete-application/Quickstart/QuickstartApp.swift"} lang="swift"/>
 
@@ -84,37 +96,31 @@ And updating the quickstart app `Quickstart/QuickstartApp.swift` to use the `Aut
 
 A [View](https://developer.apple.com/documentation/uikit/views_and_controls) and controls are the visual building blocks of your app’s user interface. Use them to draw and organize your app’s content onscreen.
 
-Start by creating login view logic by creating `Quickstart/LoginView.swift` with this code.
+Start by creating login view by selecting <Breadcrumb>File -> New -> File from Template</Breadcrumb> from the menu bar. Select <InlineUIElement>SwiftUI View</InlineUIElement> as the template. Click <InlineUIElement>Next</InlineUIElement>. Set the name of the file to `LoginView.swift`. Click <InlineUIElement>Create</InlineUIElement>. Replace the contents of the `Quickstart/LoginView.swift` file with the following code.
 
 <RemoteCode url={frontmatter.codeRoot + "/complete-application/Quickstart/LoginView.swift"} lang="swift"/>
 
-The `LoginView` view is displayed when the user is not logged in and contains a button that initiates the login flow. The `UserAuth` object is accessed via the `@EnvironmentObject` property wrapper, and the `login` method is called when the login button is pressed.
+The `LoginView` view is displayed when the user is not logged in and contains a button that initiates the login flow. The `login` method is called when the login button is pressed.
 
-Select <Breadcrumb>File -> New -> File</Breadcrumb> from the menu bar. Select <InlineUIElement>Swift File</InlineUIElement> as the template. Click <InlineUIElement>Next</InlineUIElement>. Set the name of the file to `LoginView.swift`. Click <InlineUIElement>Create</InlineUIElement>.
-
-And the logged in view `Quickstart/LoggedInView.swift`.
+Next, create the logged in view `Quickstart/LoggedInView.swift` like previously done for the `LoginView.swift`.
 
 <RemoteCode url={frontmatter.codeRoot + "/complete-application/Quickstart/LoggedInView.swift"} lang="swift"/>
 
-Which is used by the content view `Quickstart/ContentView.swift` which you update with this code.
+Next, we update the `Quickstart/ContentView.swift` view to display the login screen if the user is not logged in, or the main app screens if the user is logged in. The `UserAuth` object is accessed via the `@EnvironmentObject` property wrapper, and the `isLoggedIn` property is used to determine which view to display.
 
 <RemoteCode url={frontmatter.codeRoot + "/complete-application/Quickstart/ContentView.swift"} lang="swift"/>
-
-The `ContentView` view is the root view of the app that will display the login screen if the user is not logged in, or the main app screens if the user is logged in. The `UserAuth` object is accessed via the `@EnvironmentObject` property wrapper, and the `isLoggedIn` property is used to determine which view to display.
 
 Create the main view after a successful login in the file `Quickstart/HomeView.swift`.
 
 <RemoteCode url={frontmatter.codeRoot + "/complete-application/Quickstart/HomeView.swift"} lang="swift"/>
 
-The `HomeView` view is displayed when the user is logged in. It greets the user by their name, email or nick retrieved from FusionAuth, and contains buttons that initiates the refresh token and logout flow. The `UserAuth` object is accessed via the `@EnvironmentObject` property wrapper, and its `logout` method is called when the logout button is pressed.
+The `HomeView` view is displayed when the user is logged in. It greets the user by their name, email or nick retrieved from FusionAuth, and contains buttons that initiates the refresh token and logout flow. The `UserInfo` state object is updated with the user's information when the view is loaded, and the `refreshToken` and `logout` methods are called when the corresponding buttons are pressed.
 
 ### Add The Make Change View
 
 ChangeBank's main business is to convert your notes to coins. The `MakeChangeView` view is available when the user is logged in. It takes an amount in dollars and returns the equivalent amount in nickels and pennies.
 
-Select <Breadcrumb>File -> New -> File</Breadcrumb> from the menu bar. Select <InlineUIElement>Swift File</InlineUIElement> as the template. Click <InlineUIElement>Next</InlineUIElement>. Set the name of the file to `MakeChangeView.swift`. Click <InlineUIElement>Create</InlineUIElement>.
-
-Copy the following code into the `Quickstart/MakeChangeView.swift` file.
+Create the `Quickstart/MakeChangeView.swift` file.
 
 <RemoteCode url={frontmatter.codeRoot + "/complete-application/Quickstart/MakeChangeView.swift"} lang="swift"/>
 
@@ -122,17 +128,25 @@ Copy the following code into the `Quickstart/MakeChangeView.swift` file.
 
 In this section, you'll update the look and feel of your native application to match the ChangeBank banking styling.
 
-### Change Colors, Strings and add Styling
+### Change Colors and Styles
 
-TODO Quickstart/Assets.xcassets/changebank.imageset
-
-TODO Quickstart/Assets.xcassets/AppIcon.appiconset
-
-TODO Quickstart/Assets.xcassets/AccentColor.colorset
-
-Add a new styles file to the project. Select <Breadcrumb>File -> New -> File</Breadcrumb> from the menu bar. Select <InlineUIElement>Swift File</InlineUIElement> as the template. Click <InlineUIElement>Next</InlineUIElement>. Set the name of the file to `Styles.swift`. Click <InlineUIElement>Create</InlineUIElement>.
+Add the colors and styles in the file `Quickstart/Styles.swift`.
 
 <RemoteCode url={frontmatter.codeRoot + "/complete-application/Quickstart/Styles.swift"} lang="swift"/>
+
+### Add Images
+
+Now, add image assets to make this look like a real application with the following shell commands, run in the root of your project.
+
+```shell
+curl --create-dirs -o Quickstart/Assets.xcassets/AccentColor.colorset/Contents.json https://raw.githubusercontent.com/sonderformat-llc/fusionauth-quickstart-swift-ios-native/refs/heads/main/complete-application/Quickstart/Assets.xcassets/AccentColor.colorset/Contents.json
+curl --create-dirs -o Quickstart/Assets.xcassets/AppIcon.appiconset/Contents.json https://raw.githubusercontent.com/sonderformat-llc/fusionauth-quickstart-swift-ios-native/refs/heads/main/complete-application/Quickstart/Assets.xcassets/AppIcon.appiconset/Contents.json
+curl --create-dirs -o Quickstart/Assets.xcassets/AppIcon.appiconset/fa_icon.png https://raw.githubusercontent.com/sonderformat-llc/fusionauth-quickstart-swift-ios-native/refs/heads/main/complete-application/Quickstart/Assets.xcassets/AppIcon.appiconset/fa_icon.png
+curl --create-dirs -o Quickstart/Assets.xcassets/AppIcon.appiconset/fa_icon_dark.png https://raw.githubusercontent.com/sonderformat-llc/fusionauth-quickstart-swift-ios-native/refs/heads/main/complete-application/Quickstart/Assets.xcassets/AppIcon.appiconset/fa_icon_dark.png
+curl --create-dirs -o Quickstart/Assets.xcassets/AppIcon.appiconset/fa_icon_tinted.png https://raw.githubusercontent.com/sonderformat-llc/fusionauth-quickstart-swift-ios-native/refs/heads/main/complete-application/Quickstart/Assets.xcassets/AppIcon.appiconset/fa_icon_tinted.png
+curl --create-dirs -o Quickstart/Assets.xcassets/changebank.imageset/Contents.json https://raw.githubusercontent.com/sonderformat-llc/fusionauth-quickstart-swift-ios-native/refs/heads/main/complete-application/Quickstart/Assets.xcassets/changebank.imageset/Contents.json
+curl --create-dirs -o Quickstart/Assets.xcassets/changebank.imageset/Image.png https://raw.githubusercontent.com/sonderformat-llc/fusionauth-quickstart-swift-ios-native/refs/heads/main/complete-application/Quickstart/Assets.xcassets/changebank.imageset/Image.png
+```
 
 Once you've created these files, you can test the application out.
 
@@ -148,11 +162,29 @@ Click <InlineUIElement>Login</InlineUIElement>. You should see a system notifica
 
 At the bottom of the screen, you'll see a tab bar with two tabs. Click the <Breadcrumb>Make Change</Breadcrumb> tab. Enter an amount in dollars, and click <InlineUIElement>Make Change</InlineUIElement>. You should see the equivalent amount in nickels and pennies displayed.
 
-Navigate back to the home screen by clicking the <Breadcrumb>Home</Breadcrumb> tab. Click <InlineUIElement>Refresh Token</InlineUIElement> and you should see in the logs a new token being generated. Then click <InlineUIElement>Logout</InlineUIElement>. You should see another system notification and then be redirected to FusionAuth to log out. Finally, you'll be returned to the login screen.
+Navigate back to the home screen by clicking the <Breadcrumb>Home</Breadcrumb> tab. Click <InlineUIElement>Refresh Token</InlineUIElement> and you should see in the logs a new token being generated. Then click <InlineUIElement>Log out</InlineUIElement>. You should see another system notification and then be redirected to FusionAuth to log out. Finally, you'll be returned to the login screen.
 
 ### Running The App On A Device
 
-TODO
+To run the app on your device, you need to make a few changes. This is because the app will be running on a different device to the FusionAuth instance, so it won't be able to access the FusionAuth instance via `localhost`.
+
+A simple way to get around this is to use [ngrok](https://ngrok.com/), a tool that allows you to expose a local server to the internet. You can follow the [guide here](/docs/get-started/download-and-install/development/exposing-instance). Note the URL ngrok gave you as you'll need it soon.
+
+Now that you have the URL, you need to update the FusionAuth Tenant issuer to make sure it matches the given address.
+
+Log in to the [FusionAuth admin UI](http://localhost:9011/admin), browse to <Breadcrumb>Tenants</Breadcrumb> in the sidebar, and click <IconButton icon="edit" color="blue" /> on the "Default" tenant to edit it. Paste the complete address _(with protocol and domain)_ you copied from ngrok into the <InlineField>Issuer</InlineField> field (for example, `https://6d1e-2804-431-c7c9-739-4703-98a7-4b81-5ba6.ngrok-free.app`). Save the tenant by clicking the <IconButton icon="save" color="blue" /> icon in the top-right corner.
+
+Navigate to <Breadcrumb>Applications</Breadcrumb> and click <IconButton icon="edit" color="blue" /> on the "Example Apple SwiftUI iOS App" application. Click on the <Breadcrumb>JWT</Breadcrumb> tab, change both <InlineField>Access token signing key</InlineField> and <InlineField>Id token signing key</InlineField> to `Auto generate a new key on save...` and save the application.
+
+<Aside type="note">
+  You must create new keys after modifying the Tenant because the Issuer field is embedded in the key.
+</Aside>
+
+Now you need to update the `FusionAuth.plist` file to use the ngrok URL. Open the `FusionAuth.plist` file in the project navigator, and change the value of the `fusionAuthUrl` key to the ngrok URL.
+
+Now you can run the app on your device. Connect your device to your computer via USB. In Xcode, select your device from the device menu in the top-left corner of the window. Click the play button in the top left corner of Xcode, or select <Breadcrumb>Product -> Run</Breadcrumb> from the menu bar. The app will be built and run on your device.
+
+Note that you need to enable [developer mode](https://developer.apple.com/documentation/xcode/enabling-developer-mode-on-a-device) on your device to run the app there. You will also need to associate a developer team with your Xcode project. You can do this by selecting the project file in the project navigator and selecting your team in the <Breadcrumb>Signing & Capabilities</Breadcrumb> tab. If you don't have a developer account, you can use your personal Apple ID as the team.
 
 <QuickstartTshirtCTA/>
 
@@ -164,4 +196,17 @@ TODO
 
 * I can't log in
 
-Make sure you have the right values at `Quickstart/AuthorizationManager+Initialization.swift`. Double-check the `Issuer` in the **Tenant** to make sure it matches the URL that FusionAuth is running at including the protocol (https://).
+Make sure you have the right values at `Quickstart/FusionAuth.plist`. Double-check the `Issuer` in the **Tenant** to make sure it matches the URL that FusionAuth is running at including the protocol (https://).
+
+* It still doesn't work.
+
+You can always pull down a complete running application and compare what's different.
+
+```bash
+git clone https://github.com/sonderformat-llc/fusionauth-quickstart-swift-ios-native.git
+cd fusionauth-quickstart-swift-ios-native
+docker compose up
+```
+
+Then open and run the Xcode project in the `complete-application` directory.
+
