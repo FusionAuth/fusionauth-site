@@ -1,24 +1,38 @@
 import remarkLint from 'remark-lint';
-import remarkLintNoHtml from 'remark-lint-no-html';
-import remarkPresetLintConsistent from 'remark-preset-lint-consistent';
 import remarkPresetLintRecommended from 'remark-preset-lint-recommended';
-import remarkLintHeadingStyle from 'remark-lint-heading-style';
-import remarkToc from 'remark-toc';
+import { lintRule } from 'unified-lint-rule';
+import { visitParents } from 'unist-util-visit-parents';
+
+const noHtml = lintRule(
+    {
+      origin: 'remark-lint:no-html',
+    },
+
+    function (tree, file) {
+      visitParents(tree, 'mdxJsxFlowElement', function (node, parents) {
+        if (!node.position) return
+
+        if (/^[\t ]*<!--/.test(node.value)) return
+
+        const name = node.name;
+        // check if name starts with a capital letter
+        const isComponent = /^[A-Z]/.test(name);
+        if (isComponent) return;
+
+        file.message(`Unexpected HTML tag [${name}], use markdown instead`, {
+          ancestors: [...parents, node],
+          place: node.position
+        })
+      })
+    }
+)
 
 const remarkConfig = {
-  settings: {
-    //bullet: '*', // Use `*` for list item bullets (default)
-    // See <https://github.com/remarkjs/remark/tree/main/packages/remark-stringify> for more options.
-  },
   plugins: [
-    //remarkLint,
-    //[remarkLintNoHtml, {allowComments: false}]
-      remarkLint,
-    //remarkPresetLintConsistent,
+    remarkLint,
     remarkPresetLintRecommended,
-    [remarkLintNoHtml, {allowComments: false}],
-    //[remarkLintHeadingStyle, 'off']
+    noHtml
   ]
-}
+};
 
-export default remarkConfig
+export default remarkConfig;
