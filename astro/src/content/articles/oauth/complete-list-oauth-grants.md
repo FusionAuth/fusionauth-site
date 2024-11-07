@@ -20,6 +20,8 @@ This article will go through all the different OAuth 2 grant types and explain t
 
 If you aren't familiar with terms like Authorization Server and Resource Server, you might be interested in [What is OAuth](/articles/oauth/what-is-oauth/).
 
+[![A call to action image displaying a link to download this article as an ebook.](/img/cta/oauth-grants-guide-cta.png 'Download this article as an ebook')](/tech-papers/complete-list-of-oauth-2-grants?utm_medium=cta&utm_source=articles&utm_campaign=oauth2-grants)
+
 ## Authorization Code Grant
 
 The authorization code grant is used to sign into applications by using third-party authentication providers like Google, Facebook, and GitHub or your own OAuth server like FusionAuth. It is one of the most common methods used on the web to authorize and authenticate the Client to access protected data from the Resource Server.
@@ -143,7 +145,7 @@ The Device Code grant type works well for devices that don’t support an easy d
    - `user_code`, which is the code the user enters once they’ve authorized with the Authorization Server.
    - `device_code`, which is the unique Id assigned to the Client.
    - `interval`, which is the polling time in seconds at which the client should poll the server for an access token.
-3. The Client keeps attempting to acquire an access token every few seconds (at a rate specified by interval) by `POST`ing to the access token endpoint on the Authorization Server:
+3. The Client keeps attempting to acquire an access token every few seconds (at a rate specified by interval) by `POST`-ing to the access token endpoint on the Authorization Server:
    - `grant_type`, with the value `urn:ietf:params:oauth:grant-type:device_code`.
    - `client_id`, which is the code the user enters once they’ve authenticated with the Authorization Server.
    - `code`, which is the value of the `device_code` from the JSON response in the previous request.
