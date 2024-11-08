@@ -115,9 +115,11 @@ Open a terminal in the `light` subdirectory. All commands will be run here.
 ![Entity types in FusionAuth](../../../../public/img/articles/authentication/service-to-service/types.webp)
 
 <Aside type="note">
-All OAuth providers expose their public keys at the standard endpoint: http://localhost:9011/.well-known/jwks.json (on different domains though, of course). FusionAuth exposes apps' public keys at this endpoint, such as the `RS256` one you used above. This public key is used for any service to check that an access token it received was truly signed by FusionAuth.
+All OAuth providers expose their public keys at the standard endpoint: http://localhost:9011/.well-known/jwks.json (on different domains though, of course). FusionAuth exposes apps' public keys at this endpoint, such as the `RS256` one you used above, which is an asymmetric key. This public key is used for any service to check that an access token it received was truly signed by FusionAuth.
 
-But FusionAuth doesn't expose the default signing key, an `HS256` one, so you actually can't use the default key for access tokens. This is why you changed the JWT key in the instructions above.
+The default signing key FusionAuth provides is symmetrical. This means that the same key both encrypts and decrypts the signature of the JWT. A FusionAuth administrator has to give the key, in a secret exchange, to any system that wants to verify signatures. The key cannot be publicly available in the `jwks.json` file, else anyone on the Internet can pretend to be FusionAuth and make fake JWTs. This is why you changed the key from the default symmetric one, `HS256`, to an asymmetric one.
+
+Why offer symmetric keys at all if they're more work than asymmetric ones? Because the algorithm is much faster. If you have only one master system with lots of clients, then using a symmetric key will give you a performance improvement over using asymmetric keys. For example, the system you're building in this guide would be fine for a symmetric key. But if you have many services that all want to verify JWTs, then it's impractical to create and share symmetric keys with all of them.
 </Aside>
 
 ### Create Entities
