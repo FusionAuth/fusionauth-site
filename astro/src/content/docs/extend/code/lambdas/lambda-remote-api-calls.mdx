@@ -1,0 +1,95 @@
+---
+title: Making API Calls From Lambdas
+description: An overview of how to make API calls from Lambdas.
+section: extend
+subcategory: code
+tertcategory: lambdas
+topOfNav: true
+---
+import AdvancedPlanBlurb from 'src/content/docs/_shared/_advanced-plan-blurb.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+import LambdaTypes from 'src/content/docs/_shared/_lambda-types.astro';
+import MembershipLambda from 'src/content/docs/extend/code/_membership-lambda.md';
+import { YouTube } from '@astro-community/astro-embed-youtube';
+
+
+## Overview
+
+Lambda HTTP Connect is feature allows you to make HTTP requests from within a lambda.
+
+<AdvancedPlanBlurb />
+
+Here is a FusionAuth lambda that adds additional claims to a JWT based on an HTTP request:
+
+```javascript title="A lambda which adds claims based on an external API."
+function populate(jwt, user, registration) {
+  var response = fetch("https://api.example.com/api/status?" + user.id, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  });
+
+  if (response.status === 200) {
+    // assuming successful response looks like:
+    // {"status":"statusValue"}
+    var jsonResponse = JSON.parse(response.body);
+    jwt.status = jsonResponse.status;
+  } else {
+    jwt.status = "basic";
+  }
+}
+```
+
+You can also call FusionAuth APIs with a valid API key:
+
+<MembershipLambda />
+
+Use port 9012, or the configured value for `fusionauth-app.http-local.port`, whenever making a FusionAuth API call in a lambda. Doing so minimizes network traffic contention and improves performance.
+
+Here's a video showing more details about Lambda HTTP Connect:
+
+<YouTube id="_TnDUPQm3aQ" />
+
+### Headers
+
+You can provide request header values in a number of different ways:
+
+```javascript title="An anonymous object"
+headers: {
+  "Content-Type": "application/json"
+}
+```
+
+```javascript title="A hash or map"
+headers: new Headers({
+   "Content-Type": "application/json"
+})
+```
+
+```javascript title="An array"
+headers: new Headers([
+    ["Content-Type", "application/json"]
+])
+```
+
+### Response
+
+A response object will be returned. It will have the following fields:
+
+<APIBlock>
+  <APIField name="headers" type="Object">
+    The headers returned by the response. The keys of this object are the header names. All header keys are lower cased.
+  </APIField>
+  <APIField name="status" type="Integer">
+    The HTTP status code.
+  </APIField>
+  <APIField name="body" type="String">
+    The body of the response.
+  </APIField>
+</APIBlock>
+
+
