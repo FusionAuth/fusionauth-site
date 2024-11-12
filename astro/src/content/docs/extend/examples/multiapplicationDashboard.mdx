@@ -6,30 +6,26 @@ section: extend
 subcategory: examples
 ---
 
-import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
-import Aside from 'src/components/Aside.astro';
-import {RemoteCode} from '@fusionauth/astro-components';
 
 ## Introduction
 
-If you're using FA to manage many applications, you might want to provide your users with a central list of the applications, so they know what's available. For example, Google does this for its apps.
+If you're using FusionAuth to manage many applications, you might want to provide your users with a central list of applications, so they know what's available. For example, Google does this for its apps.
 
 ![Google app selector](../../../../../public/img/docs/extend/examples/multiapplicationDashboard/googleGrid.webp)
 
-In this guide you'll learn to make a similar page — a dashboard linking to all the applications in a FA tenant.
+In this guide you'll learn to make a similar page — a dashboard linking to all the applications in a FusionAuth tenant.
 
 In the language of authentication, FusionAuth is an identity provider (IdP) and your applications and websites are the service providers (SP). One way to authenticate a user from a central dashboard is to use identity provider initiated login. In other words, the dashboard will log the user in, and then redirect them to the selected app. In short, a service provider application will receive a login that it didn't initiate itself. This has security complexities and dangers.
 
 A simpler and safer way, that you'll use in this guide, is to make each application link in the dashboard do nothing but point to the application's login page. From that point onwards, authentication follows the standard OAuth authorization code flow.
 
-The next sections of this guide will show you how to make a dashboard for two existing FA applications in the same tenant. All this requires is customizing the theme page for the index landing page of the FA site. To show this, the guide will first show you how to install FA and make two simple web application web servers. If you already have a FA installation with existing applications, you can skip ahead to the section that creates the dashboard.
+The next sections of this guide will show you how to make a dashboard for two existing FusionAuth applications in the same tenant. All this requires is customizing the theme page for the index landing page of the FusionAuth site. To show this, the guide will first show you how to install FusionAuth and make two simple web application web servers. If you already have a FusionAuth installation with existing applications, you can skip ahead to the section that creates the dashboard.
 
 If you want to follow along with the full guide, you will need Docker installed.
 
-## Download the example repository and run FusionAuth
+## Download The Example Repository And Run FusionAuth
 
 Use `git clone` to clone the repository at https://github.com/ritza-co/dashboardExample, or download it and unzip. Open a terminal in the directory containing the repository files.
 
@@ -37,17 +33,17 @@ Use `git clone` to clone the repository at https://github.com/ritza-co/dashboard
   ```sh
   docker compose up
   ```
-  - If you have completed any FA tutorials before, you might first have to delete any existing FA containers with the same name, as well as the database volume. Run the command below to do that.
+  - If you have completed any FusionAuth tutorials before, you might first have to delete any existing FusionAuth containers with the same name, as well as the database volume. Run the command below to do that.
     ```sh
     docker ps rm fa faDb; docker compose down -v
     ```
-- In a new terminal, run the commands below to start a web server for an app that uses FA for authentication. The app is called Changebank, and is available at http://localhost:3000.
+- Leave FusionAuth running. In a new terminal, run the commands below to start a web server for an app that uses FusionAuth for authentication. The app is called Changebank, and is available at http://localhost:3000. (To learn how to make a simple Node app that uses FusionAuth, read the [quickstart](https://fusionauth.io/docs/quickstarts/quickstart-javascript-express-web)).
   ```sh
   cd bankApp
   docker run --rm -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  "npm install"
   docker run --rm --network host  -v ".:/app" -w "/app" -e "PORT=3000" node:23-alpine3.19 sh -c  "npm run start"
   ```
-- In a third terminal, run the commands below to start a web server for a the second app that uses FA for authentication. The app is called Changeinsurance, and is available at http://localhost:3001.
+- In a third terminal, run the commands below to start a web server for a the second app that uses FusionAuth for authentication. The app is called Changeinsurance, and is available at http://localhost:3001.
   ```sh
   cd insuranceApp
   docker run --rm -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  "npm install"
@@ -59,15 +55,17 @@ Before making the dashboard, check that you can log in to all three applications
   ![Changebank](../../../../../public/img/docs/extend/examples/multiapplicationDashboard/fa.webp)
 - Browse to Changebank at http://localhost:3000 and log in with the same username and password.
   ![Changebank](../../../../../public/img/docs/extend/examples/multiapplicationDashboard/changebank.webp)
-- Browse to Changeinsuance at http://localhost:3001 and log in with the same username and password.
+- Browse to Changeinsurance at http://localhost:3001 and log in with the same username and password.
   ![Changeinsurance](../../../../../public/img/docs/extend/examples/multiapplicationDashboard/changeinsurance.webp)
 
-## Make a dashboard
+If you enabled <InlineUIElement>Keep me signed in</InlineUIElement>, logging out of an application won't log you of FusionAuth. It will only delete the session of the application. Next time you try to log in, FusionAuth will see the FusionAuth authentication cookie in your browser and automatically log you in.
 
-Look at the current FA landing page at http://localhost:9011. In this section you are going to change it to display links to the two banking app web servers that you started in the previous section.
+## Make A Dashboard
 
-- Log in to your FA web interface
-- Browse to <Breadcrumb>Customizations -> Themes</Breadcrumb>. Notice there are three themes in the list. The first two are the default FA themes. The last one, <InlineUIElement>Bank theme<InlineUIElement>, was added by `kickstart.json` when running Docker compose.
+Look at the current FusionAuth landing page at http://localhost:9011. In this section you are going to change it to display links to the two banking app web servers that you started in the previous section.
+
+- Log in to your FusionAuth web interface.
+- Browse to <Breadcrumb>Customizations -> Themes</Breadcrumb>. Notice there are three themes in the list. The first two are the default FusionAuth themes. The last one, <InlineUIElement>Bank theme</InlineUIElement>, was added by `kickstart.json` when running Docker compose. Read about Kickstart [here](https://fusionauth.io/docs/get-started/download-and-install/development/kickstart).
 - Click the edit button in the Bank theme row.
 - Select the <InlineUIElement>Index</InlineUIElement> page (fourth item in the list on the left).
 - Paste the code below into the text box and click <InlineUIElement>Save</InlineUIElement> at the top right.
@@ -125,16 +123,21 @@ Look at the current FA landing page at http://localhost:9011. In this section yo
   [/@helpers.html]
   ```
 
-Beside a little CSS for styling, the code above has only two changes, adding a `<a href="http://localhost:3000/account">Changebank</a>` element for the two applications. Note that the link doesn't point to the login page of the target application — it points to the logged-in main page. If the user isn't logged in to FA, then they will be automatically redirected to the app's login page. But if they are already logged in, they will be taken straight to the app and can get to work. This saves the user time. If you want to see how this works, look at `bankApp/routes/index.js`.
+Beside a little CSS for styling, the code above has only two changes, adding a `<a href="http://localhost:3000/account">Changebank</a>` element for the two applications. Note that the link doesn't point to the login page of the target application — it points to the logged-in main page. If the user isn't logged in to FusionAuth, then they will be automatically redirected to the app's login page. But if they are already logged in, they will be taken straight to the app and can get to work. This saves the user time. (If you want to see how this authentication check in the app works, look at `bankApp/routes/index.js` in the sample repository you downloaded).
 
 To see the new landing page, browse to http://localhost:9011.
-![FA app dashboard](../../../../../public/img/docs/extend/examples/multiapplicationDashboard/dashboard.webp)
+![FusionAuth app dashboard](../../../../../public/img/docs/extend/examples/multiapplicationDashboard/dashboard.webp)
 
-## Next steps
+## Clean Up
 
-To make a dashboard for your FusionAuth instance, all you have to do is make links in a custom theme for the FA landing page similar to the ones shown above. [FA themes](https://fusionauth.io/docs/customize/look-and-feel/) use a template language called FTL. Read more about it [here](https://freemarker.apache.org/index.html).
+To remove all the Docker images used in this guide, stop the running containers and run the commands below.
 
-## TODO
+```sh
+docker ps rm fa faDb
+docker compose down -v
+docker rmi postgres:16.0-bookworm fusionauth/fusionauth-app:1.51.2 node:23-alpine3.19
+```
 
-- FA fusionauth
-- remove unused imports
+## Next Steps
+
+To make a dashboard for your FusionAuth instance, all you have to do is make links in a custom theme for the FusionAuth landing page similar to the ones shown above. [FusionAuth themes](https://fusionauth.io/docs/customize/look-and-feel/) use a template language called FTL. Read more about it [here](https://freemarker.apache.org/index.html).
