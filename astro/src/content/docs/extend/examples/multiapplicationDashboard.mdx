@@ -54,83 +54,85 @@ Use `git clone` to clone the repository at https://github.com/ritza-co/dashboard
   docker run --rm --network host  -v ".:/app" -w "/app" -e "PORT=3001" node:23-alpine3.19 sh -c  "npm run start"
   ```
 
-Before making the dashboard, check that you can log in to all three applications. Either use an incognito browser window or don't enable `Keep me signed in` when logging in:
+Before making the dashboard, check that you can log in to all three applications. Either use an incognito browser window or don't enable [Keep me signed in](https://fusionauth.io/docs/lifecycle/authenticate-users/logout-session-management#fusionauth-sso) when logging in, otherwise you won't see the login form in the rest of this guide:
 - Browse to FusionAuth at http://localhost:9011/admin and log in with `admin@example.com` and `password`.
+  ![Changebank](../../../../../public/img/docs/extend/examples/multiapplicationDashboard/fa.webp)
 - Browse to Changebank at http://localhost:3000 and log in with the same username and password.
+  ![Changebank](../../../../../public/img/docs/extend/examples/multiapplicationDashboard/changebank.webp)
 - Browse to Changeinsuance at http://localhost:3001 and log in with the same username and password.
+  ![Changeinsurance](../../../../../public/img/docs/extend/examples/multiapplicationDashboard/changeinsurance.webp)
 
 ## Make a dashboard
 
+Look at the current FA landing page at http://localhost:9011. In this section you are going to change it to display links to the two banking app web servers that you started in the previous section.
 
-keep me signed in - https://fusionauth.io/docs/lifecycle/authenticate-users/logout-session-management#fusionauth-sso
+- Log in to your FA web interface
+- Browse to <Breadcrumb>Customizations -> Themes</Breadcrumb>. Notice there are three themes in the list. The first two are the default FA themes. The last one, <InlineUIElement>Bank theme<InlineUIElement>, was added by `kickstart.json` when running Docker compose.
+- Click the edit button in the Bank theme row.
+- Select the <InlineUIElement>Index</InlineUIElement> page (fourth item in the list on the left).
+- Paste the code below into the text box and click <InlineUIElement>Save</InlineUIElement> at the top right.
+  ```html
+  [#ftl/]
+  [#-- @ftlvariable name="tenant" type="io.fusionauth.domain.Tenant" --]
+  [#-- @ftlvariable name="tenantId" type="java.util.UUID" --]
+  [#-- @ftlvariable name="theme" type="io.fusionauth.domain.Theme" --]
+  [#import "_helpers.ftl" as helpers/]
 
-Index page of FA available at http://localhost:9011.
-To turn this into app dashboard, go to http://localhost:9011/admin/theme.
-Preview the Bank theme  (created in kickstart.json) and select the Index page (fourth item in the list on the left).
-Edit the theme.
+  [@helpers.html]
+    [@helpers.head title="FusionAuth"/]
+    [@helpers.body]
+      [@helpers.header]
+        [#-- Custom header code goes here --]
+      [/@helpers.header]
 
-
-Original Index page FTL code
-
-```html
-[#ftl/]
-[#-- @ftlvariable name="tenant" type="io.fusionauth.domain.Tenant" --]
-[#-- @ftlvariable name="tenantId" type="java.util.UUID" --]
-[#-- @ftlvariable name="theme" type="io.fusionauth.domain.Theme" --]
-[#import "_helpers.ftl" as helpers/]
-
-[@helpers.html]
-  [@helpers.head title="FusionAuth"/]
-  [@helpers.body]
-    [@helpers.header]
-      [#-- Custom header code goes here --]
-    [/@helpers.header]
-
-     [#if theme.type != "simple"]
-        [@helpers.main title="" rowClass="row center-xs" colClass="col-xs-12 col-sm-12 col-md-10 col-lg-10 col-xl-9"]
-            <div class="p-3 pb-5">
-              <div style="width: 180px;">
-                <img src="/images/logo-gray.svg">
+       [#if theme.type != "simple"]
+          [@helpers.main title="" rowClass="row center-xs" colClass="col-xs-12 col-sm-12 col-md-10 col-lg-10 col-xl-9"]
+              <div class="p-3 pb-5">
+                <div style="width: 180px;">
+                  <img src="/images/logo-gray.svg">
+                </div>
+                <br />
+                <a href="http://localhost:3000/account" style="background: linear-gradient(to bottom right, palegreen, forestgreen);
+                  color: white;
+                  padding: 10px;
+                  margin: 20px;
+                  border-radius: 5px;
+                  text-align: center;
+                  width: 160px;
+                  display: inline-block;
+                  text-decoration: none;">
+                  Changebank
+                </a>
+                <a href="http://localhost:3001/account" style="background: linear-gradient(to bottom right, skyblue, navy);
+                  color: white;
+                  padding: 10px;
+                  margin: 20px;
+                  border-radius: 5px;
+                  text-align: center;
+                  width: 160px;
+                  display: inline-block;
+                  text-decoration: none;">
+                  Changeinsurance
+                </a>
               </div>
-              <br />
-              <a href="http://localhost:3000/account" style="background: linear-gradient(to bottom right, palegreen, forestgreen);
-                color: white;
-                padding: 10px;
-                margin: 20px;
-                border-radius: 5px;
-                text-align: center;
-                width: 160px;
-                display: inline-block;
-                text-decoration: none;">
-                Changebank
-              </a>
-              <a href="http://localhost:3001/account" style="background: linear-gradient(to bottom right, skyblue, navy);
-                color: white;
-                padding: 10px;
-                margin: 20px;
-                border-radius: 5px;
-                text-align: center;
-                width: 160px;
-                display: inline-block;
-                text-decoration: none;">
-                Changeinsurance
-              </a>
-            </div>
-        [/@helpers.main]
-      [/#if]
+          [/@helpers.main]
+        [/#if]
 
-    [@helpers.footer]
-      [#-- Custom footer code goes here --]
-    [/@helpers.footer]
-  [/@helpers.body]
-[/@helpers.html]
-```
+      [@helpers.footer]
+        [#-- Custom footer code goes here --]
+      [/@helpers.footer]
+    [/@helpers.body]
+  [/@helpers.html]
+  ```
 
-Explain sign out / remember me on this device
+Beside a little CSS for styling, the code above has only two changes, adding a `<a href="http://localhost:3000/account">Changebank</a>` element for the two applications. Note that the link doesn't point to the login page of the target application — it points to the logged-in main page. If the user isn't logged in to FA, then they will be automatically redirected to the app's login page. But if they are already logged in, they will be taken straight to the app and can get to work. This saves the user time. If you want to see how this works, look at `bankApp/routes/index.js`.
 
-## Further Reading
+To see the new landing page, browse to http://localhost:9011.
+![FA app dashboard](../../../../../public/img/docs/extend/examples/multiapplicationDashboard/dashboard.webp)
 
-- Theming
+## Next steps
+
+To make a dashboard for your FusionAuth instance, all you have to do is make links in a custom theme for the FA landing page similar to the ones shown above. [FA themes](https://fusionauth.io/docs/customize/look-and-feel/) use a template language called FTL. Read more about it [here](https://freemarker.apache.org/index.html).
 
 ## TODO
 
