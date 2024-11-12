@@ -19,9 +19,13 @@ import { YouTube } from '@astro-community/astro-embed-youtube';
 
 ## Overview
 
-Lambda HTTP Connect allows you to make HTTP requests from within a lambda. Any lambda can make a request to any network accessible URL which returns JSON.
+Lambda HTTP Connect allows you to make HTTP requests from within a lambda. Any lambda can make a request to any network accessible URL.
 
-This features allows you to access data from external systems to configure certain token claims or to add data to a user profile. It also allows you to push profile or other data from FusionAuth to an external system as needed.
+This features allows you to access data from external systems to configure token claims or to add data to a user profile. It also allows you to push profile or other data from FusionAuth to an external system as needed.
+
+Here's a video showing more details about Lambda HTTP Connect:
+
+<YouTube id="_TnDUPQm3aQ" />
 
 ### Example Lambda
 
@@ -52,10 +56,6 @@ You can also call FusionAuth APIs with a valid API key:
 <MembershipLambda />
 
 Use port 9012, or the configured value for `fusionauth-app.http-local.port`, whenever making a FusionAuth API call in a lambda. Doing so minimizes network traffic contention and improves performance.
-
-Here's a video showing more details about Lambda HTTP Connect:
-
-<YouTube id="_TnDUPQm3aQ" />
 
 ### Headers
 
@@ -95,11 +95,26 @@ A response object will be returned. It will have the following fields:
   </APIField>
 </APIBlock>
 
+### Securing API Keys In Lambdas
+
+Being able to make API requests against FusionAuth can be useful, but requires an API key to be stored in the Lambda code. 
+
+To secure that API key, you should:
+
+* scope your API keys as narrowly as possible (both in terms of tenants and permissions)
+* create a unique API key for each lambda to make revocation easy
+* limit who has access to view lambda code to limit who can see API keys
+* rotate API keys regularly
+
+There's an [open GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/1629) which discusses product improvements to API key handling.
+
 ## Lambda HTTP Connect Limitations
 
 When using Lambda HTTP Connect to make HTTP requests, do not call a FusionAuth API which invokes the calling lambda, because it will fail. For example, in a JWT Populate lambda, do not invoke the Login API.
 
-Requests from a lambda require the lambda to use the GraalJS engine. HTTP requests will time out after two seconds.
+Requests from a lambda require the lambda to use the GraalJS engine.
+
+HTTP requests will time out after two seconds.
 
 The `fetch` method in a lambda does not implement the [entire `fetch` API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) as implemented in a browser.
 The first argument to `fetch` must always be a string URL.
