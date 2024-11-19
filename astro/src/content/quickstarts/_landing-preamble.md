@@ -11,4 +11,4 @@ You'll need the following to work through any quickstarts.
 - Git, for cloning the example repository
 - Docker, to run FusionAuth and its dependencies
 - An editor, to update files
-- The language, platform or framework; for example, XCode to run the iOS quickstart or Java for the Spring example
+- The language, platform or framework; for example, Xcode to run the iOS quickstart or Java for the Spring example
