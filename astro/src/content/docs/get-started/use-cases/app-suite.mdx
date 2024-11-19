@@ -1,0 +1,110 @@
+---
+title: App Suite
+description: Let your users log in once and then transparently be logged into others.
+section: get started
+subcategory: use cases
+---
+import ApplicationSwitchDiagram from 'src/diagrams/docs/get-started/use-cases/app-suite/application-switch.astro';
+import AppSuiteDescription from 'src/content/docs/get-started/use-cases/_app-suite-description.mdx';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+
+## Overview
+
+<AppSuiteDescription />
+
+## Problem 
+
+You have multiple applications. They can be:
+
+* hosted at different domains or under different paths
+* be custom, commercial or open source
+* use SAML or OIDC for authentication
+* written with different technology stacks
+
+You want to let your users log in once, and then switch between the applications. Users may have different roles or permissions for each application.
+
+## Solution
+
+With the app suite use case, after the user logs in to one application, they can be logged into some or all of them. You'll also have one view of the customer profile and their login activity across all your applications.
+
+## Prerequisites
+
+You have configured your application or applications to [delegate authentication to FusionAuth](/docs/get-started/use-cases/auth-service) via the Authorization Code grant and the hosted login pages.
+
+## Example Scenario
+
+Suppose you have an e-commerce business. You have multiple applications:
+
+* an ecommerce store where people can buy clown costumes
+* a virtual try-on app which lets you see yourself in the outfits before you buy
+* a forum for discussion about the latest trends
+* a ticketing system for customer support
+
+Your users can access all of these apps with one set of login credentials.
+
+This use case is built on cookies and a redirect to FusionAuth. The redirect is typically transparent to the end user.
+
+## Actors/Components
+
+* your user and their client application (mobile app or browser)
+* any number of applications
+* FusionAuth
+
+## Implementation Steps
+
+This is a two step implementation process to ensure your customers can access all the applications with the appropriate roles. Steps to take:
+
+* Ensure that end users have their FusionAuth SSO session enabled.
+* Set up your applications to forward users to FusionAuth when they are not logged in.
+
+### Force SSO Session Creation
+
+The easiest way to force the SSO session to be created for every authentication event is to modify the theme of your applications. Rather than allow the user to check or uncheck the `rememberDevice` checkbox, which is the default setting, you update the theme to set that to `true`. Update the `OAuth Authorize` template, which is the login page, to set this value.
+
+```
+[@hidden name="rememberDevice" value="true"/]
+```
+
+The duration of the SSO session is controlled at the tenant level.
+
+### Forward Users
+
+Whenever a user accesses an application and is not logged in, forward them to the login URL for FusionAuth. Since your applications are already delegating authentication to FusionAuth, they can use the same logic to create the login URL.
+
+If a user is browsing the ecommerce store, then clicks on the forum link, they will transparently be logged in. Their client will get a token associated with the forum application, including the roles the user has for that application and claims such as the audience claim (`aud`) set correctly.
+
+<ApplicationSwitchDiagram alt="An example of an application switch." />
+
+## Expected Outcome
+
+Users can switch between your appliations transparently and securely. 
+
+## Edge Cases
+
+SSO login works across all apps in a tenant, including those the user isn't registered for. The user will be authenticated, but the `applicationId` and `roles` claims will be missing from the access token. Your applications should check for these claims before considering a user authorized to access the application. [Read more about authentication and authorization](/docs/get-started/core-concepts/authentication-authorization).
+
+When your user logs out, you must destroy the SSO session as well as each application session. You can do that via API calls or using FusionAuth's Front-Channel logout. [Read more about logout](/docs/lifecycle/authenticate-users/logout-session-management).
+
+Any applications that have self-service registration enabled will automatically register users for that application with default roles when the user attempts to log into that application. 
+
+If an application only wants to allow logins from a certain identity provider, you'll need to do extra integration work. For example, if there's an time tracking app for your ecomerce store that employees log in using Google Workspace federation, you need to fail other login attempts. You can do so with a [login validation lambda](/docs/extend/code/lambdas/login-validation). 
+
+This use case only works out of the box with FusionAuth hosted login pages. If you use the Login API, you need to build your SSO. See this [GitHub issue for more details](https://github.com/fusionauth/fusionauth-issues/issues/1515).
+
+If one application, such as the ecommerce app, requires authentication checks such as multi-factor authentication, additional self-serve required profile attributes, or registration verification, and the others do not, users will be prompted when visiting that application. 
+
+## Other Example Scenarios
+
+Any set of applications which share customer or user accounts are a good fit for this use case.
+
+* Multiple affiliated online games
+* An office suite with an online word processor, spreadsheet and presentation software
+* Travel booking software, where you might have one application for booking flights, another for hotels and a third for car rental
+
+## Additional Documentation
+{/* TODO should update this to point to task based quickstarts, both for MFA and for email verification */ }
+
+* [Single sign-on guide](/docs/lifecycle/authenticate-users/single-sign-on)
+* [Logout and session guide](/docs/lifecycle/authenticate-users/logout-session-management)
+* [Theme customization](/docs/customize/look-and-feel/)
+
