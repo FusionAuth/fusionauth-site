@@ -55,15 +55,14 @@ const prepContext = (context: DocNavContext, subcategory: string, tertcategory: 
 
 const recursiveSort = (category: Category) => {
   if (category.entries.length > 0) {
-    category.entries.sort((a, b) => a.title.localeCompare(b.title));
-    const topOfNavElements = category.entries.filter(entry => entry.topOfNav);
 
-    // sort these in reverse order so we process the Z elements before the A elements, which means A elements come first
-    topOfNavElements.sort((a, b) => b.title.localeCompare(a.title));
-    topOfNavElements.map((top) => {
-      const idx = category.entries.indexOf(top);
-      category.entries.splice(idx, 1);
-      category.entries.unshift(top);
+    category.entries.sort((a, b) => {
+      // everything has a default of 1000, so sorts to bottom
+      const numCompare = a.navOrder - b.navOrder;
+      if (numCompare !== 0) {
+        return numCompare;
+      }
+      return a.title.localeCompare(b.title);
     });
   }
   if (category.subcategories.length > 0) {
@@ -84,13 +83,13 @@ export const getDocNavContext = async (section: string) => {
 
   const sectionDocs = await getCollection('docs', doc => doc.data.section === section);
   sectionDocs.forEach(doc => {
-    const { subcategory, tertcategory, quatercategory, title, description, topOfNav } = doc.data;
+    const { subcategory, tertcategory, quatercategory, title, description, navOrder } = doc.data;
     const category = prepContext(context, subcategory, tertcategory, quatercategory);
     category.entries.push({
       title,
       description,
       href: getDocHref(doc.slug),
-      topOfNav,
+      navOrder,
     })
   });
   recursiveSort(context.category);

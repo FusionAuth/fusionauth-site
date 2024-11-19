@@ -81,10 +81,12 @@ Review [the component for all options and icons](astro/src/components/icon/Icon.
 
 ### Docs Navigation
 
-If you want a page to float to the top of the navigation, because it is an overview page, use this attribute:
+If you want to order pages within a section, use `navorder`. The default value for every page is [defined here](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/config.js#L61).
+
+Pages are ordered in the nav within a section in descending order. 
 
 ```
-topOfNav: true
+navorder: 0
 ```
 
 Make descriptions full sentences.
