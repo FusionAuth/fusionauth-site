@@ -9,6 +9,8 @@ function convertToRSS(post) {
     // Compute RSS link from post `slug`
     // This example assumes all posts are rendered as `/articles/[slug]**` routes
     link: `/blog/${post.slug}`,
+    author: post.data.authors,
+    categories: post.data.categories.split(",").map(item => item.trim()),
   }
 }
 

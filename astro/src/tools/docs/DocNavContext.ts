@@ -2,7 +2,7 @@ export interface DocNavEntry  {
   title: string;
   href: string;
   description?: string;
-  topOfNav?: boolean;
+  navOrder?: number;
 }
 export interface DocNavContext {
   category: Category;
