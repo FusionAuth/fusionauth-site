@@ -13,4 +13,5 @@ export interface Category {
   href: string;
   entries: DocNavEntry[];
   subcategories: Category[];
+  sortFunction: (a: Category, b: Category) => number;
 }

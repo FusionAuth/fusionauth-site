@@ -4,10 +4,13 @@ import { Category, DocNavContext } from 'src/tools/docs/DocNavContext';
 
 const joinup = (...parts: string[]) => [...parts].join('/')
 
-const prepContext = (context: DocNavContext, subcategory: string, tertcategory: string, quatercategory: string): Category => {
+const prepContext = (context: DocNavContext, subcategory: string, tertcategory: string, quatercategory: string, sortFunction: object): Category => {
   let subContext: Category = null;
   let tertContext: Category = null;
   let qautContext: Category = null;
+  if (sortFunction) {
+    context.sortFunction = sortFunction;
+  }
   if (subcategory) {
     subContext = context.category.subcategories.find(sub => sub.name === subcategory);
     if (!subContext) {
@@ -66,7 +69,11 @@ const recursiveSort = (category: Category) => {
     });
   }
   if (category.subcategories.length > 0) {
-    category.subcategories.sort((a, b) => a.name.localeCompare(b.name));
+    if (category.sortFunction) {
+      category.subcategories.sort(category.sortFunction);
+    } else {
+      category.subcategories.sort((a, b) => a.name.localeCompare(b.name));
+    }
     category.subcategories.forEach(sub => recursiveSort(sub));
   }
 }
@@ -85,6 +92,14 @@ export const getDocNavContext = async (section: string) => {
   sectionDocs.forEach(doc => {
     const { subcategory, tertcategory, quatercategory, title, description, navOrder } = doc.data;
     const category = prepContext(context, subcategory, tertcategory, quatercategory);
+    if (category.name === "get started") {
+      category.sortFunction = ( (a, b) => {
+        if (a.name === 'download and install') return -1;
+        if (b.name === 'download and install') return 1;
+        return a.name.localeCompare(b.name);
+      } )
+
+    }
     category.entries.push({
       title,
       description,
