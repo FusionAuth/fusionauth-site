@@ -128,6 +128,8 @@ const recursiveSort = (category: Category, orderIndex?: Category) => {
       return a.name.localeCompare(b.name);
     });
 
+    category.subcategories.push(...subs);
+
     // if (category.sortFunction) {
     //   category.subcategories.sort(category.sortFunction);
     // } else {
