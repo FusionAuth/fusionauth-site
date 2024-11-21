@@ -2,14 +2,35 @@ import { getCollection } from 'astro:content';
 import { getDocHref } from 'src/tools/docs/getDocHref';
 import { Category, DocNavContext } from 'src/tools/docs/DocNavContext';
 
+// all category names here will be sorted to the top of their category listing. 
+// if there is more than one under a given category, they'll be sorted alphabetically
+import categoriesToFloatToTop from 'src/tools/docs/categoriesToFloatToTop.json';
+
 const joinup = (...parts: string[]) => [...parts].join('/')
 
-const prepContext = (context: DocNavContext, subcategory: string, tertcategory: string, quatercategory: string, sortFunction: object): Category => {
+const prepContext = (context: DocNavContext, subcategory: string, tertcategory: string, quatercategory: string): Category => {
   let subContext: Category = null;
   let tertContext: Category = null;
   let qautContext: Category = null;
-  if (sortFunction) {
-    context.sortFunction = sortFunction;
+  
+  for (const categoryName in categoriesToFloatToTop) {
+    if (context.category.name === categoryName) {
+      const secondaryKeys = Object.keys(categoriesToFloatToTop[categoryName]);
+      context.category.sortFunction = ( (a, b) => {
+        
+        // if both are included, sort lexically
+        if (secondaryKeys.includes(a.name) && secondaryKeys.includes(b.name)) {
+          return a.name.localeCompare(b.name);
+        }
+  
+        // if one should be sorted to the top, do so
+        if (secondaryKeys.includes(a.name)) return -1;
+        if (secondaryKeys.includes(b.name)) return 1;
+
+        // if neither are included, sort lexically
+        return a.name.localeCompare(b.name);
+      } )
+    }
   }
   if (subcategory) {
     subContext = context.category.subcategories.find(sub => sub.name === subcategory);
@@ -92,14 +113,7 @@ export const getDocNavContext = async (section: string) => {
   sectionDocs.forEach(doc => {
     const { subcategory, tertcategory, quatercategory, title, description, navOrder } = doc.data;
     const category = prepContext(context, subcategory, tertcategory, quatercategory);
-    if (category.name === "get started") {
-      category.sortFunction = ( (a, b) => {
-        if (a.name === 'download and install') return -1;
-        if (b.name === 'download and install') return 1;
-        return a.name.localeCompare(b.name);
-      } )
-
-    }
+    
     category.entries.push({
       title,
       description,
