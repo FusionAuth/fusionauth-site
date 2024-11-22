@@ -20,7 +20,6 @@ export default [
   {
     name: 'ts-overrides',
     rules: {
-      //'@typescript-eslint/no-unused-vars': 'off',
     }
   },
   ...(eslintPluginAstro.configs['flat/base'].map(config => {
@@ -41,7 +40,7 @@ export default [
     ...mdx.flat,
     // optional, if you want to lint code blocks at the same
     processor: mdx.createRemarkProcessor({
-      lintCodeBlocks: true,
+      lintCodeBlocks: false,
       // optional, if you want to disable language mapper, set it to `false`
       // if you want to override the default language mapper inside, you can provide your own
       languageMapper: {},
@@ -50,6 +49,9 @@ export default [
       ...mdx.flat.rules,
       // if you want to override some rules for md/mdx files
       'mdx/remark': 'error',
+      'no-unused-expressions': 'off',
+      'remark-lint-no-undefined-references': 'off',
+      'no-undef': 'off',
     }
   },
   {
