@@ -63,8 +63,8 @@ Now that we have added the salt, the "password" that we actually generated the h
 
 The second method that attackers use to crack passwords is called brute force cracking. This means that the attacker writes a computer program that can generate all possible combinations of characters that can be used for a password and then computes the hash for each combination. This program can also take a salt if the password was hashed with a salt. The attacker then runs the program until it generates a hash that is the same as the hash from the database. Here's a simple Java program for cracking passwords. We left out some detail to keep the code short (such as all the possible password characters), but you get the idea.
 
-<br>
-<br>
+<br/>
+<br/>
 
 ```java
 import org.apache.commons.codec.digest.DigestUtils;

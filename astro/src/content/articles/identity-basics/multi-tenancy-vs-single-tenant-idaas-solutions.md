@@ -16,7 +16,7 @@ One important factor to consider when comparing identity platforms is whether yo
 ## Multi-Tenant
 
 <div class="bg-slate-200 flex justify-center p-4 w-full">
-<img src="/img/articles/multi-tenant-diagram.png" alt="Multi-tenant solutions">
+<img src="/img/articles/multi-tenant-diagram.png" alt="Multi-tenant solutions"/>
 </div>
 
 Simply put, multi-tenant is an architecture where multiple companies store their data within the same infrastructure. The entire system can span multiple servers and data centers, but most commonly data is co-mingled in a single database. The tenants are logically isolated, but physically integrated.
@@ -81,7 +81,7 @@ Joe uses two different websites, `funnymugs.com` and `chucknorrisjokes.com`. Bot
 Joe will be very (unpleasantly) surprised if he changes his password on `chucknorrisjokes.com` and magically his password is updated on `funnymugs.com`. This diagram illustrates why this unexpected password change occurs when Acme Corp. is storing single user objects.
 
 <div class="bg-slate-200 flex justify-center p-4 w-full">
-<img src="/img/blogs/password-change-tenants.png" alt="Password Change">
+<img src="/img/blogs/password-change-tenants.png" alt="Password Change"/>
 </div>
 
 This would be a poor user experience and not ideal for Acme Corp. While both users are technically Joe, he is not aware of this nuance in the method that Acme Corp. built their platform.
