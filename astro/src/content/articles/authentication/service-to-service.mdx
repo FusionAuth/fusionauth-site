@@ -26,17 +26,17 @@ This article explains how to use FusionAuth and OAuth 2.0 for service-to-service
 
 ## How OAuth Works For User Authentication
 
-Let's review how OAuth typically works for user login, as it's more commonly encountered.
+Let's review how OAuth typically works for user login, as it's more commonly encountered than machine OAuth.
 
 You may have used FusionAuth or another service for local or third-party logins. In local login, FusionAuth stores usernames and password hashes. For third-party logins, another provider, like Google, handles authentication and FusionAuth acts as an intermediary. 
 
 In both cases, the authentication flow works as follows:
 
 - A user (resource owner) clicks <InlineUIElement>Log in</InlineUIElement> on your website (client).
-- Your site redirects the user to the authorization server URL (authorization endpoint), which could be FusionAuth directly or a redirection to another provider, such as Google. This URL includes parameters such as your site's client Id, the redirect URI (the URL to send the user's browser to after login), the response type, and the requested permissions (scopes) on behalf of the user.
+- Your site redirects the user to the authorization server URL (authorization endpoint), which could be FusionAuth directly or a redirection to another provider, such as Google. This URL includes parameters such as your site's client Id, the redirect URI (the URL to send the user's browser to after login), the response type of code, and the requested permissions (scopes) on behalf of the user.
 - The user logs in and grants consent for the requested permissions on a page provided by the server.
 - The authorization server redirects the browser to your site using the redirect URI, with a temporary authorization code.
-- Your site then starts a separate HTTP call to the server's token endpoint directly, a more secure approach than using the browser, where the access token could be exposed. In this request, your site provides the temporary authorization code, your client Id, and your client secret to obtain a key (access token), which allows access to the user's resources in future calls. The server may return a refresh token with a long lifespan, which can be used to request short-lived access tokens. This mechanism enhances security and limits the potential damage if an access token is compromised.
+- Your site then starts a separate HTTP call to the server's token endpoint directly, a more secure approach than using the browser, where the access token could be exposed. In this request, your site provides the temporary authorization code, your client Id, and your client secret to obtain a key (access token), which allows access to the user's resources in future calls. The server may instead return a refresh token with a long lifespan, which can be used to request short-lived access tokens. This mechanism enhances security and limits the potential damage if an access token is compromised.
 
 The protocol above is called a flow, specifically the Authorization Code Flow. The flow returns a grant, which provides access to the requested scopes. The grant is represented by data like the client credentials and the access token. While the words "grant" and "flow" are often used interchangeably, they have distinct meanings.
 
@@ -50,7 +50,7 @@ In OAuth, the Client Credentials Flow is used for calling an API from a machine 
 - Since the app is accessing its own resources rather than those of another user, no consent is required.
 - The server returns JSON containing an access token and possibly a list of scopes.
 
-This flow is much simpler than the user flow, but there are some design choices you should be aware of. Both the client and the resource server must trust the authorization server, so both must be registered with it. Additionally, the resource server must trust that any access token used in a call represents the permissions granted by a client. To ensure this, the authorization server signs the access token by encrypting a hash of it with its private key. Without a signature, any client could create an access token claiming arbitrary permissions.
+This flow is much simpler than the user flow, but there are some design choices you should be aware of. Both the client and the resource server must trust the authorization server, so both must be registered with it. Additionally, the resource server must trust that any access token used in a call represents the permissions granted by a client. To ensure this, the authorization server signs the access token by encrypting a hash of it with the server's private key. Without a signature, any client could create an access token claiming arbitrary permissions.
 
 ## Designing A FusionAuth Example
 
@@ -131,7 +131,7 @@ All OAuth providers expose their public keys at a standard endpoint, typically /
 
 FusionAuth's default signing key is symmetric, meaning the same key is used to encrypt and decrypt the JWT signature. A FusionAuth administrator must securely share the key with any system that needs to verify signatures. The key cannot be included in the publicly available `jwks.json` file, as this would allow anyone on the internet to impersonate FusionAuth and make fake JWTs. This is why you changed the default symmetric key, `HS256`, to an asymmetric one.
 
-Why use symmetric keys if they require more effort than asymmetric ones? Because the algorithm is much faster. If your setup involves a single primary system communicating with many clients, a symmetric key gives you a significant performance improvement. For example, the system you're building in this guide will efficiently use a symmetric key. But if you have many services that need to verify JWTs, creating and sharing symmetric keys with all of them is impractical.
+Why use symmetric keys if they require more effort than asymmetric ones? Because the algorithm is much faster. If your setup involves a single primary system communicating with many clients, a symmetric key gives you a significant performance improvement. For example, the system you're building in this guide could efficiently use a symmetric key. But if you have many services that need to verify JWTs, creating and sharing symmetric keys with all of them is impractical.
 </Aside>
 
 ### Create Entities
@@ -311,7 +311,7 @@ async function verifyToken(token) {
 }
 ```
 
-The server has two functions. The first exported function, called by the client, takes a token and checks its validity. If the token is valid, the server prints that the file was saved successfully. A valid token has three properties:
+The server has two functions. The first function, which is exported and called by the client, takes a token and checks its validity. If the token is valid, the server prints that the file was saved successfully. A valid token has three properties:
 
 - It is correctly signed by FusionAuth.
 - It has not expired yet.
@@ -329,25 +329,6 @@ Uncomment the first and last lines of `customer.mjs` so it will call the server,
   docker run --rm --network host -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  \
   "node customer.mjs"
   ```
-
-## A Better Way To Verify A Token: Introspection
-
-Manually verifying a token by looking at JWT signatures, as the code above does, is not standard in OAuth. Instead, OAuth servers should allow anyone to verify a token by passing the token to the standard `introspect` endpoint, as in the example code below.
-
-```js
-async function verifyTokenThroughIntrospectionEndpoint(token) {
-  const response = await axios({
-    method: "post",
-    url: "http://localhost:9011/oauth2/introspect",
-    headers: {"Content-Type": "application/x-www-form-urlencoded"},
-    data: `token=${token}&client_id=40450891-0231-49c4-839b-b2c444f57f9c&client_secret=EmQ3FL-rDqHuESnJCmZacFK3sKQbOKX-gQYnC5pPLio`
-  });
-  console.log("\nToken verification result:", response.data);
-  return response.data;
-}
-```
-
-Currently, FusionAuth requires the customer's secret key to be included along with the token for verification through the `introspect` endpoint, but the verifying server typically does not have access to the customer's secret key.
 
 ## Update An Entity's Permissions Using curl
 
@@ -422,7 +403,7 @@ In `customer.mjs`, replace the request for the read permission, `target-entity:0
 }
 ```
 
-Now that you know how to manually update permissions using a script, let's explore an alternative approach: checking whether a customer has the `premium` attribute, and setting the relevant permissions directly in FusionAuth for each access request.
+Now that you know how to manually update permissions using a script, let's explore the alternative approach: checking whether a customer has the `premium` attribute, and setting the relevant permissions directly in FusionAuth for each access request.
 
 ## Write A Lambda Function To Add The `StoreLargeData` Permission To Premium Customers
 
