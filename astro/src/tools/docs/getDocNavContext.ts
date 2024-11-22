@@ -4,12 +4,21 @@ import { Category, DocNavContext } from 'src/tools/docs/DocNavContext';
 
 // all category names here will be sorted to the top of their category listing. 
 // if there is more than one under a given category, they'll be sorted alphabetically
-import categoryListJSON from 'src/tools/docs/docsOrdering.json';
-
-const categoryList: Category[] = categoryListJSON.categories;
+import categoriesToFloatToTop from 'src/tools/docs/categoriesToFloatToTop.json';
 
 const joinup = (...parts: string[]) => [...parts].join('/')
 
+
+// definition of the order (could be json)
+const categoryList: Category[] = [{
+  name: 'get started',
+  entries: [],
+  subcategories: [{
+    name: 'download and install',
+  }, {
+    name: 'core concepts'
+  }]
+}];
 const prepContext = (context: DocNavContext, subcategory: string, tertcategory: string, quatercategory: string): Category => {
   let subContext: Category = null;
   let tertContext: Category = null;
