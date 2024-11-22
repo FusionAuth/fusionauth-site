@@ -8,41 +8,30 @@ import categoriesToFloatToTop from 'src/tools/docs/categoriesToFloatToTop.json';
 
 const joinup = (...parts: string[]) => [...parts].join('/')
 
-
-// definition of the order (could be json)
-const categoryList: Category[] = [{
-  name: 'get started',
-  entries: [],
-  subcategories: [{
-    name: 'download and install',
-  }, {
-    name: 'core concepts'
-  }]
-}];
 const prepContext = (context: DocNavContext, subcategory: string, tertcategory: string, quatercategory: string): Category => {
   let subContext: Category = null;
   let tertContext: Category = null;
   let qautContext: Category = null;
   
-  // for (const categoryName in categoriesToFloatToTop) {
-  //   if (context.category.name === categoryName) {
-  //     const secondaryKeys = Object.keys(categoriesToFloatToTop[categoryName]);
-  //     context.category.sortFunction = ( (a, b) => {
-  //
-  //       // if both are included, sort lexically
-  //       if (secondaryKeys.includes(a.name) && secondaryKeys.includes(b.name)) {
-  //         return a.name.localeCompare(b.name);
-  //       }
-  //
-  //       // if one should be sorted to the top, do so
-  //       if (secondaryKeys.includes(a.name)) return -1;
-  //       if (secondaryKeys.includes(b.name)) return 1;
-  //
-  //       // if neither are included, sort lexically
-  //       return a.name.localeCompare(b.name);
-  //     } )
-  //   }
-  // }
+  for (const categoryName in categoriesToFloatToTop) {
+    if (context.category.name === categoryName) {
+      const secondaryKeys = Object.keys(categoriesToFloatToTop[categoryName]);
+      context.category.sortFunction = ( (a, b) => {
+        
+        // if both are included, sort lexically
+        if (secondaryKeys.includes(a.name) && secondaryKeys.includes(b.name)) {
+          return a.name.localeCompare(b.name);
+        }
+  
+        // if one should be sorted to the top, do so
+        if (secondaryKeys.includes(a.name)) return -1;
+        if (secondaryKeys.includes(b.name)) return 1;
+
+        // if neither are included, sort lexically
+        return a.name.localeCompare(b.name);
+      } )
+    }
+  }
   if (subcategory) {
     subContext = context.category.subcategories.find(sub => sub.name === subcategory);
     if (!subContext) {
@@ -88,52 +77,25 @@ const prepContext = (context: DocNavContext, subcategory: string, tertcategory: 
   }
 }
 
-const recursiveSort = (category: Category, orderIndex?: Category) => {
+const recursiveSort = (category: Category) => {
   if (category.entries.length > 0) {
-    const entries = category.entries;
-    category.entries = [];
-    orderIndex?.entries?.forEach(entry => {
-      const idx = entries.findIndex(e => e.title === entry.title);
-      if (idx !== -1) {
-        category.entries.push(entries[idx]);
-        entries.splice(idx, 1);
-      }
-    })
 
-    entries.sort((a, b) => {
+    category.entries.sort((a, b) => {
       // everything has a default of 1000, so sorts to bottom
-      // const numCompare = a.navOrder - b.navOrder;
-      // if (numCompare !== 0) {
-      //   return numCompare;
-      // }
+      const numCompare = a.navOrder - b.navOrder;
+      if (numCompare !== 0) {
+        return numCompare;
+      }
       return a.title.localeCompare(b.title);
     });
-
-    category.entries.push(...entries);
   }
   if (category.subcategories.length > 0) {
-    const subs = category.subcategories;
-    category.subcategories = [];
-    // use the defined order first
-    orderIndex?.subcategories?.forEach(sub => {
-      const idx = subs.findIndex(s => s.name === sub.name);
-      if (idx !== -1) {
-        category.subcategories.push(subs[idx]);
-        subs.splice(idx, 1);
-      }
-    });
-
-    // anything not defined gets sorted lexically
-    subs.sort((a, b) => {
-      return a.name.localeCompare(b.name);
-    });
-
-    // if (category.sortFunction) {
-    //   category.subcategories.sort(category.sortFunction);
-    // } else {
-    //   category.subcategories.sort((a, b) => a.name.localeCompare(b.name));
-    // }
-    category.subcategories.forEach(sub => recursiveSort(sub, orderIndex?.subcategories?.find(s => s.name === sub.name)));
+    if (category.sortFunction) {
+      category.subcategories.sort(category.sortFunction);
+    } else {
+      category.subcategories.sort((a, b) => a.name.localeCompare(b.name));
+    }
+    category.subcategories.forEach(sub => recursiveSort(sub));
   }
 }
 
@@ -159,6 +121,6 @@ export const getDocNavContext = async (section: string) => {
       navOrder,
     })
   });
-  recursiveSort(context.category, categoryList.find(cat => cat.name === section));
+  recursiveSort(context.category);
   return context;
 }

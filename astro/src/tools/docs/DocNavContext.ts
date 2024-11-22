@@ -1,6 +1,6 @@
 export interface DocNavEntry  {
   title: string;
-  href?: string;
+  href: string;
   description?: string;
   navOrder?: number;
 }
@@ -10,8 +10,8 @@ export interface DocNavContext {
 
 export interface Category {
   name: string;
-  href?: string;
-  entries?: DocNavEntry[];
-  subcategories?: Category[];
-  sortFunction?: (a: Category, b: Category) => number;
+  href: string;
+  entries: DocNavEntry[];
+  subcategories: Category[];
+  sortFunction: (a: Category, b: Category) => number;
 }
