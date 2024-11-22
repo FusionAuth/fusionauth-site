@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Get the list of changed files in the pull request
-changed_files=$(git diff --name-only origin/main...HEAD)
+changed_files=$(gh pr view "${{ github.event.pull_request.number }}" --json files --jq '.files[].path')
 
 # Filter the files to match the specified patterns and directory
 files_to_check=$(echo "$changed_files" | grep -E '^astro/src/.*\.(js|mjs|cjs|ts|md|mdx)$' | sed 's|^astro/||')
