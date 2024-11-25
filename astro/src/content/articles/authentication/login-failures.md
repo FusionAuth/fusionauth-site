@@ -124,7 +124,7 @@ All things in software (and life) have  tradeoffs, and tracking login failures i
 
 Once you implement tracking, you may determine that you want to do something to improve your login failure rates. Here are some ideas for how to increase successful logins.
 
-1. **Provide automated help to anyone struggling to log in.** Present tailored advice or reminders in the user experience based on the problem they’re experiencing. An example of this is offering to send a password reset email with one click after a certain number of failed login attempts. Or, if you’re noticing that legitimate-looking users are failing at the captcha step frequently, consider a [CAPTCHA alternative](https://www.w3.org/WAI/GL/wiki/Captcha_Alternatives_and_thoughts).
+1. **Provide automated help to anyone struggling to log in.** Present tailored advice or reminders in the user experience based on the problem they’re experiencing. An example of this is offering to send a password reset email with one click after a certain number of failed login attempts. Or, if you’re noticing that legitimate-looking users are failing at the CAPTCHA step frequently, consider a [CAPTCHA alternative](https://www.w3.org/WAI/GL/wiki/Captcha_Alternatives_and_thoughts).
 
 2. **Give secure options for account credentials reset.** Once a problem has been detected, offer a login with a security code. Once the user is authenticated, allow them to modify their credentials so that they can remember them. For an added layer of security, send the user an email any time their username or password changes. In case it wasn’t them, they can be alerted of a possible malicious actor and take further steps such as changing their credentials or locking their account. 
 

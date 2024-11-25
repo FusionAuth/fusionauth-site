@@ -1,0 +1,21 @@
+import Aside from 'src/components/Aside.astro';
+
+For best performance, do the following:
+
+* Minimize the number of network hops; load the data from a server on the same network.
+* Run with the `validateDBConstraints` set to `false`.
+* Make sure the JSON is minified.
+* Load in batches of 100k.
+* If you have tens of millions of users and are self-hosting, consider [switching to the database search engine](/docs/lifecycle/manage-users/search/switch-search-engines). With that option, FusionAuth won't sync user data to Elasticsearch during the import. If you require Elasticsearch for advanced searching capabilities, switch back to Elasticsearch after the migration is complete. This option is not available when using [FusionAuth Cloud](/docs/get-started/run-in-the-cloud/cloud).
+* Disable the `user.bulk.create` webhook. This may not be possible if you need FusionAuth to send an event with created users to another system.
+* Set the HTTP timeout to a large value on your API requests. Exactly how to do this varies based on the tool you're using to make the HTTP request. The import API is currently a synchronous operation, though there are plans to make it asynchronous (see [this GitHub issue for more](https://github.com/FusionAuth/fusionauth-issues/issues/944)).
+* If you only provide a `password` field, then FusionAuth will assume the password is in plaintext and hash it for you. Hashing a password negatively affects load time, performance and throughput. If you provide the `salt`, `password`, `encryptionScheme` and `factor` values when importing, then FusionAuth assumes the value in the `password` field is a hashed password, and it will not be hashed.
+* Deduplicate any emails. In FusionAuth, each email address may be associated with only one user account per tenant.
+* Stage your data by exporting current user data into separate JSON files. This will make debugging easier, since you can load one file at a time, and you can repeat a data load if there are issues. It will also be more performant than loading data across a network or from a database.
+* For easy testing, you can use or modify [this Ruby script](https://github.com/FusionAuth/fusionauth-import-scripts/blob/main/testing/generate_import.rb) to generate and import large numbers of users with a hashed password of 'password'.
+
+<Aside type="note">
+The easiest and fastest way to load bulk user data into FusionAuth is to loop over a directory of JSON files that each contain 100,000 users. These JSON files should be clean, have unique emails per tenant and be minified.
+
+In FusionAuth testing, this approach resulted in loading 100,000 users in 62 seconds to an HA FusionAuth Cloud deployment from one EC2 region to another. Performance is dependent on user data complexity, hardware, network and database constraints, but this should give you a good idea of the order of magnitude.
+</Aside>

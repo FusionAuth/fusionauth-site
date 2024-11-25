@@ -1,0 +1,91 @@
+---
+title: Login Validation Lambda
+description: An overview of the login validation lambda.
+navcategory: customization
+section: extend
+subcategory: code
+tertcategory: lambdas
+---
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+
+During a login request FusionAuth performs various validations such as verifying credentials or verifying a one time code during a multi-factor login. Using this lambda function, you may extend this functionality to include your own validation as part of a login request.
+
+The login validation lambda has access to the user record, the user's registration for the application they're trying to authenticate to if applicable and meta-data about the request. While Lambda HTTP Connect may be used in this function in order to utilize external resources to perform validation, please be aware that adding latency to the login request will likely be observable to your end user.
+
+When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+
+## Lambda Structure
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+```javascript
+function validate(result, user, registration, context) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `validate` that takes four parameters. The parameters that the lambda is passed are:
+
+* `result` - an object used for returning validation errors. You can modify this object.
+* `user` - the FusionAuth User object. This object is read-only.
+* `registration` - the FusionAuth UserRegistration object. This object is read-only.
+* `context` - an object containing context for the current request. This object is read-only.
+
+The `result` object contains an [Errors](/docs/apis/errors) object. The `user` and `registration` objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The `context` object has the following structure:
+
+```json
+{
+  "authenticationType": "...",
+  "identityProvider": {
+    "id": "...",
+    "name": "...",
+    "identityProviderType": "..."
+  }
+}
+```
+
+The `identityProvider` object in the `context` will only be present when the login request is from a 3rd party Identity Provider.
+
+To deny a login attempt, simply add one or more field or general errors to the result. The error schema can be found in the [API Errors](/docs/apis/errors) documentation.
+
+## Assigning The Lambda
+
+Once a lambda is created, you must assign it to a Tenant. Using the FusionAuth admin UI, find the <InlineField>Login validation lambda</InlineField> field found on the <Breadcrumb>Security</Breadcrumb> tab in the Tenant configuration.
+
+Or if you using the Tenant API, assign the lambda Id to the `tenant.lambdaConfiguration.loginValidationId` field.
+
+## Example Lambda
+
+Here is an example of a simple Lambda that prevents login attempts by users whose accounts are past due. Note that this is just an example that is assuming you have set the `accountStatus` in the user's data using the User API.
+
+```javascript
+function validate(result, user, registration, context) {
+  if (user.data.accountStatus === 'pastDue') {
+    result.errors.generalErrors = [{
+      code: "[LoginRestricted]",
+      message: "Account is past due, please contact accounts payable."
+    }];
+  }
+}
+```
+
+## Localization
+
+When using any of the Login APIs directly, if the lambda function adds errors to the `result`, the API will respond with a `400` status code and the JSON response will contain the same errors object returned by the lambda function.
+
+When using the FusionAuth hosted login pages, the messaging may be localized. The order of precedence is as follows.
+
+* If the message key returned in the `code` field is defined in your theme, that localized message will be displayed.
+* If the message key returned in the `code` field is not defined in your theme, the message as provided by the lambda function will be displayed.
+* If the message key returned in the `code` field is not defined in your theme, and the lambda function did not define a value for the `message`, the message key returned in the `code` field will be displayed to the user.
+
+Using the above example, by default the user will be shown the message `Account is past due, please contact accounts payable.`.
+
+To localize this message, or simply modify it to be more user friendly, add the following message to your theme:
+
+```
+[LoginRestricted]=Looks like you forgot to pay your bill. Please call 1-800-555-5555 for assitance.
+```
+
+With this change, the user will be shown  `Looks like you forgot to pay your bill. Please call 1-800-555-5555 for assitance.`.

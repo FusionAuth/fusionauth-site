@@ -1,0 +1,109 @@
+---
+title: Combining SSO and MFA in FusionAuth
+description: In this article, you'll learn how to combine single sign-on with multi-factor authentication in FusionAuth.
+author: Matt Keib
+section: Authentication
+tags: single sign on mfa multi factor authentication sso security
+icon: /img/icons/sso-mfa.svg
+darkIcon: /img/icons/sso-mfa-dark.svg
+---
+
+No matter how strong a password is, if an attacker wants to access what lies behind it---data, administrator access to a database or an admin panel, you name it---they eventually will.
+
+Yet there's an equally well-known fact: there's no security policy end users will not complain about, no matter how easy to implement it may be or how important the measures taken are. On top of that, the executive board always seems to side with the users instead of backing [DevSecOps](https://www.redhat.com/en/topics/devops/what-is-devsecops) and system administrators, who want to safeguard the organization and improve its security posture.
+
+But what if there was a way to enforce security and please end users at the same time?
+
+In this article, you'll learn how to combine [single sign-on (SSO)](/articles/authentication/how-sso-works) and [multi-factor authentication (MFA)](/articles/authentication/multi-factor-authentication) to strengthen security while making non-techies' lives easier.
+
+## Single Sign-On
+
+Single sign-on (SSO) is a user authentication process that allows a user to access multiple applications or services using one set of login credentials. Unlike traditional methods, where each application demands separate credentials, the user only needs to authenticate once. As long as the session is active, they won't need to log in to any of the relevant apps or services again.
+
+SSO simultaneously enhances user convenience and security. Users don't need to remember different passwords and log in repeatedly. Because they don't suffer from [password fatigue](https://en.wikipedia.org/wiki/Password_fatigue), you can enforce stronger password policies.
+
+SSO is particularly beneficial in enterprise environments where users frequently navigate multiple systems. For example, [Windows Hello](https://learn.microsoft.com/en-us/windows/security/identity-protection/hello-for-business/hello-hybrid-aadj-sso), Microsoft's version of SSO, allows users to access anything hosted in [Azure](https://azure.microsoft.com/en-gb/resources/cloud-computing-dictionary/what-is-azure/), such as 365 apps, as well as any enterprise application that may be registered in the tenant by simply logging in to their workstation.
+
+SSO works by storing the user's details in a centralized fashion. In the case of Windows Hello, for example, a security token is housed in the user's device, but some SSO providers store it on the cloud. This token is your passport to every registered application once you've successfully logged in to your device.
+
+Another benefit of incorporating SSO into your software is that it allows your developers to focus on the core functionalities of the solution instead of creating and managing authentication systems for each application or service---which can be complex, time-consuming, and costly. You not only save development time but also reduce the complexity of your [codebase](https://en.wikipedia.org/wiki/Codebase).
+
+## Multi-factor Authentication
+
+While SSO enhances convenience, MFA excels at strengthening the security of your solution.
+
+If you host a service maintained and administered by many people, someone's password will be compromised at some stage. Whether due to bad practices---such as leaving a password on a Post-it in the office or using a weak password with a low character count---or [phishing](https://en.wikipedia.org/wiki/Phishing), there are ways that attackers can obtain, guess, or steal passwords.
+
+For this reason---and the [rapid increase](https://www.forbes.com/sites/chuckbrooks/2022/01/21/cybersecurity-in-2022--a-fresh-look-at-some-very-alarming-stats/) of cyber incidents---it's not surprising that MFA is gaining so much traction nowadays. But what is it exactly?
+
+Instead of only requiring a password, MFA enhances the security of the authentication process by asking for a combination of three different types of credentials:
+
+- **Something you are:** biometric data like fingerprints, retina scans, facial recognition
+
+- **Something you know:** a PIN, password, or passphrase
+
+- **Something you have:** [smart cards](https://en.wikipedia.org/wiki/Smart_card), physical tokens, or an MFA app like Google Authenticator or [FIDO Keys](<https://www.pingidentity.com/en/resources/identity-fundamentals/authentication/passwordless-authentication/fido.html>)
+
+For example, some apps email or SMS you a six-digit code after you enter your login credentials. Others might have you scan your fingerprint via a device or require you to generate a token from an app. Some apps even consider the user's geographical location as an additional factor for authentication.
+
+Most services allow you to register a single record for MFA, meaning you can only associate one phone number, email account, or token app with your account. This ensures that if an attacker gains access to one of your authentication methods, they can't easily add another. They'll have to go through the same validation process first.
+
+Because MFA thwarts any potential attacks where passwords might have been compromised, it limits the damage of phishing attacks. If a user's credentials get compromised, MFA still prevents unauthorized access.
+
+In addition, because MFA is so much more secure, regulators increasingly require it in industries that work with sensitive data. In the healthcare industry, for instance, MFA is required to comply with [HIPAA](https://www.cdc.gov/phlp/publications/topic/hipaa.html) regulations and privacy rules.
+
+Let's not forget that MFA also improves customer trust---it demonstrates a commitment to protecting customer data.
+
+## Combining SSO and MFA
+
+SSO is a very convenient way to authenticate, but using only one password across different apps will expose all those apps if that password is compromised. On the other hand, MFA is a great way to secure your solution, but users don't want to go through all that hassle every time they switch solutions.
+
+Combining both lets you achieve convenience without compromising security.
+
+Picture this: You log in to your identity provider with your username and password, and then you enter an MFA code generated by an app on your phone. It takes a few seconds, but then again, as long as your session remains active, you won't have to do it again.
+
+Let's see how easy it is to combine [SSO](/features/single-sign-on) and [MFA](/features/multifactor-authentication) in FusionAuth.
+
+### Enabling SSO
+
+To integrate SSO with FusionAuth, start by registering your applications in the FusionAuth admin panel. This involves adding each application's details, such as its name and redirect URLs, to create a unique identifier for each application.
+
+When you register the application on FusionAuth, you will get a client Id and client secret that you must include in your application's code to define FusionAuth as the identity provider for that app. (There are further configurations available too, but they're beyond the scope of this article.)
+
+Once your applications are registered and configured, you can assign users to them.
+
+Navigate to the **Users** section in the admin panel, select the user in question, and add them to the desired applications. 
+
+![FusionAuth's admin panel](/img/articles/sso-mfa/applications-admin-panel.png)
+
+You must assign the user to both applications for the SSO to work properly.
+
+![Assigning the user to the applications](/img/articles/sso-mfa/2-assign-user.png)
+
+Assigning users to applications in FusionAuth allows it to manage the SSO process so that users can access multiple applications with a single set of credentials.
+
+### Enabling MFA
+
+Enabling MFA is also easily achieved via an option in FusionAuth's admin panel.
+
+For this guide, tenant-level MFA is configured, which means that all apps within a specific tenant will have MFA enforced.
+
+![Enabling MFA for all the registered apps](/img/articles/sso-mfa/3-enable-mfa.png)
+
+In FusionAuth, a tenant is the highest level of grouping for users and applications. Each FusionAuth instance comes with a 'Default' tenant, which can be used to manage internal users and customize the login page. If you're offering services to multiple clients or need to separate users, applications, and groups for different purposes, you can create additional tenants to ensure proper isolation and security. 
+
+All that's left to do is for the user to register an MFA method when they log in. The screenshot below shows the screen a user would use to register an authenticator app:
+
+![MFA registration prompt](/img/articles/sso-mfa/4-mfa-prompt.png)
+
+And that's all it takes to get the convenience and simplicity of SSO with the hardened access control of MFA.
+
+## Conclusion
+
+SSO gives users streamlined access to multiple applications with a single login, while MFA brings an added layer of security. This article explains how combining them gives you the best of both worlds.
+
+You also saw how FusionAuth's user-friendly interface simplifies the implementation of authentication options for your app.
+
+Aside from SSO and MFA, FusionAuth also supports [passwordless](/features/passwordless) and [biometric authentication](/feature/biometric) to make the login process even smoother. You can also choose to run FusionAuth locally or use [FusionAuth Cloud](/platform/fusionauth-cloud).
+
+With FusionAuth's core features available at [no cost](/pricing?step=plan&hosting=self-hosting) with self-hosting, you have an excellent opportunity to leave secure authentication in FusionAuth's hands so you can focus on your application's core functions.No matter how strong a password is, if an attacker wants to access what lies behind it---data, administrator access to a database or an admin panel, you name it---they eventually will.

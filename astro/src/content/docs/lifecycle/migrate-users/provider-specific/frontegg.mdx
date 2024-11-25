@@ -1,0 +1,448 @@
+---
+title: Migration From Frontegg
+description: How to migrate your users from Frontegg to FusionAuth.
+section: lifecycle
+subcategory: migrate users
+tertcategory: provider specific
+prerequisites: Docker, Node
+technology: Frontegg
+---
+
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import InlineField from 'src/components/InlineField.astro';
+import Aside from '/src/components/Aside.astro';
+import Breadcrumb from '/src/components/Breadcrumb.astro';
+import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/provider-specific/_mapping-user-attributes.mdx';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import SocialLoginNote from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-note.mdx';
+import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-migration.mdx';
+import OtherEntitiesIntro from 'src/content/docs/lifecycle/migrate-users/provider-specific/_other-entities-intro.mdx';
+import ScrollRef from 'src/components/ScrollRef.astro';
+import SlowMigrationTimeline from 'src/content/docs/lifecycle/migrate-users/provider-specific/_slow-migration-timeline.mdx';
+import WhatNext from 'src/content/docs/lifecycle/migrate-users/provider-specific/_what-next.mdx';
+import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_additional-support.mdx';
+import MakeWebservicePublic from 'src/content/docs/lifecycle/migrate-users/provider-specific/_make-webservice-public.mdx';
+
+export const migration_source_name = 'Frontegg';
+export const migration_source_dir = 'frontegg';
+export const script_supports_social_logins = false;
+
+## Overview
+
+This document will help you migrate users from {frontmatter.technology} to FusionAuth.
+
+This guide is a low-level, technical tutorial focusing on calling APIs and preparing data when migrating users from {frontmatter.technology}. To understand how to plan a migration at a higher level, please read the [FusionAuth migration guide](/docs/lifecycle/migrate-users/general-migration).
+
+## Prerequisites
+
+To follow this tutorial, you need:
+- [Node.js](https://nodejs.org/en) to run the migration scripts, and npm.
+- [FusionAuth](/download). The easiest way to run FusionAuth locally is to use [Docker](https://docs.docker.com/get-docker/) with the configuration file provided later in this tutorial.
+
+## Planning Considerations
+
+### Obtaining User Data
+
+While the {frontmatter.technology} platform allows you to export your user data using its API, it does not allow you to export user password hashes. This means you cannot migrate your user passwords into FusionAuth and allow your users to log in if you do a bulk migration. Your users will need to use the FusionAuth forgot password flow to set a new password and log in.
+
+Here is how a bulk migration process might work:
+1. Export all user data from the {frontmatter.technology} API, except password hashes.
+2. Convert the user data into FusionAuth-compatible objects and import the data into FusionAuth.
+3. Have your users use the forgot password flow to change their passwords.
+
+If you are willing to perform a gradual migration, also known as a slow migration, you can allow your users to log in to {frontmatter.technology} via FusionAuth, and have FusionAuth transparently migrate their data. Slow migrations in FusionAuth use [Connectors](/docs/lifecycle/migrate-users/connectors), a paid feature.
+
+A slow migration would look like this:
+1. Export all user data from the {frontmatter.technology} API, except password hashes.
+2. Configure a FusionAuth Connector to call an intermediary web service whenever a user logs in.
+3. Write the intermediary web service that will call {frontmatter.technology} with the user's credentials and save the password to FusionAuth.
+4. Once you have migrated a large enough portion of your users, you can switch off the Connector and cancel your {frontmatter.technology} subscription.
+
+This tutorial will cover all the bulk and slow migration steps.
+
+### Mapping User Attributes
+
+<MappingUserAttributes migration_source_name={migration_source_name} />
+
+### Social Logins
+
+<SocialLoginNote migration_source_name={migration_source_name} script_supports_social_logins={script_supports_social_logins} />
+
+<SocialLoginMigration />
+
+### Other Entities
+
+<OtherEntitiesIntro migration_source_name={migration_source_name} other_migrated_entities="connections or roles" />
+
+* In Frontegg, a [role](https://docs.frontegg.com/docs/roles-1) is a collection of permissions that can be assigned to a user or application. FusionAuth has [roles](/docs/get-started/core-concepts/roles) that are configured on an application-by-application basis and made available in a token after successful authentication.
+* With Frontegg, you can use [groups](https://docs.frontegg.com/docs/groups) to organize a collection of user identities to manage access to applications. FusionAuth also has [Groups](/docs/get-started/core-concepts/groups).
+* Frontegg uses [tenants](https://docs.frontegg.com/docs/user-admin-management#tenants) to define sets of users and help you manage users. You can also manage a set of users via a [Tenant](/docs/get-started/core-concepts/tenants) in FusionAuth.
+
+
+#### Identifiers
+
+When creating an object with the FusionAuth API, you can specify the Id. It must be a [UUID](/docs/reference/data-types#uuids).
+
+This works for users, applications, and tenants, among others.
+
+### {frontmatter.technology} User Structure
+
+{frontmatter.technology} has customers (that's you) called vendors. Each vendor has customers called users, grouped into tenants. Tenants are grouped into environments (such as development, QA, and production). Below is an illustration of an example user structure in Frontegg.
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/users.png`} alt="Frontegg user structure" width="1200" />
+
+Note that tenants are called accounts in the {frontmatter.technology} web portal. FusionAuth also uses tenants to group users.
+
+Permissions work slightly differently in the two systems. FusionAuth and {frontmatter.technology} both group permissions into roles, and assign roles to users. A user then has all the permissions associated with that user's roles.
+
+However, {frontmatter.technology} also supports assigning permissions directly to a user using features. FusionAuth does not support this. If you have used {frontmatter.technology} features, you will need to map features to FusionAuth Roles in your migration script. Below is a {frontmatter.technology} illustration of the platform's permissions structure (which {frontmatter.technology} calls entitlements).
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/permissions.png`} alt="Frontegg entitlements" width="1200" />
+
+
+## Bulk Migration
+
+Be aware that the steps outlined for bulk migrating users from Frontegg will not export password hashes, and users will need to change their passwords using the forgot password flow on FusionAuth.
+
+### Exporting User Data From Frontegg
+
+In this section, you create two sample {frontmatter.technology} users in the web portal and export them with the API.
+
+If you have existing users, you can use them to follow this migration tutorial. If not, add users as described below.
+
+- Log in to your account at https://portal.frontegg.com.
+- Add an environment, like `Development`.
+- Navigate to <Breadcrumb>Environments -> Development -> Env settings</Breadcrumb> and note your <InlineUIElement>Client ID</InlineUIElement>, <InlineUIElement>API Key</InlineUIElement>, and <InlineUIElement>Login URL</InlineUIElement>.
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/env-settings.png`} alt="Frontegg environment settings" width="1200" />
+
+- In the environment's <Breadcrumb>Backoffice -> Accounts</Breadcrumb>, create a new account (tenant) called `a`.
+- In <Breadcrumb>Backoffice -> Users</Breadcrumb>, create two new users called `a` and `b` assigned to account `a`. Assign roles for the users. The default roles available are "Admin" and "Read Only". For the user email addresses, you can use most web email addresses with an alias. For instance, if you use Gmail and your address is `myemail@gmail.com`, you can give the two new users the email aliases `myemail+a@gmail.com` and `myemail+b@gmail.com`. Emails sent to the users will come to your inbox.
+- For each user, open the hamburger menu on the right and click <InlineField>Edit user & Metadata</InlineField>. Give them some JSON metadata (like `{"country": "france"}`) and save.
+- When you receive the welcome emails for these users, verify them by clicking the link.
+
+You're now done working with the {frontmatter.technology} web portal and have sample user data to test a migration.
+
+### Export The Users With The API
+
+FusionAuth provides export and import scripts under a permissive open-source license. To get the scripts, clone the Git repository.
+
+```sh
+git clone https://github.com/FusionAuth/fusionauth-import-scripts
+```
+
+The `frontegg` directory contains all the scripts you need for this tutorial, and `frontegg/exampleData` has the output of the scripts.
+
+Navigate to the `frontegg/src` directory.
+
+```sh
+cd fusionauth-import-scripts/frontegg/src
+```
+
+Install the required npm dependencies by running the following command.
+
+```sh
+npm install
+```
+
+Export your users from {frontmatter.technology} by running the command below. Use the Frontegg client Id and API key you noted in the previous section.
+
+```sh
+node 1_exportUsers.mjs yourclientid yourapikey
+```
+
+This command will create a `users.json` file in the current `frontegg/src` directory. The `users.json` file should contain user data similar to the data in `exampleData/1_fronteggExport/users.json`.
+
+The `1_exportUsers.mjs` script makes two calls to the {frontmatter.technology} API:
+- `httpClient.get('identity/resources/users/v3')` gets all your users and some basic data on each.
+- `httpClient.get('identity/resources/vendor-only/users/v1/' + user.id)` gets comprehensive data for each user, including roles, but not features.
+
+### Create Roles For Your Users
+
+If you look at `exampleData/1_fronteggExport/users.json`, you'll see the users have two roles, `ReadOnly` and `Admin`, in the keys.
+
+```json
+       "tenants": [
+            {
+                "tenantId": "1d378739-a1ac-4a79-9d2f-e7eb53e6dcd7",
+                "roles": [
+                    {
+                        "id": "f4c43bb0-d9ae-4837-8a97-8688abcd8404",
+                        "vendorId": "0d0c5e4b-6c5c-4a85-96fc-7c17b31ee36a",
+                        "tenantId": null,
+                        "key": "ReadOnly",
+                        "name": "Read Only",
+```
+
+You need to add these role names in your FusionAuth Application. Users will be linked to an application through a registration object, which includes the role. If the users in your exported data have different role names to the ones in the example data, change them in the script `frontegg/src/2_addRoles.mjs`. The role UUIDs are random in this script — you can use any Ids you like, including the ones matching the UUIDs of your roles in {frontmatter.technology}.
+
+To use this script, you need an instance of FusionAuth running. Start a local instance of FusionAuth running in Docker by running the commands below in a new terminal.
+
+```sh
+cd fusionauth-import-scripts/frontegg/fusionAuthDockerFiles
+docker compose up
+```
+
+FusionAuth will now be running and accessible at `http://localhost:9011`. You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and `password`. The container is called `fa`.
+
+This configuration makes use of a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart), defined in `fusionauth-import-scripts/frontegg/fusionAuthDockerFiles/kickstart/kickstart.json`. When FusionAuth comes up for the first time, it will look at the `kickstart.json` file and configure FusionAuth to the specified state. In summary, the defined Kickstart sets up an API Key, an admin user to log in with, and a Test application in FusionAuth.
+
+In another terminal, navigate to the `frontegg/src/` directory. Now you can run the role creation script below.
+
+```sh
+node 2_addRoles.mjs
+```
+
+Now in the [FusionAuth admin interface](http://localhost:9011/admin), if you browse to **Applications —> Test** and click the <InlineUIElement>Manage Roles</InlineUIElement> button, you can see the roles have been added for your sample Application.
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/added-roles.png`} alt="Roles added to the import application" width="1200" />
+
+### Prepare Users For Import To FusionAuth
+
+The next script, `3_convertFeUserToFaUser.mjs`, is the most important. It maps the fields of `users.json` to FusionAuth fields. You may wish to alter this script to change which fields are ignored, or where they are mapped.
+
+The script uses `stream-json`, a JSON library that can incrementally read massive files with millions of users. It opens the `users.json` file for reading in the line `new Chain([fs.createReadStream(inputFilename), parser(), new StreamArray(),]);`. For more information, read https://github.com/uhop/stream-json. The `processUsers()` function calls `getFaUserFromUser()` to map the {frontmatter.technology} user to FusionAuth, and then saves the user to an `faUsers.json` file.
+
+The `getFaUserFromUser()` function does a few things:
+- Maps as many matching fields from {frontmatter.technology} to FusionAuth as possible.
+- Creates a random UUID in plain text for the user password. This will require users to create a new password when logging in to your application after migration.
+- Stores all {frontmatter.technology} user details that don't map to FusionAuth in the JSON `data` field. This is where the {frontmatter.technology} `metadata` field is saved to.
+- Adds FusionAuth User Registrations (the link between a FusionAuth User and an Application) to users. You will need to change these Ids to match those of your application when doing a real migration. This section is marked with `TODO`.
+
+Carefully read this function and make sure that the user information you need is imported correctly. If any information is not needed, you can comment out the related lines.
+
+If you are uncertain about what a user attribute in FusionAuth does, read more in the [user guide](/docs/apis/users), as linked in the [general migration guide](/docs/lifecycle/migrate-users/general-migration) recommended earlier.
+
+In a terminal in the `fusionauth-import-scripts/frontegg/src` directory, run the script with the following command.
+
+```sh
+node 3_convertFeUserToFaUser.mjs
+```
+
+The script will output users ready to import to FusionAuth to the `faUsers.json` file.
+
+### Save The User Details To FusionAuth
+
+Now you'll run the Node.js import script to import the users into FusionAuth.
+
+In a terminal in the `fusionauth-import-scripts/frontegg/src` directory, run the command below.
+
+```sh
+node 4_import.mjs
+```
+
+This script uses the FusionAuth SDK for Node.js `@fusionauth/typescript-client`. It's used only for a single operation, `fa.importUsers(importRequest)`. For more information, read the [FusionAuth Typescript Client Library](/docs/sdks/typescript) documentation.
+
+The script imports users individually. If this is too slow when running the production migration, wrap the `importUsers()` FusionAuth SDK call in a loop that bundles users in batches of 1000.
+
+### Verify The Import
+
+Log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and password `password`. Review the user entries for the test application to ensure the data was correctly imported.
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/imported-users.png`} alt="List of imported users" width="1200" />
+
+Manage users by clicking on the <InlineUIElement>Manage</InlineUIElement> button (black button) to the right of the user in the list of users. Review the details of the imported user’s profile. In the <InlineUIElement>Source</InlineUIElement> tab, you can see all the user details as a JSON object.
+
+## Slow Migration
+
+This step of the tutorial is optional. In this section, you'll learn how to create a Connector for FusionAuth to import your users' passwords individually as each user logs in.
+
+<PremiumPlanBlurb />
+
+If you don't need to do this, please skip to the <ScrollRef target="What To Do Next"/> section below.
+
+### Create A User With A Password
+
+To test the slow migration, you need a user with a password you know. To create a user with a password that you can use to test authentication, alter your login form in the {frontmatter.technology} web portal as follows:
+
+- Click <InlineUIElement>Go to builder</InlineUIElement> on the sidebar in Frontegg dashboard.
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/goto-builder.png`} alt="Go to builder in Frontegg" width="1200" />
+
+- Disable all sign-in types on the left, except for <InlineUIElement>Email sign on</InlineUIElement> with <InlineUIElement>Password</InlineUIElement>, which you enable.
+- Enable <InlineUIElement>Allow signup</InlineUIElement>.
+- Use the <InlineUIElement>Review to Publish</InlineUIElement> button at the top right to review and publish this change.
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/signup.png`} alt="Customize signup in Frontegg" width="1200" />
+
+Confirm the changes when asked and then publish the changes to your environment.
+
+Get the signup URL for your environment:
+
+- Log in to your account at https://portal.frontegg.com.
+- Go to the environment, like **Development**.
+- Go to <Breadcrumb>Environments -> Development -> Env settings</Breadcrumb> and note down the <InlineUIElement>Login URL</InlineUIElement>.
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/env-settings.png`} alt="Get login URL" width="1200" />
+
+Now visit the signup URL by appending `/account/sign-up` to the login URL to get a URL such as `https://app-xyhd7853hsngq.frontegg.com/oauth/account/sign-up`.
+
+Create a new user with an alias like `myemail+test@gmail.com` and password `password`.
+
+<Aside type="note">
+  If you did not go through the steps mentioned earlier in the bulk migration section, get export scripts by going through the steps in the <ScrollRef target="Export The Users With The API" /> and <ScrollRef target="Create Roles For Your Users" /> sections. The steps are summarized below.
+</Aside>
+
+Export the new user by running the `frontegg/src/1_exportUsers.mjs` script.
+
+```sh
+node 1_exportUsers.mjs yourclientid yourapikey
+```
+
+If not already created, create roles in FusionAuth by running the `frontegg/src/2_addRoles.mjs` script.
+
+```sh
+node 2_addRoles.mjs
+```
+
+In the `frontegg/src/3_convertFeUserToFaUser.mjs` script, comment out the following code lines that assign a random password and require a password change.
+
+```javascript
+  faUser.password = uuidv4();
+  faUser.passwordChangeRequired = true;
+  faUser.passwordChangeReason = "Administrative";
+```
+
+Map the users in the exported `users.json` file to FusionAuth-compatible objects by running the `3_convertFeUserToFaUser.mjs` script.
+
+```sh
+node 3_convertFeUserToFaUser.mjs
+```
+
+### Configure A Connector Between FusionAuth And {frontmatter.technology}
+
+<PremiumPlanBlurb />
+
+Now configure a FusionAuth Connector to point to an intermediary web service between FusionAuth and {frontmatter.technology}. The web service will expose an API endpoint that can be called from a FusionAuth Connector to retrieve the user's details to be imported to FusionAuth.
+
+<Aside type="note">
+For a general overview of Connectors, please see this [video](https://www.youtube.com/watch?v=ks-ppMH6WXw).
+</Aside>
+
+
+In your [FusionAuth admin UI](https://localhost:9011), browse to **Settings —> Connectors**.
+
+Click the dropdown button on the top right and select <InlineUIElement>Add Generic connector</InlineUIElement>.
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/create-connector.png`} alt="Create a Connector in FusionAuth" width="1200" />
+
+Enter the field values below.
+
+- <InlineField>Name:</InlineField> `FronteggConnector`
+- <InlineField>Authentication URL:</InlineField> `http://host.docker.internal:6252`. If you are running FusionAuth directly on your machine and not in Docker you can use `http://localhost:6252`.
+- Adjust the timeout values to higher values to cater for network latency when the API requests are being made
+- Enable <InlineUIElement>Debug enabled</InlineUIElement>
+
+<Aside>
+  You may need to update your hosts file to include an entry for `127.0.0.1 host.docker.internal` if it's not already present. On macOS and Linux you can achieve this by running the following command:
+
+  ```
+  echo "127.0.0.1 host.docker.internal" | sudo tee -a /etc/hosts
+  ```
+</Aside>
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/connector.png`} alt="Connector details in FusionAuth" width="1200" />
+
+<MakeWebservicePublic ngrok_port='6252' />
+
+<Aside type="caution">
+  In production, you will want to add some authentication to the web service.
+</Aside>
+
+Now browse to **Tenants** and do the following.
+- Click <InlineUIElement>Edit</InlineUIElement> on the default tenant.
+- Click the **Connectors** tab.
+- Click <InlineUIElement>Add policy</InlineUIElement>.
+- Select `FronteggConnector`.
+- Leave <InlineField>Domains</InlineField> with the value `*` to apply this Connector to every user.
+- Enable <InlineUIElement>Migrate user</InlineUIElement> so that FusionAuth will no longer use {frontmatter.technology} for subsequent logins of the same user.
+- Click <InlineUIElement>Submit</InlineUIElement>.
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/connector-policy.png`} alt="Connector policy details in FusionAuth" width="1200" />
+
+Move the `FronteggConnector` policy to the top of the list. Use the arrow buttons to move the policy if necessary. With this configuration, all users are checked against this Connector the first time they are seen. If they log in, they’ll be migrated to the FusionAuth user database.
+
+After configuration, the Connector entry form should look similar to this:
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/connector-added.png`} alt="Connector policy list in FusionAuth" width="1200" />
+
+Save the changes by clicking the save icon at the top right.
+
+
+### Build An Authentication Intermediary Web Service
+
+The next step is to write the small service available on port 6252 that forwards the user's login Id and password to {frontmatter.technology} and returns the user details that will be saved to FusionAuth if the login is successful.
+
+<Aside type='note'>
+ Documentation on the inputs and outputs a Connector expects is [here](/docs/lifecycle/migrate-users/connectors/generic-connector).
+</Aside>
+
+The Connector makes a POST request to the URL you specify, and expects a JSON object back containing a `user`.
+
+An example web service is in `frontegg/src/5_connectorService.mjs`.
+
+This file has an Express HTTP POST handler that gets the login Id and password from the request and forwards them to {frontmatter.technology} by calling the following function.
+
+```js
+await isLoginValid(email, request.body.password);
+```
+
+A 404 is returned if the credentials are not valid.
+
+If the credentials are valid, the user's details stored in the `faUsers.json` file are returned. Unfortunately, the {frontmatter.technology} API method `https://docs.frontegg.com/reference/vendoronlyusers_verifyuserpassword` you call in the service does not return a user Id. The search for the user Id is done in the following function.
+
+```js
+await getUserDetailsFromFile(email);
+```
+
+Run this web service now using the command below.
+
+```sh
+node 5_connectorService.mjs yourfronteggclientid yourfronteggapikey
+```
+
+### Log In With A Test User
+
+In the FusionAuth admin interface, browse to **Applications** and click the magnifying glass next to the **Test** application. Copy the value of the <InlineField>OAuth IdP login URL</InlineField> and open it in an incognito window in your browser (if you don't use an incognito window, you need to log out of the FusionAuth admin session to prevent the active session from interfering with the test). This URL is a login page for the Test application so that you can test the web service and Connector.
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/login-url.png`} alt="Test application login URL" width="1200" />
+
+Log in with the username and password you entered earlier, such as `myemail+test@gmail.com` and `password`. Your web service should show `Request received` on the console and the login request succeeding.
+
+<Aside type="note">
+  After a successful test login, the user will be redirected to a URL like `https://example.com/?code=2aUqU0ZhQCjtz0fnrFL_i7wxhIAh7cTfxAXEIpJE-5w&locale=en&userState=AuthenticatedNotRegistered`.
+
+  This occurs because you haven't set up a web application to handle the authorization code redirect yet. This is an important next step, but it's beyond the scope of this document. Consult the [5-minute setup guide](/docs/quickstarts/5-minute-setup-guide) for an example of how to do this.
+</Aside>
+
+If you log out and log in again with the same user, you'll notice that `Request received` will not show in the web service console. This is because FusionAuth is now using its own authentication service as the original user password has been hashed and saved in the FusionAuth database.
+
+The user has been successfully migrated, and {frontmatter.technology} is no longer needed for them.
+
+#### Debug The Connector Service
+
+If you encounter errors in this process, try the following:
+
+- View the **System Event Logs** in the bottom left of the FusionAuth web interface.
+- Add `console.log` lines to the `5_connectorService.mjs` file to see where any errors are occurring.
+- Adjust the timeout values of the Connector to higher values to cater for network latency between API calls.
+
+### Estimate The Slow Migration Timeline
+
+When using a slow migration, you can estimate how many accounts will be migrated in a given period.
+
+<SlowMigrationTimeline />
+
+After this period, you may want to bulk migrate the rest of the users, or treat them as inactive and not migrate them. Plan to disable the Connector and remove the tenant's Connector policy after the slow migration is complete.
+
+Learn more about [general slow migration considerations](/docs/lifecycle/migrate-users/general-migration#slow-migration-implementation).
+
+## What To Do Next
+
+Check what roles and features are used in {frontmatter.technology} for your real application and create similar permissions and roles in FusionAuth. Update the sample user conversion script to map the role names from {frontmatter.technology} to the roles in FusionAuth.
+
+<WhatNext />
+
+## Additional Support
+
+<AdditionalSupport />

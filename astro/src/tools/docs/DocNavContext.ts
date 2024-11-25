@@ -2,7 +2,7 @@ export interface DocNavEntry  {
   title: string;
   href: string;
   description?: string;
-  topOfNav?: boolean;
+  navOrder?: number;
 }
 export interface DocNavContext {
   category: Category;
@@ -13,4 +13,5 @@ export interface Category {
   href: string;
   entries: DocNavEntry[];
   subcategories: Category[];
+  sortFunction: (a: Category, b: Category) => number;
 }

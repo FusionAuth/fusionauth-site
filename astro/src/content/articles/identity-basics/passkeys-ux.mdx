@@ -1,0 +1,251 @@
+---
+title: User-Centric Security - How Passkeys Improve User Experience
+description: We discuss the history of passkeys, how developers use them, and how they improve the overall user experience (UX) of application login.
+author: Jura Gorohovsky
+icon: /img/icons/user-centric-security.svg
+darkIcon: /img/icons/user-centric-security-dark.svg
+section: Identity Basics
+date: 2023-08-02
+dateModified: 2024-05-10
+---
+import Aside from 'src/components/Aside.astro';
+
+In 2022, there were [5.5 billion internet users](https://www.internetworldstats.com/emarketing.htm) -- which is 69 percent of the world population, up from just 35 percent only ten years earlier. More businesses have gone online too. The number of e-commerce sites [almost tripled](https://www.digitalcommerce360.com/2023/09/19/with-14-million-ecommerce-sites-the-u-s-is-atop-the-online-world/) between 2019 and 2023, reaching over 26.5 million.
+
+With both the number of users and sites going up, exponentially more personal data goes online. But how safe is this data?
+
+Passwords are still the primary security mechanism, but using passwords securely is difficult. People tend to prefer weak passwords and reuse them across services. According to Verizon's latest [Data Breach Investigations Report](https://www.verizon.com/business/resources/reports/dbir/), 86 percent of attacks on web applications involve the use of stolen passwords. Two-factor authentication (2FA) improves password security, but it's still [susceptible to attacks](https://www.cnet.com/tech/services-and-software/two-factor-authentication-isnt-as-secure-as-you-might-expect-world-password-day/) like phishing and SIM swapping. The internet is in desperate need of a step-up in security.
+
+Users of mobile applications have been able to enjoy frictionless biometric authentication for quite some time. Where does this leave web applications? How do we bring passwordless authentication to the web?
+
+That's where [WebAuthn](https://webauthn.wtf/) comes in -- a specification that allows you to authenticate users with public-key cryptography, eliminating the need to use passwords. Keep reading to learn how WebAuthn works, how it ensures better security while providing a frictionless user experience, how it's implemented today, and what the future holds.
+
+## What Is User-Centric Security?
+
+First, let's talk about security and user experience.
+
+User-centric security is an approach to designing security systems with human behavior in mind. It calls for a paradigm shift toward [human-centered design](https://en.wikipedia.org/wiki/Human-centered_design), as opposed to the traditional technology-centric approach. A thorough understanding of human behavior in interacting with security systems should be at the core of design decisions in cybersecurity.
+
+Taking human behavior into consideration helps minimize friction in user-system interaction, and less friction leads to better adoption of a new technology.
+
+Authentication is a critical component of online security. As bad as passwords are, using them has become second nature. If the industry agrees that it's time to move away from using passwords and work toward mass adoption of a safer authentication technology, that technology has to be clear, usable, and frictionless. [As the FIDO Alliance puts it](https://fidoalliance.org/wp-content/uploads/2022/03/How-FIDO-Addresses-a-Full-Range-of-Use-Cases-March24.pdf),
+
+> In the consumer world: authentication has to "just work".
+
+## What Is WebAuthn?
+
+WebAuthn (short for *web authentication*) is a [World Wide Web Consortium (W3C) specification](https://www.w3.org/TR/webauthn/) for browser APIs that allows web applications to authenticate users with public-key cryptography using USB security keys or built-in device biometrics. The credentials that are created during WebAuthn authentication are usually called [passkeys](/guides/what-is-a-passkey).
+
+A related specification by [FIDO Alliance](https://fidoalliance.org/) called [CTAP](<https://fidoalliance.org/specs/fido-v2.0-ps-20190130/fido-client-to-authenticator-protocol-v2.0-ps-20190130.html>) defines how the authenticator talks back when requested using WebAuthn.
+i
+Together, these two specs are referred to as [FIDO2](https://fidoalliance.org/specifications/).
+
+<Aside type="note">
+If you're just getting familiar with passkeys, check out our [on-demand webinar](https://go.fusionauth.io/passkeys-webinar-on-demand), or [download our ebook](/tech-papers/why-passkeys-improve-user-security-how-to-implement-them).
+</Aside>
+
+### The Origins of WebAuthn
+
+The tech world has long known that passwords are fundamentally flawed. In 2012, the [FIDO Alliance](https://web.archive.org/web/20130228075710/https://fidoalliance.org/news/launch.pdf) (where FIDO stands for *Fast IDentity Online*) was launched with a mission to develop standards to replace passwords with more secure and easier-to-use authentication methods. Lenovo and PayPal were among the founders, and the alliance has since landed hundreds of prominent [members](https://fidoalliance.org/members/), including Apple, Microsoft, Google, Amazon, Meta, and Visa.
+
+In November 2015, FIDO submitted ["FIDO 2.0: Web API for accessing FIDO 2.0 credentials"](https://www.w3.org/submissions/2015/SUBM-fido-web-api-20151120/) to W3C for discussion. Based on this submission, W3C established the [Web Authentication Working Group](https://www.w3.org/Webauthn/charter/) (WebAuthn WG) with a mission to "define a client-side API providing strong authentication functionality to Web Applications".
+
+The first edition, or *level*, of the W3C standard, called ["Web Authentication: An API for accessing Public Key Credentials Level 1"](https://www.w3.org/TR/webauthn-1/), was published in March 2019. The [second edition](https://www.w3.org/TR/webauthn-2/) followed in April 2021, and a draft of the third edition is currently in progress.
+
+### How Does WebAuthn Work?
+
+Every WebAuthn interaction involves three actors:
+
+* **Client:** the browser where a web application using WebAuthn runs
+
+* **Relying party:** the server side of the web application looking to verify a user's identity
+
+* **Authenticator:** a piece of hardware or software that knows how to safely generate public and private keys and supports CTAP
+
+WebAuthn defines two major flows (aka ceremonies)---registration and authentication.
+
+During the registration flow, once the user selects an authenticator, a new public-private key pair is created. The public key is then sent over to the relying party, and the private key remains in the authenticator. After this, the relying party can use the public key to generate a challenge, and the authenticator needs to sign that challenge with its private key, thus verifying user identity.
+
+During the authentication flow, when a user tries to log in using WebAuthn, the client creates an auth session and sends a request to the relying party. The relying party generates a challenge and sends it to the client to pass over to the authenticator. Using a private key, the authenticator then creates a signature and sends it back through the client to the relying party. The relying party verifies that the signature is legitimate.
+
+Let's see what the actual WebAuthn user experience can be like. A demo website, [WebAuthn.io](https://webauthn.io/), lets you experiment with various ways of registering and authenticating with WebAuthn.
+
+For example, here's how you can register and authenticate from a MacBook using Touch ID:
+
+1\. Open Webauthn.io in Google Chrome.
+
+2\. Click **Advanced Settings**.
+
+3\. In the **Attachment** drop-down, select **Platform**:
+
+    ![WebAuthn.io in Chrome: selecting the platform authenticator](/img/articles/passkeys-ux/1-platform-authenticator.png)
+
+4\. Enter your username.
+
+5\. Click **Register**.
+
+6\. When Chrome displays a prompt to confirm creating a passkey, click **Continue**. 
+
+    ![WebAuthn.io in Chrome: a prompt to create a passkey](/img/articles/passkeys-ux/2-create-passkey.png)
+
+7\. When the next prompt pops up, touch your fingerprint sensor.
+
+    ![WebAuthn.io in Chrome: a prompt to use Touch ID](/img/articles/passkeys-ux/3-touch-ID.png)
+
+8\. The registration flow is now complete, and you can proceed to authenticate.
+
+    ![WebAuthn.io in Chrome: registration completed](/img/articles/passkeys-ux/4-registration-complete.png)
+
+9\. Click **Authenticate**.
+
+10\. When Chrome shows a prompt, touch your fingerprint sensor again.
+
+11\. You're now logged in!
+
+    ![WebAuthn.io in Chrome: successfully logged in](/img/articles/passkeys-ux/5-success.png)
+
+### Public-Key Cryptography
+
+WebAuthn takes advantage of public-key (aka *asymmetric*) cryptography.
+
+Upon registration, the authenticator generates a pair of keys---a public and a private key. The public key is provided to the relying party (web application), and the private key is stored in the authenticator.
+
+During login, the authenticator exchanges data with the relying party. The authenticator signs the data with the private key. The relying party then uses the corresponding public key to make sure that the data is, in fact, coming from the authenticator and has not been tampered with.
+
+Even if the relying party suffers a data breach and public keys are revealed, knowing just the public key doesn't help falsify the authenticator's signature.
+
+### Authentication Methods in WebAuthn
+
+There are two kinds of WebAuthn authenticators:
+
+* **Roaming (cross-platform) authenticators:** external hardware such as USB or Bluetooth security keys
+
+* **Platform authenticators:** built into a computer or phone, such as Apple Touch ID or Windows Hello
+
+#### Roaming Authenticators
+
+A roaming (cross-platform) authenticator is a separate physical device, such as a USB key, that securely generates public-private key pairs and stores private keys. Roaming authenticators provide a few advantages:
+
+* **Highest security:** By design, private keys never leave the authenticator.
+
+* **Better privacy:** Different public keys are generated for every service, which means usage can't be tracked across different services.
+
+However, roaming authenticators are certainly not ideal:
+
+* They can be physically *lost or stolen*. If you lose a USB key, you lose all private keys that you've been using across the internet. Unless the stolen key is equipped with biometric sensors, it also allows the thief to impersonate the original owner.
+
+* They require *extra cost and effort*. It's not that USB security keys like YubiKey or SoloKeys are expensive, but you still need to buy them separately, as opposed to authenticating with a device you already have.
+
+* They add *friction to the user experience*. WebAuthn login sessions come with a timeout, and unless you always have your USB key at hand, you need to find it before the timeout expires. This alone can discourage many people from using USB keys.
+
+Due to these drawbacks, USB security keys are unlikely to enter the mainstream. They're a better fit for enterprise security---employees can tolerate some UX friction as part of their job while the company ensures a high level of security and retains control in case a USB key is lost.
+
+#### Platform Authenticators and Biometrics
+
+A platform authenticator is an integral part of a device---be it a computer, phone, or tablet---and cannot be removed from it. Platform authenticators are usually a combination of three things:
+
+* Software components of an operating system
+
+* Device hardware for securely generating key pairs, such as [Trusted Platform Module](https://learn.microsoft.com/en-us/windows/security/hardware-security/tpm/trusted-platform-module-overview) (TPM) chips
+
+* Device hardware for verifying user identity, such as fingerprint recognition or facial scanners
+
+All major operating systems have implemented platform authenticators. They make the operating system's own authentication methods, most prominently biometric methods, easily available for web developers to take advantage of in their applications via WebAuthn.
+
+For instance, Windows Hello enables Windows 10 and Windows 11 users to log in with face or fingerprint recognition using embedded or pluggable biometric scanners. If biometric sensors are unavailable or unusable, a local PIN can be used as a fallback method. Windows 10 and 11 account for [94 percent of total Windows usage](https://gs.statcounter.com/os-version-market-share/windows/desktop/worldwide), meaning that biometric authentication is available to most users of the world's most popular desktop OS.
+
+Apple Touch ID on macOS and iOS makes a fingerprint scanner available to unlock Apple phones, tablets, and laptops. Introduced on iPhones in 2013 and swiftly spreading to a wider range of Apple devices, Touch ID became the first successful implementation of fingerprint scanning in mainstream consumer devices, paving the way for other mobile vendors to follow. Apple also offers Apple Face ID on iOS, a facial recognition method available on iPhones and iPads that Apple [claims](https://techcrunch.com/2017/09/12/face-id-is-replacing-touch-id-on-the-new-iphone-x/) has a better error rate than Touch ID. On Apple's mobile devices, one of the two biometric methods is available depending on the model.
+
+Following Apple's success with Touch ID, Samsung and other major Android phone vendors started integrating fingerprint sensors into their new models for device unlock. In 2019, Android became [FIDO2 certified](https://fidoalliance.org/android-now-fido2-certified-accelerating-global-migration-beyond-passwords/). This started introducing passwordless authentication to users of the world's most popular mobile operating system.
+
+When used with biometrics, platform authenticators bring web application users the same fingerprint authentication experience that was previously only common in mobile apps.
+
+Here are the pros of this approach:
+
+* Platform authenticators enable users to get *better security on a device they already have*, which means it's easy to get started.
+
+* Biometrics enables *verification of a person's identity*, not just any person's presence, which establishes an additional layer of security.
+
+* *Biometric data never leaves the device*, which helps prevent biometric data breaches. The WebAuthn authenticator simply validates the biometric data but does not pass it around.
+
+Still, there are downsides:
+
+* Platform authenticators are *bound to a specific device*, which is not ideal in this multi-device era. However, this is only a limitation among laptops and desktops. The same platform authenticator that is bundled with a mobile phone or tablet can be used as a roaming authenticator for another device, such as a desktop computer.
+
+* *False negatives* can occur. Fingerprint sensors won't work with wet fingers, and facial recognition will struggle if you're wearing a mask. However, if a biometric sensor is not available, you can fall back to authenticating with a local PIN or an unlock pattern.
+
+### Multi-device Passkeys
+
+Platform authenticators are tied to a specific device, which is a noticeable limitation in today's multi-device reality. In 2022, Google, Microsoft, and Apple decided to go beyond this limitation and implement [multi-device passkeys](https://fidoalliance.org/white-paper-multi-device-fido-credentials/).
+
+Multi-device passkeys are a way to store encrypted passkeys in the cloud and synchronize them between devices. If you have a Google, Microsoft, or Apple account, they provide storage for your personal data somewhere on their cloud, and that's where your passkeys can be stored too.
+
+Multi-device passkeys have a set of solid advantages:
+
+* **Protection against device loss:** Losing your phone doesn't mean losing your passkeys.
+
+* **Better user experience:** You can use verification methods such as fingerprint scanners or face ID on devices you already have.
+
+But multi-device passkeys also have drawbacks to consider:
+
+* **Dependence on cloud vendors for security:** Your keys are only as secure as your Google, Microsoft, or Apple credentials.
+
+* **Not directly usable outside a particular vendor's ecosystem:** For example, if your passkeys are synced via Apple iCloud, you can't use them on your Android phone.
+
+## How Does WebAuthn Enhance User Experience?
+
+WebAuthn is the standard that finally makes implementing passwordless authentication possible---users no longer need to remember complex passwords or rely on password managers. The flaws inherent to password authentication---such as weak passwords, reuse, phishing, and data breaches---don't matter anymore.
+
+### WebAuthn Enables Secure Authentication for More People
+
+The freedom to use existing devices, such as phones, unlocks secure authentication for more people than ever.
+
+User experience matters for adoption. If something is hard to use securely, it doesn't really increase security. For instance, using multi-device passkeys has a weaker level of security than hardware security keys, but this doesn't matter if a person is never going to use a hardware key in the first place.
+
+### WebAuthn Is Phishing Resistant
+
+Phishing is a type of attack where a malicious website impersonates a legitimate website to trick users into providing it with their credentials. Phishing has been [the reason for many high-profile breaches](https://www.slashnext.com/wp-content/uploads/2021/02/SlashNext-The-State-of-Phishing-Report.pdf). Even two-factor authentication is prone to phishing, although it makes it less likely.
+
+Malicious URLs used in phishing attacks may look very much like legitimate URLs to the human eye, but they're still different. With WebAuthn, credentials are scoped to a specific website, which effectively eliminates phishing.
+
+In the WebAuthn workflow, the data sent from the client to the authenticator comes from two sources:
+
+* The relying party, which is identified with its domain name
+
+* The client, which knows which domain a request comes from
+
+When the authenticator receives and signs a malicious request as part of a phishing attempt, the signature contains the domain name from both of these sources. When the relying party receives the signature for validation, it sees that the two domains don't match and denies the request.
+
+### WebAuthn Makes It Easier to Prove You're a Person
+
+Not only does WebAuthn enable a more secure and usable login flow, but it can also be an alternative to the current frustrating practices of bot protection and human verification.
+
+[According to a recent study](https://www.usenix.org/conference/soups2022/presentation/whalen), cryptographic attestation of personhood implemented using WebAuthn enables passing bot protection challenges ~2.5 times faster (10.6 seconds) than with [hCaptcha](https://www.hcaptcha.com/), a CAPTCHA widget (24.5 seconds).
+
+## Today and Tomorrow of WebAuthn
+
+The success of passwordless authentication depends on several factors:
+
+* How mature the support of WebAuthn is across operating systems and browsers
+
+* How widespread biometric sensors are on consumer devices
+
+* How quickly large online businesses adopt passwordless
+
+As you've learned, all major operating systems provide platform authenticators. Support for cross-device authentication, synced passkeys, and passkey autofill [varies](https://passkeys.dev/device-support/#matrix), with [macOS](https://passkeys.dev/docs/reference/macos/), [iOS](https://passkeys.dev/docs/reference/ios/), and [Android](https://passkeys.dev/docs/reference/android/) currently in the lead in terms of support maturity and [Windows](https://passkeys.dev/docs/reference/windows/) not far behind.
+
+Support for WebAuthn across browsers is solid. Caniuse.com [indicates](https://caniuse.com/?search=webauthn) that over 93 percent of global browser users are covered. One notable exception is Firefox, which is [yet to support platform authenticators](https://connect.mozilla.org/t5/ideas/support-webauthn-passkeys/idi-p/14069).
+
+Biometric sensors on consumer devices have enjoyed enormous adoption. For example, in smartphones, fingerprint sensor penetration has increased from [3 percent in 2013](https://www.counterpointresearch.com/insights/fingerprint-sensor-is-becoming-standard-feature-in-smartphones/) to [81 percent in 2022](https://www.biometricupdate.com/202211/cisco-report-81-percent-of-all-smartphones-have-biometrics-enabled).
+
+Is WebAuthn well adopted by big online players? Not exactly.
+
+Granted, Microsoft, Google, and Apple drive passkey adoption across their services. WebAuthn is also supported in some form by online giants like Amazon, PayPal, GitHub, Coinbase, Adobe, and Uber.
+
+However, WebAuthn is still mostly offered as a security option to existing users, and passwords are still the default when creating new accounts. This will likely change in the next few years, and it's time for online businesses that care about security for their customers to look into it.
+
+## Conclusion
+
+WebAuthn enables passwordless authentication, a more resilient and user-friendly approach to web application security than passwords. Consumers can now securely log in using biometric methods on devices they already have. Because of this, WebAuthn adoption has the potential to revolutionize online security.
+
+Navigating the passwordless landscape and following recent developments in this burgeoning field can be challenging. If you're thinking about embracing WebAuthn but you're not quite sure if you have the resources, remember that a customer authentication platform like [FusionAuth](/feature/biometric) will have your back.

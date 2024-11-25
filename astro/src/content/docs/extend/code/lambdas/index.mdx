@@ -4,17 +4,12 @@ description: An overview of FusionAuth's lambdas, which are pluggable JavaScript
 section: extend
 subcategory: code
 tertcategory: lambdas
-topOfNav: true
+navOrder: 0
 ---
-import AdvancedEditionBlurb from 'src/content/docs/_shared/_advanced-edition-blurb.astro';
-import APIBlock from 'src/components/api/APIBlock.astro';
-import APIField from 'src/components/api/APIField.astro';
+import AdvancedPlanBlurb from 'src/content/docs/_shared/_advanced-plan-blurb.astro';
 import Aside from 'src/components/Aside.astro';
-import DeprecatedSince from 'src/components/api/DeprecatedSince.astro';
 import InlineField from 'src/components/InlineField.astro';
-import InlineUIElement from 'src/components/InlineUIElement.astro';
 import LambdaTypes from 'src/content/docs/_shared/_lambda-types.astro';
-import MembershipLambda from 'src/content/docs/extend/code/_membership-lambda.md';
 import { YouTube } from '@astro-community/astro-embed-youtube';
 
 
@@ -53,87 +48,17 @@ function populate(jwt, user, registration) {
 }
 ```
 
-### Using Lambda HTTP Connect
+## Using Lambda HTTP Connect
 
-This feature allows you to make HTTP requests from within a lambda.
+Lambda HTTP Connect allows you to make HTTP requests from within a lambda.
 
-<AdvancedEditionBlurb />
+<AdvancedPlanBlurb />
 
-Here is a FusionAuth lambda that adds additional claims to a JWT based on an HTTP request:
+[Learn more about making API calls from lambdas](/docs/extend/code/lambdas/lambda-remote-api-calls).
 
-```javascript title="A lambda which adds claims based on an external API."
-function populate(jwt, user, registration) {
-  var response = fetch("https://api.example.com/api/status?" + user.id, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json"
-    }
-  });
+## Engine
 
-  if (response.status === 200) {
-    // assuming successful response looks like:
-    // {"status":"statusValue"}
-    var jsonResponse = JSON.parse(response.body);
-    jwt.status = jsonResponse.status;
-  } else {
-    jwt.status = "basic";
-  }
-}
-```
-
-You can also call FusionAuth APIs with a valid API key:
-
-<MembershipLambda />
-
-Use port 9012, or the configured value for `fusionauth-app.http-local.port`, whenever making a FusionAuth API call in a lambda. Doing so minimizes network traffic contention and improves performance.
-
-Here's a video showing more details about Lambda HTTP Connect:
-
-<YouTube id="_TnDUPQm3aQ" />
-
-#### Headers
-
-You can provide request header values in a number of different ways:
-
-```javascript title="An anonymous object"
-headers: {
-  "Content-Type": "application/json"
-}
-```
-
-```javascript title="A hash or map"
-headers: new Headers({
-   "Content-Type": "application/json"
-})
-```
-
-```javascript title="An array"
-headers: new Headers([
-    ["Content-Type", "application/json"]
-])
-```
-
-#### Response
-
-A response object will be returned. It will have the following fields:
-
-<APIBlock>
-  <APIField name="headers" type="Object">
-    The headers returned by the response. The keys of this object are the header names. All header keys are lower cased.
-  </APIField>
-  <APIField name="status" type="Integer">
-    The HTTP status code.
-  </APIField>
-  <APIField name="body" type="String">
-    The body of the response.
-  </APIField>
-</APIBlock>
-
-## JavaScript
-
-### Engine
-
-#### GraalJS
+### GraalJS
 
 GraalJS is built on top of the Java virtual machine. For security reasons, FusionAuth restricts access to various GraalJS features during a lambda invocation.
 
@@ -144,7 +69,7 @@ Here is documentation for the GraalJS engine:
 
 This engine has been available since version `1.35.0`.
 
-#### Nashorn
+### Nashorn
 
 <Aside type="caution">
   As of version 1.49 the Nashorn engine has been removed. Upgrading to version `1.49.0` or beyond will migrate existing lambdas to GraalJS.
@@ -154,7 +79,7 @@ Nashorn is built on top of the Java virtual machine and while Nashorn permits ac
 
 The Nashorn engine supports ECMAScript version 5.1.
 
-### Console
+## Console
 
 In addition to the standard JavaScript objects and constructs, FusionAuth provides the `console` object to allow you to create entries in the Event Log during a lambda invocation.
 
@@ -181,12 +106,12 @@ function populate(jwt, user, registration) {
 }
 ```
 
-### Exceptions
+## Exceptions
 
 Any exception thrown in a lambda does two things:
 
-* write an event log entry
-* exit the lambda code path
+* writes an event log entry
+* exits the lambda code path
 
 What that means for the overall user experience depends on the type of lambda. For example, for a JWT populate lambda, the JWT will not be modified. For a reconcile lambda, the user will not be created or linked.
 
@@ -201,22 +126,6 @@ If the Identity Provider linking strategy is set to `Link Anonymously`, no lambd
 The FusionAuth lambdas do not have full access to JavaScript modules and libraries. They also cannot import, require or load other libraries currently. These features might be added to our lambda support in the future.
 
 `console.log` and other `console` methods only take one argument; this differs from the `console` method available in web browsers.
-
-### Lambda HTTP Connect Limitations
-
-<AdvancedEditionBlurb />
-
-When using Lambda HTTP Connect to make HTTP requests, do not call a FusionAuth API which invokes the calling lambda, because it will fail. For example, in a JWT Populate lambda, do not invoke the Login API.
-
-Requests from a lambda require the lambda to use the GraalJS engine. HTTP requests will time out after two seconds.
-
-The `fetch` method in a lambda does not implement the [entire `fetch` API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) as implemented in a browser.
-The first argument to `fetch` must always be a string URL.
-Only the following options are supported:
-
-* `method`, which defaults to `GET`
-* `headers`, which defaults to null
-* `body`, which must be a string
 
 ## Managing Lambdas
 
