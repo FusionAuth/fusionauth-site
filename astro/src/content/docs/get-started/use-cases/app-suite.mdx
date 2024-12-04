@@ -1,0 +1,124 @@
+---
+title: App Suite
+description: Let your users log in once and then transparently be logged into others.
+section: get started
+subcategory: use cases
+navOrder: 20
+---
+import ApplicationSwitchDiagram from 'src/diagrams/docs/get-started/use-cases/app-suite/application-switch.astro';
+import AppSuiteDescription from 'src/content/docs/get-started/use-cases/_app-suite-description.mdx';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+
+## Overview
+
+<AppSuiteDescription />
+
+## Problem 
+
+You have multiple applications that you want to share across a common user base.
+
+These applications may:
+
+* be hosted at different domains or under different paths
+* use SAML or OIDC for authentication
+* be custom, commercial or open source
+* be written using different technology stacks
+
+You want to let your users log in once, and switch between applications without having to log in again. Users have different roles for each application.
+
+## Solution
+
+With the app suite use case, after the user logs in to one application, they are logged in to all of them.
+
+You'll also have one customer profile and can view their login activity across the applications.
+
+## Prerequisites
+
+You have configured your application or applications to [delegate authentication to FusionAuth](/docs/get-started/use-cases/auth-service) via the Authorization Code grant and the hosted login pages.
+
+## Example Scenario
+
+Suppose you have a thriving e-commerce business with multiple applications:
+
+* an ecommerce store where people can buy clown costumes
+* a virtual try-on app which lets you see yourself in the outfits before you buy
+* a forum for discussion about the latest trends
+* a ticketing system for customer support
+
+All of these use FusionAuth for their login. Each is represented by a different application, but your users have to log in each time they switch between applications.
+
+## Actors/Components
+
+* your user and their client application (mobile app or browser)
+* two or more applications
+* FusionAuth
+
+This use case is built on cookies and redirects to FusionAuth. The redirect is typically transparent to the end user.
+
+## Implementation Steps
+
+This is a two step implementation process to ensure customers can access all the applications. Steps to take:
+
+* Ensure that end users have their FusionAuth SSO session enabled when they first authenticate.
+* Have applications to forward users to FusionAuth when they are not logged in to the application.
+
+### Force SSO Session Creation
+
+The easiest way to force the SSO session to be created for each user authentication is to modify the login page of the theme. Rather than allow the user to check or uncheck the `rememberDevice` checkbox, which is the default setting, update the theme to always have that set to the value of `true`.
+
+To do so, update the `OAuth Authorize` template. This is the login page. 
+
+Here's a sample FreeMarker block to replace the default `rememberDevice` checkbox.
+
+```
+[@hidden name="rememberDevice" value="true"/]
+```
+
+The duration of this SSO session is controlled in the tenant settings.
+
+### Forward Unauthenticated Users
+
+Whenever a user accesses an application and is not logged in, forward them to the login URL for FusionAuth.
+
+Since your applications are already delegating authentication to FusionAuth, use the same logic to create the login URL.
+
+Here's a diagram of a user switching between the clownwear ecommerce store and the forum.
+
+<ApplicationSwitchDiagram alt="An example of an application switch." />
+
+If a user is browsing the ecommerce store, then clicks on the forum link, they will transparently be logged in to the forum application.
+
+Their client will get a token associated with the forum application, including the roles the user has for that application and claims such as the audience claim (`aud`) set correctly.
+
+## Expected Outcome
+
+Users switch between your applications transparently and securely. 
+
+## Edge Cases
+
+SSO login works across all apps in a tenant, including those the user isn't registered for. After bouncing to FusionAuth, the user will be authenticated, but the `applicationId` and `roles` claims will be missing from the access token. Your applications should check these claims when determining whether a user is authorized for an application. [Read more about authentication and authorization](/docs/get-started/core-concepts/authentication-authorization).
+
+When your user logs out, destroy the SSO session as each application session. You can do that using API calls or with FusionAuth's Front-Channel logout. [Read more about logout](/docs/lifecycle/authenticate-users/logout-session-management).
+
+Any applications that have self-service registration enabled will automatically register users for with default roles when the user is bounced to that application. 
+
+If an application only wants to allow logins from a certain identity provider or impose other conditions, you'll need extra integration work. For example, imagine there's a time tracking app for your clownwear ecommerce store that employees log in to using Google Workspace federation. You don't want customers to be able to view this application. One way you can prevent this with a [login validation lambda](/docs/extend/code/lambdas/login-validation).
+
+This use case only works with FusionAuth hosted login pages. If you use the Login API, you need to build your SSO. See this [GitHub issue for more details](https://github.com/fusionauth/fusionauth-issues/issues/1515).
+
+If one application, such as the ecommerce app, requires authentication checks such as multi-factor authentication, additional self-serve required profile attributes, or registration verification, and others do not, users will be prompted when visiting the ecommerce application. 
+
+## Other Example Scenarios
+
+Any set of applications which share customer or user accounts are a good fit for this use case.
+
+* Multiple affiliated online games
+* An office suite with an online word processor, spreadsheet and presentation software
+* Travel booking software, where you might have one application for booking flights, another for hotels and a third for car rental
+
+## Additional Documentation
+
+* [Single sign-on guide](/docs/lifecycle/authenticate-users/single-sign-on)
+* [Logout and session guide](/docs/lifecycle/authenticate-users/logout-session-management)
+* [Theme customization](/docs/customize/look-and-feel/)
+
