@@ -31,3 +31,20 @@ To run in dev, so file changes are picked up:
 ```
 npm run dev
 ```
+
+## Linting
+If you want to run the linter for the whole project you can run:
+
+```sh
+npm run lint
+```
+
+However, the project has a billion violations at the moment. To target a specific file, you can run:
+
+```sh
+ npm run lint -- src/components/BlogButton.astro
+```
+
+or similar to just target the individual files you want to check. Also your editor should be able to run the linter as you edit, so you will see your violations in real time.
+
+The check on Pull Requests will only look at the files that you have changed in your PR
