@@ -15,7 +15,7 @@ import IconButton from 'src/components/icon/Icon.astro';
 
 <PremiumPlanBlurb />
 
-This guide discusses ways of modeling hierarchical organizations and entities, with users and permissions, and provides a sample application to provide some starting code you can use in your own app.
+This guide discusses ways of modeling hierarchical organizations and entities, with users and permissions, and provides a sample application with some starting code you can use in your own app.
 
 ## Understand FusionAuth Types And Their Relationships
 
@@ -41,8 +41,6 @@ For example, consider an example of a bank website with clients and employees. T
 
 If you want, you could make groups called client and employee, with the client and employees roles in the application respectively. Then you would add users to either or both groups, and register the users with the application, but would not need to give the users roles manually. This would be useful if you had a lot of roles. Another use of groups is to tag users with certain attributes, such as VIP users.
 
-todo diagram of exmple and types
-
 <Aside type="warning">
 Digital security usually involves three types: users, roles, and permissions. A user can have many roles, and roles can have many permissions. The advantage of not granting users permissions directly are:
 - You can add (or remove) permissions to a role and they automatically apply to every user in that role. You don't have to add a permission to a million users individually.
@@ -53,7 +51,7 @@ However, FA does not have permissions. There is a GitHub feature request to add 
 
 There are two workarounds:
 - Treat roles as permissions. In other words, instead of the employee role, make roles called "can edit clients", "can adjust salaries", and so on. When a user logs in with FA, your website will receive a list of exactly what "permissions" (roles) the user has. But now you have lost all the advantages of working with roles described above.
-- Manage permissions in your website code. Keep the user and role associations in FA, but link roles to permissions in your website database, not in FA. When a user logs in with FA, your website will go the database and retrieve all permissions you have associated with those roles and add them to the user. This is the originally intended design of FA, as it is an authentication system more than an authorization system.
+- Manage permissions in your website code. Keep the user and role associations in FA, but link roles to permissions in your website database, not in FA. When a user logs in with FA, your website will go the database and retrieve all permissions you have associated with those roles and add them to the user. This treats FA more as an authentication system than an authorization system.
 </Aside>
 
 ### Entities And Permissions
@@ -77,38 +75,38 @@ Note that entities and applications cannot be related, even if they represent th
 ```mermaid
 graph BT
   subgraph Users & Applications
-    n1["`*Application*
-    **Change Bank**`"]
-    n2["`*User*
-    **Alice**`"]
-    n3["`*Registration*`"]
-    n4["`*Role*
-    **Employee**`"]
-    n5["`*Role*
-    **Client**`"]
-    n6["`*User*
-    **Bob**`"]
-    n7["`*Registration*`"]
-    n8["`*User*
-    **Eve**`"]
-    n9["`*Registration*`"]
-    n10["`*Group*
-    **VIP Clients**`"]
+    n1("`*Application*
+    **Change Bank**`")
+    n2("`*User*
+    **Alice**`")
+    n3("`*Registration*`")
+    n4("`*Role*
+    **Employee**`")
+    n5("`*Role*
+    **Client**`")
+    n6("`*User*
+    **Bob**`")
+    n7("`*Registration*`")
+    n8("`*User*
+    **Eve**`")
+    n9("`*Registration*`")
+    n10("`*Group*
+    **VIP Clients**`")
   end
 
   subgraph Entities & Permissions
-    n11["`*Entity Type*
-    **Company**`"]
-    n12["`*Entity*
-    **Change Bank**`"]
-    n13["`*Permission*
-    **ReadAccess**`"]
-    n14["`*Permission*
-    **WriteAccess**`"]
-    n15["`*Entity*
-    **Change Insurance**`"]
-    n16["`*Entity Grant*`"]
-    n17["`*Entity Grant*`"]
+    n11("`*Entity Type*
+    **Company**`")
+    n12("`*Entity*
+    **Change Bank**`")
+    n13("`*Permission*
+    **ReadAccess**`")
+    n14("`*Permission*
+    **WriteAccess**`")
+    n15("`*Entity*
+    **Change Insurance**`")
+    n16("`*Entity Grant*`")
+    n17("`*Entity Grant*`")
   end
 
   n1 --o n4 & n5
@@ -141,8 +139,46 @@ You can probably see some challenges already:
 There are solutions to these problems, such as including "Deny access" permissions and a "Common" department which has shared documents, and you need to pick what works for your organization. These challenges won't be discussed in this guide, as you can use the techniques shown here to implement your own solution.
 </Aside>
 
-There are a few ways to model this structure in FA:
+Below is a diagram of the company structure to model.
 
+```mermaid
+graph BT
+  n1[Change Corp]
+  n2(Change Bank)
+  n3(Change Insurance)
+
+  n4[/Operations/]
+  n5[/Finance/]
+  n6[/HR/]
+  n7[/Operations/]
+  n8[/Finance/]
+  n9[/HR/]
+
+  n10((Alice))
+  n11((Bob))
+  n12@{ shape: doc, label: "Passwords doc" }
+  n13@{ shape: doc, label: "Financial statements" }
+  n14@{ shape: doc, label: "HR manual" }
+
+  n2 --o n1
+  n3 --o n1
+  n4 --o n2
+  n5 --o n2
+  n6 --o n2
+  n7 --o n3
+  n8 --o n3
+  n9 --o n3
+
+  n10 --o n4
+  n11 --o n5
+  n12 --o n4
+  n13 --o n5
+  n14 --o n9
+```
+
+There are a few ways to model this structure in FA. Documents have to be entities and employees have to be users. There are no other types in FA that will work for this. But after that, here are your options:
+- Add a finance user to groups representing her company and department, like Change Insurance group and Finance group (with read access). Note the user will have no permissions in the Change Insurance group, otherwise she would have permissions to every document in the company. This group membership shows merely that the user is in the Change Insurance Finance department, and not the Change Bank Finance department. Alternatively, you could have separate groups with compound names, like Change Insurance Finance group and Change Bank Finance group, instead of one group for the company and one group for the department. This will make permissions management simpler, but you will have an exponential number of groups.
+- Store every user's company and department as properties in their JSON `user.data` field. This has to be done through the FA API, and cannot be maintained in the FA web interface. You will need to write your own UI app for HR staff to work with FA. TODO json example here
 
 
 
@@ -151,4 +187,24 @@ There are a few ways to model this structure in FA:
 - FA -> FusionAuth
 - diagram to file
 - remove todo
+
+## Brief
+
+Fusionauth wants an example showing how to use permissions in a ‘complex’ way:
+
+```
+Mapping permissions in a hierarchical manner
+
+company -> department -> document
+User can be granted permissions (read, write, admin) to any of these.
+```
+How do you roll it up to know which users have access to document A? Which documents does user B have access to?
+
+You’d need to store data in the entity.data field to store the tree, then run queries against the document A or user B to find out the answer.
+
+Include a sample app.
+
+Sounds like a bit of a hack, but probably we could do something like a basic Express application that has some concept of `Company -> Group/Department -> Document`, and then show how that information could be stored in Fusionauth instead of within the application itself.
+
+Maybe also some discussion of when it would make sense to do this – reading the example dan provides below, I’d think that logic should be at the application level rather than in the auth service, so if this is just an example to show off how entity.data can be hacked to add permissions then that’s fine, but we shoudl add some warning and advise people how to decide what to store in Fusionauth and what should be done in their application database.
 
