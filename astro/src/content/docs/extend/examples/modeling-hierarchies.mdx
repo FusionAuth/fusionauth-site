@@ -70,12 +70,12 @@ Like with roles, permissions have no functional meaning in FA. They are just str
 
 ### A Diagram Of All FusionAuth Types
 
-Below is a diagram illustrating the relationships in the examples from the previous sections, combining the type name with the example object of that type. Read the diagram from top to bottom to see who is a member of what, or who has what attributes.
+Below is a diagram illustrating the relationships in the examples from the previous sections, combining the type name with the example object of that type. Read the diagram from bottom to top to see who is a member of what, or who has what attributes.
 
 Note that entities and applications cannot be related, even if they represent the same physical company. Only users can have entity grants to entities.
 
 ```mermaid
-graph TB
+graph BT
   subgraph Users & Applications
     n1["`*Application*
     **Change Bank**`"]
@@ -128,6 +128,21 @@ graph TB
 ## Representing Hierarchy In FA
 
 None of the FA types are hierarchical. In other words, no types can be nested in any other types. Groups can't be members of groups, applications can't contain other applications, and entities don't have sub-entities.
+
+This is a problem when trying to model organizations that are hierarchical, especially when trying to decide when a user who has permissions to one level of the hierarchy should have permissions to an entity somewhere in the hierarchy.
+
+Let's take an example. Assume that you want to use FA to authorize users in your corporation, Change Corp, to have access to certain documents. Your corporation has two sub-companies: Change Bank and Change Insurance. Each company has many departments, like marketing, sales, finance, operations, and management. Documents belong to a single department in an organization. Companies, departments, and documents have read and write permissions, and an administrative permission (that allows users to change other users' permissions to the department or document). Permissions propagate downwards. So an employee with write permissions to the marketing department in Change Insurance, will have write permissions to all its documents. And an employee with read permissions to Change Corp has read permissions to every document in every department of both sub-companies. But you might have an auditor who you add as a user in FA that has only read access to a specific document in a specific department. This will not give her permissions to any other documents anywhere higher in the organizational hierarchy.
+
+<Aside type="note">
+You can probably see some challenges already:
+- How do you handle documents that everyone in the corporation needs to read, such as the HR manual, which is managed by the HR department of the top-level corporation? Because permissions don't propagate upwards, you have to individually give read permissions to everyone, instead of relying on the hierarchy to do it automatically.
+- What happens when permissions conflict? The operations department might have a passwords document that should have read access only by members of that department, but anyone with read access to the sub-company will have access to the passwords.
+
+There are solutions to these problems, such as including "Deny access" permissions and a "Common" department which has shared documents, and you need to pick what works for your organization. These challenges won't be discussed in this guide, as you can use the techniques shown here to implement your own solution.
+</Aside>
+
+There are a few ways to model this structure in FA:
+
 
 
 
