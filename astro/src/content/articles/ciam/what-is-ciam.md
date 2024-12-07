@@ -1,6 +1,6 @@
 ---
-title: What is Customer Identity and Access Management (CIAM)?
-description: "CIAM solutions help organizations to securely authenticate and authorize customers, protect customer data, and provide a seamless customer experience"
+title: What is Customer Identity and Access Management (CIAM)? CIAM Explained
+description: "Learn how CIAM solutions help organizations to securely authenticate and authorize customers, protect customer data, and provide a seamless customer experience."
 section: CIAM
 author: Alex Patterson
 icon: /img/icons/what-is-ciam.svg
