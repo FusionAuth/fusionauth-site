@@ -8,6 +8,7 @@ navOrder: 20
 import ApplicationSwitchDiagram from 'src/diagrams/docs/get-started/use-cases/app-suite/application-switch.astro';
 import AppSuiteDescription from 'src/content/docs/get-started/use-cases/_app-suite-description.mdx';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
 
 ## Overview
 
@@ -45,7 +46,7 @@ Suppose you have a thriving e-commerce business with multiple applications:
 * a forum for discussion about the latest trends
 * a ticketing system for customer support
 
-All of these use FusionAuth for their login. Each is represented by a different application, but your users have to log in each time they switch between applications.
+All of these use FusionAuth for their login. Each is represented by a different application and client Id, but your users have to log in each time they switch between applications.
 
 ## Actors/Components
 
@@ -59,28 +60,32 @@ This use case is built on cookies and redirects to FusionAuth. The redirect is t
 
 This is a two step implementation process to ensure customers can access all the applications. Steps to take:
 
-* Ensure that end users have their FusionAuth SSO session enabled when they first authenticate.
-* Have applications to forward users to FusionAuth when they are not logged in to the application.
+* Ensure end users have their FusionAuth SSO session enabled when they first authenticate.
+* Have applications forward users to FusionAuth when users are not logged in to the application.
 
 ### Force SSO Session Creation
 
-The easiest way to force the SSO session to be created for each user authentication is to modify the login page of the theme. Rather than allow the user to check or uncheck the `rememberDevice` checkbox, which is the default setting, update the theme to always have that set to the value of `true`.
+The easiest way to force the SSO session to be created for each user authentication is to modify the login page of the theme. Normally a user can check or uncheck the `rememberDevice` checkbox, labelled by default "Keep me signed in". To force the SSO session, update the theme to set the `rememberDevice` parameter to `true`.
 
-To do so, update the `OAuth Authorize` template. This is the login page. 
+To do so, update the `OAuth Authorize` template [using the advanced theme editor](/docs/customize/look-and-feel/advanced-theme-editor). This is the login page. 
 
-Here's a sample FreeMarker block to replace the default `rememberDevice` checkbox.
+Here's a sample FreeMarker block you can use to replace the default setup.
 
 ```
 [@hidden name="rememberDevice" value="true"/]
 ```
 
-The duration of this SSO session is controlled in the tenant settings.
+The duration of this SSO session is controlled in the tenant settings. You can modify it by navigating to <Breadcrumb>Tenant -> Your Tenant -> OAuth</Breadcrumb> and updating the <InlineField>Session timeout</InlineField>.
 
 ### Forward Unauthenticated Users
 
+<<<<<<< Updated upstream
 Whenever a user accesses an application in your app suite and is not logged in, forward them to the login URL for FusionAuth.
 
 Since your applications are already delegating authentication to FusionAuth, use the same logic to create the login URL.
+=======
+Whenever a user accesses an application and is not logged in, forward them to the login URL for FusionAuth. As your applications are already delegating authentication to FusionAuth, use the same logic or library functions to create the login URL. Here's an [explanation of how to create the URL and what each component means](/docs/lifecycle/authenticate-users/oauth/endpoints#authorization-code-grant-request).
+>>>>>>> Stashed changes
 
 Here's a diagram of a user switching between the clownwear ecommerce store and the forum.
 
@@ -88,7 +93,7 @@ Here's a diagram of a user switching between the clownwear ecommerce store and t
 
 If a user is browsing the ecommerce store, then clicks on the forum link, they will transparently be logged in to the forum application.
 
-Their client will get a token associated with the forum application, including the roles the user has for that application and claims such as the audience claim (`aud`) set correctly.
+Their client will get a token associated with the forum application, including the roles the user has for that application and claims such as the audience claim (`aud`) set correctly. The user will be logged in to the new application, as desired.
 
 ## Expected Outcome
 
@@ -96,7 +101,7 @@ Users switch between your applications transparently and securely.
 
 ## Edge Cases
 
-SSO login works across all apps in a tenant, including those the user isn't registered for. After bouncing to FusionAuth, the user will be authenticated, but the `applicationId` and `roles` claims will be missing from the access token. Your applications should check these claims when determining whether a user is authorized for an application. [Read more about authentication and authorization](/docs/get-started/core-concepts/authentication-authorization).
+SSO login works across all apps in a tenant, including those the user isn't registered for. After redirection to and from FusionAuth, the user will be authenticated, but the `applicationId` and `roles` claims will be missing from the access token. Applications must check these claims when determining whether a user is authorized for an application. [Read more about the difference between authentication and authorization](/docs/get-started/core-concepts/authentication-authorization).
 
 When your user logs out, destroy the SSO session as well as each application session. You can do that using API calls or with FusionAuth's Front-Channel logout. [Read more about logout](/docs/lifecycle/authenticate-users/logout-session-management).
 
@@ -104,13 +109,13 @@ Any applications that have self-service registration enabled will automatically 
 
 If an application only wants to allow logins from a certain identity provider or impose other conditions, you'll need extra integration work. For example, imagine there's a time tracking app for your clownwear ecommerce store that employees log in to using Google Workspace federation. You don't want customers to be able to view this application. One way you can prevent this with a [login validation lambda](/docs/extend/code/lambdas/login-validation).
 
-This use case only works with FusionAuth hosted login pages. If you use the Login API, you need to build your SSO. See this [GitHub issue for more details](https://github.com/fusionauth/fusionauth-issues/issues/1515).
+This use case only works with FusionAuth hosted login pages. If you use the Login API, you need to build your SSO implementation.
 
 If one application, such as the ecommerce app, requires authentication checks such as multi-factor authentication, additional self-serve required profile attributes, or registration verification, and others do not, users will be prompted when visiting the ecommerce application. 
 
 ## Other Example Scenarios
 
-Any set of applications which share customer or user accounts are a good fit for this use case.
+Applications which share customer or user accounts are a good fit for this use case. Examples include:
 
 * Multiple affiliated online games
 * An office suite with an online word processor, spreadsheet and presentation software
