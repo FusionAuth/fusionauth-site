@@ -13,6 +13,19 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 import Aside from 'src/components/Aside.astro';
 import IconButton from 'src/components/icon/Icon.astro';
 
+
+- [Understand FusionAuth Types And Their Relationships](#understand-fusionauth-types-and-their-relationships)
+  - [Applications And Users](#applications-and-users)
+  - [Entities And Permissions](#entities-and-permissions)
+  - [A Diagram Of All FusionAuth Types](#a-diagram-of-all-fusionauth-types)
+- [An Example Company Hierarchy With Permissions](#an-example-company-hierarchy-with-permissions)
+- [Options To Model Hierarchy In FA](#options-to-model-hierarchy-in-fa)
+- [Evaluating The Options](#evaluating-the-options)
+- [TODO](#todo)
+- [Brief](#brief)
+
+
+
 <PremiumPlanBlurb />
 
 This guide discusses ways of modeling hierarchical organizations and entities, with users and permissions, and provides a sample application with some starting code you can use in your own app.
@@ -123,7 +136,7 @@ graph BT
   n17 --o n13 & n12
 ```
 
-## Representing Hierarchy In FA
+## An Example Company Hierarchy With Permissions
 
 None of the FA types are hierarchical. In other words, no types can be nested in any other types. Groups can't be members of groups, applications can't contain other applications, and entities don't have sub-entities.
 
@@ -176,74 +189,89 @@ graph BT
   n14 --o n9
 ```
 
+## Options To Model Hierarchy In FA
+
 There are a few ways to model this structure in FA. Documents have to be entities and employees have to be users. There are no other types in FA that will work for this. But after that, here are your options:
 - **Applications and roles**: Add a finance employee, like Alice, to an application representing her company and department, like Change Bank Operations application. Each application will have two roles, read and write, which are effectively permissions not roles. Each department application has to have the company name in its title, instead of being called only Operation, because there is no way to show one application in FusionAuth is linked to another. You will have a combinatorial number of applications, given the number of companies and departments you add. However, you still need to create an application with no department, called Change Bank application, to show that Alice is a member of the company, or you will need to infer it from the department names of which she is a member. You can't use groups instead of applications to model this example because groups do not have permissions. You could use groups to make it easier to link users with applications and roles, but you still need the applications and roles.
-- **User JSON data**: Store every user's company and department as properties in their JSON `user.data` field. This has to be done through the FA API, and cannot be maintained in the FA web interface. You will need to write your own UI app for HR staff to work with FA. With this approach you don't need to use applications, roles, or groups. Below is example JSON data for Alice:
-```js
-"permissions": {
-  "Change Bank": [],
-  "Change Bank Operations": [read, write],
-}
-```
 - **Entities and grants**: Create entity types Company and Department with permissions Read, Write, and IsMember. Read and write are used to show permissions, but IsMember is used to show hierarchy. Create an entity called Change Bank of type Company and entity of Department called Operations. Create an entity grant for Operations to Change Bank with IsMember set to true to show that this Operations entity belongs to the Change Bank entity. Note that it will not be possible to tell departments called Operations in different companies apart by their name alone. You will need to examine each department's entity grant to see which company it belongs to. Create an entity grant for user Alice to entity Change Bank with no permissions, and an entity grant for Alice to Operations with permissions Read and Write. Below is a diagram of this example, which is similar to the earlier types diagram, but includes a department hierarchy now.
+  ```mermaid
+  graph BT
 
-```mermaid
-graph BT
-  n0(("`*User*
-**Alice**`"))
-  n1@{ shape: doc, label: "*Entity*
-**Passwords doc**" }
-  n2("`*Entity*
-**Change Bank**`")
-  n3("`*Entity*
-**Change Insurance**`")
-  n4[/"`*Entity*
-**Operations**`"/]
-  n5[/"`*Entity*
-**Operations**`"/]
-  n6("*Entity grant*")
-  n7("*Entity grant*")
-  n8("*Entity grant*")
-  n9("*Entity grant*")
-  n10("`*Permission*
-  **ReadAccess**`")
-  n11("`*Permission*
-  **WriteAccess**`")
-  n12("`*Permission*
-  **IsMember**`")
-  n13("`*Permission*
-  **ReadAccess**`")
-  n14("`*Permission*
-  **WriteAccess**`")
-  n15("`*Permission*
-  **IsMember**`")
-  n16("`*Permission*
-  **ReadAccess**`")
-  n17("`*Permission*
-  **WriteAccess**`")
-  n18("`*Permission*
-  **IsMember**`")
-  n19("`*Permission*
-  **ReadAccess**`")
-  n20("`*Permission*
-  **WriteAccess**`")
-  n21("`*Permission*
-  **IsMember**`")
-  n22("*Entity grant*")
+  subgraph Change Bank
+    direction BT
+    n0(("`*User*
+  **Alice**`"))
+    n1@{ shape: doc, label: "*Entity of type Document*
+  **Passwords doc**" }
+    nBank("`*Entity of type Company*
+  **Change Bank**`")
+    nOperationsToBanks("*Entity grant*")
+    nAliceCompany("*Entity grant*")
+    nAliceDepartment("*Entity grant*")
+    n16("`*Permission*
+    **ReadAccess**`")
+    n17("`*Permission*
+    **WriteAccess**`")
+    n18("`*Permission*
+    **IsMember**`")
+    nBankOperations[/"`*Entity of type Department*
+  **Operations**`"/]
+    n19("`*Permission*
+    **ReadAccess**`")
+    n20("`*Permission*
+    **WriteAccess**`")
+    n21("`*Permission*
+    **IsMember**`")
+    n22("*Entity grant*")
+    n23("`*Permission*
+    **ReadAccess**`")
+    n24("`*Permission*
+    **WriteAccess**`")
+  end
 
-  n0 --o n8 & n9
-  n1 --o n22
-  n2 --o n16 & n17 & n18
-  n3 --o n10 & n11 & n12
-  n4 --o n7 & n19 & n20 & n21
-  n5 --o n6 & n13 & n14 & n15
-  n6 --o n3 & n12
-  n7 --o n2
-  n8 --o n2
-  n9 --o n4  & n19 & n20
-  n22 --o n4 & n21
-```
+  subgraph Change Insurance
+    direction BT
+    n5[/"`*Entity of type Department*
+  **Operations**`"/]
+    n6("*Entity grant*")
+    n3("`*Entity of type Company*
+  **Change Insurance**`")
+    n10("`*Permission*
+    **ReadAccess**`")
+    n11("`*Permission*
+    **WriteAccess**`")
+    n12("`*Permission*
+    **IsMember**`")
+    n13("`*Permission*
+    **ReadAccess**`")
+    n14("`*Permission*
+    **WriteAccess**`")
+    n15("`*Permission*
+    **IsMember**`")
+  end
 
+    n0 --o nAliceCompany & nAliceDepartment
+    n1 --o n22 & n23 & n24
+    nBank --o n16 & n17 & n18
+    n3 --o n10 & n11 & n12
+    nBankOperations --o nOperationsToBanks & n19 & n20 & n21
+    n5 --o n6 & n13 & n14 & n15
+    n6 --o n3 & n12
+    nOperationsToBanks --o nBank & n18
+    nAliceCompany --o nBank
+    nAliceDepartment --o nBankOperations  & n19 & n20
+    n22 --o nBankOperations & n21
+  ```
+  For simplicity's sake this diagram does not include Change Corp entity of entity type Corporation. There are two blocks: one for Change Insurance and one for Change Bank. Ignore the Change Insurance block and concentrate on Change Bank to see how Alice is connected to her department, which is connected to the company. This diagram also shows a document attached to the Operations department. The document itself has needs read and write permissions, for when you want to enable individual access, and is linked to the Operations department via an entity grant with the IsMember permission, in the same way departments are linked to companies.
+- **User JSON data**: Store every user's company and department as properties in their JSON `user.data` field. This has to be done through the FA API, and cannot be maintained in the FA web interface. You will need to write your own UI app for HR staff to work with FA. With this approach you don't need to use applications, roles, or groups. Below is example JSON data for Alice:
+  ```js
+  "permissions": {
+    "Change Bank": [],
+    "Change Bank Operations": [read, write],
+  }
+  ```
+
+## Evaluating The Options
 
 
 ## TODO
