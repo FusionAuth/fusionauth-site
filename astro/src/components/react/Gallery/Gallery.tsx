@@ -1,10 +1,8 @@
 import { Header } from './Header';
 import { Card } from './Card/Card';
 import s from './Gallery.module.scss';
-import { WithSelected } from '../QuickstartGallery';
-
-
-export const Gallery = ({ ...props }: Props)=> {
+import React from 'react';
+export const Gallery = ({ ...props })=> {
   const sorted = props.selected.sort();
   const apps = props.apps
   let tagapps = []

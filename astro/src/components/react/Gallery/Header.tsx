@@ -1,6 +1,7 @@
 import s from './Header.module.scss'
 import { Set } from 'immutable'
 import { Bubble } from '../Bubble/Bubble';
+import React from 'react';
 
 interface Props {
   selected: Set<string>,

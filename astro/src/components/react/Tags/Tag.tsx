@@ -1,7 +1,7 @@
-import s from './Tag.module.scss';
+
 import clsx from 'clsx';
-import { CSSProperties } from 'react';
 import { WithSelected } from '../QuickstartGallery';
+import React from 'react';
 
 interface Props extends WithSelected {
   name: string,
@@ -11,11 +11,14 @@ interface Props extends WithSelected {
 
 export const Tag = ({ selected, setSelected, name, mainColor, invertedColor }: Props) => {
   name = name.toLowerCase()
-  const onClick = () => setSelected((selected) => selected.has(name) ? selected.delete(name) : selected.add(name));
+  const onClick = (event) => {
+    event.stopPropagation();
+    setSelected((selected) => selected.has(name) ? selected.delete(name) : selected.add(name));
+  }
   
   const isSelected = selected.has(name);
 
-  return <li style={{ '--main': mainColor, '--inverted': invertedColor } as CSSProperties}>
-    <button className={clsx(s.tag, isSelected && s.selected)} onClick={onClick}>{name}</button>
+  return <li>
+    <button className={isSelected ? "bg-indigo-700" : ""} onClick={onClick}>{name}</button>
   </li>;
 }
