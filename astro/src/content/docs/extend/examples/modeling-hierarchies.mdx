@@ -21,6 +21,7 @@ import IconButton from 'src/components/icon/Icon.astro';
 - [An Example Company Hierarchy With Permissions](#an-example-company-hierarchy-with-permissions)
 - [Options To Model Hierarchy In FA](#options-to-model-hierarchy-in-fa)
 - [Evaluating The Options](#evaluating-the-options)
+- [Example Node Application](#example-node-application)
 - [TODO](#todo)
 - [Brief](#brief)
 
@@ -192,8 +193,8 @@ graph BT
 ## Options To Model Hierarchy In FA
 
 There are a few ways to model this structure in FA. Documents have to be entities and employees have to be users. There are no other types in FA that will work for this. But after that, here are your options:
-- **Applications and roles**: Add a finance employee, like Alice, to an application representing her company and department, like Change Bank Operations application. Each application will have two roles, read and write, which are effectively permissions not roles. Each department application has to have the company name in its title, instead of being called only Operation, because there is no way to show one application in FusionAuth is linked to another. You will have a combinatorial number of applications, given the number of companies and departments you add. However, you still need to create an application with no department, called Change Bank application, to show that Alice is a member of the company, or you will need to infer it from the department names of which she is a member. You can't use groups instead of applications to model this example because groups do not have permissions. You could use groups to make it easier to link users with applications and roles, but you still need the applications and roles.
-- **Entities and grants**: Create entity types Company and Department with permissions Read, Write, and IsMember. Read and write are used to show permissions, but IsMember is used to show hierarchy. Create an entity called Change Bank of type Company and entity of Department called Operations. Create an entity grant for Operations to Change Bank with IsMember set to true to show that this Operations entity belongs to the Change Bank entity. Note that it will not be possible to tell departments called Operations in different companies apart by their name alone. You will need to examine each department's entity grant to see which company it belongs to. Create an entity grant for user Alice to entity Change Bank with no permissions, and an entity grant for Alice to Operations with permissions Read and Write. Below is a diagram of this example, which is similar to the earlier types diagram, but includes a department hierarchy now.
+- **1) Applications and roles**: Add a finance employee, like Alice, to an application representing her company and department, like Change Bank Operations application. Each application will have two roles, read and write, which are effectively permissions not roles. Each department application has to have the company name in its title, instead of being called only Operation, because there is no way to show one application in FusionAuth is linked to another. You will have a combinatorial number of applications, given the number of companies and departments you add. However, you still need to create an application with no department, called Change Bank application, to show that Alice is a member of the company, or you will need to infer it from the department names of which she is a member. You can't use groups instead of applications to model this example because groups do not have permissions. You could use groups to make it easier to link users with applications and roles, but you still need the applications and roles.
+- **2) Entities and grants**: Create entity types Company and Department with permissions Read, Write, and IsMember. Read and write are used to show permissions, but IsMember is used to show hierarchy. Create an entity called Change Bank of type Company and entity of Department called Operations. Create an entity grant for Operations to Change Bank with IsMember set to true to show that this Operations entity belongs to the Change Bank entity. Note that it will not be possible to tell departments called Operations in different companies apart by their name alone. You will need to examine each department's entity grant to see which company it belongs to. Create an entity grant for user Alice to entity Change Bank with no permissions, and an entity grant for Alice to Operations with permissions Read and Write. Below is a diagram of this example, which is similar to the earlier types diagram, but includes a department hierarchy now.
   ```mermaid
   graph BT
 
@@ -263,16 +264,31 @@ There are a few ways to model this structure in FA. Documents have to be entitie
     n22 --o nBankOperations & n21
   ```
   For simplicity's sake this diagram does not include Change Corp entity of entity type Corporation. There are two blocks: one for Change Insurance and one for Change Bank. Ignore the Change Insurance block and concentrate on Change Bank to see how Alice is connected to her department, which is connected to the company. This diagram also shows a document attached to the Operations department. The document itself has needs read and write permissions, for when you want to enable individual access, and is linked to the Operations department via an entity grant with the IsMember permission, in the same way departments are linked to companies.
-- **User JSON data**: Store every user's company and department as properties in their JSON `user.data` field. This has to be done through the FA API, and cannot be maintained in the FA web interface. You will need to write your own UI app for HR staff to work with FA. With this approach you don't need to use applications, roles, or groups. Below is example JSON data for Alice:
+- **3) User JSON data**: Store every user's company and department as properties in their JSON `user.data` field. This has to be done through the FA API, and cannot be maintained in the FA web interface. You will need to write your own UI app for HR staff to work with FA. With this approach you don't need to use applications, roles, or groups. Below is example JSON data for Alice:
   ```js
   "permissions": {
     "Change Bank": [],
-    "Change Bank Operations": [read, write],
+    "Change Bank Operations": ["read", "write"],
+    "Change Bank Human Resources manual": ["read"],
   }
   ```
+  The last line, regarding permissions to a document, could either be stored manually, as is shown above, or could be an entity grant from Alice to the document. If you remove the last line, you would keep only company permissions in JSON and store document permissions using entities (as shown in the previous option).
 
 ## Evaluating The Options
 
+Option 1, using applications, is inferior to the other options and can be discarded. Applications in FA are used to manage user logins, and it will get cluttered and confusing if you have dozens of new applications that are used not for login, but only to track which permissions a user has. This option provides no benefit over using entities instead.
+
+Options 2 and 3, entities versus JSON, are completely opposite approaches. Option 2 explicitly stores the relationship between all organizational departments and all documents and their related permissions in FA. Your website can use the FA API to get a list of all a user's entity grants to the user's documents and departments, and a list of all documents and the department to which they belong, and use both lists to see what a user has access to. Option 3 doesn't use any FA features to store a user's departments and permissions. Instead, you can choose any naming scheme you want to represent your hierarchy. With option 3, it's very important that you are able to map the text in the JSON with the names of your departments stored elsewhere. For instance, your permissions manager code would have to consistently use "Change Bank" and not "ChangeBank" for thousands of lines of JSON across hundreds of users. And how exactly do you know that a document authorization, stored as an entity in FA, called "Change Insurance Financial Statements draft 2042", can be read by a user with the JSON permission `Change Bank: ["read"]`? Do you parse the document title (entity name) to see if it has "Change Bank" in it? This seems extremely error-prone.
+
+Both options 2 and 3 also have a synchronization problem. If you manage document permissions with FA, and name the document entity according to the name the author gives the document in your website, what do you when the document name changes? Or if two documents have the same name?  You can quickly see that relying on a document name won't work. You will have to generate a UUID for a document on your website, and be sure to give the document authorization in FA the same UUID.
+
+Given these problems, option 3 would have to use UUIDs in the user JSON data, and you would have to recreate something very similar to FA's entity management interface in your own website. Storing some of the user permissions in FA in JSON, and some permissions in the organizational hierarchy in your website database violates the principle of encapsulation. It will result in confusion for your programmers to manage permissions across two different systems. As a result, it would be best to choose between:
+- Using FA only for user authentication and keeping all authorization and company structure information in a separate dedicated document permission system.
+- Use option 2 and fully embrace FA to store all permissions and your company structure. Ensure that you use matching UUIDs for the digital document itself, and the authorization to that document stored in FA as an entity.
+
+The next section will provide an example Node application that follows option 2. It uses the FA API to get a list of all documents, and all the logged-in user's direct and hierarchical permissions, and display them.
+
+## Example Node Application
 
 ## TODO
 
