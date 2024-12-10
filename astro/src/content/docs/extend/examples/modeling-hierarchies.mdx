@@ -22,9 +22,11 @@ import IconButton from 'src/components/icon/Icon.astro';
 - [Options To Model Hierarchy In FA](#options-to-model-hierarchy-in-fa)
 - [Evaluating The Options](#evaluating-the-options)
 - [Example Node Application](#example-node-application)
+  - [Download Example Project And Start FusionAuth](#download-example-project-and-start-fusionauth)
+  - [Create Hierarchy Entities](#create-hierarchy-entities)
+  - [Run Your Website](#run-your-website)
 - [Clean Up](#clean-up)
 - [TODO](#todo)
-- [Brief](#brief)
 
 
 
@@ -291,12 +293,10 @@ The next section will provide an example Node application that follows option 2.
 
 ## Example Node Application
 
-- duplicate js express quickstart used in last guide. change bank and change insurance
-- create entity types, entities, user
-- give richard user grant to department
-- after user login show all user permissions in account page for various docs and department. use api to pull them and js to summarize them.
 
-Use `git clone` to clone the repository at https://github.com/fusionauth/fusionauth-example-multiapp-dashboard, or download and unzip it.
+### Download Example Project And Start FusionAuth
+
+Use `git clone` to clone the repository at https://github.com/fusionauth/fusionauth-example-multiapp-dashboard, or download and unzip it. TODO
 
 Open a terminal in the directory containing the repository files.
 
@@ -310,11 +310,63 @@ Run the command below to start FusionAuth.
   If you have completed any FusionAuth tutorials before, you might need to first delete any existing FusionAuth containers with the same name and the database volumes. Run the command below to do that.
 
   ```sh
-  docker ps rm fa faDb; docker compose down -v
+  docker rm fa faDb; docker compose down -v
   ```
 </Aside>
 
+- Log in to your FusionAuth web interface at http://localhost:9011/admin and browse to <Breadcrumb>Reactor</Breadcrumb>.
+- Enter your license key to activate Reactor and refresh the page.
+
+### Create Hierarchy Entities
+
+In this section you'll create the entities and permissions in FA to represent a company hierarchy with documents.
+
+- Browse to <Breadcrumb>Entity Management -> Entity Types</Breadcrumb>.
+- Click <InlineUIElement>Add</InlineUIElement>.
+- Name the entity type `Company`.
+- Add the permissions `Read`, `Write`, and `IsMember` and save the entity type.
+- Add another entity type called `Department` with the same permission names and save it.
+- Add a final entity type called `Document` with only `Read` and `Write` permissions. Nothing can be a member of a document, so it doesn't need an `IsMember` permission.
+
+![Entity Types in FA](../../../../../public/img/docs/extend/examples/modeling-hierarchy/entityTypes.webp)
+
+Next you'll populate FA with some entities of these types:
+
+- Browse to <Breadcrumb>Entity Management -> Entities</Breadcrumb>.
+- Add a new entity.
+  - For <InlineField>Name</InlineField> enter `Change Bank`.
+  - For <InlineField>Entity type</InlineField> choose `Company`.
+  - You don't need to give the entity an Id since FA alone will manage companies and users. Only documents need to share Ids between FA and your website.
+  - Save.
+- Add another entity of type Company and call it `Change Insurance`.
+- Add another entity of type Department and call it `Change Insurance Operations`.
+- Add another entity of type Department and call it `Change Bank Operations`.
+- Add another entity of type Department and call it `Change Bank Finance`.
+- Add another entity of type Document and call it `Passwords`.
+  - Give this entity the Id `e52925cb-1072-421f-9f64-a64aacd8a7cb`.
+
+![Entities in FA](../../../../../public/img/docs/extend/examples/modeling-hierarchy/entities.webp)
+
+Finally, you need to connect the entities in a hierarchy using permissions as a link.
+
+- In the <InlineUIElement>Select</InlineUIElement> menu for the Change Bank Operations department entity, click <InlineUIElement>Manage</InlineUIElement>.
+- Add an entity grant.
+- In the search box, enter `Change Bank`, and select it from the dropdown list.
+- Enable the <InlineUIElement>IsMember</InlineUIElement> permission.
+- Save.
+- Return to <Breadcrumb>Entity Management -> Entities</Breadcrumb>.
+- Add the Finance department entity to the Change Bank company in the same way as above.
+- Add the Change Insurance department entity to the Change Insurance company in the same way as above.
+- Change Bank now has two departments and Change Insurance has one.
+- Lastly, manage the Password document, and give it an entity grant to the Change Bank Operations department with permission IsMember.
+  - Notice here that when you search for `Operations`, the search dropdown list provides you only the names `Change Bank Operations` and `Change Insurance Operations`, with no Ids or hierarchical links displayed. So if you had instead called both departments just `Operations`, without indicating the company they belonged to in their name, you wouldn't know which one to choose when trying to add the document to the department. Though it would be more elegant to call the entity by the same name as the department, just `Operations`, you need to work with the limitations of FusionAuth here to create a makeshift hierarchy. Alternatively, you could create all entities programmatically using the API an entity Ids. That would allow you to use any names you wanted.
+
+You haven't used set any read or write permissions yet, because those are linked only to users, or flow implicitly downwards through the company hierarchy set by `IsMember`.
+
+
 Leave FusionAuth running.
+
+### Run Your Website
 
 In a new terminal, run the commands below to start a web server for the Changebank app, which uses FusionAuth for authentication.
 
@@ -336,7 +388,6 @@ Before making the dashboard, check that you can log in to all three applications
   ![Changebank](/img/docs/extend/examples/multi-application-dashboard/changebank.png)
 
 
-  Log in to your [FusionAuth web interface](http://localhost:9011/admin) and browse to <Breadcrumb>Customizations -> Themes</Breadcrumb>.
 
   ## Clean Up
 
@@ -357,23 +408,9 @@ docker rmi postgres:16.0-bookworm fusionauth/fusionauth-app:1.51.2 node:23-alpin
 - add hlink to this doc from the core concepts doc
 - put code in a ritza repo
 
-## Brief
+- create entity types, entities, user
+- give richard user grant to department
+- after user login show all user permissions in account page for various docs and department. use api to pull them and js to summarize them.
 
-Fusionauth wants an example showing how to use permissions in a ‘complex’ way:
-
-```
-Mapping permissions in a hierarchical manner
-
-company -> department -> document
-User can be granted permissions (read, write, admin) to any of these.
-```
-How do you roll it up to know which users have access to document A? Which documents does user B have access to?
-
-You’d need to store data in the entity.data field to store the tree, then run queries against the document A or user B to find out the answer.
-
-Include a sample app.
-
-Sounds like a bit of a hack, but probably we could do something like a basic Express application that has some concept of `Company -> Group/Department -> Document`, and then show how that information could be stored in Fusionauth instead of within the application itself.
-
-Maybe also some discussion of when it would make sense to do this – reading the example dan provides below, I’d think that logic should be at the application level rather than in the auth service, so if this is just an example to show off how entity.data can be hacked to add permissions then that’s fine, but we shoudl add some warning and advise people how to decide what to store in Fusionauth and what should be done in their application database.
-
+<InlineField></InlineField>
+<InlineUIElement></InlineUIElement>
