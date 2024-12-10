@@ -145,14 +145,6 @@ This is a problem when trying to model organizations that are hierarchical, espe
 
 Let's take an example. Assume that you want to use FA to authorize users in your corporation, Change Corp, to have access to certain documents. Your corporation has two sub-companies: Change Bank and Change Insurance. Each company has many departments, like marketing, sales, finance, operations, and management. Documents belong to a single department in an organization. Companies, departments, and documents have read and write permissions, and an administrative permission (that allows users to change other users' permissions to the department or document). Permissions propagate downwards. So an employee with write permissions to the marketing department in Change Insurance, will have write permissions to all its documents. And an employee with read permissions to Change Corp has read permissions to every document in every department of both sub-companies. But you might have an auditor who you add as a user in FA that has only read access to a specific document in a specific department. This will not give her permissions to any other documents anywhere higher in the organizational hierarchy.
 
-<Aside type="note">
-You can probably see some challenges already:
-- How do you handle documents that everyone in the corporation needs to read, such as the HR manual, which is managed by the HR department of the top-level corporation? Because permissions don't propagate upwards, you have to individually give read permissions to everyone, instead of relying on the hierarchy to do it automatically.
-- What happens when permissions conflict? The operations department might have a passwords document that should have read access only by members of that department, but anyone with read access to the sub-company will have access to the passwords.
-
-There are solutions to these problems, such as including "Deny access" permissions and a "Common" department which has shared documents, and you need to pick what works for your organization. These challenges won't be discussed in this guide, as you can use the techniques shown here to implement your own solution.
-</Aside>
-
 Below is a diagram of the company structure to model.
 
 ```mermaid
@@ -189,6 +181,14 @@ graph BT
   n13 --o n5
   n14 --o n9
 ```
+
+<Aside type="note">
+You can probably see some challenges already:
+- How do you handle documents that everyone in the corporation needs to read, such as the HR manual, which is managed by the HR department of the top-level corporation? Because permissions don't propagate upwards, you have to individually give read permissions to everyone, instead of relying on the hierarchy to do it automatically.
+- What happens when permissions conflict? The operations department might have a passwords document that should have read access only by members of that department, but anyone with read access to the sub-company will have access to the passwords.
+
+There are solutions to these problems, such as including "Deny access" permissions and a "Common" department which has shared documents, and you need to pick what works for your organization. These challenges won't be discussed in this guide, as you can use the techniques shown here to implement your own solution.
+</Aside>
 
 ## Options To Model Hierarchy In FA
 
@@ -284,11 +284,16 @@ Both options 2 and 3 also have a synchronization problem. If you manage document
 
 Given these problems, option 3 would have to use UUIDs in the user JSON data, and you would have to recreate something very similar to FA's entity management interface in your own website to map UUIDs to hierarchical permissions. Storing some of the user permissions in FA in JSON, and some permissions in the organizational hierarchy in your website database violates the principle of encapsulation. It will result in confusion for your programmers to manage permissions across two different systems. As a result, it would be best to choose between:
 - Using FA only for user authentication and keeping all authorization and company structure information in a separate dedicated document management system that uses FA as its authentication gateway. Example document managements systems that can use an external OAuth provider like FA are [Nuxeo](https://doc.nuxeo.com/nxdoc/using-openid-oauth2-in-login-screen) and [M-Files](https://www.m-files.com/products/platform-security). There may be other document managements systems that allow the use of FA, but their documentation does not state it.
-- Use option 2 and fully embrace FA to store all permissions and your company structure. Ensure that you use matching UUIDs for the digital document itself, and the authorization to that document stored in FA as an entity.
+- Using option 2 and fully embracing FA to store all permissions and your company structure. Ensure that you use matching UUIDs for the digital document itself, and the authorization to that document stored in FA as an entity.
 
 The next section will provide an example Node application that follows option 2. It uses the FA API to get a list of all documents, and all the logged-in user's direct and hierarchical permissions, and display them.
 
 ## Example Node Application
+
+- duplicate js express quickstart used in last guide. change bank and change insurance
+- create entity types, entities, user
+- give richard user grant to department
+- after user login show all user permissions in account page for various docs and department. use api to pull them and js to summarize them.
 
 ## TODO
 
