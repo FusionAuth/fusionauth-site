@@ -23,7 +23,7 @@ In this guide, you will learn how to implement progressive registration in your 
 ## Requirements
 
 
-To implement progressive registration, you will need a [FusionAuth license](/docs/get-started/core-concepts/licensing) to access advanced registration features. This guide is based on the [ChangeBank](https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-api) application, which will be extended to include progressive registration. However, the steps apply to any application, provided you understand your application’s specific requirements.
+To implement progressive registration, you will need a [FusionAuth license](/docs/get-started/core-concepts/licensing) to access advanced registration features. This guide is based on the [ChangeBank](https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-web) application, which will be extended to include progressive registration. However, the steps apply to any application, provided you understand your application’s specific requirements.
 
 
 This guide assumes you already have an application created and an API key generated.
@@ -210,9 +210,165 @@ app.get('/oauth-redirect', async (req, res, next) => {
 
 
 In the code above, you capture the `source` parameter from the URL. If the `source` is `register`, you redirect the user to the `/set-address` page. Otherwise, you redirect the user to the `/account` page.
+Let's build the `/set-address` page.
 
+### Building the Address Page
 
-We have explored how to add a progressive registration form using the FusionAuth admin dashboard. However, you might want to use your UI to collect the information. In the next section, you will explore
+Building the `/set-address` page is very similar to the `/account` page. We wll build the UI first, and then add a route to render the page and another one to handle the form submission. But before that, 
+we need to ensure that we can save the user's address in the the fusionauth database.
+
+In the dashboard at <Breadcrumb>Home > Customizations > Form Fields > Add Field</Breadcrumb>, you can create a new field called `address`. This will be registered under the `user.data` object.
+
+<img src="/img/docs/extend/progressive-registration/registration-form-field.png" alt="Adding address field"/>
+
+Then, we need to create the routes that will render the page and handle the form submission. In the `complete-application/src/index.ts` file, add the code for the rendering route `/set-address`.
+
+```ts
+app.get("/set-address", async (req, res) => {
+  const userTokenCookie = req.cookies[userToken];
+  if (!await validateUser(userTokenCookie)) {
+    res.redirect(302, '/');
+  } else {
+    res.sendFile(path.join(__dirname, '../templates/set-address.html'));
+  }
+});
+```
+
+The code above checks that the user is authenticated and redirects the user to the home page if the user is not authenticated. Otherwise, it sends the `set-address.html` file to the browser.
+We can now add the route for the form submission.
+
+```ts
+app.post("/set-address", async (req, res) => {
+  const userTokenCookie = req.cookies[userToken];
+  if (!await validateUser(userTokenCookie)) {
+    res.status(403).json(JSON.stringify({
+      error: 'Unauthorized'
+    }))
+    return;
+  }
+
+  let error;
+
+  try {
+    const address = req.body.address;
+    const retrievedUserDetails = req.cookies[userDetails];
+    if (!retrievedUserDetails) {
+      throw new Error('No user details found in cookie');
+    }
+    const userId = retrievedUserDetails.id;
+    if (!userId) {
+      throw new Error('No user id found in cookie');
+    }
+
+    // Update the user's address
+    await client.patchUser(userId, {
+      user: {
+        email: retrievedUserDetails.email,
+        data: {
+          address: address
+        }
+      }
+    });
+
+    res.status(200).json(JSON.stringify({
+      error,
+      message: 'Address updated successfully'
+    }))
+
+  } catch (ex: any) {
+    console.error(ex);
+    error = `There was a problem updating the address. ${ex.exeception.fieldErrors}`;
+    res.json(JSON.stringify({
+      error,
+    }))
+  }
+
+});
+```
+
+In the code above, we first check that the user is authenticated and then retrieve the user's details from the cookie such as the user's email and user id. We need these details to update the user's address.
+Notice that we are using the `patchUser` method to update the user's address instead of the `updateUser` method. 
+
+We can now add the code for the form to the `set-address.html` file. The form will collect the user's address and save it in the `user.data` object.
+
+```html
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>FusionAuth Express Web</title>
+  <link rel="stylesheet" href="/static/css/changebank.css">
+</head>
+<body>
+  <div id="page-container">
+    <div id="page-header">
+      <div id="logo-header">
+        <img src="https://fusionauth.io/cdn/samplethemes/changebank/changebank.svg" />
+        <div class="h-row">
+          <p class="header-email"></p>
+          <a class="button-lg" href="/logout">Logout</a>
+        </div>
+      </div>
+
+      <div id="menu-bar" class="menu-bar">
+        <a class="menu-link" href="/make-change">Make Change</a>
+        <a class="menu-link inactive" href="/account">Account</a>
+      </div>
+    </div>
+
+    <div style="flex: 1;">
+      <div class="column-container">
+        <div class="app-container change-container">
+          <h3>Thanks for registering! Set your address to start making money changes</h3> 
+            <div class="error-message"></div>
+            <div class="change-message">
+            </div>
+
+          <form onsubmit="setAddress(event)" id="set-address-form">
+            <div class="h-row">
+              <div class="change-label">Your Address</div>
+              <input class="change-input" name="address" id="address" value="" type="text" />
+              <input class="change-submit" type="submit" value="Set Address" />
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Snag cookie user data
+      const user = JSON.parse(decodeURIComponent(document.cookie.split('; ').filter(c => c.includes('userDetails')).at(0).split('=').at(-1)).replace('j:', ''))
+      document.querySelector('.header-email').innerHTML = user.email;
+
+      const setAddress = async (e) => {
+        e.preventDefault();
+
+        const resp = await (await fetch('/set-address', {
+          method: 'POST',
+          body: new URLSearchParams(new FormData(e.currentTarget)),
+          headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+          },
+        })).json();
+        const error = JSON.parse(resp).error;
+        
+        if (error) {
+          document.querySelector('.error-message').innerHTML = result.error
+        } else {
+          location.replace('/make-change');
+        }
+      }
+    </script>
+</body>
+</html>
+```
+
+In the code above, we collect the address entered by the user and send a request to update the user information. If the request is successful, we redirect the user to the existing `/make-change` page.
+
+Great! You can test it by registering a user. You should be redirected to a similar page to the one below.
+
+<img src="/img/docs/extend/progressive-registration/set-address.png" alt="Set address"/>
+
+We have explored how to add a progressive registration form using the FusionAuth admin dashboard. However, you might want to use your own UI to collect the information. In the next section, you will explore
 how to add a progressive registration form using the FusionAuth API.
 
 
@@ -284,7 +440,7 @@ To ensure that this field can be filled, you will need to create a custom field 
 
 
 In the dashboard at <Breadcrumb>Home > Customizations > Form Fields > Add Field</Breadcrumb>, you can create a new field.
-In the form, you will need to specify the name of the field and set the field type to **Custom user data (user.data.*)**.
+In the form, you will need to specify the name of the field and set the field type to **Custom user data (user.data.*)**. The image below shows how you can add a new field called `address` under the `user.data` object.
 
 
 <img src="/img/docs/extend/progressive-registration/registration-form-field.png" alt="Registration form field"/>
