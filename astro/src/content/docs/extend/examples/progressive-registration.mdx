@@ -23,7 +23,8 @@ In this guide, you will learn how to implement progressive registration in your 
 ## Requirements
 
 
-To implement progressive registration, you will need a [FusionAuth license](/docs/get-started/core-concepts/licensing) to access advanced registration features. This guide is based on the [ChangeBank](https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-web) application, which will be extended to include progressive registration. However, the steps apply to any application, provided you understand your application’s specific requirements.
+To implement progressive registration, you will need a [FusionAuth license](/docs/get-started/core-concepts/licensing) to access advanced registration features. This guide is based on the [ChangeBank](https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-web) application, which will be extended to 
+include progressive registration. However, the steps apply to any application, provided you understand your application’s specific requirements.
 
 
 This guide assumes you already have an application created and an API key generated.
@@ -39,7 +40,7 @@ The registration flow in this guide will go in two steps:
 
 The challenge here is how to manage the routing to the home page, even more, when you might need the user to enter specific information, on the home page
 after a successful registration. This can be, for example, entering a credit card number or being prompted to create an entity such as a project
-or anything else that might be required to use the application.
+or anything else that might be required to use the application. In this guide, we will prompt the user to enter an address and then redirect him to the changes page.
 
 
 The next steps will cover two methods to achieve this, using the FusionAuth admin dashboard or the FusionAuth API.
@@ -217,7 +218,7 @@ Let's build the `/set-address` page.
 Building the `/set-address` page is very similar to the `/account` page. We will build the UI first, and then add a route to render the page and another one to handle the form submission. But before that, 
 we need to ensure that we can save the user's address in the FusionAuth database.
 
-In the dashboard at <Breadcrumb>Home > Customizations > Form Fields > Add Field</Breadcrumb>, you can create a new field called `address`. This will be registered under the `user.data` object.
+In the dashboard at <Breadcrumb>Home > Customizations > Form Fields > Add Field</Breadcrumb>, you can create a new field called `address`. This will be registered under the <InlineField>user.data</InlineField> object.
 
 <img src="/img/docs/extend/progressive-registration/registration-form-field.png" alt="Adding address field"/>
 
@@ -289,7 +290,7 @@ app.post("/set-address", async (req, res) => {
 In the code above, we first check that the user is authenticated and then retrieve the user's details from the cookie such as the user's email and user id. We need these details to update the user's address.
 Notice that we are using the `patchUser` method to update the user's address instead of the `updateUser` method. 
 
-We can now add the code for the form to the `set-address.html` file. The form will collect the user's address and save it in the `user.data` object.
+We can now add the code for the form to the `set-address.html` file. The form will collect the user's address and save it in the <InlineField>user.data</InlineField> object.
 
 ```html
 <html>
@@ -362,7 +363,107 @@ We can now add the code for the form to the `set-address.html` file. The form wi
 </html>
 ```
 
-In the code above, we collect the address entered by the user and send a request to update the user information. If the request is successful, we redirect the user to the existing `/make-change` page.
+In the code above, we collect the address entered by the user and send a request to update the user information. If the request is successful, we redirect the user to the existing `/make-change` page. 
+On the `/make-change` page, we will add modify the existing UI and backend logic to save the amount in the FusionAuth database, but also a reason in case the amount is significant.
+
+### Tweaking the Make Change Page
+
+We will add a new field, labeled `Reason for change` that will be displayed if the amount 
+entered by the user is superior or equal to 500. We will modify the route handling the form submission to ensure that the data is saved in the FusionAuth database.
+The first step is to add a new field to the form. In the dashboard at <Breadcrumb>Home > Customizations > Form Fields > Add Field</Breadcrumb>, we will create new fields called `amountChangedReason` and `amount`. 
+Those fields should be registered under the <InlineField>user.data</InlineField> object.
+
+<img src="/img/docs/extend/progressive-registration/make-change-form-fields.png" alt="Adding Amount and Amount Changed Reason fields"/>
+
+Once it's done, in the `complete-application/src/template/make-change.html`, add the following code:
+
+```html
+...
+      <form onsubmit="makeChange(event)" id="make-change-form">
+        <div class="h-row">
+          <div class="change-label">Amount in USD: $</div>
+          <input class="change-input" name="amount" id="amount" value="0.00" type="number" step="0.01" />
+          <input class="change-submit" type="submit" value="Make Change" />
+        </div>
+        <div class="h-row" style="margin-top: 20px; display: none;" id="reason-container">
+          <div class="change-label">Reason for change</div>
+          <input class="change-input" name="amountChangedReason" id="amountChangedReason" value="" type="text" />
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Snag cookie user data
+  const user = JSON.parse(decodeURIComponent(document.cookie.split('; ').filter(c => c.includes('userDetails')).at(0).split('=').at(-1)).replace('j:', ''))
+  document.querySelector('.header-email').innerHTML = user.email;
+
+  const changeInput = document.querySelector('#amount');
+  const reasonInput = document.querySelector('#reason-container');
+
+  changeInput.addEventListener('input', function(event) {
+    if (event.target.value >= 500) {
+      reasonInput.style.display = 'block';
+    } else {
+      reasonInput.style.display = 'none';
+    }
+  });
+...
+</script>
+</body>
+</html>
+```
+
+In the code above, we add a listener to the `changeInput` field. If the amount entered by the user is superior or equal to 500, we display the reason input field, with the tag `<div id="reason-container">`. 
+By default, the reason input field is hidden.
+
+Now that we have the logic to save the data in the FusionAuth database, we need to add the code to the `complete-application/src/index.ts` file.
+
+We will add the following code to the `make-change` route handler for POST requests:
+
+```ts
+app.post("/make-change", async (req, res) => {
+...
+
+  const retrievedUserDetails = req.cookies[userDetails];
+  const userId = retrievedUserDetails.id;
+
+  try {
+    message = 'We can make change for';
+    let remainingAmount = +req.body.amount;
+    for (const [name, nominal] of Object.entries(coins)) {
+      let count = Math.floor(remainingAmount / nominal);
+      remainingAmount =
+        Math.round((remainingAmount - count * nominal) * 100) / 100;
+
+      message = `${message} ${count} ${name}`;
+    }
+
+    client.patchUser(userId, {
+      user: {
+        email: retrievedUserDetails.email,
+        data: {
+          amount: req.body.amount,
+          amountChangedReason: req.body.amountChangedReason
+        }
+      }
+    });
+
+    message = req.body.amountChangedReason ? `${message} because: ${req.body.amountChangedReason}` : `${message}!`;
+  } catch (ex: any) {
+    error = `There was a problem converting the amount submitted. ${ex.message}`;
+  }
+  res.json(JSON.stringify({
+    error,
+    message
+  }))
+});
+```
+
+On the Make Change page, you can now notice that the reson for the change is displayed if the amount is superior or equal to 500.
+
+<img src="/img/docs/extend/progressive-registration/make-change-reason-page.png" alt="Make change page"/>
 
 Great! You can test it by registering a user. You should be redirected to a similar page to the one below.
 
@@ -371,26 +472,20 @@ Great! You can test it by registering a user. You should be redirected to a simi
 We have explored how to add a progressive registration form using the FusionAuth admin dashboard. However, you might want to use your own UI to collect the information. In the next section, you will explore
 how to add a progressive registration form using the FusionAuth API.
 
-
 ## Using FusionAuth API
-
 
 There might be some cases where you want to use your UI to collect the information. In this case, you should understand that implementing a progressive registration process in your application will be
 more complex, even tho you will have more control over the UI and the data you collect.
 
-
 The FusionAuth API provides a way to register users in your application. Let's explore these routes but also their SDK implementation.
 
-
 ### Registering a User Using the API
-
 
 To register a user using the API, you will need to send a `POST` request to the `/api/user/registration` endpoint. The request requires the following fields and headers:
 - `X-FusionAuth-TenantId` (Required if multiple tenants exist): The unique tenant Id used to scope the API request.
 - <InlineField>user.email</InlineField>: The unique email address for the user.
 - <InlineField>registration.applicationId</InlineField> (Required): UUID of the application for which the registration is being created.
 - <InlineField>user.password</InlineField> (Optional unless <InlineField>sendSetPasswordEmail</InlineField> is false): Plain text password to be hashed.
-
 
 You can also send the following optional fields: <InlineField>user.firstName</InlineField>, <InlineField>user.lastName</InlineField>, <InlineField>user.middleName</InlineField>, <InlineField>user.birthDate</InlineField>, <InlineField>user.imageUrl</InlineField>, <InlineField>user.preferredLanguages</InlineField>, <InlineField>user.timezone</InlineField>, <InlineField>user.username</InlineField> and <InlineField>user.data</InlineField>.
 
