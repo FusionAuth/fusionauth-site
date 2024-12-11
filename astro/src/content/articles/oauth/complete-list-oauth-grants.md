@@ -20,6 +20,8 @@ This article will go through all the different OAuth 2 grant types and explain t
 
 If you aren't familiar with terms like Authorization Server and Resource Server, you might be interested in [What is OAuth](/articles/oauth/what-is-oauth/).
 
+[![A call to action image displaying a link to download this article as an ebook.](/img/cta/oauth-grants-guide-cta.png 'Download this article as an ebook')](/tech-papers/complete-list-of-oauth-2-grants?utm_medium=cta&utm_source=articles&utm_campaign=oauth2-grants)
+
 ## Authorization Code Grant
 
 The authorization code grant is used to sign into applications by using third-party authentication providers like Google, Facebook, and GitHub or your own OAuth server like FusionAuth. It is one of the most common methods used on the web to authorize and authenticate the Client to access protected data from the Resource Server.

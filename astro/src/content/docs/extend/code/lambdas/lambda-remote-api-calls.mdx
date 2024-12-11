@@ -1,0 +1,128 @@
+---
+title: Making API Calls From Lambdas
+description: An overview of how to make API calls from Lambdas.
+section: extend
+subcategory: code
+tertcategory: lambdas
+navOrder: 10
+---
+import AdvancedPlanBlurb from 'src/content/docs/_shared/_advanced-plan-blurb.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+import LambdaTypes from 'src/content/docs/_shared/_lambda-types.astro';
+import MembershipLambda from 'src/content/docs/extend/code/_membership-lambda.md';
+import { YouTube } from '@astro-community/astro-embed-youtube';
+
+<AdvancedPlanBlurb />
+
+## Overview
+
+Lambda HTTP Connect allows you to make HTTP requests from within a lambda. Any lambda can make a request to any network accessible URL.
+
+This features allows you to access data from external systems to configure token claims or to add data to a user profile. It also allows you to push profile or other data from FusionAuth to an external system as needed.
+
+Here's a video showing more details about Lambda HTTP Connect:
+
+<YouTube id="_TnDUPQm3aQ" />
+
+## Example Lambda
+
+Here is a FusionAuth lambda that adds additional claims to a JWT based on an HTTP request:
+
+```javascript title="A lambda which adds claims based on an external API."
+function populate(jwt, user, registration) {
+  var response = fetch("https://api.example.com/api/status?" + user.id, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  });
+
+  if (response.status === 200) {
+    // assuming successful response looks like:
+    // {"status":"statusValue"}
+    var jsonResponse = JSON.parse(response.body);
+    jwt.status = jsonResponse.status;
+  } else {
+    jwt.status = "basic";
+  }
+}
+```
+
+You can also call FusionAuth APIs with a valid API key:
+
+<MembershipLambda />
+
+Use port 9012, or the configured value for `fusionauth-app.http-local.port`, whenever making a FusionAuth API call in a lambda. Doing so minimizes network traffic contention and improves performance.
+
+
+## Headers
+
+You can provide request header values in a number of different ways:
+
+```javascript title="An anonymous object"
+headers: {
+  "Content-Type": "application/json"
+}
+```
+
+```javascript title="A hash or map"
+headers: new Headers({
+   "Content-Type": "application/json"
+})
+```
+
+```javascript title="An array"
+headers: new Headers([
+    ["Content-Type", "application/json"]
+])
+```
+
+## Response
+
+A response object will be returned. It will have the following fields:
+
+<APIBlock>
+  <APIField name="headers" type="Object">
+    The headers returned by the response. The keys of this object are the header names. All header keys are lower cased.
+  </APIField>
+  <APIField name="status" type="Integer">
+    The HTTP status code.
+  </APIField>
+  <APIField name="body" type="String">
+    The body of the response.
+  </APIField>
+</APIBlock>
+
+## Securing API Keys In Lambdas
+
+Being able to make API requests against FusionAuth can be useful, but requires an API key to be stored in the Lambda code. 
+
+To secure that API key, you should:
+
+* scope your API keys as narrowly as possible (both in terms of tenants and permissions)
+* create a unique API key for each lambda to make revocation easy
+* limit who has access to view lambda code to limit who can see API keys
+* [rotate API keys regularly](/docs/operate/secure-and-monitor/key-rotation)
+
+There's an [open GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/1629) which discusses product improvements to API key handling.
+
+## Lambda HTTP Connect Limitations
+
+When using Lambda HTTP Connect to make HTTP requests, do not call a FusionAuth API which invokes the calling lambda, because it will fail. For example, in a JWT Populate lambda, do not invoke the Login API.
+
+Requests from a lambda require the lambda to use the GraalJS engine.
+
+HTTP requests will time out after two seconds.
+
+The `fetch` method in a lambda does not implement the [entire `fetch` API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) as implemented in a browser.
+The first argument to `fetch` must always be a string URL.
+Only the following options are supported:
+
+* `method`, which defaults to `GET`
+* `headers`, which defaults to null
+* `body`, which must be a string
+
+

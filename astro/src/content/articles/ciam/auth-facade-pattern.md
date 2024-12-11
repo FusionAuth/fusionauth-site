@@ -44,7 +44,7 @@ As an enterprise software developer, you have a few options:
 Like any [facade](https://en.wikipedia.org/wiki/Facade_pattern), the auth facade hides a subsystem; the subsystem hidden here is a client's identity provider. As part of your application, ship an embedded auth and user management system. Your application's authentication and authorization requests are sent to this embedded system. It federates as needed with upstream authentication providers. 
 
 <div class="bg-slate-200 px-4 w-full">
-<img src="/img/articles/auth-facade/auth-facade-pattern.svg" alt="The identity broker architectural pattern.">
+<img src="/img/articles/auth-facade/auth-facade-pattern.svg" alt="The identity broker architectural pattern." />
 </div>
 
 ## The auth facade vs federation

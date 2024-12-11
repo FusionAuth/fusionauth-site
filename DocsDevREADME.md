@@ -36,6 +36,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - Headers should have the first letter of every word capitalized: `This Is The Header Text`. This is true for all headers (h1, h2, h3, h4). This is also known as [Start Case](https://en.wikipedia.org/wiki/Letter_case).
 - When writing, you have access to Asides. Here's an [example blog post using an Aside](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/blog/log4j-fusionauth.mdx). You can assign the following values to the type: `tip` for tips. `note` for things for the user to be aware of. `important` for things the user should pay attention to. `warn` for dangerous actions like deleting a tenant.
 - For links, don't use the absolute URL for the FusionAuth website (https://fusionauth.io), only relative URLs. This allows us to deploy to our local and staging environments and not get sent over to prod.
+- If you have a list element containing more than one paragraph, indent the second paragraph by the same amount as the start of the text in the first paragraph to make sure that it renders correctly.
 
 ## Docs 
 - Don't use complex breadcrumbs styling in docs. Use `->`. Use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component. Breadcrumbs should look like this `<Breadcrumb>foo -> bar -> baz</Breadcrumb>`.
@@ -80,14 +81,17 @@ Review [the component for all options and icons](astro/src/components/icon/Icon.
 
 ### Docs Navigation
 
-If you want a page to float to the top of the navigation, because it is an overview page, use this attribute:
-
-```
-topOfNav: true
-```
-
 Make descriptions full sentences.
 
+If you want to order pages within a section, use `navOrder`. The default value for every page is [defined here](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/config.js#L61).
+
+Pages are ordered in the nav within a section in descending order. 
+
+```
+navorder: 0
+```
+
+If you want to sort a category to the top of its section, you need to add it to `astro/src/tools/docs/categoriesToFloatToTop.json`.
 
 ### Including files
 - If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_` and use dashes to separate words: `_login-api-integration` not `_login_api_integration`.
