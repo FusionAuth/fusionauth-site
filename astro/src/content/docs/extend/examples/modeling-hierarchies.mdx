@@ -12,31 +12,13 @@ import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import Aside from 'src/components/Aside.astro';
 import IconButton from 'src/components/icon/Icon.astro';
-import TypesDiagram from 'src/diagrams/docs/extend/examples/modeling-hierarches/types.astro'
-import CompanyDiagram from 'src/diagrams/docs/extend/examples/modeling-hierarches/company.astro'
-import HierarchyDiagram from 'src/diagrams/docs/extend/examples/modeling-hierarches/hierarchy.astro'
+import TypesDiagram from 'src/diagrams/docs/extend/examples/modeling-hierarchies/types.astro'
+import CompanyDiagram from 'src/diagrams/docs/extend/examples/modeling-hierarchies/company.astro'
+import HierarchyDiagram from 'src/diagrams/docs/extend/examples/modeling-hierarchies/hierarchy.astro'
 
-
-- [Understand FusionAuth Types And Their Relationships](#understand-fusionauth-types-and-their-relationships)
-  - [Applications And Users](#applications-and-users)
-  - [Entities And Permissions](#entities-and-permissions)
-  - [A Diagram Of All FusionAuth Types](#a-diagram-of-all-fusionauth-types)
-- [An Example Company Hierarchy With Permissions](#an-example-company-hierarchy-with-permissions)
-- [Options To Model Hierarchy In FusionAuth](#options-to-model-hierarchy-in-fusionauth)
-- [Evaluating The Options](#evaluating-the-options)
-- [Example Node Application](#example-node-application)
-  - [Download Example Project And Start FusionAuth](#download-example-project-and-start-fusionauth)
-  - [Create Hierarchy Entities](#create-hierarchy-entities)
-  - [Grant Entity Permissions To A User](#grant-entity-permissions-to-a-user)
-  - [Run Your Website To Calculate All The User Permissions](#run-your-website-to-calculate-all-the-user-permissions)
-- [Clean Up](#clean-up)
-- [TODO](#todo)
-
-
+This guide discusses ways of modeling hierarchical organizations and entities, with users and permissions, and provides an example script you can use in your own app. Entities are not available in the free version of FusionAuth.
 
 <PremiumPlanBlurb />
-
-This guide discusses ways of modeling hierarchical organizations and entities, with users and permissions, and provides a sample application with some starting code you can use in your own app.
 
 ## Understand FusionAuth Types And Their Relationships
 
@@ -62,7 +44,7 @@ For example, consider an example of a bank website with clients and employees. T
 
 If you want, you could make groups called client and employee, with the client and employees roles in the application respectively. Then you would add users to either or both groups, and register the users with the application, but would not need to give the users roles manually. This would be useful if you had a lot of roles. Another use of groups is to tag users with certain attributes, such as VIP users.
 
-<Aside type="warning">
+<Aside type="caution">
 Digital security usually involves three types: users, roles, and permissions. A user can have many roles, and roles can have many permissions. The advantage of not granting users permissions directly are:
 - You can add (or remove) permissions to a role and they automatically apply to every user in that role. You don't have to add a permission to a million users individually.
 - A user can have multiple roles with multiple permissions, and the user automatically gets the superset of permissions from all their roles. You don't have to consider each user as an individual and specify the exact combination of permissions that their job requires.
@@ -93,7 +75,8 @@ Below is a diagram illustrating the relationships in the examples from the previ
 
 Note that entities and applications cannot be related, even if they represent the same physical company. Only users can have entity grants to entities.
 
-<TypesDiagram />
+{/* <TypesDiagram /> */}
+![mermaid1](../../../../../public/img/docs/extend/examples/modeling-hierarchy/mermaid1.webp)
 
 ## An Example Company Hierarchy With Permissions
 
@@ -105,7 +88,8 @@ Let's take an example. Assume that you want to use FusionAuth to authorize users
 
 Below is a diagram of the company structure to model.
 
-<CompanyDiagram />
+ {/* <CompanyDiagram /> */}
+![mermaid2](../../../../../public/img/docs/extend/examples/modeling-hierarchy/mermaid2.webp)
 
 <Aside type="note">
 You can probably see some challenges already:
@@ -121,7 +105,8 @@ There are a few ways to model this structure in FusionAuth. Documents have to be
 - **1) Applications and roles**: Add a finance employee, like Alice, to an application representing her company and department, like Change Bank Operations application. Each application will have two roles, read and write, which are effectively permissions not roles. Each department application has to have the company name in its title, instead of being called only Operation, because there is no way to show one application in FusionAuth is linked to another. You will have a combinatorial number of applications, given the number of companies and departments you add. However, you still need to create an application with no department, called Change Bank application, to show that Alice is a member of the company, or you will need to infer it from the department names of which she is a member. You can't use groups instead of applications to model this example because groups do not have permissions. You could use groups to make it easier to link users with applications and roles, but you still need the applications and roles.
 - **2) Entities and grants**: Create entity types Company and Department with permissions Read, Write, and IsMember. Read and write are used to show permissions, but IsMember is used to show hierarchy. Create an entity called Change Bank of type Company and entity of Department called Operations. Create an entity grant for Operations to Change Bank with IsMember set to true to show that this Operations entity belongs to the Change Bank entity. Note that it will not be possible to tell departments called Operations in different companies apart by their name alone. You will need to examine each department's entity grant to see which company it belongs to. Create an entity grant for user Alice to entity Change Bank with no permissions, and an entity grant for Alice to Operations with permissions Read and Write. Below is a diagram of this example, which is similar to the earlier types diagram, but includes a department hierarchy now.
 
-  <HierarchyDiagram />
+{/* <HierarchyDiagram /> */}
+![mermaid3](../../../../../public/img/docs/extend/examples/modeling-hierarchy/mermaid3.webp)
 
   For simplicity's sake this diagram does not include Change Corp entity of entity type Corporation. There are two blocks: one for Change Insurance and one for Change Bank. Ignore the Change Insurance block and concentrate on Change Bank to see how Alice is connected to her department, which is connected to the company. This diagram also shows a document attached to the Operations department. The document itself has needs read and write permissions, for when you want to enable individual access, and is linked to the Operations department via an entity grant with the IsMember permission, in the same way departments are linked to companies.
 - **3) User JSON data**: Store every user's company and department as properties in their JSON `user.data` field. This has to be done through the FusionAuth API, and cannot be maintained in the FusionAuth web interface. You will need to write your own UI app for HR staff to work with FusionAuth. With this approach you don't need to use applications, roles, or groups. Below is example JSON data for Alice:
@@ -148,8 +133,9 @@ Given these problems, option 3 would have to use UUIDs in the user JSON data, an
 
 The next section will provide an example Node application that follows option 2. It uses the FusionAuth API to get a list of all documents, and all the logged-in user's direct and hierarchical permissions, and display them.
 
-## Example Node Application
+## Example Permissions Calculation Script
 
+This section is a practical tutorial that shows you how to create a hierarchical organization model in FusionAuth, and write a script to determine a user's permissions to any entity in the hierarchy.
 
 ### Download Example Project And Start FusionAuth
 
