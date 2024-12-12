@@ -25,7 +25,7 @@ import IconButton from 'src/components/icon/Icon.astro';
   - [Download Example Project And Start FusionAuth](#download-example-project-and-start-fusionauth)
   - [Create Hierarchy Entities](#create-hierarchy-entities)
   - [Grant Entity Permissions To A User](#grant-entity-permissions-to-a-user)
-  - [Run Your Website](#run-your-website)
+  - [Run Your Website To Calculate All The User Permissions](#run-your-website-to-calculate-all-the-user-permissions)
 - [Clean Up](#clean-up)
 - [TODO](#todo)
 
@@ -297,13 +297,14 @@ The next section will provide an example Node application that follows option 2.
 
 ### Download Example Project And Start FusionAuth
 
-Use `git clone` to clone the repository at https://github.com/fusionauth/fusionauth-example-multiapp-dashboard, or download and unzip it. TODO
+Use `git clone` to clone the repository at https://github.com/FusionAuth/fusionauth-example-docker-compose, or download and unzip it.
 
 Open a terminal in the directory containing the repository files.
 
 Run the command below to start FusionAuth.
 
   ```sh
+  cd light
   docker compose up
   ```
 
@@ -311,12 +312,16 @@ Run the command below to start FusionAuth.
   If you have completed any FusionAuth tutorials before, you might need to first delete any existing FusionAuth containers with the same name and the database volumes. Run the command below to do that.
 
   ```sh
-  docker rm fa faDb; docker compose down -v
+  docker rm fa fa_db; docker compose down -v
   ```
 </Aside>
 
+This command started FusionAuth using Kickstart, which automatically creates an example application with an example user called Richard. It saves you the time of having to configure everything yourself when following this tutorial.
+
 - Log in to your FusionAuth web interface at http://localhost:9011/admin and browse to <Breadcrumb>Reactor</Breadcrumb>.
 - Enter your license key to activate Reactor and refresh the page.
+
+If you have any trouble with this tutorial, try replacing the FA image in the Docker compose file `fusionauth/fusionauth-app:1.54.0`, in case future versions of FusionAuth introduced a breaking change.
 
 ### Create Hierarchy Entities
 
@@ -379,39 +384,163 @@ You haven't used set any read or write permissions yet, because those are linked
 
 FA now represents your corporate hierarchy. In the next sections you're going to work with an example website that retrieves and displays all the user's permissions after they have logged in.
 
-### Run Your Website
+### Run Your Website To Calculate All The User Permissions
 
-In a new terminal, run the commands below to start a web server for the Changebank app, which uses FusionAuth for authentication.
+In this section you'll write a script to get all the direct and indirect (through the company hierarchy) permissions a user has to all documents in FA. All you need is the user's email address or Id. You can use exactly the same code after the user has logged in to your website with FA. (To learn how to make a simple Node.js app that uses FusionAuth, read the [quickstart](/docs/quickstarts/quickstart-javascript-express-web).)
 
-  ```sh
-  cd bankApp
+For this script, you'll use TypeScript. It's easy to make errors when working with a tree structure, like these parent and child entities. TypeScript's strong typing will prevent errors, and enable you to see exactly which properties are available on each object. If you prefer JavaScript, you can delete all the type syntax, rename the file with `.js`, and the code will still run fine.
 
-  # docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  "npm install"
+Start by creating the script, called `getPermissions.ts`, and add the type definitions below. Axios will be used to call FA on the network.
 
-  # docker run --platform=linux/amd64 --rm --network faNetwork -p 3000:3000 -v ".:/app" -w "/app" -e "PORT=3000" node:23-alpine3.19 sh -c  "npm run start"
+```ts
+import axios from "npm:axios@1.7.9";
 
-  docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" denoland/deno:alpine-2.1.3 sh -c  "deno install"
+type TUser = {
+  id: string,
+  email: string,
+};
 
-  docker run --platform=linux/amd64 --rm --network faNetwork -p 3000:3000 -v ".:/app" -w "/app" -e "PORT=3000" denoland/deno:alpine-2.1.3 sh -c  "deno run --allow-net --allow-read --allow-env --unstable-detect-cjs ./bin/www"
+type TEntity = {
+  id: string,
+  name: string,
+  type: {
+    id: string,
+    name: string,
+  }
+};
+
+type Grant = {
+  id: string,
+  permissions: string[]
+  entity: TEntity,
+};
+type TUserGrant = Grant & { userId: string };
+type TEntityGrant = Grant & { recipientEntityId: string };
+
+type TPermission = {
+  entityId: string,
+  entityName : string,
+  permissions: Set<string>
+}
+```
+
+These types show all the objects returned when calling FA, listing only the important properties, and ignoring the other properties. An entity has only a name and a type. There are two types of grants, one for users and one for entities. Note the Id here points to the grant itself. You usually want to use the Id of the entity inside the grant though. A grant's permissions are a list of strings.
+
+The permission type is what you're aiming to find: a document (an entity with a name and Id) and all the permissions a user has to it. These permissions are a set, not an array, to avoid duplicates.
+
+Next, add a function to calculate the user's permissions to every document, which starts with code to get the user from FA, all entities, and all grants from every entity to every other.
+
+```ts
+async function getUserPermissions(emailAddress: string): Promise<TPermission[]> {
+  // get user, entities, and grants from fusionauth
+  const api = axios.create({ baseURL: 'http://fa:9011/api', headers: { 'Authorization': '33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod' } });
+
+  const { data: { user } }  =              await api.get(`/user`, { params: { email: emailAddress } }) as {data: {user: TUser}};
+  const { data: { grants: userGrants } } = await api.get(`/entity/grant/search?userId=${user.id}`) as {data: {grants: TUserGrant[]}};
+  const { data: { entities } } =           await api.post(`/entity/search`, { search: { numberOfResults: 10000, queryString: "*" } }) as {data: {entities: TEntity[]}};
+
+  const entityGrants: TEntityGrant[] = [];
+  for (const entity of entities) {
+    const { data: { grants } } = await api.get(`/entity/grant/search?entityId=${entity.id}`);
+    entityGrants.push(...grants);
+  }
+```
+
+Note that the FA API key is hardcoded into this file and passed to Axios. In reality, you should never commit your key to Git, but keep it in a `.env` file. The rest of the code is simple: it calls the FA API for each type and stores the result returned. Read more about the API for [users](https://fusionauth.io/docs/apis/users), [entities](https://fusionauth.io/docs/apis/entities/entities), and [grants](https://fusionauth.io/docs/apis/entities/grants).
+
+Continue the function above by calculating the permissions for the user for every document, and end the script by calling the function.
+
+```ts
+  // the goal: all documents and user's permissions to them
+  const permissionsToDocuments: TPermission[] = [];
+
+  // for each document
+  for (const document of entities.filter(e => e.type.name == 'Document')) {
+    // add document with no starting permissions to list of documents
+    permissionsToDocuments.push({ entityId: document.id, entityName: document.name, permissions: new Set() });
+
+    // get list of document and all ancestor entities
+    const entitiesWithPermissionsToDocument : TEntity[] = [];
+    let currentEntity: TEntity | null = document;
+    while (currentEntity != null) {
+      entitiesWithPermissionsToDocument.push(currentEntity);
+      currentEntity = getEntityParent(currentEntity, entities, entityGrants);
+    }
+
+    // if user has permissions to ancestor, add those permissions to document permissions for the user
+    for (const entityWithPermissionsToDocument of entitiesWithPermissionsToDocument)
+      userGrants.find(grant => grant.entity.id === entityWithPermissionsToDocument.id)
+        ?.permissions.map(p => permissionsToDocuments.at(-1)?.permissions.add(p));
+  }
+
+  console.log('All documents and permissions to them for ' + emailAddress + '\n');
+  console.dir(permissionsToDocuments, { depth: null });
+  return permissionsToDocuments;
+}
+
+function getEntityParent(entity: TEntity, entities: TEntity[], entityGrants: TEntityGrant[]): TEntity | null {
+  for (const entityGrant of entityGrants)
+    if (entityGrant.recipientEntityId == entity.id && entityGrant.permissions.includes('IsMember'))
+      for (const parentEntity of entities)
+        if (parentEntity.id == entityGrant.entity.id)
+          return parentEntity;
+  return null;
+}
+
+await getUserPermissions('richard@example.com');
+```
+
+This code is a little tricky if you haven't worked with a tree structure before. Luckily, our example assumes that every entity has only one owner (parent node), so in all searches, once you find a grant with `IsMember` you know you have found the node's only parent. The code starts by looping through every entity that is a document, because we don't care about a user's permissions to other entities. For each document, the code gets all ancestors (the document's department and the department's company). Then it finally checks if the user has any permissions to any of those entities, and adds the permissions to the list of permissions the user has to the document.
+
+In a new terminal, run the commands below to install Axios and run the script to check what permissions Richard has to both documents. Here you use Docker again, with the Deno 2 image, which can run TypeScript without any compile step. In reality, you could use the TypeScript compiler, and Node, Bun, or any other JavaScript environment you like.
+
+```sh
+docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" denoland/deno:alpine-2.1.3 sh -c  "deno install"
+
+docker run --platform=linux/amd64 --rm --network faNetwork -p 3000:3000 -v ".:/app" -w "/app" -e "PORT=3000" denoland/deno:alpine-2.1.3 sh -c  "deno run --allow-net --allow-read --allow-env --unstable-detect-cjs ./bin/www"
   ```
 
-The Changebank app is available at http://localhost:3000.
+The result should be as below.
 
-To learn how to make a simple Node.js app that uses FusionAuth, read the [quickstart](/docs/quickstarts/quickstart-javascript-express-web).
+```sh
+All documents and permissions to them for richard@example.com
 
+[
+  {
+    entityId: "e52925cb-1072-421f-9f64-a64aacd8a7cb",
+    entityName: "Passwords",
+    permissions: Set(3) { "IsMember", "Read", "Write" }
+  },
+  {
+    entityId: "832bf368-6adc-4ae0-b838-41feeb01ac47",
+    entityName: "Statements",
+    permissions: Set(0) {}
+  }
+]
+```
 
-Before making the dashboard, check that you can log in to all three applications. Either use an incognito browser window or don't enable [Keep me signed in](/docs/lifecycle/authenticate-users/logout-session-management#fusionauth-sso) when logging in, otherwise, you won't see the login form in the rest of this guide:
-- Browse to FusionAuth at http://localhost:9011/admin and log in with `admin@example.com` and `password`.
-  ![FusionAuth](/img/docs/extend/examples/multi-application-dashboard/fa.png)
-- Browse to Changebank at http://localhost:3000 and log in with the same username and password.
-  ![Changebank](/img/docs/extend/examples/multi-application-dashboard/changebank.png)
+You can see the user has permissions to the passwords document because he is a member of the Operations department where the document is a member.
 
-
-assuming a linear tree
-
-You can see that the user has no permissions to the financial statements. In the FA web interface, browse to the list of users and manage Richard. Give him an entity grant with permission `Write` to the Change Bank entity.
+The user has no permissions to the financial statements. In the FA web interface, browse to the list of users and manage Richard. Give him an entity grant with permission `Write` to the Change Bank entity.
 
 Now when you run the script again, you'll see he has been given indirect write permissions to the financial statements too.
+
+```sh
+All documents and permissions to them for richard@example.com
+
+[
+  {
+    entityId: "e52925cb-1072-421f-9f64-a64aacd8a7cb",
+    entityName: "Passwords",
+    permissions: Set(3) { "IsMember", "Read", "Write" }
+  },
+  {
+    entityId: "832bf368-6adc-4ae0-b838-41feeb01ac47",
+    entityName: "Statements",
+    permissions: Set(1) { "Write" }
+  }
+]
+```
 
   ## Clean Up
 
