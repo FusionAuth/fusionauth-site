@@ -1,0 +1,160 @@
+---
+title: Business To Business To Consumer
+description: Allow your customers' users to authenticate with FusionAuth
+section: get started
+subcategory: use cases
+---
+import LoginBefore from 'src/diagrams/quickstarts/login-before.astro';
+import LoginAfter from 'src/diagrams/quickstarts/login-after.astro';
+import B2B2CDescription from 'src/content/docs/get-started/use-cases/_b2b2c-description.mdx';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import CircusesRelationships from 'src/diagrams/docs/get-started/use-cases/b2b2c/b2b2c-circuses.astro';
+
+## Overview
+
+<B2B2CDescription />
+
+## Problem 
+
+You have an application that you sell to customers and they then have their own users. You want to safely store those users' personal identifiable information and credentials, but allow your customers to manage their users.
+
+## Solution
+
+With the business to business to consumer (b2b2c) use case, you can allow the users of your customers to securely authenticate. You can also allow your customers to read, update and delete users from their system.
+
+## Prerequisites
+
+You have configured your application or applications to [delegate authentication to FusionAuth](/docs/get-started/use-cases/auth-service) via the Authorization Code grant and the hosted login pages.
+
+You have created a FusionAuth API key with the key manager attribute enabled.
+
+## Example Scenario
+
+Suppose your company, BigTop Tickets, sells a ticketing system for circuses. Your software package lets customers buy tickets to see adorable clowns and great feats of strength. Circuses sometimes offer free events, so you need to support both paying and free customers.
+
+Your customers are the circuses, and their users are their customers. Each circus has their own policies about login methods, password length, and more.
+
+You are super excited because you've landed both Ringling Bros. and Barnum & Bailey Circus and Cirque du Soleil as your customers. They each have customers. 
+
+<CircusesRelationships alt="Circus relationships diagram."/>
+
+Note that Jamie Morgan is a customer of both circuses.
+
+## Actors/Components
+
+* your customer and their client application (mobile app or browser)
+* your customer's user and their client application (mobile app or browser)
+* your application
+* FusionAuth
+
+## Implementation Steps
+
+This is a three step implementation to ensure your customers users's will always be able to get the tickets they need. The steps include:
+
+* Setting up your system to handle adding new customers
+* Letting customers' users sign in or register
+* Allowing your customers to manage their users and other settings
+
+
+- let users sign in (mult client ids and redirect urls, RBAC)
+- admin of users (tenant bound API keys and integrated into your app)
+
+Here's a high level sequence diagram of adding new customers.
+
+<LoginBefore alt="Adding new customers." />
+
+Here's a high level sequence diagram of a user logging in.
+
+Here's a high level sequence diagram of a customer admin user managing users.
+
+<LoginAfter alt="Your application login flow with FusionAuth." />
+
+### Adding New Customers
+
+
+### Customers's Users Authentication
+
+### Customer Admin Managment
+
+
+### Implementation Notes
+
+In this case, each customer has an entirely different set of user accounts. If someone signs up with jamie.morgan@example.com for Ringling Brothers and for Cirque De Soleil, they are entirely separate accounts with no innate relation to each other.
+
+They can have different:
+
+* profile attributes
+* credentials
+* roles in applications
+
+jamie.morgan@example.com's accounts Ringling Brothers and for Cirque De Soleil are entirely separate and that user may not even know the ticketing application for these circuses are both provided by TopTicket.
+
+#### Alternative Implementation
+
+If you instead want to have a shared user space, you have the following options:
+
+* Model each customer as an applicationr. The user can log into them and be assigned roles given roles. If you want to limit access to a given set of customers for one user, self-service registration must be disabled, so you'd have to use a different provisioning method. Data about the user's relationship to the customer can be stored on the `registration.data` field.
+* Use entities. Create one application users log into, model each customer as an entity and use the [Entity Grant APIs](/docs/apis/entities/grants) to determine which customers a user should have access to. The permissions can be placed in a token using an [API call within a lambda](/docs/extend/code/lambdas/lambda-remote-api-calls). Data about the user's relationship to the customer can be stored on the `grant.data` field.
+
+In both these cases you'd keep all users in one tenant. You'd have to build your own authorization system to ensure that customer admins from Ringling Brothers couldn't access Cirque De Soliels' users.
+
+You might want to use these if you wanted your customers' users to share accounts between different circuses. In this case, they will be able to log in to one application and then switch between them, possibly acquiring different roles or permissions. This is similar to GitHub or Slack.
+
+## Expected Outcome
+
+You've delegated your application's login functionality to FusionAuth. User profile and credential data is securely stored, and you can enable new functionality through configuration, rather than engineering effort.
+
+## Edge Cases
+
+If you have user data in your application, you'll want to migrate it to FusionAuth. Here's a [helpful migration guide](/docs/lifecycle/migrate-users/general-migration).
+
+In your application, after successful login, validate [the tokens and the claims provided](/articles/tokens/building-a-secure-jwt#consuming-a-jwt) to ensure the token was provided by FusionAuth for your application.
+
+Ensure you modify [the look and feel of the hosted login pages with themes](/docs/customize/look-and-feel/).
+
+The hosted login pages give you maximal flexibility around look and feel customization, but constrain your login flow options. If you want to build login workflows with unique requirements, use the [Login API](/docs/apis/login). This is the data store use case. An example custom workflow would be:
+
+* prompt for an invite code and have the user provide a login Id 
+* send the user an MFA challenge
+* present them with a login screen, but only the login Id (email or username)
+* ask for the password on the next page
+
+## Other Example Scenarios
+
+Any application which requires a user to log in to access data or functionality matches this use case. Examples include:
+
+* An online game
+* An AI content editing application
+* A blog
+* A support ticketing system
+* A social network
+
+In each of these cases there's functionality limited to users based on their identity, profile and permissions.
+
+## Additional Documentation
+
+TODO
+
+- user manages identity vs customer (latter case is b2b2e)
+- want to allow customers to manage settings
+- do users move between customers? if so, use apps, otherwise use tenants
+
+implementation
+- handle adding new customers
+- let users sign in (mult client ids and redirect urls, RBAC)
+- admin of users (tenant bound API keys and integrated into your app)
+
+
+determine which customer a user is part of
+- pull over from tenant guide
+
+edge cases
+- how to handle multiple application configs in diff tenants all pointing to same underlying webapp
+-- authorized redirect url lookup 
+
+add link to
+- multi tenant example
+- segmenting users section
+- private label saas blog post
+- entities 
+- search query
