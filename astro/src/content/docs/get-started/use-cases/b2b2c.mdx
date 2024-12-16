@@ -4,11 +4,13 @@ description: Allow your customers' users to authenticate with FusionAuth
 section: get started
 subcategory: use cases
 ---
-import LoginBefore from 'src/diagrams/quickstarts/login-before.astro';
-import LoginAfter from 'src/diagrams/quickstarts/login-after.astro';
 import B2B2CDescription from 'src/content/docs/get-started/use-cases/_b2b2c-description.mdx';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
+import Aside from 'src/components/Aside.astro';
 import CircusesRelationships from 'src/diagrams/docs/get-started/use-cases/b2b2c/b2b2c-circuses.astro';
+import AddNewCustomers from 'src/diagrams/docs/get-started/use-cases/b2b2c/add-new-customers.astro';
+import UserLoggingIn from 'src/diagrams/docs/get-started/use-cases/b2b2c/user-logging-in.astro';
+import AdminManagingUsers from 'src/diagrams/docs/get-started/use-cases/b2b2c/admin-managing-users.astro';
 
 ## Overview
 
@@ -22,6 +24,14 @@ You have an application that you sell to customers and they then have their own 
 
 With the business to business to consumer (b2b2c) use case, you can allow the users of your customers to securely authenticate. You can also allow your customers to read, update and delete users from their system.
 
+<Aside type="note">
+There are multiple users of a b2b2c system.
+
+In this document, customers refer to people who are paying you to use the application you have build.
+
+Users refers to the end users of the system. These are people who are the customers' users or customers.
+</Aside>
+
 ## Prerequisites
 
 You have configured your application or applications to [delegate authentication to FusionAuth](/docs/get-started/use-cases/auth-service) via the Authorization Code grant and the hosted login pages.
@@ -34,11 +44,11 @@ Suppose your company, BigTop Tickets, sells a ticketing system for circuses. You
 
 Your customers are the circuses, and their users are their customers. Each circus has their own policies about login methods, password length, and more.
 
-You are super excited because you've landed both Ringling Bros. and Barnum & Bailey Circus and Cirque du Soleil as your customers. They each have customers. 
+You are super excited because you've landed both Ringling Bros. and Barnum & Bailey Circus and Cirque du Soleil as your customers. And, of course, they each have customers of their own, who are individuals or other organizations buying tickets.
 
 <CircusesRelationships alt="Circus relationships diagram."/>
 
-Note that Jamie Morgan is a customer of both circuses.
+The circus' set of customers can overlap or be disjoint. Jamie Morgan is an example of a customer of both circuses.
 
 ## Actors/Components
 
@@ -59,15 +69,17 @@ This is a three step implementation to ensure your customers users's will always
 - let users sign in (mult client ids and redirect urls, RBAC)
 - admin of users (tenant bound API keys and integrated into your app)
 
-Here's a high level sequence diagram of adding new customers.
+Here's a high level sequence diagram of the process of adding new customers. Each customer is represented as a tenant.
 
-<LoginBefore alt="Adding new customers." />
+<AddNewCustomers alt="Adding new customers." />
 
-Here's a high level sequence diagram of a user logging in.
+Here's a high level sequence diagram of a user logging in to one of the customer's ticketing systems. The application is responsible for mapping the user to the correct customer.
 
-Here's a high level sequence diagram of a customer admin user managing users.
+<UserLoggingIn alt="Users logging in." />
 
-<LoginAfter alt="Your application login flow with FusionAuth." />
+Here's a high level sequence diagram of a customer admin user managing their users. The admin functions are integrated in to the application admin screen using API calls.
+
+<AdminManagingUsers alt="Tenant admin management of their users." />
 
 ### Adding New Customers
 
@@ -102,34 +114,22 @@ You might want to use these if you wanted your customers' users to share account
 
 ## Expected Outcome
 
-You've delegated your application's login functionality to FusionAuth. User profile and credential data is securely stored, and you can enable new functionality through configuration, rather than engineering effort.
+Your web or mobile application has isolated groups of users, one set for each customer. Each user has their own profile data and manages their identity, either in your application or via other solutions such as social sign-on.
 
 ## Edge Cases
 
-If you have user data in your application, you'll want to migrate it to FusionAuth. Here's a [helpful migration guide](/docs/lifecycle/migrate-users/general-migration).
-
-In your application, after successful login, validate [the tokens and the claims provided](/articles/tokens/building-a-secure-jwt#consuming-a-jwt) to ensure the token was provided by FusionAuth for your application.
-
-Ensure you modify [the look and feel of the hosted login pages with themes](/docs/customize/look-and-feel/).
-
-The hosted login pages give you maximal flexibility around look and feel customization, but constrain your login flow options. If you want to build login workflows with unique requirements, use the [Login API](/docs/apis/login). This is the data store use case. An example custom workflow would be:
-
-* prompt for an invite code and have the user provide a login Id 
-* send the user an MFA challenge
-* present them with a login screen, but only the login Id (email or username)
-* ask for the password on the next page
 
 ## Other Example Scenarios
 
-Any application which requires a user to log in to access data or functionality matches this use case. Examples include:
+Any application which has customers who then have their own users or customers. A very common scenario is a private labelled product sold to SMBs or consumers.
+ Examples include:
 
-* An online game
-* An AI content editing application
-* A blog
-* A support ticketing system
-* A social network
+* Website builders resold by creating agencies
+* Appointment schedulers for hair salons, personal trainers and other service professionals
+* Job boards
+* Accounting software for use by CPA's customers
 
-In each of these cases there's functionality limited to users based on their identity, profile and permissions.
+In each of these cases there is a clear differentiator between the customer organization buying the solution and the end customer. This use case is appropriate when the identity of the end user is *not* controlled by the customer, but rather by the end user themselves.
 
 ## Additional Documentation
 
@@ -147,6 +147,7 @@ implementation
 
 determine which customer a user is part of
 - pull over from tenant guide
+https://fusionauth.io/docs/extend/examples/multi-tenant#data-plane-application-tenant-determination ?
 
 edge cases
 - how to handle multiple application configs in diff tenants all pointing to same underlying webapp
@@ -158,3 +159,5 @@ add link to
 - private label saas blog post
 - entities 
 - search query
+
+https://fusionauth.io/docs/extend/examples/multi-tenant#data-plane-application-tenant-determination
