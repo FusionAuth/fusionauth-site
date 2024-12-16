@@ -11,7 +11,6 @@ import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import Aside from 'src/components/Aside.astro';
-import IconButton from 'src/components/icon/Icon.astro';
 import TypesDiagram from 'src/diagrams/docs/extend/examples/modeling-hierarchies/types.astro'
 import CompanyDiagram from 'src/diagrams/docs/extend/examples/modeling-hierarchies/company.astro'
 import HierarchyDiagram from 'src/diagrams/docs/extend/examples/modeling-hierarchies/hierarchy.astro'
@@ -22,7 +21,7 @@ This guide discusses ways of modeling hierarchical organizations and entities, w
 
 ## Understand FusionAuth Types And Their Relationships
 
-Let's start by reviewing all the FusionAuth types and how they relate. You need to understand these types well to adjust the hierarchical system design in this guide to suit your situation. If you want to read about FusionAuth types in more detail, see the [Core Concepts](https://fusionauth.io/docs/get-started/core-concepts) documentation.
+Let's start by reviewing all the FusionAuth types and how they relate. You need to understand these types well to adjust the hierarchical system design in this guide to suit your situation. If you want to read about FusionAuth types in more detail, see the [Core Concepts](/docs/get-started/core-concepts) documentation.
 
 To avoid confusion with FusionAuth applications in this guide, the service you provide your users will be called your "website", as opposed to an application, app, or service.
 
@@ -42,7 +41,7 @@ A group is a collection of users. A user can belong to multiple groups, so you c
 
 For example, consider an example of a bank website with clients and employees. The bank website is an application in FusionAuth. The application has two roles: client and employee. Your clients and employees are users, that each have a single registration in the bank application. Each registration may give the user either the client or employee role, or both.
 
-If you want, you could make groups called client and employee, with the client and employees roles in the application respectively. Then you would add users to either or both groups, and register the users with the application, but would not need to give the users roles manually. This would be useful if you had a lot of roles. Another use of groups is to tag users with certain attributes, such as VIP users.
+If you want, you could make groups called client and employee, with the client and employee roles in the application respectively. Then you would add users to either or both groups, and register the users with the application, but would not need to give the users roles manually. This would be useful if you had a lot of roles. Another use of groups is to tag users with certain attributes, such as VIP users.
 
 <Aside type="caution">
 Digital security usually involves three types: users, roles, and permissions. A user can have many roles, and roles can have many permissions. The advantage of not granting users permissions directly are:
@@ -53,8 +52,9 @@ Digital security usually involves three types: users, roles, and permissions. A 
 However, FusionAuth does not have permissions. There is a GitHub feature request to add them. Vote [here](https://github.com/FusionAuth/fusionauth-issues/issues/15) if you want that feature.
 
 There are two workarounds:
+
 - Treat roles as permissions. In other words, instead of the employee role, make roles called "can edit clients", "can adjust salaries", and so on. When a user logs in with FusionAuth, your website will receive a list of exactly what "permissions" (roles) the user has. But now you have lost all the advantages of working with roles described above.
-- Manage permissions in your website code. Keep the user and role associations in FusionAuth, but link roles to permissions in your website database, not in FusionAuth. When a user logs in with FusionAuth, your website will go the database and retrieve all permissions you have associated with those roles and add them to the user. This treats FusionAuth more as an authentication system than an authorization system.
+- Manage permissions in your website code. Keep the user and role associations in FusionAuth, but link roles to permissions in your website database, not in FusionAuth. When a user logs in with FusionAuth, your website will lookup in the database and retrieve all permissions you have associated with those roles and add them to the user. This treats FusionAuth more as an authentication system than an authorization system.
 </Aside>
 
 ### Entities And Permissions
@@ -75,8 +75,7 @@ Below is a diagram illustrating the relationships in the examples from the previ
 
 Note that entities and applications cannot be related, even if they represent the same physical company. Only users can have entity grants to entities.
 
-{/* <TypesDiagram /> */}
-![mermaid1](../../../../../public/img/docs/extend/examples/modeling-hierarchy/mermaid1.webp)
+![Types diagram](/img/docs/extend/examples/modeling-hierarchy/mermaid1.webp)
 
 There are only two permission blocks in this diagram to avoid clutter. This isn't quite accurate, as in FusionAuth each entity grant would point to a separate permission — objects don't share permissions.
 
@@ -92,8 +91,7 @@ Permissions propagate downwards. So an employee with write permissions to the ma
 
 Below is a diagram of the company structure to model.
 
- {/* <CompanyDiagram /> */}
-![mermaid2](../../../../../public/img/docs/extend/examples/modeling-hierarchy/mermaid2.webp)
+![Company diagram](/img/docs/extend/examples/modeling-hierarchy/mermaid2.webp)
 
 <Aside type="note">
 You can probably see some challenges already:
@@ -106,11 +104,11 @@ There are solutions to these problems, such as including "Deny access" permissio
 ## Options To Model Hierarchy In FusionAuth
 
 There are a few ways to model this structure in FusionAuth. But documents have to be entities and employees have to be users. There are no other types in FusionAuth that will work for this. After that, here are your options:
+
 - **1) Applications and roles**: Add a finance employee, like Alice, to an application representing her company and department, like Change Bank Operations application. Each application will have two roles, read and write, which are effectively permissions not roles. Each department application has to have the company name in its title, instead of being called only Operation, because there is no way to show one application in FusionAuth is linked to another. You will have a combinatorial number of applications, given the number of companies and departments you add. However, you still need to create an application with no department, called Change Bank application, to show that Alice is a member of the company, or you will need to infer it from the department names of which she is a member. You can't use groups instead of applications to model this example because groups do not have permissions. You could use groups to make it easier to link users with applications and roles, but you still need the applications and roles.
 - **2) Entities and grants**: Create entity types Company and Department with permissions Read, Write, and IsMember. Read and write are used to show permissions, but IsMember is used to show hierarchy. Create an entity called Change Bank of type Company and entity of Department called Operations. Create an entity grant for Operations to Change Bank with IsMember set to true to show that this Operations entity belongs to the Change Bank entity. Note that it will not be possible to tell departments called Operations in different companies apart by their name alone. You will need to examine each department's entity grant to see which company it belongs to. Create an entity grant for user Alice to entity Change Bank with no permissions, and an entity grant for Alice to Operations with permissions Read and Write. Below is a diagram of this example, which is similar to the earlier types diagram, but includes a department hierarchy now. Permissions are shown in separate blocks now too.
 
-{/* <HierarchyDiagram /> */}
-![mermaid3](../../../../../public/img/docs/extend/examples/modeling-hierarchy/mermaid3.webp)
+![Hierarchy diagram](/img/docs/extend/examples/modeling-hierarchy/mermaid3.webp)
 
   For simplicity's sake this diagram does not include Change Corp entity of entity type Corporation. There are two blocks: one for Change Insurance and one for Change Bank. Ignore the Change Insurance block and concentrate on Change Bank to see how Alice is connected to her department, which is connected to the company. This diagram also shows a document attached to the Operations department. The document itself has needs read and write permissions, for when you want to enable individual access, and is linked to the Operations department via an entity grant with the IsMember permission, in the same way departments are linked to companies.
 - **3) User JSON data**: Store every user's company and department as properties in their JSON `user.data` field. This has to be done through the FusionAuth API, and cannot be maintained in the FusionAuth web interface. You will need to write your own UI app for HR staff to work with FusionAuth. With this approach you don't need to use applications, roles, or groups. Below is example JSON data for Alice:
@@ -176,13 +174,13 @@ If you have any trouble with this tutorial, try replacing the FusionAuth image i
 In this section you'll create the entities and permissions in FusionAuth to represent a company hierarchy with documents.
 
 - Browse to <Breadcrumb>Entity Management -> Entity Types</Breadcrumb>.
-- Click <InlineUIElement>Add</InlineUIElement>.
+- Click the <InlineUIElement>+ Add</InlineUIElement> button.
 - Name the entity type `Company`.
 - Add the permissions `Read`, `Write`, and `IsMember` and save the entity type.
 - Add another entity type called `Department` with the same permission names and save it.
 - Add a final entity type called `Document` with only `Read` and `Write` permissions. Nothing can be a member of a document, so it doesn't need an `IsMember` permission.
 
-![Entity Types in FusionAuth](../../../../../public/img/docs/extend/examples/modeling-hierarchy/entityTypes.webp)
+![Entity Types in FusionAuth](/img/docs/extend/examples/modeling-hierarchy/entityTypes.png)
 
 Next you'll populate FusionAuth with some entities of these types:
 
@@ -201,20 +199,20 @@ Next you'll populate FusionAuth with some entities of these types:
 - Add another entity of type Document and call it `Statements`.
   - Give this entity the Id `832bf368-6adc-4ae0-b838-41feeb01ac47`.
 
-![Entities in FusionAuth](../../../../../public/img/docs/extend/examples/modeling-hierarchy/entities.webp)
+![Entities in FusionAuth](/img/docs/extend/examples/modeling-hierarchy/entities.png)
 
 Finally, you need to connect the entities in a hierarchy using permissions as a link.
 
 - In the <InlineUIElement>Select</InlineUIElement> menu for the Change Bank Operations department entity, click <InlineUIElement>Manage</InlineUIElement>.
-- Add an entity grant.
+- Click <InlineUIElement>+ Add</InlineUIElement> to add an entity grant.
 - In the search box, enter `Change Bank`, and select it from the dropdown list.
 - Enable the <InlineUIElement>IsMember</InlineUIElement> permission.
 - Save.
 - Return to <Breadcrumb>Entity Management -> Entities</Breadcrumb>.
-- Add the Finance department entity to the Change Bank company in the same way as above.
-- Add the Change Insurance department entity to the Change Insurance company in the same way as above.
+- Add the Change Bank Finance department entity to the Change Bank company in the same way as above.
+- Add the Change Insurance Operations department entity to the Change Insurance company in the same way as above.
 - Change Bank now has two departments and Change Insurance has one.
-- Manage the Password document, and give it an entity grant to the Change Bank Operations department with permission IsMember.
+- Manage the Passwords document, and give it an entity grant to the Change Bank Operations department with permission IsMember.
 - Manage the Statements document, and give it an entity grant to the Change Bank Finance department with permission IsMember.
 
 <Aside type="caution">
@@ -223,15 +221,15 @@ Notice here that when you search for `Operations`, the search dropdown list prov
 
 ### Grant Entity Permissions To A User
 
-You haven't used set any read or write permissions yet, because those are linked only to users, or flow implicitly downwards through the company hierarchy set by `IsMember`. So let's add a user to the Operations department.
+You haven't set any read or write permissions yet, because those are linked only to users, or flow implicitly downwards through the company hierarchy set by `IsMember`. So let's add a user to the Operations department.
 
 - Browse to <Breadcrumb>Users</Breadcrumb>.
 - From the <InlineUIElement>Select</InlineUIElement> menu for user `Richard`, choose <InlineUIElement>Manage</InlineUIElement>.
-- In the <InlineUIElement>Entity grants</InlineUIElement> tab, click <InlineUIElement>Add</InlineUIElement>.
+- In the <InlineUIElement>Entity grants</InlineUIElement> tab, click <InlineUIElement>+ Add</InlineUIElement>.
 - Search for and add `Change Bank Operations`.
 - Enable all three permissions for the user and save.
 
-![User with entity grant in FusionAuth](../../../../../public/img/docs/extend/examples/modeling-hierarchy/user.webp)
+![User with entity grant in FusionAuth](/img/docs/extend/examples/modeling-hierarchy/user.png)
 
 FusionAuth now represents your corporate hierarchy and you can start work on the website.
 
@@ -241,7 +239,7 @@ In this section you'll write a script to get all the direct and indirect (throug
 
 For this script, you'll use TypeScript. It's easy to make errors when working with a tree structure, like these parent and child entities. TypeScript's strong typing will prevent errors, and enable you to see exactly which properties are available on each object. If you prefer JavaScript, you can delete all the type syntax, rename the file with `.js`, and the code will still run fine.
 
-Start by creating the script, called `getPermissions.ts`, and add the type definitions below. Axios will be used to call the FusionAuth API on the network.
+Start by creating the script, called `getPermissions.ts` in the current `light` working directory, and add the type definitions below. Axios will be used to call the FusionAuth API on the network.
 
 ```ts
 import axios from "npm:axios@1.7.9";
@@ -297,7 +295,7 @@ async function getUserPermissions(emailAddress: string): Promise<TPermission[]> 
   }
 ```
 
-Note that the FusionAuth API key is hardcoded into this file and passed to Axios. In reality, you should never commit your key to Git, but keep it in a `.env` file. The rest of the code is simple: it calls the FusionAuth API for each type and stores the result returned. Read more about the API for [users](https://fusionauth.io/docs/apis/users), [entities](https://fusionauth.io/docs/apis/entities/entities), and [grants](https://fusionauth.io/docs/apis/entities/grants).
+Note that the FusionAuth API key is hardcoded into this file and passed to Axios. In reality, you should never commit your key to Git, but keep it in a `.env` file. The rest of the code is simple: it calls the FusionAuth API for each type and stores the result returned. Read more about the API for [users](/docs/apis/users), [entities](/docs/apis/entities/entities), and [grants](/docs/apis/entities/grants).
 
 Continue the function above by calculating the permissions for the user for every document, and end the script by calling the function.
 
@@ -346,10 +344,8 @@ This code is a little tricky if you haven't worked with a tree structure before.
 In a new terminal, run the commands below to install Axios and run the script to check what permissions Richard has to both documents. Here, to save time, you use Docker again, with the Deno 2 image, which can run TypeScript without any compile step, as well as allowing you to freely mix JavaScript, ES modules, and CommonJS modules. In reality, you could use the TypeScript compiler, and Node, Bun, or any other JavaScript environment you like.
 
 ```sh
-docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" denoland/deno:alpine-2.1.3 sh -c  "deno install"
-
-docker run --platform=linux/amd64 --rm --network faNetwork -v ".:/app" -w "/app" denoland/deno:alpine-2.1.3 sh -c  "deno run --allow-net --allow-read ./bin/www"
-  ```
+docker run --platform=linux/amd64 --rm --network faNetwork -v ".:/app" -w "/app" denoland/deno:alpine-2.1.3 sh -c  "deno run --allow-net --allow-read ./getPermissions.ts"
+```
 
 The result should be as below.
 
