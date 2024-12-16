@@ -75,7 +75,6 @@ Below is a diagram illustrating the relationships in the examples from the previ
 
 Note that entities and applications cannot be related, even if they represent the same physical company. Only users can have entity grants to entities.
 
-{/* <TypesDiagram /> */}
 ![Types diagram](/img/docs/extend/examples/modeling-hierarchy/mermaid1.webp)
 
 There are only two permission blocks in this diagram to avoid clutter. This isn't quite accurate, as in FusionAuth each entity grant would point to a separate permission — objects don't share permissions.
@@ -92,7 +91,6 @@ Permissions propagate downwards. So an employee with write permissions to the ma
 
 Below is a diagram of the company structure to model.
 
- {/* <CompanyDiagram /> */}
 ![Company diagram](/img/docs/extend/examples/modeling-hierarchy/mermaid2.webp)
 
 <Aside type="note">
@@ -106,10 +104,10 @@ There are solutions to these problems, such as including "Deny access" permissio
 ## Options To Model Hierarchy In FusionAuth
 
 There are a few ways to model this structure in FusionAuth. But documents have to be entities and employees have to be users. There are no other types in FusionAuth that will work for this. After that, here are your options:
+
 - **1) Applications and roles**: Add a finance employee, like Alice, to an application representing her company and department, like Change Bank Operations application. Each application will have two roles, read and write, which are effectively permissions not roles. Each department application has to have the company name in its title, instead of being called only Operation, because there is no way to show one application in FusionAuth is linked to another. You will have a combinatorial number of applications, given the number of companies and departments you add. However, you still need to create an application with no department, called Change Bank application, to show that Alice is a member of the company, or you will need to infer it from the department names of which she is a member. You can't use groups instead of applications to model this example because groups do not have permissions. You could use groups to make it easier to link users with applications and roles, but you still need the applications and roles.
 - **2) Entities and grants**: Create entity types Company and Department with permissions Read, Write, and IsMember. Read and write are used to show permissions, but IsMember is used to show hierarchy. Create an entity called Change Bank of type Company and entity of Department called Operations. Create an entity grant for Operations to Change Bank with IsMember set to true to show that this Operations entity belongs to the Change Bank entity. Note that it will not be possible to tell departments called Operations in different companies apart by their name alone. You will need to examine each department's entity grant to see which company it belongs to. Create an entity grant for user Alice to entity Change Bank with no permissions, and an entity grant for Alice to Operations with permissions Read and Write. Below is a diagram of this example, which is similar to the earlier types diagram, but includes a department hierarchy now. Permissions are shown in separate blocks now too.
 
-{/* <HierarchyDiagram /> */}
 ![Hierarchy diagram](/img/docs/extend/examples/modeling-hierarchy/mermaid3.webp)
 
   For simplicity's sake this diagram does not include Change Corp entity of entity type Corporation. There are two blocks: one for Change Insurance and one for Change Bank. Ignore the Change Insurance block and concentrate on Change Bank to see how Alice is connected to her department, which is connected to the company. This diagram also shows a document attached to the Operations department. The document itself has needs read and write permissions, for when you want to enable individual access, and is linked to the Operations department via an entity grant with the IsMember permission, in the same way departments are linked to companies.
@@ -241,7 +239,7 @@ In this section you'll write a script to get all the direct and indirect (throug
 
 For this script, you'll use TypeScript. It's easy to make errors when working with a tree structure, like these parent and child entities. TypeScript's strong typing will prevent errors, and enable you to see exactly which properties are available on each object. If you prefer JavaScript, you can delete all the type syntax, rename the file with `.js`, and the code will still run fine.
 
-Start by creating the script, called `getPermissions.ts`, and add the type definitions below. Axios will be used to call the FusionAuth API on the network.
+Start by creating the script, called `getPermissions.ts` in the current `light` working directory, and add the type definitions below. Axios will be used to call the FusionAuth API on the network.
 
 ```ts
 import axios from "npm:axios@1.7.9";
@@ -346,9 +344,7 @@ This code is a little tricky if you haven't worked with a tree structure before.
 In a new terminal, run the commands below to install Axios and run the script to check what permissions Richard has to both documents. Here, to save time, you use Docker again, with the Deno 2 image, which can run TypeScript without any compile step, as well as allowing you to freely mix JavaScript, ES modules, and CommonJS modules. In reality, you could use the TypeScript compiler, and Node, Bun, or any other JavaScript environment you like.
 
 ```sh
-docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" denoland/deno:alpine-2.1.3 sh -c  "deno install"
-
-docker run --platform=linux/amd64 --rm --network faNetwork -v ".:/app" -w "/app" denoland/deno:alpine-2.1.3 sh -c  "deno run --allow-net --allow-read ./bin/www"
+docker run --platform=linux/amd64 --rm --network faNetwork -v ".:/app" -w "/app" denoland/deno:alpine-2.1.3 sh -c  "deno run --allow-net --allow-read ./getPermissions.ts"
 ```
 
 The result should be as below.
