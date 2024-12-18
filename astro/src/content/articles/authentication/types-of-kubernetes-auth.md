@@ -22,6 +22,8 @@ This is the control plane layer. This determines who can do what to your Kuberne
 
 This is the authentication and authorization discussed in [the Kubernetes documentation](https://kubernetes.io/docs/reference/access-authn-authz/authentication/).
 
+[![Auth Considerations for Kubernetes](/img/cta/auth-k8s.png)](/ebooks/auth-considerations-for-kubernetes?utm_medium=cta&utm_source=articles&utm_campaign=auth_considerations_k8s)
+
 As outlined there:
 
 > API requests are tied to either a normal user or a service account, or are treated as anonymous requests. This means every process inside or outside the cluster, from a human user typing `kubectl` on a workstation, to kubelets on nodes, to members of the control plane, must authenticate when making requests to the API server, or be treated as an anonymous user.
