@@ -11,10 +11,19 @@ import CircusesRelationships from 'src/diagrams/docs/get-started/use-cases/b2b2c
 import AddNewCustomers from 'src/diagrams/docs/get-started/use-cases/b2b2c/add-new-customers.astro';
 import UserLoggingIn from 'src/diagrams/docs/get-started/use-cases/b2b2c/user-logging-in.astro';
 import AdminManagingUsers from 'src/diagrams/docs/get-started/use-cases/b2b2c/admin-managing-users.astro';
+import UserSegmentTable from 'src/content/docs/get-started/core-concepts/_user-segment-table.mdx';
+import CrossTenantUserAccess from 'src/content/docs/get-started/core-concepts/_cross-tenant-access.mdx';
 
 ## Overview
 
 <B2B2CDescription />
+
+<Aside type="note">
+There are multiple users of a b2b2c system; the different types of users can be confusing.
+
+In this document, the term `customer` refers to people who are paying you to use the application you have built. The term `user` refers to the end users of the software application. `Users` are the customers' free or paid users.
+</Aside>
+
 
 ## Problem 
 
@@ -24,13 +33,10 @@ You have an application that you sell to customers and they then have their own 
 
 With the business to business to consumer (b2b2c) use case, you can allow the users of your customers to securely authenticate. You can also allow your customers to read, update and delete users from their system.
 
-<Aside type="note">
-There are multiple users of a b2b2c system.
+This use case is appropriate when the identity of the end user is *not* controlled by the customer, but rather by the end user themselves. If the identity of the end user is controlled by the customer, the b2b2e use case is a better option.
 
-In this document, customers refer to people who are paying you to use the application you have build.
+[comment]: <> (TODO update this with a link to the b2b2e scenario when that is published)
 
-Users refers to the end users of the system. These are people who are the customers' users or customers.
-</Aside>
 
 ## Prerequisites
 
@@ -40,7 +46,7 @@ You have created a FusionAuth API key with the key manager attribute enabled.
 
 ## Example Scenario
 
-Suppose your company, BigTop Tickets, sells a ticketing system for circuses. Your software package lets customers buy tickets to see adorable clowns and great feats of strength. Circuses sometimes offer free events, so you need to support both paying and free customers.
+Suppose your company, ClownPass, sells a ticketing system for circuses. Your software package lets customers buy tickets to see adorable clowns and great feats of strength. Circuses sometimes offer free events, so you need to support both paying and free customers.
 
 Your customers are the circuses, and their users are their customers. Each circus has their own policies about login methods, password length, and more.
 
@@ -59,15 +65,14 @@ The circus' set of customers can overlap or be disjoint. Jamie Morgan is an exam
 
 ## Implementation Steps
 
-This is a three step implementation to ensure your customers users's will always be able to get the tickets they need. The steps include:
+There are three implementation steps to ensure your customers users's will always be able to get the tickets they need.
+This is a Tenant based implementation, where users are stored in different FusionAuth tenants. Let's look at the details
+
+The steps include:
 
 * Setting up your system to handle adding new customers
 * Letting customers' users sign in or register
 * Allowing your customers to manage their users and other settings
-
-
-- let users sign in (mult client ids and redirect urls, RBAC)
-- admin of users (tenant bound API keys and integrated into your app)
 
 Here's a high level sequence diagram of the process of adding new customers. Each customer is represented as a tenant.
 
@@ -81,83 +86,103 @@ Here's a high level sequence diagram of a customer admin user managing their use
 
 <AdminManagingUsers alt="Tenant admin management of their users." />
 
+Let's look at these steps in detail.
+
 ### Adding New Customers
 
+To add new customers, make sure your circus SaaS application can handle multiple tenants. At a minimum, you need to ensure your application has some way to distinguish each customers access points. There are a couple of ways to do this, but the most typical is to offer a different hostname for each customer. You might have `ringling` as a hostname prefix for that customer and `cirquedesoleil` as the prefix for another one. You'll need to ensure your web application can respond to multiple hostnames. There are [other options](/docs/extend/examples/multi-tenant#data-plane-application-tenant-determination) as well.
 
-### Customers's Users Authentication
+There are other things you need to do to have a successful multi-tenant software application, such as logically isolating customer data using a tenant Id column. Such multi-tenant application architecture guidance is beyond the scope of this document.
 
-### Customer Admin Managment
+You'll need to update FusionAuth configuration, including:
 
+* create a new Tenant
+* create a new Application in that Tenant, configuring the correct redirect URL
+* create a new Tenant locked API key
+* configure the Application to use any Identity Providers, such as Google Login, that you want to enable
+* custom look and feel elements like Email Templates and Themes
+
+You can script these steps using one of the [SDKs](/docs/sdks).
+
+Record information such as the API key, the client Id and client secret from the Application configuration in your application's database. You can do lookups for this information from the hostname prefix.
+
+Once the customer is set up, users can gain access to your application in a variety of ways. They can:
+* be migrated in from an existing store
+* register using social sign-on
+* created directly using the API or SDKs
+* register themselves if you enable self-service registration
+
+### User Authentication
+
+When a user of one of your customers tries to log in, they'll interact with FusionAuth.
+
+When a user comes to the Ringling site hosted by ClownApp, they are redirected to a FusionAuth authorization URL with the appropriate client Id and redirect URL. Here's an [explanation of how to create the URL and what each component means](/docs/lifecycle/authenticate-users/oauth/endpoints#authorization-code-grant-request).
+
+The user will see a Ringling themed page. Other interactions with FusionAuth, such as a forgot password message, will be Ringling themed as well.
+
+After the user authenticates, the client Id and client secret can be looked up in the application database based on the hostname in the redirect URL. This means that the circus ticketing web application corresponds to N client Ids and secrets, one for each customer.
+
+The client Id and client secret are provided to FusionAuth to obtain tokens. Here's an [explanation of that request](/docs/lifecycle/authenticate-users/oauth/endpoints#complete-the-authorization-code-grant-request).
+
+The [tokens](/docs/lifecycle/authenticate-users/oauth/tokens) will contain information about the user and their roles, and can be used by your application to determine correct levels of access or data to retrieve.
+
+### User Management
+
+Customer admins and other privileged users will add, read, update and delete user data using the ClownPass application. The application can use the tenant locked API key to update user data or perform any other user related functionality.
+
+Users can manage their own account data directly via FusionAuth, using [self-service account management](/docs/lifecycle/manage-users/account-management/).
 
 ### Implementation Notes
 
-In this case, each customer has an entirely different set of user accounts. If someone signs up with jamie.morgan@example.com for Ringling Brothers and for Cirque De Soleil, they are entirely separate accounts with no innate relation to each other.
+Each customer's users are entirely separate with the tenant based implementation. If someone signs up, with the email address `jamie.morgan@example.com`, for Ringling Brothers and for Cirque De Soleil, each account is entirely separate with no relation to each other.
 
-They can have different:
+The accounts can have different:
 
 * profile attributes
 * credentials
 * roles in applications
 
-jamie.morgan@example.com's accounts Ringling Brothers and for Cirque De Soleil are entirely separate and that user may not even know the ticketing application for these circuses are both provided by TopTicket.
+The person who owns the `jamie.morgan@example.com` email address may not even know the ticketing application for these circuses are both provided by ClownPass.
 
-#### Alternative Implementation
+### Alternative Implementation
 
-If you instead want to have a shared user space, you have the following options:
+The tenant based solution means that there is no overlap in users. If you want a shared user pool, you can use a different approach, keeping all the users in one tenant, and tenant based API keys wouldn't help with admin access. You'd have to build and enforce your own authorization scheme to ensure customer admins from Ringling Brothers couldn't access Cirque De Soliels' users.
 
-* Model each customer as an applicationr. The user can log into them and be assigned roles given roles. If you want to limit access to a given set of customers for one user, self-service registration must be disabled, so you'd have to use a different provisioning method. Data about the user's relationship to the customer can be stored on the `registration.data` field.
-* Use entities. Create one application users log into, model each customer as an entity and use the [Entity Grant APIs](/docs/apis/entities/grants) to determine which customers a user should have access to. The permissions can be placed in a token using an [API call within a lambda](/docs/extend/code/lambdas/lambda-remote-api-calls). Data about the user's relationship to the customer can be stored on the `grant.data` field.
+Here's a table which shows tradeoffs between different approaches.
 
-In both these cases you'd keep all users in one tenant. You'd have to build your own authorization system to ensure that customer admins from Ringling Brothers couldn't access Cirque De Soliels' users.
+<UserSegmentTable />
 
-You might want to use these if you wanted your customers' users to share accounts between different circuses. In this case, they will be able to log in to one application and then switch between them, possibly acquiring different roles or permissions. This is similar to GitHub or Slack.
+You might want to use a non-tenant based option if users should be able to seamlessly purchase tickets from different circuses and have one account to manage all such tickets. This is similar to GitHub or Slack.
 
 ## Expected Outcome
 
-Your web or mobile application has isolated groups of users, one set for each customer. Each user has their own profile data and manages their identity, either in your application or via other solutions such as social sign-on.
+Your web or mobile application has isolated groups of users, one set for each customer. Each user has their own profile data and manages their identity, either in your application or via other login methods such as social sign-on.
+
+Admins can manage the subset of user management related functionality directly in your application, using tenant locked API keys to limit access.
 
 ## Edge Cases
 
+The word `tenant` can be overloaded. When you are planning for this use case, make sure you distinguish between tenants in your application and FusionAuth tenants. They don't have to map one to one.
+
+<CrossTenantUserAccess />
 
 ## Other Example Scenarios
 
 Any application which has customers who then have their own users or customers. A very common scenario is a private labelled product sold to SMBs or consumers.
  Examples include:
 
-* Website builders resold by creating agencies
+* Website builders resold by creative agencies
 * Appointment schedulers for hair salons, personal trainers and other service professionals
-* Job boards
-* Accounting software for use by CPA's customers
+* Private labelled job boards
+* Accounting software sold to CPAs and used by the customers they offer tax services to
 
 In each of these cases there is a clear differentiator between the customer organization buying the solution and the end customer. This use case is appropriate when the identity of the end user is *not* controlled by the customer, but rather by the end user themselves.
 
 ## Additional Documentation
 
-TODO
-
-- user manages identity vs customer (latter case is b2b2e)
-- want to allow customers to manage settings
-- do users move between customers? if so, use apps, otherwise use tenants
-
-implementation
-- handle adding new customers
-- let users sign in (mult client ids and redirect urls, RBAC)
-- admin of users (tenant bound API keys and integrated into your app)
-
-
-determine which customer a user is part of
-- pull over from tenant guide
-https://fusionauth.io/docs/extend/examples/multi-tenant#data-plane-application-tenant-determination ?
-
-edge cases
-- how to handle multiple application configs in diff tenants all pointing to same underlying webapp
--- authorized redirect url lookup 
-
-add link to
-- multi tenant example
-- segmenting users section
-- private label saas blog post
-- entities 
-- search query
-
-https://fusionauth.io/docs/extend/examples/multi-tenant#data-plane-application-tenant-determination
+* [Multi-tenant guide](/docs/extend/examples/multi-tenant)
+* [Determining the tenant for a user](/docs/extend/examples/multi-tenant#data-plane-application-tenant-determination)
+* [Options for segmenting users](/docs/get-started/core-concepts/users#segmenting-users)
+* [Theme customization](/docs/customize/look-and-feel/)
+* [Email template customization](/docs/customize/email-and-messages/)
+* [Blog post about private labeling](/blog/private-labeling-with-multi-tenant)
