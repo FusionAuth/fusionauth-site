@@ -87,6 +87,8 @@ Let's look at these steps in detail.
 
 To add new customers, you need to make changes to both the ClownPass ticketing application and FusionAuth configuration.
 
+#### Preparing The ClownPass Application
+
 Make sure your circus SaaS application can handle multiple tenants. At a minimum, you need to ensure your application has some way to distinguish each customer's access points. There are a couple of ways to do this, but the most typical is to offer a different hostname for each customer. If the ticketing application is hosted at `example.com`, you might have the following hostnames:
 
 * `ringling.example.com` for Ringling Bros. and Barnum & Bailey Circus ticketing
@@ -95,6 +97,8 @@ Make sure your circus SaaS application can handle multiple tenants. At a minimum
 Ensure your web application can respond to multiple hostnames. If you don't want to have customer specific hostnames, there are [other options](/docs/extend/examples/multi-tenant#data-plane-application-tenant-determination).
 
 There are other aspects of a multi-tenant application, such as logically isolating customer data. Such multi-tenant application architecture guidance is beyond the scope of this document.
+
+#### Configuring FusionAuth
 
 For each new customer, you'll need to update configuration in the ClownPass FusionAuth instance. You'll need to:
 
@@ -109,12 +113,21 @@ You can script these steps using one of the [SDKs](/docs/sdks).
 
 Record information such as the API key, the client Id and client secret from the Application configuration in your application's database. Later, your application will look up this information based on the request hostname.
 
-Once the customer is set up, users can gain access to your application in a variety of ways. They can:
+When using FusionAuth Cloud, you can [configure FusionAuth to respond to different hostnames](/docs/get-started/run-in-the-cloud/cloud#custom-domains). You can also do the same with self-hosted FusionAuth. In addition to the hostnames above, you could also have:
+
+* `auth.ringling.example.com` for Ringling Bros. and Barnum & Bailey Circus login host
+* `auth.cirquedesoleil.example.com` for Cirque du Soleil login host
+
+If you don't use hostname customization, users may see a domain name they don't expect when logging in.
+
+Once the customer is set up, users can be registered for your application in a variety of ways. They can:
 
 * be migrated in from an existing store
 * register using social sign-on
 * created directly using the API or SDKs
 * register themselves if you enable self-service registration
+
+Pick one or more methods that work for your use case; FusionAuth supports them all.
 
 ### User Authentication
 
@@ -128,7 +141,13 @@ The [tokens](/docs/lifecycle/authenticate-users/oauth/tokens) contain informatio
 
 ### User Management
 
-Customer admins and other privileged users will add, read, update and delete user data using the ClownPass application. The application uses the tenant locked API key to update user data or perform other user related functionality.
+Customer admins and other privileged users will add, read, update and delete user data using the ClownPass application. While there is a lot of user management functionality exposed as an API you could add to your application, common functionality includes:
+
+* resetting a user's password
+* locking a user
+* changing user profile data
+
+The application uses the tenant locked API key and an SDK to allow customer admins to perform user management.
 
 Users can manage their own profile and credentials using the [self-service account management](/docs/lifecycle/manage-users/account-management/) provided by FusionAuth.
 
