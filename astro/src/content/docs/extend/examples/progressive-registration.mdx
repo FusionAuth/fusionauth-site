@@ -12,13 +12,11 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
 
 
-
-
 Registration is one of the most essential parts of authentication. Getting as much information as possible during registration is crucial for your app, especially if you are working with critical fields or need additional data.
 
-However, UX is essential, and bombarding potential users with multiple fields negatively affects the experience. FusionAuth provides a feature for progressive registration, where users can enter information incrementally across various pages or components. This can be configured using the FusionAuth admin dashboard or API.
+However, UX is essential, and bombarding potential users with multiple fields negatively affects the experience. FusionAuth provides a feature for progressive registration, where users can enter information incrementally across various pages or components. This can be configured using the FusionAuth admin UI or API.
 
-This guide will teach you how to implement progressive registration in your application. Let's explore two methods to achieve this: the admin dashboard or the FusionAuth API.
+This guide will teach you how to implement progressive registration in your application. Let's explore two methods to achieve this: the FusionAuth admin UI or the FusionAuth API.
 
 
 ## Requirements
@@ -46,26 +44,26 @@ The challenge here is managing the routing to the home page even more when you n
 This can be, for example, entering a credit card number or being prompted to create an entity such as a project or anything else that might be required to use the application.
 In this guide, the application will prompt the user to enter an address. Upon submission, the user will be redirected to the "Make Change" page.
 
-The next steps will cover two methods for achieving this: using the FusionAuth admin dashboard or the FusionAuth API.
+The next steps will cover two methods for achieving progressive registration: using the FusionAuth admin UI or the FusionAuth API.
 
 ## Using FusionAuth Admin UI
 
 
-Using the FusionAuth admin dashboard, you can create a registration form that will be used to collect the basic information like name and email, and then a second form
+Using the FusionAuth admin UI, you can create a registration form that will be used to collect the basic information like first name, last name and email, and then a second form
 that will be used to collect the password and complete the registration.
 
-If you are following along with the ChangeBank application login to your FusionAuth admin dashboard at http://localhost:9011/admin with email `admin@example.com` and password `password`. Navigate to <Breadcrumb>Reactor</Breadcrumb> and activate your license.
+If you are following along with the ChangeBank application, after setting up the application you can login to your FusionAuth admin UI at http://localhost:9011/admin with email `admin@example.com` and password `password`. Navigate to <Breadcrumb>Reactor</Breadcrumb> and activate your license.
 
 Once you have activated a license for your FusionAuth instance, you can create an advanced registration form by navigating to
 <Breadcrumb>Customizations -> Forms</Breadcrumb>. On this page, click on the <InlineUIElement>Add</InlineUIElement> button. On the form that appears set the <InlineField>Name</InlineField>  value to `Registration Form` (it can be arbitrary)
-, for the <InlineField>Type</InlineField> select `Registration` .
+, for the <InlineField>Type</InlineField> select `Registration`.
 
 
 <img src="/img/docs/extend/progressive-registration/form-name-type.png" alt="Form name and type"/>
 
 
-Continue to add the fields you want to collect under the <Breadcrumb>Form Steps</Breadcrumb> section. Click the <InlineUIElement>+ Add Step</InlineUIElement> button to add the first step. For Step 1, add a field for the <InlineField>First name</InlineField>, a field for the <InlineField>Last name</InlineField>,
-and a field for the <InlineField>Email</InlineField>. The second step will be used to collect the password and complete the registration. Click the <InlineUIElement>+ Add Step</InlineUIElement> button to add the Step 2 and on this step add a <InlineField>Password</InlineField> field. Click the <InlineUIElement>Save</InlineUIElement> button to save.
+Continue to add the fields you want to collect under the <Breadcrumb>Form Steps</Breadcrumb> section. Click the <InlineUIElement>+ Add Step</InlineUIElement> button to add the first step, Step 1. For Step 1, add a field for the <InlineField>First name</InlineField>, a field for the <InlineField>Last name</InlineField>,
+and a field for the <InlineField>Email</InlineField>. The second step will be used to collect the password and complete the registration. Click the <InlineUIElement>+ Add Step</InlineUIElement> button to add Step 2 and on this step add a <InlineField>Password</InlineField> field. Click the <InlineUIElement>Save</InlineUIElement> button to save.
 
 
 <img src="/img/docs/extend/progressive-registration/form-steps-fields.png" alt="Form fields"/>
@@ -73,7 +71,7 @@ and a field for the <InlineField>Email</InlineField>. The second step will be us
 
 After creating the registration form, you will need to do two things:
 
-- First, enable self registration on your FusionAuth application by navigating to <Breadcrumb>Applications -> Your Application -> Select -> Edit -> Registration</Breadcrumb>. Under Self-service registration toggle the <InlineField>Enabled</InlineField> switch, for the <InlineField>Type</InlineField> select `Advanced` and select the registration form you just created as the form
+- First, enable self registration on your FusionAuth application by navigating to <Breadcrumb>Applications -> ExampleNodeApp -> Select -> Edit -> Registration</Breadcrumb>. Under Self-service registration toggle the <InlineField>Enabled</InlineField> switch, for the <InlineField>Type</InlineField> select `Advanced` and select the registration form you just created as the form
 to use for registration.
 
 
@@ -110,7 +108,7 @@ The ChangeBank application does not have a registration form or logic to handle 
 
 #### Adding a Button to the Navigation Bar
 
-First, you will add a button to the navigation bar. This button will redirect the user to the registration form. In the `complete-application/src/template/home.html` file, add a new button next to the login button.
+First, you will add a button to the navigation bar. This button will redirect the user to the registration form. In the `complete-application/src/template/home.html` file, add a new button next to the login button by replacing the line `<a class="button-lg" href="/login">Login</a>` with the following code.
 
 ```html
 <div style="display: flex; justify-content: space-between; width: 28%;">
@@ -119,10 +117,9 @@ First, you will add a button to the navigation bar. This button will redirect th
 </div>
 ```
 
-Clicking on the <InlineUIElement>Register</InlineUIElement> button will redirect the user to the registration form.
-
 <img src="/img/docs/extend/progressive-registration/register-button.png" alt="Register button"/>
 
+Clicking on the <InlineUIElement>Register</InlineUIElement> button will redirect the user to the registration form.
 
 The next step is to add a route to handle the registration, `/register`. This route will construct the URL for redirection to the FusionAuth registration page. You can add this route in the `complete-application/src/index.ts` file.
 
@@ -140,13 +137,12 @@ app.get('/register', (req, res, next) => {
 ```
 
 
-The `fusionAuthURL` is the URL of the FusionAuth instance. The `clientId` is the Client Id of the ExampleNodeApp application set up in FusionAuth by the kickstart configuration. The `port` is the port of the Express application.
+The `fusionAuthURL` is the URL of the FusionAuth instance, in this case its set to `http://localhost:9011` in the `.env` file. The `clientId` is the Client Id of the `ExampleNodeApp` application set up in FusionAuth by the kickstart configuration. The `port` is the port of the Express application.
 
 The `res.redirect` will redirect the user to the FusionAuth registration page. The `source` parameter will be used in the `oauth-redirect` route handler to determine whether the user is coming from the registration page.
-To ensure that you are not breaking the current code, you should also update the redirection URL for the `/login` route to include the `source` parameter.
+To ensure that you are not breaking the current code, you should also update the redirection URL for the `/login` route to include the `source` parameter for the `redirect_uri`.
 
 ```ts
-//tag::login[]
 app.get('/login', (req, res, next) => {
   const userSessionCookie = req.cookies[userSession];
 
@@ -157,7 +153,6 @@ app.get('/login', (req, res, next) => {
 
   res.redirect(302, `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=http://localhost:${port}/oauth-redirect?source=login&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256`)
 });
-//end::login[]
 ```
 
 You can save the changes and navigate to the registration page, where you will see a registration page in two steps. The first step will be to enter the basic information, such as first name, last name, and email.
@@ -173,42 +168,58 @@ The second step will be to enter the password and complete the registration.
 In the `complete-application/src/index.ts` file, the `/oauth-redirect` route handler will be modified to handle the registration. Currently, the route handler
 captures parameters from the URL, validates these parameters, and attempts to retrieve a JWT token and user information from FusionAuth using the token.
 
-The user will be redirected to the home page if all these steps are successful. You must add logic blocks to this route handler to ensure the user is redirected to the correct page after a login or registration. In the case of a registration, you want to redirect the user to a page where he will enter his address. In the case of a login, you want to redirect the user to the home page.
+The user will be redirected to the home page if all these steps are successful. You must add logic blocks to this route handler to ensure the user is redirected to the correct page after a login or registration. In the case of a registration, you want to redirect the user to a page where they will enter their address. In the case of a login, you want to redirect the user to the home page. Replace the code for the `/oauth-redirect` route with the following.
 
 
 ```ts
 app.get('/oauth-redirect', async (req, res, next) => {
- // Capture query params
- ...
+  // Capture query params
+  const stateFromFusionAuth = `${req.query?.state}`;
+  const authCode = `${req.query?.code}`;
+  const source = `${req.query?.source}`;
 
- const source = `${req.query?.source}`;
+  // Validate cookie state matches FusionAuth's returned state
+  const userSessionCookie = req.cookies[userSession];
+  if (stateFromFusionAuth !== userSessionCookie?.stateValue) {
+    console.log("State doesn't match. uh-oh.");
+    console.log("Saw: " + stateFromFusionAuth + ", but expected: " + userSessionCookie?.stateValue);
+    res.redirect(302, '/');
+    return;
+  }
 
-
- ...
-
-
- try {
-   // Exchange Auth Code and Verifier for Access Token
+  try {
+    // Exchange Auth Code and Verifier for Access Token
     const accessToken = (await client.exchangeOAuthCodeForAccessTokenUsingPKCE(authCode,
       clientId,
       clientSecret,
       `http://localhost:${port}/oauth-redirect?source=${source}`,
-      userSessionCookie.verifier)).response; // Adding source param to the redirect URL
+      userSessionCookie.verifier)).response;
 
-   ...
+    if (!accessToken.access_token) {
+      console.error('Failed to get Access Token')
+      return;
+    }
+    res.cookie(userToken, accessToken, { httpOnly: true })
 
-   // Redirecting to the correct page according to the source
-   if (source === 'register') {
-     res.redirect(302, '/set-address');
-   } else {
-     res.redirect(302, '/account');
-   }
- } catch (err: any) {
-   console.error(err);
-   res.status(err?.statusCode || 500).json(JSON.stringify({
-     error: err
-   }))
- }
+    // Exchange Access Token for User
+    const userResponse = (await client.retrieveUserUsingJWT(accessToken.access_token)).response;
+    if (!userResponse?.user) {
+      console.error('Failed to get User from access token, redirecting home.');
+      res.redirect(302, '/');
+    }
+    res.cookie(userDetails, userResponse.user);
+
+    if (source === 'register') {
+      res.redirect(302, '/set-address');
+    } else {
+      res.redirect(302, '/account');
+    }
+  } catch (err: any) {
+    console.error(err);
+    res.status(err?.statusCode || 500).json(JSON.stringify({
+      error: err
+    }))
+  }
 });
 ```
 
@@ -217,10 +228,10 @@ Let's build the `/set-address` page.
 
 ### Building the Address Page
 
-Building the `/set-address` page is similar to the `/account` page. You will create the UI first, then add a route to render the page and another to handle the form submission. But before that,
+You will create the UI first, then add a route to render the page and another to handle the form submission. But before that,
 You must ensure you can save the user's address in the FusionAuth database and that you have configured the FusionAuth client to use an API key.
 
-In the dashboard at <Breadcrumb>Customizations -> Form Fields -> Add</Breadcrumb>, you can create a new field called `Address`. This will be registered under the <InlineField>user.data</InlineField> object.
+In the FusionAuth admin UI navigate to <Breadcrumb>Customizations -> Form Fields -> Add</Breadcrumb>, and create a new field called `Address` . For the <InlineField>Field</InlineField> select `Custom user data (user.data.*)`. This will be registered under the <InlineField>user.data</InlineField> object.
 
 <img src="/img/docs/extend/progressive-registration/registration-form-field.png" alt="Adding address field"/>
 
@@ -237,8 +248,8 @@ app.get("/set-address", async (req, res) => {
 });
 ```
 
-The code above checks that the user is authenticated and redirects the user to the home page if the user is not authenticated. Otherwise, it sends the `set-address.html` file to the browser.
-You can now add the route for the form submission.
+The code above checks that the user is authenticated and redirects the user to the home page if the user is not authenticated. Otherwise, it renders the `set-address.html` page.
+You can now add the route to handle the address form submission.
 
 ```ts
 app.post("/set-address", async (req, res) => {
@@ -298,7 +309,7 @@ const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
 
 Replace the `noapikeyneeded` with an API key. If you are following along with the change bank application the API key set with the kickstart configuration is `33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod`.
 
-You can now add the code for the address form. Create the `templates/set-address.html` file and add the following code to it. The form will collect the user's address and save it in the <InlineField>user.data</InlineField> object.
+You can now add the code for the address form. Create the `templates/set-address.html` file and add the following code to it.
 
 ```html
 <html>
@@ -370,22 +381,23 @@ You can now add the code for the address form. Create the `templates/set-address
 </html>
 ```
 
-The code above collects the address entered by a user and sends a request to update the user's information. If the request is successful, the user is redirected to an existing `/make-change` page. You can test the process by registering a user. You should be redirected to a similar page to the one below.
+The code above renders a form that collects the address entered by a user and sends a request to update the user's information in the FusionAuth database. The address will be saved to the <InlineField>user.data</InlineField> object. If the request is successful, the user is redirected to an existing `/make-change` page. You can test the process by registering a user. You should be redirected to a page similar to the one below.
 
 <img src="/img/docs/extend/progressive-registration/set-address.png" alt="Set address"/>
 
-We have explored how to add a progressive registration form using the FusionAuth admin dashboard. However, you might want to use your own UI to collect the information. In the next section, you will explore
+We have explored how to add a progressive registration form using the FusionAuth admin UI. However, you might want to use your own UI to collect the information. In the next section, you will explore
 how to add a progressive registration form using the FusionAuth API.
 
 ## Using FusionAuth API
 
-In some cases, you can use your UI to collect the information. In this case, you should understand that implementing a progressive registration process in your application will be more complex, even tho you will have more control over the UI and the data you collect.
+In some cases, you can use your UI to collect the information. In this case, you should understand that implementing a progressive registration process in your application may be more complex, even though you will have more control over the UI and the data you collect.
 
 The FusionAuth API provides a way to register users in your application. Let's explore these routes and their SDK implementation.
 
 ### Registering a User Using the API
 
 To register a user using the API, you will need to send a `POST` request to the `/api/user/registration` endpoint. The request requires the following fields and headers:
+
 - `X-FusionAuth-TenantId` (Required if multiple tenants exist): The unique tenant Id used to scope the API request.
 - <InlineField>user.email</InlineField>: The unique email address for the user.
 - <InlineField>registration.applicationId</InlineField> (Required): UUID of the application for which the registration is being created.
@@ -439,7 +451,7 @@ To ensure that this field can be filled, you will need to create a custom field 
 
 
 In the dashboard at <Breadcrumb>Customizations -> Form Fields -> Add</Breadcrumb>, you can create a new field.
-In the form, you will need to specify the name of the field and set the field type to **Custom user data (user.data.*)**. The image below shows how you can add a new field called `address` under the `user.data` object.
+In the form, you will need to specify the name of the field and set the field type to `Custom user data (user.data.*)`. The image below shows how you can add a new field called `Address` under the `user.data` object.
 
 
 <img src="/img/docs/extend/progressive-registration/registration-form-field.png" alt="Registration form field"/>
@@ -452,7 +464,7 @@ The Typescript SDK provides methods to achieve this quickly. Let's build a simpl
 
 ### Registering a User Using the Typescript SDK
 
-FusionAuth provides SDKs for many languages to make their API usage easy. In this section, you will build an Express application with two endpoints:
+FusionAuth provides SDKs for many languages to make the API usage easy. In this section, you will build an Express application that utilizes the Typescript SDK with two endpoints:
 - `register`: This endpoint will register a user using the FusionAuth API.
 - `register/:userId`: This endpoint will update the user's data using the FusionAuth API.
 
