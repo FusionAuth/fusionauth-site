@@ -464,108 +464,37 @@ The Typescript SDK provides methods to achieve this quickly. Let's build a simpl
 
 ### Registering a User Using the Typescript SDK
 
-FusionAuth provides SDKs for many languages to make the API usage easy. In this section, you will build an Express application that utilizes the Typescript SDK with two endpoints:
-- `register`: This endpoint will register a user using the FusionAuth API.
-- `register/:userId`: This endpoint will update the user's data using the FusionAuth API.
+FusionAuth provides SDKs for many languages to make the API usage easy. In this section, you will extend the Changebank application to have API routes that allow registration to be completed by utilizing API calls.
 
-You can quickly setup the express application using the following commands to create a node project and add the required dependencies:
+- `api/register`: This endpoint will register a user using the FusionAuth API.
+- `api/register/:userId`: This endpoint will update the user's data using the FusionAuth API.
 
-```sh
-npm init -y
+Great! Let's add the logic for our endpoints in the `index.ts` file. You will start first by importing the necessary dependencies and adding the necessary middleware to parse JSON in API requests.
 
-npm install express body-parser @fusionauth/typescript-client dotenv
-npm install --save-dev @types/express typescript ts-node nodemon
-```
-
-Then, make sure your `package.json` file has the following main and scripts:
-
-```json
-...
-  "main": "dist/index.js",
-  "scripts": {
-    "start": "node dist/index.js",
-    "dev": "nodemon src/index.ts",
-    "build": "tsc"
-  },
-...
-```
-
-Then, create a `tsconfig.json` file with the following content:
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES6",
-    "module": "CommonJS",
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "strict": true,
-    "esModuleInterop": true
-  },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"]
-}
-```
-
-You can now create the necessary directories and files to build the application.
+Add the following import to the top of the `complete-application/src/index.ts` file.
 
 ```ts
-mkdir src
-touch src/index.ts
-touch .env
-```
-
-Make sure the `.env` file contains the following variables:
-
-- `API_KEY`: The API key of the FusionAuth application.
-- `FUSIONAUTH_URL`: The URL of the FusionAuth instance.
-- `APPLICATION_ID`: The Id of the FusionAuth application.
-
-Great! Let's add the logic for our endpoints in the `index.ts` file. You will start first by importing the necessary dependencies and creating a new instance of the FusionAuth client.
-
-```ts
-// index.ts
-import express, { Request, Response } from "express";
 import bodyParser from "body-parser";
-import FusionAuthClient from "@fusionauth/typescript-client";
-import dotenv from "dotenv";
+```
 
-// Load environment variables
-dotenv.config();
+Beneath the line of code `app.use(express.urlencoded());` in  the `complete-application/src/index.ts` file, add the following middleware to parse requests with JSON data.
 
-// Initialize FusionAuth Client
-const apiKey = process.env.API_KEY || "";
-const fusionAuthURL = process.env.FUSIONAUTH_URL || "";
-const applicationId = process.env.APPLICATION_ID || "";
-
-if (!apiKey || !fusionAuthURL || !applicationId) {
-  throw new Error("API_KEY, FUSIONAUTH_URL, or APPLICATION_ID not set in environment variables.");
-}
-
-const fusionAuthClient = new FusionAuthClient(apiKey, fusionAuthURL);
-
-// Create Express App
-const app = express();
-const PORT = process.env.PORT || 3030;
-
-// Middleware
+```ts
 app.use(bodyParser.json());
 ```
 
-After that, you can freely add the endpoints to our application. The first endpoint will register a user using the FusionAuth API. It will be called `register` and accept a JSON body with only the `email` and `password` fields.
+After that, you can add the registration API endpoints to your application in the `complete-application/src/index.ts` file. The first endpoint will be called `/api/register` and accept a JSON body with only the `email` and `password` fields.
 
 ```ts
-// index.ts
-
-...
 /**
  * Register a new user.
- * POST /register
+ * POST /api/register
  * Request Body: { email: string, password: string }
  */
-app.post("/register", async (req: any, res: any) => {
+app.post("/api/register", async (req: any, res: any) => {
   const { email } = req.body;
   const { password } = req.body;
+  console.log(req.body)
 
   if (!email) {
     return res.status(400).json({ error: "Email is required" });
@@ -575,12 +504,12 @@ app.post("/register", async (req: any, res: any) => {
   }
 
   try {
-    const response: any = await fusionAuthClient.register("", {
+    const response: any = await client.register("", {
       disableDomainBlock: false,
       sendSetPasswordEmail: false,
       skipVerification: false,
       registration: {
-        applicationId,
+        applicationId: clientId,
       },
       user: {
         email,
@@ -598,17 +527,15 @@ app.post("/register", async (req: any, res: any) => {
 });
 ```
 
-With this endpoint added, you can add the logic to update the user's data using the FusionAuth API. The second endpoint will update the user's data using the FusionAuth API. It will be called `register/:userId` and accept only a JSON body with the `address` field.
+With this endpoint added, you can add the logic to update the user's data using the FusionAuth API. The second endpoint will update the user's data and will be called `/api/register/:userId` and accept only a JSON body with the `address` field.
 
 ```ts
-// index.ts
-...
 /**
  * Update user registration.
- * PATCH /register/:userId
+ * PATCH /api/register/:userId
  * Request Body: { address: { street: string, city: string, state: string, zipCode: string } }
  */
-app.patch("/register/:userId", async (req: any, res: any) => {
+app.patch("/api/register/:userId", async (req: any, res: any) => {
   const { userId } = req.params;
   const { address } = req.body;
 
@@ -617,9 +544,9 @@ app.patch("/register/:userId", async (req: any, res: any) => {
   }
 
   try {
-    const response: any = await fusionAuthClient.patchRegistration(userId, {
+    const response: any = await client.patchRegistration(userId, {
         registration: {
-          applicationId,
+          applicationId: clientId,
           data: {
             address,
           }
@@ -634,35 +561,27 @@ app.patch("/register/:userId", async (req: any, res: any) => {
 });
 ```
 
-The `updateRegistration` method is also available in the Typescript SDK. However, this method sent a `PUT` request to the `/api/user/registration` endpoint, which means you can have data inconsistencies if you are not careful. For this reason, you recommend using the `patchRegistration` method and only use the `updateRegistration` method if you are sure that you want to update the entire registration object, which might clear out other fields that you might have set.
-You can now add the logic to start and run the Express application.
+The `updateRegistration` method is also available in the Typescript SDK. However, this method sends a `PUT` request to the FusionAuth `/api/user/registration` endpoint, which means you can have data inconsistencies if you are not careful. For this reason, we recommend using the `patchRegistration` method and only use the `updateRegistration` method if you are sure that you want to update the entire registration object, which might clear out other fields that you might have set.
 
-```ts
-// index.ts
-...
 
-// Start Express App
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-```
-
-You can now run the application using the following command:
+You can now rerun the Changebank application using the following command:
 
 ```sh
 npm run dev
 ```
 
-You can now test the application by registering a user using the `register` endpoint. You can do this by sending a `POST` request to `http://localhost:3030/register` with the following body:
+You can now test the application by registering a user using the `/api/register` endpoint. You can do this by sending a `POST` request to the route `http://localhost:8080/api/register`:
 
-```json
-{
+```sh
+curl --location 'http://localhost:8080/api/register' \
+--header 'Content-Type: application/json' \
+--data '{
   "email": "user@example.com",
   "password": "password123"
-}
+}'
 ```
 
-You will receive a similar response with the `registrationId` and `user` fields.
+You will receive a response with the `registrationId` and `user` fields.
 
 ```json
 {
@@ -693,20 +612,22 @@ You will receive a similar response with the `registrationId` and `user` fields.
 }
 ```
 
-Now, you can use the `user.id` value in the `register/:userId` endpoint to update the user's data. You can do this by sending a `PATCH` request to `http://localhost:3030/register/<userId>` with the following body:
+Now, you can use the `user.id` value to call the `/api/register/:userId` endpoint to update the user's data. You can do this by sending a `PATCH` request to `http://localhost:8080/api/register/<userId>`:
 
-```json
-{
+```sh
+curl --location --request PATCH 'http://localhost:8080/api/register/b77d9a71-3ffe-4b1a-8a05-65a5cb7495e7' \
+--header 'Content-Type: application/json' \
+--data '{
   "address": {
     "street": "123 Main St",
     "city": "Anytown",
     "state": "CA",
     "zipCode": "12345"
   }
-}
+}'
 ```
 
-You will receive a similar response with the updated user data.
+You will receive response similar to the one below with the updated user data.
 
 ```json
 {
@@ -743,8 +664,8 @@ You will receive a similar response with the updated user data.
 
 In the previous sections, you explored how to add a progressive registration process to an application using the FusionAuth admin UI or the FusionAuth API. Here are some considerations when deciding which approach to use.
 
-- If you are using the FusionAuth admin UI, you can use the admin UI to create a registration form that will collect the user's information. This form can be customized with many fields and steps you need to fit your application's requirements.
-- If you are using the FusionAuth API, you can use the API to create a registration form that will be used to collect the user's information. This is useful if you have a custom UI or data collection process on these pages.
+- If you are using the FusionAuth admin UI, you can create a registration form that will collect the user's information. This form can be customized with as many fields and steps as you need to fit your application's requirements.
+- If you are using the FusionAuth API, you can use the available client libraries or call the FusionAuth API directly to create user registrations. This is useful if you have a custom UI or data collection process.
 
 ## Next Steps
 
