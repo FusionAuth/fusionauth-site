@@ -14,13 +14,11 @@ import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro
 
 
 
-Registration is one of the most important parts of authentication. Getting as much information as possible during registration is crucial for your app, especially if you are working with critical fields or need additional data.
-
+Registration is one of the most essential parts of authentication. Getting as much information as possible during registration is crucial for your app, especially if you are working with critical fields or need additional data.
 
 However, UX is essential, and bombarding potential users with multiple fields negatively affects the experience. FusionAuth provides a feature for progressive registration, where users can enter information incrementally across various pages or components. This can be configured using the FusionAuth admin dashboard or API.
 
-
-In this guide, you will learn how to implement progressive registration in your application. We will explore two methods to achieve this, either through the admin dashboard or the FusionAuth API.
+This guide will teach you how to implement progressive registration in your application. Let's explore two methods to achieve this: the admin dashboard or the FusionAuth API.
 
 
 ## Requirements
@@ -35,23 +33,20 @@ include progressive registration. However, the steps apply to any application, a
 
 The ChangeBank application uses a kickstart configuration to set up an API key `33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod` and a FusionAuth application with the name `ExampleNodeApp`.
 
-
 ## Implementing the Registration Flow
 
 
 The registration flow in this guide will go in two steps:
 
 - The user will be presented with a form to enter their basic information such as first name, last name, and email.
-- The user will then be presented with a form to enter their password and register completely.
+- The user will then be presented with a form to enter their password and complete the registration..
 
 
-The challenge here is how to manage the routing to the home page, even more, when you might need the user to enter specific information, on the home page
-after a successful registration. This can be, for example, entering a credit card number or being prompted to create an entity such as a project
-or anything else that might be required to use the application. In this guide, we will prompt the user to enter an address and then redirect him to the Make Change page.
+The challenge here is managing the routing to the home page even more when you need the user to enter specific information on the home page after a successful registration.
+This can be, for example, entering a credit card number or being prompted to create an entity such as a project or anything else that might be required to use the application.
+In this guide, the application will prompt the user to enter an address. Upon submission, the user will be redirected to the "Make Change" page.
 
-
-The next steps will cover two methods to achieve this, using the FusionAuth admin dashboard or the FusionAuth API.
-
+The next steps will cover two methods for achieving this: using the FusionAuth admin dashboard or the FusionAuth API.
 
 ## Using FusionAuth Admin UI
 
@@ -107,7 +102,7 @@ Here is the current look of the home page of the ChangeBank application accessib
 
 <img src="/img/docs/extend/progressive-registration/home-page.png" alt="Home page"/>
 
-The ChangeBank application does not have a registration form, and also logic to handle registration. You will need to:
+The ChangeBank application does not have a registration form or logic to handle registration. You will need to:
 
 - Add a button to the navigation bar to redirect the user to the registration form.
 - Add a route to handle the registration and add logic blocks to the handler of the `/oauth-redirect` route to ensure the user is redirected to the correct page after login or registration.
@@ -115,9 +110,7 @@ The ChangeBank application does not have a registration form, and also logic to 
 
 #### Adding a Button to the Navigation Bar
 
-
 First, you will add a button to the navigation bar. This button will redirect the user to the registration form. In the `complete-application/src/template/home.html` file, add a new button next to the login button.
-
 
 ```html
 <div style="display: flex; justify-content: space-between; width: 28%;">
@@ -126,16 +119,12 @@ First, you will add a button to the navigation bar. This button will redirect th
 </div>
 ```
 
-
 Clicking on the <InlineUIElement>Register</InlineUIElement> button will redirect the user to the registration form.
-
 
 <img src="/img/docs/extend/progressive-registration/register-button.png" alt="Register button"/>
 
 
-The next step is to add a route to handle the registration, `/register`. This route will construct the
-URL for redirection to the FusionAuth registration page. We can add this route in the `complete-application/src/index.ts` file.
-
+The next step is to add a route to handle the registration, `/register`. This route will construct the URL for redirection to the FusionAuth registration page. You can add this route in the `complete-application/src/index.ts` file.
 
 ```ts
 app.get('/register', (req, res, next) => {
@@ -153,36 +142,41 @@ app.get('/register', (req, res, next) => {
 
 The `fusionAuthURL` is the URL of the FusionAuth instance. The `clientId` is the Client Id of the ExampleNodeApp application set up in FusionAuth by the kickstart configuration. The `port` is the port of the Express application.
 
+The `res.redirect` will redirect the user to the FusionAuth registration page. The `source` parameter will be used in the `oauth-redirect` route handler to determine whether the user is coming from the registration page.
+To ensure that you are not breaking the current code, you should also update the redirection URL for the `/login` route to include the `source` parameter.
 
-The `res.redirect` will redirect the user to the FusionAuth registration page. The `source` parameter will be used in the `oauth-redirect` route handler to know if the user is coming from the registration page or not.
+```ts
+//tag::login[]
+app.get('/login', (req, res, next) => {
+  const userSessionCookie = req.cookies[userSession];
 
+  // Cookie was cleared, just send back (hacky way)
+  if (!userSessionCookie?.stateValue || !userSessionCookie?.challenge) {
+    res.redirect(302, '/');
+  }
 
-When saved, you should see a registration page in two steps. The first step will be to enter the basic information.
+  res.redirect(302, `${fusionAuthURL}/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=http://localhost:${port}/oauth-redirect?source=login&state=${userSessionCookie?.stateValue}&code_challenge=${userSessionCookie?.challenge}&code_challenge_method=S256`)
+});
+//end::login[]
+```
 
+You can save the changes and navigate to the registration page, where you will see a registration page in two steps. The first step will be to enter the basic information, such as first name, last name, and email.
 
 <img src="/img/docs/extend/progressive-registration/registration-form-first-step.png" alt="Registration form first step"/>
 
-
 The second step will be to enter the password and complete the registration.
-
 
 <img src="/img/docs/extend/progressive-registration/registration-form-second-step.png" alt="Registration form second step"/>
 
-
-
-
 #### Adding Logic Blocks to the Handler of the `/oauth-redirect` Route
 
-
 In the `complete-application/src/index.ts` file, the `/oauth-redirect` route handler will be modified to handle the registration. Currently, the route handler
-captures parameters from the URL, validates these parameters, attempts to retrieve a JWT token, and attempts to retrieve user information from FusionAuth using the token. 
+captures parameters from the URL, validates these parameters, and attempts to retrieve a JWT token and user information from FusionAuth using the token.
 
-If all these steps are successful, the user will be redirected to the home page. Now, you need to add logic blocks to this route handler to ensure the user is redirected to the correct page after a login or registration. In the case of a registration, you want to redirect the user to a page where
-he will enter his address. In the case of a login, you want to redirect the user to the home page.
+The user will be redirected to the home page if all these steps are successful. You must add logic blocks to this route handler to ensure the user is redirected to the correct page after a login or registration. In the case of a registration, you want to redirect the user to a page where he will enter his address. In the case of a login, you want to redirect the user to the home page.
 
 
 ```ts
-//tag::oauth-redirect[]
 app.get('/oauth-redirect', async (req, res, next) => {
  // Capture query params
  ...
@@ -195,9 +189,15 @@ app.get('/oauth-redirect', async (req, res, next) => {
 
  try {
    // Exchange Auth Code and Verifier for Access Token
+    const accessToken = (await client.exchangeOAuthCodeForAccessTokenUsingPKCE(authCode,
+      clientId,
+      clientSecret,
+      `http://localhost:${port}/oauth-redirect?source=${source}`,
+      userSessionCookie.verifier)).response; // Adding source param to the redirect URL
 
    ...
 
+   // Redirecting to the correct page according to the source
    if (source === 'register') {
      res.redirect(302, '/set-address');
    } else {
@@ -210,23 +210,21 @@ app.get('/oauth-redirect', async (req, res, next) => {
    }))
  }
 });
-//end::oauth-redirect[]
 ```
 
-
-In the code above, you capture the `source` parameter from the URL. If the `source` is `register`, you redirect the user to the `/set-address` page. Otherwise, you redirect the user to the `/account` page.
+In the code above, you capture the `source` parameter from the URL. If the `source` is `register`, redirect the user to the `/set-address` page. Otherwise, the user is redirected to the `/account` page.
 Let's build the `/set-address` page.
 
 ### Building the Address Page
 
-Building the `/set-address` page is very similar to the `/account` page. We will build the UI first, and then add a route to render the page and another one to handle the form submission. But before that, 
-we need to ensure that we can save the user's address in the FusionAuth database.
+Building the `/set-address` page is similar to the `/account` page. You will create the UI first, then add a route to render the page and another to handle the form submission. But before that,
+You must ensure you can save the user's address in the FusionAuth database and that you have configured the FusionAuth client to use an API key.
 
 In the dashboard at <Breadcrumb>Customizations -> Form Fields -> Add</Breadcrumb>, you can create a new field called `Address`. This will be registered under the <InlineField>user.data</InlineField> object.
 
 <img src="/img/docs/extend/progressive-registration/registration-form-field.png" alt="Adding address field"/>
 
-Then, you need to create the routes that will render the page and handle the form submission. In the `complete-application/src/index.ts` file, add the code for the rendering route `/set-address`.
+Then, you must create the routes to render the page and handle the form submission. In the `complete-application/src/index.ts` file, add the code for the rendering route `/set-address`.
 
 ```ts
 app.get("/set-address", async (req, res) => {
@@ -240,7 +238,7 @@ app.get("/set-address", async (req, res) => {
 ```
 
 The code above checks that the user is authenticated and redirects the user to the home page if the user is not authenticated. Otherwise, it sends the `set-address.html` file to the browser.
-We can now add the route for the form submission.
+You can now add the route for the form submission.
 
 ```ts
 app.post("/set-address", async (req, res) => {
@@ -291,8 +289,14 @@ app.post("/set-address", async (req, res) => {
 });
 ```
 
-The code above checks that the user is authenticated and then retrieve the user's details from the cookie such as the user's email and user id. You need these details to update the user's address.
-Notice that the code uses the `patchUser` method to update the user's address instead of the `updateUser` method because it is only updating a single field.
+The code above first checks that the user is authenticated and then retrieves the user's details from the cookie, such as the user's email and user ID. You need these details to update the user's address.
+Notice that you are using the `patchUser` method instead of the `updateUser` method to update the user's address. The `patchUser` method is specifically designed for making partial updates to a user's details, which is why it's used here. To make sure the client can execute the requests, you must configure the client with an API key. Look for the declaration of the `client` variable in the `complete-application/src/index.ts` file. You should see the following code:
+
+```ts
+const client = new FusionAuthClient('noapikeyneeded', fusionAuthURL);
+```
+
+Replace the `noapikeyneeded` with an API key. If you are following along with the change bank application the API key set with the kickstart configuration is `33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod`.
 
 You can now add the code for the address form. Create the `templates/set-address.html` file and add the following code to it. The form will collect the user's address and save it in the <InlineField>user.data</InlineField> object.
 
@@ -375,10 +379,9 @@ how to add a progressive registration form using the FusionAuth API.
 
 ## Using FusionAuth API
 
-There might be some cases where you want to use your UI to collect the information. In this case, you should understand that implementing a progressive registration process in your application will be
-more complex, even though you will have more control over the UI and the data you collect.
+In some cases, you can use your UI to collect the information. In this case, you should understand that implementing a progressive registration process in your application will be more complex, even tho you will have more control over the UI and the data you collect.
 
-The FusionAuth API provides a way to register users in your application. Let's explore these routes and also their SDK implementations.
+The FusionAuth API provides a way to register users in your application. Let's explore these routes and their SDK implementation.
 
 ### Registering a User Using the API
 
@@ -428,7 +431,7 @@ Here is an example of a request body:
 ```
 
 
-The API supports more fields that can be included based on your requirements. You can find a full list of supported fields in the [FusionAuth API documentation](/docs/apis/registrations#request).
+The API supports more fields that can be included based on your requirements. You can find a full list of supported fields in the [API documentation](/docs/apis/registrations#request).
 
 
 An interesting field is the <InlineField>user.data</InlineField> field. This field can be used to store any data that you want to associate with the user according to your application requirements. For example, you can use this field to store the user's address or any other data that you want to collect during the registration process.
@@ -441,93 +444,295 @@ In the form, you will need to specify the name of the field and set the field ty
 
 <img src="/img/docs/extend/progressive-registration/registration-form-field.png" alt="Registration form field"/>
 
-
-Once this field is created, you can use it in the registration form when creating a user, or when [updating a user registration](/docs/apis/registrations#update-a-user-registration) which means
+Once this field is created, you can use it in the registration form when creating a user or when [updating a user registration](/docs/apis/registrations#update-a-user-registration), which means
 that you are progressively updating the user's data.
 
-
-The Typescript SDK provides methods to achieve this pretty easily.
-
-
-#### Registering a User Using the Typescript SDK
+The Typescript SDK provides methods to achieve this quickly. Let's build a simple Express application that registers users using the Typescript SDK.
 
 
-To register a user using the Typescript SDK, you must create a new `Registration` object and set the required fields. You can also set the optional fields.
+### Registering a User Using the Typescript SDK
 
+FusionAuth provides SDKs for many languages to make their API usage easy. In this section, you will build an Express application with two endpoints:
+- `register`: This endpoint will register a user using the FusionAuth API.
+- `register/:userId`: This endpoint will update the user's data using the FusionAuth API.
 
-```ts
-import FusionAuthClient from "@fusionauth/typescript-client";
+You can quickly setup the express application using the following commands to create a node project and add the required dependencies:
 
+```sh
+npm init -y
 
-const client = new FusionAuthClient(apiKey as string, fusionAuthURL);
-
-
-client.register('', {
- disableDomainBlock: false,
- sendSetPasswordEmail: false,
- skipVerification: false,
- registration: {
-   applicationId: "application-id-placeholder",
- },
- user: {
-   email: "email-placeholder",
- }
-}).then((response) => {
-   console.log(response.successResponse);
- })
- .catch((error) => {
-   console.error(error);
- });
+npm install express body-parser @fusionauth/typescript-client dotenv
+npm install --save-dev @types/express typescript ts-node nodemon
 ```
 
+Then, make sure your `package.json` file has the following main and scripts:
 
-#### Updating a User Registration Using the Typescript SDK
-
-
-Once you have created a user, you can update the user profile data behind the scenes with as little friction as possible. You can use the Typescript SDK by calling the `patchRegistration`.
-
-
-```ts
-import FusionAuthClient from "@fusionauth/typescript-client";
-
-
-const client = new FusionAuthClient(apiKey as string, fusionAuthURL);
-
-
-client.patchRegistration("registration-id-placeholder", {
- user: {
-   data: {
-     "address": {
-       "street": "123 Main St",
-       "city": "Anytown",
-       "state": "CA",
-       "zipCode": "12345"
-     }
-   }
- }
-})
-.then((response) => {
-   console.log(response.successResponse);
- })
- .catch((error) => {
-   console.error(error);
- });
+```json
+...
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "nodemon src/index.ts",
+    "build": "tsc"
+  },
+...
 ```
 
+Then, create a `tsconfig.json` file with the following content:
 
-The `updateRegistration` method is also available in the Typescript SDK. However, this method sent a `PUT` request to the `/api/user/registration` endpoint which means that you can have
-data inconsistencies if you are not careful. For this reason, you recommend using the `patchRegistration` method and only use the `updateRegistration` method if you are sure that you want to update the entire registration object, which might
-clear out other fields that you might have set.
+```json
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "CommonJS",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "strict": true,
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+```
 
+You can now create the necessary directories and files to build the application.
+
+```ts
+mkdir src
+touch src/index.ts
+touch .env
+```
+
+Make sure the `.env` file contains the following variables:
+
+- `API_KEY`: The API key of the FusionAuth application.
+- `FUSIONAUTH_URL`: The URL of the FusionAuth instance.
+- `APPLICATION_ID`: The Id of the FusionAuth application.
+
+Great! Let's add the logic for our endpoints in the `index.ts` file. You will start first by importing the necessary dependencies and creating a new instance of the FusionAuth client.
+
+```ts
+// index.ts
+import express, { Request, Response } from "express";
+import bodyParser from "body-parser";
+import FusionAuthClient from "@fusionauth/typescript-client";
+import dotenv from "dotenv";
+
+// Load environment variables
+dotenv.config();
+
+// Initialize FusionAuth Client
+const apiKey = process.env.API_KEY || "";
+const fusionAuthURL = process.env.FUSIONAUTH_URL || "";
+const applicationId = process.env.APPLICATION_ID || "";
+
+if (!apiKey || !fusionAuthURL || !applicationId) {
+  throw new Error("API_KEY, FUSIONAUTH_URL, or APPLICATION_ID not set in environment variables.");
+}
+
+const fusionAuthClient = new FusionAuthClient(apiKey, fusionAuthURL);
+
+// Create Express App
+const app = express();
+const PORT = process.env.PORT || 3030;
+
+// Middleware
+app.use(bodyParser.json());
+```
+
+After that, you can freely add the endpoints to our application. The first endpoint will register a user using the FusionAuth API. It will be called `register` and accept a JSON body with only the `email` and `password` fields.
+
+```ts
+// index.ts
+
+...
+/**
+ * Register a new user.
+ * POST /register
+ * Request Body: { email: string, password: string }
+ */
+app.post("/register", async (req: any, res: any) => {
+  const { email } = req.body;
+  const { password } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+  if (!password) {
+    return res.status(400).json({ error: "Password is required" });
+  }
+
+  try {
+    const response: any = await fusionAuthClient.register("", {
+      disableDomainBlock: false,
+      sendSetPasswordEmail: false,
+      skipVerification: false,
+      registration: {
+        applicationId,
+      },
+      user: {
+        email,
+        password,
+      },
+    });
+    res.status(201).json({
+        registrationId: response.response?.registration?.id,
+        user: response.response?.user
+    });
+  } catch (error: any) {
+    console.error("Error during user registration:", error);
+    res.status(error.statusCode || 500).json({ error: error.message });
+  }
+});
+```
+
+With this endpoint added, you can add the logic to update the user's data using the FusionAuth API. The second endpoint will update the user's data using the FusionAuth API. It will be called `register/:userId` and accept only a JSON body with the `address` field.
+
+```ts
+// index.ts
+...
+/**
+ * Update user registration.
+ * PATCH /register/:userId
+ * Request Body: { address: { street: string, city: string, state: string, zipCode: string } }
+ */
+app.patch("/register/:userId", async (req: any, res: any) => {
+  const { userId } = req.params;
+  const { address } = req.body;
+
+  if (!userId || !address) {
+    return res.status(400).json({ error: "User ID and address are required" });
+  }
+
+  try {
+    const response: any = await fusionAuthClient.patchRegistration(userId, {
+        registration: {
+          applicationId,
+          data: {
+            address,
+          }
+        },
+    });
+
+    res.status(200).json({response});
+  } catch (error: any) {
+    console.error("Error during user registration update:", error);
+    res.status(error.statusCode || 500).json({ error: error.exception?.fieldErrors });
+  }
+});
+```
+
+The `updateRegistration` method is also available in the Typescript SDK. However, this method sent a `PUT` request to the `/api/user/registration` endpoint, which means you can have data inconsistencies if you are not careful. For this reason, you recommend using the `patchRegistration` method and only use the `updateRegistration` method if you are sure that you want to update the entire registration object, which might clear out other fields that you might have set.
+You can now add the logic to start and run the Express application.
+
+```ts
+// index.ts
+...
+
+// Start Express App
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+```
+
+You can now run the application using the following command:
+
+```sh
+npm run dev
+```
+
+You can now test the application by registering a user using the `register` endpoint. You can do this by sending a `POST` request to `http://localhost:3030/register` with the following body:
+
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+You will receive a similar response with the `registrationId` and `user` fields.
+
+```json
+{
+	"registrationId": "ba8ab30e-455b-499f-8c84-2096bbd6e6b9",
+	"user": {
+		"active": true,
+		"connectorId": "xxxxxxxxx",
+		"data": {},
+		"email": "user@example.com",
+		"id": "b77d9a71-3ffe-4b1a-8a05-65a5cb7495e7",
+		"insertInstant": 1734425611878,
+		"lastLoginInstant": 1734425611959,
+		"lastUpdateInstant": 1734425611878,
+		"memberships": [],
+		"passwordChangeRequired": false,
+		"passwordLastUpdateInstant": 1734425611928,
+		"preferredLanguages": [],
+		"registrations": [],
+		"tenantId": "xxxxxxx",
+		"twoFactor": {
+			"methods": [],
+			"recoveryCodes": []
+		},
+		"usernameStatus": "ACTIVE",
+		"verified": true,
+		"verifiedInstant": 1734425611878
+	}
+}
+```
+
+Now, you can use the `user.id` value in the `register/:userId` endpoint to update the user's data. You can do this by sending a `PATCH` request to `http://localhost:3030/register/<userId>` with the following body:
+
+```json
+{
+  "address": {
+    "street": "123 Main St",
+    "city": "Anytown",
+    "state": "CA",
+    "zipCode": "12345"
+  }
+}
+```
+
+You will receive a similar response with the updated user data.
+
+```json
+{
+	"response": {
+		"statusCode": 200,
+		"response": {
+			"registration": {
+				"applicationId": "xxxx-ac2d60d1dc8e",
+				"data": {
+					"address": {
+						"city": "Anytown",
+						"state": "CA",
+						"street": "123 Main St",
+						"zipCode": "12345"
+					}
+				},
+				"id": "xxxx-c84-2096bbd6e6b9",
+				"insertInstant": 1734425611959,
+				"lastLoginInstant": 1734425611959,
+				"lastUpdateInstant": 1734426363298,
+				"preferredLanguages": [],
+				"roles": [],
+				"tokens": {},
+				"usernameStatus": "ACTIVE",
+				"verified": true,
+				"verifiedInstant": 1734425611959
+			}
+		}
+	}
+}
+```
 
 ## When to Use the API or the Admin UI
 
+In the previous sections, you explored how to add a progressive registration process to an application using the FusionAuth admin UI or the FusionAuth API. Here are some considerations when deciding which approach to use.
 
-In the previous sections, you have explored how to add a progressive registration process in an application using the FusionAuth admin UI or the FusionAuth API. Here are some considerations when deciding which approach to use.
-
-- If you are using the FusionAuth admin UI, you can use the admin UI to create a registration form that will collect the user's information. This form can be customized with as many fields and steps as you need to fit your application's requirements.
-- If you are using the FusionAuth API, you can use the API to create a registration form that will be used to collect the user's information. This is useful if you have 
-a custom UI or a custom data collection process on these pages.
+- If you are using the FusionAuth admin UI, you can use the admin UI to create a registration form that will collect the user's information. This form can be customized with many fields and steps you need to fit your application's requirements.
+- If you are using the FusionAuth API, you can use the API to create a registration form that will be used to collect the user's information. This is useful if you have a custom UI or data collection process on these pages.
 
 ## Next Steps
 
