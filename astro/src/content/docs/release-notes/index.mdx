@@ -12,6 +12,7 @@ import GeneralMigrationWarning from 'src/components/docs/release-notes/GeneralMi
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import Issue from 'src/components/docs/release-notes/ReleaseNotesIssue.astro';
+import RelatedToIssue from 'src/components/docs/release-notes/ReleaseNotesRelatedToIssue.astro';
 import IssueResolvedVia from 'src/components/docs/release-notes/ReleaseNoteIssueResolvedVia.astro';
 import ReleaseNotesSelector from 'src/components/docs/release-notes/ReleaseNotesSelector.astro';
 import ReleaseNoteHeading from 'src/components/docs/release-notes/ReleaseNoteHeading.astro';
@@ -50,32 +51,35 @@ Looking for release notes older than 1.44.0? Look in the [release notes archive]
 
 ### Security
 * <Issue issue="2906">
-  Added additional validation checks for authorized URLs in OAuth workflows.
+  Correct validation for configured authorized redirect URLs when using wild card support has been enabled.
   </Issue>
 * <Issue issue="2916">
-  Add additional validation of an authorizing JWT when issuing a new JWT.
+  Add additional validation of an authorizing JWT when using the Issue JWT API (`/api/jwt/issue`).
   </Issue>
 
 ### Changed
-* As part of the new refresh token grace period functionality, the length of the FusionAuth refresh token is increasing by a small amount. You'll need to accommodate for this if you are storing refresh tokens using storage that is expecting tokens to always exist at the previous tokens' length.
-  * Related to [GitHub Issue #2952](https://github.com/FusionAuth/fusionauth-issues/issues/2952)
+* <RelatedToIssue issue="2952">
+  The length of the refresh token has increased from `54` to `64` characters. If for some reason you are expecting a specific length, you may need to account for this change.
+  </RelatedToIssue>
 
 ### New
 * <Issue issue="2741">
-  Allow for the sending of usage stats. Usage stats allow us to understand how our users use our product, which helps us know where we need to invest in new features and enhancements.
+  Allow for the sending of usage stats. Enabling usage stats allow FusionAuth to better understand how our users use our product. Usage data does not contain configuration, user data or any information that can be used to identity a company or individual. This information will help us know where we need to invest in new features and enhancements.
+
+  If you are using FusionAuth Cloud, this feature will be enabled by default and cannot be disabled.
   </Issue>
 
 ### Fixed
 * <Issue issue="2737">
-  The confirmation page shown when users are completing verification and other workflows shows a FreeMarker error when some cookies are unavailable. This could happen when cookies are deleted by a user, removed by a proxy, or when running in an iframe. Note that using the FusionAuth hosted pages in iframes is unsupported, however we still like to handle errors gracefully.
+  The confirmation page shown when users are completing verification and other workflows shows a FreeMarker error when some cookies are unavailable. This could happen when cookies are deleted by a user, removed by a proxy, or when running in an iframe.
   </Issue>
-* <Issue issue="2793">
+* <Issue issue="2793" thanks="runely">
   The SCIM ResourceTypes endpoint is returning resource type URLs with incorrect paths. The endpoint is returning a path prefix of `/api/scim/v2/` when it should be `/api/scim/resource/v2/`.
   </Issue>
 * <Issue issue="2817">
   The OAuth scopes consent form has text that cannot be localized. Hosted pages should be fully localizable for users.
   </Issue>
-* <Issue issue="2839">
+* <Issue issue="2839" thanks="rod-martens-alida">
   When viewing user data in the `Manage user` view, a boolean value is always shown as `-`, regardless of its actual value.
   </Issue>
 * <Issue issue="2899">
@@ -87,18 +91,15 @@ Looking for release notes older than 1.44.0? Look in the [release notes archive]
 * <Issue issue="2917">
   When downloading login records from <Breadcrumb>System -> Login Records</Breadcrumb>, the exported file format contains a place for zip code, however the zip code values are not being populated in the export.
   </Issue>
-* <Issue issue="2928">
-  The `POST /api/user/registration` call is documented as returning a refreshTokenId, but the Id is not being returned on the response.
-  </Issue>
-* <Issue issue="2929">
-  When a license containing Breached Password Detection is missing a key, a NullPointerException is generated. This error should be handled more gracefully.
+* <Issue issue="2928" thanks="cezarneaga">
+  The `POST /api/user/registration` call is documented as returning a `refreshTokenId`, but this value is not being returned on the response.
   </Issue>
 * <Issue issue="2932">
   When editing a user's password in the FusionAuth admin UI after a new hashing scheme is set on the tenant, the password is not re-hashed using the new scheme. The re-hashing occurs as expected on a login or when the user changes their own password.
   </Issue>
 
 ### Enhancements
-* <Issue issue="1596">
+* <Issue issue="1596" thanks="juansedo">
   The `rate limit` error message was added to the default theme messages to make it more obvious that it is customizable. The `[RateLimitedException]` message key was previously supported, but not easily discoverable.
   </Issue>
 * <Issue issue="1619">
@@ -108,7 +109,7 @@ Looking for release notes older than 1.44.0? Look in the [release notes archive]
   FusionAuth can now accept encrypted SAML assertions when acting as a SAML service provider. Support for encrypted assertions when FusionAuth is the SAML identity provider was added in version `1.47.0 `.
   </Issue>
 * <Issue issue="2537">
-  API keys can now be optionally set to expire at a given date/time. An expired key will remain in the system but will cause a `401` response to be returned if it is used in an API call. Expiration can be edited, so a key's expiration can be extended, and a key's expiration can be set to a past date/time to force it int an expired and unusable state.
+  API keys can now be optionally set to expire at a given date/time. An expired key will not be deleted but will cause a `401` response to be returned when used. The expiration value can be edited to allow the expiration to be extended.
   </Issue>
 * <Issue issue="2742">
   Additional parameters are now accepted on the hosted backend `/app/login` and `/app/registration` endpoints. This means you can pass things like `login_hint`, `idp_hint`, and analytics parameters that will be available on the respective OAuth hosted pages.
@@ -117,10 +118,10 @@ Looking for release notes older than 1.44.0? Look in the [release notes archive]
   The First-time Setup wizard was improved with more descriptive and consistent text around using a Community plan license.
   </Issue>
 * <Issue issue="2864">
-  In the new Webhook Event Log there were numerous small UX and copy improvements added.
+  In the new Webhook Event Log there were numerous small UX and copy improvements.
   </Issue>
 * <Issue issue="2878">
-  Improved handling of a SAML RelayState in an IdP-initiated login. Previously, FusionAuth would only look for a valid ACS URL in the RelayState. Now, if the ACS URL can be resolved via other means, the RelayState value will be preserved and passed as a parameter in the final call to the ACS URL.
+  Improved handling of a SAML `RelayState` in an IdP-initiated login. Previously, FusionAuth would only look for a valid ACS URL in the `RelayState`. Now, if the ACS URL can be resolved via other means, the `RelayState` value will be preserved and passed as a parameter in the final call to the ACS URL.
   </Issue>
 * <Issue issue="2938">
   Added support for providing connect and read timeout values when making a `fetch` call from a lambda.
@@ -131,14 +132,17 @@ Looking for release notes older than 1.44.0? Look in the [release notes archive]
 
 ### Internal
 * <Issue issue="2147">
-  Added tests to verify correct handing of wildcards in URLs in various places in the application.
+  Added tests to verify correct handing of wildcards in URLs in various places in the application. This change does not contain any functional changes.
   </Issue>
 * <Issue issue="2880">
-  Cleaned up our default theme templates by removing some internal `TODO` comments that weren't benefiting users.
+  Remove unused comments in a few theme templates.
   </Issue>
 * <Issue issue="2873">
   Update dependencies.
   * Upgrade `org.primeframework:prime-mvc` `4.22.13` -> `4.27.0`
+  </Issue>
+* <Issue issue="2929">
+  Better exception handling in extreme edge cases related to licensing of Breached Password Detection.
   </Issue>
 
 
