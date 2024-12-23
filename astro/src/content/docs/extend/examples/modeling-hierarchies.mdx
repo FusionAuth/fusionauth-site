@@ -47,42 +47,19 @@ You can probably see some challenges already:
 There are solutions to these problems, such as including "Deny access" permissions and a "Common" department which has shared documents, and you need to pick what works for your organization. These challenges won't be discussed in this guide, as you can use the techniques shown here to implement your own solution.
 </Aside>
 
-## Options To Model Hierarchy In FusionAuth
+## How To Model Hierarchy In FusionAuth With Entities And Grants
 
-There are a few ways to model this structure in FusionAuth. But documents have to be entities and employees have to be users. There are no other types in FusionAuth that will work for this. After that, here are your options:
-
-- **1) Applications and roles**: Add a finance employee, like Alice, to an application representing her company and department, like Change Bank Operations application. Each application will have two roles, read and write, which are effectively permissions not roles. Each department application has to have the company name in its title, instead of being called only Operation, because there is no way to show one application in FusionAuth is linked to another. You will have a combinatorial number of applications, given the number of companies and departments you add. However, you still need to create an application with no department, called Change Bank application, to show that Alice is a member of the company, or you will need to infer it from the department names of which she is a member. You can't use groups instead of applications to model this example because groups do not have permissions. You could use groups to make it easier to link users with applications and roles, but you still need the applications and roles.
-- **2) Entities and grants**: Create entity types Company and Department with permissions Read, Write, and IsMember. Read and write are used to show permissions, but IsMember is used to show hierarchy. Create an entity called Change Bank of type Company and entity of Department called Operations. Create an entity grant for Operations to Change Bank with IsMember set to true to show that this Operations entity belongs to the Change Bank entity. Note that it will not be possible to tell departments called Operations in different companies apart by their name alone. You will need to examine each department's entity grant to see which company it belongs to. Create an entity grant for user Alice to entity Change Bank with no permissions, and an entity grant for Alice to Operations with permissions Read and Write. Below is a diagram of this example, which is similar to the earlier types diagram, but includes a department hierarchy now. Permissions are shown in separate blocks now too.
+The best way to model a hierarchy in FusionAuth is with Entities. For the example above, you should create entity types Company and Department with permissions Read, Write, and IsMember. Read and write are used to show permissions, but IsMember is used to show hierarchy. Create an entity called Change Bank of type Company and entity of Department called Operations. Create an entity grant for Operations to Change Bank with IsMember set to true to show that this Operations entity belongs to the Change Bank entity. Note that it will not be possible to tell departments called Operations in different companies apart by their name alone. You will need to examine each department's entity grant to see which company it belongs to. Create an entity grant for user Alice to entity Change Bank with no permissions, and an entity grant for Alice to Operations with permissions Read and Write. Below is a diagram of this example, which is similar to the earlier types diagram, but includes a department hierarchy now. Permissions are shown in separate blocks now too.
 
 ![Hierarchy diagram](/img/docs/extend/examples/modeling-hierarchy/mermaid3.webp)
 
-  For simplicity's sake this diagram does not include Change Corp entity of entity type Corporation. There are two blocks: one for Change Insurance and one for Change Bank. Ignore the Change Insurance block and concentrate on Change Bank to see how Alice is connected to her department, which is connected to the company. This diagram also shows a document attached to the Operations department. The document itself has needs read and write permissions, for when you want to enable individual access, and is linked to the Operations department via an entity grant with the IsMember permission, in the same way departments are linked to companies.
-- **3) User JSON data**: Store every user's company and department as properties in their JSON `user.data` field. This has to be done through the FusionAuth API, and cannot be maintained in the FusionAuth web interface. You will need to write your own UI app for HR staff to work with FusionAuth. With this approach you don't need to use applications, roles, or groups. Below is example JSON data for Alice:
-  ```js
-  "permissions": {
-    "Change Bank": [],
-    "Change Bank Operations": ["read", "write"],
-    "Change Bank Human Resources manual": ["read"],
-  }
-  ```
+For simplicity's sake this diagram does not include Change Corp entity of entity type Corporation. There are two blocks: one for Change Insurance and one for Change Bank. Ignore the Change Insurance block and concentrate on Change Bank to see how Alice is connected to her department, which is connected to the company. This diagram also shows a document attached to the Operations department. The document itself has needs read and write permissions, for when you want to enable individual access, and is linked to the Operations department via an entity grant with the IsMember permission, in the same way departments are linked to companies.
 
-  The last line, regarding permissions to a document, could either be stored manually, as is shown above, or could be an entity grant from Alice to the document. If you remove the last line, you would keep only company permissions in JSON and store document permissions using entities (as shown in the previous option, 2).
-
-## Evaluating The Options
-
-Option 1, using applications, is inferior to the other options and can be discarded. Applications in FusionAuth are used to manage user logins, and it will get cluttered and confusing if you have dozens of new applications that are used not for login, but only to track which permissions a user has. This option provides no benefit over using entities instead, unless you are using the free version of FusionAuth.
-
-Options 2 and 3, entities versus JSON, are completely opposite approaches. Option 2 explicitly stores the relationship between all organizational departments and all documents and their related permissions in FusionAuth. Your website can use the FusionAuth API to get a list of all a user's entity grants to the user's documents and departments, and a list of all documents and the department to which they belong, and use both lists to see what a user has access to. In contrast, option 3 doesn't use any FusionAuth features to store a user's departments and permissions. Instead, you can choose any naming scheme you want to represent your hierarchy. With option 3, it's very important that you are able to map the text in the JSON with the names of your departments stored elsewhere. For instance, your permissions manager code would have to consistently use "Change Bank" and not "ChangeBank" for thousands of lines of JSON across hundreds of users. And how exactly do you know that a document authorization, stored as an entity in FusionAuth, called "Change Insurance Financial Statements draft 2042", can be read by a user with the JSON permission `Change Bank: ["read"]`? Do you parse the document title (entity name) to see if it has "Change Bank" in it? This seems extremely error-prone.
-
-Both options 2 and 3 also have a synchronization problem. If you manage document permissions with FusionAuth, and name the document entity according to the name the author gives the document in your website, what do you when the document name changes? Or if two documents have the same name?  You can quickly see that relying on a document name won't work. You will have to generate a UUID for a document on your website, and be sure to give the document authorization in FusionAuth the same UUID.
-
-Given these problems, option 3 would have to use UUIDs in the user JSON data, and you would have to recreate something very similar to FusionAuth's entity management interface in your own website to map UUIDs to hierarchical permissions. Storing some of the user permissions in FusionAuth in JSON, and some permissions in the organizational hierarchy in your website, database violates the principle of modularity. It will result in confusion for your programmers to manage permissions across two different systems. As a result, it would be best to choose between:
-- Using FusionAuth only for user authentication and keeping all authorization and company structure information in a separate dedicated document management system that uses FusionAuth as its authentication gateway. Example document managements systems that can use an external OAuth provider like FusionAuth are [Nuxeo](https://doc.nuxeo.com/nxdoc/using-openid-oauth2-in-login-screen) and [M-Files](https://www.m-files.com/products/platform-security). (There may be other document managements systems that allow the use of FusionAuth, but their documentation does not state it.)
-- Using option 2 and fully embracing FusionAuth to store all permissions and your company structure. Ensure that you use matching UUIDs for the digital document itself, and the authorization to that document stored in FusionAuth as an entity.
+Finally, note that you should use a matching UUID for every document in your document management system and in FusionAuth, to handle situations where document names and versions change.
 
 ## Example Permissions Calculation Script
 
-This section is a practical tutorial that shows you how to create a hierarchical organization model in FusionAuth, and write a script to determine a user's permissions to any entity in the hierarchy. It demonstrates option 2 above.
+This section demonstrates how to create all the entities for the example company hierarchy, and how to write a script to determine a user's permissions to any document in the hierarchy.
 
 ### Download Example Project And Start FusionAuth
 
@@ -285,7 +262,7 @@ function getEntityParent(entity: TEntity, entities: TEntity[], entityGrants: TEn
 await getUserPermissions('richard@example.com');
 ```
 
-This code is a little tricky if you haven't worked with a tree structure before. Luckily, our example assumes that every entity has only one owner (parent node), so in all searches, once you find a grant with `IsMember` you know you have found the node's only parent. The code starts by looping through every entity that is a document, because we don't care about a user's permissions to other entities. For each document, the code gets all ancestors (the document's department and the department's company). Then it finally checks if the user has any permissions to any of those entities, and adds the permissions to the list of permissions the user has to the document.
+This code is a little tricky if you haven't worked with a tree structure before. Luckily, our example assumes that every entity has only one owner (parent node), so in all searches, once you find a grant with `IsMember` you know you have found the node's only parent. The code starts by looping through every entity that is a document, because you can ignore entities that aren't documents. For each document, the code gets all ancestors (the document's department and the department's company). Then it finally checks if the user has any permissions to any of those entities, and adds the permissions to the list of permissions the user has to the document.
 
 In a new terminal, run the commands below to install Axios and run the script to check what permissions Richard has to both documents. Here, to save time, you use Docker again, with the Deno 2 image, which can run TypeScript without any compile step, as well as allowing you to freely mix JavaScript, ES modules, and CommonJS modules. In reality, you could use the TypeScript compiler, and Node, Bun, or any other JavaScript environment you like.
 
@@ -345,3 +322,32 @@ docker rm fa fa_db
 docker rmi postgres:16.0-bookworm fusionauth/fusionauth-app:latest denoland/deno:alpine-2.1.3
 docker network prune;
 ```
+
+## Alternative Methods To Model Hierarchy In FusionAuth
+
+The code above demonstrated entities, but there are a few ways to model the example company structure in FusionAuth. Documents have to be entities, or stored outside FusionAuth, and employees have to be users. There are no other types in FusionAuth that will work for this.
+
+After that, below are the two alternatives to using entities and grants.
+
+### Applications And Roles
+
+In this option, you add the finance employee, Alice, to an application representing her company and department, like Change Bank Operations application, instead of an entity representing the company. Each application will have two roles, read and write, which are effectively permissions not roles. You can't use groups instead of applications to model this example because groups do not have permissions. Alice will need to be a member of multiple applications, for different departments and companies.
+
+You would have to keep record of what department each document belongs to outside FusionAuth. This is a bad option that provides no benefit over using entities instead, unless you are using the free version of FusionAuth, which does not have entities.
+
+### User JSON Data
+
+In this option, you store every user's company and department as properties in their JSON `user.data` field. This has to be done through the FusionAuth API, and cannot be maintained in the FusionAuth web interface. You will need to write your own UI app for HR staff to work with FusionAuth. With this approach you don't need to use applications, roles, or groups. Below is example JSON data for Alice:
+  ```js
+  "permissions": {
+    "Change Bank": [],
+    "Change Bank Operations": ["read", "write"],
+    "Change Bank Human Resources manual": ["read"],
+  }
+  ```
+
+The last line, regarding permissions to a document, could either be stored manually, as is shown above, or could be an entity grant from Alice to the document. If you remove the last line, you would keep only company permissions in JSON and store document permissions using entities.
+
+Using entities, as the example script demonstrated earlier, or using JSON, are opposite approaches. Using entities explicitly stores the relationship between all organizational departments and all documents and their related permissions in FusionAuth. In contrast, using JSON doesn't use any FusionAuth features to store a user's departments and permissions. Instead, you can choose any naming scheme you want to represent your hierarchy. Here it's very important that you are able to map the text in the JSON with the names of your departments stored elsewhere. For instance, your permissions manager code would have to consistently use "Change Bank" and not "ChangeBank" for thousands of lines of JSON across hundreds of users.
+
+If you are using the free edition of FusionAuth, using JSON might be suitable for you, but may become confusing. A better alternative would be to use FusionAuth only for user authentication, and keep all authorization and company structure information in a separate dedicated document management system that uses FusionAuth as its authentication gateway. Example document managements systems that can use an external OAuth provider like FusionAuth are [Nuxeo](https://doc.nuxeo.com/nxdoc/using-openid-oauth2-in-login-screen) and [M-Files](https://www.m-files.com/products/platform-security). (There may be other document managements systems that allow the use of FusionAuth, but their documentation does not state it.)
