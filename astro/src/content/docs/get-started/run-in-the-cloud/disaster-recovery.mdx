@@ -1,0 +1,98 @@
+---
+title: Disaster Recovery (DR)
+description: Disaster Recovery (DR) In FusionAuth Cloud
+section: get started
+subcategory: run in the cloud
+---
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import Aside from '/src/components/Aside.astro';
+import { RemoteCode } from '@fusionauth/astro-components';
+import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
+import PrimaryServing from 'src/diagrams/docs/get-started/run-in-the-cloud/disaster-recovery/primary-serving.astro';
+import SecondaryServing from 'src/diagrams/docs/get-started/run-in-the-cloud/disaster-recovery/secondary-serving.astro';
+
+<EnterprisePlanBlurb />
+
+## Disaster Recovery (DR)
+
+FusionAuth Cloud supports multi-region disaster recovery (DR). DR functionality is built into FusionAuth Cloud. Let's discuss how to enable and use DR in FusionAuth Cloud.
+
+## What Is FusionAuth Cloud Disaster Recovery
+
+DR, also known as cross-region replication (CRR), makes a secure backup copy of your login application and database in a datacenter far away from your primary FusionAuth deployment. The database is securely replicated from your primary region to your secondary region. The primary and secondary regions are configurable. 
+
+In the event of a disaster, you can switch off your primary FusionAuth deployment and promote your secondary deployment to serve production traffic. This minimizes downtime if the data centers running your primary deployment are taken offline. You can redirect login traffic away from a regional failure in minutes.
+
+This is an active/passive DR configuration, because you are only serving live traffic out of one deployment at a time.
+
+## Requirements
+
+To enable DR:
+
+* your deployment must be highly available (HA)
+* you must purchase an Enterprise plan
+
+In addition, DR is not available without talking to the [technical FusionAuth sales team](/contact), as it requires additional configuration on our side.
+
+## Set Up
+
+You'll need to determine the secondary region for your DR setup. This can be any region supported by FusionAuth Cloud.
+
+Once you have a HA plan and have discussed it with the FusionAuth team, FusionAuth will enable DR on your instance.
+
+When this is done, you'll see a related instance in the FusionAuth <Breadcrumb>Hosting</Breadcrumb> tab in your account portal.
+
+![User view of FusionAuth Cloud disaster recovery configuration.](/img/docs/get-started/run-in-the-cloud/disaster-recovery/example-dr-config.png)
+
+You'll also need to set up hostnames pointing to ABC
+TODO is this needed
+
+The database of the secondary deployment will be automatically and securely kept up date with the primary deployment.
+
+<PrimaryServing alt="When the primary deployment is serving traffic."/>
+
+## Fail Over
+
+When disaster strikes, you need to fail over. The primary goal of failing over to your DR secondary is to ensure that customers can continue to log in.
+
+To do so, please [open a support ticket](https://account.fusionauth.io/account/support/). The support team at FusionAuth may reach out proactively as well if their system monitoring suggests it.
+
+<Aside type="note">
+Why not automatically failover as soon as an error is detected? Good question, and one we debated internally.
+
+The team decided that an authentication failover was so important, took long enough and had such a business impact putting a human in the loop was required.
+</Aside>
+
+After assessment and any needed discussion, failover is manually triggered. All traffic is routed to the secondary.
+
+<SecondaryServing alt="When the primary deployment has failed and the secondary deployment is serving traffic."/>
+
+This failover process takes between 15 and 30 minutes.
+
+After failover, functionality that depends on the Elasticsearch index will not be available until after a re-index. 
+
+After failover completes, the new primary (which was formerly the secondary) can have DR enabled. This creates a new secondary in a different region.
+
+## Limitations
+
+Elasticsearch/OpenSearch indices are not replicated and need to be recreated once the secondary has been promoted.
+
+The primary and secondary deployment regions must both be supported by FusionAuth Cloud.
+
+The primary and secondary deployments must be on the same version of FusionAuth and be the same size.  TODO how do upgrades work
+
+FusionAuth Cloud does not support failing over to a self-hosted or on-prem FusionAuth instance.
+
+FusionAuth Cloud does not support active/active DR, where both deployments are serving live requests.
+
+## Self-Hosting And Disaster Recovery
+
+FusionAuth, the software package, also supports multi-region disaster recovery, because if you are self-hosting, you can replicate your database and Elasticsearch/OpenSearch data to a different region.
+
+To do so, please consult your database and Elasticsearch provider documentation for replication steps.
+
+TODO
+- update cognito guide to mention CRR
+- RTO
+- RPO
