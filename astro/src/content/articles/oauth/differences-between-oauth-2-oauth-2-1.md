@@ -16,6 +16,8 @@ A new OAuth specification has been proposed and is currently under discussion. A
 
 That bears repeating. Nothing new will be added. This is an explicit design goal of OAuth 2.1.
 
+[![The Modern Guide to OAuth](/img/cta/modern-guide-1.png)](/ebooks/modern-guide-to-oauth?utm_medium=cta&utm_source=articles&utm_campaign=oauth_differences)
+
 This article assumes you are a developer or have analogous technical experience and are familiar with OAuth and the terms used in the various corresponding standards. If you’d like an introduction to OAuth and why you’d consider using it, [Wikipedia is a good place to start](https://en.wikipedia.org/wiki/OAuth). This article covers proposed changes to OAuth that might affect you if you are either using OAuth in your application or if you build software which implements OAuth.
 
 ## Why OAuth 2.1?

@@ -19,6 +19,8 @@ As a developer or software engineer, MFA may seem a bit mysterious. This article
 
 At the end, you should have a good understanding of options for integrating MFA into your applications, and how to start doing so.
 
+[![MFA For Developers](/img/cta/mfa-for-devs.png)](/tech-papers/multi-factor-authentication-for-developers?utm_medium=cta&utm_source=articles&utm_campaign=what_is_mfa)
+
 ## What Is Multi-factor Authentication (MFA)?
 
 When a user is authenticating, they are providing proof of who they are. There are four broad categories of proof:
