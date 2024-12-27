@@ -47,4 +47,11 @@ However, the project has a billion violations at the moment. To target a specifi
 
 or similar to just target the individual files you want to check. Also your editor should be able to run the linter as you edit, so you will see your violations in real time.
 
+If you need to skip the linter for any reason you can add a comment for either `eslint-disable-next-line` or `eslint-disable-line` to the line you want to skip.
+
+```markdown
+{/* eslint-disable-next-line */}
+<a href="https://www.fusionauth.io">FusionAuth</a>
+```
+
 The check on Pull Requests will only look at the files that you have changed in your PR
