@@ -3,7 +3,7 @@ import type { APIRoute } from "astro";
 
 const docs = await getCollection("docs");
 
-export const GET: APIRoute = async ({ params, request }) => {
+export const GET: APIRoute = async ({}) => {
     return new Response(
         `## FusionAuth.io Documentation\n\n${docs
             .map((doc) => {
