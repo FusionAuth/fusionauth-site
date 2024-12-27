@@ -6,14 +6,15 @@ import { OrderedSet } from 'immutable';
 import { Categories } from '../tags';
 import { Bubble } from '../Bubble/Bubble';
 import { Consumer } from '../prelude';
+import React from 'react';
 
 interface Props extends UseStateProps<string, 'currCategory'> {
-    categories: Categories,
+    currCategory: string,
+    setCurrCategory: Consumer<string>,
     selected: OrderedSet<string>,
     setSelected: Consumer<OrderedSet<string>>,
     tags: string[]
   }
-
 export const Selector = ({ tags, selected, setSelected, currCategory, setCurrCategory }: Props) => {
   const borderRef = useRef<HTMLDivElement>(null!);
   const [selectedRef, setSelectedRef] = useState<HTMLElement>();
@@ -31,8 +32,6 @@ export const Selector = ({ tags, selected, setSelected, currCategory, setCurrCat
   useEffect(() => {
     // Temporary, I swear
     const actualSelectedRef = selectedRef ?? document.querySelector<HTMLElement>(`.${s.list} li button`)!;
-    console.log(actualSelectedRef)
-    console.log(borderRef.current)
     setSelectedStyle(calcUnderline(actualSelectedRef, borderRef.current));
   }, [selected, selectedRef]);
 
@@ -42,9 +41,13 @@ export const Selector = ({ tags, selected, setSelected, currCategory, setCurrCat
       <ul className={s.list}>{
         categoryNames.map((category) => {
           
-          return <li key={category} className={clsx(category === currCategory && s.selected)}>
-            <button onClick={onClick(category)}>
-              <span>{category}</span>
+          return <li key={category} className={""}>
+            <button onClick={onClick(category)} >
+              <span className={
+                selected.has(category)
+                    ? "dark:text-indigo-400 text-indigo-700 hover:text-slate-900 text-sm dark:hover:text-slate-200 border-indigo-700 hover:border-slate-900/50 "
+                    : "text-slate-700  dark:text-slate-400 hover:text-slate-900 text-sm dark:hover:text-slate-200 border-indigo-700 hover:border-slate-900/50 "
+              }>{category}</span>
             </button>
           </li>;
         })

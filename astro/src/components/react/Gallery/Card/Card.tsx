@@ -37,7 +37,10 @@ export const Card = ({ title, description, tags, icon, codeRoot, selected, setSe
         </div>
         <ul className={"mb-3 flex flex-grow basis-2 flex-wrap my-0"}>
           {mappedTags.map(({tag, isSelected}, tagIdx) => (
-              <li className={"w-auto px-2 py-1 my-2 mx-2 border border-solid block rounded-lg border-slate-200 dark:bg-slate-900 dark:border-slate-800 bg-white dark:hover:bg-slate-800 dark:hover:border-indigo-500 group hover:bg-slate-100 hover:border-indigo-500 list-none text-center " + (isSelected ? "dark:bg-indigo-700 text-white bg-indigo-400" : "")}
+              <li className={"w-auto px-2 py-1 my-2 mx-2 border border-solid block rounded-lg  dark:bg-slate-900 dark:border-slate-800  dark:hover:bg-slate-800 dark:hover:border-indigo-500 group hover:bg-slate-100 hover:border-indigo-500 list-none text-center " +
+                  (isSelected
+                      ? "dark:bg-indigo-700 dark:text-white text-slate-900 bg-indigo-100 border-slate-500"
+                      : "bg-white border-slate-200")}
                   key={tag + tagIdx}>
                 <button className={"w-full"} onClick={event => onTagClick(event, tag)}>{tag}</button>
               </li>
