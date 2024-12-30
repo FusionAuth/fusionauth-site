@@ -17,6 +17,9 @@ const htmlTagsWithMarkdownEquivalents = [
   'a', // Links
   'img' // Images
 ];
+
+const invalidAnchorAttributes = ['href', 'title'];
+const invalidImageAttributes = ['src', 'alt', 'title'];
 const checkIfHtml = (node, parents, file) => {
   if (!node.position) return
 
@@ -29,6 +32,15 @@ const checkIfHtml = (node, parents, file) => {
   // check if the tag has no markdown equivalent
   const tagHasNoMarkdownEquivalent = !htmlTagsWithMarkdownEquivalents.includes(name);
   if (isComponent || tagHasNoMarkdownEquivalent) return;
+
+  // check for attributes on the tags a and img
+  if (name === 'a' && node.attributes.find(attr => !invalidAnchorAttributes.includes(attr.name))) {
+    return;
+  }
+
+  if (name === 'img' && node.attributes.find(attr => !invalidImageAttributes.includes(attr.name))) {
+    return;
+  }
 
   file.message(`Unexpected HTML tag [${name}], use markdown instead`, {
     ancestors: [...parents, node],
