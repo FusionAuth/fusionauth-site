@@ -67,8 +67,8 @@ If you have any trouble with this tutorial, try replacing the FusionAuth image i
   - Click the <InlineUIElement>Add</InlineUIElement> arrow, choose <InlineUIElement>Add SCIM Server</InlineUIElement>, and save.
   - Click the <InlineUIElement>Add</InlineUIElement> arrow, choose <InlineUIElement>Add SCIM Client</InlineUIElement>, and save.
 - Browse to <Breadcrumb>Entity Management -> Entity</Breadcrumb>.
-  - Click the <InlineUIElement>Add</InlineUIElement> button, choose <InlineUIElement>SCIM Server</InlineUIElement>, for <InlineField>Name</InlineField> enter `BankTenant`, for <InlineField>Id</InlineField> enter `1a3fd007-aafb-45db-b3dc-3298bcf71c98`, and for <InlineField>Secret</InlineField> enter `FIjjqyyPgBRbUMKhZIE7aQ8OVQ_Mp6DipxDAHsVF2fg`, and save.
-  - Click the <InlineUIElement>Add</InlineUIElement> button, choose <InlineUIElement>SCIM Client</InlineUIElement>, for <InlineField>Name</InlineField> enter `BankClient`, for <InlineField>Id</InlineField> enter `bd09d77f-73e5-4d6c-ae0c-5436bf3e26d6`, and for <InlineField>Secret</InlineField> enter `UirdqdyvC5_1SxiDHdwlLyz7JGNxwCFJM0AL3MjUp28`, and save.
+  - Click the <InlineUIElement>Add</InlineUIElement> button, choose <InlineUIElement>SCIM Server</InlineUIElement>, for <InlineField>Name</InlineField> enter `BankTenant`, for <InlineField>Id</InlineField> and <InlineField>Client Id</InlineField> enter `1a3fd007-aafb-45db-b3dc-3298bcf71c98`, and for <InlineField>Secret</InlineField> enter `FIjjqyyPgBRbUMKhZIE7aQ8OVQ_Mp6DipxDAHsVF2fg`, and save.
+  - Click the <InlineUIElement>Add</InlineUIElement> button, choose <InlineUIElement>SCIM Client</InlineUIElement>, for <InlineField>Name</InlineField> enter `BankClient`, for <InlineField>Id</InlineField> and <InlineField>Client Id</InlineField> enter `bd09d77f-73e5-4d6c-ae0c-5436bf3e26d6`, and for <InlineField>Secret</InlineField> enter `UirdqdyvC5_1SxiDHdwlLyz7JGNxwCFJM0AL3MjUp28`, and save.
 - Click <InlineField>Manage</InlineField> for the BankClient entity, and <InlineField>Add</InlineField>.
   - Search for and select `BankTenant`.
   - Enable all permissions, and save. **Scroll down** when enabling permissions, because there is a barely visible scrollbar that is easy to overlook.
@@ -76,20 +76,103 @@ If you have any trouble with this tutorial, try replacing the FusionAuth image i
 You now have a SCIM server (representing your FA tenant) and a SCIM client (representing the app you want to allow managing users in FA) configured. The next step is to enable SCIM operations in your tenant.
 
 - Browse to <Breadcrumb>Tenants</Breadcrumb>, edit the Default tenant, and in the <InlineUIElement>SCIM tab</InlineUIElement> enable <InlineUIElement>Enabled<InlineUIElement>.
-  - Choose the SCIM server and client. Note that you're linking the Tenant to the Entity Type, not the Entity, which is surprising. In FA, entities handle [machine authentication](/content/articles/authentication/service-to-service) but [cannot connect with users or applications]. FA allows connecting the tenant to the entity type as a workaround in this case. Security is provided by the SCIM Client entity. Whichever permissions are enabled in the entity grant from the client to the server entity are the ones the tenant will allow.
--
-- If you want to edit the user creation data mapping, browse to Customizations - Lambdas - SCIM User Request Converter - Edit
+  - Choose the SCIM server and client and save.
+
+<Aside type="note">
+You're linking the Tenant to the Entity **Type**, not the Entity, which is surprising. In FA, entities handle [machine authentication](/content/articles/authentication/service-to-service) but entities [cannot connect to users or applications](/docs/get-started/core-concepts/types-and-relationships). FA allows connecting the tenant to the entity type as a workaround to provide security for SCIM. Permissions are controlled by the SCIM Client entity. Whichever permissions are enabled in the entity grant from the client to the server entity are the permissions the tenant will allow.
+</Aside>
+
+![Entity Types in FusionAuth](../../../../../public/img/docs/lifecycle/examples/scim/entities.webp)
+
+## Create A FA User With SCIM
+
+FA is now ready to receive SCIM commands.
+
+```sh
+curl -u bd09d77f-73e5-4d6c-ae0c-5436bf3e26d6:UirdqdyvC5_1SxiDHdwlLyz7JGNxwCFJM0AL3MjUp28 http://localhost:9011/oauth2/token --data-urlencode "grant_type=client_credentials" --data-urlencode "scope=target-entity:1a3fd007-aafb-45db-b3dc-3298bcf71c98:scim:user:create"
+```
+
+```js
+import axios from "npm:axios@1.7.9";
+import jwksClient from "npm:jwks-rsa";
+import jwt from "npm:jsonwebtoken";
+
+try {
+  const token = await getAccessToken();
+  console.log(token);
+  await makeUser(token);
+} catch (e) {console.dir(e, { depth: null });}
+
+async function makeUser(token) {
+  const data = {
+    "active": true,
+    "emails": [
+      {
+        "primary": true,
+        "type": "work",
+        "value": "alice@example.com"
+      }
+    ],
+    "externalId": "cc6714c6-286c-411c-a6bc-ee413cda1dbc",
+    "name": {
+      "familyName": "Doe",
+      "formatted": "Alice Doe",
+      "givenName": "Alice",
+    },
+    "password": "password",
+    "phoneNumbers": [
+      {
+        "primary": true,
+        "type": "mobile",
+        "value": "303-555-1234"
+      }
+    ],
+    "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Users"],
+    "userName": "alice"
+  }
+
+  try{
+  // const api = axios.create({ baseURL: 'http://fa:9011/api', headers: { 'Authorization': '33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod' } });
+  const api = axios.create({ baseURL: 'http://fa:9011/api', headers: { 'Authorization': 'Bearer ' + token } });
+  const result = await api.post(`/scim/resource/v2/Users`, data)
+  console.dir(result.data);
+  } catch (e) {console.dir(e, { depth: null });}
+}
+
+async function getAccessToken() {
+  try {
+    const formData = new URLSearchParams();
+    formData.append("grant_type", "client_credentials");
+    formData.append("client_id", "bd09d77f-73e5-4d6c-ae0c-5436bf3e26d6");
+    formData.append("client_secret", "UirdqdyvC5_1SxiDHdwlLyz7JGNxwCFJM0AL3MjUp28");
+    formData.append("scope","target-entity:1a3fd007-aafb-45db-b3dc-3298bcf71c98:scim:user:create");
+    // scim:user:read scim:user:update scim:user:delete scim:enterprise:user:create scim:enterprise:user:read scim:enterprise:user:update scim:enterprise:user:delete scim:group:create scim:group:read scim:group:update scim:group:delete
+
+    const response = await axios({
+      method: "post",
+      url: "http://fa:9011/oauth2/token",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      data: formData,
+    });
+
+    // console.log("Access Token:", response.data.access_token);
+    return response.data.access_token;
+  } catch (e) {console.dir(e, { depth: null });}
+}
+```
 
 
-![Entity Types in FusionAuth](/img/docs/extend/examples/modeling-hierarchy/entityTypes.png)
-
-### Run Your Website To Calculate All The User Permissions
-
+TODO
 In this section you'll write a script to get all the direct and indirect (through the company hierarchy) permissions a user has to all documents in FusionAuth. All you need is the user's email address or Id. Though this is a simple script, you can use exactly the same code after the user has logged in to your website with FusionAuth. (To learn how to make a simple Node.js website that uses FusionAuth, read the [quickstart](/docs/quickstarts/quickstart-javascript-express-web).)
 
 Note that the FusionAuth API key is hardcoded into this file and passed to Axios. In reality, you should never commit your key to Git, but keep it in a `.env` file. The rest of the code is simple: it calls the FusionAuth API for each type and stores the result returned. Read more about the API for [users](/docs/apis/users), [entities](/docs/apis/entities/entities), and [grants](/docs/apis/entities/grants).
 
 SCIM in FA can create users, but cannot add user to applicationsalso does not allow creating registrations to apps (have to hand-code a workaround in thelabda or by listening to a webhook, https://fusionauth.io/docs/lifecycle/migrate-users/scim/#adding-registrations). Have to edit the default lambda to map user fields to FA user fields.
+
+
+- If you want to edit the user creation data mapping, browse to Customizations - Lambdas - SCIM User Request Converter - Edit
+
+
 
 ## Clean Up
 
