@@ -7,6 +7,10 @@ subcategory: examples
 ---
 
 import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import Aside from 'src/components/Aside.astro';
 
 <EnterprisePlanBlurb />
 
@@ -25,6 +29,84 @@ FusionAuth has an alternative to SCIM, [the user API](https://fusionauth.io/docs
 
 If you're looking for a way to automatically create a set of users when installing FA, then you can use [Kickstart](https://fusionauth.io/docs/get-started/download-and-install/development/kickstart), which is easier than both the API and SCIM.
 </Aside>
+
+## Start FusionAuth And Configure SCIM
+
+Let's start the example by running a new instance of FA and configuring it to use SCIM. For compatibility and safety, you'll run all code inside [Docker](https://www.docker.com/get-started/).
+
+Use `git clone` to clone the repository at https://github.com/FusionAuth/fusionauth-example-docker-compose, or download and unzip it.
+
+Open a terminal in the directory containing the repository files.
+
+Run the command below to start FusionAuth.
+
+```sh
+cd light
+docker compose up
+```
+
+<Aside type="note">
+If you have completed any FusionAuth tutorials before, you might need to first delete any existing FusionAuth containers with the same name and the database volumes. Run the command below to do that.
+
+```sh
+docker rm fa fa_db; docker compose down -v
+```
+</Aside>
+
+This command started FusionAuth using Kickstart, which automatically creates an example application with an example user called Richard. It saves you the time of having to configure everything yourself when following this tutorial.
+
+- Log in to your FusionAuth web interface at http://localhost:9011/admin with credentials `admin@example.com` and `password`.
+- Browse to <Breadcrumb>Reactor</Breadcrumb>.
+- Enter your license key to activate Reactor and refresh the page.
+
+<Aside type="note">
+If you have any trouble with this tutorial, try replacing the FusionAuth image in the Docker compose file with `fusionauth/fusionauth-app:1.54.0`, in case future versions of FusionAuth introduced a breaking change.
+</Aside>
+
+- Browse to <Breadcrumb>Entity Management -> Entity Types</Breadcrumb>.
+  - Click the <InlineUIElement>Add</InlineUIElement> arrow, choose <InlineUIElement>Add SCIM Server</InlineUIElement>, and save.
+  - Click the <InlineUIElement>Add</InlineUIElement> arrow, choose <InlineUIElement>Add SCIM Client</InlineUIElement>, and save.
+- Browse to <Breadcrumb>Entity Management -> Entity</Breadcrumb>.
+  - Click the <InlineUIElement>Add</InlineUIElement> button, choose <InlineUIElement>SCIM Server</InlineUIElement>, for <InlineField>Name</InlineField> enter `BankTenant`, for <InlineField>Id</InlineField> enter `1a3fd007-aafb-45db-b3dc-3298bcf71c98`, and for <InlineField>Secret</InlineField> enter `FIjjqyyPgBRbUMKhZIE7aQ8OVQ_Mp6DipxDAHsVF2fg`, and save.
+  - Click the <InlineUIElement>Add</InlineUIElement> button, choose <InlineUIElement>SCIM Client</InlineUIElement>, for <InlineField>Name</InlineField> enter `BankClient`, for <InlineField>Id</InlineField> enter `bd09d77f-73e5-4d6c-ae0c-5436bf3e26d6`, and for <InlineField>Secret</InlineField> enter `UirdqdyvC5_1SxiDHdwlLyz7JGNxwCFJM0AL3MjUp28`, and save.
+- Click <InlineField>Manaage</InlineField> for the BankClient entity, and <InlineField>Add</InlineField>.
+  - Search for and select `BankTenant`.
+  - Enable all permissions, and save. Scroll down when enabling permissions, because there is a barely visible scrollbar that is easy to overlook.
+- Tenants - Default - Edit - SCIM tab - Enable Enabled
+  - Choose new server and clients
+  - Note this link is for Entity Type, not Entity. Confusing.
+- If you want to edit the user creation data mapping, browse to Customizations - Lambdas - SCIM User Request Converter - Edit
+- To understand machine authentication, see /content/articles/authentication/service-to-service article
+
+
+
+- Click the <InlineUIElement>+ Add</InlineUIElement> button.
+- Name the entity type `Company`.
+- Add the permissions `Read`, `Write`, and `IsMember` and save the entity type.
+- Add another entity type called `Department` with the same permission names and save it.
+- Add a final entity type called `Document` with only `Read` and `Write` permissions. Nothing can be a member of a document, so it doesn't need an `IsMember` permission.
+
+![Entity Types in FusionAuth](/img/docs/extend/examples/modeling-hierarchy/entityTypes.png)
+
+### Run Your Website To Calculate All The User Permissions
+
+In this section you'll write a script to get all the direct and indirect (through the company hierarchy) permissions a user has to all documents in FusionAuth. All you need is the user's email address or Id. Though this is a simple script, you can use exactly the same code after the user has logged in to your website with FusionAuth. (To learn how to make a simple Node.js website that uses FusionAuth, read the [quickstart](/docs/quickstarts/quickstart-javascript-express-web).)
+
+Note that the FusionAuth API key is hardcoded into this file and passed to Axios. In reality, you should never commit your key to Git, but keep it in a `.env` file. The rest of the code is simple: it calls the FusionAuth API for each type and stores the result returned. Read more about the API for [users](/docs/apis/users), [entities](/docs/apis/entities/entities), and [grants](/docs/apis/entities/grants).
+
+SCIM in FA can create users, but cannot add user to applicationsalso does not allow creating registrations to apps (have to hand-code a workaround in thelabda or by listening to a webhook, https://fusionauth.io/docs/lifecycle/migrate-users/scim/#adding-registrations). Have to edit the default lambda to map user fields to FA user fields.
+
+## Clean Up
+
+To remove all the Docker volume, containers, images, and networks used in this guide, run the commands below.
+
+```sh
+docker compose down -v
+docker rm fa fa_db
+docker rmi postgres:16.0-bookworm fusionauth/fusionauth-app:latest denoland/deno:alpine-2.1.3
+docker network prune;
+```
+
 
 
 ## TODO
