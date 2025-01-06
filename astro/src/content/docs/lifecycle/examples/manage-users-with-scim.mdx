@@ -144,14 +144,19 @@ async function getAccessToken() {
 async function makeUser(token, user) {
   try{
     const api = axios.create({ baseURL: 'http://fa:9011/api', headers: { 'Authorization': 'Bearer ' + token } });
-    const result = await api.post(`/scim/resource/v2/Users`, user)
+    const result = await api.post('/scim/resource/v2/Users/', user);                    // CREATE
     console.dir(result.data);
+    const userId = result.data.id;
+    await api.put('/scim/resource/v2/Users/' + userId, { ...user, "userName": "eve" }); // UPDATE
+    await api.delete('/scim/resource/v2/Users/' + userId);                              // DELETE
   }
   catch (e) {console.dir(e, { depth: null });}
 }
 ```
 
-This code starts with JSON holding a sample user to create, then calls two functions: `getAccessToken`, which is similar to the curl call earlier, and `makeUser`, which passes the token and the user JSON to the FA SCIM endpoint. (All possible token `permissions` are requested. In reality, you can remove the ones you don't need. The format is the target entity Id, followed by comma-separated permissions.)
+This code starts with JSON holding a sample user to create, then calls two functions: `getAccessToken`, which is similar to the curl call earlier, and `makeUser`, which passes the token and the user JSON to the FA SCIM endpoint. `makeUser` creates a user, stores the user UUID that FA returns, updates the user with the UUID, then deletes the user.
+
+In `getAccessToken`, all possible token `permissions` are requested. In reality, you can remove the ones you don't need. The format is the target entity Id, followed by comma-separated permissions.
 
 - Run the script in Docker with the command below. (The command shares the FA network with the container, so the container can call FA on `http://fa`, because `http://localhost` won't work from inside a container.)
 
@@ -181,15 +186,20 @@ docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app"  --network faNetwor
   "urn:ietf:params:scim:schemas:core:2.0:Users": {}
 }
 ```
-- In the FusionAuth users page, you will see the new user, Alice.
+
+- To see the the new user in the FusionAuth users page, comment out the `api.put` and `api.delete` lines in `scim.js` and run the command above again.
+
+You should now see a user, as shown below.
 
 ![User created with SCIM](../../../../../public/img/docs/lifecycle/examples/scim/user.webp)
 
-To check that all SCIM commands work, replace the `makeUser` function with the code below.
+<Aside type="tip">
+Note that FA generated a new UUID for the user Id. Even if you specify an Id value in JSON, and update the FA lambda that received SCIM requests to include `user.id = scimUser.id;`, FA still won't user your Id when creating a SCIM user. This works differently to the [user API](https://fusionauth.io/docs/apis/users#request), which allows you to specify the new user's Id in the POST URL.
 
-```sh
+This limitation means that your code has to store the Id for the user returned from FA in order to issue further commands against the user.
+</Aside>
 
-```
+## Create Registrations And Custom Lambdas
 
 SCIM in FA can create users, but cannot add user to applicationsalso does not allow creating registrations to apps (have to hand-code a workaround in thelabda or by listening to a webhook, https://fusionauth.io/docs/lifecycle/migrate-users/scim/#adding-registrations). Have to edit the default lambda to map user fields to FA user fields.
 
