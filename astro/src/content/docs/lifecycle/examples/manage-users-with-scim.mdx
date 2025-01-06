@@ -14,13 +14,14 @@ import Aside from 'src/components/Aside.astro';
 
 <EnterprisePlanBlurb />
 
-This guide will show you how to enable SCIM for your tenant (multiple FusionAuth applications), how to create and delete users for applications using the SCIM protocol, and how to map user details using a lambda.
+This guide will show you how to enable SCIM for your tenant (multiple FusionAuth applications), how to create and delete users for applications, and how to map user details using a lambda. Since SCIM works at the tenant level, not the application level, you can use SCIM for any new or existing applications in the tenant.
 
 This guide is a concrete example that integrates the information in the following FusionAuth documentation:
 - [Overview of SCIM in FusionAuth](https://fusionauth.io/docs/lifecycle/migrate-users/scim)
-- [FusionAuth SCIM API](https://fusionauth.io/docs/apis/scim)
 - [FusionAuth SCIM API for Users](https://fusionauth.io/docs/apis/scim/scim-user)
-- [Lambdas to map SCIM](https://fusionauth.io/docs/extend/code/lambdas/scim-user-request-converter)
+- [SCIM user creation lambda](https://fusionauth.io/docs/extend/code/lambdas/scim-user-request-converter)
+- [SCIM user response lambda](https://fusionauth.io/docs/extend/code/lambdas/scim-user-response-converter)
+
 
 You should read the overview article before continuing. The other pages you don't need to read until you want to manage users in ways that aren't shown in this guide.
 
@@ -96,13 +97,16 @@ FA should now be ready to receive SCIM commands. To check that the SCIM client i
 
 ```sh
 curl -u bd09d77f-73e5-4d6c-ae0c-5436bf3e26d6:UirdqdyvC5_1SxiDHdwlLyz7JGNxwCFJM0AL3MjUp28 http://localhost:9011/oauth2/token --data-urlencode "grant_type=client_credentials" --data-urlencode "scope=target-entity:1a3fd007-aafb-45db-b3dc-3298bcf71c98:scim:user:create"
-
+```
+```sh
 # Expected output:
 
 {"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJjbGllbnRfY3JlZGVudGlhbHMiXSwia2lkIjoiMDllOGQyMTkxIiwidXNlIjoic2NpbV9zZXJ2ZXIifQ.eyJhdWQiOiIxYTNmZDAwNy1hYWZiLTQ1ZGItYjNkYy0zMjk4YmNmNzFjOTgiLCJleHAiOjE3MzYxNTg4NTksImlhdCI6MTczNjE1NTI1OSwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiJiZDA5ZDc3Zi03M2U1LTRkNmMtYWUwYy01NDM2YmYzZTI2ZDYiLCJqdGkiOiIxYzdhZDJiYS0xYTExLTQwMzktYmZiOC1kOGJiNjk1ZjllZWUiLCJzY29wZSI6InRhcmdldC1lbnRpdHk6MWEzZmQwMDctYWFmYi00NWRiLWIzZGMtMzI5OGJjZjcxYzk4OnNjaW06dXNlcjpjcmVhdGUiLCJ0aWQiOiJkN2QwOTUxMy1hM2Y1LTQwMWMtOTY4NS0zNGFiNmM1NTI0NTMiLCJwZXJtaXNzaW9ucyI6eyIxYTNmZDAwNy1hYWZiLTQ1ZGItYjNkYy0zMjk4YmNmNzFjOTgiOlsic2NpbTp1c2VyOmNyZWF0ZSJdfX0.6SusxG40kaRboSSKMhmNH9gEYynfnsqyr7czvFtw3Yg","expires_in":3599,"scope":"target-entity:1a3fd007-aafb-45db-b3dc-3298bcf71c98:scim:user:create","token_type":"Bearer"}
 ```
 
-At this point, if you have a SCIM application, you can point it to FusionAuth and see if you can create a user. The curl command above gave the URL on which to get an access token for the `scim:user:create` [permission](https://fusionauth.io/docs/lifecycle/migrate-users/scim/#permissions). The user creation SCIM endpoint is http://localhost:9011/api/scim/resource/v2/Users.
+If you want to see what the token looks like decoded, paste it into https://fusionauth.io/dev-tools/jwt-decoder.
+
+At this point, if you have a SCIM app, you can point it to FusionAuth and see if you can create a user. The curl command above gave the URL on which to get an access token for the `scim:user:create` [permission](https://fusionauth.io/docs/lifecycle/migrate-users/scim/#permissions). The user creation SCIM endpoint is http://localhost:9011/api/scim/resource/v2/Users.
 
 To mimic a SCIM app, you can use a JavaScript script to create a user.
 
@@ -158,11 +162,12 @@ This code starts with JSON holding a sample user to create, then calls two funct
 
 In `getAccessToken`, all possible token `permissions` are requested. In reality, you can remove the ones you don't need. The format is the target entity Id, followed by comma-separated permissions.
 
-- Run the script in Docker with the command below. (The command shares the FA network with the container, so the container can call FA on `http://fa`, because `http://localhost` won't work from inside a container.)
+- Run the script in Docker with the command below. (The command shares the Docker FA network with the container, so the container can call FA on `http://fa`, because `http://localhost` won't work from inside a container.)
 
 ```sh
 docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app"  --network faNetwork denoland/deno:alpine-2.1.3 sh -c  "deno run --allow-net --allow-env ./scim.js"
-
+```
+```sh
 # Expected output:
 
 {
@@ -187,25 +192,93 @@ docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app"  --network faNetwor
 }
 ```
 
+<Aside type="tip">
+Note that FA generated a new UUID for the user Id. Even if you specify an Id value in JSON, and update the FA lambda that received SCIM requests to include `user.id = scimUser.id;`, FA still won't use your Id when creating a SCIM user. This works differently to the [user API](https://fusionauth.io/docs/apis/users#request), which allows you to specify the new user's Id in the POST URL.
+
+This limitation means that your code has to store the Id for the user returned from FA in order to issue further commands against the user.
+</Aside>
+
 - To see the the new user in the FusionAuth users page, comment out the `api.put` and `api.delete` lines in `scim.js` and run the command above again.
 
 You should now see a user, as shown below.
 
 ![User created with SCIM](../../../../../public/img/docs/lifecycle/examples/scim/user.webp)
 
-<Aside type="tip">
-Note that FA generated a new UUID for the user Id. Even if you specify an Id value in JSON, and update the FA lambda that received SCIM requests to include `user.id = scimUser.id;`, FA still won't user your Id when creating a SCIM user. This works differently to the [user API](https://fusionauth.io/docs/apis/users#request), which allows you to specify the new user's Id in the POST URL.
-
-This limitation means that your code has to store the Id for the user returned from FA in order to issue further commands against the user.
-</Aside>
-
 ## Create Registrations And Custom Lambdas
 
-SCIM in FA can create users, but cannot add user to applicationsalso does not allow creating registrations to apps (have to hand-code a workaround in thelabda or by listening to a webhook, https://fusionauth.io/docs/lifecycle/migrate-users/scim/#adding-registrations). Have to edit the default lambda to map user fields to FA user fields.
+At this point, you have seen how to create, update, and delete FA users with SCIM. You should be able to use this knowledge to correctly set up and test your own SCIM app.
 
+However, if you browse to the Registrations tab for the user, you'll see that Alice is not a member of any applications. SCIM in FA can create users, but [cannot add users to applications](https://fusionauth.io/docs/lifecycle/migrate-users/scim/#adding-registrations). Your SCIM app also might have some custom user data that you'd like to insert into FA.
 
-- If you want to edit the user creation data mapping, browse to Customizations - Lambdas - SCIM User Request Converter - Edit
+Both these problems can be handled by customizing the SCIM user request lambda in FA.
 
+### Create Custom Data Mappings
+
+- Browse to <Breadcrumb>Customizations -> Lambdas -> SCIM User Request Converter -> Edit</Breadcrumb>
+- Set a custom user data mapping by changing the top of the function to be like the code below. Note that lambdas don't support all JavaScript syntax, so you can't use ` `` ` strings or `...` object notation.
+```js
+function convert(user, options, scimUser) {
+ if (!user.data) user.data = {};
+   user.data.id = scimUser.externalId;
+
+  user.active = scimUser.active;
+```
+- Delete the user from the list of users in FusionAuth and rerun `scim.js`.
+- Now when you browse the user data tab for the new user, you'll see that she has more data stored.
+
+![Custom user data](../../../../../public/img/docs/lifecycle/examples/scim/data.webp)
+
+<Aside type="caution">
+It may look like you can create a registration for the user by setting `options.applicationId`, but that won't work. The user creation parameters are documented [here](https://fusionauth.io/docs/apis/users#request) and [here](https://fusionauth.io/docs/extend/code/lambdas/scim-user-request-converter#lambda-structure). The code below **won't** make the user a member of the application, and also won't throw an error.
+```js
+function convert(user, options, scimUser) {
+ options.applicationId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e';
+ options.disableDomainBlock = true;
+ options.sendSetPasswordEmail = false;
+ options.skipVerification = true;
+```
+</Aside>
+
+### Create A Registration From A Lambda
+
+```js
+function convert(scimUser, user) {
+  // Your existing conversion logic here
+
+  // Make API call to register user to an application
+  var applicationId = "your-application-id";
+  var apiKey = "your-api-key";
+
+  // Check if the user is already registered to avoid duplicate registrations
+  if (!userIsRegistered(user.id, applicationId)) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/user/registration/" + user.id, false);
+    xhr.setRequestHeader("Authorization", apiKey);
+    xhr.setRequestHeader("Content-Type", "application/json");
+
+    var data = JSON.stringify({
+      registration: {
+        applicationId: applicationId
+      }
+    });
+
+    xhr.send(data);
+
+    if (xhr.status !== 200) {
+      console.error("Failed to register user to application");
+    }
+  }
+}
+
+function userIsRegistered(userId, applicationId) {
+  // Implement logic to check if user is already registered
+  // This would typically involve making another API call
+  // Return true if registered, false otherwise
+  return false; // Placeholder
+}
+```
+
+### Create A Registration From A Webhook
 
 
 ## Clean Up
@@ -230,3 +303,4 @@ docker network prune;
   - [FusionAuth SCIM API](https://fusionauth.io/docs/apis/scim)
   - [FusionAuth SCIM API for Users](https://fusionauth.io/docs/apis/scim/scim-user)
   - [Lambdas to map SCIM](https://fusionauth.io/docs/extend/code/lambdas/scim-user-request-converter)
+- `options` bug - https://github.com/FusionAuth/fusionauth-site/issues/3454
