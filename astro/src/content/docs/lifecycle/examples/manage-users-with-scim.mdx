@@ -22,12 +22,12 @@ This guide is a concrete example that integrates the information in the followin
 - [FusionAuth SCIM API for Users](https://fusionauth.io/docs/apis/scim/scim-user)
 - [Lambdas to map SCIM](https://fusionauth.io/docs/extend/code/lambdas/scim-user-request-converter)
 
-You should read the overview article before continuing. The other pages you don't need to read until you want to manage users in more advanced ways that aren't not shown in this guide.
+You should read the overview article before continuing. The other pages you don't need to read until you want to manage users in ways that aren't shown in this guide.
 
 <Aside type="note" title="When to use SCIM?">
-FusionAuth has an alternative to SCIM, [the user API](https://fusionauth.io/docs/apis/users), which allows you to provision users with simple HTTP calls. If you're looking for an easy way to automatically create users in FusionAuth, the API is a better choice. Use SCIM in FA only when you have an existing user-management system in your organization that is primarily designed to work with SCIM. SCIM is a secure and full-featured standard, but does require more work to configure than the user API.
+FusionAuth has an alternative to SCIM, [the user API](https://fusionauth.io/docs/apis/users), which allows you to provision users with simple HTTP calls. If you're looking for an easy way to automatically create users in FusionAuth, the API is a better choice. If you're looking for a way to automatically create a set of users when installing FA, then you can use [Kickstart](https://fusionauth.io/docs/get-started/download-and-install/development/kickstart), which is easier than both the API and SCIM.
 
-If you're looking for a way to automatically create a set of users when installing FA, then you can use [Kickstart](https://fusionauth.io/docs/get-started/download-and-install/development/kickstart), which is easier than both the API and SCIM.
+Use SCIM in FA only when you have an existing user-management system in your organization that is primarily designed to work with SCIM. SCIM is a secure and full-featured standard, but does require more work to configure than the user API.
 </Aside>
 
 ## Start FusionAuth And Configure SCIM
@@ -53,7 +53,7 @@ docker rm fa fa_db; docker compose down -v
 ```
 </Aside>
 
-This command started FusionAuth using Kickstart, which automatically creates an example application with an example user called Richard. It saves you the time of having to configure everything yourself when following this tutorial.
+This command started FusionAuth using Kickstart, which automatically creates an example application with an example user called richard@example.com. It saves you the time of having to configure everything yourself when following this tutorial.
 
 - Log in to your FusionAuth web interface at http://localhost:9011/admin with credentials `admin@example.com` and `password`.
 - Browse to <Breadcrumb>Reactor</Breadcrumb>.
@@ -73,99 +73,123 @@ If you have any trouble with this tutorial, try replacing the FusionAuth image i
   - Search for and select `BankTenant`.
   - Enable all permissions, and save. **Scroll down** when enabling permissions, because there is a barely visible scrollbar that is easy to overlook.
 
-You now have a SCIM server (representing your FA tenant) and a SCIM client (representing the app you want to allow managing users in FA) configured. The next step is to enable SCIM operations in your tenant.
+You have now configured a SCIM server (representing your FA tenant) and a SCIM client (representing the app you want to allow to manage users in FA).
+
+![SCIM entities](../../../../../public/img/docs/lifecycle/examples/scim/entities.webp)
+
+The next step is to enable SCIM operations in your tenant.
 
 - Browse to <Breadcrumb>Tenants</Breadcrumb>, edit the Default tenant, and in the <InlineUIElement>SCIM tab</InlineUIElement> enable <InlineUIElement>Enabled<InlineUIElement>.
-  - Choose the SCIM server and client and save.
+  - Choose the SCIM server and client.
+  - Choose the default lambdas.
+  - Save.
+
+![Tenant with SCIM](../../../../../public/img/docs/lifecycle/examples/scim/tenant.webp)
 
 <Aside type="note">
 You're linking the Tenant to the Entity **Type**, not the Entity, which is surprising. In FA, entities handle [machine authentication](/content/articles/authentication/service-to-service) but entities [cannot connect to users or applications](/docs/get-started/core-concepts/types-and-relationships). FA allows connecting the tenant to the entity type as a workaround to provide security for SCIM. Permissions are controlled by the SCIM Client entity. Whichever permissions are enabled in the entity grant from the client to the server entity are the permissions the tenant will allow.
 </Aside>
 
-![Entity Types in FusionAuth](../../../../../public/img/docs/lifecycle/examples/scim/entities.webp)
-
 ## Create A FA User With SCIM
 
-FA is now ready to receive SCIM commands.
+FA should now be ready to receive SCIM commands. To check that the SCIM client is correctly configured to create a user on the SCIM server, and that your Docker networking works correctly, run the curl command below to check the client permissions. If FA returns an access token and not an error then everything works.
 
 ```sh
 curl -u bd09d77f-73e5-4d6c-ae0c-5436bf3e26d6:UirdqdyvC5_1SxiDHdwlLyz7JGNxwCFJM0AL3MjUp28 http://localhost:9011/oauth2/token --data-urlencode "grant_type=client_credentials" --data-urlencode "scope=target-entity:1a3fd007-aafb-45db-b3dc-3298bcf71c98:scim:user:create"
+
+# Expected output:
+
+{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJjbGllbnRfY3JlZGVudGlhbHMiXSwia2lkIjoiMDllOGQyMTkxIiwidXNlIjoic2NpbV9zZXJ2ZXIifQ.eyJhdWQiOiIxYTNmZDAwNy1hYWZiLTQ1ZGItYjNkYy0zMjk4YmNmNzFjOTgiLCJleHAiOjE3MzYxNTg4NTksImlhdCI6MTczNjE1NTI1OSwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiJiZDA5ZDc3Zi03M2U1LTRkNmMtYWUwYy01NDM2YmYzZTI2ZDYiLCJqdGkiOiIxYzdhZDJiYS0xYTExLTQwMzktYmZiOC1kOGJiNjk1ZjllZWUiLCJzY29wZSI6InRhcmdldC1lbnRpdHk6MWEzZmQwMDctYWFmYi00NWRiLWIzZGMtMzI5OGJjZjcxYzk4OnNjaW06dXNlcjpjcmVhdGUiLCJ0aWQiOiJkN2QwOTUxMy1hM2Y1LTQwMWMtOTY4NS0zNGFiNmM1NTI0NTMiLCJwZXJtaXNzaW9ucyI6eyIxYTNmZDAwNy1hYWZiLTQ1ZGItYjNkYy0zMjk4YmNmNzFjOTgiOlsic2NpbTp1c2VyOmNyZWF0ZSJdfX0.6SusxG40kaRboSSKMhmNH9gEYynfnsqyr7czvFtw3Yg","expires_in":3599,"scope":"target-entity:1a3fd007-aafb-45db-b3dc-3298bcf71c98:scim:user:create","token_type":"Bearer"}
 ```
 
+At this point, if you have a SCIM application, you can point it to FusionAuth and see if you can create a user. The curl command above gave the URL on which to get an access token for the `scim:user:create` [permission](https://fusionauth.io/docs/lifecycle/migrate-users/scim/#permissions). The user creation SCIM endpoint is http://localhost:9011/api/scim/resource/v2/Users.
+
+To mimic a SCIM app, you can use a JavaScript script to create a user.
+
+- Create the file `scim.js` in the `light` directory.
+- Insert the code below.
 ```js
 import axios from "npm:axios@1.7.9";
-import jwksClient from "npm:jwks-rsa";
-import jwt from "npm:jsonwebtoken";
 
-try {
-  const token = await getAccessToken();
-  console.log(token);
-  await makeUser(token);
-} catch (e) {console.dir(e, { depth: null });}
-
-async function makeUser(token) {
-  const data = {
-    "active": true,
-    "emails": [
-      {
-        "primary": true,
-        "type": "work",
-        "value": "alice@example.com"
-      }
-    ],
-    "externalId": "cc6714c6-286c-411c-a6bc-ee413cda1dbc",
-    "name": {
-      "familyName": "Doe",
-      "formatted": "Alice Doe",
-      "givenName": "Alice",
-    },
-    "password": "password",
-    "phoneNumbers": [
-      {
-        "primary": true,
-        "type": "mobile",
-        "value": "303-555-1234"
-      }
-    ],
-    "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Users"],
-    "userName": "alice"
-  }
-
-  try{
-  // const api = axios.create({ baseURL: 'http://fa:9011/api', headers: { 'Authorization': '33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod' } });
-  const api = axios.create({ baseURL: 'http://fa:9011/api', headers: { 'Authorization': 'Bearer ' + token } });
-  const result = await api.post(`/scim/resource/v2/Users`, data)
-  console.dir(result.data);
-  } catch (e) {console.dir(e, { depth: null });}
+const user = {
+  "active": true,
+  "emails": [{"primary": true,"type": "work","value": "alice@example.com"}],
+  "externalId": "cc6714c6-286c-411c-a6bc-ee413cda1dbc",
+  "name": {"familyName": "Doe","formatted": "Alice Doe","givenName": "Alice",},
+  "password": "password",
+  "phoneNumbers": [{"primary": true, "type": "mobile", "value": "303-555-1234"}],
+  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Users"],
+  "userName": "alice"
 }
+
+const token = await getAccessToken();
+await makeUser(token, user);
+
 
 async function getAccessToken() {
   try {
+    const permissions = 'target-entity:1a3fd007-aafb-45db-b3dc-3298bcf71c98:scim:user:create,scim:user:read,scim:user:update,scim:user:delete,scim:enterprise:user:create,scim:enterprise:user:read,scim:enterprise:user:update,scim:enterprise:user:delete,scim:group:create,scim:group:read,scim:group:update,scim:group:delete';
     const formData = new URLSearchParams();
     formData.append("grant_type", "client_credentials");
     formData.append("client_id", "bd09d77f-73e5-4d6c-ae0c-5436bf3e26d6");
     formData.append("client_secret", "UirdqdyvC5_1SxiDHdwlLyz7JGNxwCFJM0AL3MjUp28");
-    formData.append("scope","target-entity:1a3fd007-aafb-45db-b3dc-3298bcf71c98:scim:user:create");
-    // scim:user:read scim:user:update scim:user:delete scim:enterprise:user:create scim:enterprise:user:read scim:enterprise:user:update scim:enterprise:user:delete scim:group:create scim:group:read scim:group:update scim:group:delete
-
-    const response = await axios({
-      method: "post",
-      url: "http://fa:9011/oauth2/token",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      data: formData,
-    });
-
-    // console.log("Access Token:", response.data.access_token);
+    formData.append("scope", permissions);
+    const response = await axios({method: "post", url: "http://fa:9011/oauth2/token", headers: { "Content-Type": "application/x-www-form-urlencoded" }, data: formData});
     return response.data.access_token;
-  } catch (e) {console.dir(e, { depth: null });}
+  }
+  catch (e) {console.dir(e, { depth: null });}
+}
+
+
+async function makeUser(token, user) {
+  try{
+    const api = axios.create({ baseURL: 'http://fa:9011/api', headers: { 'Authorization': 'Bearer ' + token } });
+    const result = await api.post(`/scim/resource/v2/Users`, user)
+    console.dir(result.data);
+  }
+  catch (e) {console.dir(e, { depth: null });}
 }
 ```
 
+This code starts with JSON holding a sample user to create, then calls two functions: `getAccessToken`, which is similar to the curl call earlier, and `makeUser`, which passes the token and the user JSON to the FA SCIM endpoint. (All possible token `permissions` are requested. In reality, you can remove the ones you don't need. The format is the target entity Id, followed by comma-separated permissions.)
 
-TODO
-In this section you'll write a script to get all the direct and indirect (through the company hierarchy) permissions a user has to all documents in FusionAuth. All you need is the user's email address or Id. Though this is a simple script, you can use exactly the same code after the user has logged in to your website with FusionAuth. (To learn how to make a simple Node.js website that uses FusionAuth, read the [quickstart](/docs/quickstarts/quickstart-javascript-express-web).)
+- Run the script in Docker with the command below. (The command shares the FA network with the container, so the container can call FA on `http://fa`, because `http://localhost` won't work from inside a container.)
 
-Note that the FusionAuth API key is hardcoded into this file and passed to Axios. In reality, you should never commit your key to Git, but keep it in a `.env` file. The rest of the code is simple: it calls the FusionAuth API for each type and stores the result returned. Read more about the API for [users](/docs/apis/users), [entities](/docs/apis/entities/entities), and [grants](/docs/apis/entities/grants).
+```sh
+docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app"  --network faNetwork denoland/deno:alpine-2.1.3 sh -c  "deno run --allow-net --allow-env ./scim.js"
+
+# Expected output:
+
+{
+  active: true,
+  emails: [ { primary: true, type: "work", value: "alice@example.com" } ],
+  externalId: "cc6714c6-286c-411c-a6bc-ee413cda1dbc",
+  id: "672963d1-142c-4587-8956-2ecbc2e96c62",
+  meta: {
+    created: "2025-01-06T10:08:03.410Z",
+    lastModified: "2025-01-06T10:08:03.410Z",
+    location: "http://fa:9011/api/scim/resource/v2/Users/672963d1-142c-4587-8956-2ecbc2e96c62",
+    resourceType: "User"
+  },
+  name: { familyName: "Doe", formatted: "Alice Doe", givenName: "Alice" },
+  phoneNumbers: [ { primary: true, type: "mobile", value: "303-555-1234" } ],
+  schemas: [
+    "urn:ietf:params:scim:schemas:core:2.0:User",
+    "urn:ietf:params:scim:schemas:core:2.0:Users"
+  ],
+  userName: "alice",
+  "urn:ietf:params:scim:schemas:core:2.0:Users": {}
+}
+```
+- In the FusionAuth users page, you will see the new user, Alice.
+
+![User created with SCIM](../../../../../public/img/docs/lifecycle/examples/scim/user.webp)
+
+To check that all SCIM commands work, replace the `makeUser` function with the code below.
+
+```sh
+
+```
 
 SCIM in FA can create users, but cannot add user to applicationsalso does not allow creating registrations to apps (have to hand-code a workaround in thelabda or by listening to a webhook, https://fusionauth.io/docs/lifecycle/migrate-users/scim/#adding-registrations). Have to edit the default lambda to map user fields to FA user fields.
 
