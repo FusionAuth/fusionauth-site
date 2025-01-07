@@ -241,7 +241,7 @@ function convert(user, options, scimUser) {
 
 ### Create A Registration From A Lambda
 
-todo update limitations of lambdas article. graalvm link
+todo update limitations of lambdas article. graalvm link. https://www.graalvm.org/javascript does support ECMAScript 2024, but FA does not
 xmlhttprequest does not work, nor does .then and .catch in fetch. have to use httpclient
 
 
@@ -304,36 +304,32 @@ function convert(scimUser, user) {
   if (isUserRegistered(user.id, applicationId, apiKey))
     return;
 
-  fetch("http://fa:9011/api/user/registration/" + user.id, {
-    method: 'POST',
-    headers: {'Authorization': apiKey,'Content-Type': 'application/json'},
-    body: JSON.stringify({'registration': {'applicationId': applicationId}})
-  })
-  .then(function(response) {
-    if (!response.ok) {
-      console.error("Failed to register user to application");
-    }
-  })
-  .catch(function(error) {
-    console.error("Error registering user:", error);
-  });
+  try {
+    var response = HttpClient.post("http://fa:9011/api/user/registration/" + user.id,
+      {
+        headers: {'Authorization': apiKey,'Content-Type': 'application/json'},
+        body: JSON.stringify({ 'registration': { 'applicationId': applicationId }})
+      });
+    if(response.status !== 201)
+      console.error("Failed to register user to application. Response status:", response.status);
+  }
+  catch(error) {
+    console.error("Error occurred registering user:", error);
+  }
 }
 
 function isUserRegistered(userId, applicationId, apiKey) {
-  return fetch("http://fa:9011/api/user/registration/" + userId + "/" + applicationId, {
-    method: 'GET',
-    headers: {'Authorization': apiKey}
-  })
-  .then(function(response) {
-    if (response.ok) return true;
+  try {
+    var response = HttpClient.get("http://fa:9011/api/user/registration/" + userId + "/" + applicationId, {headers: {'Authorization': apiKey}});
+    if (response.status === 200) return true;
     if (response.status === 404) return false;
     console.error("Error checking user registration:", response.status);
     return false;
-  })
-  .catch(function(error) {
-    console.error("Error checking user registration:", error);
+  }
+  catch (error) {
+    console.error("Exception checking user registration:", error);
     return false;
-  });
+  }
 }
 ```
 
