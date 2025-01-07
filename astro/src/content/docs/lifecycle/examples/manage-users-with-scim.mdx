@@ -21,6 +21,7 @@ This guide is a concrete example that integrates the information in the followin
 - [FusionAuth SCIM API for Users](https://fusionauth.io/docs/apis/scim/scim-user)
 - [SCIM user creation lambda](https://fusionauth.io/docs/extend/code/lambdas/scim-user-request-converter)
 - [SCIM user response lambda](https://fusionauth.io/docs/extend/code/lambdas/scim-user-response-converter)
+- [Calling APIs from lambdas](https://fusionauth.io/docs/extend/code/lambdas/lambda-remote-api-calls)
 
 
 You should read the overview article before continuing. The other pages you don't need to read until you want to manage users in ways that aren't shown in this guide.
@@ -215,7 +216,7 @@ Both these problems can be handled by customizing the SCIM user request lambda i
 ### Create Custom Data Mappings
 
 - Browse to <Breadcrumb>Customizations -> Lambdas -> SCIM User Request Converter -> Edit</Breadcrumb>
-- Set a custom user data mapping by changing the top of the function to be like the code below. Note that lambdas support only a small subset of JavaScript syntax, so you can't use ` `` ` strings, `...` object notation, `await`, or `=>` functions.
+- Set a custom user data mapping by changing the top of the function to be like the code below.
 ```js
 function convert(user, options, scimUser) {
  if (!user.data) user.data = {};
@@ -227,6 +228,10 @@ function convert(user, options, scimUser) {
 - Now when you browse the user data tab for the new user, you'll see that she has more data stored.
 
 ![Custom user data](../../../../../public/img/docs/lifecycle/examples/scim/data.webp)
+
+<Aside type="caution">
+FA lambdas are JavaScript run in Java using [Graal](https://www.graalvm.org/javascript). Graal supports modern JavaScript syntax, like ` `` ` strings, `...` object notation, `await`, and `=>` functions. However, at the time of writing, the FA lambda code editor does not recognize this syntax and will show errors. There is a [GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/1889) open to fix this. Until that issue is fixed, the only way to check if your code is actually correct is to run it and review the FA <Breadcrumb>System -> Event Log</Breadcrumb> page to see if any `org.graalvm.polyglot.PolyglotException`s occurred.
+</Aside type="caution">
 
 <Aside type="caution">
 It may look like you can create a registration for the user by setting `options.applicationId`, but that won't work. The user creation parameters are documented [here](https://fusionauth.io/docs/apis/users#request) and [here](https://fusionauth.io/docs/extend/code/lambdas/scim-user-request-converter#lambda-structure). The code below **won't** make the user a member of the application, and also won't throw an error.
@@ -241,76 +246,26 @@ function convert(user, options, scimUser) {
 
 ### Create A Registration From A Lambda
 
-todo update limitations of lambdas article. graalvm link. https://www.graalvm.org/javascript does support ECMAScript 2024, but FA does not
-xmlhttprequest does not work, nor does .then and .catch in fetch. have to use httpclient
+To register the new user with an application, you need to make a [user API call from within the SCIM user response lambda](https://fusionauth.io/docs/extend/code/lambdas/lambda-remote-api-calls), after the FA user has been created (which means you can't make the call in the SCIM user request lambda).
 
-
-
-SCIM Server User response converter
-
-original
+- Delete the user Alice from the list of users again.
+- Browse to <Breadcrumb>Customizations -> Lambdas -> SCIM User Response Converter -> Edit</Breadcrumb>
+- Go to the very last line of the `convert` function, which should be the closing brace, `}`, and replace that line with the code below. Then save.
 ```js
-// This is the default SCIM User response converter, modify this to your liking.
-function convert(scimUser, user) {
-  // Un-comment this line to see the user object printed to the event log
-  // console.info(JSON.stringify(user, null, 2));
 
-  scimUser.active = user.active;
-  scimUser.userName = user.username;
-  scimUser.name = {
-    formatted: user.fullName,
-    familyName: user.lastName,
-    givenName: user.firstName,
-    middleName: user.middleName,
-    honorificPrefix: user.data.honorificPrefix,
-    honorificSuffix: user.data.honorificSuffix
-  };
-
-  scimUser.phoneNumbers = [{
-    primary: true,
-    value: user.mobilePhone,
-    type: "mobile"
-  }];
-
-  scimUser.emails = [{
-    primary: true,
-    value: user.email,
-    type: "work"
-  }];
-
-  // Optionally return any custom extensions stored in user.data
-  if (user.data && user.data.extensions) {
-    for (var extension in user.data.extensions) {
-      if (scimUser.schemas.indexOf(extension) === -1) {
-        scimUser.schemas.push(extension);
-      }
-      scimUser[extension] = user.data.extensions[extension];
-    }
-  }
-}
-```
-
-
-NEW:
-
-```js
-function convert(scimUser, user) {
-  ...
-  ...
-  ...
   var applicationId = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e";
-  var apiKey = "33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod";
+  var apiKey        = "33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod";
 
   if (isUserRegistered(user.id, applicationId, apiKey))
     return;
 
   try {
-    var response = HttpClient.post("http://fa:9011/api/user/registration/" + user.id,
-      {
-        headers: {'Authorization': apiKey,'Content-Type': 'application/json'},
-        body: JSON.stringify({ 'registration': { 'applicationId': applicationId }})
-      });
-    if(response.status !== 201)
+    var response = fetch("http://fa:9011/api/user/registration/" + user.id, {
+      method: 'POST',
+      headers: {'Authorization': apiKey,'Content-Type': 'application/json'},
+      body: JSON.stringify({'registration': {'applicationId': applicationId}})
+    });
+    if(response.status !== 201 && response.status !== 200)
       console.error("Failed to register user to application. Response status:", response.status);
   }
   catch(error) {
@@ -320,7 +275,10 @@ function convert(scimUser, user) {
 
 function isUserRegistered(userId, applicationId, apiKey) {
   try {
-    var response = HttpClient.get("http://fa:9011/api/user/registration/" + userId + "/" + applicationId, {headers: {'Authorization': apiKey}});
+    var response = fetch("http://fa:9011/api/user/registration/" + userId + "/" + applicationId, {
+      method: 'GET',
+      headers: {'Authorization': apiKey}
+    });
     if (response.status === 200) return true;
     if (response.status === 404) return false;
     console.error("Error checking user registration:", response.status);
@@ -332,14 +290,26 @@ function isUserRegistered(userId, applicationId, apiKey) {
   }
 }
 ```
+- Run `scim.js` in the terminal again.
+- If you view user Alice in the Users page, you can see she now is a member of the sample bank application in the registrations tab.
+  ![User has registration](../../../../../public/img/docs/lifecycle/examples/scim/entities.webp)
+- If you can't see a registration, or there was an error in the terminal, browse to the [system event log](http://localhost:9011/admin/system/event-log) to see what errors occurred.
+  ![Event log](../../../../../public/img/docs/lifecycle/examples/scim/entities.webp)
 
-http://localhost:9011/admin/system/event-log/
+Let's review what the code in the lambda does. The `convert` function includes the API key and application Id. The application Id could be moved into the user data when making the SCIM create request, and retrieved from the user data in this function, to avoid hardcoding the Id into the lambda. But the API key has to be stored in the lambda for safety. The disadvantage is that when you update your API keys for security, you need to edit every lambda and change each key manually.
+
+The user is registered by making an HTTP fetch call to the user API at `http://fa:9011/api/user/registration`. The `isUserRegistered` function works similarly, and is used to ensure that you don't add multiple registrations for the same user.
+
+Note that this lambda is called whenever you return a user through SCIM. So if you delete the user's registration to the application manually, then call SCIM read for the user, the registration will be re-added, even though you didn't call SCIM create. Review your user management protocols carefully to ensure this process doesn't mistakenly give old users access they shouldn't have.
+
+<Aside type="tip">
+If you have trouble getting a lambda to work, you can quickly test that your API keys and Ids are correct by running curl. For example, the curl command below adds a registration for the user Richard and the bank app with the default API key created by Kickstart.
 
 ```sh
 curl -XGET -H "Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" 'http://localhost:9011/api/user/registration/00000000-0000-0000-0000-111111111111/e9fdb985-9173-4e01-9d73-ac2d60d1dc8e'
-
-curl -u bd09d77f-73e5-4d6c-ae0c-5436bf3e26d6:UirdqdyvC5_1SxiDHdwlLyz7JGNxwCFJM0AL3MjUp28 http://9011/api/user/registration/ --data-urlencode "grant_type=client_credentials" --data-urlencode "scope=target-entity:1a3fd007-aafb-45db-b3dc-3298bcf71c98:scim:user:create"
 ```
+</Aside>
+
 
 
 ### Create A Registration From A Webhook
