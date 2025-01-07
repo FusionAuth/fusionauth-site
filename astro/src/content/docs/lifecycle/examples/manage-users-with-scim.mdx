@@ -215,7 +215,7 @@ Both these problems can be handled by customizing the SCIM user request lambda i
 ### Create Custom Data Mappings
 
 - Browse to <Breadcrumb>Customizations -> Lambdas -> SCIM User Request Converter -> Edit</Breadcrumb>
-- Set a custom user data mapping by changing the top of the function to be like the code below. Note that lambdas don't support all JavaScript syntax, so you can't use ` `` ` strings or `...` object notation.
+- Set a custom user data mapping by changing the top of the function to be like the code below. Note that lambdas support only a small subset of JavaScript syntax, so you can't use ` `` ` strings, `...` object notation, `await`, or `=>` functions.
 ```js
 function convert(user, options, scimUser) {
  if (!user.data) user.data = {};
@@ -241,42 +241,110 @@ function convert(user, options, scimUser) {
 
 ### Create A Registration From A Lambda
 
+todo update limitations of lambdas article. graalvm link
+xmlhttprequest does not work, nor does .then and .catch in fetch. have to use httpclient
+
+
+
+SCIM Server User response converter
+
+original
 ```js
+// This is the default SCIM User response converter, modify this to your liking.
 function convert(scimUser, user) {
-  // Your existing conversion logic here
+  // Un-comment this line to see the user object printed to the event log
+  // console.info(JSON.stringify(user, null, 2));
 
-  // Make API call to register user to an application
-  var applicationId = "your-application-id";
-  var apiKey = "your-api-key";
+  scimUser.active = user.active;
+  scimUser.userName = user.username;
+  scimUser.name = {
+    formatted: user.fullName,
+    familyName: user.lastName,
+    givenName: user.firstName,
+    middleName: user.middleName,
+    honorificPrefix: user.data.honorificPrefix,
+    honorificSuffix: user.data.honorificSuffix
+  };
 
-  // Check if the user is already registered to avoid duplicate registrations
-  if (!userIsRegistered(user.id, applicationId)) {
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/user/registration/" + user.id, false);
-    xhr.setRequestHeader("Authorization", apiKey);
-    xhr.setRequestHeader("Content-Type", "application/json");
+  scimUser.phoneNumbers = [{
+    primary: true,
+    value: user.mobilePhone,
+    type: "mobile"
+  }];
 
-    var data = JSON.stringify({
-      registration: {
-        applicationId: applicationId
+  scimUser.emails = [{
+    primary: true,
+    value: user.email,
+    type: "work"
+  }];
+
+  // Optionally return any custom extensions stored in user.data
+  if (user.data && user.data.extensions) {
+    for (var extension in user.data.extensions) {
+      if (scimUser.schemas.indexOf(extension) === -1) {
+        scimUser.schemas.push(extension);
       }
-    });
-
-    xhr.send(data);
-
-    if (xhr.status !== 200) {
-      console.error("Failed to register user to application");
+      scimUser[extension] = user.data.extensions[extension];
     }
   }
 }
+```
 
-function userIsRegistered(userId, applicationId) {
-  // Implement logic to check if user is already registered
-  // This would typically involve making another API call
-  // Return true if registered, false otherwise
-  return false; // Placeholder
+
+NEW:
+
+```js
+function convert(scimUser, user) {
+  ...
+  ...
+  ...
+  var applicationId = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e";
+  var apiKey = "33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod";
+
+  if (isUserRegistered(user.id, applicationId, apiKey))
+    return;
+
+  fetch("http://fa:9011/api/user/registration/" + user.id, {
+    method: 'POST',
+    headers: {'Authorization': apiKey,'Content-Type': 'application/json'},
+    body: JSON.stringify({'registration': {'applicationId': applicationId}})
+  })
+  .then(function(response) {
+    if (!response.ok) {
+      console.error("Failed to register user to application");
+    }
+  })
+  .catch(function(error) {
+    console.error("Error registering user:", error);
+  });
+}
+
+function isUserRegistered(userId, applicationId, apiKey) {
+  return fetch("http://fa:9011/api/user/registration/" + userId + "/" + applicationId, {
+    method: 'GET',
+    headers: {'Authorization': apiKey}
+  })
+  .then(function(response) {
+    if (response.ok) return true;
+    if (response.status === 404) return false;
+    console.error("Error checking user registration:", response.status);
+    return false;
+  })
+  .catch(function(error) {
+    console.error("Error checking user registration:", error);
+    return false;
+  });
 }
 ```
+
+http://localhost:9011/admin/system/event-log/
+
+```sh
+curl -XGET -H "Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" 'http://localhost:9011/api/user/registration/00000000-0000-0000-0000-111111111111/e9fdb985-9173-4e01-9d73-ac2d60d1dc8e'
+
+curl -u bd09d77f-73e5-4d6c-ae0c-5436bf3e26d6:UirdqdyvC5_1SxiDHdwlLyz7JGNxwCFJM0AL3MjUp28 http://9011/api/user/registration/ --data-urlencode "grant_type=client_credentials" --data-urlencode "scope=target-entity:1a3fd007-aafb-45db-b3dc-3298bcf71c98:scim:user:create"
+```
+
 
 ### Create A Registration From A Webhook
 
