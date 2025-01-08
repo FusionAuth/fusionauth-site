@@ -308,14 +308,144 @@ The `console.error` message write to the system event log.
 If you have trouble getting a lambda to work, you can quickly test that your API keys and Ids are correct by running curl. For example, the curl command below adds a registration for the user Richard and the bank app with the default API key created by Kickstart.
 
 ```sh
-curl -XGET -H "Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" 'http://localhost:9011/api/user/registration/00000000-0000-0000-0000-111111111111/e9fdb985-9173-4e01-9d73-ac2d60d1dc8e'
+curl -v -X POST -H "Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" -H "Content-Type: application/json" -d '{"registration":{"applicationId":"e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"}}' 'http://localhost:9011/api/user/registration/00000000-0000-0000-0000-111111111111/'
 ```
 </Aside>
 
-
-
 ### Create A Registration From A Webhook
 
+The alternative to creating registrations from inside the lambda, is to listen for the FA [webhook](https://fusionauth.io/docs/extend/events-and-webhooks) after the user is [created](https://fusionauth.io/docs/extend/events-and-webhooks/events/user-create-complete), and call the FA user API from your own script. To this, you need to create a webserver that listens for the webhook.
+
+- In the FA web interface, browse to <Breadcrumb>Tenants -> Default -> Edit -> Webhooks</Breadcrumb>
+- Enable `user.create.complete` and save.
+  ![Set webhook in tenant](../../../../../public/img/docs/lifecycle/examples/scim/webhook.webp)
+- Browse to <Breadcrumb>Settings -> Webhooks</Breadcrumb> and add a new one.
+  - Enter an <InlineField>URL</InlineField> value of `http://register`.
+  - Disable all webhooks except `user.create.complete` and save.
+  ![Create webook](../../../../../public/img/docs/lifecycle/examples/scim/webhook2.webp)
+- FA is now configured to send webhooks after a user is created to a web server listening at `http://register`.
+- Delete the user Alice in the FA web interface.
+- Create a file called `register.ts`.
+- Insert the code below.
+  ```js
+  Deno.serve({'hostname': '0.0.0.0', 'port': 80 }, handler);
+
+  async function handler(request: Request): Response {
+    try {
+      const body = await request.json();
+      console.dir(body);
+    }
+    catch {
+      console.log('Request contained no JSON.');
+      console.dir(request);
+    }
+    return new Response(null, { status: 200 });
+  }
+  ```
+- Run the script with the command below. Note that you are specifying the network and container name, so that FA will be able to connect to the container at `http://register`.
+  ```sh
+  docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app"  --network faNetwork --name register -p 7777:80 denoland/deno:alpine-2.1.3 sh -c  "deno run --allow-net --allow-env ./register.ts"
+    ```
+- Check the JavaScript web server is running by browsing to http://localhost:7777. You should see a blank page with no errors.
+- Run `scim.js` again.
+- The terminal output of the web server should be as below. This is what a FA webhook looks like. You can use these properties to customize your application registration if you want.
+  ```js
+  {
+    event: {
+      createInstant: 1736320075774,
+      id: "0f30478d-d345-494d-a639-4b13b93a12a7",
+      info: { ipAddress: "172.18.0.5", userAgent: "axios/1.7.9" },
+      linkedObjectId: "e3f4b606-a54e-44a2-9e45-cce7a7f59ef9",
+      tenantId: "d7d09513-a3f5-401c-9685-34ab6c552453",
+      type: "user.create.complete",
+      user: {
+        active: true,
+        connectorId: "e3306678-a53a-4964-9040-1c96f36dda72",
+        data: {
+          extensions: { "urn:ietf:params:scim:schemas:core:2.0:Users": {} },
+          id: "cc6714c6-286c-411c-a6bc-ee413cda1dbc"
+        },
+        email: "alice@example.com",
+        firstName: "Alice",
+        fullName: "Alice Doe",
+        id: "e3f4b606-a54e-44a2-9e45-cce7a7f59ef9",
+        insertInstant: 1736320075751,
+        lastLoginInstant: 1736320075751,
+        lastName: "Doe",
+        lastUpdateInstant: 1736320075751,
+        memberships: [],
+        mobilePhone: "303-555-1234",
+        passwordChangeRequired: false,
+        passwordLastUpdateInstant: 1736320075768,
+        preferredLanguages: [],
+        registrations: [],
+        tenantId: "d7d09513-a3f5-401c-9685-34ab6c552453",
+        twoFactor: { methods: [], recoveryCodes: [] },
+        uniqueUsername: "alice",
+        username: "alice",
+        usernameStatus: "ACTIVE",
+        verified: true,
+        verifiedInstant: 1736320075751
+      }
+    }
+  }
+  ```
+- Delete the user Alice in the FA web interface one last time.
+- Replace the code in `register.ts` to be as below. Now HTTP handler will take the user Id from the webhook JSON and use it to send a POST to the user registration API.
+```js
+Deno.serve({'hostname': '0.0.0.0', 'port': 80 }, handler);
+
+async function handler(request: Request): Response {
+  let data = null;
+  try {
+    data = await request.json();
+  }
+  catch {
+    console.log('Request contained no JSON.');
+    console.dir(request);
+    return new Response(null, { status: 200 });
+  }
+  try {
+    const result = await fetch('http://fa:9011/api/user/registration/'+data.event.user.id,
+      {
+        method: 'POST',
+        headers: {'Authorization': '33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod', 'Content-Type': 'application/json'},
+        body: JSON.stringify({"registration": {"applicationId":"e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"}}),
+      }
+    );
+    console.dir(result);
+    return new Response(null, { status: 200 });
+  }
+  catch (e: Error) {
+    console.log('Error creating registration:');
+    console.dir(e);
+  }
+  return new Response(null, { status: 500 });
+}
+```
+- Run `scim.js` one last time.
+- The terminal output of the web server should be as below.
+```js
+Listening on http://0.0.0.0:80/
+Response {
+  body: ReadableStream { locked: false },
+  bodyUsed: false,
+  headers: Headers {
+    "cache-control": "no-store",
+    connection: "keep-alive",
+    "content-type": "application/json; charset=UTF-8",
+    "transfer-encoding": "chunked"
+  },
+  ok: true,
+  redirected: false,
+  status: 200,
+  statusText: "OK",
+  url: "http://fa:9011/api/user/registration/835829d1-660b-4272-905e-e97ffced9661"
+}
+```
+- If you look at Alice's registrations in the user page you'll see that she is registered for the bank application again.
+
+Should you use a lambda or a webhook to create your registrations? A lambda is simpler to manage, so it's the better choice unless you need to perform extra logic or integrate with other systems, which you can do only in your own custom script.
 
 ## Clean Up
 
@@ -327,8 +457,6 @@ docker rm fa fa_db
 docker rmi postgres:16.0-bookworm fusionauth/fusionauth-app:latest denoland/deno:alpine-2.1.3
 docker network prune;
 ```
-
-
 
 ## TODO
 
