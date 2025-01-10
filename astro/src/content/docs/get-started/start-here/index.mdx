@@ -82,40 +82,38 @@ You launched a FusionAuth database and server either using Docker or in GitPod, 
 
 ## Delegate Authentication
 
-Once you have FusionAuth up and running, you need to set up your application or applications to delegate to FusionAuth. For this guide, there's an example 'Start Here' application which is already set up to do so. Let's look at that configuration and then start it up so you can log in.
+Once you have FusionAuth up and running, you need to set up your application or applications to delegate to FusionAuth. For this guide, there's an example `Start Here` application which is already set up to do so. Let's look at that configuration and then start it up so you can log in.
 
 ### Open the Admin Interface
 
 * In the previous step, you logged in to the system as an admin user.  Go back to that browser screen, which should be showing the administrative interface for FusionAuth.
-* Navigate to "Applications" in the left-hand sidebar (you may need to use the hamburger icon at the top left of the screen to see all options)
-* Choose the "Start Here" application
-* Choose "Edit" from the list of actions
+* Navigate to <InlineUIElement>Applications</InlineUIElement> in the left-hand sidebar. You may need to use the hamburger icon at the top left of the screen to see all options.
+* Choose the `Start Here` application.
+* Choose <InlineUIElement>Edit</InlineUIElement> from the <InlineUIElement>Actions</InlineUIElement> dropdown.
 
-### Set up Authentication for your Application
+### Application Configuration
 
-In the FusionAuth application you can view and change your authentication URLs and how tokens are generated/exchanged.
+After the user signs in at FusionAuth, they need to get back to your application. In the FusionAuth application configuration you can view authorized redirect URLs and how tokens are generated/exchanged.
 
- HERE IS WHERE THE SCREENSHOTS WILL GO
+![The edit screen of the application.](/img/docs/get-started/start-here/edit-application.png)
 
+### After the User Authenticates
 
-<h3>Token Exchange Details</h3>
+To understand how the JavaScript application integrates with FusionAuth, take a quick look at some of the code from the repository.
 
-To understand how authentication is being done, take a quick look at some of the code from the repository.  
-
-During login, the system checks for a valid token before letting the user in.
+We craft a URL that includes the `clientId` from the configuration you reviewed above, as well as some other parameters. This is where the user goes to log in with FusionAuth. TODO need to only show the `redirect(302, `fusionAuthURL/oauth2/authorize` line
 
 <RemoteCode url="https://raw.githubusercontent.com/synedra/fusionauth-example-express-start-here/main/app/src/index.ts" lang="javascript" tags="login" />
 
-If the user needs a new token, the oauth path is followed to get them a fresh valid token.
+Once the user authenticates, the code at the configured redirect URL is called. This code sends parameters from the login event (the authorization code), the client identifier (clientId) and other information to get a valid token from FusionAuth. When the app receives this token, the user has fully been authenticated. TODO need to only show the try block here
 
 <RemoteCode url="https://raw.githubusercontent.com/synedra/fusionauth-example-express-start-here/main/app/src/index.ts" lang="javascript" tags="oauth-redirect" />
 
-For the account page, which requires authorization, the user's identity is checked and the browser is redirected to the main page if there is no valid token.
+Once you have the token, what should the app do with it? One option is to store it as a secure cookie. We do that here. TODO show cookie saving
+
+We now can protect app functionality. For the account page, which requires authorization, the user's identity is checked and the browser is redirected to the main page if there is no valid token.
+
 <RemoteCode url="https://raw.githubusercontent.com/synedra/fusionauth-example-express-start-here/main/app/src/index.ts" lang="javascript" tags="account" />
-
-Similarly, the make-change function requires a logged-in user so that is checked at the beginning of the function.
-<RemoteCode url="https://raw.githubusercontent.com/synedra/fusionauth-example-express-start-here/main/app/src/index.ts" lang="javascript" tags="make-change" />
-
 
 ### Open the Application URL in your Browser and Login
 
