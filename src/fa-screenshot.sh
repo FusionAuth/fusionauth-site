@@ -122,10 +122,10 @@ set screenHeight to item 4 of screenResolution
 
 tell application theApp to activate
 delay 0.1
-#tell application "System Events" to tell process theApp
-#    key code 29 using {command down} -- this resets the size to the default zoom
-#    delay 0.1
-#end tell
+tell application "System Events" to tell process theApp
+    key code 29 using {command down} -- this resets the size to the default zoom
+    delay 0.1
+end tell
 
 tell application theApp
 	activate
