@@ -16,11 +16,9 @@ Customer Identity and Access Management (CIAM) is a set of technologies and proc
 
 CIAM solutions help organizations to:
 
--   Secure customer identities and protect against unauthorized access with Multi-Factor Authentication (MFA), password policies, and session management.
-
--   Provide a seamless user experience with Single Sign-On (SSO), social login, and self-service profile management.
-
--   Make data-driven decisions by collecting data such as contact information and preferences for targeted campaigns and data-driven decisions.
+-  Secure customer identities and protect against unauthorized access with Multi-Factor Authentication (MFA), password policies, and session management.
+-  Provide a seamless user experience with Single Sign-On (SSO), social login, and self-service profile management.
+-  Make data-driven decisions by collecting data such as contact information and preferences for targeted campaigns and data-driven decisions.
 
 ## Key Features of CIAM Solutions (What it Does) 
 
@@ -40,11 +38,11 @@ Passwordless authentication is a security method that does not require users to 
 
 Here are some of the methods that can be used for passwordless authentication:
 
-1.  One-time codes: One-time codes are short, randomly generated codes that are sent to the user's device. The user must enter the code to authenticate themselves.
+1. One-time codes: One-time codes are short, randomly generated codes that are sent to the user's device. The user must enter the code to authenticate themselves.
 
-2.  Biometrics: Biometrics are physical characteristics that can be used to authenticate users, such as fingerprints, facial scans, or voiceprints.
+2. Biometrics: Biometrics are physical characteristics that can be used to authenticate users, such as fingerprints, facial scans, or voiceprints.
 
-3.  Physical keys: Physical keys can be used to authenticate users by inserting them into a device or by tapping them against a sensor.
+3. Physical keys: Physical keys can be used to authenticate users by inserting them into a device or by tapping them against a sensor.
 
 #### 1.4 [Adaptive Authentication](/articles/security/adaptive-mfa-user-experience)
 
@@ -72,37 +70,29 @@ CIAM solutions need to be able to integrate with other applications and systems.
 
 #### 3.2 Scalability
 
--   Handles large user bases efficiently.
-
--   Adapts to user growth and variability (peaks and valleys of usage over time, depending on the customer journey), long lag times between users interacting, and self-service without compromising performance.
+- Handles large user bases efficiently.
+- Adapts to user growth and variability (peaks and valleys of usage over time, depending on the customer journey), long lag times between users interacting, and self-service without compromising performance.
 
 #### 3.3 Flexibility and Customization
 
--   Offers customizable branding and workflows to match organizational requirements.
-
--   Provides dynamic access controls based on evolving business needs.
+- Offers customizable branding and workflows to match organizational requirements.
+- Provides dynamic access controls based on evolving business needs.
 
 ### 4. Security and Compliance
 
 #### 4.1 Protecting Customer Identities
 
--   Prevents unauthorized access and data misuse.
-
--   Protects against DDOS attacks.
-
--   Implements measures like:
-
--   Multi-Factor Authentication (MFA)
-
--   Password encryption and secure storage
-
--   Continuous monitoring for suspicious activity
+- Prevents unauthorized access and data misuse.
+- Protects against DDOS attacks.
+- Implements measures like:
+- Multi-Factor Authentication (MFA)
+- Password encryption and secure storage
+- Continuous monitoring for suspicious activity
 
 #### 4.2 Data Compliance
 
--   Ensures compliance with global data protection regulations (e.g., GDPR, CCPA).
-
--   Provides tools for managing user consent and data privacy preferences.
+- Ensures compliance with global data protection regulations (e.g., GDPR, CCPA).
+- Provides tools for managing user consent and data privacy preferences.
 
 ## Benefits of Using CIAM (Why it Matters) 
 
@@ -112,71 +102,54 @@ CIAM is critical in modern digital security and user experience, protecting cust
 
 One of the key benefits of CIAM solutions is that they can help to improve the customer experience. CIAM solutions can make it easier for customers to sign up, log in, and access services. This can lead to increased customer satisfaction and loyalty.
 
--   Frictionless Access with Single Sign-On (SSO) and Social Login to simplify authentication or registration.
-
--   Self-Service Capabilities to enable customers to manage their accounts independently.
-
--   Personalization to tailor user experiences based on preferences and behavior.
+- Frictionless Access with Single Sign-On (SSO) and Social Login to simplify authentication or registration.
+- Self-Service Capabilities to enable customers to manage their accounts independently.
+- Personalization to tailor user experiences based on preferences and behavior.
 
 ### 2. Improved User Experience (UX)
 
 The user experience (UX) of a CIAM solution is also important. A good UX will make it easy for customers to use the solution and will help to improve the overall customer experience. These include:
 
--   Intuitive interfaces with a clear, speedy, user-friendly design.
-
--   Responsive design that is adaptable across mobile, tablet, and desktop devices.
-
--   Localization supports regional preferences and languages.
-
--   Clear error messaging guides users effectively.
+- Intuitive interfaces with a clear, speedy, user-friendly design.
+- Responsive design that is adaptable across mobile, tablet, and desktop devices.
+- Localization supports regional preferences and languages.
+- Clear error messaging guides users effectively.
 
 ### 3. Stronger Security for Apps
 
 CIAM solutions can also be used to improve the security and usability of apps without affecting the apps (once the system is integrated). They can be used for:
 
--   Multi-Factor Authentication (MFA) to prevent unauthorized access.
-
--   Centralized Role-Based Access Control (RBAC) to restrict permissions based on roles.
-
--   Continuous monitoring to track and analyze user behavior for anomalies.
-
--   Applications no longer handle sensitive credentials.
+- Multi-Factor Authentication (MFA) to prevent unauthorized access.
+- Centralized Role-Based Access Control (RBAC) to restrict permissions based on roles.
+- Continuous monitoring to track and analyze user behavior for anomalies.
+- Applications no longer handle sensitive credentials.
 
 ### 4. Protecting Customer Identities
 
 CIAM solutions can help protect customer identities and data from unauthorized access, misuse, or disclosure. This can reduce the risk of fraud, data breaches, and other security incidents. They can be used for:
 
--   Credential management with hashed password storage.
-
--   Notifying customers when their passwords have been compromised.
-
--   Regulatory compliance that meets standards like GDPR and CCPA.
+- Credential management with hashed password storage.
+- Notifying customers when their passwords have been compromised.
+- Regulatory compliance that meets standards like GDPR and CCPA.
 
 ### 5. Increasing Business Agility
 
 CIAM solutions can help organizations become more agile by simplifying customer onboarding, managing user access, and adapting to changing needs. They can be used for:
 
--   Streamlined onboarding for fast customer and user account creation.
-
--   Progressive registration so that customers can get access quickly and provide more information as they find more value.
-
--   Dynamic access controls to adjust permissions in real time.
-
--   Scalable infrastructure to accommodate user growth without performance issues.
-
--   Free up engineering time to focus on differentiated, application specific functionality.
+- Streamlined onboarding for fast customer and user account creation.
+- Progressive registration so that customers can get access quickly and provide more information as they find more value.
+- Dynamic access controls to adjust permissions in real time.
+- Scalable infrastructure to accommodate user growth without performance issues.
+- Free up engineering time to focus on differentiated, application specific functionality.
 
 ### 6. Reducing Costs and Overhead
 
 CIAM solutions can help reduce operational costs by automating processes and minimizing manual intervention, with:
 
--   Reduced support tickets thanks to fewer login and access-related issues.
-
--   Efficient workflows with automation in user account management.
-
--   Fraud prevention to minimize costs from fraud and security breaches.
-
--   Serve as a single source of self-managed profile data for customers, while delivering data to other systems as needed.
+- Reduced support tickets thanks to fewer login and access-related issues.
+- Efficient workflows with automation in user account management.
+- Fraud prevention to minimize costs from fraud and security breaches.
+- Serve as a single source of self-managed profile data for customers, while delivering data to other systems as needed.
 
 ## Real-World Use Cases of CIAM
 
@@ -208,59 +181,45 @@ Implementing a CIAM solution can bring significant benefits, but there are also 
 
 ### 1. Integration with Legacy Systems
 
--   Challenge: Many organizations rely on older legacy systems that were not designed to handle modern authentication and identity management needs. Integrating CIAM with these systems can result in compatibility issues, requiring custom development
-
--   Impact: Delays in deployment, increased costs, and potential gaps in security coverage.
-
--   Solution: Choose a CIAM platform with strong [API capabilities](/docs/apis/) or [migrate to a centralized auth system](/blog/how-to-migrate-user-data-centralized-auth-system)
+- Challenge: Many organizations rely on older legacy systems that were not designed to handle modern authentication and identity management needs. Integrating CIAM with these systems can result in compatibility issues, requiring custom development
+- Impact: Delays in deployment, increased costs, and potential gaps in security coverage.
+- Solution: Choose a CIAM platform with strong [API capabilities](/docs/apis/) or [migrate to a centralized auth system](/blog/how-to-migrate-user-data-centralized-auth-system)
 
 ### 2. Balancing Security and User Experience
 
--   Challenge: While strong security measures are essential, they can sometimes create friction in the user experience. Excessive authentication steps may lead to user frustration and increased abandonment rates.
-
--   Impact: Poor adoption rates, reduced customer satisfaction, and potential revenue loss.
-
--   Solution: Provide options like Social Login and [Passwordless Authentication](/feature/passwordless) to streamline the login experience.
+- Challenge: While strong security measures are essential, they can sometimes create friction in the user experience. Excessive authentication steps may lead to user frustration and increased abandonment rates.
+- Impact: Poor adoption rates, reduced customer satisfaction, and potential revenue loss.
+- Solution: Provide options like Social Login and [Passwordless Authentication](/feature/passwordless) to streamline the login experience.
 
 ### 3. Ensuring Regulatory Compliance
 
--   Challenge: Different regions have varying regulations governing customer data privacy and security, such as [GDPR](/blog/is-fusionauth-gdpr-compliant) in Europe and CCPA in California. Organizations must ensure their CIAM implementation complies with these laws.
-
--   Impact: Non-compliance can result in legal penalties, fines, and reputational damage.
-
--   Solution: Adopt CIAM platforms with data protection, isolation, retrieval, and deletion capabilities, password constraints, breach notifications, and other regulatory tools.
+- Challenge: Different regions have varying regulations governing customer data privacy and security, such as [GDPR](/blog/is-fusionauth-gdpr-compliant) in Europe and CCPA in California. Organizations must ensure their CIAM implementation complies with these laws.
+- Impact: Non-compliance can result in legal penalties, fines, and reputational damage.
+- Solution: Adopt CIAM platforms with data protection, isolation, retrieval, and deletion capabilities, password constraints, breach notifications, and other regulatory tools.
 
 ### 4. Managing Scalability and Performance
 
--   Challenge: CIAM systems need to handle large volumes of authentication requests, especially during peak traffic periods (e.g., product launches and seasonal promotions).
-
--   Impact: Poor system performance, slow response times, or outages during high-demand periods.
-
--   Solution: Use a [scalable CIAM platform](/articles/ciam/making-sure-your-auth-system-scales) with load balancing, caching mechanisms, and cloud-native architecture to handle fluctuating traffic efficiently.
+- Challenge: CIAM systems need to handle large volumes of authentication requests, especially during peak traffic periods (e.g., product launches and seasonal promotions).
+- Impact: Poor system performance, slow response times, or outages during high-demand periods.
+- Solution: Use a [scalable CIAM platform](/articles/ciam/making-sure-your-auth-system-scales) with load balancing, caching mechanisms, and cloud-native architecture to handle fluctuating traffic efficiently.
 
 ### 5. Continuous Monitoring and Threat Detection
 
--   Challenge: CIAM systems may be targeted for cyberattacks, including credential stuffing, account takeovers, and phishing attacks. Proactively detecting and mitigating these threats is essential.
-
--   Impact: Unauthorized access, data breaches, and financial loss.
-
--   Solution: Use continuous monitoring and [advanced threat detection](/docs/operate/secure-and-monitor/advanced-threat-detection) tools to track authentication attempts, detect anomalies, and flag suspicious activities in real-time.
+- Challenge: CIAM systems may be targeted for cyberattacks, including credential stuffing, account takeovers, and phishing attacks. Proactively detecting and mitigating these threats is essential.
+- Impact: Unauthorized access, data breaches, and financial loss.
+- Solution: Use continuous monitoring and [advanced threat detection](/docs/operate/secure-and-monitor/advanced-threat-detection) tools to track authentication attempts, detect anomalies, and flag suspicious activities in real-time.
 
 ### 6. User Adoption and Training
 
--   Challenge: Internal teams, including IT and customer service may lack familiarity with CIAM platforms. Users might also be resistant to adopting new authentication methods.
-
--   Impact: Reduced platform effectiveness and slower deployment timelines.
-
--   Solution: Provide training programs for internal stakeholders and clear [documentation](/docs/) for end-users.
+- Challenge: Internal teams, including IT and customer service may lack familiarity with CIAM platforms. Users might also be resistant to adopting new authentication methods.
+- Impact: Reduced platform effectiveness and slower deployment timelines.
+- Solution: Provide training programs for internal stakeholders and clear [documentation](/docs/) for end-users.
 
 ### 7. Cost and Resource Allocation
 
--   Challenge: Implementing a robust CIAM solution may require an upfront investment, along with ongoing costs for maintenance, updates, and compliance audits.
-
--   Impact: Budget overruns and limited resources for other IT initiatives.
-
--   Solution: Choose a [scalable](/articles/ciam/making-sure-your-auth-system-scales) CIAM solution with transparent pricing that aligns with business goals. Start with a phased rollout to manage costs effectively.
+- Challenge: Implementing a robust CIAM solution may require an upfront investment, along with ongoing costs for maintenance, updates, and compliance audits.
+- Impact: Budget overruns and limited resources for other IT initiatives.
+- Solution: Choose a [scalable](/articles/ciam/making-sure-your-auth-system-scales) CIAM solution with transparent pricing that aligns with business goals. Start with a phased rollout to manage costs effectively.
 
 | Challenge | Impact | Solution |
 |---|---|---|
@@ -282,11 +241,9 @@ CIAM solutions must handle large user volumes, especially during peak times such
 
 Best Practices:
 
--   Choose a cloud-native CIAM platform that supports scaling.
-
--   Implement load balancing and caching mechanisms to handle variable user traffic.
-
--   Regularly conduct load and stress testing to identify bottlenecks.
+- Choose a cloud-native CIAM platform that supports scaling.
+- Implement load balancing and caching mechanisms to handle variable user traffic.
+- Regularly conduct load and stress testing to identify bottlenecks.
 
 Example Use Case: An eCommerce platform prepares for Black Friday by pre-testing CIAM capacity to handle increased login requests.
 
@@ -296,13 +253,10 @@ CIAM solutions need to protect customer data. This includes data such as names, 
 
 Best Practices:
 
--   Use end-to-end encryption for sensitive customer data (e.g., names, birth dates, emails).
-
--   Ensure data masking and hashing techniques are implemented to protect user secrets like passwords.
-
--   Provide clear consent management tools for users to control their data.
-
--   Conduct regular security audits and maintain compliance certifications.
+- Use end-to-end encryption for sensitive customer data (e.g., names, birth dates, emails).
+- Ensure data masking and hashing techniques are implemented to protect user secrets like passwords.
+- Provide clear consent management tools for users to control their data.
+- Conduct regular security audits and maintain compliance certifications.
 
 Example Use Case: A healthcare application ensures encrypted storage and transport of patient identity data to meet HIPAA requirements.
 
@@ -312,13 +266,10 @@ CIAM solutions need to provide a wide range of features. These features should i
 
 Best Practices:
 
--   Ensure support for common authentication methods (SSO, Social Login, MFA).
-
--   Provide user self-service portals for profile management.
-
--   Enable granular Role-Based Access Control (RBAC) to define user permissions accurately.
-
--   Support passwordless authentication methods for improved security and usability.
+- Ensure support for common authentication methods (SSO, Social Login, MFA).
+- Provide user self-service portals for profile management.
+- Enable granular Role-Based Access Control (RBAC) to define user permissions accurately.
+- Support passwordless authentication methods for improved security and usability.
 
 Example Use Case: An online banking app integrates biometric authentication, step-up auth, and RBAC to ensure secure access to financial data.
 
@@ -328,13 +279,10 @@ CIAM solutions need to be able to be extended to meet the specific needs of an o
 
 Best Practices:
 
--   Choose a flexible CIAM platform that supports custom workflows and branding.
-
--   Enable application-specific themes to match the application's visual style.
-
--   Allow for custom plug-ins and extensions for unique requirements.
-
--   Plan for future integrations with emerging technologies (e.g., IoT, AI-driven authentication).
+- Choose a flexible CIAM platform that supports custom workflows and branding.
+- Enable application-specific themes to match the application's visual style.
+- Allow for custom plug-ins and extensions for unique requirements.
+- Plan for future integrations with emerging technologies (e.g., IoT, AI-driven authentication).
 
 Example Use Case: A SaaS company integrates custom branding themes into its CIAM platform for white-labeled client dashboards.
 
@@ -344,13 +292,10 @@ CIAM solutions need to be able to integrate with other applications and systems,
 
 Best Practices:
 
--   Choose a CIAM solution with robust API capabilities for seamless integration.
-
--   Ensure APIs adhere to security standards (OAuth 2.0, OpenID Connect).
-
--   Choose a platform that allows for robust user search capabilities, as this can be critical to integration.
-
--   Implement webhooks for real-time event updates (e.g., user account creation, login events).
+- Choose a CIAM solution with robust API capabilities for seamless integration.
+- Ensure APIs adhere to security standards (OAuth 2.0, OpenID Connect).
+- Choose a platform that allows for robust user search capabilities, as this can be critical to integration.
+- Implement webhooks for real-time event updates (e.g., user account creation, login events).
 
 Example Use Case: A retail business integrates its CIAM with Salesforce CRM to create unified customer profiles. User sourced profile data, such as marketing preferences are pushed to Salesforce. Profile data based on customer behavior such as orders or "VIP" status can be pushed into the CIAM system to be made available to other applications.
 
@@ -375,8 +320,6 @@ How It Works:
 2.  Upon successful authentication, the provider generates a secure token.
 
 3.  If a user seeks to log into another application, they are sent to FusionAuth which may have a session for them. If so, they are transparently logged into the second application.
-
-4.
 
 #### 11.2.2 Social Login
 
@@ -438,15 +381,11 @@ How It Works:
 
 MFA requires users to provide two or more verification factors during authentication.
 
--   Common Methods:
-
--   SMS-based MFA: One-time codes sent via text message.
-
--   Email-based MFA: One-time codes sent via email.
-
--   Push Notification MFA: Alerts sent to a mobile app for approval.
-
--   Biometric MFA: Verification using fingerprints or facial scans.
+- Common Methods:
+- SMS-based MFA: One-time codes sent via text message.
+- Email-based MFA: One-time codes sent via email.
+- Push Notification MFA: Alerts sent to a mobile app for approval.
+- Biometric MFA: Verification using fingerprints or facial scans.
 
 #### 11.4.2 Adaptive Authentication
 
@@ -454,11 +393,9 @@ Adjusts authentication requirements dynamically based on real-time risk signals.
 
 How It Works:
 
--   Low-Risk Scenario: Username and password may suffice.
-
--   Medium-Risk Scenario: A one-time code via email might be required.
-
--   High-Risk Scenario: Biometric verification or administrator approval could be triggered.
+- Low-Risk Scenario: Username and password may suffice.
+- Medium-Risk Scenario: A one-time code via email might be required.
+- High-Risk Scenario: Biometric verification or administrator approval could be triggered.
 
 ### 11.5 Comparison of Authentication Methods
 
