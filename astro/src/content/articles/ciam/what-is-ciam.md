@@ -223,7 +223,7 @@ Implementing a CIAM solution can bring significant benefits, but there are also 
 
 | Challenge | Impact | Solution |
 |---|---|---|
-| Ingegration with Legacy Systems | Compatibility issues, increased costs | Use CIAM platforms with strong API capabilities |
+| Integration with Legacy Systems | Compatibility issues, increased costs | Use CIAM platforms with strong API capabilities |
 | Balancing Security & UX | User frustration, abandonment rates | Adaptive authentication, social login |
 | Regulatory Compliance | Legal penalties, reputation damage | Built-in compliance tools |
 | Scalability & Performance | Downtime, slow response times | Scalable, cloud-native CIAM solutions |
@@ -275,7 +275,7 @@ Example Use Case: An online banking app integrates biometric authentication, ste
 
 ### 4. Extensibility: Adapt to Evolving Business Needs
 
-CIAM solutions need to be able to be extended to meet the specific needs of an organization. This means that the solution should be flexible enough to be customized to the specific requirements of the organizatio, including the ability to add [application-specific themes](/docs/customize/look-and-feel/application-specific-themes), where the styling and branding match the application.
+CIAM solutions need to be able to be extended to meet the specific needs of an organization. This means that the solution should be flexible enough to be customized to the specific requirements of the organization, including the ability to add [application-specific themes](/docs/customize/look-and-feel/application-specific-themes), where the styling and branding match the application.
 
 Best Practices:
 
