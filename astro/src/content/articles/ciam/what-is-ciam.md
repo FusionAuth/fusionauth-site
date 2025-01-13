@@ -523,7 +523,7 @@ FusionAuth prioritizes the protection of user data, with advanced security measu
 
 ### Cost-Effective CIAM Solution
 
-FusionAuth provides a free Community Edition and additional premium features with transparent pricing for organizations with advanced requirements.
+FusionAuth provides a free Community version and additional premium features with transparent pricing for organizations with advanced requirements.
 
 Call to Action
 
