@@ -60,23 +60,75 @@ If you have any trouble with this tutorial, try replacing the FusionAuth image i
 - Browse to <Breadcrumb>Applications -> Bank -> Edit -> SAML tab</Breadcrumb>.
   - Enable <InlineUIElement>Enabled</InlineUIElement>
   - Set <InlineField>Issuer</InlineField> to `changebank`.
-  - Set <InlineField>Authorized redirect URLs</InlineField> to `http://saml/redirect`.
+  - Set <InlineField>Authorized redirect URLs</InlineField> to `http://saml/redirect` (be sure to click the dropdown text that appears to confirm the entry).
   - Enable <InlineUIElement>Debug enabled</InlineUIElement>.
   - Save.
   - Click <InlineUIElement>View</InlineUIElement> for the application to see the SAML endpoints. They should like the ones below.
   ```
   SAML v2 Integration details
 
-  Entity Id:	http://localhost:9011/samlv2/d7d09513-a3f5-401c-9685-34ab6c552453
-  Login URL:	http://localhost:9011/samlv2/login/d7d09513-a3f5-401c-9685-34ab6c552453
-  Logout URL:	http://localhost:9011/samlv2/logout/d7d09513-a3f5-401c-9685-34ab6c552453
-  Metadata URL:	http://localhost:9011/samlv2/metadata/d7d09513-a3f5-401c-9685-34ab6c552453
-  NameIDFormat:	urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
-  Initiate login URL:	http://localhost:9011/samlv2/initiate-login/d7d09513-a3f5-401c-9685-34ab6c552453/e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
+  Entity Id: http://localhost:9011/samlv2/d7d09513-a3f5-401c-9685-34ab6c552453
+  Login URL: http://localhost:9011/samlv2/login/d7d09513-a3f5-401c-9685-34ab6c552453
+  Logout URL: http://localhost:9011/samlv2/logout/d7d09513-a3f5-401c-9685-34ab6c552453
+  Metadata URL: http://localhost:9011/samlv2/metadata/d7d09513-a3f5-401c-9685-34ab6c552453
+  NameIDFormat: urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
+  Initiate login URL: http://localhost:9011/samlv2/initiate-login/d7d09513-a3f5-401c-9685-34ab6c552453/e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
+
+  SAML
+
+  Enabled: Yes
+  Issuer: changebank
+  Audience: changebank
+  Authorized redirect URLs: http://saml/redirect
+  Logout URL: –
+  Debug enabled: Yes
+  Require signed AuthN requests: No
+  Enable login hint:
+  Login hint parameter name: login_hint
+  AuthN response signing key: SAML key generated for application Changebank
+  f0926c58-74a8-4d3c-886e-24732f11f4f6
   ```
   -
 
 TODO
+
+get passportjs to connect to fa
+
+https://github.com/node-saml/passport-saml
+https://github.com/gbraad/passport-saml-example
+https://github.com/jaredhanson/passport
+
+```https://www.antoniogioia.com/saml-sso-setup-with-express-and-passport/
+For a basic Service Provider configuration, you need:
+
+- Your cert keys
+- Identity Provider metadata page
+- Identity Provider entry point URL
+
+And you, as the Service Provider, have to provide to the Identity Provider:
+
+- Your metadata page
+- Your callback URL
+```
+
+Create cert
+```sh
+mkdir app/cert
+cd app/cert
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/CN=fa"
+```
+Creates `cert.pem` and `key.pem`. Keep the key secret.
+
+- Browse to the metadata endpoint above, http://localhost:9011/samlv2/metadata/d7d09513-a3f5-401c-9685-34ab6c552453.
+- You can find the public key that you need to have on your server. Find the tag X509Certificate, copy the content into a file named `idp_key.pem`, and save it in the cert folder.
+
+
+```sh
+docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app"  denoland/deno:alpine-2.1.3 sh -c  "deno install"
+docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app"  --network faNetwork  -p 3000:3000 denoland/deno:alpine-2.1.3 sh -c  "deno run --allow-net --allow-read --allow-env --unstable-detect-cjs ./bin/www"
+```
+
+OLD ARTICLE BELOW TO CHANGE TODO
 
   -  arrow, choose <InlineUIElement>Add SAML Server</InlineUIElement>, and save.
   - Click the <InlineUIElement>Add</InlineUIElement> arrow, choose <InlineUIElement>Add SAML Client</InlineUIElement>, and save.
@@ -475,3 +527,4 @@ docker network prune;
 
 let user log in to fa with saml. let user log into another system via fa with saml.
 add link to this guide from saml overview introduction
+check bullet points and differentiate for actions
