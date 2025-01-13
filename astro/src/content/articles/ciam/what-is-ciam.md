@@ -462,8 +462,6 @@ FusionAuth prioritizes the protection of user data, with advanced security measu
 
 FusionAuth provides a free Community version and additional premium features with transparent pricing for organizations with advanced requirements.
 
-Call to Action
-
 Experience a powerful and customizable CIAM solution tailored to your organization's needs. [Download](/download) FusionAuth or start your free trial today and enhance your authentication, security, and user management capabilities.
 
 [Get Started Free](/download)
