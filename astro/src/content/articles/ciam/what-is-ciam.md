@@ -30,7 +30,7 @@ Single Sign-On (SSO) enables your users to access multiple applications with jus
 
 #### 1.2 [Multi-Factor Authentication (MFA)](/articles/authentication/multi-factor-authentication)
 
-Multi-factor authentication (MFA) requires users to provide multiple forms of verification during login. This feature reduces the risk of unauthorized access by ensuring that even if one credential (e.g., a password) is compromised, additional verification factors remain secure.
+Multi-factor authentication (MFA) requires users to provide multiple forms of verification during login. This feature reduces the risk of unauthorized access by ensuring that even if one credential (e.g., a password) is compromised, additional verification factors such as a mobile phone, an authenticator app, or a physical verification key remain secure.
 
 #### 1.3 [Passwordless Authentication](/articles/authentication/how-passwordless-works)
 
@@ -52,7 +52,7 @@ Adaptive Authentication dynamically adjusts authentication requirements based on
 
 #### 2.1 [Social Login](/glossary/social-sign-on-social-login)
 
-Allows users to log in to applications using their social media accounts. Social login can make the login process easier and more convenient for users.
+Allows users to log in to applications using their social media accounts. Social login can make the login process easier and more convenient by allowing users to manage fewer credentials than if they had a different login for each service that their social login allows them to access.
 
 #### 2.2 Self-Service Tools
 
