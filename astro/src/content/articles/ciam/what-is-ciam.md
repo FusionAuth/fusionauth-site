@@ -301,6 +301,8 @@ Example Use Case: A retail business integrates its CIAM with Salesforce CRM to c
 
 ## 11. Authentication Methods in CIAM
 
+CIAM systems can use a few different methods for authentication. These methods can be broadly defined as "traditional" and "modern." On a more granular level, there are many different authentication methods that are considered to be "modern" alternatives to the traditional username and password combination.
+
 ### 11.1 Traditional Authentication Methods
 
 #### 11.1.1 Passwords
@@ -343,7 +345,7 @@ Passwordless authentication eliminates the need for users to create, remember, a
 
 #### 11.3.1 Passwordless Authentication
 
-Users authenticate using methods, like one-time codes, biometrics, or physical keys instead of passwords.
+Users authenticate using methods like one-time codes, biometrics, or physical keys instead of passwords.
 
 How It Works:
 
@@ -365,7 +367,7 @@ Common Methods:
 
 #### 11.3.2 Magic Link Authentication
 
-Magic links are unique, time-sensitive URLs sent to users' email  or SMS inbox, allowing a user to log in without a password.
+Magic links are another type of passwordless authentication. They are unique, time-sensitive URLs sent to users' email or SMS inbox, allowing a user to log in without a password.
 
 How It Works:
 
