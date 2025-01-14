@@ -10,7 +10,7 @@ Customer Identity and Access Management (CIAM) refers to the technologies and pr
 
 This article explores the key features, benefits, and best practices of CIAM, along with how it differs from traditional IAM systems. 
 
-##What is CIAM?
+## What is CIAM?
 
 Customer Identity and Access Management (CIAM) is a set of technologies and processes organizations use to manage the identities and access of their customers.
 
@@ -71,7 +71,7 @@ CIAM solutions need to be able to integrate with other applications and systems.
 #### 3.2 Scalability
 
 - Handles large user bases efficiently.
-- Adapts to user growth and variability (peaks and valleys of usage over time, depending on the customer journey), long lag times between users interacting, and self-service without compromising performance.
+- Adapts to user growth and variability (peaks and valleys of usage over time, depending on the customer journey) and long lag times between users interacting. Allows self-service without compromising performance.
 
 #### 3.3 Flexibility and Customization
 
@@ -100,7 +100,7 @@ CIAM is critical in modern digital security and user experience, protecting cust
 
 ### 1. Enhanced Customer Experience
 
-One of the key benefits of CIAM solutions is that they can help to improve the customer experience. CIAM solutions can make it easier for customers to sign up, log in, and access services. This can lead to increased customer satisfaction and loyalty.
+One of the key benefits of CIAM solutions is they can help to improve the customer experience. CIAM solutions can make it easier for customers to sign up, log in, and access services. This can lead to increased customer satisfaction and loyalty.
 
 - Frictionless Access with Single Sign-On (SSO) and Social Login to simplify authentication or registration.
 - Self-Service Capabilities to enable customers to manage their accounts independently.
@@ -167,7 +167,7 @@ Example Scenario: A SaaS platform offers its clients (business customers) the ab
 
 In B2B2E, CIAM solutions enable organizations to securely manage employee access across internal and external applications. This ensures seamless access management, improving operational efficiency and demonstrating the benefits of CIAM in enterprise environments.
 
-Example Scenario: A SaaS platform offers its clients (business customers) the ability to provide branded, secure logins for each business' employees. The employees log into the SaaS platform using each business' identity store, ensure that access is simple and controlled.
+Example Scenario: A SaaS platform offers its clients (business customers) the ability to provide branded, secure logins for each business' employees. The employees log into the SaaS platform using each business' identity store, ensuring that access is simple and controlled.
 
 ## [Machine-to-Machine Communication](/feature/machine-to-machine)
 
