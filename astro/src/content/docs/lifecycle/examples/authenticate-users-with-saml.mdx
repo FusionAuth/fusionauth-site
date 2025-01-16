@@ -15,6 +15,10 @@ import Aside from 'src/components/Aside.astro';
 
 - [Authentication Flow Of The Examples](#authentication-flow-of-the-examples)
 - [Example 1: Configure FusionAuth As A SAML Identity Provider](#example-1-configure-fusionauth-as-a-saml-identity-provider)
+  - [Run FusionAuth And The Initial Website](#run-fusionauth-and-the-initial-website)
+  - [Configure FusionAuth To Use SAML](#configure-fusionauth-to-use-saml)
+  - [Configure The Website To Use SAML](#configure-the-website-to-use-saml)
+  - [Explanation Of The New Code](#explanation-of-the-new-code)
 - [Example 2: Configure FusionAuth As A SAML Service Provider](#example-2-configure-fusionauth-as-a-saml-service-provider)
 - [Configure SAML With The FusionAuth API](#configure-saml-with-the-fusionauth-api)
 - [Clean Up](#clean-up)
@@ -128,13 +132,14 @@ In all the cases above, if the user already has an authentication cookie, the lo
 
 In this section, you'll configure FusionAuth as the SAML identity provider, where users do not have to log in with Corpo.com.
 
+### Run FusionAuth And The Initial Website
+
 Start by running a new instance of FusionAuth and configuring it to use SAML. For safety and compatibility with any operating system, you'll run all code inside [Docker](https://www.docker.com/get-started/).
 
-- Use `git clone` to clone the repository at https://github.com/FusionAuth/fusionauth-example-docker-compose, or download and unzip it.
+- Use `git clone` to clone the repository at https://github.com/FusionAuth/fusionauth-example-saml, or download and unzip it.
 - Open a terminal in the directory containing the repository files.
 - Run the command below to start FusionAuth.
   ```sh
-  cd light
   docker compose up
   ```
 
@@ -146,23 +151,44 @@ docker rm fa fa_db; docker compose down -v
 ```
 </Aside>
 
-This command started FusionAuth using Kickstart, which automatically creates an example application with an example user called richard@example.com. Using Kickstart saves you the time of having to configure everything yourself when following this tutorial.
-
-- Log in to your FusionAuth web interface at http://localhost:9011/admin with credentials `admin@example.com` and `password`.
-- Browse to <Breadcrumb>Reactor</Breadcrumb>.
-- Enter your license key to activate Reactor and refresh the page.
+This command started FusionAuth using Kickstart, which automatically creates an example application with example users. Using Kickstart saves you the time of having to configure everything yourself when following this tutorial.
 
 <Aside type="note">
 If you have any trouble with this tutorial, try replacing the FusionAuth image in the Docker compose file with `fusionauth/fusionauth-app:1.54.0`, in case future versions of FusionAuth introduced a breaking change.
 </Aside>
 
-- Browse to <Breadcrumb>Applications -> Bank -> Edit -> SAML tab</Breadcrumb>.
+In addition to FA, there are two websites included in this repository. You'll work with the first one, `appIdP`, in this section and then `appSP` in the next section. `appIdP` represents the Change bank website your company owns in this example. The site currently uses OAuth for login, not bespoke authentication, which is slightly different from the example description, but unimportant — the focus of this example is switching the site to use SAML authentication.
+
+Look at how the website currently looks before adding SAML.
+
+- Open a new terminal and run the commands below.
+  ```sh
+  cd appIdP
+
+  docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app"  node:23-alpine3.19 sh -c  "npm install"
+
+  docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" --name app --network faNetwork  -p 3000:3000 node:23-alpine3.19 sh -c  "npm run start"
+  ```
+
+These commands will install the Node.js packages in `package.json`, and run the Express.js web server on the same network as the FusionAuth server, `faNetwork`.
+
+- Browse to http://localhost:3000.
+- Log in to the Changebank website with `richard@example.com` and `password`.
+
+### Configure FusionAuth To Use SAML
+
+Configure FusionAuth to use SAML for the Changebank application in the FusionAuth web interface.
+
+- Log in to your FusionAuth web interface at http://localhost:9011/admin with credentials `admin@example.com` and `password`.
+- Browse to <Breadcrumb>Reactor</Breadcrumb>.
+- Enter your license key to activate Reactor and refresh the page.
+- Browse to <Breadcrumb>Applications -> Changebank -> Select -> Edit -> SAML tab</Breadcrumb>.
   - Enable <InlineUIElement>Enabled</InlineUIElement>
   - Set <InlineField>Issuer</InlineField> to `passport-saml`.
   - Set <InlineField>Authorized redirect URLs</InlineField> to `http://localhost:3000/saml/callback` (be sure to click the dropdown text that appears to confirm the entry).
   - Enable <InlineUIElement>Debug enabled</InlineUIElement>.
   - Save.
-  - Click <InlineUIElement>View</InlineUIElement> for the application to see the SAML endpoints. They should like the ones below.
+- Click <InlineUIElement>View</InlineUIElement> for the application to see the SAML endpoints. They should like the ones below, though your UUIDs may be different.
   ```
   SAML v2 Integration details
 
@@ -187,47 +213,85 @@ If you have any trouble with this tutorial, try replacing the FusionAuth image i
   AuthN response signing key: SAML key generated for application Changebank
   f0926c58-74a8-4d3c-886e-24732f11f4f6
   ```
-  -
 
-TODO
+### Configure The Website To Use SAML
 
-get passportjs to connect to fa
+FusionAuth is now ready to accept SAML logins. Next is to add the callback URL above as a page in the existing website, to configure SAML on the website, and reference FusionAuth's SSL certificate to ensure security.
+
+- Browse to the `Metadata URL` endpoint above, http://localhost:9011/samlv2/metadata/d7d09513-a3f5-401c-9685-34ab6c552453. If your URL UUID is different, use your one.
+- Copy the text in between the tags labelled `<X509Certificate>`, copy the content into a file named `appIdP/cert/cert.pem`, and save it in the cert folder.
+- Add the `Login URL` below from the FA metadata to `appIdP/.env`
+  ```
+  SAML_URL="http://localhost:9011/samlv2/login/d7d09513-a3f5-401c-9685-34ab6c552453"
+  ```
+- Add the line below to the top of the `dependencies` section of `package.json`.
+  ```
+  "@node-saml/passport-saml": "^5.0.0",
+  ```
+- Add the line below to the top of `appIdP/services/authentication.js`.
+  ```js
+  const SamlStrategy = require("passport-saml").Strategy;
+  ```
+- In the same file, add the line below to the end of the `setupPassport` function.
+  ```js
+    setupSaml(passport);
+  ```
+- In the same file, add the function below.
+  ```js
+  function setupSaml(passport) {
+    const samlOptions = {
+      path: "/saml/callback",
+      entryPoint: process.env.SAML_URL,
+      issuer: "passport-saml",
+      cert: fs.readFileSync('cert/cert.pem', 'utf8')
+    };
+    passport.use(
+      "saml",
+      new SamlStrategy(
+        samlOptions,
+        function (user, callback) { callback(null, user); }, //for signon
+        function (user, callback) { callback(null, user); }  //for logout
+      )
+    );
+  }
+  ```
+- In the file `appIdP/routes/index.js` replace the current OAuth login line with a new SAML login.
+  ```js
+  // router.get("/login", passport.authenticate("oauth2"));
+
+  router.get("/login", passport.authenticate("saml", { failureRedirect: "/", failureFlash: true }), function (req, res) {res.redirect("/");});
+  ```
+- In the same file, add the SAML callback handler below.
+  ```js
+  router.post("/saml/callback",
+    bodyParser.urlencoded({ extended: false }),
+    passport.authenticate("saml", {
+      failureRedirect: "/",
+      failureFlash: true,
+    }),
+    function (req, res, next) {
+      res.redirect("/account");
+    }
+  );
+  ```
+- In the website terminal, run the Node commands again to install the new SAML package and restart the webserver.
+  ```sh
+  cd appIdP
+
+  docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app"  node:23-alpine3.19 sh -c  "npm install"
+
+  docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" --name app --network faNetwork  -p 3000:3000 node:23-alpine3.19 sh -c  "npm run start"
+  ```
+
+You can now browse to http://localhost:3000 and log in in exactly the same way as before, except the underlying protocol is SAML, not OAuth. You can see the URL of the FusionAuth login page has changed.
+
+### Explanation Of The New Code
+
+TODO explain the code above
 
 https://github.com/node-saml/passport-saml
 https://github.com/gbraad/passport-saml-example
 https://github.com/jaredhanson/passport
-
-```https://www.antoniogioia.com/saml-sso-setup-with-express-and-passport/
-For a basic Service Provider configuration, you need:
-
-- Your cert keys
-- Identity Provider metadata page
-- Identity Provider entry point URL
-
-And you, as the Service Provider, have to provide to the Identity Provider:
-
-- Your metadata page
-- Your callback URL
-```
-
-Create cert
-```sh
-mkdir app/cert
-cd app/cert
-openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/CN=fa"
-```
-Creates `cert.pem` and `key.pem`. Keep the key secret.
-
-- Browse to the metadata endpoint above, http://localhost:9011/samlv2/metadata/d7d09513-a3f5-401c-9685-34ab6c552453.
-- You can find the public key that you need to have on your server. Find the tag X509Certificate, copy the content into a file named `idp_key.pem`, and save it in the cert folder.
-
-
-```sh
-docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app"  node:23-alpine3.19 sh -c  "npm install"
-
-docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" --name app --network faNetwork  -p 3000:3000 node:23-alpine3.19 sh -c  "npm run start"
-```
-node ./bin/www
 
 ## Example 2: Configure FusionAuth As A SAML Service Provider
 
