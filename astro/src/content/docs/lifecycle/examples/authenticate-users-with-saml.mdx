@@ -14,15 +14,103 @@ import Aside from 'src/components/Aside.astro';
 
 <EnterprisePlanBlurb />
 
-This guide will show you how to enable SAML for your website and how to authenticate users with SAML via FusionAuth. To learn more about SAML, please see the [FusionAuth SAML overview](https://fusionauth.io/docs/lifecycle/authenticate-users/saml).
+This guide will show you how to enable SAML authentication for your website and how to authenticate users with SAML via FusionAuth. To learn more about SAML, please see the [FusionAuth SAML overview](https://fusionauth.io/docs/lifecycle/authenticate-users/saml).
 
-Consider the following example. You provide a financial service on the Internet to users who log in to your website, called Changebank.com. Until now, the website has managed its own authentication with a username and password. You have a new corporate client who wants all employees to use your service, but authentication will be done with SAML, using the client as the identity provider.
+idp sp
+
+Consider the following example. You provide a financial service on the Internet to users who log in to your website, called Changebank.com. Until now, the website has managed its own authentication with a username and password. You have a new corporate client, called Corpo.com, who wants all employees to use your service, but authentication will be done with SAML, using the client as the identity provider.
 
 Let's also consider the possibility that the client is happy to let your website act as the identity provider, as long as SAML is used. In either case, you'll use FusionAuth to manage SAML, hiding the complexity of the protocol from your website.
 
 ## Technical Design Of The Example
 
-TODO
+Homemade authentication
+
+```mermaid
+sequenceDiagram
+  actor User
+  User->>Changebank: Browse to login page
+  activate Changebank
+  User->>Changebank: Send username & password
+  Note right of Changebank: Authenticate user
+  Changebank->>User: Redirect user to account page
+  deactivate Changebank
+```
+
+Login to website with SAML using FA as IdP. documented here https://fusionauth.io/docs/lifecycle/authenticate-users/saml.
+
+```mermaid
+sequenceDiagram
+  actor User
+
+  User->>Changebank: Browse to login page
+  activate Changebank
+  Changebank->>User: Redirect to FusionAuth SAML login page
+  deactivate Changebank
+
+  User->>FusionAuth: Send username & password
+  activate FusionAuth
+  Note right of FusionAuth: Authenticate user
+  FusionAuth->>User: Redirect user to Changebank callback page
+  deactivate FusionAuth
+
+  User->>Changebank: Request callback page
+  activate Changebank
+  Note right of Changebank: Check authentication cookie
+  Changebank->>User: Redirect to account page
+  deactivate Changebank
+
+  User->>Changebank: Request account page
+  activate Changebank
+  Changebank->>User: Return account page
+  deactivate Changebank
+```
+
+
+Login to website with SAML using Corpo.com as IdP. documented here https://fusionauth.io/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2.
+
+```mermaid
+sequenceDiagram
+  actor User
+
+  User->>Changebank: Browse to login page
+  activate Changebank
+  Changebank->>User: Redirect to FusionAuth SAML login page
+  deactivate Changebank
+
+  User->>FusionAuth: Request login page
+  activate FusionAuth
+  FusionAuth->>User: Redirect user to Corpo SAML login page
+  deactivate FusionAuth
+
+  User->>Corpo: Send username & password
+  activate Corpo
+  Note right of Corpo: Authenticate user
+  Corpo->>User: Redirect user to FusionAuth callback page
+  deactivate Corpo
+
+  User->>FusionAuth: Request callback page
+  activate FusionAuth
+  Note right of FusionAuth: Check authentication cookie
+  Note right of FusionAuth: Register user in database
+  FusionAuth->>User: Redirect to Changebank callback page
+  deactivate FusionAuth
+
+  User->>Changebank: Request callback page
+  activate Changebank
+  Note right of Changebank: Check authentication cookie
+  Changebank->>User: Redirect to account page
+  deactivate Changebank
+
+  User->>Changebank: Request account page
+  activate Changebank
+  Changebank->>User: Return account page
+  deactivate Changebank
+```
+
+you'll use FA to represent corpo too, as FA can be used as SP or Idp.
+
+if user already has authentication cookie from idp login will be bypassed.
 
 ## Start FusionAuth And Configure SAML
 
