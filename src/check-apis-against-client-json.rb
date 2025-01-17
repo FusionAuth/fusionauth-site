@@ -19,6 +19,7 @@ IGNORED_FIELD_REGEXPS = [
   /^application\.cleanSpeakConfiguration\.apiKey/, # this is not valid at the application level, only the integration level
   /^application\.cleanSpeakConfiguration\.url/, # this is not valid at the application level, only the integration level
   /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onLoginPrevented/, # no UX elements for this
+  /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onOneTimeTokenReuse/, # no UX elements for this
   /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onPasswordChanged/, # no UX elements for this
   /^application\.jwtConfiguration\.refreshTokenRevocationPolicy\.onMultiFactorEnable/, # no UX elements for this
   /^tenant\.jwtConfiguration\.enabled/, # jwts always configured on tenant
@@ -199,7 +200,7 @@ def open_url(url)
   return res.body
 end
 
-def downcase(string) 
+def downcase(string)
   # downcase all upper case until we see a lowercase, JWT, APIKey special cased
   dcs = "";
   if string[0..2] == "JWT"
@@ -208,18 +209,18 @@ def downcase(string)
     dcs = "apiK"+string[4..-1]
   elsif string[0..4] == "LDAPC"
     dcs = "ldapC"+string[5..-1]
-  else 
+  else
     first_lc = string.index(/[a-z]/)
     if first_lc
       dcs = string[0..first_lc-1].downcase + string[first_lc..-1]
-    else 
+    else
       dcs = string
     end
   end
   dcs
 end
 
-def skip_file(fn) 
+def skip_file(fn)
 
   # this is an intermediate identity provider, we don't want to process it
   if fn.end_with? "io.fusionauth.domain.provider.BaseSAMLv2IdentityProvider.json"
@@ -235,7 +236,7 @@ def skip_file(fn)
   if fn.end_with? "io.fusionauth.domain.webauthn.PublicKeyCredentialEntity.json"
     return true
   end
-  
+
   if fn.end_with? "io.fusionauth.domain.webauthn.PublicKeyCredentialRelyingPartyEntity.json"
     return true
   end
@@ -267,16 +268,16 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
   fs = f.read
   json = JSON.parse(fs)
   f.close
-  
-  if type 
-    # type is passed in. sometimes the field name is not the same as the type applicationEmailConfiguration being an example, it is actually emailConfiguration 
+
+  if type
+    # type is passed in. sometimes the field name is not the same as the type applicationEmailConfiguration being an example, it is actually emailConfiguration
     t = type
   else
     t = json["type"]
     t = downcase(t)
   end
 
-  if prefix != "" 
+  if prefix != ""
     # add previous objects if present
     t = prefix+"."+t
   end
@@ -304,7 +305,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
         url = options[:siteurl] + "/docs/"+path
         api_urls << url
       end
-    else 
+    else
       url = options[:siteurl] + "/docs/"+api_path
       api_urls << url
     end
@@ -313,17 +314,17 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
       if options[:verbose]
         puts "retrieving " + api_url
       end
-  
+
       tmp_page_content = open_url(api_url)
       page_content = tmp_page_content + page_content
       unless page_content
         puts "Could not retrieve: " + api_url
-  
+
         exit(false)
       end
     end
   end
-  
+
   fields = json["fields"]
   extends = json["extends"]
 
@@ -341,16 +342,16 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
     fields = fields.merge(ejson["fields"])
     #puts fields
   end
-  
-  fields && fields.length > 0 && fields.each do |fi| 
+
+  fields && fields.length > 0 && fields.each do |fi|
     field_type = fi[1]["type"]
     field_name = fi[0].to_s
-    
+
     full_field_name = make_on_page_field_name(t)+ "." + field_name
 
     if known_types.include? field_type
       # we are at a leaf. We should see if we have any fields missing
-      if ! page_content.include? full_field_name 
+      if ! page_content.include? full_field_name
         ignore = false
         # fields in this regexp ok to omit
         IGNORED_FIELD_REGEXPS.each do |re|
@@ -368,7 +369,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
       if options[:verbose]
         puts "not traversing #{full_field_name}, but checking if it is in the content of #{api_path}"
       end
-      if ! page_content.include? full_field_name 
+      if ! page_content.include? full_field_name
         missing_fields.append({full_field_name: full_field_name, type: field_type})
       end
       if full_field_name == "entity.type"
@@ -400,7 +401,7 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
             end
           end
         end
-        
+
         if options[:verbose]
           puts "looking for matching inner class"
         end
@@ -448,12 +449,12 @@ end
 if options[:fileprefix]
   files = Dir.glob(options[:clientlibdir]+"/src/main/domain/*"+options[:fileprefix]+".json")
 elsif options[:configfile]
-  config = YAML.load(File.read(options[:configfile])) 
+  config = YAML.load(File.read(options[:configfile]))
   files = []
   filenames = config["files"]
   filenames.each do |f|
     matching_files = Dir.glob(options[:clientlibdir]+"/src/main/domain/*"+f+".json")
-    matching_files.each do |mf| 
+    matching_files.each do |mf|
       files.append(mf)
     end
   end
@@ -474,7 +475,7 @@ else
   ]
 end
 
-if options[:verbose] 
+if options[:verbose]
   puts "Checking files: "
   puts files
 end
@@ -486,7 +487,7 @@ files.each do |fn|
 end
 
 
-if missing_fields.length > 0 
+if missing_fields.length > 0
   if options[:verbose]
     puts "\n\n"
   end
