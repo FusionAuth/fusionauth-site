@@ -14,13 +14,13 @@ import Aside from 'src/components/Aside.astro';
 
 
 - [Authentication Flow Of The Examples](#authentication-flow-of-the-examples)
-- [Example 1: Configure FusionAuth As A SAML Identity Provider](#example-1-configure-fusionauth-as-a-saml-identity-provider)
+- [Example 1: Use FusionAuth As A SAML Identity Provider](#example-1-use-fusionauth-as-a-saml-identity-provider)
   - [Run FusionAuth And The Initial Website](#run-fusionauth-and-the-initial-website)
   - [Configure FusionAuth To Use SAML](#configure-fusionauth-to-use-saml)
   - [Configure The Website To Use SAML](#configure-the-website-to-use-saml)
   - [Explanation Of The New Code](#explanation-of-the-new-code)
-- [Example 2: Configure FusionAuth As A SAML Service Provider](#example-2-configure-fusionauth-as-a-saml-service-provider)
-- [Configure SAML With The FusionAuth API](#configure-saml-with-the-fusionauth-api)
+- [Example 2: Use FusionAuth As A SAML Service Provider](#example-2-use-fusionauth-as-a-saml-service-provider)
+  - [Configure FusionAuth As A Service Provider](#configure-fusionauth-as-a-service-provider)
 - [Clean Up](#clean-up)
 - [TODO](#todo)
 
@@ -128,7 +128,7 @@ sequenceDiagram
 
 In all the cases above, if the user already has an authentication cookie, the login page will be bypassed and the user will be redirected to their account page.
 
-## Example 1: Configure FusionAuth As A SAML Identity Provider
+## Example 1: Use FusionAuth As A SAML Identity Provider
 
 In this section, you'll configure FusionAuth as the SAML identity provider, where users do not have to log in with Corpo.com. This is simpler than using FA as a service provider, so you'll do that in the following section.
 
@@ -224,6 +224,8 @@ To add SAML, you'll add the Passport strategy for SAML to `authentication.js` an
 
 <Aside type="tip">
 If you have trouble following the code changes presented below, you can copy the final example from `completedApps/appIdP` to `appIdP`, where all the work has already been done for you.
+
+You still need to update `cert/cert.pem` and the SAML URL in `.env` though.
 </Aside>
 
 - Browse to the `Metadata URL` endpoint above, http://localhost:9011/samlv2/metadata/d7d09513-a3f5-401c-9685-34ab6c552453. If your URL UUID is different, use your one.
@@ -303,9 +305,97 @@ The code changes to the routes file are minimal, barely changing what is in the 
 
 For more information on SAML in Passport, please see the official documentation on GitHub: https://github.com/node-saml/passport-saml, https://github.com/jaredhanson/passport, and https://github.com/gbraad/passport-saml-example.
 
-## Example 2: Configure FusionAuth As A SAML Service Provider
+## Example 2: Use FusionAuth As A SAML Service Provider
 
-## Configure SAML With The FusionAuth API
+You're ready to progress to the customer's original request — using their Corpo.com database as the SAML identity provider instead of FusionAuth. In this section you'll learn to configure FA as a service provider instead of an identity provider. However, you'll use the instance of FA you just configured in the previous section to act as the Corpo.com identity provider (because you need something for the service provider to call). So there'll be two instances of FA.
+
+In this example you'll work in the directory `appSP`. It holds the finished product of the work in the previous example.
+
+### Configure FusionAuth As A Service Provider
+
+- todo replace below with rename 2 to docker-compose
+- Edit `docker-compose.yaml` in the root of the project. Replace everything after the `fa` service with the code below (a new FusionAuth service, a new database service, and new volumes).
+```yaml
+# SP services
+  fa_db2:
+    image: postgres:16.0-bookworm
+    container_name: faDb2
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - db_net
+    volumes:
+      - db_data2:/var/lib/postgresql/data
+
+  fa2:
+    image: fusionauth/fusionauth-app:1.54.0
+    container_name: fa2
+    depends_on:
+      fa_db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:postgresql://fa_db2:5432/fusionauth
+      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
+      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_USERNAME: ${DATABASE_USERNAME}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
+      FUSIONAUTH_APP_RUNTIME_MODE: development
+      FUSIONAUTH_APP_URL: http://fa:9012
+      SEARCH_TYPE: database
+      FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}
+    networks:
+      - db_net
+    restart: unless-stopped
+    ports:
+      - 9012:9011
+    volumes:
+      - fusionauth_config2:/usr/local/fusionauth/config
+      - ./kickstart:/usr/local/fusionauth/kickstart
+
+networks:
+  db_net:
+    driver: bridge
+    name: faNetwork
+
+volumes:
+  db_data:
+  fusionauth_config:
+
+  db_data2:
+  fusionauth_config2:
+```
+
+9012 acts as SP and 9011 as IdP.
+
+- In the terminal where you ran FusionAuth in the last example, press <kbd>Ctrl</kbd>+<kbd>c</kbd> to stop Docker, and run the command below to start two instances FusionAuth.
+  ```sh
+  docker compose up
+  ```
+- Log in to your new FusionAuth web interface at http://localhost:9012/admin (*not* `9011`) with credentials `admin@example.com` and `password`.
+- Browse to <Breadcrumb>Reactor</Breadcrumb>.
+- Enter your license key to activate Reactor and refresh the page.
+
+TODO
+setup 9011 again
+setup 9012
+
+- Browse to <Breadcrumb>Applications -> Changebank -> Select -> Edit -> SAML tab</Breadcrumb>.
+  - Enable <InlineUIElement>Enabled</InlineUIElement>
+  - Set <InlineField>Issuer</InlineField> to `passport-saml`.
+  - Set <InlineField>Authorized redirect URLs</InlineField> to `http://localhost:3000/saml/callback` (be sure to click the dropdown text that appears to confirm the entry).
+  - Enable <InlineUIElement>Debug enabled</InlineUIElement>.
+  - Save.
+
+
+
 
 ## Clean Up
 
@@ -314,6 +404,7 @@ To remove all the Docker volume, containers, images, and networks used in this g
 ```sh
 docker compose down -v
 docker rm fa fa_db fa2 fa_db2
+docker volume rm db_data fusionauth_config db_data2 fusionauth_config2
 docker rmi postgres:16.0-bookworm fusionauth/fusionauth-app:latest node:23-alpine3.19
 docker network prune;
 ```
@@ -322,12 +413,11 @@ docker network prune;
 ## TODO
 
 fa
-let user log in to fa with saml. let user log into another system via fa with saml.
+just
 add link to this guide from saml overview introduction
 check bullet points and differentiate for actions
 
 Show how admin users of a tenant can configure a SAML connection (using the API to add/update FusionAuth Identity Provider)
-show how users in different tenants can log in with saml or oauth
 add link to SMIL article
 add link to both articles in github issue
 delete toc
