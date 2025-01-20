@@ -130,7 +130,7 @@ In all the cases above, if the user already has an authentication cookie, the lo
 
 ## Example 1: Configure FusionAuth As A SAML Identity Provider
 
-In this section, you'll configure FusionAuth as the SAML identity provider, where users do not have to log in with Corpo.com.
+In this section, you'll configure FusionAuth as the SAML identity provider, where users do not have to log in with Corpo.com. This is simpler than using FA as a service provider, so you'll do that in the following section.
 
 ### Run FusionAuth And The Initial Website
 
@@ -218,6 +218,10 @@ Configure FusionAuth to use SAML for the Changebank application in the FusionAut
 
 FusionAuth is now ready to accept SAML logins. Next is to add the callback URL above as a page in the existing website, to configure SAML on the website, and reference FusionAuth's SSL certificate to ensure security.
 
+The existing code uses three main files: `services/authentication.js`, which uses Passport.js to manage OAuth, `routes/index.js`, which handles HTTP requests to HTML templates or authentication callbacks, and `app.js`, which loads both of these files into Express.js.
+
+To add SAML, you'll add the Passport strategy for SAML to `authentication.js` and add login and callback routes to `index.js`.
+
 - Browse to the `Metadata URL` endpoint above, http://localhost:9011/samlv2/metadata/d7d09513-a3f5-401c-9685-34ab6c552453. If your URL UUID is different, use your one.
 - Copy the text in between the tags labelled `<X509Certificate>`, copy the content into a file named `appIdP/cert/cert.pem`, and save it in the cert folder.
 - Add the `Login URL` below from the FA metadata to `appIdP/.env`
@@ -287,11 +291,13 @@ You can now browse to http://localhost:3000 and log in in exactly the same way a
 
 ### Explanation Of The New Code
 
-TODO explain the code above
+SAML is more strict with SSL certificates than OAuth. You needed to copy the certificate from FusionAuth into your website in order for SAML to trust it.
 
-https://github.com/node-saml/passport-saml
-https://github.com/gbraad/passport-saml-example
-https://github.com/jaredhanson/passport
+In the authentication JavaScript file, you added SAML as a strategy. Passport.js can use multiple strategies, so you didn't need to remove OAuth. Each strategy is identified by a different label, like `saml`. The `setupSaml` function sets some options to match the settings in the SAML data from FusionAuth. The function then instantiates the new Passport SAML strategy with two functions that handle what happens to the user profile returned from the identity provider. You can process the user further in these functions, like saving her to a database, but here you are doing nothing except saying you are done. Express session storage (`express-session`) is already being used to store the user profile in a cookie that is sent to the user's browser.
+
+The code changes to the routes file are minimal, barely changing what is in the Passport documentation. You comment out the OAuth login route because in this example the customer wanted to switch entirely to SAML. And you add a simple login route to direct the user to FusionAuth, and a callback handler to direct the logged-in user to their account.
+
+For more information on SAML in Passport, please see the official documentation on GitHub: https://github.com/node-saml/passport-saml, https://github.com/jaredhanson/passport, and https://github.com/gbraad/passport-saml-example.
 
 ## Example 2: Configure FusionAuth As A SAML Service Provider
 
