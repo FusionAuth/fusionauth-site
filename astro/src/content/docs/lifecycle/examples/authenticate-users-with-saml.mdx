@@ -315,65 +315,9 @@ In this example you'll work in the directory `appSP`. It holds the finished prod
 
 - todo replace below with rename 2 to docker-compose
 - Edit `docker-compose.yaml` in the root of the project. Replace everything after the `fa` service with the code below (a new FusionAuth service, a new database service, and new volumes).
-```yaml
-# SP services
-  fa_db2:
-    image: postgres:16.0-bookworm
-    container_name: faDb2
-    environment:
-      PGDATA: /var/lib/postgresql/data/pgdata
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - db_net
-    volumes:
-      - db_data2:/var/lib/postgresql/data
 
-  fa2:
-    image: fusionauth/fusionauth-app:1.54.0
-    container_name: fa2
-    depends_on:
-      fa_db:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: jdbc:postgresql://fa_db2:5432/fusionauth
-      DATABASE_ROOT_USERNAME: ${POSTGRES_USER}
-      DATABASE_ROOT_PASSWORD: ${POSTGRES_PASSWORD}
-      DATABASE_USERNAME: ${DATABASE_USERNAME}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      FUSIONAUTH_APP_MEMORY: ${FUSIONAUTH_APP_MEMORY}
-      FUSIONAUTH_APP_RUNTIME_MODE: development
-      FUSIONAUTH_APP_URL: http://fa:9012
-      SEARCH_TYPE: database
-      FUSIONAUTH_APP_KICKSTART_FILE: ${FUSIONAUTH_APP_KICKSTART_FILE}
-    networks:
-      - db_net
-    restart: unless-stopped
-    ports:
-      - 9012:9011
-    volumes:
-      - fusionauth_config2:/usr/local/fusionauth/config
-      - ./kickstart:/usr/local/fusionauth/kickstart
 
-networks:
-  db_net:
-    driver: bridge
-    name: faNetwork
-
-volumes:
-  db_data:
-  fusionauth_config:
-
-  db_data2:
-  fusionauth_config2:
-```
-
-9012 acts as SP and 9011 as IdP.
+9012 acts as SP and 9011 as IdP. use separate browser windows
 
 - In the terminal where you ran FusionAuth in the last example, press <kbd>Ctrl</kbd>+<kbd>c</kbd> to stop Docker, and run the command below to start two instances FusionAuth.
   ```sh
@@ -382,17 +326,27 @@ volumes:
 - Log in to your new FusionAuth web interface at http://localhost:9012/admin (*not* `9011`) with credentials `admin@example.com` and `password`.
 - Browse to <Breadcrumb>Reactor</Breadcrumb>.
 - Enter your license key to activate Reactor and refresh the page.
+- Settings -> Key Master -> Import certificate (top right)
+- Name: fa
+- Paste X509 XML value: `MIICrzCCAZegAwIBAQIRAJYaotFZxkGevDSXjddX9+kwDQYJKoZIhvcNAQELBQAwEzERMA8GA1UEAxMIYWNtZS5jb20wHhcNMjUwMTIxMDkzMDI5WhcNMzUwMTIxMDkzMDI5WjATMREwDwYDVQQDEwhhY21lLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANCvYe+jl1v2kesPgm6zRuhQ0x49GnIVGSYaJyjK3LH9dCZG8tfjiEgNlVcEWL6gSWwv9n7OWog0OEmh9Zof4xX94MRNrwAArRNFeKzPL/Ox3jiw8vqK5OYnnBxbT6AAjmQNe8+BW/KXff0iNZchgfPKAPvYDUT+DVcSJXFdq5sOxCEvF/THa+UGoLVmQHJMTSS/nYHGG48ghINnLMC7CVNiYAPPdvPaMixB0YC29OUhpfYjbxyGKSdJQqml8VsQpyyhTDM8ijrvsP9rQRmhLirjyV2VupAae6/DgdQJA72qd/b8xXHdXdfVy6KAHPZQlQMpcb8ImvB4DNQAXMOjQukCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEANm6mI504VzQz5d9UvJ8YdZLP5GA/ygCyEEjYUcGpPjHBug4GaI+pgQHuysMtayUiC9MlRZgXkOrrRxarhtjh9iJT5cqPkJJ29NRb2ju50w+Vua4Qtv4wx4zlAOQUPyqXpzeOizkFeG+4+Pb4+hgrlwPPXTvT71YB1T7bsngHYwqdY/uSx4aIbPHDj0HPHUv+yGxoi4kFCLcqG2Dw9Nitj5i6KYJtNhEEw8MeKoUpBOLN3oeqgEHnq1DT+bQP7EMl6osIvtUQneAcmPJWyZf5n7E3NJhbCvamITcCZt1dZL/Bg6Dc89aSDPkmIPnAEuX43HgfcE50Y/V8QUoM7l6kTQ==`
+- Settings -> Identity Providers, click Add provider, and select SAML v2
+- Name: fa
+- IdP endpoint: http://localhost:9011/samlv2/login/d7d09513-a3f5-401c-9685-34ab6c552453 (or whatever your URL is from the other FusionAuth instance)
+- Verification key: `fa`
+- Linking strategy: `Link on email` (you need a user in order to create a registration).
+- Enable Debug enabled
+- In the Applications tab, enable Enabled and Create registration
+- Save
+- Settings -> System -> CORS filter - disable Enabled
 
-TODO
-setup 9011 again
-setup 9012
+- At http://localhost:9011 (the IdP), browse to <Breadcrumb>Applications -> Changebank -> Select -> Edit -> SAML tab</Breadcrumb>.
+- Set <InlineField>Issuer</InlineField> to `http://localhost:9012/samlv2/sp/bf79d4ba-d37e-46d2-9a13-5e1b5bd3178e`.
+- Set <InlineField>Authorized redirect URLs</InlineField> to `http://localhost:9012/samlv2/acs` (be sure to click the dropdown text that appears to confirm the entry).
+- Save.
 
-- Browse to <Breadcrumb>Applications -> Changebank -> Select -> Edit -> SAML tab</Breadcrumb>.
-  - Enable <InlineUIElement>Enabled</InlineUIElement>
-  - Set <InlineField>Issuer</InlineField> to `passport-saml`.
-  - Set <InlineField>Authorized redirect URLs</InlineField> to `http://localhost:3000/saml/callback` (be sure to click the dropdown text that appears to confirm the entry).
-  - Enable <InlineUIElement>Debug enabled</InlineUIElement>.
-  - Save.
+log in at http://localhost:9012/oauth2/authorize?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback
+
+If errors, go to System -> Event Log
 
 
 
