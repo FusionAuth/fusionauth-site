@@ -1,6 +1,6 @@
 ---
-title: "Unlocking Growth: Why A Low Friction User Signup Process Is Crucial For Your Business"
-description: What is the overall value of low-friction user signups? This article covers all the ways low-friction signups add value to your application and business.
+title: "Optimizing Sign-Up Flows with CIAM: Reduce Friction, Drive Growth"
+description: Learn how to create seamless sign-up flows with CIAM solutions. Discover strategies to reduce user friction, improve conversions, and unlock business growth.
 section: CIAM
 author: Hannah Sutor
 icon: /img/icons/user-signup-process.svg
