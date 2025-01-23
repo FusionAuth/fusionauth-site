@@ -8,8 +8,8 @@ import B2B2EDescription from 'src/content/docs/get-started/use-cases/_b2b2e-desc
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import Aside from 'src/components/Aside.astro';
 import CircusesRelationships from 'src/diagrams/docs/get-started/use-cases/b2b2e/b2b2e-circuses.astro';
-import AddNewCustomers from 'src/diagrams/docs/get-started/use-cases/b2b2c/add-new-customers.astro';
-import UserLoggingIn from 'src/diagrams/docs/get-started/use-cases/b2b2c/user-logging-in.astro';
+import AddNewCustomers from 'src/diagrams/docs/get-started/use-cases/b2b2e/add-new-customers.astro';
+import UserLoggingIn from 'src/diagrams/docs/get-started/use-cases/b2b2e/user-logging-in.astro';
 import AdminManagingUsers from 'src/diagrams/docs/get-started/use-cases/b2b2c/admin-managing-users.astro';
 import UserSegmentTable from 'src/content/docs/get-started/core-concepts/_user-segment-table.mdx';
 import CrossTenantUserAccess from 'src/content/docs/get-started/core-concepts/_cross-tenant-access.mdx';
@@ -40,15 +40,15 @@ You have configured your application or applications to [delegate authentication
 
 ## Example Scenario
 
-Suppose your company, ClownTix, sells a time tracking system for circuses. Your software package lets circus clowns and performers track their hours.
+Suppose your company, ClownTime, sells a time tracking system for circuses. Your software package lets circus clowns and performers track their hours.
 
-Your customers are the circuses, and their users are *their* employees or contractors. Each circus has its own remote user directory, and wants to control access to ClownPass through those directories. Acces is not simply allows or disallowed; some employees are managers and should have greater access to reports in ClownPass.
+Your customers are the circuses, and their users are *their* employees or contractors. Each circus has its own remote user directory, and wants to control access to ClownTime through those directories. Acces is not simply allows or disallowed; some employees are managers and should have greater access to reports in ClownTime.
 
-You are super excited because you've landed both Ringling Bros. and Barnum & Bailey Circus and Cirque du Soleil as customers; they have large staffs to manage. Here's a diagram of the relationship between ClownPass, its customers and the end users.
+You are super excited because you've landed both Ringling Bros. and Barnum & Bailey Circus and Cirque du Soleil as customers; they have large staffs to manage. Here's a diagram of the relationship between ClownTime, its customers and the end users.
 
 <CircusesRelationships alt="Circus relationships diagram."/>
 
-The set of customers for each circus can overlap. Jamie Morgan is an example of a customer of both circuses.
+The people who fill out time sheets can be either people or companies. For example, `ContractMarketingCorp` is a marketing corporation that promotes Cirque du Soleil on a monthly basis. The set of employees for each circus can also overlap. Jamie Morgan is an example of a customer of both circuses.
 
 ## Actors/Components
 
@@ -59,33 +59,28 @@ The set of customers for each circus can overlap. Jamie Morgan is an example of 
 
 ## Implementation Steps
 
-There are three implementation steps to ensure your customers' users will always be able to get the tickets they need. This is a tenant based implementation, where users are stored in different FusionAuth tenants.
+There are a few implementation steps to ensure your customers' employees will be able to enter their timesheets correctly. This is a tenant based implementation, where users are stored in different FusionAuth tenants.
 
 The steps include:
 
 * Setting up your system to handle adding new customers
-* Letting customers' users sign in or register
-* Allowing your customers to manage their users and other settings
+* Letting customers' users sign in using their employee directory
 
-Here's a high level sequence diagram of the process of adding new customers. Each customer is represented as a tenant.
+Here's a high level sequence diagram of the process of adding new customers. Each customer is represented as a tenant. With b2b2e, you usually want to capture information needed to configure an identity provider, such as SAML public keys or OIDC client Ids and secrets. This will be captured in your application and then provided to FusionAuth via API or SDK to allow users to log in via that identity provider.
 
 <AddNewCustomers alt="Adding new customers." />
 
-Here's a high level sequence diagram of a user logging in to one of the customer's ticketing systems. The application is responsible for mapping the user to the correct customer.
+Here's a high level sequence diagram of a user logging in to a customer's time tracking systems. The application is responsible for mapping the user to the correct customer.
 
 <UserLoggingIn alt="Users logging in." />
-
-Here's a high level sequence diagram of a customer admin managing their users. The admin functions are integrated with the application admin screens using API calls.
-
-<AdminManagingUsers alt="Tenant admin management of their users." />
 
 Let's look at these steps in detail.
 
 ### Adding New Customers
 
-To add new customers, you need to make changes to both the ClownPass ticketing application and FusionAuth configuration.
+To add new customers, you need to make changes to both the ClownTime ticketing application and FusionAuth configuration.
 
-#### Preparing The ClownPass Application
+#### Preparing The ClownTime Application
 
 Make sure your circus SaaS application can handle multiple tenants. At a minimum, you need to ensure your application has some way to distinguish each customer's access points. There are a couple of ways to do this, but the most typical is to offer a different hostname for each customer. If the ticketing application is hosted at `example.com`, you might have the following hostnames:
 
@@ -104,12 +99,15 @@ For each new customer, you'll need to update configuration in the ClownPass Fusi
 * create a new Application in that Tenant
 * configuring the correct redirect URL for the Application
 * create a new Tenant locked API key
-* configure the Application to use desired Identity Providers, such as Google Login
+* configure the Application to use desired Identity Provider, such as a Google Workspace or Entra ID
 * create Email Templates and Themes appropriate for the customer's brand
+
+TODO idp_hint where to show that?
+TODO make sure the user is registered when they use an identity provider
 
 You can script these steps using one of the [SDKs](/docs/sdks).
 
-Record information such as the API key, the client Id and client secret from the Application configuration in your application's database. Later, your application will look up this information based on the request hostname.
+Record information such as the API key, the identity provider Id, the client Id and client secret from the Application configuration in your application's database. Later, your application will look up this information based on the request hostname.
 
 When using FusionAuth Cloud, you can [configure FusionAuth to respond to different hostnames](/docs/get-started/run-in-the-cloud/cloud#custom-domains). You can also do the same with self-hosted FusionAuth. In addition to the hostnames above, you could also have:
 
@@ -118,26 +116,30 @@ When using FusionAuth Cloud, you can [configure FusionAuth to respond to differe
 
 If you don't use hostname customization, users may see a domain name they don't expect when logging in.
 
-Once the customer is set up, users can be registered for your application in a variety of ways. They can:
+Once the customer is set up, you have a variety of methods to get users into FusionAuth. They can be:
 
-* be migrated in from an existing store
-* register using social sign-on
+* migrated in from an existing store
+* provisioned 'just-in-time' by logging in using the identity provider
 * created directly using the API or SDKs
-* register themselves if you enable self-service registration
+* provisioned using SCIM if the source user data stores support SCIM
 
 Pick one or more methods that work for your use case; FusionAuth supports them all.
 
 ### User Authentication
 
-When a user comes to the Ringling site hosted by ClownApp, they must be redirected to a FusionAuth authorization URL with the appropriate client Id and redirect URL. This will be used to start the Authorization Code grant which will authenticate this user. Here's an [explanation of how to create the URL and what each component means](/docs/lifecycle/authenticate-users/oauth/endpoints#authorization-code-grant-request).
+When a user comes to the Ringling site hosted by ClownTime, they must be redirected to a FusionAuth authorization URL with the appropriate client Id and redirect URL. This will be used to start the Authorization Code grant which will authenticate this user. Here's an [explanation of how to create the URL and what each component means](/docs/lifecycle/authenticate-users/oauth/endpoints#authorization-code-grant-request).
 
-The user will see a Ringling themed page because of the previous customization and the provided client Id. Other interactions with FusionAuth, such as a "forgot password" email, should be Ringling themed as well.
+Additionally, the identity provider Id can be used and an `idp_hint` parameter can be added to the the authorization URL. Providing the `idp_hint` will skip the FusionAuth login page entirely and direct the employee to the identity store.
 
-After the user authenticates and is redirected to the ClownPass application, the client Id and client secret can be looked up in the application database based on the hostname in the redirect URL. The circus ticketing web application handles many client Ids and secrets, one for each customer. The client Id and client secret are provided to FusionAuth to complete the Authorization Code grant. Here's an [explanation of that request](/docs/lifecycle/authenticate-users/oauth/endpoints#complete-the-authorization-code-grant-request). 
+If you don't use the `idp_hint`, the user will see a Ringling themed page because of the previous customization and the provided client Id. Other interactions with FusionAuth, such as a "forgot password" email, should be Ringling themed as well.
 
-The [tokens](/docs/lifecycle/authenticate-users/oauth/tokens) contain information about the user and their roles. The ClownPass application can use them to determine correct levels of access or data to retrieve.
+After the user authenticates and is redirected to the ClownTime application, the client Id and client secret can be looked up in the application database based on the hostname in the redirect URL. The circus ticketing web application handles many client Ids and secrets, one for each customer. The client Id and client secret are provided to FusionAuth to complete the Authorization Code grant. Here's an [explanation of that request](/docs/lifecycle/authenticate-users/oauth/endpoints#complete-the-authorization-code-grant-request).
+
+The [tokens](/docs/lifecycle/authenticate-users/oauth/tokens) contain information about the user and their roles. The ClownTime application can use them to determine correct levels of access or data to retrieve.
 
 ### User Management
+
+TODO. what levels of user management make sense when the identity is controlled remotely?
 
 Customer admins and other privileged users will add, read, update and delete user data using the ClownPass application. While there is a lot of user management functionality exposed as an API you could add to your application, common functionality includes:
 
@@ -162,6 +164,8 @@ Each account is entirely separate with no relation to each other. The accounts c
 ### Alternative Implementation
 
 The tenant based solution outlined above has distinct user spaces. If you want a shared user space, where the `jamie.morgan@example.com` user has the same profile data and credentials no matter which circus they are buying tickets for, you need to use a different approach. Instead of separate tenants, have all users in one tenant and model each circus ticketing application as a separate FusionAuth Application configuration. Make sure to build and enforce your own authorization scheme to ensure customer admins from Ringling Brothers couldn't access Cirque De Soleils' users, since you can't use tenant locked API keys.
+
+TODO* create a [Login Validation Lambda](/docs/extend/code/lambdas/login-validation) to ensure that only the correct Identity Provider is used
 
 Here's a table which shows tradeoffs between these different approaches.
 
@@ -205,3 +209,7 @@ In each of these cases there is a clear differentiation between the customer org
 * [Self-service registration](/docs/lifecycle/register-users/basic-registration-forms)
 * [Self-service account management](/docs/lifecycle/manage-users/account-management/)
 * [Tenant Scoped API keys](/docs/apis/authentication#using-a-tenant-scoped-api-key)
+
+TODO SCIM
+
+TODO disabling access
