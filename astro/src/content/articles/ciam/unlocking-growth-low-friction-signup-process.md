@@ -1,6 +1,6 @@
 ---
-title: "Unlocking Growth: Why A Low Friction User Signup Process Is Crucial For Your Business"
-description: What is the overall value of low-friction user signups? This article covers all the ways low-friction signups add value to your application and business.
+title: "Optimizing Sign-Up Flows with CIAM: Reduce Friction, Drive Growth"
+description: Learn how to create seamless sign-up flows with CIAM solutions. Discover strategies to reduce user friction, improve conversions, and unlock business growth.
 section: CIAM
 author: Hannah Sutor
 icon: /img/icons/user-signup-process.svg
@@ -27,15 +27,15 @@ An important part of furthering this trust is using the signup experience to set
 
 The easier it is for a user to onboard into your product, the more users will complete the flow - it’s as simple as that. A successful sign up is vital, since it creates the following value for both the business and the user:
 
-   - Access to the product: The user gains access to the software and can begin using it. This allows the user to take advantage of the features and benefits that the software provides.
+* Access to the product: The user gains access to the software and can begin using it. This allows the user to take advantage of the features and benefits that the software provides.
 
-   - Customization options: Depending on the flow, signing up may allow the user to customize their experience. This can include things like setting preferences, saving settings, or creating a personalized profile.
+* Customization options: Depending on the flow, signing up may allow the user to customize their experience. This can include things like setting preferences, saving settings, or creating a personalized profile.
 
-   - User data and analytics: For the business, sign-ups provide valuable data and analytics about user behavior and preferences. This information can be used to improve the product and make it more tailored to the needs of the user.
+* User data and analytics: For the business, sign-ups provide valuable data and analytics about user behavior and preferences. This information can be used to improve the product and make it more tailored to the needs of the user.
 
-   - Customer engagement: Sign-ups allow the business to engage with users and build a relationship with them. This can lead to increased brand loyalty and customer retention.
+* Customer engagement: Sign-ups allow the business to engage with users and build a relationship with them. This can lead to increased brand loyalty and customer retention.
 
-   - Marketing and sales opportunities: Sign-ups can also be used as a marketing and sales tool, enabling the business to capture user data and target them with relevant offers or promotions.
+* Marketing and sales opportunities: Sign-ups can also be used as a marketing and sales tool, enabling the business to capture user data and target them with relevant offers or promotions.
 
 
 ## How friction shows up
@@ -69,20 +69,20 @@ It can’t be overstated how important security is as a part of your sign up flo
 
 Some examples of good security practices:
 
-   - Use MFA. WebAuthn and TOTP are more secure than SMS or magic links.
-   - Serve pages over SSL
-   - Allow a user to choose single a login mechanism that aligns best with their security posture
-     - If the user has their account managed centrally, they should use single sign-on
-     - If the user has a password manager and practices good password hygiene, log in through a username/password pair
-   - Risk scoring. Detect anomalies and prompt for verification that the user is human, and/or block the login and send an alert
+* Use MFA. WebAuthn and TOTP are more secure than SMS or magic links.
+* Serve pages over SSL
+* Allow a user to choose single a login mechanism that aligns best with their security posture
+   - If the user has their account managed centrally, they should use single sign-on
+   - If the user has a password manager and practices good password hygiene, log in through a username/password pair
+* Risk scoring. Detect anomalies and prompt for verification that the user is human, and/or block the login and send an alert
 
 There are some security features that have proven themselves to not _actually_ help security, and instead get in a user’s way. By regularly reviewing NIST’s [digital identity guidelines](https://pages.nist.gov/800-63-3/sp800-63b.html), you can make sure that these outdated practices are not in your flows. 
 
 Some examples of guidelines that are now passé are:
 
-   - Forcing users to change passwords frequently. This was found only to make users add one more character to their existing password, therefore not increasing security for the friction it caused.
-   - Masking password inputs. This does not increase security since very rarely is a human standing behind someone when they create a password. It makes it difficult to see if you entered the password correctly, and is no longer recommended. 
-   - Security Questions. The answers to security questions are either secure or easy to remember, but almost never both. NIST recommends against using security questions as a tool. 
+* Forcing users to change passwords frequently. This was found only to make users add one more character to their existing password, therefore not increasing security for the friction it caused.
+* Masking password inputs. This does not increase security since very rarely is a human standing behind someone when they create a password. It makes it difficult to see if you entered the password correctly, and is no longer recommended. 
+* Security Questions. The answers to security questions are either secure or easy to remember, but almost never both. NIST recommends against using security questions as a tool. 
 
 ### No feedback
 
