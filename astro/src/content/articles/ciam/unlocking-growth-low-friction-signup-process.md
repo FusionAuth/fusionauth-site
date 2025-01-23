@@ -80,9 +80,9 @@ There are some security features that have proven themselves to not _actually_ h
 
 Some examples of guidelines that are now passé are:
 
-   - Forcing users to change passwords frequently. This was found only to make users add one more character to their existing password, therefore not increasing security for the friction it caused.
-   - Masking password inputs. This does not increase security since very rarely is a human standing behind someone when they create a password. It makes it difficult to see if you entered the password correctly, and is no longer recommended. 
-   - Security Questions. The answers to security questions are either secure or easy to remember, but almost never both. NIST recommends against using security questions as a tool. 
+* Forcing users to change passwords frequently. This was found only to make users add one more character to their existing password, therefore not increasing security for the friction it caused.
+* Masking password inputs. This does not increase security since very rarely is a human standing behind someone when they create a password. It makes it difficult to see if you entered the password correctly, and is no longer recommended. 
+* Security Questions. The answers to security questions are either secure or easy to remember, but almost never both. NIST recommends against using security questions as a tool. 
 
 ### No feedback
 
