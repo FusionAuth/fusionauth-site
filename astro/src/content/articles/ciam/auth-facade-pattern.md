@@ -1,6 +1,6 @@
 ---
-title: The Auth Facade Pattern
-description: Introducing a facade in front of customer identity providers adds implementation flexibility and gives additional control to your applications
+title: "Auth Facade Pattern - Simplifying Identity Management Across Environments"
+description: Learn how the Auth Facade Pattern centralizes authentication and integrates with identity providers like Azure AD and Okta. Enhance scalability and security in complex environments.
 section: CIAM
 author: Dan Moore
 icon: /img/icons/auth-facade-pattern.svg

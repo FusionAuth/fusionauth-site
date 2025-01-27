@@ -1,0 +1,358 @@
+---
+title: "Getting Started with FusionAuth: A Beginner's Guide"
+description: Learn how to set up FusionAuth, integrate authentication into your app, and implement advanced features like magic link logins in this developer-friendly guide.
+section: get started
+subcategory: start here
+navOrder: 0
+codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-example-express-start-here/main
+---
+import ListHostedLoginPagesUseCases from 'src/content/docs/_shared/_list-hosted-login-pages-use-cases.mdx';
+import StartDiagram from 'src/diagrams/docs/get-started/start-here/launch-delegate-add.astro';
+import AfterDelegateDiagram from 'src/diagrams/docs/get-started/start-here/after-delegate.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import DockerComposeFiles from 'src/content/docs/get-started/download-and-install/_docker-compose-files.mdx';
+import { YouTube } from '@astro-community/astro-embed-youtube';
+import DockerSpinup from 'src/components/quickstarts/DockerSpinup.astro';
+import DockerRequirements from 'src/components/get-started/DockerRequirements.astro';
+import DockerInstallAndStart from 'src/components/get-started/DockerInstallAndStart.astro';
+import GitPodStart from 'src/components/get-started/GitPodStart.astro';
+import Code from 'astro/components/Code.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+import AdminAccessInstructions from 'src/content/docs/get-started/start-here/_admin-access-instructions.mdx';
+import MailAccessInstructions from 'src/content/docs/get-started/start-here/_mail-access-instructions.mdx';
+import AppAccessInstructions from 'src/content/docs/get-started/start-here/_app-access-instructions.mdx';
+
+Do you care about authentication, authorization and user management?
+
+Sure, you know your application needs it, but do you really want to spend time building undifferentiated functionality like social login, multi-factor authentication, or password reset? By using FusionAuth for authentication, authorization and user management, you get these benefits:
+
+* **pre-built authentication workflows** and integrations accelerate application delivery
+* **secure storage of user credentials and profile data**, wherever you want (you host or we host)
+* **new functionality and bugfixes** from the security experts on the FusionAuth team, available to your users when you upgrade
+* **the same experience** and application whether you develop locally, use FusionAuth in your CI/CD system, or run it in prod
+* fine grained control of the version of FusionAuth you use; **upgrades happen on your schedule, not ours**
+
+<Aside title="Summary">This hands-on guide walks you through a sample, pre-configured Node.JS application that uses FusionAuth for login and shows you how to add magic link functionality to the application. 
+It should take you no more than 15 minutes from start to finish.</Aside>
+
+The sections in this guide are as follows:
+* [FusionAuth Overview](#overview-of-using-fusionauth)
+* [Prerequisites](#prerequisites) for following this guide
+* [Launch FusionAuth](#launch-fusionauth) to get your FusionAuth server up and running
+* [Delegate Authentication](#delegate-authentication) where you will work with the FusionAuth UI to delegate authentication for your application.
+* [Add Functionality](#add-functionality) to add magic link authentication flow to your application.
+* [Cleaning Up](#cleaning-up)
+* [Summing Up](#summing-up)
+
+Ready?  Great! Let's get started.
+
+---
+
+## Overview of Using FusionAuth
+
+To get started with FusionAuth, you need to do three things:
+
+* Launch FusionAuth
+* Delegate authentication to FusionAuth
+* Add functionality to your application (optional, but common)
+
+<StartDiagram alt="Launch, then delegate, then add functionality." />
+
+For this guide, you will launch FusionAuth and delegate authentication, and then we will walk through an example where you'll add `Login With a Magic Link` functionality to an application, with no code changes required.
+
+## Prerequisites
+
+* `git`
+* a web browser
+* one of:
+  * Docker (if you follow the Docker instructions) or 
+  * a GitHub account (if you follow the GitPod instructions)
+* Docker also requires an installed version of `node` (this was tested with `v20.16.0`, but should work with any modern node version).
+
+<Aside type="note" title="Environments">
+While most of this tutorial is the same whether you are using Docker or GitPod, there are slight differences in commands used.
+</Aside>
+
+---
+
+## Launch FusionAuth
+
+FusionAuth is downloadable software; you can run it locally, on your cloud VM, in a container, or on FusionAuth Cloud.
+
+For this guide, you can either:
+
+* Use Docker to install and run FusionAuth and the application in containers on your own server
+* Use GitPod to run FusionAuth in the cloud in your GitPod account--no software install required
+
+<Aside title="Launch">This section of the guide includes a hands-on experience getting FusionAuth up and running.</Aside>
+
+Click on the arrow next to <InlineUIElement>Docker</InlineUIElement> or <InlineUIElement>GitPod</InlineUIElement> below to see the instructions to get started.
+
+<details>
+<summary>Docker</summary>
+<DockerInstallAndStart codeRoot={frontmatter.codeRoot} kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"}/>
+</details>
+
+<details>
+<summary>GitPod</summary>
+<GitPodStart codeRoot={frontmatter.codeRoot} kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"}/>
+
+</details>
+
+### What Did You Just Do?
+
+You launched a FusionAuth instance with either Docker or GitPod. It was prepopulated with application data. There are two users configured, one with admin access and one with access to the sample application.
+
+---
+
+## Delegate Authentication
+
+<Aside title="Delegate">This section of the guide is an exploration of the FusionAuth admin UI using the pre-existing application and users set up during the Launch step. Most of this step is informational and exploratory rather than interactive. After you explore the FusionAuth admin UI and related application code, you will start up the application and log in with the existing user.</Aside>
+
+What we will cover in this section:
+* [Find the Application Configuration in the FusionAuth Admin UI](#find-the-application-configuration-in-the-fusionauth-admin-ui)
+* [Review the Application Configuration](#review-the-application-configuration) to check the redirect URL and other settings
+* [Log out of the Admin UI](#log-out-of-the-admin-ui)
+* View [Application Delegation Code Excerpts](#application-delegation-code-excerpts) to explore how the Node.js application interacts with FusionAuth
+* [Start Up and Log In to the Application](#start-up-and-log-in-to-the-application) to fire up the Start Here application in your environment
+
+
+Once you have FusionAuth up and running, you need to set up your application or applications to delegate to FusionAuth.
+
+For this guide, there's an example `Start Here App` application which is already set up for you, which has been written to use FusionAuth for authentication. This application is maintained by Start Here, a leading provider of services to convert bills to coins and vice versa.
+
+Below is a diagram showing the delegation process. Click on `View Delegation Diagram` to view.
+
+<details>
+<summary>View Delegation Diagram</summary>
+<AfterDelegateDiagram />
+</details>
+
+Let's look at that configuration, check out some code, and then start the application up so you can log in.
+
+### Find The Application Configuration In The FusionAuth Admin UI
+
+In the previous step, you logged in to the system as an admin user. Now you are going to find the application configuration.
+
+* Go back to that browser screen, which should be showing the admin UI dashboard, a rainbow of sections showing information about the server.
+* Navigate to <Breadcrumb>Applications</Breadcrumb> in the left-hand sidebar. You may need to use the hamburger icon at the top left of the screen to see all options.
+* Choose <InlineUIElement>Edit</InlineUIElement> from the <InlineUIElement>Actions</InlineUIElement> dropdown in the `Start Here App` application line.
+
+### Review The Application Configuration
+
+Let's look at the configured `Start Here App` to check out the application settings.
+
+#### The Redirect URL
+
+After the user signs in using FusionAuth, they need to get back to your application. You configure each FusionAuth application configuration with redirect URLs to send the user back to.
+
+In the application configuration you are looking at, you can review the pre-configured authorized redirect URLs.
+
+![The edit screen of the application.](/img/docs/get-started/start-here/edit-application.png)
+
+#### Other Settings
+
+You can also see other useful information, such as the `Client Id`, which tells FusionAuth which application configuration to use.
+
+There are many other settings, but they are not important for this guide, so you can leave them all alone.
+
+#### Log Out Of The Admin UI
+
+Both the admin UI and the `Start Here App` are applications in FusionAuth. Users can have access to none, one or both.
+
+In this tutorial, the `admin@example.com` user can access the admin UI and the `richard@example.com` can access the `Start Here App`. Later you'll log in to the `Start Here App`, so now you need to log out of the admin UI.
+
+Click the <InlineUIElement>Logout</InlineUIElement> button in the admin UI to log out from the admin user account. This is usually found at the top of the left hand navigation (you may need to click the hamburger menu to see it) but can sometimes be found at the top right corner of your window.
+
+### Application Delegation Code Excerpts
+
+To understand how the Node.JS application delegates to FusionAuth, take a quick look at some of the Node.JS application code from the GitHub repository. You can either open it up in an editor or follow along here. If you are following the GitPod path, you can click the filename in the file browser in the left hand panel to see the file in your main window. 
+
+#### Requesting The User Authenticate
+
+To send the user over to FusionAuth initially, you must craft a URL that includes the `Client Id` from the configuration you reviewed above, as well as other parameters needed to offer a secure authentication experience. After the URL is created, you can forward the user there any time they need to log in. Here's the code that does that.
+
+<RemoteCode url="https://raw.githubusercontent.com/fusionauth/fusionauth-example-express-start-here/main/app/src/index.ts" lang="javascript" tags="login" />
+
+Once the user authenticates, the redirect URL is retrieved by the browser with some additional parameters.
+
+#### Finishing The User Authentication At The Redirect URL
+
+The code running at the redirect URL needs to finish the authentication. It sends parameters from the login event to FusionAuth to do so. These include:
+
+* the one-time use authorization code, which is tied to the authentication event (the `authCode` variable)
+* a parameter to let FusionAuth know which application the authentication is for (the `clientId` variable)
+* other parameters
+
+FusionAuth examines the request parameters and, if they all are correct, sends a token to the Node.JS application. When the app receives these, **the user is authenticated**. The application can then let the user access data or functionality.
+
+Here's the code that completes the authentication.
+
+<RemoteCode url="https://raw.githubusercontent.com/fusionauth/fusionauth-example-express-start-here/main/app/src/index.ts" lang="javascript" tags="oauth-redirect" />
+
+#### Storing The Token
+
+Once you have the token, what should the app do? One great option is to store it as a `Secure`, `HTTPOnly` cookie that the browser can then send back to other services. The above code does this using the `res.cookie` function.
+
+#### Accessing Protected Pages
+
+The application has certain pages that are protected, such as an account details page. The account page display code checks the user's identity. The browser is redirected to the home page if there is no valid token. This code is below:
+
+<RemoteCode url="https://raw.githubusercontent.com/fusionauth/fusionauth-example-express-start-here/main/app/src/index.ts" lang="javascript" tags="account" />
+
+You can check out how all the code and templates fit together by looking at code in the `app` directory.
+
+### Start Up And Log In To The Application
+
+This section of the Delegate Authentication instructions is hands-on. You will start up the application and log in using a specific user.
+
+<Aside type="caution">
+Did you remember to log out of the admin UI? To check, try to access the admin UI by doing the following, depending on whether you are using Docker or GitPod. Click on the arrow next to <InlineUIElement>Docker</InlineUIElement> or <InlineUIElement>GitPod</InlineUIElement> below to see the instructions.
+
+<AdminAccessInstructions />
+
+If you are not prompted to log in but instead see the admin UI, log out.
+</Aside>
+
+In your shell, type the following to start up the application:
+
+<Code code="cd app && npm install && npm run dev" />
+
+This will start a server up. Next, navigate to the application. Click on the arrow next to <InlineUIElement>Docker</InlineUIElement> or <InlineUIElement>GitPod</InlineUIElement> to see the instructions.
+
+<AppAccessInstructions />
+
+Then, log in to the Node.JS application in the browser:
+
+* Click on the <InlineUIElement>Login</InlineUIElement> button in the upper right hand corner.
+* Authenticate using the email `richard@example.com` and the password `password`.
+
+You may need to scroll down to see the <InlineUIElement>Submit</InlineUIElement> button.
+
+You'll then be logged to the application. From there you can view your account details or access other functionality.
+
+### What Did You Just Do?
+
+High five! In this section, you:
+
+* looked at FusionAuth configuration
+* reviewed Node.JS application code relevant to the integration
+* started the application
+* logged in to the `Start Here App` application using FusionAuth
+
+---
+
+## Add Functionality
+
+By delegating authentication to FusionAuth, your application gets access to all kinds of authentication and authorization functionality, such as magic link login, multi-factor authentication (MFA), social sign-on, self-service registration and more. Getting these flows out of the box is a lot of the value of using FusionAuth.
+
+Let's add one piece of functionality to complete this tutorial. Let's allow users to log in using magic links, where they get a link emailed to their inbox and can click on it to log in. Offering this login method reduces sign-in friction and user frustration. 
+
+<Aside title="Magic Link">
+In this hands-on section, you'll modify the FusionAuth configuration to offer users the option to log into the `Start Here App` application via a magic link.
+</Aside>
+
+Since you left the Node.JS application running, open another terminal window. In GitPod this can be done by clicking the "+" on the right hand side of the terminal section of the window.
+
+### The Email Server
+
+To add a `Login With Magic Links` button, you usually have to configure an email server and then the email templates that are sent. Never fear, for this guide, we've already set up the email server and configured the templates.
+
+The email server is a locally running mock email server, and you can visit the inbox. Click on the arrow next to <InlineUIElement>Docker</InlineUIElement> or <InlineUIElement>GitPod</InlineUIElement> to see the instructions.
+
+<MailAccessInstructions />
+
+### Enable Magic Links In FusionAuth
+
+Log out of your application and log in to the Admin UI. Click on the arrow next to <InlineUIElement>Docker</InlineUIElement> or <InlineUIElement>GitPod</InlineUIElement> to see the instructions.
+
+<AdminAccessInstructions />
+
+Navigate to <Breadcrumb>Applications</Breadcrumb> and then edit the `Start Here App` application using the <InlineUIElement>Actions</InlineUIElement> select box, the same way you did above. Navigate to the <Breadcrumb>Security</Breadcrumb> tab and then scroll to the <Breadcrumb>Passwordless login</Breadcrumb> section. You may need to resize the window or horizontally scroll the tabs to see the <Breadcrumb>Security</Breadcrumb> tab.
+
+Click the <InlineField>Enabled</InlineField> toggle.
+
+![Enable the magic link login.](/img/docs/get-started/start-here/enable-magic-link-login.png)
+
+Save your configuration change by clicking the blue disk icon.
+
+![Save the application.](/img/docs/get-started/start-here/save-application.png)
+
+Next, click the <InlineUIElement>Logout</InlineUIElement> button in the admin UI to log out from the admin user account. You're going to log back into the `Start Here App` application with a magic link.
+
+### Get A Magic Link And Log In
+
+Visit your application. To get to the application follow the instructions below. Click on the arrow next to <InlineUIElement>Docker</InlineUIElement> or <InlineUIElement>GitPod</InlineUIElement> to see the instructions.
+
+<AppAccessInstructions />
+
+Click the <InlineUIElement>Login</InlineUIElement> button.
+
+Scroll down, if needed. You'll see a <InlineUIElement>Login with a magic link</InlineUIElement> button.
+
+![Login screen with magic link enabled.](/img/docs/get-started/start-here/login-screen-magic-link-enabled.png)
+
+Click on it and enter your user's email address (`richard@example.com`) and click <InlineUIElement>Send</InlineUIElement>.
+
+![After entering users email address.](/img/docs/get-started/start-here/login-screen-magic-link-enter-email.png)
+
+Now you can visit your email inbox and you'll see your magic link email. Click on the arrow next to <InlineUIElement>Docker</InlineUIElement> or <InlineUIElement>GitPod</InlineUIElement> to see the instructions.
+
+<MailAccessInstructions />
+
+You should see something similar to:
+
+![Email inbox with magic link message.](/img/docs/get-started/start-here/email-inbox-magic-link-message.png)
+
+Click on the link, and you'll be logged into your application.
+
+### What Did You Just Do?
+
+You enabled Magic Link login for your application without touching a single line of code.
+
+## Troubleshooting
+
+If you receive an error message stating `Your account has not been registered for this application`, follow these steps:
+
+* Log out of the admin UI.
+* Log out of the `Start Here App`.
+* Log in to whichever application you are trying to access with the correct user: `admin@example.com` for the admin UI, `richard@example.com` for the `Start Here App`.
+
+## Cleaning Up
+
+If you used Docker, clean up by running `docker compose down -v` in the root directory. You can stop the Node.JS application by hitting `Control-C` in the terminal window where you are running it.
+
+If you used GitPod, clean up by looking for the orange GitPod command palette button in the bottom left corner of the workspace, clicking on it, and then choosing <InlineUIElement>Stop Workspace</InlineUIElement>.
+
+## Summing Up
+
+Congrats! You are all done with this tutorial.
+
+In this tutorial, you've done the following:
+
+* Started up your own FusionAuth instance using either Docker or GitPod.
+* Examined code and configuration and started an example application.
+* Extended the example application to allow login with an emailed link without writing any code.
+
+Let's talk about next steps.
+
+## Quickstarts
+
+Looking for an example in a particular language? Quickstarts walk you through the Launch and Delegate steps, leaving you with a running application in your framework or language of choice, to which you can add functionality. If you have Docker installed and one of over 20 frameworks and languages, [check out our quickstarts](/docs/quickstarts).
+
+Each quickstart includes a complete runnable application and a shell application you can build out by following the step-by-step integration instructions.
+
+## More Functionality
+
+Now that you know a bit about FusionAuth, if you are interested in learning more about the authentication related functionality it enables, there's more documentation covering:
+
+* [how to set up other identity providers, including SAML, OIDC and Facebook](/docs/lifecycle/authenticate-users/identity-providers/)
+* [other passwordless options including and passkeys](/docs/lifecycle/authenticate-users/passwordless/)
+* [enabling self-service registration](/docs/lifecycle/register-users/basic-registration-forms) to let users sign up for your application
+* [how to use multi-factor authentication (MFA)](/docs/lifecycle/authenticate-users/multi-factor-authentication); note that TOTP MFA is free and included in the Community plan, but all other MFA methods require a paid license
+* Sign up for a [trial FusionAuth Cloud instance](https://account.fusionauth.io/account/free-trial/start) which comes with a free Starter plan to explore [MFA and other paid features](/docs/get-started/core-concepts/premium-features)
+
+
