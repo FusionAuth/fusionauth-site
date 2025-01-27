@@ -21,7 +21,14 @@ You will need a [FusionAuth license](/docs/get-started/core-concepts/licensing) 
 
 <PremiumPlanBlurb />
 
-The steps outlined below extend the [example ChangeBank application](https://github.com/fusionauth/fusionauth-example-progressive-registration) to include progressive registration but can be tailored to your application's specific requirements. The application repo contains a Kickstart file with the configuration you need to set up FusionAuth to allow authentication from the Express app. Follow the steps in the companion application README to get up and running.
+The steps outlined below extend the [example ChangeBank application](https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-web) to include progressive registration but can be tailored to your application's specific requirements. The application repo contains a Kickstart file with the configuration you need to set up FusionAuth to allow authentication from the Express app. Follow the steps in the companion application README to get up and running. You can start the project with `npm start` but we recommend using [Docker](https://www.docker.com/) instead.
+
+```sh
+docker network create fusionauth-network
+docker run --platform=linux/amd64 --rm --network fusionauth-network -p 8080:8080 -v ".:/app" -w "/app" -e "PORT=8080" node:23-bullseye-slim sh -c "npm start"
+```
+
+This starts the ChangeBank application on port 8080 inside a Docker container, and you can access it at http://localhost:8080.
 
 ## Implementing The Progressive Registration Flow
 
@@ -124,7 +131,7 @@ In the `complete-application/src/index.ts` file, add the following code.
 app.get('/register', (req, res, next) => {
  const userSessionCookie = req.cookies[userSession];
 
- // Cookie was cleared, just send back (hacky way)
+ // Session cookie is missing or incomplete; redirect to home page
  if (!userSessionCookie?.stateValue || !userSessionCookie?.challenge) {
    res.redirect(302, '/');
  }
@@ -143,7 +150,7 @@ To ensure that you are not breaking the current code, you should also update the
 app.get('/login', (req, res, next) => {
   const userSessionCookie = req.cookies[userSession];
 
-  // Cookie was cleared, just send back (hacky way)
+  // Session cookie is missing or incomplete; redirect to home page
   if (!userSessionCookie?.stateValue || !userSessionCookie?.challenge) {
     res.redirect(302, '/');
   }
@@ -170,12 +177,12 @@ In the `complete-application/src/index.ts` file, replace the code for the `/oaut
 
 ```ts
 app.get('/oauth-redirect', async (req, res, next) => {
-  // Capture query params
+  // Extract query parameters from FusionAuth response
   const stateFromFusionAuth = `${req.query?.state}`;
   const authCode = `${req.query?.code}`;
   const source = `${req.query?.source}`;
 
-  // Validate cookie state matches FusionAuth's returned state
+  // Make sure the session state matches the one returned by FusionAuth
   const userSessionCookie = req.cookies[userSession];
   if (stateFromFusionAuth !== userSessionCookie?.stateValue) {
     console.log("State doesn't match. uh-oh.");
@@ -185,7 +192,7 @@ app.get('/oauth-redirect', async (req, res, next) => {
   }
 
   try {
-    // Exchange Auth Code and Verifier for Access Token
+    // Exchange authorization code and verifier for an access token
     const accessToken = (await client.exchangeOAuthCodeForAccessTokenUsingPKCE(authCode,
       clientId,
       clientSecret,
@@ -198,7 +205,7 @@ app.get('/oauth-redirect', async (req, res, next) => {
     }
     res.cookie(userToken, accessToken, { httpOnly: true })
 
-    // Exchange Access Token for User
+    // Retrieve user details using the obtained access token
     const userResponse = (await client.retrieveUserUsingJWT(accessToken.access_token)).response;
     if (!userResponse?.user) {
       console.error('Failed to get User from access token, redirecting home.');
@@ -359,7 +366,7 @@ Finally, add the code for the address form. Create a `templates/set-address.html
     </div>
 
     <script>
-      // Snag cookie user data
+      // Retrieve and parse user details from cookies
       const user = JSON.parse(decodeURIComponent(document.cookie.split('; ').filter(c => c.includes('userDetails')).at(0).split('=').at(-1)).replace('j:', ''))
       document.querySelector('.header-email').innerHTML = user.email;
 
@@ -579,10 +586,11 @@ app.patch("/api/register/:userId", async (req: any, res: any) => {
 
 The TypeScript SDK also provides the `updateRegistration` method, which sends a `PUT` request to the FusionAuth `/api/user/registration` endpoint. However, using this method may lead to data inconsistencies if you are not careful. For this reason, using the `patchRegistration` method is recommended to update user data. Only use the `updateRegistration` method if you want to update the entire registration object, as it might overwrite or remove fields that you have previously set.
 
-Now rerun the ChangeBank application using the command below.
+Now run the ChangeBank application using the command below if your application is not already running.
 
 ```sh
-npm run dev
+docker network create fusionauth-network
+docker run --platform=linux/amd64 --rm --network fusionauth-network -p 8080:8080 -v ".:/app" -w "/app" -e "PORT=8080" node:23-bullseye-slim sh -c "npm start"
 ```
 
 Test the application by registering a user using the `/api/register` endpoint. Use the following command to send a `POST` request to `http://localhost:8080/api/register`.
