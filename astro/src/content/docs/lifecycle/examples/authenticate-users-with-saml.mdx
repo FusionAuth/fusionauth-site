@@ -20,7 +20,7 @@ import Aside from 'src/components/Aside.astro';
   - [Configure The Website To Use SAML](#configure-the-website-to-use-saml)
   - [Explanation Of The New Code](#explanation-of-the-new-code)
 - [Example 2: Use FusionAuth As A SAML Service Provider](#example-2-use-fusionauth-as-a-saml-service-provider)
-  - [Configure FusionAuth As A Service Provider](#configure-fusionauth-as-a-service-provider)
+  - [Configure FusionAuth To Use SAML](#configure-fusionauth-to-use-saml-1)
 - [Okta](#okta)
 - [Clean Up](#clean-up)
 - [TODO](#todo)
@@ -29,7 +29,7 @@ import Aside from 'src/components/Aside.astro';
 
 This guide shows you how to authenticate users with SAML via FusionAuth with a full code example. To learn more about SAML in general, please see the [FusionAuth SAML overview](https://fusionauth.io/docs/lifecycle/authenticate-users/saml).
 
-Consider the following example. You provide a financial service on the Internet to users who log in to your website, called Changebank.com. Until now, the website has managed its own user authentication with usernames and passwords. You haven't used FusionAuth before. You have a new corporate client, called Corpo.com, who wants all its employees to use your service, but authentication will be done with SAML, using Corpo as the identity provider (party that holds the database of users). FusionAuth can be used to add SAML authentication to your website. In this case FusionAuth will be used only as a service provider (requesting party), not an identity provider.
+Consider the following example. You provide a financial service on the Internet to users who log in to your website, called Changebank.com. Until now, the website has managed its own user authentication with usernames and passwords. You haven't used FusionAuth before. You have a new corporate client, called Corpo.com, who wants all its employees to use your service, but authentication will be done with SAML, using Corpo as the identity provider (the party that holds the database of users). FusionAuth can be used to add this SAML authentication to your website. In this case FusionAuth will be used only as a service provider (requesting party), not an identity provider.
 
 Let's also consider the possibility that the Corpo.com is happy to let your website act as the identity provider, as long as SAML is used. In either case, you'll use FusionAuth to manage SAML, hiding the complexity of the protocol from your website.
 
@@ -55,7 +55,7 @@ sequenceDiagram
   deactivate Changebank
 ```
 
-Next, consider using FusionAuth as the identity provider for login. Instead of letting the user log in on your site, you'll redirect them to FusionAuth to log in, where an identifying cookie will be stored in their browser, and they'll be sent back to your site. Using FA as an identity provider is documented [here](https://fusionauth.io/docs/lifecycle/authenticate-users/saml).
+Next, consider using FusionAuth as the SAML identity provider for login. Instead of letting the user log in on your site, you'll redirect them to FusionAuth to log in, where an identifying cookie will be stored in their browser, and they'll be sent back to your site. Using FA as a SAML identity provider is documented [here](https://fusionauth.io/docs/lifecycle/authenticate-users/saml). The flow below will look familiar to anyone who has used OAuth before.
 
 ```mermaid
 sequenceDiagram
@@ -94,11 +94,12 @@ sequenceDiagram
 
   User->>Changebank: Browse to login page
   activate Changebank
-  Changebank->>User: Redirect to FusionAuth SAML login page
+  Changebank->>User: Redirect to FusionAuth OAuth login page
   deactivate Changebank
 
-  User->>FusionAuth: Request login page
+  User->>FusionAuth: Request OAuth login page
   activate FusionAuth
+  Note right of FusionAuth: User clicks "Log in with SAML"
   FusionAuth->>User: Redirect user to Corpo SAML login page
   deactivate FusionAuth
 
@@ -127,15 +128,15 @@ sequenceDiagram
   deactivate Changebank
 ```
 
-In all the cases above, if the user already has an authentication cookie, the login page will be bypassed and the user will be redirected to their account page.
+In all the cases above, if the user already has an authentication cookie for the website, the login page will be bypassed and the user will be redirected to their account page.
 
 ## Example 1: Use FusionAuth As A SAML Identity Provider
 
-In this section, you'll configure FusionAuth as the SAML identity provider, where users do not have to log in with Corpo.com. This is simpler than using FA as a service provider, so you'll do that in the following section.
+In this section, you'll configure FusionAuth as the SAML identity provider, where users do not have to log in with Corpo.com. This is simpler than using FA as a service provider, which is done in the next section by extending the example in this section.
 
 ### Run FusionAuth And The Initial Website
 
-Start by running a new instance of FusionAuth and configuring it to use SAML. For safety and compatibility with any operating system, you'll run all code inside [Docker](https://www.docker.com/get-started/).
+Start by running a new instance of FusionAuth and configuring it to use SAML. For compatibility with any operating system and safety, you'll run all code inside [Docker](https://www.docker.com/get-started/).
 
 - Use `git clone` to clone the repository at https://github.com/FusionAuth/fusionauth-example-saml, or download and unzip it.
 - Open a terminal in the directory containing the repository files.
@@ -144,21 +145,21 @@ Start by running a new instance of FusionAuth and configuring it to use SAML. Fo
   docker compose up
   ```
 
+This command started FusionAuth using Kickstart, which automatically creates an example application with example users. Using Kickstart saves you the time of having to configure everything yourself when following this tutorial.
+
 <Aside type="note">
 If you have completed any FusionAuth tutorials before, you might need to first delete any existing FusionAuth containers with the same name and the database volumes. Run the command below to do that.
 
 ```sh
-docker rm fa fa_db; docker compose down -v
+docker rm fa fa_db; docker network remove faNetwork; docker compose down -v
 ```
 </Aside>
-
-This command started FusionAuth using Kickstart, which automatically creates an example application with example users. Using Kickstart saves you the time of having to configure everything yourself when following this tutorial.
 
 <Aside type="note">
 If you have any trouble with this tutorial, try replacing the FusionAuth image in the Docker compose file with `fusionauth/fusionauth-app:1.54.0`, in case future versions of FusionAuth introduced a breaking change.
 </Aside>
 
-In addition to FA, there are two websites included in this repository. You'll work with the first one, `appIdP`, in this section and then `appSP` in the next section. `appIdP` represents the Change bank website your company owns in this example. The site currently uses OAuth for login, not bespoke authentication, which is slightly different from the example description, but unimportant — the focus of this example is switching the site to use SAML authentication.
+In addition to FA, there are two websites included in this repository. You'll work with the first one, `appIdP`, in this section and then `appSP` in the next section. `appIdP` represents the Change bank website your company owns in this example, where FA is the identity provider. The site currently uses OAuth for login, not bespoke authentication, which is slightly different from the example description, but unimportant — the focus of this example is switching the site to use SAML authentication.
 
 Look at how the website currently looks before adding SAML.
 
@@ -171,14 +172,16 @@ Look at how the website currently looks before adding SAML.
   docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" --name app --network faNetwork  -p 3000:3000 node:23-alpine3.19 sh -c  "npm run start"
   ```
 
-These commands will install the Node.js packages in `package.json`, and run the Express.js web server on the same network as the FusionAuth server, `faNetwork`.
+These commands will install the Node.js packages in `package.json` and run the Express.js web server on the same network as the FusionAuth server in the Docker file, `faNetwork`.
 
 - Browse to http://localhost:3000.
 - Log in to the Changebank website with `richard@example.com` and `password`.
 
+![Change bank account page](../../../../../public/img/docs/lifecycle/examples/saml/accountIdp.webp)
+
 ### Configure FusionAuth To Use SAML
 
-Configure FusionAuth to use SAML for the Changebank application in the FusionAuth web interface.
+Configure FusionAuth to use SAML as an identity provider for the Changebank application in the FusionAuth web interface.
 
 - Log in to your FusionAuth web interface at http://localhost:9011/admin with credentials `admin@example.com` and `password`.
 - Browse to <Breadcrumb>Reactor</Breadcrumb>.
@@ -189,31 +192,9 @@ Configure FusionAuth to use SAML for the Changebank application in the FusionAut
   - Set <InlineField>Authorized redirect URLs</InlineField> to `http://localhost:3000/saml/callback` (be sure to click the dropdown text that appears to confirm the entry).
   - Enable <InlineUIElement>Debug enabled</InlineUIElement>.
   - Save.
-- Click <InlineUIElement>View</InlineUIElement> for the application to see the SAML endpoints. They should like the ones below, though your UUIDs may be different.
-  ```
-  SAML v2 Integration details
-
-  Entity Id: http://localhost:9011/samlv2/d7d09513-a3f5-401c-9685-34ab6c552453
-  Login URL: http://localhost:9011/samlv2/login/d7d09513-a3f5-401c-9685-34ab6c552453
-  Logout URL: http://localhost:9011/samlv2/logout/d7d09513-a3f5-401c-9685-34ab6c552453
-  Metadata URL: http://localhost:9011/samlv2/metadata/d7d09513-a3f5-401c-9685-34ab6c552453
-  NameIDFormat: urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress
-  Initiate login URL: http://localhost:9011/samlv2/initiate-login/d7d09513-a3f5-401c-9685-34ab6c552453/e9fdb985-9173-4e01-9d73-ac2d60d1dc8e
-
-  SAML
-
-  Enabled: Yes
-  Issuer: changebank
-  Audience: changebank
-  Authorized redirect URLs: http://saml/redirect
-  Logout URL: –
-  Debug enabled: Yes
-  Require signed AuthN requests: No
-  Enable login hint:
-  Login hint parameter name: login_hint
-  AuthN response signing key: SAML key generated for application Changebank
-  f0926c58-74a8-4d3c-886e-24732f11f4f6
-  ```
+  ![SAML setup](../../../../../public/img/docs/lifecycle/examples/saml/saml.webp)
+- Click <InlineUIElement>Select -> View</InlineUIElement> for the application to see the SAML endpoints. They should like the ones below.
+  ![SAML settings](../../../../../public/img/docs/lifecycle/examples/saml/samlSettings.webp)
 
 ### Configure The Website To Use SAML
 
@@ -221,7 +202,7 @@ FusionAuth is now ready to accept SAML logins. Next is to add the callback URL a
 
 The existing code in `appIdP` uses three main files: `services/authentication.js`, which uses Passport.js to manage OAuth, `routes/index.js`, which handles HTTP requests to HTML templates or authentication callbacks, and `app.js`, which loads both of these files into Express.js.
 
-To add SAML, you'll add the Passport strategy for SAML to `authentication.js` and add login and callback routes to `index.js`.
+To add SAML, you'll add the Passport strategy for SAML to `authentication.js` and add login and callback routes to `index.js`. (The npm packages are already in the package file).
 
 <Aside type="tip">
 If you have trouble following the code changes presented below, you can copy the final example from `completedApps/appIdP` to `appIdP`, where all the work has already been done for you.
@@ -229,9 +210,9 @@ If you have trouble following the code changes presented below, you can copy the
 You still need to update `cert/cert.pem` and the SAML URL in `.env` though.
 </Aside>
 
-- Browse to the `Metadata URL` endpoint above, http://localhost:9011/samlv2/metadata/d7d09513-a3f5-401c-9685-34ab6c552453. If your URL UUID is different, use your one.
-- Copy the text in between the tags labelled `<X509Certificate>`, copy the content into a file named `appIdP/cert/cert.pem`, and save it in the cert folder.
-- Add the `Login URL` below from the FA metadata to `appIdP/.env`
+- Browse to the `Metadata URL` endpoint from the SAML details above, http://localhost:9011/samlv2/metadata/d7d09513-a3f5-401c-9685-34ab6c552453. If your URL UUID is different, use your one.
+- Copy the text in between the tags labelled `<X509Certificate>` and paste it into into a file named `appIdP/cert/cert.pem`. Add the line `-----BEGIN CERTIFICATE-----` above the text and the line `-----END CERTIFICATE-----` below it, and save the file.
+- Add the `Login URL` below from the SAML metadata to `appIdP/.env`
   ```
   SAML_URL="http://localhost:9011/samlv2/login/d7d09513-a3f5-401c-9685-34ab6c552453"
   ```
@@ -239,22 +220,27 @@ You still need to update `cert/cert.pem` and the SAML URL in `.env` though.
   ```
   "@node-saml/passport-saml": "^5.0.0",
   ```
-- Add the line below to the top of `appIdP/services/authentication.js`.
+- Add the lines below to the top of `appIdP/services/authentication.js`.
   ```js
   const SamlStrategy = require("passport-saml").Strategy;
+  const fs = require('fs');
   ```
 - In the same file, add the line below to the end of the `setupPassport` function.
   ```js
     setupSaml(passport);
   ```
-- In the same file, add the function below.
+- At the end of the same file, add the function below.
   ```js
   function setupSaml(passport) {
     const samlOptions = {
       path: "/saml/callback",
+      callbackUrl: "http://localhost:3000/saml/callback",
       entryPoint: process.env.SAML_URL,
       issuer: "passport-saml",
-      cert: fs.readFileSync('cert/cert.pem', 'utf8')
+      cert: fs.readFileSync('cert/cert.pem', 'utf8'),
+      idpCert: fs.readFileSync('cert/cert.pem', 'utf8'),
+      wantAuthnResponseSigned: false,
+      wantAssertionsSigned: true
     };
     passport.use(
       "saml",
@@ -266,14 +252,12 @@ You still need to update `cert/cert.pem` and the SAML URL in `.env` though.
     );
   }
   ```
-- In the file `appIdP/routes/index.js` replace the current OAuth login line with a new SAML login.
+- In middle of the file `appIdP/routes/index.js` replace the current OAuth login line with a SAML login.
   ```js
   // router.get("/login", passport.authenticate("oauth2"));
 
   router.get("/login", passport.authenticate("saml", { failureRedirect: "/", failureFlash: true }), function (req, res) {res.redirect("/");});
-  ```
-- In the same file, add the SAML callback handler below.
-  ```js
+
   router.post("/saml/callback",
     bodyParser.urlencoded({ extended: false }),
     passport.authenticate("saml", {
@@ -285,28 +269,24 @@ You still need to update `cert/cert.pem` and the SAML URL in `.env` though.
     }
   );
   ```
-- In the website terminal, run the Node commands again to install the new SAML package and restart the webserver.
+- In the website terminal (in the `appIdP` directory), push <kbd>Ctrl</kbd>+<kbd>c</kbd>, and run the Node commands again to install the new SAML package and restart the webserver.
   ```sh
-  cd appIdP
-
   docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app"  node:23-alpine3.19 sh -c  "npm install"
 
-  #docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" --name app --network faNetwork  -p 3000:3000 node:23-alpine3.19 sh -c  "npm run start"
-
-  docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" --name app --network host node:23-alpine3.19 sh -c  "npm run start"
+  docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" --name app --network faNetwork  -p 3000:3000 node:23-alpine3.19 sh -c  "npm run start"
   ```
 
-You can now browse to http://localhost:3000 and log in in exactly the same way as before, except the underlying protocol is SAML, not OAuth. You can see the URL of the FusionAuth login page has changed.
+You can now browse to http://localhost:3000 and log in in exactly the same way as before, except you're now using SAML. If you see `oauth` in the browser address bar, don't worry, FA translates SAML to OAuth calls internally before returning.
 
 ### Explanation Of The New Code
 
-SAML is more strict with SSL certificates than OAuth. You needed to copy the certificate from FusionAuth into your website in order for SAML to trust it.
+SAML is more strict with security certificates than OAuth. You needed to copy the certificate from FusionAuth into your website in order for SAML to trust it.
 
 In the authentication JavaScript file, you added SAML as a strategy. Passport.js can use multiple strategies, so you didn't need to remove OAuth. Each strategy is identified by a different label, like `saml`. The `setupSaml` function sets some options to match the settings in the SAML data from FusionAuth. The function then instantiates the new Passport SAML strategy with two functions that handle what happens to the user profile returned from the identity provider. You can process the user further in these functions, like saving her to a database, but here you are doing nothing except saying you are done. Express session storage (`express-session`) is already being used to store the user profile in a cookie that is sent to the user's browser.
 
-The code changes to the routes file are minimal, barely changing what is in the Passport documentation. You comment out the OAuth login route because in this example the customer wanted to switch entirely to SAML. And you add a simple login route to direct the user to FusionAuth, and a callback handler to direct the logged-in user to their account.
+The code changes to the routes file are minimal, barely changing what is in the Passport documentation. You comment out the OAuth login route because in this example the customer wanted to switch entirely to SAML. And you add a SAML login route to direct the user to FusionAuth, and a callback handler to direct the logged-in user to their account.
 
-For more information on SAML in Passport, please see the official documentation on GitHub: https://github.com/node-saml/passport-saml, https://github.com/jaredhanson/passport, and https://github.com/gbraad/passport-saml-example.
+For more information on SAML in Passport, please see the official documentation on GitHub: https://github.com/node-saml/passport-saml and https://github.com/jaredhanson/passport.
 
 ## Example 2: Use FusionAuth As A SAML Service Provider
 
@@ -314,7 +294,7 @@ You're ready to progress to the customer's original request — using their Corp
 
 In this example you'll work in the directory `appSP`. It holds the finished product of the work in the previous example.
 
-### Configure FusionAuth As A Service Provider
+### Configure FusionAuth To Use SAML
 
 - todo replace below with rename 2 to docker-compose
 - Edit `docker-compose.yaml` in the root of the project. Replace everything after the `fa` service with the code below (a new FusionAuth service, a new database service, and new volumes).
@@ -412,3 +392,4 @@ http://localhost:9021/oauth2/authorize?client_id=e9fdb985-9173-4e01-9d73-ac2d60d
 
 can't use host network mode on mac or windows. must chagne it to a named network.
 add linux platform to light docker file
+make repo
