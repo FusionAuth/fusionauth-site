@@ -15,11 +15,6 @@ import Diagram1 from 'src/diagrams/docs/lifecycle/examples/saml1.astro';
 import Diagram2 from 'src/diagrams/docs/lifecycle/examples/saml2.astro';
 import Diagram3 from 'src/diagrams/docs/lifecycle/examples/saml3.astro';
 
-## TODO
-
-- Show how admin users of a tenant can configure a SAML connection (using the API to add/update FusionAuth Identity Provider)
-- make repo -  https://github.com/FusionAuth/fusionauth-example-saml
-
 <EnterprisePlanBlurb />
 
 This guide shows you how to authenticate users with SAML via FusionAuth with a full code example. To learn more about SAML in general, please see the [FusionAuth SAML overview](https://fusionauth.io/docs/lifecycle/authenticate-users/saml).
@@ -227,6 +222,57 @@ authorizationURL: `${process.env.AUTH_URL}/authorize?idp_hint=E9FDB985-9173-4E01
 If you restart the Node server, you can now log in with one click.
 
 However, the OAuth page is still available. To remove it entirely, you will need to edit the FusionAuth theme for your application. Start learning about themes [here](https://fusionauth.io/docs/customize/look-and-feel/). There is also a forum issue about this question [here](https://fusionauth.io/community/forum/topic/2194/disable-username-and-password-fields).
+
+### Set Up SAML Using The FusionAuth API
+
+If you have many SAML identity providers to configure, using the web interface to create them all is tedious. You can instead use the [FusionAuth API](https://fusionauth.io/docs/apis/identity-providers/samlv2) to create providers programmatically.
+
+For example, below are the commands to reproduce all the steps in the `Configure Fusionauth To Use SAML` subsection above. (The same UUID is used for different objects, but in reality you can use any UUID you want.)
+
+```sh
+# Create a SAML signing key
+
+curl -X POST \
+  'http://localhost:9011/api/key/import/e9fdb985-9173-4e01-9d73-ac2d60d1dc8e' \
+  -H 'Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "key": {
+    "algorithm": "RS256",
+    "name": "okta",
+    "type": "RSA",
+    "publicKey": "-----BEGIN CERTIFICATE-----\nMIICrzCCAZegAwIBAQIRAPCSbFh0qE08iG4kcy8R9PYwDQYJKoZIhvcNAQELBQAwEzERMA8GA1UEAxMIYWNtZS5jb20wHhcNMjUwMTEzMDgzMDE0WhcNMzUwMTEzMDgzMDE0WjATMREwDwYDVQQDEwhhY21lLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANhx6EDmQWjEBSvv36QCb+oryp/frikQRYPQtPsijrVkjFLuPCf/kjeZ4i83afvX3erdEodEXpVCSxNjZjdN/B5WV/IuAjacODde3trFf5OnSp3ehZ6pimkS0tA4pFGObgqEFVJsisfuUaTlqDTkuo3pVjD/RE+ow0YIS97JpsZHdorQrZIK4RapHXbyCK6emTix22zf4wVcx7yayRiG6PRmhrIaDDtK9rhw7W+zfHsgk4mqmkH3UZAA4gx12eiaykIWBy4KNLQTkgwcF8aP37LYZBS7Ytwny7wc8RxVPH25iQNj1XU9w60esWtgZw25ZutI0nGQ9+V4794YXcDSVKMCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAg5R0h1/j4/3fgLmIDmRxXNsahFnZT1MLpdNk/oNmmYr/azO24VEwePFeL+msMCieg6liUfaGxs+m2ZhGGjeou5VYyQ+mRlzKNrc6SZZGnQatMpLrzAp1shdFjeWmdLnd3AvyXtwEur3on0NLzOMEWRVpXN49Uz+coZ7iGNmpYHrCXlIEA83pFR1ODETPw0gr2TyRGGotRKV8tpYmxlGIE17f81kFh3dCLDVoQGQhUXEbPXy48F/IkzmIpIUtO7HG0phYE+q4DYM2pHfEQVf+zTZc4K0q4oHGEqo5zZ9+/TW11nSvcqaBc1y5ZQ7TbeWdGORlbiX/MSuOJte0fdvOBw==\n-----END CERTIFICATE-----"
+  }
+}'
+
+# Create an identity provider
+
+curl -X POST \
+  'http://localhost:9011/api/identity-provider/e9fdb985-9173-4e01-9d73-ac2d60d1dc8e' \
+  -H 'Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "identityProvider": {
+    "name": "okta",
+    "type": "SAMLv2",
+    "buttonText": "Login with saml",
+    "idpEndpoint": "https://trial-8182522.okta.com/app/trial-8182522_fa2_1/exko6apy6xjcie11T697/sso/saml",
+    "keyId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
+    "emailClaim": "email",
+    "uniqueIdClaim": "userId",
+    "debug": true,
+    "enabled": true,
+      "applicationConfiguration": {
+      "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e": {
+        "enabled": true,
+        "createRegistration": true
+      }
+    }
+  }
+}'
+```
+
+If you need help creating the correct curl command, the AI assistant on the FusionAuth documentation site is very useful, and trained on the API documentation.
 
 ## Example 2: Use FusionAuth As A SAML Identity Provider
 
