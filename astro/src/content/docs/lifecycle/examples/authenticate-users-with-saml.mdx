@@ -18,10 +18,8 @@ import Aside from 'src/components/Aside.astro';
   - [Run FusionAuth And The Initial Website](#run-fusionauth-and-the-initial-website)
   - [Configure FusionAuth To Use SAML](#configure-fusionauth-to-use-saml)
   - [Configure The Website To Use SAML](#configure-the-website-to-use-saml)
+  - [Log In With SAML](#log-in-with-saml)
   - [Explanation Of The New Code](#explanation-of-the-new-code)
-- [Example 2: Use FusionAuth As A SAML Service Provider](#example-2-use-fusionauth-as-a-saml-service-provider)
-  - [Configure FusionAuth To Use SAML](#configure-fusionauth-to-use-saml-1)
-- [Okta](#okta)
 - [Clean Up](#clean-up)
 - [TODO](#todo)
 
@@ -55,7 +53,7 @@ sequenceDiagram
   deactivate Changebank
 ```
 
-Next, consider using FusionAuth as the SAML identity provider for login. Instead of letting the user log in on your site, you'll redirect them to FusionAuth to log in, where an identifying cookie will be stored in their browser, and they'll be sent back to your site. Using FA as a SAML identity provider is documented [here](https://fusionauth.io/docs/lifecycle/authenticate-users/saml). The flow below will look familiar to anyone who has used OAuth before.
+Next, consider using FusionAuth as the SAML identity provider for login. Instead of letting the user log in on your site, you'll redirect them to FusionAuth to log in, where an identifying cookie will be stored in their browser, and they'll be sent back to your site. Using FusionAuth as a SAML identity provider is documented [here](https://fusionauth.io/docs/lifecycle/authenticate-users/saml). The flow below will look familiar to anyone who has used OAuth before.
 
 ```mermaid
 sequenceDiagram
@@ -86,7 +84,7 @@ sequenceDiagram
 
 Finally, consider the Corpo.com original business request — that Corpo acts as the identity provider. In this case, there are four parties: the user, Changebank, FusionAuth acting as a service provider, and Corpo acting as the identity provider. The authentication flow now is similar to other flow above, with one more level of redirection.
 
-Using FA as a service provider to connect to another identity provider is documented [here](https://fusionauth.io/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2).
+Using FusionAuth as a service provider to connect to another identity provider is documented [here](https://fusionauth.io/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2).
 
 ```mermaid
 sequenceDiagram
@@ -132,7 +130,7 @@ In all the cases above, if the user already has an authentication cookie for the
 
 ## Example 1: Use FusionAuth As A SAML Identity Provider
 
-In this section, you'll configure FusionAuth as the SAML identity provider, where users do not have to log in with Corpo.com. This is simpler than using FA as a service provider, which is done in the next section by extending the example in this section.
+In this section, you'll configure FusionAuth as the SAML identity provider, where users do not have to log in with Corpo.com. This is simpler than using FusionAuth as a service provider, which is done in the next section by extending the example in this section.
 
 ### Run FusionAuth And The Initial Website
 
@@ -159,7 +157,7 @@ docker rm fa fa_db; docker network remove faNetwork; docker compose down -v
 If you have any trouble with this tutorial, try replacing the FusionAuth image in the Docker compose file with `fusionauth/fusionauth-app:1.54.0`, in case future versions of FusionAuth introduced a breaking change.
 </Aside>
 
-In addition to FA, there are two websites included in this repository. You'll work with the first one, `appIdP`, in this section and then `appSP` in the next section. `appIdP` represents the Change bank website your company owns in this example, where FA is the identity provider. The site currently uses OAuth for login, not bespoke authentication, which is slightly different from the example description, but unimportant — the focus of this example is switching the site to use SAML authentication.
+In addition to FusionAuth, there are two websites included in this repository. You'll work with the first one, `appIdP`, in this section and then `appSP` in the next section. `appIdP` represents the Change bank website your company owns in this example, where FusionAuth is the identity provider. The site currently uses OAuth for login, not bespoke authentication, which is slightly different from the example description, but unimportant — the focus of this example is switching the site to use SAML authentication.
 
 Look at how the website currently looks before adding SAML.
 
@@ -269,6 +267,9 @@ You still need to update `cert/cert.pem` and the SAML URL in `.env` though.
     }
   );
   ```
+
+### Log In With SAML
+
 - In the website terminal (in the `appIdP` directory), push <kbd>Ctrl</kbd>+<kbd>c</kbd>, and run the Node commands again to install the new SAML package and restart the webserver.
   ```sh
   docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app"  node:23-alpine3.19 sh -c  "npm install"
@@ -276,7 +277,7 @@ You still need to update `cert/cert.pem` and the SAML URL in `.env` though.
   docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" --name app --network faNetwork  -p 3000:3000 node:23-alpine3.19 sh -c  "npm run start"
   ```
 
-You can now browse to http://localhost:3000 and log in in exactly the same way as before, except you're now using SAML. If you see `oauth` in the browser address bar, don't worry, FA translates SAML to OAuth calls internally before returning.
+You can now browse to http://localhost:3000 and log in in exactly the same way as before, except you're now using SAML. If you see `oauth` in the browser address bar, don't worry, FusionAuth translates SAML to OAuth calls internally before returning.
 
 ### Explanation Of The New Code
 
@@ -288,80 +289,6 @@ The code changes to the routes file are minimal, barely changing what is in the 
 
 For more information on SAML in Passport, please see the official documentation on GitHub: https://github.com/node-saml/passport-saml and https://github.com/jaredhanson/passport.
 
-## Example 2: Use FusionAuth As A SAML Service Provider
-
-In this section you'll implement the customer's original request — using their Corpo.com database as the SAML identity provider instead of FusionAuth. In this section you'll learn to configure FA as a service provider instead of an identity provider. Because Corpo is fictional, you'll use a free account on Okta.com act as your SAML identity provider.
-
-<Aside type="warning">
-You might want to use a second instance of FusionAuth here as your identity provider instead of Okta, but a FusionAuth SAML service provider connection to a FA SAML identity provider doesn't work. There is an issue logged for the problem [here](https://github.com/FusionAuth/fusionauth-issues/issues/2979).
-</Aside>
-
-In this example you'll work in the directory `appSP`. It holds the finished product of the work in the previous example.
-
-### Configure FusionAuth To Use SAML
-
-- todo replace below with rename 2 to docker-compose
-- Edit `docker-compose.yaml` in the root of the project. Replace everything after the `fa` service with the code below (a new FusionAuth service, a new database service, and new volumes).
-
-
-9011 as IdP and 9021 acts as SP. use separate browser windows
-
-SP
-
-- In the terminal where you ran FusionAuth in the last example, press <kbd>Ctrl</kbd>+<kbd>c</kbd> to stop Docker, and run the command below to start two instances FusionAuth.
-  ```sh
-  docker compose up
-  ```
-- Log in to your new FusionAuth web interface at http://localhost:9021/admin (*not* `9011`) with credentials `admin@example.com` and `password`.
-- Browse to <Breadcrumb>Reactor</Breadcrumb>.
-- Enter your license key to activate Reactor and refresh the page.
-- Settings -> Key Master -> Import certificate (top right)
-- Name: fa
-- Paste X509 XML value
-- Settings -> Identity Providers, click Add provider, and select SAML v2
-- Id: 62f98e0d-3272-4ad3-9ac2-e54f14ecb892
-- Name: fa
-- IdP endpoint: `http://localhost:9011/samlv2/login/d7d09513-a3f5-401c-9685-34ab6c552453` (or whatever your URL is from the other FusionAuth instance)
-- Verification key: `fa`
-- Linking strategy: `Link on email` (you need a user in order to create a registration).
-- Enable Debug enabled
-- In the Applications tab, enable Enabled and Create registration
-- Save
-- View the application settings to get the issuer value.
-- Settings -> System -> CORS filter - disable Enabled
-
-IDP
-
-- At http://localhost:9011 (the IdP), browse to <Breadcrumb>Applications -> Changebank -> Select -> Edit -> SAML tab</Breadcrumb>.
-- Set <InlineField>Issuer</InlineField> to `http://localhost:9021/samlv2/sp/62f98e0d-3272-4ad3-9ac2-e54f14ecb892`. (comes from the view tab of the 9012 identiy provider info page for fa)
-- Set <InlineField>Authorized redirect URLs</InlineField> to `http://localhost:9021/samlv2/acs` (be sure to click the dropdown text that appears to confirm the entry).
-- Enable Debug enabled
-- Save.
-
-View the SP Oauth login link and browse: http://localhost:9021/oauth2/authorize?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback
-
-If errors, go to System -> Event Log
-
-```sh
-docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" --name app --network faNetwork  -p 3000:3000 node:23-alpine3.19 sh -c  "npm run start"
-```
-
-
-https://fusionauth.io/docs/reference/configuration#options
-fusionauth-app.http.port
-FUSIONAUTH_APP_HTTP_PORT: 9012
-FUSIONAUTH_APP_HTTP_LOCAL_PORT
-
-- You are using a deprecated configuration property name of [FUSIONAUTH_APP_HTTP_PORT]. The new allowed names for that property are [fusionauth-app.http.port]
-
-can't use port 9012, that's for internal communication. and 9013 for https, which we don't need to alter here.
-CORS
-
-## Okta
-
-https://www.okta.com/free-trial/
-
-
 
 ## Clean Up
 
@@ -370,14 +297,13 @@ To remove all the Docker volume, containers, images, and networks used in this g
 ```sh
 docker compose down -v
 docker rm fa fa_db fa2 fa_db2
-docker volume rm db_data fusionauth_config db_data2 fusionauth_config2
+docker volume rm db_data fusionauth_config
 docker rmi postgres:16.0-bookworm fusionauth/fusionauth-app:latest node:23-alpine3.19
 docker network prune;
 ```
 
 ## TODO
 
-fa just we
 add link to this guide from saml overview introduction
 check bullet points and differentiate for actions
 
@@ -387,13 +313,6 @@ add link to both articles in github issue
 delete toc
 readme
 
-https://github.com/FusionAuth/fusionauth-issues/issues/2979
-
-okta sign in - https://trial-8182522-admin.okta.com/
-
-login url
-http://localhost:9021/oauth2/authorize?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback
-
-can't use host network mode on mac or windows. must chagne it to a named network.
-add linux platform to light docker file
 make repo
+
+say example 1 and 2 are completely separate
