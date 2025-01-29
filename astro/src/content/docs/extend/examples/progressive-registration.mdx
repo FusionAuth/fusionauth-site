@@ -8,6 +8,7 @@ subcategory: examples
 
 import InlineField from 'src/components/InlineField.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
+import IconButton from 'src/components/IconButton.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
 
@@ -49,31 +50,45 @@ networks:
     driver: bridge
 ```
 
+Start the containers by running the following command:
+
+```sh
+docker compose up
+```
+
 2. Configure the backend URL
 
-In the `complete-application/.env` file, add the following environment variable:
+In the `complete-application/.env` file, add the following environment variables:
 
 ```text
 fusionAuthURLBackend="http://fusionauth:9011"
+apiKey="33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod"
 ```
 
-This variable specifies the internal URL for communication between the web application and the `fusionauth` service within Docker.
+The `fusionAuthURLBackend` variable specifies the internal URL for communication between the web application and the `fusionauth` service within Docker. The `apiKey` variable will be used by the client to communicate with the FusionAuth API.
 
-3. Update the `getKey` function
-
-In the `complete-application/src/index.ts` file, modify the `getKey` function to use the `fusionAuthURLBackend` environment variable for the `jwksUri` parameter and the `client` declaration.
+In the `complete-application/src/index.ts` file, define these variables at the top along with the other definitions for `clientId` and `clientSecret` etc.
 
 ```ts
-...
 if (!process.env.fusionAuthURLBackend) {
   console.error('Missing clientSecret from .env');
   process.exit();
-}
+};
 
-...
+if (!process.env.apiKey) {
+  console.error('Missing API Key from .env');
+  process.exit();
+};
+
 const fusionAuthURLBackend = process.env.fusionAuthURLBackend;
-...
+const apiKey = process.env.apiKey;
+```
 
+3. Update the `getKey` function
+
+In the `complete-application/src/index.ts` file, modify the `getKey` function to use the `fusionAuthURLBackend` environment variable for the `jwksUri` parameter.
+
+```ts
 const getKey: GetPublicKeyOrSecret = async (header, callback) => {
   const jwks = jwksClient({
     jwksUri: `${fusionAuthURLBackend}/.well-known/jwks.json`
@@ -81,17 +96,19 @@ const getKey: GetPublicKeyOrSecret = async (header, callback) => {
   const key = await jwks.getSigningKey(header.kid) as RsaSigningKey;
   var signingKey = key?.getPublicKey() || key?.rsaPublicKey;
   callback(null, signingKey);
-}
-...
-
-const client = new FusionAuthClient(apiKey as string, fusionAuthURLBackend);
-...
+};
 ```
 
-Once these changes are made, you can start the application with Docker by running the following command.
+Also update the `client` declaration to use the `apiKey`.
+
+```ts
+const client = new FusionAuthClient(apiKey as string, fusionAuthURLBackend);
+```
+
+Once these changes are made, you can start the application with Docker by running the following command in a terminal within the `complete-application` directory.
 
 ```sh
-docker run --platform=linux/amd64 --rm --network fusionauth_network -p 8080:8080 -v ".:/app" -w "/app" -e "PORT=8080" node:23-bullseye-slim sh -c "npm run dev"
+docker run --platform=linux/amd64 --rm --network fusionauth_network -p 8080:8080 -v ".:/app" -w "/app" -e "PORT=8080" node:23-bullseye-slim sh -c "npm i && npm run dev"
 ```
 
 This starts the ChangeBank application in a Docker container on port 8080, accessible at http://localhost:8080.
@@ -117,7 +134,7 @@ Navigate to <Breadcrumb>Reactor</Breadcrumb> and activate your license.
 
 ### Add A Customized Registration Form
 
-Now go to <Breadcrumb>Customizations -> Forms</Breadcrumb> and click the <InlineUIElement>Add</InlineUIElement> button.
+Now go to <Breadcrumb>Customizations -> Forms</Breadcrumb> and click the <IconButton icon="plus" color="green" /> button to add a form.
 
 On the form that appears, set the <InlineField>Name</InlineField> value to `Registration Form` (you can use any name here) and select `Registration` for <InlineField>Type</InlineField>.
 
@@ -133,7 +150,7 @@ Click the <InlineUIElement>+ Add Step</InlineUIElement> button to add the first 
 
 Click the <InlineUIElement>+ Add Step</InlineUIElement> button to add Step 2 and add a <InlineField>Password</InlineField> field.
 
-Click the <InlineUIElement>Save</InlineUIElement> button.
+Click the <IconButton icon="save" color="blue" /> button.
 
 <img src="/img/docs/extend/progressive-registration/form-steps-fields.png" alt="Form fields"/>
 
@@ -189,9 +206,9 @@ Now the home page includes a <InlineUIElement>Register</InlineUIElement> button 
 
 #### Add A Route To Handle Registration
 
-Now you'll add a `/register` to handle registration. The `/register` route constructs the URL that redirects the user to the FusionAuth registration page. 
+Now you'll add a `/register` route to handle registration. The `/register` route constructs the URL that redirects the user to the FusionAuth registration page.
 
-In the `complete-application/src/index.ts` file, add the following code.
+In the `complete-application/src/index.ts` file, add the following code below the `/login` route.
 
 ```ts
 app.get('/register', (req, res, next) => {
@@ -225,7 +242,7 @@ app.get('/login', (req, res, next) => {
 });
 ```
 
-Save the changes and navigate to the registration page to view the two-step registration in action. The first step collects the user's first name, last name, and email.
+Save the changes and navigate to the registration page to view the two-step registration pages, though you will still need to complete a few more steps outlined below before the registration flow actually works. The first step collects the user's first name, last name, and email.
 
 <img src="/img/docs/extend/progressive-registration/registration-form-first-step.png" alt="Registration form first step"/>
 
@@ -301,7 +318,7 @@ Let's build the `/set-address` page now.
 
 First, configure the FusionAuth database to save the user's address.
 
-In the FusionAuth admin UI, navigate to <Breadcrumb>Customizations -> Form Fields -> Add</Breadcrumb>, and create a new field called `Address`. For <InlineField>Field</InlineField>, select `Custom user data (user.data.*)`. The `Address` field will be registered under the <InlineField>user.data</InlineField> object.
+In the FusionAuth admin UI, navigate to <Breadcrumb>Customizations -> Form Fields -> Add</Breadcrumb>, and create a new field called `Address`. For <InlineField>Field</InlineField>, select `Custom user data (user.data.*)` and set the value for <InlineField>user.data</InlineField> to `address`. The `Address` field will be registered under the <InlineField>user.data</InlineField> object.
 
 <img src="/img/docs/extend/progressive-registration/registration-form-field.png" alt="Adding address field"/>
 
@@ -375,17 +392,7 @@ app.post("/set-address", async (req, res) => {
 
 The code above first checks that the user is authenticated and then retrieves the user's email and user Id from the cookie. These details are needed to update the user's address.
 
-Notice that the `patchUser` method is used to update the user's address instead of the `updateUser` method. The `patchUser` method is used here as it's specifically designed for making partial updates to a user's details. 
-
-Now configure the client with an API key to ensure it can execute requests.
-
-In `complete-application/src/index.ts`, find the declaration of the `client` variable, which looks something like below.
-
-```ts
-const client = new FusionAuthClient('noapikeyneeded', fusionAuthURLBackend);
-```
-
-Replace the `noapikeyneeded` with an API key. If you are following along with the sample application, the API key set with the kickstart configuration is `33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod`.
+Notice that the `patchUser` method is used to update the user's address instead of the `updateUser` method. The `patchUser` method is used here as it's specifically designed for making partial updates to a user's details.
 
 Finally, add the code for the address form. Create a `templates/set-address.html` file and add the following code to it.
 
