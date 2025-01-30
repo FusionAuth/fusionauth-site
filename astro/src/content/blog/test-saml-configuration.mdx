@@ -1,0 +1,117 @@
+---
+publish_date: 2025-01-30
+title: "How to Test FusionAuth SAML Configuration: Step-by-Step Tutorial 2025"
+description: 'Learn how to test and validate your FusionAuth SAML configuration using IAMShowcase. Complete guide with step-by-step instructions for setting up SAML authentication, debugging tips, and practical examples.'
+authors: Mark Robustelli
+image: /img/blogs/test-saml-configuration/test-your-fusionauth-saml-configuration.png
+categories: Tutorial
+tags: saml, configuration,iamshowcase, idp
+excerpt_separator: "{/* more */}"
+---
+
+import Aside from '/src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import InlineField from 'src/components/InlineField.astro';
+import SAMLLogin from "src/diagrams/blog/test-saml-configuration/saml-login.astro";
+
+Setting up SAML authentication for your application can feel a bit like poking around in the dark sometimes. So many nerd knobs to tweak. You have read the documentation, triple checked your settings, but you're still not sure if you have everything dialed in.
+
+Good news! There is a way to test and make sure your SAML v2 configuration is set up correctly. Enter [IAMShowcase](https://sptest.iamshowcase.com/). [IAMShowcase](https://sptest.iamshowcase.com/) is a site that acts as a SAML v2 SP (service provider) to test your FusionAuth IdP (Identity Provider). The authentication world is full of acronyms and that last sentence is no exception. 
+
+So, grab a cup of coffee (or something stronger if you're so inclined) and let's break it down.
+
+{/* more */}
+## Understanding Common Acronyms in Identity
+Acronyms and jargon and bears, oh my! If you are familiar with acronyms like SAML, SP, and IdP feel free to skip to the next section. For those of us that are merely mortal, here are some definitions.
+
+**[SAML v2](/docs/lifecycle/authenticate-users/saml)** stands for "Security Assertion Markup Language", the second version. SAML is like a digital passport. It lets users log into one service and also gain access to another service without needing to log in again. It is a standards based way to verify a user's identity and authorize access to applications and services. The user can log in once and access multiple applications.
+
+**IdP** is short for "Identity Provider". An IdP is a service that verifies your user's identity and communicates that identity in a secure way to any applications that depend on it. This is where the user logs in. FusionAuth is the IdP for this tutorial. 
+
+**SP** is an acronym for "Service Provider". Think of this as any application or service your user wants to access. The SP delegates identity ownership to the IdP. In this tutorial, IAMShowcase is the SP.
+
+<Aside type="note">
+[FusionAuth supports SAML](/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2) both as a SAML Identity Provider (IdP) and as a Service Provider (SP). Using FusionAuth for both makes this blog post more murky. For this post, FusionAuth is always the IdP.
+</Aside>
+
+## Test FusionAuth SAML Configuration With IAMShowcase
+There are generic [instructions](https://sptest.iamshowcase.com/instructions#start) on the IAMShowcase site, but the rest of this tutorial describes how to set up and test FusionAuth as a SAML IdP.
+
+You will need an instance of [FusionAuth up and running](docs/quickstarts/5-minute-setup-guide).
+
+### 1. Create A New Application Named IAMShowcase Example
+
+Log into FusionAuth and select <Breadcrumb>Applications</Breadcrumb>. Give the application a <InlineField>name</InlineField> such as `IAMShowcase Example`. If you have more than one tenant, select the default <InlineField>Tenant</InlineField>. Then click the blue disk to save the configuration.
+
+### 2. Retrieve The Configuration Values From The IAMShowcase Website
+
+The IAMShowcase site provides a metadata file that some IdPs can import. You can get the XML from the IAMShowcase site by clicking on [Get Metadata](https://sptest.iamshowcase.com/instructions#start). FusionAuth does not support importing of the metadata file. To see the values used, view the XML and manually enter the information in the <Breadcrumb>SAML</Breadcrumb> tab of the application configuration in FusionAuth.
+
+Here is an example of metadata provided by IAMShowcase:
+```
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" entityID="IAMShowcase" validUntil="2025-12-09T09:13:31.006Z">
+<md:SPSSODescriptor AuthnRequestsSigned="false" WantAssertionsSigned="true" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+<md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
+<md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+<md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://sptest.iamshowcase.com/acs" index="0" isDefault="true"/>
+</md:SPSSODescriptor>
+</md:EntityDescriptor>
+```
+
+### 3. Configure The IAMShowcase Example Application For SAML
+
+Select <Breadcrumb>Applications</Breadcrumb> and <InlineUIElement>Edit</InlineUIElement> the IAMShowcase Example application in FusionAuth. Select the <Breadcrumb>SAML</Breadcrumb> tab of the application and configure it with the following values.
+
+<InlineField>Enabled</InlineField> `True`
+
+<InlineField>Issuer</InlineField> `IAMShowcase`
+This is the `entityID` from the `EntityDescriptor` node in the metadata provided by IAMShowcase. Here's the relevant excerpt from the example XML above.
+```
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" entityID="IAMShowcase" validUntil="2025-12-09T09:13:31.006Z">
+```
+
+<InlineField>Authorized Redirect URLs</InlineField> `https://sptest.iamshowcase.com/acs`
+This is the `Location` from the `AssertionConsumerService` node in the metadata provided by IAMShowcase. Here's the relevant excerpt from the example XML above.
+```
+<md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://sptest.iamshowcase.com/acs" index="0" isDefault="true"/>
+```
+<InlineField>Signing key</InlineField> `Auto generate a new key on save...`
+
+Leave all other defaults the same, and click the blue disk icon button to save it.
+
+![IAMShowcase Example Application SAML configuration.](/img/blogs/test-saml-configuration/fusionauth-app-saml-settings.png)
+
+### 4. Add The User To The IAMShowcase Example Application 
+
+Select <InlineUIElement>Users</InlineUIElement>. Choose a user you want to test the SAML log in process with. Select <InlineUIElement>Manage</InlineUIElement> and then click the <InlineUIElement>Add registration</InlineUIElement> button for the IAMShowcase Example application. Click the save icon and you have registered the user for the application.
+![Showing user added to IAMShowcase Example application in FusionAuth.](/img/blogs/test-saml-configuration/fusionauth-add-user-to-application.png)
+
+### 5. Upload The IdP Metadata (For FusionAuth) To The IAMShowcase Site
+
+Now that you've told FusionAuth (the IdP) about IAMShowcase (the SP), you need to do the reverse. You have to tell IAMShowcase about FusionAuth. 
+
+Click on <Breadcrumb>Applications</Breadcrumb>. Select <InlineUIElement>View</InlineUIElement> for `IAMShowcase Example`. Scroll down to the <Breadcrumb>SAML v2 integration details</Breadcrumb> section. Copy the <InlineUIElement>Metadata URL</InlineUIElement> and paste that into a new browser window to get the XML metadata.
+![FusionAuth SAML integration details.](/img/blogs/test-saml-configuration/fusionauth-saml-details.png)
+
+### 6. Update The IAMShowcase Site With The Metadata
+
+Paste the XML into the [Upload metadata](https://sptest.iamshowcase.com/instructions#start) box on the IAMShowcase site. Click <InlineUIElement>Submit XML</InlineUIElement>. Copy the URL that pops up to your clipboard.
+
+### 7. See The SAML Workflow In Action
+
+Paste the new URL into a new window in your browser. This will show information for the user that is logged into FusionAuth on the IAMShowcase website.
+![Showing user information from FusionAuth application in IAMShowcase.](/img/blogs/test-saml-configuration/iamshowcase-user-info-from-fusionauth.png)
+
+The flow for this will look like the diagram below.
+<SAMLLogin alt={"SAML login flow."} />
+
+## Conclusion
+SAML might seem intimidating at first. Following these steps is an easy way to make sure that FusionAuth is set up correctly to work with a generic SAML SP. This allows you to test the SAML workflow before integrating FusionAuth with other SAML SPs. 
+
+If you are having trouble, set the <InlineField>Debug Enabled</InlineField> toggle to `true` on the <Breadcrumb>SAML</Breadcrumb> tab. This outputs more information to help you troubleshoot your configuration. You can find the logged information at <Breadcrumb>Logs -> Event Log</Breadcrumb> in the FusionAuth Admin application.
+
+<div style={{textAlign: "center"}}>
+  <img src="/img/blogs/test-saml-configuration/may-the-saml-be-with-you.jpg" alt="May the SAML be with you." style={{ display: "block", margin: "0 auto" }} />
+</div>
+
