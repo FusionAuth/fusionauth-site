@@ -8,6 +8,7 @@ tertcategory: saml
 ---
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 import SamlIdpNote from 'src/content/docs/lifecycle/authenticate-users/integrations/saml/_saml-idp-note.mdx';
 import SamlIdpLimitations from 'src/content/docs/get-started/core-concepts/_saml-idp-limitations.mdx';
@@ -36,9 +37,9 @@ SAML also offers Single Logout, which is the inverse of Single Sign-on. With Sin
 
 In order to configure FusionAuth to act as a SAML identity provider, you need to enable and configure SAML for an Application. When properly configured, FusionAuth, the IdP, will consume Authentication requests from an application, the SP, and, after a user logs in, return proper Authentication responses.
 
-Navigate to <strong>Applications -> Your application -> SAML</strong> to configure this functionality. In the screenshot below, you can see that we are configuring SAML for the Pied Piper application:
+Navigate to <Breadcrumb>Applications -> Your application -> SAML</Breadcrumb> to configure this functionality. In the screenshot below, you can see that we are configuring SAML for the Pied Piper application:
 
-<img src="/img/docs/lifecycle/authenticate-users/saml/samlv2-application.png" alt="Application SAML v2 Configuration" width="1200" />
+![Application SAML v2 Configuration](/img/docs/lifecycle/authenticate-users/saml/samlv2-application.png)
 
 ### Form Fields
 
@@ -59,14 +60,14 @@ Navigate to <strong>Applications -> Your application -> SAML</strong> to configu
     This is also known as the Assertion Consumer Service URL or ACS.
   </APIField>
   <APIField name="Logout URL" optional>
-    The URL used to perform the `302` redirect as the response from the `/samlv2/logout` endpoint. If this value is omitted, the tenant configured logout URL will be used. See the <InlineField>Logout URL</InlineField> under the <strong>Tenant -> Your Tenant -> OAuth</strong> tab.
+    The URL used to perform the `302` redirect as the response from the `/samlv2/logout` endpoint. If this value is omitted, the tenant configured logout URL will be used. See the <InlineField>Logout URL</InlineField> under the <Breadcrumb>Tenant -> Your Tenant -> OAuth</Breadcrumb> tab.
 
     Usually this is the starting location of the application.
   </APIField>
   <APIField name="Debug enabled" optional>
     Many service providers are not compliant with the SAML and XML signing specifications. This makes it challenging to get them working with FusionAuth. 
 
-    If you are running into integration issues, toggle this setting on and FusionAuth will output debugging information into the Event Log during a SAML login. You can find the event log in <strong>System -> Event Log</strong>.
+    If you are running into integration issues, toggle this setting on and FusionAuth will output debugging information into the Event Log during a SAML login. You can find the event log in <Breadcrumb>System -> Event Log</Breadcrumb>.
   </APIField>
 </APIBlock>
 
@@ -74,7 +75,7 @@ Navigate to <strong>Applications -> Your application -> SAML</strong> to configu
 
 Settings in this section configure SAML request handling.
 
-<img src="/img/docs/lifecycle/authenticate-users/saml/samlv2-application-authentication.png" alt="Application SAML v2 Authentication Configuration" width="1200" />
+![Application SAML v2 Authentication Configuration](/img/docs/lifecycle/authenticate-users/saml/samlv2-application-authentication.png)
 
 #### Form Fields
 
@@ -86,6 +87,16 @@ Settings in this section configure SAML request handling.
     The default key used to verify the signature if the public key cannot be determined by the KeyInfo element when using POST bindings, or the key used to verify the signature when using HTTP Redirect bindings.
 
     If a <InlineField>Require signature</InlineField> is not enabled, this field is optional.
+  </APIField>
+  <APIField name="Enable login hint" since="1.47.0">
+    When enabled, FusionAuth will accept a username or email address as a login hint on a custom HTTP request parameter.
+  </APIField>
+  <APIField name="Login hint parameter name" optional defaults="login_hint" since="1.47.0">
+    The name of the login hint parameter provided by the service provider on an AuthnRequest. If this parameter is present, its value will be used to pre-populate the username field on the FusionAuth login form.
+
+    For example, suppose <InlineField>Enable login hint</InlineField> is enabled and <InlineField>Login hint parameter name</InlineField> has the value `login_name`. When FusionAuth is set up as an IdP, the SP can send a request which includes the parameter `login_name=richard@example.com`, and FusionAuth will pre-populate richard@example.com into the login form the end user sees.
+
+    Note that this setting names an HTTP query parameter, not an element in the SAML AuthnRequest XML.
   </APIField>
 </APIBlock>
 
@@ -99,7 +110,7 @@ Settings in this section configure how FusionAuth processes the SAML response.
   <APIField name="Signing key" required>
     In order to properly sign the SAML responses, FusionAuth requires a key pair from Key Master. You can either select an existing key here or select the first option to have FusionAuth generate a key pair to use. If no choice is selected, a new key will be automatically created and assigned.
 
-    To add, manage or import your key, navigate to <strong>Settings -> Key Master</strong>.
+    To add, manage or import your key, navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb>.
   </APIField>
   <APIField name="Signature canonicalization method" optional>
     This sets the XML signature canonicalization method that FusionAuth will use when signing the SAML response. This method is also used when FusionAuth creates a message digest in the SAML response. 
@@ -115,13 +126,24 @@ Settings in this section configure how FusionAuth processes the SAML response.
 
     The complete documentation for this lambda can be found on the [SAML v2 response populate lambda documentation page](/docs/extend/code/lambdas/samlv2-response-populate).
   </APIField>
+  <APIField name="Enable IdP initiated login" optional defaults="false" since="1.41.0">
+    When enabled, FusionAuth will be able to initiate a login request to a SAML v2 Service Provider.
+
+    Once enabled, open the View dialog or this application to view the integration URI. You will find this value in the view dialog in the SAML v2 Integration details, and the value will be named <InlineField>Initiate login URL:</InlineField>.
+  </APIField>
+  <APIField name="NameID format" optional defaults="Persistent" since="1.41.0">
+    The NameId format to send in the AuthN response to the SAML v2 Service Provider. There are two valid values:
+
+    * Persistent - The `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent` NameID format will be used.
+    * Email - The `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress` NameID format will be used.
+  </APIField>
 </APIBlock>
 
 ### Logout Request
 
 Settings in this section configure SAML Logout handling. They define how FusionAuth will handle incoming logout requests from a service provider. When Single Logout is enabled, additional settings are available that will be used sign the Logout Request sent to session participants.
 
-<img src="/img/docs/lifecycle/authenticate-users/saml/samlv2-application-logout.png" alt="Application SAML v2 Logout Configuration" width="1200" />
+![Application SAML v2 Logout Configuration](/img/docs/lifecycle/authenticate-users/saml/samlv2-application-logout.png)
 
 #### Form Fields
 
@@ -152,7 +174,7 @@ Settings in this section configure SAML Logout handling. They define how FusionA
   <APIField name="Signing key" required>
     In order to properly sign the SAML Single Logout responses, FusionAuth requires a key pair from Key Master. You can either select an existing key here or select the first option to have FusionAuth use the authentication response signing key.
 
-    To add, manage or import your key, navigate to <strong>Settings -> Key Master</strong>.
+    To add, manage or import your key, navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb>.
   </APIField>
   <APIField name="Signature canonicalization method" optional>
     This sets the XML signature canonicalization method that FusionAuth will use when signing the SAML Single Logout response. 
@@ -171,7 +193,7 @@ Settings in this section configure how FusionAuth processes the SAML Logout resp
   <APIField name="Signing key" required>
     In order to properly sign the SAML Logout responses, FusionAuth requires a key pair from Key Master. You can either select an existing key here or select the first option to have FusionAuth use the authentication response signing key.
 
-    To add, manage or import your key, navigate to <strong>Settings -> Key Master</strong>.
+    To add, manage or import your key, navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb>.
   </APIField>
   <APIField name="Signature canonicalization method" optional>
     This sets the XML signature canonicalization method that FusionAuth will use when signing the SAML Logout response. 
@@ -184,7 +206,7 @@ Settings in this section configure how FusionAuth processes the SAML Logout resp
 
 Settings in this section configure how FusionAuth encrypts the SAML Assertion response.
 
-<img src="/img/docs/lifecycle/authenticate-users/saml/samlv2-application-encryption.png" alt="Application SAML v2 Assertion Encryption Configuration" width="1200" />
+![Application SAML v2 Assertion Encryption Configuration](/img/docs/lifecycle/authenticate-users/saml/samlv2-application-encryption.png)
 
 #### Form Fields
 
@@ -219,13 +241,23 @@ Settings in this section configure how FusionAuth encrypts the SAML Assertion re
 
 Once you have configured the SAML identity provider for an application, you will need to copy and paste a number of URLs to the service provider or send the metadata XML file to the service provider. The URLs for all of these items can be found by clicking on the view icon from the application list page.
 
-<img src="/img/docs/lifecycle/authenticate-users/saml/applications-list-view.png" alt="View icon on the Application listing page" width="1200" role="bottom-cropped" />
+![View icon on the Application listing page](/img/docs/lifecycle/authenticate-users/saml/applications-list-view.png)
 
 Once you click the view icon, the dialog will pop up. Under the heading **SAML v2 Integration details**, you will see all of the SAML endpoint URLs that the service provider will need. These include the login URL, logout URL and metadata URL. If the service provider needs a metadata XML file, you can copy and paste the metadata URL from this dialog into a new browser tab and then save the contents of that webpage into a new file named `metadata.xml`. Some browsers will force the name of the file to be `metadata.xhtml` and you will have to rename it before sending it to the service provider.
 
 Here is what the view dialog looks like and the SAML information you will need:
 
-<img src="/img/docs/lifecycle/authenticate-users/saml/applications-list-view-dialog.png" alt="View dialog on the Application listing page" width="1200" role="bottom-cropped" />
+![View dialog on the Application listing page](/img/docs/lifecycle/authenticate-users/saml/applications-list-view-dialog.png)
+
+## SAML v2 IdP Initiated RelayState
+
+Since version `1.55.1`, FusionAuth supports an opaque value in the `RelayState` parameter on a request to begin an IdP-initiated SAML v2 login workflow. An opaque `RelayState` value will be passed unmodified to the SAML v2 Service Provider on the request to the Assertion Consumer Service (ACS) URL. The `RelayState` parameter and ACS URL resolution function as follows:
+- If the `RelayState` value matches a configured <InlineField>Authorized redirect URLs</InlineField> value, that value is used as the ACS URL for the current workflow. The `RelayState` parameter will not be included on the request to the ACS URL.
+- If the `RelayState` value does not match a configured <InlineField>Authorized redirect URLs</InlineField> value, the `RelayState` parameter will be treated as an opaque value and included unmodified on the request to the ACS URL. ACS URL resolution continues as follows:
+  - If a `redirect_uri` parameter was provided on the IdP-initiated login request, it _must_ match a configured <InlineField>Authorized redirect URLs</InlineField> value, or the request will result in an error. Otherwise, the matched value will be used as the ACS URL for the workflow.
+  - If no `redirect_uri` parameter was provided on the request, the first configured <InlineField>Authorized redirect URLs</InlineField> value will be used as the ACS URL for the workflow.
+
+In FusionAuth versions _before_ `1.55.1` the `RelayState` parameter is only used for ACS URL resolution. If provided on the request, it must match a configured <InlineField>Authorized redirect URLs</InlineField> value, or the request will result in an error. No `RelayState` value is passed to the ACS URL.
 
 ## Attributes
 
