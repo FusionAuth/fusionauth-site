@@ -30,7 +30,7 @@ OAuth 2.1 is not a scrape and rebuild of OAuth 2.0. Instead, OAuth 2.1 captures 
 
 Here's a suggested description pulled from the [ongoing mailing list discussion](https://mailarchive.ietf.org/arch/msg/oauth/Ne4Q9erPP7SpC5051sSy6XnLDv0/):
 
-> By design, [OAuth 2.1] does not introduce any new features to what already exists in the OAuth 2.0 specifications being replaced.
+> By design, OAuth 2.1 does not introduce any new features to what already exists in the OAuth 2.0 specifications being replaced.
 
 Many of the details are drawn from the [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14) document. In the name of security best practices, some of the more problematic grants will be removed.
 
