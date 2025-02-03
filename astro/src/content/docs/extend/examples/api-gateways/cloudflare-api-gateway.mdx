@@ -9,7 +9,6 @@ tertcategory: api gateways
 import Aside from 'src/components/Aside.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
-import ScrollRef from 'src/components/ScrollRef.astro';
 import FrameworkIntegrationTutorialList from 'src/content/docs/_shared/_framework-integration-tutorial-list.mdx';
 
 ## Overview
@@ -30,7 +29,7 @@ Please note that there are many ways to integrate FusionAuth with Cloudflare. Fo
 
 ## Set Up FusionAuth
 
-First, you need to make sure the JWT issuer setting is correct for your FusionAuth instance. Navigate to <strong>Tenants -> Your Tenant</strong> and change the issuer to the URL of your FusionAuth instance. For example, you can set a value like `https://local.fusionauth.io` if your FusionAuth instance is accessible at `https://local.fusionauth.io`. Note down this value, as you'll set it in the Cloudflare Worker function later.
+First, you need to make sure the JWT issuer setting is correct for your FusionAuth instance. Navigate to **Tenants -> Your Tenant** and change the issuer to the URL of your FusionAuth instance. For example, you can set a value like `https://local.fusionauth.io` if your FusionAuth instance is accessible at `https://local.fusionauth.io`. Note down this value, as you'll set it in the Cloudflare Worker function later.
 
 If you are running FusionAuth locally and want to expose it publicly using ngrok, you can run the following command.
 
@@ -47,35 +46,35 @@ Forwarding    https://7817-102-218-66-2.eu.ngrok.io -> http://localhost:9011
 The ngrok forwarding address will be publicly accessible and you can use this URL in place of `<YOUR_FUSIONAUTH_URL>` in this guide.
 
 
-Next, you need to configure an application that will issue tokens to access the Cloudflare function. Navigate to <strong>Applications</strong> and create a new application. Fill out the <InlineField>Name</InlineField> field and select a <strong>Tenant</strong> if you have more than one. Click on the <strong>OAuth</strong> tab and make sure that `Authorization Code` and `Refresh Token` grants are enabled under <InlineField>Enabled grants</InlineField>.
+Next, you need to configure an application that will issue tokens to access the Cloudflare function. Navigate to **Applications** and create a new application. Fill out the <InlineField>Name</InlineField> field and select a **Tenant** if you have more than one. Click on the **OAuth** tab and make sure that `Authorization Code` and `Refresh Token` grants are enabled under <InlineField>Enabled grants</InlineField>.
 
 Your application should look like this.
 
 <img src="/img/docs/extend/examples/api-gateways/application-configuration.png" alt="The FusionAuth example configuration" width="1200" />
 
-On the <strong>JWT</strong> tab, toggle the <InlineField>Enabled</InlineField> switch and set the <InlineField>Access Token signing key</InlineField> and <InlineField>Id Token signing key</InlineField> to `Auto generate a new key on save...`.
+On the **JWT** tab, toggle the <InlineField>Enabled</InlineField> switch and set the <InlineField>Access Token signing key</InlineField> and <InlineField>Id Token signing key</InlineField> to `Auto generate a new key on save...`.
 
 <img src="/img/docs/extend/examples/api-gateways/jwt-config.png" alt="The JWT configuration" width="1200" role="bottom-cropped" />
 
 Click the <InlineUIElement>Save</InlineUIElement> button to save the application.
 
-You will be redirected to the page that lists all your applications. Click the <InlineUIElement>Edit</InlineUIElement> button next to the application you just created. Note down the <InlineField>Client Id</InlineField> value to use in the <ScrollRef target="Set Up Cloudflare" /> step.
+You will be redirected to the page that lists all your applications. Click the <InlineUIElement>Edit</InlineUIElement> button next to the application you just created. Note down the <InlineField>Client Id</InlineField> value to use in the [Set Up Cloudflare](#set-up-cloudflare) step.
 
 <img src="/img/docs/extend/examples/api-gateways/application-client-id-client-secret.png" alt="Extracting the Client Id and secret" width="1200" />
 
 For testing, you'll need to link a FusionAuth user to your application. You can either use the existing user you used to log in to FusionAuth or create a new isolated user.
 
-To create a new user, navigate to <strong>Users</strong> in the sidebar and click the green <InlineUIElement>+</InlineUIElement> button at the top right of the screen. Choose the appropriate tenant and fill in the <InlineField>Email</InlineField>. To set the password for the user directly without sending an email, toggle the <InlineField>Send email to set up password</InlineField> switch. Record this user email and password, as you'll use it to obtain a token.
+To create a new user, navigate to **Users** in the sidebar and click the green <InlineUIElement>+</InlineUIElement> button at the top right of the screen. Choose the appropriate tenant and fill in the <InlineField>Email</InlineField>. To set the password for the user directly without sending an email, toggle the <InlineField>Send email to set up password</InlineField> switch. Record this user email and password, as you'll use it to obtain a token.
 
 <img src="/img/docs/extend/examples/api-gateways/new-user.png" alt="Creating a new user" width="1200" role="bottom-cropped" />
 
-Now select the <strong>Registrations</strong> tab. Click <InlineUIElement>Add registrations</InlineUIElement> and select the FusionAuth application you set up earlier. Alternatively, to link your existing user, navigate to the user list by selecting <strong>Users</strong> on the left sidebar. Find your user and click the <InlineUIElement>Manage</InlineUIElement> action button on the user. Select the <strong>Registrations</strong> tab. Click <InlineUIElement>Add registrations</InlineUIElement> and select the FusionAuth application you set up earlier.
+Now select the **Registrations** tab. Click <InlineUIElement>Add registrations</InlineUIElement> and select the FusionAuth application you set up earlier. Alternatively, to link your existing user, navigate to the user list by selecting **Users** on the left sidebar. Find your user and click the <InlineUIElement>Manage</InlineUIElement> action button on the user. Select the **Registrations** tab. Click <InlineUIElement>Add registrations</InlineUIElement> and select the FusionAuth application you set up earlier.
 
 <img src="/img/docs/extend/examples/api-gateways/registrations-tab.png" alt="The application registrations tab" width="1200" role="bottom-cropped" />
 
-Next, set up an API key. On the left sidebar, select <strong>Settings -> API Keys</strong>. Click the green <InlineUIElement>+</InlineUIElement> button at the top left to create a new key. Give the key a description, like `API Gateway Key`. Select the tenant that you created the FusionAuth application under.
+Next, set up an API key. On the left sidebar, select **Settings -> API Keys**. Click the green <InlineUIElement>+</InlineUIElement> button at the top left to create a new key. Give the key a description, like `API Gateway Key`. Select the tenant that you created the FusionAuth application under.
 
-Then, on <strong>Endpoints</strong>, allow `POST` on the `/api/login` route. This key will only be allowed to call this endpoint with the `POST` method.
+Then, on **Endpoints**, allow `POST` on the `/api/login` route. This key will only be allowed to call this endpoint with the `POST` method.
 
 <img src="/img/docs/extend/examples/api-gateways/login-api.png" alt="Enabling the login API" width="1200" />
 
@@ -91,7 +90,7 @@ Navigate to your [Cloudflare dashboard](https://dash.cloudflare.com/login) and l
 
 ### Create A Cloudflare Worker Function
 
-On the left-hand sidebar, navigate to <strong>Workers & Pages -> Overview</strong>. Click the <InlineUIElement>Get Started</InlineUIElement> button if you are setting up a worker for the first time, or the <InlineUIElement>Create Application</InlineUIElement> button to get to the Create Worker screen.
+On the left-hand sidebar, navigate to **Workers & Pages -> Overview**. Click the <InlineUIElement>Get Started</InlineUIElement> button if you are setting up a worker for the first time, or the <InlineUIElement>Create Application</InlineUIElement> button to get to the Create Worker screen.
 
 <img src="/img/docs/extend/examples/api-gateways/cloudflare-workers-pages-overview.png" alt="Cloudflare Workers & Pages overview page" width="1200" />
 
@@ -229,7 +228,7 @@ curl --location --request POST '<YOUR_FUSIONAUTH_URL>/api/login' \
   }'
 ```
 
-Replace the following values with the values you noted in the <ScrollRef target="Set Up FusionAuth" /> section.
+Replace the following values with the values you noted in the [Set Up FusionAuth](#set-up-fusionauth) section.
 
 * `<YOUR_FUSIONAUTH_URL>` is the URL of your FusionAuth installation.
 * `<API_KEY>` is the API key created earlier, enabled for login.
@@ -286,7 +285,7 @@ You should see the function return with a reflection of the claims it received.
 ## Troubleshooting
 
 * If you are running a local instance of FusionAuth, the Cloudflare Worker will not be able to reach the key sets needed to validate the JWT. You will either need to host FusionAuth on a publicly accessible URL or proxy your local instance through a tool like [ngrok](https://ngrok.com).
-* Ensure that the generated FusionAuth application's <InlineField>Access Token signing key</InlineField> and <InlineField>Id Token signing key</InlineField> on the application's <strong>JWT</strong> tab are asymmetric (RS256).
+* Ensure that the generated FusionAuth application's <InlineField>Access Token signing key</InlineField> and <InlineField>Id Token signing key</InlineField> on the application's **JWT** tab are asymmetric (RS256).
 * The JWT issued by the [FusionAuth Login API](/docs/apis/login) has an expiry. If you wait too long before using it to call the Cloudflare Worker, the token will expire and the call will fail. You can resolve this by rerunning the curl command to obtain a new JWT token and then use the new token.
 
 ## Next Steps
