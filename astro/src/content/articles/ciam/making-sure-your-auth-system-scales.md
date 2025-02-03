@@ -1,6 +1,6 @@
 ---
-title: Making Sure Your Auth System Can Scale
-description: What steps do you need to take to ensure your authentication system can scale?
+title: "Scaling Your Auth - Best Practices for Performance and Security"
+description: Discover strategies to scale your authentication system without compromising security. Understand the balance between performance and protection.
 section: CIAM
 author: James Hickey
 icon: /img/icons/auth-system-scale.svg
