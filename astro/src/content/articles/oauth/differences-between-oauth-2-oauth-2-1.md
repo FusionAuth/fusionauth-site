@@ -1,6 +1,6 @@
 ---
-title: Differences Between OAuth 2 And OAuth 2.1
-description: The OAuth 2.1 draft will soon be published as an RFC. Why did they write it? How were the OAuth 2 specifications modified? What will you have to change?
+title: "OAuth 2.1: Key Updates and Differences from OAuth 2.0 | FusionAuth"
+description: OAuth 2.1 consolidates improvements and changes made to OAuth 2.0. Discover the key updates in OAuth 2.1, including enhanced security measures and streamlined flows. 
 image: advice/oauth-2-1/expert-advice-differences-between-oauth-2-and-oauth-2.1.png
 author: Dan Moore
 section: OAuth
