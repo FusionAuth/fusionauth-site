@@ -14,8 +14,6 @@ const modifiedFilesJson = execSync(`gh api repos/FusionAuth/fusionauth-site/pull
 const modifiedFiles = JSON.parse(modifiedFilesJson);
 
 const changedSrcFiles = modifiedFiles
-    .filter(file => ! file.filename.startsWith('astro/astro.config.ts'))
-    .filter(file => ! file.filename.startsWith('astro/public/js/'))
     .filter(file => file.filename.startsWith('astro/src/'))
     .filter(file => validExtensions.some(ext => file.filename.endsWith(ext)))
     .filter(file => validStatus.includes(file.status))
