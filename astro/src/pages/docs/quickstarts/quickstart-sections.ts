@@ -65,17 +65,6 @@ const qsSections: QuickStartSection[] = [
     articles: [
     ],
   },
-  {
-      key: 'five-minute',
-      icon: '/img/icons/qs-main.svg',
-      faIcon: 'fa-code-simple',
-      color: 'indigo',
-      title: '5-minute Guides',
-      anchorTag: '5-minute',
-      desc: 'Guides for getting up and running quickly',
-      articles: [
-      ],
-  },
 ];
 
 // merge in quickstarts managed by astro to the list of quickstart links we have above
