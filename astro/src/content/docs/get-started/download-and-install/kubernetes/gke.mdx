@@ -6,6 +6,7 @@ section: get started
 subcategory: download and install
 tertcategory: kubernetes
 ---
+import Aside from 'src/components/Aside.astro';
 import Kubectl from 'src/content/docs/get-started/download-and-install/kubernetes/_kubectl.mdx';
 
 ## Overview
@@ -29,6 +30,10 @@ GCP provides a number of configuration options designed to meet specific needs b
 
 ## Project Setup
 
+<Aside type="tip">
+Each of these commands can take anywhere from a few seconds to a few minutes to run. It can also take several minutes for the propagation to appear in the Google Cloud Console. Be patient and refresh your browser when checking for verification.
+</Aside>
+
 Having installed the [Cloud SDK](https://cloud.google.com/sdk/docs/install), authorize `gcloud` to access GCP using your Google credentials:
 
 ```shell title="Authorize gcloud"
@@ -36,6 +41,10 @@ gcloud auth login
 ```
 
 Now create a new project used to organize all of your Google Cloud resources:
+
+<Aside type="tip">
+If you get an error when trying to create the project stating "Project creation failed. The project Id you specified is already in use by another project. Please try an alternative ID.", you may need to choose a new id such as fusionauth-gke-example-9876.  Be sure then to replace the Id you use in all the subsequent commands.
+</Aside>
 
 ```shell title="Create a project"
 gcloud projects create fusionauth-gke-example \
@@ -95,7 +104,6 @@ gcloud compute addresses create fusionauth-private-range \
   --prefix-length=16 \
   --description="Fusionauth private IP range for GKE and SQL" \
   --network=default
-Created [https://www.google
 ```
 
 In order for GKE to communicate with Cloud SQL and Elasticsearch over a private network you need to create a private connection from your VPC network to the underlying service producer network.
@@ -119,17 +127,23 @@ gcloud container clusters create fusionauth-cluster \
   --num-nodes=1 \
   --region=us-west1 \
   --enable-ip-alias \
-  --cluster-version=1.21.4-gke.2300 \
+  --cluster-version=1.30.8-gke.1051000 \
   --cluster-ipv4-cidr=10.44.0.0/14 \
-  --services-ipv4-cidr=10.48.0.0/20
+  --services-ipv4-cidr=10.48.0.0/20 \
+  --labels=goog-partner-solution=isol_plb32_001kf000012eawziay_hgq452iixrlzpeddhfr5gp4uxglz5lvn
 ```
 
 * `num-nodes` - The number of nodes to be created in each zone. In this example, you specify the region of which consists of three zones. Therefore you will have a total of `3` nodes.
 * `region` - The region to create the cluster.
 * `enable-ip-alias` - Indicates to create a [VPC-native cluster](https://cloud.google.com/kubernetes-engine/docs/concepts/alias-ips). This greatly simplifies network connectivity when communicating with the database by making pod IP addresses natively routable within the cluster's VPC network.
-* `cluster-version` - The Kubernetes version to use. [optional]
-* `cluster-ipv4-cidr` - Used to create the subnet's secondary IP address range for Pods. [optional]
-* `service-ip-range` - Used to create the subnet's secondary IP address range for Services. [optional]
+* `cluster-version` - The Kubernetes version to use. \[optional\]
+* `cluster-ipv4-cidr` - Used to create the subnet's secondary IP address range for Pods. \[optional\]
+* `service-ip-range` - Used to create the subnet's secondary IP address range for Services. \[optional\]
+* `labels` - FusionAuth's identifier in the Google Cloud Marketplace program. This is a static value and you use the exact values shown here. \[optional\]
+
+<Aside type="tip">
+If you receive an error message stating "Master version '1.30.8-gke.1051000' is unsupported.", please see the Google documentation for [currently supported versions](https://cloud.google.com/kubernetes-engine/docs/release-notes).
+</Aside>
 
 For more information on the [create](https://cloud.google.com/sdk/gcloud/reference/container/clusters/create) command, see [gcloud container clusters create](https://cloud.google.com/sdk/gcloud/reference/container/clusters/create) documentation.
 
@@ -147,7 +161,9 @@ Execute the [list](https://cloud.google.com/sdk/gcloud/reference/container/clust
 
 ```shell title="Get cluster information"
 gcloud container clusters list
+```
 
+```shell title="Cluster list results"
 NAME                LOCATION  MASTER_VERSION   MASTER_IP     MACHINE_TYPE  NODE_VERSION     NUM_NODES  STATUS
 fusionauth-cluster  us-west1  1.21.4-gke.2300  34.83.218.38  e2-medium     1.21.4-gke.2300  3          RUNNING
 ```
@@ -157,7 +173,9 @@ Use `kubectl` to make requests to the Kubernetes API Server.
 
 ```shell title="Get list of nodes running on the cluster"
 kubectl get nodes -o wide
+```
 
+```shell title="Get nodes results"
 NAME                                                STATUS   ROLES    AGE   VERSION            INTERNAL-IP   EXTERNAL-IP      OS-IMAGE                             KERNEL-VERSION   CONTAINER-RUNTIME
 gke-fusionauth-cluster-default-pool-2a2e7af5-nrrb   Ready    <none>   66m   v1.21.4-gke.2300   10.138.0.23   35.203.183.157   Container-Optimized OS from Google   5.4.120+         containerd://1.4.4
 gke-fusionauth-cluster-default-pool-30c935b6-0mt4   Ready    <none>   66m   v1.21.4-gke.2300   10.138.0.24   35.185.202.53    Container-Optimized OS from Google   5.4.120+         containerd://1.4.4
@@ -203,16 +221,32 @@ gcloud sql users set-password postgres \
 
 ```shell title="Get list of Cloud SQL instances in the current project"
 gcloud sql instances list
+```
 
+```shell title="List Cloud SQL instances results"
 NAME                 DATABASE_VERSION  LOCATION    TIER               PRIMARY_ADDRESS  PRIVATE_ADDRESS  STATUS
 fusionauth-test-db3  POSTGRES_12       us-west1-a  db-g1-small        -                10.50.144.5      RUNNABLE
 ```
 
-## Deploy Elasticsearch using Elastic Cloud
+## Configure Search Engine
 
-Google Cloud offers its Elasticsearch Service through Elastic Cloud. This section will guide you through setting up your account and deploying an Elasticsearch cluster.
+There are two options available to configure search in FusionAuth. The first is a simple search through the database search engine and the second is the Elasticsearch engine. For more details on the differences, please see [Search And FusionAuth](/docs/lifecycle/manage-users/search/search).
 
-From the navigation menu in the GCP console, click on [Elasticsearch Service](https://console.cloud.google.com/marketplace/product/endpoints/elasticsearch-service.gcpmarketplace.elastic.co) and then click the `Enable` button. Follow the instructions on the next screen to setup a new Elastic Cloud subscription.
+### Database Search
+
+The database search is the easiest to configure. To use this option, no additional configuration needs to occur at this point.  However, after completing provisioning the Google Kubernetes Engine Cluster instructions, there are additional [steps required](/docs/get-started/download-and-install/kubernetes/gke#next-steps). One of those steps is setting configuration values in a `values.yaml` file. To use the database search engine, you will set the `engine` value under `search` in the `values.yaml` to `database`.
+
+```yaml
+search:
+  # search.engine -- Defines backend for fusionauth search capabilities. Valid values for engine are 'elasticsearch' or 'database'.
+  engine: database
+```
+
+### Deploy Elasticsearch using Elastic Cloud
+
+To use the Elasticsearch engine, Google Cloud offers its Elasticsearch Service through Elastic Cloud. This section will guide you through setting up your account and deploying an Elasticsearch cluster.
+
+From the navigation menu in the GCP console, click on [Elasticsearch Service](https://console.cloud.google.com/marketplace/product/endpoints/elasticsearch-service.gcpmarketplace.elastic.co) and then click the `Enable` button. Follow the instructions on the next screen to set up a new Elastic Cloud subscription.
 
 <img src="/img/docs/get-started/download-and-install/kubernetes/es-enable.png" alt="Elasticsearch service enable subscription screen" width="1200" role="top-cropped bottom-cropped" />
 
@@ -249,6 +283,17 @@ Under **Applications**, click on the `Copy endpoint` link next to **Elasticsearc
 ## Next Steps
 
 You now are running all the necessary infrastructure to deploy a containerized application to GKE.
+
+<Aside type="note" title="Additional GKE Configuration">
+ There is an additional configuration value when running the next steps for running in a cluster on the GKE. In the Deploy FusionAuth in Kubernetes instructions below, there is a [Helm Chart Configuraiton](/docs/get-started/download-and-install/kubernetes/fusionauth-deployment#helm-chart-configuration) section. In addition to following the directions given in that section, you will need to update an additional section of the `values.yaml` file. You will need to find the section for the `podLabels` and replace it with the following:
+
+ ```yaml title="Additional podLabels configuration"
+podLabels: {
+    goog-partner-solution: isol_plb32_001kf000012eawziay_hgq452iixrlzpeddhfr5gp4uxglz5lvn
+}
+```
+This allows the pod to be associated with FusionAuth in the Google Cloud Marketplace program. This is a static value and you will use the exact values shown here.
+</Aside>
 
 Next up, [Deploy FusionAuth in Kubernetes](/docs/get-started/download-and-install/kubernetes/fusionauth-deployment).
 

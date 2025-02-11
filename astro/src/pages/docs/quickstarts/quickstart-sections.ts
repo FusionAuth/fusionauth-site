@@ -22,17 +22,6 @@ interface QuickStartSection {
 
 const qsSections: QuickStartSection[] = [
   {
-      key: 'five-minute',
-      icon: '/img/icons/qs-main.svg',
-      faIcon: 'fa-code-simple',
-      color: 'indigo',
-      title: '5-minute Guides',
-      anchorTag: '5-minute',
-      desc: 'Guides for getting up and running quickly',
-      articles: [
-      ],
-  },
-  {
     key: 'web',
     icon: '/img/icons/web-application.svg',
     faIcon: 'fa-code-simple',
@@ -75,6 +64,17 @@ const qsSections: QuickStartSection[] = [
     desc: 'An API or service protected by FusionAuth and access tokens',
     articles: [
     ],
+  },
+  {
+      key: 'five-minute',
+      icon: '/img/icons/qs-main.svg',
+      faIcon: 'fa-code-simple',
+      color: 'indigo',
+      title: '5-minute Guides',
+      anchorTag: '5-minute',
+      desc: 'Guides for getting up and running quickly',
+      articles: [
+      ],
   },
 ];
 

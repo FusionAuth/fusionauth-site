@@ -1,6 +1,6 @@
 ---
-title: Developer's Guide To GDPR
-description: A complete guide for developers to ensure their applications are GDPR compliant.
+title: "GDPR Developer's Guide to Achieving Compliance with Your CIAM"
+description: Explore this GDPR Developer's Guide to ensuring compliance with your CIAM. Learn best practices for secure and compliant user identity management.
 section: CIAM
 author: Brian Pontarelli
 icon: /img/icons/developer-guide-gdpr.svg

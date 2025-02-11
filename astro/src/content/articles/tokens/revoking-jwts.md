@@ -1,6 +1,6 @@
 ---
-title: Revoking JWTs & JWT Expiration
-description: How to use and revoke JWTs for effective and efficient authorization management. Examples, diagrams & more.
+title: How to Manage JWT Expiration and Revoke JWTs | FusionAuth
+description: Understand how to manage JWT expiration and revoke JWTs effectively to maintain secure user sessions and prevent unauthorized access in your application.
 author: Brian Pontarelli
 icon: /img/icons/revoking-jwts.svg
 darkIcon: /img/icons/revoking-jwts-dark.svg
@@ -19,7 +19,7 @@ There is not a simple solution because JWTs are designed to be portable, decoupl
 
 Here's a diagram that illustrates this architecture:
 
-<div class="bg-slate-200 flex justify-center p-4 w-full">
+<div class="flex justify-center p-4 w-full">
 <img src="/img/articles/revoking-jwts/jwt-revoke_350.png" alt="Revoking JWTs"/>
 </div>
 

@@ -405,8 +405,8 @@ import TransactionTypes from 'src/content/docs/apis/_transaction-types.mdx';
     Time in seconds until an inactive session will be invalidated. Used when creating a new session in the FusionAuth OAuth frontend.
   </APIField>
 
-  <APIField name="tenant.issuer" type="String" optional since="1.8.0">
-    The named issuer used to sign tokens, this is generally your public fully qualified domain.
+  <APIField name="tenant.issuer" type="String" optional since="1.8.0" defaults="acme.com">
+    The named issuer used to sign tokens. This is generally your public fully qualified domain with the `https://` protocol prefix. For example, `https://example.com`.
 
     Prior to version `1.30.0` this value was required.
   </APIField>
@@ -433,12 +433,24 @@ import TransactionTypes from 'src/content/docs/apis/_transaction-types.mdx';
     * `SlidingWindowWithMaximumLifetime` - the expiration is calculated from the last time the token was used, or until the <InlineField>maximumTimeToLiveInMinutes</InlineField> is reached. &nbsp; <AvailableSince since="1.46.0"/>
   </APIField>
 
+  <APIField name="tenant.jwtConfiguration.refreshTokenOneTimeUseConfiguration.gracePeriodInSeconds" type="Integer" optional defaults="0" since="1.55.1">
+    The length of time specified in seconds that a one-time use token can be reused.
+
+    This value must be greater than `0` and less than `86400` which is equal to 24 hours. Setting this value to `0` effectively disables the grace period which means a one-time token may not be reused. For security reasons, you should keep this value as small as possible, and only increase past `0` to improve reliability for an asynchronous or clustered integration that may require a brief grace period.
+
+    Note that one-time use tokens refreshed within a grace period are not considered for revocation when <InlineField>tenant.jwtConfiguration.refreshTokenRevocationPolicy.onOneTimeTokenReuse</InlineField> is `true`. When a token is reused within the grace period the current token will be returned on the API response and the token will not be rotated.
+  </APIField>
+
   <APIField name="tenant.jwtConfiguration.refreshTokenRevocationPolicy.onLoginPrevented" type="Boolean" optional defaults="true" since="1.17.0">
     When enabled, all refresh tokens will be revoked when a user action, such as locking an account based on a number of failed login attempts, prevents user login.
   </APIField>
 
   <APIField name="tenant.jwtConfiguration.refreshTokenRevocationPolicy.onMultiFactorEnable" type="Boolean" optional defaults="false" since="1.42.0">
     When enabled, all refresh tokens will be revoked when a user enables multi-factor authentication for the first time. This policy will not be applied when adding subsequent multi-factor methods to the user.
+  </APIField>
+
+  <APIField name="tenant.jwtConfiguration.refreshTokenRevocationPolicy.onOneTimeTokenReuse" type="Boolean" optional defaults="false" since="1.55.1">
+    When enabled, if a one-time use refresh token is reused, the token will be revoked. This does not cause all refresh tokens to be revoked, only the reused token is revoked.
   </APIField>
 
   <APIField name="tenant.jwtConfiguration.refreshTokenRevocationPolicy.onPasswordChanged" type="Boolean" optional defaults="true" since="1.17.0">
