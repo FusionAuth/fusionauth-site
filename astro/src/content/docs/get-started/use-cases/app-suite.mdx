@@ -1,0 +1,129 @@
+---
+title: App Suite
+description: Let your users log in once and then transparently be logged into others.
+section: get started
+subcategory: use cases
+navOrder: 20
+---
+import ApplicationSwitchDiagram from 'src/diagrams/docs/get-started/use-cases/app-suite/application-switch.astro';
+import AppSuiteDescription from 'src/content/docs/get-started/use-cases/_app-suite-description.mdx';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+
+## Overview
+
+<AppSuiteDescription />
+
+## Problem 
+
+You have multiple applications you want to share across a common user base.
+
+These applications may:
+
+* be hosted at different domains or under different paths
+* use SAML or OIDC for authentication
+* be custom, commercial, or open source
+* be written using different technology stacks
+
+You want to let your users log in once, and switch between applications without having to log in again. Users may or may not have different roles for each application.
+
+## Solution
+
+With the app suite use case, after the user logs in to one application, they will transparently log in to every application via the magic sauce of FusionAuth SSO. You'll also have only one customer profile to manage. You can view their login activity across the applications.
+
+## Prerequisites
+
+You have configured your application or applications to [delegate authentication to FusionAuth](/docs/get-started/use-cases/auth-service) via the Authorization Code grant and the FusionAuth hosted login pages.
+
+## Example Scenario
+
+Suppose you have a thriving e-commerce business with much clown love and with multiple end user applications:
+
+* an e-commerce store where people can buy clown costumes
+* a virtual try-on app which lets you see yourself in the outfits before you buy
+* a forum for discussion about the latest trends
+* a ticketing system for customer support
+
+Here's a diagram of an app suite as a central hub for these different applications.
+
+![Diagram of an app suite as a central hub for a number of different applications.](/img/docs/get-started/use-cases/app-suite.png)
+
+All of these use FusionAuth for their login. Each is represented by a different application and client Id, but your users transparently log in each time they switch between applications.
+
+## Actors/Components
+
+* your user and their client application (mobile app or browser)
+* two or more applications
+* FusionAuth
+
+This use case is built on cookies and redirects to FusionAuth. The redirect is typically transparent to the end user.
+
+## Implementation Steps
+
+This is a two step implementation process to ensure customers can access all the applications. Steps to take:
+
+* Ensure end users have their FusionAuth SSO session enabled when they first authenticate.
+* When a user is not logged in to a particular application, forward the user to FusionAuth. They'll be transparently logged in and delivered back to the application.
+
+### Force SSO Session Creation
+
+The easiest way to force the SSO session to be created as a user logs in is to modify the login page. You do so by modifying the theme. In the default theme, a user can check or uncheck the `rememberDevice` checkbox, labelled by default "Keep me signed in". To force creation of the SSO session, update the theme to set the `rememberDevice` parameter to `true`. Modify the `OAuth Authorize` template [using the advanced theme editor](/docs/customize/look-and-feel/advanced-theme-editor).
+
+Here's a sample FreeMarker block you can use to update the default template.
+
+```
+[@hidden name="rememberDevice" value="true"/]
+```
+
+The duration of this SSO session is controlled in the Tenant settings. You can modify it by navigating to <Breadcrumb>Tenant -> Your Tenant -> OAuth</Breadcrumb> and updating the <InlineField>Session timeout</InlineField>.
+
+### Forward Unauthenticated Users
+
+Whenever a user is not logged in and accesses an application in your app suite, forward them to the login URL for FusionAuth. As your applications are already delegating authentication to FusionAuth, use the same logic or library functions to create an authorize URL. Here's an [explanation of how to create the URL and what each component means](/docs/lifecycle/authenticate-users/oauth/endpoints#authorization-code-grant-request).
+
+Here's a diagram of a user switching between the clownwear e-commerce store and the forum.
+
+<ApplicationSwitchDiagram alt="An example of an application switch." />
+
+If a user is browsing the e-commerce store, then clicks on the forum link, they will transparently be logged in to the forum application.
+
+Their client will get a token associated with the forum application, including the roles the user has for that application and claims such as the audience claim (`aud`) set correctly. The user will be logged in to the new application, as desired.
+
+## Expected Outcome
+
+Users switch between your applications transparently and securely. 
+
+## Edge Cases
+
+SSO login works across all apps in a tenant, including those the user isn't registered for. After redirection to and from FusionAuth, the user will be authenticated, but the `applicationId` and `roles` claims will be missing from the access token. Applications must check these claims when determining whether a user is authorized for an application. [Read more about the difference between authentication and authorization](/docs/get-started/core-concepts/authentication-authorization).
+
+When your user logs out, destroy the SSO session as well as each application session. You can do that using API calls or with FusionAuth's Front-Channel logout. [Read more about logout](/docs/lifecycle/authenticate-users/logout-session-management).
+
+Any applications with [self-service registration](/docs/lifecycle/register-users/basic-registration-forms) enabled will automatically register a user with default roles when the user is redirected to the login URL for that application. 
+
+If an application only wants to allow logins from a certain identity provider or impose other conditions, you'll need extra integration work. For example, imagine there's a time tracking app for your clownwear e-commerce store that employees log in to using Google Workspace federation. You don't want customers to be able to view this application. One way you can prevent this with a [login validation lambda](/docs/extend/code/lambdas/login-validation).
+
+The functionality described in this use case only works with [FusionAuth hosted login pages](/docs/get-started/core-concepts/hosted-login-vs-api-login#hosted-login-pages). If you use the Login API, you need to build your SSO implementation.
+
+Applications may have different authentication related requirements. Examples include:
+
+* multi-factor authentication (MFA)
+* required registration fields
+* registration verification
+
+If a user logs into an application and then switches to another app with different requirements, they will be forced to satisfy the second apps' requirements. For example, suppose that an e-commerce application requires MFA and the forum application does not. If the user initially logs into the forum application and then switches to the e-commerce application, they will be prompted to complete MFA.
+
+## Other Example Scenarios
+
+Applications which share customer or user accounts are a good fit for this use case. Examples include:
+
+* Multiple affiliated online games
+* An office suite with an online word processor, spreadsheet and presentation software
+* Travel booking software, where you might have one application for booking flights, another for hotels and a third for car rental
+
+## Additional Documentation
+
+* [Single sign-on guide](/docs/lifecycle/authenticate-users/single-sign-on)
+* [Logout and session guide](/docs/lifecycle/authenticate-users/logout-session-management)
+* [Theme customization](/docs/customize/look-and-feel/)
+

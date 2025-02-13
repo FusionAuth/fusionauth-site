@@ -1,6 +1,6 @@
 ---
 ---
-Learn how you would use FusionAuth to add authentication and authorization to an application in the framework or language of your choice in 15 minutes or less.
+Learn how you would use FusionAuth to add authentication and authorization to an application in the framework or language of your choice in 15 minutes or less. For a quick interactive introduction to FusionAuth and the problems it solves, check out our [Start Here](/docs/get-started/start-here) tutorial.
 
 Each quickstart includes a complete runnable application and a shell application you can build out by following the step-by-step integration instructions. Application examples include: [traditional web applications](#web-application), [single-page applications](#spa), [mobile applications](#mobile-app), and [APIs protected with access tokens](#api).
 

@@ -81,7 +81,9 @@ Review [the component for all options and icons](astro/src/components/icon/Icon.
 
 ### Docs Navigation
 
-If you want to order pages within a section, use `navorder`. The default value for every page is [defined here](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/config.js#L61).
+Make descriptions full sentences.
+
+If you want to order pages within a section, use `navOrder`. The default value for every page is [defined here](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/config.js#L61).
 
 Pages are ordered in the nav within a section in descending order. 
 
@@ -89,8 +91,7 @@ Pages are ordered in the nav within a section in descending order.
 navorder: 0
 ```
 
-Make descriptions full sentences.
-
+If you want to sort a category to the top of its section, you need to add it to `astro/src/tools/docs/categoriesToFloatToTop.json`.
 
 ### Including files
 - If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_` and use dashes to separate words: `_login-api-integration` not `_login_api_integration`.
@@ -212,6 +213,7 @@ Fruits were domesticated at different times.
 - curl
 - Docker
 - Docker Compose
+- e-commerce
 - ECMAScript
 - Elasticsearch
 - esport
@@ -228,7 +230,7 @@ Fruits were domesticated at different times.
 - OAuth and OAuth2
 - re-authentication
 - self-service
-- server-side
+- server-side (an adjective)
 - Spring Boot
 - third-party
 - two-factor
