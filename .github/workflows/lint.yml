@@ -1,0 +1,35 @@
+# Runs the linter on the changed files in the PR
+name: Run ESLint on changed files
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  run_lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+        # I want to lint only the files that have changed in the PR
+        # This is a bit tricky because we need to fetch the main branch to compare against
+        # Instead I am using the GitHub cli to fetch the changes in the PR
+      - name: Install GitHub CLI
+        run: sudo apt-get install gh
+
+      - name: Authenticate GitHub CLI
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      - name: Set Pull Request Number
+        run: echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+
+      - name: NPM Install
+        run: |
+          cd astro
+          npm ci
+        shell: bash
+
+      - name: ESLint
+        run: |
+          cd astro
+          npm run lint-pr
+        shell: /usr/bin/bash -e -o pipefail {0}

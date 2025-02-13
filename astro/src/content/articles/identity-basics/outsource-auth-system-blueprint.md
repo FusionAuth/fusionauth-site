@@ -15,6 +15,8 @@ You also know that these aren't decisions that you can only make once -- you hav
 
 Authentication is one of those components that you deal with all the time. Auth is a necessary part of any software product, but how you implement auth is not necessarily always the same. Careful consideration is needed, because your decision to outsource will not only impact speed of development, but also long-term product maintenance -- you don't want to slow down time to market because you re-implemented an entire auth system unnecessarily, but you also don't want to use an auth system that is going to cause problems down the road. 
 
+[![Should You Outsource Your Auth?](/img/cta/outsourcing-auth.png)](/ebooks/ultimate-guide-to-outsourcing-your-auth?utm_medium=cta&utm_source=articles&utm_campaign=why_outsource_auth)
+
 ## Auth outsourcing considerations
 
 What are the primary considerations when making an outsourcing decision, especially around a component as critical as your identity management system? This document is a blueprint for both what you should consider as well as who to get on board if you decide using a third party auth provider makes sense.
