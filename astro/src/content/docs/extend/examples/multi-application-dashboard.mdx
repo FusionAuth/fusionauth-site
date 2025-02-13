@@ -10,6 +10,7 @@ import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import IconButton from 'src/components/icon/Icon.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
 
 ## Overview
 
@@ -35,38 +36,37 @@ Open a terminal in the directory containing the repository files.
 
 Run the command below to start FusionAuth.
 
-  ```sh
-  docker compose up
-  ```
+```sh
+docker compose up
+```
 
 <Aside type="note">
-  If you have completed any FusionAuth tutorials before, you might need to first delete any existing FusionAuth containers with the same name and the database volumes. Run the command below to do that.
+If you have completed any FusionAuth tutorials before, you might need to first delete any existing FusionAuth containers with the same name and the database volumes. Run the command below to do that.
 
-  ```sh
-  docker ps rm fa faDb; docker compose down -v
-  ```
+```sh
+docker ps rm fa faDb; docker compose down -v
+```
 </Aside>
 
 Leave FusionAuth running. 
 
 In a new terminal, run the commands below to start a web server for the Changebank app, which uses FusionAuth for authentication. 
 
-  ```sh
-  cd bankApp
-  docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  "npm install"
-  docker run --platform=linux/amd64 --rm --network faNetwork -p 3000:3000 -v ".:/app" -w "/app" -e "PORT=3000" node:23-alpine3.19 sh -c  "npm run start"
-  ```
+```sh
+cd bankApp
+docker compose up
+```
 
 The Changebank app is now running at http://localhost:3000. 
 
+In a third terminal, run the commands below to start a web server for a second app that uses FusionAuth for authentication.
 
-In a third terminal, run the commands below to start a web server for a second app that uses FusionAuth for authentication. The app is called Changeinsurance, and is available at http://localhost:3001.
+```sh
+cd insuranceApp
+docker compose up
+```
 
-  ```sh
-  cd insuranceApp
-  docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app" node:23-alpine3.19 sh -c  "npm install"
-  docker run --platform=linux/amd64 --rm --network faNetwork -p 3001:3001 -v ".:/app" -w "/app" -e "PORT=3001" node:23-alpine3.19 sh -c  "npm run start"
-  ```
+The app is called Changeinsurance, and is now running at http://localhost:3001.
 
 Before making the dashboard, check that you can log in to all three applications. Either use an incognito browser window or don't enable <InlineUIElement>[Keep me signed in](/docs/lifecycle/authenticate-users/logout-session-management#fusionauth-sso)</InlineUIElement> when logging in, otherwise, you won't see the login form in the rest of this guide:
 - Browse to FusionAuth at http://localhost:9011/admin and log in with `admin@example.com` and `password`.
@@ -93,59 +93,9 @@ Notice there are three themes in the list. The first two are the default FusionA
 - Click the <IconButton name="edit" /> edit button in the Bank theme row's action column.
 - Select the <InlineUIElement>Index</InlineUIElement> page (fourth item in the list on the left).
 - Paste the code below into the text box.
-  ```html
-  [#ftl/]
-  [#-- @ftlvariable name="tenant" type="io.fusionauth.domain.Tenant" --]
-  [#-- @ftlvariable name="tenantId" type="java.util.UUID" --]
-  [#-- @ftlvariable name="theme" type="io.fusionauth.domain.Theme" --]
-  [#import "_helpers.ftl" as helpers/]
 
-  [@helpers.html]
-    [@helpers.head title="FusionAuth"/]
-    [@helpers.body]
-      [@helpers.header]
-        [#-- Custom header code goes here --]
-      [/@helpers.header]
+<RemoteCode lang="html" url="https://raw.githubusercontent.com/fusionauth/fusionauth-example-multiapp-dashboard/refs/heads/main/theme/index.ftl" />
 
-       [#if theme.type != "simple"]
-          [@helpers.main title="" rowClass="row center-xs" colClass="col-xs-12 col-sm-12 col-md-10 col-lg-10 col-xl-9"]
-              <div class="p-3 pb-5">
-                <div style="width: 180px;">
-                  <img src="/images/logo-gray.svg">
-                </div>
-                <br />
-                <a href="http://localhost:3000/account" style="background: linear-gradient(to bottom right, palegreen, forestgreen);
-                  color: white;
-                  padding: 10px;
-                  margin: 20px;
-                  border-radius: 5px;
-                  text-align: center;
-                  width: 160px;
-                  display: inline-block;
-                  text-decoration: none;">
-                  Changebank
-                </a>
-                <a href="http://localhost:3001/account" style="background: linear-gradient(to bottom right, skyblue, navy);
-                  color: white;
-                  padding: 10px;
-                  margin: 20px;
-                  border-radius: 5px;
-                  text-align: center;
-                  width: 160px;
-                  display: inline-block;
-                  text-decoration: none;">
-                  Changeinsurance
-                </a>
-              </div>
-          [/@helpers.main]
-        [/#if]
-
-      [@helpers.footer]
-        [#-- Custom footer code goes here --]
-      [/@helpers.footer]
-    [/@helpers.body]
-  [/@helpers.html]
-  ```
 - Click the <IconButton name="save" /> save button at the top right.
 
 Besides a little CSS for styling, the code above only adds links for the two applications. The links don't point to the login page of the target application. Instead, they point to the logged-in main page. If the user isn't logged in to FusionAuth, they will be automatically redirected to the app's login page. If they are already logged in, they will be taken straight to the app. This saves the user time while still protecting the application content.
@@ -157,17 +107,16 @@ You can extend this to any number of applications, just like Google does.
 
 ### Partial Access
 
-You can require application registration for users befeore access is allowed. Do so by enabling the <InlineUIElement>require registration</InlineUIElement> setting in the <Breadcrumb>OAuth</Breadcrumb> tab of the application. 
+You can require application registration for users before access is allowed. Do so by first disabling Self-service registration setting under <Breadcrumb>Registration</Breadcrumb> tab and enabling the <InlineUIElement>Require registration</InlineUIElement> setting in the <Breadcrumb>OAuth</Breadcrumb> tab of the application.
 
-When this is configured, a user who is not registered to the Changeinsurance application will not be able to access it, even though they can click on the link. They simply won't be logged in.
+When this is configured, a user who is not registered to the Changebank or Changeinsurance application will not be able to access it, even though they can click on the link. They simply won't be logged in.
 
 ## Clean Up
 
-To remove all the Docker images used in this guide, stop the running containers and run the commands below.
+To stop the running containers run the command below.
 
 ```sh
 docker compose down -v
-docker rmi postgres:16.0-bookworm fusionauth/fusionauth-app:1.51.2 node:23-alpine3.19
 ```
 
 ## Next Steps
