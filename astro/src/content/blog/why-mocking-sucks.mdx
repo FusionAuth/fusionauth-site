@@ -126,7 +126,6 @@ The trend is clear: it's time to embrace local-first development to provide deve
 Firebase, widely used for authentication, real-time databases, and cloud functions, offers a local emulator suite. The tool allows developers to simulate core Firebase services in their development environment, removing the need for fragile mocks.
 - You can test real authentication flows, database queries, and cloud function triggers without depending on the live Firebase servers.
 - The emulator provides feature parity with production, allowing reliable integration tests free from rate limits and connectivity issues.
-    
 
 ### FusionAuth Kickstart
 
@@ -135,9 +134,91 @@ At FusionAuth, we offer a Quickstart Docker server that provides a real version 
 - Developers can spin up a local FusionAuth instance to test full authentication flows, including OAuth and SSO, ensuring tests align with production.
 - Our kickstart feature automates environment setup, making maintaining consistent development and CI environments simple. 
 - Unlike mocks, this approach handles real-world complexities like security updates and multi-step flows, reducing the risk of surprises in production.
-    
 
-Here's how you can run the kickstart with Docker Compose.
+To see how much effective a real dev server can be,  let's write a mock that simulates a [login](/docs/apis/login) on the FusionAuth API. 
+    
+Here's how you might do it:
+
+```python
+import requests
+from unittest.mock import patch
+import unittest
+
+def fusionauth_login(login_id, password, application_id, base_url="https://sandbox.fusionauth.io"):
+    url = f"{base_url}/api/login"
+    headers = {"Content-Type": "application/json"}
+    data = {
+        "loginId": login_id,
+        "password": password,
+        "applicationId": application_id
+    }
+    
+    response = requests.post(url, json=data, headers=headers)
+    
+    if response.status_code == 200:
+        return {"status": "success", "token": response.json().get("token")}
+    elif response.status_code == 404:
+        return {"status": "error", "message": "User not found or incorrect password"}
+    elif response.status_code == 423:
+        return {"status": "error", "message": "User account is locked"}
+    else:
+        return {"status": "error", "message": "Unknown error"}
+
+class TestFusionAuthLogin(unittest.TestCase):
+    
+    @patch("requests.post")
+    def test_successful_login(self, mock_post):
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {
+            "token": "fake-jwt-token",
+            "user": {"id": "12345", "email": "test@example.com"}
+        }
+
+        result = fusionauth_login("test@example.com", "correct-password", "app-123")
+        self.assertEqual(result["status"], "success")
+        self.assertIn("token", result)
+    
+    @patch("requests.post")
+    def test_invalid_credentials(self, mock_post):
+        mock_post.return_value.status_code = 404
+        mock_post.return_value.json.return_value = {}
+
+        result = fusionauth_login("test@example.com", "wrong-password", "app-123")
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["message"], "User not found or incorrect password")
+
+    @patch("requests.post")
+    def test_locked_account(self, mock_post):
+        mock_post.return_value.status_code = 423
+        mock_post.return_value.json.return_value = {}
+
+        result = fusionauth_login("locked_user@example.com", "some-password", "app-123")
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["message"], "User account is locked")
+
+    @patch("requests.post")
+    def test_unknown_error(self, mock_post):
+        mock_post.return_value.status_code = 500
+        mock_post.return_value.json.return_value = {}
+
+        result = fusionauth_login("test@example.com", "password", "app-123")
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["message"], "Unknown error")
+
+if __name__ == "__main__":
+    unittest.main()
+```
+
+The `fusionauth_login` function simulates a login request to FusionAuth's `/api/login` endpoint. It handles various responses—success, incorrect credentials, locked accounts, and unexpected errors. The unit tests use unittest.mock.patch to replace real API calls, ensuring tests pass without needing a live FusionAuth server.
+
+But this approach doesn't scale. For every new scenario, another mock is needed. More tests mean more mocks, more maintenance, and more fragile tests. What starts as a simple test suite quickly turns into a tangled web of artificial responses, each one detached from reality.
+
+And when FusionAuth updates? Your mocks stay frozen in time. New fields, changed response structures, evolving authentication flows—none of it is reflected in your tests. The mocks keep passing, but your application is already broken in production.
+
+Mocks don't capture the real world. They won't expose rate limits, token expirations, network timeouts, or multi-factor authentication failures. They give you an illusion of stability while hiding the cracks until it's too late.
+The alternative? Run a real FusionAuth instance locally.
+
+Here's how you can use FusionAuth Kickstart with Docker Compose to test authentication without mocks.
 
 #### Step 1: Download the Docker Compose and Environment Files
 
@@ -177,6 +258,51 @@ The setup uses OpenSearch by default, but you can modify the `docker-compose.yml
 #### Step 4: Customize for Your Needs
 
 You can further customize the services by editing the `docker-compose.yml` and `.env` files. FusionAuth supports various deployment methods (e.g., Kubernetes, Helm), making it adaptable to different environments. You can learn more about working in a development environment [here](/docs/get-started/download-and-install/development/).
+
+### Step 5: Authenticate a User Using the FusionAuth API
+
+Once FusionAuth is running locally, you can authenticate a user by making a request to the /api/login endpoint. Use the following curl command to test the login flow with real authentication logic:
+
+```bash
+curl -X POST http://localhost:9011/api/login \
+    -H "Content-Type: application/json" \
+    -d '{
+        "loginId": "example@fusionauth.io",
+        "password": "password",
+        "applicationId": "10000000-0000-0002-0000-000000000001"
+    }'
+```
+
+And running tests in a Dockerized environment has its own set of advantages. For example, a development team is building a microservices-based authentication system. To ensure smooth integration, they initially rely on mocks to simulate FusionAuth responses in their tests.
+
+```python
+@patch("requests.post")
+def test_successful_login(mock_post):
+    mock_post.return_value.status_code = 200
+    mock_post.return_value.json.return_value = {
+        "token": "fake-jwt-token",
+        "user": {"id": "12345", "email": "test@example.com"}
+    }
+    
+    result = fusionauth_login("test@example.com", "correct-password", "app-123")
+    
+    assert result["status"] == "success"
+    assert "token" in result
+```
+
+Everything passes in CI. The system is deployed. Then reality sets in.
+
+* Service Discovery Issues: The real FusionAuth service is running inside a Kubernetes cluster, and the application fails to resolve its hostname due to incorrect DNS settings. The mock didn't account for this because it never interacted with the actual service.
+* Configuration Drift: In local development, the mock assumed a specific authentication flow. But in production, the real FusionAuth instance required an additional security header, causing unexpected authentication failures.
+
+A simple solution could have prevented this: running FusionAuth inside a Dockerized local environment. Instead of relying on mocks, the team sets up a containerized FusionAuth instance using Docker Compose:
+
+```bash
+docker-compose up -d
+```
+
+Now, integration tests run against a real authentication service within the same network as the application, replicating production-like conditions. The authentication flow is validated end-to-end, ensuring that DNS resolution, security headers, rate limits, and real response times are properly accounted for—before deployment.
+
 
 ## Final Thoughts: Stop Relying on Mocks
 
