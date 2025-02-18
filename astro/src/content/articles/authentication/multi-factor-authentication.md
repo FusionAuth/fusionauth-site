@@ -1,6 +1,6 @@
 ---
-title: "What is Multi-Factor Authentication (MFA) and How it Works"
-description: Learn what MFA is, why it's crucial, the available factors, and when to consider requiring multi-factor authentication for enhanced security.
+title: What Is Multi-Factor Authentication (MFA)? Methods, Types, and How It Works | FusionAuth"
+description: Learn what multi-factor authentication (MFA) is, how it works, and the different types and methods used. Strengthen security by understanding MFA’s role in verifying user identity.
 author: Dan Moore
 section: Authentication
 tags: mfa 2fa multi-factor-authentication two-factor-authentication user-experience customer-experience security policie sms totp factors ap-push tradeoffs open-standards biometric

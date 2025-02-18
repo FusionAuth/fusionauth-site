@@ -230,7 +230,7 @@ Fruits were domesticated at different times.
 - OAuth and OAuth2
 - re-authentication
 - self-service
-- server-side
+- server-side (an adjective)
 - Spring Boot
 - third-party
 - two-factor

@@ -19,12 +19,16 @@ const changedSrcFiles = modifiedFiles
     .filter(file => validStatus.includes(file.status))
     .map(file => file.filename.replace('astro/', ''));
 
-console.log(`Linting changed files: ${changedSrcFiles.join(', ')}`);
-
-try {
-  const output = execSync(`npm run lint -- ${changedSrcFiles.join(' ')}`);
-  console.log(output.toString());
-} catch (e) {
-  console.error(e.stdout.toString());
-  process.exit(1);
+if (changedSrcFiles.length > 0) {
+  console.log(`Linting changed files: ${changedSrcFiles.join(', ')}`);
+  try {
+    const output = execSync(`npm run lint -- ${changedSrcFiles.join(' ')}`);
+    console.log(output.toString());
+  } catch (e) {
+    console.error(e.stdout.toString());
+    process.exit(1);
+  }
+} else {
+  console.log('No changed files to lint.');
+  process.exit(0);
 }
