@@ -1,0 +1,144 @@
+---
+title: Machine To Machine Communication
+description: Allow services and software to securely authenticate using FusionAuth
+section: get started
+subcategory: use cases
+---
+import ApplicationSwitchDiagram from 'src/diagrams/docs/get-started/use-cases/app-suite/application-switch.astro';
+import M2MCommunicationDescription from 'src/content/docs/get-started/use-cases/_m2m-communication-description.mdx';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+
+## Overview
+
+<M2MCommunicationDescription />
+
+## Problem 
+
+You have software programs, devices or APIs which need to authenticate using the Client Credentials grant and use the corresponding tokens.
+
+You want to let each of the programs have specific permissions and have them all managed by FusionAuth.
+
+## Solution
+
+With the machine to machine (m2m) use case, you model everything inside FusionAuth using Entity Management. Each entity can have permissions against any other entity. Once you have an entity, you can use the Client Credentials grant to get an access token. This access token can be presented to another piece of software which can validate it and determine if the request is allowed.
+
+
+## Prerequisites
+
+You have at least two pieces of software that need to communicate with each other without any human intervention.
+
+## Example Scenario
+
+Suppose you have a thriving e-commerce business that sends clowns notifications about upcoming events. You are going to break this out into a few different services and use FusionAuth to manage the permissions between the components.
+
+## Actors/Components
+
+* event API which holds events data
+* email API which is an adapter over an email service such as SendGrid or Mailgun
+* user API which has user information including email addresses
+* a client application which runs periodically and is scheduled by cron
+* FusionAuth
+
+The APIs will have the following interactions and permissions.
+
+| API | Called by | Permissions List |
+|-----------|-----------|-----------|
+| Event API | Client using `read` permissions | `read`, `update`, `delete` |
+| User API | Client using `read` permissions | `read`, `update`, `delete` |
+| Email API | Client using `send` permissions | `send`, `admin` |
+
+
+## Implementation Steps
+
+This is an TODO step implementation process to ensure customers can access all the applications. Steps to take:
+
+* set up the entity types and permissions (3 types: crud API, sending API, client, consider asymetric signing key)
+* set up the entities and distribute ids/secrets
+* write the client code
+- start up
+- get the access token for calling the event API from FusionAuth
+- get the access token for calling the user API from FusionAuth
+- get the access token for calling the email API from FusionAuth
+- find all the events happening in the next week passing the access token in the header, event API to validate the access token
+-- for each event
+-- find all the users who wanted to be reminded of each event passing the access token in the header, user API to validate the access token
+-- build the reminder text and extract the email address
+-- call the email API with the email address and the reminder content passing the access token in the header, email API to validate the access token
+
+
+### Force SSO Session Creation
+
+The easiest way to force the SSO session to be created as a user logs in is to modify the login page. You do so by modifying the theme. In the default theme, a user can check or uncheck the `rememberDevice` checkbox, labelled by default "Keep me signed in". To force creation of the SSO session, update the theme to set the `rememberDevice` parameter to `true`. Modify the `OAuth Authorize` template [using the advanced theme editor](/docs/customize/look-and-feel/advanced-theme-editor).
+
+Here's a sample FreeMarker block you can use to update the default template.
+
+```
+[@hidden name="rememberDevice" value="true"/]
+```
+
+The duration of this SSO session is controlled in the Tenant settings. You can modify it by navigating to <Breadcrumb>Tenant -> Your Tenant -> OAuth</Breadcrumb> and updating the <InlineField>Session timeout</InlineField>.
+
+### Forward Unauthenticated Users
+
+Whenever a user is not logged in and accesses an application in your app suite, forward them to the login URL for FusionAuth. As your applications are already delegating authentication to FusionAuth, use the same logic or library functions to create an authorize URL. Here's an [explanation of how to create the URL and what each component means](/docs/lifecycle/authenticate-users/oauth/endpoints#authorization-code-grant-request).
+
+Here's a diagram of a user switching between the clownwear e-commerce store and the forum.
+
+<ApplicationSwitchDiagram alt="An example of an application switch." />
+
+If a user is browsing the e-commerce store, then clicks on the forum link, they will transparently be logged in to the forum application.
+
+Their client will get a token associated with the forum application, including the roles the user has for that application and claims such as the audience claim (`aud`) set correctly. The user will be logged in to the new application, as desired.
+
+## Expected Outcome
+
+Users switch between your applications transparently and securely. 
+
+## Edge Cases
+
+SSO login works across all apps in a tenant, including those the user isn't registered for. After redirection to and from FusionAuth, the user will be authenticated, but the `applicationId` and `roles` claims will be missing from the access token. Applications must check these claims when determining whether a user is authorized for an application. [Read more about the difference between authentication and authorization](/docs/get-started/core-concepts/authentication-authorization).
+
+When your user logs out, destroy the SSO session as well as each application session. You can do that using API calls or with FusionAuth's Front-Channel logout. [Read more about logout](/docs/lifecycle/authenticate-users/logout-session-management).
+
+Any applications with [self-service registration](/docs/lifecycle/register-users/basic-registration-forms) enabled will automatically register a user with default roles when the user is redirected to the login URL for that application. 
+
+If an application only wants to allow logins from a certain identity provider or impose other conditions, you'll need extra integration work. For example, imagine there's a time tracking app for your clownwear e-commerce store that employees log in to using Google Workspace federation. You don't want customers to be able to view this application. One way you can prevent this with a [login validation lambda](/docs/extend/code/lambdas/login-validation).
+
+The functionality described in this use case only works with [FusionAuth hosted login pages](/docs/get-started/core-concepts/hosted-login-vs-api-login#hosted-login-pages). If you use the Login API, you need to build your SSO implementation.
+
+Applications may have different authentication related requirements. Examples include:
+
+* multi-factor authentication (MFA)
+* required registration fields
+* registration verification
+
+If a user logs into an application and then switches to another app with different requirements, they will be forced to satisfy the second apps' requirements. For example, suppose that an e-commerce application requires MFA and the forum application does not. If the user initially logs into the forum application and then switches to the e-commerce application, they will be prompted to complete MFA.
+
+## Other Example Scenarios
+
+Applications which share customer or user accounts are a good fit for this use case. Examples include:
+
+* Multiple affiliated online games
+* An office suite with an online word processor, spreadsheet and presentation software
+* Travel booking software, where you might have one application for booking flights, another for hotels and a third for car rental
+
+## Additional Documentation
+
+* [Single sign-on guide](/docs/lifecycle/authenticate-users/single-sign-on)
+* [Logout and session guide](/docs/lifecycle/authenticate-users/logout-session-management)
+* [Theme customization](/docs/customize/look-and-feel/)
+
+TODO gty issue with AWS
+alt use case: developers integrating with your APIs can use instead of API keys, with extra step
+service to service guide
+entity management docs
+entity open issues (scope names are weird, no aliases, migration tough)
+lambda
+why not use API keys?
+- timebound
+- standards based
+- can be centrally managed and monitored but access tokens are not validated with FusionAuth
+- granular permissions
+video on client credentials grant
+https://fusionauth.io/blog/securing-your-api
