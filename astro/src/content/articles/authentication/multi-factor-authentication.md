@@ -56,7 +56,7 @@ Imagine a security system that not only asks for your credentials but also reads
 
 What's truly fascinating about adaptive MFA is its dynamic nature. It's not just about adding layers of security; it's about adding the right layers, at the right time. This approach minimizes friction for users, making security feel less like a series of hoops to jump through and more like a smart, responsive ally. It's a dance between convenience and caution, where security measures are tailored in real-time, based on the perceived level of risk. This not only enhances the user experience but also fortifies defenses, ensuring that the keys to the kingdom aren't handed over too easily, nor kept under lock and key unnecessarily.
 
-You can also use the same principles for initial authentication (for instance, requiring a CAPTCHA if a user logs in from a new device). Read more about adaptive approaches in our [Advanced Threat Detection](/docs/operate/secure-and-monitor/advanced-threat-detection) features. 
+You can also use the same principles for initial authentication (for instance, requiring a CAPTCHA if a user logs in from a new device). Read more about adaptive approaches in our [Advanced Threat Detection](/docs/operate/secure/advanced-threat-detection) features. 
 
 ## Why Use Multi-factor Authentication (MFA)?
 
