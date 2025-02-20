@@ -1,6 +1,6 @@
 ---
 title: Business To Business To Consumer
-description: Let your customers' users log in to your application.
+description: Let your customers' users log in to your application and manage their identities inside FusionAuth.
 section: get started
 subcategory: use cases
 ---
@@ -13,6 +13,7 @@ import UserLoggingIn from 'src/diagrams/docs/get-started/use-cases/b2b2c/user-lo
 import AdminManagingUsers from 'src/diagrams/docs/get-started/use-cases/b2b2c/admin-managing-users.astro';
 import UserSegmentTable from 'src/content/docs/get-started/core-concepts/_user-segment-table.mdx';
 import CrossTenantUserAccess from 'src/content/docs/get-started/core-concepts/_cross-tenant-access.mdx';
+import TenantAuthorizationWarning from 'src/content/docs/get-started/use-cases/_tenant-authorization.mdx';
 
 ## Overview
 
@@ -32,9 +33,7 @@ You have an application that you sell to customers; they then have their own use
 
 With the b2b2c use case, you allow the users of your customers to securely authenticate. You can also allow your customers to manage users.
 
-This use case is appropriate when the identity of the end user is *not* controlled by the customer, but rather by the end user themselves. If the identity of the end user is controlled by the customer, the b2b2e use case is a better option.
-
-[comment]: <> (TODO update this with a link to the b2b2e scenario when that is published)
+This use case is appropriate when the identity of the end user is *not* controlled by the customer, but rather by the end user themselves. If the identity of the end user is controlled by the customer, [the b2b2e use case](/docs/get-started/use-cases/b2b2e) is a better option.
 
 ## Prerequisites
 
@@ -55,7 +54,7 @@ The set of customers for each circus can overlap. Jamie Morgan is an example of 
 ## Actors/Components
 
 * your customer and their client application (mobile app or browser)
-* your customer's user and their client application (mobile app or browser)
+* your customer's users and their client application (mobile app or browser)
 * your application
 * FusionAuth
 
@@ -96,22 +95,22 @@ Make sure your circus SaaS application can handle multiple tenants. At a minimum
 
 Ensure your web application can respond to multiple hostnames. If you don't want to have customer specific hostnames, there are [other options](/docs/extend/examples/multi-tenant#data-plane-application-tenant-determination).
 
-There are other aspects of a multi-tenant application, such as logically isolating customer data. Such multi-tenant application architecture guidance is beyond the scope of this document.
+There are many other aspects of a multi-tenant application, such as logically isolating customer data in your application. Such multi-tenant application architecture guidance is beyond the scope of this document.
 
 #### Configuring FusionAuth
 
 For each new customer, you'll need to update configuration in the ClownPass FusionAuth instance. You'll need to:
 
-* create a new Tenant
-* create a new Application in that Tenant
-* configuring the correct redirect URL for the Application
-* create a new Tenant locked API key
-* configure the Application to use desired Identity Providers, such as Google Login
-* create Email Templates and Themes appropriate for the customer's brand
+* create a new tenant
+* create a new application in that tenant
+* configure the correct redirect URL for the application
+* create a new tenant scoped API key with the proper permissions
+* configure the application to use desired identity providers, such as Google Login
+* create email templates and themes appropriate for the customer's brand
 
-You can script these steps using one of the [SDKs](/docs/sdks).
+You can script these configuration steps using one of the [SDKs](/docs/sdks). You can also create a template tenant and copy it, modifying as needed.
 
-Record information such as the API key, the client Id and client secret from the Application configuration in your application's database. Later, your application will look up this information based on the request hostname.
+Record information such as the API key, the client Id and client secret from the FusionAuth Application configuration in your web or mobile application's database. Later, your application will look up this information based on the request hostname.
 
 When using FusionAuth Cloud, you can [configure FusionAuth to respond to different hostnames](/docs/get-started/run-in-the-cloud/cloud#custom-domains). You can also do the same with self-hosted FusionAuth. In addition to the hostnames above, you could also have:
 
@@ -123,7 +122,7 @@ If you don't use hostname customization, users may see a domain name they don't 
 Once the customer is set up, users can be registered for your application in a variety of ways. They can:
 
 * be migrated in from an existing store
-* register using social sign-on
+* register using social sign-on (make sure you create a registration for the user if you do this)
 * created directly using the API or SDKs
 * register themselves if you enable self-service registration
 
@@ -131,23 +130,23 @@ Pick one or more methods that work for your use case; FusionAuth supports them a
 
 ### User Authentication
 
-When a user comes to the Ringling site hosted by ClownApp, they must be redirected to a FusionAuth authorization URL with the appropriate client Id and redirect URL. This will be used to start the Authorization Code grant which will authenticate this user. Here's an [explanation of how to create the URL and what each component means](/docs/lifecycle/authenticate-users/oauth/endpoints#authorization-code-grant-request).
+When a user comes to the Ringling site hosted by ClownApp, they must be redirected to a FusionAuth authorization URL with the appropriate client Id and redirect URL. This starts the Authorization Code grant to authenticate this user. Here's an [explanation of how to create the URL and what each component means](/docs/lifecycle/authenticate-users/oauth/endpoints#authorization-code-grant-request).
 
-The user will see a Ringling themed page because of the previous customization and the provided client Id. Other interactions with FusionAuth, such as a "forgot password" email, should be Ringling themed as well.
+The user sees a Ringling themed page because of the previous customization and the provided client Id. Other interactions with FusionAuth, such as a "forgot password" email, should be Ringling themed as well.
 
-After the user authenticates and is redirected to the ClownPass application, the client Id and client secret can be looked up in the application database based on the hostname in the redirect URL. The circus ticketing web application handles many client Ids and secrets, one for each customer. The client Id and client secret are provided to FusionAuth to complete the Authorization Code grant. Here's an [explanation of that request](/docs/lifecycle/authenticate-users/oauth/endpoints#complete-the-authorization-code-grant-request). 
+After the user authenticates and is redirected to the ClownPass application, the client Id and client secret is looked up in the application database based on the hostname in the redirect URL. The circus ticketing web application handles many client Ids and secrets, one for each customer. The client Id and client secret are provided to FusionAuth to complete the Authorization Code grant. Here's an [explanation of that request](/docs/lifecycle/authenticate-users/oauth/endpoints#complete-the-authorization-code-grant-request). 
 
 The [tokens](/docs/lifecycle/authenticate-users/oauth/tokens) contain information about the user and their roles. The ClownPass application can use them to determine correct levels of access or data to retrieve.
 
 ### User Management
 
-Customer admins and other privileged users will add, read, update and delete user data using the ClownPass application. While there is a lot of user management functionality exposed as an API you could add to your application, common functionality includes:
+Customer admins and other privileged users can add, read, update and delete user data using the ClownPass application. While there is a lot of user management functionality exposed as an API that you could add to your application, common functionality includes:
 
 * resetting a user's password
 * locking a user
 * changing user profile data
 
-The application uses the tenant locked API key and an SDK to allow customer admins to perform user management.
+The application uses the tenant scoped API key and an SDK to allow customer admins to perform user management.
 
 Users can manage their own profile and credentials using the [self-service account management](/docs/lifecycle/manage-users/account-management/) provided by FusionAuth.
 
@@ -163,7 +162,13 @@ Each account is entirely separate with no relation to each other. The accounts c
 
 ### Alternative Implementation
 
-The tenant based solution outlined above has distinct user spaces. If you want a shared user space, where the `jamie.morgan@example.com` user has the same profile data and credentials no matter which circus they are buying tickets for, you need to use a different approach. Instead of separate tenants, have all users in one tenant and model each circus ticketing application as a separate FusionAuth Application configuration. Make sure to build and enforce your own authorization scheme to ensure customer admins from Ringling Brothers couldn't access Cirque De Soleils' users, since you can't use tenant locked API keys.
+The tenant based solution outlined above has separate user spaces. Remember Jamie, the user discussed above? With tenants, each account is different, even if the user uses the same email to log in.
+
+If you want a shared user space, where the `jamie.morgan@example.com` user has the same profile data and credentials no matter which circus they are buying tickets for, you need to use a different approach. Instead of separate tenants, have all users in one tenant and model each circus ticketing application as a separate FusionAuth application configuration.
+
+With this approach, you can't use tenant scoped API keys. Make sure to build and enforce your own authorization scheme to ensure customer admins from Ringling Brothers couldn't access Cirque De Soleils' users.
+
+If you have more complex modelling needs, you can use entities to [model organizations](/docs/extend/examples/modeling-organizations).
 
 Here's a table which shows tradeoffs between these different approaches.
 
@@ -175,9 +180,11 @@ You might want to use one of the alternative options if users must be able to se
 
 Your web or mobile application has isolated groups of users, one set for each customer. Each user has their own profile data and manages their identity, either in your application or via other login methods such as social sign-on.
 
-Admins can use whatever user management related functionality you choose to expose in your application, using tenant locked API keys to limit access.
+Admins can use whatever user management related functionality you choose to expose in your application, using tenant scoped API keys to limit access.
 
 ## Edge Cases
+
+<TenantAuthorizationWarning />
 
 The word `tenant` can be overloaded. When you are planning for this use case, make sure you distinguish between tenants in your application and FusionAuth tenants. They don't have to map one to one.
 
