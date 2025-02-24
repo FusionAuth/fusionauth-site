@@ -7,6 +7,7 @@ categories: Education
 tags: single testing mocking
 excerpt_separator: "{/* more */}"
 ---
+import Aside from 'src/components/Aside.astro';
 
 Developers love mocking. It's been a go-to solution for years: simulate external services, run tests faster, and avoid the overhead of real APIs. But here's the truth—**mocking is overused and often dangerous**. It deceives you into thinking your system is stable, hiding critical failures that only appear when your code hits the real world. APIs change. Rate limits throttle you. Authentication flows break. Your tests will still pass with green colors while your app silently crashes in production.
 
@@ -68,29 +69,29 @@ Let's take the stripe example again. Mocking each of these individually is manag
 
 Here are the issues:
 
-#### 1\. It Creates a False Sense of Security
+#### 1. It Creates a False Sense of Security
 
 Mocks only behave the way you program them to. They'll never catch unexpected changes or errors that might occur with the real service. This gives you the illusion that your system is working perfectly.
 
 Even worse, mocks can accidentally break your product by masking breaking changes. Imagine a situation where a third-party API modifies a key response format. If your mocks aren't updated to reflect this change, your tests will continue to pass while your product silently fails in production. This false confidence leads to missed bugs, broken functionality, and a potentially massive impact on your users and business.
 
-#### 2\. It Increases Maintenance Overhead
+#### 2. It Increases Maintenance Overhead
 
 APIs evolve. New fields, endpoints, and even minor response tweaks can break your mocks. You'll constantly need to update your test suite to keep up with these changes, which can result in technical debt that burdens your team.
 
-#### 3\. It Encourages Bad Testing Practices
+#### 3. It Encourages Bad Testing Practices
 
 Developers often become complacent with mocks, focusing more on matching expected inputs and outputs than handling real-world edge cases. This leads to over-reliance on happy-path tests that fail to account for errors, latency, or timeouts in real environments.
 
-#### 4\. It Decouples You from Reality
+#### 4. It Decouples You from Reality
 
 Mocks can't reproduce the unpredictability of real services—rate limiting, version mismatches, or complex state changes in multi-tenant APIs. Tests that never hit real endpoints miss these critical factors, resulting in software unprepared for real-world conditions.
 
-#### 5\. It's an Anti-Pattern for Complex Systems
+#### 5. It's an Anti-Pattern for Complex Systems
 
 The more interconnected your services are, the harder it becomes to maintain accurate mocks. In a distributed system, service interactions are dynamic and often undocumented, meaning mocks will never fully reflect actual behavior. Over time, this leads to **tests that become brittle and unreliable**.
 
-### 6\. It Hinders Real Developer Experience
+### 6. It Hinders Real Developer Experience
 
 Developers often miss opportunities to work with real APIs early in development due to over-reliance on mocks. This delays the discovery of integration issues, ultimately shifting the pain to later stages, like QA or production.
 
@@ -127,9 +128,11 @@ Firebase, widely used for authentication, real-time databases, and cloud functio
 
 Let's see how mocking a Firebase service and using the Firebase Emulator Suite differentiate. 
 
-A common approach to testing Firebase authentication and Firestore interactions is to mock the Firebase Admin SDK. Below is an example of how developers typically do this.
+A common approach to testing Firebase authentication and Firestore interactions is to mock the Firebase Admin SDK. Below is an example of how developers typically do this in Python.
 
 ```python
+# pytest test.py
+
 from unittest.mock import patch, MagicMock
 import firebase_admin
 from firebase_admin import auth, firestore, credentials
@@ -215,6 +218,8 @@ firebase emulators:start
 With Firebase running locally, you can now modify the authentication and Firestore functions to connect to the emulator instead of mocking API calls.
 
 ```python
+# pytest test.py
+
 import firebase_admin
 from firebase_admin import auth, firestore, credentials
 
@@ -347,11 +352,16 @@ And when FusionAuth updates? Your mocks stay frozen in time. New fields, changed
 
 The alternative? Run a real FusionAuth instance locally.
 
-Here's how you can use FusionAuth Kickstart with Docker Compose to test authentication without mocks.
+<Aside type="tip">
+  The easiest way to run FusionAuth is in a Docker container. Clone the [fusionauth-example-docker-compose](https://github.com/fusionauth/fusionauth-example-docker-compose) GitHub repository. Open a terminal in the `light` subdirectory, and run `docker compose up` in a terminal to start FusionAuth. Log in at http://localhost:9011 with `admin@example.com` and `password`. The example repository will use the sample [kickstart file](https://github.com/FusionAuth/fusionauth-example-docker-compose/blob/main/light/kickstart/kickstart.json) to configure the FusionAuth instance.
+</Aside>
+
+Below is an outline of the steps you can use to set up a FusionAuth instance with [Kickstart](/docs/get-started/download-and-install/development/kickstart) and Docker Compose as configured in the [fusionauth-example-docker-compose](https://github.com/FusionAuth/fusionauth-example-docker-compose/tree/main/light) repository to test authentication without mocks.
 
 #### Step 1: Create the kickstart file
 
-The kickstart file is a JSON file containing instructions regarding the environment setup. In the testcase we are setting up, we need to create a user. Here is how the kickstart file looks like:
+The [Kickstart](/docs/get-started/download-and-install/development/kickstart) is a JSON file containing instructions regarding the environment setup. In the testcase we are setting up, we need to create a user. Here is how the kickstart file would look like:
+
 
 ```json
 {
@@ -361,8 +371,11 @@ The kickstart file is a JSON file containing instructions regarding the environm
     "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
     "clientSecret": "super-secret-secret-that-should-be-regenerated-for-production",
     "defaultTenantId": "d7d09513-a3f5-401c-9685-34ab6c552453",
-    "userEmail": "test@example.com",
-    "userPassword": "correct-password",
+    "adminEmail": "admin@example.com",
+    "adminPassword": "password",
+    "adminUserId": "00000000-0000-0000-0000-000000000001",
+    "userEmail": "richard@example.com",
+    "userPassword": "password",
     "userUserId": "00000000-0000-0000-0000-111111111111"
   },
   "apiKeys": [
@@ -393,9 +406,9 @@ The kickstart file is a JSON file containing instructions regarding the environm
           "name": "Example App",
           "oauthConfiguration": {
             "authorizedRedirectURLs": [
-              "URL_TO_YOUR_BACKEND"
+              "https://fusionauth.io"
             ],
-            "logoutURL": "URL_TO_YOUR_BACKEND",
+            "logoutURL": "https://fusionauth.io",
             "clientSecret": "#{clientSecret}",
             "enabledGrants": [
               "authorization_code",
@@ -409,6 +422,33 @@ The kickstart file is a JSON file containing instructions regarding the environm
             "accessTokenKeyId": "#{asymmetricKeyId}",
             "idTokenKeyId": "#{asymmetricKeyId}"
           }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{adminUserId}",
+      "body": {
+        "registration": {
+          "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
+          "roles": [
+            "admin"
+          ]
+        },
+        "roles": [
+          "admin"
+        ],
+        "skipRegistrationVerification": true,
+        "user": {
+          "birthDate": "1981-06-04",
+          "data": {
+            "favoriteColor": "chartreuse"
+          },
+          "email": "#{adminEmail}",
+          "firstName": "Erlich",
+          "lastName": "Bachman",
+          "password": "#{adminPassword}",
+          "imageUrl": "//www.gravatar.com/avatar/5e7d99e498980b4759650d07fb0f44e2"
         }
       }
     },
@@ -435,9 +475,10 @@ The kickstart file is a JSON file containing instructions regarding the environm
 }
 ```
 
-In the code above, variables are declared, to avoid repetitiion. After that, an API key is defined. Then, there is a series of requests that will be executed to:
+In the code above, variables are declared, to avoid repetition. After that, an API key is defined. Then, there is a series of requests that will be executed to:
 - Create a new application.
 - Create a new user.
+- Register user to the application.
 
 With the file ready, we can move on to the next step.
 
@@ -450,23 +491,20 @@ curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionau
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/.env
 ```
 
-Edit these files to match your environment. In the `.env` file, you'll want to modify the `DATABASE_PASSWORD` and ensure the `POSTGRES_USER` and `POSTGRES_PASSWORD` are set correctly. Add also the `FUSIONAUTH_APP_KICKSTART_FILE` variable with the path to the kickstart file.
+Edit these files to match your environment. In the `.env` file, you'll want to modify the `DATABASE_PASSWORD` and ensure the `POSTGRES_USER` and `POSTGRES_PASSWORD` are set correctly. Also add the `FUSIONAUTH_APP_KICKSTART_FILE` environment variable with the path to the kickstart file along with an entry to attach the kickstart directory as a volume on the `fusionauth` service.
 
 #### Step 3: Start the FusionAuth Containers
 
 Run the following commands to bring up the services:
 
 ```sh
-docker compose up -d
-docker compose logs -f
+docker compose up
 ```
 
 This command starts three services:
 
 1. `db` - A PostgreSQL instance to store your data.
-    
 2. `search`- An OpenSearch instance for advanced search features.
-    
 3. `fusionauth` - The main application handling authentication flows.
     
 
@@ -483,26 +521,31 @@ You can further customize the services by editing the `docker-compose.yml` and `
 Now, you can rewrite the tests without mocking the FusionAuth API.
 
 ```python
+# pytest test.py
+
 import requests
-import pytest
 
 BASE_URL = "http://localhost:9011"
-APPLICATION_ID = "YOUR_APP_ID"  # Replace with your actual FusionAuth Application ID
+APPLICATION_ID = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"  # Replace with your actual FusionAuth Application ID
+API_KEY = "33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" # Replace with your actual FusionAuth API_KEY ID
 
 def fusionauth_login(login_id, password, application_id):
     """
     Function to authenticate a user against FusionAuth.
     """
     url = f"{BASE_URL}/api/login"
-    headers = {"Content-Type": "application/json"}
+    headers = {
+        "Authorization": API_KEY,
+        "Content-Type": "application/json"
+    }
     data = {
         "loginId": login_id,
         "password": password,
         "applicationId": application_id
     }
-    
+
     response = requests.post(url, json=data, headers=headers)
-    
+
     if response.status_code == 200:
         return {"status": "success", "token": response.json().get("token")}
     elif response.status_code == 404:
@@ -510,33 +553,36 @@ def fusionauth_login(login_id, password, application_id):
     else:
         return {"status": "error", "message": f"Unknown error: {response.text}"}
 
+
 def test_successful_login():
     """
     Test successful authentication with correct credentials.
     The user must exist in FusionAuth before running this test.
     """
-    result = fusionauth_login("test@example.com", "correct-password", APPLICATION_ID)
+    result = fusionauth_login("richard@example.com", "password", APPLICATION_ID)
     assert result["status"] == "success"
     assert "token" in result
+
 
 def test_invalid_credentials():
     """
     Test authentication with invalid credentials.
     """
-    result = fusionauth_login("test@example.com", "wrong-password", APPLICATION_ID)
+    result = fusionauth_login("richard@example.com", "wrong-password", APPLICATION_ID)
     assert result["status"] == "error"
     assert result["message"] == "User not found or incorrect password"
+
 
 def test_unknown_error():
     """
     Test handling of unknown errors by using an invalid application ID.
     """
-    result = fusionauth_login("test@example.com", "correct-password", "INVALID_APP_ID")
+    result = fusionauth_login("richard@example.com", "password", "INVALID_APP_ID")
     assert result["status"] == "error"
     assert "Unknown error" in result["message"]
 ```
 
-Now, integration tests run against a real authentication service within the same network as the application, replicating production-like conditions. The authentication flow is validated end-to-end, ensuring that DNS resolution, security headers, rate limits, and real response times are properly accounted for—before deployment.
+Now, integration tests run against a real authentication service within the same network as the application, replicating production-like conditions. The authentication flow is validated end-to-end, ensuring that security headers, rate limits, and real response times are properly accounted for—before deployment.
 
 
 ## Final Thoughts: Stop Relying on Mocks
