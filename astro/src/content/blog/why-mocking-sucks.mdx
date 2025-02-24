@@ -60,8 +60,6 @@ However, this approach completely crumbles when your workflow spans multiple ser
 
 ![Complex Stripe Mock](/img/blogs/why-mocking-sucks/complex-stripe-mock.png)
 
-Your mocks will quietly deceive you, letting you believe your system is stable—until it collapses in production. APIs change without warning, network glitches occur, and mocks won't prepare you for any of it.
-
 This is even more critical for applications that use third-party services for authentication. For example, let's say you are using Auth0 to manage authentication. Mocking here is risky because authentication is mission-critical, and frequent security updates can quickly make your mocks obsolete, breaking your app in production. Worse, authentication failures can shatter user trust, leading to frustration, account lockouts, or even security vulnerabilities.
 
 ## When and why mocking sucks
@@ -270,10 +268,10 @@ Great! The tests can reflect production-like conditions, catching issues like au
 
 ### FusionAuth Kickstart
 
-At FusionAuth, we offer a quickstart Docker server that provides a real version of our authentication service.
+At FusionAuth, we offer a [kickstart feature](/docs/get-started/download-and-install/development/kickstart) that allows you to build a template that can replicate a development or a production environment.
 
 - Developers can spin up a local FusionAuth instance to test full authentication flows, including OAuth and SSO, ensuring tests align with production.
-- Our [Kickstart](/docs/get-started/download-and-install/development/kickstart) feature automates environment setup, making maintaining consistent development and CI environments simple.
+- The kickstart feature automates environment setup, accounts creation and configuration of any resources. Then you have a FusionAuth instance with available data.
 - Unlike mocks, this approach handles real-world complexities like security updates and multi-step flows, reducing the risk of surprises in production.
 
 To see how much effective a real dev server can be,  let's write a mock that simulates a [login](/docs/apis/login) on the FusionAuth API. 
@@ -329,15 +327,6 @@ class TestFusionAuthLogin(unittest.TestCase):
         self.assertEqual(result["message"], "User not found or incorrect password")
 
     @patch("requests.post")
-    def test_locked_account(self, mock_post):
-        mock_post.return_value.status_code = 423
-        mock_post.return_value.json.return_value = {}
-
-        result = fusionauth_login("locked_user@example.com", "some-password", "app-123")
-        self.assertEqual(result["status"], "error")
-        self.assertEqual(result["message"], "User account is locked")
-
-    @patch("requests.post")
     def test_unknown_error(self, mock_post):
         mock_post.return_value.status_code = 500
         mock_post.return_value.json.return_value = {}
@@ -356,12 +345,103 @@ But this approach doesn't scale. For every new scenario, another mock is needed.
 
 And when FusionAuth updates? Your mocks stay frozen in time. New fields, changed response structures, evolving authentication flows—none of it is reflected in your tests. The mocks keep passing, but your application is already broken in production.
 
-Mocks don't capture the real world. They won't expose rate limits, token expirations, network timeouts, or multi-factor authentication failures. They give you an illusion of stability while hiding the cracks until it's too late.
 The alternative? Run a real FusionAuth instance locally.
 
 Here's how you can use FusionAuth Kickstart with Docker Compose to test authentication without mocks.
 
-#### Step 1: Download the Docker Compose and Environment Files
+#### Step 1: Create the kickstart file
+
+The kickstart file is a JSON file containing instructions regarding the environment setup. In the testcase we are setting up, we need to create a user. Here is how the kickstart file looks like:
+
+```json
+{
+  "variables": {
+    "apiKey": "33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod",
+    "asymmetricKeyId": "#{UUID()}",
+    "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
+    "clientSecret": "super-secret-secret-that-should-be-regenerated-for-production",
+    "defaultTenantId": "d7d09513-a3f5-401c-9685-34ab6c552453",
+    "userEmail": "test@example.com",
+    "userPassword": "correct-password",
+    "userUserId": "00000000-0000-0000-0000-111111111111"
+  },
+  "apiKeys": [
+    {
+      "key": "#{apiKey}",
+      "description": "Unrestricted API key"
+    }
+  ],
+  "requests": [
+    {
+      "method": "POST",
+      "url": "/api/key/generate/#{asymmetricKeyId}",
+      "tenantId": "#{defaultTenantId}",
+      "body": {
+        "key": {
+          "algorithm": "RS256",
+          "name": "For example app",
+          "length": 2048
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/application/#{applicationId}",
+      "tenantId": "#{defaultTenantId}",
+      "body": {
+        "application": {
+          "name": "Example App",
+          "oauthConfiguration": {
+            "authorizedRedirectURLs": [
+              "URL_TO_YOUR_BACKEND"
+            ],
+            "logoutURL": "URL_TO_YOUR_BACKEND",
+            "clientSecret": "#{clientSecret}",
+            "enabledGrants": [
+              "authorization_code",
+              "refresh_token"
+            ],
+            "generateRefreshTokens": true,
+            "requireRegistration": true
+          },
+          "jwtConfiguration": {
+            "enabled": true,
+            "accessTokenKeyId": "#{asymmetricKeyId}",
+            "idTokenKeyId": "#{asymmetricKeyId}"
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/user/registration/#{userUserId}",
+      "body": {
+        "user": {
+          "birthDate": "1985-11-23",
+          "email": "#{userEmail}",
+          "firstName": "Richard",
+          "lastName": "Flintstone",
+          "password": "#{userPassword}"
+        },
+        "registration": {
+          "applicationId": "#{applicationId}",
+          "data": {
+            "favoriteColor": "turquoise"
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+In the code above, variables are declared, to avoid repetitiion. After that, an API key is defined. Then, there is a series of requests that will be executed to:
+- Create a new application.
+- Create a new user.
+
+With the file ready, we can move on to the next step.
+
+#### Step 2: Download the Docker Compose and Environment Files
 
 Run the following commands to download the required files:
 
@@ -370,9 +450,9 @@ curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionau
 curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/.env
 ```
 
-Edit these files to match your environment. In the `.env` file, you'll want to modify the `DATABASE_PASSWORD` and ensure the `POSTGRES_USER` and `POSTGRES_PASSWORD` are set correctly.
+Edit these files to match your environment. In the `.env` file, you'll want to modify the `DATABASE_PASSWORD` and ensure the `POSTGRES_USER` and `POSTGRES_PASSWORD` are set correctly. Add also the `FUSIONAUTH_APP_KICKSTART_FILE` variable with the path to the kickstart file.
 
-#### Step 2: Start the FusionAuth Containers
+#### Step 3: Start the FusionAuth Containers
 
 Run the following commands to bring up the services:
 
@@ -390,56 +470,70 @@ This command starts three services:
 3. `fusionauth` - The main application handling authentication flows.
     
 
-#### Step 3: Explore and Configure FusionAuth
+#### Step 4: Explore and Configure FusionAuth
 
 FusionAuth will now be accessible at [`http://localhost:9011`](http://localhost:9011). You can configure your application, manage users, and integrate authentication workflows from here.
 
 The setup uses OpenSearch by default, but you can modify the `docker-compose.yml` file to switch between different search engines if needed.
 
-#### Step 4: Customize for Your Needs
+#### Step 5: Customize for Your Needs
 
 You can further customize the services by editing the `docker-compose.yml` and `.env` files. FusionAuth supports various deployment methods (e.g., Kubernetes, Helm), making it adaptable to different environments. You can learn more about working in a development environment [here](/docs/get-started/download-and-install/development/).
 
-### Step 5: Authenticate a User Using the FusionAuth API
-
-Once FusionAuth is running locally, you can authenticate a user by making a request to the /api/login endpoint. Use the following curl command to test the login flow with real authentication logic:
-
-```bash
-curl -X POST http://localhost:9011/api/login \
-    -H "Content-Type: application/json" \
-    -d '{
-        "loginId": "example@fusionauth.io",
-        "password": "password",
-        "applicationId": "10000000-0000-0002-0000-000000000001"
-    }'
-```
-
-And running tests in a Dockerized environment has its own set of advantages. For example, a development team is building a microservices-based authentication system. To ensure smooth integration, they initially rely on mocks to simulate FusionAuth responses in their tests.
+Now, you can rewrite the tests without mocking the FusionAuth API.
 
 ```python
-@patch("requests.post")
-def test_successful_login(mock_post):
-    mock_post.return_value.status_code = 200
-    mock_post.return_value.json.return_value = {
-        "token": "fake-jwt-token",
-        "user": {"id": "12345", "email": "test@example.com"}
+import requests
+import pytest
+
+BASE_URL = "http://localhost:9011"
+APPLICATION_ID = "YOUR_APP_ID"  # Replace with your actual FusionAuth Application ID
+
+def fusionauth_login(login_id, password, application_id):
+    """
+    Function to authenticate a user against FusionAuth.
+    """
+    url = f"{BASE_URL}/api/login"
+    headers = {"Content-Type": "application/json"}
+    data = {
+        "loginId": login_id,
+        "password": password,
+        "applicationId": application_id
     }
     
-    result = fusionauth_login("test@example.com", "correct-password", "app-123")
+    response = requests.post(url, json=data, headers=headers)
     
+    if response.status_code == 200:
+        return {"status": "success", "token": response.json().get("token")}
+    elif response.status_code == 404:
+        return {"status": "error", "message": "User not found or incorrect password"}
+    else:
+        return {"status": "error", "message": f"Unknown error: {response.text}"}
+
+def test_successful_login():
+    """
+    Test successful authentication with correct credentials.
+    The user must exist in FusionAuth before running this test.
+    """
+    result = fusionauth_login("test@example.com", "correct-password", APPLICATION_ID)
     assert result["status"] == "success"
     assert "token" in result
-```
 
-Everything passes in CI. The system is deployed. Then reality sets in.
+def test_invalid_credentials():
+    """
+    Test authentication with invalid credentials.
+    """
+    result = fusionauth_login("test@example.com", "wrong-password", APPLICATION_ID)
+    assert result["status"] == "error"
+    assert result["message"] == "User not found or incorrect password"
 
-* Service Discovery Issues: The real FusionAuth service is running inside a Kubernetes cluster, and the application fails to resolve its hostname due to incorrect DNS settings. The mock didn't account for this because it never interacted with the actual service.
-* Configuration Drift: In local development, the mock assumed a specific authentication flow. But in production, the real FusionAuth instance required an additional security header, causing unexpected authentication failures.
-
-A simple solution could have prevented this: running FusionAuth inside a Dockerized local environment. Instead of relying on mocks, the team sets up a containerized FusionAuth instance using Docker Compose:
-
-```bash
-docker-compose up -d
+def test_unknown_error():
+    """
+    Test handling of unknown errors by using an invalid application ID.
+    """
+    result = fusionauth_login("test@example.com", "correct-password", "INVALID_APP_ID")
+    assert result["status"] == "error"
+    assert "Unknown error" in result["message"]
 ```
 
 Now, integration tests run against a real authentication service within the same network as the application, replicating production-like conditions. The authentication flow is validated end-to-end, ensuring that DNS resolution, security headers, rate limits, and real response times are properly accounted for—before deployment.
@@ -447,9 +541,7 @@ Now, integration tests run against a real authentication service within the same
 
 ## Final Thoughts: Stop Relying on Mocks
 
-Mocks are risky. They break, they lie, and they hide real-world problems. Complex flows fail, updates blindside you, and tests give you false confidence.
-
-The solution? Use real dev versions of services. Here's why:
+Mocking is risky due to the fact it does not capture a realistic environment. That is why you should use real dev versions of services for:
 
 - Better Production Alignment - Your tests reflect real-world conditions, including API changes, security updates, and unexpected behavior.
 - Lower Maintenance - Say goodbye to constant mock updates. Real services stay consistent with production, reducing technical debt.
