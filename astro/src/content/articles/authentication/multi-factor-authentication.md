@@ -1,6 +1,6 @@
 ---
-title: "What is Multi-Factor Authentication (MFA) and How it Works"
-description: Learn what MFA is, why it's crucial, the available factors, and when to consider requiring multi-factor authentication for enhanced security.
+title: What Is Multi-Factor Authentication (MFA)? Methods, Types, and How It Works | FusionAuth"
+description: Learn what multi-factor authentication (MFA) is, how it works, and the different types and methods used. Strengthen security by understanding MFA’s role in verifying user identity.
 author: Dan Moore
 section: Authentication
 tags: mfa 2fa multi-factor-authentication two-factor-authentication user-experience customer-experience security policie sms totp factors ap-push tradeoffs open-standards biometric
@@ -56,7 +56,7 @@ Imagine a security system that not only asks for your credentials but also reads
 
 What's truly fascinating about adaptive MFA is its dynamic nature. It's not just about adding layers of security; it's about adding the right layers, at the right time. This approach minimizes friction for users, making security feel less like a series of hoops to jump through and more like a smart, responsive ally. It's a dance between convenience and caution, where security measures are tailored in real-time, based on the perceived level of risk. This not only enhances the user experience but also fortifies defenses, ensuring that the keys to the kingdom aren't handed over too easily, nor kept under lock and key unnecessarily.
 
-You can also use the same principles for initial authentication (for instance, requiring a CAPTCHA if a user logs in from a new device). Read more about adaptive approaches in our [Advanced Threat Detection](/docs/operate/secure-and-monitor/advanced-threat-detection) features. 
+You can also use the same principles for initial authentication (for instance, requiring a CAPTCHA if a user logs in from a new device). Read more about adaptive approaches in our [Advanced Threat Detection](/docs/operate/secure/advanced-threat-detection) features. 
 
 ## Why Use Multi-factor Authentication (MFA)?
 

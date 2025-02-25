@@ -4,12 +4,12 @@ description: Learn how to run multiple tenants in a single FusionAuth instance.
 navcategory: developer
 section: extend
 subcategory: examples
-tags: b2b2c
+tags: b2b2c, b2b2e
 ---
 import Aside from 'src/components/Aside.astro';
 import InlineField from 'src/components/InlineField.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
 import MultiTenantLimitations from 'src/content/docs/get-started/core-concepts/_multi-tenant-limitations.mdx';
-import ScrollRef from 'src/components/ScrollRef.astro';
 import ControlPlaneRegistrationDiagram from 'src/diagrams/docs/extend/examples/_control-plane-registration.astro';
 import CrossTenantUserAccess from 'src/content/docs/get-started/core-concepts/_cross-tenant-access.mdx';
 import DataPlaneLoginDiagram from 'src/diagrams/docs/extend/examples/_data-plane-login.astro';
@@ -125,7 +125,7 @@ For the PPVC control plane web application, the FusionAuth objects can be create
 
 If an employee at Raviga signs up for PPVC, a new FusionAuth tenant object will be created for Raviga, and within that tenant a new FusionAuth application configuration object. This Raviga FusionAuth tenant object is where all users of the Raviga PPVC application would be stored. 
 
-The mapping between the data plane application and the corresponding FusionAuth tenant and application objects must be stored somewhere. In this example, each data plane application has a hostname and background display color, as well as FusionAuth configuration information. This additional metadata should be stored in the application database. This metadata will be discussed more deeply in <ScrollRef target="The Tenant Object" /> section.
+The mapping between the data plane application and the corresponding FusionAuth tenant and application objects must be stored somewhere. In this example, each data plane application has a hostname and background display color, as well as FusionAuth configuration information. This additional metadata should be stored in the application database. This metadata will be discussed more deeply in [The Tenant Object](#the-tenant-object) section.
 
 ### Data Plane Application Tenant Determination
 
@@ -220,7 +220,7 @@ The control plane application needs a corresponding FusionAuth application confi
 * Enable self service registration, if desired.
 * Specific roles, if desired.
 
-Here's what the <strong>OAuth</strong> tab will look like:
+Here's what the <Breadcrumb>OAuth</Breadcrumb> tab will look like:
 
 ![Setting up the control plane application in FusionAuth.](/img/docs/extend/examples/setting-up-the-control-plane-application.png)
 
@@ -230,7 +230,7 @@ Below, basic self service registration is enabled. Doing this will allow a user 
 
 Then, you need to configure your control plane application to use FusionAuth for auth. This is framework dependent, but typically involves an OAuth library.
 
-You also need to create a Key Manager API key. Navigate to <strong>Settings -> API Keys</strong> and create a global API key. Make sure you enable <InlineField>Key manager</InlineField> as this will be used to mint tenant scoped API keys.
+You also need to create a Key Manager API key. Navigate to <Breadcrumb>Settings -> API Keys</Breadcrumb> and create a global API key. Make sure you enable <InlineField>Key manager</InlineField> as this will be used to mint tenant scoped API keys.
 
 ![Creating a key manager API key.](/img/docs/extend/examples/creating-key-manager-api-key.png)
 
@@ -242,7 +242,7 @@ Instead of doing all of these manually, you may also download [a kickstart file]
 
 ### Defining The Tenant Object
 
-The tenant object exists in your control plane and data plane applications. As outlined in <ScrollRef target="The Tenant Object" />, this entity stores all tenant related information, whether FusionAuth related or application specific. Here's a sample `tenant` table definition:
+The tenant object exists in your control plane and data plane applications. As outlined in [The Tenant Object](#the-tenant-object), this entity stores all tenant related information, whether FusionAuth related or application specific. Here's a sample `tenant` table definition:
 
 ```sql title="Tenant object creation DDL"
  CREATE TABLE tenant
@@ -482,7 +482,7 @@ $application_object["registrationConfiguration"] = $application_registrationconf
 {/* ... */}
 ```
 
-If needed, any of the above options could be configured. For instance, to allow users to sign in with Google, you would create an identity provider and assign the identity provider to the FusionAuth application configuration for a new data plane application during the <ScrollRef target="Initial FusionAuth Configuration" /> step.
+If needed, any of the above options could be configured. For instance, to allow users to sign in with Google, you would create an identity provider and assign the identity provider to the FusionAuth application configuration for a new data plane application during the [Initial FusionAuth Configuration](#initial-fusionauth-configuration) step.
 
 After the FusionAuth configuration is set up, store the FusionAuth application's Id and Client Secret. These values will be needed later.
 
@@ -501,7 +501,7 @@ Now that FusionAuth tenant objects and application objects are automatically cre
 
 ### Routing Requests to the Correct Tenant
 
-As mentioned in <ScrollRef target="Data Plane Application Tenant Determination" />, you must map requests to a specific data plane application. Typically the hostname is used to determine the tenant: `hooli.piedpipervideochat.com` points to the Hooli data plane application.
+As mentioned in [Data Plane Application Tenant Determination](#data-plane-application-tenant-determination), you must map requests to a specific data plane application. Typically the hostname is used to determine the tenant: `hooli.piedpipervideochat.com` points to the Hooli data plane application.
 
 #### Configure DNS and Your Web Server to Handle Wildcard Domains
 
@@ -557,7 +557,7 @@ return [$client_id, $client_secret];
 
 The code checks to see if the host matches the control plane application. Remember, in the PPVC multi-tenant application, the web application code responds to all requests for any users, both those logging into the control plane application to create video chat tenants and the users of the video chat application logging into a data plane application. 
 
-The OAuth configuration for the control plane application is static and was created in the <ScrollRef target="Initial FusionAuth Configuration" /> section. In contrast, for the data plane applications, the configuration is dynamic, is stored in the database, and was created in <ScrollRef target="Creating a FusionAuth Application" />. The tenant object is retrieved by the hostname and the Client Id and Client Secret are returned.
+The OAuth configuration for the control plane application is static and was created in the [Initial FusionAuth Configuration](#initial-fusionauth-configuration) section. In contrast, for the data plane applications, the configuration is dynamic, is stored in the database, and was created in [Creating a FusionAuth Application](#creating-a-fusionauth-application). The tenant object is retrieved by the hostname and the Client Id and Client Secret are returned.
 
 Each FusionAuth application object lives in one and only one FusionAuth tenant object, so providing the Client Id, which identifies the FusionAuth application configuration, ensures FusionAuth determines the correct FusionAuth tenant object. The Client Id is used to create the login, logout and registration links displayed in the PPVC application. These links can be used in navigation or any other location where the user might want to log in, register, or log out. Let's look at building those links next.
 
@@ -594,7 +594,7 @@ This logout URL works with browsers. If you are using APIs for a mobile applicat
 
 ### Handling OAuth Callbacks
 
-The final auth specific functionality for supporting multiple tenants is handling the OAuth callback. You may recall that in the <ScrollRef target="Creating a FusionAuth Application" /> section, you configured a FusionAuth application object with a given `authorizedRedirectURLs` value. It was something like: `https://hooli.piedpipervideochat.com/login/callback`. And in the most recent section, you saw code that looked like `$redirectURI = '...';`. These are the same values.
+The final auth specific functionality for supporting multiple tenants is handling the OAuth callback. You may recall that in the [Creating a FusionAuth Application](#creating-a-fusionauth-application) section, you configured a FusionAuth application object with a given `authorizedRedirectURLs` value. It was something like: `https://hooli.piedpipervideochat.com/login/callback`. And in the most recent section, you saw code that looked like `$redirectURI = '...';`. These are the same values.
 
 You must create a part of your web application codebase to respond to OAuth redirect requests. The code must do the following:
 
@@ -606,7 +606,7 @@ Let's look at each of these steps.
 
 #### Determine the Tenant's OAuth Configuration
 
-Mapping from the hostname like `hooli` to a certain Client Id and Secret should sound familiar. It is exactly the same logic as what was done in the <ScrollRef target="Look Up the OAuth Configuration Based On the Hostname" /> section.
+Mapping from the hostname like `hooli` to a certain Client Id and Secret should sound familiar. It is exactly the same logic as what was done in the [Look Up the OAuth Configuration Based On the Hostname](#look-up-the-oauth-configuration-based-on-the-hostname) section.
 
 #### Exchange the Authorization Code
 
@@ -697,7 +697,7 @@ There are five general categories of modifiable objects in FusionAuth:
 
 A "scoped" object is contained within the enclosing object. If the latter is deleted, the former will be as well. For instance, both users and groups are scoped to a tenant, and when the enclosing tenant is deleted, the users and groups for that tenant are too. Scoped objects cannot be shared. If the PPVC application has groups for different user privileges, each tenant needs to have its own. For example, an "Admin Group" or "Moderator Group" would have to be created in each tenant.
 
-An "attached" object, on the other hand, is linked to a different object, but if the latter is deleted, the former still exists. For instance, a signing key, created by using <strong>Key Master</strong>, can be associated with a tenant. When that tenant is deleted, the association is removed, but the signing key remains. 
+An "attached" object, on the other hand, is linked to a different object, but if the latter is deleted, the former still exists. For instance, a signing key, created by using <Breadcrumb>Key Master</Breadcrumb>, can be associated with a tenant. When that tenant is deleted, the association is removed, but the signing key remains. 
 
 Attached objects can be shared between peer objects. For example, PPVC can use the same signing key for the `hooli.piedpipervideochat.com` and `raviga.piedpipervideochat.com` tenants. 
 

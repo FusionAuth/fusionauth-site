@@ -1,6 +1,6 @@
 ---
-title: Differences Between OAuth 2 And OAuth 2.1
-description: The OAuth 2.1 draft will soon be published as an RFC. Why did they write it? How were the OAuth 2 specifications modified? What will you have to change?
+title: "OAuth 2.1: Key Updates and Differences from OAuth 2.0 | FusionAuth"
+description: OAuth 2.1 consolidates improvements and changes made to OAuth 2.0. Discover the key updates in OAuth 2.1, including enhanced security measures and streamlined flows. 
 image: advice/oauth-2-1/expert-advice-differences-between-oauth-2-and-oauth-2.1.png
 author: Dan Moore
 section: OAuth
@@ -30,7 +30,7 @@ OAuth 2.1 is not a scrape and rebuild of OAuth 2.0. Instead, OAuth 2.1 captures 
 
 Here's a suggested description pulled from the [ongoing mailing list discussion](https://mailarchive.ietf.org/arch/msg/oauth/Ne4Q9erPP7SpC5051sSy6XnLDv0/):
 
-> By design, [OAuth 2.1] does not introduce any new features to what already exists in the OAuth 2.0 specifications being replaced.
+> By design, OAuth 2.1 does not introduce any new features to what already exists in the OAuth 2.0 specifications being replaced.
 
 Many of the details are drawn from the [OAuth 2.0 Security Best Current Practices](https://tools.ietf.org/html/draft-ietf-oauth-security-topics-14) document. In the name of security best practices, some of the more problematic grants will be removed.
 
