@@ -17,6 +17,8 @@ section: Tokens
 
 Despite some negative sentiment, JWTs are a powerful and secure method of managing identity and authorization -- they simply need to be used properly. They have other benefits too, they’re flexible, [standardized](https://tools.ietf.org/html/rfc7519), stateless, portable, easy to understand, and extendable. They also have libraries to help you generate and consume them in almost every programming language.
 
+[![Breaking Down JWTs](/img/cta/jwt-1.png)](/ebooks/breaking-down-json-web-tokens%20?utm_medium=cta&utm_source=articles&utm_campaign=building_secure_jwt)
+
 This article will help make sure your JWTs are unassailable. It'll cover how you can securely integrate tokens into your systems by illustrating the most secure options. 
 
 However, every situation is different. You know your data and risk factors, so please learn these best practices and then apply them using judgement. A bank shouldn't follow the same security practices as a 'todo' SaaS application; take your needs into account when implementing these recommendations.

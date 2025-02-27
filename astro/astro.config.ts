@@ -6,6 +6,7 @@ import tailwind from "@astrojs/tailwind";
 import indexPages from "astro-index-pages/index.js";
 import {rehypeTasklistEnhancer} from './src/plugins/rehype-tasklist-enhancer';
 import {codeTitleRemark} from './src/plugins/code-title-remark';
+import remarkMdx from 'remark-mdx';
 
 const optionalIntegrations = [];
 if (!process.env.DEV) {
@@ -37,12 +38,13 @@ const config = defineConfig({
   ],
   markdown: {
     remarkPlugins: [
-        codeTitleRemark
+      codeTitleRemark,
+      remarkMdx,
     ],
     rehypePlugins: [
-        // Tweak GFM task list syntax
-        // @ts-ignore
-        rehypeTasklistEnhancer(),
+      // Tweak GFM task list syntax
+      // @ts-ignore
+      rehypeTasklistEnhancer(),
     ]
   },
   site: 'https://fusionauth.io/',

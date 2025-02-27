@@ -1,6 +1,6 @@
 ---
-title: The Auth Bottleneck Pattern 
-description: Why you might use a centralized user management system rather than having individual applications manage their own auth.
+title: Auth Bottleneck Architecture - Streamline Authentication Across Applications
+description: "Learn how the auth bottleneck pattern centralizes authentication and authorization for employees and customers."
 section: CIAM
 author: Dan Moore
 icon: /img/icons/auth-bottleneck-architecture.svg
