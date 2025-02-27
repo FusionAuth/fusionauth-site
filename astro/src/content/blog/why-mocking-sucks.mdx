@@ -8,10 +8,11 @@ tags: single testing mocking
 excerpt_separator: "{/* more */}"
 ---
 import Aside from 'src/components/Aside.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
 
-Developers love mocking. It's been a go-to solution for years: Simulate external services, run tests faster, and avoid the overhead of real APIs. But here's the truth — **mocking is overused and often dangerous**. It deceives you into thinking your system is stable, hiding critical failures that only appear when your code hits the real world. APIs change. Rate limits throttle you. Authentication flows break. Your tests will still pass with green colors while your app silently crashes in production.
+Developers love mocking. It's been a go-to solution for years: Simulate external services, run tests faster, and avoid the overhead of real APIs. But here's the truth — **mocking is overused and often dangerous**. It deceives you into thinking your system is stable, hiding critical failures that only appear when your code hits the real world. APIs change. Rate limits throttle you. Authentication flows break. Your tests will still pass with green colors while your app crashes in production.
 
-Mocks can turn your tests into a house of cards, giving you false confidence and creating hidden technical debt that slows teams down. In complex workflows — like payments or authentication — mocks fail to capture the true behavior of interconnected services.
+Overusing mocks can turn your tests into a house of cards, giving you false confidence and creating hidden technical debt that slows teams down. In complex workflows — like payments or authentication — mocks fail to capture the true behavior of interconnected services.
 
 In this post, we pull back the curtain on the dangers of mocking, showing you when it works, when it fails miserably, and why relying on mock services can build technical debt faster. With real-world examples like Stripe and Auth0, you'll see how mocking can backfire and why using real dev versions of services often leads to more robust software.
 
@@ -21,10 +22,9 @@ Mocking solves problems that often arise in modern software development, mainly 
 
 Here's why you might need to mock in specific scenarios:
 
-- **Testing failure scenarios:** How can you simulate an API outage or trigger an error response like `500 Internal Server Error`? With mocking, you can control these responses to see how your application behaves under failure conditions.
+- **Testing failure scenarios:** How can you simulate an API outage, rate limiting or an error response like `500 Internal Server Error`? With mocking, you can control responses to have confidence in how your application behaves under failure conditions.
 - **Resolving latency issues in tests:** External services introduce latency. For example, if you're testing customer registration through an external API, even a 500 ms response time can add up across hundreds of tests. Mocking replaces real service calls with near-instant simulated responses, allowing tests to run quickly.
 - **Simulating external services that aren't ready:** Backend APIs or third-party integrations may not be fully available during development in many projects. Mocking helps teams continue their work by simulating those services before they're ready.
-    
 
 ## When Mocking Works Well: Simple Service Simulations
 
@@ -62,7 +62,7 @@ However, this approach falls apart when your workflow spans multiple services. I
 
 ![Complex Stripe Mock](/img/blogs/why-mocking-sucks/complex-stripe-mock.png)
 
-Accurately testing complex workflows is especially critical for applications that use third-party services for authentication. For example, let's say you are using Auth0 to manage authentication. Mocking here is risky because authentication is mission-critical, and frequent security updates can quickly make your mocks obsolete, breaking your app in production. Worse, authentication failures can shatter user trust, leading to frustration, account lockouts, or even security vulnerabilities.
+Accurately testing complex workflows is especially critical for applications that use third-party services for authentication. For example, let's say you are using Auth0 to manage authentication. Mocking here is risky because authentication is mission-critical, and updates can make your mocks obsolete, breaking your app in production. Worse, authentication failures can shatter user trust, leading to frustration, account lockouts, or even security vulnerabilities.
 
 ## When Mocking Sucks And Why
 
@@ -110,12 +110,16 @@ Mocks can still be helpful for specific, isolated tests, but local-first is the 
 
 Here is a table summarizing the differences between mock-driven and local-first development:
 
-| Category             | Mock-Driven Development                                              | Local-First Development                                           |
-|----------------------|----------------------------------------------------------------------|-------------------------------------------------------------------|
-| Maintenance          | Requires constant updates to stay in sync with evolving APIs.        | Minimal maintenance; stays aligned with production behavior.      |
-| Reliability          | Mocks can mask breaking changes and hidden errors.                   | Real services expose real-world issues early.                     |
-| Real-World Accuracy  | Fails to capture rate limits, network errors, or version mismatches. | Accurately simulates production-like conditions.                  |
-| Developer Experience | Delays integration issue discovery until QA or production.           | Developers catch and fix integration issues early in development. |
+| Category             | Mock-Driven Development                                              | Local-First Development                                                    |
+|----------------------|----------------------------------------------------------------------|----------------------------------------------------------------------------|
+| Maintenance          | Requires constant updates to stay in sync with evolving APIs.        | Minimal maintenance; tested component up to date with production behavior. |
+| Reliability          | Mocks can mask breaking changes and hidden errors.                   | Real services expose real-world issues at dev time.                        |
+| Developer Experience | Delays integration issue discovery until QA or production.           | Developers catch and fix integration issues early in development.          |
+
+## But Isn't Prod Always Going To Be Different That Dev?
+
+Your production services will always be different from dev in an operational sense; they'll have more load and more data if nothing else.
+But by using local-first development rather than mocks, you can keep developers closer to the reality of production, discovering issues sooner and reducing test maintenance.
 
 ## Real-World Examples Of Local-First Development Tools
 
@@ -132,57 +136,7 @@ Let's see how mocking a Firebase service and using the Firebase Emulator Suite d
 
 A common approach to testing Firebase authentication and Firestore interactions is to mock the Firebase Admin SDK. Below is an example of how developers typically do this in Python.
 
-```python
-# pytest test.py
-
-from unittest.mock import patch, MagicMock
-import firebase_admin
-from firebase_admin import auth, firestore, credentials
-
-# Initialize Firebase app (mocked in tests)
-cred = credentials.Certificate("path/to/serviceAccountKey.json")
-firebase_admin.initialize_app(cred)
-
-# Function to authenticate a user and retrieve an ID token
-def authenticate_user(uid):
-    user = auth.get_user(uid)
-    token = auth.create_custom_token(uid)
-    return {"uid": user.uid, "token": token}
-
-# Function to fetch a document from Firestore
-def get_user_data(uid):
-    db = firestore.client()
-    doc_ref = db.collection("users").document(uid)
-    doc = doc_ref.get()
-    return doc.to_dict() if doc.exists else None
-
-# Unit test with mocks
-@patch("firebase_admin.auth.get_user")
-@patch("firebase_admin.auth.create_custom_token")
-@patch("firebase_admin.firestore.client")
-def test_authenticate_user(mock_firestore, mock_create_token, mock_get_user):
-    # Mock user data
-    mock_get_user.return_value = MagicMock(uid="12345")
-    mock_create_token.return_value = "fake-token"
-    
-    result = authenticate_user("12345")
-    
-    assert result["uid"] == "12345"
-    assert result["token"] == "fake-token"
-
-@patch("firebase_admin.firestore.client")
-def test_get_user_data(mock_firestore):
-    # Mock Firestore response
-    mock_doc = MagicMock()
-    mock_doc.exists = True
-    mock_doc.to_dict.return_value = {"name": "John Doe", "email": "john@example.com"}
-    mock_firestore.return_value.collection.return_value.document.return_value.get.return_value = mock_doc
-
-    result = get_user_data("12345")
-
-    assert result["name"] == "John Doe"
-    assert result["email"] == "john@example.com"
-```
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-example-firebase-mock-testing-vs-emulation/refs/heads/main/firebase_test_with_mocking.py" lang="python"  />
 
 While this approach allows for isolated testing, it introduces several problems:
 
@@ -222,57 +176,7 @@ firebase emulators:start
 
 With Firebase running locally, you can modify the authentication and Firestore functions to connect to the emulator instead of mocking API calls.
 
-```python
-# pytest test.py
-
-import firebase_admin
-from firebase_admin import auth, firestore, credentials
-
-# Connect to Firebase Emulator
-cred = credentials.Certificate("path/to/serviceAccountKey.json")
-firebase_admin.initialize_app(cred, {
-    "projectId": "demo-project"
-})
-
-# Set Firebase Emulator URLs
-import os
-os.environ["FIRESTORE_EMULATOR_HOST"] = "localhost:8080"
-os.environ["FIREBASE_AUTH_EMULATOR_HOST"] = "localhost:9099"
-
-# Function to authenticate a user using the local Firebase Emulator
-def authenticate_user_emulator(uid):
-    user = auth.get_user(uid)
-    token = auth.create_custom_token(uid)
-    return {"uid": user.uid, "token": token}
-
-# Function to fetch user data from Firestore in the Emulator
-def get_user_data_emulator(uid):
-    db = firestore.client()
-    doc_ref = db.collection("users").document(uid)
-    doc = doc_ref.get()
-    return doc.to_dict() if doc.exists else None
-
-# Integration test with the Firebase Emulator
-def test_firebase_emulator():
-    # Create test user
-    user = auth.create_user(uid="test-user", email="test@example.com", password="password123")
-    assert user.uid == "test-user"
-
-    # Authenticate and get a token
-    result = authenticate_user_emulator("test-user")
-    assert "token" in result
-
-    # Write user data to Firestore
-    db = firestore.client()
-    db.collection("users").document("test-user").set({"name": "John Doe", "email": "test@example.com"})
-
-    # Retrieve user data
-    user_data = get_user_data_emulator("test-user")
-    assert user_data["name"] == "John Doe"
-    assert user_data["email"] == "test@example.com"
-
-test_firebase_emulator()
-```
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-example-firebase-mock-testing-vs-emulation/refs/heads/main/firebase_test_with_emulator.py" lang="python"  />
 
 The tests can reflect production-like conditions, catching issues like authentication changes, security rule enforcement, and API updates. 
 
@@ -288,66 +192,7 @@ To see how effective a real dev server can be, let's write a mock that simulates
     
 Here's how you might mock the login in Python:
 
-```python
-import requests
-from unittest.mock import patch
-import unittest
-
-def fusionauth_login(login_id, password, application_id, base_url="https://sandbox.fusionauth.io"):
-    url = f"{base_url}/api/login"
-    headers = {"Content-Type": "application/json"}
-    data = {
-        "loginId": login_id,
-        "password": password,
-        "applicationId": application_id
-    }
-    
-    response = requests.post(url, json=data, headers=headers)
-    
-    if response.status_code == 200:
-        return {"status": "success", "token": response.json().get("token")}
-    elif response.status_code == 404:
-        return {"status": "error", "message": "User not found or incorrect password"}
-    elif response.status_code == 423:
-        return {"status": "error", "message": "User account is locked"}
-    else:
-        return {"status": "error", "message": "Unknown error"}
-
-class TestFusionAuthLogin(unittest.TestCase):
-    
-    @patch("requests.post")
-    def test_successful_login(self, mock_post):
-        mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {
-            "token": "fake-jwt-token",
-            "user": {"id": "12345", "email": "test@example.com"}
-        }
-
-        result = fusionauth_login("test@example.com", "correct-password", "app-123")
-        self.assertEqual(result["status"], "success")
-        self.assertIn("token", result)
-    
-    @patch("requests.post")
-    def test_invalid_credentials(self, mock_post):
-        mock_post.return_value.status_code = 404
-        mock_post.return_value.json.return_value = {}
-
-        result = fusionauth_login("test@example.com", "wrong-password", "app-123")
-        self.assertEqual(result["status"], "error")
-        self.assertEqual(result["message"], "User not found or incorrect password")
-
-    @patch("requests.post")
-    def test_unknown_error(self, mock_post):
-        mock_post.return_value.status_code = 500
-        mock_post.return_value.json.return_value = {}
-
-        result = fusionauth_login("test@example.com", "password", "app-123")
-        self.assertEqual(result["status"], "error")
-        self.assertEqual(result["message"], "Unknown error")
-
-if __name__ == "__main__":
-    unittest.main()
-```
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-example-mock-testing-vs-dev-server/refs/heads/main/fusionauth_test_with_mocking.py" lang="python"  />
 
 The `fusionauth_login` function simulates a login request to FusionAuth's `/api/login` endpoint. It handles various responses — success, incorrect credentials, locked accounts, and unexpected errors. The unit tests use `unittest.mock.patch` to replace real API calls, ensuring tests pass without needing a live FusionAuth server.
 
@@ -369,126 +214,13 @@ A [Kickstart](/docs/get-started/download-and-install/development/kickstart) file
 
 To create a test case that registers a user, the Kickstart file might look like the example below.
 
-
-```json
-{
-  "variables": {
-    "apiKey": "33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod",
-    "asymmetricKeyId": "#{UUID()}",
-    "applicationId": "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e",
-    "clientSecret": "super-secret-secret-that-should-be-regenerated-for-production",
-    "defaultTenantId": "d7d09513-a3f5-401c-9685-34ab6c552453",
-    "adminEmail": "admin@example.com",
-    "adminPassword": "password",
-    "adminUserId": "00000000-0000-0000-0000-000000000001",
-    "userEmail": "richard@example.com",
-    "userPassword": "password",
-    "userUserId": "00000000-0000-0000-0000-111111111111"
-  },
-  "apiKeys": [
-    {
-      "key": "#{apiKey}",
-      "description": "Unrestricted API key"
-    }
-  ],
-  "requests": [
-    {
-      "method": "POST",
-      "url": "/api/key/generate/#{asymmetricKeyId}",
-      "tenantId": "#{defaultTenantId}",
-      "body": {
-        "key": {
-          "algorithm": "RS256",
-          "name": "For example app",
-          "length": 2048
-        }
-      }
-    },
-    {
-      "method": "POST",
-      "url": "/api/application/#{applicationId}",
-      "tenantId": "#{defaultTenantId}",
-      "body": {
-        "application": {
-          "name": "Example App",
-          "oauthConfiguration": {
-            "authorizedRedirectURLs": [
-              "URL_TO_YOUR_APP"
-            ],
-            "logoutURL": "URL_TO_YOUR_APP",
-            "clientSecret": "#{clientSecret}",
-            "enabledGrants": [
-              "authorization_code",
-              "refresh_token"
-            ],
-            "generateRefreshTokens": true,
-            "requireRegistration": true
-          },
-          "jwtConfiguration": {
-            "enabled": true,
-            "accessTokenKeyId": "#{asymmetricKeyId}",
-            "idTokenKeyId": "#{asymmetricKeyId}"
-          }
-        }
-      }
-    },
-    {
-      "method": "POST",
-      "url": "/api/user/registration/#{adminUserId}",
-      "body": {
-        "registration": {
-          "applicationId": "#{FUSIONAUTH_APPLICATION_ID}",
-          "roles": [
-            "admin"
-          ]
-        },
-        "roles": [
-          "admin"
-        ],
-        "skipRegistrationVerification": true,
-        "user": {
-          "birthDate": "1981-06-04",
-          "data": {
-            "favoriteColor": "chartreuse"
-          },
-          "email": "#{adminEmail}",
-          "firstName": "Erlich",
-          "lastName": "Bachman",
-          "password": "#{adminPassword}",
-          "imageUrl": "//www.gravatar.com/avatar/5e7d99e498980b4759650d07fb0f44e2"
-        }
-      }
-    },
-    {
-      "method": "POST",
-      "url": "/api/user/registration/#{userUserId}",
-      "body": {
-        "user": {
-          "birthDate": "1985-11-23",
-          "email": "#{userEmail}",
-          "firstName": "Richard",
-          "lastName": "Flintstone",
-          "password": "#{userPassword}"
-        },
-        "registration": {
-          "applicationId": "#{applicationId}",
-          "data": {
-            "favoriteColor": "turquoise"
-          }
-        }
-      }
-    }
-  ]
-}
-```
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-example-mock-testing-vs-dev-server/refs/heads/main/fusionauth/kickstart/kickstart.json" lang="json"  />
 
 This code declares variables to avoid repetition, and then defines an API key. It then executes a series of requests to:
 
 - Create a new application.
 - Create a new user.
 - Register the user to the application.
-
-
 
 #### Step 2: Download The Docker Compose And Environment Files
 
@@ -514,7 +246,6 @@ This command starts three services:
 1. `db` - A PostgreSQL instance to store your data.
 2. `search`- An OpenSearch instance for advanced search features.
 3. `fusionauth` - The main application handling authentication flows.
-    
 
 #### Step 4: Explore And Configure FusionAuth
 
@@ -528,70 +259,9 @@ You can further customize the services by editing the `docker-compose.yml` and `
 
 Now, you can rewrite the tests without mocking the FusionAuth API.
 
-```python
-# pytest test.py
+<RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-example-mock-testing-vs-dev-server/refs/heads/main/fusionauth_test_with_dev_server.py" lang="python"  />
 
-import requests
-
-BASE_URL = "http://localhost:9011"
-APPLICATION_ID = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"  # Replace with your actual FusionAuth Application ID
-API_KEY = "33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" # Replace with your actual FusionAuth API_KEY ID
-
-def fusionauth_login(login_id, password, application_id):
-    """
-    Function to authenticate a user against FusionAuth.
-    """
-    url = f"{BASE_URL}/api/login"
-    headers = {
-        "Authorization": API_KEY,
-        "Content-Type": "application/json"
-    }
-    data = {
-        "loginId": login_id,
-        "password": password,
-        "applicationId": application_id
-    }
-
-    response = requests.post(url, json=data, headers=headers)
-
-    if response.status_code == 200:
-        return {"status": "success", "token": response.json().get("token")}
-    elif response.status_code == 404:
-        return {"status": "error", "message": "User not found or incorrect password"}
-    else:
-        return {"status": "error", "message": f"Unknown error: {response.text}"}
-
-
-def test_successful_login():
-    """
-    Test successful authentication with correct credentials.
-    The user must exist in FusionAuth before running this test.
-    """
-    result = fusionauth_login("richard@example.com", "password", APPLICATION_ID)
-    assert result["status"] == "success"
-    assert "token" in result
-
-
-def test_invalid_credentials():
-    """
-    Test authentication with invalid credentials.
-    """
-    result = fusionauth_login("richard@example.com", "wrong-password", APPLICATION_ID)
-    assert result["status"] == "error"
-    assert result["message"] == "User not found or incorrect password"
-
-
-def test_unknown_error():
-    """
-    Test handling of unknown errors by using an invalid application ID.
-    """
-    result = fusionauth_login("richard@example.com", "password", "INVALID_APP_ID")
-    assert result["status"] == "error"
-    assert "Unknown error" in result["message"]
-```
-
-Integration tests run against a real authentication service within the same network as the application, replicating production-like conditions. The authentication flow is validated end-to-end, ensuring that security headers, rate limits, and real response times are properly accounted for before deployment.
-
+Integration tests run against a real authentication service within the same network as the application, replicating production-like conditions. The authentication flow is validated end-to-end, ensuring that security headers, and real response times are properly accounted for before deployment.
 
 ## Final Thoughts: Stop Relying On Mocks
 
