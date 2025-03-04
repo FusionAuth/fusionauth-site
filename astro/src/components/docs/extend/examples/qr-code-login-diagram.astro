@@ -1,0 +1,29 @@
+---
+import Diagram from 'src/components/mermaid/SequenceDiagram.astro';
+
+const { alt } = Astro.props;
+
+//language=Mermaid
+const diagram = `
+sequenceDiagram
+    autonumber
+    participant P as Logged-in first <br/> device (Phone)
+    participant C as Second device<br/> (Computer)
+    participant A as App
+    participant F as FusionAuth
+
+    C->>A: Open app, visit QR code login page (/logged-out-qr-login)
+    A->>F: POST /oauth2/device_authorize
+    F-->>A: device_code, user_code, verification_uri_complete
+    A->>A: Generate QR code with verification_uri_complete
+    A-->>C: Display QR code
+    A-->>F: POST /oauth2/token with device_code (polling periodically)
+    P->>F: Scan QR code, GET verification_uri_complete
+    Note over P, F: User approves login
+    F-->>P: Success page
+    A-->>F: POST /oauth2/token with device_code (polling periodically)
+    F-->>A: access_token, refresh_token
+    A-->>C: Complete login, redirect to app
+`;
+---
+<Diagram code={diagram} alt={alt} />

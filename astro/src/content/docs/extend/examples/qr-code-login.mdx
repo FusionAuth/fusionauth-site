@@ -1,0 +1,343 @@
+---
+title: QR Code Login
+description: Learn how to support QR code logins in an app
+navcategory: developer
+section: extend
+subcategory: examples
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-example-qr-codes/main
+---
+import Diagram from 'src/components/docs/extend/examples/qr-code-login-diagram.astro';
+import Aside from 'src/components/Aside.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+
+QR code login lets end users log into a device, such as a computer, by
+scanning a QR code using a device, such as a smartphone, that's already
+authenticated.
+
+This guide uses the [QR Codes Example
+App](https://github.com/fusionauth/fusionauth-example-qr-codes) to show how to
+implement QR code login using FusionAuth. The app extends the [Python Flask
+quickstart](/docs/quickstarts/quickstart-python-flask-web) and lets users log
+into the fictitious [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM)
+service.
+
+The guide covers:
+
+- [How QR code login works](#how-qr-code-login-works)
+- [How to run the app](#run-the-app)
+- [How to build a QR code login](#implement-a-qr-code-login)
+
+![ChangeBank's QR code login page](/img/docs/extend/examples/qr-code-login/example-qr-code.webp)
+
+## How QR code login works
+
+FusionAuth's QR code login uses the [OAuth 2.0 Device Authorization
+flow](https://oauth.net/2/device-flow/). This flow lets a device, such as a
+computer, offload authentication to another device, such as a smartphone, that's
+already logged in. In a typical Device Authorization flow, the user manually
+enters a short code into a verification URI on the already logged-in device.
+
+QR code login replaces manual code entry with QR codes. Instead, when a user
+visits a designated QR code login page, the app generates a QR code that
+contains the complete verification URI that includes the user code. The user can
+then scan the QR code with a logged-in device and approve login for the other
+device. Using a QR code speeds up login and reduces entry errors.
+
+<Diagram></Diagram>
+
+## Run the App
+
+To start, run the example app to experience the QR login flow as an end user.
+
+### Prerequisites
+
+- A smartphone or similar device with a browser and QR scanning capabilities.
+- A free [ngrok](https://ngrok.com/) account and agent.
+- [Python](https://www.python.org/downloads/).
+- [Docker](https://www.docker.com).
+
+### Set Up and Run ngrok
+
+The app requires two local servers:
+
+- A Flask server on port 5000.
+- FusionAuth on port 9011.
+
+To reach the servers from both your smartphone and computer, use ngrok to create
+secure, public URLs for each server. ngrok sends, or tunnels, traffic from each
+URL to your local server.
+
+1. Add the following lines to your local `ngrok.yml` file:
+
+    ```
+    tunnels:
+      fa:
+        proto: http
+        addr: 9011
+      flask:
+        proto: http
+        addr: 5000
+    ```
+
+    <Aside type="note">
+    The default location of the `ngrok.yml`  file varies by OS. To get the
+    default file location, see the [ngrok Agent Configuration
+    File](https://ngrok.com/docs/agent/config/) docs.
+    </Aside>
+
+1. Start both tunnels:
+
+    ```
+    ngrok start --all
+    ```
+
+    The command's output provides URLs for each port, such as:
+
+    ```
+    Forwarding    https://d9d5-73-249-72-110.ngrok-free.app -> http://localhost:9011
+    Forwarding    https://bccb-73-249-72-110.ngrok-free.app -> http://localhost:5000
+    ```
+
+    The rest of the guide refers to these URLs as:
+    
+    - `issuer_url` for FusionAuth on port 9011.
+    - `app_url` for the Flask app on port 5000.
+
+### Set Up and Run FusionAuth
+
+Next, configure FusionAuth to use the ngrok URLs and start the FusionAuth
+server:
+
+1. Clone the [QR Codes
+   Example App](https://github.com/fusionauth/fusionauth-example-qr-codes) repo and
+   navigate to the cloned directory. For example, using SSH:
+
+    ```
+    git clone git@github.com:FusionAuth/fusionauth-example-qr-codes.git
+    cd fusionauth-example-qr-codes
+    ```
+
+1.  In `/kickstart/kickstart.json`, edit the `variables` section to add
+   variables for the `app_url` and `issuer_url`:
+
+    ```json
+    {
+      "variables": {
+        ...
+        "app_url": "https://bccb-73-249-72-110.ngrok-free.app",
+        "issuer_url": "https://d9d5-73-249-72-110.ngrok-free.app",
+        ...
+      },
+      ...
+    }
+    ```
+
+     Save `/kickstart/kickstart.json`.
+
+1. In a new terminal window, start FusionAuth using Docker:
+
+    ```
+    docker compose up -d
+    ```
+
+### Set Up and Run the Flask Server
+
+Next, configure and start the app's Flask server.
+
+1. In the clone repo's directory, edit `.env-flask` to set the `ISSUER` environment
+   variable to the `issuer_url`:
+
+   ```
+   ISSUER=https://d9d5-73-249-72-110.ngrok-free.app
+   ```
+
+    Save `.env-flask`.
+
+1.  In a new terminal window, set up a Python virtual environment and install
+    the Flask app's dependencies:
+
+    ```
+    python -m venv venv && \
+    source venv/bin/activate && \
+    pip install -r requirements.txt
+    ```
+
+1.  Start the Flask server:
+
+    ```
+    python server.py
+    ```
+
+    <Aside type="note">
+    Don't use the `flask` command. The command won't work due to threading limitations.
+    </Aside>
+
+### Log In on Your Smartphone
+
+With the Flask server running, you can now log in to the app from your
+smartphone:
+
+1. In your smartphone's browser, go to the app's **Login** page at `<app_url>/login`.
+
+    For example, if the `app_url` is `https://bccb-73-249-72-110.ngrok-free.app`,
+    go to `https://bccb-73-249-72-110.ngrok-free.app/login`.
+
+    If prompted by ngrok, click **Visit Site**.
+
+1. Log in to the app using the following credentials:
+
+    - **Email**: `richard@example.com`
+    - **Password**: `password`
+
+1. After login, you're redirected to the app's **Account** page.
+
+    Don't log out or clear your smartphone browser's cookies. Next, you'll use your smartphone to
+    log in to your computer.
+
+
+### Log In on Your Computer
+
+While you're logged in to the app on your smartphone, use QR code login to log in
+using your computer.
+
+1. In your computer's browser, go to the app's **QR Code Login** page at `<app_url>/logged-out-qr-login`.
+
+    For example, if the `app_url` is `https://bccb-73-249-72-110.ngrok-free.app`,
+    go to `https://bccb-73-249-72-110.ngrok-free.app/logged-out-qr-login`.
+
+    If prompted by ngrok, click **Visit Site**.
+
+1. Using your logged-in smartphone, scan the QR code, which redirects to a **Device
+   login** page.
+
+    ![Device Login page](/img/docs/extend/examples/qr-code-login/device-login.webp)
+
+1. Click **Submit**.
+
+    On your smartphone, the **Device login** page redirects
+    to a success page with a related success message.
+
+    ![Device Login success message](/img/docs/extend/examples/qr-code-login/device-login-success.webp)
+
+    In your computer's browser session, you're automatically logged in
+    and redirected to the app's **Account** page.
+
+
+### Clean Up
+
+When you're done, press <kbd>Ctrl + C</kbd> to stop ngrok and Flask 
+in their respective terminal windows.
+
+To exit the Python virtual environment, run the following command
+from the repo's root directory:
+
+```
+deactivate
+```
+
+To stop Docker and clean up its resources, run:
+
+```
+docker compose down -v
+```
+
+## Implement a QR Code Login
+
+This section explains how the [QR Codes Example
+App](https://github.com/fusionauth/fusionauth-example-qr-codes) implements
+QR code login using the Device Authorization flow.
+
+### Configure FusionAuth
+
+In addition to using the `app_url` and `issuer_url` variables,
+the app's `/kickstart/kickstart.json` creates a FusionAuth application that:
+
+- Enables the Device Authorization flow using the
+  `urn:ietf:params:oauth:grant-type:device_code` grant type
+
+- Specifies a custom Device Verification URL within the application. The example app
+  uses the themed OAuth device template at FusionAuth's `/oauth2/device` endpoint.
+
+The related application creation request in `/kickstart/kickstart.json`:
+
+<RemoteCode url={frontmatter.codeRoot + "/kickstart/kickstart.json#L73-L110"} lang="json"/>
+
+### Start the Device Authorization Flow
+
+The `/logged-out-qr-login` route in the example app's `server.py` file starts a
+Device Authorization flow. When an end user requests the route, the app:
+
+1. Requests a device code and verification URI from FusionAuth's
+   `/oauth2/device_authorize` endpoint.
+1. Starts a background thread to poll FusionAuth for authorization
+   using the device code returned from the response.
+1. Generates a QR code containing the complete verification URI, which
+   includes the user code.
+1. Renders the `logged-out-qr-login.html` HTML template with the QR code to the
+   end user.
+   
+<RemoteCode url={frontmatter.codeRoot + "/server.py"} tags="loggedOutQRLogin"
+lang="python"/>
+
+The `poll_url` function defines the background polling logic. When invoked, the
+function sends requests to FusionAuth's `/oauth2/token` endpoint with the device
+code, checking if the user has authorized the login. When authorization occurs,
+the resulting access and refresh tokens are stored in `polling_data`.
+
+<RemoteCode url={frontmatter.codeRoot + "/server.py#L43-L77"}
+lang="python"/>
+
+### End User Scans the QR Code
+
+When the end user scans the QR code with an already logged-in device, the
+device's browser is directed to the verification URI in FusionAuth. If not
+logged in, the user must authenticate using email and password first.
+
+On this page, the end user can click **Submit** to authorize the login and
+associate their user session with the device code.
+
+![Device Login page](/img/docs/extend/examples/qr-code-login/device-login.webp)
+
+When authorization occurs, access and refresh tokens are returned by
+FusionAuth's `/oauth2/token` endpoint. This is picked up by the ongoing
+polling performed by the `poll_url` function.
+
+### Monitor the Authorization Status
+
+The `/device_grant_finished` route works with JavaScript in the
+`logged-out-qr-login.html` template to monitor polling progress:
+
+* The template polls the `/device_grant_finished` route.
+* When `poll_url` receives access and refresh tokens, the
+  `/device_grant_finished` route returns `{"reload": "true"}`, redirecting
+  the browser to the `/reload` route.
+
+The `/device_grant_finished` route in `server.py`:
+
+<RemoteCode url={frontmatter.codeRoot + "/server.py"} tags="deviceGrantFinished"
+lang="python"/>
+
+The `logged-out-qr-login.html` template:
+
+<RemoteCode url={frontmatter.codeRoot + "/templates/logged-out-qr-login.html#L31-L55"} 
+lang="javascript"/>
+
+### Complete the Login
+
+The `/reload` route completes the login process. When requested, the route:
+
+1. Retrieves the access and refresh tokens from
+  `polling_data`.
+1. Uses the FusionAuth client to fetch user info from the access token.
+1. Calls the `process_token` function defined in `server.py` to set cookies used for
+   authentication and authorization on the home page (`/`) and `/account`
+   routes. This effectively logs in the user.
+1. Redirects the user to the home page (`/`) route, now logged in.
+
+The `/reload` route:
+
+<RemoteCode url={frontmatter.codeRoot + "/server.py#L114-L133"} lang="python"/>
+
+The `process_token` function definition:
+
+<RemoteCode url={frontmatter.codeRoot + "/server.py#L268-L277"} lang="python"/>
