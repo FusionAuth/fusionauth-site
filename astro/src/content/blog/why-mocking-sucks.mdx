@@ -1,0 +1,274 @@
+---
+publish_date: 2025-03-05 
+title: Why Mocking Sucks
+description: In this article, you'll learn why mocking is a risky practice and how to avoid it.
+image: /img/blogs/why-mocking-sucks/why-mocking-sucks.png
+authors: Matt Keib
+categories: Education
+tags: single testing mocking
+excerpt_separator: "{/* more */}"
+---
+import Aside from 'src/components/Aside.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+
+Developers love mocking. It's been a go-to solution for years: Simulate external services, run tests faster, and avoid the overhead of real APIs. But here's the truth — **mocking is overused and often dangerous**. It deceives you into thinking your system is stable, hiding critical failures that only appear when your code hits the real world. APIs change. Rate limits throttle you. Authentication flows break. Your tests will still pass with green colors while your app crashes in production.
+
+Overusing mocks can turn your tests into a house of cards, giving you false confidence and creating hidden technical debt that slows teams down. In complex workflows — like payments or authentication — mocks fail to capture the true behavior of interconnected services.
+
+In this post, we pull back the curtain on the dangers of mocking, showing you when it works, when it fails miserably, and why relying on mock services can build technical debt faster. With real-world examples like Stripe and Auth0, you'll see how mocking can backfire and why using real dev versions of services often leads to more robust software.
+
+## Why Is Mocking Necessary?
+
+Mocking solves problems that often arise in modern software development, mainly when dealing with multi-tenant SaaS platforms or distributed systems. If you're working with downloadable or offline software, mocks may not be as critical since your dependencies are within your control. However, mocking can become necessary when your application relies on third-party services — especially APIs you don't own.
+
+Here's why you might need to mock in specific scenarios:
+
+- **Testing failure scenarios:** How can you simulate an API outage, rate limiting or an error response like `500 Internal Server Error`? With mocking, you can control responses to have confidence in how your application behaves under failure conditions.
+- **Resolving latency issues in tests:** External services introduce latency. For example, if you're testing customer registration through an external API, even a 500 ms response time can add up across hundreds of tests. Mocking replaces real service calls with near-instant simulated responses, allowing tests to run quickly.
+- **Simulating external services that aren't ready:** Backend APIs or third-party integrations may not be fully available during development in many projects. Mocking helps teams continue their work by simulating those services before they're ready.
+
+## When Mocking Works Well: Simple Service Simulations
+
+Mocking works best when simulating simple, isolated services with predictable behavior. For example, mocking is an excellent option if your app integrates with Stripe and you only need to test customer registration. You can simulate a successful customer registration call or even an API failure to verify your error-handling code — all without ever hitting Stripe's servers.
+
+```python
+from unittest.mock import patch
+
+@patch('requests.post')
+def test_successful_registration(mock_post):
+    # Mock the API response
+    mock_post.return_value.status_code = 201
+    mock_post.return_value.json.return_value = {
+        "id": "cus_12345",
+        "name": "Test User",
+        "email": "test@example.com"
+    }
+
+    # Call the function being tested
+    result = register_customer("Test User", "test@example.com")
+
+    # Verify the mock behavior and response
+    assert result["id"] == "cus_12345"
+    assert result["name"] == "Test User"
+    assert result["email"] == "test@example.com"
+    mock_post.assert_called_once_with(
+        "https://api.stripe.com/v1/customers",
+        data={"name": "Test User", "email": "test@example.com"}
+    )
+```
+
+![Simple Stripe Mock](/img/blogs/why-mocking-sucks/simple-stripe-mock.png)
+
+However, this approach falls apart when your workflow spans multiple services. Imagine testing a full Stripe payment flow: Registering a customer, adding items to a cart, and processing a payment. Mocking each step might seem feasible, but once you combine them, inter-service dependencies, timing issues, and API quirks won't surface in your tests.
+
+![Complex Stripe Mock](/img/blogs/why-mocking-sucks/complex-stripe-mock.png)
+
+Accurately testing complex workflows is especially critical for applications that use third-party services for authentication. For example, let's say you are using Auth0 to manage authentication. Mocking here is risky because authentication is mission-critical, and updates can make your mocks obsolete, breaking your app in production. Worse, authentication failures can shatter user trust, leading to frustration, account lockouts, or even security vulnerabilities.
+
+## When Mocking Sucks And Why
+
+Revisiting the Stripe example, maintaining mocks for the full simulated flow requires constant updates to match API changes, introduces inconsistencies, and fails to mimic the nuances of real-world interactions.
+
+Here are the issues:
+
+### 1. Mocking Creates A False Sense Of Security
+
+Mocks only behave the way you program them to. They'll never catch unexpected changes or errors that might occur with the real service, giving you the illusion that your system is working perfectly.
+
+Even worse, mocks can accidentally break your product by masking breaking changes. Imagine a situation where a third-party API modifies a key response format. If your mocks aren't updated to reflect this change, your tests will continue to pass while your product experiences hidden failures in production. This false confidence leads to missed bugs, broken functionality, and a potentially massive impact on your users and business.
+
+### 2. Mocking Increases Maintenance Overhead
+
+APIs evolve. New fields, endpoints, and even minor response tweaks can break your mocks. You'll constantly need to update your test suite to keep up with these changes, which can result in technical debt that burdens your team.
+
+### 3. Mocking Encourages Bad Testing Practices
+
+Developers often become complacent with mocks, focusing more on matching expected inputs and outputs than handling real-world edge cases. This leads to over-reliance on happy-path tests that fail to account for errors, latency, or timeouts in real environments.
+
+### 4. Mocking Decouples You from Reality
+
+Mocks can't reproduce the unpredictability of real services—rate limiting, version mismatches, or complex state changes in multi-tenant APIs. Tests that never hit real endpoints miss these critical factors, resulting in software unprepared for real-world conditions.
+
+### 5. Mocking Is An Anti-Pattern For Complex Systems
+
+The more interconnected your services are, the harder it becomes to maintain accurate mocks. In a distributed system, service interactions are dynamic and often undocumented, meaning mocks will never fully reflect actual behavior. Over time, this leads to **tests that become brittle and unreliable**.
+
+### 6. Mocking Hinders Real Developer Experience
+
+Developers often miss opportunities to work with real APIs early in development due to over-reliance on mocks. This delays the discovery of integration issues, ultimately shifting the pain to later stages, like QA or production.
+
+### So What Is The Solution?
+
+In some cases, mocking may be your only option. When you do, use company-maintained mocks whenever possible, like Stripe's [`stripe-mock`](https://github.com/stripe/stripe-mock), which stays in sync with their API and minimizes maintenance overhead. However, even the best mocks can't replace the benefits of using sandbox or dev environments provided by real services.
+
+Use sandbox APIs to run realistic integration tests, but be prepared to face latency, rate limits, and downtime. These issues can disrupt your tests and waste time.
+
+## Local-First vs. Mock-Driven Development
+
+This "local-first" development approach aligns with broader trends in modern software engineering. Developers are increasingly favoring real, self-contained environments over artificial mocks. Tools like Docker, Kubernetes, and local microservice setups have empowered teams to replicate production-like conditions at every stage of development. The idea is simple: The more your tests reflect reality, the fewer issues you'll face when deploying to production.
+
+Mocks can still be helpful for specific, isolated tests, but local-first is the future for complex, business-critical systems like authentication.
+
+Here is a table summarizing the differences between mock-driven and local-first development:
+
+| Category             | Mock-Driven Development                                              | Local-First Development                                                    |
+|----------------------|----------------------------------------------------------------------|----------------------------------------------------------------------------|
+| Maintenance          | Requires constant updates to stay in sync with evolving APIs.        | Minimal maintenance; tested component up to date with production behavior. |
+| Reliability          | Mocks can mask breaking changes and hidden errors.                   | Real services expose real-world issues at dev time.                        |
+| Developer Experience | Delays integration issue discovery until QA or production.           | Developers catch and fix integration issues early in development.          |
+
+## But Isn't Prod Always Going To Be Different Than Dev?
+
+Your production services will always be different from dev in an operational sense; they'll have more load and more data if nothing else.
+But by using local-first development rather than mocks, you can keep developers closer to the reality of production, discovering issues sooner and reducing test maintenance.
+
+## Real-World Examples Of Local-First Development Tools
+
+The trend is clear: It's time to embrace local-first development to provide developers with reliable, production-grade environments they can run locally. By offering real services for development and testing, this approach empowers teams to build with greater confidence and fewer surprises in production.
+
+### Firebase Emulator Suite
+
+Firebase, widely used for authentication, real-time databases, and cloud functions, offers a local emulator suite. The tool allows developers to simulate core Firebase services in their development environment, removing the need for fragile mocks.
+
+- You can test real authentication flows, database queries, and cloud function triggers without depending on the live Firebase servers.
+- The emulator provides feature parity with production, allowing reliable integration tests free from rate limits and connectivity issues.
+
+Let's see how mocking a Firebase service and using the Firebase Emulator Suite differ.
+
+A common approach to testing Firebase authentication and Firestore interactions is to mock the Firebase Admin SDK. Below is an example of how developers typically do this in Python.
+
+<RemoteCode url="https://raw.githubusercontent.com/fusionauth/fusionauth-example-firebase-mock-testing-vs-emulation/refs/heads/main/firebase_test_with_mocking.py" lang="python"  />
+
+While this approach allows for isolated testing, it introduces several problems:
+
+- Mocks do not capture Firebase behavior changes, such as new API parameters or modified authentication flows.
+- Firestore queries in production may behave differently from their mocked versions, especially when dealing with security rules and indexes.
+- The real Firebase service enforces rate limits and authentication constraints, which mocks ignore.
+
+So instead of mocking Firebase, you can use the [Firebase Emulator Suite](https://firebase.google.com/docs/emulator-suite/install_and_configure#install_the_local_emulator_suite) to run tests against a fully functional local Firebase instance, which behaves identically to production.
+
+#### Step 1: Install And Configure Firebase Emulator
+
+Install the Firebase CLI.
+
+```sh 
+npm install -g firebase-tools
+```
+
+Initialize the project. 
+
+```sh
+firebase init
+```
+
+Initialize Firebase Emulators.
+
+```bash 
+firebase init emulators
+```
+
+Start the emulator.
+
+```bash
+firebase emulators:start
+```
+
+#### Step 2: Modify Your Code To Use The Emulator
+
+With Firebase running locally, you can modify the authentication and Firestore functions to connect to the emulator instead of mocking API calls.
+
+<RemoteCode url="https://raw.githubusercontent.com/fusionauth/fusionauth-example-firebase-mock-testing-vs-emulation/refs/heads/main/firebase_test_with_emulator.py" lang="python"  />
+
+The tests can reflect production-like conditions, catching issues like authentication changes, security rule enforcement, and API updates. 
+
+### FusionAuth Kickstart
+
+[FusionAuth Kickstart](/docs/get-started/download-and-install/development/kickstart) allows you to build a template that replicates a development or production environment.
+
+- Developers can spin up a local FusionAuth instance to test full authentication flows, including OAuth and SSO, ensuring tests align with production.
+- Kickstart automates environment setup, account creation, and configuration of any resources. Then you have a FusionAuth instance with available data.
+- Unlike mocks, this approach handles real-world complexities like security updates and multi-step flows, reducing the risk of surprises in production.
+
+To see how effective a real dev server can be, let's write a mock that simulates a [login](/docs/apis/login) on the FusionAuth API. 
+    
+Here's how you might mock the login in Python:
+
+<RemoteCode url="https://raw.githubusercontent.com/fusionauth/fusionauth-example-mock-testing-vs-dev-server/refs/heads/main/fusionauth_test_with_mocking.py" lang="python"  />
+
+The `fusionauth_login` function simulates a login request to FusionAuth's `/api/login` endpoint. It handles various responses — success, incorrect credentials, locked accounts, and unexpected errors. The unit tests use `unittest.mock.patch` to replace real API calls, ensuring tests pass without needing a live FusionAuth server.
+
+But this approach doesn't scale. For every new scenario, another mock is needed. More tests mean more mocks, more maintenance, and more fragile tests. What starts as a simple test suite quickly turns into a tangled web of artificial responses, each one detached from reality.
+
+And when FusionAuth updates? Your mocks stay frozen in time. New fields, changed response structures, evolving authentication flows — none of these are reflected in your tests. The mocks keep passing, but your application is broken in production.
+
+The alternative? Run a real FusionAuth instance locally.
+
+<Aside type="tip">
+  The easiest way to run FusionAuth is in a Docker container. Clone the [fusionauth-example-docker-compose](https://github.com/fusionauth/fusionauth-example-docker-compose) GitHub repository. Open a terminal in the `light` subdirectory, and run `docker compose up` in a terminal to start FusionAuth. Log in at http://localhost:9011 with `admin@example.com` and `password`. The example repository will use the sample [Kickstart file](https://github.com/FusionAuth/fusionauth-example-docker-compose/blob/main/light/kickstart/kickstart.json) to configure the FusionAuth instance.
+</Aside>
+
+Below is an outline of the steps you can use to set up a FusionAuth instance with [Kickstart](/docs/get-started/download-and-install/development/kickstart) and Docker Compose, as configured in the [`fusionauth-example-docker-compose`](https://github.com/FusionAuth/fusionauth-example-docker-compose/tree/main/light) repository, to test authentication without mocks.
+
+#### Step 1: Create The Kickstart File
+
+A [Kickstart](/docs/get-started/download-and-install/development/kickstart) file is a JSON file containing instructions for setting up an environment. 
+
+To create a test case that registers a user, the Kickstart file might look like the example below.
+
+<RemoteCode url="https://raw.githubusercontent.com/fusionauth/fusionauth-example-mock-testing-vs-dev-server/refs/heads/main/fusionauth/kickstart/kickstart.json" lang="json"  />
+
+This code declares variables to avoid repetition, and then defines an API key. It then executes a series of requests to:
+
+- Create a new application.
+- Create a new user.
+- Register the user to the application.
+
+#### Step 2: Download The Docker Compose And Environment Files
+
+Run the following commands to download the required files:
+
+```sh
+curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/.env
+```
+
+Edit these files to match your environment. In the `.env` file, modify `DATABASE_PASSWORD` and ensure the `POSTGRES_USER` and `POSTGRES_PASSWORD` are set correctly. Add the `FUSIONAUTH_APP_KICKSTART_FILE` environment variable with the path to the Kickstart file, and mount the Kickstart directory as a volume on the `fusionauth` service.
+
+#### Step 3: Start The FusionAuth Containers
+
+Run the following commands to bring up the services:
+
+```sh
+docker compose up
+```
+
+This command starts three services:
+
+1. `db` - A PostgreSQL instance to store your data.
+2. `search`- An OpenSearch instance for advanced search features.
+3. `fusionauth` - The main application handling authentication flows.
+
+#### Step 4: Explore And Configure FusionAuth
+
+FusionAuth will now be accessible at [`http://localhost:9011`](http://localhost:9011). You can configure your application, manage users, and integrate authentication workflows from here.
+
+The setup uses OpenSearch by default, but you can modify the `docker-compose.yml` file to switch between different search engines if needed.
+
+#### Step 5: Customize The Services
+
+You can further customize the services by editing the `docker-compose.yml` and `.env` files. FusionAuth supports various deployment methods (for example, Kubernetes and Helm), making it adaptable to different environments. Learn more about working in a development environment in the [development documentation](/docs/get-started/download-and-install/development/).
+
+Now, you can rewrite the tests without mocking the FusionAuth API.
+
+<RemoteCode url="https://raw.githubusercontent.com/fusionauth/fusionauth-example-mock-testing-vs-dev-server/refs/heads/main/fusionauth_test_with_dev_server.py" lang="python"  />
+
+Integration tests run against a real authentication service within the same network as the application, replicating production-like conditions. The authentication flow is validated end-to-end, ensuring that security headers, and real response times are properly accounted for before deployment.
+
+## Final Thoughts: Stop Relying On Mocks
+
+Mocking is risky due to the fact it does not capture a realistic environment. That is why you should use real dev versions of services for:
+
+- Better production alignment: Your tests reflect real-world conditions, including API changes, security updates, and unexpected behavior.
+- Lower maintenance: Real services stay consistent with production, eliminating the need for constant mock updates and reducing technical debt.
+- Accurate testing: Complex workflows like authentication, payments, or multi-step integrations behave correctly, uncovering edge cases early.
+- Developer confidence: With realistic tests, you ship features knowing they'll perform reliably in production.
