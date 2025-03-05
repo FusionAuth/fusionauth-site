@@ -1,4 +1,4 @@
-import {bundledLanguages, Highlighter, getSingletonHighlighter} from "shiki/bundle/full";
+import {bundledLanguages, getSingletonHighlighter, Highlighter} from "shiki/bundle/full";
 
 let cachedHighlighter: Promise<Highlighter> | undefined = undefined;
 const cachedLoadedLanguages = new Map<string, Promise<void>>();
@@ -44,11 +44,21 @@ export function ensureLanguageIsLoaded(highlighter: Highlighter, language: strin
   const isBundledLanguage = Object.keys(bundledLanguages).includes(language);
 
   if (!isBundledLanguage) {
-    console.warn(`[Shiki] Language "${language}" is not a bundled language. ${JSON.stringify(data)}`);
+    console.warn(`[Shiki] Language "${language}" is not a bundled language, will fallback to "plaintext". ${JSON.stringify(data)}`);
   }
 
   const loadPromise = isLanguageAlreadyLoaded || !isBundledLanguage
     ? Promise.resolve() : highlighter.loadLanguage(bundledLanguages[language]);
   cachedLoadedLanguages.set(language, loadPromise);
   return loadPromise;
+}
+
+/**
+ * Resolves the provided language to a supported language if available; otherwise defaults to "plaintext".
+ *
+ * @param {string} language - The language identifier to be resolved.
+ * @return {string} The resolved language if it exists in the bundled languages, or "plaintext" as a fallback.
+ */
+export function resolveLanguage(language: string): string {
+  return bundledLanguages[language] ? language : "plaintext";
 }
