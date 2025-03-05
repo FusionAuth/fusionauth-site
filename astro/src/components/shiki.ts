@@ -1,7 +1,7 @@
 import {bundledLanguages, createHighlighter, Highlighter} from "shiki/bundle/full";
 
 let cachedHighlighter: Promise<Highlighter> | undefined = undefined;
-let cachedLoadedLanguages = new Map<string, Promise<void>>();
+const cachedLoadedLanguages = new Map<string, Promise<void>>();
 
 /**
  * Configuration for the highlighter.
