@@ -39,34 +39,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.PUBLISHER_ROLE_ARN }}
           role-session-name: site_publisher_session
           aws-region: ${{ env.AWS_REGION }}
-
       - name: Install modules
         run: npm ci
-
       - name: Build application
         run: npm run build
-
-      - name: Check APIs for completeness against client libs
-        # Only run if the API docs change
-        if: ${{ github.event_name == 'push' && (contains(github.event.head_commit.modified, 'astro/src/content/docs/apis/') || contains(github.event.head_commit.modified, '.github/workflows/apicheck.yml')) }}
-        run: |
-          tagver=`curl --silent https://account.fusionauth.io/api/version -o - | jq 'last(.versions[-1])'|sed 's/"//g'`
-          git clone --depth 1 --branch $tagver https://github.com/fusionauth/fusionauth-client-builder
-          src/check-apis-against-client-json.rb -f $PWD/src/.checkapis.yaml -c $PWD/fusionauth-client-builder -v --pr
-        shell: bash
-
       - name: Deploy to S3
         run: |
           aws s3 sync ./dist/ s3://${{ env.BUCKET_NAME }} --delete
           aws s3 sync ./cdn/ s3://${{ env.BUCKET_NAME }}/cdn/
-
       - name: CloudFront request handler and cache invalidation
         working-directory: .
         run: |

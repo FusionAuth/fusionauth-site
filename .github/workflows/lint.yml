@@ -33,3 +33,19 @@ jobs:
           cd astro
           npm run lint-pr
         shell: /usr/bin/bash -e -o pipefail {0}
+
+      # Might as well
+      - name: Run a dev build
+        run: |
+          cd astro
+          npm run dev-build
+        shell: /usr/bin/bash -e -o pipefail {0}
+
+      - name: Check APIs for completeness against client libs
+        # Only run if the API docs change. Not technically "lint" but it's a good place for it.
+        if: ${{ github.event_name == 'push' && (contains(github.event.head_commit.modified, 'astro/src/content/docs/apis/') || contains(github.event.head_commit.modified, '.github/workflows/apicheck.yml')) }}
+        run: |
+          tagver=`curl --silent https://account.fusionauth.io/api/version -o - | jq 'last(.versions[-1])'|sed 's/"//g'`
+          git clone --depth 1 --branch $tagver https://github.com/fusionauth/fusionauth-client-builder
+          src/check-apis-against-client-json.rb -f $PWD/src/.checkapis.yaml -c $PWD/fusionauth-client-builder -v --pr
+        shell: bash
