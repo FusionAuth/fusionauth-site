@@ -195,7 +195,7 @@ end
 def fetch_doc(url, options)
   if options[:pr]
     # Convert the URL to a local file path
-    local_path = url.gsub(options[:siteurl], "astro/dist/docs/apis") + ".html"
+    local_path = url.gsub(options[:siteurl] + "/docs", "astro/dist/docs") + ".html"
     puts "checking " + local_path
     if File.exist?(local_path)
       return File.read(local_path)
