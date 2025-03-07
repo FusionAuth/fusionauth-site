@@ -228,6 +228,7 @@ Fruits were domesticated at different times.
 - multi-tenancy/multi-tenant
 - Node.js
 - OAuth and OAuth2
+- private-labeled (an adjective)
 - re-authentication
 - self-service
 - server-side (an adjective)
