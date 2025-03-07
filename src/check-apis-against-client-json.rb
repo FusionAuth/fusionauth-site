@@ -195,7 +195,8 @@ end
 def fetch_doc(url, options)
   if options[:pr]
     # Convert the URL to a local file path
-    local_path = url.gsub(options[:siteurl], "astro/dist/docs/apis")
+    local_path = url.gsub(options[:siteurl], "astro/dist/docs/apis") + ".html"
+    puts "checking " + local_path
     if File.exist?(local_path)
       return File.read(local_path)
     else
@@ -318,9 +319,9 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
       api_urls << url
     end
     page_content = ""
-    # Fix me here, copilot!
+
     api_urls.each do | api_url |
-      if options[:verbose]
+      if options[:verbose] && !options[:pr]
         puts "retrieving " + api_url
       end
 
