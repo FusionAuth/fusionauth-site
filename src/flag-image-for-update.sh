@@ -11,8 +11,4 @@
 
 script_dir="$(dirname $0)"
 
-convert $1  -gravity Center -pointsize 120 -fill "#f004" -draw 'text 0,0 "Needs Update"' -set comment "update for issue1" $1
-$script_dir/shrink-images.sh $1
-convert $1 -set comment "update for issue1" $1
-
-
+magick $1  -gravity Center -pointsize 120 -fill "#f006" -draw 'text 0,0 "Needs Update"' $1
