@@ -9,6 +9,5 @@
 # Usage:
 # flag-image-for-update.sh <image_file>
 
-script_dir="$(dirname $0)"
 
 magick $1  -gravity Center -pointsize 120 -fill "#f006" -draw 'text 0,0 "Needs Update"' $1
