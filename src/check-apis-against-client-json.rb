@@ -58,8 +58,9 @@ OptionParser.new do |opts|
     options[:configfile] = configfile
   end
 
-# add in config file
-# run in gh workflow
+  opts.on("--pr", "Check local files instead of the website.") do
+    options[:pr] = true
+  end
 
   opts.on("-v", "--verbose", "Run verbosely.") do |v|
     options[:verbose] = v
@@ -191,13 +192,20 @@ def todash(camel_cased_word)
   downcase
 end
 
-def open_url(url)
-  res = Net::HTTP.get_response(URI.parse(url))
-  if res.code != "200"
-    return nil
+def fetch_doc(url, options)
+  if options[:pr]
+    # Convert the URL to a local file path
+    local_path = url.gsub(options[:siteurl] + "/docs", "astro/dist/docs") + ".html"
+    puts "checking " + local_path
+    if File.exist?(local_path)
+      return File.read(local_path)
+    else
+      return nil
+    end
+  else
+    res = Net::HTTP.get_response(URI.parse(url))
+    return res.code == "200" ? res.body : nil
   end
-
-  return res.body
 end
 
 def downcase(string)
@@ -249,6 +257,7 @@ def skip_file(fn)
   return false
 end
 
+# noinspection t
 def process_file(fn, missing_fields, options, prefix = "", type = nil, page_content = nil)
 
   # these are leafs of the tree and aren't fields with possible subfields.
@@ -310,12 +319,13 @@ def process_file(fn, missing_fields, options, prefix = "", type = nil, page_cont
       api_urls << url
     end
     page_content = ""
+
     api_urls.each do | api_url |
-      if options[:verbose]
+      if options[:verbose] && !options[:pr]
         puts "retrieving " + api_url
       end
 
-      tmp_page_content = open_url(api_url)
+      tmp_page_content = fetch_doc(api_url, options)
       page_content = tmp_page_content + page_content
       unless page_content
         puts "Could not retrieve: " + api_url

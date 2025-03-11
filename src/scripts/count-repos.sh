@@ -36,7 +36,6 @@ function get_json_repos() {
   local EXCLUDE=(
     "fusionauth-example-template"
     "fusionauth-example-vue-sdk"
-    "fusionauth-quickstart-kotlin-android-native"
     "fusionauth-quickstart-javascript-nuxt-web"
   )
 
