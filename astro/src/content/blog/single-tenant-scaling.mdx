@@ -20,7 +20,7 @@ import InlineField from 'src/components/InlineField.astro';
 - [What Is Multi-Tenant Architecture?](#what-is-multi-tenant-architecture)
 - [Advantages And Risks Of Multi-Tenancy](#advantages-and-risks-of-multi-tenancy)
 - [Scaling And Tenancy](#scaling-and-tenancy)
-- [FusionAuth Design](#fusionauth-design)
+- [Scaling And Authentication](#scaling-and-authentication)
 - [FusionAuth Load Tests](#fusionauth-load-tests)
 - [Further Reading](#further-reading)
 - [Todo](#todo)
@@ -102,21 +102,25 @@ scale with machines, vms, or containers
 
 Peak-time throttling highlighted the limitations of shared-resource architectures in handling unpredictable demand surges.
 
-## FusionAuth Design
+## Scaling And Authentication
 
-Let's take a real world example — load testing an authentication gateway, FusionAuth. FusionAuth is an authentication gateway that can be cloud-hosted or self-hosted (where you can use a free-tier with most features websites commonly need). It uses a single tenant design.
+Authentication needs attention when designing your infrastructure because of the CPU load when hashing passwords. In any authentication system [the bottleneck is hashing](https://fusionauth.io/articles/ciam/making-sure-your-auth-system-scales), both for registration and login. Hashing is intentionally slow, in order to make attacks on a user's password take longer. This means hashing is particularly susceptible to load spikes causing loss of service.
 
-However, FA allows you to completely partition users and customers into logical tenants in the same database. Even API keys are set per tenant, ensuring security and isolation. While using multiple tenants is not recommended, it is useful for times when you want to host Dev, QA, and Prod environments on the same server; or white-label and theme an application for a new client that wants to use your service, but with customization and isolation. Read more about these use cases in this [article](https://fusionauth.io/blog/multi-tenancy-in-a-single-tenant-architecture).
+Let's try a real example — load testing an authentication gateway: FusionAuth. FusionAuth is an authentication gateway that can be cloud-hosted or self-hosted (where you can use a free-tier with most features websites commonly need). It uses a single tenant design. However, FA allows you to completely partition users and customers into logical tenants in the same database. While using multiple tenants is not recommended, it is useful for times when you want to host Dev, QA, and Prod environments on the same server; or white-label and theme an application for a new client that wants to use your service, but with customization and isolation. Read more about these use cases in this [article](https://fusionauth.io/blog/multi-tenancy-in-a-single-tenant-architecture).
 
 ## FusionAuth Load Tests
 
-In any authentication system [the bottleneck is hashing passwords](https://fusionauth.io/articles/ciam/making-sure-your-auth-system-scales), both for registration and login. Hashing is intentionally slow, in order to make attacks on a user's password take longer. Since the gateway tested, FA, is stateless, you can easily scale it horizontally by adding more instances of the application (usually in Docker), all accessing the same single instance Postgres database. Even back in 2019, [FA could support 100 million users](https://fusionauth.io/blog/got-users-100-million) on one database.
+Since FA is stateless, you can easily scale it horizontally by adding more instances of the application (usually in Docker), all accessing the same single instance Postgres database. Even back in 2019, [FA could support 100 million users](https://fusionauth.io/blog/got-users-100-million) on one database.
 
-While writing this article, we can ran a load test on FusionAuth with one, two, and three tenants. Each test registered, logged in, then deleted 2000 users. The users were split equally between tenants in the multi-tenant tests. The tests were run from a multi-threaded Go script against a Postgres and FA instance, each using two cores of a twelve core 3.4GHz CPU.
+The question is: what is the effect on load if you use multiple tenants on the same instance?
 
-The results are below, showing each test run five times with results in milliseconds. The last line in each table is the number of users processed per second.
+We ran a load test on FusionAuth with one, two, and three tenants. Each test registered, logged in, then deleted 2000 users. The users were split equally between tenants in the multi-tenant tests so the total workload was the same. The tests were run from a multi-threaded Go script against a Postgres and FA instance, each using two cores of a twelve core 3.4 GHz CPU.
 
-One tenant:
+The results are below, showing each test run five times, with results in milliseconds. Each column is a step in the test: register, log in, and delete. Look at the last line in each table, which is the number of users processed per second for each step (the load capacity of the system).
+
+<br />
+
+**One tenant:**
 |                   | Register | Log in | Delete |
 |-------------------|----------|--------|--------|
 |                   | 21994    | 14811  | 3213   |
@@ -124,10 +128,12 @@ One tenant:
 |                   | 17640    | 14791  | 3301   |
 |                   | 17075    | 14861  | 3528   |
 |                   | 17379    | 15002  | 3304   |
-| Median            | 17640    | 14818  | 3304   |
+| Median            | _17640_    | _14818_  | _3304_   |
 | **Users per second**| **113**      | **135**    | **605**    |
 
-Two tenants:
+<br /><br />
+
+**Two tenants:**
 |                   | Register | Log in | Delete |
 |-------------------|----------|--------|--------|
 |                   | 21556    | 17075  | 5310   |
@@ -135,10 +141,12 @@ Two tenants:
 |                   | 18928    | 15490  | 3916   |
 |                   | 18297    | 15199  | 3401   |
 |                   | 17895    | 15208  | 331    |
-| Median            | 18928    | 15490  | 3916   |
+| Median            | _18928_    | _15490_  | _3916_   |
 | **Users per second**  | **106**      | **129**    | **511**    |
 
-Three tenants:
+<br /><br />
+
+**Three tenants:**
 |                   | Register | Log in | Delete |
 |-------------------|----------|--------|--------|
 |                   | 17280    | 14881  | 3204   |
@@ -146,14 +154,14 @@ Three tenants:
 |                   | 17054    | 14697  | 3313   |
 |                   | 17277    | 14600  | 3497   |
 |                   | 17687    | 14798  | 3488   |
-| Median            | 17277    | 14798  | 3313   |
+| Median            | _17277_    | _14798_  | _3313_   |
 | **Users per second**  | **116**      | **135**    | **604**    |
 
 You can see that the number of users processed per second does not change in each test, meaning that processing speed is independent of multi-tenancy. The conclusion is that if your server supports more than one tenant, each tenant will have proportionally less processing speed. This highlights that when resources are fixed, such as on a shared server, you should always aim for your application to be the only one on the server.
 
-Another interesting result of the test was the effect of the number of simultaneous requests on performance. All tests ran without error when using 200 requests (coroutines in Go). However, when increasing to 400 requests, FA had a few timeout errors. Above 500, excess requests began to fail rapidly. In other words, load spikes are dangerous. You should always provision enough infrastructure to handle your peak usage times, not your average usage.
+Another interesting result of the test was the effect of the number of simultaneous requests on performance. All tests ran without error when using 200 requests (coroutines in Go). However, when increasing to 400 simultaneous requests, FA had a few timeout errors. Above 500, excess requests began to fail rapidly. In other words, load spikes are dangerous. You should always provision enough infrastructure to handle your peak usage times, not your average usage.
 
-On average during the tests, the database used 200 MB of RAM and FA used 700 MB. As expected, FA fully used its two CPU cores and the database used only 36% of one. When not limiting the FA Docker instance to two cores, it was able to log in 550 users per second.
+On average during the tests, the database used 200 MB of RAM and FA used 700 MB. As expected, FA fully used its two CPU cores and the database used only 36% of one. When allowing the FA Docker instance to use all twelve cores, it was able to log in 550 users per second.
 
 ## Further Reading
 
