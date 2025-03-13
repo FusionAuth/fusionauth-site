@@ -21,14 +21,13 @@ import InlineField from 'src/components/InlineField.astro';
 - [Advantages And Risks Of Multi-Tenancy](#advantages-and-risks-of-multi-tenancy)
 - [Scaling And Tenancy](#scaling-and-tenancy)
 - [Scaling And Authentication](#scaling-and-authentication)
-- [FusionAuth Load Tests](#fusionauth-load-tests)
+- [Load Testing Different Numbers Of Tenants For Authentication](#load-testing-different-numbers-of-tenants-for-authentication)
+- [Conclusions And Recommendations](#conclusions-and-recommendations)
 - [Further Reading](#further-reading)
-- [Todo](#todo)
 
 ## Introduction
 
-TODO
-specifica example of authentication systems and their considerations. security and scaling.
+This article discusses how multi-tenant designs affect scalability in software architecture. Security, load handling, flexibility, and control are all influenced when choosing a single-tenant or multi-tenant host.
 
 ## What Is Scaling In Web Applications?
 
@@ -62,7 +61,7 @@ The accepted definition of **multi-tenancy** is when **a single instance of soft
 
 But what exactly is a **single instance of software**? What if there is one web server process but multiple databases? Is that still multi-tenant? What about multiple WordPress sites that all store their data in the same database? Or a load balancer that evenly distributes customer requests to multiple, but identical, instances of a web application running on the same server that access the same database?
 
-As you can see, the difference between a multi-tenant and a single-tenant system is continuous, not discrete. An **instance of software** can involve multiple URLs, processes, databases, files, virtual machines, containers, and servers. But for the purposes of this discussion, we can at least define the two clear ends of the spectrum:
+As you can see, the difference between a multi-tenant and a single-tenant system is continuous, not discrete. Additionally, infrastructure can be single-tenant or multi-tenant too — a dedicated physical server, or many Docker containers for different customers running on a shared server. An **instance of software** can involve multiple URLs, processes, databases, files, virtual machines, containers, and servers. But for the purposes of this discussion, we can at least define the two clear ends of the spectrum:
 
 - Single-tenant application:
   - Serves one customer, using a single database or file system.
@@ -74,22 +73,24 @@ As you can see, the difference between a multi-tenant and a single-tenant system
 The important differences are:
 - Multiple customers are served in a multi-tenant design.
 - Data is isolated in a single-tenant design in databases or files, which affects security and privacy.
-- Servers are isolated in a single-tenant design, which affects the resource load on CPU, RAM, and disk. (With virtual machines and containers, the distinction between virtual and physical servers can get blurry too.)
+- Servers are isolated in a single-tenant design, which affects the resource load on CPU, RAM, and disk. (With virtual machines and containers, the distinction between virtual and physical servers can get blurry.)
 
 ## Advantages And Risks Of Multi-Tenancy
 
-Multi-tenancy has a lot of advantages. It's simple to server multiple customers with one set of infrastructure. Application and database version upgrades need to be done only in one place.
+Multi-tenancy has a lot of advantages. It's simple to serve multiple customers with one set of infrastructure. Application and database version upgrades need to be done only in one place.
 
-Shared infrastructure is much cheaper than a dedicated physical server. At the time of writing a dedicated Hetzner server is ten times the price of a shared one. Since shared infrastructure is generally hosted inside Docker, or a shared file system in the case of WordPress servers, it's simple to scale up or down by increasing your share of the physical machine's resources.
+Shared infrastructure is much cheaper than a dedicated physical server. At the time of writing, the cheapest dedicated Hetzner server is ten times the price of the cheapest shared one. Since shared infrastructure is generally hosted inside Docker, or a shared file system in the case of WordPress servers, it's simple to scale up or down by increasing your share of the physical machine's resources. You can instantly increase the power of your "server" from a dashboard, or by emailing support.
 
-One danger of multi-tenant systems is exposing customer data. If you use a single database, every SQL query you write has to be careful to not expose another customer's data. An attacker who gains access to your database, gain access to **all** customers' data. If you're using a shared web server, a single website with a malicious plugin could threaten the data and performance of all other sites on the server.
+One danger of multi-tenant systems is exposing customer data. If you use a single database, every SQL query you write has to be careful to not expose another customer's data. An attacker who gains access to your database, gain access to all customers' data. If you're using a shared WordPress web host, a single website with a malicious plugin could threaten the data and performance of all other sites on the server.
 
-In [2022](https://gizmodo.com/oktapus-okta-hack-twilio-10000-logins-130-companies-1849457420) and [2023](https://www.wired.com/story/okta-support-system-breach-disclosure/) the online authentication gateway Okta suffered major attacks. Ten thousand credentials of Okta customers were stolen in 2022, and in 2023 the hackers gained access to Okta customer support accounts. Gaining access to customer support gave the attacker access to all customers on the infrastructure that the compromised accounts had access to. Multi-tenant systems involve more customers per server than single-tenant ones, and thus expose a bigger attack surface.
+For example, in [2022](https://gizmodo.com/oktapus-okta-hack-twilio-10000-logins-130-companies-1849457420) and [2023](https://www.wired.com/story/okta-support-system-breach-disclosure/) the online authentication gateway Okta suffered major attacks. Ten thousand credentials of Okta customers were stolen in 2022, and in 2023 the hackers gained access to Okta customer support accounts. Gaining access to customer support gave the attacker access to all customers on the infrastructure that the compromised accounts had access to. Multi-tenant systems involve more customers per server than single-tenant ones, and thus expose a bigger attack surface.
 
 This attack also provides incentive for you to consider a self-hosted solution instead of a cloud-hosted one. Cloud solutions are convenient, but are easier targets because hackers:
 - Know exactly what software is running on popular service providers' infrastructure.
 - Gain access to multiple customers' data if they gain access to the cloud server.
 - Can exploit social engineering and phishing attacks between customers and cloud providers.
+
+If you're in an industry that has regulations regarding data privacy, or countries that disallow storing data overseas, single-tenant systems and local dedicated servers might be your only option.
 
 ## Scaling And Tenancy
 
@@ -97,24 +98,27 @@ Multi-tenant systems are especially problematic when it comes to scaling. While 
 
 Not only do you have to worry about load spikes in your application, but also those of noisy neighbours on the shared server. If another app on the same server experiences a sudden spike in HTTP requests or needs to run several CPU-intensive calculations, your app might become unusable. If your app uses the same range of IP addresses for sending email as another app on the email provider that spams, your emails might be flagged as spam too. These problems are difficult for hosts to manage — generally they warn customers in the short term and require them to upgrade their resource tier, or leave, in the long term.
 
+While a shared server might be vastly cheaper than a dedicated physical one, it is actually proportionally more expensive. For example, while the aforementioned Hetzner physical server may cost ten times as much, it offers 25 times more disk space, 16 times more RAM, and six exclusive-use CPU cores instead of intermittent use of two threads.
 
-scale with machines, vms, or containers
+The same expense effect is true for cloud services like AWS too. Hosting your app with multiple Amazon databases, virtual instances, serverless functions, storage buckets, and other trendy techniques is usually cheap for tiny businesses, but for large applications results in far more expensive fees than managing your own server.
 
-Peak-time throttling highlighted the limitations of shared-resource architectures in handling unpredictable demand surges.
+Single-tenant systems and hosts allow you absolute control over your infrastructure. You can choose the exact physical server specifications, operating system, and software tools that you want — while excluding any unnecessary software that might otherwise slow your system.
+
+The disadvantage of a single-tenant system and dedicated server hosting is wasted resources. You need to buy or rent a server that can handle your peak loads. By definition, that means on average the server will be mostly unused. Scaling up is also trickier. You will need to buy a new server, install and configure an operating system, and install and configure your application and dependencies. This can be simplified by using scripts and devops tools, but is still more work than requesting more resources on a shared host.
 
 ## Scaling And Authentication
 
-Authentication needs attention when designing your infrastructure because of the CPU load when hashing passwords. In any authentication system [the bottleneck is hashing](https://fusionauth.io/articles/ciam/making-sure-your-auth-system-scales), both for registration and login. Hashing is intentionally slow, in order to make attacks on a user's password take longer. This means hashing is particularly susceptible to load spikes causing loss of service.
+Authentication needs special attention when designing your infrastructure because of the CPU load when hashing passwords. In any authentication system [the bottleneck is hashing](https://fusionauth.io/articles/ciam/making-sure-your-auth-system-scales), both for registration and login. Hashing is intentionally slow, in order to make attacks on a user's password take longer. This means hashing is particularly susceptible to load spikes causing loss of service.
 
-Let's try a real example — load testing an authentication gateway: FusionAuth. FusionAuth is an authentication gateway that can be cloud-hosted or self-hosted (where you can use a free-tier with most features websites commonly need). It uses a single tenant design. However, FA allows you to completely partition users and customers into logical tenants in the same database. While using multiple tenants is not recommended, it is useful for times when you want to host Dev, QA, and Prod environments on the same server; or white-label and theme an application for a new client that wants to use your service, but with customization and isolation. Read more about these use cases in this [article](https://fusionauth.io/blog/multi-tenancy-in-a-single-tenant-architecture).
+Let's test a real example — load testing an authentication gateway: FusionAuth. FusionAuth is an authentication gateway that can be cloud-hosted or self-hosted (where you can use a free-tier with most features websites commonly need). It uses a single tenant design. However, Fusionauth allows you to completely partition users and customers into logical tenants in the same database. While using multiple tenants is not recommended, it is useful for times when you want to host Dev, QA, and Prod environments on the same server; or white-label and theme an application for a new client that wants to use your service, but with customization and isolation. Read more about these use cases in this [article](https://fusionauth.io/blog/multi-tenancy-in-a-single-tenant-architecture).
 
-## FusionAuth Load Tests
+## Load Testing Different Numbers Of Tenants For Authentication
 
-Since FA is stateless, you can easily scale it horizontally by adding more instances of the application (usually in Docker), all accessing the same single instance Postgres database. Even back in 2019, [FA could support 100 million users](https://fusionauth.io/blog/got-users-100-million) on one database.
+Since Fusionauth is stateless, you can easily scale it horizontally by adding more instances of the application (usually in Docker), all accessing the same single instance Postgres database. Even back in 2019, [Fusionauth could support 100 million users](https://fusionauth.io/blog/got-users-100-million) on one database.
 
 The question is: what is the effect on load if you use multiple tenants on the same instance?
 
-We ran a load test on FusionAuth with one, two, and three tenants. Each test registered, logged in, then deleted 2000 users. The users were split equally between tenants in the multi-tenant tests so the total workload was the same. The tests were run from a multi-threaded Go script against a Postgres and FA instance, each using two cores of a twelve core 3.4 GHz CPU.
+We ran a load test on FusionAuth with one, two, and three tenants. Each test registered, logged in, then deleted 2000 users. The users were split equally between tenants in the multi-tenant tests so the total workload remained the same. The tests were run from a multi-threaded Go script against a Postgres and Fusionauth instance, each using two cores of a twelve core 3.4 GHz CPU.
 
 The results are below, showing each test run five times, with results in milliseconds. Each column is a step in the test: register, log in, and delete. Look at the last line in each table, which is the number of users processed per second for each step (the load capacity of the system).
 
@@ -159,20 +163,27 @@ The results are below, showing each test run five times, with results in millise
 
 You can see that the number of users processed per second does not change in each test, meaning that processing speed is independent of multi-tenancy. The conclusion is that if your server supports more than one tenant, each tenant will have proportionally less processing speed. This highlights that when resources are fixed, such as on a shared server, you should always aim for your application to be the only one on the server.
 
-Another interesting result of the test was the effect of the number of simultaneous requests on performance. All tests ran without error when using 200 requests (coroutines in Go). However, when increasing to 400 simultaneous requests, FA had a few timeout errors. Above 500, excess requests began to fail rapidly. In other words, load spikes are dangerous. You should always provision enough infrastructure to handle your peak usage times, not your average usage.
+Another interesting result of the test was the effect of the number of simultaneous requests on performance. All tests ran without error when using 200 requests (coroutines in Go). However, when increasing to 400 simultaneous requests, Fusionauth had a few timeout errors. Above 500, excess requests began to fail rapidly. In other words, load spikes are dangerous. You should always provision enough infrastructure to handle your peak usage times, not your average usage.
 
-On average during the tests, the database used 200 MB of RAM and FA used 700 MB. As expected, FA fully used its two CPU cores and the database used only 36% of one. When allowing the FA Docker instance to use all twelve cores, it was able to log in 550 users per second.
+On average during the tests, the database used 200 MB of RAM and Fusionauth used 700 MB. As expected, Fusionauth fully used its two CPU cores and the database used only 36% of one. When allowing the Fusionauth Docker instance to use all twelve cores, it was able to log in 550 users per second.
+
+## Conclusions And Recommendations
+
+Let's summarize what to check when designing your system to scale:
+- If your business is growing, are you increasing your infrastructure capacity to ensure that your user experience is not gradually decreasing, with longer latencies and dropped requests?
+- Do you have enough CPU, RAM, disk space, TCP connections, and Internet bandwidth to handle usage spikes? Estimate the worst case and prepare in advance.
+- Conversely, if your usage is much lower than expected, are you swapping to a less powerful server to save money?
+- If you're a small business, you can use shared hosts and tools, but have an exit plan ready to swap to single-tenant solutions and dedicated servers as you grow.
+- If you're using multi-tenant infrastructure, monitor your application to check how performance varies over time. If you have noisy neighbours, you need to know if your application will still perform adequately when other apps on the server have load spikes.
+- Consider the worst-case scenario if your infrastructure host is attacked, causing denial of service or exposing customer data. If your service going down or private data being lost will cause financial or personal harm, switch to a more secure infrastructure.
+- If your service is not sensitive and you have many customers, switch to a faster hashing algorithm in your authentication system to save CPU time and increase throughput.
+
+To explore the benefits of single-tenant solutions yourself, use the FusionAuth [pricing calculator](https://fusionauth.io/pricing) to compare how fees change at different loads and hosting types, and read about how one client saved thousands of dollars [self-hosting their own authentication ](https://fusionauth.io/blog/currentdesk-saved-with-fusionauth)gateway.
 
 ## Further Reading
 
 - [How authentication systems scale](https://fusionauth.io/articles/ciam/making-sure-your-auth-system-scales)
-- [FA can support 100 million users](https://fusionauth.io/blog/got-users-100-million)
-- [Single tenancy in FA](https://fusionauth.io/blog/multi-tenancy-in-a-single-tenant-architecture)
+- [Fusionauth can support 100 million users](https://fusionauth.io/blog/got-users-100-million)
+- [Single tenancy in Fusionauth](https://fusionauth.io/blog/multi-tenancy-in-a-single-tenant-architecture)
 - [Okta breach in 2022](https://gizmodo.com/oktapus-okta-hack-twilio-10000-logins-130-companies-1849457420)
 - [Okta breach in 2023](https://www.wired.com/story/okta-support-system-breach-disclosure)
-
-## Todo
-
-- FA MT ST
-- brief - https://drafts.cc.ritza.co/s/jUNHKWkvD#
-- AI outline - https://docs.google.com/document/d/1kJioHOMPwBYHEHwgsdw6z-JgkujvADXrgn8GCt7SsGg/edit?tab=t.0#heading=h.xqz7i06mgvne
