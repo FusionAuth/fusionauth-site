@@ -1,8 +1,10 @@
 ---
 /**
-  * Remote content fetcher. Remote content is assumed to be markdown.
-  */
-import { marked } from 'marked';
+ * Remote content fetcher. Remote content is assumed to be markdown.
+ */
+// @ts-ignore
+import { Marked } from "marked";
+import {ensureLanguageIsLoaded, getCachedHighlighter, resolveLanguage} from "./shiki";
 
 export interface Props {
   /**
@@ -15,9 +17,9 @@ export interface Props {
   /**
    * Optional tags marking beginning and end of content to include
    * Loosely based on https://docs.asciidoctor.org/asciidoc/latest/directives/include-tagged-regions/
-   * Note: Currently only supports one set of tags. If the tags are enclosed in comments, make sure to have the comments on one line. 
+   * Note: Currently only supports one set of tags. If the tags are enclosed in comments, make sure to have the comments on one line.
    *
-   * See https://raw.githubusercontent.com/FusionAuth/fusionauth-example-scripts/main/client-side-password-rules/README.md and 
+   * See https://raw.githubusercontent.com/FusionAuth/fusionauth-example-scripts/main/client-side-password-rules/README.md and
    * src/content/docs/customize/look-and-feel/client-side-password-rule-validation.mdx for an example.
    */
   tags?: string;
@@ -35,44 +37,87 @@ try {
   } else {
     const matchLines = url.match(/.*#L(\d+)(-L(\d+))?$/);
     if (matchLines) {
-      remoteSelectedContent = selectLines(remoteContent, matchLines[1], matchLines[3]);
+      remoteSelectedContent = selectLines(
+        remoteContent,
+        parseInt(matchLines[1]),
+        parseInt(matchLines[3]),
+      );
     } else {
       remoteSelectedContent = remoteContent.trim();
     }
   }
-
-  remoteSelectedContent = marked.parse(remoteSelectedContent);
-
 } catch (e) {
-  console.log("Couldn't retrieve remote code",e);
+  console.log("Couldn't retrieve remote code", e);
 }
 
 function selectTagged(content: string, tags: string): string {
   const lines = content.split("\n");
 
   const startLine = lines.findIndex((line) => line.includes(`tag::${tags}`));
-  const endLine = lines.findIndex((line) => line.includes(`end::${tags}`))
+  const endLine = lines.findIndex((line) => line.includes(`end::${tags}`));
 
   // remove trailing multi-line HTML comment
   if (startLine < lines.length - 1) {
-    lines[startLine + 1] = lines[startLine + 1].replace('-->', '');
+    lines[startLine + 1] = lines[startLine + 1].replace("-->", "");
   }
 
   // remove preceding multi-line HTML comment
-  lines[endLine-1] = lines[endLine-1].replace('<!--', '');
+  lines[endLine - 1] = lines[endLine - 1].replace("<!--", "");
 
-  return lines.slice(startLine + 1, endLine).join("\n").replace(/\s+$/g, '');
+  return lines
+    .slice(startLine + 1, endLine)
+    .join("\n")
+    .replace(/\s+$/g, "");
 }
 
-function selectLines(content: string, lineNum: string, lineEnd: string): string {
+function selectLines(
+  content: string,
+  lineNum: number,
+  lineEnd: number,
+): string {
   const lines = content.split("\n");
   if (lineNum && lineEnd) {
-    return lines.slice(lineNum-1, lineEnd-1).join("\n");
+    return lines.slice(lineNum - 1, lineEnd - 1).join("\n");
   } else if (lineNum) {
     return lines[lineNum - 1];
   } else {
     return content;
   }
 }
+
+const highlighter = await getCachedHighlighter();
+
+const remark = new Marked();
+remark.use({
+  extensions: [
+    {
+      name: "code",
+
+      renderer: (token) => {
+        try {
+          // @ts-ignore
+          return highlighter.codeToHtml(token.text, {
+            lang: resolveLanguage(token.lang),
+            theme: "github-dark",
+          });
+        } catch (e) {
+          console.error(e);
+          return "";
+        }
+      },
+    },
+  ],
+  async: true,
+  walkTokens: async (token) => {
+    if (token.type === "code") {
+      await ensureLanguageIsLoaded(highlighter, token.lang, {url});
+    }
+  },
+});
+
+const html = remark.parse(remoteSelectedContent);
 ---
-<article set:html={remoteSelectedContent} />
+
+<article>
+  <Fragment set:html={html} />
+</article>

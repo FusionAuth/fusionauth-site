@@ -77,6 +77,8 @@ This table is drawn from RFC 7518. As only HS256 is required to be compliant wit
 
 Other metadata is also stored in this part of the JWT. The `typ` header indicates the type of the JWT. In this case, the value is `JWT`, but other values are valid. For instance, if the JWT conforms to RFC 9068, it may have the value `at+JWT` indicating it is an access token.
 
+[![A call to action image displaying a link to download an ebook on this topic.](/img/cta/jwt-guide-cta.png 'Download this article as an ebook')](/ebooks/breaking-down-json-web-tokens?utm_medium=cta&utm_source=articles&utm_campaign=jwt_ebook)
+
 The `kid` value indicates what key was used to sign the JWT. For a symmetric key the `kid` could be used to look up a value in a secrets vault. For an asymmetric signing algorithm, this value lets the consumer of a JWT look up the correct public key corresponding to the private key which signed this JWT. Processing this value correctly is critical to signature verification and the integrity of the JWT payload.
 
 Typically, you'll offload most of the processing of header values to a library. There are plenty of good open source JWT processing libraries. You should understand the values, but probably won't have to implement the actual processing.

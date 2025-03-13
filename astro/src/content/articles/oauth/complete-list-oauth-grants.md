@@ -1,6 +1,6 @@
 ---
-title: The Complete List of OAuth 2 Grants
-description: Sure, you know the Authorization Code grant and the Client Credentials grant, but what other OAuth grants are there?
+title: Oauth 2.0 Grant Types | Complete List of Oauth Grants | FusionAuth
+description: Get a complete list of OAuth 2.0 grant types, including authorization code, client credentials.
 image: articles/complete-oauth-grants/complete-oauth-grants.png
 author: Ravgeet Dhillon
 section: OAuth
@@ -19,6 +19,8 @@ OAuth 2.0 focuses on authorization. There are other protocols like [OpenID Conne
 This article will go through all the different OAuth 2 grant types and explain the flow for each so that you can determine which is the best fit and safely use it in your applications.
 
 If you aren't familiar with terms like Authorization Server and Resource Server, you might be interested in [What is OAuth](/articles/oauth/what-is-oauth/).
+
+[![A call to action image displaying a link to download this article as an ebook.](/img/cta/oauth-grants-guide-cta.png 'Download this article as an ebook')](/tech-papers/complete-list-of-oauth-2-grants?utm_medium=cta&utm_source=articles&utm_campaign=oauth2-grants)
 
 ## Authorization Code Grant
 
@@ -235,7 +237,7 @@ The UMA grant type gives the resource owner control over who can access their pr
 
 ## SAML 2.0 Bearer Grant
 
-[The SAML 2.0 Bearer Grant](https://www.rfc-editor.org/rfc/rfc7522) uses a [SAML 2.0](https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf) assertion for authorization grant as well as client credentials, as described in (Assertion Framework for OAuth 2.0 Client Authentication and Authorization Grants)[https://www.rfc-editor.org/rfc/rfc7521]. The following is the flow of using SAML 2.0 assertion for authorization grant.
+[The SAML 2.0 Bearer Grant](https://rfc-editor.org/rfc/rfc7522) uses a [SAML 2.0](https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf) assertion for authorization grant as well as client credentials, as described in [Assertion Framework for OAuth 2.0 Client Authentication and Authorization Grants](https://rfc-editor.org/rfc/rfc7521). The following is the flow of using SAML 2.0 assertion for authorization grant.
 
 ### Flow for SAML 2.0 Bearer Grant
 
