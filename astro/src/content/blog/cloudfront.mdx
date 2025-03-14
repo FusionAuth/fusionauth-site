@@ -1,0 +1,136 @@
+---
+publish_date: 2025-03-11
+title: "How to set up a Custom Domain for FusionAuth using AWS CloudFront."
+description: 'Learn how to use AWS CloudFront to Setup a Custom Domain with FusionAuth.'
+authors: Mark Robustelli
+image: /img/blogs/cloudfront/configure-custom-domain-in-cloudfront.png
+categories: Tutorial
+tags: custom-domain, aws, cloudfront, domain-name
+excerpt_separator: "{/* more */}"
+---
+
+import Aside from '/src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+
+While you configure a [custom domain](docs/get-started/run-in-the-cloud/cloud#custom-domains) with a [FusionAuth Hosting package](/pricing), you can also configure one using AWS Cloudfront.
+
+{/* more */}
+
+One of the great things about FusionAuth is its flexibility. FusionAuth wants you to be able to control your auth and run it the way that works best for you. If AWS CloudFront is your chosen tool for your domain management, you should and can manage how users access your instance of FusionAuth from there.
+
+## The Setup
+
+For the purpose of this blog, pretend you own a software company named Code Gremlins. Code Gremlins offers a web based ToDo app to customers. You have a hosted instance of FusionAuth and want to configure AWS CloudFront to access that instance.
+
+* Your FusionAuth hosted instance is available at the following URL: https://codegremlins.fusionauth.io.
+* You own the company domain of codegremlins.net and it is registered with GoDaddy. 
+* You want to reference your FusionAuth instance using https://auth.codegremlins.net.
+* You can offer your application at https://todoapp.codegremlins.net.
+
+## Get Your SSL Certificate
+
+Cloudfront requires an SSL certificate from AWS Certificate Manager (ACM) if you want to serve traffic securely (which you do). Here's how to get one:
+
+* Go to [AWS Certificate Manager](https://aws.amazon.com/certificate-manager/) and click the <InlineUIElement>Sign In</InlineUIElement> or <InlineUIElement>Sign in to the Console</InlineUIElement> button.
+* Once at the Console, enter `Certificate Manager` in the search bar.
+
+<div style={{textAlign: "center"}}>
+  <img src="/img/blogs/cloudfront/aws-cert-manager.png" alt="AWS Certificate Manager." style={{ display: "block", margin: "0 auto" }} />
+</div>
+* Request a public certificate for `auth.codegremlins.net` (or whatever subdomain you are using). You will need to choose a validation method using either DNS (recommended) or email. If you choose DNS, you will be given information and need to create a CNAME record with whoever hosts your domain. Fill out the information on the form and click `Request`. 
+<div style={{textAlign: "center"}}>
+  <img src="/img/blogs/cloudfront/aws-request-dns-validation.png" alt="AWS DNS Validation." style={{ display: "block", margin: "0 auto" }} />
+</div>
+* Once the request has been submitted you will be taken to another screen. As you see in the screen shot below, the status will be `Pending validation` until you perform the validation.
+<div style={{textAlign: "center"}}>
+  <img src="/img/blogs/cloudfront/aws-cert-validation.png" alt="AWS Certificate Request." style={{ display: "block", margin: "0 auto" }} />
+</div>
+
+<Aside type="tip">Notice in the screenshot there is only limited information visible. To the right of the CNAME name in the `Domains` section there is more information in the table but you may not be able to scroll. You may have to highlight the text with your mouse and drag to the right of the screen to see the rest of the information. For example, In this case the `CNAME` name is `_7f214f44b65f038ed047cf3e4885000e.auth.codegremlins.net.` and the CNAME value is `_19a113b312369bece7458ffab448ffdb.xlfgrmvvlj.acm-validations.aws.` </Aside>
+* Add the CNAME DNS entry with your domain provider. 
+* After you login to GoDaddy , select `Domains`. 
+* Choose `codegremlins.net` (or your subdomain). 
+* Go to <InlineUIElement>DNS</InlineUIElement>. 
+* Select <InlineUIElement>Add New Record</InlineUIElement>. 
+* Select `CNAME` for <InlineField>Type</InlineField>.
+* Enter `_7f214f44b65f038ed047cf3e4885000e.auth` for <InlineField>Name</InlineField>. Notice this is not the full value provided by the `CNAME` it is only the subdomain part. Each provider may be different. 
+* Enter `_d000256d72e990f3dff7497b0d486f4c.xlfgrmvvlj.acm-validations.aws.` for the <InlineField>Value</InlineField>. 
+* Click <InlineUIElement>Save</InlineUIElement>.
+
+<div style={{textAlign: "center"}}>
+  <img src="/img/blogs/cloudfront/godaddy-cname-settings.png" alt="GoDaddy CNAME settings." style={{ display: "block", margin: "0 auto" }} />
+</div>
+<br></br>
+<Aside type="tip">Most DNS updates take effect within an hour, but could take up to 48 hours to update globally.</Aside>
+
+## Set Up CloudFront Distribution
+
+* Go back to the AWS console and search for CloudFront. Select CloudFront.
+<div style={{textAlign: "center"}}>
+  <img src="/img/blogs/cloudfront/aws-cloudfront.png" alt="Search for AWS Cloudfront." style={{ display: "block", margin: "0 auto" }} />
+</div>
+* Select <InlineUIElement>Create distribution</InlineUIElement>.
+* Fill in the form with the necessary info.  `Origin domain` will be `codegremlins.fusionauth.io`. You will need to make a selection in the `Web Application Firewall (WAF)` section. Click <InlineUIElement>Create distribution</InlineUIElement>.
+<div style={{textAlign: "center"}}>
+  <img src="/img/blogs/cloudfront/aws-cloudfront-create-distribution.png" alt="AWS Cloudfront create distribution." style={{ display: "block", margin: "0 auto" }} />
+</div>
+* After the new distribution is created, please note the 'Distribution domain name' as you will need it later. In this case, it is `d2gwcywxndug73.cloudfront.net`.
+* Next, select <InlineField>Edit</InlineField> in the `Settings` section of the <Breadcrumb>General</Breadcrumb> tab.
+<div style={{textAlign: "center"}}>
+  <img src="/img/blogs/cloudfront/aws-cloudfront-distro-edit.png" alt="AWS Cloudfront edit distribution." style={{ display: "block", margin: "0 auto" }} />
+</div>
+* Under `Alternate domain name (CNAME) - optional`, select <InlineUIElement>Add item</InlineUIElement>. Enter `auth.codegremlins.net`.
+* Under `Custom SSL certificate - optional`, select `auth.codegremlins.net`. This is the certificate you set in the above steps.
+* Select <InlineUIElement>Save Changes</InlineUIElement>.
+<div style={{textAlign: "center"}}>
+  <img src="/img/blogs/cloudfront/aws-cname-cert.png" alt="AWS Cloudfront edit distribution values." style={{ display: "block", margin: "0 auto" }} />
+</div>
+<br></br>
+<Aside type="tip">After you make the changes, it may take a while for AWS to deploy them. Check on the status, by returning to the list of distributions and check the `Last modified`. It will read `Deploying` if it is still deploying and it will have a date when complete.</Aside>
+
+Now you will have to make a change to allow the proper headers. 
+
+* Next, click on the <InlineUIElement>Behaviors</InlineUIElement> tab.
+* Choose `Default(*)`.
+* Select <InlineUIElement>Edit</InlineUIElement>
+
+<div style={{textAlign: "center"}}>
+  <img src="/img/blogs/cloudfront/aws-behaviors.png" alt="AWS Cloudfront edit distribution behaviors." style={{ display: "block", margin: "0 auto" }} />
+</div>
+
+* Scroll down to the `Cache key and origin requests` section.
+* Change the <InlineField>Cache policy</InlineField> to `CachingDisabled`.
+* Change the <InlineField>Origin request policy</InlineField> to `AllViewerExceptHostHeader`.
+* Select <InlineUIElement>Save changes</InlineUIElement>.
+
+## Configure The DNS
+
+Now that you have the distribution set up, you need to tell the DNS to point to the distribution when a user enters `auth.codegremlins.net`.
+
+* Go to your domain provider. In this case, GoDaddy.
+* Go to `My Products`.
+* Select `Domains`.
+* Select `codegremlins.net`.
+* Click on the <InlineUIElement>DNS</InlineUIElement> tab.
+* Click <InlineUIElement>Add New Record</InlineUIElement>.
+* Choose `CNAME` for the <InlineField>Type</InlineField>.
+* Enter `auth` for the <InlineField>Name</InlineField>.
+* Value is the name of the AWS Distribution domain name. In this case, <InlineField>Name</InlineField> will be `d2gwcywxndug73.cloudfront.net`.
+* Click  <InlineUIElement>Save</InlineUIElement>.
+
+<div style={{textAlign: "center"}}>
+  <img src="/img/blogs/cloudfront/aws-behaviors-settings.png" alt="AWS Cloudfront edit distribution behaviors settings." style={{ display: "block", margin: "0 auto" }} />
+</div>
+
+## Visit FusionAuth Using The New Custom Domain
+
+Open your browser and visit https://auth.codegremlins.net. You should get the FusionAuth Admin UI web page. 
+
+## Next steps
+
+At this point, you should be able to use https://auth.codegremlins.net as you would the original https://codegremlins.fusionauth.io address. It will work with your applications and the APIs. You can also use these steps to create additional domains for additional applications. 
+
+There are also several other settings in the AWS Distribution set up and you can tweak them until they work just right for you. After all, that is one of the beautiful parts about owning your authentication. You get to set it up so that it works just for your needs. FusionAuth gives you that flexibility.
+
