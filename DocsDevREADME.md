@@ -468,6 +468,10 @@ The main configuration file is located at [`.vale.ini`](./.vale.ini), where we s
 
 There's [a GitHub Action](./.github/workflows/vale.yml) that runs Vale on added/modified files when opening a pull request. It'll only cover files located at `astro/src/content` and `astro/src/components`. It will block merging the PR.
 
+There are other GH actions there as well.
+
+When you are adding a new GH action, pin the SHA. https://michaelheap.com/pin-your-github-actions/ has more.
+
 ### Running locally
 
 If you have Docker installed, you can lint files by running the command below.
