@@ -456,6 +456,8 @@ We're using [Vale](https://vale.sh/) to find misspellings and to standardize ter
 
 The main configuration file is located at [`.vale.ini`](./.vale.ini), where we specify file extensions to parse (besides the default `.md` one), some custom filters to ignore Astro components and which rules we'll use.
 
+We also use eslint to remove HTML from markdown one commit at a time.
+
 ### Rules
 
 - The rules _(or, as Vale calls them, "styles")_ are located at [`config/vale/styles`](./config/vale/styles).
@@ -494,7 +496,15 @@ If you want to filter by specific rules, you can also pass a `--filter` argument
 $ vale --filter=".Name == 'Vale.Spelling'" astro/path/to/file
 ```
 
-### What to do with linting errors
+### What to do with eslint linting errors
+
+Remove the HTML if you can.
+
+Move HTML into an astro component.
+
+As a last resort, if you can't do either of the above, you can use `{/* eslint-disable-line */}` to disable the lint checking for that line. This has the disadvantage of masking other errors, do don't do it unless it is your last resort.
+
+### What to do with vale linting errors
 
 Whenever you receive an error, you need to determine if you should:
 
