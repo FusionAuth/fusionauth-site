@@ -1,5 +1,7 @@
 ---
-const tabs = [
+const {kickstartEnabled, kickstartName, includeHostedOptions, includeKubernetes, includePackages, includeSandbox} = Astro.props;
+
+var tabs = [
   {
     "id": "docker",
     "title": "Docker",
@@ -7,21 +9,21 @@ const tabs = [
     "active": true
   },
   {
-    "id": "cloud",
-    "title": "FusionAuth Cloud",
-    "image": "cloud.svg",
-    "active": false
-  },
-  {
-    "id": "gitpod",
-    "title": "Gitpod",
-    "image": "gitpod.svg",
-    "active": false
-  },
-  {
     "id": "linux",
     "title": "Linux",
     "image": "linux.svg",
+    "active": false
+  },
+  {
+    "id": "windows",
+    "title": "Windows",
+    "image": "windows.svg",
+    "active": false
+  },
+  {
+    "id": "macos",
+    "title": "macOS",
+    "image": "macos.svg",
     "active": false
   },
   {
@@ -37,66 +39,109 @@ const tabs = [
     "active": false
   },
   {
-    "id": "kubernetes",
-    "title": "Kubernetes",
-    "image": "kubernetes.svg",
-    "active": false
-  },
-  {
-    "id": "helm",
-    "title": "Helm",
-    "image": "helm.png",
-    "active": false
-  },
-  {
-    "id": "macos",
-    "title": "macOS",
-    "image": "macos.svg",
-    "active": false
-  },
-  {
     "id": "homebrew",
     "title": "Homebrew",
     "image": "homebrew.svg",
     "active": false
-  },
-  {
-    "id": "windows",
-    "title": "Windows",
-    "image": "windows.svg",
-    "active": false
-  },
-  {
-    "id": "packages",
-    "title": "Packages",
-    "image": "package.svg",
-    "active": false
-  },
-  {
-    "id": "sandbox",
-    "title": "Sandbox",
-    "image": "sandbox.svg",
-    "active": false
-  },
-  {
-    "id": "marketplaces",
-    "title": "Marketplaces",
-    "image": "marketplace.svg",
-    "active": false
   }
 ];
 
+if (includeHostedOptions) {
+  tabs.push(
+      {
+        "id": "cloud",
+        "title": "FusionAuth Cloud",
+        "image": "cloud.svg",
+        "active": false
+      }
+  );
+  tabs.push(
+      {
+        "id": "gitpod",
+        "title": "Gitpod",
+        "image": "gitpod.svg",
+        "active": false
+      }
+  );
+  tabs.push(
+      {
+        "id": "marketplaces",
+        "title": "Marketplaces",
+        "image": "marketplace.svg",
+        "active": false
+      }
+  );
+}
+
+if (includeKubernetes) {
+  tabs.push(
+      {
+        "id": "kubernetes",
+          "title": "Kubernetes",
+          "image": "kubernetes.svg",
+          "active": false
+      }
+  );
+  tabs.push(
+      {
+        "id": "helm",
+          "title": "Helm",
+          "image": "helm.png",
+          "active": false
+      }
+  );
+}
+
+if (includePackages) {
+  tabs.push(
+      {
+        "id": "packages",
+        "title": "Packages",
+        "image": "package.svg",
+        "active": false
+      }
+  );
+}
+
+if (includeSandbox) {
+  tabs.push(
+      {
+        "id": "sandbox",
+        "title": "Sandbox",
+        "image": "sandbox.svg",
+        "active": false
+      }
+  );
+}
+
 const anchorClass = 'border-b border-b-indigo-400 text-indigo-400 hover:text-indigo-400 hover:border-b-2';
+
+var step = 1;
+var kickstart = "";
+var kickstartWindowsWithEnv = "";
+var kickstartWithEnv = "";
+if (kickstartEnabled) {
+  kickstart =
+      `curl -fsSL https://github.com/FusionAuth/fusionauth-example-kickstart/archive/refs/heads/bpontarelli/reorg.zip > kickstarts.zip && \\
+unzip kickstarts.zip && \\
+ln -s fusionauth-example-kickstart-bpontarelli-reorg/${kickstartName} kickstart`
+  kickstartWithEnv = kickstart + `\nexport FUSIONAUTH_APP_KICKSTART_FILE="$PWD/kickstart/kickstart.json" && \\`
+  kickstartWindowsWithEnv =
+      `Invoke-WebRequest -UseBasicParsing -Uri https://github.com/FusionAuth/fusionauth-example-kickstart/archive/refs/heads/bpontarelli/reorg.zip -OutFile kickstarts.zip && \`
+Expand-Archive -DestinationPath . kickstarts.zip && \`
+New-Item -Path kickstart -ItemType SymbolicLink -Value fusionauth-example-kickstart-bpontarelli-reorg\\${kickstartName} && \`
+$env:FUSIONAUTH_APP_KICKSTART_FILE=(Get-Item .).FullName + "\\kickstart\\kickstart.json" && \``
+}
 ---
 <div class="bg-indigo-900 flex gap-3 mb-10 not-prose p-3 rounded-2xl text-sm text-white">
   <ul class="bg-indigo-950 border border-slate-700 flex flex-col gap-1 p-2 rounded-lg text-[13px]">
     {tabs.map(tab =>
-      <li class:list={["group", tab.active ? "active" : ""]}>
-        <a data-tab-button href={"#" + tab.id} class="border border-transparent items-center flex gap-2 rounded-md px-4 py-2 text-slate-400 group-[.active]:border-white hover:bg-slate-800 hover:text-indigo-400">
-          <img src={"/img/icons/install-or-start-trial/" + tab.image} alt={tab.title} class="m-0 p-0 w-7"/>
-          <span class="text-nowrap">{tab.title}</span>
-        </a>
-      </li>
+        <li class:list={["group", tab.active ? "active" : ""]}>
+          <a data-tab-button href={"#" + tab.id} class="border border-transparent items-center flex gap-2 rounded-md px-4 py-2 text-slate-400 group-[.active]:border-white hover:bg-slate-800 hover:text-indigo-400">
+            <img src={"/img/icons/install-or-start-trial/" + tab.image} alt={tab.title} class="m-0 p-0 w-7"/>
+            <span class="text-nowrap">{tab.title}</span>
+          </a>
+        </li>
     )}
   </ul>
   <div data-tab-content id="docker" class="bg-indigo-950 border border-slate-700 flex-1 overflow-hidden rounded-lg">
@@ -105,76 +150,70 @@ const anchorClass = 'border-b border-b-indigo-400 text-indigo-400 hover:text-ind
       <li class="group"><a data-tab-button href="#docker-vanilla" class="block border-b-2 border-transparent group-[.active]:border-indigo-400 flex-grow px-7 py-3 text-md text-slate-400 group-[.active]:text-white">Docker Vanilla</a></li>
     </ul>
     <hr class="border-slate-700"/>
-    <div data-tab-content id="docker-compose" class="m-8">
+    <div data-tab-content id="docker-compose" class="m-8" data-reset={step = 1}>
       <h2 class="mb-4 text-2xl">Docker Compose</h2>
       <p class="mb-6">
         Use the following Docker Compose commands to get up and running quickly with FusionAuth, PostgreSQL, and Elasticsearch. This command assumes you are running Linux, macOS, or a Unix variant. You might need to modify it if you are using a different operating system. Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
       </p>
+      <p class="mb-6">
+        <strong>Step { step++ }:</strong> Download the Docker files
+      </p>
       <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-<code class="block whitespace-pre">curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/docker-compose.yml > docker-compose.yml && \
-curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/master/docker/fusionauth/.env > .env && \
-curl -fsSL https://github.com/FusionAuth/fusionauth-example-express-start-here/archive/refs/heads/main.zip > example.zip && \
-unzip example.zip && \
-docker-compose up</code>
+<code class="block whitespace-pre">curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/refs/heads/bpontarelli/kickstart/docker/fusionauth/docker-compose.yml > docker-compose.yml && \
+curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/refs/heads/bpontarelli/kickstart/docker/fusionauth/.env > .env</code>
+      </pre>
+      { kickstartEnabled &&
+          <p class="mb-2">
+            <strong>Step { step++ }:</strong> Download the Kickstart files needed for this project
+          </p>
+          <p class="mb-6">
+            <em>NOTE: These are picked up by the Docker container automatically</em>
+          </p>
+          <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
+<code class="block whitespace-pre">{kickstart}</code>
+          </pre>
+      }
+      <p class="mb-6">
+        <strong>Step { step++ }:</strong> Start the Docker Compose containers
+      </p>
+      <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
+<code class="block whitespace-pre">docker-compose up</code>
       </pre>
       <p class="mb-6">
         Then open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
       </p>
-      <p class="font-bold mb-6 text-red-600 text-lg">
-        TODO: We need to update the docker-compose.yml file to point to a kickstart.json file. It will work even if it doesn't exist.
-      </p>
-      <p class="font-bold mb-6 text-red-600 text-lg">
-        TODO: We also need a new kickstart repository where we can download a ZIP and explode it.
-      </p>
     </div>
-    <div data-tab-content id="docker-vanilla" class="hidden m-8">
+    <div data-tab-content id="docker-vanilla" class="hidden m-8" data-reset={step = 1}>
       <h2 class="mb-4 text-2xl">Docker Vanilla</h2>
       <p class="mb-6">
         Use the following Docker commands to start just FusionAuth without a database. You'll need to install and configure a database manually. Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
       </p>
       <p class="mb-6">
-        <strong>Step 1:</strong> Install FusionAuth Docker container
+        <strong>Step { step++ }:</strong> Install FusionAuth Docker container
       </p>
       <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
         <code class="block whitespace-pre">docker pull fusionauth/fusionauth-app</code>
       </pre>
+      { kickstartEnabled &&
+          <p class="mb-6">
+            <strong>Step { step++ }:</strong> Download the Kickstart files needed for this project
+          </p>
+          <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
+<code class="block whitespace-pre">{kickstart}</code>
+          </pre>
+      }
       <p class="mb-6">
-        <strong>Step 2:</strong> Start the Docker container
+        <strong>Step { step++ }:</strong> Start the Docker container
       </p>
       <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-        <code class="block whitespace-pre">docker run -it -p 9011:9011 fusionauth/fusionauth-app</code>
+        <code class="block whitespace-pre">docker run -it -p 9011:9011 --add-host host.docker.internal:host-gateway { kickstartEnabled && "-e FUSIONAUTH_APP_KICKSTART_FILE=\"/usr/local/fusionauth/kickstart/kickstart.json\" --mount type=bind,src=./kickstart,dst=/usr/local/fusionauth/kickstart " }fusionauth/fusionauth-app</code>
       </pre>
+      <p class="mb-6">
+        <em>NOTE: If you are running the database on the host machine, use the hostname `host.docker.internal` to connect FusionAuth to the database rather than `localhost`.</em>
+      </p>
       <p>
         Then open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
       </p>
-    </div>
-  </div>
-  <div data-tab-content id="cloud" class="bg-indigo-950 border border-slate-700 flex-1 hidden overflow-hidden rounded-lg text-sm">
-    <ul class="flex mt-3 mx-4">
-      <li class="group active"><a data-tab-button href="#fusionauth-cloud" class="block border-b-2 border-transparent group-[.active]:border-indigo-400 px-7 py-3 font-bold text-md text-slate-400 group-[.active]:text-white">FusionAuth Cloud</a></li>
-    </ul>
-    <hr class="border-slate-700"/>
-    <div data-tab-content id="fusionauth-cloud" class="m-8">
-      <h2 class="mb-4 text-2xl">FusionAuth Cloud</h2>
-      <p class="mb-6">
-        You can sign up for a free trial of FusionAuth running in our fully managed Cloud. Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
-      </p>
-      <a href="http://account.fusionauth.io/account/free-trial/start?source=site" class="bg-orange-400 font-bold inline-block px-6 py-3 rounded-md uppercase">start free trial</a>
-    </div>
-  </div>
-  <div data-tab-content id="gitpod" class="bg-indigo-950 border border-slate-700 flex-1 hidden overflow-hidden rounded-lg text-sm">
-    <ul class="flex mt-3 mx-4">
-      <li class="group active"><a data-tab-button href="#gitpod-classic" class="block border-b-2 border-transparent group-[.active]:border-indigo-400 px-7 py-3 font-bold text-md text-slate-400 group-[.active]:text-white">Gitpod Classic</a></li>
-    </ul>
-    <hr class="border-slate-700"/>
-    <div data-tab-content id="gitpod-classic" class="m-8">
-      <h2 class="mb-4 text-2xl">Gitpod Classic</h2>
-      <p class="mb-6">
-        Launch FusionAuth in a Gitpod Classic environment. If you have a Gitpod Enterprise account, you can also launch FusionAuth. Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
-      </p>
-      <a href="https://gitpod.io/#https://github.com/fusionauth/fusionauth-example-express-start-here" class="inline-block" target="_blank">
-        <img src="https://gitpod.io/button/open-in-gitpod.svg" alt="Open in GitPod"/>
-      </a>
     </div>
   </div>
   <div data-tab-content id="linux" class="bg-indigo-950 border border-slate-700 flex-1 hidden overflow-hidden rounded-lg text-sm">
@@ -188,10 +227,12 @@ docker-compose up</code>
         Copy and paste the code below and we'll do the rest (feel free to read the install scripts first). This installation method installs the FusionAuth ZIP packages into the current working directory. You'll also need to manually install a database for FusionAuth to work. You can learn more about our Fast Path installation in our <a href="https://fusionauth.io/docs/get-started/download-and-install/fast-path" class={anchorClass}>Fast Path Installation Guide</a>. Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
       </p>
       <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-        <code class="block whitespace-pre">bash -c "curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-install/master/install.sh | bash -s"</code>
+        <code class="block whitespace-pre">curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-install/master/install.sh | bash -s && \
+cd fusionauth && \{kickstartEnabled && kickstartWithEnv}
+bin/startup.sh</code>
       </pre>
       <p>
-        You'll need to run the startup.sh script as well. Once that has been run, you can open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
+        Then open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
       </p>
     </div>
   </div>
@@ -357,10 +398,12 @@ kubectl port-forward svc/$SVC_NAME 9011:9011</code>
         Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
       </p>
       <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-        <code class="block whitespace-pre">bash -c "curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-install/master/install.sh | bash -s"</code>
+        <code class="block whitespace-pre">curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-install/master/install.sh | bash -s && \
+cd fusionauth && \{kickstartEnabled && kickstartWithEnv}
+bin/startup.sh</code>
       </pre>
       <p>
-        You'll need to run the startup.sh script as well. Once that has been run, you can open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
+        Then open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
       </p>
     </div>
   </div>
@@ -416,7 +459,10 @@ kubectl port-forward svc/$SVC_NAME 9011:9011</code>
         Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
       </p>
       <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-        <code class="block whitespace-pre">. &lbrace; iwr -useb https://raw.githubusercontent.com/FusionAuth/fusionauth-install/master/install.ps1 } | iex; install</code>
+        <code class="block whitespace-pre">Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/FusionAuth/fusionauth-install/master/install.ps1 -OutFile install.ps1 && `
+.\install && `
+cd fusionauth && `{ kickstartEnabled && kickstartWindowsWithEnv }
+bin\startup.ps1</code>
       </pre>
       <p>
         You'll need to run the startup.ps1 script as well. Once that has been run, you can open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
@@ -439,6 +485,34 @@ kubectl port-forward svc/$SVC_NAME 9011:9011</code>
       <p class="mb-6">
         Looking for our standard packages (DEB, RPM and ZIPs)? They are stored in our <a href="https://fusionauth.io/direct-download" class={anchorClass}>direct downloads</a>.
       </p>
+    </div>
+  </div>
+  <div data-tab-content id="cloud" class="bg-indigo-950 border border-slate-700 flex-1 hidden overflow-hidden rounded-lg text-sm">
+    <ul class="flex mt-3 mx-4">
+      <li class="group active"><a data-tab-button href="#fusionauth-cloud" class="block border-b-2 border-transparent group-[.active]:border-indigo-400 px-7 py-3 font-bold text-md text-slate-400 group-[.active]:text-white">FusionAuth Cloud</a></li>
+    </ul>
+    <hr class="border-slate-700"/>
+    <div data-tab-content id="fusionauth-cloud" class="m-8">
+      <h2 class="mb-4 text-2xl">FusionAuth Cloud</h2>
+      <p class="mb-6">
+        You can sign up for a free trial of FusionAuth running in our fully managed Cloud. Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
+      </p>
+      <a href="https://account.fusionauth.io/account/free-trial/start?source=site" class="bg-orange-400 font-bold inline-block px-6 py-3 rounded-md uppercase">start free trial</a>
+    </div>
+  </div>
+  <div data-tab-content id="gitpod" class="bg-indigo-950 border border-slate-700 flex-1 hidden overflow-hidden rounded-lg text-sm">
+    <ul class="flex mt-3 mx-4">
+      <li class="group active"><a data-tab-button href="#gitpod-classic" class="block border-b-2 border-transparent group-[.active]:border-indigo-400 px-7 py-3 font-bold text-md text-slate-400 group-[.active]:text-white">Gitpod Classic</a></li>
+    </ul>
+    <hr class="border-slate-700"/>
+    <div data-tab-content id="gitpod-classic" class="m-8">
+      <h2 class="mb-4 text-2xl">Gitpod Classic</h2>
+      <p class="mb-6">
+        Launch FusionAuth in a Gitpod Classic environment. If you have a Gitpod Enterprise account, you can also launch FusionAuth. Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
+      </p>
+      <a href="https://gitpod.io/#https://github.com/fusionauth/fusionauth-example-express-start-here" class="inline-block" target="_blank">
+        <img src="https://gitpod.io/button/open-in-gitpod.svg" alt="Open in GitPod"/>
+      </a>
     </div>
   </div>
   <div data-tab-content id="sandbox" class="bg-indigo-950 border border-slate-700 flex-1 hidden overflow-hidden rounded-lg text-sm">
