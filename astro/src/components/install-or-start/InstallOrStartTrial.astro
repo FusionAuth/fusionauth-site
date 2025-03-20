@@ -1,4 +1,7 @@
 ---
+import Code from 'src/components/install-or-start/Code.astro';
+import Kickstart from 'src/components/install-or-start/Kickstart.astro';
+
 const {kickstartEnabled, kickstartName, includeHostedOptions, includeKubernetes, includePackages, includeSandbox} = Astro.props;
 
 var tabs = [
@@ -7,6 +10,12 @@ var tabs = [
     "title": "Docker",
     "image": "docker.svg",
     "active": true
+  },
+  {
+    "id": "macos",
+    "title": "macOS",
+    "image": "macos.svg",
+    "active": false
   },
   {
     "id": "linux",
@@ -18,30 +27,6 @@ var tabs = [
     "id": "windows",
     "title": "Windows",
     "image": "windows.svg",
-    "active": false
-  },
-  {
-    "id": "macos",
-    "title": "macOS",
-    "image": "macos.svg",
-    "active": false
-  },
-  {
-    "id": "debian",
-    "title": "Debian",
-    "image": "debian.svg",
-    "active": false
-  },
-  {
-    "id": "redhat",
-    "title": "RedHat",
-    "image": "redhat.png",
-    "active": false
-  },
-  {
-    "id": "homebrew",
-    "title": "Homebrew",
-    "image": "homebrew.svg",
     "active": false
   }
 ];
@@ -95,6 +80,30 @@ if (includeKubernetes) {
 if (includePackages) {
   tabs.push(
       {
+        "id": "debian",
+          "title": "Debian",
+          "image": "debian.svg",
+          "active": false
+      }
+  );
+  tabs.push(
+      {
+        "id": "redhat",
+          "title": "RedHat",
+          "image": "redhat.png",
+          "active": false
+      }
+  );
+  tabs.push(
+      {
+        "id": "homebrew",
+          "title": "Homebrew",
+          "image": "homebrew.svg",
+          "active": false
+      }
+  );
+  tabs.push(
+      {
         "id": "packages",
         "title": "Packages",
         "image": "package.svg",
@@ -115,23 +124,7 @@ if (includeSandbox) {
 }
 
 const anchorClass = 'border-b border-b-indigo-400 text-indigo-400 hover:text-indigo-400 hover:border-b-2';
-
 var step = 1;
-var kickstart = "";
-var kickstartWindowsWithEnv = "";
-var kickstartWithEnv = "";
-if (kickstartEnabled) {
-  kickstart =
-      `curl -fsSL https://github.com/FusionAuth/fusionauth-example-kickstart/archive/refs/heads/bpontarelli/reorg.zip > kickstarts.zip && \\
-unzip kickstarts.zip && \\
-ln -s fusionauth-example-kickstart-bpontarelli-reorg/${kickstartName} kickstart`
-  kickstartWithEnv = kickstart + `\nexport FUSIONAUTH_APP_KICKSTART_FILE="$PWD/kickstart/kickstart.json" && \\`
-  kickstartWindowsWithEnv =
-      `Invoke-WebRequest -UseBasicParsing -Uri https://github.com/FusionAuth/fusionauth-example-kickstart/archive/refs/heads/bpontarelli/reorg.zip -OutFile kickstarts.zip && \`
-Expand-Archive -DestinationPath . kickstarts.zip && \`
-New-Item -Path kickstart -ItemType SymbolicLink -Value fusionauth-example-kickstart-bpontarelli-reorg\\${kickstartName} && \`
-$env:FUSIONAUTH_APP_KICKSTART_FILE=(Get-Item .).FullName + "\\kickstart\\kickstart.json" && \``
-}
 ---
 <div class="bg-indigo-900 flex gap-3 mb-10 not-prose p-3 rounded-2xl text-sm text-white">
   <ul class="bg-indigo-950 border border-slate-700 flex flex-col gap-1 p-2 rounded-lg text-[13px]">
@@ -153,32 +146,42 @@ $env:FUSIONAUTH_APP_KICKSTART_FILE=(Get-Item .).FullName + "\\kickstart\\kicksta
     <div data-tab-content id="docker-compose" class="m-8" data-reset={step = 1}>
       <h2 class="mb-4 text-2xl">Docker Compose</h2>
       <p class="mb-6">
-        Use the following Docker Compose commands to get up and running quickly with FusionAuth, PostgreSQL, and Elasticsearch. This command assumes you are running Linux, macOS, or a Unix variant. You might need to modify it if you are using a different operating system. Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
+        Use the following Docker Compose commands to get up and running quickly with FusionAuth, PostgreSQL, and Elasticsearch. You might need to modify it if you are using a different operating system. Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
       </p>
-      <p class="mb-6">
+      <p class="mb-4">
         <strong>Step { step++ }:</strong> Download the Docker files
       </p>
-      <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-<code class="block whitespace-pre">curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/refs/heads/bpontarelli/kickstart/docker/fusionauth/docker-compose.yml > docker-compose.yml && \
-curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/refs/heads/bpontarelli/kickstart/docker/fusionauth/.env > .env</code>
-      </pre>
+      <ul class="flex mb-4">
+        <li class="group active"><a data-tab-button href="#docker-compose-download-nix" class="block border-b-2 border-transparent font-bold px-7 py-3 text-xs text-slate-400 group-[.active]:border-indigo-400 group-[.active]:text-white">Linux/Unix/macOS</a></li>
+        <li class="group"><a data-tab-button href="#docker-compose-download-windows" class="block border-b-2 border-transparent flex-grow px-7 py-3 text-xs text-slate-400 group-[.active]:border-indigo-400 group-[.active]:text-white">Windows</a></li>
+      </ul>
+      <div data-tab-content id="docker-compose-download-nix">
+        <Code>
+          curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/refs/heads/bpontarelli/kickstart/docker/fusionauth/docker-compose.yml > docker-compose.yml && \
+          curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/refs/heads/bpontarelli/kickstart/docker/fusionauth/.env > .env
+        </Code>
+      </div>
+      <div data-tab-content id="docker-compose-download-windows" class="hidden">
+        <Code>
+          Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/refs/heads/bpontarelli/kickstart/docker/fusionauth/docker-compose.yml -OutFile docker-compose.yml && `
+          Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/refs/heads/bpontarelli/kickstart/docker/fusionauth/.env -OutFile .env
+        </Code>
+      </div>
       { kickstartEnabled &&
-          <p class="mb-2">
+          <p class="mb-2 mt-12">
             <strong>Step { step++ }:</strong> Download the Kickstart files needed for this project
           </p>
-          <p class="mb-6">
-            <em>NOTE: These are picked up by the Docker container automatically</em>
+          <p class="mb-4">
+            <em class="text-xs">NOTE: The Docker Compose configuration loads these Kickstart files automatically.</em>
           </p>
-          <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-<code class="block whitespace-pre">{kickstart}</code>
-          </pre>
+          <Kickstart env={false} includeNix={true} includeWindows={true} name={kickstartName} section="docker-compose-kickstart"/>
       }
-      <p class="mb-6">
+      <p class="mb-6 mt-12">
         <strong>Step { step++ }:</strong> Start the Docker Compose containers
       </p>
-      <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-<code class="block whitespace-pre">docker-compose up</code>
-      </pre>
+      <Code>
+        docker-compose up
+      </Code>
       <p class="mb-6">
         Then open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
       </p>
@@ -191,26 +194,62 @@ curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/re
       <p class="mb-6">
         <strong>Step { step++ }:</strong> Install FusionAuth Docker container
       </p>
-      <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-        <code class="block whitespace-pre">docker pull fusionauth/fusionauth-app</code>
-      </pre>
+      <Code>
+        docker pull fusionauth/fusionauth-app
+      </Code>
       { kickstartEnabled &&
-          <p class="mb-6">
+          <p class="mb-6 mt-12">
             <strong>Step { step++ }:</strong> Download the Kickstart files needed for this project
           </p>
-          <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-<code class="block whitespace-pre">{kickstart}</code>
-          </pre>
+          <Kickstart env={false} includeNix={true} includeWindows={true} name={kickstartName} section="docker-vanilla"/>
       }
-      <p class="mb-6">
+      <p class="mb-6 mt-12">
         <strong>Step { step++ }:</strong> Start the Docker container
       </p>
-      <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-        <code class="block whitespace-pre">docker run -it -p 9011:9011 --add-host host.docker.internal:host-gateway { kickstartEnabled && "-e FUSIONAUTH_APP_KICKSTART_FILE=\"/usr/local/fusionauth/kickstart/kickstart.json\" --mount type=bind,src=./kickstart,dst=/usr/local/fusionauth/kickstart " }fusionauth/fusionauth-app</code>
-      </pre>
+      <Code>
+        docker run -it -p 9011:9011 --add-host host.docker.internal:host-gateway { kickstartEnabled && "-e FUSIONAUTH_APP_KICKSTART_FILE=\"/usr/local/fusionauth/kickstart/kickstart.json\" --mount type=bind,src=./kickstart,dst=/usr/local/fusionauth/kickstart " }fusionauth/fusionauth-app
+      </Code>
       <p class="mb-6">
         <em>NOTE: If you are running the database on the host machine, use the hostname `host.docker.internal` to connect FusionAuth to the database rather than `localhost`.</em>
       </p>
+      <p>
+        Then open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
+      </p>
+    </div>
+  </div>
+  <div data-tab-content id="macos" class="bg-indigo-950 border border-slate-700 flex-1 hidden overflow-hidden rounded-lg text-sm">
+    <ul class="flex mt-3 mx-4">
+      <li class="group active"><a data-tab-button href="#macos-fast-path" class="block border-b-2 border-transparent group-[.active]:border-indigo-400 px-7 py-3 font-bold text-md text-slate-400 group-[.active]:text-white">Fast Path</a></li>
+    </ul>
+    <hr class="border-slate-700"/>
+    <div data-tab-content id="macos-fast-path" class="m-8" data-step={step = 1}>
+      <h2 class="mb-4 text-2xl">macOS Fast Path</h2>
+      <p class="mb-6">
+        Copy and paste the code below into Terminal/iTerm and we'll do the rest (feel free to read the install scripts first).
+        This installation method installs the FusionAuth ZIP packages into the current working directory.
+        You'll also need to manually install a database for FusionAuth to work.
+        You can learn more about our Fast Path installation in our <a href="https://fusionauth.io/docs/get-started/download-and-install/fast-path" class={anchorClass}>Fast Path Installation Guide</a>.
+        Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
+      </p>
+      <p class="mb-6">
+        <strong>Step { step++ }:</strong> Download and install the ZIP files
+      </p>
+      <Code>
+        curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-install/master/install.sh | bash -s && \
+        cd fusionauth
+      </Code>
+      { kickstartEnabled &&
+          <p class="mb-6 mt-12">
+            <strong>Step { step++ }:</strong> Download the Kickstart files needed for this project
+          </p>
+          <Kickstart env={false} includeNix={true} includeWindows={false} name={kickstartName}/>
+      }
+      <p class="mb-6 mt-12">
+        <strong>Step { step++ }:</strong> Start FusionAuth
+      </p>
+      <Code>
+        bin/startup.sh
+      </Code>
       <p>
         Then open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
       </p>
@@ -221,18 +260,77 @@ curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/re
       <li class="group active"><a data-tab-button href="#linux-fast-path" class="block border-b-2 border-transparent group-[.active]:border-indigo-400 px-7 py-3 font-bold text-md text-slate-400 group-[.active]:text-white">Linux Fast Path</a></li>
     </ul>
     <hr class="border-slate-700"/>
-    <div data-tab-content id="linux-fast-path" class="m-8">
+    <div data-tab-content id="linux-fast-path" class="m-8" data-step={step = 1}>
       <h2 class="mb-4 text-2xl">Linux Fast Path</h2>
       <p class="mb-6">
         Copy and paste the code below and we'll do the rest (feel free to read the install scripts first). This installation method installs the FusionAuth ZIP packages into the current working directory. You'll also need to manually install a database for FusionAuth to work. You can learn more about our Fast Path installation in our <a href="https://fusionauth.io/docs/get-started/download-and-install/fast-path" class={anchorClass}>Fast Path Installation Guide</a>. Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
       </p>
-      <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-        <code class="block whitespace-pre">curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-install/master/install.sh | bash -s && \
-cd fusionauth && \{kickstartEnabled && kickstartWithEnv}
-bin/startup.sh</code>
-      </pre>
+      <p class="mb-6">
+        <strong>Step { step++ }:</strong> Download and install the ZIP files
+      </p>
+      <Code>
+        curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-install/master/install.sh | bash -s && \
+        cd fusionauth
+      </Code>
+      { kickstartEnabled &&
+          <p class="mb-6 mt-12">
+            <strong>Step { step++ }:</strong> Download the Kickstart files needed for this project
+          </p>
+          <Kickstart env={false} includeNix={true} includeWindows={false} name={kickstartName}/>
+      }
+      <p class="mb-6 mt-12">
+        <strong>Step { step++ }:</strong> Start FusionAuth
+      </p>
+      <Code>
+        bin/startup.sh
+      </Code>
       <p>
         Then open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
+      </p>
+    </div>
+  </div>
+  <div data-tab-content id="windows" class="bg-indigo-950 border border-slate-700 flex-1 hidden overflow-hidden rounded-lg text-sm">
+    <ul class="flex mt-3 mx-4">
+      <li class="group active"><a data-tab-button href="#windows-fast-path" class="block border-b-2 border-transparent group-[.active]:border-indigo-400 px-7 py-3 font-bold text-md text-slate-400 group-[.active]:text-white">Fast Path</a></li>
+      <li class="group"><a data-tab-button href="#windows-wsl2" class="block border-b-2 border-transparent group-[.active]:border-indigo-400 px-7 py-3 font-bold text-md text-slate-400 group-[.active]:text-white">WSL v2</a></li>
+    </ul>
+    <hr class="border-slate-700"/>
+    <div data-tab-content id="windows-fast-path" class="m-8" data-step={step = 1}>
+      <h2 class="mb-4 text-2xl">Windows Fast Path</h2>
+      <p class="mb-6">
+        Copy and paste the code below into PowerShell and we'll do the rest (feel free to read the install scripts first).
+        This installation method installs the FusionAuth ZIP packages into the current working directory.
+        You'll also need to manually install a database for FusionAuth to work.
+        You can learn more about our Fast Path installation in our <a href="https://fusionauth.io/docs/get-started/download-and-install/fast-path" class={anchorClass}>Fast Path Installation Guide</a>.
+        Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
+      </p>
+      <p class="mb-6">
+        <strong>Step { step++ }:</strong> Download and install the ZIP files
+      </p>
+      <Code>
+        Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/FusionAuth/fusionauth-install/main/install.ps1 | iex && `
+        cd fusionauth
+      </Code>
+      { kickstartEnabled &&
+          <p class="mb-6 mt-12">
+            <strong>Step { step++ }:</strong> Download the Kickstart files needed for this project
+          </p>
+          <Kickstart env={false} includeNix={false} includeWindows={true} name={kickstartName}/>
+      }
+      <p class="mb-6 mt-12">
+        <strong>Step { step++ }:</strong> Start FusionAuth
+      </p>
+      <Code>
+        bin\startup.ps1
+      </Code>
+      <p>
+        Then open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
+      </p>
+    </div>
+    <div data-tab-content id="windows-wsl2" class="hidden m-8">
+      <h2 class="mb-4 text-2xl">Windows Subsystem for Linux 2</h2>
+      <p class="mb-6">
+        Follow the <a href="https://docs.microsoft.com/en-us/windows/wsl/about" class={anchorClass}>Microsoft documentation to install Debian/Ubuntu using WSL 2</a> and then follow the Linux install directions by clicking the Linux tab above.
       </p>
     </div>
   </div>
@@ -275,6 +373,42 @@ sudo systemctl start fusionauth-app</code>
       </pre>
       <p>
         Then open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
+      </p>
+    </div>
+  </div>
+  <div data-tab-content id="homebrew" class="bg-indigo-950 border border-slate-700 flex-1 hidden overflow-hidden rounded-lg text-sm">
+    <ul class="flex mt-3 mx-4">
+      <li class="group active"><a data-tab-button href="#homebrew-cli" class="block border-b-2 border-transparent group-[.active]:border-indigo-400 px-7 py-3 font-bold text-md text-slate-400 group-[.active]:text-white">Homebrew</a></li>
+    </ul>
+    <hr class="border-slate-700"/>
+    <div data-tab-content id="homebrew-cli" class="m-8">
+      <h2 class="mb-4 text-2xl">Homebrew Installation</h2>
+      <p class="mb-6">
+        Copy and paste each command below into Terminal to install using <a href="https://brew.sh/" class={anchorClass}>Homebrew</a>.
+        You'll also need to manually install a database for FusionAuth to work.
+        You can also review our <a href="https://fusionauth.io/docs/get-started/download-and-install/homebrew" class={anchorClass}>Homebrew Installation Guide</a> for more information.
+        Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
+      </p>
+      <p class="mb-6">
+        <strong>Step 1:</strong> Tap the FusionAuth package, this will only need to be performed once
+      </p>
+      <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
+        <code class="block whitespace-pre">brew tap fusionauth/homebrew-fusionauth</code>
+      </pre>
+      <p class="mb-6">
+        <strong>Step 2:</strong> Install the FusionAuth tap, this will only need to be performed once
+      </p>
+      <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
+        <code class="block whitespace-pre">brew install fusionauth-app</code>
+      </pre>
+      <p class="mb-6">
+        <strong>Step 3:</strong> Start the FusionAuth service
+      </p>
+      <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
+        <code class="block whitespace-pre">brew services start fusionauth-app</code>
+      </pre>
+      <p>
+        Than open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
       </p>
     </div>
   </div>
@@ -380,98 +514,6 @@ kubectl port-forward svc/$SVC_NAME 9011:9011</code>
       </pre>
       <p>
         Then open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
-      </p>
-    </div>
-  </div>
-  <div data-tab-content id="macos" class="bg-indigo-950 border border-slate-700 flex-1 hidden overflow-hidden rounded-lg text-sm">
-    <ul class="flex mt-3 mx-4">
-      <li class="group active"><a data-tab-button href="#macos-fast-path" class="block border-b-2 border-transparent group-[.active]:border-indigo-400 px-7 py-3 font-bold text-md text-slate-400 group-[.active]:text-white">Fast Path</a></li>
-    </ul>
-    <hr class="border-slate-700"/>
-    <div data-tab-content id="macos-fast-path" class="m-8">
-      <h2 class="mb-4 text-2xl">macOS Fast Path</h2>
-      <p class="mb-6">
-        Copy and paste the code below into Terminal/iTerm and we'll do the rest (feel free to read the install scripts first).
-        This installation method installs the FusionAuth ZIP packages into the current working directory.
-        You'll also need to manually install a database for FusionAuth to work.
-        You can learn more about our Fast Path installation in our <a href="https://fusionauth.io/docs/get-started/download-and-install/fast-path" class={anchorClass}>Fast Path Installation Guide</a>.
-        Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
-      </p>
-      <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-        <code class="block whitespace-pre">curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-install/master/install.sh | bash -s && \
-cd fusionauth && \{kickstartEnabled && kickstartWithEnv}
-bin/startup.sh</code>
-      </pre>
-      <p>
-        Then open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
-      </p>
-    </div>
-  </div>
-  <div data-tab-content id="homebrew" class="bg-indigo-950 border border-slate-700 flex-1 hidden overflow-hidden rounded-lg text-sm">
-    <ul class="flex mt-3 mx-4">
-      <li class="group active"><a data-tab-button href="#homebrew-cli" class="block border-b-2 border-transparent group-[.active]:border-indigo-400 px-7 py-3 font-bold text-md text-slate-400 group-[.active]:text-white">Homebrew</a></li>
-    </ul>
-    <hr class="border-slate-700"/>
-    <div data-tab-content id="homebrew-cli" class="m-8">
-      <h2 class="mb-4 text-2xl">Homebrew Installation</h2>
-      <p class="mb-6">
-        Copy and paste each command below into Terminal to install using <a href="https://brew.sh/" class={anchorClass}>Homebrew</a>.
-        You'll also need to manually install a database for FusionAuth to work.
-        You can also review our <a href="https://fusionauth.io/docs/get-started/download-and-install/homebrew" class={anchorClass}>Homebrew Installation Guide</a> for more information.
-        Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
-      </p>
-      <p class="mb-6">
-        <strong>Step 1:</strong> Tap the FusionAuth package, this will only need to be performed once
-      </p>
-      <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-        <code class="block whitespace-pre">brew tap fusionauth/homebrew-fusionauth</code>
-      </pre>
-      <p class="mb-6">
-        <strong>Step 2:</strong> Install the FusionAuth tap, this will only need to be performed once
-      </p>
-      <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-        <code class="block whitespace-pre">brew install fusionauth-app</code>
-      </pre>
-      <p class="mb-6">
-        <strong>Step 3:</strong> Start the FusionAuth service
-      </p>
-      <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-        <code class="block whitespace-pre">brew services start fusionauth-app</code>
-      </pre>
-      <p>
-        Than open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
-      </p>
-    </div>
-  </div>
-  <div data-tab-content id="windows" class="bg-indigo-950 border border-slate-700 flex-1 hidden overflow-hidden rounded-lg text-sm">
-    <ul class="flex mt-3 mx-4">
-      <li class="group active"><a data-tab-button href="#windows-fast-path" class="block border-b-2 border-transparent group-[.active]:border-indigo-400 px-7 py-3 font-bold text-md text-slate-400 group-[.active]:text-white">Fast Path</a></li>
-      <li class="group"><a data-tab-button href="#windows-wsl2" class="block border-b-2 border-transparent group-[.active]:border-indigo-400 px-7 py-3 font-bold text-md text-slate-400 group-[.active]:text-white">WSL v2</a></li>
-    </ul>
-    <hr class="border-slate-700"/>
-    <div data-tab-content id="windows-fast-path" class="m-8">
-      <h2 class="mb-4 text-2xl">Windows Fast Path</h2>
-      <p class="mb-6">
-        Copy and paste the code below into PowerShell and we'll do the rest (feel free to read the install scripts first).
-        This installation method installs the FusionAuth ZIP packages into the current working directory.
-        You'll also need to manually install a database for FusionAuth to work.
-        You can learn more about our Fast Path installation in our <a href="https://fusionauth.io/docs/get-started/download-and-install/fast-path" class={anchorClass}>Fast Path Installation Guide</a>.
-        Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
-      </p>
-      <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-        <code class="block whitespace-pre">Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/FusionAuth/fusionauth-install/master/install.ps1 -OutFile install.ps1 && `
-.\install && `
-cd fusionauth && `{ kickstartEnabled && kickstartWindowsWithEnv }
-bin\startup.ps1</code>
-      </pre>
-      <p>
-        You'll need to run the startup.ps1 script as well. Once that has been run, you can open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
-      </p>
-    </div>
-    <div data-tab-content id="windows-wsl2" class="hidden m-8">
-      <h2 class="mb-4 text-2xl">Windows Subsystem for Linux 2</h2>
-      <p class="mb-6">
-        Follow the <a href="https://docs.microsoft.com/en-us/windows/wsl/about" class={anchorClass}>Microsoft documentation to install Debian/Ubuntu using WSL 2</a> and then follow the Linux install directions by clicking the Linux tab above.
       </p>
     </div>
   </div>

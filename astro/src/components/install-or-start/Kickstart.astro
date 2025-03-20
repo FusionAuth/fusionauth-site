@@ -1,0 +1,29 @@
+---
+import Code from 'src/components/install-or-start/Code.astro';
+const {env, includeNix, includeWindows, name, section} = Astro.props;
+const tabs = includeNix && includeWindows;
+---
+{ tabs &&
+  <ul class="flex mb-4">
+    <li class="group active"><a data-tab-button href={"#" + section + "-nix"} class="block border-b-2 border-transparent font-bold px-7 py-3 text-xs text-slate-400 group-[.active]:border-indigo-400 group-[.active]:text-white">Linux/Unix/macOS</a></li>
+    <li class="group"><a data-tab-button href={"#" + section + "-windows"} class="block border-b-2 border-transparent flex-grow px-7 py-3 text-xs text-slate-400 group-[.active]:border-indigo-400 group-[.active]:text-white">Windows</a></li>
+  </ul>
+}
+{ includeNix &&
+    <div data-tab-content id={section + "-nix"}>
+      <Code>
+        curl -fsSL https://github.com/FusionAuth/fusionauth-example-kickstart/archive/refs/heads/bpontarelli/reorg.zip > kickstarts.zip && \
+        unzip kickstarts.zip && \
+        ln -s fusionauth-example-kickstart-bpontarelli-reorg/{name} kickstart{env && "\nexport FUSIONAUTH_APP_KICKSTART_FILE=\"$PWD/kickstart/kickstart.json\""}
+      </Code>
+    </div>
+}
+{includeWindows &&
+    <div data-tab-content id={section + "-windows"} class={tabs && "hidden"}>
+      <Code>
+        Invoke-WebRequest -UseBasicParsing -Uri https://github.com/FusionAuth/fusionauth-example-kickstart/archive/refs/heads/bpontarelli/reorg.zip -OutFile kickstarts.zip && `
+        Expand-Archive -DestinationPath . kickstarts.zip && `
+        New-Item -Path kickstart -ItemType SymbolicLink -Value fusionauth-example-kickstart-bpontarelli-reorg\{ name }{ env && "&& `\n$env:FUSIONAUTH_APP_KICKSTART_FILE=(Get-Item .).FullName + \"\kickstart\kickstart.json\"" }
+      </Code>
+    </div>
+}

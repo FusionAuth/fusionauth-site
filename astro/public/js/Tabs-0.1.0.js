@@ -18,6 +18,18 @@ class Tabs {
       const buttons = anchor.closest('ul').querySelectorAll('a[data-tab-button]');
       buttons.forEach(button => {
         button.parentElement.classList.remove('active');
+
+        // Hide all the tabs
+        var href = button.getAttribute('href');
+        if (href === null) {
+          return;
+        }
+        href = href.substring(1);
+
+        const div = document.getElementById(href);
+        if (div) {
+          div.classList.add('hidden');
+        }
       });
       anchor.parentElement.classList.add('active');
 
@@ -28,15 +40,8 @@ class Tabs {
       }
 
       // Find the div
-      console.log(href);
       const div = document.getElementById(href);
-      console.log(div);
-      if (div !== null && div.matches('[data-tab-content')) {
-        const tabs = div.parentElement.querySelectorAll(':scope > [data-tab-content]')
-        tabs.forEach(tab => {
-          tab.classList.add('hidden');
-        });
-
+      if (div) {
         div.classList.remove('hidden');
       }
     }
