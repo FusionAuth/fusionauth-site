@@ -36,13 +36,13 @@ Popular online games are notorious for failing to handle large numbers of users.
 
 Recent examples include ChatGPT, an AI LLM that is extremely RAM and CPU intensive, which throttles its use in peak times. Even its vastly more efficient Chinese competitor, DeepSeek, which was the most downloaded free app on the Apple mobile store in 2025, had outages with logins and chat responses soon after launch.
 
-Scaling concerns affect even programming languages. PHP's single-process-per-HTTP-request design is one of the reasons programmers flocked to Node.js when it released. With Node's non-blocking IO requests, it was trivial for a junior programmer to write an asynchronous web server to handle thousands of simultaneous requests with no extra work and very little RAM.
+Scaling concerns affect even programming languages. PHP's single-process-per-HTTP-request design is one of the reasons programmers flocked to Node.js when it was released. With Node's non-blocking IO requests, it was trivial for a junior programmer to write an asynchronous web server to handle thousands of simultaneous requests with no extra work and very little RAM.
 
 ## What Is Multi-Tenant Architecture?
 
 One important decision you need to make when choosing infrastructure that can scale is single-tenant architecture versus multi-tenant architecture.
 
-The accepted definition of **multi-tenancy** is when **a single instance of software runs on a single server and serves multiple tenants**. Consider a project management software website, like Trello or Redmine. The website is multi-tenant if it can serve multiple customers (companies running projects) from one server. A designer might even work on two different projects at two different companies, both using the same project management software. She would be seen as completely different users under each company (tenant), even though she logs into both companies with the same email address.
+The accepted definition of **multi-tenancy** is when **a single instance of software runs on a single server and serves multiple tenants**. Consider a project management software website, like Trello or Redmine. The website is multi-tenant if it can serve multiple customers (companies running projects) from one server. A designer might even work on two different projects at two different companies, both using the same project management software. She would be seen as a completely different user under each company (tenant), even though she might log into both companies with the same email address.
 
 But what exactly is a **single instance of software**? What if there is one web server process but multiple databases? Is that still multi-tenant? What about multiple WordPress sites that all store their data in the same database? Or a load balancer that evenly distributes customer requests to multiple, but identical, instances of a web application running on the same server that access the same database?
 
@@ -66,7 +66,7 @@ Multi-tenancy has a lot of advantages. It's simple to serve multiple customers w
 
 Shared infrastructure is much cheaper than a dedicated physical server. At the time of writing, the cheapest dedicated Hetzner server is ten times the price of the cheapest shared one. Since shared infrastructure is generally hosted inside Docker, or a shared file system in the case of WordPress servers, it's simple to scale up or down by increasing your share of the physical machine's resources. You can instantly increase the power of your "server" from a dashboard, or by emailing support.
 
-One danger of multi-tenant systems is exposing customer data. If you use a single database, every SQL query you write has to be careful to not expose another customer's data. An attacker who gains access to your database, gain access to all customers' data. If you're using a shared WordPress web host, a single website with a malicious plugin could threaten the data and performance of all other sites on the server.
+One danger of multi-tenant systems is exposing customer data. If you use a single database, every SQL query you write has to be careful to not expose another customer's data. An attacker who gains access to your database, gains access to all customers' data. If you're using a shared WordPress web host, a single website with a malicious plugin could threaten the data and performance of all other sites on the server.
 
 For example, in [2022](https://gizmodo.com/oktapus-okta-hack-twilio-10000-logins-130-companies-1849457420) and [2023](https://www.wired.com/story/okta-support-system-breach-disclosure/) the online authentication gateway Okta suffered major attacks. Ten thousand credentials of Okta customers were stolen in 2022, and in 2023 the hackers gained access to Okta customer support accounts. Gaining access to customer support gave the attacker access to all customers on the infrastructure that the compromised accounts had access to. Multi-tenant systems involve more customers per server than single-tenant ones, and thus expose a bigger attack surface.
 
@@ -95,15 +95,15 @@ The disadvantage of a single-tenant system and dedicated-server hosting is waste
 
 Authentication needs special attention when designing your infrastructure because of the CPU load when hashing passwords. In any authentication system [the bottleneck is hashing](/articles/ciam/making-sure-your-auth-system-scales), both for registration and login. Hashing is intentionally slow, in order to make attacks on a user's password take longer. This means hashing is particularly susceptible to load spikes causing loss of service.
 
-Let's test a real example — load testing an authentication gateway: FusionAuth. FusionAuth is an authentication gateway that can be cloud-hosted or self-hosted (where you can use a free-tier with most features websites commonly need). It uses a single tenant design. However, Fusionauth allows you to completely partition users and customers into logical tenants in the same database. While using multiple tenants is not recommended, it is useful for times when you want to host DEV, QA, and PROD environments on the same server; or white-label and theme an application for a new client that wants to use your service, but with customization and isolation. Read more about these use cases in this [article](/blog/multi-tenancy-in-a-single-tenant-architecture).
+Let's test a real example — load testing an authentication gateway: FusionAuth. FusionAuth is an authentication gateway that can be cloud-hosted or self-hosted (where you can use a free-tier with most features websites commonly need). It uses a single tenant design. However, FusionAuth allows you to completely partition users and customers into logical tenants in the same database. While using multiple tenants is not recommended, it is useful for times when you want to host DEV, QA, and PROD environments on the same server; or white-label and theme an application for a new client that wants to use your service, but with customization and isolation. Read more about these use cases in this [article](/blog/multi-tenancy-in-a-single-tenant-architecture).
 
 ## Load Testing Different Numbers Of Tenants For Authentication
 
-Since Fusionauth is stateless, you can easily scale it horizontally by adding more instances of the application (usually in Docker), all accessing the same single instance Postgres database. Even back in 2019, [Fusionauth could support 100 million users](/blog/got-users-100-million) on one database.
+Since FusionAuth is stateless, you can easily scale it horizontally by adding more instances of the application (usually in Docker), all accessing the same single instance Postgres database. Even back in 2019, [FusionAuth could support 100 million users](/blog/got-users-100-million) on one database.
 
 The question is: what is the effect on load if you use multiple tenants on the same instance?
 
-We ran a load test on FusionAuth with one, two, and three tenants. Each test registered, logged in, then deleted 2000 users. The users were split equally between tenants in the multi-tenant tests so the total workload remained the same. The tests were run from a multi-threaded Go script against a Postgres and Fusionauth instance, each using two cores of a twelve-core 3.4 GHz CPU.
+We ran a load test on FusionAuth with one, two, and three tenants. Each test registered, logged in, then deleted 2000 users. The users were split equally between tenants in the multi-tenant tests so the total workload remained the same. The tests were run from a multi-threaded Go script against a Postgres and FusionAuth instance, each using two cores of a twelve-core 3.4 GHz CPU.
 
 The results are below, showing each test run five times, with results in milliseconds. Each column is a step in the test: register, log in, and delete. Look at the last line in each table, which is the number of users processed per second for each step (the load capacity of the system).
 
@@ -148,9 +148,9 @@ The results are below, showing each test run five times, with results in millise
 
 You can see that the number of users processed per second does not change in each test, meaning that processing speed is independent of multi-tenancy. The conclusion is that if your server supports more than one tenant, each tenant will have proportionally less processing speed. This highlights that when resources are fixed, such as on a shared server, you should always aim for your application to be the only one on the server.
 
-Another interesting result of the test was the effect of the number of simultaneous requests on performance. All tests ran without error when using 200 requests (coroutines in Go). However, when increasing to 400 simultaneous requests, Fusionauth had a few timeout errors. Above 500, excess requests began to fail rapidly. In other words, load spikes are dangerous. You should always provision enough infrastructure to handle your peak usage times, not your average usage.
+Another interesting result of the test was the effect of the number of simultaneous requests on performance. All tests ran without error when using 200 requests (coroutines in Go). However, when increasing to 400 simultaneous requests, FusionAuth had a few timeout errors. Above 500, excess requests began to fail rapidly. In other words, load spikes are dangerous. You should always provision enough infrastructure to handle your peak usage times, not your average usage.
 
-On average during the tests, the database used 200 MB of RAM and Fusionauth used 700 MB. As expected, Fusionauth fully used its two CPU cores and the database used only 36% of one. When allowing the Fusionauth Docker instance to use all twelve cores, it was able to log in 550 users per second.
+On average during the tests, the database used 200 MB of RAM and FusionAuth used 700 MB. As expected, FusionAuth fully used its two CPU cores and the database used only 36% of one. When allowing the FusionAuth Docker instance to use all twelve cores, it was able to log in 550 users per second.
 
 ## Conclusions And Recommendations
 
@@ -169,7 +169,7 @@ To explore the benefits of single-tenant solutions yourself, use the FusionAuth 
 ## Further Reading
 
 - [How authentication systems scale](/articles/ciam/making-sure-your-auth-system-scales)
-- [Fusionauth can support 100 million users](/blog/got-users-100-million)
-- [Single tenancy in Fusionauth](/blog/multi-tenancy-in-a-single-tenant-architecture)
+- [FusionAuth can support 100 million users](/blog/got-users-100-million)
+- [Single tenancy in FusionAuth](/blog/multi-tenancy-in-a-single-tenant-architecture)
 - [Okta breach in 2022](https://gizmodo.com/oktapus-okta-hack-twilio-10000-logins-130-companies-1849457420)
 - [Okta breach in 2023](https://www.wired.com/story/okta-support-system-breach-disclosure)
