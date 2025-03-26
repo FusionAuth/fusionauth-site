@@ -1,0 +1,49 @@
+---
+title: Networking Configuration
+description: Learn about FusionAuth networking configuration.
+navcategory: admin
+section: operate
+subcategory: secure
+---
+import Aside from 'src/components/Aside.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+
+## IP Address Resolution
+<Aside type="version">
+Available Since Version 1.49.0
+</Aside>
+
+FusionAuth determines a client's IP address so that the address can be recorded during a login event, sent to a webhook in the event request body, and used when IP ACLs are in use by an Application or an API key.
+
+When traffic passes through a proxy, the proxy typically appends the IP address to the `X-Forwarded-For` header, and the proxy's IP address becomes the new requesting IP. Because a proxy is free to modify this header as it sees fit, a bad actor could write a value to the `X-Forwarded-For` header that allowed a request to bypass ACL rules, or to cause an incorrect IP address to be logged or used in calls to webhooks.
+
+The FusionAuth IP resolution configuration allows you to tell FusionAuth which proxies it should trust. When an `X-Forwarded-For` header is present on a request, FusionAuth will take the first untrusted proxy from the list and use that as the client IP address. If all proxies are trusted, then the left most address on the `X-Forwarded-For` header will be used as the client IP address.
+
+<Aside type="caution">
+Use caution when applying IP address resolution settings if your FusionAuth Admin application is using an Access control list. Saving an incorrect set of trusted proxies can make your Admin application inaccessible.
+</Aside>
+
+### Configuration
+To modify the IP resolution trust policy, navigate to <Breadcrumb>Settings -> System -> Networking</Breadcrumb>.
+
+<img src="/img/docs/operate/secure-and-monitor/networking-settings.png" alt="Networking Configuration" width="1200" role="shadowed" />
+
+### Form Fields
+
+<APIBlock>
+  <APIField name="Trust policy">
+    This policy indicates how FusionAuth will resolve the client IP address when parsing the `X-Forwarded-For` header.
+
+    Selecting `All` will cause FusionAuth to trust all proxies, and to ignore any IP addresses named in the <InlineField>Trusted proxies</InlineField> field. This setting is not recommended, but may be necessary in development, or during configuration when the list of trusted upstream proxies is not yet known.
+
+    Selecting `Only Configured` will tell FusionAuth to only trust those proxies listed in the `Trusted proxies` list. This is the recommended settings.
+  </APIField>
+  <APIField name="Trusted proxies">
+    This is newline-separated list of trusted proxy IP addresses. This value will be accepted but ignored when the Trust Policy is set to `All`.
+
+    Values may be specified as IPv4, or IPv6 format, and ranges of addresses are also accepted in CIDR notation.
+  </APIField>
+</APIBlock>

@@ -5,7 +5,6 @@ section: lifecycle
 subcategory: migrate users
 ---
 import JSON from 'src/components/JSON.astro';
-import ScrollRef from 'src/components/ScrollRef.astro';
 import Aside from 'src/components/Aside.astro';
 import RehashingUserPasswords from 'src/content/docs/_shared/_rehashing-user-passwords.mdx';
 import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-migration.mdx';
@@ -242,17 +241,17 @@ Prepare FusionAuth for your users and applications; while the exact configuratio
 
 Create one or more tenants. Multiple tenants are useful for allowing someone to have the same email but different passwords, or allowing different settings such as the theme or password rules. Add these via the API or navigating to <Breadcrumb>Tenants</Breadcrumb> and clicking the green plus sign.
 
-<img src="/img/docs/lifecycle/migrate-users/provider-specific/add-tenant.png" alt="Adding a tenant." width="1200" role="bottom-cropped" />
+![Adding a tenant.](/img/docs/lifecycle/migrate-users/provider-specific/add-tenant.png)
 
 Create one or many applications and add any roles needed for them. Create a FusionAuth application entity for each application whose users you are migrating. An application is anything a user can log in to, whether an API, a commercial product, or a custom web application. Add each of these via the API or navigating to <Breadcrumb>Applications</Breadcrumb> in the administrative user interface, then clicking the green plus sign to add the application.
 
-<img src="/img/docs/lifecycle/migrate-users/provider-specific/add-application.png" alt="Adding an application." width="1200" role="bottom-cropped" />
+![Adding an application.](/img/docs/lifecycle/migrate-users/provider-specific/add-application.png)
 
 Map user attributes, as discussed above, into the FusionAuth `user` or `registration` objects. If some of your data doesn't fit into the FusionAuth model, add it to the appropriate `data` field.
 
 All of this configuration can be done via the API or the administrative user interface. If you want to use the former, you'll have to [create an API key](/docs/apis/authentication#managing-api-keys) with appropriate permissions.
 
-Now that FusionAuth is up and running, proceed to either the <ScrollRef target="Big Bang Implementation" />, the <ScrollRef target="Segment By Segment Implementation" /> or the <ScrollRef target="Slow Migration Implementation" /> section.
+Now that FusionAuth is up and running, proceed to either the [Big Bang Implementation](#big-bang-implementation), the [Segment By Segment Implementation](#segment-by-segment-implementation) or the [Slow Migration Implementation](#slow-migration-implementation) section.
 
 ### Big Bang Implementation
 
@@ -270,7 +269,7 @@ To actually move the data, you'll build out a series of scripts and programs. To
 
 You'll also want to [create an API key](/docs/apis/authentication#managing-api-keys). Make sure you give the key appropriate permissions. The minimum required are the `POST` method on the `/api/user/import` endpoint.
 
-<img src="/img/docs/lifecycle/migrate-users/provider-specific/api-key-creation.png" alt="Adding an application." width="1200" />
+![Adding an application.](/img/docs/lifecycle/migrate-users/provider-specific/api-key-creation.png)
 
 You can write the migration scripts in shell, any of the supported [client library languages](/docs/sdks/), or against the [REST API](/docs/apis/users) in any language supporting HTTP requests. Iterate over all the users in the old system or systems. Build the JSON files. Add a registration for each application to which a user should have access.
 
@@ -451,7 +450,7 @@ The JSON response above has a `user.data.migrated` value of `true`. This indicat
 
 Navigate to <Breadcrumb>Settings -> Connectors</Breadcrumb> and add a Connector. You can also configure Connectors by using the API; consult the [Connector API documentation](/docs/apis/connectors/) for more details.
 
-<img src="/img/docs/lifecycle/migrate-users/provider-specific/add-connector.png" alt="Adding a Connector." width="1200" />
+![Adding a Connector.](/img/docs/lifecycle/migrate-users/provider-specific/add-connector.png)
 
 Configuration varies depending on whether the original datasource is an HTTP API or an LDAP directory.
 
@@ -487,7 +486,7 @@ To test this, log some users in. If you have test users in your original auth sy
 
 With FusionAuth, proxying authentication requests to the original datasource is easy. You've already set up the connection information when configuring the Connector. Now associate the Connector to the tenant. This is called a Connector policy. Navigate to <Breadcrumb>Tenants -> Your Tenant -> Connectors</Breadcrumb> and add a policy.
 
-<img src="/img/docs/lifecycle/migrate-users/provider-specific/add-connector-policy.png" alt="Adding a Connector policy." width="1200" />
+![Adding a Connector policy.](/img/docs/lifecycle/migrate-users/provider-specific/add-connector-policy.png)
 
 Make sure to check the <InlineField>Migrate user</InlineField> checkbox. Then, each user will be authenticated against the original user datastore the first time they are seen. Their data will then be migrated to FusionAuth. On subsequent logins, they'll authenticate with FusionAuth. You can learn more about configuring Connector policies in the [Connector documentation](/docs/lifecycle/migrate-users/connectors/).
 
@@ -509,7 +508,9 @@ FA_HOST=...
 curl -H "Authorization: $API_KEY" $FA_HOST'/api/user/search?queryString=data.migrated%3Atrue%0A'
 ```
 
-This will return all the users who've been migrated as well as a count, subject to the limits of FusionAuth's Elasticsearch integration. See this [GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/494) for more on those limits. Here's an example of the output:
+This will return all the users who've been migrated as well as a count, subject to the limits of FusionAuth's Elasticsearch integration. Prior to version 1.48.0, there were limits on the number of users returned [which required workarounds](/docs/get-started/core-concepts/limitations#maximum-users-returned-workarounds). After version 1.48.0, [use pagination to retrieve all users](/docs/lifecycle/manage-users/search/search#extended-pagination).
+
+Here's an example of the output:
 
 ```json title="Results of the FusionAuth migrated user query"
 {"total":629,"users": [ ... ] }
@@ -531,7 +532,7 @@ However you retrieve the number of users migrated, regularly compare it to the n
 
 When it is time to stop the slow migration, remove the Connector policy. All future logins will take place against FusionAuth.
 
-<img src="/img/docs/lifecycle/migrate-users/provider-specific/delete-connector-policy.png" alt="Removing a Connector policy." width="1200" />
+![Removing a Connector policy.](/img/docs/lifecycle/migrate-users/provider-specific/delete-connector-policy.png)
 
 You may also optionally remove the Connector.
 
@@ -575,7 +576,7 @@ Make sure you provide a link to a form, phone number or other means of contactin
 
 A customer service representative can trigger a password reset email from the appropriate user data store. You can do that from within the FusionAuth administrative user interface.
 
-<img src="/img/docs/lifecycle/migrate-users/provider-specific/reset-user-password.png" alt="Resetting the password of a user." width="1200" role="bottom-cropped" />
+![Resetting the password of a user.](/img/docs/lifecycle/migrate-users/provider-specific/reset-user-password.png)
 
 Alternatively, if the user has not been migrated, the customer service representative can look up the user and then reset their password in the legacy system.
 
@@ -671,7 +672,7 @@ There are two options to update this type of SAML configuration external to Fusi
 
 #### Updating Upstream Configuration
 
-The first option is to contact every upstream SAML IdP and have the administrators update their configuration to point to FusionAuth instead of the existing SAML SP. You can pre-load the required certificates in FusionAuth using the [Key Master UI](/docs/operate/secure-and-monitor/key-master) or APIs. You can also configure [FusionAuth SAMLv2 Identity Providers](/docs/lifecycle/authenticate-users/identity-providers/) with the same values (audience, etc) as the existing SAML SP.
+The first option is to contact every upstream SAML IdP and have the administrators update their configuration to point to FusionAuth instead of the existing SAML SP. You can pre-load the required certificates in FusionAuth using the [Key Master UI](/docs/operate/secure/key-master) or APIs. You can also configure [FusionAuth SAMLv2 Identity Providers](/docs/lifecycle/authenticate-users/identity-providers/) with the same values (audience, etc) as the existing SAML SP.
 
 This is the recommended option. If you choose this option, make sure to incorporate communication and testing time into your migration plan.
 

@@ -213,6 +213,7 @@ Fruits were domesticated at different times.
 - curl
 - Docker
 - Docker Compose
+- e-commerce
 - ECMAScript
 - Elasticsearch
 - esport
@@ -227,9 +228,10 @@ Fruits were domesticated at different times.
 - multi-tenancy/multi-tenant
 - Node.js
 - OAuth and OAuth2
+- private-labeled (an adjective)
 - re-authentication
 - self-service
-- server-side
+- server-side (an adjective)
 - Spring Boot
 - third-party
 - two-factor
@@ -454,6 +456,8 @@ We're using [Vale](https://vale.sh/) to find misspellings and to standardize ter
 
 The main configuration file is located at [`.vale.ini`](./.vale.ini), where we specify file extensions to parse (besides the default `.md` one), some custom filters to ignore Astro components and which rules we'll use.
 
+We also use eslint to remove HTML from markdown one commit at a time.
+
 ### Rules
 
 - The rules _(or, as Vale calls them, "styles")_ are located at [`config/vale/styles`](./config/vale/styles).
@@ -465,6 +469,10 @@ The main configuration file is located at [`.vale.ini`](./.vale.ini), where we s
 ### GitHub Actions
 
 There's [a GitHub Action](./.github/workflows/vale.yml) that runs Vale on added/modified files when opening a pull request. It'll only cover files located at `astro/src/content` and `astro/src/components`. It will block merging the PR.
+
+There are other GH actions there as well.
+
+When you are adding a new GH action, pin the SHA. https://michaelheap.com/pin-your-github-actions/ has more.
 
 ### Running locally
 
@@ -488,7 +496,15 @@ If you want to filter by specific rules, you can also pass a `--filter` argument
 $ vale --filter=".Name == 'Vale.Spelling'" astro/path/to/file
 ```
 
-### What to do with linting errors
+### What to do with eslint linting errors
+
+Remove the HTML if you can.
+
+Move HTML into an astro component.
+
+As a last resort, if you can't do either of the above, you can use `{/* eslint-disable-line */}` to disable the lint checking for that line. This has the disadvantage of masking other errors, do don't do it unless it is your last resort.
+
+### What to do with vale linting errors
 
 Whenever you receive an error, you need to determine if you should:
 
