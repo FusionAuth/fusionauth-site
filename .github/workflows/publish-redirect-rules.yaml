@@ -1,6 +1,9 @@
 ---
 name: publish-redirect-rules
 
+env:
+  AWS_REGION: us-east-1
+
 on:
   push:
     branches:
@@ -32,16 +35,12 @@ jobs:
         run: cat src/redirects.json | jq empty
 
       - name: set aws credentials
-        # if: github.event_name == 'push'
+        if: github.event_name == 'push'
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
         with:
-          role-to-assume: ${{ secrets.TEMP_RUNNER_IAM_ROLE }}
+          role-to-assume: ${{ secrets.ACTIONS_RUNNER_ROLE_PROD }}
           role-session-name: github-actions
-          aws-region: us-east-1
-
-      - name: test aws creds
-        run: |
-          aws sts get-caller-identity
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: upload file to s3
         if: github.event_name == 'push'
