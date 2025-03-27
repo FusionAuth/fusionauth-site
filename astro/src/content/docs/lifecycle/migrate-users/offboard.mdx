@@ -25,9 +25,13 @@ To learn about authentication migration in general, please see the [generic migr
 FusionAuth might also have a specific guide on migrating from the service you want to migrate to, listed [here](/docs/lifecycle/migrate-users/provider-specific/). If so, check the steps in the guide to see if there are any important differences between the two services that you need to plan for.
 
 <Aside type='note'>
-For integrating FusionAuth data with complementary services, such as using a monitoring service like [Prometheus](/docs/operate/secure-and-monitor/prometheus) or [Elastic](/docs/operate/secure-and-monitor/elastic), please see those guides.
+For integrating FusionAuth data with complementary services, such as using a monitoring service like [Prometheus](/docs/operate/monitor/prometheus) or [Elastic](/docs/operate/monitor/elastic), please see those guides.
 
 You should use different techniques, like webhooks and APIs, for sending data to such services, instead of the bulk database export discussed in this guide.
+</Aside>
+
+<Aside type='note'>
+The offboarding documentation and processes described here are tied to a specific version of FusionAuth's database schema. If you need to query the database directly, you must [download the database schema](/direct-download/) zip for your specific FusionAuth version. The schema structure may differ between versions, so you'll need to adapt these examples to match your version's database structure.
 </Aside>
 
 ## Start A Sample Instance Of FusionAuth
@@ -51,16 +55,17 @@ The screenshot below shows DBeaver connected to the FusionAuth PostgreSQL databa
 
 ![Browse tables](/img/docs/lifecycle/migrate-users/offboard/offboardDBeaver.png)
 
-## Offline And Online Migrations
+## Bulk And Slow Migrations
 
 Now that you know how to access your data, you can write a database export script to extract the values you want and import them into your new authentication system. However, you need to consider new users and users that update their details after you have exported your database but before the users have joined your new system.
 
 You have three strategy options:
-- Offline migration: Take the application offline. Migrate the user data to the new system. Switch the application from pointing to FusionAuth for authentication to the new authentication system. Bring the application online again. This process could take a few minutes to a few hours.
-- Online migration: Use webhooks and the FusionAuth API to migrate users individually from FusionAuth to the new system. As each user logs in, a webhook event fires, triggering a script you write to migrate the user's data and mark them as using the new system for future logins instead of FusionAuth. This is a more complex approach than an offline migration.
-- Hybrid migration: Perform an offline migration without taking the application offline. Use webhooks to send any information that changes during the migration process to update the new system. This approach is called dual-write and involves updating changes to users in both FusionAuth and the new authentication service until FusionAuth is disabled.
+- Bulk migration: Take the application offline. Migrate all user data to the new system at once using a database script. Switch the application from pointing to FusionAuth for authentication to the new authentication system. Bring the application online again. This process could take a few minutes to a few hours.
+- Slow migration: Use webhooks and the FusionAuth API to migrate users gradually from FusionAuth to the new system. As each user logs in, a webhook event fires, triggering a script you write to migrate the user's data and mark them as using the new system for future logins instead of FusionAuth.
+- Hybrid migration: Alternatively you can combine both approaches by doing a bulk migration without taking the application offline, and using webhooks to keep both systems in sync until the migration is complete. This allows you to migrate most users quickly while maintaining system availability.
 
-An offline migration is the simplest to perform for most systems, but you need to warn users that the system will be offline for a period at a convenient time. You will need to use a form of online migration if your database is extensive or your application cannot afford to be offline.
+A bulk migration is simpler but requires system downtime. You'll need a slow or hybrid migration if your database is large or your application must stay online. With any approach, warn users about potential service disruptions.
+
 
 Whichever option you choose, you will need to test the process thoroughly before running it against the live application.
 
@@ -158,7 +163,7 @@ Save the output to a SQL file, and then run the file on the new database.
 
 To generate a JSON file to give to user-import plugins or loop through in code that calls the new service's API, run the original SQL query from the start of this section. In the DBeaver query output, click `Export data` and follow the wizard, choosing `JSON` as the output format.
 
-```JSON
+```json
 {
 "SELECT \n\tu.id, u.first_name,\n\ti.email, i.encryption_scheme, i.password, i.salt, i.factor \nFROM \n\tidentities AS i\n\tJOIN users AS u \n\t\tON u.id = i.users_id": [
 	{
@@ -213,15 +218,15 @@ Finally, be aware that FusionAuth users can have different hashing algorithms â€
 
 If you are changing only your authentication gateway and the domain name for your application and the identity provider client Id and key remain the same, social logins should continue to work. At worst, users will be required to log in again with their Google account. This requires only a few clicks and is not a bad user experience, unlike requiring users to complete a forgot-password workflow.
 
-## Online Migration Techniques
+## Slow Migration Techniques
 
 If you cannot do a bulk migration and take your application offline, you need to know how to migrate individual users. FusionAuth provides two useful tools for this, [webhooks](/docs/extend/events-and-webhooks) and [APIs](/docs/apis).
 
-It is possible to do a bulk migration using the [users](/docs/apis/users#search-for-users) API instead of a database script, but it would be slower unless your database is small.
+It is possible to do a [slow migration](/docs/lifecycle/migrate-users/#slow-migration) using the [users](/docs/apis/users#search-for-users) API instead of a database script, but it would be slower unless your database is small.
 
-Online migration generally involves choosing relevant FusionAuth [events](/docs/extend/events-and-webhooks/events), and using those to trigger a webhook that calls a web service you've written. The web service can then call the relevant API to get user data, and call the API of the authentication service you are migrating to, to update user data.
+Slow migrations generally involve choosing relevant FusionAuth [events](/docs/extend/events-and-webhooks/events), and using those to trigger a webhook that calls a web service you've written. The web service can then call the relevant API to get user data, and call the API of the authentication service you are migrating to, to update user data.
 
-For example, you might do a bulk migration of some users into the target system, but continue using FusionAuth. If a user logs in to FusionAuth and updates their last name, you would want the "user update" event to fire and trigger a call to your web service. Your service could then call the `GET /api/user/{userId}` API and get the user's new last name. Finally, the service would call the new gateway's API to update the user, ensuring that user data remains synchronized between both databases until the final transition to the new gateway occurs.
+For example, you might do a migration of some users into the target system, but continue using FusionAuth. If a user logs in to FusionAuth and updates their last name, you would want the "user update" event to fire and trigger a call to your web service. Your service could then call the `GET /api/user/{userId}` API and get the user's new last name. Finally, the service would call the new gateway's API to update the user, ensuring that user data remains synchronized between both databases until the final transition to the new gateway occurs.
 
 
 
