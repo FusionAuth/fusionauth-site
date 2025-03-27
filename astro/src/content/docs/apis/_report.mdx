@@ -1,6 +1,8 @@
 import API from 'src/components/api/API.astro';
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
 import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
 import JSON from 'src/components/JSON.astro';
 
@@ -35,9 +37,24 @@ This report includes the number of {props.reportType} for a given application or
     The start of the query range. This is an [instant](/docs/reference/data-types#instants) but it is truncated to {props.reportUnit} in the report timezone (which is set in the system settings).
   </APIField>
   <APIField name="loginId" type="String" optional since="1.4.0" renderif={props.reportURI === 'login'}>
-    When this parameter is provided it will reduce the scope of the report to a single user with the requested email or username specified by this parameter.
+    When this parameter is provided it will reduce the scope of the report to a single user. This parameter can be one of the following (see <InlineField>loginIdTypes</InlineField> for information on which of these identifiers will be used):
+
+    * <InlineField>email</InlineField>
+    * <InlineField>phoneNumber</InlineField> (if `phoneNumber` is included in <InlineField>loginIdTypes</InlineField>)
+    * <InlineField>username</InlineField>
 
     This parameter is mutually exclusive with `userId`, if both are provided, the `loginId` will take precedence.
+  </APIField>
+  <APIField name="loginIdTypes" type="Array<String>" optional defaults="email, username if email not found" since="1.99.9" renderif={props.reportURI === 'login'}>
+    The types that FusionAuth will attempt to resolve a user identity with, using <InlineField>user.identities\[x].type</InlineField>. Can be one or more of the following:
+
+    * `email`
+    * `phoneNumber`
+    * `username`
+
+    <Aside>
+      The order is significant. If `["email", "username"]` is supplied with a <InlineField>loginId</InlineField> value of `terry@example.com`, then a user with `terry@example.com` as their email address will match first before any user with `terry@example.com` as their username.
+    </Aside>
   </APIField>
   <APIField name="userId" type="UUID" optional since="1.4.0" renderif={props.reportURI === 'login'}>
     When this parameter is provided it will reduce the scope of the report to a single user with the requested unique Id.
