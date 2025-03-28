@@ -8,6 +8,7 @@ codeRootSimple: https://raw.githubusercontent.com/FusionAuth/fusionauth-example-
 codeRootFriendly: https://raw.githubusercontent.com/FusionAuth/fusionauth-example-device-limit-friendly/main
 ---
 import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
@@ -60,7 +61,7 @@ Full implementations of both device-limiting methods in the ChangeBank applicati
 
 Both device-limiting methods depend on calling the [FusionAuth JWT Retrieve Refresh Tokens API](/docs/apis/jwt#retrieve-refresh-tokens) to retrieve the active [refresh tokens](/docs/apis/jwt) for a user. You will use the API key with the GET and DELETE permissions for the `/api/jwt/refresh` API route in this guide.
 
-To create a key for the Retrieve Refresh Tokens API, navigate to <strong>Settings -> API Keys</strong> and click the <InlineUIElement>+</InlineUIElement> button to add a key. Give the key a name, and enable the GET and DELETE permissions for `/api/jwt/refresh`. Click <InlineUIElement>Save</InlineUIElement> to save the API Key.
+To create a key for the Retrieve Refresh Tokens API, navigate to <Breadcrumb>Settings -> API Keys</Breadcrumb> and click the <InlineUIElement>+</InlineUIElement> button to add a key. Give the key a name, and enable the GET and DELETE permissions for `/api/jwt/refresh`. Click <InlineUIElement>Save</InlineUIElement> to save the API Key.
 
 Now you can use this key to call the API to retrieve the active refresh tokens for a user. The API returns refresh tokens for all applications, so you will need to filter the tokens by the `applicationId` to get the number of active sessions for a specific application. Note that there may be refresh tokens without an `applicationId`, which are tokens used for the "Remember me" feature on FusionAuth itself. These tokens should be ignored when counting a user's active sessions.
 
@@ -75,7 +76,7 @@ The `clientId` variable stores the FusionAuth application Id of the application 
 
 Since the solution relies on counting the number of active refresh tokens for a user to determine how many devices they are logged in on, you will need to ensure that your FusionAuth application is set up to issue refresh tokens and that your client application requests them when logging in. 
 
-To set up your FusionAuth application to issue refresh tokens, navigate to <strong>Applications -> Edit -> OAuth</strong> and select the <InlineField>Generate refresh tokens</InlineField> field if it isn't already selected. Scroll down to the <InlineField>Enabled Grants</InlineField> field and select the <InlineField>Refresh Token</InlineField> field.
+To set up your FusionAuth application to issue refresh tokens, navigate to <Breadcrumb>Applications -> Edit -> OAuth</Breadcrumb> and select the <InlineField>Generate refresh tokens</InlineField> field if it isn't already selected. Scroll down to the <InlineField>Enabled Grants</InlineField> field and select the <InlineField>Refresh Token</InlineField> field.
 
 To set up your client application to request refresh tokens when logging in, add [the `offline_access` scope](/docs/lifecycle/authenticate-users/oauth/) in the `scope` parameter of the `/oauth2/authorize` request. If you are constructing the request manually, it should look something like the following.
 
@@ -93,7 +94,7 @@ For other libraries and languages, consult the documentation to see how to inclu
 
 When logging out of FusionAuth with the `/oauth2/logout` endpoint, the refresh token is [not automatically revoked by FusionAuth](/community/forum/topic/270/logout-questions). This means that the refresh token will still be returned from the refresh token API, and will still be counted as an active session or device. To ensure that the refresh token is revoked when the user logs out, you will need to call the [JWT Revoke Refresh Tokens API](/docs/apis/jwt#revoke-refresh-tokens) on logout.
 
-The best place to do this is in the logout callback configured under <strong>Applications -> Edit -> OAuth</strong> on the <InlineField>Logout URL</InlineField> field. This is the route that the user is redirected to after they have been logged out of FusionAuth. You should also remove any local cookies at the same time. The complete logout return route should look like the following.
+The best place to do this is in the logout callback configured under <Breadcrumb>Applications -> Edit -> OAuth</Breadcrumb> on the <InlineField>Logout URL</InlineField> field. This is the route that the user is redirected to after they have been logged out of FusionAuth. You should also remove any local cookies at the same time. The complete logout return route should look like the following.
 
 <RemoteCode url={frontmatter.codeRootFriendly + "/complete-application/src/index.ts"} tags="oauth-logout" lang="typescript"/>
 
@@ -112,10 +113,10 @@ This failed login message will be displayed for any login that fails due to a we
 
 ### Create A Webhook In FusionAuth
 
-To add the webhook to FusionAuth, navigate to <strong>Settings -> Webhooks</strong> in the sidebar. Click the <InlineUIElement>+</InlineUIElement> button to add a webhook. Give the webhook a name, and select the <InlineField>user.login.success</InlineField> event. Set the URL to `http://{YOUR_APPLICATION_URL}/user-login-success`. Click <InlineUIElement>Save</InlineUIElement> to save the webhook when you are done.
+To add the webhook to FusionAuth, navigate to <Breadcrumb>Settings -> Webhooks</Breadcrumb> in the sidebar. Click the <InlineUIElement>+</InlineUIElement> button to add a webhook. Give the webhook a name, and select the <InlineField>user.login.success</InlineField> event. Set the URL to `http://{YOUR_APPLICATION_URL}/user-login-success`. Click <InlineUIElement>Save</InlineUIElement> to save the webhook when you are done.
 
 <Aside type="note">
-In production, you should [add security to the webhook](/docs/extend/events-and-webhooks/#security) in the form of Basic Auth and a certificate in the <strong>Security</strong> tab. This ensures that the webhook can only be called by FusionAuth.
+In production, you should [add security to the webhook](/docs/extend/events-and-webhooks/#security) in the form of Basic Auth and a certificate in the <Breadcrumb>Security</Breadcrumb> tab. This ensures that the webhook can only be called by FusionAuth.
 </Aside>
 
 ### Listen To The Webhook
@@ -134,7 +135,7 @@ One or more webhooks returned an invalid response or were unreachable. Based on 
 
 This message is very generic and does not tell the user that the reason they cannot log in is because they are logged in on too many devices. To fix this, override the default message with a custom message. You can do this by customizing the <InlineField>WebhookTransactionException</InlineField> message in your FusionAuth theme templates. 
 
-Customize the message in <strong>Customizations -> Themes</strong>. Click the <InlineUIElement>Edit</InlineUIElement> button next to the "ChangeBank Theme". Under <InlineField>Templates</InlineField>, click <InlineUIElement>Messages</InlineUIElement>. Click the <InlineUIElement>Edit</InlineUIElement> button next to the <InlineField>Default</InlineField> locale. Search for `[WebhookTransactionException]` (around line 606), and change the message to read something more explanatory, such as, "You are already logged in on other devices. Please log out of one of your other devices and try again." Click <InlineUIElement>Submit</InlineUIElement>, and then save the theme.
+Customize the message in <Breadcrumb>Customizations -> Themes</Breadcrumb>. Click the <InlineUIElement>Edit</InlineUIElement> button next to the "ChangeBank Theme". Under <InlineField>Templates</InlineField>, click <InlineUIElement>Messages</InlineUIElement>. Click the <InlineUIElement>Edit</InlineUIElement> button next to the <InlineField>Default</InlineField> locale. Search for `[WebhookTransactionException]` (around line 606), and change the message to read something more explanatory, such as, "You are already logged in on other devices. Please log out of one of your other devices and try again." Click <InlineUIElement>Submit</InlineUIElement>, and then save the theme.
 
 Logging in again with the same user on more than two devices should now display the new message.
 
@@ -165,7 +166,7 @@ To implement this solution, you will need to:
 
 ### Setting The JWT Lifespan
 
-To set the JWT lifespan, navigate to <strong>Applications</strong> in the FusionAuth sidebar. Select the <InlineUIElement>Edit</InlineUIElement> button next to the application you are limiting logins for. Under the <strong>JWT</strong> tab, set <InlineField>JWT duration</InlineField> to a relatively short time, such as 300 seconds (five minutes). Click <InlineUIElement>Save Application</InlineUIElement> when you are done.
+To set the JWT lifespan, navigate to <Breadcrumb>Applications</Breadcrumb> in the FusionAuth sidebar. Select the <InlineUIElement>Edit</InlineUIElement> button next to the application you are limiting logins for. Under the <Breadcrumb>JWT</Breadcrumb> tab, set <InlineField>JWT duration</InlineField> to a relatively short time, such as 300 seconds (five minutes). Click <InlineUIElement>Save Application</InlineUIElement> when you are done.
 
 ### Create A Middleware Security Function
 
