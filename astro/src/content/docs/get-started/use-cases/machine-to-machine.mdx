@@ -4,10 +4,12 @@ description: Allow services and software to securely authenticate using FusionAu
 section: get started
 subcategory: use cases
 ---
-import ApplicationSwitchDiagram from 'src/diagrams/docs/get-started/use-cases/app-suite/application-switch.astro';
+import APIRequestDiagram from 'src/diagrams/docs/get-started/use-cases/machine-to-machine/api-request.astro';
 import M2MCommunicationDescription from 'src/content/docs/get-started/use-cases/_m2m-communication-description.mdx';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+import DataFieldDataTypeChanges from 'src/content/docs/_shared/_data-field-data-type-changes.mdx';
 
 ## Overview
 
@@ -21,126 +23,155 @@ You want to let each of the programs have specific permissions and have them all
 
 ## Solution
 
-With the machine to machine (m2m) use case, you model everything inside FusionAuth using Entity Management. Each entity can have permissions against any other entity. Once you have an entity, you can use the Client Credentials grant to get an access token. This access token can be presented to another piece of software which can validate it and determine if the request is allowed.
+With the machine to machine (m2m) use case, you model everything inside FusionAuth using Entity Management. Each entity can have permissions against any other entity.
 
+Once you have an entity, you can use the Client Credentials grant to get an access token. This access token can be presented to another piece of software which can validate it and determine if the request is allowed.
 
 ## Prerequisites
 
-You have at least two pieces of software that need to communicate with each other without any human intervention.
+You have at least two pieces of software that need to securely communicate with each other without any human intervention.
+
+You want to use FusionAuth to create access tokens that can be used to authenticate one machine to another.
 
 ## Example Scenario
 
-Suppose you have a thriving e-commerce business that sends clowns notifications about upcoming events. You are going to break this out into a few different services and use FusionAuth to manage the permissions between the components.
+Suppose you have a hardware business selling internet enabled clock radios. The radio ships with the ability to tell time and tune into the FM stations, but you want recurring revenue as well, so you offer two upsells, a news API and weather API. 
+
+The user can subscribe and provide their zip code. Then the user can press a button on their clock radio for either news or weather.
+
+Basic subscriptions only get weather, and premium plans get news and weather
+
+In this case, you need to tie each radio to a plan. Since users might change from no plan to basic to premium, or vice versa, you also need to have it change over time.
 
 ## Actors/Components
 
-* event API which holds events data
-* email API which is an adapter over an email service such as SendGrid or Mailgun
-* user API which has user information including email addresses
-* a client application which runs periodically and is scheduled by cron
+* weather API which returns weather
+* news API which returns news
+* clock radios
 * FusionAuth
-
-The APIs will have the following interactions and permissions.
-
-| API | Called by | Permissions List |
-|-----------|-----------|-----------|
-| Event API | Client using `read` permissions | `read`, `update`, `delete` |
-| User API | Client using `read` permissions | `read`, `update`, `delete` |
-| Email API | Client using `send` permissions | `send`, `admin` |
-
 
 ## Implementation Steps
 
 This is an TODO step implementation process to ensure customers can access all the applications. Steps to take:
 
-* set up the entity types and permissions (3 types: crud API, sending API, client, consider asymetric signing key)
-* set up the entities and distribute ids/secrets
-* write the client code
-- start up
-- get the access token for calling the event API from FusionAuth
-- get the access token for calling the user API from FusionAuth
-- get the access token for calling the email API from FusionAuth
-- find all the events happening in the next week passing the access token in the header, event API to validate the access token
--- for each event
--- find all the users who wanted to be reminded of each event passing the access token in the header, user API to validate the access token
--- build the reminder text and extract the email address
--- call the email API with the email address and the reminder content passing the access token in the header, email API to validate the access token
+Here's the initial set up.
 
+* set up the entity types and permissions
+  * APIType with two possible permissions, `news` and `weather`
+  * ClockRadioTyp with zero permissions
+* set up the API entity
 
-### Force SSO Session Creation
+For each clock radio, create a digital twin in an entity:
 
-The easiest way to force the SSO session to be created as a user logs in is to modify the login page. You do so by modifying the theme. In the default theme, a user can check or uncheck the `rememberDevice` checkbox, labelled by default "Keep me signed in". To force creation of the SSO session, update the theme to set the `rememberDevice` parameter to `true`. Modify the `OAuth Authorize` template [using the advanced theme editor](/docs/customize/look-and-feel/advanced-theme-editor).
+* create an entity
+* set up the proper grants to the API. Include permissions as dictated by the plan.
+* put the plan name and the user id in clock radio `data` field for easy searching
+* distribute the client Id and secret to the hardware of each clock radio
 
-Here's a sample FreeMarker block you can use to update the default template.
+For each time the user presses the news/weather button:
+* the radio retrieves its client Id and secret
+* the radio chooses to ask permission for either `weather` or `weather` and `news`
+* the radio presents the Id, secret and permission to FusionAuth 
+* if the radio doesn't have a plan that supports the permission, an error is returned
+* if the radio has a plan, an access token is returned
+* the access token is presented to the APIs along with the data request
+* the APIs validate the token and return the data
+* the radio displays the data
 
-```
-[@hidden name="rememberDevice" value="true"/]
-```
+When the plan changes:
+* look up the entity representing the radio
+* update the plan name in the `data` field
+* update the permissions to reflect the new plan
 
-The duration of this SSO session is controlled in the Tenant settings. You can modify it by navigating to <Breadcrumb>Tenant -> Your Tenant -> OAuth</Breadcrumb> and updating the <InlineField>Session timeout</InlineField>.
+The next time the radio makes a request, the access token will only be granted for the appropriate permissions.
 
-### Forward Unauthenticated Users
+### Why Not Use API Keys
 
-Whenever a user is not logged in and accesses an application in your app suite, forward them to the login URL for FusionAuth. As your applications are already delegating authentication to FusionAuth, use the same logic or library functions to create an authorize URL. Here's an [explanation of how to create the URL and what each component means](/docs/lifecycle/authenticate-users/oauth/endpoints#authorization-code-grant-request).
+Before you dive into implementation, you might be wondering about API keys. The access token generated by the Client Credentials grant is essentially an API key, proving the clock radio's identity and access. Why not give a static API key to each clock radio and call it good?
 
-Here's a diagram of a user switching between the clownwear e-commerce store and the forum.
+By using an access token for machine to machine communication, you get the following benefits:
 
-<ApplicationSwitchDiagram alt="An example of an application switch." />
+* the access token is timebound and expires; if someone steals it, they only get limited access to the API
+* it's standards based and developers with OAuth experience can reason about it
+* the client Id and secret are centrally managed and monitored, but the access tokens can be validated without contacting FusionAuth
+* you can include granular permissions and other data within the token
 
-If a user is browsing the e-commerce store, then clicks on the forum link, they will transparently be logged in to the forum application.
+### Setting Up Entity Types
 
-Their client will get a token associated with the forum application, including the roles the user has for that application and claims such as the audience claim (`aud`) set correctly. The user will be logged in to the new application, as desired.
+Entity types define permissions. Since you need to know which permissions the radios can make against the APIs, define all your permissions here.
+
+The radio entity type doesn't need any permissions, since nothing is granted permissions against it.
+
+![Entity types for digital twins.](/img/docs/get-started/use-cases/m2m-entity-types.png)
+
+### Creating The Digital Twin
+
+This is something that you should write code for, using [one of the SDKs](/docs/sdks), because you need to do this for every radio.
+
+You'll need to [create an API key](/docs/apis/authentication#api-key-authentication) to automate this.
+
+Here's example code to create the entity and then grant the `news` permission:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-machine-to-machine/refs/heads/main/create-entity/create-entity.js" />
+
+### Making The API Request
+
+When the radio is ready to make the API request, it needs to obtain an access token by communicating with FusionAuth. Then it will make a call against the appropriate API. The API can then validate the token and return the data as needed.
+
+Here's a diagram outlining this request.
+
+<APIRequestDiagram alt="A clock radio making an API request." />
+
+You obtain the access token using [the Client Credentials grant](/docs/lifecycle/authenticate-users/oauth/#example-client-credentials-grant). You validate the access token, which is a JWT, using a library to check the signature and the other claims. Our quickstarts have [examples of how to validate the access token in an API](/docs/quickstarts/#api) across a number of languages.
+
+You can also modify the body of the access token by using a [Client Credentials JWT Populate lambda](/docs/extend/code/lambdas/client-credentials-jwt-populate).
+
+### Changing The Plan
+
+When the user changes their plan, you can update the entity's permissions. Here's sample code to update the plan and permissions.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-machine-to-machine/refs/heads/main/update-plan/update-plan.js" />
+
+The next time an API request is made, the updated permissions will be included in the access token.
 
 ## Expected Outcome
 
-Users switch between your applications transparently and securely. 
+Your devices have a digital twin that can be used to manage device authentication and authorization against your APIs and services.
+
+You can change the permissions and capabilities of these devices over time.
 
 ## Edge Cases
 
-SSO login works across all apps in a tenant, including those the user isn't registered for. After redirection to and from FusionAuth, the user will be authenticated, but the `applicationId` and `roles` claims will be missing from the access token. Applications must check these claims when determining whether a user is authorized for an application. [Read more about the difference between authentication and authorization](/docs/get-started/core-concepts/authentication-authorization).
+The admin UI for managing entities can be difficult to use. It's a good idea to use the admin UI to explore the functionality but use the SDKs or API to manage entities in production.
 
-When your user logs out, destroy the SSO session as well as each application session. You can do that using API calls or with FusionAuth's Front-Channel logout. [Read more about logout](/docs/lifecycle/authenticate-users/logout-session-management).
+No "on behalf of" semantics are currently supported, where three or more machines communicate in sequence. [Read more on the GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/1471).
 
-Any applications with [self-service registration](/docs/lifecycle/register-users/basic-registration-forms) enabled will automatically register a user with default roles when the user is redirected to the login URL for that application. 
+You can rotate client secrets, but you cannot change the entity Id. If you need to modify that value, create an new entity. Entity Ids are always UUIDs.
 
-If an application only wants to allow logins from a certain identity provider or impose other conditions, you'll need extra integration work. For example, imagine there's a time tracking app for your clownwear e-commerce store that employees log in to using Google Workspace federation. You don't want customers to be able to view this application. One way you can prevent this with a [login validation lambda](/docs/extend/code/lambdas/login-validation).
+The token generated by the Client Credentials grant has a `gty` claim in the header. For some consuming APIs, this may cause a problem. [Read more on the GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/2886).
 
-The functionality described in this use case only works with [FusionAuth hosted login pages](/docs/get-started/core-concepts/hosted-login-vs-api-login#hosted-login-pages). If you use the Login API, you need to build your SSO implementation.
+Introspection by an API of the access token obtained via a Client Credentials grant doesn't work as expected. [More details in this GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/3010). The workaround is to validate the access token directly, rather than using introspection.
 
-Applications may have different authentication related requirements. Examples include:
+### Limits On The Data Field
 
-* multi-factor authentication (MFA)
-* required registration fields
-* registration verification
-
-If a user logs into an application and then switches to another app with different requirements, they will be forced to satisfy the second apps' requirements. For example, suppose that an e-commerce application requires MFA and the forum application does not. If the user initially logs into the forum application and then switches to the e-commerce application, they will be prompted to complete MFA.
+<DataFieldDataTypeChanges />
 
 ## Other Example Scenarios
 
-Applications which share customer or user accounts are a good fit for this use case. Examples include:
+Whenever software talks to software without a human in the mix, machine to machine communication is happening. Examples include:
 
-* Multiple affiliated online games
-* An office suite with an online word processor, spreadsheet and presentation software
-* Travel booking software, where you might have one application for booking flights, another for hotels and a third for car rental
+* APIs calling other APIs in a microservices based application
+* A cron job making calls against a protected service every night at 11pm
+* CI/CD pipelines where you are making calls against remote services to, for example, push a container image
+* Authentication for developers building on your platform, with the client Id and secret being shared in your developer portal
 
 ## Additional Documentation
 
-* [Single sign-on guide](/docs/lifecycle/authenticate-users/single-sign-on)
-* [Logout and session guide](/docs/lifecycle/authenticate-users/logout-session-management)
-* [Theme customization](/docs/customize/look-and-feel/)
+* [An example Client Credentials grant](/docs/lifecycle/authenticate-users/oauth/#example-client-credentials-grant)
+* [Examples of how to validate the access token in an API](/docs/quickstarts/#api)
+* [Entity management](/docs/get-started/core-concepts/entity-management)
+* [Lambda to customize the body of the access token](/docs/extend/code/lambdas/client-credentials-jwt-populate)
+* [Videos on using the Client Credentials grant for API authentication](https://www.youtube.com/watch?v=rT-VTtgligI&list=PLUOVyt5DYPpNzRdTKrio0P0a4mktqLPN9)
+* [Securing your API blog post](/blog/securing-your-api)
 
-TODO gty issue with AWS
-alt use case: developers integrating with your APIs can use instead of API keys, with extra step
-service to service guide
-entity management docs
-entity open issues (scope names are weird, no aliases, migration tough)
-lambda
-why not use API keys?
-- timebound
-- standards based
-- can be centrally managed and monitored but access tokens are not validated with FusionAuth
-- granular permissions
-video on client credentials grant
-https://fusionauth.io/blog/securing-your-api
-
-https://github.com/FusionAuth/fusionauth-site/pull/3411#issuecomment-2697526947
+[//]: # (Add  service to service guide https://github.com/FusionAuth/fusionauth-site/pull/3411)
