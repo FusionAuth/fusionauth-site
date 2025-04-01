@@ -81,7 +81,7 @@ Review [the component for all options and icons](astro/src/components/icon/Icon.
 
 ### Docs Navigation
 
-Make descriptions full sentences.
+Make descriptions full sentences. They must end in a period or other punctuation.
 
 If you want to order pages within a section, use `navOrder`. The default value for every page is [defined here](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/config.js#L61).
 
@@ -184,6 +184,8 @@ Follow everything in the `Content Style Guidelines` section.
 - You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.
 - All references to `stackoverflow.com` should be updated and direct to the community forum at `https://fusionauth.io/community/forum/`
 - When using an aside in the blog, please use the `nodark="true"` attribute.
+- Make descriptions full sentences. They must end in a period or other punctuation.
+- Titles should not end in a period. They can end in a ? or ! if needed.
 
 ## Lists
 
