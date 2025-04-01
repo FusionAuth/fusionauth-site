@@ -81,7 +81,7 @@ Review [the component for all options and icons](astro/src/components/icon/Icon.
 
 ### Docs Navigation
 
-Make descriptions full sentences. They must end in a period or other punctuation.
+Make descriptions full sentences. They must end in a period. Titles, on the other hand, should not end with punctuation.
 
 If you want to order pages within a section, use `navOrder`. The default value for every page is [defined here](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/config.js#L61).
 
