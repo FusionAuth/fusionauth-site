@@ -63,6 +63,25 @@ const docsCollection = defineCollection({
   }),
 });
 
+const blogCollection = defineCollection({
+  schema: z.object({
+    title: z.string().refine(
+        title => !title.endsWith('.'),
+        { message: "Title cannot end with a period (.)" }
+    ),
+    description: z.string(),
+    image: z.string().optional(),
+    authors: z.string().optional(), // comma-separated string
+    categories: z.string().optional(), // comma-separated string
+    tags: z.string().optional(), // comma-separated string
+    publish_date: z.date(),
+    updated_date: z.date().optional(),
+    featured_tag: z.string().optional(),
+    featured_category: z.string().optional(),
+    blurb: z.string().optional(),
+  }),
+});
+
 const jsonCollection = defineCollection({
   type: 'data',
 })
@@ -73,4 +92,5 @@ export const collections = {
   'quickstarts': quickstartsCollection,
   'docs': docsCollection,
   'json': jsonCollection,
+  'blog': blogCollection,
 };
