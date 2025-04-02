@@ -1,6 +1,6 @@
 ---
-title: Identity Provider Needs For Gaming Or Esports
-description: What are the specific features you need to look for in an identity provider if you’re in the gaming or esports industry?
+title: Identity Verification Solutions for Online Gaming | What Game Platforms Need | FusionAuth
+description: Explore identity verification solutions for online gaming. Learn what gaming platforms need to securely manage player identities and meet verification requirements.
 author: Deborah Ruck
 section: Gaming & Entertainment
 icon: /img/icons/identity-provider-gaming-esports.svg
