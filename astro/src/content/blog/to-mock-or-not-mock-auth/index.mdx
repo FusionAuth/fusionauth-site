@@ -1,7 +1,7 @@
 ---
 publish_date: 2025-03-05 
 title: "To Mock or Not Mock: The Checklist"
-description: FusionAuth is ready for the GDPR in 6 important ways.
+description: Mocking is widely used in the industry—but often for the wrong reasons. Learn in which cases mocking is justified.
 authors: Bryan Giese
 image: /img/blogs/fusionauth-gdpr-ready/6-ways-fusionauth-api-gdpr-ready.jpg
 categories: Product, Engineering
@@ -9,3 +9,313 @@ tags: tests mocking
 excerpt_separator: "{/* more */}"
 ---
 
+Mocking is widely used in the industry, but often for the wrong reasons. It's applied as a solution to problems it doesn't actually solve.
+
+Authentication is one area where mocking is especially overused. Teams frequently mock auth flows to avoid setup complexity, speed up test cycles, or work around limitations in third-party providers. But mocking auth introduces risks such as hiding integration issues and creating test coverage gaps that are easy to miss until servers are down in production.
+
+That said, mocking isn't inherently wrong. In certain cases, mocking authentication can be useful—if not necessary. Some systems are too large to run locally. Some identity providers don't offer sandbox environments. Sometimes, mocking is the only practical way to simulate specific failure scenarios or reduce CI runtime.
+
+In this article, you'll first look at why mocking authentication can be risky. Then, you'll go through a checklist of conditions where mocking might be justified and an example code to show what that looks like in practice.
+
+## Why Mocking Auth Is Risky
+
+Authentication is the entry point of any system. No authentication means no identity, authorization, access control, billing, or auditing. Your application doesn't know who the user is, what they can do, or how to track their activity. And if authentication breaks, nothing else matters, your system just stops working.
+
+Here are some of the reasons why mocking authentication can lead to false positives, unstable systems, and security blind spots:
+
+- False sense of confidence: Mocks always return what you expect. If your real provider changes a token format or an auth flow breaks, your test suite won't catch it—and your users will.
+- Disconnected from edge cases: Mocks won't expose token expiration, clock drift, rate limits, or slow auth responses. These issues only show up in production—often too late.
+- Bypassing actual integration logic: When you mock, you skip login flows, MFA enforcement, redirect handling, and token validation. Your tests say “working” while real logins silently fail.
+- Oversimplifying real-world auth behavior: Auth involves multiple requests, redirects, cookies, and headers. Mocks flatten that into one fake call—missing the entire complexity of how your system really works.
+- Missing critical security logic: You're not testing token parsing, signature validation, audience checks, or scope enforcement. You're running tests with the locks disabled.
+
+You can learn more about why mocking sucks [here](https://dzone.com/articles/why-mocking-sucks). 
+
+But there is a philosophy behing mocking that is worth considering
+
+## When Mocking Auth Makes Sense
+
+There are scenarios where mocking is not only acceptable but practical, especially when you understand exactly what you're testing and why.
+
+Mocking effectively deals with isolated logic, external constraints, or system-wide performance trade-offs. It's not a replacement for real integration tests, but it helps move development forward in some contexts without over-engineering your test environment. The core idea behind mocking has always been pragmatic: to make testing possible when real systems are unavailable, unreliable, or too complex to set up.
+
+Here are the cases when mocking auth is justified.
+
+### 1. You're writing unit tests, not end-to-end tests
+
+There's a reason mocking authentication in end-to-end tests is usually the wrong approach. E2E tests are meant to simulate how a real user interacts with the system—from login to data flow to error handling. If you're faking authentication there, you're breaking the integrity of the flow. You're no longer testing the real application.
+
+But unit tests are different. In unit tests, you do not test identity flows or token handling. Instead, you test a single behavior in isolation, without infrastructure. Suppose you include a full authentication workflow in your test to validate logic that assumes a user is authenticated. In that case, you're introducing complexity that has nothing to do with what you're trying to verify. You've added network calls, external dependencies, and potential failure points for a test that's supposed to be fast and local.
+
+Here is an example of a test that does not use mocking to check the reference field on the object created when a POST request is made to the API. Here is the app.
+
+```python
+# app.py
+
+import uuid
+from flask import Flask, request, jsonify, abort
+
+app = Flask(__name__)
+
+def get_user_from_token(token):
+    # In a real app, this would call an auth service to verify the token
+    response = requests.get("http://auth-service.local/validate", headers={
+        "Authorization": f"Bearer {token}"
+    })
+    if response.status_code != 200:
+        abort(401)
+    return response.json()
+
+@app.route("/payments", methods=["POST"])
+def create_payment():
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    user = get_user_from_token(token)
+
+    return jsonify({
+        "id": str(uuid.uuid4()),
+        "reference": str(uuid.uuid4()),
+        "user_id": user["id"]
+    }), 201
+```
+
+In the application above, creating a payment requires a valid token. The app pulls the token from the request header, validates it by calling an external authentication service, and then generates a payment with a reference field (a UUID). At first glance, this is simple enough. But now you want to test that a payment is correctly created, especially since the reference field exists on every creation. This is pure business logic.
+
+Here is what a test will look like.
+
+```python
+# test_without_mocking.py
+
+import pytest
+import requests
+from app import app
+
+def get_token():
+    res = requests.post("http://auth-service.local/login", json={
+        "loginId": "test@example.com",
+        "password": "secure123"
+    })
+    return res.json()["token"]
+
+@pytest.fixture
+def client():
+    app.config["TESTING"] = True
+    return app.test_client()
+
+def test_create_payment_reference_exists(client):
+    token = get_token()
+
+    response = client.post(
+        "/payments",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert response.status_code == 201
+    data = response.get_json()
+    assert "reference" in data
+    assert len(data["reference"]) == 36
+```
+
+You're now making two network calls to retrieve the token and another inside your app to validate it. Neither has anything to do with the reference field, the only thing you were actually interested in validating. This test introduces real latency and real points of failure; worst of all, it can't help you catch bugs easily.
+
+Instead of calling the authentication server, you can override the `get_user_from_token()` function directly in the test to simulate a successful authentication.
+
+```python
+# test_payments.py
+
+import pytest
+from app import app
+
+@pytest.fixture
+def client():
+    app.config["TESTING"] = True
+    return app.test_client()
+
+def test_create_payment(client, monkeypatch):
+    def mock_get_user_from_token(token):
+        return {"id": "user_123", "email": "test@example.com"}
+
+    monkeypatch.setattr("app.get_user_from_token", mock_get_user_from_token)
+
+    response = client.post("/payments", headers={"Authorization": "Bearer fake-token"})
+    assert response.status_code == 201
+    assert response.json["user_id"] == "user_123"
+```
+
+The version of the code above keeps the full `request/response` cycle, still expects an `Authorization` header, and still passes through your actual handler code. But now it doesn't depend on any real login flow or token infrastructure. You're simulating the outcome of a successful authentication, not the full process.
+
+## 2. You Need to Simulate Edge Cases or Error Scenarios
+
+Real-world authentication flows fail, and your app needs to handle those failures. But most identity providers don't give you fine-grained ways to simulate failure states. You can't always force a `401`, trigger a rate limit, or simulate an expired session on demand. And even if you could, it might be slow, fragile, or hard to reproduce in CI. In those cases, mocking becomes practical.
+
+When you're writing tests for edge cases—timeouts, invalid tokens, locked accounts, you often need total control over the response. Mocking allows this control.
+
+Let's suggest you want to test what happens when a user's account is locked. In a real system, you'd need to either:
+
+- Lock a real account manually in the auth provider
+- Or trigger lock conditions through a real login flow (e.g., fail 5 times)
+
+Neither is fast. Neither is repeatable. So, you can mock the outcome.
+
+```python
+# test_locked_user.py
+
+import pytest
+from app import app
+from flask import abort
+
+@pytest.fixture
+def client():
+    app.config["TESTING"] = True
+    return app.test_client()
+
+def test_locked_user_auth(client, monkeypatch):
+    def mock_get_user_from_token(token):
+        abort(403, description="Account locked")
+
+    monkeypatch.setattr("app.get_user_from_token", mock_get_user_from_token)
+
+    response = client.post(
+        "/payments",
+        headers={"Authorization": "Bearer test-token"}
+    )
+
+    assert response.status_code == 403
+    assert b"Account locked" in response.data
+```
+
+The test above ensures the payment creation endpoint correctly returns a `403` when the user's account is locked. In this case, you're testing your own fallback behavior, not the identity provider.
+
+### 3. You can't seed, reset, or simulate your provider
+
+Sometimes, the biggest reason to mock isn't complexity: it's access. If you're integrating with a third-party identity provider like Auth0, Azure AD, Okta, or even a corporate SSO setup, you often can't configure it, seed it with test users, or force it into failure modes. You may not even be able to run it locally. You're working with a black box; in that case, mocking might be your **only option**.
+
+You should use mocking when the following scenarios show up:
+
+- You're using corporate SSO or a third-party identity provider.
+- You can't automate the login flow because it's tied to a real tenant.
+- Tokens are opaque (In a proprietary format), and your only interface is the `Authorization` header.
+
+That makes mocking your only practical option. In the end, it comes down to one question: how much access do you really have?
+
+### 4. You're Trying to Save Time or Budget
+
+Every external call has a cost. Sometimes, that cost is literal—paid API quotas and test environments that aren't free. Sometimes, it's performance: slower test runs or unnecessary complexity added to every test case.
+
+If your authentication provider charges for sandbox usage or imposes strict rate limits, there's no reason to burn money or test time on verifying a token in every test. In that situation, mocking becomes a reasonable trade-off.
+
+### 5. The System Is Too Large to Run Locally
+
+Let's be honest. Not every application is designed to run cleanly on a laptop. Some systems are big. At many companies, your architecture might rely on dozens of services, real-time pipelines, webhook listeners, or cloud-only infrastructure that makes local development painful or impossible.
+
+The same challenges apply to testing. In order to run a full integration flow, you might need to bring up Redis clusters, WebSocket gateways, real-time databases, or entire chunks of your cloud stack. While technically possible, you'll burn hours on orchestration instead of writing tests.
+
+Let's suggest you use Svix, an open-source event delivery platform, to push signed and timestamped events with delivery tracking, retries, and endpoint verification. A successful webhook delivery triggers a mail sent to the user identified with the ID sent on the event. 
+
+Let's say your webhook handler uses a helper function to authenticate and verify incoming events. You don't want to test that in your app; you trust Svix to sign things correctly.
+
+So, during testing, you can bypass the signature verification entirely.
+
+```python
+# app.py
+
+from flask import Flask, request, jsonify
+from webhook_utils import verify_signature
+
+app = Flask(__name__)
+
+def handle_webhook(data):
+    return {"status": "accepted", "event": data.get("type")}
+
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    payload = request.get_json()
+
+    if not verify_signature(payload, request.headers):
+        return jsonify({"error": "invalid signature"}), 403
+
+    result = handle_webhook(payload)
+    return jsonify(result), 200
+```
+
+Now, in your test, you **bypass** the `verify_signature` function so that your test can focus on what happens after a valid webhook is received:
+
+```python
+# test_webhook.py
+
+import pytest
+from app import app
+
+@pytest.fixture
+def client():
+    app.config["TESTING"] = True
+    return app.test_client()
+
+def test_webhook_with_mocked_signature(client, monkeypatch):
+    def mock_verify_signature(payload, signature):
+        return True  # Always accept during tests
+
+    monkeypatch.setattr("app.verify_signature", mock_verify_signature)
+
+    payload = {
+        "type": "invoice.created",
+        "invoice_id": "inv_001"
+    }
+
+    response = client.post(
+        "/webhook",
+        json=payload,
+        headers={"svix-signature": "fake-signature"}
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["status"] == "accepted"
+    assert response.get_json()["event"] == "invoice.created"
+```
+
+In the code above, the `verify_signature` function is monkeypatched during the test to always return True. This bypasses actual signature verification logic. Mocking works here because there is no need to go through signing or verification. You can assume a valid request and focus on checking the fields returned in the responses. 
+
+## 5. You Need to Run Thousands of Tests Quickly
+
+When your test suite grows, every millisecond counts. Authentication services often introduce latency—whether it's requesting tokens, verifying them, or calling a downstream user info endpoint.
+
+That might not matter for one test, but scale it up to hundreds—or thousands—and the time adds up quickly.
+
+For example, GitHub Actions provides 2,000 free CI minutes monthly for private repositories. Suppose each of your tests adds just one second of overhead due to authentication—calling an auth API, verifying a token, or requesting user info. If you have 500 auth-reliant tests, that's 500 extra seconds per test run.
+
+Now assume your team pushes 20 times a day. That's nearly 3 hours of pipeline time wasted—**per day**. Over a month, that's enough to burn through your free quota, slow your feedback loop, and delay deploys.
+
+When you're running tests in a high-scale environment—CI pipelines, monorepos, frequent deploys—mocking authentication is how you keep the test loop fast and predictable. That doesn't just save computing. It speeds up deployment, reduces CI costs, and improves developer feedback cycles.
+
+## Final Thoughts
+
+As you've seen throughout this article, mocking has real use cases. It's not inherently bad. In fact, it can help reduce infrastructure costs, shorten CI run times, and reduce the complexity of testing flows that rely on external systems. In the right conditions, mocking gives you control and lets you focus on business logic, not boilerplate or network overhead. But you need to know when it's justified.
+
+When you consider mocking authentication, you should stop and ask yourself a few key questions. These aren't just about how to mock—but exactly what you're mocking.
+
+Authentication is not a single step. It's a flow. Depending on your architecture, it may include:
+
+- Retrieving a token from a login API.
+- Verifying a token signature.
+- Fetching user claims from a provider.
+- Applying rules like 2FA triggers, session policies, or tenant-based routing.
+- Injecting a user into context after assuming authentication passed.
+
+So, what are you actually mocking?
+
+- Are you bypassing the login flow entirely?
+- Are you skipping token validation logic?
+- Are you faking a user object with known permissions?
+- Are you simulating provider failures or edge cases?
+
+Each carries different trade-offs. Some are simple and safe. For example, injecting a user after assuming valid authentication. Others may hide critical issues, like faking an auth provider response and forgetting to validate signatures.
+
+And here's a question we strongly encourages: **Is your testing setup even local-first capable?**
+
+If you can run your auth system locally—do it. Can you run Docker containers, use Kickstart to seed accounts, and spin up isolated services with no shared state? If so, mocking shouldn't even be on the table.
+
+It's also important to understand the difference between mocking and stubbing. Stubbing is a more limited form of mocking that only replaces a single function call. It's often used to simulate a specific response or error condition. Mocking, on the other hand, can replace multiple function calls and return different results. Another key difference is that mocks have tracability while stubs don't.
+In the example of the payment creation endpoint, mocking the `get_user_from_token` function would return a specific user object. Stubbing would return a specific response.
+
+Finally, **know where your boundary is.** You don't need to mock what's inside your sandbox. If you can own it, run it. Everything outside—remote APIs, 3rd-party identity, or black-box SSO? That's where mocking can be a safe fallback.
+
+Mocking is fine as long as it's done with intent.
