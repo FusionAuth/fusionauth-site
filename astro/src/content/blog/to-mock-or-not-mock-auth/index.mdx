@@ -143,7 +143,7 @@ def test_create_payment(client, monkeypatch):
 
 The version of the code above keeps the full `request/response` cycle, still expects an `Authorization` header, and still passes through your actual handler code. But now it doesn't depend on any real login flow or token infrastructure. You're simulating the outcome of a successful authentication, not the full process.
 
-## 2. You Need to Simulate Edge Cases or Error Scenarios
+### 2. You Need to Simulate Edge Cases or Error Scenarios
 
 Real-world authentication flows fail, and your app needs to handle those failures. But most identity providers don't give you fine-grained ways to simulate failure states. You can't always force a `401`, trigger a rate limit, or simulate an expired session on demand. And even if you could, it might be slow, fragile, or hard to reproduce in CI. In those cases, mocking becomes practical.
 
@@ -187,7 +187,7 @@ The test above ensures the payment creation endpoint correctly returns a `403` w
 
 ### 3. You can't seed, reset, or simulate your provider
 
-Sometimes, the biggest reason to mock isn't complexity: it's access. If you're integrating with a third-party identity provider like Auth0, Azure AD, Okta, or even a corporate SSO setup, you often can't configure it, seed it with test users, or force it into failure modes. You may not even be able to run it locally. You're working with a black box; in that case, mocking might be your **only option**.
+Sometimes, the biggest reason to mock isn't complexity: it's access. If you're integrating with a third-party identity provider like Auth0, Azure AD, Okta, or even a corporate SSO setup, you often can't configure it, seed it with test users, or force it into failure modes. You may not even be able to run it locally. 
 
 You should use mocking when the following scenarios show up:
 
@@ -195,7 +195,7 @@ You should use mocking when the following scenarios show up:
 - You can't automate the login flow because it's tied to a real tenant.
 - Tokens are opaque (In a proprietary format), and your only interface is the `Authorization` header.
 
-That makes mocking your only practical option. In the end, it comes down to one question: how much access do you really have?
+When auth is a black box (whether a corporate SSO or closed-source IdP), you're often forced to mock. But you need to do it deliberately and document what's being skipped. In the end, it comes down to one question: how much access do you really have?
 
 ### 4. You're Trying to Save Time or Budget
 
@@ -209,7 +209,7 @@ Let's be honest. Not every application is designed to run cleanly on a laptop. S
 
 The same challenges apply to testing. In order to run a full integration flow, you might need to bring up Redis clusters, WebSocket gateways, real-time databases, or entire chunks of your cloud stack. While technically possible, you'll burn hours on orchestration instead of writing tests.
 
-Let's suggest you use Svix, an open-source event delivery platform, to push signed and timestamped events with delivery tracking, retries, and endpoint verification. A successful webhook delivery triggers a mail sent to the user identified with the ID sent on the event. 
+Say you use [Svix](https://www.svix.com/open-source-webhook-service/) to handle webhooks. You dont want to test their signature logic—just your system's behavior after a valid event.
 
 Let's say your webhook handler uses a helper function to authenticate and verify incoming events. You don't want to test that in your app; you trust Svix to sign things correctly.
 
@@ -273,6 +273,36 @@ def test_webhook_with_mocked_signature(client, monkeypatch):
 ```
 
 In the code above, the `verify_signature` function is monkeypatched during the test to always return True. This bypasses actual signature verification logic. Mocking works here because there is no need to go through signing or verification. You can assume a valid request and focus on checking the fields returned in the responses. 
+
+In case you are using a microservices architecture, you can mock the entire auth service using a Docker container. For example, just spin up a lightweight Flask (or FastAPI) app that simulates token issuance and verification. 
+
+Here’s what a minimal mock auth server might look like:
+
+```python
+# mock_auth_server.py
+
+# mock_auth.py
+
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route("/login", methods=["POST"])
+def login():
+    return jsonify({"token": "test-token", "user": {"id": "user_123"}})
+
+@app.route("/validate", methods=["GET"])
+def validate():
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    if token == "test-token":
+        return jsonify({"id": "user_123", "email": "test@example.com"})
+    return jsonify({"error": "invalid token"}), 401
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8001)
+```
+
+You can then spin up the mock auth server in a Docker container and point your tests to it. It guarantees zero latency and zero external dependencies, and keeps your test environment clean without breaking the auth contract. 
 
 ## 5. You Need to Run Thousands of Tests Quickly
 
