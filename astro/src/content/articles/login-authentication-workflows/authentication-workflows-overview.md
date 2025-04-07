@@ -9,6 +9,8 @@ The landscape of applications today is broad. Similarly, the methods of authenti
 
 Keep in mind that this list is not exhaustive. Most IdPs, including FusionAuth, are capable of other forms of login. Also, there are many login workflows that we do not cover here due to security concerns with those methods.
 
+[![FusionAuth CTA Banner](/img/cta/login-auth-workflows.png)](/tech-papers/login-authentication-workflows)
+
 Also, these articles do not discuss the pros and cons of the different types of applications and which might be best for your needs. They focus entirely on authentication for applications. There are many articles available that cover different application types and why you should choose one over the other (such as the decision to use a native mobile application versus a responsive web application).
 
 ## Definitions
