@@ -1,0 +1,39 @@
+---
+import { getEntry } from 'astro:content';
+import { LambdaDoc } from 'src/tools/docs';
+import APIField from 'src/components/api/APIField.astro';
+import AvailableSince from "../../../components/api/AvailableSince.astro";
+
+interface Props {
+  prefix?: String,
+  showRequired?: boolean,
+  showSince?: boolean
+}
+
+const lambdasEntry = await getEntry('json', 'lambdas');
+const lambdas: LambdaDoc[] = (lambdasEntry.data as LambdaDoc[])
+    .sort((a, b) => a.typeText.localeCompare(b.typeText));
+
+const { prefix, showRequired, showSince } = Astro.props;
+
+if (typeof prefix !== 'undefined' && prefix !== '') {
+  if (!prefix.endsWith(".")) {
+     throw new Error(`Prefix, if provided, must end with a ".". Prefix: '${prefix}'`);
+  }
+}
+
+const name = `${prefix || ''}type`;
+
+
+---
+<APIField {name} type="String" required={showRequired}>
+  <p>The lambda type. The possible values are:</p>
+  <ul>
+    { lambdas.map(lambda =>
+      <li>
+        <code>{ lambda.typeText }</code>
+        { showSince && lambda.version && <AvailableSince since={ lambda.version }/> }
+      </li>
+    )}
+  </ul>
+</APIField>

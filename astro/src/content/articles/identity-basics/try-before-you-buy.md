@@ -6,7 +6,7 @@ icon: /img/icons/value-auth-provider-commit.svg
 darkIcon: /img/icons/value-auth-provider-commit-dark.svg
 section: Identity Basics
 date: 2021-02-24
-dateModified: 2021-02-24
+dateModified: 2024-08-21
 ---
 
 Sometimes, despite a salesperson overcoming all your concerns or a landing page perfectly crafted to speak your language in every bullet point, there's a lingering fear that the product you're looking at just might not be what you're looking for. Everyone has experienced buyer's remorse at some point in their life, and most people I know don't want to go through it again.
@@ -19,21 +19,21 @@ Choosing incorrectly could mean a major rewrite of your application logic. Getti
 
 ## Advantages of Trying an Auth Provider Before You Buy
 
-Trying your authentication provider before you commit can save you lots of headaches in the future and should be an important part of choosing an authentication partner.
+[Trying your authentication provider](/download) before you commit can save you lots of headaches in the future and should be an important part of choosing an authentication partner.
 
 Offering a free trial is an increasingly common practice among authentication providers, but if there's no trial option listed publicly, you should ask a salesperson if it's an option. If there still isn't a way to experiment with an auth system before you pick it, you may want to consider working with a different partner. There are many reasons you want to try before you commit, but let's go over a few of the more important ones.
 
-### Your Developers Can Test the API
+### Free Trials Let You Test The APIs
 
 When making any significant purchase that your development team will use as part of their daily work, it's important to know that your developers can work with it and use it in ways that will benefit the product long term.
 
-If the developers start testing a potential API and they find they can build a relatively simple prototype to prove the API can support all your use cases, then you can be confident that a larger-scale implementation will work as well. Not only will this give you more confidence that the product you're buying is the right one for your business, it will also help your developers work more quickly when they do move to a larger-scale implementation because they will already have experience working with the API.
+If the developers start testing a potential API and they find they can [build a relatively simple prototype](/docs/quickstarts) to prove the API can support all your use cases, then you can be confident that a [larger-scale implementation](/articles/ciam/making-sure-your-auth-system-scales) will work as well. Not only will this give you more confidence that the product you're buying is the right one for your business, it will also help your developers work more quickly when they do move to a larger-scale implementation because they will already have experience working with the API.
 
-For example, you may be looking at a few different authentication providers and have one that you've decided is the best candidate for your application. After all, it checks all the boxes! But when your developers start reading the documentation and actually build out a small prototype, they may find the library for your application's language doesn't support [passwordless authentication](/docs/lifecycle/authenticate-users/passwordless/magic-links). If you had committed to this authentication provider before discovering this, you might have already heavily integrated it into your application—which needs passwordless authentication.
+For example, you may be looking at a few different authentication providers and have one that you've decided is [the best CIAM candidate](/guides/keycloak-alternatives) for your application. After all, it checks all the boxes! But when your developers start reading the documentation and actually build out a small prototype, they may find the library for your application's language doesn't support [passwordless authentication](/docs/lifecycle/authenticate-users/passwordless/magic-links). If you had committed to this authentication provider before discovering this, you might have already heavily integrated it into your application—which needs passwordless authentication.
 
 This would be a huge problem leading to a major rewrite or possibly having to drop a key feature of your app. However, if you had built a prototype using a free trial and discovered this limitation ahead of time, you could have simply moved on to choosing a different provider.
 
-### Better Understanding of Costs
+### Free Trials Help You Better Understand Costs
 
 Many API-based products such as authentication providers are usage-based, which means as your usage increases, the pricing changes. While looking at the pricing table may have you convinced that you'll be on a free or low-cost plan, actually building out a prototype might reveal otherwise.
 
@@ -45,7 +45,7 @@ But when you build a prototype, you might notice that every incorrect password a
 
 Catching surprises like this during a free trial can help you understand how to factor your costs correctly, as opposed to finding out when your integration is already in production. It allows your development team a chance to think up different ways to architect your solution to fit within these constraints, or even choose a different provider if a workaround or change in architecture isn't going to be possible.
 
-### Developer Buy-In
+### Free Trials Assist With Developer Buy-In
 
 Any new initiative will move faster and more efficiently if the whole team is on the same page and giving the new integration their full effort.
 
@@ -54,8 +54,8 @@ Developers can be a particularly stubborn group when it comes to efforts like th
 And if the development team is split as to which solution they think is best, a free trial like this can help opinions converge around the best solution in practice, rather than wasting time on arguments of opinion. One common attempt to resolve a split between solutions is to just have more demo meetings from vendors and opinion-charged internal meetings. This often leads to frustration and the vendor selection process stalling out all together.
 
 As an alternative, consider dividing the development team based on who backs which solution and having each side develop a small prototype to demo to the team. This will quickly bring to light any challenges with one solution or the other and allow for much more productive conversations after the trial is over.
-
-## Running an Effective Trial
+[![FusionAuth free trial](/img/articles/try-before-buy/fusionauth-free-trial.png)](/download)
+## How To Effectively Trial Software
 
 It's not enough to simply have a free trial of a potential authentication solution. For your trial to be useful, you need to run it effectively in order to be sure that you've tested for all of your potential use cases and gotten all the information you need to make a more informed decision.
 
@@ -87,4 +87,4 @@ If you don't already have a QA environment, this can be a great chance to create
 
 Trying a full version of an authentication provider that you're considering is a very important step in making a final purchasing decision. Because authentication is a crucial component of any application, it's not a decision you want to be forced to reverse down the road. That would not only be costly in terms of dollars but also in developer time that could be spent working on new features for your product.
 
-If you're looking for an authentication provider you can get running in five minutes with an unlimited free plan, check out and download [FusionAuth](/download).
+You wouldn't be reading this if you weren't considering authentication providers. Whether it's your first implementation or if you're tired of getting nickel-and-dimed by your existing auth, FusionAuth is here to help. We've loaded [FusionAuth](/download) with a ton of features, and all of the nerd knobs that you could want. Best of all, you can [get started for free](/download) with no MAU restrictions, free passkeys, and unlimited identity providers.

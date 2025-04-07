@@ -1,4 +1,4 @@
-## Running builds
+# Running builds
 Almost all of the content for site now lives under the [astro](./astro) directory and is built by astro. You can run the site by cd-ing into the astro directory and running npm scripts from there or by running savant targets from the top level.
 
 The build targets are
@@ -36,6 +36,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - Headers should have the first letter of every word capitalized: `This Is The Header Text`. This is true for all headers (h1, h2, h3, h4). This is also known as [Start Case](https://en.wikipedia.org/wiki/Letter_case).
 - When writing, you have access to Asides. Here's an [example blog post using an Aside](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/blog/log4j-fusionauth.mdx). You can assign the following values to the type: `tip` for tips. `note` for things for the user to be aware of. `important` for things the user should pay attention to. `warn` for dangerous actions like deleting a tenant.
 - For links, don't use the absolute URL for the FusionAuth website (https://fusionauth.io), only relative URLs. This allows us to deploy to our local and staging environments and not get sent over to prod.
+- If you have a list element containing more than one paragraph, indent the second paragraph by the same amount as the start of the text in the first paragraph to make sure that it renders correctly.
 
 ## Docs 
 - Don't use complex breadcrumbs styling in docs. Use `->`. Use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component. Breadcrumbs should look like this `<Breadcrumb>foo -> bar -> baz</Breadcrumb>`.
@@ -80,14 +81,17 @@ Review [the component for all options and icons](astro/src/components/icon/Icon.
 
 ### Docs Navigation
 
-If you want a page to float to the top of the navigation, because it is an overview page, use this attribute:
+Make descriptions full sentences. They must end in a period. Titles, on the other hand, should not end with punctuation.
+
+If you want to order pages within a section, use `navOrder`. The default value for every page is [defined here](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/config.js#L61).
+
+Pages are ordered in the nav within a section in descending order. 
 
 ```
-topOfNav: true
+navorder: 0
 ```
 
-Make descriptions full sentences.
-
+If you want to sort a category to the top of its section, you need to add it to `astro/src/tools/docs/categoriesToFloatToTop.json`.
 
 ### Including files
 - If you are building a file to include across multiple sections of documentation, make sure you preface the filename with `_` and use dashes to separate words: `_login-api-integration` not `_login_api_integration`.
@@ -175,11 +179,13 @@ Follow everything in the `Content Style Guidelines` section.
 - For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
 - For field names, use double quotes: "Login Identifier Attribute".
 - For values, use back ticks: `userPrincipalName`.
-- Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/main/.github/known-blog-categories.txt). You can separate categories with commas.
+- Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/main/config/contentcheck/known-blog-categories.txt). You can separate categories with commas.
 - Use tags. They are separated with commas. These are freeform, so feel free to add multiple and choose what works. The first one is what is used to show related posts, unless there's a `featuredTag` value in the front matter. You can [learn more about the logic by reviewing the layout](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/layouts/Blog.astro).
 - You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.
 - All references to `stackoverflow.com` should be updated and direct to the community forum at `https://fusionauth.io/community/forum/`
 - When using an aside in the blog, please use the `nodark="true"` attribute.
+- Make descriptions full sentences. They must end in a period or other punctuation.
+- Titles should not end in a period. They can end in a ? or ! if needed.
 
 ## Lists
 
@@ -209,6 +215,7 @@ Fruits were domesticated at different times.
 - curl
 - Docker
 - Docker Compose
+- e-commerce
 - ECMAScript
 - Elasticsearch
 - esport
@@ -223,9 +230,10 @@ Fruits were domesticated at different times.
 - multi-tenancy/multi-tenant
 - Node.js
 - OAuth and OAuth2
+- private-labeled (an adjective)
 - re-authentication
 - self-service
-- server-side
+- server-side (an adjective)
 - Spring Boot
 - third-party
 - two-factor
@@ -450,16 +458,23 @@ We're using [Vale](https://vale.sh/) to find misspellings and to standardize ter
 
 The main configuration file is located at [`.vale.ini`](./.vale.ini), where we specify file extensions to parse (besides the default `.md` one), some custom filters to ignore Astro components and which rules we'll use.
 
+We also use eslint to remove HTML from markdown one commit at a time.
+
 ### Rules
 
-- The rules _(or, as Vale calls them, "styles")_ are located at [`.github/vale/styles`](./.github/vale/styles).
-- Right now, we're using [`write-good`](./.github.vale/styles/write-good), a collection of simple rules to avoid common mistakes and awkward sentences.
-- We also have a custom vocabulary at [`.github/vale/styles/config/vocabularies/FusionAuth/accept.txt`](./.github/vale/styles/config/vocabularies/FusionAuth/accept.txt) with known words.
+- The rules _(or, as Vale calls them, "styles")_ are located at [`config/vale/styles`](./config/vale/styles).
+- Right now, we're using [`write-good`](./config/vale/styles/write-good), a collection of simple rules to avoid common mistakes and awkward sentences.
+- We also have a custom vocabulary at [`config/vale/styles/config/vocabularies/FusionAuth/accept.txt`](./config/vale/styles/config/vocabularies/FusionAuth/accept.txt) with known words.
   - Note that this file can use regular expressions to match words in a case-insensitive manner, as described [in their docs](https://vale.sh/docs/topics/vocab/).
+- Anything marked as code (with backticks) is ignored, so if you have a UUID or config string, surrounding it with backticks is a good way to satisfy vale.
 
 ### GitHub Actions
 
-There's [a GitHub Action](./.github/workflows/vale.yml) that runs Vale on added/modified files when opening a pull request. It'll only cover files located at `astro/src/content`, but it won't block merging the PR, as we currently have lots of errors to fix. So, use it as a guide to improve what you are writing.
+There's [a GitHub Action](./.github/workflows/vale.yml) that runs Vale on added/modified files when opening a pull request. It'll only cover files located at `astro/src/content` and `astro/src/components`. It will block merging the PR.
+
+There are other GH actions there as well.
+
+When you are adding a new GH action, pin the SHA. https://michaelheap.com/pin-your-github-actions/ has more.
 
 ### Running locally
 
@@ -483,12 +498,20 @@ If you want to filter by specific rules, you can also pass a `--filter` argument
 $ vale --filter=".Name == 'Vale.Spelling'" astro/path/to/file
 ```
 
-### What to do with linting errors
+### What to do with eslint linting errors
+
+Remove the HTML if you can.
+
+Move HTML into an astro component.
+
+As a last resort, if you can't do either of the above, you can use `{/* eslint-disable-line */}` to disable the lint checking for that line. This has the disadvantage of masking other errors, do don't do it unless it is your last resort.
+
+### What to do with vale linting errors
 
 Whenever you receive an error, you need to determine if you should:
 
 - Actually fix the word (e.g. if you received an error like _"Use 'Id' instead of 'ID'."_); or
-- Add a known word to [`the vocabulary`](./.github/vale/styles/config/vocabularies/FusionAuth/accept.txt) if it's a language, library, company name, etc. But make sure you have the correct capitalization to avoid having duplicates there; or
+- Add a known word to [`the vocabulary`](./config/vale/styles/config/vocabularies/FusionAuth/accept.txt) if it's a language, library, company name, etc. But make sure you have the correct capitalization to avoid having duplicates there; or
 - In case of custom Astro components, you'd probably need to add a new `TokenIgnores` item in [`.vale.ini`](./.vale.ini).
 
 ## Pull request review process
@@ -496,4 +519,5 @@ Whenever you receive an error, you need to determine if you should:
 * If a piece of content is technical, it needs a technical review by engineering or devrel.
 * Typo fixes don't need review.
 * If a piece of content is significant (blog post, guide, article) give it the label `content` and it will be published to a slack channel for marketing awareness.
+
 

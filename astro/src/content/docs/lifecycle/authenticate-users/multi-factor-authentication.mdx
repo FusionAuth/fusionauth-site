@@ -4,17 +4,21 @@ description: Learn about how to use multi-factor authentication (MFA) in FusionA
 navcategory: developer
 section: lifecycle
 subcategory: authenticate users
+tags: auth as a service
 ---
-import PremiumEditionBlurb from 'src/content/docs/_shared/_premium-edition-blurb.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
 import DifferenceTwoFactorMultiFactor from 'src/content/docs/_shared/_difference-two-factor-multi-factor.mdx';
-import EnterpriseEditionBlurb from 'src/content/docs/_shared/_enterprise-edition-blurb.astro';
+import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
 import JSON from 'src/components/JSON.astro';
 import InlineField from 'src/components/InlineField.astro';
 import RecoveryCodesBlurb from 'src/content/docs/lifecycle/authenticate-users/_recovery-codes-blurb.mdx';
 import Aside from 'src/components/Aside.astro';
 import MfaMigration from 'src/content/docs/lifecycle/authenticate-users/_mfa-migration.mdx';
 import MfaTroubleshooting from 'src/content/docs/lifecycle/authenticate-users/_mfa-troubleshooting.mdx';
+import StepUpDiagram from 'src/diagrams/docs/lifecycle/authenticate-users/step-up-auth.astro';
 import { YouTube } from '@astro-community/astro-embed-youtube';
+import StaticPatchNote from 'src/content/docs/sdks/_static-patch-note.mdx';
 
 <YouTube id="GM2JPTu-EE4" />
 
@@ -30,7 +34,7 @@ Currently there are three methods or factors of multi-factor authentication supp
 * Email
 * SMS, including Twilio
 
-<PremiumEditionBlurb />
+<PremiumPlanBlurb />
 
 **However, the Authenticator/TOTP implementation is not a premium feature.**
 
@@ -50,7 +54,7 @@ Please see the [Tenant configuration documentation for more information](/docs/g
 
 ## Application Set Up
 
-<EnterpriseEditionBlurb />
+<EnterprisePlanBlurb />
 
 You can override some MFA configuration settings at the application level.
 For instance, if you have one application that is used by your administrators, you might want to require MFA. For another application used by your customers, you might want to disable MFA.
@@ -71,7 +75,7 @@ You can, however, enable MFA on your own account using the administrative user i
 
 There are three options to allow users to enable multi-factor authentication on their account:
 
-* If you have a paid edition, users may use the self service account management feature to enable MFA for their accounts. [Learn more about that option here](/docs/lifecycle/manage-users/account-management/).
+* If you have a paid plan, users may use the self service account management feature to enable MFA for their accounts. [Learn more about that option here](/docs/lifecycle/manage-users/account-management/).
 * You may enable MFA directly using the User API.
 * You can build your own MFA user interface, allowing end users to enable MFA.
 
@@ -150,7 +154,7 @@ curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'ht
 
 This API call will send a unique code to the user using the method specified.
 
-The lifetime and length of this code can be configured by navigating to <strong>Tenants -> Your Tenant -> Advanced</strong> and modifying the <InlineField>Two-Factor One Time Code</InlineField> settings.
+The lifetime and length of this code can be configured by navigating to <Breadcrumb>Tenants -> Your Tenant -> Advanced</Breadcrumb> and modifying the <InlineField>Two-Factor One Time Code</InlineField> settings.
 
 #### Collect the Code
 
@@ -309,6 +313,10 @@ To use this:
 * Optionally send the code
 * Collect the code and verify it
 
+Here's a diagram showing this flow for a banking application which requires step up auth before completing a transfer, but not when users view a balance. 
+
+<StepUpDiagram alt="Diagram of step up auth when user selects a message based MFA method like email." />
+
 You can also send information at the start of the step up process and receive it at the end.
 
 Let's walk through each of these steps.
@@ -390,18 +398,18 @@ Users may need to disable an MFA method. They may switch email addresses, change
 
 You have four options:
 
-* If you have a paid edition, users may use the self service account management feature to disable MFA for their accounts. [Learn more about that option here](/docs/lifecycle/manage-users/account-management/).
+* If you have a paid plan, users may use the self service account management feature to disable MFA for their accounts. [Learn more about that option here](/docs/lifecycle/manage-users/account-management/).
 * You may remove MFA using the administrative user interface.
 * You may disable MFA directly using the User API.
 * You can build your own MFA user interface, allowing end users to disable MFA.
 
 ### Using the Administrative User Interface
 
-Navigate to <strong>Users -> The User</strong> and manage the user. Then go to the <strong>Multi-Factor</strong> tab. Remove any of the MFA methods by clicking the red trash can icon and confirming the deletion:
+Navigate to <Breadcrumb>Users -> The User</Breadcrumb> and manage the user. Then go to the <Breadcrumb>Multi-Factor</Breadcrumb> tab. Remove any of the MFA methods by clicking the red trash can icon and confirming the deletion:
 
 <img src="/img/docs/lifecycle/authenticate-users/delete-factor-admin-view.png" alt="Delete an MFA method from the admin screen." width="1200" role="bottom-cropped" />
 
-A user may also remove an MFA method by using the self service account management (if you have a paid edition) by clicking the `-` link. [Learn more about that here.](/docs/lifecycle/manage-users/account-management/)
+A user may also remove an MFA method by using the self service account management (if you have a paid plan) by clicking the `-` link. [Learn more about that here.](/docs/lifecycle/manage-users/account-management/)
 
 <img src="/img/docs/lifecycle/authenticate-users/user-self-serve-manage-factors.png" alt="Self service management of MFA methods." width="1200" role="bottom-cropped" />
 
@@ -422,8 +430,7 @@ user_two_factor_removed=`echo $user| jq 'del(.[].twoFactor[])' -`
 curl -XPUT -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://sandbox.fusionauth.io/api/user/00000000-0000-0000-0000-000000000004' -d "$user_two_factor_removed"
 ```
 
-The reason you need to retrieve the user and modify the data, then use `PUT` to update it, is because of how `PATCH` handles arrays.
-[Read this tracking issue for more info.](https://github.com/FusionAuth/fusionauth-issues/issues/441)
+The reason you need to retrieve the user and modify the data then use `PUT` to update it, is [because of how `PATCH` handles arrays](/docs/apis/#the-patch-http-method).
 
 ### Building Your Own Interface
 
@@ -528,17 +535,17 @@ In this situation, when using the `trustToken` on the [Change Password API](/doc
 
 To migrate from the Two Factor authentication APIs provided in FusionAuth 1.25 or earlier, you'll need to think about the following aspects:
 
-* Your edition
+* Your plan
 * Your data
 * Your code
 
-### Your Edition
+### Your Plan
 
-If you do not have a paid FusionAuth edition, you are using the community edition. [Learn more about the various editions](/pricing). Due to the complexity of the new MFA implementation, SMS based MFA is no longer part of the community edition as it was before version 1.26.
+If you do not have a paid FusionAuth plan, you have the Community plan. [Learn more about the various plans](/pricing). Due to the complexity of the new MFA implementation, SMS based MFA is no longer part of the Community plan as it was before version 1.26.
 
 Therefore if you want to use message based MFA in a version of FusionAuth after 1.25, you must purchase a paid license.
 
-Google Authenticator and time based one-time password MFA continue to work in the community edition. TOTP MFA has been improved and you can now add multiple authenticator devices to one user account.
+Google Authenticator and time based one-time password MFA continue to work in the Community plan. TOTP MFA has been improved and you can now add multiple authenticator devices to one user account.
 
 ### Your Data
 
@@ -551,7 +558,7 @@ The migrated data includes:
 * Existing Twilio settings which will be converted to the new messenger configuration
 * TOTP configuration
 
-If you find your data has not migrated correctly, [please file an issue](https://github.com/fusionauth/fusionauth-issues/issues) and let us know. If you have an edition which includes support, please [file a ticket](https://account.fusionauth.io/account/support/).
+If you find your data has not migrated correctly, [please file an issue](https://github.com/fusionauth/fusionauth-issues/issues) and let us know. If you have a plan which includes support, please [file a ticket](https://account.fusionauth.io/account/support/).
 
 ### Your Code
 
@@ -582,7 +589,7 @@ If you have other MFA methods that you'd like to use with FusionAuth, you have a
 * If you can send a code out of band, you may use step up auth to protect all the pages in your system. As soon as a user logs in, require step up auth. Users don't have to have MFA enabled to use step up.
 * If your additional factor can receive a webhook, configure your webhooks to be transactional and send one on login. The service can then perform the MFA check, perhaps doing something like fingerprint recognition. If any status other than `200` is returned, the login will fail. The downside of this approach is that the message to the end user won't be helpful, and that MFA will be required on every login. Here is an [example of a webhook stopping a login](/blog/2020/08/13/locking-an-account-with-breached-password).
 * Use the [Login API](/docs/apis/login) and build custom login flows, inserting your custom MFA functionality where needed.
-* Set up an OpenID Connect server with the required MFA functionality. Then set up an [Identity Provider](/docs/lifecycle/authenticate-users/identity-providers/) that delegates to that OIDC server. Modify your theme so that this Identity Provider is the only login option.
+* Set up an OpenID Connect server with the required MFA functionality. Then set up an [Identity Provider](/docs/lifecycle/authenticate-users/identity-providers/) that delegates to that OIDC server. Add a [Login Validation Lambda](/docs/extend/code/lambdas/login-validation) so that this Identity Provider is the only login option.
 
 ## Migrating MFA Methods From a Different System
 
@@ -593,7 +600,7 @@ If you have other MFA methods that you'd like to use with FusionAuth, you have a
 There are times when you might want to force a user to provide an additional factor of authentication before they ever get access to your application.
 For example, you might require MFA when a user logs into an accounting application, but not when they log in to a customer support application.
 
-In FusionAuth, this is controlled by the Login Policy setting. This can be configured at the tenant level, or, if you have the enterprise plan, at the application level. There are three values for any tenant login policy:
+In FusionAuth, this is controlled by the Login Policy setting. This can be configured at the tenant level, or, if you have the Enterprise plan, at the application level. There are three values for any tenant login policy:
 
 * Enabled
 * Disabled

@@ -1,6 +1,6 @@
 ---
-title: "What is Multi-Factor Authentication (MFA) and How it Works"
-description: Learn what MFA is, why it's crucial, the available factors, and when to consider requiring multi-factor authentication for enhanced security.
+title: What Is Multi-Factor Authentication (MFA)? Methods, Types, and How It Works | FusionAuth"
+description: Learn what multi-factor authentication (MFA) is, how it works, and the different types and methods used. Strengthen security by understanding MFA’s role in verifying user identity.
 author: Dan Moore
 section: Authentication
 tags: mfa 2fa multi-factor-authentication two-factor-authentication user-experience customer-experience security policie sms totp factors ap-push tradeoffs open-standards biometric
@@ -18,6 +18,8 @@ As a developer or software engineer, MFA may seem a bit mysterious. This article
 * When you might consider requiring MFA
 
 At the end, you should have a good understanding of options for integrating MFA into your applications, and how to start doing so.
+
+[![MFA For Developers](/img/cta/mfa-for-devs.png)](/tech-papers/multi-factor-authentication-for-developers?utm_medium=cta&utm_source=articles&utm_campaign=what_is_mfa)
 
 ## What Is Multi-factor Authentication (MFA)?
 
@@ -54,7 +56,7 @@ Imagine a security system that not only asks for your credentials but also reads
 
 What's truly fascinating about adaptive MFA is its dynamic nature. It's not just about adding layers of security; it's about adding the right layers, at the right time. This approach minimizes friction for users, making security feel less like a series of hoops to jump through and more like a smart, responsive ally. It's a dance between convenience and caution, where security measures are tailored in real-time, based on the perceived level of risk. This not only enhances the user experience but also fortifies defenses, ensuring that the keys to the kingdom aren't handed over too easily, nor kept under lock and key unnecessarily.
 
-You can also use the same principles for initial authentication (for instance, requiring a CAPTCHA if a user logs in from a new device). Read more about adaptive approaches in our [Advanced Threat Detection](/docs/operate/secure-and-monitor/advanced-threat-detection) features. 
+You can also use the same principles for initial authentication (for instance, requiring a CAPTCHA if a user logs in from a new device). Read more about adaptive approaches in our [Advanced Threat Detection](/docs/operate/secure/advanced-threat-detection) features. 
 
 ## Why Use Multi-factor Authentication (MFA)?
 
@@ -179,7 +181,7 @@ Below is a diagram displaying estimated relative deployment and security attribu
 
 Let's look at each category and examine the factors in more detail.
 
-### Posession: What You Have
+### Possession: What You Have
 
 Having possession of a physical object or access to a separate user account can be a secure authentication factor. The out of band communication of a one time code is also a form of "what you have".
 
@@ -276,7 +278,7 @@ As a developer, avoid this factor. If you must implement it, let the user provid
 
 Like all factors, you could use this option as part of defense in depth solution, in combination with other factors.
 
-Counsel your users to answer these questions wisely. Frankly, they should pick fake answers. For example, if a question is "what was your first pet's name", and their first pet's name was Fluffy, pick anything other than "Fluffy". Anything. Perhaps "fido" or "killer". 
+Counsel your users to answer these questions wisely. Frankly, they should pick fake answers. For example, if a question is "what was your first pet's name", and their first pet's name was Fluffy, pick anything other than "Fluffy". Anything. Perhaps "spot" or "killer". 
 
 If the user is saving these answers in a password manager, I would even suggest "h941TphXOL3h0ws7M0U2" or "relevance-middle-yellow-horoscope". The goal is to prevent someone from learning the name of a childhood pet from a Facebook post and using that information to gain illicit access. 
 

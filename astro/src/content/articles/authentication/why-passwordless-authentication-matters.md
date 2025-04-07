@@ -19,7 +19,7 @@ At its core, WebAuthn is an API that builds upon the [FIDO2 specification](/blog
 
 The importance of moving towards passwordless authentication cannot be stressed enough. It eliminates the inherent risks associated with the username and password combinations we're accustomed to using today. One of the largest advantages of a passwordless internet is the eradication of the common practice of reusing passwords.
 
-WebAuthn isn't just an innovation. It acts as a wall of protection against one of the most pervasive and damaging forms of cyber-attacks—phishing. Phishing attacks are notorious for [exploiting human error](/articles/security/steps-secure-your-authentication-system), relying on deception to harvest login credentials. But WebAuthn flips the script. It safeguards against phishing by using asymmetric cryptography and eliminating passwords. Even if someone tricks you into revealing your authentication data, you're still protected because you can't share the key on your device. It also protects against phishing because the prompt to authenticate is tied to the domain of the website, so users are not vulnerable to [unicode domain attacks](https://www.thesslstore.com/blog/unicode-domain-phishing/).
+WebAuthn isn't just an innovation. It acts as a wall of protection against one of the most pervasive and damaging forms of cyber-attacks—phishing. Phishing attacks are notorious for [exploiting human error](/articles/security/steps-secure-your-authentication-system), relying on deception to harvest login credentials. But WebAuthn flips the script. It safeguards against phishing by using asymmetric cryptography and eliminating passwords. Even if someone tricks you into revealing your authentication data, you're still protected because you can't share the key on your device. It also protects against phishing because the prompt to authenticate is tied to the domain of the website, so users are not vulnerable to [Unicode domain attacks](https://www.thesslstore.com/blog/unicode-domain-phishing/).
 
 ## WebAuthn Key Components
 
@@ -34,7 +34,7 @@ The Relying Party is a central player in the WebAuthn ecosystem, representing th
 
 ### Client to Authenticator Protocol
 
-The Client to Authenticator Protocol serves as the communication bridge between the Browser and the authenticator device.This ensures the authentication process is seamless, and effective.  Whether it's the biometric sensors on your smartphone or a specialized security key like a Ubikey, the Client to Authenticator Protocol facilitates the exchange of information, making it possible to verify your identity with confidence.
+The Client to Authenticator Protocol serves as the communication bridge between the Browser and the authenticator device.This ensures the authentication process is seamless, and effective.  Whether it's the biometric sensors on your smartphone or a specialized security key like a Yubikey, the Client to Authenticator Protocol facilitates the exchange of information, making it possible to verify your identity with confidence.
 
 ### Platform and Browser Support
 

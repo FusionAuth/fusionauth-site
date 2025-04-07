@@ -1,6 +1,6 @@
 ---
-title: The Auth Bottleneck Pattern 
-description: Why you might use a centralized user management system rather than having individual applications manage their own auth.
+title: Auth Bottleneck Architecture - Streamline Authentication Across Applications
+description: "Learn how the auth bottleneck pattern centralizes authentication and authorization for employees and customers."
 section: CIAM
 author: Dan Moore
 icon: /img/icons/auth-bottleneck-architecture.svg
@@ -12,6 +12,8 @@ A common pattern for modern organizations is to centralize user management with 
 ## The architectural pattern with OIDC and SAML
 
 In this architectural pattern, applications delegate user management to a specific system designed for the purpose. Many applications can delegate their auth needs to a standards based system. Examples include custom applications written by internal teams, third party services used by employees, such as Salesforce and Zendesk, and applications used by customers, such as forums, help desk software, or account management. 
+
+[![FusionAuth CTA Banner](/img/cta/modern-guide-2.png)](/ebooks/modern-guide-to-oauth)
 
 By choosing one user management application for your customer and employee needs, you reduce training time. You can also easily allow different types of users access to different types of applications.
 
@@ -67,7 +69,7 @@ If you work for a large organization, you may need to federate your user managem
 
 Of course, nothing is perfect. There are challenges with this approach as well. Some technical, some not so much. 
 
-First off is the [SSO tax](https://sso.tax/). Many third party applications don't support auth delegation until you are on an enterprise plan. Investigate required applications to see if and how they can act as a RP or SP to a centralized user management system before you decide to pursue the bottleneck architecture. 
+First off is the [SSO tax](https://sso.tax/). Many third party applications don't support auth delegation until you are on the enterprise tier. Investigate required applications to see if and how they can act as a RP or SP to a centralized user management system before you decide to pursue the bottleneck architecture. 
 
 Another organizational challenge is ensuring developers and end users actually use the organization's user management system. Some may want to use their old, familiar authentication solutions. Encourage everyone to work within these constraints by making adoption as easy as possible and clearly explaining the benefits. Providing examples of successful integrations can help with both of these.
 

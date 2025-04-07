@@ -6,6 +6,7 @@ subcategory: events and webhooks
 tertcategory: events
 ---
 import APIField from 'src/components/api/APIField.astro';
+import AuthenticationTypeValues from 'src/content/docs/_shared/authentication-type-values.astro';
 import Event from 'src/content/docs/extend/events-and-webhooks/events/_event.astro';
 import EventBody from 'src/content/docs/extend/events-and-webhooks/events/_event-body.astro';
 import InlineField from 'src/components/InlineField.astro';
@@ -13,7 +14,7 @@ import ReferenceLink from 'src/content/docs/_shared/_reference-link.mdx';
 
 export const eventType = 'user.login.failed';
 
-<Event description="This event is generated when a user login request fails due to invalid credentials."
+<Event description="This event is generated when a user login request fails due to invalid credentials. It is not generated when a login attempt is made and the user doesn't exist."
        eventType={eventType}
        name="User Login Failed"
        scope="application"
@@ -30,7 +31,9 @@ export const eventType = 'user.login.failed';
   </APIField>
 
   <APIField slot="leading-fields" name="event.authenticationType" type="String">
-    The type of authentication used in the login request.
+    The type of authentication used in the login request. The possible values are:
+
+    <AuthenticationTypeValues showSince="1.6.0" />
   </APIField>
 
   <APIField slot="leading-fields" name="event.createInstant" type="Long">
@@ -47,12 +50,35 @@ export const eventType = 'user.login.failed';
     Moved to <InlineField>event.info</InlineField> in 1.30.0
   </APIField>
 
+  <APIField slot="trailing-fields" name="event.reason" type="Object" since="1.53.0">
+    An object containing data on the reason the login failed.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.reason.code" type="String" since="1.53.0">
+    The cause of the event. The possible values are:
+
+    * `credentials` 
+    * `lambdaValidation`
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.reason.lambdaId" type="UUID" since="1.53.0">
+    This is the unique Id of the lambda that caused the login to fail.
+
+    This field is only present if <InlineField>reason.code</InlineField> is `lambdaValidation`.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.reason.lambdaResult" type="Errors" since="1.53.0">
+    The [Errors](/docs/apis/errors) object returned by the lambda function which caused the login to fail.
+
+    This field is only present if <InlineField>reason.code</InlineField> is `lambdaValidation`.
+  </APIField>
+
   <APIField slot="trailing-fields" name="event.tenantId" type="UUID" since="1.8.0">
     The unique tenant identifier. This value may not be returned if not applicable.
   </APIField>
 
   <APIField slot="trailing-fields" name="event.type" type="String">
-    The event type, this value will always be <code>{eventType}</code>.
+    The event type, this value will always be <code>{eventType}</code>.{/* eslint-disable-line */}
   </APIField>
 
   <APIField slot="trailing-fields" name="event.user" type="Object">

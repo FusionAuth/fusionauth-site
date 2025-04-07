@@ -1,0 +1,124 @@
+---
+title: Multi-Application Dashboard
+description: Create a dashboard page with a list of applications a user can log in to.
+navcategory: developer
+section: extend
+subcategory: examples
+---
+
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import IconButton from 'src/components/icon/Icon.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+
+## Overview
+
+If you're using FusionAuth to manage many applications, you might want to provide your users with a central list of applications, so they know what's available. For example, Google does this for its apps.
+
+![Google app selector](/img/docs/extend/examples/multi-application-dashboard/googleGrid.png)
+
+In this guide, you'll learn to make a similar page — a dashboard linking to all the applications in a FusionAuth tenant.
+
+In the language of authentication, FusionAuth is an identity provider (IdP) and your applications and websites are the service providers (SPs). One way to authenticate a user from a central dashboard is to use an IdP-initiated login. In other words, the dashboard will log the user in, and then redirect them to the selected app. In short, a service provider application will receive a login that it didn't initiate itself. This has security implications.
+
+This guide will demonstrate a simpler and safer way to authenticate users from a central dashboard by making each application link in the dashboard point to the application's login page. From that point onward, authentication follows the standard OAuth Authorization Code grant.
+
+The next section of this guide will show you how to make a dashboard for two existing FusionAuth applications in the same tenant. All this requires is customizing the theme for the index landing page of the FusionAuth site. The guide will first show you how to install FusionAuth and make two simple web applications. If you already have a FusionAuth installation with existing applications, you can skip ahead to [the section that creates the dashboard](#make-a-dashboard).
+
+If you want to follow along with the full guide, you will need Docker installed.
+
+## Download The Example Repository And Run FusionAuth
+
+Use `git clone` to clone the repository at https://github.com/fusionauth/fusionauth-example-multiapp-dashboard, or download and unzip it. 
+
+Open a terminal in the directory containing the repository files.
+
+Run the command below to start FusionAuth.
+
+```sh
+docker compose up
+```
+
+<Aside type="note">
+If you have completed any FusionAuth tutorials before, you might need to first delete any existing FusionAuth containers with the same name and the database volumes. Run the command below to do that.
+
+```sh
+docker ps rm fa faDb; docker compose down -v
+```
+</Aside>
+
+Leave FusionAuth running. 
+
+In a new terminal, run the commands below to start a web server for the Changebank app, which uses FusionAuth for authentication. 
+
+```sh
+cd bankApp
+docker compose up
+```
+
+The Changebank app is now running at http://localhost:3000. 
+
+In a third terminal, run the commands below to start a web server for a second app that uses FusionAuth for authentication.
+
+```sh
+cd insuranceApp
+docker compose up
+```
+
+The app is called Changeinsurance, and is now running at http://localhost:3001.
+
+Before making the dashboard, check that you can log in to all three applications. Either use an incognito browser window or don't enable <InlineUIElement>[Keep me signed in](/docs/lifecycle/authenticate-users/logout-session-management#fusionauth-sso)</InlineUIElement> when logging in, otherwise, you won't see the login form in the rest of this guide:
+- Browse to FusionAuth at http://localhost:9011/admin and log in with `admin@example.com` and `password`.
+  ![FusionAuth](/img/docs/extend/examples/multi-application-dashboard/fa.png)
+- Browse to Changebank at http://localhost:3000 and log in with the same username and password.
+  ![Changebank](/img/docs/extend/examples/multi-application-dashboard/changebank.png)
+- Browse to Changeinsurance at http://localhost:3001 and log in with the same username and password.
+  ![Changeinsurance](/img/docs/extend/examples/multi-application-dashboard/changeinsurance.png)
+
+If you enabled <InlineUIElement>Keep me signed in</InlineUIElement>, logging out of an application won't necessarily log you out of FusionAuth. It will only delete the session of the application. Next time you try to log in, FusionAuth will see the FusionAuth authentication cookie in your browser and automatically log you in.
+
+## Make A Dashboard
+
+Now that you have applications up and running, let's build the dashboard.
+
+Look at the current FusionAuth landing page at http://localhost:9011. 
+
+In this section, you will change the FusionAuth landing page to display links to the two banking app web servers you started in the previous section.
+
+Log in to your [FusionAuth web interface](http://localhost:9011/admin) and browse to <Breadcrumb>Customizations -> Themes</Breadcrumb>. 
+
+Notice there are three themes in the list. The first two are the default FusionAuth themes. The last one, <InlineUIElement>Bank theme</InlineUIElement>, was added by Kickstart when you started FusionAuth up. Read about Kickstart [here](/docs/get-started/download-and-install/development/kickstart).
+
+- Click the <IconButton name="edit" /> edit button in the Bank theme row's action column.
+- Select the <InlineUIElement>Index</InlineUIElement> page (fourth item in the list on the left).
+- Paste the code below into the text box.
+
+<RemoteCode lang="html" url="https://raw.githubusercontent.com/fusionauth/fusionauth-example-multiapp-dashboard/refs/heads/main/theme/index.ftl" />
+
+- Click the <IconButton name="save" /> save button at the top right.
+
+Besides a little CSS for styling, the code above only adds links for the two applications. The links don't point to the login page of the target application. Instead, they point to the logged-in main page. If the user isn't logged in to FusionAuth, they will be automatically redirected to the app's login page. If they are already logged in, they will be taken straight to the app. This saves the user time while still protecting the application content.
+
+To see the new landing page, browse to http://localhost:9011.
+![FusionAuth app dashboard](/img/docs/extend/examples/multi-application-dashboard/dashboard.png)
+
+You can extend this to any number of applications, just like Google does.
+
+### Partial Access
+
+You can require application registration for users before access is allowed. Do so by first disabling the self-service registration setting under the <Breadcrumb>Registration</Breadcrumb> tab and enabling the <InlineUIElement>Require registration</InlineUIElement> setting in the <Breadcrumb>OAuth</Breadcrumb> tab of the application.
+
+When this is configured, a user who is not registered to the Changebank or Changeinsurance application will not be able to access it, even though they can click on the link. They simply won't be logged in.
+
+## Clean Up
+
+To stop the running containers run the command below.
+
+```sh
+docker compose down -v
+```
+
+## Next Steps
+
+To make a dashboard for your FusionAuth instance, all you need to do is make links in a custom theme for the FusionAuth landing page similar to the ones shown above. [FusionAuth themes](/docs/customize/look-and-feel/) use a template language called FTL. Read more about it [here](https://freemarker.apache.org/index.html).

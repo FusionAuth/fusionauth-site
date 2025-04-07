@@ -1,6 +1,6 @@
 ---
-title: The Demise of Third-Party Cookies and Why You Need to Run Your Own CIAM System
-description: What is the future of third party cookies and how does that tie into customer identity and access management?
+title: "Why CIAM is the Key to Surviving the Demise of Third-Party Cookies"
+description: Explore how CIAM solutions replace third-party cookies, enhance security, and enable seamless customer interactions. Build trust and stay compliant with CIAM.
 section: CIAM
 author: Kuntal Chakraborty
 icon: /img/icons/third-party-cookies-ciam-system.svg
@@ -72,7 +72,7 @@ The user management aspect of a CIAM system enables administrators to update use
 
 To ensure user privacy, it’s important to limit who can see customer information. Allowing customers to manage their own identity reduces the necessity of company admins having access to that data. A CIAM system can also integrate with other applications (like CRMs) or data stores and provide a single centralised view of your customers.
 
-With the flexible architecture of a CIAM system, you don't have to worry about spending time and money on a separate identity management solution. FusionAuth, for example, provides an [intuitive user management feature](/features/user-management).
+With the flexible architecture of a CIAM system, you don't have to worry about spending time and money on a separate identity management solution. FusionAuth, for example, provides an [intuitive user management feature](/platform/user-management).
 
 #### Profile Management
 

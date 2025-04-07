@@ -1,0 +1,274 @@
+---
+publish_date: 2024-10-23
+title: Hundreds Of Millions Of Entities
+description: How Does FusionAuth Handle Large Numbers Of Entities?
+authors: Dan Moore
+image: /img/blogs/hundreds-millions-entities/hundreds-of-millions-of-entities.png
+categories: Education
+tags: performance, entities, load testing, clownwear
+excerpt_separator: "{/* more */}"
+---
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import Aside from 'src/components/Aside.astro';
+
+Recently we load tested a FusionAuth Cloud deployment to see how it handled large numbers of [entities](/docs/get-started/core-concepts/entity-management). The goal was to have hundreds of millions of entities, associate users with them, and see if the system still performed well with and without pushing entity data into a token during a login.
+
+{/* more */}
+
+## What Are Entities
+
+If you are familiar with entities, feel free to skip this section.
+
+An entity in FusionAuth represents any object or concept that isn't a user but either:
+
+* has a relationship with your users
+* has a relationship with other entities
+
+You can manage such relationships within your own application datastore or you can externalize it using entities and have FusionAuth manage the relationships.
+
+If you use FusionAuth, entities allow you to model and query relationships using our proprietary APIs. They also allow machine-to-machine authentication using the standard OAuth Client Credentials grant.
+
+Think of entities as containers for data and permissions that can interact with users and other entities in your system. They can represent a wide variety of objects, from physical devices to organizations to API endpoints.
+
+## The Use Case for Entities
+
+This large number of entities comes up in a business-to-business-to-business (B2B2B) scenario where:
+
+* the FusionAuth customer has customers that have their own customers
+* users can belong to one or many companies
+* users can have different permissions for different customers.
+
+That's a bit abstract, so let's outline a scenario.
+
+Cosmo's Clown Store, which [previously added passkeys](/articles/authentication/webauthn-explained), has grown so large it is going to franchise. Within each franchise, there are employees, stores and departments. Each employee will have some relationship to a store (such as being a worker or a manager) and possibly a relationship to a department (purchasing, HR, marketing). The latter only occurs when a franchise has more than two stores. There also might be a number of Cosmo's Clown Store customers who would be users without any such relationship.
+
+As part of the franchise agreement, Cosmo's Clown Store offers multiple applications to help franchisees manage their stores, including Clownwear Central (an ERP system), Tell It To The Nose (a community management tool), and Juggling Your Hours (a timesheet application). All employees have varying levels of access to these tools, and an employee might be a manager at one store with ERP access, and part time help at another store, with only Juggling Your Hours access.
+
+Relationships like these can be modeled with entities, and FusionAuth can handle a large amount of them efficiently.
+
+## The Deployment
+
+We test a HA (High Availability) deployment running three extra large nodes.
+
+It runs FusionAuth 1.52.1, the latest release at the time we started the load test.
+
+## Setting Up The Test
+
+In order to test FusionAuth under stress, it's important to test with large amounts of data.
+
+In this cloud deployment of FusionAuth, we loaded:
+
+* 5,000 tenants.
+* 5,000 applications, one per tenant.
+* Approximately 15,000,000 users, 3000 per tenant, each registered for the application.
+* 461,276,259 entities, distributed unevenly across tenants. Tenants had between zero and 7,500,00 entities, with most tenants having either 0 or approximately 200,000 entities.
+* Each entity had ten attributes, nine are five characters long and one is between 100 and 1000 characters long.
+* 1 lambda which pulls information from the entities associated with a user.
+
+We also associated a user in each tenant with ten entities and 1,000 users with one. 
+
+This data was loaded with a variety of scripts, some using the [Typescript client library](/docs/sdks/typescript) and others [calling the REST API](/docs/apis/) directly.
+
+The entities were loaded one at a time. There is no way to bulk load entities in FusionAuth at this time. We saw loading rates of between 47,000 and 75,000 entities loaded per minute. They were loaded from a server in a different account but the same region as the HA server.
+
+The users were imported using the [User Import API](/docs/apis/users#import-users) in batches of 1000. The goal was not to stress test the number of users a FusionAuth deployment can support, but rather to have enough users to simulate decent scale.
+
+The [JWT Populate lambda](/docs/extend/code/lambdas/jwt-populate), which augmented the access token with entity data, looked like this:
+
+```javascript
+function populate(jwt, user, registration) {
+
+  // limited API key
+  var APIKEY='...';
+  
+  var response = fetch("http://localhost:9012/api/entity/grant/search?userId="+user.id, {
+    method: "GET",
+    headers: {
+      "Authorization": APIKEY
+    }
+  });
+
+  if (response.status === 200) {
+    var jsonResponse = JSON.parse(response.body);
+    var value = jsonResponse.grants[0].entity.data.attr2;
+    jwt.entityValue = value;
+  } else {
+    jwt.entityValue = "n/a";
+  }
+}
+```
+
+This code:
+
+* loads the first entity grant
+* extracts the second attribute of the associated entity, whatever it is
+* adds that attribute the token
+
+In a real world scenario you would have additional logic around the entities or attributes. You might add more of the values to the token. 
+
+## Setup Timeline
+
+The above setup took a fair bit of calendar time. We used an `m7g.2xlarge` instance running in the same region as the FusionAuth deployment, but in a different account. Due to experiments and other issues, the data loading took about 5 days to load ~98% of the entities. The users were created over 11 days, some of which overlapped with the entity loading. It took about 6 days to assign the users to the entities as outlined above. 
+
+Two bumps occurred during the load process. Both remind us that there is no such thing as "the cloud", only other people's computers.
+
+<img src="/img/blogs/hundreds-millions-entities/always-has-been.png" alt="Meme of astronauts saying the cloud has always been other people's computers" width="1200" />
+
+Yup, in both cases we ran out of disk space.
+
+<Aside type="note">
+The failures below occurred because this test system alerts were explicitly ignored by the FusionAuth support team.
+
+If this had been a customer deployment, the team would have been alerted well ahead of failure and taken steps to resolve the issues.
+</Aside>
+
+### Database Space
+
+First, we ran out of space in the relational database that is a key component of any FusionAuth instance. This happened at the point approximately 100,000,000 entities had been loaded. If and when this would happen in any other deployment depends on the size of the entities as well as the amount of other data loaded into FusionAuth.
+
+Here's what we saw when we tried to log in:
+
+```
+FusionAuth encountered an unexpected error. Please review the troubleshooting guide found in the documentation for assistance and the available support channels. 
+```
+
+This is a pretty generic error message that can cover a lot of different situations.
+
+Digging in further, we saw this message in the logs. In the admin UI, you can see this by navigating to <Breadcrumb>System -> Logs</Breadcrumb>:
+
+```
+### Error updating database.  Cause: java.sql.SQLTransientConnectionException: HikariPool-1 - Connection is not available, request timed out after 2000ms. 
+### The error may exist in io/fusionauth/api/domain/EventLogMapper.java (best guess)
+### The error may involve io.fusionauth.api.domain.EventLogMapper.create
+### The error occurred while executing an update
+### Cause: java.sql.SQLTransientConnectionException: HikariPool-1 - Connection is not available, request timed out after 2000ms. 
+        at org.apache.ibatis.exceptions.ExceptionFactory.wrapException(ExceptionFactory.java:30)
+        at org.apache.ibatis.session.defaults.DefaultSqlSession.update(DefaultSqlSession.java:199)
+        at org.apache.ibatis.session.defaults.DefaultSqlSession.insert(DefaultSqlSession.java:184)
+        at org.apache.ibatis.binding.MapperMethod.execute(MapperMethod.java:62)
+        at org.apache.ibatis.binding.MapperProxy$PlainMethodInvoker.invoke(MapperProxy.java:141)
+        at org.apache.ibatis.binding.MapperProxy.invoke(MapperProxy.java:86)
+        at jdk.proxy2/jdk.proxy2.$Proxy55.create(Unknown Source) 
+        at io.fusionauth.api.service.system.DefaultEventLogService.create(DefaultEventLogService.java:64)
+        at io.fusionauth.api.service.system.DefaultEventLogService.create(DefaultEventLogService.java:46)
+        at io.fusionauth.api.service.system.EventLogHelper.create(EventLogHelper.java:24)
+        at io.fusionauth.api.service.system.DefaultAsyncTaskManager.run(DefaultAsyncTaskManager.java:222)
+        at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
+        at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+        at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:304)
+        at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+        at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+        at java.base/java.lang.Thread.run(Thread.java:833)
+Caused by: java.sql.SQLTransientConnectionException: HikariPool-1 - Connection is not available, request timed out after 2000ms. 
+        at com.zaxxer.hikari.pool.HikariPool.createTimeoutException(HikariPool.java:696)
+        at com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:181)
+        at com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:146)
+        at com.zaxxer.hikari.HikariDataSource.getConnection(HikariDataSource.java:100)
+        at org.apache.ibatis.transaction.jdbc.JdbcTransaction.openConnection(JdbcTransaction.java:145)
+        at org.apache.ibatis.transaction.jdbc.JdbcTransaction.getConnection(JdbcTransaction.java:67)
+        at org.apache.ibatis.executor.BaseExecutor.getConnection(BaseExecutor.java:348)
+        at org.apache.ibatis.executor.SimpleExecutor.prepareStatement(SimpleExecutor.java:89)
+        at org.apache.ibatis.executor.SimpleExecutor.doUpdate(SimpleExecutor.java:49)
+        at org.apache.ibatis.executor.BaseExecutor.update(BaseExecutor.java:117)
+        at org.apache.ibatis.executor.CachingExecutor.update(CachingExecutor.java:76)
+        at org.apache.ibatis.session.defaults.DefaultSqlSession.update(DefaultSqlSession.java:197)
+        ... 15 common frames omitted 
+Caused by: org.postgresql.util.PSQLException: Connection to DBHOSTNAME:5432 refused. Check that the hostname and port are correct and that the postmaster is accepting TCP/IP connections.
+        at org.postgresql.core.v3.ConnectionFactoryImpl.openConnectionImpl(ConnectionFactoryImpl.java:346)
+        at org.postgresql.core.ConnectionFactory.openConnection(ConnectionFactory.java:54)
+        at org.postgresql.jdbc.PgConnection.<init>(PgConnection.java:273)
+        at org.postgresql.Driver.makeConnection(Driver.java:446)
+        at org.postgresql.Driver.connect(Driver.java:298)
+        at com.zaxxer.hikari.util.DriverDataSource.getConnection(DriverDataSource.java:138)
+        at com.zaxxer.hikari.pool.PoolBase.newConnection(PoolBase.java:359)
+        at com.zaxxer.hikari.pool.PoolBase.newPoolEntry(PoolBase.java:201)
+        at com.zaxxer.hikari.pool.HikariPool.createPoolEntry(HikariPool.java:470)
+        at com.zaxxer.hikari.pool.HikariPool$PoolEntryCreator.call(HikariPool.java:733)
+        at com.zaxxer.hikari.pool.HikariPool$PoolEntryCreator.call(HikariPool.java:712)
+        at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+        ... 3 common frames omitted 
+Caused by: java.net.ConnectException: Connection refused 
+        at java.base/sun.nio.ch.Net.pollConnect(Native Method) 
+        at java.base/sun.nio.ch.Net.pollConnectNow(Net.java:672)
+        at java.base/sun.nio.ch.NioSocketImpl.timedFinishConnect(NioSocketImpl.java:554)
+        at java.base/sun.nio.ch.NioSocketImpl.connect(NioSocketImpl.java:602)
+        at java.base/java.net.SocksSocketImpl.connect(SocksSocketImpl.java:327)
+        at java.base/java.net.Socket.connect(Socket.java:633)
+        at org.postgresql.core.PGStream.createSocket(PGStream.java:243)
+        at org.postgresql.core.PGStream.<init>(PGStream.java:98)
+        at org.postgresql.core.v3.ConnectionFactoryImpl.tryConnect(ConnectionFactoryImpl.java:136)
+        at org.postgresql.core.v3.ConnectionFactoryImpl.openConnectionImpl(ConnectionFactoryImpl.java:262)
+        ... 14 common frames omitted 
+```
+
+The database disk filling up caused FusionAuth to fail.
+
+We determined the disk was full by reviewing our monitoring systems. If this had been a customer deployment, we would have been alerted well prior to failure and taken steps to resolve it. Since this was a testing instance, the alerts were silenced.
+
+Luckily, the fix was simple. All we had to do was increase the size of the database file system.
+
+From 100,000,000 to around 250,000,000 entities, the system worked great. Then the next disk space issue reared its ugly head.
+
+### Elasticsearch Space
+
+Entities are searchable in FusionAuth. Just like users, there's a `data` field which holds arbitrary JSON. This field can be searched using [Elasticsearch syntax](/docs/apis/entities/entities#search-for-entities). The above lambda uses these search capabilities 
+
+But adding in that many entities caused the servers hosting the search indices to run out of disk space. We started seeing errors at around 250M entities.
+
+Here's the error, which you can find in the `fusionauth-search.log` log file.
+
+```
+[Sep 08, 2024 7:18:05.237 PM][WARN ][o.e.c.r.a.d.DiskThresholdDecider] [HOSTNAME] after allocating, node [4O_HLG1NSx2mGm6_kyho_A] would have more than the allowed 10% free disk threshold (7.5% free), preventing allocation
+```
+
+You will also receive `503` error messages when you try to create new entities, and the operation will fail.
+
+Again, the answer was simple: increase the disk size of the system managing the indices. 
+
+## Performance Testing Results
+
+After the data loading was done, we stood up a [custom load test](https://github.com/FusionAuth/fusionauth-load-tests/). These were run on the same server that did the data loading.
+
+The test performed 50,000 logins as fast as it could. 50 workers logged in across over 1300 tenants that had entities, with each worker performing approximately 1000 logins.
+
+There were two separate runs. One run logged in the user account with multiple entity associations. The lambda shown above then ran the entity search. The other run logged in a user account with no entity associations.
+
+The results:
+
+| Run type    | Number of logins | Clock time | Logins/second |
+| -------- | ------- | ------- | ------- |
+| Users with grant  | 50,000    | 701 seconds | 72.24 | 
+| Users with no grant  | 50,000   | 611 seconds | 81.79 |
+
+Even though there was an approximately 11% decrease in the number of logins/second when the entity search occurred, 72.24 logins/second is pretty good. That translates to 187,246,080 logins/month.
+
+That is a lot of logins.
+
+### Caveats
+
+FusionAuth, like all software, is limited by the hardware available.
+
+These tests were run on a deployment that anybody can [buy today](/pricing), with the exception of increased disk sizes.
+
+If you are interested in running FusionAuth using many entities and are worried about performance, please [contact our sales team](/contact) and we'll be happy to build a custom deployment that meets your needs.
+
+## Other Stuff
+
+After loading this data, we looked at related operations.
+
+If you are wondering how long it takes to [reindex](/docs/lifecycle/manage-users/search/search#reindexing-elasticsearch) 15M users or 461M entities, wonder no more.
+
+* A user reindex took 20.6 hours (729,000/hour).
+* The entity reindex took 102.2 hours (4.5 million/hour). This re-index exposed some performance optimization opportunities. Here's the [GitHub tracking issue](https://github.com/FusionAuth/fusionauth-issues/issues/2896) and also required an expansion of the disk space for our search nodes.
+
+It took about 6 minutes to upgrade from 1.52.1 to 1.53.2. The timing of any upgrade depends on the [database migrations being run](/docs/get-started/download-and-install/fusionauth-app#advanced-installation) and the size of the data in the affected tables.
+
+## Summing Up
+
+FusionAuth is performant and responsive even with hundreds of millions of entities and a significant number of users.
+
+However, retrieving entity data in a lambda is not cost free. There was a 11.7% decrease in the number of logins per second when an associated entity value was added to the access token.
+
+The biggest impact of the large amount of data loaded into this system was disk space issues.
+
+With over 460 million entities and 15 million users, login performance was snappy.

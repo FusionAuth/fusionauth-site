@@ -146,7 +146,7 @@ You need to enter the following:
 
 Click "Submit". 
 
-> If you do encounter the error ***Exception in thread main java.lang.NoClassDefFoundError: com/inversoft/mysql/MySQLHelper***, make sure you've [installed the MySQL driver](/docs/get-started/download-and-install/database#install-mysql-connector).
+> If you do encounter the error `Exception in thread main java.lang.NoClassDefFoundError: com/inversoft/mysql/MySQLHelper`, make sure you've [installed the MySQL driver](/docs/get-started/download-and-install/database#install-mysql-connector).
 
 ### Complete the Setup Wizard
 

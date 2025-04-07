@@ -1,0 +1,113 @@
+---
+title: Upgrade Notes
+description: This page contains upgrade notes for required theme changes in recent versions of FusionAuth.
+section: customize
+subcategory: look and feel
+---
+
+## Overview
+
+New versions of FusionAuth sometimes include new or updated theme templates. If a new template is not part of a custom theme, FusionAuth will render the template from the default theme. Occasionally, modifications to existing templates or [helper macros](/docs/customize/look-and-feel/helpers) introduced in a FusionAuth release will require changes to an existing custom theme in order for it to continue functioning correctly.
+
+This page contains notes on changes in recent versions of FusionAuth that require changes to a customized theme.
+
+## Version 1.53.3
+
+Version `1.53.3` includes a change to persist the value of the `Keep me signed in` checkbox from the hosted login pages through an external identity provider workflow. This checkbox value indicates whether the user wishes to create an SSO session after login. If the Google IdP's `loginMethod` is configured as `UsePopup` or `UseVendorJavaScript`, existing custom advanced themes require an update to incorporate the fix for the Google IdP. You can update the template via the API using `theme.templates.helpers` or by modifying the *Helpers* template in the admin UI. Google IdPs configured with a `loginMethod` value of `UseRedirect` do not require this update, but you may consider making the change preemptively in case the `loginMethod` is changed later.
+
+To allow the `Keep me signed in` value to be persisted through a Google IdP login in an existing custom advanced theme, remove the `data-login_uri` attribute and its value from the `div` with Id `g_id_onload` in the `googleButton` macro and add the `data-callback` attribute in its place.
+
+Replace
+
+```html
+<div id="g_id_onload" [#list identityProvider.lookupAPIProperties(clientId)!{} as attribute, value] data-${attribute}="${value}" [/#list]
+     data-client_id="${identityProvider.lookupClientId(clientId)}"
+     data-login_uri="${currentBaseURL}/oauth2/callback?state=${idpRedirectState}&identityProviderId=${identityProvider.id}" >
+</div>
+```
+
+with
+
+```html
+<div id="g_id_onload" [#list identityProvider.lookupAPIProperties(clientId)!{} as attribute, value] data-${attribute}="${value}" [/#list]
+     data-client_id="${identityProvider.lookupClientId(clientId)}"
+     data-callback="googleLoginCallback" >
+</div>
+```
+
+## Version 1.52.0
+
+Version `1.52.0` includes a change to use the browser-default date picker to enhance the experience on mobile. Existing custom advanced themes require an update to incorporate the change. You can update the template via the API using `theme.templates.helpers` or by modifying the *Helpers* template in the admin UI.
+
+To include the new date picker in an existing custom advanced theme, replace the `Prime.Document.query('.date-picker')` line in the `head` macro with the following:
+
+```javascript
+document.querySelectorAll('.date-picker').forEach(datePicker => {
+  datePicker.onfocus = () => datePicker.type = 'date';
+  datePicker.onblur = () => {
+    if (datePicker.value === '') {
+      datePicker.type = 'text';
+    }
+  };
+});
+```
+
+## Version 1.50.0
+
+Version `1.50.0` added the ability to prompt users for consent to custom OAuth scopes in third-party applications. This change requires a new themed template `oauth2Consent` as well as a new macro and function in the `helpers` template.
+
+The `oauth2Consent` template from the default theme will be used until it is added to an existing custom theme. You can copy the new template from the default theme as a starting point and add it to a custom theme via the API using `theme.templates.oauth2Consent` or the _Consent prompt_ template in the admin UI.
+
+The new `scopeConsentField` macro and `resolveScopeMessaging` function *must* be added to an existing custom theme's `helpers` template in order for the theme to continue functioning. Add these new items to the template via the API using `theme.templates.helpers` or the *Helpers* template in the admin UI. You can copy them from the default template or use the following:
+
+```html
+[#macro scopeConsentField application scope type]
+  [#-- Resolve the consent message and detail for the provided scope --]
+  [#if type != "unknown"]
+    [#local scopeMessage = resolveScopeMessaging('message', application, scope.name, scope.defaultConsentMessage!scope.name) /]
+    [#local scopeDetail = resolveScopeMessaging('detail', application, scope.name, scope.defaultConsentDetail!'') /]
+  [/#if]
+
+  [#if type == "required"]
+    [#-- Required scopes should use a hidden form field with a value of "true". The user cannot change this selection, --]
+    [#-- but there should be a display element to inform the user that they must consent to the scopes to continue. --]
+    <div class="form-row consent-item col-lg-offset-0">
+      [@hidden name="scopeConsents['${scope.name}']" value="true" /]
+      <i class="fa fa-check"></i>
+      <span>
+        ${scopeMessage}
+        [#if scopeDetail?has_content]
+          <i class="fa fa-info-circle" data-tooltip="${scopeDetail}"></i>
+        [/#if]
+      </span>
+    </div>
+  [#elseif type == "optional"]
+    [#-- Optional scopes should render a checkbox to allow a user to change their selection. The available values should be "true" and "false" --]
+    <div class="consent-item col-lg-offset-0">
+      [@input type="checkbox" name="scopeConsents['${scope.name}']" id="${scope.name}" label=scopeMessage value="true" uncheckedValue="false" tooltip=scopeDetail /]
+    </div>
+  [#elseif type == "unknown"]
+    [#-- Unknown scopes and the reserved "openid" and "offline_access" scopes are considered required and do not have an associated display element. --]
+    [@hidden name="scopeConsents['${scope}']" value="true" /]
+  [/#if]
+[/#macro]
+
+[#function resolveScopeMessaging messageType application scopeName default]
+  [#-- Application specific, tenant specific, not application/tenant specific, then default --]
+  [#local message = theme.optionalMessage("[{application}${application.id}]{scope-${messageType}}${scopeName}") /]
+  [#local resolvedMessage = message != "[{application}${application.id}]{scope-${messageType}}${scopeName}" /]
+  [#if !resolvedMessage]
+     [#local message = theme.optionalMessage("[{tenant}${application.tenantId}]{scope-${messageType}}${scopeName}") /]
+     [#local resolvedMessage = message != "[{tenant}${application.tenantId}]{scope-${messageType}}${scopeName}" /]
+  [/#if]
+  [#if !resolvedMessage]
+    [#local message = theme.optionalMessage("{scope-${messageType}}${scopeName}") /]
+    [#local resolvedMessage = message != "{scope-${messageType}}${scopeName}" /]
+  [/#if]
+  [#if !resolvedMessage]
+    [#return default /]
+  [#else]
+    [#return message /]
+  [/#if]
+[/#function]
+```

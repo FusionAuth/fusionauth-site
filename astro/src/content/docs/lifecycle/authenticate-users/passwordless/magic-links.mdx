@@ -6,7 +6,6 @@ section: lifecycle
 subcategory: authenticate users
 tertcategory: passwordless
 ---
-import ScrollRef from 'src/components/ScrollRef.astro';
 import Aside from 'src/components/Aside.astro';
 import JSON from 'src/components/JSON.astro';
 import { Code } from 'astro/components';
@@ -32,7 +31,7 @@ This feature in FusionAuth sends a secure, one time, timebound encoded code. By 
 
 This is also known as "magic link" login. It does not require a password, hence the general term "passwordless".
 
-You are not required to use email as a transport mechanism, though it is quite common. If you are <ScrollRef target="Using the API Directly" />, you can use text messages/SMS, push notifications, or send it via carrier pigeon. As long as the user can provide the value to FusionAuth, it will be validated and the user will be logged in.
+You are not required to use email as a transport mechanism, though it is quite common. If you are [Using the API Directly](#using-the-api-directly), you can use text messages/SMS, push notifications, or send it via carrier pigeon. As long as the user can provide the value to FusionAuth, it will be validated and the user will be logged in.
 
 <Aside type="note">
 Prior to version 1.41.0, magic links and codes were the only form of passwordless authentication supported by FusionAuth.
@@ -52,7 +51,8 @@ If you are planning to use magic links, you have two options. The first option y
 
 In either case, you should:
 
-* Configure your SMTP server settings under <strong>Tenants -> Email</strong>. If you are testing this flow out locally, you may want to use [mailcatcher](https://mailcatcher.me/)
+* Configure your SMTP server settings under **Tenants -> Email**. If you are testing this flow out locally, you may want to use [mailcatcher](https://mailcatcher.me/)
+* Ensure your email templates are set up correctly. You can use the default templates, but you may want to customize them. More on that in the [Customizing Magic Link Authentication](#customizing-magic-link-authentication) section.
 * Create an application
 * Turn on "Passwordless Login" under the "Security" tab of the application configuration:
 
@@ -66,10 +66,17 @@ Since, by default, magic links authentication requires email delivery, ensure Fu
 
 Choose the FusionAuth hosted login pages approach if you want to use the [Authorization Code grant](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant). Enabling magic links adds an option for a user to receive a one-time code. Because this is the Authorization Code grant, any library or framework that supports this OAuth grant will work.
 
+<Aside type="note">
+Make sure you are using the latest version of FusionAuth. As of version 1.41.0, FusionAuth supports multiple kinds of passwordless authentication, not just magic links.
+</Aside>
+
 To use this option:
 
 1. Go to your application configuration page in the administration UI
 2. Configure the OAuth redirect URL as you would with any application where users authenticate password ([more on OAuth config here](/docs/lifecycle/authenticate-users/oauth/)). Make sure the Authorization Code grant is an enabled grant
+3. Turn on "Passwordless Login" under the "Security" tab of the application configuration:
+
+<img src="/img/docs/lifecycle/authenticate-users/passwordless/turn-on-passwordless.png" alt="Turn on magic links passwordless login" width="1200" />
 
 Now you're done with configuration.
 
@@ -87,6 +94,10 @@ To test out how your users would experience this:
 4. Click on the link
 
 As soon as the magic link is clicked, the user has begun an Authorization Code grant. You can [consume the authorization code](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant) using a library or your own code. Whatever you would normally do if someone signed in with a password, you can now do here. This means that you'll be provided with the same refresh tokens, user data, or JWTs that would be delivered if the user had signed in with a password.
+
+<Aside type="note">
+If you are testing locally with an email server like Mailcatcher, you may need to copy the link from the email and paste it into your browser. Some email clients will not allow you to click on links that are not HTTPS.
+</Aside>
 
 To customize the look of the login pages, use [themes](/docs/customize/look-and-feel/). While editing the theme, you could remove the username/password form. This would force everyone to use magic links authentication.
 
@@ -126,7 +137,7 @@ You start a magic link login by calling the [`/api/passwordless/start`](/docs/ap
 ```shell title="Start Magic Link Login API call"
 API_KEY=...
 REQUEST_PAYLOAD='{...}'
-curl  -H "Content-type: application/json" -H "Authorization: $API_KEY" https://local.fusionauth.io/api/passwordless/start -d $REQUEST_PAYLOAD
+curl  -H "Content-type: application/json" -H "Authorization: $API_KEY" https://local.fusionauth.io/api/passwordless/start -d "$REQUEST_PAYLOAD"
 ```
 
 Here's an example request payload:
@@ -145,7 +156,7 @@ The call to [`/api/passwordless/start`](/docs/apis/passwordless#start-passwordle
 
 <JSON title="Start Magic Link Login Response JSON" src="passwordless/start-response.json" />
 
-Possession of this one-time code authenticates the end user. Deliver this code to the end user using whatever method you'd like. If you want to use FusionAuth to deliver the code via email, see <ScrollRef target="Sending the Code Using FusionAuth" />.
+Possession of this one-time code authenticates the end user. Deliver this code to the end user using whatever method you'd like. If you want to use FusionAuth to deliver the code via email, see [Sending the Code Using FusionAuth](#sending-the-code-using-fusionauth).
 
 #### Sending the Code Using FusionAuth
 
@@ -191,7 +202,7 @@ Learn more about setting up [two-factor authentication](/docs/lifecycle/authenti
 
 ### Two Factor Authentication With the API
 
-Two factor authentication also works when <ScrollRef target="Using the API Directly" />. In that case, when you complete the magic link authentication, instead of getting the user data, you'll get a `twoFactorId`:
+Two factor authentication also works when [Using the API Directly](#using-the-api-directly). In that case, when you complete the magic link authentication, instead of getting the user data, you'll get a `twoFactorId`:
 
 ```json
 {"twoFactorId":"VnNILnXs_EDG-cjwokwITRApmAxCMkojeT3CUqqLhLc"}

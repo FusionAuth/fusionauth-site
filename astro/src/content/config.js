@@ -49,8 +49,14 @@ const quickstartsCollection = defineCollection({
 
 const docsCollection = defineCollection({
   schema: z.object({
-    title: z.string().optional(),
-    description: z.string().optional(),
+    title: z.string().refine(
+        title => !/[.!?]$/.test(title),
+        { message: "Title cannot end with punctuation" }
+    ),
+    description: z.string().refine(
+        desc => /[.]$/.test(desc),
+        { message: "Description must end with a period" }
+    ),
     canonicalUrl: z.string().optional(),
     section: z.string().optional(),
     subcategory: z.string().optional(),
@@ -58,8 +64,30 @@ const docsCollection = defineCollection({
     quatercategory: z.string().optional(),
     nestedHeadings: z.boolean().optional(),
     disableTOC: z.boolean().default(false),
-    topOfNav: z.boolean().default(false),
+    navOrder: z.number().default(1000),
     idpDisplayName: z.string().optional(),
+  }),
+});
+
+const blogCollection = defineCollection({
+  schema: z.object({
+    title: z.string().refine(
+        title => !/[.]$/.test(title),
+        { message: "Title cannot end with a period" }
+    ),
+    description: z.string().refine(
+        desc => /[.!?]$/.test(desc),
+        { message: "Description must end with punctuation" }
+    ),
+    image: z.string().optional(),
+    authors: z.string().optional(), // comma-separated string
+    categories: z.string().optional(), // comma-separated string
+    tags: z.string().optional(), // comma-separated string
+    publish_date: z.date(),
+    updated_date: z.date().optional(),
+    featured_tag: z.string().optional(),
+    featured_category: z.string().optional(),
+    blurb: z.string().optional(),
   }),
 });
 
@@ -73,4 +101,5 @@ export const collections = {
   'quickstarts': quickstartsCollection,
   'docs': docsCollection,
   'json': jsonCollection,
+  'blog': blogCollection,
 };

@@ -9,6 +9,8 @@ The landscape of applications today is broad. Similarly, the methods of authenti
 
 Keep in mind that this list is not exhaustive. Most IdPs, including FusionAuth, are capable of other forms of login. Also, there are many login workflows that we do not cover here due to security concerns with those methods.
 
+[![FusionAuth CTA Banner](/img/cta/login-auth-workflows.png)](/tech-papers/login-authentication-workflows)
+
 Also, these articles do not discuss the pros and cons of the different types of applications and which might be best for your needs. They focus entirely on authentication for applications. There are many articles available that cover different application types and why you should choose one over the other (such as the decision to use a native mobile application versus a responsive web application).
 
 ## Definitions
@@ -52,4 +54,4 @@ Native mobile applications are usually installed via a store and installed on th
 
 Native applications often call APIs to handle user interactions and input. For example, if a user clicks a button or submits a form, the application might call an API on the server. This API might be called via HTTP or some other type of protocol. Often, native applications use various libraries for making API calls simpler.
 
-Some experts recommend that native applications (including mobile apps) use OAuth's authorization code grant. This method works fine with many IdPs, including FusionAuth, but is not listed in this section because it is covered in the SPA and WebApp sections above. The only difference is that at the end of the OAuth workflow, the native application pulls the JWT and refresh tokens from the web-view.
+Some experts recommend that native applications (including mobile apps) use OAuth's authorization code grant. This method works fine with many IdPs, including FusionAuth, but is not listed in this section because it is covered in the Single Page Application and Traditional Web Application sections above. The only difference is that at the end of the OAuth workflow, the native application pulls the JWT and refresh tokens from the web-view.
