@@ -29,7 +29,7 @@ There are a few options that are worth considering.
 
 ## Check with the IdP
 
-If you have the Todo Backend call the `introspect` endpoint against every JWT it encounters, per [RFC 7662](https://tools.ietf.org/html/rfc7662), then you are guaranteed that if a JWT is revoked on the IdP, the Todo Backend will immediately be notified of any revoked JWTS.
+If you have the Todo Backend call the `introspect` endpoint against every JWT it encounters, per [RFC 7662](https://tools.ietf.org/html/rfc7662), then you are guaranteed that if a JWT is revoked on the IdP, the Todo Backend will immediately be notified of any revoked JWTs.
 
 From the RFC, the `active` value of the response is defined as:
 
@@ -173,5 +173,5 @@ We can now revoke a user's refresh token and FusionAuth will broadcast the event
 
 This solution works well even in large systems with numerous backends. It requires the use of refresh tokens and an API that allows refresh tokens to be revoked. The only caveat is to be sure that your JWTManager code cleans up after itself to avoid running out of memory. Also, if you are using a distributed system with multiple servers running the Todo Backend, you could store the list of revoked JWTs in redis or another in memory datastore and have the `JWTManager` update that when a webhook arrives.
 
-If you are using FusionAuth, you can use the Webhook and Event system to build this feature into your application quickly. We are also writing `JWTManager` implementations into each of our client libraries so you don't have to write those yourself. At the time of this writing, the Java and Typescript clients both have a `JWTManager` you can use. The other languages might have a JWTManager implementation now but if they don't, just submit a support ticket or a Github issue and we will write one for you.
+If you are using FusionAuth, you can use the Webhook and Event system to build this feature into your application quickly. We are also writing `JWTManager` implementations into each of our client libraries so you don't have to write those yourself. At the time of this writing, the Java and Typescript clients both have a `JWTManager` you can use. The other languages might have a JWTManager implementation now but if they don't, just submit a support ticket or a GitHub issue and we will write one for you.
 
