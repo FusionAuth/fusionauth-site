@@ -1,0 +1,194 @@
+---
+publish_date: 2023-04-13 
+title: Announcing FusionAuth 1.45
+description: This release includes search and pagination for ten plus FusionAuth configuration types, a FusionAuth hosted backend for easier use with SPAs, and the ability to import Drupal password hashes.
+authors: Dan Moore
+image: /img/blogs/release-1-45/fusionauth-1-45.png
+categories: Release Updates, Product
+tags: release notes, pagination, reach, drupal, password hashing
+excerpt_separator: "{/* more */}"
+---
+
+FusionAuth version 1.45 shipped on April 10, 2023. This release includes search and pagination of over ten FusionAuth configuration types, a FusionAuth hosted backend for easier use with SPAs, and the ability to import Drupal password hashes. And more!
+
+{/* more */}
+
+All in all there are 23 issues, enhancements, and bug fixes included in the 1.45 releases. As always, please see the [release notes](/docs/release-notes/#version-1-45-0) for a full breakdown of the changes between 1.44 and 1.45, including any schema changes.
+
+## Pagination and search for all the things
+
+At FusionAuth, we have customers and users with [thousands of Tenants](/blog/2021/03/29/seegno-thousands-tenants), Keys, and Applications. Until this release, such users were forced to use our [client libraries](/docs/sdks/) to interact with their FusionAuth systems, because our administrative user interface was not performant with large numbers of entities. And even then, searching for particular objects was difficult.
+
+No more! With release 1.45, you can now search for:
+
+* Applications
+* Consents
+* Groups
+* Tenants
+* Themes
+* Keys
+* API Keys
+* User Comments
+* Email Templates
+* Identity Providers
+* Webhooks
+* Lambdas
+
+If you have a large number of them, you can also paginate the results. 
+
+![Pagination in the application admin UI.](/img/blogs/release-1-45/paginate.png)
+
+Let's walk through this here. I'm going to use the ruby client library, but you can use curl or any of the other client libraries as well.
+
+Make sure you install version 1.45 of the FusionAuth client. Here's my Gemfile:
+
+```ruby
+source 'https://rubygems.org'
+
+gem 'fusionauth_client', '~> 1.45'
+```
+
+Let's create 100 applications:
+
+```ruby
+require 'fusionauth/fusionauth_client'
+
+client = FusionAuth::FusionAuthClient.new(
+  'YOUR_API_KEY',
+  'YOUR_FUSIONAUTH_INSTANCE_URL'
+)
+
+(1..100).each do |num|
+  puts num
+  properties = { application: 
+    {
+      name: "app"+num.to_s
+    }
+  }
+  response = client.create_application(nil,properties)
+  unless response.success_response
+    if response.exception
+      # if we can't connect
+       print response.exception
+    end
+    print "status: #{response.status}"
+    print response.error_response
+    exit
+  end
+end
+```
+
+You'll now have 101 Applications, at least, since the FusionAuth admin UI is also an Application in FusionAuth. Next, search for a particular one, with the name `app47`:
+
+```ruby
+require 'fusionauth/fusionauth_client'
+
+client = FusionAuth::FusionAuthClient.new(
+  'YOUR_API_KEY',
+  'YOUR_FUSIONAUTH_INSTANCE_URL'
+)
+
+properties = { 
+  search: {
+    name: "app47"
+  }
+}
+
+response = client.search_applications(properties)
+unless response.success_response
+  if response.exception
+    # if we can't connect
+     print response.exception
+  end
+  print "status: #{response.status}"
+  print response.error_response
+  exit
+end
+
+puts response.success_response
+```
+
+Finally, paginate through the applications. First you will find the total number, then you'll iterate through all Applications ten at a time and process each group.
+
+```ruby
+require 'fusionauth/fusionauth_client'
+
+client = FusionAuth::FusionAuthClient.new(
+  'YOUR_API_KEY',
+  'YOUR_FUSIONAUTH_INSTANCE_URL'
+)
+
+find_total= { 
+  search: {
+    startRow: 0,
+    numberOfResults: 1
+  }
+}
+
+response = client.search_applications(find_total)
+
+total = response.success_response.total
+total_seen = 0
+increment = 10
+
+while total_seen < total do
+  properties = { 
+    search: {
+      startRow: total_seen,
+      numberOfResults: increment
+    }
+  }
+
+  response = client.search_applications(properties)
+  curr_batch_size = response.success_response.applications.size
+  puts "processing another #{curr_batch_size} applications..."
+  total_seen += curr_batch_size 
+end
+```
+
+The FusionAuth admin UI also uses pagination and should be much quicker when you have a large number of applications. Hopefully this will make your management tasks easier.
+
+## FusionAuth hosted backend
+
+FusionAuth recommends the Authorization Code grant for all your authentication needs. While we do support [other grants](/docs/lifecycle/authenticate-users/oauth/) and have a proprietary [Login API](/docs/apis/login), the Authorization Code grant is our recommended approach whenever a user is present.
+
+However, a key part of the Authorization Code grant is the exchange of the Authorization Code, the Client Id, and the Client Secret (plus some other stuff) for a token. The token is then stored by the client and presented to other servers for access to protected data and/or functionality. (If you want to learn more about this grant, here's a [good overview with diagrams](/articles/oauth/oauth-token-storage).) This exchange can be done in a variety of ways:
+
+* Write custom code. It is about [30 lines of code](https://github.com/FusionAuth/fusionauth-example-5-minute-guide/blob/main/routes/index.js#L52).
+* Use an open source library, such as [Spring Security](https://docs.spring.io/spring-security/reference/servlet/oauth2/client/authorization-grants.html) or [OmniAuth OIDC](https://github.com/omniauth/omniauth_openid_connect).
+
+But we wanted to make this even easier. For some users, setting up server side code is a hassle.
+
+FusionAuth now offers a React SDK which communicates with endpoints managed by FusionAuth which will take care of the code exchange. They'll set the access token as an `HttpOnly`, `Secure` cookie, as well as a refresh token as a cookie if requested.
+
+The endpoints the SDK calls are documented. You can create your own custom code at the same URLs if you'd prefer, but FusionAuth is a one-stop shop for your authentication needs, no server side code needed. [Read the docs here](/docs/apis/hosted-backend).
+
+Check out the [React SDK here](https://github.com/FusionAuth/fusionauth-react-sdk/). Future SDKs [are planned](https://github.com/FusionAuth/fusionauth-issues/issues/2078) as well.
+
+## Importing Drupal password hashes
+
+FusionAuth has the ability to import [password hashes](/docs/reference/password-hashes) when using the [Import User API](/docs/apis/users#import-users). Doing so lets you transparently [migrate your users](/docs/lifecycle/migrate-users/) from one identity store such as Auth0 or Keycloak to FusionAuth, without requiring them to reset their passwords. Since you are importing hashes, the plaintext password is never revealed.
+
+While you can [write your own password hashing plugins](/docs/extend/code/password-hashes/), FusionAuth also ships with a number of plugins that we maintain.
+
+With this release, FusionAuth supports the phpass (pronounced 'p-h-pass', thank you very much) MD5 and SHA-512 hashing algorithms. These are commonly used by PHP applications, including Drupal.
+
+## The rest of it
+
+As mentioned above, there were 23 issues, enhancements, and bug fixes included in this release. A selection of the included changes not covered above includes:
+
+* You can require a user to provide their password when they are changing it.
+* You can access the profile pages without using the SSO session.
+* The OpenAPI specification is valid again (oops).
+
+Read more about all the changes in the [release notes](/docs/release-notes/#version-1-45-0).
+
+## Upgrade at will
+
+The [release notes](/docs/release-notes/#version-1-45-0) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified or enhanced.
+
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/operate/deploy/upgrade). 
+
+If you have a FusionAuth Cloud deployment, proceed to the "Hosting" tab on your <a href="https://account.fusionauth.io/account/deployment/" target="_blank">account dashboard</a> and upgrade your instances. If you have any questions about the upgrade, <a href="https://account.fusionauth.io/account/support/" target="_blank">please open a support ticket</a>.
+
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).

@@ -1,0 +1,16 @@
+The current SCIM implementation does not support bulk operations using SCIM. Bulk operations on users, such as addition and deletion, are available via [FusionAuth APIs](/docs/apis/), but are not currently supported via SCIM compatible endpoints. If this functionality is required, please file a [GitHub issue](https://github.com/fusionauth/fusionauth-issues/issues) explaining your use case.
+
+The list operation is limited to 10,000 users if you are using the Elasticsearch search engine. See [Limitations](/docs/get-started/core-concepts/limitations#user-searches) for more information.
+
+You cannot create a FusionAuth Registration for a user provisioned with SCIM directly during the provisioning process. See [Adding Registrations](/docs/lifecycle/migrate-users/scim/scim#adding-registrations) for workarounds.
+
+While it is not enforced, or a hard limitation, it is recommended to configure at most one SCIM client per tenant. While you can have multiple SCIM clients configured to provision users in one FusionAuth tenant, at the end of the day you only have one user data store in each tenant. Conflicts with creation, updates and deletion could happen; they won't be automatically resolved by FusionAuth. If you need multiple SCIM clients provisioning users into a single tenant, ensure you handle conflicts.
+
+Okay, okay, you want multiple SCIM clients to provision users into a single FusionAuth tenant. Let's talk about the complexities. Imagine you have an Okta SCIM client provisioning users into a FusionAuth tenant and an Azure AD/Microsoft Entra ID SCIM client provisioning users into the same tenant.
+
+Issues with this approach include:
+
+* The user and group lambdas would have to include logic to differentiate between a user from Okta and a user from Azure AD/Microsoft Entra ID and handle the fields differently. The incoming SCIM request does not include information about the source, but you might be able to examine an email domain or a marker attribute to determine where the user was coming from.
+* User collisions are not handled by FusionAuth. If the Okta SCIM client created an account for a user with the email address `richard@example.com` in the tenant, then later the Azure AD SCIM client tried to create an account for a user with the email address `richard@example.com`, the second account creation would fail. One workaround would be for the lambda to resolve the collision, for example by adding a suffix or prefix to make the email address unique. 
+* Update or deletion requests from the Okta SCIM client could modify users created by the Azure AD SCIM client and vice versa.
+* The bearer access token used to authenticate each SCIM client can be different, but they must have the same lifetime, since that is configured at the Entity Type level. You couldn't have Okta's credentials be valid for a year but Azure AD's credentials be valid for six months.

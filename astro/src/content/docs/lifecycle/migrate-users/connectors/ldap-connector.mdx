@@ -1,0 +1,129 @@
+---
+title: LDAP Connector
+description: Learn more about connecting FusionAuth with an LDAP directory.
+navcategory: premium
+section: lifecycle
+subcategory: migrate users
+tertcategory: connectors
+---
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import SystemOfRecordCaveat from 'src/content/docs/lifecycle/migrate-users/connectors/_system-of-record-caveat.mdx';
+import { YouTube } from '@astro-community/astro-embed-youtube';
+
+## Overview
+
+LDAP Connectors allow you to authenticate users against or migrate them from an LDAP server accessible to FusionAuth.
+
+## Configuration
+
+
+<img src="/img/docs/lifecycle/migrate-users/connectors/ldap-connector-create-screen.png" alt="The LDAP Connector creation screen." width="1200" role="shadowed bottom-cropped" />
+
+
+### Form Fields
+
+<APIBlock>
+  <APIField name="Id" optional>
+    An optional UUID. When this value is omitted a unique Id will be generated automatically.
+  </APIField>
+  <APIField name="Name" required>
+    A unique name to identify the Connector. This name is for display purposes only and it can be modified later if desired.
+  </APIField>
+  <APIField name="LDAP URL" required>
+    The URL used to connect to the LDAP service.
+  </APIField>
+  <APIField name="Security method" optional>
+    The desired security method used to connect to LDAP. The default value of `None` is unencrypted which is not recommended unless you use an alternative method of securing your connection, such as a VPN.
+  </APIField>
+  <APIField name="Connect timeout" required>
+    The connect timeout in milliseconds used when making the request to LDAP.
+  </APIField>
+  <APIField name="Read timeout" required>
+    The read timeout in milliseconds used when making the request to LDAP.
+  </APIField>
+  <APIField name="Reconcile lambda" required>
+    The lambda used to reconcile the user from LDAP to FusionAuth.
+
+    Navigate to <Breadcrumb>Customizations -> Lambdas</Breadcrumb> to create this lambda.
+  </APIField>
+  <APIField name="Debug enabled" optional>
+    Enable debug to create an event log to assist you in debugging integration errors.
+  </APIField>
+</APIBlock>
+
+
+<img src="/img/docs/lifecycle/migrate-users/connectors/ldap-connector-create-directory-tab.png" alt="The LDAP Connector creation screen." width="1200" role="shadowed top-cropped" />
+
+### Directory
+
+<APIBlock>
+  <APIField name="Base structure" required>
+    The base structure is the directory to use in order to search for users.
+
+    For example, to search the entire directory, you’d use a base structure of `DC=piedpiper,DC=com`. If you want to search against only engineering, add the organization: `OU=engineering,DC=piedpiper,DC=com`.
+  </APIField>
+  <APIField name="System account DN" required>
+    The distinguished name of an entry which has read access to the directory.
+
+    For example: `CN=ReadOnlyFusionAuthUser,OU=engineering,DC=piedpiper,DC=com`.
+  </APIField>
+  <APIField name="System account password" required>
+    The password of the <InlineField>System Account DN</InlineField>.
+  </APIField>
+  <APIField name="Login identifier attribute" required>
+    The value that the user would enter for their username on a login screen.
+
+    For example: `uid` or `userPrincipalName`
+  </APIField>
+
+  <APIField name="Identifying attribute" required>
+    The entry attribute name which is the first component of the distinguished name of entries in the directory.
+
+    For example: `cn`
+  </APIField>
+
+  <APIField name="Requested attributes" required>
+    The list of requested directory attributes to be returned. These will be passed to the lambda to be converted into FusionAuth user attributes. These must be added one at a time.
+
+    For example: `cn` `givenName` `sn` `userPrincipalName` `mail`
+  </APIField>
+
+</APIBlock>
+
+## Using the LDAP Connector
+
+Once you have completed configuration of the LDAP connector, you will need to instruct a tenant to use this connector.
+
+* Ensure your LDAP server is accessible to the FusionAuth instance. This may entail setting up a VPN, locating FusionAuth in the correct network, or configuring a firewall to allow access.
+* Determine which LDAP user FusionAuth will connect as.
+* Create an [LDAP reconcile Lambda](/docs/extend/code/lambdas/ldap-connector-reconcile) to map the directory attributes to FusionAuth user attributes.
+* Configure the Connector in <Breadcrumb>Settings -> Connectors</Breadcrumb>. At a minimum, configure
+** The LDAP URL and connection security
+** The previously created lambda
+** LDAP directory settings
+* Add the Connector Policy in <Breadcrumb>Tenants -> Your Tenant -> Connectors</Breadcrumb> to configure to which domains the connector applies.
+
+### Using the LDAP Connector as the System of Record
+
+<SystemOfRecordCaveat system_of_record="backing LDAP directory" />
+
+The correct way to maintain these attributes is:
+
+* store them in the LDAP directory
+* request them by configure the appropriate <InlineField>Requested attributes</InlineField>
+* use the [reconcile lambda](/docs/extend/code/lambdas/ldap-connector-reconcile) to set the user's attributes appropriately
+
+FusionAuth does not support pushing user profile data into LDAP. Data always flows through a Connector into FusionAuth.
+ 
+If you use the Connector as a source of authentication, the source of truth remains the LDAP server. If you migrate your users (by toggling on <InlineField>Migrate user</InlineField> on the Tenant Connector policy), FusionAuth becomes the source of truth after the first login of each user. You can review the `connectorId` associated with the User object to confirm which Connector is authoritative for a user.
+
+## Connecting to Active Directory
+
+User data stored in Microsoft Active Directory is accessible via LDAP. If you'd like to federate and allow some of your users to authenticate against Active Directory, use the LDAP Connector.
+
+Here's a video walking through such a configuration of FusionAuth and Microsoft Active Directory:
+
+<YouTube id="Cqd7EgK4ess" />

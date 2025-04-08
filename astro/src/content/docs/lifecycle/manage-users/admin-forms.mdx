@@ -1,0 +1,106 @@
+---
+title: Custom Admin Forms
+description: How and why to customize forms in the admin UI.
+navcategory: developer
+section: lifecycle
+subcategory: manage users
+---
+import AdminCustomFormLimitations from 'src/content/docs/lifecycle/manage-users/_custom-admin-form-limitations.mdx';
+import AdminUserForm from 'src/content/docs/_shared/_admin-user-form.mdx';
+import AdminUserRegistrationForm from 'src/content/docs/_shared/_admin-user-registration-form.mdx';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+
+## Overview
+
+With custom admin forms, you can modify the administrative user interface (admin UI) and customize your view of Users or Registrations. While FusionAuth ships with usable admin UI forms, if you have user or registration fields that are unique to your use case or business, this feature may be useful to you.
+
+This can be useful if there are custom data fields that you want to let users of the admin UI edit, while applying validation rules. With this feature, you are changing the way user data can be edited, not the way it is viewed in the admin UI.
+
+These fields are like any other custom data fields and [can be searched](/docs/lifecycle/manage-users/search/user-search-with-elasticsearch) in the same way.
+
+<PremiumPlanBlurb />
+
+### The User Form
+
+<AdminUserForm />
+
+### The Registration Form
+
+<AdminUserRegistrationForm />
+
+## Example
+
+Suppose you needed to capture two additional fields for your application:
+
+* a user's favorite color 
+* a user's desired background color on a specific application
+
+If you want these fields to be editable in the admin UI so that customer service reps could update the colors when the user called in. (You can also make these fields editable by the end user, see [Update User Profiles and Passwords](/docs/lifecycle/manage-users/account-management/updating-user-data) for more.)
+
+You can create two custom form fields called `user.data.favoriteColor` and `registration.data.backgroundColor`. Then you create a new user form and add the `favoriteColor` field to it.
+
+You'd also create a new registration form and add the `backgroundColor` field to it. 
+
+You'd also need to update the theme's messages file as mentioned above in order to have the correct form labels. If you do not, the keys of the fields will be used as the labels.
+
+Finally, you'd update the tenant settings to use the new user form, and the application to use the new registration form. 
+
+### Results
+
+Here's the admin user form after you've added the `user.data.favoriteColor` field. 
+
+![Admin User Form after adding a custom field.](/img/docs/lifecycle/manage-users/custom-admin-forms/custom-user-form.png)
+
+Here's the admin registration form after you've added the `user.data.favoriteColor` field. 
+
+![Admin Registration Form after adding a custom field.](/img/docs/lifecycle/manage-users/custom-admin-forms/custom-registration-form.png)
+
+Here's an example of a user who has had both custom fields updated. The <Breadcrumb>User data</Breadcrumb> tab will display custom data. 
+
+
+![User details view after their custom fields have been updated.](/img/docs/lifecycle/manage-users/custom-admin-forms/display-custom-data.png)
+
+The layout and labels of the custom data can't be modified.
+
+## View Only Admin User Data Access
+
+Custom admin forms are useful for allowing users with access to the admin UI to edit profile data. If you only want to allow the user to view profile data, you can give them the [appropriate FusionAuth admin UI role](/docs/get-started/core-concepts/roles#fusionauth-admin-ui-roles), typically `user_support_viewer`.
+
+They can then navigate to <Breadcrumb>Users -> The User</Breadcrumb> and then to the <Breadcrumb>User data</Breadcrumb> tab.
+
+## Access Paths
+
+You can have multiple types of custom data fields. You can have fields that are editable in:
+
+* the admin UI, appropriate for fields that should only be edited by admin users
+* the self-service account management UI, appropriate for fields that can be edited by end users
+* neither, appropriate for fields that are used by software systems
+
+You can always edit custom data fields directly using the [User API](/docs/apis/users) or [Registration API](/docs/apis/registrations). Or, if you prefer not to make raw HTTP API calls, a [client library](/docs/sdks) with an appropriate API key.
+
+## Difference Between User And Registration Fields
+
+You have two options for storing custom data:
+
+* The `user.data` field
+* The `registration.data` field
+
+How can you choose between these? Users exist independent of any other entity, though they are contained within a Tenant, and that Registrations join Users with Applications. Therefore, if a field is part of a User, it should be stored in `user.data`. If, on the other hand, the field only makes sense in the context of a User and an Application, then use the `registration.data` field.
+
+Examples of fields that should be stored on the user:
+
+* Unchanging or slowly changing attributes like the user's shoe size or favorite color
+* Identifiers tying the user to other systems
+* Cross-application preferences like timezone
+
+Examples of fields that should be stored on the registration:
+
+* Application preferences such as background color or profile header image
+* User controllable attributes related to a single application such as a nick or friends list
+* Application data such as the last access date or last file opened
+
+## Limitations
+
+<AdminCustomFormLimitations />
+

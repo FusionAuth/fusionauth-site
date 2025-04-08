@@ -1,0 +1,60 @@
+---
+import Diagram from "../../../../components/mermaid/SequenceDiagram.astro";
+import * as include from "./_includes.js";
+
+const diagram = `
+sequenceDiagram
+  autonumber
+  ${include.participants}
+  ${include.initializeLocalStorage}
+
+  Note over Browser,Hacker: Login (browser navigates away from SPA)
+  Browser->>FusionAuth: GET /oauth2/authorize {response_type=token}
+  FusionAuth->>Browser: (Login form HTML)
+  Browser->>FusionAuth: POST /oauth2/authorize (response_type=token)
+  FusionAuth->>Browser: 302 Location: {redirect_uri w/ JWT in redirect URI and no refresh token}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  Browser->>Store: GET {redirect_uri w/o JWT in URI}
+  Store->>Browser: (SPA HTML, CSS & JavaScript)
+
+  Note over Browser,Hacker: Local storage drop
+  Browser->>Browser: Move JWT from URI to local storage
+
+  ${include.shoppingCartJWTLocalStorageLoad}
+
+  ${include.jwtExpires}
+
+  Note over Browser,Hacker: Automatic re-login (since session exists)
+  Browser->>FusionAuth: GET /oauth2/authorize {response_type=token}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  FusionAuth->>Browser: 302 Location: {redirect_uri w/ JWT in redirect URI and no refresh token}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  Browser->>Store: GET {redirect_uri w/o JWT in URI}
+  Store->>Browser: (SPA HTML, CSS & JavaScript)
+
+  Note over Browser,Hacker: Local storage drop
+  Browser->>Browser: Move JWT from URI to local storage
+
+  ${include.shoppingCartJWTLocalStorageLoad}
+
+  ${include.sso}
+
+  ${include.forumsInitializeLocalStorage}
+
+  Note over Browser,Hacker: Login (browser navigates away from SPA but auto-logs-in since the session exists)
+  Browser->>FusionAuth: GET /oauth2/authorize {response_type=token}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  FusionAuth->>Browser: 302 Location: {redirect_uri w/ JWT in redirect URI and no refresh token}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  Browser->>Forums: GET {redirect_uri w/o JWT in URI}
+  Forums->>Browser: (SPA HTML, CSS & JavaScript)
+
+  Note over Browser,Hacker: Local storage drop
+  Browser->>Browser: Move JWT from URI to local storage
+
+  ${include.forumsJWTLocalStorageLoad}
+
+  ${include.attackVectors}
+
+  Note over Browser,Hacker: Stolen JWT
+  Hacker->>Store: GET /api/load-shopping-cart<br/>(JWT)
+  Store->>Hacker: (Shopping cart contents)
+`;
+---
+
+<Diagram code={diagram} errorBoxes={[18]} warningBoxes={[27]} infoBoxes={[22]}/>

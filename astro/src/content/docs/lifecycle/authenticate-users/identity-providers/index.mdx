@@ -1,0 +1,335 @@
+---
+title: Identity Providers Overview
+description: An overview of all FusionAuth Identity Providers, which allow authentication delegation.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: identity providers
+navOrder: 0
+tags: authorization hub
+---
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import { YouTube } from '@astro-community/astro-embed-youtube';
+import IdentityProviderLimitations from 'src/content/docs/_shared/_identity-provider-limits.mdx';
+
+## Identity Providers
+
+Identity Providers allow you to enable third-party login in FusionAuth. This includes social options such as Facebook and Google, and enterprise options such as OIDC and SAML.
+
+Find the FusionAuth Identity Providers in the UI by navigating to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> or use the [Identity Providers](/docs/apis/identity-providers/) APIs.
+
+![Identity Providers](/img/docs/get-started/core-concepts/identity-providers.png)
+
+## Social Identity Providers
+
+The following providers are available:
+
+* [Apple](/docs/lifecycle/authenticate-users/identity-providers/social/apple)
+* [Facebook](/docs/lifecycle/authenticate-users/identity-providers/social/facebook)
+* [Epic Games](/docs/lifecycle/authenticate-users/identity-providers/gaming/epic-games) - requires a paid plan.
+* [Google](/docs/lifecycle/authenticate-users/identity-providers/social/google)
+* [HYPR](/docs/lifecycle/authenticate-users/identity-providers/enterprise/hypr)
+* [LinkedIn](/docs/lifecycle/authenticate-users/identity-providers/social/linkedin)
+* [Nintendo](/docs/lifecycle/authenticate-users/identity-providers/gaming/nintendo) - requires a paid plan.
+* [Sony](/docs/lifecycle/authenticate-users/identity-providers/gaming/sony) - requires a paid plan.
+* [Steam](/docs/lifecycle/authenticate-users/identity-providers/gaming/steam) - requires a paid plan.
+* [Twitch](/docs/lifecycle/authenticate-users/identity-providers/gaming/twitch) - requires a paid plan.
+* [Twitter](/docs/lifecycle/authenticate-users/identity-providers/social/twitter)
+* [Xbox](/docs/lifecycle/authenticate-users/identity-providers/gaming/xbox) - requires a paid plan.
+
+If you're looking for a provider that is not listed here, review the open features in [GitHub](https://github.com/FusionAuth/fusionauth-issues/issues) and either vote or comment on an existing feature, or open a new feature request if you do not find an existing feature open.
+
+## Enterprise Identity Providers
+
+The following providers are available:
+
+* [External JWT](/docs/lifecycle/authenticate-users/identity-providers/external-jwt/)
+* [OpenID Connect](/docs/lifecycle/authenticate-users/identity-providers/overview-oidc)
+* [SAML v2](/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2)
+* [SAML v2 IdP Initiated](/docs/lifecycle/authenticate-users/identity-providers/enterprise/samlv2-idp-initiated) - requires a paid plan.
+
+If you're looking for a provider that is not listed here, review the open features in [GitHub](https://github.com/FusionAuth/fusionauth-issues/issues) and either vote or comment on an existing feature, or open a new feature request if you do not find an existing feature open.
+
+## Identity Providers and Tenants
+
+Identity providers can be configured to set a limit on the number of links that may be established on a per tenant basis.
+
+In the following, we have enabled "Limit links per user" on the Default tenant and set a "Maximum link count" of `2`. With this configuration, a user will only be able to establish at most two links for this IdP specifically.
+
+![Identity Providers](/img/docs/lifecycle/authenticate-users/identity-providers/identity-provider-tenant-config.png)
+
+## Identity Providers and Applications
+
+Identity providers can be enabled or disabled on a per application basis.
+
+In the following screenshot you will see that we have enabled this login provider for the Pied Piper application and enabled "Create registration". Enabling "Create registration" means that a user does not need to be manually registered for the application prior to using this login provider.
+
+![Identity Providers](/img/docs/lifecycle/authenticate-users/identity-providers/identity-provider-application-config.png)
+
+For example, when a new user attempts to log into Pied Piper using Google, if their user does not exist in FusionAuth it will be created dynamically, and if the Create registration toggle has been enabled, the user will also be registered for Pied Piper and assigned any default roles assigned by the application.
+
+If you do not wish to automatically provision a user for this Application when logging in with Google, leave Create registration off and you will need to manually register a user for this application before they may complete login with Google and be authorized for the Pied Piper Application.
+
+<Aside type="note">
+Regardless of whether you enable "Create registration" or not, a user may be created within FusionAuth when a person signs in with the identity provider. What happens depends on the configured linking strategy. This setting controls whether a user is registered and therefore authorized for this application.
+</Aside>
+
+When you enable an identity provider you're indicating that this external provider is an additional SoR (Source of Record). When the user successfully logs into this provider such as Google, Google has told FusionAuth the user exists and their credentials are valid. In return FusionAuth accepts this source of record and creates link and/or user, depending on the linking strategy. Next we identify if the configuration allows us to automatically register (that is, provide authorization) for the requested application, based on the "Create registration" setting.
+
+## Overrides
+
+You can have different identity provider configurations for different applications. Suppose you had two different applications that were both using the Apple Identity Provider. But for one, you wanted to request the `email name` scope and for the other you wanted to request the `email` scope only. To make this work, create the Apple Identity provider with the scope `email name` and assign it to the first application. Then, for the second, override the <InlineField>Scope</InlineField> field with the `email` value.
+
+You can override none, some or all of the available configuration values by expanding the <InlineUIElement>Overrides</InlineUIElement> element for the application's identity provider setting. You may also modify the <InlineField>identityProvider.applicationConfiguration</InlineField> values using the API.
+
+![Overriding Identity Provider settings](/img/docs/lifecycle/authenticate-users/identity-providers/override-identity-provider-settings.png)
+
+For certain Identity Providers, there are no override settings since you can create more than one. You can have multiple configurations for these Identity Provider types:
+
+* External JWT
+* SAMLv2
+* OpenID Connect/OIDC
+
+For other Identity Providers, such as Apple, Google or Facebook, you cannot have two different Identity Providers of the same type assigned to the same Application. Use overrides as documented above.
+
+In some cases, you need to use two different Applications to achieve your desired configuration. For example, if you need two sets of attributes for an Identity Provider, but the attributes don't exist in the <InlineUIElement>Overrides</InlineUIElement> options. An example of such an attribute is <InlineField>Linking Strategy</InlineField>.
+
+## Hints
+
+<YouTube id="5bYpee0dlAA" />
+
+When you are using the FusionAuth hosted login pages, you can bypass the login page and go directly to a third party Identity Provider based upon the user's email address or an Identity Provider Id.
+
+<Aside type="note">
+Hints currently work with most Identity Providers with the exception of HYPR and the SAML v2 Identity Provider Initiated type Identity Provider.
+</Aside>
+
+An Identity Provider Id is appended to the Login URL for an application using the `idp_hint` request parameter. For example, to send a user directly to a login page for an OIDC identity provider with the id `44449786-3dff-42a6-aac6-1f1ceecb6c46`, you'd append `&idp_hint=44449786-3dff-42a6-aac6-1f1ceecb6c46`.
+
+An email address or domain may be provided in the `login_hint` request parameter. For example, to send a user directly to the login page of an OIDC IdP configured with a domain of `example.com`, you'd append `&login_hint=example.com` to the application's Login URL. The use of this parameter is up to the Identity Provider, so adding this parameter may or may not be supported by the Identity Provider you are using.
+
+You can read more about the `login_hint` and `idp_hint` parameters in the [OAuth Endpoints documentation](/docs/lifecycle/authenticate-users/oauth/endpoints).
+
+## Managed Domains
+
+For SAML v2 or OIDC identity providers, you can optionally enable managed domains. This feature is not available for any other types of identity providers.
+
+If users share a common email domain, such as `@example.com`, you can use managed domains to streamline their login process. Here's how it works:
+
+- On the login page, users are prompted to enter their email address.
+- If the email domain matches a managed domain defined in the identity provider settings, the user is automatically redirected to the configured identity provider for authentication.
+- If the email domain does not match, the user proceeds to the standard email/password login flow.
+
+Multiple email address domains can be managed by the same identity provider. Multiple identity providers can be configured with managed domains. Each email domain can be managed by at most one identity provider in a FusionAuth instance.
+
+Configuring managed domains on an identity provider and then configuring the identity provider to be enabled for an application changes the login page experience for all users logging into this application. Every user viewing the application login page will be required to enter their email address first. 
+
+## Account Security
+
+When you configure an Identity Provider, you are explicitly trusting this federated identity system to authenticate users. MFA requirements and configuration, roles and groups, email or phone verification, and account identifiers are controlled by the provider.
+
+<Aside type="caution">
+Be careful who you allow to set up an Identity Provider. Your security is only as strong as the security of the platform to which you federate.
+</Aside>
+
+A malicious identity provider can negatively impact your system. For instance, it could create accounts with email addresses already in FusionAuth. This could lead to account takeover; the malicious user could log in to the identity provider, return to FusionAuth, and access user data.
+
+Such attacks can be mitigated by:
+
+* Not setting up an Identity Provider.
+* Limiting the applications for which an Identity Provider is configured.
+* Doing additional verification in a Reconcile Lambda to ensure that the email address or identifier provided by the Identity Provider is expected.
+* Using a `Disabled` linking strategy for an Identity Provider and managing links via the [Links API](/docs/apis/identity-providers/links). This allows business logic to execute before or during linking. Examples include disallowing any links to a certain domain or calling into another API for additional validation before creating a link.
+
+## Linking Strategies
+
+![Linking Strategies](/img/docs/lifecycle/authenticate-users/identity-providers/linking-strategy.png)
+
+The linking strategy is used when creating the link between the Identity Provider and the user account in FusionAuth.
+
+Here's a table illustrating the alternatives. 
+
+| Strategy | User must exist | User linked on | Use when the identity provider...
+| --- | --- | --- | ---
+| Create a Pending Link | Depends on application, see note below | User chooses account manually | ...shares a different email or username than an existing FusionAuth identity and users know enough to link them.
+| Disabled         | &ndash; |    &ndash; | ...identities will be linked using the API. Use this when you want to manage linking explicitly using the Link API. Added in version `1.37.0`.
+| Anonymously Link | No | IdP id | ...exposes neither username nor email.
+| Link On Email. Create the user if they do not exist. | No | Email address | ...shares the user's email and users that do not exist in the identity provider can have access.
+| Link On Email. Do not create the user if they do not exist. | Yes | Email address | ...shares the user's email and you don't want users that do not exist in FusionAuth to have access. Such users must be provisioned beforehand.
+| Link On Username. Create the user if they do not exist. | No | Username | ...shares the user's username and users that do not exist in the identity provider can have access.
+| Link On Username. Do not create the user if they do not exist. | Yes | Username | ...shares the user's username and you don't want users that do not exist in FusionAuth to have access. Such users must be provisioned beforehand.
+
+
+Some identity providers don't provide a username and/or email.  In those instances, it is recommended to consider using a pending link or creating an anonymous link. Both of these options enable you to link the user without an email or username in the response from the identity provider.
+
+## Linking and Create Registration
+
+The <InlineField>Linking strategy</InlineField> and <InlineField>Create registration</InlineField> configurations are related to each other, but distinct.
+The <InlineField>Linking strategy</InlineField> controls how a User is created in FusionAuth based on information returned from the remote identity provider. <InlineField>Create registration</InlineField> controls if the User created in FusionAuth is registered for a given Application.
+
+## Linking Strategy Examples
+
+Here are some walkthroughs of linking scenarios. A user, Richard, is trying to access an app, such as Pied Piper. Richard uses an Identity Provider to login. It doesn't matter if the Identity Provider is a social provider like Facebook or an enterprise provider like an OIDC or SAML compatible identity server, the behavior is the same.
+
+The FusionAuth hosted login pages are being used. Similar behavior is available via the [Identity Provider API](/docs/apis/identity-providers/).
+
+### Disabled
+
+<Aside type="version">
+Available since 1.37.0.
+</Aside>
+
+This is useful when you do not want to link automatically, and you wish to control all linking manually via the Link API. This provides you the greatest level of control of which users become linked from the identity provider to FusionAuth.
+
+However, this strategy may not work if you do not have access to the `identityProviderUserId`, which is the immutable Id of the user in the upstream identity provider. See the [Link API](/docs/apis/identity-providers/links#link-a-user) for more.
+
+### Pending Link
+
+This is useful when the user has a different email or username in the remote identity provider than an existing FusionAuth identity. The user must know enough to link them. That is, they must remember the account they have in FusionAuth. This uses the linking strategy `Create a Pending Link`.
+
+<Aside type="note">
+If the application configuration allows for self service registration, the user can register for an account in FusionAuth when a pending link strategy is chosen. Otherwise the user must exist in FusionAuth.
+</Aside>
+
+Richard is logging into Pied Piper. He has an account in FusionAuth with the email address `richard@piedpiper.com`. He also has an account at Hooli with the email address `richard@hooli.com`.
+
+* Richard clicks on the 'Login With Hooli' button on the login screen.
+* He logs in to Hooli with `richard@hooli.com`, his account at Hooli.
+* He is redirected to FusionAuth.
+* He is prompted to log in to FusionAuth with his Pied Piper email and password.
+* He logs in with `richard@piedpiper.com`.
+* The FusionAuth account with the email `richard@piedpiper.com` is linked to the Hooli `richard@hooli.com` account.
+
+![Screen prompting a user to connect their pending link account.](/img/docs/lifecycle/authenticate-users/identity-providers/idp-linking-pending-link.png)
+
+### Anonymous Link
+
+This is a useful option if you don't want to create a full user account in FusionAuth. But see the [Anonymous Account Limitations](#anonymous-account-limitations) below. This uses the linking strategy `Anonymous Link`.
+
+#### Anonymous Link, IdP Provides Email
+
+Richard is logging into Pied Piper. He doesn't have an account in FusionAuth.
+
+* Richard clicks on the 'Login With Hooli' button on the login screen.
+* He logs in to Hooli with `richard@hooli.com`, his account at Hooli.
+* He is redirected to FusionAuth.
+* There is an account created in FusionAuth with no username or email address. It is not a full account.
+* Richard can interact with Pied Piper (a JWT is issued, etc), but cannot use FusionAuth workflows like 'forgot password'.
+
+![Admin view of a user who has linked anonymously.](/img/docs/lifecycle/authenticate-users/identity-providers/idp-linking-anonymous-account.png)
+
+#### Anonymous Link, No Email Or Username Returned By The IdP
+
+Richard is logging into Pied Piper. He doesn't have an account in FusionAuth. The identity provider is the Hooli XYZ server. This identity provider does not return a username or password in its response.
+
+* Richard clicks on the 'Login With Hooli XYZ' button on the login screen.
+* He logs in with `richard@hoolixyz.com`.
+* He is redirected to FusionAuth.
+* There is an account created in FusionAuth with no username or email address. It is not a full account.
+* Richard can interact with Pied Piper (a JWT is issued, etc), but cannot use FusionAuth workflows like 'forgot password'.
+
+#### Anonymous Account Limitations
+
+Users with an anonymous account may log in to applications using their IdP provided credentials.
+
+They won't have an email address, so can't use any of the email based FusionAuth workflows like 'forgot password'.
+
+You also can't modify the user using any FusionAuth APIs. If you try to modify the user using these, you must provide a username or email.
+
+
+### Link On Email
+
+There are two strategies which link on an email address.
+
+* `Link On Email. Create the user if they do not exist.` creates a user if no matching account exists in FusionAuth.
+* `Link On Email. Do not create the user if they do not exist.` does not create a user if no matching account exists and treats such a login as an error. If a matching account exists, the login succeeds.
+
+#### Link On Email, Matching Account Must Exist and Does
+
+This uses the linking strategy `Link On Email. Do not create the user if they do not exist.`.
+
+Here, Richard is logging into Pied Piper. He has an account in FusionAuth with the email address `richard@piedpiper.com`.
+
+* Richard clicks on the 'Login With Hooli' button on the login screen.
+* He logs in to Hooli with the `richard@piedpiper.com` account.
+* He is redirected to FusionAuth and logs in successfully. Access is allowed.
+* The FusionAuth account with the email `richard@piedpiper.com` is linked to the Hooli `richard@piedpiper.com` account.
+
+#### Link On Email, Matching Account Must Exist But Doesn't
+
+This uses the linking strategy `Link On Email. Do not create the user if they do not exist.`.
+
+Richard is logging into Pied Piper. He doesn't have an account in FusionAuth.
+
+* Richard clicks on the 'Login With Hooli' button on the login screen.
+* He logs in to Hooli with the `richard@piedpiper.com` account.
+* He is redirected to FusionAuth but sees an error. No access is allowed.
+
+Here's an example of the error page:
+
+![Error when a user must exist for successful linking.](/img/docs/lifecycle/authenticate-users/identity-providers/idp-linking-user-must-exist.png)
+
+#### Link On Email, User Account Is Created If Needed
+
+This uses the linking strategy `Link On Email. Create the user if they do not exist.`.
+
+Richard is logging into Pied Piper. He doesn't have an account in FusionAuth.
+
+* Richard clicks on the 'Login With Hooli' button on the login screen.
+* He logs in to Hooli with the `richard@piedpiper.com` account.
+* He is redirected to FusionAuth.
+* A new account is created in FusionAuth with the email `richard@piedpiper.com`.
+* The new FusionAuth account with the email `richard@piedpiper.com` is linked to the Hooli `richard@piedpiper.com` account.
+
+### Link On Username
+
+Similarly to linking on email, there are two options here.
+
+* `Link On Username. Create the user if they do not exist.` creates a user if no matching account exists in FusionAuth.
+* `Link On Username. Do not create the user if they do not exist.` does not create a user if no matching account exists and treats such a login as an error. If a matching account exists, the login succeeds.
+
+#### Link On Username, Matching Account Must Exist And Does
+
+This uses the linking strategy `Link On Username. Do not create the user if they do not exist.`.
+
+Richard is logging into Pied Piper. He has an account in FusionAuth with the username `richard`.
+
+* Richard clicks on the 'Login With Hooli' button on the login screen.
+* He logs in to Hooli with the `richard` account.
+* He is redirected to FusionAuth and logs in successfully. Access is allowed.
+* The FusionAuth account with the username `richard` is linked to the Hooli `richard` account.
+
+#### Link On Username, Matching Account Must Exist But Doesn't
+
+This uses the linking strategy `Link On Username. Do not create the user if they do not exist.`.
+
+Richard is logging into Pied Piper. He doesn't have an account in FusionAuth.
+
+* Richard clicks on the 'Login With Hooli' button on the login screen.
+* He logs in to Hooli with the `richard` account.
+* He is redirected to FusionAuth but sees an error. No access is allowed.
+
+#### Link On Username, User Account Is Created If Needed
+
+This uses the linking strategy `Link On Username. Create the user if they do not exist.`.
+
+Richard is logging into Pied Piper. He doesn't have an account in FusionAuth.
+
+* Richard clicks on the 'Login With Hooli' button on the login screen.
+* He logs in to Hooli with the `richard` account.
+* He is redirected to FusionAuth.
+* A new account is created in FusionAuth with the username `richard`.
+* The new FusionAuth account with the username `richard` is linked to the Hooli `richard` account.
+
+## OAuth Scope Parameter
+
+If you would like to request OAuth scopes on the access token from FusionAuth, provide those in the `scope` parameter on the authorization request to FusionAuth.
+
+In contrast, the `scope` parameter for the request to the identity provider is configured via the <InlineField>Scope</InlineField> value, if available.
+
+## Limitations
+
+<IdentityProviderLimitations />

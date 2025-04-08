@@ -1,0 +1,740 @@
+---
+title: Drupal
+description: Quickstart integration of Drupal web application with FusionAuth
+navcategory: getting-started
+prerequisites: Drupal, Docker, Composer, Drush
+section: web
+technology: Drupal
+language: PHP
+icon: /img/icons/drupal.svg
+faIcon: fa-gem
+color: rose
+cta: EmailListCTA
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-php-drupal-web/main
+---
+import Aside from '../../components/Aside.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import DockerSpinup from '/src/components/quickstarts/DockerSpinup.astro';
+import Field from '../../components/Field.astro';
+import InlineUIElement from '../../components/InlineUIElement.astro';
+import Intro from '/src/components/quickstarts/Intro.astro';
+import LoginArchitectureWeb from '/src/components/quickstarts/LoginArchitectureWeb.astro';
+import NextSteps from '/src/components/quickstarts/NextSteps.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+import QuickstartTshirtCTA from '/src/components/quickstarts/QuickstartTshirtCTA.astro'
+
+<Intro technology={frontmatter.technology}
+       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-php-drupal-web"/>
+
+## Prerequisites
+
+- [PHP](https://www.php.net/downloads.php) 8.1.0+
+- [Composer](https://getcomposer.org/)
+- [GD extension](https://www.php.net/manual/en/book.image.php)
+- [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](/docs/get-started/download-and-install/).)
+
+<Aside type="note">
+  This app has been tested with Drupal 10.1.5. This example should work with other compatible versions of Drupal 10. Drupal 10 requires PHP 8.1.0+ and MariaDB 10.3.7+, MySQL 5.7.8+, or Percona 5.7.8+.
+</Aside>
+
+## General Architecture
+
+<LoginArchitectureWeb intro="By default, Drupal has a built-in login and authentication system. As such, the application will resemble the following before FusionAuth is introduced." />
+
+## Getting Started
+
+In this section, you'll get FusionAuth up and running on your machine and create a Drupal application.
+
+### Clone The Code
+
+First off, grab the code from the repository and change into that directory.
+
+```shell
+git clone https://github.com/FusionAuth/fusionauth-quickstart-php-drupal-web.git
+cd fusionauth-quickstart-php-drupal-web
+```
+
+### Create Your Drupal Application
+
+The `complete-application` directory in the repository already contains a complete Drupal application but for demonstration purposes, this tutorial shows how to create a new application from scratch and then switch the volumes in the `docker-compose.yml` file to point to the new application.
+
+Start by creating a new Drupal 10 project and changing to the project directory with the following command.
+
+```shell
+composer create-project drupal/recommended-project:10.1.5 "your-application" && cd your-application
+```
+
+Next, make two changes in the `docker-compose.yml` file to allow you to use your new Drupal application.
+
+<Aside type="note">
+ If you want to use the existing application at any point, revert the following two changes and then rebuild the Docker containers and volumes.
+</Aside>
+
+On the `web` service, change `volumes` from `./complete-application:/opt/drupal:cached` to `./your-application:/opt/drupal:cached`.
+
+Under the `db2` service, change the key `MYSQL_DATABASE` from `drupaldb` to `changebank`. This updates the database name so that you are not using the same database as the existing complete application. 
+
+Save your changes and then run the following command to get the application up and running.
+
+```shell
+docker compose up -d
+```
+
+Once the application is up and running, navigate to http://localhost/ and you should be redirected to the Drupal installation wizard at http://localhost/core/install.php.
+
+Run through the wizard and fill in all required fields. Make sure to enter the following.
+
+On <Breadcrumb>Step 1</Breadcrumb>, choose your language and click <InlineUIElement>Save and continue</InlineUIElement>.
+
+On <Breadcrumb>Step 2</Breadcrumb>, choose `Standard` profile and click <InlineUIElement>Save and continue</InlineUIElement>.
+
+On <Breadcrumb>Step 4</Breadcrumb>, enter the following database connection details.
+
+- <Field label="Database type"/>: Pick the `MySQL, MariaDB, Percona Server, or equivalent` option.
+- <Field label="Database name"/>: `changebank`.
+- <Field label="Database username"/>: `drupal`.
+- <Field label="Database password"/>: `verybadpassword`.
+- Expand Advanced options.
+  - Set <Field label="Host"/> to `db2`.
+  - Set the <Field label="port number"/> to `3307`.
+
+Click <InlineUIElement>Save and continue</InlineUIElement>.
+
+On <Breadcrumb>Step 6</Breadcrumb>, enter the following values.
+
+- <Field label="Site name"/>: `Change Bank`.
+- <Field label="Site email address"/>: `admin@example.com`.
+- <Field label="Username"/>: `admin`.
+- <Field label="Password"/>: `verybadpassword`.
+- <Field label="Confirm password"/>: `verybadpassword`.
+- <Field label="Email address"/>: `admin@example.com`.
+
+Click <InlineUIElement>Save and continue</InlineUIElement>.
+
+
+Once you've completed the installation wizard, you should be taken to the welcome page.
+
+Now you can install OpenID Connect to handle authenticating with FusionAuth and the Admin Toolbar module to add a bit of quality of life when navigating the Drupal administration menu.
+
+In a terminal, run the following command from the `your-application` directory.
+
+```shell
+composer require 'drupal/openid_connect:3.x-dev@dev' 'drupal/admin_toolbar:^3.4'
+```
+
+#### Enabling Extensions Via UI
+
+You can enable the modules by visiting the extensions page of your Drupal application at http://localhost/admin/modules. Search for "OpenID Connect" and "Admin Toolbar" using the <Field label="Filter"/> field. Select the module checkboxes and click the <InlineUIElement>Install</InlineUIElement> button.
+
+#### Enabling Extensions With Drush
+
+Alternatively, you can use Drush to enable the modules. Drush is a command line shell and Unix scripting interface for Drupal, available as a [composer package](https://packagist.org/packages/drush/drush). Install it by running the following command.
+
+```shell
+composer require drush/drush
+```
+
+You might need to restart your containers for the changes to take effect. You can do so by running the following command.
+
+```shell
+docker compose restart
+```
+
+Once the containers are up and running, connect to the Drupal container terminal to run Drush commands. 
+
+```shell
+docker compose exec web bash
+```
+
+Run the following command to enable the modules.
+
+```shell
+vendor/bin/drush pm-enable openid_connect admin_toolbar
+```
+
+Confirm with yes when prompted.
+
+```
+Do you want to continue? (yes/no) [yes]:
+yes
+```
+
+You can use Drush to run many commands and perform common tasks in Drupal. Other popular commands include:
+
+- `vendor/bin/drush cr` clears the cache.
+- `vendor/bin/drush pm-enable <module name>` enables a module.
+- `vendor/bin/drush updb` updates the database.
+- `vendor/bin/drush uli` generates a one-time login link for a user.
+
+For the full list of Drush commands, visit https://www.drush.org/12.2.0/commands/all/.
+
+### Run FusionAuth Via Docker
+
+<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} />
+
+## Authentication
+
+To set up your Drupal application to use FusionAuth for authentication, head to http://localhost/admin/config/people/openid-connect on your Drupal site.
+
+Add a new client by clicking on <InlineUIElement>+ Generic OAuth 2.0</InlineUIElement> and fill in the details as follows:
+
+- <Field label="Name"/>: `FusionAuth`
+- <Field label="Client ID"/>: `e9fdb985-9173-4e01-9d73-ac2d60d1dc8e`
+- <Field label="Client secret"/>: `super-secret-secret-that-should-be-regenerated-for-production`
+- <Field label="Authorization endpoint"/>: `http://host.docker.internal:9011/oauth2/authorize`
+- <Field label="Token endpoint"/>: `http://host.docker.internal:9011/oauth2/token`
+- <Field label="UserInfo endpoint"/>: `http://host.docker.internal:9011/oauth2/userinfo`
+
+<Aside>
+  You may need to update your hosts file to include an entry for `127.0.0.1 host.docker.internal` if it's not already present. On macOS and Linux you can achieve this by running the following command:
+
+  ```
+  echo "127.0.0.1 host.docker.internal" | sudo tee -a /etc/hosts
+  ```
+</Aside>
+
+Scroll down and click <InlineUIElement>Create OpenID Connect client</InlineUIElement>.
+
+While on the page that lists your newly created client, click the <Breadcrumb>Settings</Breadcrumb> tab. Under the section <Breadcrumb>OpenID buttons display in user login form</Breadcrumb>, change the value from `Hidden` to `Below` to display the "Login with FusionAuth" button on the login page.
+
+Scroll down and click <InlineUIElement>Save configuration</InlineUIElement> to save the settings.
+
+Before you test the authentication flow, you need to make a small change to allow visitors to create accounts on the Drupal application. Navigate to http://localhost/admin/config/people/accounts and change <Field label="Who can register accounts?"/> to `Visitors` and uncheck <Field label="Require email verification when a visitor creates an account"/>. Save the configuration.
+
+You need to flush the cache for the changes to take effect. You can flush the cache in Drupal in two ways:
+
+- By navigating to http://localhost/admin/config/development/performance and clicking the <InlineUIElement>Clear all caches</InlineUIElement> button.
+- Or by running the `vendor/bin/drush cr` command in the Drupal Docker container terminal.
+
+### Test Authentication
+
+Now you can test the authentication flow.
+
+In the browser, navigate to http://localhost/user/logout to log out of the Drupal application. Navigate to http://localhost/user/login and click on the <InlineUIElement>Login with FusionAuth</InlineUIElement> button.
+
+You should be taken to the FusionAuth login page. Log in with the username `richard@example.com` and password `password`.
+
+You should be redirected back to the Drupal application once logged in.
+
+## Customization
+
+In this section, you'll turn your application into a trivial banking application with some styling.
+
+You're going to create a module called "Changebank" that will handle the logic for making change from dollars, and add a couple of blocks to the application.
+
+### Generate Changebank Module
+
+In your terminal, run the following command in the Drupal Docker container.
+
+```shell
+vendor/bin/drush generate module
+```
+You will be presented with the module creation wizard. Fill it out as follows:
+
+```
+Welcome to module generator!
+
+Module name:
+Changebank
+
+Module machine name [changebank]:
+changebank
+
+Module description:
+Provides a way to make change from dollars.
+
+Package [Custom]:
+Custom
+
+Dependencies (comma separated):
+
+Would you like to create module file [No]:
+Yes
+
+Would you like to create install file [No]:
+No
+
+Would you like to create README.md file [No]:
+No
+
+The following directories and files have been created or updated:
+
+- /opt/drupal/web/modules/changebank/changebank.info.yml
+- /opt/drupal/web/modules/changebank/changebank.module
+```
+
+Now you will expand on the module by generating two blocks, a form, a controller, and a routing file.
+
+To generate the first block, run the following command and complete the wizard.
+
+```shell
+vendor/bin/drush generate block
+```
+
+You will be presented with the block creation wizard. Fill it out as follows:
+
+```
+Welcome to block generator!
+
+Module machine name:
+changebank
+
+Block admin label:
+User Email Block
+
+Plugin ID [changebank_user_email_block]:
+useremailblock
+
+Plugin class [UseremailblockBlock]:
+UserEmailBlock
+
+Block category [Custom]:
+Custom
+
+Make the block configurable? [No]:
+No
+
+Would you like to inject dependencies? [No]:
+No
+
+Create access callback? [No]:
+No
+
+The following directories and files have been created or updated:
+
+- /opt/drupal/web/modules/changebank/src/Plugin/Block/UserEmailBlock.php
+```
+
+Generate the second block with the same block generation command as before.
+
+```shell
+vendor/bin/drush generate block
+```
+
+Enter the following information:
+
+```
+Welcome to block generator!
+
+Module machine name:
+changebank
+
+Block admin label:
+User Login Logout Block
+
+Plugin ID [changebank_user_login_logout_block]:
+userloginlogoutlock
+
+Plugin class [UserloginlogoutlockBlock]:
+UserLoginLogoutBlock
+
+Block category [Custom]:
+Custom
+
+Make the block configurable? [No]:
+No
+
+Would you like to inject dependencies? [No]:
+No
+
+Create access callback? [No]:
+No
+
+The following directories and files have been created or updated:
+
+- /opt/drupal/web/modules/changebank/src/Plugin/Block/UserLoginLogoutBlock.php
+```
+
+To generate the form, run the following command.
+
+```shell
+vendor/bin/drush generate form
+```
+
+You will be presented with the form wizard. Fill it out as follows:
+
+```
+Welcome to form generator!
+
+Module machine name:
+changebank
+
+Module name [Changebank]:
+Changebank
+
+Class [ExampleForm]:
+ChangebankForm
+
+Would you like to create a route for this form? [Yes]:
+No
+
+The following directories and files have been created or updated:
+
+- /opt/drupal/web/modules/changebank/src/Form/ChangebankForm.php
+```
+
+Next, generate a controller with the following command.
+
+```shell
+vendor/bin/drush generate controller
+```
+
+You will be presented with the controller wizard. Fill it out as follows:
+
+```
+Welcome to controller generator!
+
+Module machine name:
+changebank
+
+Module name [Changebank]:
+Changebank
+
+Class [ChangebankController]:
+ChangebankController
+
+Would you like to inject dependencies? [No]:
+No
+
+Would you like to create a route for this controller? [Yes]:
+No
+
+The following directories and files have been created or updated:
+
+- /opt/drupal/web/modules/changebank/src/Controller/ChangebankController.php
+```
+
+Finally, generate a routing file with the following command.
+
+```shell
+vendor/bin/drush generate routing
+```
+
+You will be presented with the routing wizard. Fill it out as follows:
+
+```
+Module machine name:
+changebank
+
+Module name [Changebank]:
+Changebank
+
+The following directories and files have been created or updated:
+
+- /opt/drupal/web/modules/changebank/changebank.routing.yml
+```
+
+### Customizing The Module
+
+Now that you have all the files you need in your custom module, you can customize them.
+
+You will be editing the following files:
+
+- `ChangebankForm.php`
+- `ChangebankController.php`
+- `changebank.routing.yml`
+- `UserEmailBlock.php`
+- `UserLoginLogoutBlock.php`
+- `changebank.module`
+
+#### Customize The Changebank Form
+
+In your text editor, select the `ChangebankForm.php` file located at `your-application/web/modules/changebank/src/Form/ChangebankForm.php`. Clear the existing boilerplate contents and add the following code.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/web/modules/custom/changebank/src/Form/ChangebankForm.php"}
+            lang="php" />
+
+#### Customize The Controller
+
+In your text editor, select the `ChangebankController.php` file located at `your-application/web/modules/changebank/src/Controller/ChangebankController.php` and replace the content with the following code.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/web/modules/custom/changebank/src/Controller/ChangebankController.php"}
+            lang="php" />
+
+#### Customize The Routing
+
+Next you'll set up two routes, one for the form and one for the account page. 
+
+Select the `changebank.routing.yml` file located at `your-application/web/modules/changebank/changebank.routing.yml` and replace the content with the following configuration.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/web/modules/custom/changebank/changebank.routing.yml"}
+            lang="yaml" />
+
+#### Customize The User Email Block
+
+You'll use the User Email Block to display the current user's email address in a block. Select the `UserEmailBlock.php` file located at `your-application/web/modules/changebank/src/Plugin/Block/UserEmailBlock.php` and replace the content with the following code.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/web/modules/custom/changebank/src/Plugin/Block/UserEmailBlock.php"}
+            lang="php" />
+
+#### Customize The User Login And Logout Block
+
+You'll use the User Login And Logout Block to display a login button for anonymous users and a logout button for authenticated users.
+
+Select the `UserLoginLogoutBlock.php` file located at `your-application/web/modules/changebank/src/Plugin/Block/UserLoginLogoutBlock.php` and replace the content with the following code.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/web/modules/custom/changebank/src/Plugin/Block/UserLoginLogoutBlock.php"}
+            lang="php" />
+
+#### Customize The `changebank.module` File
+
+To make the blocks available to the application, you need to make some changes to the `changebank.module` file located at `your-application/web/modules/changebank/changebank.module`. Add the following.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/web/modules/custom/changebank/changebank.module"}
+            lang="php" />
+
+#### Enable The Changebank Module
+
+To enable the Changebank module, navigate to http://localhost/admin/modules while logged in as admin and select the checkbox next to the Changebank module item. Click the <InlineUIElement>Install</InlineUIElement> button.
+
+<Aside type="note">
+You can also enable the module by running the following command in the Drupal Docker container.
+
+```shell
+vendor/bin/drush pm-enable changebank
+```
+</Aside>
+
+### Add Styling
+
+In this section, you're going to add a theme to the application, along with a couple of templates and some basic styling.
+
+#### Download A Theme
+
+A theme called "Barrio Bootstrap 5" will give you a good starting point for styling the application. Run the following command from a terminal in the `your-application` directory to add the theme to the project.
+
+```shell
+composer require 'drupal/bootstrap_barrio:^5.5'
+```
+
+#### Create A Subtheme
+
+Next, you'll create a subtheme of the Barrio Bootstrap 5 theme. 
+
+You will notice a folder called `subtheme` in the `your-application/web/themes/contrib/bootstrap_barrio` directory.
+
+First, create a directory called `custom` in `your-application`, and a directory called `subtheme` in `custom`.
+
+```shell
+mkdir -p web/themes/custom/subtheme
+```
+
+Copy the `your-application/web/themes/contrib/bootstrap_barrio/subtheme` directory into `your-application/web/themes/custom/subtheme`.
+
+```shell
+cp -r web/themes/contrib/bootstrap_barrio/subtheme/* web/themes/custom/subtheme
+```
+
+Enter the subtheme folder and edit the `bootstrap_barrio_subtheme.info.yml` file. Change the name of the theme from `Bootstrap Barrio Subtheme` to `Changebank`, and change the description from `Basic structure for a Bootstrap Barrio SubTheme` to `Subtheme for Changebank`.
+
+#### Enable The Theme
+
+To enable the theme, navigate to http://localhost/admin/appearance and click the <InlineUIElement>Install</InlineUIElement> button for both "Bootstrap Barrio 5.5.14" and "Changebank 5.5.14".
+
+Click the <InlineUIElement>Set as default</InlineUIElement> button for "Changebank 5.5.14".
+
+While you are here, let's add the Changebank logo to the application.
+
+Click <InlineUIElement>Settings</InlineUIElement> on Changebank 5.5.14, then scroll down and click <InlineUIElement>Logo image</InlineUIElement>. Uncheck the <InlineUIElement>Use the logo supplied by the theme</InlineUIElement> checkbox, and upload the [Changebank logo](https://github.com/FusionAuth/fusionauth-quickstart-php-drupal-web/blob/main/complete-application/web/sites/default/files/changebank-logo.png) in the <Field label="Upload logo image"/> field. Save the configuration.
+
+#### Install And Enable Twig Tweak
+
+The Twig Tweak module will make it easier to render content in the templates you create later. Twig Tweak is a small module that provides a Twig extension with some useful functions and filters that can improve the developer experience.
+
+Run the following command in the `your-application` directory to download the module.
+
+```shell
+composer require 'drupal/twig_tweak:^3.2'
+```
+
+Enable the module by navigating to http://localhost/admin/modules, selecting the checkbox next to Twig Tweak, and clicking the <InlineUIElement>Install</InlineUIElement> button.
+
+<Aside type="note">
+You can also enable the module with the following command in the Drupal Docker container.
+
+```shell
+vendor/bin/drush pm-enable twig_tweak
+```
+</Aside>
+
+#### Add Templates
+
+In the subtheme directory of your application, you'll add a couple of templates to override the default templates provided by the Bootstrap Barrio theme. This will allow you to customize the markup of the application.
+
+The `page--front.html.twig` template file you will create uses an image that is currently not in your application. To copy the image to your application, run the following command from `your-application` directory.
+
+```shell
+cp ../complete-application/web/sites/default/files/money-new.jpg  web/sites/default/files/money-new.jpg
+```
+
+Navigate to `your-application/web/themes/custom/subtheme/templates/`. If the `templates` directory is not there, you may need to create it.
+
+In the templates directory, create the following files:
+
+- `page--front.html.twig`
+- `block--system-branding-block.html.twig`
+- `region--secondary-menu.html.twig`
+
+In the page template for the front page (called `page--front.html.twig`), add the following code.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/web/themes/custom/subtheme/templates/page--front.html.twig"}
+            lang="twig" />
+
+Now add markup to create a custom layout for the site logo, the user email block, and the user login and logout block.
+
+First, add the following to the `region--secondary-menu.html.twig` template.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/web/themes/custom/subtheme/templates/region--secondary-menu.html.twig"}
+            lang="twig" />
+
+If the user email and login and logout blocks do not display or appear broken, make sure that the Twig Tweak module is enabled as it provides the naming convention to embed the blocks in the template.
+
+Now, as the code adds the System Branding block to the secondary menu region template, you need to manually hide the site name.
+
+Add the following to the `block--system-branding-block.html.twig` template.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/web/themes/custom/subtheme/templates/block--system-branding-block.html.twig"}
+            lang="twig" />
+
+This code hides the `site_name` variable by commenting it out, but you can delete it if you prefer.
+
+#### Customize The Stylesheet
+
+Next you'll add some styling to the application to make it look a little nicer. Select the `style.css` file located at `your-application/web/themes/custom/subtheme/css/style.css` and add the following.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/web/themes/custom/subtheme/css/style.css"}
+            lang="css" />
+
+### Add A Menu
+
+Previously, you created the routes for the form and account page. Now you'll add a menu to the application to make it easier to navigate between the two pages.
+
+Go to http://localhost/admin/structure/menu in the administration menu and click <InlineUIElement>Add menu</InlineUIElement>.
+
+Set <Field label="Title"/> to `Changebank Menu` and click <InlineUIElement>Save</InlineUIElement>.
+
+Click <InlineUIElement>Add link</InlineUIElement> and enter the following:
+
+- <Field label="Menu link title"/>: `Account`
+- <Field label="Link"/>: `/account`
+
+Scroll down and click <InlineUIElement>Save</InlineUIElement>.
+
+Click on <InlineUIElement>Add link</InlineUIElement> again and enter the following:
+
+- <Field label="Menu link title"/>: `Make Change`
+- <Field label="Link"/>: `/makechange`
+
+Scroll down and click <InlineUIElement>Save</InlineUIElement>.
+
+### Enable Blocks
+
+Now that you have the User Email, User Login and Logout, and the Changebank Menu blocks, you need to enable them.
+
+Navigate to http://localhost/admin/structure/block in the administration menu.
+
+#### Enable The Changebank Menu Block
+
+Scroll down to the Primary Menu section and click <InlineUIElement>Place block</InlineUIElement>.
+
+- Type `Changebank Menu` in the <Field label="Filter"/> field.
+- Click <InlineUIElement>Place block</InlineUIElement> to place the block in the region.
+- Uncheck the <InlineUIElement>Display title</InlineUIElement> checkbox.
+- Click on the <Breadcrumb>Roles</Breadcrumb> tab under <Breadcrumb>Visibility</Breadcrumb> and enable the `Authenticated user` role.
+- Click on <InlineUIElement>Save block</InlineUIElement>.
+
+<Aside type="note">
+  In your custom module, you set access to the `account` and `makechange` routes to be restricted to authenticated (logged in) users. You want to make sure that the menu is also only visible to authenticated users.
+</Aside>
+
+#### Enable The User Email Block
+
+Scroll down to the Secondary Menu section and click <InlineUIElement>Place block</InlineUIElement>.
+
+- Type `User Email Block` in the <Field label="Filter"/> field.
+- Click <InlineUIElement>Place block"</InlineUIElement> to place the block in the region.
+- Uncheck the <InlineUIElement>Display title</InlineUIElement> checkbox.
+- Click the <Breadcrumb>Roles</Breadcrumb> tab under <Breadcrumb>Visibility</Breadcrumb> and enable the `Authenticated user` role.
+- Click on <InlineUIElement>Save block</InlineUIElement>.
+
+#### Enable The User Login And Logout Block
+
+Scroll down to the Secondary Menu section and click <InlineUIElement>Place block</InlineUIElement>.
+
+- Type `User Login Logout Block` in the <Field label="Filter"/> field.
+- Click <InlineUIElement>Place block</InlineUIElement> to place the block in the region.
+- Uncheck the <InlineUIElement>Display title</InlineUIElement> checkbox.
+- Leave the <Breadcrumb>Roles</Breadcrumb> tab under <Breadcrumb>Visibility</Breadcrumb> set to any role by not selecting any of the options (the visibility of the login and logout links is controlled in your custom module).
+- Click on <InlineUIElement>Save block</InlineUIElement>.
+
+#### Default Blocks
+
+By default, Drupal will have a Site Branding block, a Main Navigation block, and a User Account block.
+
+You already have custom login and logout links, so you can remove the `User account menu` block. Click the dropdown arrow next to the `User account menu` block and select <InlineUIElement>Remove</InlineUIElement>.
+
+To disable `Breadcrumbs`, click the dropdown arrow next to the `Breadcrumbs` block and select <InlineUIElement>Disable</InlineUIElement>.
+
+The theme you used also has default blocks, like `Search Form (wide)` in the top header form and `Search Form (narrow)` in the sidebar first section. You don't need search functionality in this application, so remove these blocks by clicking on the dropdown arrow next to each and selecting <InlineUIElement>Remove</InlineUIElement>.
+
+Now let's set the Main Navigation block to only be visible to anonymous users. Click the <InlineUIElement>Configure</InlineUIElement> link next to the Main Navigation block. Click the <Breadcrumb>Roles</Breadcrumb> tab under <Breadcrumb>Visibility</Breadcrumb> and select the `Anonymous user` role. Click <InlineUIElement>Save block</InlineUIElement>.
+
+Move the Site Branding block to the Secondary Menu section by dragging the block and dropping it into the region above the other two blocks. Scroll down and click <InlineUIElement>Save blocks</InlineUIElement>.
+
+Finally, configure the Site Branding block to only display the logo by unchecking the <InlineUIElement>Site name</InlineUIElement> and <InlineUIElement>Site slogan</InlineUIElement> checkboxes. Click <InlineUIElement>Save block</InlineUIElement>.
+
+### Set Login Redirect
+
+Navigate to http://localhost/admin/config/people/openid-connect and click the <Breadcrumb>Settings</Breadcrumb> tab.
+
+Since you have the `/account` route set up in your custom module, let's make sure that the user is redirected to that page after logging in and not the standard user page.
+
+Scroll down to the redirects section and enter `account` in the <Field label="Login"/> redirect field.
+
+Save the configuration and clear the cache. Log out from the application.
+
+## Run The Application
+
+You can now open the application at http://localhost/user/login.
+
+Log in by clicking the <InlineUIElement>Login with FusionAuth</InlineUIElement> button and using the username `richard@example.com` and password `password`.
+
+<QuickstartTshirtCTA/>
+
+## Next Steps
+
+<NextSteps />
+
+### Drupal Customization
+
+Drupal is a powerful CMS, and there are many ways to customize it. Here are a few things you may want to do:
+
+* Increase the functionality of the make change form, such as adding a field for the amount of change to make or specifying the type of change to make (quarters, dimes, nickels, pennies).
+* Add additional functionality to the application, such as a way to deposit and withdraw money from the account and keep track of all transactions on the account page.
+* Customize the FusionAuth login button.
+
+## Troubleshooting
+
+* I get `This site can’t be reached localhost refused to connect.` when I click the login button
+
+Ensure FusionAuth is running in the Docker container. You should be able to log in as the admin user `admin@example.com` with the password `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
+
+* I get an error `/usr/bin/env: 'php\r': No such file or directory` when trying to run Drush commands.
+
+Incorrect line endings are known to cause this issue. To fix the issue, convert the line endings of the file from Windows to Unix. You can use the `dos2unix` command. Install `dos2unix` by running the following command in the Drupal container.
+
+```shell
+apt-get update && apt-get install -y dos2unix
+```
+
+Once installed, convert the line endings of the file by running the following command in the Drupal container.
+
+```shell
+dos2unix /opt/drupal/vendor/bin/drush
+```
+
+* I get the following error during the Drupal installation wizard: `The Settings file does not exist.`
+
+Drupal will try to automatically create a `settings.php` configuration file, which is normally in the directory `sites/default` (to avoid problems when upgrading, Drupal is not packaged with this file). If auto-creation fails, you will need to create this file yourself, using the file `sites/default/default.settings.php` as a template.
+
+Create a settings file by navigating to `your-application/web/sites/default/`, copying `default.settings.php`, and renaming it to `settings.php`.

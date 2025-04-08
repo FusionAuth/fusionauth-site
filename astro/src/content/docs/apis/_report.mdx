@@ -1,0 +1,72 @@
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import JSON from 'src/components/JSON.astro';
+
+This report includes the number of {props.reportType} for a given application or across all applications. You must specify a date range for the report. {props.reportDescription}
+
+### Request
+
+{props.reportURI === 'login' && <>
+
+<API method="GET" uri={`/api/report/${props.reportURI}?start={start}&end={end}&applicationId={applicationId}`} authentication={["api-key"]} title={`Retrieve the ${props.reportType} report`}/>
+<API method="GET" uri={`/api/report/${props.reportURI}?start={start}&end={end}&applicationId={applicationId}&loginId={loginId}`} authentication={["api-key"]} title={`Retrieve the ${props.reportType} report for an individual user by username or email address`}/>
+<API method="GET" uri={`/api/report/${props.reportURI}?start={start}&end={end}&applicationId={applicationId}&userId={userId}`} authentication={["api-key"]} title={`Retrieve the ${props.reportType} report for an individual user by unique Id`}/>
+
+</>}
+
+{props.reportURI !== 'login' && <>
+
+<API method="GET" uri={`/api/report/${props.reportURI}?start={start}&end={end}&applicationId={applicationId}`} authentication={["api-key"]} title={`Retrieve the ${props.reportType} report`}/>
+
+</>}
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" optional>
+    A specific application to query for. If not provided a "Global" (across all applications) {props.reportType} report will be returned.
+  </APIField>
+  <APIField name="end" type="Long" required>
+    The end of the query range. This is an [instant](/docs/reference/data-types#instants) but it is truncated to {props.reportUnit} in the report timezone (which is set in the system settings).
+  </APIField>
+  <APIField name="start" type="Long" required>
+    The start of the query range. This is an [instant](/docs/reference/data-types#instants) but it is truncated to {props.reportUnit} in the report timezone (which is set in the system settings).
+  </APIField>
+  <APIField name="loginId" type="String" optional since="1.4.0" renderif={props.reportURI === 'login'}>
+    When this parameter is provided it will reduce the scope of the report to a single user with the requested email or username specified by this parameter.
+
+    This parameter is mutually exclusive with `userId`, if both are provided, the `loginId` will take precedence.
+  </APIField>
+  <APIField name="userId" type="UUID" optional since="1.4.0" renderif={props.reportURI === 'login'}>
+    When this parameter is provided it will reduce the scope of the report to a single user with the requested unique Id.
+
+    This parameter is mutually exclusive with `loginId`, if both are provided, the `loginId` will take precedence.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API contains the {props.reportType} report.
+
+<StandardGetResponseCodes />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name={props.reportPrefix}>
+    The list of {props.reportType} counts.
+  </APIField>
+  <APIField name={`${props.reportPrefix}[x].interval`} type="Integer">
+    The interval for this count. The interval values for the {props.reportType} report are the number of {props.reportUnit} since Epoch UTC shifted to the report timezone.
+  </APIField>
+  <APIField name={`${props.reportPrefix}[x].count`} type="Integer">
+    The number of {props.reportType} for this count.
+  </APIField>
+  <APIField name="total" type="Integer">
+    The total (sum) of each count across the query range.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src={`reports/${props.reportJSON}`} />

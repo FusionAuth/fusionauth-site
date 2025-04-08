@@ -1,0 +1,160 @@
+---
+title: FusionAuth and Proxies
+description: Learn more about HTTP proxies and FusionAuth.
+navcategory: admin
+section: operate
+subcategory: deploy
+---
+import Aside from 'src/components/Aside.astro';
+import OneProxyDiagram from 'src/diagrams/docs/operate/deploy/_one-proxy.astro';
+import TwoProxyDiagram from 'src/diagrams/docs/operate/deploy/_two-proxies.astro';
+import ProxyTroubleshooting from 'src/content/docs/operate/deploy/_proxy-troubleshooting.mdx';
+
+
+## Overview
+
+While FusionAuth doesn't require a proxy, using one offers additional flexibility.
+
+## What Is a Proxy
+
+While the term is overloaded, for the purposes of this document, a proxy is any software which sits between your users and FusionAuth. Some or all requests to FusionAuth then pass through the proxy.
+
+<OneProxyDiagram alt="A typical proxy configuration." />
+
+Proxies can be self-hosted or SaaS. Examples include:
+
+* NGINX
+* Apache
+* Caddy
+* Cloudflare
+* CloudFront
+
+FusionAuth should work with any proxy that supports HTTP. If you find a proxy that isn't supported, please [open a GitHub issue with details](https://github.com/fusionauth/fusionauth-issues/issues).
+
+## Why Use a Proxy
+
+While you can run FusionAuth without a proxy, there are a number of reasons why you might want one:
+
+* Have different domain names which point to different FusionAuth tenants; the proxy can map between domain names and tenant Ids
+* Block or throttle access based on request characteristics such as user agent
+* Cache CSS or other static assets for performance
+* Display custom error pages for 4xx or 5xx errors ([see this issue for more](https://github.com/FusionAuth/fusionauth-issues/issues/404))
+* Terminate TLS before requests reach FusionAuth
+* Add additional request processing logic
+* Have FusionAuth requests served from a non-standard path such as `/fa/` ([see this issue for more](https://github.com/FusionAuth/fusionauth-issues/issues/88))
+
+## How To Use a Proxy
+
+This section won't discuss setting up your proxy or proxy specific configuration. For more on that, please consult your proxy package's or server's documentation. 
+
+To correctly set up a proxy in front of FusionAuth, you must forward all requests to FusionAuth, and you must also set the correct headers. 
+
+### Headers To Set
+
+Below is a list of the headers you must set when using a proxy with FusionAuth. If you do not set these headers correctly, FusionAuth will not function correctly. You may be unable to log in to the administrative user interface, redirect URLs may be sent incorrectly, or other functionality may not work.
+
+*Proxy Headers To Set*
+| Header | Example Value | Notes |
+| ---- | ---- | ---- |
+| `X-Forwarded-Proto` | `https` | Typically this will be `https`, as it is typical to run FusionAuth in production using HTTPS. This ensures any redirects and cookies are sent with the appropriate scheme. This will be the scheme of the proxy server. |
+| `X-Forwarded-Host` | `auth.example.com` | The original host requested by the client in the `Host` HTTP request header. This will be the hostname of the proxy server. |
+| `X-Forwarded-Port` | `443` | The original port requested by the client. This will be the port of the proxy server. |
+| `X-Forwarded-For` | `204.98.1.1` | The originating IP address of the client. This varies and is used for logging IP addresses and [enforcing ACLs](/docs/apis/ip-acl). |
+| `X-Forwarded-Server` | `auth.example.com` | The hostname of the proxy server. It should be set by every proxy server in the proxy chain. This may be different from `X-Forwarded-Host` if there are two or more proxy servers. |
+
+Let's say FusionAuth is running at `https://example.fusionauth.io`, and the proxy lives at `https://auth.example.com`. In this case, the headers would have the following values:
+
+* `X-Forwarded-Proto`: `https`
+* `X-Forwarded-Host`: `auth.example.com`
+* `X-Forwarded-For`: The client IP address
+* `X-Forwarded-Server`: `auth.example.com`
+* `X-Forwarded-Port`: `443`
+
+Proxies may use different formats to set these headers. For example, IIS requires underscores and you must prepend the header with HTTP. `X-Forwarded-Proto` is `HTTP_X_Forwarded_Proto`. Please consult your proxy server's documentation for more details.
+
+Here is documentation for common proxy servers, describing how to configure these headers:
+
+* [Cloudflare](https://developers.cloudflare.com/rules/transform/request-header-modification/)
+* [NGINX](https://nginx.org/en/docs/http/ngx_http_headers_module.html)
+* [Apache](https://httpd.apache.org/docs/current/mod/mod_headers.html)
+* [Caddy](https://caddyserver.com/docs/caddyfile/directives/header)
+* [Amazon CloudFront](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/add-origin-custom-headers.html)
+
+
+### Caching
+
+FusionAuth disallows caching of non-static assets such as HTML pages with the [`Cache-control: no-store` header](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control).
+
+Never cache FusionAuth non-static asset responses.
+
+### Common Proxy Configurations
+
+The community has provided a number of example configurations for different proxies. You can [view them in the GitHub repo](https://github.com/FusionAuth/fusionauth-contrib/tree/main/Reverse%20Proxy%20Configurations).
+
+<Aside type="note">
+If you are running version `1.41.0` or later, please make sure your proxy is using `HTTP/1.1` instead of `HTTP/1.0`. We do not support `HTTP/1.0` anymore.
+
+We figured since it has been [supported since 1997](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Evolution_of_HTTP), `HTTP/1.1` was a good option.
+</Aside>
+
+### Chaining Proxies
+
+If needed, you can have multiple proxies for each request. This may be useful if one proxy handles custom domain names for tenants and another handles error pages.
+
+<TwoProxyDiagram alt="A proxy configuration with multiple proxies." />
+
+With this pattern, every proxy in the chain must have the same value for `X-Forwarded-Host`, the hostname of the initial proxy. The initial proxy is `Proxy 1` in the diagram above.
+
+Doing so allows FusionAuth to set cookies and create redirects correctly.
+
+However, `X-Forwarded-Server` should change as requests pass through each proxy.
+
+### Proxies and Tenants
+
+If you are running [multiple tenants](/docs/get-started/core-concepts/tenants) in FusionAuth, a proxy can be useful to add the tenant Id to all requests for a given domain or path. Clients use the domain without needing to know or care about the tenant they are interacting with.
+
+Suppose we have with two tenants, Pied Piper and Hooli:
+
+* Pied Piper has an endpoint at `piedpiper.example.com` and a FusionAuth tenant Id of `edfcf8d6-3044-4b5b-a52a-016f17f635d6`.
+* Hooli has an endpoint at `hooli.example.com` and a FusionAuth tenant Id of `6fec7aed-cad3-45e0-bade-3c23cbeff070`.
+
+When an API request comes in to `piedpiper.example.com`, the proxy can append an `X-FusionAuth-TenantId` header with the value `edfcf8d6-3044-4b5b-a52a-016f17f635d6`. And, when an API request comes in to `hooli.example.com`, the proxy can append an `X-FusionAuth-TenantId` header with the value `6fec7aed-cad3-45e0-bade-3c23cbeff070`.
+
+When requesting the [hosted login pages](/docs/get-started/core-concepts/integration-points#hosted-login-pages), you can append a `tenantId` query string. Simply add `tenantId=edfcf8d6-3044-4b5b-a52a-016f17f635d6` for all requests to `piedpier.example.com`.
+
+### Locking FusionAuth Down
+
+You may want to allow access to FusionAuth only through the proxy to enhance a defense in depth strategy. There are a few options to do so:
+
+* At the network level, using firewalls.
+* Using FusionAuth's IP ACL feature (only available in the Enterprise plan).
+
+In either case, disallow traffic to FusionAuth not originating from the proxy.
+
+## Trusting Proxies
+
+When running behind a proxy, FusionAuth uses the `X-Forwarded-For` header to resolve the client's IP address. To prevent man-in-the-middle attacks or IP spoofing via the `X-Forwarded-For` header, FusionAuth allows you to specify a list of trusted proxies. See the [networking configuration](/docs/operate/secure/networking) section for more information.
+
+## Troubleshooting
+
+<ProxyTroubleshooting />
+
+## Proxying Requests From FusionAuth
+
+This guide covers proxying requests *to* FusionAuth, in order to add a layer of indirection between your users and FusionAuth. The benefits are listed in [Why Use a Proxy](#why-use-a-proxy).
+
+If you are self-hosting, you can also proxy requests *from* FusionAuth, such as [webhooks](/docs/extend/events-and-webhooks/) or [connector requests](/docs/lifecycle/migrate-users/connectors/). You can read more about that in the [Configuration Reference](/docs/reference/configuration). Look for the `proxy.*` configuration values. This functionality is not available in FusionAuth Cloud.
+
+## SNI and FusionAuth Cloud Instances
+
+The latest FusionAuth Cloud Instances will use [SNI](https://en.wikipedia.org/wiki/Server_Name_Indication) to negotiate a TLS connection. If you are using a proxy in front of your FusionAuth instance, ensure it supports the use of SNI for TLS connections.
+
+## Limits
+
+There are no limits on using a proxy with FusionAuth.
+
+You can use a proxy with self-hosted FusionAuth or with FusionAuth Cloud.
+
+When using a proxy with FusionAuth Cloud, ensure you have configured DDOS and other protections correctly at the proxy.
+FusionAuth Cloud's built-in protection depends, in part, on receiving correct client IP addresses, but a proxy may mask or modify those and render this protection less effective.
+

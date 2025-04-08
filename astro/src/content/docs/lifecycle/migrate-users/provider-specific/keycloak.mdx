@@ -1,0 +1,269 @@
+---
+title: Migration From Keycloak
+description: Learn how to migrate your users to FusionAuth from Keycloak.
+section: lifecycle
+subcategory: migrate users
+tertcategory: provider specific
+---
+import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_additional-support.mdx';
+import Aside from 'src/components/Aside.astro';
+import CreateApiKey from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-api-key.mdx';
+import CreateTestApplication from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-application.mdx';
+import CreateTestTenant from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-tenant.mdx';
+import FinalDestination from 'src/content/docs/lifecycle/migrate-users/provider-specific/_final-destination.mdx';
+import GetScript from 'src/content/docs/lifecycle/migrate-users/provider-specific/_get-script.mdx';
+import Identifiers from 'src/content/docs/lifecycle/migrate-users/provider-specific/_identifiers.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/provider-specific/_mapping-user-attributes.mdx';
+import OtherEntitiesIntro from 'src/content/docs/lifecycle/migrate-users/provider-specific/_other-entities-intro.mdx';
+import PasswordHashNote from 'src/content/docs/lifecycle/migrate-users/provider-specific/_password-hash-note.mdx';
+import {RemoteCode} from '@fusionauth/astro-components';
+import SetUpFusionauth from 'src/content/docs/lifecycle/migrate-users/provider-specific/_set-up-fusionauth.mdx';
+import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-migration.mdx';
+import SocialLoginNote from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-note.mdx';
+import VerifyImport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_verify-import.mdx';
+import WhatNext from 'src/content/docs/lifecycle/migrate-users/provider-specific/_what-next.mdx';
+
+export const migration_source_name = 'Keycloak';
+export const migration_source_dir = 'keycloak';
+
+## Overview
+
+This document will help you migrate off of Keycloak. 
+
+If you are looking to compare FusionAuth and Keycloak, [this document may help](/blog/2019/03/06/keycloak-fusionauth-comparison).
+
+This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin. For more general migration information, please view the [FusionAuth migration guide](/docs/lifecycle/migrate-users/general-migration).
+
+There are a number of different ways applications can be integrated with Keycloak, and it would be difficult to cover them all. This guide mentions the typical parts of a bulk migration and in particular focuses on migrating user data from a Keycloak user database into FusionAuth. 
+
+<Aside type="note">
+This guide was tested against Keycloak 15.
+</Aside>
+
+## Planning Considerations
+
+### Obtaining User Data
+
+You will need read only database access to your Keycloak database. As part of the planning process, gather the credentials that will allow you to run SQL queries against this database.
+
+You will need read only access to these tables:
+
+* `USER_ENTITY`
+* `CREDENTIAL`
+
+You will also need to have a list of realms that you want to move and their names. You can find their names in the administrative user interface:
+
+<img src="/img/docs/lifecycle/migrate-users/provider-specific/keycloak-tenant-screen.png" alt="The Keycloak realm screen." width="1200" role="bottom-cropped" />
+
+Make note of each realm name containing users you want to migrate. You may migrate one, many or all realms depending on your requirements and larger migration plan.
+
+### Mapping User Attributes
+
+<MappingUserAttributes />
+
+### Social Logins
+
+<SocialLoginNote migration_source_name={migration_source_name} />
+
+<SocialLoginMigration />
+
+### Other Entities
+
+<OtherEntitiesIntro migration_source_name={migration_source_name} other_migrated_entities="identity providers, clients, or keys" />
+
+* In Keycloak, Identity Providers and User Federation allow user data to remain in external systems of record. FusionAuth has similar concepts of [Identity Providers](/docs/lifecycle/authenticate-users/identity-providers/) and [Connectors](/docs/lifecycle/migrate-users/connectors/).
+* Mappers are ways for you to customize authentication or authorization workflows. FusionAuth has a similar concept called [Lambdas](/docs/extend/code/lambdas/).
+* With Keycloak, Clients are what your users can log in to. FusionAuth refers to these as [Applications](/docs/get-started/core-concepts/applications). In both cases, you can use either OAuth/OIDC or SAML to do so.
+* Realms are a high level construct which groups other entities such as users and clients together. FusionAuth calls these [Tenants](/docs/get-started/core-concepts/tenants). FusionAuth supports a multi-tenant configuration by default.
+* For Keycloak, [Roles](https://www.keycloak.org/docs/latest/server_admin/#core-concepts-and-terms) provide information about what your users can do in your custom or off the shelf applications. Roles can be associated with other roles. FusionAuth has [Roles](/docs/get-started/core-concepts/roles) and they are defined on an Application by Application basis and cannot be composed.
+* Refresh tokens allow JWTs to be refreshed without a user logging in. These can be migrated using the [Import Refresh Tokens API](/docs/apis/users#import-refresh-tokens). Keycloak calls these "Offline Sessions"
+
+#### Identifiers 
+
+<Identifiers />
+
+Once you've planned your migration, the next step is to export your user data from Keycloak.
+
+## Exporting Users
+
+To import your users, you'll need their attributes, including their password hashes and other information. Some of these are stored in JSON fields.
+
+<PasswordHashNote />
+
+Here are SQL scripts that will query the needed fields. Update `RealmID` with the name of the Keycloak realm to export, gathered from the [Obtaining User Data](#obtaining-user-data) step. The scripts are different depending on if you are exporting from MySQL or PostgreSQL.
+
+### Exporting From MySQL
+
+Here's the SQL to export from MySQL.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-import-scripts/main/keycloak/keycloak-export.sql"
+            lang="sql"
+            title="Keycloak Export MySQL SQL" />
+
+You'll need to run this SQL query in such a way as to get comma separated values (CSV) out of it. Depending on your database, you'll do this differently.
+
+Here's how to generate CSV with MySQL, assuming the SQL above is in `keycloak-export.sql`. You may have to remove the header line from the `out.csv` file.
+
+```shell title="Generate CSV with MySQL"
+cat keycloak-export.sql | mysql -u USER -p keycloak| sed 's/\t/,/g' > out.csv
+```
+
+### Exporting From PostgreSQL
+
+Here's the SQL to export from PostgreSQL.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-import-scripts/main/keycloak/keycloak-export-postgres.sql"
+            lang="sql"
+            title="Keycloak Export Postgres SQL" />
+
+Here's how to generate CSV with PostgreSQL, assuming the SQL above is in `keycloak-export-postgres.sql`. You may have to remove the header line from the `out.csv` file.
+
+```shell title="Generate CSV with PostgreSQL"
+psql -W -h localhost -p5433 -U USER -d keycloak -c "Copy (`cat keycloak-export-postgres.sql`) To STDOUT With CSV HEADER DELIMITER ',';" > out.csv
+```
+
+### Export Result
+
+Whichever database you are exporting from, at the end of the export process you'll have a file that looks like:
+
+```plaintext title="Sample User Export"
+FIRST_NAME,LAST_NAME,EMAIL,USERNAME,EMAIL_VERIFIED,ID,PASSWORD,SALT,HASHITERATIONS,ALGORITHM,CREATED_TIMESTAMP,REALM_ID
+Test,Example,test@example.com,test,\0,f35a58e2-0247-4c38-aa39-93405e09c677,T6S/56cQy0ahQKohXe61aMOhvFr/PHEPfQbILKMLZKrdfOSo8wc+S6HCYomSJwTgYmdPy2gKh+oQW9UbeCmEwQ==,eYcTxcZhBV+GU9BQRt8Ypw==,27500,pbkdf2-sha256,1634670076567,Test
+Test,Example2,test2@example.com,test2,,1709a278-12a5-4126-9542-02f6809a349e,LjFqvhPuUHJdQvWIwVQfqxjeujAWqG/DVQRFoOv62/cTznl9ob4jwWwY6i1RrwGviu5iNPU5VIp03SxDyetyfw==,jVqbuA9k2Mlo37OWXBMKLw==,27500,pbkdf2-sha256,1634670197972,Test
+```
+
+Now, you can begin the user import process.
+
+## Importing Users
+
+Next up, import the user data. Here are the steps we need to take:
+
+1. Set Up FusionAuth
+2. Get the Script
+3. Install Needed Gems
+4. Use the Script
+5. Verify the Import
+6. The Final Destination of Imported Users
+
+### Set Up FusionAuth
+
+<SetUpFusionauth />
+
+#### Optionally Install a Hashing Plugin
+
+The FusionAuth team has written a Keycloak compatible password hashing plugin. The <InlineField>encryptionScheme</InlineField> for this plugin is `salted-pbkdf2-hmac-sha256-512`. This plugin ships with versions of FusionAuth 1.34 and above. It is called the `Salted PBKDF2 with SHA-256 with 512-bit derived key` plugin.
+
+If you have a version of FusionAuth below 1.34, the code is [available for download](https://github.com/FusionAuth/fusionauth-contrib/blob/main/Password%20Hashing%20Plugins/src/main/java/com/mycompany/fusionauth/plugins/ExamplePBDKF2HMACSHA256KeyLength512PasswordHasher.java). If you use this, follow the [plugin installation steps](/docs/extend/code/password-hashes/writing-a-plugin#install-the-plugin).
+
+If you have configured Keycloak to use a different hashing algorithm, you will need to [write and install a plugin](/docs/extend/code/password-hashes/writing-a-plugin) using that algorithm. You'll also need to update the `map_hashing_algorithm` method in the `import.rb` script.
+
+#### Create a Test Tenant
+
+<CreateTestTenant migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} />
+
+
+#### Create a Test Application
+
+<CreateTestApplication migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} />
+
+#### Add an API Key
+
+<CreateApiKey migration_source_dir={migration_source_dir} />
+
+### Get the Script
+
+<GetScript migration_source_dir={migration_source_dir} />
+
+### Install Needed Gems
+
+The following gems must be available to the import script:
+
+* `date`
+* `csv`
+* `optargs`
+* `fusionauth_client`
+
+Most likely all of these will be on your system already, except the `fusionauth_client` gem.
+
+If you have `bundler` installed, run `bundle install` in the `keycloak` directory. Otherwise install the needed gems in some other way.
+
+### Use the Script
+
+You can see the output of the script by running it with the `-h` option:
+
+```sh title="Running the import script with the help command line switch"
+ruby ./import.rb -h
+```
+
+The output will be similar to this:
+
+```sh title="The help output of the import.rb script"
+Usage: import.rb [options]
+    -r APPLICATION_IDS,              A comma separated list of existing applications Ids. All users will be registered for these applications.
+        --register-users
+    -u, --users-file USERS_FILE      The exported CSV user data file from Keycloak. Defaults to out.csv.
+    -f FUSIONAUTH_URL,               The location of the FusionAuth instance. Defaults to http://localhost:9011.
+        --fusionauth-url
+    -k, --fusionauth-api-key API_KEY The FusionAuth API key.
+    -t TENANT_ID,                    The FusionAuth tenant id. Required if more than one tenant exists.
+        --fusionauth-tenant-id
+    -m, --map-keycloak-user-id       Whether to map the keycloak user id for normal imported users to the FusionAuth user id.
+    -h, --help                       Prints this help.
+```
+
+For this script to work correctly, set the following switches, unless the defaults work for you:
+
+* `-u` should point to the location of the user export file you created.
+* `-f` must point to your FusionAuth instance. If you are testing locally, it will probably be `http://localhost:9011`.
+* `-k` needs to be set to the value of the API key created above.
+* `-t` should be set to the Id of the testing tenant created above.
+
+You may or may not want to use the `-m` switch, which takes the Keycloak Id and uses that for the FusionAuth user Id. If you have external systems reliant on the identifier, set this. Doing so ensures imported users have the same Id as they did in Keycloak. Otherwise, you can omit this switch.
+
+When you run the script, you'll see output like:
+
+```shell title="Import script output"
+$ ruby ./import.rb -f http://localhost:9011 -k '...' -u out.csv
+FusionAuth Importer : Keycloak
+ > User file: out.csv
+ > Call FusionAuth to import users
+ > Import success
+Duplicate users 0
+Import complete. 2 users imported.
+```
+
+#### Enhancing the Script
+
+You may also want to migrate additional data. Currently, the following attributes are migrated:
+
+* `user_id`
+* `email`
+* `email_verified`
+* `username`
+* `firstName`
+* `lastName`
+* `insertInstant`
+* the password hash and supporting attributes, if available
+* `registrations`, if supplied
+
+The migrated user will have the Keycloak tenant Id and original user Id stored on the `user.data` object. If you have additional user attributes to migrate, review and modify the `map_user` method. 
+
+You may also want to assign Roles, or associate users with Groups, by creating the appropriate JSON data structures in the import call. These are documented in the [Import User API docs](/docs/apis/users#import-users). This will require modifying the `import.rb` code.
+
+### Verify the Import
+
+<VerifyImport migration_source_dir={migration_source_dir} />
+
+### The Final Destination of Imported Users
+
+<FinalDestination migration_source_dir={migration_source_dir} />
+
+## What to Do Next
+
+<WhatNext />
+
+## Additional Support
+
+<AdditionalSupport />
+

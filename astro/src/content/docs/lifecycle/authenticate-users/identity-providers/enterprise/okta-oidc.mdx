@@ -1,0 +1,88 @@
+---
+title: OpenID Connect with Okta
+description: Learn how to set up user login using Okta as an OpenID Connect Identity Provider.
+section: lifecycle
+subcategory: authenticate users
+tertcategory: identity providers
+quatercategory: enterprise
+---
+import IdentityProviderOverviewDiagram from 'src/content/docs/_shared/_identity-provider-overview-diagram.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import InlineField from 'src/components/InlineField.astro';
+
+## Configure OpenID Connect with Okta
+
+Once you have completed this configuration, you may enable an OpenID Connect <InlineUIElement>Login with Okta</InlineUIElement> button for one or more FusionAuth applications. See [Okta - Generic OpenID Connect](https://help.okta.com/en-us/Content/Topics/integrations/open-id-connect.htm) as an additional reference.
+
+<IdentityProviderOverviewDiagram identity_provider_name="Okta" />
+
+## Prerequisites
+
+* A FusionAuth instance running on a publicly accessible URL. You can spin up a [basic FusionAuth Cloud instance](/pricing) or [install it on any server](/docs/get-started/download-and-install).
+* An [Okta Workforce Identity Cloud Account](https://www.okta.com) connected to a business email address.
+** The [Okta Verify app](https://help.okta.com/en-us/Content/Topics/Mobile/okta-verify-overview.htm) if your Okta account is not configured to send SMS messages for 2FA.
+
+## Okta Configuration
+
+Log in to Okta and navigate to the <strong>Admin</strong> panel.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-idp-admin-button.png" alt="Okta admin button." width="1200" />
+
+Navigate to <strong>Applications -> Applications</strong> and click the <InlineUIElement>Create App Integration</InlineUIElement> button.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-idp-create-app-integration.png" alt="create app integration." width="1200" role="bottom-cropped" />
+
+Select <InlineField>OIDC - OpenID Connect</InlineField> and <InlineField>Web Application</InlineField> then click <InlineUIElement>Next</InlineUIElement>.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-idp-oidc-webapp.png" alt="OIDC and web application." width="1200" />
+
+Enter an <InlineField>App integration name</InlineField> and ensure that <InlineField>Authorization Code</InlineField> is checked. Then, supply a <InlineField>Sign-in redirect URI</InlineField> of the form `<YOUR_FUSIONAUTH_URL>/oauth2/callback`, where `YOUR_FUSIONAUTH_URL` is the URL of your FusionAuth instance. For example, `https://local.fusionauth.io`.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-idp-name-uri.png" alt="name and redirect URI." width="1200" role="bottom-cropped" />
+
+Under the <strong>Assignments</strong> section, select <InlineField>Skip group assignment for now</InlineField>. Hit <InlineUIElement>Save</InlineUIElement>.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-idp-skip-group.png" alt="skip group assignment." width="1200" />
+
+Copy the <InlineField>Client Id</InlineField> and <InlineField>Secret</InlineField> into a text file for later use.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-idp-client-id-secret.png" alt="client id and secret." width="1200" />
+
+Under <strong>Sign On</strong>, navigate to the section <strong>OpenID Connect ID Token</strong> and change the <InlineField>Issuer</InlineField> to use the `Okta URL`. Hit <InlineUIElement>Save</InlineUIElement> and copy this URL into a text file.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-idp-issuer.png" alt="issuer URL." width="1200" />
+
+Navigate to <strong>Directory -> People</strong> and click on the username of the user that you'd like to authenticate. Then click <InlineUIElement>Assign Applications</InlineUIElement> and hit the <InlineUIElement>Assign</InlineUIElement> button next to the one you created. Then click <InlineUIElement>Save and Go Back</InlineUIElement> and <InlineUIElement>Done</InlineUIElement>.
+
+## Configure a new FusionAuth OpenID Connect Identity Provider
+
+There is no pre-configured Identity Provider for Okta in FusionAuth. The generic "OpenID" Identity Provider can be used though, as Okta supports the standard OpenId Connect protocols.
+
+Navigate to your FusionAuth instance. Select <strong>Settings</strong> from the sidebar and then navigate to the section <strong>Identity Providers</strong>.
+
+Select <InlineField>Add OpenID Connect</InlineField> from the <InlineField>Add</InlineField> dropdown at the top right of the page.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-choose-openid.png" alt="Create a new OpenID integration"  width="1200"  role="bottom-cropped" />
+
+- Provide a <InlineField>Name</InlineField>, like `Okta`.
+- Set <InlineField>Client Id</InlineField> to the `Client ID` recorded when creating the app integration on Okta.
+- Select `HTTP Basic Authentication` for the <InlineField>Client Authentication</InlineField> field.
+- Set the <InlineField>Client secret</InlineField> to the client secret recorded when creating the app integration on Okta.
+- Enable <InlineField>Discover endpoints</InlineField>.
+- Use the Okta URL that you recorded as the <InlineField>Issuer</InlineField> URL.
+- For the <InlineField>Scope</InlineField>, type in `openid email`.
+- Optionally, change the <InlineField>Button Text</InlineField> field to `Login with Okta`.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-idp-settings-identity-provider.png" alt="identity provider settings." width="1200" />
+
+- Navigate to the <strong>Applications</strong> section and ensure that the application you are adding Okta authentication to has the <InlineField>Enabled</InlineField> and <InlineField>Create Registration</InlineField> switches toggled. Hit <InlineUIElement>Save</InlineUIElement>.
+
+## Testing the Login
+
+To test, navigate to the applications page in FusionAuth. Click on the <InlineUIElement>View</InlineUIElement> icon (magnifying glass) next to the application you enabled Okta login on and copy the `OAuth IdP login URL` address. Navigate to this address. You should see a <InlineUIElement>Login with Okta</InlineUIElement> button on your app's sign-in page:
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-idp-result.png" alt="result." width="1200" role="bottom-cropped" />
+
+Click the <InlineUIElement>Login with Okta</InlineUIElement> button. Test logging in with the username and password, as well as the 2FA method selected when configuring your account on Okta.
+
+If it is all set up correctly, you should be redirected back to your app, successfully logged in. The user will be added to FusionAuth, and you can examine the <strong>Linked accounts</strong> section of the user details screen to see that the Okta OIDC link was created.

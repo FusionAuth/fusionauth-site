@@ -1,0 +1,62 @@
+---
+title: SAML v2 Reconcile Lambda
+description: An overview of the SAML v2 Response Reconcile lambda.
+navcategory: customization
+section: extend
+subcategory: code
+tertcategory: lambdas
+---
+import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/extend/code/lambdas/_reconcile-lambda-user-registration-parameters.mdx';
+import SamlResponseFields from 'src/content/docs/extend/code/lambdas/_saml-response-fields.mdx';
+import ReconcileLambdaIntro from 'src/content/docs/extend/code/lambdas/_reconcile-lambda-intro.mdx';
+
+<ReconcileLambdaIntro identity_provider_name="SAML v2" prefix="an" extra_reconcile=" and well known SAML v2 attributes " extra_text="It is common that the SAML attributes (claims) returned from the SAML IdP login request will contain custom attributes. In order to utilize these custom attributes you may wish to use a lambda to assist FusionAuth during the login request to copy these claims to appropriate fields on the FusionAuth user object."
+/>
+
+## Lambda Structure
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+```javascript
+function reconcile(user, registration, samlResponse) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `reconcile` that takes three parameters. The parameters that the lambda is passed are:
+
+<ReconcileLambdaUserRegistrationParameters />
+* `samlResponse` - the SAML v2 response object. This is read-only.
+
+The two FusionAuth objects are well documented here in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The SAML response object mimics the format of the XML document, but is designed to be much simpler to use than dealing with the DOM object model. Here is a list of the fields you have access to manipulate in the SAML response:
+
+<SamlResponseFields />
+
+## Assigning The Lambda
+
+Once a lambda is created, you may assign it to one or more SAML v2 IdPs in the IdP configuration.
+
+Navigate to <strong>Settings -> Identity Providers</strong> and select your existing a SAML v2 configuration or click <strong>Add provider</strong> and select SAML v2 if it has not yet been configured.
+
+## Example Lambda
+
+Here is an example of a simple Lambda that sets roles and attributes on the FusionAuth user from the SAML v2 response.
+
+```javascript
+function reconcile(user, registration, samlResponse) {
+  // Assign the roles to the user from the SAML attribute named 'roles'
+  registration.roles = samlResponse.assertion.attributes['roles'] || [];
+  // Set Assign a custom attribute from the SAML attribute named 'favoriteColor'
+  registration.data.favoriteColor = samlResponse.assertion.attributes['favoriteColor'];
+
+  // Create an event log of type 'Debug' when the lambda has Debug enabled
+  console.debug('FusionAuth reconciled a User from a SAML v2 IdP and I helped!');
+}
+```
+
+During development if you want to get a better idea of what your IdP is returning in the `samlResponse` object, you may print the contents of this object to the Event Log to help you write the lambda. Add the following line of code to your lambda to dump the entire object to an informational event log.
+
+```javascript
+// Pretty print the samlResponse object to the Event Log
+console.info(JSON.stringify(samlResponse, null, 2));
+```

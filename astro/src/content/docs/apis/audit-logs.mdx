@@ -1,0 +1,343 @@
+---
+title: Audit Logs
+description: Learn about the APIs for adding entries to, searching, and exporting the audit log.
+section: apis
+---
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import JSON from 'src/components/JSON.astro';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import InlineField from 'src/components/InlineField.astro';
+import Aside from 'src/components/Aside.astro';
+
+## Overview
+
+This page contains the APIs that are used to manage the Audit Log. Here are the APIs:
+
+
+## Add an Entry to the Audit Log
+
+This API allows you to insert an Audit Log. Generally, Audit Logs are created automatically whenever an admin does something from the FusionAuth UI. However, you can use this API to insert Audit Logs directly if you need.
+
+### Request
+
+<API method="POST" uri="/api/system/audit-log" authentication={["api-key"]} title="Create an Audit Log"/>
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="auditLog.data" type="Object" optional>
+    An object that can hold additional details of an audit log.
+  </APIField>
+  <APIField name="auditLog.newValue" type="String" optional>
+    Intended to be utilized during a change to record the new value.
+  </APIField>
+  <APIField name="auditLog.oldValue" type="String" optional>
+    Intended to be utilized during a change to record the old value prior to the change.
+  </APIField>
+  <APIField name="auditLog.reason" type="String" optional>
+    Intended to be utilized during a change to indicate the reason for the modification.
+  </APIField>
+  <APIField name="auditLog.insertUser" type="String" required>
+    The user that took the action that is being written to the Audit Logs. We suggest you use email addresses for this field.
+  </APIField>
+  <APIField name="auditLog.message" type="String" required>
+    The message of the Audit Log.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="audit-logs/create-request.json" />
+
+### Response
+
+The response for this API does not contain a body. It only contains a status code.
+
+<StandardPostResponseCodes />
+
+## Retrieve an Audit Log
+
+### Request
+
+<API method="GET" uri="/api/system/audit-log/{logId}" authentication={["api-key"]} title="Retrieve an Audit Log by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="logId" type="Long" required>
+    The unique Id of the Audit Log to retrieve.
+  </APIField>
+</APIBlock>
+
+### Response
+
+<StandardGetResponseCodes />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="auditLog.data" type="Object">
+    Additional details of an audit log.
+  </APIField>
+  <APIField name="auditLog.newValue" type="String">
+    The new value of a changed object.
+  </APIField>
+  <APIField name="auditLog.oldValue" type="String">
+    The previous value of a changed object.
+  </APIField>
+  <APIField name="auditLog.reason" type="String">
+    The reason why the audit log was created.
+  </APIField>
+  <APIField name="auditLog.id" type="Long">
+    The Audit Log unique Id.
+  </APIField>
+  <APIField name="auditLog.insertInstant" type="Long">
+    The [instant](/docs/reference/data-types#instants) when the Audit Log was created.
+  </APIField>
+  <APIField name="auditLog.insertUser" type="String">
+    The user that created the Audit Log.
+  </APIField>
+  <APIField name="auditLog.message" type="String">
+    The message of the Audit Log.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Response" src="audit-logs/response.json" />
+
+## Search the Audit Log
+
+This API allows you to search and paginate through the Audit Logs.
+
+### Request
+
+<API method="GET" uri="/api/system/audit-log/search?message={message}&start={start}&end={end}&user={user}" authentication={["api-key"]} title="Searches the Audit Logs using the given search criteria"/>
+
+When calling the API using a `GET` request you will send the search criteria on the URL using request parameters. In order to simplify the example URL above, not every possible parameter is shown, however using the provided pattern you may add any of the documented request parameters to the URL.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="message" type="String" optional>
+    The string to search in the Audit Log message for. This can contain wildcards using the asterisk character (`*`). If no wildcards are present, this parameter value will be interpreted as `*value*`.
+  </APIField>
+  <APIField name="newValue" type="String" optional since="1.30.0">
+    The string to search for in the Audit Log field for <InlineField>newValue</InlineField>. Note, that not all audit log entries will contain this field, it is primarily used for Audit Logs for updates to existing objects.
+  </APIField>
+  <APIField name="numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="oldValue" type="String" optional since="1.30.0">
+    The string to search for in the Audit Log field for <InlineField>oldValue</InlineField>. Note, that not all audit log entries will contain this field, it is primarily used for Audit Logs for updates to existing objects.
+  </APIField>
+  <APIField name="orderBy" type="String" optional defaults="insertInstant DESC">
+    The database column to order the search results on plus the order direction.
+
+    The possible values are:
+
+     * `insertInstant` - the [instant](/docs/reference/data-types#instants) when the Audit Log was created
+     * `insertUser` - the user that create the Audit Log
+     * `message` - the message of the Audit Log
+
+    For example, to order the results by the insert instant in a descending order, the value would be provided as `insertInstant DESC`. The final string is optional can be set to `ASC` or `DESC`.
+  </APIField>
+  <APIField name="reason" type="String" optional since="1.30.0">
+    The string to search for in the Audit Log field for <InlineField>reason</InlineField>. Note, that not all audit log entries will contain this field.
+  </APIField>
+  <APIField name="start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="startRow" type="Integer" optional defaults="0">
+    The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+  </APIField>
+  <APIField name="user" type="String" optional>
+    The string to search in the Audit Log user for. This can contain wildcards using the asterisk character (`*`). If no wildcards are present, this parameter value will be interpreted as `*value*`.
+  </APIField>
+</APIBlock>
+
+<API method="POST" uri="/api/system/audit-log/search" authentication={["api-key"]} title="Searches the Audit Logs using the given search criteria"/>
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="search.end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="search.message" type="String" optional>
+    The string to search in the Audit Log message for. This can contain wildcards using the asterisk character (`*`). If no wildcards are present, this parameter value will be interpreted as `*value*`.
+  </APIField>
+  <APIField name="search.newValue" type="String" optional since="1.30.0">
+    The string to search for in the Audit Log field for <InlineField>newValue</InlineField>. Note, that not all audit log entries will contain this field, it is primarily used for Audit Logs for updates to existing objects.
+
+    In versions >= 1.49.0 sensitive values may be masked.
+  </APIField>
+  <APIField name="search.numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="search.oldValue" type="String" optional since="1.30.0">
+    The string to search for in the Audit Log field for <InlineField>oldValue</InlineField>. Note, that not all audit log entries will contain this field, it is primarily used for Audit Logs for updates to existing objects.
+
+    In versions >= 1.49.0 sensitive values may be masked.
+  </APIField>
+  <APIField name="search.orderBy" type="String" optional defaults="insertInstant DESC">
+    The database column to order the search results on plus the order direction.
+
+    The possible values are:
+
+     * `insertInstant` - the [instant](/docs/reference/data-types#instants) when the Audit Log was created
+     * `insertUser` - the user that create the Audit Log
+     * `message` - the message of the Audit Log
+
+    For example, to order the results by the insert instant in a descending order, the value would be provided as `insertInstant DESC`. The final string is optional can be set to `ASC` or `DESC`.
+  </APIField>
+  <APIField name="search.reason" type="String" optional since="1.30.0">
+    The string to search for in the Audit Log field for <InlineField>reason</InlineField>. Note, that not all audit log entries will contain this field.
+  </APIField>
+  <APIField name="search.start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="search.startRow" type="Integer" optional defaults="0">
+    The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+  </APIField>
+  <APIField name="search.user" type="String" optional>
+    The string to search in the Audit Log user for. This can contain wildcards using the asterisk character (`*`). If no wildcards are present, this parameter value will be interpreted as `*value*`.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API contains the Audit Logs matching the search criteria in paginated format.
+
+<StandardGetResponseCodes />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="auditLogs" type="Array">
+    The list of Audit Logs returned by the search.
+  </APIField>
+  <APIField name="auditLogs[x].data" type="Object">
+    Additional details of an audit log.
+  </APIField>
+  <APIField name="auditLogs[x].data.newValue" type="String">
+    The new value of a changed object.
+
+    In versions >= 1.49.0 sensitive values may be masked.
+  </APIField>
+  <APIField name="auditLogs[x].data.oldValue" type="String">
+    The previous value of a changed object.
+
+    In versions >= 1.49.0 sensitive values may be masked.
+  </APIField>
+  <APIField name="auditLogs[x].data.reason" type="String">
+    The reason why the audit log was created.
+  </APIField>
+  <APIField name="auditLogs[x].id" type="Long">
+    The Audit Log unique Id.
+  </APIField>
+  <APIField name="auditLogs[x].insertInstant" type="Long">
+    The [instant](/docs/reference/data-types#instants) when the Audit Log was created.
+  </APIField>
+  <APIField name="auditLogs[x].insertUser" type="String">
+    The user that created the Audit Log.
+  </APIField>
+  <APIField name="auditLogs[x].message" type="String">
+    The message of the Audit Log.
+  </APIField>
+  <APIField name="total" type="Integer">
+    The total number of Audit Logs matching the search criteria. Use this value along with the <InlineField>numberOfResults</InlineField> and <InlineField>startRow</InlineField> in the Search request to perform pagination.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Response" src="audit-logs/search-response.json" />
+
+## Export Audit Logs
+
+<Aside type="version">
+Available Since Version 1.7.0
+</Aside>
+
+This API is used to export the Audit Logs, the response will be a compressed zip archive.
+
+### Request
+
+<API method="GET" uri="/api/system/audit-log/export?message={message}&start={start}&end={end}&user={user}" authentication={["api-key"]} title="Export the Audit Logs matching the criteria"/>
+
+When calling the API using a `GET` request you will send the export criteria on the URL using request parameters. In order to simplify the example URL above, not every possible parameter is shown, however using the provided pattern you may add any of the documented request parameters to the URL.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="dateTimeSecondsFormat" type="String" optional>
+    The format string used to format the date and time columns in the export result.
+
+    When this parameter is omitted a default format of `M/d/yyyy hh:mm:ss a z` will be used. See the [DateTimeFormatter patterns](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html) for additional examples.
+  </APIField>
+  <APIField name="end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="message" type="String" optional>
+    The string to search in the Audit Log message for. This can contain wildcards using the asterisk character (`*`). If no wildcards are present, this parameter value will be interpreted as `*value*`.
+  </APIField>
+  <APIField name="start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="user" type="String" optional>
+    The string to search in the Audit Log user for. This can contain wildcards using the asterisk character (`*`). If no wildcards are present, this parameter value will be interpreted as `*value*`.
+  </APIField>
+  <APIField name="zoneId" type="String" optional>
+    The [time zone](/docs/reference/data-types#time-zone) used to adjust the stored UTC time in the export result.
+
+    For example:
+
+    > `America/Denver` or `US/Mountain`
+
+    When this parameter is omitted the configured default report time zone will be used. See <InlineField>reportTimezone</InlineField> in the [System Configuration API](/docs/apis/system).
+  </APIField>
+</APIBlock>
+
+<API method="POST" uri="/api/system/audit-log/export" authentication={["api-key"]} title="Export the Audit Logs matching the criteria"/>
+
+When calling the API using a `POST` request you will send the export criteria in a JSON request body.
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="criteria.end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to include in the export.
+  </APIField>
+  <APIField name="criteria.message" type="String" optional>
+    The string to search in the Audit Log message for. This can contain wildcards using the asterisk character (`*`). If no wildcards are present, this parameter value will be interpreted as `*value*`.
+  </APIField>
+  <APIField name="criteria.start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to include in the export.
+  </APIField>
+  <APIField name="criteria.user" type="String" optional>
+    The string to search in the Audit Log user for. This can contain wildcards using the asterisk character (`*`). If no wildcards are present, this parameter value will be interpreted as `*value*`.
+  </APIField>
+  <APIField name="dateTimeSecondsFormat" type="String" optional>
+    The format string used to format the date and time columns in the export result.
+
+    When this parameter is omitted a default format of `M/d/yyyy hh:mm:ss a z` will be used. See the [DateTimeFormatter patterns](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html) for additional examples.
+  </APIField>
+  <APIField name="zoneId" type="String" optional>
+    The [time zone](/docs/reference/data-types#time-zone) used to adjust the stored UTC time in the export result.
+
+    For example:
+
+    > `America/Denver` or `US/Mountain`
+
+    When this parameter is omitted the configured default report time zone will be used. See <InlineField>reportTimezone</InlineField> in the [System Configuration API](/docs/apis/system).
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API will contain a compressed zip of the audit logs.
+
+<StandardGetResponseCodes success_code="200" success_message="The request was successful. The response will be a compressed archive byte stream with a `Content-Type` of `application/zip`." />

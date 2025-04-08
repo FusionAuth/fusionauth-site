@@ -1,0 +1,34 @@
+Here is an example of a simple Lambda that assists FusionAuth to reconcile the User from a successful GitHub login request.
+
+```javascript
+function reconcile(user, registration, jwt, id_token, tokens) {
+  // This is an example lambda function reconcile the GitHub login
+
+  // Set GitHub Avatar URL to the FusionAuth imageURL
+  user.imageUrl = jwt.avatar_url;
+
+  // Update the registration username to the GitHub short name
+  registration.username = jwt.login;
+
+  // Store the company and location returned from GitHub in custom user data.
+  user.data = user.data || {};
+  user.data.company = jwt.company;
+  user.data.location = jwt.location;
+
+  // The id_token may be available depending upon your IdP configuration.
+  // - Ensure the value is defined before accessing it.
+  if (id_token) {
+    user.data.companyName = id_token.companyName;
+  }
+
+  // Create an event log of type 'Debug' when the lambda has Debug enabled
+  console.debug('FusionAuth reconciled a User from GitHub and I helped!');
+}
+```
+
+During development if you want to get a better idea of what your IdP is returning in the `jwt` object, you may print the contents of this object to the Event Log to help you write the lambda. Add the following line of code to your lambda to dump the entire object to an informational event log.
+
+```javascript
+// Pretty print the jwt object to the Event Log
+console.info(JSON.stringify(jwt, null, 2));
+```

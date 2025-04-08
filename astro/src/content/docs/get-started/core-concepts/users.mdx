@@ -1,0 +1,875 @@
+---
+title: Users
+description: An overview of FusionAuth Users.
+section: get started
+subcategory: core concepts
+tags: b2b2c, b2b2e
+---
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import Aside from 'src/components/Aside.astro';
+import LoginEvents from 'src/content/docs/_shared/_login_events.mdx';
+import DataFieldDataTypeChanges from 'src/content/docs/_shared/_data-field-data-type-changes.mdx';
+import CrossTenantUserAccess from 'src/content/docs/get-started/core-concepts/_cross-tenant-access.mdx';
+import UserSegmentTable from 'src/content/docs/get-started/core-concepts/_user-segment-table.mdx';
+import Icon from 'src/components/icon/Icon.astro';
+import { YouTube } from '@astro-community/astro-embed-youtube';
+
+## Overview
+
+FusionAuth is all about users, and it is helpful to fully understand how FusionAuth understands users to fully leverage all of the features FusionAuth offers.
+
+The user itself is easy enough to understand; it represents your end user, your employee, or your client.
+
+Here's a brief video covering some aspects of users:
+
+<YouTube id="Dcdp-dGFwpI" />
+
+## Core Concepts Relationships
+
+Below is a visual reminder of the relationships between FusionAuth's primary core concepts.
+
+![Diagram showing Users used within FusionAuth.](/img/docs/get-started/core-concepts/core-concepts-relationships-users.png)
+
+## Admin UI
+
+This page describes the admin UI for creating and managing users.
+
+{/*  These are not capitalized because we are matching the exact names for the tabs in the admin UI. */}
+
+### List of Users
+
+To display a list of users, navigate to <Breadcrumb>Users</Breadcrumb>.
+
+![List of Users](/img/docs/get-started/core-concepts/user-list.png)
+
+Using the icons on this screen, you can:
+
+* <Icon name="address-card" /> Manage the user's profile
+* <Icon name="unlock-button"/> Lock the user
+* <Icon name="lock-button" /> Unlock the user
+
+If you have user selected, you can also:
+
+* <Icon name="plus-circle" /> Add the users to a group
+* <Icon name="minus-circle" /> Remove the users from a group
+
+You can search for users using the search field. Learn more about [User Search](#user-search).
+
+### Add a User
+
+To add a new user, navigate to <Breadcrumb>Users</Breadcrumb>.
+
+#### Form Fields
+
+These are the default fields that are available when creating a user. You can add additional fields by creating custom forms and fields. See the [Editing User Data In the admin UI](/docs/lifecycle/register-users/advanced-registration-forms#editing-user-data-in-the-admin-ui) documentation for more information.
+
+<APIBlock>
+  <APIField name="Tenant" required>
+    The tenant to which this user belongs. This field is only displayed once multiple tenants exist in FusionAuth. When only a single tenant exists, the user will always be created in the default tenant.
+  </APIField>
+  <APIField name="Skip email verification" optional>
+    If this is checked, FusionAuth will not send an email asking the user to verify their email address. This is only available if [Email verification](/docs/get-started/core-concepts/tenants#email) in the tenant is set up.
+  </APIField>
+  <APIField name="Email" optional>
+    The email address of the user. This is a required field if <InlineField>Send email to set up password</InlineField> is enabled. It must be unique across all users in the tenant.
+  </APIField>
+  <APIField name="Username" optional>
+    The username of the user. The username is stored and returned as a case-sensitive value, however, a username is considered unique regardless of the case. This is a required field if no <InlineField>Email</InlineField> is provided.
+  </APIField>
+  <APIField name="Mobile phone" optional>
+    The mobile phone number of the user. This is useful for sending push notifications or SMS messages to the user.
+  </APIField>
+  <APIField name="Send email to set up password" optional>
+    If this is checked, FusionAuth will send an email asking them to set their password.
+    If you also have email verification enabled and do not skip verification with <InlineField>Skip email verification</InlineField> setting, only the setup password email will be sent to the user. Setting up the password using the email sent during this user create operation will verify the user’s email if it is not already verified.
+    This is only available if the [Setup password option](/docs/get-started/core-concepts/tenants#template-settings) in the tenant Template settings is set up.
+  </APIField>
+  <APIField name="Password" required>
+    The password of the user. This field is only displayed if <InlineField>Send email to set up password</InlineField> is not enabled.
+  </APIField>
+  <APIField name="Confirm password" required>
+    Password confirmation field. You must enter the same value in both <InlineField>Password</InlineField> and <InlineField>Confirm password</InlineField>. This field is only displayed if <InlineField>Send email to set up password</InlineField> is not enabled.
+  </APIField>
+</APIBlock>
+
+##### Options
+
+<APIBlock>
+  <APIField name="Birthdate" optional>
+    The birthdate of the user.
+  </APIField>
+  <APIField name="First name" optional>
+    The first name of the user.
+  </APIField>
+  <APIField name="Middle name" optional>
+    The middle name of the user.
+  </APIField>
+  <APIField name="Last name" optional>
+    The last name of the user.
+  </APIField>
+  <APIField name="Full name" optional>
+    The full name of the user as a separate field that is not calculated from <InlineField>firstName</InlineField> and <InlineField>lastName</InlineField>.
+  </APIField>
+  <APIField name="Languages" optional>
+    The preferred languages of the user. These are important for email templates and other localizable text. See [Locales](/docs/reference/data-types#locales) for the list and [Localization and Internationalization](/docs/get-started/core-concepts/localization-and-internationalization) for more on how they are used.
+  </APIField>
+  <APIField name="Timezone" optional>
+    The preferred timezone of the user.
+  </APIField>
+  <APIField name="Image URL" optional>
+    The URL that points to an image file that is the user’s profile image.
+  </APIField>
+</APIBlock>
+
+### Edit a User
+
+To edit a user, navigate to <Breadcrumb>Users</Breadcrumb> and click the <InlineUIElement>Manage</InlineUIElement> button next to the user you wish to edit.
+
+In the top right corner of the page, you will see a dropdown menu with the following options:
+
+* <InlineUIElement>Edit user</InlineUIElement> Edit the user's profile information.
+* <InlineUIElement>Add a comment</InlineUIElement> Add a comment to the user's profile. This will be visible in the user's [History](#history).
+* <InlineUIElement>Action User</InlineUIElement> Perform a user action on the user. See [Current actions](#current-actions) for more information.
+* <InlineUIElement>Delete user</InlineUIElement> Delete the user. You will have to confirm this action, because it is permanent and cannot be undone.
+* <InlineUIElement>Lock account</InlineUIElement> Lock the user's account. Only available if the user is not already locked.
+* <InlineUIElement>Unlock account</InlineUIElement> Unlock the user's account. Only available if the user is locked.
+* <InlineUIElement>Send password reset</InlineUIElement> Send a password reset email to the user. Only available if the user has an email address.
+* <InlineUIElement>Require password change</InlineUIElement> The user will be required to change their password the next time they log in.
+
+![User edit dropdown in the administrative user interface.](/img/docs/get-started/core-concepts/user-dropdown.png)
+
+Additionally, a lock icon is displayed in the top right corner of the profile. If the user is unlocked, the icon will be green. If the user is locked, the icon and the top border of the profile will be red. Clicking on the icon will lock or unlock the user.
+
+![Locked user in the administrative user interface.](/img/docs/get-started/core-concepts/user-locked.png)
+
+### Registrations
+
+Applications in FusionAuth represent something you can log in to.
+They are tenant scoped.
+You associate a user with an application via a registration.
+You may also optionally associate one or more roles with each user's registration.
+
+An example use case is a single company, where you have a forum, a todo application, and an accounting application.
+If you have three users, Richard, Monica, and Jared, you can grant Richard access to all three applications, Monica access to the forum and todo applications, and Jared access to the accounting application.
+
+Prohibit a user from logging into an application for which they are not registered by checking the claims in the token or enabling the <InlineField>Require registration</InlineField> setting for the application.
+
+Applications also may have associated identity providers, such as Google or OIDC providers.
+When so configured, a user may log in to an application with the identity provider.
+
+Every user object contains an array of application registrations.
+You can search for all users with a given registration.
+
+Learn more about [Applications](/docs/get-started/core-concepts/applications).
+
+![User registrations in the administrative user interface.](/img/docs/get-started/core-concepts/user-registrations.png)
+
+#### Table Columns
+
+<APIBlock>
+  <APIField name="Application" required>
+    The application to which this registration belongs.
+  </APIField>
+  <APIField name="Username" optional>
+    The username of the user for this application. This username cannot be used to log in. It is for display purposes only.
+  </APIField>
+  <APIField name="Roles" optional>
+    The roles assigned to the user on the application.
+  </APIField>
+  <APIField name="Created">
+    The date and time this registration was created.
+  </APIField>
+  <APIField name="Last updated">
+    The date and time this registration was last updated.
+  </APIField>
+  <APIField name="Last login">
+    The date and time that the user last logged into the application for this registration.
+  </APIField>
+  <APIField name="Action">
+    The action to take on this registration.
+    The available actions are:
+    * <Icon name="edit" /> Edit the registration
+    * <Icon name="fa-search" /> View the registration
+    * <Icon name="trash" /> Delete the registration
+  </APIField>
+</APIBlock>
+
+### Multi-Factor
+
+The multi-factor tab allows you to view and remove the multi-factor authentication settings for a user.
+
+Learn more about [Multi-Factor Authentication (MFA)](/docs/lifecycle/authenticate-users/multi-factor-authentication).
+
+![User multi-factor screen in the administrative user interface.](/img/docs/get-started/core-concepts/user-mfa.png)
+
+#### Table Columns
+
+<APIBlock>
+  <APIField name="Method" required>
+    The method of multi-factor authentication:
+    * Authenticator App
+    * Email
+    * SMS
+  </APIField>
+  <APIField name="Transport" optional>
+    The receiver address used for the multi-factor authentication method. This address does not have to be the same as the <InlineField>Email</InlineField> or <InlineField>Mobile phone</InlineField> of the user. The value depends on the <InlineField>Method</InlineField>:
+    * Email address
+    * Phone number
+  </APIField>
+  <APIField name="Identifier">
+    The Id of the multi-factor authentication method.
+  </APIField>
+  <APIField name="Last used">
+    Indicates which multi-factor authentication method was last used.
+  </APIField>
+  <APIField name="Action">
+    You can disable multi-factor authentication for a user by clicking the <Icon name="trash" /> button.
+  </APIField>
+</APIBlock>
+
+### Passkeys
+
+The passkeys tab allows you to manage the registered passkeys for a user.
+
+Learn more about [WebAuthn and passkeys](/docs/lifecycle/authenticate-users/passwordless/webauthn-passkeys).
+
+![User passkeys screen in the administrative user interface.](/img/docs/get-started/core-concepts/user-passkeys.png)
+
+#### Table Columns
+
+<APIBlock>
+  <APIField name="Display name" required>
+    The display name for the passkey selected during registration. The user should have selected this value.
+  </APIField>
+  <APIField name="Name" required>
+    A unique name meant to disambiguate passkeys with the same <InlineField>Display name</InlineField>.
+  </APIField>
+  <APIField name="Id" required>
+    The unique Id of the passkey.
+  </APIField>
+  <APIField name="Created">
+    The date and time when the passkey was created.
+  </APIField>
+  <APIField name="Last used">
+    The date and time when the passkey was last used.
+  </APIField>
+  <APIField name="Action">
+    You can view and delete a passkey by clicking the <Icon name="fa-search" /> or <Icon name="trash" /> buttons.
+  </APIField>
+</APIBlock>
+
+### Families
+
+The families tab allows you to view the families to which a user belongs.
+
+A family is a collection of users that are related to each other. For example, a family may consist of a parent and their children.
+
+![User families screen in the administrative user interface.](/img/docs/get-started/core-concepts/user-families.png)
+
+#### Table Columns
+
+<APIBlock>
+  <APIField name="Name" required>
+    The avatar and name of the user in the family.
+  </APIField>
+  <APIField name="Role" optional>
+    The roles assigned to the user on the family. Possible values are:
+    * Adult
+    * Child
+    * Teen
+  </APIField>
+  <APIField name="Age" required>
+    The age of the user. This is calculated from the <InlineField>Birthdate</InlineField>.
+  </APIField>
+  <APIField name="Family">
+    The family Id to which this relationship belongs.
+  </APIField>
+  <APIField name="Added on">
+    The date and time when the user was added to the family.
+  </APIField>
+  <APIField name="Action">
+    You can navigate to the user's profile by clicking the <icon name="address-card" /> button.
+  </APIField>
+</APIBlock>
+
+### Linked accounts
+
+The linked accounts tab allows you to manage the Identity Provider accounts which have been linked for this user.
+
+Learn more about [Identity Providers](/docs/get-started/core-concepts/identity-providers/) and  [Identity Provider links](/docs/lifecycle/authenticate-users/identity-providers/#linking-strategies).
+
+![User identity providers screen in the administrative user interface.](/img/docs/get-started/core-concepts/user-identity-providers.png)
+
+#### Table Columns
+
+<APIBlock>
+  <APIField name="Display name" required>
+    The display name of the linked account.
+  </APIField>
+  <APIField name="Identity Provider" required>
+    The identity provider to which this linked account belongs.
+  </APIField>
+  <APIField name="Created">
+    The date and time this linked account was created.
+  </APIField>
+  <APIField name="Last login">
+    The date and time this linked account was last used to log in.
+  </APIField>
+  <APIField name="Action">
+    You can view and delete a linked account by clicking the <Icon name="fa-search"/> or <Icon name="trash"/> buttons.
+  </APIField>
+</APIBlock>
+
+### Groups
+
+The groups tab allows you to manage the groups for a user.
+
+Groups are a way to group users in FusionAuth.
+They are tenant scoped.
+They may have application roles associated with them.
+Users with a registration for an application as well as a group membership will assume those roles upon login.
+
+Group membership is boolean in nature.
+A user is either in a group or out of a group.
+
+An example use case is a forum moderators group.
+The forum application can get the group memberships of any user.
+If the user is a member of the moderators group, the application can provide a 'flag' button on the forum software.
+
+Every user object contains an array of group memberships.
+You can search for all users with a given group membership.
+
+To get the group names of memberships for a user, you must use FusionAuth's proprietary APIs.
+Group names are not included in the user object.
+
+Learn more about [Groups](/docs/get-started/core-concepts/groups).
+
+![User groups screen in the administrative user interface.](/img/docs/get-started/core-concepts/user-groups.png)
+
+#### Table Columns
+
+<APIBlock>
+  <APIField name="Group" required>
+    The group to which the user belongs.
+  </APIField>
+  <APIField name="Member Id" optional>
+    The unique Id of this group member. This is not the user Id, but a unique Id for the membership.
+  </APIField>
+  <APIField name="Created" required>
+    The date and time this membership was created.
+  </APIField>
+  <APIField name="Action">
+    You can view and delete a group membership by clicking the <Icon name="fa-search"/> or <Icon name="trash" /> buttons.
+  </APIField>
+</APIBlock>
+
+### Entity grants
+
+The entity grants tab allows you to manage the entity grants for a user.
+
+Entities and grants allow you to model fine-grained permissions in a flexible manner.
+Entities are things, while grants are expressions of permissions granted to a user or thing to another thing.
+Entities have configurable permissions.
+Entities are a good fit when you have users that may need access to different assets which can't be easily modeled as applications.
+
+An example use case which could be modeled using entities is GitHub organizations.
+A user can belong to zero or more GitHub organizations and have different access levels in each one.
+But a user logs in to GitHub, not to a GitHub organization.
+Additionally, permissions will vary between organizations.
+A user may be an admin in one GitHub organization and have read-only access in another one.
+To implement this, you'd represent each GitHub organization as an entity in FusionAuth, and grant users permissions to each organization of which they are a member.
+
+It is very common to have an interstitial page when using entities.
+(This page is custom-built and is not provided by FusionAuth.)
+The user logs in to an application, and is then presented with a list of entities to which they've been granted permissions.
+The user selects an entity and then acts within the confines of that entity.
+
+You can search for all users granted access to a given entity.
+You can search for all entities for which a user has a grant.
+
+To search for grants on a user, you must use FusionAuth's proprietary APIs.
+Additionally, since entities cannot be 'logged into', they don't have any relationship with external identity providers.
+
+Learn more about [Entities and Grants](/docs/get-started/core-concepts/entity-management).
+
+![User entity grants screen in the administrative user interface.](/img/docs/get-started/core-concepts/user-entity-grants.png)
+
+#### Table Columns
+
+<APIBlock>
+  <APIField name="Id" required>
+    The Id of the grant.
+  </APIField>
+  <APIField name="Name" required>
+    The name of the entity.
+  </APIField>
+  <APIField name="Type" required>
+    The type of the entity.
+  </APIField>
+  <APIField name="Entity Id" required>
+    The Id of the target entity.
+  </APIField>
+  <APIField name="Permissions" required>
+    The set of permissions of this grant.
+  </APIField>
+  <APIField name="Created">
+    The date and time the grant was created.
+  </APIField>
+  <APIField name="Action">
+    You can edit and delete a grant by clicking the <Icon name="edit" /> or <Icon name="trash" /> buttons.
+  </APIField>
+</APIBlock>
+
+#### Entities Compared to Applications
+
+Entities, grants, and permissions are analogous to applications, registrations, and roles, but you can't log into an entity.
+
+Entities may also be useful if you have two or more applications in FusionAuth, but you want to group access in an orthogonal way while still allowing users to assume different roles.
+
+Suppose you have a point of sales application and a scheduling application for your retail chain.
+You have ten stores.
+You want to allow employees to log in to each of these applications, but you want to limit them to access only stores where they are currently working.
+But if they move between stores to cover for a shift or because of a transfer, you want to handle that use case as well.
+This means you can't use tenants to model stores.
+
+You could model the point of sales and scheduling applications as applications.
+Each store would be an entity, and after the user has logged into an application, you'd show them the stores to which they'd have access.
+
+You could also provide different roles in different stores.
+The scheduling software could know that Richard would have access to the scheduling application as a manager for store A, but only as an employee for store B.
+
+If you were to model this using only applications, you'd have to have twenty applications in FusionAuth (two for each store) and keeping those configurations synchronized might be difficult.
+And if you added more applications or stores, you'd face a combinatorial explosion of applications.
+
+### Recent logins
+
+The recent logins tab allows you to view the recent logins for a user. This includes when the user logged in, the IP address, and the application.
+
+![User recent logins screen in the administrative user interface.](/img/docs/get-started/core-concepts/user-recent-logins.png)
+
+#### Table Columns
+
+<APIBlock>
+  <APIField name="Application" required>
+    The application the user logged in to. If `-`, the user logged in to the tenant, but not to a specific application. This can occur when no application Id is provided, or if the user is not registered for the application.
+  </APIField>
+  <APIField name="Time">
+    The date and time when the login occurred.
+  </APIField>
+  <APIField name="IP Address" required>
+    The recorded IP address for this login record.
+  </APIField>
+</APIBlock>
+
+### Consent
+
+The consent tab allows you to manage the consent for a user.
+
+A FusionAuth consent is a definition of a permission that can be given to a user. At a minimum a consent has a name, and defines the minimum age of self-consent. A consent can then be granted to a user from a family member, or optionally, a user may self-consent if they meet the minimum age defined by the consent.
+
+Learn more about [Family API with Consents](/blog/2023/06/13/modeling-family-and-consents).
+
+![User consents screen in the administrative user interface.](/img/docs/get-started/core-concepts/user-consents.png)
+
+#### Table Columns
+
+<APIBlock>
+  <APIField name="Name" required>
+    The name of the consent.
+  </APIField>
+  <APIField name="Values" required>
+    The values of the consent.
+  </APIField>
+  <APIField name="Status" required>
+    The status of the consent.
+  </APIField>
+  <APIField name="Given on">
+    The date and time this consent was given.
+  </APIField>
+  <APIField name="Given by" required>
+    The Id of the user who gave this consent.
+  </APIField>
+  <APIField name="Action">
+    You can edit and revoke a consent by clicking the <Icon name="edit" /> or <Icon name="minus-circle-red" /> buttons.
+  </APIField>
+</APIBlock>
+
+### Sessions
+
+Users have sessions in FusionAuth. Sessions are represented by refresh tokens. Their lifetime is controlled by the tenant or application refresh token settings.
+
+These appear in the administrative user interface under the <Breadcrumb>Sessions</Breadcrumb> tab (you may need to scroll if your screen is small):
+
+![User session screen in the administrative user interface.](/img/docs/get-started/core-concepts/user-session.png)
+
+There are two primary types of sessions/tokens shown in this table:
+
+* Normal refresh tokens.
+* SSO token. While technically a refresh token, it is special and fully managed by FusionAuth. You may safely ignore this.
+
+With <InlineUIElement>Delete all sessions</InlineUIElement> button, you can revoke all sessions for a user.
+This is useful if you want to force a user to log in again.
+
+[Learn more about sessions and logging out](/docs/lifecycle/authenticate-users/logout-session-management).
+
+#### Table Columns
+
+<APIBlock>
+  <APIField name="Name" required>
+    The name of the session.
+  </APIField>
+  <APIField name="Type" required>
+    The type of the session.
+  </APIField>
+  <APIField name="IP address" required>
+    The IP address of the client that initiated this session.
+  </APIField>
+  <APIField name="Application" required>
+    The application to which this session belongs.
+  </APIField>
+  <APIField name="Created">
+    The date and time this session was created.
+  </APIField>
+  <APIField name="Last Accessed">
+    The date and time this session was last accessed.
+  </APIField>
+  <APIField name="Expiration" required>
+    The date and time this session will expire.
+  </APIField>
+  <APIField name="Action">
+    You can revoke a session by clicking the <Icon name="trash" /> button.
+  </APIField>
+</APIBlock>
+
+### Current actions
+
+The current actions tab allows you to view user actions that are currently in effect for this user. User actions can be used to flag a user, send emails and webhook notifications when they buy temporary access to a resource, or when they are temporarily locked out of their account.
+
+See [Using FusionAuth User Actions](/blog/2023/04/20/using-user-actions) for more information about user Actions.
+
+![User current actions screen in the administrative user interface.](/img/docs/get-started/core-concepts/user-current-actions.png)
+
+#### Table Columns
+
+<APIBlock>
+  <APIField name="Action" required>
+    The action that is currently taken on the user. If a reason was provided, it will be appended to the action name.
+  </APIField>
+  <APIField name="Comment" required>
+    The comment left by the actioner.
+  </APIField>
+  <APIField name="Start" required>
+    The date and time this action was started.
+  </APIField>
+  <APIField name="Expiration" required>
+    The date and time this action will expire.
+  </APIField>
+  <APIField name="Actioning user" required>
+    The user that is taking the action on the user.
+  </APIField>
+  <APIField name="Actioning user id" required>
+    The Id of the user that is taking the action on the user.
+  </APIField>
+  <APIField name="Action">
+    You can modify and cancel an action by clicking the <Icon name="edit"/> or <Icon name="x" /> buttons.
+  </APIField>
+</APIBlock>
+
+### History
+
+The history tab allows you to view expired user actions. Comments are also displayed here.
+
+![User history screen in the administrative user interface.](/img/docs/get-started/core-concepts/user-history.png)
+
+#### Table Columns
+
+<APIBlock>
+  <APIField name="Action" required>
+    The action that was taken on the user. If a reason was provided, it will be appended to the action name.
+  </APIField>
+  <APIField name="Comment" required>
+    The comment left by the actioner.
+  </APIField>
+  <APIField name="Start" required>
+    The date and time this action was started.
+  </APIField>
+  <APIField name="Expiration" required>
+    The date and time this action expired.
+  </APIField>
+  <APIField name="Actioning user" required>
+    The user that was taking the action on the user.
+  </APIField>
+  <APIField name="Actioning user id" required>
+    The Id of the user that was taking the action on the user.
+  </APIField>
+</APIBlock>
+
+### User data
+
+The user data tab allows you to view the user data for a user.
+
+User data is a key value store that allows you to store arbitrary data about a user. This data is not used by FusionAuth, it is simply stored and returned when the user is retrieved. FusionAuth does not provide a UI for managing user data. It is intended to be used by your application utilizing the API.
+
+![User data screen in the administrative user interface.](/img/docs/get-started/core-concepts/user-data.png)
+
+### Source
+
+The source tab allows you to view the user account as read-only JSON. This is equivalent to retrieving the user via [the User API](/docs/apis/users). This is useful for debugging and troubleshooting.
+
+![User source screen in the administrative user interface.](/img/docs/get-started/core-concepts/user-source.png)
+
+## User Scope
+
+A user is scoped to a tenant.
+
+Each FusionAuth tenant is a logical grouping of users, configurations, and applications.
+This means a user with the same identifier (email, username, etc.) in two different tenants is a different user.
+They can have different passwords, different identity provider links, and different attributes.
+You can search for users across tenants using the User Search API.
+
+An example use case is a private label todo SaaS application, where you want a user to sign up for two or more different instances of your SaaS and not know that there is a shared identity store behind them.
+For example, richard@piedpiper.com can sign up for the Pied Piper Todo application and the Hooli Todo Application with the same email address, but different passwords, MFA methods, and more.
+
+<CrossTenantUserAccess />
+
+Learn more about [Tenants](/docs/get-started/core-concepts/tenants).
+
+## What Makes a User Active
+
+FusionAuth includes reporting on the number of daily and monthly active users. What makes a user active during a time period is any of these events:
+
+* A user is created.
+* A user logs in.
+* The [Login Ping API](/docs/apis/login#update-login-instant) is used.
+* A JWT is refreshed using a refresh token.
+* A user is registered for an application.
+* A user is provisioned via SCIM.
+* SSO is used; this calls the login ping.
+
+<Aside type="note">
+Users imported with the [User Import API](/docs/apis/users#import-users) do not count as a monthly active user (MAU).
+
+Users whose profile data is updated via the [User Update API](/docs/apis/users#update-a-user) do not count as an MAU either.
+</Aside>
+
+There are many different ways to log in using FusionAuth, but all of the below trigger a login event:
+
+<LoginEvents />
+
+## User Search
+
+<Aside type="version">
+
+As of version 1.16.0, FusionAuth ships with a database search engine as the default.
+
+By selecting the appropriate [installation guide](/docs/get-started/download-and-install/fast-path), one can easily create a configuration with Elasticsearch pre-enabled.
+
+You can read more about the database and other search engines in the [search core concepts section](/docs/lifecycle/manage-users/search/search).
+
+</Aside>
+
+User search requests may be made through the [User Search API](/docs/apis/users#search-for-users) or within the FusionAuth admin UI under <Breadcrumb>Users</Breadcrumb>.
+
+### Configuration
+
+Please see our [search core concepts section](/docs/lifecycle/manage-users/search/search) for additional information on basic configuration. The remainder of this section will cover specifics as it relates to users and search.
+
+### Database Search Engine
+
+This configuration is lightweight, simplifies installation and system complexity, but comes with the tradeoffs of limited search capabilities and performance implications.
+
+The database search engine enables fuzzy search against the following fields of the user:
+
+* `firstName`
+* `lastName`
+* `fullName`
+* `email`
+* `username`
+
+![User Search with Database Search Engine](/img/docs/get-started/core-concepts/user-search-database.png)
+
+To learn more about the database search engine in general, view the [search core concepts section](/docs/lifecycle/manage-users/search/search).
+
+### Elasticsearch Search Engine
+
+Leveraging Elasticsearch for the user search engine enables advanced search capabilities on more numerous and granular data and a performance improvement for user search.
+
+#### Advanced Search UI
+
+FusionAuth provides an advanced user search interface that reveals how you may construct <InlineField>queryString</InlineField> and <InlineField>query</InlineField> parameters for the [User Search API](/docs/apis/users#search-for-users) and [User Bulk Delete API](/docs/apis/users#bulk-delete-users) with desired results. Navigate to <InlineUIElement>Users</InlineUIElement> from the left navigation and click on the <InlineUIElement>Advanced</InlineUIElement> link below the <InlineField>Search</InlineField> input field to begin. The [<InlineUIElement>Advanced</InlineUIElement>](/docs/apis/users#search-for-users) portion of this UI is available when the search engine type is configured to `elasticsearch`.
+
+We provide selectors for common search fields, as well as a free-form search field for constructing complex search queries. By selecting the <InlineField>Show Elasticsearch query</InlineField> toggle, you will see either the Elasticsearch query string or JSON search query that can be used as <InlineField>queryString</InlineField> and <InlineField>query</InlineField> parameters for the [User Search API](/docs/apis/users#search-for-users) and [User Bulk Delete API](/docs/apis/users#bulk-delete-users).
+
+Additionally, you may enter Elasticsearch query strings or raw JSON queries into the search field for testing purposes.
+
+The following screenshot shows a query string being constructed to search for users that belong to the `Moderators` group and are in the `Default` tenant:
+
+![User Search by Query String](/img/docs/get-started/core-concepts/user-search-query-string.png)
+
+When searching for users by application or any fields on an application, it is necessary to construct a JSON query due to the way the Elasticsearch mapping is defined.
+
+The following screenshot shows an Elasticsearch JSON query being constructed to search for users that match the email pattern `*@fusionauth.io`, are registered to the `Pied Piper` application, and are assigned the `dev` role:
+
+![User Search with JSON Query.](/img/docs/get-started/core-concepts/user-search-json-query.png)
+
+To learn more about the Elasticsearch search engine in general, view the [Elasticsearch search guide](/docs/lifecycle/manage-users/search/user-search-with-elasticsearch).
+
+<Aside type="version">
+  Prior to version 1.48.0 if you attempted to page past 10,000 results in the admin UI you would encounter an error.
+
+  Starting in version 1.48.0 you are able to page past the 10,000 results limit one page at a time.
+</Aside>
+
+When there are more than 10,000 results when using the Elasticsearch engine you have the option to navigate past the limit, however you may only do so one page at a time.
+
+![User Search with over 10,000 results first page.](/img/docs/get-started/core-concepts/user-search-extended-a.png)
+
+Clicking on the <InlineUIElement>Last</InlineUIElement> pagination button will take you to the page with the 10,000th result. You will then have the option to click on the <InlineUIElement>Next</InlineUIElement> button to continue paging forward.
+
+![User Search with over 10,000 results paged to 10,000.](/img/docs/get-started/core-concepts/user-search-extended-b.png)
+
+You may continue to page forward using <InlineUIElement>Next</InlineUIElement> until you reach the last of the search results.
+
+![User Search with over 10,000 results paged to end.](/img/docs/get-started/core-concepts/user-search-extended-c.png)
+
+For more information see [Extended Pagination](/docs/lifecycle/manage-users/search/search#extended-pagination)
+
+#### Limitations On Changing Data Field Types
+
+<DataFieldDataTypeChanges />
+
+## Segmenting Users
+
+Often you want to segment or separate your users.
+You have options to do so in FusionAuth.
+They each have tradeoffs.
+Here's a table with the strengths and challenges of each option.
+
+<UserSegmentTable showLinks="true" />
+
+### Tenants
+
+Each FusionAuth tenant is a logical grouping of users, configuration and applications.
+Users are tenant scoped.
+This means a user with the same identifier (email, username, etc) in two different tenants is a different account.
+They can have different passwords, identity provider links and profile attributes.
+You can search for users across tenants using the [User Search API](/docs/apis/users#search-for-users).
+
+An example use case is a private label SaaS application for managing todos and tasks. You want a user to sign up for two or more different instances of your SaaS and never know that there is a shared identity store behind them.
+For example, richard@piedpiper.com can sign up for the Pied Piper Todo application and the Hooli Todo Application with the same email address, but different passwords, MFA methods and more.
+
+<CrossTenantUserAccess />
+
+Learn more about [Tenants](/docs/get-started/core-concepts/tenants).
+
+### Applications and Registrations
+
+Applications in FusionAuth are anything a user can log in to: mobile applications, webapps, COTS applications, APIs and desktop applications.
+Applications are tenant scoped.
+You associate a user with an application using a registration.
+You may also optionally associate one or more roles with each user's registration.
+
+An example use case is a single company, where you have a forum, a todo application and an accounting application.
+If you have three users, Richard, Monica and Jared, you can grant Richard access to all three applications, Monica access to the forum and todo applications, and Jared access to the accounting application.
+
+Prevent a user from logging into an application for which they are not registered by [checking the claims in the token](/docs/get-started/core-concepts/authentication-authorization) and enabling the <InlineField>Require registration</InlineField> setting for the application.
+
+Applications also may have associated Identity Providers, such as Google or OIDC providers.
+When so configured, a user may log in to an application with the Identity Provider.
+
+Every user object contains an array of application registrations.
+You can search for all users with a given registration.
+
+Learn more about [Applications](/docs/get-started/core-concepts/applications).
+
+### Groups
+
+Groups are a way to group users in FusionAuth.
+They are tenant scoped.
+They may have application roles associated with them.
+Users with a registration for an application as well as a group membership will assume those roles upon login.
+
+Group membership is boolean in nature.
+A user is either in a group or out of a group.
+
+An example use case is a forum moderators group.
+The forum application can get the group memberships of any user.
+If the user is a member of the moderators group, the application can provide a 'flag' button on the forum software.
+
+Every user object contains an array of group memberships.
+You can search for all users with a given group memberships.
+
+One issue is that to get the group names of memberships for a user, you must use FusionAuth's proprietary APIs.
+Group names are not included in the user object.
+
+Learn more about [Groups](/docs/get-started/core-concepts/groups).
+
+### Entities and Grants
+
+Entities and grants allow you to model fine grained permissions in a flexible manner.
+Entities are things, while grants are expressions of permissions granted to a user or thing to another thing.
+Entities have configurable permissions.
+Entities are a good fit when you have users that may need access to different assets which can't be easily modeled as applications.
+
+An example use case which could be modeled using entities is GitHub organizations.
+A user can belong to zero or more GitHub organizations and have different access levels in each one.
+But a user logs in to GitHub, not to a GitHub organization.
+Additionally, permissions will vary between organizations.
+A user may be an admin in one GitHub organization and have read-only access in another one.
+To implement this, you'd represent each GitHub organization as an entity in FusionAuth, and grant users permissions to each organization of which they are a member.
+
+It is very common to have an interstitial page when using entities.
+(This page is custom built and is not provided by FusionAuth.)
+The user logs in to an application, and is then presented with a list of entities to which they've been granted permissions.
+The user selects an entity and then interacts with the permissions they have been granted to that entity.
+
+You can search for all users granted access to a given entity.
+You can search for all entities for which a user has a grant.
+
+To search for grants on a user, you must use FusionAuth's proprietary APIs.
+Additionally, since entities cannot be 'logged into', they don't have any relationship with external Identity Providers.
+
+Learn more about [Entities and Grants](/docs/get-started/core-concepts/entity-management).
+
+#### Entities Compared to Applications
+
+Entities, grants and permissions are analogous to applications, registrations and roles, but you can't log in to an entity.
+
+Entities may also be useful if you have two or more applications in FusionAuth, but you want to control access in an orthogonal way while still allowing users to assume different roles.
+
+Suppose you have a point of sales application and a scheduling application for your retail chain.
+You have ten stores.
+You want to allow employees to log in to each of these applications, but you want to limit them to access only stores where they are currently working.
+But if they move between stores to cover for a shift or because of a transfer, you want to handle that use case as well.
+This means you can't use tenants to model stores.
+
+To solve this, model the point of sales and scheduling applications as applications.
+Each store would be an entity, and after the user has logged into an application, you'd show them the stores to which they'd have access.
+
+With entities, you can give users different levels of access in different stores. 
+The scheduling software can query the FusionAuth API or examine the token and allow Richard access to the scheduling application as a manager for store A but only as an employee for store B.
+
+If you were to model this using only applications, you'd need twenty applications in FusionAuth (two for each store). Keeping those configurations synchronized might be difficult.
+And if you added more applications, you'd face a combinatorial explosion of applications.
+
+### The user.data Field
+
+You can add arbitrary JSON to the `user.data` field. You can do this using the [User API](/docs/apis/users), in the admin UI with [custom admin forms](/docs/lifecycle/manage-users/admin-forms) or allow users to do so using [self-service account management](/docs/lifecycle/manage-users/account-management/). The `user.data` fields can be read in a [JWT Populate Lambda](/docs/extend/code/lambdas/jwt-populate) and pushed into the tokens generated during authentication.
+
+The downstream application can examine the tokens and determine access.
+
+A variant of this is using [Lambda HTTP Connect](/docs/extend/code/lambdas/lambda-remote-api-calls) which can pass a user Id to an external service during authentication and retrieve user attributes. This has the advantage of avoiding synchronization at the cost of increased latency during the authentication event. The exact amount of latency depends on API responsiveness.
+
+This approach works well when you want FusionAuth to handle authentication but keep all user segmentation logic in your application.
+
+An example use case for `user.data` is if you have custom authorization logic in your application based on user profile data such as `org_id` and `org_type`. At authentication time, push these attributes into your token using a JWT populate lambda. Then pass the token to your client, and have the client present the token to your application. The application can then examine the `org_id` and `org_type` profile attributes and make an authorization decision based on that custom logic.
+
+Learn more about [Searching user data](/docs/lifecycle/manage-users/search/user-search-with-elasticsearch) and the [JWT Populate Lambda](/docs/extend/code/lambdas/jwt-populate).
+
+#### The user.data Schema
+
+<DataFieldDataTypeChanges />

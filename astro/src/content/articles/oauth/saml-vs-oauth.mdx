@@ -1,0 +1,173 @@
+---
+title: SAML vs. OAuth - Understand Differences and Benefits
+description: SAML and OAuth are two systems that make secure user access more convenient and secure. Although they’re superficially similar, under the hood there are more differences than you might expect.
+image: advice/saml-vs-oauth/saml-vs-oauth.png
+author: James Konik
+section: OAuth
+icon: /img/icons/saml-vs-oauth.svg
+darkIcon: /img/icons/saml-vs-oauth-dark.svg
+---
+import Textarea from "../../../components/Textarea.astro";
+
+Login is the first major step in your relationship with your users. Making it go smoothly reflects well on your applications. It also needs to be secure, but the requirements for identifying users safely are complex.
+
+Using a defined protocol lets you give users a secure, established process for accessing privileged resources. [SAML](https://en.wikipedia.org/wiki/Security_Assertion_Markup_Language) and [OAuth](/articles/oauth/modern-guide-to-oauth) are two systems that make allowing access more convenient and secure. Although they’re superficially similar, under the hood there are more differences than you might expect.
+
+OAuth was originally developed by engineers from Google and Twitter. It lets you use login credentials for large sites—like Google or Twitter—to log in to other applications. That means you can carry the same credentials around the internet instead of having to create new ones for each site you visit.
+
+SAML, or Security Assertion Markup Language, also lets you log in to multiple sites using a [single sign-on, or SSO](/blog/2022/09/08/how-sso-works). It delivers assertions in XML that give information to authenticate users. Assertions can also include [attributes or authorization decisions](https://www.varonis.com/blog/what-is-saml/).
+
+[![The Modern Guide to OAuth](/img/cta/modern-guide-2.png)](/ebooks/modern-guide-to-oauth?utm_medium=cta&utm_source=articles&utm_campaign=saml_vs_oauth)
+
+SAML is primarily an authentication system, while OAuth is an authorization system. [*Authentication*](/articles/authentication/common-authentication-implementation-risks) is about confirming the user’s identity. [*Authorization*](/docs/get-started/core-concepts/authentication-authorization#overview) is about deciding what services they can access.
+
+## What Are Common SAML and OAuth Workflows?
+
+Let’s take a look at how the two systems let you access websites and applications. These are common systems, though [other workflows are possible](https://www.ibm.com/docs/en/tfim/6.2.2.6?topic=overview-oauth-20-workflow).
+
+## What Is Security Assertion Markup Language (SAML)?
+
+When a user interacts with SAML, both a service provider and [identity provider](/docs/apis/identity-providers/) are involved. The service provider is typically the website the user is interacting with.
+
+If the user tries to access a protected resource, or tries to log in, the service provider sends the browser a SAML request, which the browser then uses to connect to the identity provider. The SSO service asks the user for credentials, and the user provides their login details, such as a username and password.
+
+Here’s a diagram showing how single sign-on works:
+
+![Diagram showing flow between the user apps and identity provider when using multiple applications.](/img/articles/saml-vs-oauth/diagram-showing-flow-between-the-user-apps-and-identity-provider-when-using-multiple-applications.png)
+<p class="italic not-prose text-blue-600 text-center dark:text-orange-200"> Diagram showing flow between the user apps and identity provider when using multiple applications. </p>
+
+When the right credentials are provided, the identity provider responds with a SAML response indicating what level of access the user has the rights to. The user can then pass these details to the service provider to use their services.
+
+If the user is already authenticated, they’re not asked for their credentials, which saves time and improves the user experience.
+
+## What is Open Authorization (OAuth)?
+
+There are two versions of OAuth, and there are [differences](https://www.synopsys.com/blogs/software-security/oauth-2-0-vs-oauth-1-0/) between them. This article focuses on version 2.0, which has been around since 2012. An updated version 2.1 [has been proposed](/articles/oauth/differences-between-oauth-2-oauth-2-1) but not yet approved.
+
+With OAuth, a user making a login or resource request is redirected to an authorization server, which is run by a company like Google, Twitter, or Facebook. Companies can also run their own authorization server. The authorization server presents the user with a familiar login screen. However, the login screen won’t grant access directly to that service. Rather, it allows the site making the redirect to access the user’s data supplied by that service.
+
+There are several possible workflows with OAuth. In the deprecated implicit grant, when the user provides appropriate credentials, the authorization server provides them with an access token and redirects them to a URI originally supplied by the client.
+
+In the [authorization code grant workflow](https://www.oauth.com/oauth2-servers/server-side-apps/authorization-code/), the authorization server redirects the user back to the original application with a code in the URI. That application requests an access token from the authentication server, using the code and their own secret credentials.
+
+Since this grant avoids always sending the access token directly to the client, you have more architectural flexibility. In addition, you don’t send the token over an accessible channel like the URL query string, which  prevents malicious access if the user’s device is compromised.
+
+Access tokens are typically in JSON Web Token (JWT) format, but can be in [other formats](https://oauth.net/2/bearer-tokens/) as well, even regular text.
+
+[JWT Debugger](/dev-tools/jwt-decoder) is a tool that shows you how the token and the information it contains relate to each other.
+
+Below is a sample JWT you can copy and paste into the decoder to try it out.
+
+```
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo
+```
+
+<form className="gap-y-6 grid grid-cols-1 mt-8">
+  <Textarea id="encoded-textarea" label="Token" name="encoded-textarea" required={false} instructions="Paste a JSON web token into the text area above"/>
+  <Textarea id="header-textarea" label="Header" name="header-textarea" required={false}/>
+  <Textarea id="payload-textarea" label="Payload" name="payload-textarea" required={false}/>
+</form>
+
+The access token is then sent to the resource server, which verifies it with the authorization server before providing access to the user.
+
+This allows users to gain access through a familiar UI, and their primary credentials are shared only with a service they already know and trust. The resource owner gets to take advantage of the authorization platform’s established systems and recognition. The authorization provider gets its service used more widely, and may also benefit from getting added information about the user’s activities.
+
+This information is a core source of revenue for companies like Facebook. While some users may not be keen on the [potential lack of privacy](https://www.wired.com/story/security-risks-of-logging-in-with-facebook/), those users are [in the minority](https://www.webmarketingpros.com/gigya-survey-shows-social-login-use-skyrocketing-on-sites-and-apps/). However, these concerns are part of why some companies are choosing to run their own OAuth servers.
+
+## What Are the Differences Between SAML and OAuth?
+
+Let’s talk about what function each system performs.
+
+SAML is primarily for authentication, which means proving the user is who they say they are.
+
+There are [several common places](/docs/get-started/core-concepts/authentication-authorization) where we see this in action. While entering a username and password is the most obvious example, unlocking your phone with a passcode or using a biometric scanner are also forms of authentication. With SAML authentication, the identity provider returns a SAML response confirming the user’s identity.
+
+OAuth, by contrast, is an authorization system. Here, the system determines what permissions the user gets.
+
+Though authentication and authorization are different, they’re often used together, with one system for each type of functionality. Apps often need to both authenticate users and then determine what they can do, though in some cases, such as logging into a streaming service or other subscription-based platform, authentication might simply grant them access to resources.
+
+OAuth is frequently used together with [OpenID Connect](https://openid.net/connect/), or OIDC. This allows you to authenticate users and get their profile information, such as [contact data or personal details](/docs/lifecycle/authenticate-users/oauth/tokens#id-token), while using OAuth for authorization.
+
+You can experiment with OAuth on the [OAuth Tools](https://oauth.tools/) website, as in the screenshot below:
+
+![Refresh token demo from OAuth Tools.](/img/articles/saml-vs-oauth/refresh-token-demo-from-oauth-tools.png)
+<p class="italic not-prose text-blue-600 text-center dark:text-orange-200">Refresh token demo from OAuth Tools.</p>
+
+SAML, though an authentication-based protocol, can also be used to provide other information, and these attributes can be used to [provide role information](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_saml_assertions.html), providing authorization functionality.
+
+Using OAuth for authorization together with SAML for authentication is perfectly feasible. The [Microsoft identity platform](https://docs.microsoft.com/en-us/azure/active-directory/develop/authentication-vs-authorization), for example, uses them both.
+
+## What are Some Typical Use Cases for SAML and OAuth?
+
+Let’s look at some of the ways these systems are used.
+
+### Typical SAML Use Cases
+
+SAML allows users to conveniently access multiple resources [safely and securely](https://www.onelogin.com/learn/saml). It can reduce support requests since users don’t need to create and store credentials for every service they use. It tends to be popular with groups that need to regularly grant access to specific sets of resources, as it minimizes the work involved.
+
+#### Enterprise Access
+
+SAML is widely associated with large organizations. You can use it to provide users with access to a system, and use its attributes to control what exactly they can do. You can also use attributes to group users, and then [dynamically adjust what they have access to](https://documentation.solarwinds.com/en/success_center/appoptics/content/shared/user_roles.htm).
+
+#### Single Sign-On between Separate Platforms
+
+Single sign-on (SSO) is SAML’s most common use, allowing users to [authenticate across multiple domains](https://medium.com/@winma.15/why-saml-security-assertion-markup-language-3d961a333fd7) without needing new credentials each time.
+
+If your company uses SAML, it can assign you credentials that work with other platforms you’ll need at work, such as [Salesforce or Jira](https://auth0.com/blog/how-saml-authentication-works/).
+
+#### Large Cloud Platforms
+
+Large cloud platforms often allow users to sign in via SAML. In addition to being convenient, it lets admins easily assign roles and permissions. Different team members get access to the appropriate resources, and changes to roles are easy to make.
+
+[Zendesk](/docs/lifecycle/authenticate-users/integrations/saml/zendesk) is a typical example. You can [add attributes](https://support.zendesk.com/hc/en-us/articles/4408887505690-Enabling-SAML-single-sign-on) to SAML-enabled users, allowing you to store things like contact details, team membership, access levels, or whatever other data you require.
+
+
+### Typical OAuth Use Cases
+
+OAuth allows developers to authenticate users without demanding their credentials. This lets them learn more about their users, but doesn’t require that users create a new login or provide details they’ve entered elsewhere. Perhaps more importantly, it also means developers can provide key functionality without having to build it themselves.
+
+#### Web Applications
+
+If you’re building an app, you can use OAuth to let users access it securely, regardless of what framework you’re using. Getting security right is hard, but integrating a pre-existing solution doesn’t have to be.
+
+For example, if you’re [developing a React app](/blog/2021/11/11/how-to-authenticate-your-react-app/), you can rely on OAuth to grant users access.
+
+Using a third-party authorization system can make the development of secure applications faster and easier. Logging in with Facebook or Google makes your site more attractive to users who trust those brands, and lets them avoid the friction point of having to create new credentials.
+
+#### Mobile Devices
+
+Mobile users can access OAuth-enabled applications with existing credentials. Since they log in via the OAuth provider, their data is kept private from the application they’re logging in to.
+
+Dealing with multiple passwords is fiddly and awkward on mobile, and storing them is a security risk. [Using a social login](https://frontegg.com/blog/social-logins) solves those problems.
+
+There are established [security best practices](https://oauth.net/2/native-apps/) when using OAuth with mobile, such as not using embedded views with third-party applications. You can also use PKCE, or [Proof Key for Code Exchange](https://oauth.net/2/pkce/), to add further protection against some types of attacks.
+
+#### Device Authorization
+
+[OAuth device authorization](/articles/oauth/oauth-device-authorization) allows you to authenticate on consumer devices. If you’re using Apple TV, a game console, or a similar smart device, entering login details is awkward and error-prone.
+
+With OAuth device authorization, your smart device shows you a URL and a code. You use another device such as a PC or smartphone to access the URL, sign into the relevant service, and add the code.
+
+The smart device can detect this, and then [you’re authorized](https://www.oauth.com/oauth2-servers/device-flow/user-flow/). It’s quick and easy, and saves you from having to enter your login data on the original device.
+
+#### Single-Page Applications
+
+Single-page applications (SPAs) contain all their logic on the frontend. That makes regular authentication difficult. All the code for an SPA runs in the browser, so [client secrets can’t be kept confidential](https://www.oauth.com/oauth2-servers/single-page-apps/).
+
+You can sidestep this problem by using OAuth with a backend for frontend (BFF) component. The component can manage OAuth tokens for your SPA [using encrypted, same-site cookies](https://curity.io/resources/learn/spa-best-practices/).
+
+## When Should You Use SAML or OAuth?
+
+SAML and OAuth are different solutions to similar problems. They’re different animals, but their territories overlap at times, and you can frequently find them together.
+
+Understanding what they offer helps you choose which to use, and when.
+
+For modern applications deploying across multiple devices, the [flexibility and ease of use](https://auth0.com/intro-to-iam/saml-vs-oauth/) of OAuth make it a winner. If you augment it with OIDC, you get the benefits of secure authentication and authorization with easily implemented third-party services.
+
+SAML is sometimes more practical for large organizations in enterprise scenarios, enabling your users to access multiple services conveniently. However, the complexity and age of the specification and the use of XML as the transport layer can make it more difficult to use SAML.
+
+FusionAuth supports both of these important protocols. FusionAuth can be used as both SAML identity provider and service provider and as an OAuth and OIDC authorization server and resource server. However, in general, if you have the choice, you should use OAuth paired with OIDC, as it is the more modern protocol and is continually improving. Use SAML where you are required to.
+
+<link rel="stylesheet" href="/css/codemirror-5.17.0.css"/>
+<script src="/js/codemirror-min-5.17.0.js"></script>
+<script type="text/javascript" src="/js/JWTDebugger-0.1.0.js" defer></script>

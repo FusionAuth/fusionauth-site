@@ -1,0 +1,186 @@
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import InlineField from 'src/components/InlineField.astro';
+import JSON from 'src/components/JSON.astro';
+import IdentityProviderTenantConfiguration from 'src/content/docs/apis/identity-providers/_identity-provider-tenant-configuration.mdx';
+import IdentityProviderDebugRequestParameter from 'src/content/docs/apis/identity-providers/_identity-provider-debug-request-parameter.mdx';
+import IdentityProviderReconcileidRequestParameter from 'src/content/docs/apis/identity-providers/_identity-provider-reconcileid-request-parameter.mdx';
+import IdentityProviderLinkingStrategyRequestParameter from 'src/content/docs/apis/identity-providers/_identity-provider-linking-strategy-request-parameter.mdx';
+import IdentityProviderLoginMethodRequestParameter from 'src/content/docs/apis/identity-providers/_identity-provider-login-method-request-parameter.mdx';
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="identityProvider.applicationConfiguration" type="Map<UUID,Object>" optional>
+    The configuration for each Application that the identity provider is enabled for.
+  </APIField>
+  <APIField name="identityProvider.applicationConfiguration[applicationId].apiMode" type="String" optional since="1.44.0" renderif={props.idp_type === 'Steam'}>
+    This is an optional Application specific override for the top level <InlineField>apiMode</InlineField>.
+  </APIField>
+  <APIField name="identityProvider.applicationConfiguration[applicationId].buttonText" type="String" optional>
+    This is an optional Application specific override for the top level <InlineField>buttonText</InlineField>.
+
+    {props.idp_type === 'Google' && <>
+      <p class="text-green-600">Since 1.44.0</p>
+      The <InlineField>identityProvider.applicationConfiguration[applicationId].buttonText</InlineField> value may only be used when the <InlineField>identityProvider.loginMethod</InlineField> is set to <code>UseRedirect</code>. The button text is managed by Google for all other configurations. Google allows for minor adjustments using their API. You may specify any valid API parameter in the <InlineField>identityProvider.properties.button</InlineField> configuration.
+    </>}
+  </APIField>
+  <APIField name="identityProvider.applicationConfiguration[applicationId].client_id" type="String" optional>
+    This is an optional Application specific override for the top level <InlineField>client_id</InlineField>.
+  </APIField>
+  <APIField name="identityProvider.applicationConfiguration[applicationId].client_secret" type="String" optional renderif={props.idp_type !== 'Steam'}>
+    This is an optional Application specific override for the top level <InlineField>client_secret</InlineField>.
+  </APIField>
+  <APIField name="identityProvider.applicationConfiguration[applicationId].createRegistration" type="Boolean" optional defaults="true">
+    Determines if a UserRegistration is created for the User automatically or not. If a user doesn't exist in FusionAuth and logs in through an identity provider, this boolean controls whether or not FusionAuth creates a registration for the User in the Application they are logging into.
+  </APIField>
+  <APIField name="identityProvider.applicationConfiguration[applicationId].enabled" type="Boolean" optional defaults="false">
+    Determines if this identity provider is enabled for the Application specified by the `applicationId` key.
+  </APIField>
+
+  { props.idp_type === 'Google' && <>
+
+  <APIField name="identityProvider.applicationConfiguration[applicationId].properties" type="Object" optional since="1.44.0">
+    This is an optional Application specific override for the top level <InlineField>properties</InlineField>.
+  </APIField>
+  <APIField name="identityProvider.applicationConfiguration[applicationId].properties.api" type="String" optional since="1.44.0">
+    This is an optional Application specific override for the top level <InlineField>properties.api</InlineField>.
+
+    If this Application's <InlineField>loginMethod</InlineField> is set to <code>UsePopup</code>, or the Application configuration is unset and the top level <InlineField>loginMethod</InlineField> is set to <code>UsePopup</code>, and this value contains the conflicting <code>ux_mode=redirect</code> property, that single property will be replaced with <code>ux_mode=popup</code>.
+
+    <p class="text-green-600">Since 1.45.1</p>
+    The properties specified in this field will override individual properties on the top level <InlineField>properties.api</InlineField> rather than overriding the entire <InlineField>properties.api</InlineField> value.
+  </APIField>
+  <APIField name="identityProvider.applicationConfiguration[applicationId].properties.button" type="String" optional since="1.44.0">
+    This is an optional Application specific override for the top level <InlineField>properties.button</InlineField>.
+
+    <p class="text-green-600">Since 1.45.1</p>
+    The properties specified in this field will override individual properties on the top level <InlineField>properties.button</InlineField> rather than overriding the entire <InlineField>properties.button</InlineField> value.
+  </APIField>
+
+  </>}
+
+  <APIField name="identityProvider.applicationConfiguration[applicationId].scope" type="String" optional renderif={props.idp_type !== 'Steam'}>
+    This is an optional Application specific override for the top level <InlineField>scope</InlineField>.
+
+    { props.idp_type === 'Google' && <>
+      <p class="text-green-600">Since 1.44.0</p>
+      The <InlineField>identityProvider.applicationConfiguration[applicationId].scope</InlineField> value may only be used when the <InlineField>identityProvider.loginMethod</InlineField> is set to <code>UseRedirect</code>. The <code>email</code>, <code>profile</code>, and <code>openid</code> scopes will always be requested for all other configurations.
+    </>}
+  </APIField>
+
+  <APIField name="identityProvider.applicationConfiguration[applicationId].webAPIKey" type="String" optional renderif={props.idp_type === 'Steam'}>
+    This is an optional Application specific override for the top level <InlineField>webAPIKey</InlineField>.
+  </APIField>
+  <APIField name="identityProvider.apiMode" type="String" optional since="1.44.0" defaults="Public" renderif={props.idp_type === 'Steam'}>
+    Determines which Steam API to utilize.
+
+    The possible values are:
+
+     * `Partner` - The Steam partner API is used. `https://partner.steam-api.com`
+     * `Public` - The public Steam API is used. `https://api.steampowered.com`
+
+    The only functional difference between these two APIs is that the public API is rate limited, and the partner API is not. If you are a Steam partner, you will want to set this value to `Partner`. Prior to version `1.44.0`, the public API was always used.
+  </APIField>
+
+  <APIField name="identityProvider.buttonText" type="String" required>
+    The top-level button text to use on the FusionAuth login page for this Identity Provider.
+
+    { props.idp_type === 'Google' && <>
+      <p class="text-green-600">Since 1.44.0</p>
+      The <InlineField>identityProvider.buttonText</InlineField> value may only be used when the <InlineField>identityProvider.loginMethod</InlineField> is set to <code>UseRedirect</code>. The button text is managed by Google for all other configurations. Google allows for minor adjustments using their API. You may specify any valid API parameter in the <InlineField>identityProvider.properties.button</InlineField> configuration.
+    </>}
+  </APIField>
+  <APIField name="identityProvider.client_id" type="String" required>
+    The top-level {props.idp_display_name} client id for your Application. This value is retrieved from the {props.idp_display_name} developer website when you setup your {props.idp_display_name} developer account.
+  </APIField>
+  <APIField name="identityProvider.client_secret" type="String" required renderif={props.idp_display_name !== 'Steam'}>
+    The top-level client secret to use with the {props.idp_display_name} Identity Provider when retrieving the long-lived token. This value is retrieved from the {props.idp_display_name} developer website when you setup your {props.idp_display_name} developer account.
+  </APIField>
+
+  <IdentityProviderDebugRequestParameter idp_since={props.idp_since} />
+
+  <APIField name="identityProvider.emailClaim" type="String" optional defaults="email" renderif={props.idp_type === 'Nintendo'}>
+    An optional configuration to modify the expected name of the claim returned by the {props.idp_display_name} Identity Provider that contains the email address.
+  </APIField>
+  <APIField name="identityProvider.enabled" type="Boolean" optional defaults="false">
+    Determines if this provider is enabled. If it is false then it will be disabled globally.
+  </APIField>
+
+  <IdentityProviderReconcileidRequestParameter idp_since={props.idp_since} />
+
+  <IdentityProviderLinkingStrategyRequestParameter idp_since={props.idp_since} idp_linking_strategy={props.idp_linking_strategy} idp_display_name={props.idp_display_name}/>
+
+  { props.idp_login_method && <IdentityProviderLoginMethodRequestParameter idp_since={props.idp_since}
+                                                                           idp_display_name={props.idp_display_name}
+                                                                           idp_type={props.idp_type} /> }
+
+  <APIField name="identityProvider.properties" type="Object" optional since="1.44.0" renderif={props.idp_type === 'Google'}>
+    An object to hold configuration parameters for the [Google Identity Services API](https://developers.google.com/identity/gsi/web/reference/html-reference). See the <InlineField>identityProvider.properties.api</InlineField> and <InlineField>identityProvider.properties.button</InlineField> fields for more detail on format and configurable values.
+  </APIField>
+  <APIField name="identityProvider.properties.api" type="String" optional since="1.44.0" renderif={props.idp_type === 'Google'}>
+    Google Identity Services login API configuration in a properties file formatted String. Any `attribute` from [Google's documentation](https://developers.google.com/identity/gsi/web/reference/html-reference#element_with_id_g_id_onload) can be added. Properties can be referenced in templates that support Google login to initialize the API via HTML or JavaScript. The properties specified in this field should not include the `data-` prefix on the property name.
+
+    If the <InlineField>identityProvider.loginMethod</InlineField> is set to `UsePopup` and this value contains the conflicting `ux_mode=redirect` property, that single property will be replaced with `ux_mode=popup`.
+
+    If omitted, this value will default to the following properties:
+
+    _Default API Configuration Properties_
+
+    ```properties title=
+    auto_prompt=true
+    auto_select=false
+    cancel_on_tap_outside=false
+    context=signin
+    itp_support=true
+    ```
+  </APIField>
+  <APIField name="identityProvider.properties.button" type="String" optional since="1.44.0" renderif={props.idp_type === 'Google'}>
+    Google Identity Services button configuration in a properties file formatted String. Any attribute from [Google's documentation](https://developers.google.com/identity/gsi/web/reference/html-reference#element_with_class_g_id_signin) can be added. Properties can be referenced in templates that support Google login to render the login button via HTML or JavaScript. The properties specified in this field should not include the `data-` prefix on the property name.
+
+    If omitted, this value will default to the following properties:
+
+    _Default Button Properties_
+
+    ```properties
+    logo_alignment=left
+    shape=rectangular
+    size=large
+    text=signin_with
+    theme=outline
+    type=standard
+    ```
+  </APIField>
+
+  <APIField name="identityProvider.scope" type="String" optional renderif={props.idp_type !== 'Steam'}>
+    The top-level scope that you are requesting from {props.idp_display_name}.
+
+    { props.idp_type === 'Google' && <>
+      <p class="text-green-600">Since 1.44.0</p>
+      The <InlineField>identityProvider.scope</InlineField> value may only be used when the <InlineField>identityProvider.loginMethod</InlineField> is set to <code>UseRedirect</code>. The <code>email</code>, <code>profile</code>, and <code>openid</code> scopes will always be requested for all other configurations.
+    </>}
+  </APIField>
+
+  <IdentityProviderTenantConfiguration idp_type={props.idp_type} idp_since={props.idp_since} optional_tag={props.optional_tag} />
+
+  <APIField name="identityProvider.type" type="String" required>
+    This field must be set to <code>{props.idp_type}</code>.
+  </APIField>
+  <APIField name="identityProvider.webAPIKey" type="String" required renderif={props.idp_type === 'Steam'}>
+    The top-level web API key to use with the {props.idp_display_name} Identity Provider when retrieving the player summary info. This value is retrieved from the {props.idp_display_name} developer website when you setup your {props.idp_display_name} developer account.
+  </APIField>
+
+  { props.idp_type === 'Nintendo' && <>
+
+  <APIField name="identityProvider.uniqueIdClaim" type="String" optional defaults="id">
+    An optional configuration to modify the expected name of the claim returned by the {props.idp_display_name} Identity Provider that contains the user Id.
+  </APIField>
+  <APIField name="identityProvider.usernameClaim" type="String" optional defaults="preferred_username">
+    An optional configuration to modify the expected name of the claim returned by the {props.idp_display_name} Identity Provider that contains the username.
+  </APIField>
+
+  </>}
+</APIBlock>
+
+<JSON title={" Example " + props.idp_display_name + " Request JSON"} src={"identity-providers/" + props.idp_lowercase +"-request.json"}/>
+

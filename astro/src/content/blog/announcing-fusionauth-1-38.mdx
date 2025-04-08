@@ -1,0 +1,96 @@
+---
+publish_date: 2022-09-09 
+title: Announcing FusionAuth 1.38
+description: This release includes bug fixes and group membership webhooks.
+authors: Dan Moore
+image: /img/blogs/release-1-38/fusionauth-1-38.png
+categories: Release Updates, Product
+tags: webhook, release notes, changelog, updates
+excerpt_separator: "{/* more */}"
+---
+
+We're excited to announce the version 1.38 releases of FusionAuth. These shipped in mid-August, 2022. These releases include bug fixes and group webhooks.
+
+{/* more */}
+
+There are a number of new features, enhancements, and bug fixes. As always, please see the [release notes](/docs/release-notes/archive#version-1-38-1) for a full breakdown of the changes between 1.37 and 1.38, including any schema changes. 
+
+I wanted to highlight the big addition, which is group webhooks.
+
+## Why use webhooks
+
+It's worth stepping back a bit and talking about why webhooks are important.
+
+FusionAuth is always an architectural component which integrates with other parts of your application. We love FusionAuth, but you'd never build an entire application on it without using other frameworks such as Spring, Django or Rails.
+
+This means that FusionAuth needs to play nicely with other pieces of software. It does this in a number of different ways, including:
+
+* Implementing well known standards like [SAML](/docs/lifecycle/authenticate-users/saml/), [OAuth2, and OIDC](/docs/lifecycle/authenticate-users/oauth/).
+* Providing APIs for all the things. FusionAuth offers a great default login experience for 80% of use cases, but for the other 20%, you can use our APIs. The results: your UX, our backend implementation.
+* A deployment model that [works pretty much everywhere](/docs/get-started/download-and-install), including Docker, Windows, Linux and macOS.
+* [Client libraries](/docs/sdks/) which allow you to manage and automate FusionAuth configuration tasks.
+
+But an additional key integration point is propagating [events](/docs/extend/events-and-webhooks/) from inside FusionAuth. These events range from the common, [a user logs in](/docs/extend/events-and-webhooks/events/user-login-success), to the hopefully less common, [a user's password is determined to have been compromised](/docs/extend/events-and-webhooks/events/user-password-breach), to the rare and esoteric, a [JWT signing key is updated](/docs/extend/events-and-webhooks/events/jwt-public-key-update).
+
+Webhook recipients also can prevent events from completing. This functionality is termed "transactional webhooks". When webhooks are configured to be transactional, if a webhook recipient indicates failure by returning a non `2xx` status code, the corresponding action will not succeed, whether that is a user login, the creation of a user or something else. When this occurs, the user won't be able to log in, or the account won't be created.
+
+Webhooks open up the hood of FusionAuth, so to speak, and allow you to build software that can take action based on what is happening inside FusionAuth in a robust manner. Through the transactions mentioned above, they can also prohibit actions based on certain circumstances.
+
+## Group webhooks
+
+Webhook events for groups were [first requested a few years ago](https://github.com/FusionAuth/fusionauth-issues/issues/633) and were implemented in this release.
+
+There are twelve new webhooks:
+
+* Group Create: when a group is created
+* Group Create Complete: when a group is created and the transaction has completed
+* Group Delete: when a group is deleted
+* Group Delete Complete: when a group is deleted and the transaction has completed
+* Group Update: when a group is updated
+* Group Update Complete: when a group is updated and the transaction has completed
+* Group Member Add: when a user is added to a group
+* Group Member Add Complete: when a user is added to a group and the transaction has completed
+* Group Member Remove: when a user is removed from a group
+* Group Member Remove Complete: when a user is removed from a group and the transaction has completed
+* Group Member Update: when a group membership is updated
+* Group Member Update Complete: when a group membership update has occurred and the transaction has completed
+
+Here's an example of a Group Member Add webhook when viewed in the administrative user interface.
+
+![An example group webhook.](/img/blogs/release-1-38/webhook-example.png)
+
+You can learn more in the [Events and Webhooks](/docs/extend/events-and-webhooks/events/) documentation.
+
+## How you might use these webhooks
+
+There are a number of possible scenarios where these webhooks can be helpful.
+
+If you are managing groups in FusionAuth and one or more other places, use these webhooks to sync up the systems.
+
+When a group is added in FusionAuth, create a group in the other system. If you want to sync the other way, from the other system to FusionAuth, use the [Group APIs](/docs/apis/groups) to do so.
+
+You can also use these webhooks to audit group membership. There's an [example application](https://github.com/FusionAuth/fusionauth-example-lambda-webhook) to listen for FusionAuth webhooks and store the resulting JSON to Amazon S3. 
+
+In this scenario, you could capture every time a user is added or removed from a group, the date and time it happened, and IP address or location information related to that change.
+
+Since groups are often used to give users permissions (who among us hasn't at one time been a member of the proverbial `admin` group?), tracking these changes improves your security awareness.
+
+## The rest of it
+
+There were 7 issues, enhancements, and bug fixes included in this release. A selection not mentioned above includes:
+
+* Correcting the `Content-type` header for CSS and JavaScript files hosted by FusionAuth.
+* Potential deadlock resolution in the situation where a webhook receiver calls a FusionAuth API which triggers another webhook.
+* Some cleanup around the Netty changes in the 1.37 release.
+
+Read more about all the changes in the [release notes](/docs/release-notes/archive#version-1-38-1).
+
+## Upgrade at will
+
+The [release notes](/docs/release-notes/archive#version-1-38-1) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified or enhanced.
+
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/operate/deploy/upgrade). 
+
+If you have a FusionAuth Cloud deployment, proceed to the "Deployments" tab on your [account dashboard](https://account.fusionauth.io/account/deployment/) and upgrade your instances. If you have any questions about the upgrade, [please open a support ticket](https://account.fusionauth.io/account/support/).
+
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).

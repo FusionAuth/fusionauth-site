@@ -1,0 +1,150 @@
+---
+publish_date: 2022-09-14 
+title: Announcing FusionAuth 1.39
+description: This release includes better support for JSON patch, SCIM, and locales, as well as bug fixes.
+authors: Dan Moore
+image: /img/blogs/release-1-39/fusionauth-1-39.png
+categories: Release Updates, Product
+tags: scim, release notes, changelog, updates
+excerpt_separator: "{/* more */}"
+---
+
+We're excited to announce the release of FusionAuth version 1.39.0. It shipped on Sep 11, 2022. This release includes better support for JSON patch, SCIM, and locales.
+
+{/* more */}
+
+There are a number of new features, enhancements, and bug fixes. As always, please see the [release notes](/docs/release-notes/archive#version-1-39-0) for a full breakdown of the changes between 1.38 and 1.39, including any schema changes. I wanted to call out a few highlights in this post.
+
+## Patch support
+
+With this release, FusionAuth now supports `PATCH` operations in a more sophisticated way.
+
+With REST APIs, `PATCH` updates an object. Unlike the similar `PUT` verb, `PATCH` endpoints don't require the entire state of an object. Instead, only the fields provided are changed.
+
+For instance, if you have a user with id `fff92906-68c4-4453-b126-46344bb7f7ca` who has a `firstName` field of "Richard", you can change their name to "Rick" using an API call like this:
+
+```
+API_KEY=...
+
+curl -H 'Authorization: '$API_KEY \
+     -X PATCH \
+     -H 'Content-Type: application/json' \
+     https://local.fusionauth.io/api/user/fff92906-68c4-4453-b126-46344bb7f7ca \
+     -d '{"user": {"firstName": "Rick" }}'
+```
+
+This works well for primitive values, but for arrays and objects, it's more complicated.
+
+Suppose you have a group "Paid employees" with roles of `ceo` and `dev`:
+
+![A group of employees that are paid.](/img/blogs/release-1-39/paid-employees-group.png)
+
+Here's the JSON for that group, if you were to retrieve it via API:
+
+```json
+{
+  "group": {
+    "data": {},
+    "id": "e7f92906-68c4-4453-b126-46344bb7f7ca",
+    "insertInstant": 1663011117188,
+    "lastUpdateInstant": 1663012776313,
+    "name": "Paid employees",
+    "roles": {
+      "85a03867-dccf-4882-adde-1a79aeec50df": [
+        {
+          "id": "a9a4e5f8-f834-48e3-aa28-309b0b8e6a0a",
+          "insertInstant": 1663010341637,
+          "isDefault": false,
+          "isSuperRole": false,
+          "lastUpdateInstant": 1663010341637,
+          "name": "ceo"
+        },
+        {
+          "id": "03b57acd-2aa7-4603-b3b3-3c4f8ddde235",
+          "insertInstant": 1663010341637,
+          "isDefault": false,
+          "isSuperRole": false,
+          "lastUpdateInstant": 1663010341637,
+          "name": "dev"
+        }
+      ]
+    },
+    "tenantId": "30663132-6464-6665-3032-326466613934"
+  }
+}
+```
+
+What would you do if the group roles needed to change? Suppose you needed to remove the "dev" role from the "Paid employees" group? (Sorry, developers; you'll get loads of options instead.)
+
+How do you model that with JSON? Should you send a new array? Send the roles to be deleted? Something else? 
+
+FusionAuth was limited in how it handled arrays and other complex data structures before this release. In this case, it would have added any roles provided in a `PATCH` call to the existing roles. But if you are trying to delete roles from a group, you couldn't use `PATCH`. Instead, the recommended option was to request the group JSON, remove the "dev" role from the `roleIds` array, and use `PUT` to update the entire group. 
+
+But now there are additional choices. The first is to use [JSON Patch (RFC 6902)](https://www.rfc-editor.org/rfc/rfc6902). Use this option by setting the `Content-Type` in your request to `application/json-patch+json`. With this choice, you have fine grained control over the JSON object. You can move, replace or add fields.
+
+Here's how you'd update the group to only have the `ceo` role:
+
+```
+API_KEY=...
+curl -H 'Authorization: '$API_KEY \
+     -X PATCH \
+     -H 'Content-Type: application/json-patch+json' \
+     https://local.fusionauth.io/api/group/e7f92906-68c4-4453-b126-46344bb7f7ca \
+     -d '[{ "op": "add", "path": "/roleIds", "value": [ "a9a4e5f8-f834-48e3-aa28-309b0b8e6a0a" ] }]'
+```
+
+Using this call sets the value of `roleIds` with the array contained in the `value` field. This approach is precise and can make multiple changes to a given object with one call, but has a downside of requiring you to learn a new set of operations. Additionally, the data is sent in format (an array of operations) which is only vaguely related to the structure of the object being changed.
+
+The other option is to use [JSON Merge Patch (RFC 7396)](https://www.rfc-editor.org/rfc/rfc7396). This is a more straightforward way to update complex JSON objects. Use this approach by setting the `Content-Type` to `application/merge-patch+json`. This will modify JSON fields, but allow you to pass the changes in a more intuitive manner.
+
+```
+API_KEY=...
+curl -H 'Authorization: '$API_KEY \
+     -X PATCH \
+     -H 'Content-Type: application/merge-patch+json' \
+     https://local.fusionauth.io/api/group/e7f92906-68c4-4453-b126-46344bb7f7ca \
+     -d '{"roleIds": ["a9a4e5f8-f834-48e3-aa28-309b0b8e6a0a"]  }'
+```
+
+You can continue to use `PATCH` with a `Content-Type` of `application/json` if you want the default behavior, which appends values to objects and arrays. At the time of writing, the client libraries continue to use this previous `PATCH` method.
+
+## SCIM support
+
+While SCIM was released in [version 1.36](/blog/2022/04/15/announcing-fusionauth-1-36), there were some gaps that prevented interoperability with two common SCIM providers: Azure AD and Okta.
+
+SCIM is a standard like OIDC and SAML, but which handles a different part of the auth process. The former handles the creation, update and deletion of user accounts, where the latter two handle authentication and authorization.
+
+In other words, SCIM creates the user account, and then OIDC/SAML allows the user to log in to that account.
+
+With this release you can now provision and deprovision users from these identity stores into FusionAuth. We've seen a few scenarios where this is useful:
+
+* When your customers are themselves businesses with a centralized user store. Your customers want to control access to their instance of your application, and can do so by using SCIM to set up accounts for their users. When an employee leaves the customer, their account is automatically removed from FusionAuth.
+* To ensure your employees have correct access to your custom application. When a new employee is added into your Azure AD directory, SCIM can provision them into the custom application, easing the onboarding experience. Equally important, when the employee departs, their access to the app also departs.
+
+With this release, you can use the power of FusionAuth for your CIAM needs, but ensure that FusionAuth is in sync with Okta or Azure AD directories that have up to date employee data.
+
+## Improved locale support
+
+[FusionAuth supports localization](/docs/get-started/core-concepts/localization-and-internationalization), including on the hosted login pages. These pages take common auth related workflows off your plate, and can do so in a number of languages ([16 at last count](https://github.com/FusionAuth/fusionauth-localization/)).
+
+This release improves localization support in a few ways, but the biggest impact is persistent support for locales from the initial request. If a user requests the hosted login pages with a locale parameter, FusionAuth now persists that choice. Even if a user immediately submits the form and there are errors, the messages are rendered in the correct language.
+
+## The rest of it
+
+There were 12 issues, enhancements, and bug fixes included in this release. A selection not mentioned above includes:
+
+* Support for the `en_GB` time and date format in the administrative user interface.
+* Group application roles are no longer incorrectly removed when a `PATCH` request to [`/api/group/{groupId}`](/docs/apis/groups#update-a-group) is made
+* Improved error messages when an API request is made without the correct `Content-Type` header.
+
+Read more about all the changes in the [release notes](/docs/release-notes/archive#version-1-39-0).
+
+## Upgrade at will
+
+The [release notes](/docs/release-notes/archive#version-1-39-0) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified or enhanced.
+
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/operate/deploy/upgrade). 
+
+If you have a FusionAuth Cloud deployment, proceed to the "Deployments" tab on your [account dashboard](https://account.fusionauth.io/account/deployment/) and upgrade your instances. If you have any questions about the upgrade, [please open a support ticket](https://account.fusionauth.io/account/support/).
+
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).

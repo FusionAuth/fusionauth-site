@@ -1,0 +1,136 @@
+---
+publish_date: 2022-12-08 
+title: Single Sign-On vs. Single Logout
+authors: Anish Devasia
+image: /img/blogs/sso-slo/single-sign-on-vs-single-logout.svg
+tags: single sign on, sso, single log out, slo
+categories: Education, Product
+description: Single sign-on is an authentication method that allows users to access multiple applications with one set of login credentials.
+excerpt_separator: "{/* more */}"
+---
+
+[Single sign-on (SSO)](/blog/2022/09/08/how-sso-works) is an authentication method that allows users to access multiple applications with one set of login credentials. It provides secure access to numerous applications, making logging into applications easy while alleviating the burden of authentication and authorization for application developers.
+
+{/* more */}
+
+Single logout (SLO) is considered the reverse of SSO. With SLO, a user signing out from one application will be signed out from all the other applications that they were signed into using the same set of credentials.
+
+[![FusionAuth CTA Banner](/cdn/blog-cta-banner-dark.png "Streamline user access with FusionAuth's comprehensive SSO solutions. Schedule a demo to learn more.")](/contact)
+
+SSO adoption is quickly becoming the go-to method for authentication for commercial and enterprise applications. SLO, however, has not gained a similar adoption. Developing and adopting new features always has some friction for established players. This leaves users with usability issues and developers with security problems.
+
+In this article, you'll learn why SLO is important and how it works. You'll also learn about some challenges you may face when implementing SLO as well as a few best practices.
+
+## What Is SLO
+
+As previously stated, SLO is complementary to SSO and lets users log out from the applications they previously logged into using SSO.
+
+When a user logs out from one of the applications, all the other applications that use the authentication from the identity provider (IdP) also log out the user from their respective applications. This means users don't have to log out from every application they previously logged into.
+
+SLO relies on many of the systems and architecture needed to implement SSO. [Security Assertion Markup Language (SAML) 2.0](/docs/lifecycle/authenticate-users/saml/) provides a full-fledged implementation of SLO with a dedicated logout profile that helps with SLO functionality.
+
+## Why You Need SLO
+
+SSO has gained popularity due to the convenience it offers, as users need only one set of credentials to log into multiple applications. You need SLO for the same reason.
+
+### Convenience
+
+When users log in with SSO, the user identity is accessed by multiple applications. Without SLO, the user has to individually log out from every session they've signed into.
+
+With SLO, the user only needs to sign out of one service provider, and all the active sessions will be terminated without any additional effort. This is vastly convenient from a usability perspective.
+
+### Security
+
+Without SLO, users have to remember all the applications they are active in. There is a high probability that users will forget some of the applications they've logged into and forget to log out. This means the user will not be completely logged out of the identity and poses a security threat. 
+
+Consider an employee who is working on a temporary workstation and has logged into multiple applications using the same identity. If the user only signs out from one application, the identity is logged in other applications. Anyone using the workstation later can have unauthorized access due to the signed in identity.
+
+With SLO in place, users log out from all the service providers in one stroke, boosting the security of the identity.
+
+## How SLO Works
+
+SAML is the open standard that is commonly used for implementing SSO. The Single Logout Protocol is defined in section 3.7. With SAML, three entities are involved in the workflow, including the following:
+
+* **User agents** access the application. In many situations, the user agent is the web browser the user uses to access different applications.
+* **Service providers (SP)** are the applications that the users need to access, such as Google Calendar or Instagram.
+* The **Identity provider (IdP)** manages the identity and credentials of the users that need to access various service providers. IdPs authenticate and authorize users on behalf of multiple service providers.
+
+These three entities are also involved in SLO. For example, consider a user that has already used SSO to log into multiple service providers using IdP. When that user logs into an application with SSO, a `NameID` and a unique `SessionIndex` (an optional attribute) are exchanged between the SP and IdP. `NameID` represents the user that is being authenticated, and `SessionIndex` represents a particular session on the service provider. These attributes are maintained by both SP and IdP to identify an SSO session. 
+
+If the user used [SSO to log in](/docs/lifecycle/authenticate-users/single-sign-on) to three SP applications, App1, App2, and App3, and then the user clicks on the **Logout** button in App1, a logout request is issued by App1 and sent to the IdP/SSO provider with the `NameID` and `SessionIndex` (if present). To log the user out from all other SP applications, the IdP/SSO provider identifies all of the user’s active sessions using their ‘NameID’.
+
+A typical `LogoutRequest` looks like this:
+
+```
+<samlp:LogoutRequest xmlns: samlp="urn:oasis:names:tc:SAML:2.0:protocol"
+Destination="https://idp.example.com/logoutService" ID="_6d0a9a4dbd356e2447b25dfald52e796" IssueInstant="2022-08-26T09:16:39Z" Version="2.0">
+<saml:Issuer xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">https://dev.application.com/saml-sp</saml:Issuer>
+<NameID xmlns="urn: oasis: names: tc: SAML:2.0: assertion"›user1@yourdomain.com</NameID>
+<samlp:SessionIndex>_30f323d6-e259-4200-8dc5-4159d6f95fd6</samlp:SessionIndex>
+</samlp:LogoutRequest>
+```
+
+Here, the `NameID` is "user1@yourdomain.com" and the `SessionIndex` is `_30f323d6-e259-4200-8dc5-4159d6f95fd6`. This combination is used to identify the other ongoing sessions. The IdP sends logout requests to the other applications (in this scenario, App2 and App3). Then the other applications send `LogoutResponse` to the IdP.
+
+Once the IdP successfully receives the `LogoutResponse` from all the other applications, it sends a `LogoutResponse` to the application from which the user clicked **Logout**. Here, the IdP sends `LogoutResponse` to App1 once the IdP receives `LogoutResponse` from App2 and App3.
+
+A typical `LogoutResponse` looks like this:
+
+```
+<samlp:LogoutResponse xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="_6c3737282f007720e736f0f4028feed8cb9b40291c" Version="2.0" IssueInstant="2022-08-26T09:16:40Z" Destination="https://dev.application.com/saml-lo" InResponseTo="_6d0a9a4dbd356e2447b25dfald52e796">
+  <saml:Issuer>https://idp.example.com/logoutService</saml:Issuer>
+  <samlp:Status>
+    <samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/>
+  </samlp:Status>
+</samlp:LogoutResponse>
+```
+
+If the `LogoutResponse` received by App1 has the `Success` message in it, App1 logs out the user.
+
+Users can also initiate SLO from the IdP. When a user clicks **Logout** on the IdP, it sends a `LogoutRequest` to all the service providers with an active session. Once the IdP receives a successful `LogoutResponse` from all the service providers, the user is logged out from the IdP.
+
+## SLO Best Practices
+
+To help bolster security and usability for your readers, it's best to implement some best practices when incorporating SLO. Following are a few of the most common best practices you should implement:
+
+### Idle Session Management
+
+If a user initiates a session but is not actively using your application, that session is a security vulnerability. If the device the user initiated the session on is compromised, malicious actors can use the active login session to gain unauthorized access to resources.
+
+In order to secure your application, you should enforce an upper limit for idle sessions and automatically terminate sessions that have breached the time limit. For example, automatically log a user out if they have not been active for one week. Thirty days is a common upper limit used by applications. You need to assess your requirements and vulnerabilities before deciding on the upper limit for your application.
+
+### Short Session Life
+
+For improved security, you can enforce a short life for each user session. After a designated session time has crossed, the user will have to re-validate the identity to continue with the session. As developers, you can embrace active authentication after each session limit or use [silent authentication](https://developers.xsolla.com/doc/login/authentication-options/silent-authentication/).
+
+### Multi-factor Authentication
+
+[Multi-factor authentication (MFA)](/docs/lifecycle/authenticate-users/multi-factor-authentication) is not directly involved in the logout flow. However, it's wise to implement this feature for your application at the IdP to improve security. For instance, it adds security to your SLO if you plan to implement automatic termination of idle sessions or short sessions.
+
+When implementing multifactor authentication, it's best to use supplementary factors as additional factors for authentication. For example, using a password and fingerprint for authentication is better than using a combination of a password and a PIN. The former combination is better since it relies on two different factors of authentication, namely, a knowledge factor (password) and the inherence factor (fingerprint). The latter combination only relies on two different knowledge factors (password and PIN).
+
+## Challenges in Building SLO
+
+From a security and usability perspective, SLO is a requirement. However, its implementation can be challenging. You need developers with sound knowledge of SAML as well as an SSO that supports SLO.
+
+### Adoption
+
+In order for you to implement SLO for your application, the IdP that users choose for SSO needs to support SLO. Similarly, the other service providers that users sign in with using the IdP also need to support SLO to avoid any orphaned sessions.
+
+The main issue is that many IdPs and service providers don't support SLO yet. If the IdP doesn't support SLO, you can't implement SLO for your application. In addition, if other service providers don't support SLO, users can't gain the usability and security benefits of SLO. This is a chicken and egg problem and would require strong network effects to ramp up adoption. 
+
+In the initial days of SAML, SLO was not given much prominence and people were slow to adapt. However, as organizations continue to focus more on cybersecurity and as governments adopt regulations, SLO adoption will be unavoidable even if this widespread adoption takes time.
+
+### Cookie Trouble
+
+SLO implementations with front-channel bindings (asynchronous), like POST, HTTP redirect, and artifact bindings, require session cookies in the browser. In the push for privacy, popular browsers are dropping support for [third-party cookies, starting with Chromium](https://blog.chromium.org/2020/01/building-more-private-web-path-towards.html), which is an open source browser project.
+
+Popular browsers, including Google Chrome, Microsoft Edge, and Opera, all use Chromium code. The loss of third-party cookies means front-channel bindings can't be used for SLO implementations. Developers will have to resort to back-channel logout methods like [simple object access protocol (SOAP)](https://www.w3schools.com/xml/xml_soap.asp) in order to implement SLO. 
+
+## Conclusion
+
+SSO is a convenient feature that helps users log into applications without having to remember multiple sets of login credentials. SLO is a particular use case of SSO that logs the user out of sessions they've previously signed into using the same identity.
+
+Adoption of SLO requires participation from IdPs and service providers. In this article, you learned about how SLO works and some best practices you should use when implementing it. Managing idle sessions and implementing short session life are some of the basics you need to cover in your SLO implementation.
+
+[FusionAuth](/) is a customer authentication and authorization platform built with developers in mind. The solution provides developers with immense levels of control, flexibility, and ergonomics, and it even has a free Community plan if you intend to host the solution yourselves. Set up your application and [play with SAML, SSO, and SLO using FusionAuth](/download) today.

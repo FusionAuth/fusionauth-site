@@ -1,0 +1,1 @@
+export const refCase = (target) => target.replaceAll(' ', '-').toLowerCase();

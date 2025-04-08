@@ -1,0 +1,264 @@
+---
+title: Remix
+description: Quickstart integration of Javascript Remix web application with FusionAuth
+navcategory: getting-started
+prerequisites: Node.js version 18
+section: web
+technology: Remix
+language: Javascript
+icon: /img/icons/remix.svg
+faIcon: fa-node-js
+color: green
+cta: EmailListCTA
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-remix-web/main
+---
+
+import Aside from '/src/components/Aside.astro';
+import DockerSpinup from '/src/components/quickstarts/DockerSpinup.astro';
+import Intro from '/src/components/quickstarts/Intro.astro';
+import LoginArchitectureWeb from '/src/components/quickstarts/LoginArchitectureWeb.astro';
+import NextSteps from '/src/components/quickstarts/NextSteps.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+import QuickstartTshirtCTA from '/src/components/quickstarts/QuickstartTshirtCTA.astro'
+
+<Intro technology={frontmatter.technology}
+       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-javascript-remix-web"/>
+
+## Prerequisites
+
+For this Quickstart, you'll need:
+
+* [Node 18](https://nodejs.org/en/download) or later.
+* [Docker](https://www.docker.com), which is the quickest way to start FusionAuth. (There are [other ways](/docs/get-started/download-and-install/)).
+
+## General Architecture
+
+<LoginArchitectureWeb />
+
+## Getting Started
+
+Start with getting FusionAuth up and running and creating a new Remix application.
+
+### Clone The Code
+
+First, grab the code from the repository and change into that folder.
+
+```
+git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-remix-web.git
+cd fusionauth-quickstart-javascript-remix-web
+```
+
+All shell commands in this guide can be entered in a terminal in this folder. On Windows, you need to replace forward slashes with backslashes in paths.
+
+All the files you'll create in this guide already exist in the `complete-application` subfolder, if you prefer to copy them.
+
+### Run FusionAuth Via Docker
+
+<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} />
+
+### Create A Basic Remix Application
+
+Next, you'll set up a basic Remix app. While this guide builds a new Remix project, you can use the same method to integrate your existing project with FusionAuth.
+
+Create the default Remix starter project.
+
+```shell
+npx create-remix@latest mysite
+```
+
+If `create-remix` isn't on your machine, npx will prompt you to install it. Confirm the installation with a `y` input.
+
+Choose the following options:
+- Just the basics
+- Remix App Server
+- TypeScript
+- Yes (to running `npm install`)
+
+Add additional npm packages the site will use using the commands below.
+
+```shell
+cd mysite
+npm install dotenv remix-auth remix-auth-oauth2 jwt-decode
+```
+
+The two Remix authentication packages allow you to use FusionAuth without needing to know how OAuth works. The JWT package will provide your app with the user details returned from FusionAuth. The `dotenv` package allows the app to read configuration details from a `.env` environment file.
+
+Now create the `.env` file in your `mysite` folder and add the following to it (note that this is a different environment file to the one in the root folder used by Docker for FusionAuth).
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-remix-web/main/complete-application/.env"
+ lang="shell" />
+
+### Preliminary Setup
+
+Before you configure authentication, you need to change the default files created by Remix.
+
+Replace the contents of the file `mysite/app/root.tsx` with the following code.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/root.tsx"
+ lang="typescript" />
+
+This is what these changes do:
+- Add some styling with `import css from "~/css/changebank.css";` at the top.
+- Specify the `<head>` content for the page (title and CSS link) in the two functions at the bottom.
+
+At the top of the file `mysite/app/entry.server.tsx`, add the following line.
+
+```tsx
+import 'dotenv/config';
+```
+
+This allows any other file run on the server to use settings from `.env`.
+
+## Authentication
+
+Authentication in Remix requires two parts:
+
+- An Authenticator service to handle communication with FusionAuth.
+- Routes (login, logout, callback) that talk to the Authenticator.
+
+### Services
+
+The `app` folder in the `mysite` project holds all your code. The `routes` folder is a reserved word in Remix, and contains your application's pages. Let's make a `services` folder to keep your authentication code separate.
+
+```shell
+mkdir app/services
+```
+
+In this `services` folder, add a file called `session.server.ts` and copy in the following code (this guide follows the example from the [Remix Auth README](https://github.com/sergiodxa/remix-auth)).
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/services/session.server.ts"
+ lang="typescript" />
+
+This code provides a way for Remix to store cookies that maintain the user's session. (If you'd prefer to use file-based sessions instead of cookie-based, you can read about it in an earlier [blog post about using Remix](/blog/remix-demo).)
+
+Next, create an authentication file in the `services` folder, `auth.server.ts`, that uses the session provider you just created.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/services/auth.server.ts"
+ lang="typescript" />
+
+In the line `new Authenticator<User>`, you can specify which user details you want to keep in the session. This example uses a single string containing the user's email, but you could define an object with more details or just a user Id.
+
+Note that the `User` must have a value. If the Authenticator returns nothing to store in the session, then a user will not stay logged in.
+
+In `authOptions`, you specify the FusionAuth URLs stored in the `.env` file, which match those created by Kickstart when you ran the Docker command to start FusionAuth.
+
+Finally, `authStrategy` returns the user's email, decoded from the JWT returned by FusionAuth.
+
+### Routes
+
+First replace the homepage of your app in `mysite/app/routes/_index.tsx` with the following code.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/routes/_index.tsx"
+ lang="typescript" />
+
+Remix extends React with a few more custom elements that automatically hide the difference between client and server from the programmer. For example, the line `<Link to="/login" className="button-lg">Login</Link>` allows Remix to load the linked page in the background without a separate page refresh.
+
+If you have not worked with React before, there are a few differences from normal HTML to note:
+
+- The `class` attribute is replaced by `className`, as `class` is a reserved word in JavaScript.
+- To add JavaScript values into your HTML, you wrap the value in `{  }`.
+- The `style` values are not strings but object literals in braces, wrapped in more braces.
+
+The `_index.tsx` file imports the Authenticator service you created in the previous section, checks if the user has a session, and redirects the user to their profile if they do. This `isAuthenticated` function does not call FusionAuth but checks the user's cookie instead.
+
+<Aside type="caution">
+Note that this code runs in a Remix `loader` function on the server, not the client. Remember that Remix provides two functions that run only on the server: `loader` for GET requests and `action` for POST, PATCH, and UPDATE requests. These functions will always run before any HTML is returned to the client. By contrast, the `default` function (that returns HTML) is exported from a route and runs only in the browser (unless the user browses directly to the route without already being on the site). Since Remix mixes server-side and client-side code in the same file, it is essential not to put any authentication handling or secrets in the client-side code.
+</Aside>
+
+The link you created looks for a login route, so let's code it. Create the file `mysite/app/routes/login.tsx` and add the following code to it.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/routes/login.tsx"
+ lang="typescript" />
+
+This route is purely server-side, as it exports no default function. Instead, the GET loader function redirects the user to FusionAuth. (The user will automatically be logged in without FusionAuth if they already have a session cookie in their browser).
+
+Now create the file `mysite/app/routes/logout.tsx` and add the following code to it.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/routes/logout.tsx"
+ lang="typescript" />
+
+When a user browses to this route, they will be logged out by the Authenticator clearing their session, and redirected to the home page.
+
+The final route to create is `mysite/app/routes/auth.callback.tsx`.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/routes/auth.callback.tsx"
+ lang="typescript" />
+
+This is where FusionAuth is configured to direct the user after authentication. It may look like this code is doing yet another authentication with `authenticator.authenticate`, but the Authenticator will already have created a session for the user, so no call to FusionAuth will be made here. It is just a way to direct the user to the appropriate page after login.
+
+<Aside type="tip">
+If you are wondering why `auth.callback.tsx` has two dots, it's because Remix routing treats the first dot as a slash in the URL, `/auth/callback`.
+</Aside>
+
+## Customization
+
+Now that authentication is done, the last task is to create two example pages that a user can access only when logged in.
+
+Copy over some CSS and an image from the example app.
+
+```shell
+mkdir app/css
+cp ../complete-application/app/css/changebank.css ./app/css/changebank.css
+cp ../complete-application/public/money.jpg ./public/money.jpg
+```
+
+Add the account page `mysite/app/routes/account.tsx` with the following code.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/routes/account.tsx"
+ lang="typescript" />
+
+The `loader` function at the top of the page prohibits the user from viewing this page if they are not authenticated. Any page you create that needs the user to be authenticated requires this function.
+
+The line `const email: string = useLoaderData<typeof loader>();` provides whatever data the loader function returns for use in the HTML. It's used in the line `<p className="header-email">{email}</p>`.
+
+The final page you need is `mysite/app/routes/change.tsx`, with the following code.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-remix-web/main/complete-application/app/routes/change.tsx"
+ lang="typescript" />
+
+This page has identical Remix and authentication functionality to the Account page and some pure React code that updates the DOM whenever the state changes.
+
+## Run The Application
+
+Start the Remix server from the root `mysite` directory.
+
+```shell
+npm run dev
+```
+
+You can now browse to [the app](http://localhost:3000).
+
+Log in using `richard@example.com` and `password`. The change page will allow you to enter a number. Log out and verify that you can't browse to the [account page](http://localhost:3000/account).
+
+<QuickstartTshirtCTA/>
+
+## Next Steps
+
+<NextSteps />
+
+### Remix Authentication
+
+- [Remix Docs](https://remix.run/docs)
+- [Passport.js authentication concepts](https://www.passportjs.org/concepts/authentication/downloads/html/)
+- [Remix Auth](https://github.com/sergiodxa/remix-auth)
+- [Remix-Auth-Oauth2 Docs](https://github.com/sergiodxa/remix-auth-oauth2)
+
+
+## Troubleshooting
+
+* I get "This site can’t be reached localhost refused to connect" when I click the login button.
+
+Ensure FusionAuth is running in the Docker container. You should be able to log in as the admin user `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
+
+* It still doesn't work.
+
+You can always pull down a complete running application and compare what's different.
+
+```
+git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-remix-web.git
+cd fusionauth-quickstart-javascript-remix-web
+docker compose up -d
+cd complete-application
+npm install
+npm run dev
+```

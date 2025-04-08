@@ -1,2 +1,0 @@
-1. The browser requests the forums single-page application from the application backend. This is a standard SSO login that is fully supported by FusionAuth
-1. The application backend responds with the HTML, CSS & JavaScript of the application

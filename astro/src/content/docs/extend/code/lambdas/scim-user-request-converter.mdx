@@ -1,0 +1,100 @@
+---
+title: SCIM User Request Converter Lambda
+description: An overview of the SCIM User Request Converter lambda.
+navcategory: customization
+section: extend
+subcategory: code
+tertcategory: lambdas
+---
+
+If you would like to convert an incoming SCIM User and optionally SCIM EnterpriseUser request into a User, you must specify a lambda in the SCIM configuration. This lambda will be invoked prior to the User being acted upon.
+
+When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+
+## Lambda Structure
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+```javascript
+function convert(user, options, scimUser) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `convert` that takes three parameters. The parameters that the lambda is passed are:
+
+* `user` - the FusionAuth User object. You can modify this object.
+* `options` - request options. This object is read-only. This object has the following properties:
+** `options.applicationId`
+** `options.disableDomainBlock`
+** `options.sendSetPasswordEmail`
+** `options.skipVerification` NOTE: only applies during a User create request
+* `scimUser` - the SCIM request object. This object is read-only.
+
+The FusionAuth objects are well documented in the [User API](/docs/apis/users) documentation. The `options` object contains parameters matching the non-User object Create User API parameters, such as `disableDomainBlock`.
+
+The SCIM User object is a JavaScript object containing the SCIM User and optionally the SCIM EnterpriseUser request JSON payload. See [SCIM User](https://datatracker.ietf.org/doc/html/rfc7643#section-4.1) and [SCIM EnterpriseUser extension](https://datatracker.ietf.org/doc/html/rfc7643#section-4.3).
+
+You may add or modify anything in the `user` and `options` objects.
+
+## Assigning The Lambda
+
+Once a lambda is created, you must assign it to a Tenant. See the SCIM tab in the Tenant configuration.
+
+## Default Lambda
+
+A default SCIM User Request Converter Lambda that converts an incoming SCIM User and SCIM EnterpriseUser request to a FusionAuth User is available and may be used or modified. The lambda function is documented below.
+
+```javascript
+function convert(user, options, scimUser) {
+  // Un-comment this line to see the scimUser object printed to the event log
+  // console.info(JSON.stringify(scimUser, null, 2));
+
+  // Request options
+  // Note, sendSetPasswordEmail is only utilized during a user create request.
+  // options.applicationId = null;
+  // options.disableDomainBlock = false;
+  // options.sendSetPasswordEmail = false;
+  // options.skipVerification = false;
+
+  user.active = scimUser.active;
+  user.data.honorificPrefix = scimUser.name && scimUser.name.honorificPrefix;
+  user.data.honorificSuffix = scimUser.name && scimUser.name.honorificSuffix;
+  user.firstName = scimUser.name && scimUser.name.givenName;
+  user.fullName = scimUser.name && scimUser.name.formatted;
+  user.lastName = scimUser.name && scimUser.name.familyName;
+  user.middleName = scimUser.name && scimUser.name.middleName;
+  user.password = scimUser.password;
+  user.username = scimUser.userName;
+
+  // user.email
+  if (scimUser.emails) {
+    for (var i = 0; i < scimUser.emails.length; i++) {
+      if (scimUser.emails[i].primary) {
+        user.email = scimUser.emails[i].value;
+      }
+    }
+  }
+
+  // user.mobilePhone
+  if (scimUser.phoneNumbers) {
+    for (var j = 0; j < scimUser.phoneNumbers.length; j++) {
+      if (scimUser.phoneNumbers[j].primary) {
+        user.mobilePhone = scimUser.phoneNumbers[j].value;
+      }
+    }
+  }
+
+  // Handle the Enterprise User extension and other custom extensions
+  if (scimUser.schemas) {
+    for (var k = 0; k < scimUser.schemas.length; k++) {
+      var schema = scimUser.schemas[k];
+      if (schema !== 'urn:ietf:params:scim:schemas:core:2.0:User') {
+        user.data = user.data || {};
+        user.data.extensions = user.data.extensions || {};
+        user.data.extensions[schema] = scimUser[schema] || {};
+      }
+    }
+  }
+}
+```

@@ -1,0 +1,1 @@
+export const filterByPath = (entry, path) => entry.slug.startsWith(path);

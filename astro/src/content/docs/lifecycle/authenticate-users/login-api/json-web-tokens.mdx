@@ -1,0 +1,174 @@
+---
+title: JSON Web Tokens and the Login API
+description: Learn how FusionAuth provides and manages JSON Web Tokens.
+navcategory: developer
+section: lifecycle
+subcategory: authenticate users
+tertcategory: login api
+---
+import Aside from 'src/components/Aside.astro';
+import JSON from 'src/components/JSON.astro';
+import AccessTokenClaims from 'src/content/docs/_shared/_access-token-claims.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import TenantJsonWebTokenSettings from 'src/content/docs/get-started/core-concepts/_tenant-json-web-token-settings.mdx';
+import RefreshTokenSettings from 'src/content/docs/get-started/core-concepts/_refresh-token-settings.mdx';
+import ApplicationJsonWebTokenSettings from 'src/content/docs/get-started/core-concepts/_application-json-web-token-settings.mdx';
+import ApplicationLambdaSettings from 'src/content/docs/get-started/core-concepts/_application-lambda-settings.mdx';
+
+## Overview
+
+JSON Web Tokens (or JWT for short - pronounced "jot") is a standard defined as [RFC 7519](https://tools.ietf.org/html/rfc7519) that
+provides a portable unit of identity. FusionAuth implements the JWT specification and can provide JWTs as part of the authentication workflows.
+
+<Aside type="note">
+If you are using OAuth grants for authentication, only the JWT signing configuration documentation applies.
+
+Much of this tutorial is aimed at those using the Login API, not the hosted login pages.
+
+For more on the OAuth grants and the tokens returned when using them, visit [the OAuth documentation](/docs/lifecycle/authenticate-users/oauth/).
+</Aside>
+
+After a User is authenticated via the [Login API](/docs/apis/login) or [OAuth](/docs/lifecycle/authenticate-users/oauth/), FusionAuth creates a JWT and returns
+it to the caller. This JWT will be cryptographically signed to allow other applications to verify that it was created by FusionAuth.
+
+## Configuring JWTs in FusionAuth
+
+FusionAuth provides the ability to configure a couple of aspects of its JWT handling. By navigating to **Settings -> Tenants** in FusionAuth and selecting the JWT tab, you will see the tenant JWT configuration settings.
+
+The following is an example screenshot of the tenant JWT configuration.
+
+![Tenant Configuration - JWT](/img/docs/tenant-configuration-jwt.png)
+
+### JSON Web Token Settings
+
+<TenantJsonWebTokenSettings/>
+
+### Refresh Token Settings
+
+<RefreshTokenSettings page="tenant"/>
+
+## Application Specific Configuration
+
+If you navigate to **Applications** from the main menu, you can also configure the JWT parameters, including the signing algorithm, on a per application basis. If you don't select to enable Application specific JWT configuration, the tenant configuration will be used.
+
+The following is an example screenshot of an Application specific JWT configuration.
+
+![Application JWT enabled](/img/docs/get-started/core-concepts/application-jwt-enabled-configuration.png)
+
+### JSON Web Token Settings
+
+<ApplicationJsonWebTokenSettings/>
+
+![Application Refresh Token configuration](/img/docs/get-started/core-concepts/application-jwt-enabled-refresh-token.png)
+
+### Refresh Token Settings
+
+<RefreshTokenSettings/>
+
+### Lambda Settings
+
+<ApplicationLambdaSettings/>
+
+Learn more about the [JWT Populate Lambda](/docs/extend/code/lambdas/jwt-populate).
+
+## Configuring JWT Signing
+
+FusionAuth provides three configuration locations for JWT signing: 
+
+* the tenant default values shown above
+* an Application level setting
+* with [Entity Management](/docs/get-started/core-concepts/entity-management), each entity type can have a unique key
+
+FusionAuth supports configurations for HMAC, ECDSA (Elliptic Curve) or RSA based signing algorithms.
+
+Keys are managed in [Key Master](/docs/operate/secure/key-master) and can be generated or imported there.
+
+### ECDSA & RSA Signing
+
+If you are using FusionAuth in a hybrid environment where applications may be untrusted, asymmetric ECDSA or RSA signing is preferred.
+
+Using this approach allows you to provide applications with a public key to verify the JWT signature while securing the private key in FusionAuth.
+
+Only the party that holds the private key can produce JWTs. It is easier to know for certain who issued and signed the JWT. It will be FusionAuth.
+
+### HMAC Signing
+
+If you are in a secure environment and you require better performance, symmetric HMAC signing is best.
+
+The downside of using HMAC signing is that each application requires access to the HMAC secret and you'll need to ensure it is distributed safely.
+
+Anyone with the secret can both produce a JWT with a valid signature and verify the signature which makes it difficult to know for certain who issued and signed the JWT.
+
+## Login and JWTs
+
+When you complete a request to the [Login API](/docs/apis/login), FusionAuth will return a JWT in the JSON response body as well as in an HTTP Only session cookie. The cookie has the benefit of allowing web applications to authenticate directly against FusionAuth and managing JWT identities through the browser. The cookie name that the JWT is returned in is called `access_token`.
+
+Here is an example of this `Set-Cookie` response header that includes a JWT with line breaks and spaces for readability.
+
+```plaintext title="Example HTTP Cookie Header"
+Set-Cookie: access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.
+                         eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.
+                         Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo;
+                         Secure; HttpOnly
+```
+
+The JSON response body will also contain the JWT in an attribute called `token` like this:
+
+<JSON title="Example JSON Response Body with JWT" src="login/login-response-short.json" />
+
+### Skipping JWT Creation
+
+There are some circumstances where you don't need a JWT returned as part of the [Login API](/docs/apis/login) response and therefore you can instruct FusionAuth to omit the JWT from the response. This will reduce the latency of calling the [Login API](/docs/apis/login) because FusionAuth can skip the creation and signing of the JWT. To disable JWTs during authentication, supply the `noJWT` parameter in the JSON request body on the [Login API](/docs/apis/login#authenticate-a-user).
+
+## JWT Payload
+
+FusionAuth provides a few custom claims in addition to some registered claims as defined by [RFC 7519 Section 4.1](https://tools.ietf.org/html/rfc7519#section-4.1). The following claims will be found in a JWT issued by FusionAuth.
+
+### Claims
+
+<AccessTokenClaims />
+
+### Example JWT
+
+Here is an example JWT that might be returned from FusionAuth:
+
+<JSON title="Example JWT" src="login/jwt.json" />
+
+## Refresh Tokens
+
+Refresh tokens are a method of allowing a User to stay logged into an Application for a long period of time without requiring them to type in their password. This method is often used by Applications that don't store sensitive data such as games and social networks.
+
+To receive a refresh token from the Login API, enable Refresh Tokens for the application. Using the FusionAuth UI, navigate to **Settings -> Applications -> Security Tab**. Here you will find the Login API settings. Ensure that both <InlineField>Generate Refresh Tokens</InlineField> and <InlineField>Enable JWT refresh</InlineField> fields are enabled.
+
+FusionAuth provides refresh tokens in the response from the [Login API](/docs/apis/login) provided that you supply these elements:
+
+* `loginId` - the User's login Id
+* `password` - the User's password or Authentication Token
+* `applicationId` - the identifier for the Application the user is logging into
+
+If all of these attributes are supplied to the [Login API](/docs/apis/login) then FusionAuth will produce a refresh token.
+
+<Aside type="caution">
+If any of the required elements are missing, no refresh token will be generated.
+</Aside>
+
+The refresh token will be returned in the JSON in the response body as well as in a cookie header. The refresh token will be in a parameter called `refreshToken` in the JSON response and the HTTP Only persistent cookie will be named `refresh_token`.
+
+Here is an example of this `Set-Cookie` response header for a refresh token.
+
+```plaintext title="Example HTTP Cookie Header"
+Set-Cookie: refresh_token=eu1SsrjsiDf3h3LryUjxHIKTS0yyrbiPcsKF3HDp; Max-Age=2592000; Expires=Fri, 29-Sep-2017 15:20:24 GMT; Secure; HttpOnly
+```
+
+Here is an example of the JSON response body that contains the refresh token:
+
+<JSON title="Example JSON with Refresh Token" src="login/login-response-short-refresh-token.json" />
+
+<Aside type="caution">
+Refresh Tokens are considered sensitive information. The token must be secured on the User's device. If a Refresh Token is compromised,
+the token bearer may perform authenticated requests on behalf of the User.
+</Aside>
+
+Once you have a refresh token on the device, you can call the [Refresh a JWT](/docs/apis/jwt#refresh-a-jwt) API to get a new JWT from FusionAuth using the refresh token.
+Using this pattern allows you to perform authenticated actions using the JWT without prompting the User to authenticate as long as the refresh token is active.
+

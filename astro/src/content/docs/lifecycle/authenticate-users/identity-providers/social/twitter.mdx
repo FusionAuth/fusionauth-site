@@ -1,0 +1,132 @@
+---
+title: Twitter
+description: Learn how to add a login with Twitter button to your application.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: identity providers
+quatercategory: social
+---
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import IdpApplicationConfiguration from 'src/content/docs/_shared/_idp-application-configuration.astro';
+import IdentityProviderOverviewDiagram from 'src/content/docs/_shared/_identity-provider-overview-diagram.astro';
+import InlineField from 'src/components/InlineField.astro';
+import LoginApiIntegration from 'src/content/docs/_shared/_login-api-integration.astro';
+
+## Overview
+
+Adding a Login with Twitter button to FusionAuth is simple, and this guide will walk you through the steps necessary to collect the credentials from Twitter in order to enable this Social login.
+
+Once you have completed this configuration you will be able to enable the Twitter login button for one or more FusionAuth Applications. Below is an example login page with the Twitter Identity Provider enabled.
+
+![Twitter Login](/img/docs/lifecycle/authenticate-users/identity-providers/social/login-twitter.png)
+
+<IdentityProviderOverviewDiagram identity_provider_name="Twitter" />
+
+## Create a Twitter Account
+
+Ensure you have a Twitter account, and then navigate to the [Twitter Developer Portal](https://developer.twitter.com).
+
+If you do not yet have a developer account, you will need to apply for access to the Twitter API.
+
+https://developer.twitter.com/en/apply-for-access.html
+
+Once you have logged into Twitter and have obtained access to a Twitter developer account, continue to the next step.
+
+## Create a Twitter App
+
+Twitter allows you to create an application as part of the developer account setup. If you do not yet have a Twitter app you will need to create one in this step. Application creation is restricted according to the level of access you have in your Twitter project. You will need to apply for elevated access to be able to create more than one app in your Twitter project as well as to get access to settings that are otherwise restricted in `Essential` access mode. You can learn more about access levels and permissions [here](https://developer.twitter.com/en/docs/projects/).  If you already have a Twitter app that you plan to use for FusionAuth please review this section anyway to ensure your configuration is correct to support the Twitter login.
+
+You can view a list of your Twitter apps on the [Twitter Developer Portal dashboard](https://developer.twitter.com/en/portal/projects-and-apps).
+
+![Twitter Create App](/img/docs/lifecycle/authenticate-users/identity-providers/social/twitter-home-create.png)
+
+In the following sections we go through the configurations that you will need to set in your app to allow Twitter to connect with FusionAuth.
+
+### Record the Keys and Token
+
+The API key and API secret key are typically presented at the onset of app creation. Record these values. They will be needed for later integration with the FusionAuth Identity Provider.
+
+### Authentication Settings
+
+You will need to modify a few settings to enable Twitter to connect with FusionAuth.
+
+Under *User authentication settings* modify the app settings as below:
+
+![Authentication Settings](/img/docs/lifecycle/authenticate-users/identity-providers/social/twitter-auth-settings.png)
+
+#### Add a Callback URI
+
+_See label for step 1_
+
+Under the <strong>App Info</strong> section register a <InlineField>Callback URI / Redirect URL</InlineField> and specify your website URL.
+
+In this example we are registering `https://login.piedpiper.com/oauth2/callback` as the callback URI. The redirect URL *must* be set to an absolute URL in the Twitter console for your application. If the hostname for your FusionAuth app is `login.piedpiper.com`, the redirect URL would be `https://login.piedpiper.com/oauth2/callback`.
+
+
+#### Enable Request Email
+
+_See label for step 2_
+
+To link your users by email, you will want to ensure you have checked <InlineField>Request email from users</InlineField>. Please note, for some Twitter users, it is possible to create an account without an email address. If this is the case for your Twitter users, you will want to configure the IdP below to link on a username, or use a reconcile lambda to map custom claims returned from Twitter. See [Linking Strategies](/docs/lifecycle/authenticate-users/identity-providers/#linking-strategies) which discusses workaround options.
+
+
+### Keys and Tokens
+
+Under the <strong>Keys and tokens</strong> section you will find the Consumer API Keys and Secret. These two values are the same values that were presented to you during app creation and will be used to configure the FusionAuth Identity Provider.
+
+![Twitter Keys and tokens](/img/docs/lifecycle/authenticate-users/identity-providers/social/twitter-keys-tokens.png)
+
+
+## Create a Twitter Identity Provider
+
+The last step will be to create a Twitter Identity Provider in FusionAuth. To create an Identity Provider navigate to <strong>Settings -> Identity Providers</strong> and click `Add Twitter` from the dropdown.
+
+![Add provider](/img/docs/lifecycle/authenticate-users/identity-providers/social/twitter-add-provider.png)
+
+This will take you to the <strong>Add Twitter</strong> page, and you'll fill out the <InlineField>Consumer key</InlineField> and <InlineField>Consumer secret</InlineField> required fields using the values found in the Twitter App <strong>Keys and tokens</strong> tab from the previous step.
+
+The button text is also required but it will be defaulted to `Login with Twitter`, you may optionally modify this default value.
+
+<IdpApplicationConfiguration identity_provider="Twitter" />
+
+![Add Twitter](/img/docs/lifecycle/authenticate-users/identity-providers/social/identity-provider-twitter-add.png)
+
+### Form Fields
+
+<APIBlock>
+  <APIField name="Consumer key" required>
+    The Twitter API key found in your Twitter App Keys and tokens settings in the `API key` field.
+  </APIField>
+  <APIField name="Consumer secret" required>
+    The Twitter API secret key found in your Twitter App Keys and tokens settings in the `API secret key` field.
+  </APIField>
+  <APIField name="Callback URL" since="1.6.0">
+    This is the callback URL you will provide in your Twitter configuration.
+  </APIField>
+  <APIField name="Button text" required>
+    The text to be displayed in the button on the login form. This value is defaulted to `Login with Twitter` but it may be modified to your preference.
+  </APIField>
+  <APIField name="Linking strategy" optional>
+    The linking strategy for Twitter. [See Linking Strategies for more](/docs/lifecycle/authenticate-users/identity-providers/#linking-strategies).
+  </APIField>
+  <APIField name="Reconcile lambda" optional since="1.17.0">
+    A lambda may be utilized to map custom claims returned from Twitter.
+
+    To configure a lambda, navigate to <strong>Customizations -> Lambdas</strong>.
+  </APIField>
+  <APIField name="Debug enabled" optional defaults="false">
+    Enable debug to create an event log to assist you in debugging integration errors.
+  </APIField>
+</APIBlock>
+
+## Proxy details
+
+If you are running FusionAuth behind a proxy of some sort, please review the following information.
+
+FusionAuth will detect the public URL of your instance at runtime to send to Twitter as the callback URL. If you are behind a proxy, ensure that the `X-Forwarded-Host` and the `X-Forwarded-Proto` headers are added by your proxy if the host or protocol do not match what is behind the proxy. For example, if your public URL is using `https` and your proxy is performing SSL acceleration the URL behind the proxy may be `http`. In this scenario, most proxies will have added the `X-Forwarded-Proto` header to the request which will allow FusionAuth to send the correct URL to Twitter.
+
+## Building Your Own Integration
+
+<LoginApiIntegration apiRef="/docs/apis/identity-providers/twitter#complete-the-twitter-login" identity_provider_name="Twitter" />

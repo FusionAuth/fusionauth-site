@@ -1,0 +1,888 @@
+---
+title: Tenants
+description: An overview of FusionAuth Tenants.
+section: get started
+subcategory: core concepts
+tags: auth as a service
+---
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import AvailableSince from 'src/components/api/AvailableSince.astro';
+import DefaultSMTPConfigurationProperties from 'src/content/docs/_shared/default-smtp-configuration-properties.mdx';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import EmailTemplates from 'src/content/docs/get-started/core-concepts/_email-templates.mdx';
+import TenantJsonWebTokenSettings from 'src/content/docs/get-started/core-concepts/_tenant-json-web-token-settings.mdx';
+import RefreshTokenSettings from 'src/content/docs/get-started/core-concepts/_refresh-token-settings.mdx';
+import AdvancedPlanBlurb from 'src/content/docs/_shared/_advanced-plan-blurb.astro';
+import EnterprisePlanBlurbApi from 'src/content/docs/_shared/_enterprise-plan-blurb-api.astro';
+import LicensedPlanBlurb from 'src/content/docs/_shared/_licensed-plan-blurb.mdx';
+import TenantWebhooksTable from 'src/content/docs/get-started/core-concepts/_tenant-webhooks-table.mdx';
+import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
+import Icon from 'src/components/icon/Icon.astro';
+import { YouTube } from '@astro-community/astro-embed-youtube';
+
+## Overview
+
+FusionAuth is fundamentally a single tenant solution, so you may be surprised to learn that we support multiple tenants.
+
+FusionAuth will always be a single tenant solution, this means that your instance of FusionAuth is your own and even when FusionAuth is hosting, we do not co-mingle your data with other clients. FusionAuth was built as a single tenant solution, and we have no plans to change anytime soon.
+
+It is entirely likely that our clients may wish to be multi-tenant or offer their services to more than one client. In these scenarios it may be useful to separate Users, Applications and Groups for each of your clients.
+
+For example, let's assume you are building a payroll offering using a SaaS model. In this case it is possible that `monica@piedpiper.com` works for two of your clients, Acme Corp and The Umbrella Company. Because Monica is not aware that Acme Corp and The Umbrella Company both are buying their Payroll software from the same vendor it would be surprising for Monica to share the same password and account details between these two companies. In this scenario you would likely want to utilize the FusionAuth Tenant to ensure that `monica@piedpiper.com` exists once for each instance of your Payroll offering.
+
+See [Tenant API Authentication](/docs/apis/authentication#making-an-api-request-using-a-tenant-id) for more details about making API requests in a multi-tenant configuration.
+
+Here's a brief video covering some aspects of tenants:
+
+<YouTube id="bamlKmIelyc" />
+
+## Core Concepts Relationships
+
+Below is a visual reminder of the relationships between FusionAuth's primary core concepts.
+
+![Diagram showing Tenants used within FusionAuth.](/img/docs/get-started/core-concepts/core-concepts-relationships-tenants.png)
+
+## Admin UI
+
+This page describes the admin UI for creating and configuring a Tenant.
+
+### List of Tenants
+
+To display a list of tenants, navigate to <Breadcrumb>Tenants</Breadcrumb>.
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-list.png" alt="List of Tenants" width="1200" role="bottom-cropped" />
+
+Using the icons on this screen, you can:
+
+* <Icon name="plus" /> Create a new tenant
+* <Icon name="trash" /> Delete the tenant configuration
+  * You cannot delete the [Default tenant](/docs/get-started/core-concepts/limitations#default-configuration).
+* <Icon name="copy" /> Duplicate the tenant configuration
+* <Icon name="edit" /> Edit the tenant configuration
+* <Icon name="fa-search" /> View the tenant configuration
+
+
+### Create a Tenant
+
+To create a new tenant, navigate to <Breadcrumb>Tenants</Breadcrumb>.
+
+![Create a Tenant.](/img/docs/get-started/core-concepts/create-tenant.png)
+
+### Tenant Configuration
+
+A majority of your FusionAuth configuration is managed at the Tenant-level.  Some of these configuration options act as defaults and can be overridden by the Application.
+
+### General
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-general.png" alt="Tenant Configuration - General" width="1200" role="shadowed" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Issuer" required>
+    The named issuer used to sign tokens. This is generally your public fully qualified domain with the `https://` protocol prefix. For example, `https://example.com`.
+  </APIField>
+  <APIField name="Login Theme" optional>
+    The Theme associated with this Tenant; determines which templates to render for interactive work-flows.
+  </APIField>
+</APIBlock>
+
+#### Form Settings
+
+<APIBlock>
+  <APIField name="Admin user form" optional since="1.20.0">
+    The form that will be used in the FusionAuth UI for adding and editing users.
+
+<PremiumPlanBlurb />
+  </APIField>
+</APIBlock>
+
+#### Username settings
+
+Enable <InlineField>Unique usernames</InlineField> to allow multiple users suggest the same username. If there are any collisions, FusionAuth will transparently create a unique username by appending a suffix. The user will continue to use the username without the suffix.
+
+<APIBlock>
+  <APIField name="Unique usernames" optional defaults="false" since="1.27.0">
+    When `true`, FusionAuth will handle username collisions.
+
+<PremiumPlanBlurb />
+  </APIField>
+  <APIField name="Number of digits" optional defaults="5" since="1.27.0">
+    The maximum number of digits to use when building a unique suffix for a username. A number will be randomly selected and may be 1 or more digits up to this configured value. The value of this field must be greater than or equal to `3` and less than or equal to `10`.
+  </APIField>
+  <APIField name="Separator character" optional since="1.27.0">
+    A single character to use as a separator from the requested username and a unique suffix that is added when a duplicate username is detected. This value can be a single non alphanumeric ASCII character.
+  </APIField>
+</APIBlock>
+
+### Connectors
+
+Connectors can be enabled on a per tenant basis with a Connector policy.
+
+<img src="/img/docs/get-started/core-concepts/tenant-connector-tab.png" alt="The Tenant Connector policy configuration tab." width="1200" role="shadowed" />
+
+You can find details on adding a connector below. Full documentation on Connectors and Connector Policies can be found [here](/docs/lifecycle/migrate-users/connectors/).
+
+#### Add Connector Policy Dialog
+
+If you click on the <InlineUIElement>Add policy</InlineUIElement> button on this page you will be presented with the following dialog.
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-connector-add-policy.png" alt="Add Connector Policy" width="300" role="box-shadow" />
+
+##### Form Fields
+
+<APIBlock>
+  <APIField name="Connector" required>
+    The Connector to be used for this policy.
+  </APIField>
+  <APIField name="Domains" optional defaults='["*"]'>
+    One or more line separated domains to be used to filter incoming authentication requests. To match all incoming email addresses, a single entry using an asterisk `*` can be used.
+  </APIField>
+  <APIField name="Migrate user" optional>
+    When selected, migrate the user from the Connector into FusionAuth so that future authentications will use FusionAuth and not the Connector.
+  </APIField>
+</APIBlock>
+
+### Email
+
+Once you have configured your email settings, you may test your configuration with the "Send test email" button.
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-smtp-settings.png" alt="Tenant Configuration - SMTP settings" width="1200" role="shadowed top-cropped" />
+
+#### SMTP settings
+
+<APIBlock>
+  <APIField name="Host" optional defaults="localhost">
+    The hostname of the SMTP server. This will be provided by your SMTP provider.
+  </APIField>
+  <APIField name="Port" optional defaults="25">
+    The port of the SMTP server. This will be provided by your SMTP provider. Ports `25`, `465` and `587` are the well known ports used by SMTP, it is possible your provider will utilize a different port.
+
+    In most cases you will be using TLS to connect to your SMTP server, and the port will generally be `587` or `465`.
+  </APIField>
+  <APIField name="Username" optional>
+    The username of the outgoing SMTP mail server authentication.
+  </APIField>
+  <APIField name="Change password" optional>
+    When enabled, you may modify the SMTP password, when the <InlineField>Password</InlineField> field is not displayed the current password will not be modified.
+  </APIField>
+  <APIField name="Password" required>
+    The new password to use for the outgoing SMTP mail server authentication. This field is only required when <InlineField>Change password</InlineField> is checked.
+
+    When using duplicating Tenants, the SMTP password is not copied. You will have to enter this manually before sending emails.
+  </APIField>
+  <APIField name="Security" optional defaults="None">
+    The security type when using an SSL connection to the SMTP server. This value should be provided by your SMTP provider.
+
+    Generally speaking, if using port `25` you will select `None`, if using port of `465` you will select `SSL` and if using port `587` you will select `TLS`. It is possible your provider will be different, follow your providers instruction.
+
+    * `None`
+    * `SSL`
+    * `TLS`
+  </APIField>
+  <APIField name="Default from address" optional>
+    The default email address that emails will be sent from when a from address is not provided on an individual email template. This is the address part email address (i.e.  Jared Dunn  `jared@piedpiper.com`).
+  </APIField>
+  <APIField name="Default from name" optional>
+    The default From Name used in sending emails when a from name is not provided on an individual email template. This is the display name part of the email address ( i.e. **Jared Dunn**  `jared@piedpiper.com`).
+  </APIField>
+  <APIField name="Additional Headers" optional since="1.32.0">
+    One or more line separated SMTP headers to be added to each outgoing email. The header name and value should be separated by an equals sign. ( i.e. `X-SES-CONFIGURATION-SET=Value`).
+  </APIField>
+  <APIField name="Debug enabled" optional since="1.37.0">
+    When enabled SMTP and JavaMail debug information will be output to the Event Log.
+  </APIField>
+</APIBlock>
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-email-verification-settings.png" alt="Tenant Configuration - Email verification settings" width="1200" role="shadowed" />
+
+#### Email verification settings
+
+<APIBlock>
+  <APIField name="Verify email" optional>
+    When enabled, users will be required to verify their email address.
+  </APIField>
+  <APIField name="Allow implicit verification" optional>
+    When enabled, this allows a user's email address to be verified as a result of completing a similar based email workflow such as change password.
+  </APIField>
+  <APIField name="Verify email when changed" optional>
+    When enabled, users will be required to verify their email address upon update.
+  </APIField>
+  <APIField name="Verification template" required>
+    The email template to use when accounts are created to verify the User's email address.
+
+    Required when the <InlineField>Verify email</InlineField> toggle is enabled.
+  </APIField>
+  <APIField name="Verification complete template" optional since="1.30.0">
+    The email template to use when notifying a user that email address has been verified.
+  </APIField>
+  <APIField name="Verification strategy" optional since="1.27.0">
+    The process by which the user will verify their email address. Using the "Form Field" method works only when the <InlineField>Unverified behavior</InlineField> is `Gated`.
+  </APIField>
+  <APIField name="Unverified behavior" optional since="1.27.0">
+    The way a user is handled during the login process when they do not have a verified email address.
+  </APIField>
+  <APIField name="Allow email change when gated" optional since="1.27.0">
+    When enabled, the user is allowed to change their email address when they are gated because they haven't verified their email address.
+  </APIField>
+  <APIField name="Delete unverified users" optional>
+    When enabled, users who have not verified their email address after a configurable duration since being created will be permanently deleted.
+  </APIField>
+  <APIField name="Delete after" required>
+    The duration since creation that a user must exist before being deleted for having an unverified email address.
+
+    Required when the <InlineField>Delete unverified users</InlineField> toggle is enabled.
+  </APIField>
+</APIBlock>
+
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-template-settings.png" alt="Tenant Configuration - Email template settings" width="1200" role="shadowed" />
+
+#### Template settings
+
+<EmailTemplates />
+
+### Family
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-family-settings.png" alt="Tenant Configuration - Family" width="1200" role="shadowed top-cropped" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, you may model parent-child user relationships, and observe parental approval and age validation on user creation.
+  </APIField>
+  <APIField name="Maximum child age" required>
+    The maximum age a user can be to be considered a child.
+
+    Required when the <InlineField>Enabled</InlineField> toggle is enabled.
+  </APIField>
+  <APIField name="Minimum owner age" required>
+    The minimum age a user must be to create a family.
+
+    Required when the <InlineField>Enabled</InlineField> toggle is enabled.
+  </APIField>
+  <APIField name="Allow child registrations" required>
+    When enabled, allow children to register themselves without requiring a parent to create their account for them.
+  </APIField>
+  <APIField name="Family request template" optional>
+    The email template used when children are not able to register themselves and they are asking their parent to create them an account.
+  </APIField>
+  <APIField name="Confirm child account template" optional>
+    The email template used when a parent needs to confirm a child account before it is activated as part of their family.
+  </APIField>
+  <APIField name="Parent registration request template" optional>
+    The email template used when a child is requesting that their parent create an account (because it is not created automatically).
+  </APIField>
+  <APIField name="Parent email required during registration" optional>
+    When enabled, child users must provide their parent's email address during the registration process.
+  </APIField>
+  <APIField name="Delete unverified children" optional>
+    When enabled, child user accounts that have not been verified by a parent after a configured period will be automatically deleted.
+  </APIField>
+  <APIField name="Delete after" required>
+    The number of days before a child account that has not yet been verified by a parent is automatically deleted.
+
+    Required when the <InlineField>Delete unverified children</InlineField> toggle is enabled.
+  </APIField>
+</APIBlock>
+
+### Multi-Factor
+
+<PremiumPlanBlurb />
+**Note:** The Authenticator/TOTP implementation is not a premium feature, and is included in the Community version. Email and SMS require the Advanced Multi-Factor feature available when purchasing a paid plan.
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-mfa-policy-settings.png" alt="Tenant Configuration - MFA policy settings" width="1200" bottom-cropped top-cropped="undefined" />
+
+#### Policies
+
+<APIBlock>
+  <APIField name="On login" optional>
+    When set to `Enabled`, a two-factor challenge will be required during login when a user has configured one or more two-factor methods. When set to `Disabled`, even when a user has one or more two-factor methods configured, a two-factor challenge will not be required during login. When set to `Required`, a two-factor challenge will be required during login. If a user does not have configured two-factor methods, they will not be able to log in.
+
+    Supported values include:
+
+    * Enabled. A challenge will be required during login when an eligible method is available.
+    * Disabled. A challenge will not be required during login.
+    * Required. A challenge will be required during login. &nbsp; <AvailableSince since="1.42.0"/>
+  </APIField>
+</APIBlock>
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-mfa-authenticator-settings.png" alt="Tenant Configuration - MFA authenticator settings" width="1200" bottom-cropped top-cropped="undefined" />
+
+#### Authenticator settings
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, users may use an authenticator application to complete a multi-factor authentication request.
+  </APIField>
+</APIBlock>
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-mfa-email-settings.png" alt="Tenant Configuration - MFA email settings" width="1200" bottom-cropped top-cropped="undefined" />
+
+#### Email settings
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, users may use an email address to complete a multi-factor authentication request.
+  </APIField>
+  <APIField name="Template" required>
+    The email template to use when a multi-factor authentication request is sent to the User's email address.
+
+    Required when the <InlineField>Enabled</InlineField> toggle is enabled.
+  </APIField>
+</APIBlock>
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-mfa-sms-settings.png" alt="Tenant Configuration - MFA SMS settings" width="1200" bottom-cropped top-cropped="undefined" />
+
+#### SMS settings
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, users may use a mobile phone number to complete a multi-factor authentication request.
+  </APIField>
+  <APIField name="Messenger" required>
+    The Messenger used to deliver the template.
+
+    Required when the <InlineField>Enabled</InlineField> toggle is enabled.
+  </APIField>
+  <APIField name="Template" required>
+    The SMS template to use when a multi-factor authentication request is sent to the User's mobile phone number.
+
+    Required when the <InlineField>Enabled</InlineField> toggle is enabled.
+  </APIField>
+</APIBlock>
+
+### WebAuthn
+
+<LicensedPlanBlurb version="1.52.0" />
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-webauthn.png" alt="Tenant Configuration - WebAuthn" width="1200"  role="bottom-cropped" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, WebAuthn is available for the tenant, and additional configuration options will be available.
+  </APIField>
+  <APIField name="Relying party Id" optional>
+    The Relying Party Id is used to scope WebAuthn passkeys to the site where they were registered. As part of WebAuthn's security requirements, this value must be either:
+
+     * The browser request origin's effective domain
+     * A registrable domain suffix of the effective domain
+
+    For example, if the login page is at `auth.piedpiper.com`, then the following are valid Relying Party Ids:
+
+     * `auth.piedpiper.com` - matches the effective domain
+     * `piedpiper.com` - a registrable suffix of the effective domain
+
+    But the following values are _not_ valid:
+
+     * `m.auth.piedpiper.com` - a subdomain of the effective domain
+     * `com` - this is a suffix of the effective domain but not registrable
+
+    It is important that this is configured according to the URL that a user would see in their browser while on the FusionAuth login page. See the [WebAuthn Admin Guide](/docs/lifecycle/authenticate-users/passwordless/webauthn) for more details on how to select the appropriate value.
+
+    Leaving this value empty will cause the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) to use the browser's current request origin.
+  </APIField>
+  <APIField name="Relying party name" optional>
+    The Relying Party name for WebAuthn ceremonies. This value may be displayed to the user by the browser or OS during WebAuthn registration and authentication ceremonies.
+
+    If this value is left blank, the <InlineField>Issuer</InlineField> value will be used.
+  </APIField>
+  <APIField name="Debug enabled" optional>
+    Enable debug to create an event log to assist you in debugging integration errors.
+  </APIField>
+</APIBlock>
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-webauthn-bootstrap-settings.png" alt="Tenant Configuration - WebAuthn Bootstrap settings" width="1200"  role="top-cropped" bottom-cropped="undefined" />
+
+#### Bootstrap settings
+
+The settings in this section affect the availability and behavior of the WebAuthn bootstrap workflow. The bootstrap workflow is used when the user must "bootstrap" the authentication process by identifying themselves prior to the WebAuthn ceremony and can be used to authenticate from a new device using WebAuthn.
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, the WebAuthn bootstrap workflow can be used to authenticate users via WebAuthn from new or repeat devices.
+
+    The availability of the bootstrap workflow can be overridden at the application level on the [WebAuthn Tab of the Application settings](/docs/get-started/core-concepts/applications#webauthn).
+  </APIField>
+  <APIField name="Authenticator attachment" optional>
+    The authenticator attachment preference for the bootstrap workflow on this tenant. This value controls the attachment requirement for authenticators during the bootstrap workflow registration ceremony. Authenticators that do not meet the requirement are not considered during passkey registration. The possible values are:
+
+     * `Any` - any authenticator attachment is allowed
+     * `Platform only` - only authenticators integrated with the client device are allowed
+     * `Cross-platform only` - only authenticators that are usable across multiple client devices are allowed
+
+    The recommended value for the bootstrap workflow is `Any` when the option is available.
+
+<EnterprisePlanBlurbApi feature="WebAuthn cross-platform authenticators" />
+  </APIField>
+  <APIField name="User verification" optional>
+    The user verification requirement for the bootstrap workflow on this tenant. This value controls whether user verification is required for registration and authentication ceremonies during the bootstrap workflow. Authenticators that do not meet the requirement are not considered during passkey registration or authentication. The possible values are:
+
+     * `Required` - user verification is required to complete the WebAuthn ceremony
+     * `Preferred` - the Relying Party prefers user verification is provided but will not fail the WebAuthn ceremony without it
+     * `Discouraged` - the Relying Party does not want user verification for the WebAuthn ceremony
+
+    Because the bootstrap workflow is used to authenticate a user, it is _highly_ recommended to set this value to `Required`.
+  </APIField>
+</APIBlock>
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-webauthn-reauthentication-settings.png" alt="Tenant Configuration - WebAuthn Re-authentication settings" width="1200"  role="top-cropped" bottom-cropped="undefined" />
+
+#### Re-authentication settings
+
+The settings in this section affect the availability and behavior of the WebAuthn re-authentication workflow. The re-authentication workflow is meant to provide a streamlined user experience when logging in from a frequently used device.
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, the WebAuthn re-authentication workflow can be used to streamline the login experience when authenticating from a previously used device.
+
+    The availability of the re-authentication workflow can be overridden at the application level on the [WebAuthn Tab of the Application settings](/docs/get-started/core-concepts/applications#webauthn).
+  </APIField>
+  <APIField name="Authenticator attachment" optional>
+    The authenticator attachment preference for the re-authentication workflow on this tenant. This value controls the attachment requirement for authenticators during the re-authentication workflow registration ceremony. Authenticators that do not meet the requirement are not considered during passkey registration. The possible values are:
+
+     * `Any` - any authenticator attachment is allowed
+     * `Platform only` - only authenticators integrated with the client device are allowed
+     * `Cross-platform only` - only authenticators that are usable across multiple client devices are allowed
+
+    The recommended value for the re-authentication workflow is `Platform only` to ensure the user has access to that authenticator when logging from the device in the future.
+
+<EnterprisePlanBlurbApi feature="WebAuthn cross-platform authenticators" />
+  </APIField>
+  <APIField name="User verification" optional>
+    The user verification requirement for the re-authentication workflow on this tenant. This value controls whether user verification is required for registration and authentication ceremonies during the re-authentication workflow. Authenticators that do not meet the requirement are not considered during passkey registration or authentication. The possible values are:
+
+     * `Required` - user verification is required to complete the WebAuthn ceremony
+     * `Preferred` - the Relying Party prefers user verification is provided but will not fail the WebAuthn ceremony without it
+     * `Discouraged` - the Relying Party does not want user verification for the WebAuthn ceremony
+
+    Because the re-authentication workflow is used to authenticate a user, it is _highly_ recommended to set this value to `Required`.
+  </APIField>
+</APIBlock>
+
+
+### OAuth
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-oauth.png" alt="Tenant Configuration - OAuth" width="1200" role="shadowed top-cropped" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Session timeout" optional>
+    The length of time an SSO session can be inactive before it is closed.
+  </APIField>
+  <APIField name="Logout URL" optional>
+    The URL the user is redirected to upon logout.
+  </APIField>
+  <APIField name="Client credentials populate lambda" optional since="1.28.0">
+    The lambda that will be called to populate the JWT during a client credentials grant.
+  </APIField>
+  <APIField name="Allow access token bootstrap" since="1.56.0">
+    When enabled, an SSO session can be created after login by providing an access token as a bearer token in a request to the OAuth2 Authorize endpoint.
+  </APIField>
+</APIBlock>
+
+
+### JWT
+<img src="/img/docs/tenant-configuration-jwt.png" alt="Tenant Configuration - JWT" width="1200" role="top-cropped" />
+
+#### JSON Web Token settings
+
+<TenantJsonWebTokenSettings />
+
+#### Refresh Token settings
+
+<RefreshTokenSettings page="tenant" />
+
+### Password
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-password-failed-authentication-settings.png" alt="Tenant Configuration - JWT" width="1200" role="shadowed top-cropped" />
+
+#### Failed authentication settings
+
+<APIBlock>
+  <APIField name="User action" optional>
+    The user action must be 'time-based' and must have 'prevent login' enabled. This actions is applied after multiple failed login attempts.
+  </APIField>
+  <APIField name="Failed attempts" required>
+    The number of failed attempts allowed during the specified time period before the selected action is applied.
+  </APIField>
+  <APIField name="Time period" required>
+    The window of time in seconds for which the failed authentication attempts are counted. If no further failed attempts occur the failure count will be reset after this time period starting at the time of the last failed login.
+  </APIField>
+  <APIField name="Action duration" required>
+    The length of time the selected action is applied to the user before the action expires at which point the user will be allowed to attempt log in again.
+  </APIField>
+  <APIField name="Time unit" optional>
+    The time unit the <InlineField>Action duration</InlineField> is measured in.
+  </APIField>
+  <APIField name="Cancel action on password reset" since="1.42.0">
+    Indicates whether you want the user to be able to self-service unlock their account prior to the action duration by completing a password reset workflow.
+  </APIField>
+  <APIField name="Email user" since="1.42.0">
+    Indicates you would like to email the user when the user's account is locked due to this action being taken. This requires the User Action specified by the <InlineField>User action</InlineField> to also be configured for email. If the User Action is not configured to be able to email the user, this configuration will be ignored.
+
+    The email template configuration will be in the User Action.
+  </APIField>
+</APIBlock>
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-password-breach-detection-settings.png" alt="Tenant Configuration - JWT" width="1200" role="shadowed" />
+
+#### Breach detection settings
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, users' login Id and password will be checked against public breached password databases on user creation, password change, and (optionally) on login.  Purchase of a FusionAuth plan is required to enable this feature.
+  </APIField>
+  <APIField name="Match mode" optional>
+    The login Id and password match constraints to qualify as a breach match.
+  </APIField>
+  <APIField name="On login" optional>
+    The action to perform during login for breach detection.  Performing breach detection during login may increase the time it takes to complete authentication.
+  </APIField>
+</APIBlock>
+
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-password-validation-settings.png" alt="Tenant Configuration - JWT" width="1200" role="shadowed" />
+
+#### Password settings
+
+<APIBlock>
+  <APIField name="Minimum length" required>
+    The minimum length a password may be to qualify as a valid password.
+  </APIField>
+  <APIField name="Maximum length" required>
+    The maximum length a password may be to qualify as a valid password.
+  </APIField>
+  <APIField name="Uppercase & lowercase" optional>
+    When enabled, force the user to use at least one uppercase and one lowercase character.
+  </APIField>
+  <APIField name="Special character" optional>
+    When enabled, force the user to use at least one non-alphanumeric character.
+  </APIField>
+  <APIField name="Number" optional>
+    When enabled, force the user to use at least one number.
+  </APIField>
+  <APIField name="Minimum age (toggle)" optional>
+    When enabled, users must wait a configurable duration before changing their password after the previous change.
+  </APIField>
+  <APIField name="Minimum age (value)" required>
+    The minimum age (in seconds) users must wait before changing their password after the previous change.
+
+    Required when the <InlineField>Minimum age</InlineField> toggle is enabled.
+  </APIField>
+  <APIField name="Expiration (toggle)" optional>
+    When enabled, user passwords will expire after a configurable duration, at which point the user will be forced to change their password on login.
+  </APIField>
+  <APIField name="Expiration (value)" required>
+    The duration (in days) the password expire after since the previous change.
+
+    Required when the <InlineField>Expiration</InlineField> toggle is enabled.
+  </APIField>
+  <APIField name="Reject previous passwords" optional>
+    When enabled, prevent users from using a configurable number of their previous passwords.
+  </APIField>
+  <APIField name="Number of passwords" required>
+    The number of previous password to retain, to prevent users from password reuse.
+
+    Required when the <InlineField>Reject previous passwords</InlineField> toggle is enabled.
+  </APIField>
+  <APIField name="Re-validate on login" optional>
+    When enabled the user's password will be validated during login. If the password does not meet the currently configured validation rules the user will be required to change their password.
+  </APIField>
+</APIBlock>
+
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-password-cryptographic-hash-settings.png" alt="Tenant Configuration - JWT" width="1200" role="shadowed" />
+
+#### Cryptographic hash settings
+
+<APIBlock>
+  <APIField name="Scheme" optional>
+    The password hashing scheme used when creating new users and when changing a password. View [hashing algorithms that ship with FusionAuth](/docs/reference/password-hashes) or [learn how to create your own hashing algorithm](/docs/extend/code/password-hashes/custom-password-hashing).
+  </APIField>
+  <APIField name="Factor" required>
+    A non-zero number that provides an iteration count to the hashing scheme. A higher number will make the password hash more difficult to reverse engineer but will take more CPU time during login. Be careful as a high factor may cause logins to become very slow.
+  </APIField>
+  <APIField name="Re-hash on login" optional>
+    When enabled the user's password hash will be modified if it does not match the configured values during next login.
+  </APIField>
+</APIBlock>
+
+
+### Webhooks
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-webhooks-settings.png" alt="Tenant Configuration - Webhooks" width="1200" role="shadowed" />
+
+#### Webhooks
+
+Enable the webhooks you wish to receive events from this tenant. All webhooks will be shown, but if the webhook is a `global` webhook then you will not be able to unselect it here. That must be done in the [Tenants Tab of the Webhook Settings](/docs/extend/events-and-webhooks/#tenants).
+
+#### Event Settings
+
+<TenantWebhooksTable />
+
+### SCIM
+
+<EnterprisePlanBlurb />
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-scim-settings.png" alt="Tenant Configuration - SCIM" width="1200"  role="shadowed" />
+
+Read more about setting up and using SCIM in the [full SCIM documentation](/docs/lifecycle/migrate-users/scim/scim).
+
+The SCIM server configuration to enable incoming SCIM client provisioning requests.
+
+#### SCIM server settings
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, FusionAuth will act as a SCIM server and the SCIM API endpoints will be functional.
+  </APIField>
+  <APIField name="Client entity type" required>
+    The Entity Type defined for the SCIM client. If there are no Entity Types available in the list then navigate to Entity > Types and create a new one using the template button for SCIM client.
+  </APIField>
+  <APIField name="Server entity type" required>
+    The Entity Type defined for the SCIM server. If there are no Entity Types available in the list then navigate to Entity > Types and create a new one using the template button for SCIM server.
+  </APIField>
+  <APIField name="User request lambda" required>
+    The lambda that will be invoked on every incoming request to the SCIM User API endpoints. This maps the incoming SCIM User JSON to the User object.
+  </APIField>
+  <APIField name="User response lambda" required>
+    The lambda that will be invoked on every outgoing response from the SCIM User API endpoints. This maps the outgoing User object to the JSON for a SCIM User.
+  </APIField>
+  <APIField name="Enterprise User request lambda" required>
+    The lambda that will be invoked on every incoming request to the SCIM Enterprise User API endpoints. This maps the incoming SCIM Enterprise User JSON to the User object.
+  </APIField>
+  <APIField name="Enterprise User response lambda" required>
+    The lambda that will be invoked on every outgoing response from the SCIM Enterprise User API endpoints. This maps the outgoing User object to the JSON for a SCIM Enterprise User.
+  </APIField>
+  <APIField name="Group request lambda" required>
+    The lambda that will be invoked on every incoming request to the SCIM Group API endpoints. This maps the incoming SCIM Group JSON to the Group object.
+  </APIField>
+  <APIField name="Group response lambda" required>
+    The lambda that will be invoked on every outgoing response from the SCIM Group API endpoints. This maps the outgoing Group object to the JSON for a SCIM Group.
+  </APIField>
+  <APIField name="Schemas" optional>
+    The JSON response sent from the Schemas endpoint. This can be customized however you like, but by default the response body will contain the JSON for the core SCIM [schemas](https://datatracker.ietf.org/doc/html/rfc7643#section-8.7.1) for SCIM Group, SCIM User, and SCIM EnterpriseUser.
+  </APIField>
+</APIBlock>
+
+### Security
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-security-acl-catpcha.png" alt="Tenant Configuration - Security: ACL and CAPTCHA" width="1200" role="bottom-cropped" />
+
+#### Login API settings
+
+<APIBlock>
+  <APIField name="Require an API key" optional>
+    This indicates how to authenticate the Login API when an `applicationId` is not provided.
+
+    When an `applicationId` is provided, the application configuration will take precedence. In almost all cases you will want to leave this enabled to require the use of an API key.
+  </APIField>
+  <APIField name="Login validation lambda" optional since="1.53.0">
+    The lambda assigned to perform extended validation during login requests.
+  </APIField>
+</APIBlock>
+
+#### Access control lists settings
+
+<EnterprisePlanBlurb />
+
+<APIBlock>
+  <APIField name="Access control list" optional>
+    The IP access control list that will be used to restrict or allow access to hosted login pages in FusionAuth. For example, it may be configured to only allow specific IP addresses to access authentication pages (login, forgot password, etc) for all applications on that tenant.
+
+    When <InlineField>Access control list</InlineField> is configured on an application within the tenant, the application value will override the tenant value for that application.
+  </APIField>
+</APIBlock>
+
+#### CAPTCHA settings
+
+<EnterprisePlanBlurb />
+
+CAPTCHA is supported on multiple theme templates, when enabled. You can further control display on a template by template basis with the [specific theme template variables](/docs/customize/look-and-feel/template-variables).
+
+See [invisible reCAPTCHA](/docs/customize/look-and-feel/helpers#invisible-recaptcha) for information on enabling an invisible reCAPTCHA badge on the page.
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, CAPTCHA is used to help increase security of a form submission on the FusionAuth themed pages.
+  </APIField>
+  <APIField name="Method" required>
+    The type of CAPTCHA to use. FusionAuth supports `Google reCAPTCHA v2`, `Google reCAPTCHA v3`, `hCaptcha`, and `hCaptcha Enterprise`.
+
+    Required when `enabled` is set to `true`.
+  </APIField>
+  <APIField name="Secret key" required>
+    The secret key for this CAPTCHA service.
+
+    Required when `enabled` is set to `true`.
+  </APIField>
+  <APIField name="Site key" required>
+    The site key for this CAPTCHA service.
+
+    Required when `enabled` is set to `true`.
+  </APIField>
+  <APIField name="Threat score threshold" optional>
+    The threat score threshold for this CAPTCHA service if required. If it is not used by this CAPTCHA service then the value will be ignored.
+  </APIField>
+</APIBlock>
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-security-domains-rate-limiting.png" alt="Tenant Configuration - Security: Blocked domains and rate limiting" width="1200" role="top-cropped" />
+
+#### Blocked domain settings
+
+<EnterprisePlanBlurb />
+
+<APIBlock>
+  <APIField name="Blocked domains" optional>
+    One or more newline separated email domains for which self service registration will be prohibited. For example, enter your company email domain (`piedpiper.com`) to prevent employees from using the self-service registration form, or to prevent end users from attempting to create an account using a company email address.
+
+    This configuration is applied to all registration API requests and self-service registration pages for all applications in this tenant.
+  </APIField>
+</APIBlock>
+
+#### Rate limit settings
+
+<EnterprisePlanBlurb />
+
+The Rate limit settings allow you to set a number of times an action can be attempted within a specific time frame. When the limit is exceeded, that action is unavailable until the configured time frame elapses without a failed attempt. The settings are evaluated and enforced per user.
+
+<APIBlock>
+  <APIField name="Action">
+    The action to be rate limited.
+
+    *Note:* For the `Failed login` action, rate limiting can be used in combination with [Failed authentication settings](#failed-authentication-settings). When enabled, and rate limiting conditions have been exceeded, login requests will be denied and bypass the login flow until conditions are no longer exceeded. <InlineField>Failed attempts</InlineField> will only be incremented when requests are not being rate limited.
+  </APIField>
+  <APIField name="Enabled">
+    When enabled, the corresponding action will be rate limited when the <InlineField>limit</InlineField> value has been exceeded within the specified <InlineField>time period</InlineField>.
+  </APIField>
+  <APIField name="Limit">
+    The number of allowed attempts within the <InlineField>time period</InlineField> before an action will be rate limited. When an action is rate limited, it will not succeed.
+  </APIField>
+  <APIField name="Time period">
+    The window of time that the <InlineField>limit</InlineField> is evaluated against when determining if an action should be rate limited.
+  </APIField>
+</APIBlock>
+
+
+### Advanced
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-extId-durations.png" alt="Tenant Configuration - External Identifier Durations" width="1200" role="shadowed top-cropped" />
+
+#### External identifier durations Form Fields
+
+<APIBlock>
+  <APIField name="Authorization Code" required>
+    The number of seconds before the OAuth2 Authorization Code is no longer valid to be used to complete a Token request.
+  </APIField>
+  <APIField name="Change Password" required>
+    The number of seconds before the Change Password identifier is no longer valid to complete the Change Password request.
+  </APIField>
+  <APIField name="Device Grant Codes" required>
+    The number of seconds before the `device_code` and `user_code` are no longer valid to be used to complete the Device Code grant.
+  </APIField>
+  <APIField name="Email Verification" required>
+    The number of seconds before the Email Verification identifier is no longer valid to complete the Email Verification request.
+  </APIField>
+  <APIField name="External Authentication" required>
+    The number of seconds before the External Authentication identifier is no longer valid to complete the Authentication request.
+  </APIField>
+  <APIField name="Login timeout" required>
+    The number of seconds before the Login Timeout identifier is no longer valid to complete post-authentication steps in the OAuth workflow.
+  </APIField>
+  <APIField name="One Time Password" required>
+    The number of seconds before the One Time Password identifier is no longer valid to complete a Login request.
+  </APIField>
+  <APIField name="Passwordless Login" required>
+    The number of seconds before the Passwordless Login identifier is no longer valid to complete a Login request.
+  </APIField>
+  <APIField name="Pending account link" required>
+    The number of seconds before the Pending account link is no longer valid to complete an account link request.
+  </APIField>
+  <APIField name="Registration Verification" required>
+    The number of seconds before the Registration Verification identifier is no longer valid to complete the Registration Verification request.
+  </APIField>
+  <APIField name="Remember scope consent choice" required>
+    The number of seconds before a remembered consent choice, used to bypass the OAuth scope consent prompt, expires.
+  </APIField>
+  <APIField name="SAMLv2 AuthN request" required>
+    The number of seconds before the SAMLv2 AuthN request is no longer valid to complete the SAMLv2 login request.
+  </APIField>
+  <APIField name="Setup Password" required>
+    The number of seconds before the Setup Password identifier is no longer valid to complete the Change Password request.
+  </APIField>
+  <APIField name="Two Factor Login" required>
+    The number of seconds before the Two Factor identifier is no longer valid to complete a Two Factor login request.
+  </APIField>
+  <APIField name="Two Factor one-time code" required>
+    The number of seconds before the Two Factor one-time code used to enable or disable a two-factor method is no longer valid.
+  </APIField>
+  <APIField name="Two Factor Trust" required>
+    The number of seconds before the Two Factor Trust is no longer valid and the user will be prompted for Two Factor during login.
+  </APIField>
+  <APIField name="WebAuthn authentication" required>
+    The number of seconds before the WebAuthn authentication challenge is no longer valid and the user will need to restart the authentication workflow.
+  </APIField>
+  <APIField name="WebAuthn registration" required>
+    The number of seconds before the WebAuthn registration challenge is no longer valid and the user will need to restart the credential registration workflow.
+  </APIField>
+</APIBlock>
+
+
+<img src="/img/docs/get-started/core-concepts/tenant-configuration-extId-generation.png" alt="Tenant Configuration - External Identifier Generation" width="1200" role="shadowed" />
+
+#### External identifier generation Form Fields
+
+<APIBlock>
+  <APIField name="Change Password" required>
+    The length and type of characters of the generated code used in the Change Password flow.
+  </APIField>
+  <APIField name="Email Verification" required>
+    The length and type of characters of the generated code used in the Email Verification flow.
+  </APIField>
+  <APIField name="Email Verification one-time code" required>
+    The length and type of characters of the generated code used for Email Verification one-time codes.
+
+    The one-time code for email verification is only used with email verification gating and when using a form field configuration instead of the clickable link.
+  </APIField>
+  <APIField name="Passwordless Login" required>
+    The length and type of characters of the generated code used in the Passwordless Login flow.
+  </APIField>
+  <APIField name="Registration Verification" required>
+    The length and type of characters of the generated code used in the Registration Verification flow.
+  </APIField>
+  <APIField name="Registration Verification one-time code" required>
+    The length and type of characters of the generated code used for Registration Verification one-time codes.
+
+    The one-time code for registration verification is only used with registration verification gating and when using a form field configuration instead of the clickable link.
+  </APIField>
+  <APIField name="Setup Password" required>
+    The length and type of characters of the generated code used in the Setup Password flow.
+  </APIField>
+  <APIField name="Device grant user code" required>
+    The length and type of characters of the generated user code used in the Device Authorization Grant flow.
+  </APIField>
+  <APIField name="Two-Factor one-time code" required>
+    The length and type of characters of the generated code used for Two-Factor one-time codes.
+  </APIField>
+</APIBlock>
+
+
+#### SMTP Settings Form Fields
+
+<APIBlock>
+  <APIField name="Additional properties" optional>
+    Custom SMTP configuration properties. This field can contain any Java mail property. Any value here will override the default values FusionAuth sets.
+
+    <DefaultSMTPConfigurationProperties />
+    Here's example syntax for overriding these properties, in this case setting both timeout defaults to 5 seconds.
+```
+mail.smtp.timeout=5000
+mail.smtp.connectiontimeout=5000
+```
+  </APIField>
+</APIBlock>
+

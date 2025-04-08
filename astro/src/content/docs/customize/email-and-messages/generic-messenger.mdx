@@ -1,0 +1,131 @@
+---
+title: Generic Messenger
+description: Learn how to add and configur generic messengers.
+section: customize
+subcategory: email and messages
+---
+import InlineField from 'src/components/InlineField.astro';
+import Aside from 'src/components/Aside.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import JSON from 'src/components/JSON.astro';
+import SecuringHttpRequests from 'src/content/docs/_shared/_securing_http_requests.mdx';
+
+<Aside type="version">
+Available since 1.26.0
+</Aside>
+
+## Set Up a Generic Messenger
+
+Currently, built-in messengers are only provided to send messages via Twilio or email. If you need to connect to a messaging provider other than Twilio, whether you want to send SMS messages or use a different transport layer such as push notifications, you can use the Generic messenger configuration.
+
+The generic messenger allows for a simple JSON REST API integration which allows you to receive a message from FusionAuth to an arbitrary URL. The Generic Message Receiver at this URL may then make an API call to any third party messaging provider.
+
+To create a new generic messenger, navigate to <strong>Settings -> Messengers</strong>. Click `Add Generic Messenger` from the dropdown in the upper right.
+
+### Add Generic Messenger
+
+
+<img src="/img/docs/customize/email-and-messages/add-generic-messenger-home-crop.png" alt="Add Generic Messenger Home"  role="bottom-cropped"  width="1200" />
+
+Complete the following fields:
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Id" optional>
+    A unique UUID is auto generated if left blank.
+  </APIField>
+  <APIField name="Name" required>
+    For display only. Name of this generic messenger.
+  </APIField>
+  <APIField name="URL" required>
+    This is the URL of the messaging service you wish to connect to.
+  </APIField>
+  <APIField name="Connect timeout" required>
+    In milliseconds, how long to keep the socket open when connecting to the messenger.
+    Must be an integer and greater than 0.
+  </APIField>
+  <APIField name="Read timeout" required>
+    In milliseconds, how long to keep the socket open when reading to the messenger.
+    Must be an integer and greater than 0.
+  </APIField>
+  <APIField name="Debug enabled" optional>
+    When enabled, each message sent using this messenger will generate a new Debug Event Log which can be viewed using the Event Log API or from the admin UI by navigating to <strong>System-> Event Log</strong>.
+  </APIField>
+</APIBlock>
+
+### Security
+
+<img src="/img/docs/customize/email-and-messages/security-sub-add-generic.png" alt="Generic Messenger Security Tab"  width="1200"  role="bottom-cropped top-cropped" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Basic auth username" optional>
+    Username used to authenticate with the generic messenger
+  </APIField>
+  <APIField name="Basic auth password" optional>
+    Password used to authenticate with the generic messenger
+  </APIField>
+  <APIField name="Certificate" optional>
+    The SSL certificate in PEM format to be used when connecting to the messenger API endpoint. When provided an in memory keystore will be generated in order to complete the HTTPS connection to the messenger API endpoint.
+  </APIField>
+</APIBlock>
+
+### Headers
+
+<img src="/img/docs/customize/email-and-messages/headers-sub-add-generic-crop.png" alt="Generic Messenger Headers Tab"  role="top-cropped bottom-cropped"  width="1200" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Add Headers" optional>
+    In these fields, you can add custom key and value pairs. These will be sent as headers on the request.
+  </APIField>
+</APIBlock>
+
+### Testing Your Configuration
+
+<img src="/img/docs/customize/email-and-messages/configuration-test-generic.png" alt="Test Configuration Generic"  role="top-cropped"  width="1200" />
+
+You also can test your generic messenger configuration. By hitting `Test generic configuration` FusionAuth will fire a JSON message to the messenger to ensure everything is set up correctly.
+
+## Writing the Generic Message Receiver
+
+You need to write a server side component, a receiver, which will be deployed at a URL to consume the message sent from FusionAuth. At that point, it can proxy the request to any third party messaging service. In other words, a FusionAuth Generic Messenger is a thin coordination layer between FusionAuth and other messaging services. An application with the proper permissions, code and configuration to relay a message must exist at the configured URL. This receiver component may be written in any language that can consume a JSON message.
+
+The request to your endpoint will be delivered as JSON.
+When your application receives this message from FusionAuth, it should take whatever steps necessary to send the message, such as:
+
+* call into a SDK provided by the third party
+* make an API request to a vendor provided endpoint
+* call multiple internal APIs
+* anything else that may be required
+
+### Request 
+
+<APIBlock>
+  <APIField name="phoneNumber" type="String">
+    The phone number of the user to which this message should be sent.
+  </APIField>
+  <APIField name="textMessage" type="String">
+    The message text to send. This is built from the configured [message template](/docs/customize/email-and-messages/message-templates) and is localized.
+  </APIField>
+  <APIField name="type" type="String">
+    The type of the message. This will always be `SMS`.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Message Payload JSON" src="messengers/generic-message-request.json" />
+
+### Response 
+
+If the message was processed successfully, return a status code in the `200` to `299` range. No further processing will be performed by FusionAuth.
+
+If the receiver is unsuccessful at sending the message, for whatever reason, return a status code outside of that range.
+
+## Securing the Generic Message Receiver
+
+<SecuringHttpRequests request_entity="Generic Message Receiver" request_entity_lc="generic-messenger" ssl_certificate_sentence="This must be an SSL certificate in PEM format" />
+

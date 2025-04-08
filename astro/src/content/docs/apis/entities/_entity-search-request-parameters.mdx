@@ -1,0 +1,129 @@
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import InlineField from 'src/components/InlineField.astro';
+import SearchPreprocessingWarning from "src/content/docs/_shared/_search-preprocessing-warning.mdx";
+
+{/*  parameter_prefix is either blank for parameters or "search." for body */}
+{/*  query_string_request is set to anything for query string requests */}
+{/*  query_string_request is undefined for body requests */}
+{/*  database_search_engine_type is defined if this is a database search engine entry */}
+{/*  elasticsearch_search_engine_type is defined if this is a elasticsearch search engine entry */}
+
+<APIBlock>
+  <APIField name={props.parameter_prefix + "accurateTotal"} type="Boolean" optional defaults="false">
+    Set this value equal to `true` to receive an accurate hit count on the API response.
+
+    By default the search engine will limit the hit count to 10,000 entities. This means that even if your query may match more than 10,000 entities, the returned total count will be 10,000. This is adequate for many use cases such as pagination and general purpose queries. If you are looking for an accurate entity count that can exceed 10,000 matches, you will want to set this value equal to `true`.
+  </APIField>
+  {/*  The only field with a different definition between body and query string is ids */}
+  <APIField name={props.parameter_prefix + "ids"} type="UUID" optional renderif={!!props.query_string_request}>
+    An Entity Id to retrieve. By specifying this URL parameter multiple times you can lookup multiple Entities.
+
+    {props.database_search_engine_type &&
+        <> Using this parameter is mutually exclusive with the <InlineField>queryString</InlineField> field and is not paginated or sorted using the <InlineField>sortFields</InlineField> field. </>
+    }
+    {props.elasticsearch_search_engine_type &&
+        <>
+          Using this parameter is mutually exclusive with the <InlineField>query</InlineField> and <InlineField>queryString</InlineField> fields and is not paginated or sorted using <InlineField>sortFields</InlineField> field.
+
+          Using this parameter will not hit the Elasticsearch index, instead it will cause entities to be retrieved by Id only.
+        </>
+    }
+  </APIField>
+  <APIField name="nextResults" type="String" optional since="1.48.0" renderif={!!props.elasticsearch_search_engine_type}>
+    The encoded token returned in the <InlineField>nextResults</InlineField> of a previous search response. Providing this token will return a result set for the page following the last result from the previous search response.
+    
+    This parameter can be used to successfully page past the `max_result_window` limitation.
+
+    This parameter cannot be used with the <InlineField>ids</InlineField>, <InlineField>query</InlineField>, <InlineField>queryString</InlineField>, or <InlineField>sortFields</InlineField> parameters. The <InlineField>startRow</InlineField> parameter must be 0 or omitted.
+
+    See [Extended Pagination](/docs/lifecycle/manage-users/search/search#extended-pagination) for more information.
+  </APIField>
+  <APIField name={props.parameter_prefix + "ids"} type="Boolean" optional defaults="false" renderif={!props.query_string_request}>
+    A list of Entity Ids to retrieve. When using this parameter, the results are not paginated or sorted using the <InlineField>sortFields</InlineField>.
+
+    {props.database_search_engine_type &&
+      <> The <InlineField>{props.parameter_prefix}ids</InlineField> and <InlineField>queryString</InlineField> parameters are mutually exclusive, they are listed here in order of precedence. </>
+    }
+    {props.elasticsearch_search_engine_type &&
+      <>
+        The <InlineField>{props.parameter_prefix}ids</InlineField>, <InlineField>query</InlineField>, and <InlineField>queryString</InlineField> parameters are mutually exclusive, they are listed here in order of precedence.
+
+        Using this parameter will not hit the Elasticsearch index, instead it will cause entities to be retrieved by Id only.
+      </>
+    }
+  </APIField>
+  <APIField name={props.parameter_prefix + "numberOfResults"} type="Boolean" optional defaults="25">
+    The number of search results to return. Used for pagination.
+  </APIField>
+  <APIField name={props.parameter_prefix + "query"} type="String" optional renderif={!!props.elasticsearch_search_engine_type}>
+    The raw JSON Elasticsearch query that is used to search for Entities.  The <InlineField>ids</InlineField>, <InlineField>query</InlineField>, and <InlineField>queryString</InlineField>  parameters are mutually exclusive, they are listed here in order of precedence.
+
+    It is necessary to use the <InlineField>{props.parameter_prefix}query</InlineField> parameter when querying against <InlineField>grants</InlineField> in order to achieve expected results, as this field is defined as a [nested datatype](https://www.elastic.co/guide/en/elasticsearch/reference/6.3/nested.html) in the Elasticsearch mapping.
+  </APIField>
+  <APIField name={props.parameter_prefix + "queryString"} type="String" optional renderif={!!props.database_search_engine_type}>
+    A query string that is used to search for Entities. Using this parameter is mutually exclusive with the <InlineField>ids</InlineField> field.
+
+    Database search limits effective queries to single search terms that may match the following fields on the Entities or their Entity Type:
+
+      * `clientId`
+      * `name`
+      * `entityType.name`
+
+    The search matches against all of these fields and any entity with a matching field will be returned. The match is case-insensitive, and you may not search by prefix or suffix. Whitespace is not allowed in the search. Regular expressions may not be used. A value of `*` will match all records.
+  </APIField>
+  <APIField name={props.parameter_prefix + "queryString"} type="String" optional renderif={!!props.elasticsearch_search_engine_type}>
+    The Elasticsearch query string that is used to search for Entities.  The <InlineField>ids</InlineField>, <InlineField>query</InlineField>, and <InlineField>queryString</InlineField>  parameters are mutually exclusive, they are listed here in order of precedence.
+
+    The match is case-insensitive. Whitespace is allowed in the search, but must be URL escaped; for example, using `%20` for a space character. Elasticsearch compatible regular expressions may be used, so you may search by prefix or suffix using the `*` wildcard.
+
+    You may search against specific fields like so: `name:*API`. This will match only entities with a name ending in a `API`. Here are [the available fields for matching](/docs/reference/entity-fields).
+
+    <SearchPreprocessingWarning/>
+  </APIField>
+  <APIField name={props.parameter_prefix + "startRow"} type="Integer" optional defaults="0">
+    The start row within the search results to return. Used for pagination.
+  </APIField>
+  <APIField name={props.parameter_prefix + "sortFields"} type="Array" optional>
+    An array of sort fields used to sort the result. The order the sort fields are provided will be maintained in the sorted output.
+  </APIField>
+  <APIField name={props.parameter_prefix + "sortFields[x].missing"} type="String" optional defaults="_last" renderif={!!props.elasticsearch_search_engine_type}>
+    The value to substitute if this field is not defined. Two special values may be used:
+
+      * `_first` When the field is not defined sort this record first.
+      * `_last` When the field is not defined sort this record last.
+  </APIField>
+  <APIField name={props.parameter_prefix + "sortFields[x].name"} type="String" optional renderif={!!props.database_search_engine_type}>
+    The name of the field to sort.
+
+    Required if <InlineField>sortFields</InlineField> is provided.
+
+    The following field names are supported for the database search engine:
+      * `clientId`
+      * `insertInstant`
+      * `lastUpdateInstant`
+      * `name`
+      * `tenantId`
+      * `typeId`
+  </APIField>
+  <APIField name={props.parameter_prefix + "sortFields[x].name"} type="String" optional renderif={!!props.elasticsearch_search_engine_type}>
+    The name of the field to sort.
+
+    Required if <InlineField>sortFields</InlineField> is provided.
+
+    Due to how the search index is structured not all fields on the entity are sortable. The following field names are currently supported.
+
+      * `clientId`
+      * `insertInstant`
+      * `lastUpdateInstant`
+      * `name`
+      * `tenantId`
+      * `typeId`
+  </APIField>
+  <APIField name={props.parameter_prefix + "sortFields[x].order"} type="String" optional defaults="asc">
+    The order to sort the specified field. Possible values are:
+
+      * `asc`
+      * `desc`
+  </APIField>
+</APIBlock>

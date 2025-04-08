@@ -1,0 +1,222 @@
+---
+title: Anonymous Users
+description: Learn how to create anonymous or stub users in FusionAuth.
+navcategory: developer
+section: lifecycle
+subcategory: register users
+---
+import Aside from 'src/components/Aside.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+
+## Overview
+
+A "stub" user profile, also known as an anonymous user, is a pattern to allow your users to build up profiles gradually before requiring identifying information such as an email address or username. This is a common pattern with business to consumer or gaming applications, where you want to lower friction as much as possible.
+
+In this guide, you'll be creating anonymous users whenever a user visits a page to watch the video. The video is about [ChangeBank](https://www.youtube.com/watch?v=CXDxNCzUspM), the global leader in making change.
+
+In this case, you will record how many times a user visited the video page. You could also capture other data, such as how long this video was watched, when it was visited, or anything else you want to record. Users can also sign up on the viewing page and set a password via an email. The number of times the user watched the video will be preserved in the user account.
+
+This guide will cover the important concepts and code, but won't be a step by step tutorial.
+
+You can find [the full code here](https://github.com/FusionAuth/fusionauth-example-anonymous-user) if you want to grab it and explore the code yourself. The repository includes a Kickstart file to get FusionAuth correctly configured in one command.
+
+If you want to follow along with that code, you need to have the following:
+
+* Docker for running FusionAuth
+* Python3.8 or later
+
+## Setting Up Anonymous User Support
+
+Tracking a user without any identifying information isn't supported by the FusionAuth hosted login pages, so you'll be building on top of the FusionAuth APIs. The APIs allow you to extend FusionAuth to meet specific or atypical needs for your identity store.
+
+This guide uses Python to interact with the APIs, but you can use any of the supported [client libraries](/docs/sdks/) or the [REST API](/docs/apis/).
+
+To track anonymous users and allow them to convert to regular users, you'll need to:
+
+* Set up an API Key with the appropriate permissions
+* Set up an anonymous user profile based on behavior on the site
+* Store the anonymous user Id on the device
+* Update the stub user profile when the user takes an action, such as viewing a page
+* Build a conversion page when the user wants to sign up with an email address to enable more personalized functionality
+
+There are four types of users in this solution:
+
+* an unknown user is a regular website visitor who has not yet taken an action which will create an anonymous user account
+* an anonymous user has a shadow account in FusionAuth which can track actions, but doesn't have access to that account
+* a converted user has set up a password and email address, but previously had an anonymous account
+* a regular user is either a converted user or an unknown user who has registered
+
+## Creating The API Key
+
+Since you are using the FusionAuth APIs to create and update user data, you'll need to create an API Key. This is a high privilege secret and should be treated with care. Actions it will enable:
+
+* creating the anonymous user account
+* reading and updating the user's data
+* issuing a special JWT to safely place the user Id in a browser cookie
+* triggering a forgot password flow
+
+To create the key, navigate to <strong>Settings -> API Keys</strong> and create a new API Key. The key needs to have the following permissions:
+
+* `/api/user`: `GET`, `POST`, `PATCH`
+* `/api/jwt/vend`: `POST`
+* `/api/user/forgot-password`: `POST`
+
+Now that you've set up the API key, make sure it is available to the application via a secrets manager or environment variable. You can then create a FusionAuth client like this.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-anonymous-user/main/complete-application/server.py"
+            lang="python"
+            tags="createFusionAuthClient" />
+
+## Create The Anonymous User
+
+Next, determine when to create the anonymous user account. The best time is when a user first takes an action worth recording. In this example, that occurs when they visit the video page.
+
+When that happens, make an API call to create a user. Because FusionAuth requires a login identifier (either an email or a username) and a password, you'll have to provide those. Use long random values for these fields so they are unguessable. You'll be accessing the account via the Id and the user won't be logging in, so random values are fine.
+
+Here's the user creation logic, from the route which serves up the video page.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-anonymous-user/main/complete-application/server.py"
+            lang="python"
+            tags="createUser" />
+
+You can see code checks to see if an anonymous account exists by checking for a cookie. If not, a new user is created with the relevant data attributes. The Id of the user is then extracted. You'll need to save that off. All future interactions will be keyed off this Id.
+
+## Saving The Id
+
+After the anonymous profile is created, you need to store the Id, which is a [UUID](/docs/reference/data-types#uuids). This value should be sent down to the user's device. If this is a web application, a `Secure`, `HttpOnly` cookie is a good storage option.
+
+The value of the cookie can be one of the following.
+
+* the plaintext Id value
+* a JSON Web Token (JWT) containing the Id
+* an encrypted value
+
+Which you choose depends on your use case. The security risk with the plaintext value is that anyone with access to the cookie can try different Id values to modify the profile of another user. Attackers may notice the anonymous cookie format and try to probe your system in other ways using scripts. This may be an acceptable risk in low-value accounts.
+
+An encrypted value ensures that no one can read the Id except the system which created it. This requires effort and key management.
+
+A JWT is a middle ground. It requires less effort than encrypting the Id, but eliminates the risk of account probing, since any JWT that is tampered won't be valid. That is the approach this guide will take. 
+
+Here's the code to create the JWT and store it in a cookie.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-anonymous-user/main/complete-application/server.py"
+            lang="python"
+            tags="createJWT" />
+
+You can then store the JWT. You can do so in a persistent secure, `HttpOnly` browser cookie, or, if the device is a mobile application, in a shared preferences file.
+
+<Aside type="note">
+You can also add more information to the JWT. Depending on how your application is architected, you may want to replicate the format of a JWT which would be generated by a full account login.
+</Aside>
+
+
+## Presenting The Token
+
+Your client side application should then present the token representing the stub profile every time it interacts with your application to persist or read a preference. At a high level, the process is:
+
+* read the JWT
+* validate it
+* read the Id
+* retrieves the user information from the User API
+* updates the user profile data
+
+In this example, the `watchCount` is incremented each time the video page is viewed. Here's the code to do so.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-anonymous-user/main/complete-application/server.py"
+            lang="python"
+            tags="readJWT" />
+
+The user Id is retrieved from the cookie, then the user is looked up. If the user Id is not found, something is wrong and processing stops. Otherwise, the anonymous user profile is updated.
+
+It's also worth looking at the `get_anon_user_id_from_cookie` method, which is what gets the `user_id`.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-anonymous-user/main/complete-application/server.py"
+            lang="python"
+            tags="getAnonUserIdFromCookie" />
+
+Here the JWT is retrieved from the cookie. It is also validated using the [authlib JWT decoder](https://docs.authlib.org). If validation fails, someone is messing with the JWT value and no processing should occur.
+
+## Converting To A Full User
+
+After a period of time, the user may want to register. Behind the scenes, this process is different from a normal self-service registration because you're converting an anonymous account to a full user profile. However, for the user, it is a simple registration. You may prompt them to register based on time of game play or actions they've taken. Encourage them to register if they want to play across devices or require them to do so to gain access to features.
+
+<Aside type="note">
+You'll also want to handle the case where an unknown user wants to register.
+
+In that case, redirect to your normal registration flow.
+</Aside>
+
+For the purposes of this example, you are going to allow the user to convert to a full account by clicking a link any time they want to, rather than forcing registration based on business logic.
+
+A conversion process looks like this:
+
+* The user chooses to convert their account by providing an email address
+* The application retrieves the user Id
+* The application updates the user account with the email address
+* The application triggers a forgot password email
+
+Here's code that does this.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-anonymous-user/main/complete-application/server.py"
+            lang="python"
+            tags="registerAnonymousUserRoute" />
+
+### The Forgot Password Workflow
+
+Make sure that you always confirm the user owns the email address which they are entering. Otherwise, a malicious actor could enter any email address, which may lead to unwanted escalation.
+
+Since you can only have one forgot password email template per user, you can provide a `state` value specifying this forgot password workflow was started by an anonymous user conversion, and then use logic in the email template.
+
+Here's the example email template with the logic with a `[#if state.anon_user??]` statement.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-anonymous-user/main/kickstart/email-templates/forgot-password.txt.ftl" />
+
+
+### Cleaning Up After Full Conversion
+
+After the forgot password workflow is completed, the user should be prompted to log in. At this point, the anonymous user has been fully converted to a regular user account, and you can undertake any cleanup that is needed.
+
+There are two [webhook](/docs/extend/events-and-webhooks/) events you could listen for and process cleanup after.
+
+The first is [password change](/docs/extend/events-and-webhooks/events/user-password-update). This is the cleanest option, because when a user has changed their password, they have indicated control of the email address, but this is only available on the Enterprise plan.
+
+The second is the [successful user login event](/docs/extend/events-and-webhooks/events/user-password-update). Here, you examine the user who is logging in and see if they have any anonymous user attributes. Since an anonymous user can't log in, because they have a random username and password, this event will never be triggered for that type of user.
+
+This guide will use the latter option. You'll need to [create and register the webhook](/docs/extend/events-and-webhooks/#add-webhook), which can be done via admin UI or API.
+
+Here's the webhook code.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-anonymous-user/main/complete-application/server.py"
+            lang="python"
+            tags="cleanupAnonymousUserRoute" />
+
+This examines the incoming event to see if it is a login success. It then checks if the user is a newly converted user, as indicated by a value of `user.data.anonymousUser`. If these are all true, then the user is updated to set `anonymousUser` to `false`. For this guide, that is indication that the user has been converted to a regular user.
+
+At this point, the user has a full fledged user account with a known login identifier and password, as well as the profile data that they've provided when they were an anonymous user.
+
+## Querying For Users
+
+When you create a user and put values in `user.data`, you can query those values later. Running such queries helps you understand how many anonymous users you have, what these anonymous users are doing, how many people convert to full accounts, and more.
+
+In this example, the `user.data` object looks like this.
+
+```json
+{
+  "data" : {
+    "anonymousUser" : true,
+    "watchCount" : 2
+  }
+}
+```
+
+You can run queries to see how many anonymous users there are or how many actions they've taken. Run such queries using the [User Search API](/docs/apis/users#search-for-users).
+
+For more examples of searching users, see the [Searching Users With Elasticsearch guide](/docs/lifecycle/manage-users/search/user-search-with-elasticsearch).
+
+## Limitations
+
+Creating anonymous users as outlined in this guide has some limitations.
+
+* Creating an anonymous user counts as a [monthly active user](/docs/get-started/core-concepts/users#what-makes-a-user-active), which may affect your cost if you have a paid plan. Any updates to a user will not trigger an MAU.
+* If a user removes the cookie or logs in from a different device, they will not have access to the anonymous profile.
+* You may end up with a large number of stub accounts, depending on when you create them. You use the User Search APIs to find anonymous accounts that have not been updated for 30 days and delete those accounts.

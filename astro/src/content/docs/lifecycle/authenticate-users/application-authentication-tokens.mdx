@@ -1,0 +1,61 @@
+---
+title: Application Authentication Tokens
+description: Leverage Application specific authentication tokens to speed up certain authentication tasks.
+navcategory: developer
+section: lifecycle
+subcategory: authenticate users
+---
+import API from 'src/components/api/API.astro';
+import JSON from 'src/components/JSON.astro';
+import InlineField from 'src/components/InlineField.astro';
+
+## Application Authentication Tokens
+
+In most cases, Users will authenticate using a login Id (email or username) plus a password. Passwords are hashed using a strong cryptographic
+hash such as BCrypt. The process of hashing is intentionally slow by design to limit the risk of brute force attacks. In some cases, you might need
+a way to speed up authentication without reducing the hashing strength for the normal login process.
+
+To solve this problem, FusionAuth supports the concept of Authentication Tokens. Authentication Tokens are an Application specific way of
+authenticating Users. For each Application, you can enable Authentication Tokens and then allow Users to authenticate using this authentication token.
+
+An Authentication Token is a sequence of characters and it can be used in place of your normal password. If you allow FusionAuth to generate the
+token for you which is highly recommended, the token is built using a secure random generator and the URL safe Base64 encoded to produce a string 43 characters in length.
+
+While 128 bites of entropy is generally considered to be sufficiently secure , the generated Authentication Token provides 256 bites of entropy. This value is calculated
+by multiplying the number of characters by the entropy per character, and because a Base64 encoded character provides a entropy of 5.954 bits, a 43 character string will have 256 bits of entropy.
+
+### Enabling Authentication Tokens
+
+To enable Authentication Tokens, open the FusionAuth web interface and navigate to <strong>Applications</strong> from the main menu. Edit the Application you want to use Authentication Tokens for and click the Security tab. You'll see an option like this:
+
+<img src="/img/docs/lifecycle/authenticate-users/authentication-token.png" alt="Authentication Tokens" width="1200" role="shadowed" />
+
+Enable this option and save the change to your Application.
+
+### Generating Authentication Tokens
+
+Once the Authentication Tokens are enabled for a specific Application, you can ask FusionAuth to generate one for a User by creating or
+updating a User Registration. To accomplish this, you will set the request parameter named `generateAuthenticationToken` to true in
+the request JSON like this:
+
+<API method="PUT" uri="/api/user/registration"/>
+
+<JSON title="Example Request JSON" src="user-registrations/create-request-with-authentication-token.json" />
+
+This request will result in a response that includes an Authentication Token like this:
+
+<JSON title="Example Response JSON" src="user-registrations/response-with-authentication-token.json" />
+
+For more information, review the [User Registration APIs](/docs/apis/registrations).
+
+### Authenticating Using a Token
+
+Once a User has been given an Application specific Authentication Token, you can supply it on the [Login API](/docs/apis/login) as long as
+you include the Application Id in the request as well.
+
+Note that you must provide a valid API key unless you've also unchecked the <InlineField>Require an API key</InlineField> setting in the <strong>Login API Settings</strong>.
+
+Here is an example request to the Login API:
+
+<JSON title="Example Request JSON" src="login/request-with-authentication-token.json" />
+

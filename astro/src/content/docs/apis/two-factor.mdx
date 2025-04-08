@@ -1,0 +1,491 @@
+---
+title: Multi-Factor
+description: Learn about the APIs for enabling and disabling multi-factor authentication for users.
+section: apis
+---
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+import TwoFactorTotpLimits from 'src/content/docs/_shared/_two-factor-totp-limits.mdx';
+import PlanBlurb from 'src/content/docs/_shared/_plan-blurb.astro';
+import DifferenceTwoFactorMultiFactor from 'src/content/docs/_shared/_difference-two-factor-multi-factor.mdx';
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+import TwoFactorEnableRequestBody from 'src/content/docs/apis/_two-factor-enable-request-body.mdx';
+import TwoFactorEnableResponse from 'src/content/docs/apis/_two-factor-enable-response.mdx';
+import TwoFactorDisableRequestParameters from 'src/content/docs/apis/_two-factor-disable-request-parameters.mdx';
+import TwoFactorDisableRequestBody from 'src/content/docs/apis/_two-factor-disable-request-body.mdx';
+import JSON from 'src/components/JSON.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import TwoFactorStartRequestBody from 'src/content/docs/apis/_two-factor-start-request-body.mdx';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import TwoFactorStartResponseBody from 'src/content/docs/apis/_two-factor-start-response-body.mdx';
+
+<PlanBlurb>
+  Email and SMS multi--factor methods are only available in paid plan of FusionAuth. Please visit [our pricing page](/pricing) to learn more about paid plans.
+</PlanBlurb>
+
+<Aside type="caution">
+This API underwent breaking changes in version 1.26.
+
+If you are using a version of FusionAuth prior to 1.26.0, you should upgrade. 😎 &nbsp; But if you cannot - here is the doc you are looking for: [old Two Factor doc](/docs/archive/apis/two-factor-1-25).
+</Aside>
+
+## Overview
+
+This API allows you to manage multi-factor authentication (MFA) for users.
+
+<Aside type="note">
+  <DifferenceTwoFactorMultiFactor />
+</Aside>
+
+## Authentication
+
+Some of these operations can use JWT authentication instead of API key authentication. In some cases, when you have a valid <InlineField>twoFactorId</InlineField>, neither a JWT nor an API key is required.
+
+Learn more about [JWT authentication and see examples here](/docs/apis/authentication#jwt-authentication).
+
+## TOTP Implementation
+
+Support for Authy, Google Authenticator and other time based one-time password solutions are not premium features and are included in the Community plan.
+
+<TwoFactorTotpLimits />
+
+## Enable Multi-Factor
+
+This API is used to enable Multi-Factor authentication for a single User. To use this API the User must provide a valid
+Multi-Factor verification code.
+
+If using message based delivery, you may [Send a Multi-Factor Code When Enabling MFA](#send-a-multi-factor-code-when-enabling-mfa) to deliver a
+code to the User. The User will then provide this code as input.
+
+### Request
+
+<API method="POST" uri="/api/user/two-factor/{userId}" authentication={["api-key"]} title="Enable Multi-Factor Authentication by User Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userId" type="UUID" required>
+    The Id of the User for whom to enable Multi-Factor authentication.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<TwoFactorEnableRequestBody />
+
+<API method="POST" uri="/api/user/two-factor" authentication={["jwt"]} title="Enable Multi-Factor Authentication Using a JWT"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<TwoFactorEnableRequestBody />
+
+### Response
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                                             |
+|------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful. Multi-Factor has been enabled for the User.                                                                                                                                                                 |
+| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors. This status will also be returned if a paid FusionAuth license is required and is not present. |
+| 401  | You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See [Authentication](/docs/apis/authentication).                                                     |
+| 404  | The User does not exist. The response will be empty.                                                                                                                                                                                    |
+| 421  | The `code` request parameter is not valid. The response will be empty.                                                                                                                                                                  |
+| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                                                                              |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                                                |
+
+
+<TwoFactorEnableResponse />
+
+## Disable Multi-Factor
+
+This API is used to disable Multi-Factor authentication for a single User. To use this API the User must provide a valid
+Multi-Factor verification code or recovery code.
+
+If using message based delivery, you may [Send a Multi-Factor Code When Disabling MFA](#send-a-multi-factor-code-when-disabling-mfa) to deliver a
+code to the User. The User will then provide this code as input.
+
+If a recovery code is provided, all methods will be removed.
+
+### Request
+
+<API method="DELETE" uri="/api/user/two-factor/{userId}?code={code}&methodId={methodId}" authentication={["api-key"]} title="Disable a single multi-factor method by User Id"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<TwoFactorDisableRequestParameters />
+
+<API method="DELETE" uri="/api/user/two-factor/{userId}" authentication={["api-key"]} title="Disable a single multi-factor method by User Id"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<TwoFactorDisableRequestBody />
+
+<JSON title="Example Request JSON" src="two-factor/disable-request.json" />
+
+<API method="DELETE" uri="/api/user/two-factor" authentication={["jwt"]} title="Disable a single multi-factor method using a JWT"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<TwoFactorDisableRequestBody />
+
+<JSON title="Example Request JSON" src="two-factor/disable-request.json" />
+
+<API method="DELETE" uri="/api/user/two-factor?code={code}&methodId={methodId}" authentication={["jwt"]} title="Disable a single multi-factor method using a JWT"/>
+
+<TwoFactorDisableRequestParameters />
+
+### Response
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                         |
+|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful. Multi-Factor has been disabled for the User.                                                                                                            |
+| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                            |
+| 401  | You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See [Authentication](/docs/apis/authentication). |
+| 404  | The User does not exist. The response will be empty.                                                                                                                                |
+| 421  | The `code` request parameter is not valid. The response will be empty.                                                                                                              |
+| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                          |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                            |
+
+## Generate a Secret
+
+This API is used to generate a new multi-factor secret for use when enabling multi-factor authentication for a User. This is provided
+as a helper to assist you in enabling multi-factor authentication.
+
+If this secret will be used with a QR code to allow the User to scan the value, use the Base32 encoded value returned in the response.
+
+### Request
+
+<API method="GET" uri="/api/two-factor/secret" authentication={["api-key"]} title="Generate a multi-factor Secret"/>
+
+<API method="GET" uri="/api/two-factor/secret" authentication={["jwt"]} title="Generate a multi-factor Secret"/>
+
+### Response
+
+The response for this API contains a Multi-Factor secret suitable for an authenticator like Google Authenticator.
+
+<StandardGetResponseCodes never_missing no_errors />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="secret" type="String">
+    A Base64 encoded secret that may be used to enable Multi-Factor authentication.
+  </APIField>
+  <APIField name="secretBase32Encoded" type="String">
+    A Base32 encoded form of the provided secret. This is useful if you need to provide a QR code to the User to enable Multi-Factor authentication.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src="two-factor/secret/response.json" />
+
+## Start Multi-Factor
+
+Starts an multi-factor request. This would be used for only step up auth, such as when sensitive data is requested.
+
+If you want to provide your own code and/or deliver the code out of band using your own delivery mechanism, this is the right API call. Do not combine this with a [Send a Multi-Factor Code During Login or Step Up](#send-a-multi-factor-code-during-login-or-step-up) call, as calling that API will invalidate all other codes associated with the <InlineField>twoFactorId</InlineField>, including any you provide.
+
+To require additional factors during login, [Enable Multi-Factor](#enable-multi-factor) for the User. Then FusionAuth will handle MFA code collection automatically, if you are using the hosted login pages, or send a status code in response to the login API if you are not.
+
+### Request
+
+<API method="POST" uri="/api/two-factor/start" authentication={["api-key"]} title="Start multi-factor authentication"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<TwoFactorStartRequestBody />
+
+### Response
+
+<StandardPostResponseCodes missing_message="The User does not exist. The response will be empty." />
+
+<TwoFactorStartResponseBody />
+
+## Retrieve Multi-Factor Status
+
+Retrieves a user's multi-factor status. This is helpful to understand if a user has multi-factor authentication enabled, and if the user will be required to perform a multi-factor challenge during the next login request.
+
+This API may also be used to identify if an existing multi-factor trust value obtained during a multi-factor login is expired, or valid for a specific application when configured to restrict multi-factor trust.
+
+### Request
+
+<API method="GET" uri="/api/two-factor/status/{twoFactorTrustId}" authentication={["api-key"]} title="Retrieve multi-factor status"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="applicationId" type="String" optional>
+    A unique application Id. When Application multi-factor configuration is enabled, providing this parameter will ensure the returned status applies to the expected result when attempting to login into this application.
+  </APIField>
+  <APIField name="twoFactorTrustId" type="String" optional>
+    The existing multi-factor trust obtained by completing a multi-factor login. This is the value that allows you to bypass multi-factor during the next login attempt.
+  </APIField>
+  <APIField name="userId" type="String" required>
+    The unique Id of the user for which to retrieve multi-factor status.
+  </APIField>
+</APIBlock>
+
+### Response
+
+.Response Codes
+
+| Code | Description                                                                                                                                                                                                                                          |
+|------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The user does not have multi-factor enabled, or the provided trust is still valid for the next login.                                                                                                                                                |
+| 242  | The user has multi-factor authentication enabled. Since version `1.42.0`, this status code is also returned when two factor authentication is required.  The user will be required to complete a two-factor challenge during the next login attempt. |
+| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                                                                                             |
+| 401  | You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See [Authentication](/docs/apis/authentication).                                                                  |
+| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                                                                                           |
+
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="trusts" type="Array">
+    An array of one or more trust configurations.
+  </APIField>
+  <APIField name="twoFactorTrustId" type="String">
+    The value provided in the <InlineField>twoFactorTrustId</InlineField> on the request.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src="two-factor/status/response.json" />
+
+## Send a Multi-Factor Code During Login or Step Up
+
+This operation allows you to send a message with a code to finish a Multi-Factor flow, and requires an existing <InlineField>twoFactorId</InlineField>. No API key is required.
+
+This should only be used if you want FusionAuth to send the code. Do not use this if you are sending a code out of band or are using a TOTP based authentication method.
+
+You can use this to re-send a code with the same or a different method. Using this API will invalidate all other codes previously associated with the provided <InlineField>twoFactorId</InlineField>.
+
+Sending a code invalidates all previous codes for the provided `twoFactorId`.
+
+### Request
+
+<API method="POST" uri="/api/two-factor/send/{twoFactorId}" authentication={["none"]} title="Send a multi-factor code to complete Multi-Factor Login"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="twoFactorId" type="String" required>
+    The <InlineField>twoFactorId</InlineField> returned by the Login API or the Start multi-factor request.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="methodId" type="String" required>
+    The Id of the MFA method to be used.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="two-factor/send/twoFactorId-request.json" />
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardPostResponseCodes success_code="200" success_message="The request was successful." />
+
+## Send a Multi-Factor Code When Enabling MFA
+
+You are enabling MFA for a user. You must provide an API key or a valid JWT for the User you are modifying. This should only be used if you want FusionAuth to send the code. Do not use this if you are using a TOTP based authentication method.
+
+### Request
+
+<API method="POST" uri="/api/two-factor/send" authentication={["api-key"]} title="Send a Multi-Factor code to an existing User by Id"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" optional since="1.46.0">
+    An optional Application Id. When this value is provided, it will be used to resolve an application-specific email template and make `application` available as a template variable.
+
+    If not provided, only the tenant configuration will be used when resolving email templates, and `application` will not be available as a template variable.
+  </APIField>
+  <APIField name="email" type="String" optional>
+    The email to which send Multi-Factor codes. If the <InlineField>method</InlineField> is equal to `email`, this is required.
+  </APIField>
+  <APIField name="method" type="String" required>
+    The type of the MFA method which will be added. The value provided here must be allowed in the Tenant MFA configuration as well.
+
+    Valid values are:
+
+    * `email`
+    * `sms`
+  </APIField>
+  <APIField name="mobilePhone" type="String" optional>
+    The mobile phone to which send Multi-Factor codes. If the <InlineField>method</InlineField> is equal to `sms`, this is required.
+  </APIField>
+  <APIField name="userId" type="UUID" required>
+    The User Id.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="two-factor/send/enable-userId-request.json" />
+
+
+<API method="POST" uri="/api/two-factor/send" authentication={["jwt"]} title="Send a Multi-Factor code to an authenticated User using a JWT"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" optional since="1.46.0">
+    An optional Application Id. When this value is provided, it will be used to resolve an application-specific email template and make `application` available as a template variable.
+
+    If not provided, only the tenant configuration will be used when resolving email templates, and `application` will not be available as a template variable.
+  </APIField>
+  <APIField name="email" type="String" optional>
+    The email to which send Multi-Factor codes. If the <InlineField>method</InlineField> is equal to `email`, this is required.
+  </APIField>
+  <APIField name="method" type="String" required>
+    The type of the MFA method which will be added. The value provided here must be allowed in the Tenant MFA configuration as well.
+
+    Valid values are:
+
+    * `email`
+    * `sms`
+  </APIField>
+  <APIField name="mobilePhone" type="String" optional>
+    The mobile phone to which send Multi-Factor codes. If the <InlineField>method</InlineField> is equal to `sms`, this is required.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="two-factor/send/enable-jwt-request.json" />
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardPostResponseCodes success_code="200" success_message="The request was successful." />
+
+## Send a Multi-Factor Code When Disabling MFA
+
+You are disabling MFA for a user. You must provide an API key or a valid JWT for the User you are modifying. This should only be used if you want FusionAuth to send the code. Do not use this if you are using a TOTP based authentication method.
+
+### Request
+
+<API method="POST" uri="/api/two-factor/send" authentication={["api-key"]} title="Send a Multi-Factor code to an existing User by Id"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" optional since="1.46.0">
+    An optional Application Id. When this value is provided, it will be used to resolve an application-specific email template and make `application` available as a template variable.
+
+    If not provided, only the tenant configuration will be used when resolving email templates, and `application` will not be available as a template variable.
+  </APIField>
+  <APIField name="methodId" type="String" required>
+    The Id of the MFA method which will be removed.
+  </APIField>
+  <APIField name="userId" type="UUID" required>
+    The User Id of the User to send a Multi-Factor verification code. This User is expected to already have Multi-Factor enabled.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="two-factor/send/disable-userId-request.json" />
+
+<API method="POST" uri="/api/two-factor/send" authentication={["jwt"]} title="Send a Multi-Factor code to an authenticated User using a JWT"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" optional since="1.46.0">
+    An optional Application Id. When this value is provided, it will be used to resolve an application-specific email template and make `application` available as a template variable.
+
+    If not provided, only the tenant configuration will be used when resolving email templates, and `application` will not be available as a template variable.
+  </APIField>
+  <APIField name="methodId" type="String" required>
+    The Id of the MFA method which will be removed.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="two-factor/send/disable-jwt-request.json" />
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardPostResponseCodes success_code="200" success_message="The request was successful." />
+
+## Generate Recovery Codes
+
+This API is used to generate a list of Recovery Codes. When creating new codes, any existing Recovery Codes will be cleared and the new set will become the current values.
+
+### Request
+
+<API method="POST" uri="/api/user/two-factor/recovery-code/{userId}" authentication={["api-key"]} title="Create Recovery Codes"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userId" type="UUID" required>
+    The unique Id of the user to assign the generated Recovery Codes to.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API contains an array of size 10 of Recovery Codes that were created.
+
+<StandardPostResponseCodes never_search_error />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="recoveryCodes" type="Array<String>">
+    The array of Recovery Codes.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src="two-factor/response-with-recovery-codes.json" />
+
+## Retrieve Recovery Codes
+
+This API is used to retrieve Recovery Codes for a User.
+
+### Request
+
+<API method="GET" uri="/api/user/two-factor/recovery-code/{userId}" authentication={["api-key"]} title="Retrieve Recovery Codes"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userId" type="UUID" required>
+    The Id of the User to retrieve Recovery Codes for.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API contains the remaining Recovery Codes that are assigned to the User. Each time one is used it is removed, so this response will contain between 0 and 10 codes.
+
+<StandardPostResponseCodes never_search_error />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="recoveryCodes" type="Array<String>">
+    The array of Recovery Codes.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src="two-factor/response-with-recovery-codes.json" />

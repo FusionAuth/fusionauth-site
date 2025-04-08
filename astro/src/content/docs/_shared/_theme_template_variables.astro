@@ -1,0 +1,28 @@
+---
+import templates from 'src/content/json/themes/templates.json';
+import Aside from 'src/components/Aside.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import API from 'src/components/api/API.astro';
+import APIField from 'src/components/api/APIField.astro';
+import RemovedSince from 'src/components/api/RemovedSince.astro';
+import { marked } from 'marked';
+
+templates.sort((a, b) => { return a.fieldName.toUpperCase().localeCompare(b.fieldName.toUpperCase())});
+
+const makeId = (name) => { return name.toLowerCase().replaceAll(' ', '-') };
+---
+{templates.filter((t) => t.onlyAPI === undefined).map((t) =>
+<APIBlock>
+  <h3 id={makeId(t.displayName)}>{t.displayName}</h3>
+  {t.version && <Aside type="version">Available since {t.version}</Aside>}
+  {t.path && <API method="" uri={t.path}/>}
+  <h4>Variables</h4>
+  {!t.variables && <p>No template specific variables.</p>}
+  {t.variables && t.variables.sort((a,b) => a.name.toUpperCase().localeCompare(b.name.toUpperCase())).map((tvar) =>
+    <APIField name={tvar.name} type={tvar.type} since={tvar.since} deprecated={tvar.deprecated}>
+      <span set:html={marked.parse(tvar.description)}></span>
+      {tvar.removed && <><br /><RemovedSince since={tvar.removed}/></>}
+    </APIFIeld>
+  )}
+</APIBlock>
+)}

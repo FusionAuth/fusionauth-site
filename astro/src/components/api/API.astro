@@ -1,0 +1,113 @@
+---
+import APIAuthenticationIcon from "src/components/api/APIAuthenticationIcon.astro";
+import Aside from "src/components/Aside.astro";
+
+interface Props {
+  authentication?: ['api-key' | 'basic' | 'client-credentials' | 'jwt' | 'local-bypass' | 'none'];
+  description?: string;
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  showPatch?: false;
+  title?: string;
+  uri?: string;
+}
+
+const { authentication, method, showPatch, title, uri }: Props = Astro.props;
+
+// Parse URI
+let parts= [];
+let parameters = null;
+
+if (uri) {
+  let url = uri;
+
+  // Separate the URL from the query string
+  let q = uri.indexOf("?");
+  if (q >= 0) {
+    parameters = uri.substring(q);
+    url = url.substring(0, q );
+  }
+
+  // Optionally extract one or more segment.
+  let type = 'literal';
+  let atom = '';
+
+  for (let i = 0; i < url.length; i++) {
+    let c = url.charAt(i);
+    atom += c;
+
+    if (c === '{') {
+      if (atom.length > 0) {
+        parts.push({type: 'literal', value: atom.substring(0, atom.length - 1)});
+      }
+      type = 'segment';
+      atom = '{';
+    } else if (c === '}') {
+      parts.push({type: 'segment', value: atom});
+      type = 'literal';
+      atom = '';
+    }
+  }
+
+  if (atom.length > 0) {
+    parts.push({type: 'literal', value: atom});
+  }
+
+  // Account for a literal URL w/out any parameter segments
+  if (parts.length === 0) {
+    parts.push({type: 'literal', value: url});
+  }
+}
+
+const authenticationTypes = {
+  'api-key': '/docs/apis/authentication#api-key-authentication',
+  'none': '/docs/apis/authentication#no-authentication-required',
+  'jwt': '/docs/apis/authentication#jwt-authentication',
+  'basic': '/docs/apis/authentication#basic-authentication-using-an-api-key',
+  'client-credentials': '/docs/apis/authentication#client-credentials',
+  'local-bypass': '/docs/apis/authentication#localhost-authentication-bypass'
+}
+---
+
+{(authentication || title) &&
+<div class="border-b border-slate-300 dark:border-slate-800 flex flex-row align-middle">
+  { authentication &&
+    <div class="not-prose flex mb-2 flex-row mx-1">
+      { authentication.map(auth =>
+          <a class="no-underline flex" href={authenticationTypes[auth]}>
+            <APIAuthenticationIcon type={auth}/>
+          </a>
+      )}
+    </div>
+  }
+  { title &&
+    <span class="font-semibold text-sm mt-1 dark:text-white text-slate-800">{ title }</span>
+  }
+</div>
+}
+
+<div class="mt-4 mb-8">
+  <div class="bg-gray-800 my-0 py-2 px-4 rounded">
+    <span class="text-yellow-400 font-semibold pr-2 text-sm leading-5 tracking-normal">{ method }</span>
+    <span class="font-mono text-white text-sm">
+      { uri &&
+        parts.map(part =>
+          <span class:list={[ part.type === 'segment' ? 'text-blue-300 font-semibold spellcheck-ignore' : 'font-normal', 'break-words leading-5 tracking-normal spellcheck-ignore']}>{ part.value }</span>
+        )
+
+      }<!-- Note: This comment is removing white space between these two expressions to remove white space between the spans.
+                  If any white space exists, it will render as a space on the page.
+      -->{ parameters && <span class="text-blue-300 break-words leading-5 tracking-normal spellcheck-ignore">{ parameters }</span> }
+    </span>
+  </div>
+</div>
+
+{ showPatch && method == 'PUT' &&
+  <div class="mb-14">
+    <Astro.self method="PATCH" uri={uri}/>
+    <Aside type="note" title="Please read">
+      <p>When using the PATCH method, you can either use the same request body documentation that is provided for the PUT request for backward compatibility. Or you may use either <a href="https://www.rfc-editor.org/rfc/rfc6902">JSON Patch/RFC 6902]</a> or <a href="https://www.rfc-editor.org/rfc/rfc7396">JSON Merge Patch/RFC 7396</a>. See the <a href="/docs/apis/#the-patch-http-method">PATCH documentation</a> for more information.</p>
+      <p>When using the PATCH method with a <code>Content-Type</code> of <code>application/json</code> the provided request parameters will be merged into the existing object, this means all parameters are optional when using the PATCH method and you only provide the values you want changed. A <code>null</code> value can be used to remove a value. Patching an <code>Array</code> will result in all values from the new list being appended to the existing list, this is a known limitation to the current implementation of PATCH.</p>
+    </Aside>
+  </div>
+}
+

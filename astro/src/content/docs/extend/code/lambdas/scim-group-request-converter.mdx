@@ -1,0 +1,74 @@
+---
+title: SCIM Group Request Converter Lambda
+description: An overview of the SCIM Group Request Converter lambda.
+navcategory: customization
+section: extend
+subcategory: code
+tertcategory: lambdas
+---
+
+If you would like to convert an incoming SCIM Group request into a Group, you must specify a lambda in the SCIM configuration. This lambda will be invoked prior to the Group being acted upon.
+
+When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+
+## Lambda Structure
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+```javascript
+function convert(group, members, options, scimGroup) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `convert` that takes four parameters. The parameters that the lambda is passed are:
+
+* `group` - the FusionAuth Group object. You can modify this object.
+* `members` - the members in this FusionAuth Group. You can modify this object.
+  * `members[x].userId` - The Id of the FusionAuth User
+  * `members[x].data.$ref` - The URI to retrieve the SCIM User representation of the FusionAuth User
+
+    * ex. `https://login.piedpiper.com/api/scim/v2/Users/902c246b-6245-4190-8e05-00816be7344a`
+
+* `options` - request options. You can modify this object.
+  * `options.roleIds`
+* `scimGroup` - the SCIM request object. This object is read-only.
+
+The FusionAuth object is well documented in the [Group API](/docs/apis/groups) documentation. The SCIM Group object is a JavaScript object containing the SCIM Group request JSON payload. See [SCIM Group](https://datatracker.ietf.org/doc/html/rfc7643#section-4.2).
+
+You may add or modify anything in the `group`, `members` and `options` objects.
+
+## Assigning The Lambda
+
+Once a lambda is created, you must assign it to a Tenant. See the SCIM tab in the Tenant configuration.
+
+## Default Lambda
+
+A default SCIM Group Request Converter Lambda that converts an incoming SCIM Group request to a FusionAuth Group is available and may be used or modified. The lambda function is documented below.
+
+```javascript
+function convert(group, members, options, scimGroup) {
+  // Un-comment this line to see the scimGroup object printed to the event log
+  // console.info(JSON.stringify(scimGroup, null, 2));
+
+  // Request options
+  // FusionAuth allows you to assign one or more application roles to a group.
+  // To use this feature, assign one or more application Ids here.
+  // options.roleIds = [];
+
+  // Set the name of the group using the SCIM Group displayName
+  group.name = scimGroup.displayName;
+
+  // Build a members array with a userId and a $ref in custom data
+  if (scimGroup.members) {
+    for (var i = 0; i < scimGroup.members.length; i++) {
+      members.push({
+        userId: scimGroup.members[i].value,
+        data: {
+          $ref: scimGroup.members[i]['$ref']
+        }
+      });
+    }
+  }
+}
+```

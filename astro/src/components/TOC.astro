@@ -1,0 +1,27 @@
+---
+const { toc, depth = 1, maxDepth = 4, ...props } = Astro.props;
+const headings = toc.filter((it) => it.depth === depth);
+// const headings = toc;
+const notFirstLevel = depth !== 2;
+---
+<ul id="toc-list" class:list={["space-y-3", {"ml-4": notFirstLevel, "pt-3": notFirstLevel, "pt-5": !notFirstLevel}]} data-widget="scroll-spy">
+  {
+    headings.map((it, idx) => {
+      const nextHeading = headings[idx + 1];
+      const subHeadings = toc.slice(
+        (toc as any).indexOf(it) + 1,
+        nextHeading ? (toc as any).indexOf(nextHeading) : undefined
+      );
+      return (
+        <li>
+          <div class="group" data-widget="scroll-spy-item">
+            <a href={"#" + it.slug} class="block font-medium text-slate-600 text-sm dark:text-slate-400 dark:group-[.active]:text-indigo-400 dark:hover:text-slate-100 group-[.active]:text-indigo-600 hover:text-slate-900">
+              {it.text}
+            </a>
+          </div>
+          {(subHeadings.length > 0 && it.depth < maxDepth) ? <Astro.self toc={subHeadings} depth={it.depth + 1} {maxDepth} {...props}/> : null}
+        </li>
+      )
+    })
+  }
+</ul>

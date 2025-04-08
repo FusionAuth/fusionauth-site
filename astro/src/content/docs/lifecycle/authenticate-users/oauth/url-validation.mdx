@@ -1,0 +1,150 @@
+---
+title: URL Validation
+description: Learn about OAuth URL validation policies in FusionAuth.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: oauth
+---
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+
+<Aside type="version">
+Available since 1.43.0
+</Aside>
+
+## Overview
+
+Beginning in version `1.43.0` FusionAuth provides support for wildcards in OAuth 2.0 redirect URLs and origin URLs. This document provides details on where wildcards are allowed in configured values and the valid replacement patterns for wildcards in each position.
+
+## URL Validation Policy
+
+In order to validate allowed authorized redirect and origin URLs containing wildcards, the <InlineField>URL validation</InlineField> setting must be configured to `Allow wildcards` under <strong>Applications -> Edit Application -> OAuth</strong>.
+
+See the [Application API](/docs/apis/applications) or [Application OAuth Configuration](/docs/get-started/core-concepts/applications#oauth) for details.
+
+## Allowed Wildcard Positions
+
+In order to maintain security while allowing the flexibility of wildcards, FusionAuth limits the position and number of wildcards that are allowed in the configured authorized redirect and origin URLs. The asterisk character, `*`, is the wildcard character.
+
+### Domain
+
+The domain of a configured URL allows 0 or 1 wildcards in the domain portion of the URL. Wildcards are not allowed if the host is specified by an IP address. If the domain contains a wildcard, it must meet all of the following requirements:
+
+ * The domain must contain at least three segments.
+ * The wildcard may only appear in the host portion of the domain (left-most subdomain).
+ * The wildcard can be a full or partial replacement of the host.
+
+The following table provides some examples of valid and invalid wildcard patterns.
+
+_Domain Wildcards_
+
+| Example                     | Valid                                                 | Reason                                      |
+|-----------------------------|-------------------------------------------------------|---------------------------------------------|
+| `https://*.example.com`     | <i class="fas fa-check text-green-600 font-bold"></i> |                                             |
+| `https://blah*.example.com` | <i class="fas fa-check text-green-600 font-bold"></i> |                                             |
+| `https://*.com`             | <i class="fas fa-times text-red-600 font-bold"></i>   | The domain only contains two segments       |
+| `https://auth.*.com`        | <i class="fas fa-times text-red-600 font-bold"></i>   | The wildcard does not appear in the host    |
+| `https://*mid*.example.com` | <i class="fas fa-times text-red-600 font-bold"></i>   | The domain contains multiple wildcards      |
+| `https://*.168.1.1`         | <i class="fas fa-times text-red-600 font-bold"></i>   | Wildcards are not allowed with IP addresses |
+
+### Port
+
+The port number can be specified as a wildcard. There is no partial wildcard support for the port number.
+
+_Port Wildcards_
+
+| Example                  | Valid                                                 | Reason                                                |
+|--------------------------|-------------------------------------------------------|-------------------------------------------------------|
+| `https://example.com:*`  | <i class="fas fa-check text-green-600 font-bold"></i> |                                                       |
+| `https://example.com:4*` | <i class="fas fa-times text-red-600 font-bold"></i>   | Partial wildcards are not allowed for the port number |
+
+### Path Segments
+
+Wildcards are allowed in path segments with the following restrictions:
+
+ * There can be no more than one wildcard _per path segment_.
+ * The wildcard can be a full or partial replacement of the path segment.
+
+The following table provides some examples of valid and invalid wildcard patterns in the path.
+
+_Path Wildcards_
+
+| Example                                   | Valid                                                 | Reason                                       |
+|-------------------------------------------|-------------------------------------------------------|----------------------------------------------|
+| `https://example.com/path/*/resource`     | <i class="fas fa-check text-green-600 font-bold"></i> |                                              |
+| `https://example.com/p*/to/resource`      | <i class="fas fa-check text-green-600 font-bold"></i> |                                              |
+| `https://example.com/*/par*tial/*`        | <i class="fas fa-check text-green-600 font-bold"></i> |                                              |
+| `https://example.com/path/*mid*/resource` | <i class="fas fa-times text-red-600 font-bold"></i>   | The path segment contains multiple wildcards |
+
+### Query String Values
+
+Wildcards are allowed in query string values with the following restrictions:
+
+ * Partial wildcards are not allowed for query string values.
+
+Wildcards are _not_ allowed in query string names. The following table provides some examples of valid and invalid wildcard patterns in the query string.
+
+_Query String Wildcards_
+
+| Example                                    | Valid                                                 | Reason                                                              |
+|--------------------------------------------|-------------------------------------------------------|---------------------------------------------------------------------|
+| `https://example.com?foo=*`                | <i class="fas fa-check text-green-600 font-bold"></i> | &nbsp;                                                              |
+| `https://example.com?foo=*&bar=*&baz=blah` | <i class="fas fa-check text-green-600 font-bold"></i> | &nbsp;                                                              |
+| `https://example.com?foo=par*tial`         | <i class="fas fa-times text-red-600 font-bold"></i>   | Partial wildcard replacement is not allowed for query string values |
+| `https://example.com?*=blah`               | <i class="fas fa-times text-red-600 font-bold"></i>   | Wildcards are not allowed in query string names                     |
+
+## Wildcard Replacement Patterns
+
+The position where wildcards are allowed in configured values is just one half of the puzzle. Wildcards in each portion of the URL have different rules for the replacement values. Please note that allowed replacement values may not produce a valid URL. This section provides details on the allowed replacements for wildcards in each portion of the URL. Each wildcard in the configured value must match one or more characters. Matches against empty strings will fail.
+
+### Domain
+
+Replacements for wildcards in the domain portion of the URL must not contain `.`, `:`, `/`, or `?` characters. The following table lists examples of valid and invalid replacements for valid wildcard patterns.
+
+_Domain wildcard replacement_
+
+| Pattern                     | Value                               | Valid                                                 | Reason                                                    |
+|-----------------------------|-------------------------------------|-------------------------------------------------------|-----------------------------------------------------------|
+| `https://*.example.com`     | `https://login.example.com`         | <i class="fas fa-check text-green-600 font-bold"></i> | &nbsp;                                                    |
+| `https://auth*.example.com` | `https://auth2.example.com`         | <i class="fas fa-check text-green-600 font-bold"></i> | &nbsp;                                                    |
+| `https://auth*.example.com` | `https://auth.example.com `         | <i class="fas fa-times text-red-600 font-bold"></i>   | The value does not contain a character to replace the `*` |
+| `https://*.example.com`     | `https://auth.customer.example.com` | <i class="fas fa-times text-red-600 font-bold"></i>   | The replacement contains a `.` character                  |
+
+### Port
+
+Replacement values for wildcards in the port portion of the URL must consist of one or more decimal digits.
+
+_Port wildcard replacement_
+
+| Pattern                 | Value                      | Valid                                                 | Reason                                                 |
+|-------------------------|----------------------------|-------------------------------------------------------|--------------------------------------------------------|
+| `https://example.com:*` | `https://example.com:2012` | <i class="fas fa-check text-green-600 font-bold"></i> | &nbsp;                                                 |
+| `https://example.com:`  | `https://example.com:80b`  | <i class="fas fa-times text-red-600 font-bold"></i>   | The replacement value contains a non-numeric character |
+
+### Path Segments
+
+Replacement values for wildcards in a path segment of the URL must not contain `/` or `?` characters.
+
+_Path segment wildcard replacement_
+
+| Pattern                               | Value                                         | Valid                                                 | Reason                                                                          |
+|---------------------------------------|-----------------------------------------------|-------------------------------------------------------|---------------------------------------------------------------------------------|
+| `https://example.com/path/*/resource` | `https://example.com/path/to/resource`        | <i class="fas fa-check text-green-600 font-bold"></i> |                                                                                 |
+| `https://example.com/p*/to/resource`  | `https://example.com/path/to/resource`        | <i class="fas fa-check text-green-600 font-bold"></i> |                                                                                 |
+| `https://example.com/*/par*tial/*`    | `https://example.com/path/partotial/resource` | <i class="fas fa-check text-green-600 font-bold"></i> |                                                                                 |
+| `https://example.com/path/*/resource` | `https://example.com/path/to/the/resource`    | <i class="fas fa-times text-red-600 font-bold"></i>   | The replacement value contains a `/`                                            |
+| `https://example.com/path/*`          | `https://example.com/path/resource?foo=bar`   | <i class="fas fa-times text-red-600 font-bold"></i>   | The replacement value contains a `?`                                            |
+| `https://example.com/*/par*tial/*`    | `https://example.com/path/partial/resource`   | <i class="fas fa-times text-red-600 font-bold"></i>   | The segment `partial` does not contain a replacement character for the wildcard |
+
+### Query String Values
+
+Replacement values for query string values must not contain the `&` character.
+
+_Query string value wildcard replacement_
+
+| Pattern                     | Value                                  | Valid                                                 | Reason                                                         |
+|-----------------------------|----------------------------------------|-------------------------------------------------------|----------------------------------------------------------------|
+| `https://example.com?foo=*` | `https://example.com?foo=bar`          | <i class="fas fa-check text-green-600 font-bold"></i> |                                                                |
+| `https://example.com?foo=*` | `https://example.com?foo=bar&baz=blah` | <i class="fas fa-times text-red-600 font-bold"></i>   | The replacement value contains an `&` character                |
+| `https://example.com?foo=*` | `https://example.com?baz=blah&foo=bar` | <i class="fas fa-times text-red-600 font-bold"></i>   | The replacement value contains an extra query string parameter |

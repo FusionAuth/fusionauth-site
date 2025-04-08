@@ -1,0 +1,172 @@
+---
+title: Advanced Theme Editor
+description: Learn how to theme and the FusionAuth login pages (including forgot password, two-factor authentication and others).
+section: customize
+subcategory: look and feel
+---
+import InlineField from 'src/components/InlineField.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import MessagesExample from 'src/content/docs/customize/look-and-feel/_messages-example.mdx';
+import ThemeEnvironments from 'src/content/docs/operate/deploy/_theme-environment-management.mdx';
+import ThemeTroubleshooting from 'src/content/docs/customize/look-and-feel/_theme-troubleshooting.mdx';
+import ThemeUpgrade from 'src/content/docs/customize/look-and-feel/_theme-upgrade.mdx';
+import Templates from 'src/content/docs/_shared/_theme_templates.astro';
+import Aside from 'src/components/Aside.astro';
+
+## Overview
+
+FusionAuth's Advanced Theme Editor allow you to control every aspect of the look and feel of your hosted login pages.
+
+The other option, in version 1.51.0 and later, is to use the [Simple Theme Editor](/docs/customize/look-and-feel/simple-theme-editor) to quickly and easily style FusionAuth with no code.
+
+### Difference From Simple Themes
+
+The Simple Theme Editor allows you to select from a set of pre-built themes and customize them with a few simple options. This is a great way to get started with customizing FusionAuth without needing to write any code.
+
+The Advanced Theme Editor allows editing page templates directly. This allows you to take full control over all of the hosted pages by creating an advanced theme and editing the HTML, CSS, and messages. This is a powerful way to create a fully custom experience, but it can be complex and time-consuming.
+
+## Create a Theme
+
+FusionAuth provides the ability to create and manage themes in the UI as well as a [Themes API](/docs/apis/themes). Any user of the FusionAuth role of `admin` or `theme_manager` may view, edit, update, and delete Themes.
+
+All of the FusionAuth login templates are written in [FreeMarker](https://freemarker.apache.org). FreeMarker provides a very rich template language that will allow you to customize the pages and helpers to suit your needs. You can also define new macros and functions to assist you further.
+
+Below is an example screenshot of the Add Theme panel with each template described below.
+
+<img src="/img/docs/customize/look-and-feel/create-theme.png" alt="Create a Theme" width="1200" role="shadowed" />
+
+### Form Fields
+
+<APIBlock>
+  <APIField name="Id" optional>
+    An optional UUID. When this value is omitted a unique Id will be generated automatically.
+  </APIField>
+  <APIField name="Name" required>
+    A unique name to identify the theme. This name is for display purposes only and it can be modified later if desired.
+  </APIField>
+</APIBlock>
+
+
+### Templates
+
+{/* ===== */}
+{/*  To add a new theme template, do the following */}
+{/*  update site/_date/templates.yaml (further instructions there) */}
+{/*  update the JSON files in site/docs/src/json/themes/ with the new theme template key */}
+{/*  touch this file to regenerate (if in dev mode) */}
+{/*  that's it. the API and the theme form page will be automatically updated. */}
+
+<APIBlock>
+  <APIField name="Stylesheet (CSS)" optional>
+    This CSS stylesheet may be used to style the themed pages.
+
+    This CSS will be included in the `head` tag in the Helpers `head` macro. You may also choose to include other remote stylesheets by using the `<style>` tag within the `head` macro.
+
+    ```
+    <style>
+      ${theme.stylesheet()}
+    </style>
+    ```
+  </APIField>
+  <APIField name="Messages" optional>
+    This section allows you to add additional localized messages to your theme. When creating an additional locale it is not required that all messages are defined for each language. If a message key is not defined for the specified locale, the value from the default bundles will be used.
+
+    If you intend to localize your login templates, you may find our [community contributed and maintained messages in our GitHub repository](https://github.com/FusionAuth/fusionauth-localization) helpful.
+  </APIField>
+  <APIField name="Helpers" required>
+    This template contains all of the main helper macros to define the `head`, `body` and `footer`. To begin theming FusionAuth you'll want to start with this template as it will affect all other templates.
+
+    See the [Helpers](/docs/customize/look-and-feel/helpers) page for additional information.
+  </APIField>
+</APIBlock>
+
+<Templates />
+
+## Preview a Theme
+
+If you want to see how your theme works, you can always open a browser with no active FusionAuth session and visit the hosted login pages.
+
+However, at times, you may need to make changes in your theme that you want to view without going through an entire registration process. You can easily do so by previewing the theme via the administrative user interface.
+
+Navigate to <strong>Customizations -> Themes</strong>. Choose your theme, then click the preview link (the green magnifying glass):
+
+<img src="/img/docs/customize/look-and-feel/theme-preview-button.png" alt="Preview your theme" width="1200" role="bottom-cropped" />
+
+This will open a new tab. Click on any of the pages you've modified in the left hand navigation, for example <InlineField>OAuth register</InlineField>, and you'll see the page as it would be rendered.
+
+## Example Code
+
+### Displaying Messages
+
+You can customize messages by locale. You can also have optional keys.
+
+<MessagesExample />
+
+### Customizing the Authorize Page
+
+Now that you have a good overview of all the templates, macros and helpers, here is an example of customizing the Authorize page.
+
+Let's assume you want to change the header and footer across all of the pages including the Authorize page. This is accomplished by editing the `helpers.header` and `helpers.footer` macros. For the header, let's assume you want to add a `Sign Up` and `Login` link. For the footer, let's assume you want to add a link to your privacy policy. Here are the macros that include these new links:
+
+```html title="Custom header helper"
+[#macro header]
+  <header class="my-custom-header">
+    <nav>
+      <ul>
+        <li class="login"><a target="_blank" href="https://my-application.com/login">Login</li>
+        <li class="sign-up"><a target="_blank" href="https://my-application.com/sign-up">Sign Up</li>
+      </ul>
+    </nav>
+  </header>
+
+  [#nested/]
+[/#macro]
+```
+
+```html title="Custom footer helper"
+[#macro footer]
+  <footer class="my-custom-footer">
+    <nav>
+      <ul>
+        <li class="privacy-policy"><a target="_blank" href="https://my-application.com/privacy-policy">Privacy Policy</li>
+      </ul>
+    </nav>
+  </footer>
+
+  [#nested/]
+[/#macro]
+```
+
+Once you make these changes, they will take effect on all of the pages listed above.
+
+## Development Tools
+
+When building an advanced theme, the [FusionAuth theme helper project](https://github.com/FusionAuth/fusionauth-theme-helper) is useful.
+
+You can pull down all your templates, edit them locally, and have them transparently uploaded to your FusionAuth instance.
+
+### Managing Many Themes
+
+If you have a large number of themes, you'll want additional tooling to manage them. Best practices include:
+
+* Put your themes under version control and use CI/CD and one of the [client libraries](/docs/sdks) to apply changes.
+* Prefer modifying CSS rather than theme templates.
+* Leverage `tenant.data` for a small number of attributes that differ between tenants, which allows you to use the same theme with modified templates. See [Environment Management](#environment-management) for an example.
+* Consider generating your themes locally using a templating language such as jinja and then uploading them.
+* Automatically assign themes to tenants, using one of the [client libraries](/docs/sdks).
+
+There is an [open feature request](https://github.com/FusionAuth/fusionauth-issues/issues/1869) to allow for theme inheritance, but it is not currently on the roadmap.
+
+## Environment Management
+
+<ThemeEnvironments />
+
+## Troubleshooting
+
+<ThemeTroubleshooting />
+
+## Upgrading
+
+<ThemeUpgrade />
+

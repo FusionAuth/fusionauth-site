@@ -1,0 +1,82 @@
+---
+title: Github
+description: Set up user login using Github as an OpenID Connect Identity Provider.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: identity providers
+quatercategory: social
+---
+import Aside from 'src/components/Aside.astro';
+import IdentityProviderOverviewDiagram from 'src/content/docs/_shared/_identity-provider-overview-diagram.astro';
+import GitHubTroubleshooting from 'src/content/docs/lifecycle/authenticate-users/identity-providers/social/_github-troubleshooting.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import OpenidConnectExampleLambda from 'src/content/docs/_shared/_openid-connect-example-lambda.mdx';
+
+## Configure OpenID Connect with GitHub
+
+<Aside type="note">
+<GitHubTroubleshooting />
+</Aside>
+
+Once you have completed this configuration you may enable an OpenID Connect "Login with GitHub" button for one or more FusionAuth Applications. See [GitHub - Creating an OAuth App](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/) for an additional reference.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/github-openid-connect-login.png" alt="Login with GitHub" />
+
+<IdentityProviderOverviewDiagram identity_provider_name="GitHub" />
+
+### Register a GitHub OAuth2 Application
+
+You will first need to log in to [GitHub](https://github.com/).
+
+Once logged in, navigate to <strong>Settings -> Developer settings -> OAuth Apps -> Register a new application</strong> to create a new GitHub OAuth Application.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/github-openid-connect-register-application.png" alt="Register a new GitHub OAuth Application"  width="1200" />
+
+Here we have configured our application `Authorization callback URL`. If FusionAuth is running at `login.piedpiper.com`, this value should be `https://login.piedpiper.com/oauth2/callback`.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/github-openid-connect-client-id-secret.png" alt="GitHub Client ID and Secret" width="1200" />
+
+Once the application has been created, note the `Client ID` and the `Client Secret`. These will be used respectively as the <InlineField>Client Id</InlineField> value and the <InlineField>Client secret</InlineField> value in your FusionAuth OpenID Connect Identity Providers configuration. Please note that you may have to click on "Generate a new client secret".
+
+### Configure a New FusionAuth OpenID Connect Identity Provider
+
+To create a GitHub Identity Provider return to FusionAuth and navigate to <strong>Settings -> Identity Providers</strong> and click `Add provider` and select `OpenID Connect` from the dialog.
+
+This will take you to the `Add OpenID Connect` panel, and you'll fill out the required fields.
+
+You will need to set <InlineField>Client authentication method</InlineField> to `HTTP Basic authentication (client_secret_basic)`.
+
+<InlineField>Client Id</InlineField> and <InlineField>Client secret</InlineField> values reference the previously noted GitHub OAuth Application's `Client ID` and `Client Secret`. The <InlineField>Redirect URL</InlineField> is read only and generated for you based upon the URL of FusionAuth, this value should match the one you configured in your GitHub application.
+
+GitHub has not implemented a well-known configuration endpoint, so you will need to disable the <InlineField>Discover endpoints</InlineField> field and specify the endpoints manually. The values for these fields are:
+
+* `Authorization endpoint` - `https://github.com/login/oauth/authorize`
+* `Token endpoint` - `https://github.com/login/oauth/access_token`
+* `Userinfo endpoint` - `https://api.github.com/user`
+
+You will need to specify `user:email` as a <InlineField>Scope</InlineField> for your application.
+
+In the following screenshot you will see that we have enabled this login provider for the `Pied Piper` application and enabled <InlineField>Create registration</InlineField>.
+
+GitHub does not implement OpenID Connect to spec. In order to pull in some additional data for populating the user profile (GitHub shortname, Image URL, etc.) you can enable a <InlineField>Reconcile lambda</InlineField>. This example lambda below is based on a GitHub use case. This is optional.
+
+#### Example lambda
+
+<OpenidConnectExampleLambda />
+
+#### Options
+
+The final item to configure is under the <strong>Options</strong> tab. For GitHub, you will want to configure:
+
+- <InlineField>Unique Id claim</InlineField> of `id`
+- <InlineField>Email claim</InlineField> of `email`
+- <InlineField>Username claim</InlineField> of `login`
+
+That's it, now the `Login with GitHub` button will show up on the login page of our `Pied Piper` application.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/social/github-openid-connect-configuration.png" alt="FusionAuth GitHub IdP Configuration" role="shadowed bottom-cropped top-cropped" />
+
+## Troubleshooting
+
+<GitHubTroubleshooting />

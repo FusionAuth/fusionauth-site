@@ -1,0 +1,139 @@
+---
+import { getCollection } from "astro:content";
+import Default from "./Default.astro";
+import { sortArticle } from "../components/ArticleSort.js";
+import ArticleNav from '../components/nav/ArticleNav.astro';
+
+let { frontmatter, section } = Astro.props;
+section = frontmatter.section ? frontmatter.section : section;
+
+const openGraphImage = '/img/og/articles-developers-v1.png';
+const cta = 'FreeTrialCTA';
+
+const sections = [
+  {
+    "title": "Authentication",
+    "path": "/articles/authentication/",
+    "icon": "fa-lock",
+    "color": "indigo"
+  },
+  {
+    "title": "Login & Auth Workflows",
+    "path": "/articles/login-authentication-workflows/",
+    "icon": "fa-id-card",
+    "color": "fuchsia"
+  },
+  {
+    "title": "CIAM",
+    "path": "/articles/ciam/",
+    "icon": "fa-user",
+    "color": "blue"
+  },
+  {
+    "title": "Gaming & Entertainment",
+    "path": "/articles/gaming-entertainment/",
+    "icon": "fa-gamepad-modern",
+    "color": "green"
+  },
+  {
+    "title": "Identity Basics",
+    "path": "/articles/identity-basics/",
+    "icon": "fa-id-card",
+    "color": "rose"
+  },
+  {
+    "title": "OAuth",
+    "path": "/articles/oauth/",
+    "icon": "fa-gear-complex-code",
+    "color": "yellow"
+  },
+  {
+    "title": "Security",
+    "path": "/articles/security/",
+    "icon": "fa-lock",
+    "color": "red"
+  },
+  {
+    "title": "Tokens",
+    "path": "/articles/tokens/",
+    "icon": "fa-tag",
+    "color": "indigo"
+  }
+];
+
+const articles = await getCollection("articles");
+let sideMenu = [];
+
+// Handle the login workflow sub-menus
+let mobileItems = [];
+let spaItems = [];
+let webappItems = [];
+let otherItems = [];
+if (Astro.url.pathname.startsWith("/articles/login-authentication-workflows")) {
+  sideMenu.push({
+    "title": "Login & Authentication Workflows",
+    "items": otherItems
+  });
+  sideMenu.push({
+    "title": "Mobile Workflows",
+    "items": mobileItems
+  });
+  sideMenu.push({
+    "title": "Single-Page App Workflows",
+    "items": spaItems
+  });
+  sideMenu.push({
+    "title": "WebApp Workflows",
+    "items": webappItems
+  });
+
+  for (const article of articles.sort(sortArticle)) {
+    // Figure out which items list this login workflow goes into
+    if (article.slug.startsWith("login-authentication-workflows/mobile")) {
+      mobileItems.push({
+        "title": article.data.title,
+        "path": `/articles/${article.slug}`
+      });
+    } else if (article.slug.startsWith("login-authentication-workflows/spa")) {
+      spaItems.push({
+        "title": article.data.title,
+        "path": `/articles/${article.slug}`
+      });
+    } else if (article.slug.startsWith("login-authentication-workflows/webapp")) {
+      webappItems.push({
+        "title": article.data.title,
+        "path": `/articles/${article.slug}`
+      });
+    } else if (article.slug.startsWith("login-authentication-workflows/")) {
+      otherItems.push({
+        "title": article.data.title,
+        "path": `/articles/${article.slug}`
+      });
+    }
+  }
+} else if (section) {
+  let items = [];
+  sideMenu.push({
+    "title": section,
+    "items": items
+  });
+
+  for (const article of articles.sort(sortArticle)) {
+    if (article.data.excludeFromNav) {
+      continue;
+    }
+
+    if (article.data.section === section) {
+      let path = `/articles/${article.slug}`;
+      items.push({
+        "title": article.data.title,
+        "path": path
+      });
+    }
+  }
+}
+---
+<Default {sections} {sideMenu} {openGraphImage} {cta} {...Astro.props}>
+  <ArticleNav slot="nav"/>
+  <slot/>
+</Default>

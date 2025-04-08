@@ -1,0 +1,196 @@
+---
+title: Themes Helper Macros
+description: Learn about the Freemarker macros FusionAuth provides to help with theming.
+section: customize
+subcategory: look and feel
+---
+import InlineField from 'src/components/InlineField.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import Aside from 'src/components/Aside.astro';
+import RecaptchaValues from 'src/content/docs/_shared/_recaptcha-values.mdx';
+
+## Overview
+
+FusionAuth has a template that contains a number of macros used in all of the page templates. This template is located at `../_helpers.ftl` and it contains a number of FreeMarker macros. The rest of the pages use these macros to generate various pieces of the HTML. The macros contained in `_helpers.ftl` are:
+
+## Section Helpers
+
+* `html`
+  * Renders the `<html>` element
+* `head`
+  * Renders the `<head>` element and everything inside it including the `<title>`, CSS, Java Script, and meta information
+* `body`
+  * Renders the `<body>` element
+* `header`
+  * Renders any type of header for each page. This could be a navigation bar, side bar, or page details
+* `main`
+  * Renders the main content body of each page. If all of your pages will have similar HTML elements like a container, this is the place to put them.
+* `footer`
+  * Renders the footer content of each page. This might contain links, nav, privacy policies, etc.
+
+Here is an example of what one of these helpers looks like:
+
+```html title="HTML helper"
+[#macro html]
+<!DOCTYPE html>
+<html>
+  [#nested/]
+</html>
+[/#macro]
+```
+
+The key to these macros is the `[#nested/]` element. This is the location that FreeMarker will insert any nested content when you use the macro. Here is an example of using this macro:
+
+```html title="Example usage of HTML macro"
+[@helpers.html]
+<body>
+Hello world!
+</body>
+[/@helpers.html]
+```
+
+Everything inside the macro will be place where the `[#nested/]` element is. Therefore, the result of our example would be this HTML:
+
+```html title="Example result"
+<!DOCTYPE html>
+<html>
+<body>
+Hello world!
+</body>
+</html>
+```
+
+All of the page templates use these macros, which makes it much easier to style all of the pages at one time. You simply edit the macros and your changes will take effect on all of the pages listed above.
+
+## Social (alternative) Login Helpers
+
+In addition to the section helpers, the `_helpers.ftl` template also contains additional macros that can be used to setup social and alternative logins. Currently, FusionAuth supports these social login providers:
+
+* Apple
+* Epic Games
+* Facebook
+* Google
+* HYPR
+* LinkedIn
+* Sony PlayStation Network
+* Steam
+* Twitch
+* Twitter
+* Xbox
+* Generic OpenID Connect
+* Generic SAML v2
+* Generic SAML v2 Identity Provider Initiated
+
+This macro can be included on the Authorize or Register page.
+
+* `/oauth2/authorize`
+* `/oauth2/register`, available since 1.28.0
+
+Once you have configured your alternative logins (called identity providers in the interface and API), they will appear on the FusionAuth stock login form. This is because our stock login form includes this code:
+
+```html title="Social login code"
+[@helpers.head]
+  [@helpers.alternativeLoginsScript clientId=client_id identityProviders=identityProviders/]
+  ...
+[/@helpers.head]
+
+[@helpers.body]
+  ...
+
+  [@helpers.alternativeLogins clientId=client_id identityProviders=identityProviders/]
+[/@helpers.body]
+```
+
+The first macro (`alternativeLoginScripts`) includes the JavaScript libraries that FusionAuth uses to hook up the identity providers. Unless you want to write your own JavaScript or use a third-party library, you will need this JavaScript in the `<head>` tag in order for FusionAuth to leverage external login providers.
+
+The second macro (`alternativeLogins`) produces the login buttons for each of the configured identity providers. These buttons are all hooked up to the JavaScript included in the `<head>` of the page in order to make it all work nicely.
+
+You might want to use your own buttons for social logins. This is possible with FusionAuth, but you will need to do a couple of things to make it all work.
+
+First, you need to remove the `[@helpers.alternativeLogins]` macro call.
+
+Second, you need to use a specific `id` or `class` on your HTML element for the button. Here are the `id` s or `class` es for each identity provider:
+
+* `id="apple-login-button"` is used for Apple
+* `id="epicgames-login-button"` is used for Epic Games
+* `id="google-login-button"` is used for Google
+* `id="facebook-login-button"` is used for Facebook
+* `id="linkedin-login-button"` is used for LinkedIn
+* `id="sonypsn-login-button"` is used for Sony PlayStation Network
+* `id="steam-login-button"` is used for Steam
+* `id="twitch-login-button"` is used for Twitch
+* `id="twitter-login-button"` is used for Twitter
+* `id="xbox-login-button"` is used for Xbox
+* `class="openid login-button"` is used for Generic OpenID Connect
+* `class="samlv2 login-button"` is used for Generic SAML v2
+
+And finally, you need to ensure that Prime.js is included on your page. This library ships with FusionAuth and you just need to ensure it is included like this:
+
+```html title="Prime.js include"
+<script src="/js/prime-min.js"></script>
+```
+
+## Alert and Error Helpers
+
+The `_helpers.ftl` template also provides a couple of macros that can be used to output errors and alerts that might occur. The best bet is to include these macros in your `main` macro. Here are the macros and their purpose:
+
+* `printErrorAlerts`
+  * This outputs any error alerts. These are normally displayed at the top of the page and you might want to make them able to be dismiss (i.e. removed from the page).
+* `printInfoAlerts`
+  * This outputs any informational alerts. These are the same as the errors, but might have different CSS.
+* `alert`
+  * This macro is used by the `printErrorAlerts` and `printInfoAlerts` but you can also use it directly to display an error or info message anywhere on the page.
+
+## Form Helpers
+
+The `_helpers.ftl` template provides a couple of macros that help render form elements and output form errors. Here are the macros you can use:
+
+* `hidden`
+  * This outputs a hidden input element. Many pieces of the OAuth workflow and the other pages in FusionAuth use hidden form fields to store data. This macro uses the `eval` feature of FreeMarker in order to pull in data that was in the request. You shouldn't edit this macro unless you know what you are doing.
+* `input`
+  * This outputs an input element plus a label and any errors that might have occurred on the form field. You can use this for text, passwords, and other input elements. FusionAuth also leverages `addons` which are icons next to the input field that provide visual cues to the user. This macro allows you to leverage addons as well. Similar to the `hidden` element, you should not edit this unless you know what you are doing.
+* `errors`
+  * This macro is used by the `input` macro to render errors on the field. You can use this if you write your own `input` macros. Otherwise, you likely won't use this.
+* `button`
+  * This macro renders a button that can be used to submit a form. The FusionAuth version of this macro includes an icon and the button text.
+* `scopeConsentField`
+  * This macro renders the appropriate form field for a requested OAuth scope on the OAuth _Consent prompt_ page. It automatically handles the field type and message resolution based on the application's configuration. It requires the `resolveScopeMessaging` function to be defined in `_helpers.ftl`.
+
+## CAPTCHA
+
+The `_helpers.ftl` template provides a macro to embed [CAPTCHA challenges](/docs/get-started/core-concepts/tenants#captcha-settings) into your templates.
+
+* `captchaBadge`
+  * Macro that adds a CAPTCHA badge to the template. See [template variables](/docs/customize/look-and-feel/template-variables/) for more information on the template variables. The macro's parameters are:
+
+### Parameters
+<APIBlock>
+  <APIField name="captchaMethod" type="String">
+    This is the type of CAPTCHA to use. Typically supplied by the `tenant.captchaConfiguration.captchaMethod` template variable. Valid values are:
+
+    <RecaptchaValues />
+  </APIField>
+  <APIField name="showCaptcha" type="Boolean">
+    This determines whether or not to show the CAPTCHA badge. Typically supplied by the `showCaptcha` template variable.
+  </APIField>
+  <APIField name="siteKey" type="String">
+    The `data-sitekey` value to use for the CAPTCHA. Typically supplied by the `tenant.captchaConfiguration.siteKey` template variable. Required if using `GoogleRecaptchaV3`.
+  </APIField>
+</APIBlock>
+
+### Invisible reCAPTCHA
+If you wish to enable an [invisible reCAPTCHA](https://developers.google.com/recaptcha/docs/invisible) element so that a CAPTCHA will still challenge a submit without a checkbox on the form you may do so by adding the `data-size` and `data-callback` attributes on the tag with the `g-recaptcha` class. In FusionAuth version 1.46.0 and later these attributes will be present in the default template but commented out.
+
+```html title="Invisible tag"
+[#if captchaMethod == "GoogleRecaptchaV2"]
+      <div class="g-recaptcha" data-sitekey="${siteKey!''}"
+        data-size="invisible"
+        data-callback="reCaptchaV2InvisibleCallback"
+      ></div>
+ ...
+```
+
+<Aside type="note">
+On versions of FusionAuth prior to 1.46.0 you will need to update the JavaScript in order to properly handle the form submit for invisible reCAPTCHA. See [the 1.46.0 release notes](/docs/release-notes/#version-1-46-0) for more information.
+</Aside>

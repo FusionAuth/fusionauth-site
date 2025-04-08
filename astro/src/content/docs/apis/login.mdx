@@ -1,0 +1,603 @@
+---
+title: Login
+description: Explore the FusionAuth Login API documentation for detailed information on authenticating users, handling sessions, and implementing secure login flows.
+section: apis
+---
+import InlineField from 'src/components/InlineField.astro';
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import XFusionauthTenantIdHeaderScopedOperationRowOnly from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.mdx';
+import LoginApplicationidParameter from 'src/content/docs/apis/_login-applicationId-parameter.mdx';
+import LoginMetadataDevice from 'src/content/docs/apis/_login-metadata-device.mdx';
+import JSON from 'src/components/JSON.astro';
+import LoginResponseCodes from 'src/content/docs/apis/_login-response-codes.mdx';
+import LoginResponseCodesAuthenticated from 'src/content/docs/apis/_login-response-codes-authenticated.mdx';
+import UserResponseBody from 'src/content/docs/apis/_user-response-body.mdx';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+import Aside from 'src/components/Aside.astro';
+import LoginEvents from 'src/content/docs/_shared/_login_events.mdx';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+
+## Authenticate a User
+
+The Login API is used authenticate a user in FusionAuth. The issuer of the One Time Password will dictate if a JWT or a Refresh Token may be issued in the API response.
+
+### Request
+
+By default, this API will require API key authentication when called with an <InlineField>applicationId</InlineField>. API key authentication may be disabled per Application, see <InlineField>application.loginConfiguration.requireAuthentication</InlineField> in the [Application API](/docs/apis/applications) or navigate to <Breadcrumb>Applications -> Edit -> Security</Breadcrumb> in the user interface.
+
+Prior to version `1.5.0` this API did not accept an API key and never required authentication.
+
+<API method="POST" uri="/api/login" authentication={['none', 'api-key']} title="Authenticate a User"/>
+
+#### Request Headers
+
+<APIBlock>
+  <APIField name="X-Forwarded-For" type="String" optional>
+    The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
+    generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used
+    if available, the request body value will take precedence.
+  </APIField>
+  <XFusionauthTenantIdHeaderScopedOperationRowOnly />
+</APIBlock>
+
+#### Request Cookies
+
+<APIBlock>
+  <APIField name="fusionauth.trust" type="String" optional>
+    The Multi-Factor Trust identifier returned by the Multi-Factor Login API response. This value may be provided to bypass the Multi-Factor challenge when a User has Multi-Factor enabled. When this cookie exists on the request it will take precedence over the <InlineField>twoFactorTrustId</InlineField> if provided in the request body.
+  </APIField>
+</APIBlock>
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" optional>
+  <LoginApplicationidParameter />
+  </APIField>
+  <APIField name="ipAddress" type="String" optional>
+    The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of
+    the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will
+    be stored in the User login history.
+  </APIField>
+  <APIField name="loginId" type="String" required>
+    The login identifier of the user. The login identifier can be either the <InlineField>email</InlineField> or the <InlineField>username</InlineField>.
+
+    **Note:**
+    The value will be used exactly as provided to resolve a user by <InlineField>email</InlineField> or the <InlineField>username</InlineField>. If the provided value contains leading or trailing white space these characters will not be removed, and then would only match a user by <InlineField>email</InlineField> or the <InlineField>username</InlineField> if the values stored in FusionAuth also contain these same leading or trailing spaces.
+
+    You may optionally normalize this value prior to sending it to FusionAuth. If you are using a hosted login page, FusionAuth will use this API to complete login during an OAuth2 or SAML v2 workflow. In this case, you may optionally normalize or validate the user input client side using JavaScript or HTML 5 validation to achieve the same result.
+  </APIField>
+</APIBlock>
+
+<LoginMetadataDevice />
+
+  <APIField name="noJWT" type="Boolean" optional defaults="false">
+    When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` or `refreshToken` fields, and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
+
+    This optional parameter may be helpful when performing high volume authentication requests and the JWT is not being utilized, in this scenario removing the additional latency required to issue and sign the JWT may have a measurable cumulative effect on performance.
+  </APIField>
+  <APIField name="password" type="String" required>
+    The user's password or an Application specific [Authentication Token](/docs/lifecycle/authenticate-users/application-authentication-tokens).
+  </APIField>
+  <APIField name="twoFactorTrustId" type="String" optional>
+    The Multi-Factor Trust identifier returned by the Multi-Factor Login API response. This value may be provided to bypass the Multi-Factor challenge when a User has Multi-Factor enabled.
+  </APIField>
+<JSON title="Example Request JSON" src="login/request.json" />
+
+### Response
+
+The response for this API contains the User object.
+
+<LoginResponseCodesAuthenticated />
+
+<UserResponseBody login_response />
+
+#### Response Cookies
+
+<APIBlock>
+  <APIField name="access_token" type="String">
+    The encoded access token. This cookie is written in the response as an HTTP Only session cookie.
+  </APIField>
+  <APIField name="refresh_token" type="String">
+    The refresh token. This cookie is written in the response as an HTTP only persistent cookie. The cookie expiration is configured in the JWT
+    configuration for the application or the global JWT configuration.
+  </APIField>
+</APIBlock>
+
+## Authenticate a User with a one time password
+
+This API is used to login using a One Time Password that has been returned from the Change Password API. The login request is nearly identical, however the `oneTimePasswordId` will take the place of both the `loginId` and the `password` properties.
+
+### Request
+
+By default, this API will require authentication when called with an <InlineField>applicationId</InlineField>. Authentication may be disabled per Application, see <InlineField>application.loginConfiguration.requireAuthentication</InlineField> in the [Application API](/docs/apis/applications) or navigate to <Breadcrumb>Applications -> Edit -> Security</Breadcrumb> in the user interface.
+
+
+<API method="POST" uri="/api/login" authentication={['none', 'api-key']} title=" Authenticate a User"/>
+
+#### Request Headers
+
+<APIBlock>
+  <APIField name="X-Forwarded-For" type="String" optional>
+    The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
+    generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used
+    if available, the request body value will take precedence.
+  </APIField>
+  <XFusionauthTenantIdHeaderScopedOperationRowOnly />
+</APIBlock>
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" optional>
+    <LoginApplicationidParameter />
+  </APIField>
+  <APIField name="ipAddress" type="String" optional>
+    The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of
+    the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will
+    be stored in the User login history.
+  </APIField>
+  <APIField name="oneTimePassword" type="String" required>
+    The one time password returned by the Change Password API. This value takes the place of the <InlineField>loginId</InlineField> and the <InlineField>password</InlineField> fields.
+  </APIField>
+  <LoginMetadataDevice />
+  <APIField name="noJWT" type="Boolean" optional defaults="false">
+    When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` or `refreshToken` fields, and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
+
+    This optional parameter may be helpful when performing high volume authentication requests and the JWT is not being utilized, in this scenario removing the additional latency required to issue and sign the JWT may have a measurable cumulative effect on performance.
+  </APIField>
+  <APIField name="twoFactorTrustId" type="String" optional>
+    The Multi-Factor Trust identifier returned by the Multi-Factor Login API response. This value may be provided to bypass the Multi-Factor challenge when a User has Multi-Factor enabled.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="login/request-one-time-password.json" />
+
+### Response
+
+The response for this API contains the User object.
+
+<LoginResponseCodesAuthenticated />
+
+<UserResponseBody login_response />
+
+#### Response Cookies
+
+<APIBlock>
+  <APIField name="access_token" type="String">
+    The encoded access token. This cookie is written in the response as an HTTP Only session cookie.
+  </APIField>
+  <APIField name="refresh_token" type="String">
+    The refresh token. This cookie is written in the response as an HTTP only persistent cookie. The cookie expiration is configured in the JWT
+    configuration for the application or the global JWT configuration.
+  </APIField>
+</APIBlock>
+
+
+## Complete Multi-Factor Authentication
+
+The Multi-Factor Login API is used to complete the authentication process when a `242` status code is returned by the Login API.
+
+### Request
+
+Complete a login request when a User has Multi-Factor authentication enabled.
+
+<API method="POST" uri="/api/two-factor/login" authentication={["none"]} title="Complete a Multi-Factor Login"/>
+
+#### Request Headers
+
+<APIBlock>
+  <APIField name="X-Forwarded-For" type="String" optional>
+    The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is generally preferred to specify the IP address in the request body. If it is not provided in the request body, this header value will be used if available. If provided in both places, the request body value takes precedence.
+  </APIField>
+  <XFusionauthTenantIdHeaderScopedOperationRowOnly />
+</APIBlock>
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" optional>
+    <LoginApplicationidParameter />
+  </APIField>
+  <APIField name="code" type="String" required>
+    The Multi-Factor verification code. This may also be a recovery code.
+  </APIField>
+  <APIField name="ipAddress" type="String" optional>
+    The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address
+    of the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address
+    will be stored in the User login history.
+  </APIField>
+</APIBlock>
+
+<LoginMetadataDevice />
+
+  <APIField name="noJWT" type="Boolean" optional defaults="false">
+    When this value is set to true a JWT will not be issued as part of this request. The response body will not contain the `token` field,
+    and the `access_token` and `refresh_token` cookies will not be written to the HTTP response.
+  </APIField>
+  <APIField name="trustComputer" type="Boolean" optional defaults="false">
+    When this value is set to true the response will contain a Multi-Factor Trust identifier. This can be used on subsequent Login requests to
+    allow the Multi-Factor challenge to be bypassed.
+  </APIField>
+  <APIField name="twoFactorId" type="String" required>
+    An Id generated and returned in the response body during the initial authentication attempt.
+
+    The default duration of this identifier is 5 minutes. This means that you have 5 minutes to complete the request to this API after calling the Login API. Once the identifier has expired you will need to call the Login API again to restart the process.
+
+    This duration can be modified using the Tenant API or in the FusionAuth UI.
+  </APIField>
+<JSON title="Example Request JSON" src="login/two-factor/request.json" />
+
+### Response
+
+The response for this API contains the User object.
+{/*  keep in sync with _login-response-codes.adoc */}
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The authentication was successful. The response will contain the User object that was authenticated.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 202  | The user was authenticated successfully. The user is not registered for the application specified by `applicationId` on the request. The response will contain the User object that was authenticated.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 203  | The user was authenticated successfully. The user is required to change their password, the response will contain the `changePasswordId` to be used on the [Change Password](/docs/apis/users#change-a-users-password) API. Since version `1.15.0`, the response will also contain a `changePasswordReason` field which can have one of the following values:<ul><li>`Administrative` - An administrator has required this user to change their password.</li><li>`Breached` - The password has been found to have belonged to a breached dataset and must be changed, per the Reactor configuration.</li><li>`Expired` - The password has expired, per the expiration setting in the tenant configuration. </li><li>`Validation` - The password fails the validation rules configured in the tenant password settings. </li></ul> <JSON title="Example Response JSON" src="login/login-change-password-response.json" /> {/* eslint-disable-line */} |
+| 212  | The user's email address has not yet been verified. The response will contain the User object that was authenticated. If the verification strategy has been set to `FormField`, the response will contain the <InlineField>emailVerificationId</InlineField> that was generated for the user.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 213  | The user's registration has not yet been verified. The response will contain the User object that was authenticated. If the verification strategy has been set to `FormField`, the response will contain the <InlineField>registrationVerificationId</InlineField> that was generated for the user.<br/>Prior to version `1.27.0`, this status code was not returned, and you will see a `200` instead. {/* eslint-disable-line */}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 404  | The `twoFactorId` was invalid or expired. You will need to authenticate again using the [Login](#authenticate-a-user) API. The response will be empty.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 409  | The user is currently in an action that has prevented login. The response will contain the actions that prevented login. <JSON title="Example Response JSON" src="login/login-prevented-response.json" />                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 410  | The user has expired. The response will be empty.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 421  | The `code` request parameter is not valid. The response will be empty.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 504  | One or more Webhook endpoints returned an invalid response or were unreachable. Based on the transaction configuration for this event your action cannot be completed. A stack trace is provided and logged in the FusionAuth log files.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+
+<UserResponseBody login_response two_factor_login_response />
+
+#### Response Cookies
+
+<APIBlock>
+  <APIField name="access_token" type="String">
+    The encoded access token. This cookie is written in the response as an HTTP Only session cookie.
+  </APIField>
+  <APIField name="refresh_token" type="String">
+    The refresh token. This cookie is written in the response as an HTTP Only persistent cookie. The cookie expiration is configured in the
+    JWT configuration for the application or the global JWT configuration.
+  </APIField>
+  <APIField name="fusionauth.trust" type="String">
+    The Multi-Factor Trust identifier. This value is returned when `trustComputer` was set to `true` on the request. This value can be used by
+     subsequent login requests to bypass the Multi-Factor challenge. This cookie is written in the response as an HTTP Only persistent cookie.
+  </APIField>
+</APIBlock>
+
+## Update Login Instant
+
+Sends a ping to FusionAuth indicating that the user has authenticated, and (optionally) automatically logged into an application.
+When using FusionAuth's SSO or your own, you should call this if the user is already logged in centrally, but accesses an
+application where they no longer have a session. This helps correctly track login counts, times and helps with reporting.
+
+### Request
+
+<API method="PUT" uri="/api/login/{userId}/{applicationId}?ipAddress={ipAddress}" authentication={["api-key"]} title="Update the login instant for a given User and Application"/>
+
+#### Request Headers
+
+<APIBlock>
+  <APIField name="X-Forwarded-For" type="String" optional>
+    The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
+    generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used
+    if available, the request body value will take precedence.
+  </APIField>
+  <XFusionauthTenantIdHeaderScopedOperationRowOnly />
+</APIBlock>
+
+#### Request Parameters
+
+
+<APIBlock>
+  <APIField name="userId" type="UUID" required>
+    The Id of the user logging in.
+  </APIField>
+  <APIField name="applicationId" type="UUID" optional>
+
+  <LoginApplicationidParameter />
+  </APIField>
+  <APIField name="ipAddress" type="String" optional>
+    The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of
+    the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will
+    be stored in the User login history.
+  </APIField>
+</APIBlock>
+
+
+<API method="PUT" uri="/api/login?ipAddress={ipAddress}" authentication={["jwt"]} title="Update the login instant for a given User and Application using a JWT"/>
+
+The `userId` is not required on the request. The `userId` and `applicationId` values will be retrieved from the identity claims in the JWT payload.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="ipAddress" type="String" optional>
+    The IP address of the end-user that is logging into FusionAuth. If this value is omitted FusionAuth will attempt to obtain the IP address of
+    the client, the value will be that of the `X-Forwarded-For` header if provided or the last proxy that sent the request. The IP address will
+    be stored in the User login history.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Response
+
+This API does not return a JSON response body.
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                         |
+|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The update was successful.                                                                                                                                                          |
+| 202  | The user exists but is not registered for the application specified by applicationId on the request.                                                                                |
+| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                            |
+| 401  | You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See [Authentication](/docs/apis/authentication). |
+| 404  | The user was not found.                                                                                                                                                             |
+| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                      |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                            |
+
+## Logout a User
+
+The Logout API is intended to be used to remove the refresh token and access token cookies if they exist on the client and revoke the refresh token. This
+API does nothing if the request does not contain an access token or refresh token cookies.
+
+The refresh token is only revoked if the request contains the `refresh_token` cookie or the `refreshToken` request parameter. 
+
+This does not revoke the FusionAuth SSO session. Use [`/oauth2/logout`](/docs/lifecycle/authenticate-users/oauth/endpoints#logout) to do so.
+
+### Request
+
+<API method="POST" uri="/api/logout" authentication={["none"]} title="Remove the access_token and refresh_token cookies if they exist on the client."/>
+
+#### Request Cookies
+
+<APIBlock>
+  <APIField name="access_token" type="String" optional>
+    The access token cookie. When this cookie available in the request it will be deleted from the client.
+  </APIField>
+  <APIField name="refresh_token" type="String" optional>
+    The refresh token cookie. When this cookie available in the request it will be deleted from the client and revoked in FusionAuth.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="global" type="Boolean" optional defaults="false">
+    When this value is set to true all of the refresh tokens issued to the owner of the provided refresh token will be revoked. If no refresh token is provided on the request no refresh tokens will be revoked.
+  </APIField>
+  <APIField name="refreshToken" type="String" optional>
+    The `refresh_token` as a request parameter instead of coming in via a cookie. If provided this takes precedence over the cookie.
+  </APIField>
+</APIBlock>
+
+### Response
+
+This API does not return a JSON response body.
+
+_Response Codes_
+
+| Code | Description                                                                                    |
+|------|------------------------------------------------------------------------------------------------|
+| 200  | The update was successful.                                                                     |
+| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. |
+
+## Search Login Records
+
+<Aside type="version">
+Available Since Version 1.7.0
+</Aside>
+
+This API allows you to search and paginate through the Login Records. Login Records are created in the following scenarios:
+
+<LoginEvents />
+
+You can limit the number of Login Records retained by navigating to **Settings -> System -> Advanced -> Login record settings** and configuring automatic deletion of Login Records after a certain number of days.
+
+### Request
+
+<API method="GET" uri="/api/system/login-record/search?applicationId={applicationId}&start={start}&end={end}&userId={userId}" authentication={["api-key"]} title="Searches for Login Records given search criteria"/>
+
+When calling the API using a `GET` request you will send the search criteria on the URL using request parameters. In order to simplify the example URL above, not every possible parameter is shown, however using the provided pattern you may add any of the documented request parameters to the URL.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" optional>
+    The unique Id of the Application used to narrow the search results to logins for a particular application.
+  </APIField>
+  <APIField name="end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="retrieveTotal" type="Boolean" optional defaults="false">
+    Set this to `true` if you want the total possible results returned in the response. With a very large number of login records settings this value to `true` will increase the response time of this request.
+  </APIField>
+  <APIField name="start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="startRow" type="Integer" optional defaults="0">
+    The offset into the total results. In order to paginate the results, increment this value by the <InlineField>numberOfResults</InlineField> for subsequent requests.
+  </APIField>
+  <APIField name="userId" type="String" optional>
+    The unique Id of the User used to narrow the search results to login records for a particular user.
+  </APIField>
+</APIBlock>
+
+
+<API method="POST" uri="/api/system/login-record/search" authentication={["api-key"]} title="Searches for Login Records given search criteria"/>
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="retrieveTotal" type="Boolean" optional defaults="false">
+    Set this to `true` if you want the total possible results returned in the response. With a very large number of login records settings this value to `true` will increase the response time of this request.
+  </APIField>
+  <APIField name="search.applicationId" type="UUID" optional>
+    The unique Id of the Application used to narrow the search results to logins for a particular application.
+  </APIField>
+  <APIField name="search.end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="search.numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="search.start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="search.startRow" type="Integer" optional defaults="0">
+    The offset into the total results. In order to paginate the results, increment this value by the <InlineField>numberOfResults</InlineField> for subsequent requests.
+  </APIField>
+  <APIField name="search.userId" type="UUID" optional>
+    The unique Id of the User used to narrow the search results to login records for a particular user.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API will contain all login records matching the search criteria in paginated format.
+
+<StandardGetResponseCodes />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="logins" type="Array">
+    The list of Login Records returned by the search.
+  </APIField>
+  <APIField name="logins[x].applicationId" type="UUID">
+    The unique Id of the application.
+  </APIField>
+  <APIField name="logins[x].applicationName" type="String">
+    The name of the application. Because the application name may be modified after the login event occurred, only the <InlineField>applicationId</InlineField> should be considered immutable for historical purposes when identifying the application.
+  </APIField>
+  <APIField name="logins[x].loginId" type="String">
+    The email or username of the user. Because email or username may be modified after the login event occurred, only the <InlineField>userId</InlineField> and the should be considered immutable for historical purposes when identifying the user.
+  </APIField>
+  <APIField name="logins[x].instant" type="Long">
+    The [instant](/docs/reference/data-types#instants) when the login occurred.
+  </APIField>
+  <APIField name="logins[x].ipAddress" type="String">
+    The recorded IP address for this login record.
+  </APIField>
+  <APIField name="logins[x].userId" type="UUID">
+    The unique Id of the user.
+  </APIField>
+  <APIField name="total" type="Long">
+    The total number of login records available. This will only be provided in the response when <InlineField>retrieveTotal</InlineField> was set to `true` on the request.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Response" src="login-records/search/response.json" />
+
+## Export Login Records
+
+<Aside type="version">
+Available Since Version 1.7.0
+</Aside>
+
+This API is used to export Login Records, the response will be a compressed zip archive of CSV files.
+
+### Request
+
+<API method="GET" uri="/api/system/login-record/export?applicationId={applicationId}&start={start}&end={end}&userId={userId}" authentication={["api-key"]} title="Export the Login Records matching the criteria"/>
+
+When calling the API using a `GET` request you will send the export criteria on the URL using request parameters. In order to simplify the example URL above, not every possible parameter is shown, however using the provided pattern you may add any of the documented request parameters to the URL.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" optional>
+    The unique Id of the Application used to reduce the export result to logins for a particular application.
+  </APIField>
+  <APIField name="dateTimeSecondsFormat" type="String" optional>
+    The format string used to format the date and time columns in the export result.
+
+    When this parameter is omitted a default format of `M/d/yyyy hh:mm:ss a z` will be used. See the [DateTimeFormatter patterns](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html) for additional examples.
+  </APIField>
+  <APIField name="end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="userId" type="UUID" optional>
+    The unique Id of the User used to reduce the export result to logins for a particular user.
+  </APIField>
+  <APIField name="zoneId" type="String" optional>
+    The [time zone](/docs/reference/data-types#time-zone) used to adjust the stored UTC time in the export result.
+
+    For example:
+
+    > `America/Denver` or `US/Mountain`
+
+    When this parameter is omitted the configured default report time zone will be used. See <InlineField>reportTimezone</InlineField> in the [System Configuration API](/docs/apis/system).
+  </APIField>
+</APIBlock>
+
+
+<API method="POST" uri="/api/system/login-record/export" authentication={["api-key"]} title="Export the Login Records matching the criteria"/>
+
+When calling the API using a `POST` request you will send the export criteria in a JSON request body.
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="criteria.applicationId" type="UUID" optional>
+    The unique Id of the Application used to reduce the export result to logins for a particular application.
+  </APIField>
+  <APIField name="criteria.end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to include in the export.
+  </APIField>
+  <APIField name="criteria.start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to include in the export.
+  </APIField>
+  <APIField name="criteria.userId" type="UUID" optional>
+    The unique Id of the User used to reduce the export result to logins for a particular user.
+  </APIField>
+  <APIField name="dateTimeSecondsFormat" type="String" optional>
+    The format string used to format the date and time columns in the export result.
+
+    When this parameter is omitted a default format of `M/d/yyyy hh:mm:ss a z` will be used. See the [DateTimeFormatter patterns](https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html) for additional examples.
+  </APIField>
+  <APIField name="zoneId" type="String" optional>
+    The [time zone](/docs/reference/data-types#time-zone) used to adjust the stored UTC time in the export result.
+
+    For example:
+
+    > `America/Denver` or `US/Mountain`
+
+    When this parameter is omitted the configured default report time zone will be used. See <InlineField>reportTimezone</InlineField> in the [System Configuration API](/docs/apis/system).
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API will contain a compressed zip of the audit logs.
+
+<StandardGetResponseCodes success_code="200" success_message="The request was successful. The response will be a compressed archive byte stream with a `Content-Type` of `application/zip`." />
+
+```plaintext title="Sample file export"
+"User Id ","Time ","Application Id ","IP Address ","City ","Country ","Zipcode ","Region ","Latitude ","Longitude "
+00000000-0000-0000-0000-000000000001,5/12/2022 02:46:44 PM MDT,,107.170.227.24,San Francisco,US,,CA,37.7309,-122.3886
+00000000-0000-0000-0000-000000000001,5/12/2022 12:25:12 AM MDT,3c219e58-ed0e-4b18-ad48-f4f92793ae32,127.0.0.1,,,,,,
+```
+
+<Aside type="note">
+The location information is only included in exports when [Advanced Threat Detection](/docs/operate/secure/advanced-threat-detection) is enabled.
+</Aside>
+

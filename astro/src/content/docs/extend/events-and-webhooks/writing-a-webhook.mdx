@@ -1,0 +1,132 @@
+---
+title: Writing a Webhook
+description: Learn how to write a webhook to handle and process FusionAuth.
+navcategory: developer
+section: extend
+subcategory: events and webhooks
+---
+import ApplicationWebhooksWarning from 'src/content/docs/extend/events-and-webhooks/_application-webhooks-warning.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+import DiagramTxNone from 'src/diagrams/docs/extend/events-and-webhooks/_transaction-none.astro';
+import DiagramTxAny from 'src/diagrams/docs/extend/events-and-webhooks/_transaction-any-succeed.astro';
+import DiagramTxThree from 'src/diagrams/docs/extend/events-and-webhooks/_transaction-any-succeed-three-failures.astro';
+import { YouTube } from '@astro-community/astro-embed-youtube';
+
+## Overview
+
+In order to appropriately handle requests from the FusionAuth event, you must build a HTTP Webhook receiver to listens for requests from FusionAuth. Your Webhook must be able to receive HTTP `POST` requests with a JSON request body. The HTTP request will be sent using a `Content-Type` header value of `application/json`.
+
+Additional headers may be added to the request by adding headers to the Webhook configuration.
+
+## Responses
+
+Your Webhook must handle the RESTful request described above and send back an appropriate status code. Your Webhook must send back to FusionAuth an HTTP response code that indicates whether or not the event was successfully handled or not. If your Webhook handled the event properly, it must send back an HTTP response status code of `2xx`. If there was any type of error or failure, your Webhook must send back a non `2xx` HTTP response status.
+
+## Configuration
+
+Once your Webhook is complete and listening for events, you must configure your Webhook URL in FusionAuth. To add a webhook navigate to <strong>Settings -> Webhooks</strong>.
+
+Then, configure the Tenant to listen for the event by navigating to <strong>Tenants -> Your Tenant -> Webhooks</strong>.
+
+Here's a video displaying how to configure a webhook.
+
+<YouTube id="peyqQggiR4o" />
+
+If you have multiple Webhooks configured for a single Tenant, the transaction setting for the event will dictate if FusionAuth will commit the transaction or not.
+
+As of version 1.37.0 if you have multiple webhooks assigned to different tenants but configured for the same event, such as `user.create`, only the events matching both tenant and type will be delivered. For example, imagine you have Pied Piper and Hooli tenants and both have different webhooks (`piedpier.com/webhook` and `hooli.com/webhook`) and each is configured to listen only to their tenant for the `user.create` webhook event. In this case, `piedpiper.com/webhook` would receive only Pied Piper user creation event information; likewise `hooli.com/webhook` will receive only webhooks for the `user.create` event from the Hooli tenant.
+
+Prior to version 1.37.0 if you have multiple tenants listening for the same event, they will all receive that event and can filter on the provided <InlineField>tenantId</InlineField> to determine if they should handle the event.
+
+### Application Scoped Events
+
+<ApplicationWebhooksWarning />
+
+### Tenant Scoped Events
+
+As of version 1.37.0, all events can be tenant scoped except system events:
+
+* `audit-log.create`
+* `create-log.create`
+* `kickstart.success`
+
+If you want to get events for certain applications, the preferred method is to send events for a tenant. Filter on the `applicationId` when consuming the event and discard events from any applications not of interest.
+
+### Example Configuration After 1.37.0
+
+Here's an example scenario. You have two tenants, Pied Piper and Hooli. You have configured two webhooks listening for `user.create` events. One updates a separate user database, the other records information in an analytics system. Both the Pied Piper and Hooli tenants have the `user.create` event enabled in their webhook configurations and both webhooks are selected to receive events from both tenants.
+
+In this scenario, each webhook will receive data when a user is created in either tenant, Pied Piper or Hooli.
+
+Transaction settings can be managed at the tenant level. It is possible, for example, to require only the analytics webhook to succeed for the Pied Piper tenant and only the user database sync to succeed for the Hooli tenant.
+
+If you are separating your staging and production environments using tenants, webhooks will not cross those boundaries except for the system scoped events.
+
+### Example Configuration Before 1.37.0
+
+Here's an example scenario. You have two tenants, Pied Piper and Hooli. You have configured two webhooks listening for `user.create` events. One updates a separate user database, the other records information in an analytics system. Both the Pied Piper and Hooli tenants have the `user.create` event enabled in their webhook configurations.
+
+In this scenario, each webhook will receive data when a user is created in either tenant, Pied Piper or Hooli.
+
+Transaction settings can be managed at the tenant level, but the webhooks receiving an event are not. Any webhook that is configured to receive the `user.create` event will play a role in the transaction. It is not possible, for example, to require only the analytics webhook to succeed for the Pied Piper tenant and only the user database sync to succeed for the Hooli tenant. If you need this level of granularity, run different FusionAuth instances.
+
+If you are separating your staging and production environments using tenants, webhooks will cross those boundaries. While you can filter on the tenant in the webhook itself, if you register both a production webhook and a staging webhook for the same event, the production webhook will receive staging data and the staging webhook will receive production data. In addition, webhook transactions will depend on both. The workaround is to run separate FusionAuth instances.
+
+Please review this issue for additional information about [future webhook improvements](https://github.com/FusionAuth/fusionauth-issues/issues/1543).
+
+## Retries
+
+If the webhook transaction succeeds, FusionAuth will try to send the payload to any failed webhooks again. For example, if there are three webhooks set up to listen to a `user.update` request, and the transaction level is set to "Any single webhook must succeed" and one webhook succeeds, the two failures will be retried. FusionAuth will retry sending the payload up to three additional times. This retry logic means that webhook endpoints may receive a payload multiple times and should be prepared to handle such a situation.
+{/* TODO update when https://github.com/FusionAuth/fusionauth-issues/issues/1543 lands */}
+
+If not enough of the webhooks succeed to satisfy the transaction type initially, the operation will not succeed; for example, the user will not be updated. The originating call will receive an error HTTP status code.
+
+If a webhook endpoint times out, this is considered a failure, the same as if a non `2xx` status code is returned. If the endpoint does not respond after the retries, the failure will be logged in the system log.
+
+
+### Retry Examples
+
+Below are flow diagrams of example requests. The order of the requests is not guaranteed, but is merely illustrative. In each of these, an API call such as a user update is made, and FusionAuth has been configured to fire off to three different webhooks at that time. The webhook transaction level and the webhook success statuses vary.
+
+Here's a situation with three webhooks and a webhook transaction level of "No webhooks are required to succeed". In this scenario, FusionAuth "fires and forgets":
+<DiagramTxNone alt="A flow with three webhooks and a 'no webhooks are required to succeed' transaction level." />
+
+Next, consider the scenario with three webhooks and a webhook transaction configuration of "Any single webhook must succeed" where "Webhook 1" succeeds. In this case, the other two webhooks are retried up to three additional times. "Webhook 2" succeeds eventually, but "Webhook 3" fails:
+
+<DiagramTxAny alt="A flow with three webhooks, a 'any single webhook must succeed' transaction level, and one success." />
+
+Here's a configuration with three webhooks and a webhook transaction configuration of "Any single webhook must succeed" where all webhooks fail or time out. In this case, there are no retries, since the webhook transaction level was not met.
+
+<DiagramTxThree alt="A flow with three webhooks, a 'any single webhook must succeed' transaction level, and three failures." />
+
+## Calling FusionAuth APIs In Webhooks
+
+Some events fire on creation of an entity in FusionAuth, such as `user.create`. You may want to modify the created entity, but if your webhook tries to modify the newly created object in a webhook handling the create event, the operation will fail. This is due to the fact that the operation occurs in a database transaction and has not yet completed when the webhook runs. 
+
+In fact, the created user will not be visible to any other API request until the transaction is committed. The operation fails because the webhook is trying to modify an object that has not yet been completely created and has not yet been committed to persistent storage. Depending upon your transaction configuration for a particular event, FusionAuth may wait until all webhooks have responded before committing the transaction.
+
+Even if you configure your webhook transaction to not require any webhooks to succeed, it is unlikely your code will operate as intended due to the parallel timing of the requests. The `user.create` event was not designed to allow a webhook to retrieve and modify the user.
+
+Here's a scenario:
+
+* You have a webhook that catches the `user.create` event.
+* It extracts the user's email address.
+* Then it queries a non FusionAuth database and adds a custom `user.data.premiumUser` field to the FusionAuth user object based on the query results.
+* At user login, the value of the `user.data.premiumUser` field will be placed into a JWT for other applications to access.
+
+In this example, you have a few options; which one is best depends on when you need to be able to read from the `user.data.premiumUser` field.
+
+* Provide the custom data field at user creation, instead of updating the user via a webhook. This option is the simplest, but may not be possible if users are self registering. In this case, the field is available from the moment the user is created.
+* Review available events and determine if a subsequent event occurs in your workflow. For example, `user.registration.create` may occur after a user is created. At this point, the user will exist and can be modified. If an event happens repeatedly, make the modification idempotent. In this case, the field is available as soon as the other event fires.
+* Don't process the data in the webhook. Instead, push the event JSON to a queue and return success. Have a queue consumer pull the data off and update the `user.data.premiumUser` field. The consumer can retry multiple times if the user object has not yet been fully created, which can happen if there are other webhooks whose completion is required. In this case, the field is available when the consumer finishes.
+
+While this scenario is most obvious when a user or registration is being created, it applies to all webhooks. The final state of the operation which caused the webhook is not persisted to FusionAuth until after the webhook finishes.
+
+## Example Code
+
+Here's an example of a Webhook written in Node using Express. In this example, if the event is a `user.delete` event, this code deletes all of the user's ToDos. The example code is [available on GitHub](https://github.com/FusionAuth/fusionauth-example-javascript-webhooks/blob/main/simple/app.js).
+
+In this example we are also checking the HTTP Authorization header for an API key. Using an API key or some type of authentication helps secure your Webhook to prevent malicious requests. You can configure the API key via the FusionAuth Web Interface or the API using the Headers of the Webhook configuration.
+
+<RemoteCode title="Example Webhook" lang="javascript" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-javascript-webhooks/main/simple/app.js" tags="simplewebhook" />

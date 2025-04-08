@@ -1,0 +1,156 @@
+---
+title: Configure WebAuthn
+description: Learn how to configure WebAuthn for FusionAuth.
+navcategory: admin
+section: lifecycle
+subcategory: authenticate users
+tertcategory: passwordless
+---
+import LicensedPlanBlurb from 'src/content/docs/_shared/_licensed-plan-blurb.mdx';
+import Aside from 'src/components/Aside.astro';
+import LicensedPlanBlurbApi from 'src/content/docs/_shared/_licensed-plan-blurb-api.mdx';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import InlineField from 'src/components/InlineField.astro';
+import EnterprisePlanBlurbApi from 'src/content/docs/_shared/_enterprise-plan-blurb-api.astro';
+
+<LicensedPlanBlurb version="1.52.0" />
+
+<Aside type="version">
+Available since 1.41.0
+</Aside>
+
+## Overview
+
+WebAuthn provides the ability for users to authenticate in their browser using the same method they use to unlock their device, like a biometric scan or PIN. WebAuthn has some big security benefits over the traditional username and password. Read on to learn how to configure WebAuthn in your FusionAuth instance. If you'd like more detail on integrating WebAuthn with your FusionAuth instance, check out the [WebAuthn Developer Guide](/docs/lifecycle/authenticate-users/passwordless/webauthn-passkeys).
+
+<Aside type="note">
+What about passkeys?
+
+"Passkey" is the user-friendly term for WebAuthn credentials. Use this guide to configure FusionAuth's WebAuthn systems to allow your users to log in with passkeys.
+</Aside>
+
+## What is WebAuthn
+
+WebAuthn is a W3C [specification](https://www.w3.org/TR/webauthn-2/) that defines an API to create and use public-key credentials in web applications. Check out FusionAuth's [WebAuthn blog post](/blog/2022/09/13/what-is-webauthn-why-do-you-care) for more information on the basics of WebAuthn and its security benefits.
+
+You can enable WebAuthn in your FusionAuth instance with a few configuration changes. This guide explains these configuration options and provides detail to help you choose the best options for your instance.
+
+<LicensedPlanBlurbApi feature="WebAuthn" />
+
+
+See the [Licensing](/docs/get-started/core-concepts/licensing) guide for information about activating a license for your FusionAuth instance.
+
+## Tenant Configuration
+The bulk of WebAuthn configuration happens at the tenant level, including Relying Party settings, authenticator attachment, and user verification requirements. Use the WebAuthn tab on the add/edit tenant page to configure these options.
+
+<img src="/img/docs/lifecycle/authenticate-users/passwordless/tenant-configuration-webauthn-general.png" alt="Tenant Configuration - WebAuthn" width="1200"  role="top-cropped" bottom-cropped="undefined" />
+
+The settings in this first section are applied to all applications in the tenant.
+
+<APIBlock>
+  <APIField name="Enabled">
+    This toggle must be enabled to use WebAuthn on this tenant.
+  </APIField>
+  <APIField name="Relying party Id">
+    The Relying Party Id controls the scope of WebAuthn passkeys (i.e. which sites a WebAuthn passkey can be used to authenticate). More on this [below](#relying-party-id).
+  </APIField>
+  <APIField name="Relying party name">
+    The Relying Party name is a human-readable name that may be displayed by the browser or operating system during a WebAuthn ceremony. The value should be something that your users will recognize such as the name of your company or service. If the field is left blank, FusionAuth will default the value to <InlineField>Issuer</InlineField> from the <strong>General</strong> tab during WebAuthn ceremonies.
+  </APIField>
+  <APIField name="Debug enabled">
+    Enable this toggle to create event logs with detailed information on WebAuthn failures. This can be useful for troubleshooting WebAuthn integration issues.
+  </APIField>
+</APIBlock>
+
+### Relying Party Id
+The Relying Party Id controls which sites a given passkey can be used on. A passkey can only be used with the same Relying Party Id it was registered with. There are constraints on valid values based on the website where the WebAuthn ceremonies are performed. Leaving this field blank, which causes the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) to use the browser request origin's effective domain, should work for most use cases, but overriding the value can provide additional flexibility.
+
+Next, we'll cover the constraints imposed on this value by the browser and then how and why you may want to override the value.
+
+#### Constraints
+
+As part of its security requirements, the WebAuthn specification requires that the Relying Party Id for a given ceremony is either:
+
+ * The browser request origin's [effective domain](https://html.spec.whatwg.org/multipage/browsers.html#concept-origin-effective-domain)
+ * A [registrable domain suffix](https://html.spec.whatwg.org/multipage/browsers.html#is-a-registrable-domain-suffix-of-or-is-equal-to) of the browser request origin's effective domain
+
+It's easier to explain with an example. If your login page is at `https://auth.piedpiper.com/oauth2/authorize`, then the effective domain is `auth.piedpiper.com`. The following are valid Relying Party Ids:
+
+ * `auth.piedpiper.com` - matches the effective domain
+ * `piedpiper.com` - a registrable suffix of the effective domain
+
+But the following values are _not_ valid:
+
+ * `m.auth.piedpiper.com` - a subdomain of the effective domain
+ * `com` - this is a suffix of the effective domain but not registrable
+
+Remember, if you are using a proxy or other means to serve up authentication pages for multiple domains, the domain the user sees in the browser is what matters, not the true hostname of the server.
+
+#### Override
+
+Continuing with the example from the previous section, let's say your login page is at `auth.piedpiper.com`. If <InlineField>Relying party Id</InlineField> is left blank, the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) will default to using `auth.piedpiper.com`, the browser request origin's effective domain, to scope passkeys. This means that passkeys will be registered with a Relying Party Id of `auth.piedpiper.com`, and those passkeys can only be used when the Relying Party Id is `auth.piedpiper.com` during the authentication ceremony.
+
+The primary use case for overriding the Relying Party Id is to allow users access to their passkeys across multiple subdomains. Let's expand this scenario and assume you've got login pages on a few domains:
+
+ * `auth.piedpiper.com` - the login domain for desktop/laptop users
+ * `m.auth.piedpiper.com` - the login domain for mobile browser users
+ * `login.piedpiper.com` - a legacy domain that is still in use for some portion of users
+
+If you leave the <InlineField>Relying party Id</InlineField> blank, passkeys will be scoped to these exact domains. This means that a user who registers a passkey on their MacBook at `auth.piedpiper.com`, which is then synced to their other Apple devices via iCloud, would not be able to use that same passkey on their iPhone at `m.auth.piedpiper.com`. It also means that a user who registers a passkey on the legacy `login.piedpiper.com` would not be able to use that passkey on `auth.piedpiper.com` once they have been migrated to the new login domain.
+
+There are a couple of options to override the Relying Party Id to improve the flexibility and usefulness of WebAuthn. Here are the override options available assuming all three login domains use the same FusionAuth instance and keeping in mind the constraints from the previous section:
+
+ * `auth.piedpiper.com` - this value would allow users to share the same passkey between `auth.piedpiper.com` and `m.auth.piedpiper.com`, but it would prevent users from registering or using passkeys on the `login.piedpiper.com` legacy domain
+ * `piedpiper.com` - this value functions the same as using `auth.piedpiper.com` with the added benefit that users would be allowed to register and use passkeys on `login.piedpiper.com` _and_ continue using those same passkeys once they are migrated to the new `auth.piedpiper.com` domain
+
+### Workflow settings
+
+<img src="/img/docs/lifecycle/authenticate-users/passwordless/tenant-configuration-webauthn-workflow.png" alt="Tenant Configuration - WebAuthn workflow settings" width="1200"  role="top-cropped" bottom-cropped="undefined" />
+
+Each WebAuthn workflow has the same set of configuration options.
+
+<APIBlock>
+  <APIField name="Enabled">
+    Enabling this toggle will enable the associated workflow for all applications belonging to this tenant. The availability of a workflow can be overridden at the application level using the [Application Configuration](#application-configuration).
+  </APIField>
+  <APIField name="Authenticator attachment">
+    This setting controls which authenticator attachments are allowed for registration ceremonies when using the associated workflow. See the section [below](#authenticator-attachment) for recommendations on configuring this option.
+  </APIField>
+  <APIField name="User verification">
+    This setting controls whether user verification is required for registration and authentication ceremonies when using the associated workflow. See the section [below](#user-verification) for recommendations on configuring this option.
+  </APIField>
+</APIBlock>
+
+#### Authenticator attachment
+
+There are two [authenticator attachment modalities](https://www.w3.org/TR/webauthn-2/#authenticator-attachment-modality) in WebAuthn.
+
+ * `platform` - the authenticator is integrated with the client device
+ * `cross-platform` - the authenticator is removable from the client device and can be used with other client devices
+
+The workflow settings allow limiting the associated workflow to one attachment only or allowing either. The value is used to limit eligible authenticators to those that are best suited for the workflow. The authenticator attachment preference only impacts the WebAuthn registration ceremony. These are the recommended values for available WebAuthn workflows:
+
+ * Bootstrap - ``Any``. The bootstrap workflow can be used to authenticate on any supported device. The `Any` option allows signing in with WebAuthn across the broadest set of devices.
+ * Re-authentication - ``Platform only``. In order to ensure that the authenticator is available for repeated logins on the same device, it is best to limit authenticator selection to those integrated with the client device.
+
+<EnterprisePlanBlurbApi feature="WebAuthn cross-platform authenticators" />
+
+
+#### User verification
+
+There are three options for the [user verification requirement](https://www.w3.org/TR/webauthn-2/#enum-userVerificationRequirement) defined by WebAuthn.
+
+ * `Required` - user verification is required to successfully complete the WebAuthn ceremony
+ * `Preferred` - user verification is preferred for the WebAuthn ceremony, but it will not fail if user verification is not provided
+ * `Discouraged` - user verification should not be provided for the WebAuthn ceremony
+
+The workflow settings allow selecting the preference for user verification. If the workflow allows a user to authenticate, it is _highly_ recommended to require user verification. If user authentication is not required, anyone with access to the authenticator could use it to authenticate as the user that owns the passkey.
+
+## Application Configuration
+
+The application-level configuration options for WebAuthn serve as a way to override the availability of WebAuthn workflows that are configured at the tenant level.
+
+<img src="/img/docs/get-started/core-concepts/application-webauthn.png" alt="Application Configuration - WebAuthn" width="1200" role="top-cropped,bottom-cropped"/>
+
+In order to override which workflows are enabled for the application, regardless of the tenant configuration, first enable the main toggle. Enabling the toggle in one of the subsections will enable that workflow for the application. Likewise, disabling the toggle in one of the subsections will disable that workflow for the application.

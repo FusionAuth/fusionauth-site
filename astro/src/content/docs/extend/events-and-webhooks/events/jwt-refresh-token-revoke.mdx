@@ -1,0 +1,192 @@
+---
+title: JWT Refresh Token Revoke
+description: Learn about the JWT Refresh Token Revoke event.
+section: extend
+subcategory: events and webhooks
+tertcategory: events
+---
+import APIField from 'src/components/api/APIField.astro';
+import Event from 'src/content/docs/extend/events-and-webhooks/events/_event.astro';
+import EventBody from 'src/content/docs/extend/events-and-webhooks/events/_event-body.astro';
+import InlineField from 'src/components/InlineField.astro';
+import ReferenceLink from 'src/content/docs/_shared/_reference-link.mdx';
+
+export const eventType = 'jwt.refresh-token.revoke';
+
+<Event name="JWT Refresh Token Revoke"
+       eventType={eventType}
+       description="This event is generated when a group is updated. The JSON includes the Group that was updated."
+       scope="application"
+       transactional="true">
+
+  <p slot="description">
+    This event is generated when a refresh token is revoked. The JSON includes either the User Id and User or the Application Id depending on what was revoked. It will also include the time to live duration (in seconds) for each Application. This value is used to determine if JWTs are valid or not based on their expiration instants.
+  </p>
+
+  <p slot="description">
+    The following scenarios will cause this event to be generated:
+  </p>
+
+  <ul slot="description">
+    <li>A single Refresh Token is revoked</li>
+    <li>All Refresh Tokens owned by a single User are revoked (if there is at least one valid Refresh Token for this User)</li>
+    <li>All Refresh Tokens owned by a single User for an Application are revoked</li>
+    <li>All Refresh Tokens for an Application are revoked</li>
+  </ul>
+
+</Event>
+
+<h3>Revoking Single Refresh Token</h3>
+
+<p>This example JSON would reflect a scenario where a single refresh token is revoked for a single user for a single application.</p>
+
+<EventBody eventType={eventType}
+           sinceThreatDetection="1.30.0"
+           sinceIpAddress="1.27.0"
+           jsonFile="jwt-refresh-token-revoke-user.json">
+           includeTenantId="false">
+  <APIField slot="leading-fields" name="event.applicationId" type="UUID">
+    The unique Id of the Application for which the refresh token have been revoked.
+  </APIField>
+
+  <APIField slot="leading-fields" name="event.applicationTimeToLiveInSeconds" type="Map<UUID, Integer>">
+    <p>
+      A map of Application Id to the configured time to live (TTL) for the access token (JWT). This can be used to identify the maximum amount of time after this event occurred where an un-expired access token may be held by a user.
+    </p>
+
+    <p>
+      If you take the <InlineField>createInstant</InlineField> of this event and add the number of seconds for a specific application TTL you come up with an instant in time where you should consider all access tokens issued before this time invalid. This is because the access token will have been issued on or before the instant the refresh token was revoked.
+    </p>
+
+    <p>
+      This map will contain a single entry for the application represented by the <InlineField>applicationId</InlineField> field.
+    </p>
+  </APIField>
+
+  <APIField slot="leading-fields" name="event.createInstant" type="Long">
+    The <ReferenceLink file="data-types#instants" label="instant" /> that the event was generated.
+  </APIField>
+
+  <APIField slot="leading-fields" name="event.id" type="UUID">
+    The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.refreshToken" type="Object" since="1.37.0">
+The refresh token being revoked. This is only returned when a single refresh token is revoked.  See the [JWT API](/docs/apis/jwt#retrieve-refresh-tokens) for property definitions and example JSON.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.tenantId" type="UUID" since="1.8.0">
+    The unique tenant identifier. This value may not be returned if not applicable.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.type" type="String">
+    The event type, this value will always be <code>{eventType}</code>.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.userId" type="UUID">
+The unique Id of the User for which a refresh token has been revoked.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.user" type="Object" since="1.8.0">
+The user for which a refresh token has been revoked. See the [Users API](/docs/apis/users) for property definitions and example JSON.
+  </APIField>
+
+</EventBody>
+
+<h3>All User Refresh Tokens Revoked</h3>
+<p>
+  This example JSON would reflect a scenario where all refresh tokens owned by a single user are revoked.
+</p>
+
+<EventBody eventType={eventType}
+           sinceThreatDetection="1.30.0"
+           sinceIpAddress="1.27.0"
+           jsonFile="jwt-refresh-token-revoke-all-user.json">
+           includeTenantId="false">
+  <APIField slot="leading-fields" name="event.applicationTimeToLiveInSeconds" type="Map<UUID, Integer>">
+    <p>
+      A map of Application Id to the configured time to live (TTL) for the access token (JWT). This can be used to identify the maximum amount of time after this event occurred where an un-expired access token may be held by a user.
+    </p>
+
+    <p>
+      If you take the <InlineField>createInstant</InlineField> of this event and add the number of seconds for a specific application TTL you come up with an instant in time where you should consider all access tokens issued before this time invalid. This is because the access token will have been issued on or before the instant the refresh token was revoked.
+    </p>
+
+    <p>
+      This map will contain a single entry for the application represented by the <InlineField>applicationId</InlineField> field.
+    </p>
+  </APIField>
+
+  <APIField slot="leading-fields" name="event.createInstant" type="Long">
+    The <ReferenceLink file="data-types#instants" label="instant" /> that the event was generated.
+  </APIField>
+
+  <APIField slot="leading-fields" name="event.id" type="UUID">
+    The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.tenantId" type="UUID" since="1.8.0">
+    The unique tenant identifier. This value may not be returned if not applicable.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.type" type="String">
+    The event type, this value will always be <code>{eventType}</code>.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.userId" type="UUID">
+The unique Id of the User for which a refresh token has been revoked.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.user" type="Object" since="1.8.0">
+The user for which a refresh token has been revoked. See the [Users API](/docs/apis/users) for property definitions and example JSON.
+  </APIField>
+
+</EventBody>
+
+<h3>All Applications Refresh Tokens Revoked</h3>
+
+<p>
+  This example JSON would reflect a scenario where all refresh tokens issued for a specific application are revoked.
+</p>
+
+<EventBody eventType={eventType}
+           sinceThreatDetection="1.30.0"
+           sinceIpAddress="1.27.0"
+           jsonFile="jwt-refresh-token-revoke-application.json">
+           includeTenantId="false">
+
+  <APIField slot="leading-fields" name="event.applicationId" type="UUID">
+    The unique Id of the Application for which all of the refresh tokens have been revoked.
+  </APIField>
+
+  <APIField slot="leading-fields" name="event.applicationTimeToLiveInSeconds" type="Map<UUID, Integer>">
+    <p>
+      A map of Application Id to the configured time to live (TTL) for the access token (JWT). This can be used to identify the maximum amount of time after this event occurred where an un-expired access token may be held by a user.
+    </p>
+
+    <p>
+      If you take the <InlineField>createInstant</InlineField> of this event and add the number of seconds for a specific application TTL you come up with an instant in time where you should consider all access tokens issued before this time invalid. This is because the access token will have been issued on or before the instant the refresh token was revoked.
+    </p>
+
+    <p>
+      This map will contain a single entry for the application represented by the <InlineField>applicationId</InlineField> field.
+    </p>
+  </APIField>
+
+  <APIField slot="leading-fields" name="event.createInstant" type="Long">
+    The <ReferenceLink file="data-types#instants" label="instant" /> that the event was generated.
+  </APIField>
+
+  <APIField slot="leading-fields" name="event.id" type="UUID">
+    The unique Id of the event. You may receive an event more than once based upon your transaction settings. This Id may be used to identify a duplicate event.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.tenantId" type="UUID" since="1.8.0">
+    The unique tenant identifier. This value may not be returned if not applicable.
+  </APIField>
+
+  <APIField slot="trailing-fields" name="event.type" type="String">
+    The event type, this value will always be <code>{eventType}</code>.
+  </APIField>
+
+</EventBody>

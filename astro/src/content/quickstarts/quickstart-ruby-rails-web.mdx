@@ -1,0 +1,249 @@
+---
+title: Ruby on Rails
+description: Quickstart integration of Ruby on Rails web application with FusionAuth
+navcategory: getting-started
+prerequisites: Ruby, bundler and Rails
+section: web
+technology: Ruby on Rails
+language: Ruby
+icon: /img/icons/ruby-on-rails.svg
+faIcon: fa-gem
+color: rose
+cta: EmailListCTA
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main
+---
+import Aside from '../../components/Aside.astro';
+import Code from 'astro/components/Code.astro';
+import DockerSpinup from '/src/components/quickstarts/DockerSpinup.astro';
+import Intro from '/src/components/quickstarts/Intro.astro';
+import LoginArchitectureWeb from '/src/components/quickstarts/LoginArchitectureWeb.astro';
+import NextSteps from '/src/components/quickstarts/NextSteps.astro';
+import {RemoteCode, RemoteValue} from '@fusionauth/astro-components';
+import QuickstartTshirtCTA from '/src/components/quickstarts/QuickstartTshirtCTA.astro'
+
+<Intro technology={frontmatter.technology}
+       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web"/>
+
+## Prerequisites
+
+- [Ruby](https://www.ruby-lang.org/en/documentation/installation/): This will be needed for pulling down the various dependencies.
+- [Rails](https://guides.rubyonrails.org/getting_started.html): This will be used in order to run the Rails server.
+- [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](/docs/get-started/download-and-install)).
+
+This app has been tested with Ruby 3.2.2 and Rails 7.0.4.3. This example should work with other compatible versions of Ruby and Rails.
+
+## General Architecture
+
+<LoginArchitectureWeb />
+
+## Getting Started
+
+In this section, you'll get FusionAuth up and running and use Rails to create a new application.
+
+### Clone the Code
+
+First off, grab the code from the repository and change into that directory.
+
+```
+git clone https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web.git
+cd fusionauth-quickstart-ruby-on-rails-web
+```
+
+### Run FusionAuth via Docker
+
+<DockerSpinup kickstartUri="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json" />
+
+### Create your Ruby on Rails Application
+
+Now you are going to create a Ruby on Rails application. While this section builds a simple Ruby on Rails application, you can use the same configuration to integrate your existing Ruby on Rails application with FusionAuth.
+
+```bash
+rails new myapp && cd myapp
+```
+
+## Authentication
+
+We'll use the [OmniAuth Library](https://github.com/omniauth/omniauth), which simplifies integrating with FusionAuth and creating a secure web application.
+
+### Configure OmniAuth
+
+Install the omniauth gem and other supporting gems. Add the following three lines to your `Gemfile`.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/Gemfile"
+ lang="ruby"
+ tags="gemfile"/>
+
+Then, install them.
+
+```bash
+bundle install
+```
+
+Next, update your `config/environments/development.rb` file with FusionAuth OpenID Connect (OIDC) environment specific configuration.
+
+<Aside type="tip">
+You'll have to add similar configuration to the correct environment files when deploying to prod or other environments.
+</Aside>
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/config/environments/development.rb"
+lang="ruby"
+tags="oidcConfig"/>
+
+Configure OmniAuth by creating `config/initializers/omniauth.rb` with the following code:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/config/initializers/omniauth.rb"
+lang="ruby" />
+
+This pulls values from the environment file and configures the omniauth gem to communicate with FusionAuth.
+
+### Add Controllers
+
+Next, you can create some controllers with the following shell commands:
+
+```shell
+rails generate controller auth
+rails generate controller home
+rails generate controller make_change
+```
+
+These controllers have the following purposes:
+
+* `auth` is for omniauth integration
+* `home` is an unprotected home page with a login button
+* `make_change` is a protected page for our example bank application
+
+First, let's update the `config/routes.rb` file. Here's what that should look like:
+
+<RemoteCode url="
+https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/config/routes.rb"
+lang="ruby" />
+
+Some simple routes corresponding to the controllers:
+
+* `make_change` is the protected bank page
+* `home` is the home page, which is available to unauthenticated users. This is also the default page.
+* `logout` is tied to the auth controller's logout method.
+* `auth/:provider/callback` is the omniauth callback method, which completes the OIDC grant.
+
+Now, update the auth controller at `app/controllers/auth_controller.rb` to look like this, which completes some of the routes defined above.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/app/controllers/auth_controller.rb"
+lang="ruby" />
+
+This lets you have a nice `logout` method and also handle the callback from omniauth. The latter sets a `session` attribute with user data, which can be used by views later.
+
+Now, update the application controller at `app/controllers/application_controller.rb`.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/app/controllers/application_controller.rb"
+lang="ruby" />
+
+- `authenticate_user!` enforces authentication for all routes in your application by checking for the session attribute set by the auth controller after a successful login.
+- `redirect_non_localhost!` ensures users access the web app via `localhost` instead of a URL like http:127.0.0.1:3000/ .  FusionAuth's origin and redirect URL configurations in this example expect `localhost`.  In production, update this with your domain name.
+
+Now, let's build out the home page. Update the home controller at `app/controllers/home_controller.rb` to look like this:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/app/controllers/home_controller.rb"
+lang="ruby" />
+
+You're skipping authentication for this route. After all, a user has to have someplace to go if they are unauthenticated, right?
+
+Finally, we'll add some business logic for logged in users to make change with the following code in `app/controllers/make_change_controller.rb`:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/app/controllers/make_change_controller.rb"
+lang="ruby" />
+
+## App Customization
+
+In this section, you'll turn your application into a trivial banking application with some styling.
+
+### Add Views
+
+The view is welcoming, but prompts them to login. Otherwise, it shows a mock account balance. Replace `app/views/home/index.html.erb` with this code:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/app/views/home/index.html.erb"
+lang="erb" />
+
+Next, update the layout so the user has login or logout buttons on every page. Add the below code to `app/views/layouts/application.html.erb` just after the `<body>` tag.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/app/views/layouts/application.html.erb"
+lang="erb"
+tags="applicationLayout"/>
+
+Finally, add a form and messaging for making change at `app/views/make_change/index.html.erb`:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/app/views/make_change/index.html.erb"
+lang="erb" />
+
+### Add Styling
+
+Now, add some image assets and styling to make this look like a real application with the following shell commands:
+
+```shell
+curl -o app/assets/images/example_bank_logo.svg https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/app/assets/images/example_bank_logo.svg
+curl -o app/assets/images/fusion_auth_logo.svg https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/app/assets/images/fusion_auth_logo.svg
+curl -o app/assets/images/money.jpg https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/app/assets/images/money.jpg
+curl -o app/assets/stylesheets/changebank.css https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/complete-app/app/assets/stylesheets/changebank.css
+```
+
+Once you’ve created these files, you can test the application out.
+
+## Run the App
+
+Start up the Rails application using this command:
+
+<RemoteValue
+  url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json"
+  selector="$.requests.[?(@.url === '/api/application/#{applicationId}')].body.application.oauthConfiguration.clientSecret">
+  {(value) => <Code lang="shell" code={`OP_SECRET_KEY="${value}" bundle exec rails s`} />}
+</RemoteValue>
+
+`OP_SECRET_KEY` is the client secret, which was defined by the [FusionAuth Installation via Docker](#run-fusionauth-via-docker) step. You don't want to commit secrets like this to version control, so use an environment variable.
+
+You can now open up an incognito window and visit the Rails app at http://localhost:3000 . Log in with the user account you created when setting up FusionAuth, and you’ll see the email of the user next to a logout button.
+
+<QuickstartTshirtCTA/>
+
+## Next Steps
+
+<NextSteps>
+  <Fragment slot="security">
+    <li>[OmniAuth OpenIDConnect](https://github.com/omniauth/omniauth) handles token validation and refresh.</li>
+  </Fragment>
+</NextSteps>
+
+## Troubleshooting
+
+* I get `This site can’t be reached  localhost refused to connect.` when I click the Login button
+
+Ensure FusionAuth is running in the Docker container.  You should be able to login as the admin user, <code><RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json" selector="$.variables.adminEmail" /></code> with a password of <code><RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json" selector="$.variables.adminPassword" /></code> at [http://localhost:9011/admin](http://localhost:9011/admin).
+
+* I get an error page when I click on the Login button with message of `"error_reason" : "invalid_client_id"`
+
+Ensure the value for `config.x.fusionauth.client_id` in the file `config/environments/development.rb` matches client Id configured in FusionAuth for the Example App Application at [http://localhost:9011/admin/application/](http://localhost:9011/admin/application/).
+
+* I'm getting an error from Rails after logging in
+
+```
+Rack::OAuth2::Client::Error
+invalid_client :: Invalid client authentication credentials.
+```
+
+This indicates that OmniAuth is unable to call FusionAuth to validate the returned token.  It is likely caused because of an incorrect client secret.  Ensure the `OP_SECRET_KEY` environment variable used to start rails matches the FusionAuth ExampleApp client secret. You can review that by logging in as the admin user and examining the Application at [http://localhost:9011/admin/application/](http://localhost:9011/admin/application/)
+
+* It still doesn't work
+
+You can always pull down a complete running application and compare what's different.
+
+<RemoteValue
+  url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web/main/kickstart/kickstart.json"
+  selector="$.requests.[?(@.url === '/api/application/#{applicationId}')].body.application.oauthConfiguration.clientSecret">
+  {(value) => (
+    <Code lang="shell" code={`git clone https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-web.git
+cd fusionauth-quickstart-ruby-on-rails-web
+docker compose up -d
+cd complete-app
+bundle install
+OP_SECRET_KEY=${value} bundle exec rails s`}/>
+  )}
+</RemoteValue>
+

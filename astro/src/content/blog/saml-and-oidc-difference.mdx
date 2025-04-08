@@ -1,0 +1,275 @@
+---
+publish_date: 2023-01-09
+title: "OIDC vs SAML: What's the Difference?"
+description: OIDC and SAML are authentication protocols that enable identity providers to implement user validation and access control. In this guide, you will learn the purpose of the two authentication methods and explain where they are used.
+authors: Paul Ibeabuchi
+categories: Education, Product
+tags: saml, oidc, open id connect
+image: /img/blogs/saml-oidc-difference/oidc-vs-saml.svg
+excerpt_separator: "{/* more */}"
+---
+
+It's essential for digital platforms to keep their data and resources secure, which is why authentication protocols are so necessary. Authentication protocols are sets of rules used to determine the identity of an entity (such as an end user, application, or device) before granting access. This differs from authorization in that authentication is concerned with identity, while authorization is concerned with permissions. Although authentication is followed by authorization, the reverse is not typically true.
+
+{/* more */}
+
+Identity management matters because cyberattacks can pose threats to your organization. You shouldn't allow external entities access to your platform without verifying who they are. Otherwise, your data and your users' data could be at risk of exposure or misuse.
+
+[![FusionAuth CTA banner.](/cdn/blog-cta-banner-dark.png 'Discover how FusionAuth simplifies identity management with support for both OIDC and SAML. Schedule a personalized demo to see it in action.')](/contact)
+
+This article will examine two authentication protocols: OpenID Connect (OIDC) and Security Assertion Markup Language (SAML). You will learn how they work, how they compare to each other, and which protocol might be a better fit for your organization.
+
+## What Is OIDC?
+
+[OIDC](https://openid.net/connect/) is an open authentication protocol built on top of the OAuth 2.0 authorization framework. It delegates authentication to identity providers such as Google and FusionAuth to verify identities, while defining how an identity provider communicates with a relying party (or the platform providing services) to authenticate an entity (or end user).
+
+OIDC uses tokens known as [JSON Web Tokens](https://jwt.io/) (JWTs), with which applications can authenticate identities and access data from another application or service. It supports the [single sign-on](/learn/expert-advice/authentication/developer-benefits-single-sign-on) (SSO) mechanism, which is used by most engineers to authenticate a user across several platforms. This can be handled by services like [FusionAuth](/), which provides out-of-the-box features such as SSO for quicker authentication. OIDC works with web-based, mobile, and JavaScript clients.
+
+### Why Use OIDC?
+
+OAuth was built to handle authorization, but engineers widely used it for authentication. This required a hack to work, making authentication more complex to implement. OIDC was released as a standard in 2014 to solve this problem. It extends the OAuth protocol and inherits OAuth properties, which makes it capable of handling authorization. But it's designed to manage authentication.
+
+The idea is to allow an entity or end user to provide access credentials once, to be used for authentication in other types of applications (web, mobile, or cloud) at different points in time. OIDC is easier for developers to implement than SAML, an older protocol discussed below, and offers a more flexible syntax, which is why it has gained in popularity.
+
+### How Does OIDC Work?
+
+In general, a user launches your application and begins the authentication process. The user is redirected to an identity provider that supports the protocol, such as Google, where they authenticate and optionally approve or decline the sharing of specific profile attributes such as phone number or email, after which they're redirected back to your application.
+
+For example, say you're using an application called AppX and it needs to access your Gmail contacts. The application or relying party provides you with an interface that initiates the authentication process, and you're redirected to your identity provider, which in this case is Google. The application sends a request with multiple parameters, including the following:
+
+* `client_id`: Google uses this ID to identify the application.
+* `redirect_uri`: Sometimes referred to as a callback URL, this is a page you'll be redirected to after the authentication process has concluded.
+* `scope`: This defines what kind of access the application would have to your Gmail. In this example, it wants to access your Gmail contacts.
+
+Here's what a sample OIDC request for this would look like:
+
+```
+https://accounts.google.com/o/oauth2/v2/auth
+    ?client_id=48722948009.apps.googleusercontent.com
+    &redirect_uri=https%3A//appx/return-page.com/redirect_uri
+    &scope=openid%20contacts
+    &login_hint=jdoe@example.com
+    &response_type=id_token
+    &state=Hz9b42jks19142
+    &nonce=9228744-220092-4982279
+```
+
+Google verifies the request using the `client_id`, and you are then required to authenticate. Upon successful authentication, Google informs you of the kind of access the application is asking for (as defined in the `scope` property) and provides you with an interface to approve or decline the access. If you decline, Google redirects back to the application, indicating that the authentication has failed. Otherwise, it redirects to the page defined in the `redirect_uri` property with an ID token, which is signed and contains information about the kind of access the application has to your Gmail.
+
+Here's what a sample ID token response for this looks like:
+
+```
+{
+    "id_token":" eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Impkb2VAZXhhbXBsZS5jb20iLCJleHAiOjg2NDAwLCJpYXQiOjg2NDAwLCJpc3MiOiJwcml2YXRlIiwianRpIjoiY2VmYTc0ZmUtODk0Yy1mZjYzLWQ4MTYtNDYyMGI4Y2Q5MmVlIiwib3JnIjoicHJpdmF0ZSIsInN1YiI6ImpvaG4uZG9lIn0.vEWNFlttEd3qPSW2_2f8Nqm1Qpc_TqBTTfCGT2Oo60CBVaCiZmEn3rISIbtVJKQAOymFfJS2qhRk42GSNhK-6A"
+    "expires in": 86400,
+    "token type": "Bearer"
+}
+```
+
+The application can now send a request to Google's API along with the access token as proof of authorization. Google verifies the token and grants the app access to your Gmail contacts. If you paste this token in [JWT's token decoder](https://jwt.io/), you can see the decoded data.
+
+It is important to note that *access token* is different from *ID token*. The ID token has the user information, and it is useful for the application to determine who is authenticated. The access token is used to give permission to applications to have access to the requested resources. 
+
+Here's an example of what an access token response looks like:
+
+```json
+{
+"access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJhdXRob3JpemF0aW9uX2NvZGUiXSwia2lkIjoiZTQwMGE5ODgwIn0.eyJhdWQiOiI1MWFjNDg3Yi0wMjg1LTQwMDMtODNlZC1kMWIxOGZhMWJhYzgiLCJleHAiOjE2NjYwOTEzOTQsImlhdCI6MTY2NjA4Nzc5NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyNDA4ZDk5ZC00MjViLTQ4NTAtYThlYS0wNjhlMjc0MDAzOGUiLCJqdGkiOiI3MjA4NzMxOS00OGRhLTRiYjAtYmI4MC1lMGFlYTI0MjUyNTYiLCJhdXRoZW50aWNhdGlvblR5cGUiOiJQQVNTV09SRCIsImVtYWlsIjoibHVjaWVuQGRyYWZ0LmRldiIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhdXRoX3RpbWUiOjE2NjYwODc3OTQsInRpZCI6IjE5MDdlNmU2LTY0MjctZTc1YS05NDViLTUwN2NjZTAwNTk5MiJ9.Ps__UHniLjBGDGTU86HL7qXhiz-RKuzlkIji_NIn_h8",
+   "expires_in": 3599,
+   "token_type": "Bearer",
+   "userId": "2408d99d-425b-4850-a8ea-068e2740038e"
+}
+```
+ 
+## What Is SAML?
+
+SAML, just like OIDC, is an authentication protocol that enables secure communication between service providers and identity providers. It uses Extensible Markup Language (XML) for sharing data. SAML also supports SSO authentication, but unlike OIDC, it only works with XML syntax.
+
+### Why Use SAML?
+
+Before the prevalent version of SAML was released in 2005, developers could only implement SSO by using cookies within the same domain. For an entity to gain access to multiple service providers such as websites or applications, it would need to provide credentials to each platform for authentication. SAML solves this problem by presenting a centralized point of authentication where an entity (usually an end user) provides their credentials once. Other service providers can then communicate with it to authenticate the entity.
+
+### How Does SAML Work?
+
+With SAML, the authentication process is typically initiated by the end user and the application (also called a service provider), which generates a SAML request and redirects the end user to their service provider. The service provider then redirects to the identity provider which validates the request and prompts the end user to authorize it, after which a SAML response with a token is returned to the application. The application validates the response and token so that it can access data using the token.
+
+To understand the process in more detail, look at the example from earlier. The authentication process begins and the application generates a SAML request, then redirects you to the identity provider (in this case Google). Some of the important properties included in this request are:
+
+* `ID`: This is the ID that Google uses to recognize the application.
+* `IssueInstant`: This timestamp indicates when the request was initiated. This can be used to determine whether you're still within the time frame allocated for the authentication.
+* `Destination`: This is the link to Google, where the end user is redirected.
+* `AssertionConsumerServiceURL`: This is where the response from Google is sent.
+
+Here's what the SAML request might look like:
+
+```
+<samlp:AuthnRequest xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="appx_492507f0030a9797g4c9d9d327f627afel2jcc24" Version="2.0" ProviderName="AppX" IssueInstant="2022-08-30T17:22:45Z" Destination="https://accounts.google.com/acs" ProtocolBinding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" AssertionConsumerServiceURL="https://appx.com/index.php?acs">
+  <saml:Issuer>https://appx.com/sample/metadata.php</saml:Issuer>
+  <samlp:NameIDPolicy Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress" AllowCreate="true"/>
+  <samlp:RequestedAuthnContext Comparison="exact">
+    <saml:AuthnContextClassRef>urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport</saml:AuthnContextClassRef>
+  </samlp:RequestedAuthnContext>
+</samlp:AuthnRequest>
+```
+
+Google validates this request and presents the end user with a login dialog to authenticate and authorize the request. Next, Google sends a SAML response back to the application.
+
+Here's what a sample SAML response looks like:
+
+```
+<saml2p:Response
+Destination="https://accounts.google.com/acs"
+ID="_id352878128357297293380"
+InResponseTo="appx_492507f0030a9797g4c9d9d327f627afel2jcc24"
+IssueInstant="2022-08-30T17:22:45Z">
+  <ds:Signature>
+    <ds:SignedInfo>
+      <ds:CanonicalizationMethod
+      Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" />
+      <ds:SignatureMethod
+      Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256" />
+      <ds:Reference URI="#id35287812421219341967493380">
+        <ds:Transforms>
+          <ds:Transform
+          Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />
+          <ds:Transform
+          Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#",/>
+        </ds:Transforms>
+        <ds:DigestMethod
+        Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" />
+        <ds:DigestValue>
+        tyLUm4r2isgN+L6sRcqDSEa1Zb7WQbQJG6PpLcf3Mrc=
+        </ds:DigestValue>
+      </ds:Reference>
+    </ds:SignedInfo>
+    <ds:SignatureValue>
+    XjqbZty/QkqTnMV8YsS2XJ3qgVLPGNC67o/WmzkzoAyl3SBOCGllV4UdijkTjhgykQP7MVXyCql0
+    eRtIMJ++rbdfg7a9a7f9a9777987fADJL893GlEAO0kZusWYlP3cu/ObmQZUQ7CSgr4
+    DRXsVWRhSmmpxHl6klC6c10eWiIlK7Ccpvvvb2hlwl8anyuO/CcKH0n/Rb9vHWtsAlqKXZ8G4X6M
+    77AfRFC7yDWk+8B784109phQxL78lKld898dE6J2LnkmuaPoKVyTtpP2JYLiYMSBu8laDsnZ
+    I/ewOtBwr16j9oOJpgHPQufQJfvcg+dfjPUJsl==
+    </ds:SignatureValue>
+    <ds:KeyInfo>
+      <ds:X509Data>
+        <ds:X509Certificate>
+        MIICMjCCAZugAwIBAgIBADANBgkqhkiG9w0BAQ0FADA2MQswCQYDVQQGEwJ1czEL
+        MAkGA1UECAwCQ0ExDDAKBgNVBAoMA2lkcDEMMAoGA1UEAwwDaWRwMB4XDTE5MDQy
+        DKJLFjg7876G7g9dhfkaTGGGHDHBBDD797fvfkhHKFGJGJGF9f7y67JGJFGJFTTJy7f76FJK
+        AkNBMQwwCgYDVQQKDANpZHAxDDAKBgNVBAMMA2lkcDCBnzANBgkqhkiG9w0BAQEF
+        AAOBjQAwgYkCgYEA1mKmlbr/SiHOhgdROpYeze96mw0WbO+BdJYDceeuNkaw0zOU
+        AUGLAJDG074D6dfa6kg7a9agKJHAGY9dgakg7IGKAHDGHAG9g00875KGKY7KGKDGH9  
+        fY4GVjiCw7i9YJ+cgcMZh8qL0yoilrLpRLzLrRC6rApqYfEwn+5FPKtTt7cCAwEA
+        AaNQME4wHQYDVR0OBBYEFNvFMRtHJ4D327dbRbxhWceXnwd0MB8GA1UdIwQYMBaA
+        FNvFMRtHJ4D327dbRbxhWceXnwd0MAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEN
+        BQADgYEAX0I5zpGqI7vzzs8CDyokux1JZzfu+O3P5GfOwUaIG9y01FzxgbL2MRKQ
+        oTXMAed97Q6vHA5cffvteu/rPcerpGmFj5h3wv5u+D0ch5s/Mk/Ug6S+x6k3CC+P
+        kHimi6OEslFecDMhghUtPJAmhOGnTRwLr7hVeJXBHXWCTXA7aGE=
+        </ds:X509Certificate>
+      </ds:X509Data>
+    </ds:KeyInfo>
+  </ds:Signature>
+  <saml2p:Status>
+    <saml2p:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success" />
+  </saml2p:Status>
+  <saml2:Assertion
+  ID="_id352878128357297293380"
+  IssueInstant="2022-08-30T17:22:45Z">
+    <ds:Signature>
+      <ds:SignedInfo>
+        <ds:CanonicalizationMethod
+        Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" />
+        <ds:SignatureMethod
+        Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256" />
+        <ds:Reference URI="#id35287812421980111258419174">
+          <ds:Transforms>
+            <ds:Transform
+            Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />
+            <ds:Transform
+            Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+          </ds:Transforms>
+          <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" />
+          <ds:DigestValue>
+          VKPsgTPABNq1SvInCMXd04LZCvRYMnJzEeT5oIs70hw=
+          </ds:DigestValue>
+        </ds:Reference>
+      </ds:SignedInfo>
+      <ds:SignatureValue>
+gsUzQuivXX378HkYNI+plBkp1BvPUNmJD+kh825nHwIBNd019IxffVmOfRAQAkZhT6rqxWhO5/YcJGR5J0qjJVmrRrJ/dfjkLO7F7979khkhHKkgjgf9KDGDFJ+NStyXsi8Q8502Qe0ChHOtEXMrw9HWPwYtJX0rlpNEzLUnEQPvJ4pd3bz9SIl/HADJHFTDKJFY9D8DD6G96Aldg78a876aoALJDGLKjdfYkF998gk6fG96GPg869g6AHDGJAG9G66G5G4Ag5a75galg3k2ggGGfgiCzPgb1+LjvD9dpFH5pcLt9YlwHyYgEBBLOQg==
+      </ds:SignatureValue>
+      <ds:KeyInfo>
+        <ds:X509Data>
+          <ds:X509Certificate>
+MIICMjCCAZugAwIBAgIBADANBgkqhkiG9w0BAQ0FADA2MQswCQYDVQQGEwJ1czELMAkGA1UECAwCQ0ExDDAKBgNVBAoMA2lkcDEMMAoGA1UEAwwDaWRwMB4XDTE5MDQyDKJLFjg7876G7g9dhfkaTGGGHDHBBDD797fvfkhHKFGJGJGF9f7y67JGJFGJFTTJy7f76FJKAkNBMQwwCgYDVQQKDANpZHAxDDAKBgNVBAMMA2lkcDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA1mKmlbr/SiHOhgdROpYeze96mw0WbO+BdJYDceeuNkaw0zOUAUGLAJDG074D6dfa6kg7a9agKJHAGY9dgakg7IGKAHDGHAG9g00875KGKY7KGKDGH9fY4GVjiCw7i9YJ+cgcMZh8qL0yoilrLpRLzLrRC6rApqYfEwn+5FPKtTt7cCAwEAAaNQME4wHQYDVR0OBBYEFNvFMRtHJ4D327dbRbxhWceXnwd0MB8GA1UdIwQYMBaAFNvFMRtHJ4D327dbRbxhWceXnwd0MAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQENBQADgYEAX0I5zpGqI7vzzs8CDyokux1JZzfu+O3P5GfOwUaIG9y01FzxgbL2MRKQoTXMAed97Q6vHA5cffvteu/rPcerpGmFj5h3wv5u+D0ch5s/Mk/Ug6S+x6k3CC+PkHimi6OEslFecDMhghUtPJAmhOGnTRwLr7hVeJXBHXWCTXA7aGE=          
+</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </ds:Signature>
+    <saml2:Subject>
+      <saml2:NameID>
+      appx@xyz.com
+      </saml2:NameID>
+      <saml2:SubjectConfirmation>
+        <saml2:SubjectConfirmationData
+        InResponseTo="appx_492507f0030a9797g4c9d9d327f627afel2jcc24"
+        NotOnOrAfter="2022-08-30T17:25:45Z"
+        Recipient="https://sp.example.com/saml/acs" />
+      </saml2:SubjectConfirmation>
+    </saml2:Subject>
+    <saml2:Conditions
+    NotBefore="2022-08-30T17:21:45Z"
+    NotOnOrAfter="2022-08-30T17:25:45Z"
+    xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion">
+    </saml2:Conditions>
+    <saml2:AuthnStatement
+    AuthnInstant="2019-04-18T18:51:46.729Z"
+    SessionIndex="appx_492507f0030a9797g4c9d9d327f627afel2jcc24">
+    </saml2:AuthnStatement>
+    <saml2:AttributeStatement>
+      <saml2:Attribute Name="contacts">
+        <saml2:AttributeValue>
+        John Doe
+        </saml2:AttributeValue>
+        <saml2:AttributeValue>
+        Ibeabuchi Paul
+        </saml2:AttributeValue>
+      </saml2:Attribute>
+    </saml2:AttributeStatement>
+  </saml2:Assertion>
+</saml2p:Response>
+```
+
+Here is more insight into some of the SAML response components:
+* An **assertion** is a component in XML format that contains the user’s authentication and authorization status. It can also contain certain attributes of the user such as name and email.
+* Since every assertion is usually signed, a **signature” indicates the assertion’s signature.
+* A **condition** usually contains a time boundary or duration during which the SAML response is valid.
+* The identity provider uses **NameID** to identify the user being authenticated. This could be an email address, a persistent identifier such as a UUID or something else.
+
+## OIDC vs. SAML
+
+Although these authentication protocols are similar, they have some key differences:
+
+* **Platform support:** SAML is mostly used for web-based applications. Although it can be used for mobile applications, engineers have to deal with compatibility issues. OIDC uses JWTs, which makes it versatile enough to also work with mobile and cloud platforms.
+* **Response format:** SAML uses the XML data format to transfer messages between applications for authentication via different bindings such as `HTTP Redirect Binding`, `SAML SOAP Binding`, `Reverse SOAP Binding`, `HTTP Artifact Binding`, and `SAML URI Binding`. OIDC is light-weight and uses JWT or opaque tokens.
+* **Complexity:** SAML offers a number of different configuration options, some of which are optional. This offers flexibility, but is difficult to and can cause issues with compatibility between different implementations.
+* **Implementation:** OIDC is more developer-friendly than SAML and easier to implement as it uses JSON tokens (ID tokens) which are more feasible to handle than XML in SAML. Due to its popularity and modern feel, many libraries have been built around it for faster implementation. SAML can be difficult to implement and manage.
+* **Security:** SAML has been around much longer than OIDC and has been developed and improved over a longer period. It also requires more validation than OIDC, which uses minimum verification processes. For these reasons, some corporations and [federal organizations](https://aws.amazon.com/blogs/security/how-us-federal-agencies-can-authenticate-to-aws-with-multi-factor-authentication/) use SAML instead of OIDC.
+* SAML is used in modern applications for SSO, whereas OIDC can be used for SSO and API access control, because of the OAuth access token that is part of the response.
+
+However, they share some similar concepts shown in the table below:
+
+| **OIDC**                                                                          | **SAML**                                                              |
+|-------------------------------------------------------------------------------|-------------------------------------------------------------------|
+| **ID tokens** contain authentication details about the user | **Assertions** contain authentication details about the user |
+| Redirects to **Redirect URI** after authentication                       | Redirects back to a **Relay State** after authentication                         |
+| **nbf** and **exp** for token validity duration    | Uses **NotBefore** and **NotOnOrAfter**               for token validity duration    |
+| The **OpenID Provider (OP)**  authenticates the user                                 | The **Identity Provider (IDP)** authenticates the user |
+| The **Relying Party (RP)** wants the user data                                 | The **Service Provider (SP)** wants the user data |
+
+[![FusionAuth CTA Banner](/img/blogs/saml-oidc-difference/saml-oidc-architecture.png 'Discover how FusionAuth simplifies identity management with support for both OIDC and SAML. Schedule a personalized demo to see it in action.')](/contact)
+
+## Conclusion
+
+Both protocols work well and are used widely. However, they have their trade-offs in terms of what applications to use them with. OIDC is a better choice if you're working with APIs or more modern applications. It's user friendly and easy to implement. However, if your application is already using SAML or if you are integrating with a system that only supports SAML, stick to it.
+
+If you want to play with either protocol to learn more, FusionAuth has you covered. You can use the Community plan for free. The platform provides authentication, authorization, and user management for any kind of application, and it easily integrates with most languages and frameworks. [Download FusionAuth](/download) to explore SAML and OIDC functionality. 
+

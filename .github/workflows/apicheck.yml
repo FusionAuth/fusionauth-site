@@ -1,0 +1,31 @@
+name: check_apis
+
+# Controls when the action will run. 
+on:
+  # Triggers the workflow once a day
+  schedule:
+    - cron: '31 18 * * *'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  check_apis:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - uses: ruby/setup-ruby@922ebc4c5262cd14e07bb0e1db020984b6c064fe # v1
+        with:
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+      - name: Check APIs for completeness against client libs
+        run: |
+          # check out last released version of the client libs
+          tagver=`curl --silent https://account.fusionauth.io/api/version -o - | jq 'last(.versions[-1])'|sed 's/"//g'`
+          git clone --depth 1 --branch $tagver https://github.com/fusionauth/fusionauth-client-builder
+          src/check-apis-against-client-json.rb -f $PWD/src/.checkapis.yaml -c $PWD/fusionauth-client-builder -v
+        shell: bash

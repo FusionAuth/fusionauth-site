@@ -1,0 +1,80 @@
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+
+As you upgrade your FusionAuth version, you'll also want to make sure you test and possibly upgrade your theme. You can find details on required changes for recent versions in [Upgrade Notes](/docs/customize/look-and-feel/upgrade).
+
+### CSS
+
+If you can meet your look and feel customization needs by only modifying the CSS stylesheet, rather than the theme templates, upgrades to later versions of FusionAuth will be easier.
+
+When you limit yourself to making CSS changes, you'll still need to review the release notes and verify that any newly introduced pages look good, but you won't have to propagate customized template changes.
+
+However, if you need to make template changes, no worries, FusionAuth supports that use case as well.
+
+### Templates
+
+When new functionality is introduced to [the hosted login pages](/docs/get-started/core-concepts/integration-points#hosted-login-pages), new theme templates are occasionally added. They are added to the default theme by the upgrade process, but if you've customized your theme to fit your brand, you'll need to modify the theme to have the new template.
+
+New templates and macros are documented in the release notes. If there are additions to a theme, you'll want to take a closer look at the themes after the upgrade.
+
+As part of your upgrade testing, open the administrative user interface and navigate to <strong>Customizations > Themes</strong>.
+
+If any themes are missing templates, they will show as "Upgrade Required". Port the new theme files over to your custom theme, modify them as needed, and save the theme.
+
+In some cases, existing templates are modified. If you have customized your theme, you'll need to compare the new template to your existing version's base theme and port over any changes to your customized theme. The easiest way to do this is to use a diff tool to compare the two sets of files. Here is a suggested process to follow before you upgrade:
+
+1. Download the default theme from your existing version of FusionAuth.
+2. Download the default theme from the new version of FusionAuth.
+3. Use a diff tool to compare the two sets of files. 
+4. Apply any differences to your customized theme.
+
+You can use the [Theme Helper](https://github.com/FusionAuth/fusionauth-theme-helper) to help  with this process.
+
+#### Using the Theme Helper to Upgrade Themes
+
+Clone the [Theme Helper repo](https://github.com/FusionAuth/fusionauth-theme-helper) and follow the install instructions in the `README.md` file. 
+
+Download the base themes from your existing version of FusionAuth and the new version of FusionAuth to compare.
+
+To get the existing version's theme files, create a `.env` file from the `.env.sample` file. Use the FusionAuth administrative user interface to create an [API key](/docs/apis/authentication#managing-api-keys) with read permissions for Themes. Add the API key to the `.env` file. The [default theme](/docs/get-started/core-concepts/limitations#default-configuration) uses the ID `75a068fd-e94b-451a-9aeb-3ddb9a3b5987` across all instances. Use this value to update the `THEME_ID` key in the `.env` file.
+
+In the `.env` file, set the `FUSIONAUTH_URL` to the URL of your existing FusionAuth instance. Finally, update the `TMP_DIR` to a directory on your local machine where you want the existing theme files to be downloaded, such as `current-theme`.
+
+Now you can run the `download.sh` script to download the existing theme files to the `TMP_DIR` directory.
+
+Once the download is complete, you'll need to get the base theme files from the new version of FusionAuth. The easiest way to do this is to install the new version of FusionAuth on your local machine or a VM using Docker. Instructions for installing FusionAuth using Docker can be found in the [FusionAuth Docker Installation Guide](/docs/get-started/download-and-install/docker#docker-compose).
+
+Once you've got the new version of FusionAuth running, you can update the Theme Helper `.env` file in the Theme Helper repo to point to the new version of FusionAuth. If running locally, update the `FUSIONAUTH_URL` to `http://localhost:9011`. 
+
+Log in to the new version of FusionAuth to create an API key and use the same [default theme](/docs/get-started/core-concepts/limitations#default-configuration) ID `75a068fd-e94b-451a-9aeb-3ddb9a3b5987` for the `THEME_ID` variable as you did for the existing version. Finally, update the `TMP_DIR` to a directory on your local machine where you want the new theme files to be downloaded, such as `new-theme`. Make sure it is a different directory than the one you used for the existing theme files.
+
+Now you can run the `download.sh` script again to download the new theme files to the `TMP_DIR` directory.
+
+Once you have both sets of theme files downloaded, you can run the `diff-themes.sh` script to compare the two sets of files. The script takes two arguments: the path to the existing theme files and the path to the new theme files. For example:
+
+```sh
+./diff-themes.sh current-theme new-theme
+```
+The script will output a list of files with differences between the two themes along with the detailed diff for each file. You can use this output to update your customized theme files or use the file list as a guide along with an external diff tool.
+
+#### Using The Theme History Repository
+
+There's a FusionAuth maintained repository which tracks the history of hosted theme pages across releases. Each release is tagged with the version. This repository has theme files back to version 1.23.0.
+
+You can view [the repository](https://github.com/FusionAuth/fusionauth-theme-history) and use GitHub tooling to compare different the themes from different versions. You can also clone the repository and use your preferred git diffing tools.
+
+### Messages
+
+When new functionality is introduced to [the hosted login pages](/docs/get-started/core-concepts/integration-points#hosted-login-pages), new theme message keys are sometimes required. They are added to the default theme `messages` file by the upgrade process. 
+
+However, if you have customized your theme, the new keys are not added to that modified theme. The first time you try to modify your theme, you'll receive an error message similar to the text below:
+
+```
+Missing required keys. See text area below for default English translations. To continue, please copy the values from below into the Messages text area.
+```
+
+FusionAuth warns you about missing required keys in order to avoid an inadvertent bad user experience. The default display for keys with no valid values in theme <InlineField>Messages</InlineField> is the key text, such as `[ExternalAuthenticationException]LinkedInToken`, which can be confusing for end users. 
+
+During an upgrade, you can find these keys by testing the upgrade on a development instance or comparing releases in the [fusionauth-localization repo](https://github.com/FusionAuth/fusionauth-localization/). You can safely add these new key values to your theme prior to an upgrade. Any unused messages in a theme's `messages` file are silently ignored (unless malformed). 
+
+The extra lines won't do any harm and will ensure an excellent end-user experience if a user stumbles on new functionality right after an upgrade.

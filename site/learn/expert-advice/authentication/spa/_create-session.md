@@ -1,1 +1,0 @@
-1. The application backend receives the 200 from FusionAuth and creates a server-side session and stores the User object (or JWT) in it

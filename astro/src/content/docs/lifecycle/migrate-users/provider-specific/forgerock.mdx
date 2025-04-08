@@ -1,0 +1,291 @@
+---
+title: Migration From Forgerock
+description: Learn how to migrate your users to FusionAuth from Forgerock.
+section: lifecycle
+subcategory: migrate users
+tertcategory: provider specific
+---
+import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_additional-support.mdx';
+import Aside from 'src/components/Aside.astro';
+import CreateApiKey from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-api-key.mdx';
+import CreateTestApplication from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-application.mdx';
+import CreateTestTenant from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-tenant.mdx';
+import FinalDestination from 'src/content/docs/lifecycle/migrate-users/provider-specific/_final-destination.mdx';
+import GetScript from 'src/content/docs/lifecycle/migrate-users/provider-specific/_get-script.mdx';
+import Identifiers from 'src/content/docs/lifecycle/migrate-users/provider-specific/_identifiers.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/provider-specific/_mapping-user-attributes.mdx';
+import OtherEntitiesIntro from 'src/content/docs/lifecycle/migrate-users/provider-specific/_other-entities-intro.mdx';
+import PasswordHashNote from 'src/content/docs/lifecycle/migrate-users/provider-specific/_password-hash-note.mdx';
+import {RemoteCode} from '@fusionauth/astro-components';
+import SetUpFusionauth from 'src/content/docs/lifecycle/migrate-users/provider-specific/_set-up-fusionauth.mdx';
+import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-migration.mdx';
+import SocialLoginNote from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-note.mdx';
+import VerifyImport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_verify-import.mdx';
+import WhatNext from 'src/content/docs/lifecycle/migrate-users/provider-specific/_what-next.mdx';
+
+export const migration_source_name = 'Forgerock';
+export const migration_source_dir = 'forgerock';
+
+## Overview
+
+This document will help you migrate off of {migration_source_name}. 
+
+This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin. For more general migration information, please view the [FusionAuth migration guide](/docs/lifecycle/migrate-users/general-migration).
+
+There are a number of different ways applications can be integrated with {migration_source_name}, and it would be difficult to cover them all. This guide mentions the typical parts of a bulk migration and in particular focuses on migrating user data from a {migration_source_name} user database into FusionAuth. 
+
+<Aside type="note">
+This guide was tested against {migration_source_name} 7.4. You can find the {migration_source_name} Cloud Development Kit [here](https://backstage.forgerock.com/docs/forgeops/7.4/cdk/intro.html).  
+</Aside>
+
+## Planning Considerations
+
+### Obtaining User Data
+
+You will need API read access to your {migration_source_name} instance. As part of the planning process, gather the credentials that will allow you to run the API queries against this instance.
+
+<Aside type="note">
+There are many ways to get data from the {migration_source_name} instances. If you cannot get API access and use something like the ./ldapsearch on the server, you will need to convert the output to similar JSON as output by the API calls.
+</Aside>
+
+### Mapping User Attributes
+
+<MappingUserAttributes />
+
+### Social Logins
+
+<SocialLoginNote migration_source_name={migration_source_name} />
+
+<SocialLoginMigration />
+
+### Other Entities
+
+<OtherEntitiesIntro migration_source_name={migration_source_name} other_migrated_entities="identity providers, clients, or keys" />
+
+* In {migration_source_name}, Identity Providers and User Federation allow user data to remain in external systems of record. FusionAuth has similar concepts of [Identity Providers](/docs/lifecycle/authenticate-users/identity-providers/) and [Connectors](/docs/lifecycle/migrate-users/connectors/).
+* Mappers are ways for you to customize authentication or authorization workflows. FusionAuth has a similar concept called [Lambdas](/docs/extend/code/lambdas/).
+* With {migration_source_name}, Clients are what your users can log in to. FusionAuth refers to these as [Applications](/docs/get-started/core-concepts/applications). In both cases, you can use either OAuth/OIDC or SAML to do so.
+* Realms are a high level construct which groups other entities such as users and clients together. FusionAuth calls these [Tenants](/docs/get-started/core-concepts/tenants). FusionAuth supports a multi-tenant configuration by default.
+* For {migration_source_name}, [Roles](https://www.keycloak.org/docs/latest/server_admin/#core-concepts-and-terms) provide information about what your users can do in your custom or off the shelf applications. Roles can be associated with other roles. FusionAuth has [Roles](/docs/get-started/core-concepts/roles) and they are defined on an Application by Application basis and cannot be composed.
+* Refresh tokens allow JWTs to be refreshed without a user logging in. These can be migrated using the [Import Refresh Tokens API](/docs/apis/users#import-refresh-tokens). {migration_source_name} calls these "Offline Sessions"
+
+#### Identifiers 
+
+<Identifiers />
+
+Once you've planned your migration, the next step is to export your user data from {migration_source_name}.
+
+## Exporting Users
+
+To import your users, you'll need their attributes, including their password hashes and other information.
+
+<PasswordHashNote migration_source_name={migration_source_name} />
+
+Here are scripts that will query the needed fields.
+
+### Exporting Using the API
+
+There are many ways to export data from {migration_source_name}. For this example, you will be using the Rest API.
+
+<Aside type="note">
+By default, {migration_source_name} has disabled the exporting of the password hash through the Rest API. To enable, select Identity Management Native Console -> Configure -> Managed Object -> User. Find the 'password' field. Select Edit. Then, select the Privacy & Encryption tab. Next, set Private to false. You may wish to re-enable after the export.
+
+If you do not want to set the `Private` switch to false in your environment, you may use the ./ldapsearch method mentioned above or another viable alternative method. The results of that will then have to be merged with the other user information into a `.json` file using the method of your choosing.
+</Aside>
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-import-scripts/main/forgerock/forgerock-export.rb"
+            lang="ruby"
+            title="Forgerock Export Script" />
+
+There are several options that can be set when running the script. To see a list of options available, use the -h switch.
+
+The output of the script will be a `.json` file:
+
+```shell title="Forgerock Export Script Help"
+ruby ./forgerock-export.rb -h
+```
+
+```shell title="Forgerock Export Script Help Results"
+Usage: forgerock-export.rb [options]
+    -o, --output-file OUTPUT_FILE    The name and location of the output file to write.
+    -b, --base-url BASE_URL          The base url for the Forgerock instance.
+    -r, --realm REALM                The Forgerock realm the client belongs to.
+    -u, --user-name USER_NAME        The user name of the api user.
+    -p USER_PASSWORD,                The password for the api user.
+        --user-password
+    -c, --client-id CLIENT_ID        The client id of the application to use for the authentication.
+    -s, --client-secret              The client secret for the application to use for authentication.
+    -h, --help                       Prints this help.
+```
+
+```shell title="Generate JSON Export with Forgerock Rest API"
+ruby forgerock-export.rb -o "forgerock_user_export.json" -b "https://cdk.example.com/" -r "realms/root/realms/alpha/" -u "postmanAdminUser" -p "Password1234\!" -c "postmanAdminClient" -s "Password1234\!"
+```
+
+### Export Result
+
+The result of running the script will be a JSON file that looks like:
+
+```json title="Sample User Export"
+{
+  "result": [
+    {
+      "_id": "b8fb2d96-2cfe-492c-924c-fd365bdb8f69",
+      "_rev": "afba2c3c-2f7e-4416-8f3f-2de234a3021b-145868",
+      "favoriteColor": "red",
+      "telephoneNumber": null,
+      "mail": "testuser1@example.com",
+      "password": "{PBKDF2-HMAC-SHA256}10:NnfLb4gwMj31YdtATz8824xGQrJylmwCNm2LQqy0wixtuWvU+vMKMpZ7mye04Jfp",
+      "sn": "User1",
+      "givenName": "Test1",
+      "userName": "testuser1"
+    },
+    {
+      "_id": "be0d0fb2-1634-4e14-9fe4-5ac8775cf6b0",
+      "_rev": "afba2c3c-2f7e-4416-8f3f-2de234a3021b-145875",
+      "favoriteColor": "blue",
+      "telephoneNumber": null,
+      "mail": "testuser2@example.com",
+      "password": "{PBKDF2-HMAC-SHA256}10:8c7nLGEIXeZf45YQ92A2MD+v8olvKKl6iWXGQZoluJ/awqZnHwFvslIOx7xOZ9AV",
+      "sn": "User2",
+      "givenName": "Test2",
+      "userName": "testuser2"
+    }
+  ],
+  "resultCount": 2,
+  "pagedResultsCookie": null,
+  "totalPagedResultsPolicy": "NONE",
+  "totalPagedResults": -1,
+  "remainingPagedResults": -1
+}
+```
+
+Now, you can begin the user import process.
+
+## Importing Users
+
+Next up, import the user data. Here are the steps we need to take:
+
+1. Set Up FusionAuth
+2. Get the Script
+3. Install Needed Gems
+4. Use the Script
+5. Verify the Import
+6. The Final Destination of Imported Users
+
+### Set Up FusionAuth
+
+<SetUpFusionauth />
+
+#### Optionally Install a Hashing Plugin
+
+FusionAuth will work with the {migration_source_name} default PBKDF2-HMAC-SHA256 encryption.
+
+If you have configured {migration_source_name} to use a different hashing algorithm, you may need to [write and install a plugin](/docs/extend/code/password-hashes/writing-a-plugin) using that algorithm. You'll also need to update the `map_hashing_algorithm` method in the `import.rb` script.
+
+#### Create a Test Tenant
+
+<CreateTestTenant migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} />
+
+
+#### Create a Test Application
+
+<CreateTestApplication migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} />
+
+#### Add an API Key
+
+<CreateApiKey migration_source_dir={migration_source_dir} />
+
+### Get the Script
+
+<GetScript migration_source_dir={migration_source_dir} />
+
+### Install Needed Gems
+
+The following gems must be available to the import script:
+
+* `date`
+* `json`
+* `optparse`
+* `fusionauth_client`
+* `base64`
+
+
+Most likely all of these will be on your system already, except the `fusionauth_client` gem.
+
+If you have `bundler` installed, run `bundle install` in the {migration_source_dir} directory. Otherwise install the needed gems in some other way.
+
+### Use the Script
+
+```sh title="Running the import script with the help command line switch"
+ruby ./import.rb -h
+```
+
+```shell title="Import Script Help Results"
+Usage: import.rb [options]
+    -r APPLICATION_IDS,              A comma separated list of existing applications Ids. All users will be registered for these applications.
+        --register-users
+    -u, --users-file USERS_FILE      The exported json user data file from Forgerock. Defaults to samplefiles/forgerock-user-export.json.
+    -f FUSIONAUTH_URL,               The location of the FusionAuth instance. Defaults to http://localhost:9011.
+        --fusionauth-url
+    -k, --fusionauth-api-key API_KEY The FusionAuth API key.
+    -t TENANT_ID,                    The FusionAuth tenant id. Required if more than one tenant exists.
+        --fusionauth-tenant-id
+    -m, --map-forgerock-user-id      Whether to map the forgerock user id for normal imported users to the FusionAuth user id.
+    -h, --help                       Prints this help.
+```
+
+For this script to work correctly, set the following switches, unless the defaults work for you:
+
+* `-u` should point to the location of the user export file you created.
+* `-f` must point to your FusionAuth instance. If you are testing locally, it will probably be `http://localhost:9011`.
+* `-k` needs to be set to the value of the API key created above.
+* `-t` should be set to the Id of the testing tenant created above.
+
+You may or may not want to use the `-m` switch, which takes the {migration_source_name} Id and uses that for the FusionAuth user Id. If you have external systems reliant on the identifier, set this. Doing so ensures imported users have the same Id as they did in {migration_source_name}. Otherwise, you can omit this switch.
+
+When you run the script, you'll see output like:
+
+```shell title="Import script output"
+$ ruby ./import.rb -u ./sample-files/forgerock-user-export.json -k 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod -t 25c9d123-8a79-4edd-9f76-8dd9c806b0f3
+FusionAuth Importer : Forgerock
+ > Working Directory: forgerock
+ > User file: ./sample-files/forgerock-user-export.json
+ > Call FusionAuth to import users
+ > Import success
+Duplicate users 0
+Import complete. 2 users imported.
+```
+
+#### Enhancing the Script
+
+You may also want to migrate additional data. Currently, the following attributes are migrated:
+
+* `user_id`
+* `email`
+* `username`
+* `firstName`
+* `lastName`
+* the password hash and supporting attributes, if available
+
+The migrated user will have the original {migration_source_name} user Id stored on the `user.data` object. If you have additional user attributes to migrate, review and modify the `map_user` method. 
+
+You may also want to assign Roles, or associate users with Groups, by creating the appropriate JSON data structures in the import call. These are documented in the [Import User API docs](/docs/apis/users#import-users). This will require modifying the `import.rb` code.
+
+### Verify the Import
+
+<VerifyImport migration_source_dir={migration_source_dir} />
+
+### The Final Destination of Imported Users
+
+<FinalDestination migration_source_dir={migration_source_dir} />
+
+## What to Do Next
+
+<WhatNext />
+
+## Additional Support
+
+<AdditionalSupport />
+

@@ -1,0 +1,422 @@
+---
+title: Testing Lambdas
+description: A guide on how to create and test lambdas with FusionAuth.
+section: extend
+subcategory: code
+tertcategory: lambdas
+navOrder: 20
+---
+import { RemoteCode } from '@fusionauth/astro-components';
+import Aside from 'src/components/Aside.astro';
+import IconButton from 'src/components/IconButton.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import JSON from 'src/components/JSON.astro';
+
+## Overview
+
+This guide shows you how to create a simple lambda manually, update it programmatically, and test it with unit and integration tests. You can familiarize yourself with lambdas by reading the [FusionAuth lambda documentation](/docs/extend/code/lambdas/).
+
+## Prerequisites
+
+To follow this guide, you need
+
+- [Node.js version 18](https://nodejs.org/en/download) or later
+- [Docker](https://www.docker.com/get-started/)
+
+### Lambda Limitations
+
+<Aside type="note">
+  Remember the following limitations of lambdas when planning what they'll do:
+  <ul>
+    <li>Lambdas do not have full access to JavaScript libraries, nor can they load them currently.</li>
+    <li>The console methods take only one argument.</li>
+    <li>HTTP requests are not available in the Community or Starter FusionAuth plans.</li>
+    <li>If you set the Identity Provider [linking strategy](/docs/lifecycle/authenticate-users/identity-providers/#linking-strategies) to "Link Anonymously", no lambdas will be used for external authentication.</li>
+  </ul>
+</Aside>
+
+## Set Up The FusionAuth Sample Project
+
+Download or use Git to clone the [testing-lambdas repository](https://github.com/FusionAuth/fusionauth-example-testing-lambdas). Open a terminal in the directory you just created and start FusionAuth with Docker.
+
+```bash
+docker compose up -d
+```
+
+This command will run FusionAuth and set up a sample application with an API Key and a User, configured in the `kickstart.json` file in the `kickstart` subdirectory.
+
+FusionAuth will be initially configured with these settings.
+
+* Your example username is `richard@example.com` and the password is `password`.
+* Your admin username is `admin@example.com` and the password is `password`.
+* The base URL of FusionAuth [http://localhost:9011/](http://localhost:9011/).
+
+<Aside type="caution">
+  The `.env` and `kickstart.json` files contain passwords. In a real application, always add these files to your `.gitignore` file and never commit secrets to version control.
+</Aside>
+
+## Manually Create A Simple Lambda
+
+Let's start by making a simple lambda to test that it works on your machine.
+
+- Log in to the [FusionAuth admin UI](http://localhost:9011/admin).
+- Navigate to "Customizations -> Lambdas".
+- Click the <IconButton icon="plus" color="green" /> button at the top right to add a new lambda.
+- Enter the Id `f3b3b547-7754-452d-8729-21b50d111505`.
+- Enter the Name `[ATest]` (to put it at the top of the list of lambdas alphabetically).
+- Select the Type `JWT Populate`.
+- Leave the Engine as `GraalJS`.
+- Enable <InlineUIElement>Debug Enabled</InlineUIElement> so that you can see messages in the event log.
+- Add the line `jwt.message = 'Hello World!';` to the body of the `populate` function.
+
+The body should now be similar to below.
+
+```js
+function populate(jwt, user, registration) {
+  jwt.message = 'Hello World!';
+  console.info('Hello World!');
+}
+```
+
+<img src="/img/docs/extend/code/lambdas/populate-lambda.png" alt="Creating a JWT populate lambda" role="bottom-cropped" width="1200" />
+
+Save the lambda.
+
+Now activate the lambda for the example app.
+
+- Navigate to "Applications" and click the <IconButton icon="edit" color="blue" /> button on the "Example app".
+- Click on the "JWT" tab.
+- Toggle <InlineUIElement>Enabled</InlineUIElement> to on.
+- Under "Lambda Settings", select the lambda you created, called "[ATest]", for the `Access Token populate lambda`.
+- Click the <IconButton icon="save" color="blue" /> button to save the changes.
+
+<img src="/img/docs/extend/code/lambdas/edit-application.png" alt="Enabling the lambda in an application" className="img-fluid" width="1200" />
+
+You can now test that the new lambda writes to the event log and returns extra data in the JWT. The repository you downloaded contains two directories.
+- `complete-application` — This is the result of the work you will complete in this guide if you need to refer to the finished files. Do not work in this directory.
+- `app` — This contains a basic application to which you will add tests in this guide. Work in this directory.
+
+Open the `routes/index.js` file in the `app` directory.
+
+Locate the redirect route handler (which is the function that starts with `router.get('/oauth-redirect'`) and add a line to write the JWT to the console at login.
+
+```js
+router.get('/oauth-redirect', function (req, res, next) {
+  console.dir(res); // You should insert this line
+```
+
+Save the file and start the test app with the following command.
+
+```js
+npm install
+npm start
+```
+
+Log in to the app at `http://localhost:3000` with user `richard@example.com` and password `password`.
+
+In the FusionAuth admin UI, navigate to "System -> Event Log" and you will see a log entry of the invocation of your "Hello World" lambda. The entire HTTP response is logged in the test app terminal. The JWT is a long alphanumeric line at the end of the response. It should look something like below.
+
+```
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJhdXRob3JpemF0aW9uX2NvZGUiXSwia2lkIjoiMWU1NmM0OWU4In0.eyJhdWQiOiJkZGQwNTAyMS0wNjgyLTQ4NWUtYThlMi1kMDMyOTY0YjAyMTEiLCJleHAiOjE2ODkyNjQwNzEsImlhdCI6MTY4OTI2MDQ3MSwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIwYTkzOTYwNi0zNmVjLTQ1M2ItOTM0Mi04ZWZmOTE3ZjJhZWYiLCJqdGkiOiIyYmZlMjUwNy1hZWM0LTRjOTEtYWY5Yy1hOWVhYjQzNmQ4MGYiLCJhdXRoZW50aWNhdGlvblR5cGUiOiJQQVNTV09SRCIsImVtYWlsIjoiZXJsaWNoQGV4YW1wbGUuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImFwcGxpY2F0aW9uSWQiOiJkZGQwNTAyMS0wNjgyLTQ4NWUtYThlMi1kMDMyOTY0YjAyMTEiLCJzY29wZSI6Im9mZmxpbmVfYWNjZXNzIiwicm9sZXMiOltdLCJzaWQiOiIzNDk5MTAxMS1kNzUxLTRlOTctYWZiNi0zNzQ2N2RlYTc5YWIiLCJhdXRoX3RpbWUiOjE2ODkyNjA0NzEsInRpZCI6ImNiY2VkOWVhLWQ3NzgtZDBlYi03ZjU4LWE0MGYxY2VlNWFhYiIsIm1lc3NhZ2UiOiJIZWxsbyBXb3JsZCEifQ.3DOvP8LRAp6pIh0guUjJjYbNwZKzruVWre8Xq8x_S8k
+```
+
+Copy this token from your terminal and paste it into the <InlineField>Token</InlineField> text box on the [FusionAuth Online JWT Decoder](/dev-tools/jwt-decoder). You'll see `"message": "Hello World!"` in the <InlineUIElement>Payload</InlineUIElement> box, showing you that your new lambda ran correctly.
+
+## Programmatically Update A Lambda
+
+Let's take a look at how to update your lambda programmatically using the FusionAuth API. Refer to the [APIs](/docs/apis/) documentation for more.
+
+### Understand The Client Libraries
+
+Although you can use the [lambda API](/docs/extend/code/lambdas/) directly by making HTTP requests, it's much easier to use one of the provided [client libraries](/docs/sdks/).
+
+There are two ways to do this using JavaScript:
+
+- The [TypeScript client library](https://github.com/FusionAuth/fusionauth-typescript-client), documented [here](/docs/sdks/typescript), should be used for any browser or Node.js code you write in JavaScript or TypeScript. It provides a straightforward way of calling the underlying HTTP API.
+- The [Node CLI](https://github.com/FusionAuth/fusionauth-node-cli) is a set of commands you can run in the terminal to perform a few advanced functions. The focus of this CLI is on uploading and downloading of commonly modified assets such as lambdas or themes. The Node CLI is a wrapper on the TypeScript client library and operates at a higher level of abstraction. It is helpful to manage lambdas, but you can always drop down to the TypeScript client library if needed.
+
+### Create An API Key
+
+The API, CLI, and client library all need an API Key to access FusionAuth.
+
+The kickstart configuration file used by FusionAuth already created a sample API Key with superuser privileges. For more information on managing API keys, please refer to the following [guide](/docs/apis/authentication#managing-api-keys).
+
+<Aside type="tip">
+  For production, you would want to enable only the following endpoints necessary to perform actions on lambdas, such as updating and deleting, and to mimic user actions to test the lambdas, such as logging in `/api/lambda`, `/api/lambda/search`, `/api/login`, `/api/user` and `/api/user/registration`.
+</Aside>
+
+### Use The Lambda CLI
+
+First, install the Node CLI library. Open a terminal in your app folder and use the following commands.
+
+```bash
+npm install --save-dev @fusionauth/cli
+npx fusionauth --help
+```
+
+You should see the FusionAuth logo and a usage help message.
+
+The lambda commands that the CLI provides match operations in the underlying TypeScript client library: `update`, `delete`, and `retrieve`.
+
+Now you can retrieve the "[ATest]" lambda you created earlier. This is a useful way to check that a lambda you've created has been successfully uploaded for your app.
+
+```bash
+npx fusionauth lambda:retrieve f3b3b547-7754-452d-8729-21b50d111505 --key lambda_testing_key
+```
+
+The lambda will be saved to a file, where the file name is the UUID of your lambda. So it should look like this: `./lambdas/f3b3b547-7754-452d-8729-21b50d111505.json`.
+
+Let's update the lambda to say "Goodbye World!" instead of "Hello World!" and re-upload it. Open the file in a text editor, and change the value of the <InlineField>body</InlineField> property to the following.
+
+```json
+    "body": "function populate(jwt, user, registration) {\n  jwt.message = 'Goodbye World!';\n  console.info('Goodbye World!');\n}",
+```
+
+Save the file and upload the lambda with the following command.
+
+```bash
+npx fusionauth lambda:update f3b3b547-7754-452d-8729-21b50d111505 --key lambda_testing_key
+```
+
+You can check that the lambda in FusionAuth now says "Goodbye World!" by viewing the ["[ATest]" lambda details](http://localhost:9011/admin/lambda).
+
+<img src="/img/docs/extend/code/lambdas/updated-lambda.png" alt="Update lambda" role="bottom-cropped" width="1200" />
+
+### CLI Limitations
+
+The Node CLI allows you only to create, retrieve, and update lambdas. You can delete a lambda that is not in use by an application with `lambda:delete`. The way to link or unlink a lambda with an application is through the admin UI, API, or a client library.
+
+For example, to link a lambda with an application in the TypeScript client library, you could use code similar to the following.
+
+```ts
+const request: ApplicationRequest = {
+  application: {
+    lambdaConfiguration: {
+      accessTokenPopulateId: "f3b3b547-7754-452d-8729-21b50d111505"
+    }
+  }
+};
+await new FusionAuthClient(apiKey, host).patchApplication(applicationId, request);
+```
+
+## Testing Overview
+
+Lambdas run arbitrary code at certain points in an authentication flow. For example, you can use lambdas to:
+
+- Get user information from an external provider (like a first name or photo from Facebook) or the User object in FusionAuth to put in a JWT.
+- Call an external service at login, for example, to send any suspicious login attempt to a private Slack channel monitored by administrators.
+
+In both these cases, there are two types of tests you can perform:
+
+- **Integration test**: Check if the lambda has uploaded and is running correctly by logging in and seeing if the expected output happens.
+- **Unit test:** You don't upload the lambda, but instead create a mock FusionAuth event that calls the lambda in your code and checks that the lambda does what it is supposed to.
+
+Each of these types of lambda tests is outlined below.
+
+### Test Library
+
+There are many JavaScript test libraries available, and everyone has their preference. This guide uses a simple library for demonstration so that you can generalize the tests to your favorite library. The tests below use [`tape`](https://github.com/ljharb/tape), which implements the [Test Anything Protocol (TAP)](https://en.wikipedia.org/wiki/Test_Anything_Protocol), a language-agnostic specification for running tests that's been in use since 1987. The tests also use [fetch-mock](https://www.wheresrhys.co.uk/fetch-mock/) to mock `fetch` calls from your lambda, [`faucet`](https://www.npmjs.com/package/faucet) to give neat output from `tape`, [`jsonwebtoken`](https://www.npmjs.com/package/jsonwebtoken) to decode the JWT, and [`uuid`](https://www.npmjs.com/package/uuid) to make a random user Id.
+
+Install the following packages in your test app terminal.
+
+```bash
+npm install --save-dev tape faucet fetch-mock jsonwebtoken uuid
+```
+
+<Aside type="note">
+  The `fetch()` method is available natively from Node.js LTS version 18. In earlier versions, `fetch` was provided by libraries, so many popular mocking libraries for `fetch` (such as [Nock](https://github.com/nock/nock)) won't work with modern Node.js in 2023.
+</Aside>
+
+### Integration Test: Verify JWT Population
+
+The first of the two tests you're going to write is an integration test. It will verify that your updated lambda is populating the JWT with a "Goodbye World" message when you log in programmatically.
+
+#### Create A User
+
+Before you can write any tests, you need a test user profile to log in with. The test app `package.json` includes a reference to the `@fusionauth/typescript-client` discussed earlier, so you can use that to create a test user programmatically.
+
+Make a new file called `userCreator.js` in the app folder and paste the following code into it.
+
+<RemoteCode lang="javascript" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/userCreator.js" />
+
+The code above has two functions:
+
+- The `createRandomUser` function, which creates a User request object with `const request` and then sends it to `fusion.register()`. Details on this can be found in the [TypeScript client library interface](https://github.com/FusionAuth/fusionauth-typescript-client/blob/main/src/FusionAuthClient.ts).
+- The `deleteUser` function, which you can use in the tests to delete the user just created.
+
+Run the code to test user creation with the following command.
+
+```bash
+node userCreator.js
+```
+
+In FusionAuth, click on "Users" to check that a new user called `lambdatestuser` has been created. You can delete the `createRandomUser(uuidv4());` line in `userCreator.js` as each test will use a new temporary user. This will allow you to add multiple lambda tests while avoiding potential conflicts between test users and permissions.
+
+#### Write The Test
+
+Now you will test that the lambda returns "Goodbye World", which will confirm that the CLI `update` command worked.
+
+Create a file called `userLogin.js` and add the following code.
+
+<RemoteCode lang="javascript" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/userLogin.js" />
+
+This helper file allows your tests to log in to FusionAuth programmatically. The `login` function calls the FusionAuth TypeScript library. It then decodes the JWT response and returns its `message` property.
+
+Now create a test file that will use it, `test_1.js`, and add the following code.
+
+<RemoteCode lang="javascript" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/test_1.js" />
+
+This file starts with a declaration of constant variables that match the `kickstart.json` and `.env` files. The `login` function is called by the `tape` function `test`. This test specifies the name of the test, says that it expects exactly one assertion to occur with `plan`, checks that calling `login` returns the property you expect from the lambda updated earlier, and exits. Even if the test fails, the `finally` clause will delete the temporary user created.
+
+Run it with the following command.
+
+```bash
+node test_1.js
+```
+
+The output should be as follows.
+
+```bash
+TAP version 13
+# test login returns JWT with "Goodbye World"
+User c82aced2-b25b-4390-a4a2-72562b9bc13b created successfully
+ok 1 should be truthy
+User c82aced2-b25b-4390-a4a2-72562b9bc13b deleted successfully
+
+1..1
+# tests 1
+# pass  1
+
+# ok
+```
+
+When your code has several tests, and you want a colorful, concise summary, you can use the following instead.
+
+```bash
+node test_1.js | npx faucet
+```
+
+The output should be as follows.
+
+```bash
+✓ test login returns JWT with "Goodbye World"
+# tests 1
+# pass  1
+✓ ok
+```
+
+### Unit Test: Call An External Service
+
+The next test you'll write is a unit test that verifies your lambda locally using a fake mock service and not in FusionAuth. The benefit of this test is that you can test your logic works without needing an external service to be reliable at the time of testing. The danger is that your test might pass locally, but the lambda might fail on FusionAuth due to it running on a different JavaScript environment with different restrictions and configuration.
+
+Let's take an example where you check if users have email addresses from a country sanctioned by the United States, such as North Korea or Cuba. You call the external site `https://issanctioned.example.com` with an email address, and you're told whether or not the domain is banned.
+
+Create a file called `test_2.js` and add the following code.
+
+<RemoteCode lang="javascript" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/test_2.js" />
+
+This test function uses `fetchMock` to mock the external service that would be called from the lambda function in FusionAuth. The first test checks if North Korea (`.kp`) is banned and the second if Canada (`.ca`) is allowed. The mocks for the JWT, user, and registration objects are all simple `{}` objects you can pass as parameters to the `populate()` lambda. This is the lambda function that would run on FusionAuth, similar to the "Hello World" function described earlier.
+
+Finally, run the tests.
+
+```bash
+node test_2.js  | npx faucet
+```
+
+The output should be as follows
+
+```bash
+✓ test lambda rejects sanctioned emails and accepts others
+# tests 2
+# pass  2
+✓ ok
+```
+
+If all your unit tests for a lambda pass, you can safely upload it to FusionAuth manually or with the CLI for further testing.
+
+If your HTTP Connect fetch request fails when deployed to FusionAuth, please review the [documentation](/docs/extend/code/lambdas/lambda-remote-api-calls). In particular, ensure you are using a license and have purchased the correct plan (Essentials or Enterprise).
+
+### Unit Test: Populate JWT From FusionAuth
+
+In this final unit test, let's look at how to check user information available in FusionAuth to determine custom fields to return to your app. You are also going to download the lambda code to test from FusionAuth programmatically, instead of hardcoding the `populate` function into your test.
+
+There are two objects related to login to consider. The first is the JWT fields that are returned to your app by default.
+
+<JSON title="Complete JWT Response" src="jwt/login-response.json" />
+
+The second object is the user supplied to your `populate()` function in a lambda.
+
+<JSON title="Complete User Object" src="users/login-response.json" />
+
+You can see that the user object has data that the JWT does not, like names, birthdates, and languages, that you might want to add in a lambda. You can also add logic in the lambda to manipulate these fields before returning them to your app.
+
+To demonstrate, let's write a lambda function that returns permissions to your app based on the user's role.
+
+In the FusionAuth admin UI, open the `[ATest]` lambda function you created earlier and overwrite it with the following code.
+
+```js
+function populate(jwt, user, registration) {
+  jwt.message = 'Goodbye World!';
+  jwt.permissions = [];
+  if (user.registrations[0].roles.includes("admin")) {
+    jwt.permissions.push("all");
+  } else if (user.registrations[0].roles.includes("editor")) {
+    jwt.permissions.push("read");
+    jwt.permissions.push("write");
+  } else if (user.registrations[0].roles.includes("viewer")) {
+    jwt.permissions.push("read");
+  }
+}
+```
+
+This lambda function `populate` adds a `permissions` array to the JWT returned.
+
+Create a file called `test_3.js` and add the following code.
+
+<RemoteCode lang="javascript" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-testing-lambdas/main/complete-application/test_3.js" />
+
+The test function downloads the lambda from FusionAuth using `getLambda()`, runs `eval` it to make it available in memory, and calls it, passing it a mock `user` object. You need to mock only the fields the lambda needs in this parameter. In this test, you've added a `roles` array inside application `registrations`.
+
+Run the test.
+
+```bash
+node test_3.js
+```
+
+The output is as follows.
+
+```bash
+TAP version 13
+# test lambda rejects returns permissions based on role
+ok 1 Check admin and viewer has all permissions
+ok 2 Check editor has write permission
+ok 3 Check editor has read permission
+
+1..3
+# tests 3
+# pass  3
+
+# ok
+```
+
+Note that running code downloaded from a database is a security risk. Any administrator with access to your FusionAuth admin UI can put malicious code into your lambdas that could use Node.js to access your local disk or send passwords over the internet. To keep safe, run your tests only in a Docker or LXC container with no disk access to your physical machine, and no passwords stored in the container.
+
+### How To Run All The Tests
+
+If you want to run your entire test suite, use the following command.
+
+```bash
+npx tape test_*.js | npx faucet
+```
+
+All tests should be green, as follows.
+
+```bash
+✓ test login returns JWT with "Goodbye World"
+✓ test lambda rejects sanctioned emails and accepts others
+✓ test lambda rejects returns permissions based on role
+# tests 6
+# pass  6
+✓ ok
+```

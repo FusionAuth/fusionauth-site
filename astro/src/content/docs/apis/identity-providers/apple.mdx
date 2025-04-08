@@ -1,0 +1,147 @@
+---
+title: Apple
+description: Learn about the APIs for creating, retrieving, updating and disabling the Apple identity provider.
+section: apis
+subcategory: identity providers
+---
+import Aside from 'src/components/Aside.astro';
+import TokenStorageNote from 'src/content/docs/apis/identity-providers/_token-storage-note.mdx';
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import InlineField from 'src/components/InlineField.astro';
+import AppleRequestBody from 'src/content/docs/apis/identity-providers/_apple-request-body.astro';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import AppleResponseBody from 'src/content/docs/apis/identity-providers/_apple-response-body.mdx';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import GenericUpdateExplanationFragment from 'src/content/docs/apis/_generic-update-explanation-fragment.mdx';
+import StandardPutResponseCodes from 'src/content/docs/apis/_standard-put-response-codes.astro';
+import StandardDeleteResponseCodes from 'src/content/docs/apis/_standard-delete-response-codes.astro';
+import CompleteLoginText from 'src/content/docs/apis/identity-providers/_complete-login-text.mdx';
+import XForwardedForHeader from 'src/content/docs/apis/identity-providers/_x-forwarded-for-header.mdx';
+import XFusionauthTenantIdHeaderScopedOperationRowOnly from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.mdx';
+import IdentityProviderLoginRequestBody from 'src/content/docs/apis/identity-providers/_identity-provider-login-request-body.astro';
+import JSON from 'src/components/JSON.astro';
+import IdentityProviderLoginResponseBody from 'src/content/docs/apis/identity-providers/_identity-provider-login-response-body.mdx';
+
+export const idp_display_name = 'Apple';
+export const idp_since = 11700;
+
+## Overview
+
+<Aside type="version">
+This API has been available since 1.17.0
+</Aside>
+
+The Apple identity provider type will use the Sign in with Apple APIs and will provide a `Sign in with Apple` button on FusionAuth's login page that will either redirect to an Apple sign in page or leverage native controls when using Safari on macOS or iOS. Additionally, this identity provider will call Apple's `/auth/token` API to load additional details about the user and store them in FusionAuth.
+
+<TokenStorageNote idp_long_lived_token_type="refresh"
+                  idp_refresh_additional_info_url="https://developer.apple.com/documentation/sign_in_with_apple/sign_in_with_apple_rest_api/verifying_a_user"
+                  idp_display_name="Apple"
+                  idp_linking_strategy="LinkByEmail"
+                  token_name="refresh_token"
+                  return_text="/auth/token" />
+
+## Create the Apple Identity Provider
+
+### Request
+
+<API method="POST" uri="/api/identity-provider" authentication={["api-key"]} title="Create the Apple Identity Provider"/>
+
+The <InlineField>type</InlineField> in the request JSON is used to determine that you are managing the Apple identity provider.
+
+<AppleRequestBody idp_since={idp_since} />
+
+### Response
+
+<StandardPostResponseCodes never_search_error />
+
+<AppleResponseBody idp_since={idp_since} />
+
+## Retrieve the Apple Identity Provider
+
+There is only one Apple Identity Provider, so this Identity Provider may be retrieved by type or Id.
+
+### Request
+
+<API method="GET" uri="/api/identity-provider?type=Apple" authentication={["api-key"]} title="Retrieve the Apple Identity Provider by type"/>
+
+<API method="GET" uri="/api/identity-provider/13d2a5db-7ef9-4d62-b909-0df58612e775" authentication={["api-key"]} title="Retrieve the Apple Identity Provider by Id"/>
+
+### Response
+
+<StandardGetResponseCodes never_search_error />
+
+<AppleResponseBody idp_since={idp_since} />
+
+## Update the Apple Identity Provider
+
+<GenericUpdateExplanationFragment extra_id_verbiage="There is only one Apple Identity Provider, so this Identity Provider may be updated by type or Id." capitalized_object_name="Apple Identity Provider" />
+
+### Request
+
+<API method="PUT" uri="/api/identity-provider?type=Apple" authentication={["api-key"]} showPatch={true} title="Update the Apple Identity Provider by type"/>
+
+<API method="PUT" uri="/api/identity-provider/13d2a5db-7ef9-4d62-b909-0df58612e775" authentication={["api-key"]} showPatch={true} title="Update the Apple Identity Provider by Id"/>
+
+<AppleRequestBody idp_since={idp_since} />
+
+### Response
+
+The response for this API contains the Apple Identity Provider.
+
+<StandardPutResponseCodes never_search_error />
+
+<AppleResponseBody idp_since={idp_since} />
+
+## Delete the Apple Identity Provider
+
+There is only one Apple Identity Provider, so this Identity Provider may be deleted by type or Id.
+
+### Request
+
+<API method="DELETE" uri="/api/identity-provider?type=Apple" authentication={["api-key"]} title="Delete the Apple Identity Provider by type"/>
+
+<API method="DELETE" uri="/api/identity-provider/13d2a5db-7ef9-4d62-b909-0df58612e775" authentication={["api-key"]} title="Delete the Apple Identity Provider by Id"/>
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes never_search_error />
+
+## Complete the Apple Login
+
+<CompleteLoginText idp_display_name="Apple" token_text_with_article="an id token" token_text="id token" />
+
+Apple requires you use a hybrid grant. At a high level, the steps you'll follow are:
+
+* Begin the Authorization Code grant with Apple using a hybrid grant: `response_type=code id_token`.
+* Collect the two values, `code` and `id_token` sent to you by Apple on the redirect URL specified by the `redirect_uri` query parameter.
+* Send these values to the FusionAuth IdP Login API to complete the login process. The API call, parameters to provide, and response are described below.
+
+<Aside type="note">
+Do not complete the Authorization Code exchange with Apple using the Token endpoint.
+</Aside>
+
+### Request
+
+<API method="POST" uri="/api/identity-provider/login" authentication={["none"]} title="Complete Apple Login"/>
+
+#### Request Headers
+
+<APIBlock>
+</APIBlock>
+
+<XForwardedForHeader />
+<XFusionauthTenantIdHeaderScopedOperationRowOnly />
+
+<IdentityProviderLoginRequestBody idp_display_name={idp_display_name} />
+
+<JSON title="Example Native Request JSON" src="identity-providers/login/apple-request-native.json" />
+
+### Response
+
+The response for this API contains the User object.
+
+<IdentityProviderLoginResponseBody />
+

@@ -1,0 +1,81 @@
+---
+title: JWT Populate Lambda
+description: An overview of the JWT populate lambda.
+navcategory: customization
+section: extend
+subcategory: code
+tertcategory: lambdas
+---
+import { YouTube } from '@astro-community/astro-embed-youtube';
+
+If you would like to augment the claims provided in the JWT before it has been signed you can specify a lambda in the JWT configuration. This lambda will be invoked prior to the token being signed and issued to a user.
+
+Here's a brief video showing how to set up a JWT populate lambda:
+
+<YouTube id="xFp1QkTiOAU" />
+
+When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+
+This lambda is not executed if you call the Login API directly and omit the `applicationId` request parameter.
+
+## Lambda Structure
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+```javascript
+function populate(jwt, user, registration) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `populate` that takes three parameters. The parameters that the lambda is passed are:
+
+* `jwt` - the claims object to be signed and return as the JWT payload. You can modify this object.
+* `user` - the FusionAuth User object. This object is read-only.
+* `registration` - the FusionAuth UserRegistration object. This parameter will be `undefined` when the user is not registered for the application. This object is read-only.
+
+The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The JWT object is a JavaScript object containing the JWT payload. See [OpenID Connect & OAuth 2.0 Token](/docs/lifecycle/authenticate-users/oauth/tokens).
+
+You may add or modify anything in the `jwt` object. However, you may not modify the header keys or values of the JWT. FusionAuth also protects certain reserved claims. The following claims are considered reserved and modifications or removal will not be reflected in the final JWT payload:
+
+- `exp`
+- `iat`
+- `sub`
+- `tid`
+
+The `tid` claim was added in version `1.36.0` which means prior to that version it was not considered a reserved claim.
+
+Prior to version `1.14.0` the following claims were considered reserved.
+
+- `applicationId`
+- `aud`
+- `authenticationType`
+- `email`
+- `email_verified`
+- `exp`
+- `iat`
+- `iss`
+- `preferred_username`
+- `roles`
+- `sub`
+
+
+## Assigning The Lambda
+
+Once a lambda is created, you must assign it to an Application. See the JWT tab in the Application configuration.
+
+## Example Lambda
+
+Here is an example of a simple Lambda that adds a few extra claims to the JWT issued to the User.
+
+```javascript
+function populate(jwt, user, registration) {
+  // Add a new claim named 'favoriteColor' from a custom data attribute on the user
+  jwt.favoriteColor = user.data.favoriteColor;
+  // Add a new claim named 'dept' using a custom data attribute on the registration
+  jwt.dept = registration.data.departmentName;
+
+  // Create an event log of type 'Debug' when the lambda has Debug enabled
+  console.debug('Added custom claims to the JSON web token');
+}
+```

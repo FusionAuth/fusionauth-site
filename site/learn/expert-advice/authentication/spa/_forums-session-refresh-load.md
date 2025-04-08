@@ -1,3 +1,0 @@
-1. The browser requests the user's forum posts from the application backend via AJAX and includes the session and refresh token cookies
-1. The application backend looks up the server-side session associated with the session cookie and extends the expiration date
-1. The application backend loads the User object (or JWT) from the session associated with the session cookie. The backend then looks up the user's forum posts from the database (or similar location). Finally, the application backend returns the user's forum posts (usually as JSON)

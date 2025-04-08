@@ -1,0 +1,188 @@
+---
+title: External JWT
+description: Complete a FusionAuth login with an external JWT from a third party Identity Provider.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: identity providers
+quatercategory: External JWT
+---
+import ExternalJwtProviderWarning from 'src/content/docs/_shared/_external-jwt-provider-warning.mdx';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import InlineField from 'src/components/InlineField.astro';
+
+## Overview
+
+The External JWT Identity Provider is not intended to provide a login button in FusionAuth. Instead, this configuration is intended for use with the JWT Reconcile API.
+
+- [External JWT API](/docs/apis/identity-providers/external-jwt)
+- [Reconcile a JWT API](/docs/apis/jwt#reconcile-a-jwt-using-the-external-jwt-provider)
+
+Using this identity provider allows you to authenticate with a third party that can provide you a JSON Web Token (JWT). Then you may take this JWT and send it to FusionAuth to reconcile the user. The reconcile process is essentially logging that user into a particular FusionAuth application.
+
+The configuration for this identity provider allows you to configure some claim mapping from the third party JWT to the FusionAuth user, and it will require one or more keys that will allow FusionAuth to verify the signature of the third party JWT. These keys will be added to the `Verification Keys` section documented below.
+
+<ExternalJwtProviderWarning />
+
+If you are looking to add a login button to FusionAuth for users to authenticate against a third party identity provider, this is not the configuration you're looking for, move along.
+
+## Create an External JWT Identity Provider
+
+To create an Identity Provider navigate to <strong>Settings -> Identity Providers</strong> and click `Add provider` and select `External JWT` from the dialog. This will take you to the Add panel, and you will need to fill out the required fields.
+
+[//]: # (TODO : Needs updated screenshot)
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/external-jwt/identity-provider-external-jwt-add.png" alt="Add External JWT" width="1200" />
+
+### Form Fields
+
+<APIBlock>
+  <APIField name="Id" optional>
+    An optional UUID. When this value is omitted a unique Id will be generated automatically.
+  </APIField>
+  <APIField name="Name" required>
+    A unique name to identify the identity provider. This name is for display purposes only and it can be modified later if desired.
+  </APIField>
+  <APIField name="Reconcile lambda" optional since="1.17.0">
+    A lambda may be utilized to map custom claims from the JWT. This may be used in addition to, or in place of the claim mapping on the JWT tab.
+
+    To configure a lambda, navigate to <strong>Customizations -> Lambdas</strong>.
+  </APIField>
+  <APIField name="Linking strategy" optional since="1.28.0">
+    The linking strategy for this identity provider. [See Linking Strategies for more](/docs/lifecycle/authenticate-users/identity-providers/#linking-strategies).
+
+    When the <InlineField>Linking strategy</InlineField> is equal to `Link on email. Create the user if they do not exist.` or `Link on email. Do not create the user if they do not exist.` and the `email_verified` claim is present on the response from the External JWT Identity Provider and the value is `false` a link will not be established and an error will be returned indicating a link cannot be established using an unverified email address.
+  </APIField>
+  <APIField name="Debug enabled" optional defaults="false">
+    Enable debug to create an event log to assist you in debugging integration errors.
+  </APIField>
+</APIBlock>
+
+## Applications
+
+To enable this identity provider for an application, find your application name in the table. You will always see the `FusionAuth` application, this application represents the FusionAuth user interface. If you wish to be able to log into FusionAuth with this provider you may enable this application.
+
+In the above screenshot, you will see that we have enabled this login provider for the `Pied Piper` application and enabled `Create registration`. Enabling create registration means that a user does not need to be manually registered for the application before using this login provider.
+
+For example, when a new user attempts to log into `Pied Piper` using this identity provider, if their user does not exist in FusionAuth it will be created dynamically, and if the `Create registration` toggle has been enabled, the user will also be registered for `Pied Piper` and assigned any default roles assigned by the application.
+
+If you do not wish to automatically provision a user for this Application when logging in with PiedPiper, leave `Create registration` off and you will need to manually register a user for this application before they may complete login with this provider.
+
+## JWT
+
+This configuration is necessary to allow FusionAuth to properly inspect the third-party JWT once the signature has been verified.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/external-jwt/identity-provider-external-jwt-jwt-add.png" alt="Add External JWT" width="1200" />
+
+
+### Form Fields
+
+<APIBlock>
+  <APIField name="Unique Id claim" optional defaults="sub">
+    The name of the claim that will contain the user's unique Id.
+  </APIField>
+  <APIField name="Email claim" optional defaults="email">
+    The name of the claim that will contain an email address.
+  </APIField>
+  <APIField name="Email verified claim" optional defaults="email_verified" since="1.48.0">
+    The name of the claim that will contain the email verified claim.
+
+    When the linking strategy is configured to `Link on email. Create the user if they do not exist.` or `Link on email. Do not create the user if they do not exist.`, a link will be rejected if this claim is returned by the identity provider and the value is `false`.
+  </APIField>
+  <APIField name="Username claim" optional defaults="preferred_username">
+    The name of the claim that will contain the user's username.
+  </APIField>
+  <APIField name="Header key identifier" optional defaults="kid">
+    This value is the name of the claim in the third-party JWT header FusionAuth can find the identifier used to indicate which key pair was used to generate the JWT signature. This allows FusionAuth to use the correct key if more than one key is provided in the `Verification Keys` configuration.
+
+    This field defaults to `kid`, this is a common identifier used in the JWT header to identify the key used to generate the signature.
+  </APIField>
+  <APIField name="Default verification key" optional>
+    This value is the name of the claim in the third-party JWT header FusionAuth can find the identifier used to indicate which key pair was used to generate the JWT signature. This allows FusionAuth to use the correct key if more than one key is provided in the `Verification Keys` configuration.
+
+    This field defaults to `kid`, this is a common identifier used in the JWT header to identify the key used to generate the signature.
+  </APIField>
+  <APIField name="Unique claim" optional deprecated>
+    This value is the name of the claim in the third-party JWT where FusionAuth can find the user's email address. The email address will be used in FusionAuth to uniquely identify a user.
+
+    This field defaults to `email`, this is likely the correct claim name.
+  </APIField>
+</APIBlock>
+
+
+## Managed domains
+
+To successfully reconcile a JWT to FusionAuth using this identity provider, you can *optionally* specify one more managed domains.
+A managed domain will indicate to FusionAuth this identity provider can reconcile a user based upon their email address.
+
+For example, if a user's email address is `jared@piedpiper.com`, in order for a JWT owned by Jared to be reconciled to FusionAuth using this identity provider, `piedpiper.com` could be configured as a managed domain.  You may leave this blank. If you do so, then any email can be used with this identity provider. This is helpful if you are not certain which email domains your users will have.
+
+A domain may only be managed by a single identity provider. More than one domain may be added per identity provider.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/external-jwt/identity-provider-external-jwt-domains-add.png" alt="Add External JWT" width="1200" />
+
+### Form Fields
+
+<APIBlock>
+  <APIField name="Managed domains" optional>
+    This identity provider may only be used to reconcile a user that has an email address that matches a configured domain. If you do not know which domains you would like to manage, you may leave this empty for now and return and add them later.
+
+    If you would like to add more than one domain, use a separate line per domain.
+
+    These configured domains will be used by the [Lookup API](/docs/apis/identity-providers/#lookup-an-identity-provider) and the [Reconcile API](/docs/apis/jwt#reconcile-a-jwt-using-the-external-jwt-provider).
+  </APIField>
+</APIBlock>
+
+## Claim mapping
+
+All configured claim mappings will be visible here. Use the `Add Claim` button to add additional claim mappings. You may optionally perform all of the claim mapping using a Reconcile lambda function.
+
+## Add Claim Mapping Dialog
+
+If you click on the `Add Claim` button on this page you will be presented with the following dialog.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/external-jwt/identity-provider-external-jwt-add-claim-dialog.png" alt="Add Claim Mapping" width="1200" role="box-shadow" />
+
+### Form Fields
+
+<APIBlock>
+  <APIField name="Incoming claim" required>
+    The name of the claim in the third-party JWT that you would like to map to a FusionAuth user claim
+  </APIField>
+  <APIField name="FusionAuth claim" required>
+    The FusionAuth user claim to receive the value of the specified claim in the third-party JWT. If you select the special values `UserData` or `RegistrationData` the value will be stored in either the user or registration data with the key being the claim name.
+
+    For example, if you select `company` as the incoming claim, and specify `RegistrationData`, the claim will be stored in the registration data for the corresponding application.
+
+    ```json
+    {
+     "registration": {
+       "data": {
+        "company": "Acme. Corp"
+       }
+     }
+    }
+    ```
+  </APIField>
+</APIBlock>
+
+
+## OAuth
+
+The OAuth configuration is not a functional part of this identity provider. Instead, it is provided for convenience only.
+
+If you review the API response of the [Lookup API](/docs/apis/identity-providers/#lookup-an-identity-provider) you will notice it returns these two values. You may use these values then at runtime to identify where to redirect the user to complete authentication.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/external-jwt/identity-provider-external-jwt-oauth-add.png" alt="Add External JWT" width="1200" />
+
+### Form Fields
+
+<APIBlock>
+  <APIField name="Authorization endpoint" optional>
+    The URL of the OAuth 2.0 Authorization endpoint in use by the third party identity provider that will be providing the third-party JWT.
+  </APIField>
+  <APIField name="Token endpoint" optional>
+    The URL of the OAuth 2.0 Token endpoint in use by the third party identity provider that will be providing the third-party JWT.
+  </APIField>
+</APIBlock>

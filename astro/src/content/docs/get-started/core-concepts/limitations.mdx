@@ -1,0 +1,188 @@
+---
+title: Limitations
+description: Learn about the built-in limitations of FusionAuth.
+section: get started
+subcategory: core concepts
+---
+import UserInfoAudClaimLimits from 'src/content/docs/_shared/_userinfo-aud-claim-limits.mdx';
+import UserSearchLimits from 'src/content/docs/_shared/_user-search-limits.mdx';
+import UserSearchLimitsWorkarounds from 'src/content/docs/_shared/_user-search-limits-workarounds.mdx';
+import UpdateKeyNote from 'src/content/docs/_shared/_update-key-note.mdx';
+import DefaultEntities from 'src/content/docs/_shared/_default-entities.mdx';
+import LoginAPIScopeLimitations from 'src/content/docs/_shared/_login-api-scope-limits.mdx';
+import LogoutBehaviorAllApplications from 'src/content/docs/get-started/core-concepts/_logout-behavior-all-applications.mdx';
+import SamlIdpLimitations from 'src/content/docs/get-started/core-concepts/_saml-idp-limitations.mdx';
+import SamlSpLimitations from 'src/content/docs/_shared/_saml-sp-limitations.mdx';
+import DataFieldDataTypeChanges from 'src/content/docs/_shared/_data-field-data-type-changes.mdx';
+import TwoFactorTotpLimits from 'src/content/docs/_shared/_two-factor-totp-limits.mdx';
+import MultiTenantLimitations from 'src/content/docs/get-started/core-concepts/_multi-tenant-limitations.mdx';
+import DowntimeUpgradeLimitation from 'src/content/docs/get-started/core-concepts/_downtime-upgrade-limitation.mdx';
+import ConfigurationLimits from 'src/content/docs/get-started/core-concepts/_configuration-limits.mdx';
+import ScimLimits from 'src/content/docs/_shared/_scim-limits.mdx';
+import TemplateContentLimits from 'src/content/docs/_shared/_template-content-limits.mdx';
+import TerraformLimitations from 'src/content/docs/operate/deploy/_terraform-limitations.mdx';
+import IdentityProviderLimitations from 'src/content/docs/_shared/_identity-provider-limits.mdx';
+import GroupLimits from 'src/content/docs/get-started/core-concepts/_group-limits.md';
+import AdminCustomFormLimitations from 'src/content/docs/lifecycle/manage-users/_custom-admin-form-limitations.mdx';
+
+
+## Overview
+
+FusionAuth has the following known limits:
+
+## User Searches
+
+<UserSearchLimits />
+
+### Maximum Users Returned Workarounds
+
+<UserSearchLimitsWorkarounds />
+
+## Field Lengths
+
+FusionAuth stores most data in a database. Lengths of specific fields are documented in the database schema for your database type. Please [download the database schema for your version of FusionAuth](/direct-download) to review length limits for a particular column.
+
+Many varchar columns have a length of 191. Why 191? In MySQL when using a `utf8mb4` (4 byte character set) on an indexed column, MySQL limits the usable characters to 191 to account for the overhead of the 4 byte addressing. The InnoDB MySQL engine has a max index length of 767 bytes (for mysql 5.7.9, the earliest version of MySQL which [FusionAuth supports](/docs/get-started/download-and-install/system-requirements)). Because we are using `utf8mb4` which allows up to 4 bytes per character, we end up with 767/4 ~ 191, so we set the column length to that.
+
+## API Keys
+
+FusionAuth is API first and everything can be managed by an API. You can create an API key in the following ways:
+
+* Using the [API Key API](/docs/apis/api-keys), if you are using version 1.26 or greater.
+* Use the administrative user interface.
+* [Kickstart](/docs/get-started/download-and-install/development/kickstart) which only works on fresh installations.
+
+## Minimum Key Lengths
+
+You can use FusionAuth to manage your cryptographic keys. Due to security considerations, FusionAuth won't import keys below a certain length.
+
+For RSA keys used to verify signatures, the minimum length is 1024. This key length is allowed as of FusionAuth 1.23.4 and supports external systems that rely upon this weak key length.
+
+For RSA keys used for signing or any other purpose, the minimum length is 2048. 
+
+For ECC keys, the minimum length is 256.
+
+See the [Keys API](/docs/apis/keys) for more, including supported algorithms and lengths.
+
+## Updating Keys
+
+FusionAuth can manage keys, secrets, and certificates, using [Key Master](/docs/operate/secure/key-master). You can update a Key managed by FusionAuth, with some limits.
+
+<UpdateKeyNote />
+
+## Default Configuration
+
+There are a number of items in FusionAuth created by default and which cannot be removed. Additionally, there are sometimes limits to modifying them. These defaults include:
+
+<DefaultEntities />
+
+## Login API and OAuth Scopes
+
+<LoginAPIScopeLimitations />
+
+## OAuth Logout Behavior
+
+<LogoutBehaviorAllApplications />
+
+## UserInfo Authorization Header
+
+The UserInfo endpoint takes access tokens and returns claims about the user.
+
+<UserInfoAudClaimLimits />
+
+## SAML
+
+### IdP Limitations
+
+<SamlIdpLimitations />
+
+### SP Limitations
+
+<SamlSpLimitations />
+
+## Identifiers
+
+Identifiers (Ids) in FusionAuth are [UUIDs](/docs/reference/data-types#uuids).
+
+If you are creating an object, such as an Application, with the FusionAuth API, you can specify this Id, as long as it is a valid UUID. The ability to choose specific Ids exists for Users, Applications, and Tenants, among others, and allows you to avoid breaking external systems dependent on existing identifiers.
+
+Ids cannot be modified after the object is created. If you need to change an identifier, delete the object and recreate it with the correct Id.
+
+### User Identifiers
+
+Each account must have an identifier, either an email address or a username. Users may not have multiple email addresses. See [this issue for more information](https://github.com/fusionauth/fusionauth-issues/issues/1).
+
+An account may have both a username and an email address.
+
+### Client Ids
+
+OAuth has the concept of a `client_id`. In FusionAuth, `client_id`s cannot be modified after creation. During creation, an Id can be set to any valid UUID value. The Id must be unique across all Tenants.
+
+The `client_id` is always the same as either the Application Id or Entity Id, depending on the grant you are using.
+
+## Data Type Changes In 'data' Fields
+
+<DataFieldDataTypeChanges />
+
+## TOTP Algorithm Implementation
+
+<TwoFactorTotpLimits />
+
+## Multi-Tenancy
+
+<MultiTenantLimitations />
+
+## System Upgrade Downtime
+
+<DowntimeUpgradeLimitation />
+
+## Database Configuration
+
+<ConfigurationLimits />
+
+## Password Hashes
+
+There is no FusionAuth API allowing user password hashes to be exported.
+
+If you need to migrate hashes from FusionAuth to any other system, use a database export.
+
+## SCIM
+
+<ScimLimits />
+
+## Email Templates
+
+<TemplateContentLimits />
+
+## Terraform Limitations
+
+<TerraformLimitations />
+
+## Identity Provider Limitations
+
+<IdentityProviderLimitations />
+
+## Group Limitations
+
+<GroupLimits />
+
+## Admin Custom Forms
+
+<AdminCustomFormLimitations />
+
+## What's Not Limited
+
+All other objects and configuration, including but not limited to the following, are limited only by the resources of your system:
+
+* Users
+* Applications
+* Tenants
+* Roles
+* Groups
+* Identity Providers such as SAML or OIDC connections
+* API keys to allow for programmatic configuration of and interaction with FusionAuth
+* The number of email templates
+* Supported languages/locales
+* Signing and verifying keys
+* MFA methods per user
+

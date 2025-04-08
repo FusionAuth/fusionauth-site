@@ -1,0 +1,105 @@
+---
+title: Kafka Integration
+description: How to publish FusionAuth events to Kafka.
+navcategory: developer
+section: extend
+subcategory: events and webhooks
+tertcategory: kafka
+# TODO: move kafka example out to a GH repo
+---
+import KafkaTroubleshooting from 'src/content/docs/extend/events-and-webhooks/kafka/_kafka_troubleshooting.mdx';
+import {RemoteCode} from '@fusionauth/astro-components';
+
+## Overview
+
+[Kafka](https://kafka.apache.org/) is a scalable messaging platform. This integration allows you to consume webhook events
+using a Kafka topic in addition to or instead of consuming the JSON events directly from a configured webhook, so events (for example, a "new user" event when a new user is created in FusionAuth) can be sent from FusionAuth to a Kafka topic.
+
+When the Kafka integration is enabled, all [webhook events](/docs/extend/events-and-webhooks/events/) across all tenants will be sent to Kafka with all fields included.
+
+## Configuration
+
+The Kafka integration may be enabled using the [Integrations](/docs/apis/integrations) API or through the FusionAuth UI by navigating
+to <strong>Settings -> Integrations -> Kafka</strong>.
+
+<img src="/img/docs/extend/events-and-webhooks/kafka/kafka.png" alt="Kafka Configuration" width="1200" />
+
+By default, you'll see properties set for the Kafka Producer configuration, including `bootstrap.servers`, `max.block.ms`, and `request.timeout.ms`. These tell FusionAuth how to make the initial connection to your Kafka cluster and set how long it can wait to send information to Kafka. You can find a complete list of allowed configuration for this block at the [Kafka configuration documentation](https://kafka.apache.org/documentation/#configuration).
+
+Specify a topic that you've already created in your Kafka cluster and press "Send test event" to make sure that the connection is working as expected. After seeing that it succeeded, don't forget to press "Save" in the top right to turn on the Kafka integration.
+
+You should see an event similar to the following in your Kafka topic if the test succeeds.
+
+```json
+{"createInstant":1667831017070,"id":"4532ba80-9443-4300-a324-3a2193e56c67","message":"You've successfully configured the Kafka Integration for FusionAuth.","type":"test"}
+```
+
+### Example Configuration for Docker Compose
+
+If you're running Kafka alongside FusionAuth (for example, from the same `docker-compose.yaml` file), the only thing you need to change in the default configuration is to show FusionAuth where to find the Kafka bootstrap server on the network.
+
+If your Docker Compose file is as follows:
+
+<RemoteCode title="Example docker-compose.yml with Kafka" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-docker-compose/main/kafka/docker-compose.yml" lang="yaml" />
+
+Then you would input the following configuration in the FusionAuth UI to configure the Kafka integration.
+
+```
+bootstrap.servers=kafka:9092
+max.block.ms=5000
+request.timeout.ms=2000
+```
+
+### Example Configuration for a Remote Managed Kafka Integration
+
+If you're using a managed service for Kafka that runs on a different server than your FusionAuth installation, you'll also need to specify credentials for connecting to the remote Kafka instance. You should be able to get the exact configuration you need from your Kafka hosting provider by looking for "Producer configuration" or similar. It should look similar to the following.
+
+```
+bootstrap.servers=pkc-6ojv2.us-west4.gcp.your-kafka-provider.cloud:9092
+client.dns.lookup=use_all_dns_ips
+sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule   required username='ZN6LJ5UHSXZLW3LR'   password='M9T8b85OPspFAS37Do5Baq7jIS+hl7h7bY8MRrfVff5lz8xeCwea7zB5AC3nKXUD';
+sasl.mechanism=PLAIN
+security.protocol=SASL_SSL
+session.timeout.ms=45000
+```
+
+## Event Types and Configuration
+
+After successfully connecting to a Kafka instance, you'll be notified of each event that happens in FusionAuth. Events will generally contain fields for: 
+
+* `id`: A unique Id for that event that can be used for deduplication.
+* `createInstant`: A timestamp indicating when the event occurred.
+* `type`: The kind of event that occurred.
+* `info`: A map of extra information about the event and its source, such as IP address and device information.
+
+Other fields applicable to the event may also be included. You can find the full schema for each event in the [webhook events](/docs/extend/events-and-webhooks/events/) documentation.
+
+Events can be categorized into two broad types:
+
+- System events, which include audit log events and event log data.
+- Tenant-based events, which include detailed information about user creation, removal, or changes. 
+
+By default, system events will be sent to Kafka without further configuration. Tenant events, however, are dependent on a [Webhook](/docs/extend/events-and-webhooks/) being set up and active. The events sent to Kafka then follow the configuration of events for that webhook and tenant. If you don't already have a webhook configured and want to use Kafka for tenant-level events, we recommend you set up a no-op webhook receiver that accepts the incoming POST request, discards it, and returns a `200 OK` status. This will allow you to set up a dummy webhook configuration to control Kafka tenant-level events. To create such a receiver, you can use a low-code platform such as [Pipedream](https://pipedream.com) or [Zapier](https://zapier.com), or roll your own.
+
+## Example Events Sent to Kafka
+
+After creating the integration and using FusionAuth, your Kafka topic might look similar to the following, which shows events for: 
+
+1. Sending the initial test event.
+2. The audit log event for creating a new user with the email address `newuser@example.com`. This is a system-level event.
+3. The tenant-level event for creating the above user. 
+4. An error event because the SMTP integration isn't working so the password reset email couldn't be sent to the new user. This is a system-level event.
+
+```json
+{"createInstant":1667833973280,"id":"e6a4f780-02da-4b5a-8b04-94d2a49ea369","message":"You've successfully configured the Kafka Integration for FusionAuth.","type":"test"}
+
+{"event":{"auditLog":{"id":38,"insertInstant":1667834917902,"insertUser":"test@example.com","message":"Created user with Id [3cbb85e7-ebf8-4c92-bc75-7ca8db4399db], name [null] and loginId [newuser@example.com]","reason":"FusionAuth User Interface"},"createInstant":1667834917903,"id":"4b81d279-24c7-463b-847a-0cecaaf113a0","info":{"ipAddress":"192.168.16.1","userAgent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15"},"type":"audit-log.create"}}
+
+{"event":{"createInstant":1667834917903,"id":"0c11627f-9461-4a00-8156-00ff6c3d68d3","info":{"ipAddress":"172.22.0.1","userAgent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15"},"tenantId":"2671a63f-084c-4434-9465-fde65b8845ee","type":"user.create","user":{"active":true,"connectorId":"e3306678-a53a-4964-9040-1c96f36dda72","email":"newuser@example.com","id":"7e512f97-79f7-42e5-891f-a2383ed3460c","insertInstant":1667834917902,"lastLoginInstant":1667834917902,"lastUpdateInstant":1667834917902,"passwordChangeRequired":false,"passwordLastUpdateInstant":1667834917902,"tenantId":"2671a63f-084c-4434-9465-fde65b8845ee","twoFactor":{},"usernameStatus":"ACTIVE","verified":true}}}
+
+{"event":{"createInstant":1667834917916,"eventLog":{"id":34,"insertInstant":1667834917913,"message":"Async Email Send exception occurred.\n\nTemplate Id: 3e6462be-178c-499f-92c9-3643ccca8ced\nTemplate Name: [FusionAuth Default] Setup Password\nTenant Id: 6825d48e-4df4-f83e-1055-f1d42e363749\nAddressed to: newuser@example.com\n\nCause:\ncom.sun.mail.util.MailConnectException : Message: Couldn't connect to host, port: localhost, 25; timeout -1","type":"Error"},"id":"44ca31e5-967c-4b5c-8ff4-1ee51d73999a","type":"event-log.create"}}
+```
+
+## Troubleshooting FusionAuth's Kafka Integration
+
+<KafkaTroubleshooting />

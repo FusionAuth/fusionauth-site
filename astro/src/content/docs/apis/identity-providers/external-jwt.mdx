@@ -1,0 +1,168 @@
+---
+title: External JWT
+description: Learn about the APIs for creating, retrieving, updating and deleting external JWT identity providers.
+section: apis
+subcategory: identity providers
+---
+import Aside from 'src/components/Aside.astro';
+import ExternalJwtProviderWarning from 'src/content/docs/_shared/_external-jwt-provider-warning.mdx';
+import TokenStorageNote from 'src/content/docs/apis/identity-providers/_token-storage-note.mdx';
+import API from 'src/components/api/API.astro';
+import InlineField from 'src/components/InlineField.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import ExternalJwtRequestBody from 'src/content/docs/apis/identity-providers/_external-jwt-request-body.mdx';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import ExternalJwtResponseBody from 'src/content/docs/apis/identity-providers/_external-jwt-response-body.mdx';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import GenericUpdateExplanationFragment from 'src/content/docs/apis/_generic-update-explanation-fragment.mdx';
+import StandardPutResponseCodes from 'src/content/docs/apis/_standard-put-response-codes.astro';
+import StandardDeleteResponseCodes from 'src/content/docs/apis/_standard-delete-response-codes.astro';
+import XForwardedForHeader from 'src/content/docs/apis/identity-providers/_x-forwarded-for-header.mdx';
+import XFusionauthTenantIdHeaderScopedOperationRowOnly from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.mdx';
+import IdentityProviderLoginRequestBody from 'src/content/docs/apis/identity-providers/_identity-provider-login-request-body.astro';
+import IdentityProviderLoginResponseBody from 'src/content/docs/apis/identity-providers/_identity-provider-login-response-body.mdx';
+
+export const idp_display_name = 'External JWT';
+export const idp_enforce_email_verified_claim = true;
+export const idp_since = 10100;
+export const idp_linking_strategy = 'LinkByEmail';
+
+## Overview
+
+<Aside type="version">
+This API has been available since 1.1.0
+</Aside>
+
+This is a special type of identity provider that is only used via the [JWT Reconcile](/docs/apis/jwt#reconcile-a-jwt-using-the-external-jwt-provider) API. This identity provider defines the claims inside the incoming JWT and how they map to fields in the FusionAuth User object.
+
+<ExternalJwtProviderWarning />
+
+In order for this identity provider to use the JWT, it also needs the public key or HMAC secret that the JWT was signed with. FusionAuth will verify that the JWT is valid and has not expired. Once the JWT has been validated, FusionAuth will reconcile it to ensure that the User exists and is up-to-date.
+
+[//]: # (idp_display_name blank on purpose reads better)
+<TokenStorageNote idp_display_name idp_linking_strategy="LinkByEmail" token_name="token provided in the refresh_token field" return_text="request" />
+
+### Request
+
+<API method="POST" uri="/api/identity-provider" authentication={["api-key"]} title="Create an Identity Provider using a randomly generated id"/>
+
+<API method="POST" uri="/api/identity-provider/{identityProviderId}" authentication={["api-key"]} title="Create an Identity Provider with the provided unique id"/>
+
+The <InlineField>type</InlineField> property in the request JSON is used to determine that you are managing an External JWT identity provider.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="identityProviderId" type="UUID" optional defaults="secure random UUID">
+    The Id to use for the new Identity Provider. If an id is not provided, a secure random UUID is generated.
+  </APIField>
+</APIBlock>
+
+<ExternalJwtRequestBody idp_since={idp_since} idp_display_name={idp_display_name} idp_linking_strategy={idp_linking_strategy} idp_enforce_email_verified_claim={idp_enforce_email_verified_claim}  />
+
+### Response
+
+<StandardPostResponseCodes never_search_error />
+
+<ExternalJwtResponseBody idp_since={props.idp_since} idp_display_name={props.idp_display_name} idp_linking_strategy={idp_linking_strategy} />
+
+## Retrieve an External JWT Identity Provider
+
+### Request
+
+<API method="GET" uri="/api/identity-provider/{identityProviderId}" authentication={["api-key"]} title="Retrieve an external JWT Identity Provider by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="identityProviderId" type="UUID" required>
+    The unique Id of the Identity Provider to retrieve.
+  </APIField>
+</APIBlock>
+
+### Response
+
+<StandardGetResponseCodes never_search_error />
+
+<ExternalJwtResponseBody />
+
+
+## Update an External JWT Identity Provider
+
+<GenericUpdateExplanationFragment capitalized_object_name="External JWT Identity Provider" />
+
+### Request
+
+<API method="PUT" uri="/api/identity-provider/{identityProviderId}" authentication={["api-key"]} showPatch={true} title="Update an Identity Provider"/>
+
+<ExternalJwtRequestBody />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="identityProviderId" type="UUID" required>
+    The unique Id of the Identity Provider to update.
+  </APIField>
+</APIBlock>
+
+<ExternalJwtRequestBody idp_since={idp_since} idp_display_name={idp_display_name} idp_linking_strategy={idp_linking_strategy} idp_enforce_email_verified_claim={idp_enforce_email_verified_claim} />
+
+### Response
+
+The response for this API contains the external JWT Identity Provider that was updated.
+
+<StandardPutResponseCodes never_search_error />
+
+<ExternalJwtResponseBody idp_since={props.idp_since} idp_display_name={props.idp_display_name} idp_linking_strategy={idp_linking_strategy} />
+
+## Delete an External JWT Identity Provider
+
+### Request
+
+<API method="DELETE" uri="/api/identity-provider/{identityProviderId}" authentication={["api-key"]} title="Delete an Identity Provider by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="identityProviderId" type="UUID" required>
+    The unique Id of the Identity Provider to delete.
+  </APIField>
+</APIBlock>
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes never_search_error />
+
+## Complete the External JWT Login
+
+This API allows you to complete an External JWT login after retrieving the external JWT and processing it.
+
+For example, if you have a JWT representing a user, using this API you can pass that JWT returned from an external service to FusionAuth and we will complete the login workflow and reconcile the user to FusionAuth.
+
+The user does not need to exist yet in FusionAuth to utilize this API, depending on the configured [linking strategy](/docs/lifecycle/authenticate-users/identity-providers/#linking-strategies). The token returned will be used to retrieve the user's email address or username and if that user does not yet exist in FusionAuth the user may be created.
+
+If <InlineField>createRegistration</InlineField> has been enabled for this identity provider and the user does not yet have a registration for this application, a registration will be automatically created for the user. The user will be assigned any default roles configured for the application.
+
+If <InlineField>createRegistration</InlineField> has not been enabled, a registration will not be created if one does not yet exist. This is useful if you wish to manually provision users and then subsequently allow them to login.
+
+### Request
+
+<API method="POST" uri="/api/identity-provider/login" authentication={["none"]} title="Complete External JWT Login"/>
+
+#### Request Headers
+
+<APIBlock>
+  <XForwardedForHeader />
+  <XFusionauthTenantIdHeaderScopedOperationRowOnly />
+</APIBlock>
+
+<IdentityProviderLoginRequestBody idp_display_name={idp_display_name} />
+
+### Response
+
+The response for this API contains the User object.
+
+<IdentityProviderLoginResponseBody />

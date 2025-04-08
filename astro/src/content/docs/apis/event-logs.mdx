@@ -1,0 +1,200 @@
+---
+title: Event Logs
+description: Learn about the APIs for searching and retrieving event logs.
+section: apis
+---
+import Aside from 'src/components/Aside.astro';
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import JSON from 'src/components/JSON.astro';
+import InlineField from 'src/components/InlineField.astro';
+
+## Overview
+
+<Aside type="version">
+This API has been available since 1.6.0
+</Aside>
+
+The Event Log contains messages that are not easy to convey to user at runtime - logs and errors from asynchronous code execution.  These messages include:
+
+* SMTP transport errors
+* Lambda execution exceptions
+* Lambda execution console logs
+* SAML IdP integration errors and debug
+* Webhook event errors
+* Runtime exceptions due to email template rendering issues
+
+This page contains the APIs that are used to retrieve Event Logs. Here are the APIs:
+
+## Retrieve an Event Log
+
+### Request
+
+<API method="GET" uri="/api/system/event-log/{logId}" authentication={["api-key"]} title="Retrieve an Event Log by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="logId" type="Long" required>
+    The unique Id of the Event Log to retrieve.
+  </APIField>
+</APIBlock>
+
+### Response
+
+<StandardGetResponseCodes />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="eventLog.id" type="Long">
+    The event Log unique Id.
+  </APIField>
+  <APIField name="eventLog.insertInstant" type="Long">
+    The [instant](/docs/reference/data-types#instants) when the Event Log was created.
+  </APIField>
+  <APIField name="eventLog.message" type="String">
+    The message of the event Log.
+  </APIField>
+  <APIField name="eventLog.type" type="String">
+    The type of the Event Log.  Possible values are:
+
+    * `Information`
+    * `Debug`
+    * `Error`
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Response" src="event-logs/response.json" />
+
+## Search Event Logs
+
+### Request
+
+<API method="GET" uri="/api/system/event-log/search?message={message}&start={start}&end={end}&type={type}" authentication={["api-key"]} title="Searches the Event Logs using the given search criteria"/>
+
+When calling the API using a `GET` request you will send the search criteria on the URL using request parameters. In order to simplify the example URL above, not every possible parameter is shown, however using the provided pattern you may add any of the documented request parameters to the URL.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="message" type="String" optional>
+    The string to search in the Event Log message for. This can contain wildcards using the asterisk character (`*`). If no wildcards are present, this parameter value will be interpreted as `*value*`.
+  </APIField>
+  <APIField name="numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="orderBy" type="String" optional defaults="insertInstant DESC">
+    The database column to order the search results on plus the order direction.
+
+    The possible values are:
+
+     * `insertInstant` - the [instant](/docs/reference/data-types#instants) when the Event Log was created
+     * `insertUser` - the user that create the Event Log
+     * `message` - the message of the Event Log
+     * `type` - the type of the Event Log
+
+    For example, to order the results by the insert instant in a descending order, the value would be provided as `insertInstant DESC`. The final string is optional can be set to `ASC` or `DESC`.
+  </APIField>
+  <APIField name="start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="startRow" type="Integer" optional defaults="0">
+    The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+  </APIField>
+  <APIField name="type" type="String" optional>
+    The type of Event Logs to return. Only one type may be provided. If omitted, all types will be returned.
+
+    The possible values are:
+
+    * `Information`
+    * `Debug`
+    * `Error`
+  </APIField>
+</APIBlock>
+
+<API method="POST" uri="/api/system/event-log/search" authentication={["api-key"]} title="Searches the Event Logs using the given search criteria"/>
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="search.end" type="Long" optional>
+    The end [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="search.message" type="String" optional>
+    The string to search in the Event Log message for. This can contain wildcards using the asterisk character (`*`). If no wildcards are present, this parameter value will be interpreted as `*value*`.
+  </APIField>
+  <APIField name="search.numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="search.orderBy" type="String" optional defaults="insertInstant DESC">
+    The database column to order the search results on plus the order direction.
+
+    The possible values are:
+
+     * `insertInstant` - the [instant](/docs/reference/data-types#instants) when the Event Log was created
+     * `insertUser` - the user that create the Event Log
+     * `message` - the message of the Event Log
+
+    For example, to order the results by the insert instant in a descending order, the value would be provided as `insertInstant DESC`. The final string is optional can be set to `ASC` or `DESC`.
+  </APIField>
+  <APIField name="search.start" type="Long" optional>
+    The start [instant](/docs/reference/data-types#instants) of the date/time range to search within.
+  </APIField>
+  <APIField name="search.startRow" type="Integer" optional defaults="0">
+    The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+  </APIField>
+  <APIField name="search.type" type="String" optional>
+    The type of Event Logs to return. Only one type may be provided. If omitted, all types will be returned.
+
+    The possible values are:
+
+    * `Information`
+    * `Debug`
+    * `Error`
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Request" src="event-logs/search-request.json" />
+
+### Response
+
+The response for this API contains the Event Logs matching the search criteria in paginated format.
+
+<StandardGetResponseCodes />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="eventLogs" type="Array">
+    The list of Event Logs returned by the search.
+  </APIField>
+  <APIField name="eventLogs[x].id" type="Long">
+    The Event Log unique Id.
+  </APIField>
+  <APIField name="eventLogs[x].insertInstant" type="Long">
+    The [instant](/docs/reference/data-types#instants) when the Event Log was created.
+  </APIField>
+  <APIField name="eventLogs[x].message" type="String">
+    The message of the Event Log.
+  </APIField>
+  <APIField name="eventLogs[x].type" type="String">
+    The type of the Event Log.  Possible values are:
+
+    * `Information`
+    * `Debug`
+    * `Error`
+  </APIField>
+  <APIField name="total" type="Integer">
+    The total number of Event Logs matching the search criteria. Use this value along with the <InlineField>numberOfResults</InlineField> and <InlineField>startRow</InlineField> in the Search request to perform pagination.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Response" src="event-logs/search-response.json" />

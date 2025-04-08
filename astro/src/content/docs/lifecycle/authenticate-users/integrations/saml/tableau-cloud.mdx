@@ -1,0 +1,84 @@
+---
+title: SAML v2 & Tableau Cloud
+description: Setting up Tableau Cloud to allow users to log in using FusionAuth via SAML v2.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: integrations
+quatercategory: saml
+---
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import InlineField from 'src/components/InlineField.astro';
+import Icon from 'src/components/icon/Icon.astro';
+
+## Overview
+
+[Tableau](https://www.tableau.com/) is one of the most advanced data visualization tools used for business intelligence and data analysis. This document covers the configuration necessary to get Tableau Cloud working with FusionAuth as the identity provider using SAML v2, allowing users to log in to your Tableau Cloud account using their FusionAuth credentials.
+
+### Prerequisites
+
+This document assumes you have a running instance of FusionAuth and a working Tableau Cloud application. You will also need admin accounts for both to configure them correctly.
+
+Finally, you'll need a FusionAuth user that you will use to sign into Tableau. You can use an existing user or create a new user for this purpose.
+
+### Enabling SAML for Tableau
+
+In your Tableau Cloud dashboard, navigate to <strong>Settings -> Authentication</strong>. Select <InlineUIElement>Enable an additional authentication method</InlineUIElement>, choose <InlineUIElement>SAML</InlineUIElement> and click <InlineUIElement>Edit connection</InlineUIElement> to open the settings.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/navigation.png" alt="Enable SAML in Tableau CLoud." width="1200" role="bottom-cropped" />
+
+Copy both <InlineField>Tableau Cloud entity ID</InlineField> and <InlineField>Assertion Consumer Service URL (ACS)</InlineField> from <InlineUIElement>Export metadata from Tableau Cloud</InlineUIElement> and write them down. You'll use them shortly.
+
+Now, log in to your FusionAuth instance to create a new application. Navigate to <strong>Applications</strong> and click the <Icon name="plus" /> button and give it a meaningful name (e.g. `Tableau`).
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/application-config.png" alt="Create an Application." width="1200" />
+
+Go to the <strong>SAML</strong> tab and toggle the <InlineField>Enabled</InlineField> switch. Paste the <InlineField>Tableau Cloud entity ID</InlineField> and <InlineField>Assertion Consumer Service URL (ACS)</InlineField> you copied from Tableau to <InlineField>Issuer</InlineField> and <InlineField>Authorized redirect URLs</InlineField> fields in your FusionAuth application, respectively.
+
+_Mapping fields_
+
+| Tableau                                                         | FusionAuth                                          |
+|-----------------------------------------------------------------|-----------------------------------------------------|
+| <InlineField>Tableau Cloud entity ID</InlineField>              | <InlineField>Issuer</InlineField>                   |
+| <InlineField>Assertion Consumer Service URL (ACS)</InlineField> | <InlineField>Authorized redirect URLs</InlineField> |
+
+Click <Icon name="save"/> to save your application.
+
+In the <strong>Applications</strong> page, click on the <Icon name="fa-search"/> button next to your application to view its details. In the modal that opens, scroll down a bit until you reach the <InlineUIElement>SAML v2 Integration details</InlineUIElement> section.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/metadata-view.png" alt="View the Application Metadata." width="1200" role="bottom-cropped" />
+
+Copy the address from <InlineUIElement>Metadata URL:</InlineUIElement> and open it in a new tab in your browser. If the file didn't automatically download, save it.
+
+Go back to your Tableau account and upload this in the <InlineUIElement>Import metadata file into Tableau Cloud</InlineUIElement> field by either dropping the file there or clicking <InlineUIElement>Choose a file</InlineUIElement> and selecting it. Click <InlineUIElement>Apply</InlineUIElement> to load the information from the metadata file into both <InlineField>IdP entity ID</InlineField> and <InlineField>SSO Service URL</InlineField> fields. You should see something like the image below.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/config.png" alt="Uploading metadata file." width="1200" role="bottom-cropped top-cropped" />
+
+Click <InlineUIElement>Test Connection</InlineUIElement> to open a modal with the FusionAuth login screen. Fill in your credentials and submit the form. You should see a <InlineUIElement>Successfully connected to server</InlineUIElement> message below that button.
+
+In <InlineUIElement>Match attributes</InlineUIElement>, map email, first and last name fields like shown in the image below and click <InlineUIElement>Apply</InlineUIElement>.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/mapping.png" alt="Map email  first and last name fields" width="1200" role="bottom-cropped top-cropped" />
+
+### Add a New User
+
+In your Tableau Cloud account, go to <strong>Settings -> Authentication</strong> (the same page you've configured the authentication above) and scroll down to <InlineUIElement>Manage Users</InlineUIElement>. Click <InlineUIElement>Manage Users</InlineUIElement> and then <InlineUIElement>Add Users by Email</InlineUIElement> to send invites to the desired users. Tableau supports SCIM for automated provisioning, as does FusionAuth, but that is beyond the scope of this document. You must provide the same addresses they use to log in to your FusionAuth instance.
+
+After doing so, they should receive an email with a link to the login page. When browsing to that page, they should enter their email address.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/adding-user.png" alt="Adding a user via email address." width="1200" />
+
+They'll be redirected to the FusionAuth login screen when they click <InlineUIElement>Sign in</InlineUIElement>. There, they should fill in the credentials for their FusionAuth account. After they authenticate successfully, they will be sent to the Tableau Cloud dashboard.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/tableau-dashboard.png" alt="Tableau dashboard." width="1200" />
+
+### Troubleshooting
+
+Make sure you paste the right information from <InlineField>Tableau Cloud entity ID</InlineField> and <InlineField>Assertion Consumer Service URL (ACS)</InlineField> fields into your FusionAuth application.
+
+You can also browse to <strong>Settings -> Authentication</strong> in your Tableau Cloud dashboard and click <InlineUIElement>Download log file</InlineUIElement> in <InlineUIElement>Troubleshooting single sign-on (SSO)</InlineUIElement> to further investigate.
+
+Finally, you can edit your FusionAuth application, go to the <strong>SAML</strong> tab and click <InlineUIElement>Debug enabled</InlineUIElement> to create an event log with more information. To see these logs, browse to <strong>System -> Event Log</strong>.
+
+You can also review the [Tableau Cloud SSO docs](https://help.tableau.com/current/online/en-us/saml_config_site.htm).
+

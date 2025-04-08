@@ -1,0 +1,351 @@
+---
+title: System
+description: Learn about the APIs for retrieving and updating the system configuration.
+section: apis
+---
+import Aside from 'src/components/Aside.astro';
+import API from 'src/components/api/API.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import SystemConfigurationResponseBody from 'src/content/docs/apis/_system-configuration-response-body.mdx';
+import GenericUpdateExplanationFragment from 'src/content/docs/apis/_generic-update-explanation-fragment.mdx';
+import SystemConfigurationRequestBody from 'src/content/docs/apis/_system-configuration-request-body.mdx';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import SystemLogsRequestBody from 'src/content/docs/apis/_system-logs-request-body.mdx';
+import JSON from 'src/components/JSON.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import ReindexRequestBody from 'src/content/docs/apis/_reindex-request-body.mdx';
+import PrometheusJvmGauges from 'src/content/docs/_shared/_prometheus-jvm-gauges.mdx';
+
+## Overview
+
+This page contains the APIs that are used for retrieving and updating the system configuration.
+
+## Retrieve the System Configuration
+
+This API is used to retrieve the System Configuration.
+
+### Request
+
+<API method="GET" uri="/api/system-configuration" authentication={["api-key"]} title="Retrieve the System Configuration"/>
+
+### Response
+
+The response for this API contains the System Configuration.
+
+<StandardGetResponseCodes no_errors never_missing />
+
+<SystemConfigurationResponseBody />
+
+## Update the System Configuration
+
+<GenericUpdateExplanationFragment extra_id_verbiage="No Id is required to update this object." capitalized_object_name="System Configuration" />
+
+### Request
+
+<API method="PUT" uri="/api/system-configuration" authentication={["api-key"]} showPatch={true} title="Update the System Configuration"/>
+
+<SystemConfigurationRequestBody />
+
+### Response
+
+The response for this API contains the System Configuration.
+
+<StandardPostResponseCodes />
+
+<SystemConfigurationResponseBody />
+
+## Export System Logs
+
+This API is used to export the System Logs, the response will be a compressed zip archive containing the logs from the configured log directory. When running FusionAuth on Docker or other container service where logs are written to `stdout` and not written to the file system, this API will return an empty archive.
+
+### Request
+
+<API method="GET" uri="/api/system/log/export?dateTimeSecondsFormat={dateTimeSecondsFormat}&includeArchived=true&zoneId={zoneId}" authentication={["api-key"]} title="Export the System Logs"/>
+
+When calling the API using a `GET` request you will send the export criteria on the URL using request parameters.
+
+#### Request Parameters
+
+<SystemLogsRequestBody />
+
+<API method="POST" uri="/api/system/log/export" authentication={["api-key"]} title="Export the System Logs"/>
+
+When calling the API using a `POST` request you will send the export criteria in a JSON request body.
+
+#### Request Body
+
+<SystemLogsRequestBody />
+
+<JSON title="Example Request JSON" src="system-logs/post-request.json" />
+
+### Response
+
+The response for this API will contain a compressed zip of the system logs.
+
+<StandardGetResponseCodes never_missing never_search_error success_code="200" success_message='The request was successful. The response will be a compressed archive byte stream with a "Content-Type" of "application/zip".' />
+
+## Retrieve the Logging Level
+
+The Logger API is used to retrieve the current log level for a particular logger by name.
+
+<Aside type="caution">
+This API is subject to change and should only be used under instruction from FusionAuth support.
+</Aside>
+
+### Request
+
+<API method="GET" uri="/api/logger?name={name}" authentication={["api-key"]} title="Retrieve the logging level by logger name"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="name" type="String" required>
+    The logger name for which you are requesting to retrieve the current logging level.
+  </APIField>
+</APIBlock>
+
+### Response
+
+<StandardGetResponseCodes never_missing never_search_error />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="name" type="String">
+    The name of the logger.
+  </APIField>
+  <APIField name="level" type="String">
+    The current logging level. Possible values are:
+
+    * `error`
+    * `warn`
+    * `info`
+    * `debug`
+    * `trace`
+    * `off`
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Response" src="logger/response.json" />
+
+## Update the Logging Level
+
+This API is used to update the log level for a particular FusionAuth package.
+
+<Aside type="caution">
+This API is subject to change and should only be used under instruction from FusionAuth support.
+</Aside>
+
+### Request
+
+<API method="POST" uri="/api/logger" authentication={["api-key"]} title="Update the logging level by logger name"/>
+
+#### Request Headers
+
+<APIBlock>
+  <APIField name="Content-Type" type="String" required>
+    The request body is expected to be sent using form encoded data. Ensure your HTTP client sends the `Content-Type` request header set to `application/x-www-form-urlencoded`.
+  </APIField>
+</APIBlock>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="name" type="String" required>
+    The logger name for which you are requesting to update the current logging level.
+  </APIField>
+  <APIField name="level" type="String" required>
+    The requested logging level. Possible values are:
+
+    * `error`
+    * `warn`
+    * `info`
+    * `debug`
+    * `trace`
+    * `off`
+  </APIField>
+</APIBlock>
+
+### Response
+
+<StandardGetResponseCodes never_missing never_search_error />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="level" type="String">
+    The logging level. If the request was successful, this value should be equal to the request value. Possible values are:
+
+    * `error`
+    * `warn`
+    * `info`
+    * `debug`
+    * `trace`
+    * `off`
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Response" src="logger/response.json" />
+
+## Rebuild the Elasticsearch index
+
+
+This API is used to rebuild the Elasticsearch index. In general you do not need to rebuild the search index at runtime, and doing will cause additional CPU and I/O overhead to FusionAuth until the request has completed. Please be careful with this API.
+
+This API may be useful if you are building a new FusionAuth environment from an existing database w/out moving over an existing search index. In this scenario you will need to rebuild the search index from the database in order see the Users show up in the UI or use any of the Search APIs.
+
+Beginning in version `1.48.0`, index aliases are used to minimize any disruption to API requests utilizing the search index. In practice this should not affect you, but please be aware that FusionAuth will use the configured index name as an alias, and the actual index name will be suffixed with `_a` or `_b`.
+
+For example, the default name for the user index is `fusionauth_user`. You can expect to see the actual index to be created as `fusionauth_user_a` with an alias added named `fusionauth_user`. Using this same example, when a reindex request is started, a new index named `fusionauth_user_b` will be created, and when the re-index operation is complete the alias `fusionauth_user` will be changed to point to `fusionauth_user_b` and the `fusionauth_user_a` will be deleted.
+
+### Request
+
+<API method="POST" uri="/api/system/reindex" authentication={["api-key"]} title="Rebuild the Elasticsearch index"/>
+
+<ReindexRequestBody />
+
+### Response
+
+<StandardPostResponseCodes never_missing success_code="202" success_message="The request was successful. The re-index request has been started. No response body will be returned." />
+
+## Retrieve the status of an index rebuild
+
+This API is used to retrieve the status of a reindex request. This may be useful to identify if an existing re-index operation has been completed.
+
+### Request
+
+<API method="GET" uri="/api/system/reindex" authentication={["api-key"]} title="Retrieve the status the Elasticsearch reindex operation"/>
+
+### Response
+
+<StandardGetResponseCodes missing_message="A re-index operation is not currently in progress. No response body will be returned." success_code="202" success_message="A re-index operation is currently in progress." />
+
+## Retrieve System Status
+
+The Status API is used to retrieve the current status and metrics for FusionAuth. This is useful for monitoring. For health checks, prefer [the Health API](/docs/apis/system#retrieve-system-health).
+
+By default, this API requires authentication. If you prefer to allow unauthenticated access to this endpoint from local scrapers, you may set `fusionauth-app.local-metrics.enabled=true`. See the  [configuration reference](/docs/reference/configuration) for more info.
+
+<Aside type="note">
+FusionAuth also supports a system status check [using Prometheus](/docs/operate/monitor/prometheus).
+</Aside>
+
+### Request
+
+<API method="GET" uri="/api/status" authentication={["local-bypass", "none"]} title="Return the system status without an API key"/>
+
+<API method="GET" uri="/api/status" authentication={["api-key"]} title="Return the system status with an API key"/>
+
+### Response
+The JSON response from the Status API is complex and subject to change. The only exception is the `version` key.
+
+The `version` key will not change and will be returned as below. As a reminder, an API key is required to obtain this value unless explicitly allowed from `localhost`.
+```json
+{
+  "version": "1.26.1"
+}
+```
+
+The specific contents of the JSON body are not documented here. If you choose to use this API for monitoring purposes you should primarily use the response code to indicate server health. If you receive a `200` you may consider FusionAuth in a healthy state. The response body is intended for use by FusionAuth support.
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | FusionAuth is functioning properly                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 452  | FusionAuth is failing to make a JDBC connection to the configured database.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 453  | The FusionAuth database connection pool connectivity is below the healthy threshold. This means requests are waiting too long to obtain a connection to the database. Additional information may be available in the JSON response which is retrieved when using an API key.                                                                                                                                                                                                                                                                                              |
+| 454  | The FusionAuth database connection pool connectivity is below the healthy threshold. Additional information may be available in the JSON response which is retrieved when using an API key.<br/><br/> As of version `1.51.1` this status code will no longer be returned based upon the connectivity health check. In practice you only need to monitor for `452` to ensure FusionAuth is able to connect to the database. {/* eslint-disable-line */}                                                                                                                    |
+| 460  | FusionAuth is using Elasticsearch and the search service is reporting an unhealthy cluster status. In a cluster with 2+ nodes, this means the cluster status is being reported as `yellow` or `red`. In a single-node Elasticsearch configuration this means the cluster status is `red.`<br/><br/> As of version `1.51.1` this status code will no longer be returned based upon the Elasticsearch health check. If you are using an external Elasticsearch or OpenSearch service, you will want to monitor that separately from FusionAuth. {/* eslint-disable-line */} |
+| 500  | FusionAuth is not functioning properly. This could indicate that the database connectivity failed or one or more services within FusionAuth failed. Consult the FusionAuth [Troubleshooting](/docs/operate/troubleshooting/troubleshooting) to learn more about the failure or contact FusionAuth support for assistance.                                                                                                                                                                                                                                                 |
+
+## Retrieve System Health
+
+<Aside type="version">
+  This API has been available since 1.51.1
+</Aside>
+
+The Health API is used to monitor the health of the FusionAuth service. This endpoint is specifically intended for use by a load balancer to understand when FusionAUth is available, live and ready for requests. Prefer this endpoint to the Status API when using it for a load balancer or a Kubernetes readiness check.
+
+This API does not require an API key.
+
+### Request
+
+<API method="GET" uri="/api/health" authentication={["none"]} title="Return the system health"/>
+
+### Response
+
+This API does not return a JSON response body.
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                   |
+|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | FusionAuth is functioning properly and can accept requests.                                                                                                   |
+| 500  | FusionAuth is not functioning properly. This will generally indicate that FusionAuth is not able to communicate with the database or complete I/O operations. |
+
+
+## Retrieve System Version
+
+The Version API is used to retrieve the current version of FusionAuth.
+
+### Request
+
+<API method="GET" uri="/api/system/version" authentication={["api-key"]} title="Return the FusionAuth system version with an API key"/>
+
+### Response
+
+<StandardGetResponseCodes never_missing never_search_error no_errors />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="version" type="String">
+    The version of the running FusionAuth instance.
+  </APIField>
+</APIBlock>
+
+```json title="Example JSON Response"
+{
+  "version": "1.27.0"
+}
+```
+
+
+## Retrieve System Metrics Using Prometheus
+
+This page contains the API that is used for retrieving FusionAuth application metrics to be used with Prometheus. Please refer to the [Prometheus setup](/docs/operate/monitor/prometheus) guide to understand how to set up Prometheus with the FusionAuth metrics endpoint.
+
+By default, this API requires authentication. If you prefer to allow unauthenticated access to this endpoint from local scrapers, you may set `fusionauth-app.local-metrics.enabled=true`. See the  [configuration reference](/docs/reference/configuration) for more info.
+
+<API method="GET" uri="/api/prometheus/metrics" authentication={["basic", "api-key"]} title="Retrieve FusionAuth application metrics to use with Prometheus"/>
+
+### Request Parameters
+There are no request parameters required with this API.
+
+### Response
+The response to this API call contains currently available metrics. The metrics in this response are subject to change.
+
+<PrometheusJvmGauges />
+
+```plaintext title="Example Prometheus Response"
+  # HELP jvm_memory_heap_committed Generated from Dropwizard metric import (metric=jvm.memory.heap.committed, type=com.codahale.metrics.jvm.MemoryUsageGaugeSet$8)
+# TYPE jvm_memory_heap_committed gauge
+jvm_memory_heap_committed 5.36870912E8
+# HELP jvm_memory_non_heap_used Generated from Dropwizard metric import (metric=jvm.memory.non-heap.used, type=com.codahale.metrics.jvm.MemoryUsageGaugeSet$11)
+# TYPE jvm_memory_non_heap_used gauge
+jvm_memory_non_heap_used 1.66423384E8
+# HELP jvm_memory_pools_CodeHeap__non_profiled_nmethods__used Generated from Dropwizard metric import (metric=jvm.memory.pools.CodeHeap-'non-profiled-nmethods'.used, type=com.codahale.metrics.jvm.MemoryUsageGaugeSet$17)
+# TYPE jvm_memory_pools_CodeHeap__non_profiled_nmethods__used gauge
+jvm_memory_pools_CodeHeap__non_profiled_nmethods__used 3.0334336E7
+# HELP prime_mvc___admin_group_index__requests Generated from Dropwizard metric import (metric=prime-mvc.[/admin/group/index].requests, type=com.codahale.metrics.Timer)
+# TYPE prime_mvc___admin_group_index__requests summary
+prime_mvc___admin_group_index__requests{quantile="0.5",} 0.0
+prime_mvc___admin_group_index__requests{quantile="0.75",} 0.0
+prime_mvc___admin_group_index__requests{quantile="0.95",} 0.0
+prime_mvc___admin_group_index__requests{quantile="0.98",} 0.0
+prime_mvc___admin_group_index__requests{quantile="0.99",} 0.0
+prime_mvc___admin_group_index__requests{quantile="0.999",} 0.0
+prime_mvc___admin_group_index__requests_count 1.0
+```

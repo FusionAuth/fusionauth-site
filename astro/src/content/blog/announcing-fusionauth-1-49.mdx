@@ -1,0 +1,95 @@
+---
+publish_date: 2024-03-07
+title: Announcing FusionAuth 1.49
+description: This update includes bug fixes, security improvements and more.
+authors: Dan Moore
+image: /img/blogs/release-1-49/fusionauth-1-49.png
+categories: Release Updates, Product
+tags: release notes, linkedin, email, magic links, elasticsearch, opensearch
+excerpt_separator: "{/* more */}"
+---
+import JSON from 'src/components/JSON.astro';
+import Aside from '../../components/Aside.astro';
+
+FusionAuth version 1.49.1 shipped in early March 2024. This version includes bug fixes, security improvements, and more.
+
+{/* more */}
+
+The focus of this update was bug fixes. We have some other bigger features planned soon, but wanted to get this release in the hands of the community.
+
+Therefore, I hereby dub 1.49.1 the "Bug fix Beluga" release.
+
+![Bug fixes are awesome.](/img/blogs/release-1-49/beluga-meme.png)
+
+All in all, there are 29 issues, enhancements, and bug fixes included in the 1.49.1 release. As always, please see the [release notes](/docs/release-notes/#version-1-49-1) for a full breakdown of the changes between 1.48.3 and 1.49.1, including any schema changes.
+
+Let's look at some of the more notable fixes.
+
+## LinkedIn Provider Works Again
+
+In 2023, LinkedIn changed their implementation of ["Sign in with LinkedIn"](https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2). They made it more OIDC compliant (yay!). They also kept the old version around for older apps (yay!). But it broke FusionAuth's [LinkedIn Identity Provider](/docs/lifecycle/authenticate-users/identity-providers/social/linkedin) for new LinkedIn integrations (boo!).
+
+The new version is what all new "Sign in with LinkedIn" integrations should use. The older version is [deprecated as of Aug 2023](https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin).
+
+In this release, FusionAuth uses the new LinkedIn Authentication API which is OIDC compatible. This includes more standard OIDC scopes, such as `openid` and `profile`, as well as a more standardized Id token which can be validated using [LinkedIn's discovery document](https://www.linkedin.com/oauth/.well-known/openid-configuration).
+
+We're happy LinkedIn updated its authentication workflow to support OIDC and are excited to support that integration going forward.
+
+## Elasticsearch Reindexing Progress
+
+I don't know about you, but I like progress indicators. I remember, years ago, watching progress indicators all the time, from network downloads to disk defragmentation programs. (RIP `Defrag`.) We all have faster internet and disk now, so hopefully those indicators are a thing of the distant past for you.
+
+But if you use FusionAuth and [reindex your Elasticsearch (or OpenSearch) index](/docs/lifecycle/manage-users/search/search#reindexing-elasticsearch), before this release FusionAuth didn't do a great job of reporting progress. It only reported after processing each batch of 250,000 objects. Depending on the data in the index, this could give the impression that progress halted.
+
+In this release and going forward, FusionAuth will report reindexing progress more regularly to spare everyone some frustration.
+
+## Email Link Workflow Improvements
+
+Speaking of frustration, FusionAuth has dealt with a lot of issues around [our magic links functionality](/docs/lifecycle/authenticate-users/passwordless/magic-links). This seems pretty straightforward:
+
+* create a customizable, localizable email template: check!
+* create a one-time use, random, high entropy string tied to a user account: check!
+* send the email to an account: check!
+
+If the user clicks on the link in the email, FusionAuth is assured they own the email address and should be logged in.  
+
+But, it's not quite that simple.
+
+Corporate email link checkers prevent phishing attempts by automatically checking all links in an email. This means they access links before the user does, making one-time codes useless.
+
+FusionAuth tried to solve the email link checker issue by taking the GET request from the user clicking on a link in an email client and returning an HTML form including the one-time code. After the form loads, FusionAuth submits it via JavaScript, which converts the `GET` into a `POST`. 
+
+In most cases, FusionAuth found web crawlers or link checkers will perform a `HEAD` request, perhaps followed by a `GET` request. If that is all the link checker does, the above strategy avoids one-time code invalidation. The user will get the desired result: they'll be logged in.
+
+However, FusionAuth clients have demonstrated that Outlook Safelinks both performs the `GET` and submits the form. This means that the `POST` request happens, which causes the one-time code to be used before the user is presented with the page. The link is then invalid and when the user clicks it, they arrive at a screen indicating that.
+
+As far as the team could discover, Microsoft does not document any legitimate way to stop this or indicate that the link should not be followed and submitted. This makes sense because documented 'safe link' attributes or some other method of skipping the link check would allow a malicious actor to defeat them.
+
+Microsoft Outlook Safe Links is the most common offender, but not the only one. Others include:
+
+* Proofpoint URL Defense 
+* Mimecast
+
+In this release, in certain circumstances FusionAuth will require the user to submit a form after they click on the emailed link. While this increases login friction, it also guarantees the one-time code won't be used up by any known link checker.
+
+![Preview of the email link confirmation page.](/img/blogs/release-1-49/confirmation-required.png)
+
+## The Rest Of It
+
+As mentioned above, there were 29 issues, enhancements, and bug fixes included in this release. A selection of the changes not covered above includes:
+
+* A fix for maintenance mode issues with PostgreSQL 15.
+* Updated internal dependencies, including libraries like Jackson and MyBatis.
+* A few fixes for the client libraries, including adding support for JWT authentication in our OpenAPI specification.
+
+Read more about all the changes in the [release notes](/docs/release-notes/#version-1-49-1).
+
+## Upgrade At Will
+
+The [release notes](/docs/release-notes/#version-1-49-1) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified or enhanced.
+
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/operate/deploy/upgrade). 
+
+If you have a FusionAuth Cloud deployment, proceed to the "Hosting" tab on your <a href="https://account.fusionauth.io/account/deployment/" target="_blank">account dashboard</a> and upgrade your instances. If you have any questions about the upgrade, <a href="https://account.fusionauth.io/account/support/" target="_blank">please open a support ticket</a>.
+
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).

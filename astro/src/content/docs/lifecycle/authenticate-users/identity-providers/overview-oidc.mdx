@@ -1,0 +1,219 @@
+---
+title: OpenID Connect
+description: Learn more about user login using an OpenID Connect Identity Provider.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: identity providers
+tags: b2b2e
+---
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import InlineField from 'src/components/InlineField.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import ManagedDomainsDescription from 'src/content/docs/lifecycle/authenticate-users/identity-providers/_managed-domains-description.mdx';
+import IdpManagedDomainsTroubleshooting from 'src/content/docs/lifecycle/authenticate-users/identity-providers/_idp-managed-domains-troubleshooting.mdx';
+import Diagram from 'src/diagrams/docs/identity-providers/oidc-redirect-urls.astro';
+
+## Overview
+
+Adding a Login button for a third-party OpenID Connect provider to FusionAuth is simple. This guide will walk you through the steps necessary to enable an OpenID Connect login provider.
+
+
+We also provide specific examples for configuring OpenID connect with some providers whose implementation requires unique configuration. If you'd like us to provide additional examples, please open a request on [GitHub](https://github.com/FusionAuth/fusionauth-site/issues).
+
+* [Configure OpenID Connect with Amazon Cognito](/docs/lifecycle/authenticate-users/identity-providers/enterprise/cognito)
+* [Configure OpenID Connect with Azure Active Directory/Microsoft Entra ID](/docs/lifecycle/authenticate-users/identity-providers/enterprise/azure-ad-oidc)
+* [Configure OpenID Connect with Discord](/docs/lifecycle/authenticate-users/identity-providers/gaming/discord)
+* [Configure OpenID Connect with GitHub](/docs/lifecycle/authenticate-users/identity-providers/social/github)
+* [Configure OpenID Connect with Okta](/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-oidc)
+
+Once you have completed this configuration you will be able to enable the OpenID Connect login button for one or more FusionAuth Applications. Below is an example login page with an OpenID Connect Identity Provider enabled for PiedPiper.
+
+![OpenID Connect Login](/img/docs/lifecycle/authenticate-users/identity-providers/login-openid-connect.png)
+
+## Create an OpenID Connect Identity Provider
+
+To create an Identity Provider navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> and click <InlineUIElement>Add provider</InlineUIElement> and select <InlineUIElement>OpenID Connect</InlineUIElement> from the dialog.
+
+
+This will take you to the <Breadcrumb>Add OpenID Connect</Breadcrumb> screen, and you'll fill out the required fields. If you do not know the Client Id and Client secret for this provider, you will need to contact the owner of the OpenID Connect provider.
+
+If your OpenID Connect provider has implemented a well-known configuration endpoint, FusionAuth will be able to discover the necessary endpoints when you provide the URL to the provider in the `Issuer` field. For example, if you enter `https://login.piedpiper.com` in the `Issuer` field, FusionAuth will attempt to make a request to `https://login.piedpiper.com/.well-known/openid-configuration` to retrieve additional configuration. Alternatively you may provide fully qualified URLs for each of the required endpoints, to do this, toggle off the `Discover endpoints` switch and you will be shown three required fields.
+
+![Add OpenID Connect](/img/docs/lifecycle/authenticate-users/identity-providers/identity-provider-openid-connect-add-top.png)
+
+To enable this identity provider for an application, find your application name in the <InlineField>Applications</InlineField> configuration section at the bottom of this panel. You will always see the `FusionAuth` application, this application represents the FusionAuth user interface. If you wish to be able to log into FusionAuth with this provider you may enable this application.
+
+In the following screenshot you will see that we have enabled this login provider for the `Pied Piper` application and enabled `Create registration`. Enabling create registration means that a user does not need to be manually registered for the application prior to using this login provider.
+
+For example, when a new user attempts to log into `Pied Piper` using this identity provider, if their user does not exist in FusionAuth it will be created dynamically, and if the `Create registration` toggle has been enabled, the user will also be registered for `Pied Piper` and assigned any default roles assigned by the application.
+
+If you do not wish to automatically provision a user for this Application when logging in with PiedPiper, leave `Create registration` off and you will need to manually register a user for this application before they may complete login with this provider.
+
+![OpenID Connect Applications Configuration](/img/docs/lifecycle/authenticate-users/identity-providers/identity-provider-openid-connect-add-bottom.png)
+
+That's it, now the `Login with PiedPiper` button will show up on the login page.
+
+### Form Fields
+
+<APIBlock>
+  <APIField name="Id" optional>
+    An optional UUID. When this value is omitted a unique Id will be generated automatically.
+  </APIField>
+  <APIField name="Name" required>
+    A unique name to identify the identity provider. This name is for display purposes only and it can be modified later if desired.
+  </APIField>
+  <APIField name="Client Id" required>
+    The client Id that will be used during the authentication workflow with this provider. This value will have been provided to you by the owner of the identity provider.
+  </APIField>
+  <APIField name="Client authentication" optional since="1.15.3">
+    The client authentication method to use with the OpenID Connect identity provider.
+
+    See the [OIDC spec concerning Client Authentication](https://openid.net/specs/openid-connect-core-1_0.html#ClientAuthentication) for more information.
+  </APIField>
+  <APIField name="Client secret" optional>
+    The client secret that will be used during the authentication workflow with this provider. This value will have been provided to you by the owner of the identity provider.  This value is required when <InlineField>Client authentication method</InlineField> is not `HTTP basic authentication (client_secret_basic)` or `Request body (client_secret_post)`.
+  </APIField>
+  <APIField name="Discover endpoints">
+    When enabled FusionAuth will attempt to discover the endpoint configuration using the Issuer URL.
+
+    For example, if `https://login.piedpiper.com` is specified as the issuer, the well-known OpenID Connect URL `https://piedpiper.com/.well-known/openid-configuration` will be queried to discover the well-known endpoints.
+
+    When disabled, you may manually enter the required endpoints. This option is helpful if your OpenID Connect provider does not implement the well-known discovery endpoint.
+  </APIField>
+  <APIField name="Issuer" required>
+    This is the public URL of the identity provider.
+
+    When <InlineField>Discover endpoints</InlineField> is enabled, this field is required.
+  </APIField>
+  <APIField name="Authorization endpoint" required>
+    The public URL of the OpenID Connect authorization endpoint.
+
+    When <InlineField>Discover endpoints</InlineField> is disabled, this field is required.
+  </APIField>
+  <APIField name="Token endpoint" required>
+    The public URL of the OpenID Connect token endpoint.
+
+    When <InlineField>Discover endpoints</InlineField> is disabled, this field is required.
+  </APIField>
+  <APIField name="Userinfo endpoint" required>
+    The public URL of the OpenID Connect userinfo endpoint.
+
+    When <InlineField>Discover endpoints</InlineField> is disabled, this field will be required.
+  </APIField>
+  <APIField name="Button text" optional defaults="Login with OpenID Connect">
+    The text to be displayed in the button on the login form.
+  </APIField>
+  <APIField name="Button image" optional>
+    The image to be displayed in the button on the login form. When this value is omitted a default OpenID Connect icon will be displayed on the login button.
+  </APIField>
+  <APIField name="Scope" optional>
+    This optional field defines the scope you're requesting from the user during login. This is an optional field, but it may be required depending upon the OpenID Connect provider you're using.
+  </APIField>
+  <APIField name="Linking strategy" optional since="1.28.0">
+    The linking strategy for the OpenID Connect provider. [See Linking Strategies for more](/docs/lifecycle/authenticate-users/identity-providers/#linking-strategies).
+
+    When the <InlineField>Linking strategy</InlineField> is equal to `Link on email. Create the user if they do not exist.` or `Link on email. Do not create the user if they do not exist.` and the `email_verified` claim is present on the response from the OpenID Connect Identity Provider and the value is `false` a link will not be established and an error will be returned indicating a link cannot be established using an unverified email address.
+  </APIField>
+  <APIField name="Reconcile lambda" optional>
+    A lambda maps custom claims returned from the OpenID Connect provider to the FusionAuth User or Registration.
+
+    To create or configure a lambda, navigate to <Breadcrumb>Settings -> Lambdas</Breadcrumb>. [See the lambda documentation for more](/docs/extend/code/lambdas/).
+  </APIField>
+  <APIField name="Debug enabled" optional defaults="false">
+    Enable debug to create event log entries during the user login process. This will assist you in debugging integration issues.
+  </APIField>
+</APIBlock>
+
+### Managed Domains
+
+![Add OpenID Connect Managed Domain](/img/docs/lifecycle/authenticate-users/identity-providers/identity-provider-openid-connect-add-managed-domains.png)
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Managed domains" optional>
+    <ManagedDomainsDescription type="OpenID Connect"/>
+  </APIField>
+</APIBlock>
+
+### Options
+
+![Add OpenID Connect Options](/img/docs/lifecycle/authenticate-users/identity-providers/identity-provider-openid-connect-add-options.png)
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Use POST method" optional defaults="false">
+    When enabled the authentication request will use the HTTP POST binding with the identity provider instead of the default Redirect binding which uses the HTTP GET method.
+  </APIField>
+  <APIField name="Unique Id claim" optional defaults="sub">
+    The name of the claim that contains the immutable unique Id of the user.
+  </APIField>
+  <APIField name="Email claim" optional defaults="email">
+    The name of the claim that will contain an email address.
+  </APIField>
+  <APIField name="Email verified claim" optional defaults="email_verified" since="1.48.0">
+    The name of the claim that will contain the email verified claim.
+
+    When the linking strategy is configured to `Link on email. Create the user if they do not exist.` or `Link on email. Do not create the user if they do not exist.`, a link will be rejected if this claim is returned by the identity provider and the value is `false`.
+  </APIField>
+  <APIField name="Username claim" optional defaults="preferred_username">
+    The name of the claim that will contain the user's username.
+  </APIField>
+</APIBlock>
+
+## Redirect URLs
+
+When configuring an OpenID Connect identity provider, you'll need to provide a redirect URL. This is the URL to which the identity provider will send a successful request. From there, FusionAuth will process the request, run the [configured lambda](/docs/extend/code/lambdas/openid-connect-response-reconcile), if any, and log the user into FusionAuth. From there, the redirect URL of the application will be sent the authorization code, to exchange for a token. There are, therefore, two redirect URLs in this scenario:
+
+* The application redirect URL, which catches the Authorization Code from FusionAuth and exchanges it for a token. This is a custom route that you write, and so you control the URL. This redirect will be present in any application integrating with FusionAuth whether or not you are using the OpenID Connect identity provider. Learn more about the [Authorization Code grant](/docs/lifecycle/authenticate-users/oauth/#example-authorization-code-grant).
+* The FusionAuth redirect URL, which handles the response from the OpenID Connect identity provider. This will always have the path `/oauth2/callback`. If your FusionAuth server is running at `login.pipedpiper.com`, the FusionAuth redirect URL will be `https://login.pipedpiper.com/oauth2/callback`.
+
+Here is the request flow through an OpenID Connect login where the application is Pied Piper, the authorization server is FusionAuth, and the remote IdP is Azure Active Directory/Microsoft Entra ID.
+
+<Diagram />
+
+## Proof Key for Code Exchange
+
+<Aside type="version">
+Available since 1.21.0
+</Aside>
+
+[Proof Key for Code Exchange](https://tools.ietf.org/html/rfc7636), more commonly referred to as PKCE (pronounced pixy) is an extension to the Authorization Code grant. This extension is intended to help secure the code exchange workflow utilized by this OpenID Connect configuration.
+
+This extension is used by default on all OpenID Connect IdP configurations, and it cannot be disabled. The use of this extension is backwards compatible with identity providers that either do not require or support PKCE.
+
+FusionAuth will pass along the required PKCE request parameters to the OpenID Connect identity provider and if the provider supports PKCE, the extension will be utilized, and if it is not supported it will be ignored.
+
+## Troubleshooting
+
+The first steps to troubleshooting any OIDC connection are:
+
+* Double check all your configuration, including making sure that there are no errant spaces.
+* Turn on debugging and view the event log entries during a typical login flow.
+
+### User info as JWT
+
+The [OIDC specification](https://openid.net/specs/openid-connect-core-1_0.html#UserInfoResponse) allows a client to request the `userinfo` response in various formats:
+
+* JSON
+* Signed JWT
+* Encrypted/nested JWT
+
+FusionAuth supports the JSON format only. If you are trying to set up an OIDC integration and see an error message like:
+
+```
+Request to the [https://example.com/userinfo] endpoint failed. Status code [200].
+Exception encountered.com.inversoft.rest.JSONException : Message: Failed to parse the HTTP response as JSON. Actual HTTP response body:
+eyJoa...
+```
+
+This means that the OIDC endpoint is sending back the `userinfo` data as a JWT. Please review your client registration with the OIDC endpoint administrators to ensure `userinfo` data is sent back as JSON.
+
+### Unable to login
+
+<IdpManagedDomainsTroubleshooting idp_type_name="OIDC" />

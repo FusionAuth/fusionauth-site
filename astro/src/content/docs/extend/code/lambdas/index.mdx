@@ -1,0 +1,136 @@
+---
+title: Lambdas Overview
+description: An overview of FusionAuth's lambdas, which are pluggable JavaScript code that run at various points in the user lifecycle.
+section: extend
+subcategory: code
+tertcategory: lambdas
+navOrder: 0
+---
+import AdvancedPlanBlurb from 'src/content/docs/_shared/_advanced-plan-blurb.astro';
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+import LambdaTypes from 'src/content/docs/_shared/_lambda-types.astro';
+import { YouTube } from '@astro-community/astro-embed-youtube';
+
+
+## Overview
+
+A FusionAuth lambda is a JavaScript function that can be used to augment or modify runtime behavior, typically during a login flow.
+
+FusionAuth leverages lambdas to handle different events that occur inside it as well as customize tokens and messages that FusionAuth sends such as JWTs or SAML responses. A lambda may optionally be invoked when these events occur. Developers can write lambdas in the FusionAuth UI or can upload lambdas via the API.
+
+Here's a brief video covering some aspects of lambdas:
+
+<YouTube id="aKIWILh3qxM" />
+
+## Lambda Types
+
+Lambdas are typed according to their intended purpose. You cannot use a lambda intended for one situation in another.
+
+The following lambdas are currently supported:
+
+{/*  Don't add a new lambda here. Add it to the src/content/json/lambdas.json file and the list will be generated. */}
+<LambdaTypes />
+
+## Example Lambdas
+
+Each lambda documentation page will have an example lambda implementation specific to that functionality.
+The signature of each lambda function differs for different types of lambdas.
+
+### Adding Claims
+
+Here is an example of a FusionAuth lambda that adds additional claims to a JWT:
+
+```javascript
+function populate(jwt, user, registration) {
+  jwt.favoriteColor = user.data.favoriteColor;
+  jwt.applicationBackgroundColor = registration.data.backgroundColor;
+}
+```
+
+## Using Lambda HTTP Connect
+
+Lambda HTTP Connect allows you to make HTTP requests from within a lambda.
+
+<AdvancedPlanBlurb />
+
+[Learn more about making API calls from lambdas](/docs/extend/code/lambdas/lambda-remote-api-calls).
+
+## Engine
+
+### GraalJS
+
+GraalJS is built on top of the Java virtual machine. For security reasons, FusionAuth restricts access to various GraalJS features during a lambda invocation.
+
+The GraalJS Engine [supports ECMAScript 2021](https://www.graalvm.org/22.0/reference-manual/js/JavaScriptCompatibility/).
+
+Here is documentation for the GraalJS engine:
+* https://github.com/oracle/graaljs
+
+This engine has been available since version `1.35.0`.
+
+### Nashorn
+
+<Aside type="caution">
+  As of version 1.49 the Nashorn engine has been removed. Upgrading to version `1.49.0` or beyond will migrate existing lambdas to GraalJS.
+</Aside>
+
+Nashorn is built on top of the Java virtual machine and while Nashorn permits access to the Java API, for security reasons FusionAuth restricts access to all Java objects during a lambda invocation. Here is the documentation provided by Oracle for the Nashorn engine:
+
+The Nashorn engine supports ECMAScript version 5.1.
+
+## Console
+
+In addition to the standard JavaScript objects and constructs, FusionAuth provides the `console` object to allow you to create entries in the Event Log during a lambda invocation.
+
+Available methods:
+
+- `info` - Create an event log of type Information
+- `log` - alias to the `info` method
+- `debug` - Create an event log of type Debug (only when the Lambda has enabled Debug)
+- `error` - Create an event log of type Error
+
+The `log`, `info` and `error` will always cause Event Log entries to be created as a result of the lambda invocation. The `log` method is an alias to the `info` method. Messages created using the `debug` method will only be added to the Event Log when you have enabled <InlineField>Debug</InlineField> in your lambda configuration.
+
+Messages of each type are accumulated during the lambda invocation and a maximum of one event log of each type will be created as a result of the lambda invocation. This means making multiple requests to `console.info` in the lambda function body will result in a single event log of type Information.
+
+When logging objects, you'll need to stringify them to see their data.
+
+```javascript
+function populate(jwt, user, registration) {
+  //...
+  console.log(user); // doesn't log any data other than the fact a user is an object. Probably not what you want.
+  console.log(JSON.stringify(user)); // outputs all the properties of the user object.
+  console.log(JSON.stringify(user, null, ' ')); // pretty prints the user object.
+  //...
+}
+```
+
+## Exceptions
+
+Any exception thrown in a lambda does two things:
+
+* writes an event log entry
+* exits the lambda code path
+
+What that means for the overall user experience depends on the type of lambda. For example, for a JWT populate lambda, the JWT will not be modified. For a reconcile lambda, the user will not be created or linked.
+
+In general, exceptions should not be used for flow control and should instead be used for exceptional situations.
+
+To view exception details, enable debugging on the lambda via the <InlineField>Debug enabled</InlineField> toggle in the administrative user interface or the API.
+
+## Limitations
+
+If the Identity Provider linking strategy is set to `Link Anonymously`, no lambdas will be used by FusionAuth. More information about the [Identity Provider linking strategies is available here](/docs/lifecycle/authenticate-users/identity-providers/#linking-strategies).
+
+The FusionAuth lambdas do not have full access to JavaScript modules and libraries. They also cannot import, require or load other libraries currently. These features might be added to our lambda support in the future.
+
+`console.log` and other `console` methods only take one argument; this differs from the `console` method available in web browsers.
+
+## Managing Lambdas
+
+You can use the [FusionAuth APIs](/docs/apis/lambdas), [client libraries](/docs/sdks) or [the CLI tool](/docs/customize/cli) to manage your lambdas.
+
+It's recommended you keep your lambdas under version control as they are part of the code execution path of FusionAuth.
+
+You can [test your lambdas](/docs/extend/code/lambdas/testing) as well.

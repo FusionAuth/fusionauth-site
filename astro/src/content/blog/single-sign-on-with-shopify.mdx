@@ -1,0 +1,174 @@
+---
+publish_date: 2022-03-21 
+title: "How to Set Up Single Sign-On (SSO) Between FusionAuth and Shopify"
+description: This tutorial demonstrates how to integrate SSO to a Shopify site using FusionAuth.
+authors: Aniket Bhattacharyea
+image: /img/blogs/single-sign-on-shopify/setup-sso-between-shopify-fusionauth.svg
+categories: Tutorial
+tags: single sign on, shopify, integration
+excerpt_separator: "{/* more */}"
+---
+import {Content as WhatIsFusionAuth} from "../../components/blog/what-is-fusionauth.md";
+
+With the rise in the number of internet users, companies feel the need to retain their customers as well as gather information about them. A user management system has thus become a vital part of modern application development. However, without the right tools, it quickly becomes difficult to manage users, especially when you have multiple interrelated services; for example, an application might have an accompanying forum system.
+
+{/* more */}
+
+The trouble with multiple related services like this is that users who sign up for more than one service need to remember different sets of credentials or reuse the same credentials. The first situation creates a poor user experience, and the second situation is a security risk. Furthermore, having different user management systems for different services also means that the same user needs to be duplicated across services, resulting in high infrastructure costs and a management nightmare. This is where SSO comes in.
+
+Single sign-on, commonly known as SSO, is an authentication mechanism that lets users use a single set of credentials to log in to multiple different applications. SSO has two components—a service provider, which is just the application the user is trying to log in to, and an identity provider, like [FusionAuth](/), which handles the authentication and stores the user data. The service provider communicates with the identity provider to retrieve user data.
+
+In this article, you’ll learn how to use [FusionAuth](/) with your [Shopify](https://shopify.com) store.
+
+## What is FusionAuth?
+
+<WhatIsFusionAuth />
+
+## Why FusionAuth?
+
+The identity provider is the most critical component of an SSO system. Since you’ll be trusting the identity provider with your customer information, it is important that it is secure. Furthermore, it needs to be able to integrate with the services you’re using. [FusionAuth](/) checks all those boxes with its extensive set of features. It can be self-hosted for free, or you can use their managed hosting, which is competitively priced. You can connect as many applications as you want to FusionAuth. FusionAuth goes through regular penetration tests and security audits to ensure your data is safe in their hands. It’s also compliant with GDPR, HIPAA, COPPA, and other data protection laws, and is highly customizable; password constraints, themes, email templates, localization—everything can be fine-tuned to match your preferences.
+
+In this tutorial, you will learn how to integrate SSO to a Shopify store using FusionAuth with the help of an OpenId Connect app. When you are done, you can offer a single login experience to your customers, whether they are logging into your Shopify store or other applications such as a help forum or customer support system like Zendesk. Your customers will only have one login to remember across their entire experience with your business.
+
+
+## Prerequisites
+
+To follow along with this tutorial, you will need the following:
+
+1. A [Shopify](https://www.shopify.com/) account with admin access. If you don’t have one, you can follow [this tutorial](https://www.bitcatcha.com/blog/set-up-shopify-online-store/) to sign up for a fourteen-day free trial. You do not need to add a product or set a theme; the account is all that is required. Note your store URL, which should be in the format `https://your-store-name.myshopify.com`. You’ll also need to [disable the password protection](https://help.shopify.com/en/manual/intro-to-shopify/initial-setup/setup-prepare-for-launch#remove-your-online-store-password) on your store.
+
+2. An account in a [FusionAuth](/) instance. You can either sign up for FusionAuth cloud or run your own FusionAuth instance. If you wish to self-host FusionAuth, make sure it is publicly accessible through the internet. I used [this community supported GitHub repo](https://github.com/pankyka/fusionauth-heroku) to deploy an instance to Heroku, but you can use whatever solution you prefer.
+
+## Setting Up SSO with Shopify and FusionAuth
+
+Once you have a Shopify and FusionAuth account ready, you can start integrating them.
+
+
+### Installing the Shopify App
+
+I’ll be using the [Single Sign On - SSO Login](https://apps.shopify.com/single-sign-onsso) app to integrate FusionAuth with Shopify. This app costs money, but has a free trial period.
+
+To install the app, open up the [app store page](https://apps.shopify.com/single-sign-onsso) and click on "Add app".
+
+![Screenshot of app installation page.](/img/blogs/single-sign-on-shopify/screenshot-of-app-installation-page.png)
+
+You will be asked to provide the URL of your Shopify app; after which, you will be able to log in to Shopify.
+
+![Login dialog.](/img/blogs/single-sign-on-shopify/login-dialog.png)
+
+On the next page, click on "Install app", and it will be installed to your Shopify store.
+
+![Screenshot of app installation page.](/img/blogs/single-sign-on-shopify/screenshot-of-app-installation-page-0.png)
+
+Then you’ll be taken to your billing page, where you must accept the recurring charge imposed by the app. You’ll get a free trial for fifteen days. There are, unfortunately, no free solutions for adding single sign-on to your Shopify store.
+
+### Configuring the App
+
+After the app has been installed, click on "Apps" on the sidebar of your Shopify admin dashboard, and then select "Single Sign On - SSO Login". You’ll be taken to the configuration page for the app.
+
+![Screenshot of the apps list.](/img/blogs/single-sign-on-shopify/screenshot-of-the-apps-list.png)
+
+Here, you can change the appearance of the login widget that will be displayed on your store page. You can change the colors, text, and dimensions. If you’re using a custom domain for Shopify, you will need to enter the domain name in the "Domain Name" field.
+
+![The Domain name field.](/img/blogs/single-sign-on-shopify/the-domain-name-field.png)
+
+Scroll down a bit, and in the "Attribute Mapping" section, enter “email” in the "Email" field. This tells the app that the "Email" field present in the FusionAuth response needs to be mapped to the "Email" field of the user.
+
+![The Email field.](/img/blogs/single-sign-on-shopify/the-email-field.png)
+
+Click "Save" once you are done. Then click on the "Setup IdP" button at the top of the page.
+
+![The SETUP IdP button.](/img/blogs/single-sign-on-shopify/the-setup-idp-button.png)
+
+You’ll be redirected to the IdP setup page of the app. *Note that this is a separate website, which will gather information from Shopify to automatically log you in. So you need to disable any browser extensions that might block tracking or third-party cookies only for your Shopify URL. I am using the Brave browser, and I had to turn off shields for it to work.*
+
+In the dashboard, click on the "Add Identity Provider" button.
+
+![Screenshot pointing out the Add Identity Provider button.](/img/blogs/single-sign-on-shopify/screenshot-pointing-out-the-add-identity-provider-button.png)
+
+Click on the "OAuth 2.0" tab. Choose "Custom provider" from the "App Name" dropdown, and enter an "App Display Name", which will be displayed in the dashboard for you to easily identify the application. Then copy the "OAuth Callback URL" value. Though your value will be different, it will look something like `https://store.xecurity.com/moas/broker/login/oauth/callback/20956`. You’ll need this in the next step.
+
+![Screenshot pointing out the App Name and OAuth Callback URL fields.](/img/blogs/single-sign-on-shopify/screenshot-pointing-out-the-app-name-and-oauth-callback-url-fields.png)
+
+Keep this window open as you’ll be coming back to it.
+
+### Configuring FusionAuth
+
+Next, it's time to configure FusionAuth. If this is your first time logging in to your FusionAuth instance, you need to register an account. Just enter your name, email, password, and click "Submit". There's also [a tutorial about setting up an instance the first time](/docs/get-started/download-and-install/setup-wizard).
+
+You can also use this [sample kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/example-apps/shopify-sso.json) to set up everything if you don't want to do these steps manually. Make sure to review the kickstart file and update the authorized redirect URLs, at a minimum. Learn more about [Kickstart here](/docs/get-started/download-and-install/development/kickstart). 
+
+Once you are at the FusionAuth dashboard, navigate to "Applications" and then click the green plus button to add a new application.
+
+![Adding an application.](/img/blogs/single-sign-on-shopify/add-application.png)
+
+On the application creation page, you will need to provide a name for your application. This is so that you can distinguish your application in the dashboard. Go ahead and enter "Shopify".
+
+![Screenshot of the app creation page.](/img/blogs/single-sign-on-shopify/screenshot-of-the-app-creation-page.png)
+
+Now, click on the "OAuth" tab. The default settings should be sufficient; the only thing you need to change is the "Authorized redirect URLs" field. Here, you need to put one or more URLs where the users will be redirected once they are logged in. Paste the "OAuth Callback URL" you copied in the previous step here. `https://store.xecurity.com/moas/broker/login/oauth/callback/20956` is the value for me, but yours will be different.
+
+![Screenshot pointing out Authorized redirect URLs.](/img/blogs/single-sign-on-shopify/screenshot-pointing-out-authorized-redirect-urls.png)
+
+Note that by default, FusionAuth will only provide login functionality, and you will have to manually create new users through the admin panel. This is useful if you’re building an internal site where you do not want users to register themselves. However, if you’re building a shop, you most likely want users to be able to create an account, so let’s enable that. Click on the "Registration" tab and enable the self-service registration. The default settings should suffice.
+
+![The Registration tab.](/img/blogs/single-sign-on-shopify/the-registration-tab.png)
+
+When you’re done, click on the blue "Save" button at the top-right corner of the page.
+
+You’ll now be presented with a list of your applications. Click on the green looking glass icon next to the application that you just created.
+
+![Screenshot pointing out the View button.](/img/blogs/single-sign-on-shopify/screenshot-pointing-out-the-view-button.png)
+
+From the "Details" window, copy the "Client Id" and "Client secret".
+
+![Screenshot pointing out the Client Id and Client secret.](/img/blogs/single-sign-on-shopify/screenshot-pointing-out-the-client-id-and-client-secret.png)
+
+Now, come back to the Shopify IdP setup window from the previous section. 
+
+Paste the Client Id and Client Secret in the appropriate fields. 
+
+Then, fill the following fields. Make sure you change `<your-fusionauth-instance-url>` to the value of your FusionAuth instance URL:
+
+1. "OAuth Authorize Endpoint": `https://<your-fusionauth-instance-url>/oauth2/authorize`
+2. "OAuth Access Token Endpoint": `https://<your-fusionauth-instance-url>/oauth2/token`
+3. "OAuth Get User Info Endpoint": `https://<your-fusionauth-instance-url>/oauth2/userinfo`
+4. "Scope": `openid`
+
+![The IdP setup window.](/img/blogs/single-sign-on-shopify/the-idp-setup-window.png)
+
+Lastly, click on "Save", and the configuration will be complete.
+
+### Testing the Setup
+
+Finally, let’s test the entire setup to make sure everything is working. Visit your Shopify login page.
+
+You should see the login button per your customization earlier. Once you click on it, you’ll be redirected to the FusionAuth sign-in page.
+
+![The FusionAuth login screen.](/img/blogs/single-sign-on-shopify/fusionauth-login-screen.png)
+
+Here, you can sign in with an existing account or register a new account. To create a new account, just click on "Create an account", and you’ll be presented with the registration form.
+
+![The FusionAuth registration screen.](/img/blogs/single-sign-on-shopify/fusionauth-registration-screen.png)
+
+Enter your email and password, and click on "Register". After registering a new account, you can check the "Customers" page in your Shopify admin dashboard and verify that the new user has indeed been registered.
+
+![Screenshot of the customers page.](/img/blogs/single-sign-on-shopify/screenshot-of-the-customers-page.png)
+
+Congratulations, FusionAuth has been successfully integrated with your Shopify store.
+
+## Next steps
+
+While this post walked you through setting up SSO for your Shopify store, there is still more to explore.
+
+* Enable this for end users to allow them to log in with FusionAuth.
+* Modify the look and feel of FusionAuth [using themes](/docs/customize/look-and-feel/) so it looks like your Shopify store.
+* Test logging out.
+* Change the look and feel of the login button on your Shopify site to look like your store.
+
+## Conclusion
+
+This tutorial demonstrated that using SSO can vastly improve the user experience as well as take the hassle out of user management.
+
+You learned how to use FusionAuth as an identity provider and implement SSO with Shopify.
+

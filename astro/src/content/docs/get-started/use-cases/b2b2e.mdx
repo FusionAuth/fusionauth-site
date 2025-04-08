@@ -1,0 +1,233 @@
+---
+title: Business To Business To Employee
+description: Let your customers' users log in to your application with identities managed by your customers.
+section: get started
+subcategory: use cases
+---
+import B2B2EDescription from 'src/content/docs/get-started/use-cases/_b2b2e-description.mdx';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import Aside from 'src/components/Aside.astro';
+import CircusesRelationships from 'src/diagrams/docs/get-started/use-cases/b2b2e/b2b2e-circuses.astro';
+import AddNewCustomers from 'src/diagrams/docs/get-started/use-cases/b2b2e/add-new-customers.astro';
+import UserLoggingIn from 'src/diagrams/docs/get-started/use-cases/b2b2e/user-logging-in.astro';
+import AdminManaging from 'src/diagrams/docs/get-started/use-cases/b2b2e/admin-managing.astro';
+import UserSegmentTable from 'src/content/docs/get-started/core-concepts/_user-segment-table.mdx';
+import CrossTenantUserAccess from 'src/content/docs/get-started/core-concepts/_cross-tenant-access.mdx';
+import APIKeyCrossTenantNote from 'src/content/docs/apis/_api-key-cross-tenant-note.mdx';
+import TenantAuthorizationWarning from 'src/content/docs/get-started/use-cases/_tenant-authorization.mdx';
+
+## Overview
+
+<B2B2EDescription />
+
+<Aside type="note">
+There are multiple users in a business to business to employee (b2b2e) system and the different types can be confusing.
+
+In this document, the term `customer` refers to people who are paying you to use the application you have built. The term `user` refers to the customers' users, typically employees or contractors. Users are the end users of your software application.
+</Aside>
+
+## Problem 
+
+You have an application that you sell to customers; they then have their own users. You want these users to safely log in to your application with a customized experience unique to each customer.
+
+Users' identities are controlled by the associated customer in a datastore they manage. There may be some personal identifiable information of users stored in your authentication system.
+
+You want customers to configure the connection to their own user data store and have your application rely on that connection for authentication and authorization decisions. Your customers control their users' access to your application based on that data store.
+
+## Solution
+
+With the b2b2e use case, you allow the users of your customers to securely authenticate using customers' identity providers, typically via OIDC or SAML. You also allow customers to manage the identity provider configuration.
+
+<Aside type="tip">
+This use case is appropriate when the identity of the end user is *controlled* by the customer. If the identity of the end user is controlled by the end user, the [b2b2c use case](/docs/get-started/use-cases/b2b2c) is a better option.
+</Aside>
+
+## Prerequisites
+
+You have configured your application or applications to [delegate authentication to FusionAuth](/docs/get-started/use-cases/auth-service) via the Authorization Code grant and the hosted login pages.
+
+## Example Scenario
+
+Suppose your company, ClownTime, sells a time tracking system for circuses. Your software package lets circus clowns and performers track their hours.
+
+Your customers are the circuses, and their users are *their* employees or contractors. Each circus has its own remote user directory, and wants to control access to ClownTime through those directories. Access is not simply allowed or disallowed; some employees are managers and should have greater access to reports in ClownTime.
+
+You are super excited because you've landed both Ringling Bros. and Barnum & Bailey Circus and Cirque du Soleil as customers; they have large staffs to manage. Here's a diagram of the relationship between ClownTime, its customers and the end users.
+
+<CircusesRelationships alt="Circus relationships diagram."/>
+
+The entities who fill out time sheets can be either people or companies. For example, `ContractMarketingCorp` is a marketing corporation that promotes Cirque du Soleil on a monthly basis. The set of employees for each circus can also overlap. Jamie Morgan is an example of an employee of both circuses.
+
+## Actors/Components
+
+* your customer and their client application (mobile app or browser)
+* your customer's users and their client application (mobile app or browser)
+* your application
+* FusionAuth
+
+## Implementation Steps
+
+There are a few implementation steps to ensure your customers' employees will be able to enter their timesheets correctly. This is a tenant based implementation, where users are stored in different FusionAuth tenants.
+
+Jamie, the user mentioned above who is an employee of both circuses, has two different accounts, one in each tenant. Those accounts have different ids, profile data, and role assignments, even though the same human is logging into each of them.
+
+The steps include:
+
+* Setting up your system to handle adding new customers
+* Letting customers' users sign in using their employee directory
+* Allowing your customers to manage settings and access reporting
+
+Here's a high level sequence diagram of the process of adding new customers. Each of your customers is a tenant in FusionAuth. With b2b2e, you usually want to capture information needed to configure an identity provider, such as SAML public keys or OIDC client Ids and secrets. Store this in your application and then provide it to FusionAuth via API or SDK. This allows users to log in via the correct identity provider.
+
+<AddNewCustomers alt="Adding new customers." />
+
+Here's a high level sequence diagram of a user logging in to a customer's time tracking system. Your application is responsible for mapping the user to the correct customer.
+
+<UserLoggingIn alt="Users logging in using idp_hints." />
+
+Here's a high level sequence diagram of a customer admin managing their configuration and running reports. The admin functions are integrated with the application admin screens using API calls.
+
+<AdminManaging alt="Tenant admin management." />
+
+Let's look at these steps in detail.
+
+### Adding New Customers
+
+To add new customers, you need to make changes to both the ClownTime time tracking application and FusionAuth configuration.
+
+#### Preparing The ClownTime Application
+
+Make sure your time tracking SaaS application can handle multiple tenants. At a minimum, you need to ensure your application has some way to distinguish each customer's access points. There are a couple of ways to do this, but the most typical is to offer a different hostname for each customer. If the time tracking application is hosted at `example.com`, you might have the following hostnames:
+
+* `ringling.example.com` for Ringling Bros. and Barnum & Bailey Circus time tracking
+* `cirquedesoleil.example.com` for Cirque du Soleil time tracking
+
+Ensure your web application can respond to multiple hostnames. If you don't want customer specific hostnames, there are [other options](/docs/extend/examples/multi-tenant#data-plane-application-tenant-determination).
+
+There are many other aspects of writing a multi-tenant application, such as logically isolating customer data and handling cross-tenant reporting. Such multi-tenant application architecture guidance is beyond the scope of this document.
+
+#### Configuring FusionAuth
+
+For each new customer, you'll need to update configuration in the ClownTime FusionAuth instance. You'll need to:
+
+* create a new tenant
+* create a new application in that tenant
+* configure the correct redirect URL for the application
+* create a new tenant scoped API key with the proper permissions
+* configure the desired identity provider, such as a Google Workspace or Entra ID; this often involves sharing a secret or public key
+* configure the application to use desired identity provider
+* create email templates and themes appropriate for the customer's brand
+
+You can script these configuration steps using one of the [SDKs](/docs/sdks). You can also create a template tenant and copy it, modifying as needed.
+
+Record information such as the API key, the identity provider Id, the client Id and client secret from the application configuration in your application's database. Later, your application will look up this information based on the request hostname.
+
+When using FusionAuth Cloud, you can [configure FusionAuth to respond to different hostnames](/docs/get-started/run-in-the-cloud/cloud#custom-domains). You can also do the same with self-hosted FusionAuth. In addition to the hostnames above, you could also have:
+
+* `auth.ringling.example.com` for Ringling Bros. and Barnum & Bailey Circus login host
+* `auth.cirquedesoleil.example.com` for Cirque du Soleil login host
+
+If you don't use hostname customization, users may see a domain name they don't expect when logging in.
+
+Once the customer is set up, you have a variety of methods to get users into FusionAuth. They can be:
+
+* migrated in from an existing store
+* provisioned 'just-in-time' by logging in using the identity provider (make sure you create a registration for the user if you do this)
+* created directly using the API or SDKs
+* provisioned using SCIM, if source user data store supports SCIM
+
+Pick one or more methods that work for your use case; FusionAuth supports them all.
+
+### User Authentication
+
+When a user comes to the Ringling site hosted by ClownTime, they must be redirected to a FusionAuth authorization URL with the appropriate client Id and redirect URL. This starts the Authorization Code grant to authenticate this user. Here's an [explanation of how to create the URL and what each component means](/docs/lifecycle/authenticate-users/oauth/endpoints#authorization-code-grant-request).
+
+Additionally, the `idp_hint` parameter with a value of the identity provider Id should be added to the authorization URL. This skips the FusionAuth login page entirely. Instead, the browser transparently redirects the user to the identity provider.
+
+If you don't use an `idp_hint`, the user will see a custom themed page. Other interactions with FusionAuth, such as the account locked page, should be themed as well.
+
+After the user authenticates and is redirected to the ClownTime application, the client Id and client secret can be looked up in the application database based on the hostname in the redirect URL. The circus time tracking web application handles many client Ids and secrets, one for each customer. The client Id and client secret are provided to FusionAuth to complete the Authorization Code grant. Here's an [explanation of that request](/docs/lifecycle/authenticate-users/oauth/endpoints#complete-the-authorization-code-grant-request).
+
+The [tokens](/docs/lifecycle/authenticate-users/oauth/tokens) contain information about the user and their roles. The ClownTime application can use them to determine correct levels of access or data to retrieve.
+
+### Customer Administration
+
+In this use case, customer admins don't interact with FusionAuth as much as in the [b2b2c use case](/docs/get-started/use-cases/b2b2c). After all, the source of record for user data is the customer's configured identity provider, not FusionAuth. But there are still a few ways a customer admin user could interact with data held by FusionAuth. Common functionality includes:
+
+* reviewing or updating identity provider information
+* rotating secrets or certificates
+* locking a user
+* running reports on usage
+
+Your application should use a tenant scoped API key and an SDK to allow customer admins to perform management.
+
+### Implementation Notes
+
+For a b2b2e application, quickly disabling access is critical. Keep the lifetimes of the SSO sessions and tokens low enough to satisfy your requirements. You need to balance your security needs while avoiding degrading the user experience by forcing them to log in repeatedly. Setting the access token lifetime to be short and using the refresh grant is one way to solve this. You can also set up a [deny list](/articles/tokens/revoking-jwts). Using tenants for customers allows you to set different SSO lifetime durations as well as other settings for each customer.
+
+With this use case, the remote identity providers are responsible for authenticating users to their satisfaction, including applying multi-factor authentication (MFA). FusionAuth, and by extension your application, fully trusts these remote data stores.
+
+You can mix users that are authenticated by FusionAuth and those authenticated by an identity provider. For this use case, within one tenant, you should pick one user data store or the other. For example, smaller circuses may not have an identity provider set up; these customers' users can be managed by FusionAuth, while Ringling users can be managed by their identity store. If you do mix them and the user login source can be determined by email address, use [managed domains](/docs/lifecycle/authenticate-users/identity-providers/#managed-domains).
+
+Users that are provisioned 'just-in-time' using identity providers can use reconcile lambdas to modify the user's application registration, including roles. With [lambda HTTP connect](/docs/extend/code/lambdas/lambda-remote-api-calls) these lambdas can retrieve data from other systems via `fetch` calls.
+
+### Alternative Implementations
+
+The tenant based solution outlined above has separate user spaces. Remember Jamie, the user discussed above? With tenants, each account is different, even if the user uses the same email to log in.
+
+If you want a shared user space, where the `jamie.morgan@example.com` user has the same profile data and identity, you need a different approach. Instead of separate tenants, have all users in one tenant and model each circus time tracking application as a separate FusionAuth application configuration. Each application has a different identity provider. You can [require registration](/docs/get-started/core-concepts/authentication-authorization#authorization-and-securing-your-application) for all applications and use a [login validation lambda](/docs/extend/code/lambdas/login-validation) to enforce the mapping between applications and identity providers.
+
+With this approach, you can't use tenant scoped API keys. Make sure to build and enforce your own authorization scheme to ensure customer admins from Ringling Brothers couldn't access Cirque De Soleils' users.
+
+If you have more complex modelling needs, you can use entities to [model organizations](/docs/extend/examples/modeling-organizations).
+
+Here's a table which shows tradeoffs between these different approaches.
+
+<UserSegmentTable />
+
+You might want to use one of the alternative options if users must be able to seamlessly track time with a single user account when they work for different circuses. This is similar to the approach of GitHub or Slack.
+
+## Expected Outcome
+
+Your web or mobile application has an isolated set up for each customer. The customer can control the configuration of their identity provider from within the primary application and the customer's user data store determines access for each of the users.
+
+## Edge Cases
+
+<TenantAuthorizationWarning />
+
+The word `tenant` can be overloaded. When you are planning for this use case, make sure you distinguish between tenants in your application and FusionAuth tenants. They don't have to map one to one.
+
+<CrossTenantUserAccess />
+
+Use tenants to model customers when using SCIM to add their users. It's not recommended to have multiple SCIM servers provisioning users into one FusionAuth tenant. SCIM provisioning requires additional work to register users for roles.
+
+When the user logs out of your application, they are logged out of FusionAuth but not out of the identity provider. Logging them out of the identity provider requires identity provider dependent functionality.
+
+If you have users who are managed locally and users that are managed via an identity provider in the same tenant and you require local users to set up MFA, the identity provider managed users may [run into this issue](https://github.com/FusionAuth/fusionauth-issues/issues/2357).
+
+## Other Example Scenarios
+
+Any application which has customers who then have employees or users managed in an identity provider or user data story is a good fit for this use case.
+
+A very common scenario is a private labelled product sold to mid-size or large businesses. Examples include:
+
+* IT ticketing systems
+* Document collaboration systems
+* Procurement software
+* Learning management systems
+
+In each of these cases the customer organization is buying the solution from you, the SaaS vendor, and allowing their employees to access it. This use case is appropriate when the user identity is controlled by the customer.
+
+## Additional Documentation
+
+* [Multi-tenant guide](/docs/extend/examples/multi-tenant)
+* [Determining the tenant for a user](/docs/extend/examples/multi-tenant#data-plane-application-tenant-determination)
+* [Options for segmenting users](/docs/get-started/core-concepts/users#segmenting-users)
+* [Theme customization](/docs/customize/look-and-feel/)
+* [Email template customization](/docs/customize/email-and-messages/)
+* [Blog post about private labeling](/blog/private-labeling-with-multi-tenant)
+* [SAML identity provider](/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2)
+* [OIDC identity provider](/docs/lifecycle/authenticate-users/identity-providers/overview-oidc)
+* [SCIM](/docs/lifecycle/migrate-users/scim)
+* [Searching users](/docs/lifecycle/manage-users/search/user-search-with-elasticsearch)
+* [Tenant scoped API keys](/docs/apis/authentication#using-a-tenant-scoped-api-key)

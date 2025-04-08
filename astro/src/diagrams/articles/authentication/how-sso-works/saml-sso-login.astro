@@ -1,0 +1,37 @@
+---
+import Diagram from "../../../../components/mermaid/SequenceDiagram.astro";
+const { alt } = Astro.props;
+
+//language=Mermaid
+const diagram = `
+sequenceDiagram
+    participant Browser
+    participant z as Zendesk
+    participant FusionAuth as Identity Provider (IdP)
+    participant g as Gusto
+
+    Browser ->> z : Requests app
+    z ->> z : Check session existence, session missing
+    z ->> Browser : Redirect to IdP with a signed AuthNRequest (XML)
+    Browser ->> FusionAuth : Request login page
+    FusionAuth ->> FusionAuth : Validate AuthNRequest (XML)
+    FusionAuth ->> FusionAuth : Check IdP session existence (doesn't exist)
+    FusionAuth ->> Browser : Send login page
+    Browser ->> FusionAuth : Send credentials of user
+    FusionAuth ->> Browser : Redirects to Zendesk with a response (XML)
+    Browser ->> z : Requests App and provides response (XML)
+    z ->> z : Processes response (XML)
+    z ->> Browser : Sends app
+    Browser ->> g : Requests app
+    g ->> g : Check session existence, session missing
+    g ->> Browser : Redirect to IdP with a signed AuthNRequest (XML)
+    Browser ->> FusionAuth : Request login page
+    FusionAuth ->> FusionAuth : Validate AuthNRequest (XML)
+    FusionAuth ->> FusionAuth : Check IdP session existence (exists)
+    FusionAuth ->> Browser : Redirects to Gusto with a response (XML)
+    Browser ->> g : Requests app and provides response (XML)
+    g ->> g : Processes response (XML)
+    g ->> Browser : Sends app 
+`;
+---
+<Diagram code={diagram} alt={alt} />

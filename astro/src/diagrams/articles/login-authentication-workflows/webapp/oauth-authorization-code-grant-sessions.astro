@@ -1,0 +1,47 @@
+---
+import Diagram from "../../../../components/mermaid/SequenceDiagram.astro";
+import * as include from "./_includes.js";
+
+const diagram = `
+sequenceDiagram
+  autonumber
+  ${include.participants}
+  ${include.initialize}
+
+  Note over Browser,Hacker: Login (browser navigates away from WebApp)
+  Browser->>FusionAuth: GET /oauth2/authorize {response_type=code}
+  FusionAuth->>Browser: (Login form HTML)
+  Browser->>FusionAuth: POST /oauth2/authorize (response_type=code)
+  FusionAuth->>Browser: 302 Location: {redirect_uri w/ code}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  Browser->>Store: GET {redirect_uri w/ code}
+  Store->>FusionAuth: POST /oauth2/token<br/>(code, client_secret)
+  FusionAuth->>Store: 200 Ok<br/>(Refresh token and JWT - ignored)
+  Store->>Store: Create session and store User in it
+  Store->>Browser: 302 Location: /shopping-cart<br/>[SessionId HttpOnly w/ domain: store.example.com]
+
+  ${include.shoppingCartSessionLoad}
+
+  ${include.shoppingCartSessionRelogin}
+
+  ${include.sso}
+
+  ${include.forumsInitialize}
+  
+  Note over Browser,Hacker: Login (browser navigates away from WebApp but auto-logs-in since the session exists)
+  Browser->>FusionAuth: GET /oauth2/authorize {response_type=code}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  FusionAuth->>Browser: 302 Location: {redirect_uri w/ code}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  Browser->>Forums: GET {redirect_uri w/ code}
+  Forums->>FusionAuth: POST /oauth2/token<br/>(code, client_secret)
+  FusionAuth->>Forums: 200 Ok<br/>(Refresh token and JWT - ignored)
+  Forums->>Forums: Create session and store User in it
+  Forums->>Browser: 302 Location: /posts<br/>[SessionId HttpOnly w/ domain: forums.example.com]
+
+  ${include.forumsSessionLoad}
+
+  ${include.attackVectors}
+
+  ${include.stolenSessionId}
+`;
+---
+
+<Diagram code={diagram} errorBoxes={[17]} warningBoxes={[23]} infoBoxes={[19]}/>

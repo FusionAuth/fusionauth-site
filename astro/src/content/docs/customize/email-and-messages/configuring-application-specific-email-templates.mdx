@@ -1,0 +1,88 @@
+---
+title: Application Email Templates
+description: Learn how to override email templates with application specific email templates.
+section: customize
+subcategory: email and messages
+---
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import ChangePasswordHTML from 'src/content/docs/_shared/email/_change-password-html.mdx';
+import ChangePasswordText from 'src/content/docs/_shared/email/_change-password-txt.mdx';
+
+<PremiumPlanBlurb />
+
+## Prerequisites
+
+In order for you to get the most value from this guide, you should have a FusionAuth instance, with an email provider and an application set up for a user to log in with.
+
+If you don't have this set up yet, please review the following links:
+
+* [5 minute setup guide](/docs/quickstarts/5-minute-setup-guide) - get a FusionAuth instance up and running with a simple application
+* [Configure Email](/docs/customize/email-and-messages/configure-email) - Configure an email provider. You can also use mailcatcher as a local SMTP client. This is [documented for a docker install](/docs/get-started/download-and-install/docker#other-services).
+
+## Custom Application Email Templates
+
+In FusionAuth, a Tenant can be configured to send transactional emails for various workflows. Each Tenant can fire off emails based on certain events using the default Email Templates that ship with FusionAuth, such as `Email Update`, `Forgot Password`, and `Suspicious login`. Each email template can be customized and localized.
+
+In this guide, you'll learn how to customize these templates at the application level.
+To begin, you'll configure your email template at the Tenant level to ensure it is sent when a user that is registered for your application starts the [Forgot Password Workflow](/docs/apis/users#start-forgot-password-workflow).
+
+First, navigate to <strong>Tenant -> Email -> Template Settings -> Forgot Password</strong>. Select `Forgot Password` from the dropdown, then click the blue save icon.
+
+If you don't see a `Forgot Password` email template, go to <strong>Customizations -> Emails Templates</strong> and click the light green <InlineUIElement>+</InlineUIElement> icon. Fill in `Forgot Password` for the <InlineField>Name</InlineField>, and for the <InlineField>Default Subject</InlineField>, <InlineField>From Email</InlineField>, <InlineField>Default from Name</InlineField> fields, whatever values you require. Paste in the following code for <InlineField>HTML Template</InlineField> and <InlineField>Text Template</InlineField>, respectively.
+
+<ChangePasswordHTML />
+
+<ChangePasswordText />
+
+Both of these templates assume FusionAuth is running at `localhost:9011`. If you are running it at a different address, update the templates with the correct hostname.
+
+Save your template by clicking the blue save icon.
+
+When a user clicks the `Forgot your password?` link on the login page or calls the [forgot password API](/docs/apis/users#start-forgot-password-workflow), this template will be used to build the email sent to the user. This is the start of the workflow to change their password. This template is used so long as the application doesn't have a `Forgot Password` template configured.
+
+Now you need to send an email using the default email template. 
+
+Make sure you've created an Application in the [Application overview]. Then navigate to your application login page by clicking on <strong>Applications</strong> in the navigation sidebar, selecting the green magnifying glass icon, and copying and pasting the [<InlineUIElement>Login URL</InlineUIElement>](/docs/get-started/core-concepts/applications) into an incognito browser.
+
+Click the `Forgot your password?` link, enter your email in the form, and the `Forgot Password` email should be sent to the user's email inbox.
+
+## Configuring Application Email Templates
+
+Finally, override the generic Tenant Email Template just configured with a custom application specific template for a fictitious company called Pied Piper.
+
+Navigate to <strong>Customizations -> Emails Templates</strong> and click the blue edit icon for the <InlineUIElement>Forgot Password</InlineUIElement> email template and copy the <InlineField>HTML Template</InlineField> and <InlineField>Text Template</InlineField> sections into a text file for easier editing.
+
+Create a new email template by going to <strong>Customizations -> Emails Templates</strong> and click the green <InlineUIElement>+</InlineUIElement> icon.
+Fill out the <InlineField>Name</InlineField>, <InlineField>Default Subject</InlineField>, <InlineField>From Email</InlineField>, <InlineField>Default from Name</InlineField> fields.
+Click on `HTML Template` in the bottom right corner, and paste your default template from above into the <InlineField>Default HTML</InlineField>  and <InlineField>Default Text</InlineField> sections. Feel free to edit these templates based on the needs of your application.
+
+Save your template by clicking the blue save icon in the top right corner.
+
+Now configure the email template by navigating to <strong>Applications -> Your Application</strong>. Click the green edit icon, then navigate to <strong>Email -> Templates -> Forgot password</strong> and select your application email template. This option will have the same <InlineField>Name</InlineField> field as above. Click the blue save icon in the top right corner.
+
+## Test the Custom Template
+
+For our demo application Pied Piper, call the [Start Forgot Password Workflow](/docs/apis/users#start-forgot-password-workflow) for a user to start the forgot password flow. You can also use the link on the login page, as previously demonstrated.
+
+```shell
+curl --request POST \
+    YOUR_FUSIONAUTH_INSTANCE/api/user/forgot-password \
+  --header 'Authorization: YOUR_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "applicationId": "85a03867-dccf-4882-adde-1a79aeec50df",
+    "loginId": "dinesh@piedpiper.com",
+     "sendForgotPasswordEmail": true
+}'
+```
+
+Modify the curl command. You'll need to update a number of values.
+
+* Replace `YOUR_API_KEY` with a valid FusionAuth API key.
+* Replace `YOUR_FUSIONAUTH_INSTANCE` with the URL to your instance. If running locally this will be `http://localhost:9011`.
+* Replace the value of `applicationId` with the Id of your application.
+* Replace the value of `loginId` with the email address of the account for which the password is being reset. Remember this user must be registered for the application before the email can be sent.
+
+Once successfully executed, you will see an application specific email sent to the above user's email address.

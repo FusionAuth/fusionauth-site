@@ -1,0 +1,316 @@
+---
+title: FusionAuth App Installation
+description: Learn how to install the FusionAuth App bundle.
+section: get started
+subcategory: download and install
+---
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+import TroubleshootingRuntimeModesAtStartup from 'src/content/docs/get-started/download-and-install/_troubleshooting-runtime-modes-at-startup.mdx';
+import Modes from 'src/content/docs/get-started/download-and-install/_modes.mdx';
+
+## Overview
+
+This guide will assist you with installing FusionAuth App on your own server running Linux, macOS, or Windows. The FusionAuth App
+bundle provides access to the API and the web based user interface.
+
+## Download the Package
+
+Navigate to the [Downloads](/download/) page and find FusionAuth App package for your target platform.
+
+## Install the Package
+
+### Red Hat
+
+To install on a Red Hat based system, use the RPM bundle. Execute this command to install the FusionAuth App RPM (replace `<version>` with
+ the correct version number):
+
+```shell
+sudo rpm -i fusionauth-app<version>.rpm
+```
+
+### Debian
+
+To install on a Debian based system, use the DEB bundle. Execute this command to install the FusionAuth App DEB (replace `<version>` with
+ the correct version number):
+
+```shell
+sudo dpkg -i fusionauth-app<version>.deb
+```
+
+### macOS
+
+To install on macOS, use the `.zip` bundle. Extract the `fusionauth-app` zip bundle anywhere on the file system. Remember where you extract the file.
+ This location will be referred to as `FUSIONAUTH_HOME`. We suggest extracting this file to a directory such as `/usr/local/fusionauth`.
+
+Once the zip bundle has been extracted, the directory structure should look similar to this. If you installed somewhere other the default `FUSIONAUTH_HOME`,
+ your directory structure will be different, this is only for shown as an example.
+
+```shell
+/usr/local/fusionauth/bin
+/usr/local/fusionauth/config
+/usr/local/fusionauth/config/fusionauth.properties
+/usr/local/fusionauth/fusionauth-app
+```
+
+### Windows
+
+Please note, that versions equal to `1.37.0` and less than `1.40.0` did not have a native Windows install option. It is recommended to plan to install version `1.40.0` or later.
+
+To install on Windows, use the `.zip` bundle. Extract the `fusionauth-app` zip bundle anywhere on the file system. Remember where you extract
+ the file. This location will be referred to as `FUSIONAUTH_HOME`. We suggest extracting this file to a directory such as `\fusionauth` on Windows.
+
+Once the zip bundle has been extracted, the directory structure should look similar to this. If you installed somewhere other the default `FUSIONAUTH_HOME`,
+ your directory structure will be different, this is only for shown as an example.
+
+```
+\fusionauth\bin
+\fusionauth\config
+\fusionauth\config\fusionauth.properties
+\fusionauth\fusionauth-app\
+```
+
+Next, install the Windows service by changing to the directory designated as `FUSIONAUTH_HOME` and then running the install command. For versions less than `1.40.0`, adjust the example below to use `\fusionauth\fusionauth-app\apache-tomcat\bin` instead.
+
+```
+cd \fusionauth\fusionauth-app\bin
+FusionAuthApp.exe /install
+```
+
+## Start FusionAuth App
+
+Next, you need to start FusionAuth App and use of the following options to setup the database:
+
+* Enter [Maintenance Mode](#maintenance-mode) where you can visually configure and create the database
+* Use [silent mode](/docs/get-started/download-and-install/silent-mode) and allow FusionAuth to automatically configure and create the database
+
+Use the instructions below to start FusionAuth. FusionAuth App depends on the Search Engine, the Search Engine must be started first.
+
+<Aside type="note">
+Maintenance Mode makes installation simple. If it is not possible for you to use maintenance mode, you can edit the FusionAuth configuration files and leverage [silent mode](/docs/get-started/download-and-install/silent-mode) or install the database schema via the command-line using the [Advanced Installation](#advanced-installation) instructions below.
+
+If you do not plan to use [silent mode](/docs/get-started/download-and-install/silent-mode) or [Maintenance Mode](#maintenance-mode) to configure FusionAuth, do not start FusionAuth at this point. Instead, skip the to [Advanced Installation](#advanced-installation) section and then return to this section after you have configured FusionAuth and the database via the command-line.
+</Aside>
+
+
+```shell title="Linux (RPM or DEB package)"
+sudo systemctl start fusionauth-app
+```
+
+```shell title="macOS (ZIP package)"
+<FUSIONAUTH_HOME>/bin/startup.sh
+```
+
+```plaintext title="Windows (ZIP package)"
+\fusionauth\bin\startup.ps1
+```
+
+```plaintext title="Windows Service"
+net start FusionAuthApp
+```
+
+
+## Runtime Modes
+
+The runtime mode may be configured to trigger or suppress environment specific runtime behavior.
+See the <InlineField>fusionauth.runtime-mode</InlineField> property and the `FUSIONAUTH_RUNTIME_MODE` environment variable definitions in the [Configuration](/docs/reference/configuration) documentation for reference.
+
+The available runtime modes are:
+
+* `development`
+* `production`
+
+<Aside type="caution">
+All FusionAuth nodes in a multi-node cluster must use the **same** runtime mode.
+
+Changing runtime mode of an existing deployment requires stopping all running nodes before starting new nodes with a different runtime mode. Plan for brief downtime during this process.
+</Aside>
+
+### Development
+
+When in development runtime mode, FusionAuth will enter an interactive [Maintenance Mode](#maintenance-mode) when installing and upgrading FusionAuth to aid in the configuration of the database and Elasticsearch, and apply necessary database migrations.
+
+### Production
+
+Production runtime mode should be configured when deploying FusionAuth to a production environment.
+
+When in production runtime mode, maintenance mode will never run.
+Maintenance mode is not intended for multi-node deployments and will not reliably coordinate database migrations among the nodes, which can result in a corrupted database schema.
+Additionally, disabling maintenance mode prevents end-users from navigating to the interactive maintenance mode page rather than the login page at runtime.
+
+In production runtime mode, database migrations will need to be applied out of band using our documented manual method, or using some other external mechanism. See the [Upgrade FusionAuth](/docs/operate/deploy/upgrade) documentation for reference.
+
+In order to enable the production runtime mode, all database and (optional) Elasticsearch configuration properties must be configured properly, see the [Configuration Reference](/docs/reference/configuration).
+The configured database and Elasticsearch will be expected to be running and ready to accept connections.
+
+## Maintenance Mode
+
+<Aside type="note">
+Maintenance mode is only accessible in the development runtime mode.  See [Runtime Modes](#runtime-modes) above for details.
+</Aside>
+You will access FusionAuth App's Maintenance Mode setup via the browser. If you installed FusionAuth App on your local machine, you'll
+access this interface by opening `http://localhost:9011` in your browser. If FusionAuth is running on a remote server, change the server
+name in the URL to match your server's name.
+
+### Database Configuration
+
+The first step will be to configure the database connection to allow FusionAuth to configure the database.
+
+To complete this step you will need to confirm the database type, host, port and name. The connection type defaults to `MySQL` with the default
+MySQL port of `3306`. If you are connecting to a PostgreSQL database the default port is `5432`, your configuration may be different.
+
+In the Super User credentials section you will need to supply FusionAuth with a username and password to the database so that it may create
+a new database and configure the FusionAuth schema. The provided credentials must have adequate authority to complete successfully. These credentials
+are not persisted and only utilized to complete maintenance mode.
+
+<Aside type="caution">
+**Troubleshooting MySQL root user issues**
+
+If you are using MySQL, your server might not be configured to allow the `root` user to login except from the hostname `localhost`. Depending on how your system is
+configured, FusionAuth might use a different IP or hostname such as `127.0.0.1` or `myapp.com`. Therefore, you need to ensure that your MySQL server is configured to allow the `root` user
+to connect from your specific location. To do this, you can create a separate `root` user with the hostname you are targeting, in the example we are using `127.0.0.1`. Here are the
+SQL statements for this method:
+
+
+
+**Create new user method with all permissions to all databases and tables**
+
+```sql
+# replace password with a secure password, or omit the `IDENTIFIED BY` clause to create user without a password
+CREATE USER 'root'@'127.0.0.1' IDENTIFIED BY password;
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+```
+</Aside>
+
+The final section labeled FusionAuth credentials will be used to define a new database user to own the FusionAuth schema and connect to the database
+when FusionAuth starts up. A default `username` and `password` have been generated for you, feel free to utilize these values or modify them to suit your
+InfoSec requirements. These credentials will be created and used by FusionAuth to connect to the database at runtime. These credentials will be saved
+to the `fusionauth.properties` configuration file.
+
+Click the submit button once you have completed this form and if the provided credentials and database connection information was correct you will
+be taken to the next step of the maintenance process or FusionAuth will continue starting up if the configuration is complete.
+
+![Maintenance Mode Database Configuration](/img/docs/get-started/download-and-install/maintenance-mode-database.png)
+
+### Search Configuration
+
+If this is your first time starting up FusionAuth we will need to validate your connection to the search engine service and create a search index
+for use by FusionAuth.
+
+No configuration is required, but you will need to complete this step by clicking on the Submit button to continue. Once this step is complete you
+will complete the initial configuration using the [Setup Wizard](/docs/get-started/run-in-the-cloud/setup-wizard).
+
+![Maintenance Mode Search Configuration](/img/docs/get-started/download-and-install/maintenance-mode-search.png)
+
+## Advanced Installation
+
+These instructions will assist you in editing the FusionAuth configuration file and installing the database schema via the command-line. If you used Maintenance Mode to configure FusionAuth App, you can skip this section.
+
+To manually configure the database schema, you will need to downloaded the corresponding zip file for the version of FusionAuth you'll be installing. Navigate to the [Direct Download](/direct-download) page and find the file named `fusionauth-database-schema-<version>.zip`. That zip archive will contain the necessary SQL files to complete this section.
+
+When you extract the contents of the zip archive you will find `mysql.sql` and `postgresql.sql`.  Typically, these files are used when building a database from the ground up (in other words, creating the schema, in the next section) and are always provided with each release of FusionAuth.  For existing databases, migrations can be run and are included in the `migrations` folder.  Not all versions of FusionAuth require a database migration. FusionAuth versions with migrations are highlighted in the [release notes](/docs/release-notes/).
+
+```
+fusionauth-database-schema/
+├── migrations
+│   ├── mysql
+│   │   ├── 1.1.0.sql
+           //...
+│   │   ├── 1.33.0.sql
+│   └── postgresql
+│       ├── 1.1.0.sql
+           //...
+│       ├── 1.33.0.sql
+├── mysql.sql
+├── passport-to-fusionauth (less common to reference)
+│   ├── mysql.sql
+│   └── postgresql.sql
+└── postgresql.sql
+```
+
+### Database Schema
+
+<Aside type="caution">
+**Security**
+
+By default, unless you configure the database connection using Maintenance Mode, FusionAuth is configured to connect to the database named `fusionauth`
+on `localhost` with the user name `fusionauth` and the password `fusionauth`. For development and testing, you can use these defaults; however, we recommend a more secure password for production systems.
+</Aside>
+
+In the following examples, `<root_user>` is the name of the root user for your database. The `<root_user>` must be either the root user or
+a user that has privileges to create databases. For MySQL, this is generally a user named `root`, on PostgreSQL, this is generally a user named `postgres`, your configuration may vary. Run the following SQL commands to configure the database for use by FusionAuth. Additionally, `<ordinary_user>` and `<ordinary_password>` are non-superuser accounts that are used to connect to the FusionAuth database.
+
+```shell title="MySQL"
+# Create the fusionauth database, replace <root_user> a valid superuser.
+mysql --default-character-set=utf8 -u<root_user> -e "CREATE DATABASE fusionauth CHARACTER SET = 'utf8mb4' COLLATE = 'utf8mb4_bin';"
+
+# Create the non-superuser account in the database, replace <root_user> a valid superuser, <ordinary_user> a valid non-superuser and <ordinary_password> with a secure password.
+mysql --default-character-set=utf8mb4 -u<root_user> -e "CREATE USER <ordinary_user> IDENTIFIED BY '<ordinary_password>'"
+
+# Grant ordinary user all authority to fusionauth database, replace <root_user> a valid superuser and <ordinary_user> with your user from above.
+mysql --default-character-set=utf8mb4 -u<root_user> -e "GRANT ALL ON fusionauth.* TO '<ordinary_user>'@'%'" fusionauth
+
+# Create FusionAuth schema, run this command from the directory where you have extracted the FusionAuth Database Schema zip, replace <ordinary_user> and <ordinary_password> with the values from above.
+mysql --default-character-set=utf8mb4 -u<ordinary_user> -p<ordinary_password> fusionauth < mysql.sql
+```
+
+```shell title="PostgreSQL"
+# Create the fusionauth database, replace <root_user> a valid superuser.
+psql -U<root_user> -c "CREATE DATABASE fusionauth ENCODING 'UTF-8' LC_CTYPE 'en_US.UTF-8' LC_COLLATE 'en_US.UTF-8' TEMPLATE template0"
+
+# Note, if installing on Windows, the Encoding values are different, replace the previous command with this version.
+psql -U<root_user> -c "CREATE DATABASE fusionauth ENCODING 'UTF-8' LC_CTYPE 'English_United States' LC_COLLATE 'English_United States' TEMPLATE template0;"
+
+# Create the non-superuser account in the database, replace <root_user> a valid superuser, <ordinary_user> a valid non-superuser and <ordinary_password> with a secure password.
+psql -U<root_user> -c "CREATE ROLE <ordinary_user> WITH LOGIN PASSWORD '<ordinary_password>';"
+
+# Grant ordinary user all authority to fusionauth database, replace <root_user> a valid superuser and <ordinary_user> with your user from above.
+psql -U<root_user> -c "GRANT ALL PRIVILEGES ON DATABASE fusionauth TO <ordinary_user>; ALTER DATABASE fusionauth OWNER TO <ordinary_user>;"
+
+# Create FusionAuth schema, run this command from the directory where you have extracted the FusionAuth Database Schema zip, replace <ordinary_user> with
+the value from above.
+psql -U<ordinary_user> fusionauth < postgresql.sql
+```
+
+### Configuration
+
+Before starting FusionAuth for the first time, you'll need to add your database connection in the configuration. The name of this
+file is `fusionauth.properties`.
+
+The configuration file may be found in the following directory, assuming you installed in the default locations. If you have installed in an
+alternate location, the path to this file will be different.
+
+Windows::
+  `\fusionauth\config`
+
+macOS or Linux::
+  `/usr/local/fusionauth/config`
+
+For more information about the other configuration options found in this file, see the [Configuration Reference](/docs/reference/configuration) section.
+
+Find the default database JDBC URL, username and password values, verify this information is correct. The default JDBC URL is configured for MySQL,
+if you're using PostgreSQL you'll need to update the URL. See the `database.url` property documentation in [Configuration Reference](/docs/reference/configuration) for more information.
+
+<Aside type="note">
+If you are using MySQL, your `database.url` property must have a parameter at the end like this: `?serverTimezone=UTC`. The `?` character is the
+same as a standard URL parameter, so if you have additional parameters, you should only have a single `?` and parameters should be separated by `&`.
+</Aside>
+
+```ini title="Database Configuration"
+database.url=jdbc:mysql://localhost:3306/fusionauth?serverTimezone=UTC
+database.username=fusionauth
+database.password=fusionauth
+```
+
+FusionAuth should now be configured, the database should be created and everything should be ready to run. You can start FusionAuth using
+the instructions in the [Start FusionAuth App](#start-fusionauth-app) section above.
+
+## Troubleshooting
+
+<TroubleshootingRuntimeModesAtStartup />
+
+## FAQs
+
+<Modes />
+

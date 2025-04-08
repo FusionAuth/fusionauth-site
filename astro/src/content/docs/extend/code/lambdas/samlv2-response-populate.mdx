@@ -1,0 +1,50 @@
+---
+title: SAML v2 Populate Lambda
+description: An overview of the SAML v2 populate lambda.
+navcategory: customization
+section: extend
+subcategory: code
+tertcategory: lambdas
+---
+import SamlResponseFields from 'src/content/docs/extend/code/lambdas/_saml-response-fields.mdx';
+
+In order to handle complex integrations with SAML service providers, you can specify a lambda to be used by the FusionAuth SAML identity provider. This lambda will be invoked prior to the SAML response being sent back to the service provider.
+
+When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+
+## Lambda Structure
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+```javascript
+function populate(samlResponse, user, registration) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `populate` that takes three parameters. The parameters that the lambda is passed are:
+
+* `samlResponse` - the SAML v2 response object. You can modify this object.
+* `user` - the FusionAuth User object. This object is read-only.
+* `registration` - the FusionAuth UserRegistration object. This object is read-only.
+
+The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The SAML response object mimics the format of the XML document, but is designed to be much simpler to use than dealing with the DOM object model. Here is a list of the fields you have access to manipulate in the SAML response:
+
+<SamlResponseFields />
+
+## Assigning The Lambda
+
+Once a lambda is created, you may assign it to one or more applications in the SAML configuration. See the SAML tab in the Application configuration.
+
+## Example Lambda
+
+Here is an example of a simple Lambda that sets a few extra parameters into the SAML response from the User, including some custom data:
+
+```javascript
+function populate(samlResponse, user, registration) {
+  // Set an attribute named 'roles' from the User assigned roles for this registration
+  samlResponse.assertion.attributes['roles'] = registration.roles || [];
+  // Set an attribute named 'favoriteColor' using the custom data attribute named 'favoriteColor'
+  samlResponse.assertion.attributes['favoriteColor'] = [user.data.favoriteColor];
+}
+```

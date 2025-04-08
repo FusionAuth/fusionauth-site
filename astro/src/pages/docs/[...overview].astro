@@ -1,0 +1,74 @@
+---
+import { getCollection } from "astro:content";
+import Layout from 'src/layouts/Docs.astro';
+import { getDocNavContext } from '../../tools/docs';
+import ClickableCard from '../../components/ClickableCard.astro';
+import { specialCaps } from '../../tools/string';
+
+export async function getStaticPaths() {
+  const entries = await getCollection("docs");
+  const ids: string[] = entries.map(entry => entry.id);
+  const pathSet = new Set<string>();
+  ids.forEach(id => {
+    const parts = id.split('/');
+    for (let i = 0; i < parts.length -1; i++) {
+      pathSet.add(parts.slice(0, i +1).join('/'));
+    }
+  });
+  const missingIndexPages = [];
+  pathSet.forEach(path => {
+    if (!ids.includes(`${path}/index.mdx`)) {
+      missingIndexPages.push(path);
+    }
+  })
+  return missingIndexPages.map(overview => {
+    const frontmatter: any = {}
+    const parts = overview.split('/');
+    if (parts.length > 0) {
+      frontmatter.section = parts[0].replaceAll('-', ' ');
+    }
+    if (parts.length > 1) {
+      frontmatter.subcategory = parts[1].replaceAll('-', ' ');
+    }
+    if (parts.length > 2) {
+      frontmatter.tertcategory = parts[2].replaceAll('-', ' ');
+    }
+    if (parts.length > 3) {
+      frontmatter.quatercategory = parts[3].replaceAll('-', ' ');
+    }
+    return {
+      params: { overview }, props: { frontmatter }
+    };
+  });
+}
+const { frontmatter } = Astro.props;
+const navContext = await getDocNavContext(frontmatter.section);
+let currentCat = navContext.category;
+
+if (frontmatter.subcategory) {
+  currentCat = currentCat.subcategories.find(sub => sub.name === frontmatter.subcategory);
+  if (frontmatter.tertcategory) {
+    currentCat = currentCat.subcategories.find(tert => tert.name === frontmatter.tertcategory);
+    if (frontmatter.quatercategory) {
+      currentCat = currentCat.subcategories.find(quat => quat.name === frontmatter.quatercategory);
+    }
+  }
+}
+
+const entries = currentCat.entries || [];
+const subCategories = currentCat.subcategories;
+---
+
+<Layout title={currentCat.name.charAt(0).toUpperCase() + currentCat.name.slice(1) + " documentation" } {frontmatter} {navContext} disableTOC={true} excludeFromSearchIndex={true}>
+  <div class="gap-6 grid grid-cols-1 not-prose lg:grid-cols-2" xmlns="http://www.w3.org/1999/xhtml">
+  {entries.map(entry =>
+    <ClickableCard href={entry.href} title={entry.title} description={entry.description}/>
+  )}
+  </div>
+  {subCategories.length > 0 && <h1 class="capitalize mt-8">{ specialCaps(currentCat.name) } Sub-Sections </h1>}
+  <div class="gap-6 grid grid-cols-1 not-prose lg:grid-cols-2" xmlns="http://www.w3.org/1999/xhtml">
+  {subCategories.map(entry =>
+    <ClickableCard href={entry.href} title={ specialCaps(entry.name)} />
+  )}
+  </div>
+</Layout>

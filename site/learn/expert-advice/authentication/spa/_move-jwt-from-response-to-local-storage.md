@@ -1,1 +1,0 @@
-1. The application running in the browser moves the JWT from the JSON response to local storage

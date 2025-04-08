@@ -1,0 +1,202 @@
+---
+publish_date: 2024-01-09
+title: "Best Practices for OAuth in Mobile Apps"
+description: 'Master the art of secure logins: Where OAuth meets native apps, simplicity shakes hands with security!'
+authors: Alex Patterson
+image: /img/blogs/best-practices-for-oauth-in-mobile-apps/oauth-mobile.png
+categories: Tutorial
+tags: mobile, oauth
+excerpt_separator: "{/* more */}"
+---
+
+import { YouTube } from '@astro-community/astro-embed-youtube';
+import Aside from '/src/components/Aside.astro';
+
+Learn mobile app development & OAuth practices with FusionAuth. Improve user login experience, speed up development, and secure APIs for your applications. Dive into security & single sign-on.
+
+{/* more */}
+
+<YouTube id="iNNd_cIy-Q8" />
+
+## Best Practices for OAuth and Native Apps
+
+OAuth and OpenID Connect (OIDC) are important standards for handling authentication and authorization in modern applications. In this guide, we will cover best practices for implementing OAuth and OIDC in native mobile apps.
+
+## The Problem
+
+When building a native mobile app like a ridesharing service called Ubyft, there are several key problems related to user login and API access that must be addressed:
+
+- **User Login** - How does a user gain access to the app's features after signing up? This includes flows for registration, login, managing profiles, and more.
+- **API Access** - How does the native app access API resources that live outside the app itself, whether first-party APIs owned by the app creator or third-party APIs like Facebook?
+- **Speed of Development** - How can we build fast while also following security best practices around auth?
+
+## Approaches for Solving the Login Problem
+
+There are a few main approaches we could take:
+
+### Native Login
+
+Code the login screens and identity management directly in the app, hitting our own custom APIs
+
+*Pros:* 
+- Full control and customization.
+- You own everything
+
+*Cons:* 
+- Large Dev Ops burden around ID management
+- You own everything
+
+How does [Native Login](/articles/login-authentication-workflows/mobile/native-login-form-to-fusionauth-jwts-refresh-tokens) work? Below you can see how a flow would work with an endpoint at ubyft.com for authentication and one for all of the rideshare data at rides.ubyft.com.
+
+1. Login using your mobile application to your applications authentication endpoint.
+![Diagram of login to site](/img/blogs/best-practices-for-oauth-in-mobile-apps/native-1.png)
+1. Authentication enpdpoint passes back authentication token.
+![Diagram of AT passing to mobile device](/img/blogs/best-practices-for-oauth-in-mobile-apps/native-2.png)
+1. Authentication token is stored on device.
+![Full Screen App](/img/blogs/best-practices-for-oauth-in-mobile-apps/native-3.png)
+1. Authentication token is used to call API endpoints in rides.ubyft.com.
+![Full Screen App](/img/blogs/best-practices-for-oauth-in-mobile-apps/native-4.png)
+1. The rides.ubyft.com application must check that this is a vaid authentication token and then pass back the data in JSON format.
+![Full Screen App](/img/blogs/best-practices-for-oauth-in-mobile-apps/native-5.png)
+
+What do you own during Native Login?
+- All the login flows
+- Securing the password
+- Designing API security
+- Mediating access to third party APIs
+- New auth developments and requirements
+- Siloed user data
+
+### Native Hybrid
+
+Use a third-party identity provider like Firebase but still code the UI
+
+*Pros:* 
+- You don’t own everything
+- You still own UX
+- Leverage third-party ID expertise 
+
+*Cons:* 
+- Vendor lock-in
+- You don't own everything
+
+<Aside type="note">
+We have a great article on [Avoiding Authentication System Lock-In](/articles/authentication/avoid-lockin).
+</Aside>
+
+1. Login using your mobile application to third-party authentication endpoint.
+![Diagram of login to site](/img/blogs/best-practices-for-oauth-in-mobile-apps/native-hybrid-1.png)
+1. Third-party authentication enpdpoint passes back authentication token.
+![Diagram of AT passing to mobile device](/img/blogs/best-practices-for-oauth-in-mobile-apps/native-hybrid-2.png)
+1. Third-party authentication token is stored on device.
+![Full Screen App](/img/blogs/best-practices-for-oauth-in-mobile-apps/native-hybrid-3.png)
+1. Authentication token is used to call API endpoints in rides.ubyft.com.
+![Full Screen App](/img/blogs/best-practices-for-oauth-in-mobile-apps/native-4.png)
+1. The rides.ubyft.com application must check that this is a vaid authentication token and then pass back the data in JSON format.
+![Full Screen App](/img/blogs/best-practices-for-oauth-in-mobile-apps/native-5.png)
+
+
+### OAuth and OIDC
+
+- Standards-based approach that centralizes ID concerns
+
+*Pros:* 
+- Leverage auth server
+    - Functionality
+    - Security
+
+*Cons:* 
+- Less UI control
+- Costs
+
+<Aside type="note">
+The idea of having one central place where you can control who has access to which applications makes more sense. The more applications you have, the more a central identity store makes sense.
+</Aside>
+
+## OAuth and OIDC Flows for Native Apps
+
+Now let's do a deep dive into OAuth and OIDC, which externalize ID concerns by:
+
+- Authenticating users against a centralized *identity provider*
+- Providing standard *access tokens* that apps can use to access APIs
+
+This gives us increased security and speed of development at the cost of some UI control.
+
+### Initialization
+
+We start by registering our app client in the identity provider and getting a *client Id*:
+
+### User Login Flow
+
+The login flow works as follows, hitting a series of redirect URIs:
+
+1. App requests a login page from the Id provider
+2. User logs in by providing credentials
+3. App receives standard Id and access tokens
+
+To initialize this, the app makes a request like this:
+
+```
+https://id.ubyft.com/authorize?client_id={CLIENT_ID}&response_type=code&scope=openid&redirect_uri=ubyft://auth&state={STATE}
+```
+
+The parameters:
+
+- `client_id`: App client ID
+- `response_type`: "code" for auth code flow
+- `scope`: Request ID token
+- `redirect_uri`: Registered URI
+- `state`: Pass info to redirect URI
+
+### Access Tokens
+
+After login, the app receives OAuth *access tokens* it can use to access APIs.
+
+- Access tokens grant access to API resources
+- They are time-bound and need to be refreshed
+
+By requesting a `offline_access` scope, the app can also get a *refresh token* to fetch new access tokens.
+
+### Identity Tokens
+
+The OIDC flow provides an *ID token* for user authentication:
+
+- ID tokens provide user identity information
+- They contain *claims* like user Id, name, email
+- Apps should verify the signature and other security claims
+
+## Securing OAuth Tokens
+
+Because access tokens grant access, we must store them securely:
+
+- On iOS, use the keychain
+- On Android, use EncryptedSharedPreferences
+- HTTPS Only
+- Don't pass in URL or query string
+
+Tokens should also be transmitted over TLS to prevent interception.
+
+## Single Sign-On
+
+We can leverage Google/Apple SSO instead of a private identity provider:
+
+- Lower friction since users already have accounts
+- Downside is less control and lock-in
+
+## System Browser vs. Webviews
+
+It's best to use the native *system browser* over webviews:
+
+![Full Screen App](/img/blogs/best-practices-for-oauth-in-mobile-apps/2.png)
+
+- Increased security
+- Required by Google/Apple
+- Enables SSO across apps
+
+Trust me if she can see it so will you!
+
+![Native Login Diagram](/img/blogs/best-practices-for-oauth-in-mobile-apps/1.png)
+
+## Conclusion
+
+Using OAuth and OIDC enables secure sign-on flows while accelerating development. By following the practices outlined here around protected tokens and platform-specific guidelines, native apps can build robust Id management.

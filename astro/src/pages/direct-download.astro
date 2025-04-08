@@ -1,0 +1,146 @@
+---
+import { getDocNavContext } from '../tools/docs';
+import Layout from 'src/layouts/Docs.astro';
+import DirectDownloads from '../content/docs/get-started/_direct-downloads-preamble.mdx';
+
+const title = 'FusionAuth Downloads | All Versions and Release Notes';
+const description = 'Download the latest version of FusionAuth for your platform. See release notes and installation guides.';
+
+const navContext = await getDocNavContext('get started');
+
+const frontmatter = {section: 'get started'};
+---
+<script>
+  // dynamically generate the download links
+  const render = (versionsResp) => {
+    let archived = false;
+    const releases = versionsResp.versions.map(version => {
+      if (version === '1.43.2') {
+        archived = true;
+      }
+      const idVersion = version.replace(/\./g, '_');
+      const mVersion = version.replace(/-/g, '.');
+      const anchor = version.replace(/\./g, '-');
+      const releaseNotesLink = archived
+          ? `/docs/release-notes/archive#version-${anchor}`
+          : `/docs/release-notes#version-${anchor}`;
+
+      return { idVersion, mVersion, releaseNotesLink, version };
+    });
+
+    const mappedHtml = releases.map(release => `
+    <div id=${release.idVersion} class="mt-5">
+      <h3>${release.version}
+      <div class="mb-6 text-sm">
+        <a href=${release.releaseNotesLink}>Release Notes</a>
+        <span>|</span>
+        <a href="/docs/get-started/download-and-install/packages">Installation Guide</a>
+      </div>
+      </h3>
+      
+      <div>
+      <a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-app-${release.version}.zip">
+        fusionauth-app-${release.version}.zip
+      </a>
+      &nbsp;
+      <span>
+        [<a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-app-${release.version}.zip.sha256">sha256</a>]
+      </span>
+      <br>
+      <a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-app_${release.version}-1_all.deb">
+        fusionauth-app_${release.version}-1_all.deb
+      </a>
+      &nbsp;
+      <span>
+        [<a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-app_${release.version}-1_all.deb.sha256">sha256</a>]
+      </span>
+      <br>
+      <a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-app-${release.mVersion}-1.noarch.rpm">
+        fusionauth-app-${release.mVersion}-1.noarch.rpm
+      </a>
+      &nbsp;
+      <span>
+        [<a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-app-${release.mVersion}-1.noarch.rpm.sha256">sha256</a>]
+      </span>
+      <br>
+      <br>
+      <a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-search-${release.version}.zip">
+        fusionauth-search-${release.version}.zip
+      </a>
+      &nbsp;
+      <span>
+        [<a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-search-${release.version}.zip.sha256">sha256</a>]
+      </span>
+      <br>
+      <a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-search_${release.version}-1_all.deb">
+        fusionauth-search_${release.version}-1_all.deb
+      </a>
+      &nbsp;
+      <span>
+        [<a href="https://files.fusionauth.io/products/fusionauth/{version}/fusionauth-search_${release.version}-1_all.deb.sha256">sha256</a>]
+      </span>
+      <br>
+      <a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-search-${release.mVersion}-1.noarch.rpm">
+        fusionauth-search-${release.mVersion}-1.noarch.rpm
+      </a>
+      &nbsp;
+      <span>
+        [<a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-search-${release.mVersion}-1.noarch.rpm.sha256">sha256</a>]
+      </span>
+      <br>
+      <br>
+      <a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-database-schema-${release.version}.zip">
+        fusionauth-database-schema-${release.version}.zip
+      </a>
+      &nbsp;
+      <span>
+        [<a href="https://files.fusionauth.io/products/fusionauth/${release.version}/fusionauth-database-schema-${release.version}.zip.sha256">sha256</a>]
+      </span>
+      &nbsp;
+      (<a href="/docs/get-started/download-and-install/fusionauth-app#advanced-installation">See Advanced Installation</a>)
+    </div>
+    `).join('\n');
+
+    document.getElementById('downloads-container').innerHTML = mappedHtml;
+
+    const toc = releases.map(release => `
+    <li>
+      <div class="group" data-widget="scroll-spy-item">
+        <a href=#${release.idVersion} class="block font-medium text-slate-600 text-sm dark:text-slate-400 dark:group-[.active]:text-indigo-400 dark:hover:text-slate-100 group-[.active]:text-indigo-600 hover:text-slate-900">
+          ${release.version}
+        </a>
+      </div>
+    </li>
+    `).join('\n');
+
+    document.getElementById('toc-list').innerHTML = toc;
+  };
+
+  // check if we have a saved copy in local storage
+  const cachedResponse = localStorage.getItem('io.fusionauth.downloads');
+  if (cachedResponse) {
+    render(JSON.parse(cachedResponse));
+  }
+
+  // go get the latest
+  const versionResp = await fetch('https://account.fusionauth.io/api/version');
+  const versions = await versionResp.json() as { versions: string[]; };
+  versions.versions.reverse();
+
+  // update the page
+  render(versions);
+
+  // save it
+  localStorage.setItem('io.fusionauth.downloads', JSON.stringify(versions));
+</script>
+<Layout {title} {description} {navContext} {frontmatter} noSideNav={true}>
+  <DirectDownloads />
+  <div id="downloads-container"> </div>
+  <section class="mt-12">
+    <h2>Questions or Issues? <img class="inline my-0" width="42" src="/img/landing/gear-question-mark.svg" alt="Questions?"></h2>
+    <p>
+      If you have questions or issues, join our active <a class="text-blue-500 visited:text-indigo-500" href="/community">Developer Community</a>, or take a look at our <a class="text-blue-500 visited:text-indigo-500" href="/pricing">Hosting and Support Plans</a>.
+    </p>
+  </section>
+</Layout>
+

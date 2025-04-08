@@ -1,0 +1,44 @@
+---
+name: publish-redirect-rules
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/redirects.json'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/redirects.json'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          sparse-checkout: src/redirects.json
+
+      - name: validate json
+        run: cat src/redirects.json | jq empty
+
+      - name: set aws credentials
+        if: github.event_name == 'push'
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
+        with:
+          role-to-assume: arn:aws:iam::121700706967:role/gha-fusionauth-site-prod
+          role-session-name: github-actions
+          aws-region: us-east-1
+
+      - name: upload file to s3
+        if: github.event_name == 'push'
+        run: aws s3 cp src/redirects.json s3://${{ secrets.S3_ARTIFACTS_PROD }}/lambda/site-origin-request-handler/redirects.json

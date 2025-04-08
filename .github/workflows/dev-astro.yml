@@ -1,0 +1,61 @@
+#
+# Build the astro-based artifacts and deploy them to the dev website S3 bucket
+#
+name: Dev astro deployment
+env:
+  BUCKET_NAME: "fusionauth-dev-astro"
+  PUBLISHER_ROLE_ARN: "${{ secrets.DEV_PUBLISHER_ROLE_ARN }}"
+  AWS_REGION: "us-east-2"
+on:
+  # Runs on pushes targeting the default branch
+  # push:
+  #   branches: ["release/1.53.0"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      branch:
+        required: true
+        type: string
+
+permissions:
+  id-token: write # Used to get an access token, which is then used to assume an AWS IAM role
+  contents: read
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "astro-dev"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest-8-core-32-gb
+    defaults:
+      run:
+        working-directory: ./astro
+    permissions:
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          ref: ${{ inputs.branch }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
+        with:
+          role-to-assume: ${{ env.PUBLISHER_ROLE_ARN }}
+          role-session-name: site_publisher_session
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Install modules
+        run: npm ci
+      - name: Build application
+        run: npm run build
+      - name: Deploy to S3
+        run: |
+          aws s3 sync ./dist/ s3://${{ env.BUCKET_NAME }} --delete
+          aws s3 sync ./cdn/ s3://${{ env.BUCKET_NAME }}/cdn/
+      - name: CloudFront request handler and cache invalidation
+        working-directory: .
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.DEV_DISTRIBUTION_ID }} --paths "/*"

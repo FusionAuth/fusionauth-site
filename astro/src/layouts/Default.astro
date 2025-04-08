@@ -1,0 +1,215 @@
+---
+import '../css/style.css';
+import CTA from '../components/cta/CTA.astro';
+import Head from '../components/Head.astro';
+import Header from '../components/Header.astro';
+import Navigation from '../components/Navigation.astro';
+import GitHubEdit from '../components/GitHubEdit.astro';
+import Search from '../components/search/Search.astro';
+import SectionNavigation from '../components/SectionNavigation.astro';
+import TOC from '../components/TOC.astro';
+import Article from './Article.astro';
+import ArticleNav from '../components/nav/ArticleNav.astro';
+import Icon from '../components/icon/Icon.astro';
+import { specialCaps } from '../tools/string';
+import IndexableBody from '../components/search/IndexableBody.astro';
+
+interface Props {
+  author?: string;
+  date?: string;
+  description?: string;
+  disableTOC?: boolean;
+  excludeFromSearchIndex?: boolean,
+  frontmatter?: Record<string, any>,
+  headings?: any[];
+  icon?: string;
+  image?: string;
+  openGraphImage?: string;
+  section?: string;
+  sections?: any[];
+  sideMenu?: any[];
+  title?: string;
+  cta?: string;
+  contribute?: boolean;
+  breadcrumbs?: any[];
+  maxTocDepth?: number;
+}
+
+let {
+  author,
+  date,
+  description = "Looks like the developers forgot to include a description for this page. Sorry about that.",
+  disableTOC,
+  excludeFromSearchIndex = false,
+  frontmatter,
+  headings = [],
+  icon,
+  darkIcon,
+  image,
+  openGraphImage,
+  section,
+  sections = [],
+  sideMenu = [],
+  title = "",
+  cta = "DownloadCTA",
+  contribute = true,
+  breadcrumbs = [],
+  searchFilters = {},
+  maxTocDepth,
+}: Props = Astro.props;
+
+author = frontmatter.author ? frontmatter.author : author;
+date = frontmatter.date ? frontmatter.date : date;
+description = frontmatter.description ? frontmatter.description : description;
+icon = frontmatter.icon ? frontmatter.icon : icon;
+darkIcon = frontmatter.darkIcon ? frontmatter.darkIcon : darkIcon;
+image = frontmatter.image ? frontmatter.image : image;
+section = frontmatter.section ? frontmatter.section : section;
+title = frontmatter.title ? frontmatter.title : title;
+disableTOC = frontmatter.disableTOC ? frontmatter.disableTOC : disableTOC;
+cta = frontmatter.cta ? frontmatter.cta : cta;
+
+if (author && !searchFilters['author']) {
+  searchFilters = {...searchFilters, author: [author]}
+}
+if (section && !searchFilters['section']) {
+  searchFilters = {...searchFilters, section: [section]}
+}
+
+const articleStyles = [
+  // base
+  "pb-24 prose prose-slate dark:prose-invert max-w-none overflow-x-auto w-full",
+  // a
+  "dark:prose-a:text-indigo-400 dark:hover:prose-a:text-indigo-400 dark:hover:prose-a:border-b-indigo-400 dark:prose-a:border-b-indigo-400 hover:prose-a:border-b-2 hover:prose-a:border-b-indigo-700 prose-a:border-b prose-a:border-b-indigo-700 prose-a:no-underline prose-a:text-indigo-700",
+  // code
+  "dark:prose-code:bg-slate-700 prose-code:font-bold prose-code:bg-slate-200 prose-code:p-0.5 prose-code:rounded-sm prose-code:break-words prose-code:px-2 prose-code:rounded-md",
+  // headings
+  "dark:prose-headings:text-slate-200 prose-headings:scroll-mt-24 prose-headings:text-slate-800 prose-headings:mb-4",
+  // h2
+  "prose-h2:mt-8",
+  // li
+  "prose-li:text-sm",
+  // p
+  "prose-p:text-sm prose-p:font-normal prose-p:leading-6 dark:prose-p:text-slate-300 prose-p:text-slate-800",
+  // span
+  "prose-span:text-slate-800 dark:prose-span:text-slate-300",
+  // table
+  "prose-table:block prose-table:rounded prose-table:overflow-x-scroll",
+  // td
+  "prose-td:border prose-td-border-collapse prose-td:border-opacity-75 prose-td:border-slate-400 dark:prose-td:border-slate-700 prose-td:px-4 prose-td:text-sm prose-td:font-normal prose-td:leading-5",
+  // th
+  "prose-th:border prose-th-border-collapse prose-th:border-opacity-75 prose-th:border-slate-400 dark:prose-th:border-slate-700 prose-th:px-4 prose-th:py-4 prose-th:text-base prose-th:font-semi-bold prose-th:leading-5",
+  // tr
+  "even:prose-tr:bg-slate-100 dark:even:prose-tr:bg-slate-800/50",
+];
+
+const mainStyles = [
+  "mx-auto max-w-8xl px-4 py-8",
+  "flex 2xl:container"
+];
+
+const sideNavStyles = [
+  "lg:bg-opacity-0 hidden dark:bg-slate-900 bg-white absolute top-[110px] px-4 py-4 w-64 -left-0 z-10",
+  // spacing
+  "lg:block lg:max-w-[270px] lg:w-full lg:pr-4 lg:mr-6 lg:py-0 lg:sticky lg:top-24 lg:self-start overflow-y-auto lg:max-h-[calc(100vh-100px)]"
+];
+
+const tocStyles = [
+  "bottom-0 hidden overflow-y-auto pb-10 pt-0 lg:block w-full max-w-[240px] ml-6 sticky top-24 self-start overflow-y-auto lg:max-h-[calc(100vh-100px)] z-10"
+];
+---
+
+<!DOCTYPE html>
+<html class="antialiased min-h-full" lang="en">
+<Head title={title} description={description} canonicalUrl={frontmatter.canonicalUrl} {openGraphImage} {searchFilters} />
+<IndexableBody {excludeFromSearchIndex}>
+  <slot name="nav"/>
+  <main class:list={mainStyles}>
+  <!-- Left sidebar -->
+  <div id="side-nav" class:list={sideNavStyles}>
+    <!-- Relative container for the sticky search -->
+    <div class="relative">
+      <!-- Mobile close button -->
+      <button type="button" class="absolute ml-6 right-1 top-0 lg:hidden" data-widget="visibility-button" data-element="side-nav">
+        <i class="fa-regular fa-x text-lg"></i>
+      </button>
+
+        <!-- Search button -->
+        <div class="bg-white hidden pb-6 pt-0 sticky mt-0 top-0 self-start z-10 dark:bg-slate-900 lg:block">
+          <button type="button" class="flex items-center pl-2 pr-3 py-1.5 border border-slate-900/10 rounded-md shadow-sm text-slate-400 text-sm w-full dark:bg-slate-800 dark:highlight-white/5 dark:hover:bg-slate-700 dark:hover:border-slate-500 hover:border-slate-300" data-widget="search-button">
+            <i class="fa-light fa-magnifying-glass mr-3"></i>
+            <span>Search...</span>
+            <span class="font-semibold ml-auto pl-3 text-xs" data-widget="search-key-hint"></span>
+          </button>
+        </div>
+
+      <!-- Allow Docs to insert their own here -->
+      { Astro.slots.has('sideNav') &&
+          <slot name="sideNav"></slot>
+      }
+
+      <!-- Default Nav i.e. articles, may just break this out later-->
+      { !Astro.slots.has('sideNav') && <>
+          <!-- Section nav -->
+        <SectionNavigation items={sections}/>
+
+        <!-- Sidebar nav -->
+        <Navigation items={sideMenu}/>
+
+        <!-- Contribute -->
+        { contribute && <GitHubEdit {...Astro.props} /> }
+
+      </>}
+
+      </div>
+    </div>
+
+    <!-- Main content section -->
+    <article data-pagefind-body class:list={articleStyles}>
+      <div class="flex items-start">
+        <div class="flex-grow">
+          {breadcrumbs.length > 0 && <div class="flex flex-row not-prose hidden lg:block items-center pb-6">
+            { breadcrumbs.map((crumb, i) => <>
+              <a href={crumb.href} class="font-medium text-slate-500 mb-4 mt-0 text-sm hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:underline capitalize">{ specialCaps(crumb.title) }</a>
+              { i !== breadcrumbs.length - 1 && <span class="mx-2 text-slate-500">/</span> }
+            </>) }
+          </div> }
+
+          {breadcrumbs.length === 0 && section && <p class="font-semibold mb-4 mt-0 text-indigo-700 text-lg dark:text-indigo-500">{ specialCaps(section) }</p>}
+          <h1 data-pagefind-meta="title" class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]}>{title}</h1>
+          {author &&
+            <p class="m-0 text-sm">By {author} {date && <span>- {new Date(date).toDateString()}</span>}</p>
+          }
+        </div>
+        {icon &&
+          <img src={icon} alt={title} class="ml-8 mr-4 my-0 w-20 dark:hidden"/>
+        }
+        {darkIcon &&
+          <img src={darkIcon} alt={title} class="ml-8 mr-4 my-0 w-20 hidden dark:block" />
+        }
+      </div>
+      {/* Corrected: No inner data-pagefind-body */}
+      <section>
+        <slot/>
+      </section>
+
+    </article>
+
+    <!-- Table of contents -->
+    {!disableTOC &&
+      <aside class:list={tocStyles}>
+        <h3 class="font-semibold text-sm">On this page</h3>
+        <nav>
+          <TOC toc={headings} depth={2} maxDepth={maxTocDepth}/>
+        </nav>
+
+        {/* FIXME sean will address the cta at some point */}
+        <div class=`mt-16 hidden ${!cta && 'hidden'}`>
+          <CTA cta={cta}/>
+        </div>
+      </aside>
+    }
+  </main>
+  <Search/>
+</IndexableBody>
+</html>

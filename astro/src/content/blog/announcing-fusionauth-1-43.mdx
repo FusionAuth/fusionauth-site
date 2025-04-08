@@ -1,0 +1,87 @@
+---
+publish_date: 2023-02-16 
+title: Announcing FusionAuth 1.43
+description: This release includes the unification of SAML SP initiated and IdP initiated login configurations, enhanced support for PostgreSQL 15, options to relax SAML security measures to ease migration, and adds support for wildcards in redirect URL.
+authors: Dan Moore
+image: /img/blogs/release-1-43/fusionauth-1-43.png
+categories: Release Updates, Product
+tags: release notes, saml, redirect, postgresql, oauth, security
+excerpt_separator: "{/* more */}"
+---
+import Aside from '../../components/Aside.astro';
+
+FusionAuth version 1.43 shipped on February 15, 2023. This release includes the unification of SAML SP initiated and IdP initiated login configurations, enhanced support for PostgreSQL 15, options to relax SAML security measures to ease migration, and adds support for wildcards in redirect URLs. And more!
+
+{/* more */}
+
+There are a number of new features, enhancements, and bug fixes. As always, please see the [release notes](/docs/release-notes/archive#version-1-43-0) for a full breakdown of the changes between 1.42 and 1.43, including any schema changes.
+
+All in all there are 36 issues, enhancements, and bug fixes included in the 1.43 releases. Read more about all the changes in the [release notes](/docs/release-notes/archive#version-1-43-0).
+
+## Unified SAML Service Provider and Identity Provider Initiated login configuration
+
+As a SAML service provider, FusionAuth supports both [SP initiated](/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2) and [IdP initiated](/docs/lifecycle/authenticate-users/identity-providers/enterprise/samlv2-idp-initiated) logins. However, before this release, you had to configure two different Identity Providers in FusionAuth.
+
+Now, you can use the same configuration for both types of logins by enabling IdP initiated login on a SAML Identity Provider.
+
+![A SAML configuration with IdP initiated login allowed.](/img/blogs/release-1-43/saml-v2-unification.png)
+
+You can also enable similar configuration when FusionAuth is the IdP, which allows FusionAuth to initiate a SAML login as the IdP. 
+
+SAMLv2 IdP initiated login requires a license.
+
+## Enhanced support for PostgreSQL 15
+
+In PostgreSQL 15, the default permissions of the public schema were modified. FusionAuth's database schema management has been updated to address that by setting the correct grants.
+
+These changes are backward compatible for [every version of PostgreSQL](/docs/get-started/download-and-install/system-requirements#database) that FusionAuth supports.
+
+## Options to relax SAML security measures
+
+When FusionAuth is acting as the Service Provider in a SAML flow, it checks the AuthN response to ensure that it was the intended recipient by verifying the `Destination` attribute is the FusionAuth ACS URL. This is a secure default, because it prohibits an attack where someone else creates an AuthN response using a server setup they control to create an identity that has elevated privileges, then presents that response to FusionAuth.
+
+However, if you have hundreds or thousands of configurations in external client systems depending on that configuration, it can be tough to migrate from another Service Provider to FusionAuth. Doing so requires asking all those clients to update their configuration to point from the previous ACS URL. 
+
+With this release, you have more flexibility to allow for different destination values. You can allow any `Destination`, or specify certain ones in a list.
+
+![A SAML configuration with alternate Destinations allowed.](/img/blogs/release-1-43/saml-v2-destination-alternates.png)
+
+The validation of the `Destination` attribute can be modified for any SAML Identity Provider configuration.
+
+![With great power comes great responsibility.](/img/blogs/release-1-43/saml-destination-validation.png)
+
+<Aside type="caution">When you are changing these settings, be aware of the security risks and minimize the number of destinations that FusionAuth accepts. While this may be necessary for a migration, afterwards work with the upstream IdPs to modify their configuration to point directly to FusionAuth. This is the safest and most secure setting.</Aside>
+
+## Support for wildcards in redirect URLs
+
+You can now support wildcards in redirect URLs and origin URLs. You have to explicitly allow this for each application, and the recommended practice is to explicitly configure each URL.
+
+However, the community has shared situations where a wildcard is helpful, such as development environments or redirect URLs with variable query parameters.
+
+![Configuring an application to allow for wildcards in the redirect URLs.](/img/blogs/release-1-43/oauth2-redirect-url-wildcards.png)
+
+Again, with great power comes great responsibility.
+
+<Aside nodark="true" type="caution">If you are allowing wildcards, ensure that the scope of the wildcard is as narrow as possible and that you entirely control all content and code running at the wildcarded URLs. Otherwise you could run into a situation where someone hijacks authorization codes and steals access tokens.</Aside>
+
+## The rest of it
+
+As mentioned above, there were 36 issues, enhancements, and bug fixes included in this release. A selection of the included changes not covered above includes:
+
+* There's a self-service registration validation lambda, allowing you to create more complex validation for an advanced registration signup form.
+* You can provide a `sourceApplicationId` when creating a new application to make application setup easier.
+* Consents can be managed via the account management profile pages.
+* The Apple Identity Provider has been enhanced to support both web and mobile logins from one configuration.
+* You can now terminate TLS at FusionAuth if you choose not to run a reverse proxy.
+
+Read more about all the changes in the [release notes](/docs/release-notes/archive#version-1-43-0).
+
+## Upgrade at will
+
+The [release notes](/docs/release-notes/archive#version-1-43-0) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified or enhanced.
+
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/operate/deploy/upgrade). 
+
+If you have a FusionAuth Cloud deployment, proceed to the "Deployments" tab on your <a href="https://account.fusionauth.io/account/deployment/" target="_blank">account dashboard</a> and upgrade your instances. If you have any questions about the upgrade, <a href="https://account.fusionauth.io/account/support/" target="_blank">please open a support ticket</a>.
+
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).

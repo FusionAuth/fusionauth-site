@@ -1,0 +1,373 @@
+---
+title: Spring Boot With Thymeleaf
+description: Quickstart integration of a Spring Boot web application using Thymeleaf with FusionAuth
+navcategory: getting-started
+prerequisites: Maven, Java
+section: web
+technology: Spring Boot, Thymeleaf
+language: Java
+icon: /img/icons/spring.svg
+faIcon: fa-leaf
+color: green
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main
+---
+import Aside from '../../components/Aside.astro';
+import DockerSpinup from '/src/components/quickstarts/DockerSpinup.astro';
+import InlineUIElement from '../../components/InlineUIElement.astro';
+import Intro from '/src/components/quickstarts/Intro.astro';
+import LoginArchitectureWeb from '/src/components/quickstarts/LoginArchitectureWeb.astro';
+import NextSteps from '/src/components/quickstarts/NextSteps.astro';
+import SpringBootPreReqs from '../../components/quickstarts/springboot-prereqs.mdx';
+import {RemoteCode} from '@fusionauth/astro-components';
+import QuickstartTshirtCTA from '/src/components/quickstarts/QuickstartTshirtCTA.astro'
+
+
+<Intro technology="Spring Boot"
+       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-java-springboot-web">It uses Spring Boot web and Thymeleaf, and sets up an OAuth authorization code grant flow, allowing users to log in to the application.</Intro>
+
+## Prerequisites
+
+<SpringBootPreReqs/>
+
+<Aside type="note">This example was made with Maven, Spring Boot version 2.7, and Java 17. If you use different options, the configuration and code may be different.</Aside>
+
+## General Architecture
+
+<LoginArchitectureWeb />
+
+
+## Getting Started
+
+Start with getting FusionAuth up and running and creating a Spring Boot application with Thymeleaf.
+
+### Clone The Code
+
+First, grab the code from the repository and change into that directory.
+
+```shell
+git clone https://github.com/FusionAuth/fusionauth-quickstart-java-springboot-web.git
+cd fusionauth-quickstart-java-springboot-web
+```
+
+### Run FusionAuth Via Docker
+
+<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} />
+
+<Aside type="caution">
+  The `.env` and `kickstart.json` files contain passwords. In a real application, always add these files to your `.gitignore` file and never commit secrets to version control.
+</Aside>
+
+### Create A Basic Spring Boot Application
+
+Next, you'll set up a basic Spring Boot project with a single app. While this guide builds a new Spring Boot project, you can use the same method to integrate your existing project with FusionAuth.
+
+<Aside type="note">
+If you simply want to run the application, there is a completed version in the `complete-application` directory. You can use the following commands to get it up and running if you do not want to create your own.
+
+```shell
+cd complete-application
+./mvnw package
+./mvnw spring-boot:run
+```
+
+Then view the application at the following URL http://localhost:8080.
+</Aside>
+
+#### Get The Template
+
+Go to the Spring Initializr site at https://start.spring.io/ and download your own starter package. Choose the following options.
+
+* Project - `Mavern`
+* Language - `Java`
+* Spring Boot Version - `2.7.16`
+* Project Metadata
+    * Group - `io.fusionauth.quickstart`
+    * Artifact - `springweb`
+    * Package Name - `io.fusionauth.quickstart.springweb`
+    * Packaging - `Jar`
+    * Java Version - `17`
+
+This project has the following three dependencies which you will need to add by clicking the <InlineUIElement>Add Dependencies</InlineUIElement> button and searching for each dependency, when creating the package on the Initializr site.
+
+- OAuth2 Client
+- Thymeleaf
+- Spring Web
+
+If you choose different options, the configuration and code may be different. After entering the configuration settings above and adding the dependencies you can click the <InlineUIElement>Generate</InlineUIElement> button to download your starter package.
+
+You can unzip the package in any directory of your choice. This guide assumes you are in `your-application` directory.
+
+<Aside type="note">All the commands that follow presume you are running the command from the `your-application` root project directory</Aside>
+
+```shell
+mv ~/Downloads/springweb.zip .
+unzip springweb.zip
+mv springweb/* .
+mv springweb/.* .
+rm springweb.zip
+rmdir springweb
+```
+
+The commands above will unzip your downloaded starter package and copy the package files into your current working directory. Remember to replace `~/Downloads/` in the command above with the actual path to your downloads folder.
+
+#### Install Dependencies And Build The Application
+
+From the `your-application` directory, run the following to execute the Maven build tool to download dependencies and build your application.
+
+```shell
+./mvnw package
+```
+
+<Aside type="note">If you are on Windows substitute `./mvnw` with `.\mvnw.cmd`.</Aside>
+
+## Authentication
+
+In this section, you’ll build the integration with FusionAuth, which will allow users to log in to your application.
+
+### Project Settings
+
+Open the `src/main/resources/application.properties` file and add the following configuration settings.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/resources/application.properties"/>
+
+The properties with the `spring.thymeleaf` prefix enable Thymeleaf for server-side template rendering and define the location and suffix of the template files.
+
+The `spring.application.name` property defines the app name, which will show in your application view.
+
+The properties with the `spring.security.oauth2.client.registration` prefix configure the settings for the OAuth2 Client. The `client-id`, `client-secret`, `redirect-uri`, and `authorization-grant-type` values all need to match what is configured in FusionAuth. Because you used the Kickstart method, these settings should be correct, but if they are not, you can log in to [FusionAuth admin UI](http://localhost:9011/admin) and check the [OAuth Settings](/docs/get-started/core-concepts/applications#oauth) for your application.
+
+The properties with the `spring.security.oauth2.provider` prefix tell Spring where the important endpoints for FusionAuth are.
+
+### Add Controllers
+
+In your starter package, the main class which is the entry point of the application is `SpringwebApplication.java` in `src/main/java/io/fusionauth/quickstart/springweb`.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/java/io/fusionauth/quickstart/springweb/SpringwebApplication.java"
+            lang="java"/>
+
+
+Create a file named `HomeController.java` in the `src/main/java/io/fusionauth/quickstart/springweb` directory. To do so you can run the command below from `your-application` directory.
+
+```shell
+touch src/main/java/io/fusionauth/quickstart/springweb/HomeController.java
+```
+
+Then copy the following code for the `HomeController` Java class into the file.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/java/io/fusionauth/quickstart/springweb/HomeController.java"
+            lang="java"/>
+
+This controller serves the page for unauthenticated users on the index `/` route and shows the application name, which is injected from the `spring.application.name` property in the `application.properties` file. The `home` return string tells Spring to render the `home.html` template which you will create later.
+
+Create another file in the `src/main/java/io/fusionauth/quickstart/springweb` directory. This time, name it `AccountController.java`.
+
+```shell
+touch src/main/java/io/fusionauth/quickstart/springweb/AccountController.java
+```
+
+Paste the following code into the `AccountController.java` file.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/java/io/fusionauth/quickstart/springweb/AccountController.java"
+            lang="java"/>
+
+This controller serves the page for authenticated users on the `/account` route and adds the claims from the `OidcUser` returned from FusionAuth to the view model on the `profile` attribute. The `account` return string tells Spring to render the `account.html` template which you will create later.
+
+Next, create a file named `MakeChangeController.java` in the `src/main/java/io/fusionauth/quickstart/springweb` directory.
+
+```shell
+touch src/main/java/io/fusionauth/quickstart/springweb/MakeChangeController.java
+```
+
+Then, copy the following code into the newly created file.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/java/io/fusionauth/quickstart/springweb/MakeChangeController.java"
+            lang="java"/>
+
+This controller serves both GET and POST requests on the `/make-change` route. Both methods add the claims to the `profile` attribute like `AccountController.java` does. `GetMapping` adds a new model object of `Change` to the view model. `PostMapping` takes the `Change` object as a parameter and uses the `total` to calculate how many nickels and pennies to return. If `total` is not a valid dollar (`BigDecimal`) value, it adds an error to the `Change` model object. The return string `make-change` tells Spring to render the `make-change.html` template which you will create later.
+
+### Add The Model Object
+
+Now you'll create the model object referenced in the controllers. In the directory `src/main/java/io/fusionauth/quickstart/springweb`, create a new directory called `model`.
+
+```shell
+mkdir src/main/java/io/fusionauth/quickstart/springweb/model
+```
+
+In the `model` directory, and create a new file named `Change.java`.
+
+```shell
+touch src/main/java/io/fusionauth/quickstart/springweb/model/Change.java
+```
+
+Now, populate it with the follow code for the `Change` Java class.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/java/io/fusionauth/quickstart/springweb/model/Change.java"
+            lang="java" />
+
+This model has four fields.
+
+- `error`: The error string if the input was invalid.
+- `total`: The total amount to divide into pennies and nickels.
+- `nickels`: The number of nickels returned from the `make change` operation.
+- `pennies`: The number of pennies returned from the `make change` operation.
+
+The model also has a `getMessage` method, which formats a message string to render on the template.
+
+### Add View Templates
+
+Now you can add three views for Thymeleaf to render on the routes you defined:
+
+- `Home`: The welcome page an unauthenticated user will see when they visit your application.
+- `Account`: A protected view the user will see after they log in.
+- `Make Change`: A protected view to demonstrate making an authenticated form post to the backend.
+
+Create the template files in `src/main/resources/templates`.
+
+Create the `home.html` template file.
+
+```shell
+touch src/main/resources/templates/home.html
+```
+
+Then paste the following code into it.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/resources/templates/home.html"
+            lang="html" />
+
+This template links to `/account` for login. Spring will automatically know that the user is not logged in and redirect them to FusionAuth based on what was defined in `application.properties`.
+
+Create the `account.html` template file in the `src/main/resources/templates` directory.
+
+```shell
+touch src/main/resources/templates/account.html
+```
+
+Then paste the following code into it.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/resources/templates/account.html"
+            lang="html" />
+
+This page has an `a href` link to `/logout` that Spring will use to redirect the user to FusionAuth for logout. It also references the `${profile.email}` claim that was set in the account controller.
+
+Create the `make-change.html` template file in the `src/main/resources/templates` directory.
+
+```shell
+touch src/main/resources/templates/make-change.html
+```
+
+Then paste the following code into it.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/resources/templates/make-change.html"
+            lang="html" />
+
+In addition to the references made above, this template adds a form that binds the `${change}` object as the model, submits the `*{total}` as input by the user, and displays the message or error depending on what is defined in the `Change` object.
+
+### Configure Spring Web And Spring Security
+
+Add a new directory called `config` under `src/main/java/io/fusionauth/quickstart/springweb` using the following command.
+
+```shell
+mkdir src/main/java/io/fusionauth/quickstart/springweb/config
+```
+
+Add a `SecurityConfiguration.java` file to the `src/main/java/io/fusionauth/quickstart/springweb/config` directory using the following command.
+
+```shell
+touch src/main/java/io/fusionauth/quickstart/springweb/config/SecurityConfiguration.java
+```
+
+Then paste the following code into it.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/java/io/fusionauth/quickstart/springweb/config/SecurityConfiguration.java"
+            lang="java" />
+
+This class uses the `@Configuration` annotation to provide additional configuration, in this case, a `SecurityFilterChain` that tells Spring to:
+
+- Require authentication for all requests *except* to `/` (`home.html`), `/images`, and `/css` (implicitly referring to the directories under `src/main/resources/static`).
+- Redirect the user on logout to FusionAuth to complete the logout.
+
+Also add a `WebConfig.java`, to the `src/main/java/io/fusionauth/quickstart/springweb/config` directory.
+
+```shell
+touch src/main/java/io/fusionauth/quickstart/springweb/config/WebConfig.java
+```
+
+Then paste the following code into it.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/java/io/fusionauth/quickstart/springweb/config/WebConfig.java"
+            lang="java" />
+
+This configuration class enables Web MVC and sets up resource handlers for the static assets.
+
+## Customization
+
+The template files you added to the `templates` directory reference a stylesheet and images. Create a `css` and `images` directory under `src/main/resources/static/` to place the stylesheet and images.
+
+```shell
+mkdir src/main/resources/static/css
+mkdir src/main/resources/static/images
+```
+
+Add a `styles.css` file to the `src/main/resources/static/css` directory using the command below.
+
+```shell
+curl -o src/main/resources/static/css/styles.css 'https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/resources/static/css/styles.css'
+```
+
+You can update the stylesheet as you see fit, but be sure to update the templates if you make changes.
+
+Download the [bank logo image](https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/resources/static/images/example_bank_logo.svg) as `example_bank_logo.svg` and the [money image](https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/resources/static/images/money.jpg) as `money.jpg` into the `src/main/resources/static/images` directory using the commands below.
+
+```shell
+curl -o src/main/resources/static/images/example_bank_logo.svg 'https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/resources/static/images/example_bank_logo.svg'
+curl -o src/main/resources/static/images/money.jpg 'https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-java-springboot-web/main/complete-application/src/main/resources/static/images/money.jpg'
+```
+
+### Run The Application
+
+From the root `your-application` directory, run the application using the following command.
+
+```shell
+./mvnw spring-boot:run
+```
+
+You can now open the application at http://localhost:8080.
+
+Log in using `richard@example.com` and `password`.
+
+<QuickstartTshirtCTA/>
+
+## Next Steps
+
+<NextSteps />
+
+## Troubleshooting
+
+* I get "This site can’t be reached localhost refused to connect" when I click the login button.
+
+Ensure FusionAuth is running in the Docker container. You should be able to log in as the admin user, `admin@example.com` with a password of `password` at [http://localhost:9011/admin](http://localhost:9011/admin).
+
+* I get an error page when I click on the login button with the message `"error_reason" : "invalid_client_id"`.
+
+Ensure the value for `spring.security.oauth2.client.registration.fusionauth-client.client-id` in the file `src/main/resources/application.properties` matches client the Id configured in FusionAuth for the "Example App" Application at [http://localhost:9011/admin/application/](http://localhost:9011/admin/application/).
+
+* I get an error "package org.springframework.x.y.z does not exist".
+
+Ensure you have added the required dependencies `OAuth2 Client`, `Thymeleaf`, and `Spring Web` when configuring your starter package on the [Spring Initializr](https://start.spring.io/) site. Click the <InlineUIElement>Add Dependencies</InlineUIElement> button and search for each dependency.
+
+* The `templates` and `static` directories are missing in the starter package.
+
+Ensure you have added the required dependencies `Thymeleaf` and `Spring Web` when configuring your starter package on the [Spring Initializr](https://start.spring.io/) site. Click the <InlineUIElement>Add Dependencies</InlineUIElement> button and search for each dependency.
+
+* It still doesn't work.
+
+You can always pull down a complete running application and compare what's different.
+
+```shell
+git clone https://github.com/FusionAuth/fusionauth-quickstart-java-springboot-web.git
+cd fusionauth-quickstart-java-springboot-web
+docker compose up -d
+cd complete-application
+./mvnw package
+./mvnw spring-boot:run
+```

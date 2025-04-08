@@ -1,0 +1,287 @@
+---
+title: Migration From Supabase
+description: Learn how to migrate your users to FusionAuth from Supabase.
+section: lifecycle
+subcategory: migrate users
+tertcategory: provider specific
+---
+import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_additional-support.mdx';
+import Aside from 'src/components/Aside.astro';
+import CreateApiKeySocial from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-api-key-social.mdx';
+import CreateTestApplication from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-application.mdx';
+import CreateTestTenant from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-tenant.mdx';
+import FinalDestination from 'src/content/docs/lifecycle/migrate-users/provider-specific/_final-destination.mdx';
+import GetScript from 'src/content/docs/lifecycle/migrate-users/provider-specific/_get-script.mdx';
+import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/provider-specific/_mapping-user-attributes.mdx';
+import OtherEntitiesIntro from 'src/content/docs/lifecycle/migrate-users/provider-specific/_other-entities-intro.mdx';
+import {RemoteCode} from '@fusionauth/astro-components';
+import SetUpFusionauth from 'src/content/docs/lifecycle/migrate-users/provider-specific/_set-up-fusionauth.mdx';
+import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-migration.mdx';
+import SocialLoginNote from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-note.mdx';
+import VerifyImport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_verify-import.mdx';
+import WhatNext from 'src/content/docs/lifecycle/migrate-users/provider-specific/_what-next.mdx';
+
+export const migration_source_name = 'Supabase';
+export const migration_source_dir = 'supabase';
+
+
+
+## Overview
+
+This document will help you migrate off of Supabase and onto FusionAuth.
+
+This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin. For more general migration information, please view the [FusionAuth migration guide](/docs/lifecycle/migrate-users/general-migration).
+
+
+There are a number of different ways applications can be integrated with Supabase, and it would be difficult to cover them all. This guide mentions the typical parts of a bulk migration and focuses on migrating user data from a Supabase-managed user database into FusionAuth.
+
+## Planning Considerations
+
+### Obtaining User Data
+
+You can write a custom psql script in the Supabase SQL Editor to export user data as JSON that you can import to FusionAuth. In Supabase, user data is stored in the `auth.users` table, and you can join the query with data from other `auth` tables to pull specific attributes.
+
+### Mapping User Attributes
+
+<MappingUserAttributes />
+
+
+### Social Logins
+
+<SocialLoginNote migration_source_name={migration_source_name} />
+
+
+<SocialLoginMigration />
+
+### Other Entities
+
+<OtherEntitiesIntro migration_source_name={migration_source_name} other_migrated_entities="connections or roles" />
+
+* In Supabase, sign-in providers are a source of data for users. FusionAuth calls these Identity Providers.
+* Projects are a high-level construct that groups entities such as users and applications together. FusionAuth calls these Tenants.
+* Supabase has other products your applications might be using, like Edge functions. FusionAuth does not have equivalents for these products, and is focused only on authentication.
+
+#### Identifiers
+
+When creating an object with the FusionAuth API, you can specify the Id. It must be a [UUID](/docs/reference/data-types#uuids).
+
+This works for users, applications, and tenants, among others.
+
+Supabase uses a custom UUID format. When migrating, a new UUID will be created for the user on FusionAuth.
+
+If you have external dependencies on an Id stored in Supabase, you can add a new attribute under `user.data` (such as `user.data.originalId`) with the value of the Supabase Id. Because everything under `user.data` is indexed and available via search, you'll be able to find your users using either the new FusionAuth Id, or the original Supabase one.
+
+## Exporting Users
+
+To export users from Supabase, you’ll perform the following steps:
+
+1. Access the Supabase SQL Editor and create a new query.
+2. Paste the `ufn_get_user_migration_data_json()` function code into the editor.
+3. Run the function in the editor and save the JSON data to a file, for example, `users.json`.
+
+The script below is a user-defined psql function for exporting user data from Supabase. The script will generate a JSON array object.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-import-scripts/main/supabase/supabase_user_migration_script.sql"
+            lang="shell"
+            title="Supabase user data export function" />
+
+The function `ufn_get_user_migration_data_json()` returns a JSON array with formatted user data. Create a new file on your machine, for example, `users.json`, and copy the generated JSON to it. You'll upload this data to FusionAuth later.
+
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/supabase-sql.png`} alt="Adding an API key," width="1200" />
+
+The user data to be exported will be selected from the `auth` table. If you have other tables that contain user-specific fields (for example, usernames), you can edit the script above to cater to that.
+
+The JSON output produced by the script should look something like this:
+
+```json
+[
+  {
+    "instance_id": "00000000-0000-0000-0000-000000000000",
+    "encrypted_password": "",
+    "created_at": 1684248249840.815,
+    "provider": "facebook",
+    "email": "erlich@example.com",
+    "user_id": "facebook|99af46c2-b9e9-4471-81fd-35bdf12957aa",
+    "salt": "",
+    "password": "hasprovider",
+    "email_verified": true
+  },
+  {
+    "instance_id": "00000000-0000-0000-0000-000000000000",
+    "encrypted_password": "$2a$10$VnxRmsfGTooc.Yy7Ez7L7.bkdHaSzseGwHkjvxZUGaGo5k4XIfDYe",
+    "created_at": 1684096920263.688,
+    "provider": "email",
+    "email": "richard@example.com",
+    "user_id": "auth0|b60d3ece-2c59-43d0-acf1-632fdefb6a54",
+    "factor": "10",
+    "salt": "VnxRmsfGTooc.Yy7Ez7L7.",
+    "password": "bkdHaSzseGwHkjvxZUGaGo5k4XIfDYe",
+    "encryptionScheme": "bcrypt",
+    "email_verified": true
+  },
+  {
+    "instance_id": "00000000-0000-0000-0000-000000000000",
+    "encrypted_password": "",
+    "created_at": 1684269308911.086,
+    "provider": "google",
+    "email": "bertram@example.com",
+    "user_id": "google|1a5347be-4bab-4113-aaf5-51d358fd4165",
+    "salt": "",
+    "password": "hasprovider",
+    "email_verified": true
+  },
+  {
+    "instance_id": "00000000-0000-0000-0000-000000000000",
+    "encrypted_password": "$2a$10$X06hVD7/522iK698AxX1u.NINSImp/Md75dY/yz5sYjpmGF/5aeM6",
+    "created_at": 1684052197215.207,
+    "provider": "email",
+    "email": "jared@example.com",
+    "user_id": "auth0|90d5cfea-e41e-44ea-a3bd-e16d112622f8",
+    "factor": "10",
+    "salt": "X06hVD7/522iK698AxX1u.",
+    "password": "NINSImp/Md75dY/yz5sYjpmGF/5aeM6",
+    "encryptionScheme": "bcrypt",
+    "email_verified": true
+  }
+]
+```
+
+## Importing Users
+
+Next up, import the user data. Here are the steps you need to take.
+
+1. Set Up FusionAuth
+2. Get the Script
+3. Install Needed Gems
+4. Use the Script
+5. Verify the Import
+6. The Final Destination of Imported Users
+
+### Set Up FusionAuth
+
+<SetUpFusionauth />
+
+#### Create a Test Tenant
+
+<CreateTestTenant migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} />
+
+#### Create a Test Application
+
+<CreateTestApplication migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} />
+
+#### Add an API Key
+
+<CreateApiKeySocial migration_source_dir={migration_source_dir} />
+
+### Get the Script
+
+<GetScript migration_source_dir={migration_source_dir} />
+
+### Install Needed Gems
+
+The following gems must be available to the import script:
+
+* `date`
+* `json`
+* `optparse`
+* `securerandom`
+* `fusionauth_client`
+
+Most likely all of these will be on your system already, except the `fusionauth_client` gem.
+
+If you have `bundler` installed, run `bundle install` in the `supabase` directory. Otherwise, install the needed gems in some other way.
+
+### Use the Script
+
+You can see the output of the script by running it with the `-h` option:
+
+Running the import script with the help command line switch
+
+```sh
+ruby ./import.rb -h
+```
+
+The output will be similar to this:
+
+```sh title="The help output of the import.rb script"
+Usage: import.rb [options]
+    -l, --link-social-accounts       Link social accounts, if present, after import. This operation is slower than an import.
+    -r APPLICATION_IDS,              A comma separated list of existing applications Ids. All users will be registered for these applications.
+        --register-users
+    -o, --only-link-social-accounts  Link social accounts with no import.
+    -u, --users-file USERS_FILE      The exported JSON user data file from Supabase. Defaults to users.json.
+    -f FUSIONAUTH_URL,               The location of the FusionAuth instance. Defaults to http://localhost:9011.
+        --fusionauth-url
+    -k, --fusionauth-api-key API_KEY The FusionAuth API key.
+    -t TENANT_ID,                    The FusionAuth tenant id. Required if more than one tenant exists.
+        --fusionauth-tenant-id
+    -m, --map-supa-id            Whether to map the Supabase id for normal imported users to the FusionAuth user id.
+    -h, --help                       Prints this help.
+```
+
+For this script to work correctly, set the following switches, unless the defaults work for you:
+
+* `-u` should point to the location of the user export file you obtained, unless the default works.
+* `-f` must point to your FusionAuth instance. If you are testing locally, it will probably be `http://localhost:9011`.
+* `-k` needs to be set to the value of the API key created above.
+* `-t` should be set to the Id of the testing tenant created above.
+
+The `-o` and `-l` switches will attempt to create links for any social users (where the user authenticated via Google or another social provider) found in the users data file.
+
+If you are loading social users, you must create the social providers in FusionAuth beforehand, or the links will fail. Additionally, creating a link is not currently optimized in the same way that loading users is. So it may make sense to import all the users in one pass (omitting the `-l` switch). Then, after the users are imported, create the links using the `-o` switch in a second pass.
+
+<Aside type="note">
+The social account linking functionality will only work with FusionAuth versions above or equal to 1.28. The `fusionauth_client` library must be >= 1.28 as well.
+</Aside>
+
+When you run the script:
+
+```shell title="Import script output"
+ruby ./import.rb -f http://localhost:9011 -k '...' -u users.json -t '...' -l
+```
+
+You’ll see output like:
+
+```shell title="Import script output"
+FusionAuth Importer : Supabase
+ > User file: users.json
+ > Call FusionAuth to import users
+ > Import success
+Linking 2 social accounts
+ > Link success
+ > Link success
+Duplicate users 0
+Import complete. 4 users imported.
+```
+
+#### Enhancing the Script
+
+You may also want to migrate additional data. Currently, the following attributes are migrated:
+
+* `user_id`
+* `email`
+* `email_verified`
+* `username`
+* the password hash and supporting attributes, if available
+
+If you have additional user attributes to migrate, review and modify the `map_user` method.
+
+You may also want to assign Roles, or associate users with Groups, by creating the appropriate JSON data structures in the import call. These are documented in the
+[Import User API docs](/docs/apis/users#import-users). This will require modifying the `import.rb` code.
+
+### Verify the Import
+
+<VerifyImport migration_source_dir={migration_source_dir} />
+
+### The Final Destination of Imported Users
+
+<FinalDestination migration_source_dir={migration_source_dir} />
+
+## What to Do Next
+
+<WhatNext />
+
+## Additional Support
+
+<AdditionalSupport />
+

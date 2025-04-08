@@ -1,0 +1,255 @@
+---
+title: WebAuthn
+description: Learn about the APIs for starting and completing WebAuthn ceremonies and retrieving, importing and deleting WebAuthn passkeys.
+section: apis
+---
+import LicensedPlanBlurb from 'src/content/docs/_shared/_licensed-plan-blurb.mdx';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import API from 'src/components/api/API.astro';
+import Aside from 'src/components/Aside.astro';
+import ImportWebauthnRequestBody from 'src/content/docs/apis/_import-webauthn-request-body.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import LoginResponseCodes from 'src/content/docs/apis/_login-response-codes.mdx';
+import {RemoteCode} from '@fusionauth/astro-components';
+import StandardDeleteResponseCodes from 'src/content/docs/apis/_standard-delete-response-codes.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import UserResponseBody from 'src/content/docs/apis/_user-response-body.mdx';
+import WebauthnAuthenticateCompleteRequestBody from 'src/content/docs/apis/_webauthn-authenticate-complete-request-body.mdx';
+import WebauthnAuthenticateStartRequestBody from 'src/content/docs/apis/_webauthn-authenticate-start-request-body.mdx';
+import WebauthnAuthenticateStartResponseBody from 'src/content/docs/apis/_webauthn-authenticate-start-response-body.mdx';
+import WebauthnRegisterCompleteRequestBody from 'src/content/docs/apis/_webauthn-register-complete-request-body.mdx';
+import WebauthnRegisterStartRequestBody from 'src/content/docs/apis/_webauthn-register-start-request-body.mdx';
+import WebauthnRegisterStartResponseBody from 'src/content/docs/apis/_webauthn-register-start-response-body.mdx';
+import WebauthnResponseBody from 'src/content/docs/apis/_webauthn-response-body.mdx';
+import WebauthnsResponseBody from 'src/content/docs/apis/_webauthns-response-body.mdx';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+import XFusionauthTenantIdRequired from 'src/content/docs/apis/_x-fusionauth-tenant-id-required.mdx';
+
+<LicensedPlanBlurb version="1.52.0" />
+
+## Overview
+
+<Aside type="version">
+This API has been available since 1.41.0
+</Aside>
+
+This page contains all of the APIs for managing WebAuthn passkeys, sometimes referred to as credentials, and starting and completing WebAuthn ceremonies.
+
+The following APIs are provided to manage WebAuthn passkeys.
+
+## Retrieve a Passkey
+
+This API is used to retrieve information about a single WebAuthn passkey or all of a user's registered passkeys.
+
+### Request
+
+<API method="GET" uri="/api/webauthn/{id}" authentication={["api-key"]} title="Retrieve a single Passkey by Id"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="id" type="UUID" required noborder>
+    The unique Id of the WebAuthn passkey to retrieve.
+  </APIField>
+</APIBlock>
+
+<API method="GET" uri="/api/webauthn?userId={userId}" authentication={["api-key"]} title="Retrieve all Passkeys belonging to a User"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userId" type="UUID" required>
+    The unique Id of the User to retrieve WebAuthn passkeys for.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API contains either a single Passkey or all of the Passkeys belonging to a User. When you call this API with an Id, the response will contain just that Passkey. When you call this API without an Id and provide a User Id in the query string, the response will contain all of the Passkeys belonging to that User. Both response types are defined below along with an example JSON response.
+
+<StandardGetResponseCodes />
+
+<WebauthnResponseBody />
+
+<WebauthnsResponseBody />
+
+## Delete a Passkey
+
+This API is used to delete a single WebAuthn passkey or all of a user's registered passkeys.
+
+### Request
+
+<API method="DELETE" uri="/api/webauthn/{id}" authentication={["api-key"]} title="Delete a single Passkey by Id"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="id" type="UUID" required noborder>
+    The unique Id of the WebAuthn passkey to delete.
+  </APIField>
+</APIBlock>
+
+<API method="DELETE" uri="/api/webauthn?userId={userId}" authentication={["api-key"]} title="Delete all Passkeys belonging to a User"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userId" type="UUID" required>
+    The unique Id of the User to delete WebAuthn passkeys for.
+  </APIField>
+</APIBlock>
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes />
+
+## Import Passkeys
+
+This API is used to bulk import multiple passkeys into FusionAuth. Reasonable defaults are provided for optional fields. This request is useful for migrating data from an existing database into FusionAuth.
+
+### Request
+
+<API method="POST" uri="/api/webauthn/import" authentication={["api-key"]} title="Import Multiple Passkeys"/>
+
+<XFusionauthTenantIdRequired />
+
+<ImportWebauthnRequestBody />
+
+### Response
+
+Only a status code is available on the Import API, no JSON body will be returned.
+
+<StandardPostResponseCodes />
+
+## WebAuthn JavaScript API Binary Format
+The [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) `navigator.credentials.create()` and `navigator.credentials.get()` expect to receive fields containing binary data on the `options` object as a JavaScript [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) and will return binary fields as ``ArrayBuffer``s. In order to prevent encoding issues on the FusionAuth API, these fields are passed over the network as base64url-encoded strings.
+
+Select fields on the `options` JSON object that is passed to the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) must be converted from base64url-encoded strings to ``ArrayBuffer``s after receiving `options` from the FusionAuth API. Likewise, certain fields on [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) responses must be converted from ``ArrayBuffer``s to base64url-encoded strings before calling FusionAuth's APIs to complete the ceremony.
+
+### Converting base64url-encoded String to `ArrayBuffer`
+Converting a base64url-encoded strings to ``ArrayBuffer``s is required before the `options` JSON object from [Start a WebAuthn Passkey Registration](#start-a-webauthn-passkey-registration) or [Start a WebAuthn Passkey Assertion or Authentication](#start-a-webauthn-passkey-assertion-or-authentication) responses are passed to the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API). The FusionAuth hosted pages will perform this conversion as necessary. If you need to perform this conversion yourself, you can use the following JavaScript function.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-javascript-webauthn/main/base64url-to-buffer.js"
+            lang="javascript"
+            title="Function to convert a base64url-encoded string to an ArrayBuffer" />
+
+Fields that require this conversion are documented in the [Start a WebAuthn Passkey Registration](#start-a-webauthn-passkey-registration) and [Start a WebAuthn Passkey Assertion or Authentication](#start-a-webauthn-passkey-assertion-or-authentication) response sections.
+
+### Converting `ArrayBuffer` to base64url-encoded String
+Converting ``ArrayBuffer``s to base64url-encoded strings is required before the responses from the [WebAuthn JavaScript APIs](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) are sent to FusionAuth's [Complete a WebAuthn Passkey Registration](#complete-a-webauthn-passkey-registration), [Complete a WebAuthn Passkey Authentication](#complete-a-webauthn-passkey-authentication), or [Complete a WebAuthn Passkey Assertion](#complete-a-webauthn-passkey-assertion) APIs. The FusionAuth hosted pages will perform this conversion as necessary. If you need to perform this conversion yourself, you can use the following JavaScript function.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-javascript-webauthn/main/buffer-to-base64url.js"
+            lang="javascript"
+            title="Function to convert an ArrayBuffer to a base64url-encoded string" />
+
+Fields that require this conversion are documented in the [Complete a WebAuthn Passkey Registration](#complete-a-webauthn-passkey-registration), [Complete a WebAuthn Passkey Authentication](#complete-a-webauthn-passkey-authentication), and [Complete a WebAuthn Passkey Assertion](#complete-a-webauthn-passkey-assertion) request sections.
+
+## Start a WebAuthn Passkey Registration
+
+This API is used to start a WebAuthn registration ceremony by providing some details about the current user and the new passkey. The response is a JSON object which is suitable to be passed to the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) `navigator.credentials.create()` function and includes a one-time challenge unique to the current registration ceremony.
+
+### Request
+
+<API method="POST" uri="/api/webauthn/register/start" authentication={["api-key"]} title="Start a WebAuthn Registration Ceremony and Retrieve Passkey Creation Options"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<WebauthnRegisterStartRequestBody />
+
+### Response
+
+<StandardPostResponseCodes />
+
+<WebauthnRegisterStartResponseBody />
+
+## Complete a WebAuthn Passkey Registration
+
+This API is used to complete a WebAuthn registration ceremony by providing the values returned from the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) call. The API will validate the request against configured passkey requirements for the workflow and the one-time challenge generated and returned by [Start a WebAuthn Passkey Registration](#start-a-webauthn-passkey-registration).
+
+### Request
+
+<API method="POST" uri="/api/webauthn/register/complete" authentication={["none"]} title="Complete a WebAuthn Registration Ceremony and Return Passkey Details"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<WebauthnRegisterCompleteRequestBody />
+
+### Response
+
+<StandardPostResponseCodes omit_missing_header />
+
+<WebauthnResponseBody />
+
+## Start a WebAuthn Passkey Assertion or Authentication
+
+This API is used to start a WebAuthn authentication ceremony by providing some details about the current user and the new passkey. The response is a JSON object which is suitable to be passed to the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) `navigator.credentials.get()` function and includes a one-time challenge unique to the current ceremony. This same API is used to start a WebAuthn assertion that validates a passkey signature without authenticating the user.
+
+### Request
+
+<API method="POST" uri="/api/webauthn/start" authentication={["api-key"]} title="Start a WebAuthn Authentication Ceremony and Retrieve Passkey Request Options"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<WebauthnAuthenticateStartRequestBody />
+
+### Response
+
+<StandardPostResponseCodes />
+
+<WebauthnAuthenticateStartResponseBody />
+
+## Complete a WebAuthn Passkey Authentication
+This API is used to complete a WebAuthn authentication ceremony by providing the values returned from the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) call. The API will validate the request against configured passkey requirements for the workflow and the one-time challenge generated and returned by [Start a WebAuthn Passkey Assertion or Authentication](#start-a-webauthn-passkey-assertion-or-authentication).
+
+### Request
+
+<API method="POST" uri="/api/webauthn/login" authentication={["none"]} title="Complete a WebAuthn Authentication Ceremony"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Cookies
+
+<APIBlock>
+  <APIField name="fusionauth.trust" type="String" optional>
+    The Multi-Factor Trust identifier returned by the Multi-Factor Login API response. This value may be provided to bypass the Multi-Factor challenge when a User has Multi-Factor enabled. When this cookie exists on the request it will take precedence over the <InlineField>twoFactorTrustId</InlineField> if provided in the request body.
+  </APIField>
+</APIBlock>
+
+<WebauthnAuthenticateCompleteRequestBody />
+
+### Response
+The response for this API contains the User object.
+
+<LoginResponseCodes />
+
+<UserResponseBody login_response />
+
+## Complete a WebAuthn Passkey Assertion
+This API is used to validate a WebAuthn authentication ceremony by providing the values returned from the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) call, but it does not authenticate the user. This API can be used to confirm that a user has access to a particular passkey without authenticating them.
+
+### Request
+
+<API method="POST" uri="/api/webauthn/assert" authentication={["none"]} title="Assert a WebAuthn Authentication Ceremony"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<WebauthnAuthenticateCompleteRequestBody />
+
+### Response
+The response for this API contains the WebAuthn passkey used to complete the assertion.
+
+<StandardPostResponseCodes omit_missing_header />
+
+<WebauthnResponseBody />

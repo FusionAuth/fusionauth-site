@@ -1,0 +1,62 @@
+---
+import renderDiagram from './render-diagram.js';
+import cache, { generateHash } from './cache.js';
+import 'src/css/diagrams.css';
+
+const props = { ...Astro.props };
+props.code = props.code || '';
+props.id = props.id || 'fusionauth-diagram';
+
+const uniqueKey = generateHash([props.code, props.id + '12']);
+
+if (cache[uniqueKey] === undefined) {
+  /* Render the mermaid diagram */
+  const result: string | false = await renderDiagram({
+    code: props.code,
+    id: props.id,
+    nostyle: false
+  });
+  if (result) {
+    /* Store diagram data to cache */
+    cache[uniqueKey] = result;
+  }
+}
+
+---
+{
+  cache[uniqueKey] && (
+    <div class="mermaid-diagram not-prose">
+      <Fragment set:html={cache[uniqueKey]} data-test="mermaid" class="not-prose" />
+    </div>
+  )
+}
+
+{ props.alt &&
+  <p class="italic not-prose text-blue-600 text-center dark:text-orange-200"> {props.alt} </p>
+}
+
+<script>
+  document.querySelectorAll('foreignObject')
+      .forEach(el => {
+        el.childNodes.forEach(child => {
+          child.style.display = 'contents';
+        });
+      });
+</script>
+<style is:global>
+  .label-container {
+    height: 40px;
+  }
+
+  g .label > foreignObject {
+    height: 25px;
+  }
+
+  g .edgePaths {
+    z-index: 2;
+  }
+
+  .edgeLabel {
+    padding: .3rem .7rem;
+  }
+</style>

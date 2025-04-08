@@ -1,0 +1,209 @@
+---
+title: IP Access Control Lists
+description: Learn about the APIs for creating, retrieving, updating and deleting IP Access Control Lists.
+section: apis
+---
+import Aside from 'src/components/Aside.astro';
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import IpAclRequestBody from 'src/content/docs/apis/_ip-acl-request-body.mdx';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import IpAclResponseBody from 'src/content/docs/apis/_ip-acl-response-body.mdx';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import IpAclResponseBodySearch from 'src/content/docs/apis/_ip-acl-response-body-search.mdx';
+import GenericUpdateExplanationFragment from 'src/content/docs/apis/_generic-update-explanation-fragment.mdx';
+import StandardPutResponseCodes from 'src/content/docs/apis/_standard-put-response-codes.astro';
+import StandardDeleteResponseCodes from 'src/content/docs/apis/_standard-delete-response-codes.astro';
+
+## Overview
+
+<Aside type="version">
+This API has been available since 1.30.0
+</Aside>
+
+An IP ACL (Access Control List) is a list of IP ranges that are either Allowed or Blocked. Along with one entry that defines a start IP address of `*` (wild) that defines the default behavior when an IP address does not match any other range in the list. This means an IP ACL will have a default action of either Allow or Block. The IP address start and end entries for ranges currently only support IPv4.
+
+An IP ACL may be assigned to an API Key, a Tenant or an Application.
+
+When an IP ACL is assigned to an API key, the IP ACL will restrict the usage of the API key based upon the request originating IP address. If a request is made using an API key with an assigned IP ACL and the IP address is found to be blocked, a 401 status code will be returned. The user of this API key will not be able to tell the difference between an invalid API key and an API key that is blocked due to the IP ACL.
+
+When an IP ACL is assigned to a Tenant or Application, it is used to restrict access to the FusionAuth SSO. This means it will be used to restrict access to endpoints that begin with `/oauth2/`, `/account/`, `/email/`, `/password/`, `/registration/` and any other user accessible themed pages. It will not be used to restrict access to the FusionAuth admin UI except when accessed through SSO, or the FusionAuth API.
+
+If two IP ACLs are assigned one to a Tenant and the other to an Application, the Application IP ACL will take precedence.
+
+The IP address used to test against the IP ACL is resolved by using the first value in the `X-Forwarded-For` HTTP header. If this header is not found, then the IP address reported by the HTTP Servlet request as the remote address will be used. If you are accessing FusionAuth through a proxy it is important that you trust your edge proxy to set the correct value in the `X-Forwarded-For` HTTP header. Because this header can be set by any HTTP client, it is only secure or trustworthy when managed by a trusted edge proxy. You should not rely upon this feature alone to restrict access to an API key.
+
+The following APIs are provided to manage IP ACLs.
+
+## Create an IP ACL
+
+This API is used to create a new IP ACL.
+
+### Request
+
+<API method="POST" uri="/api/ip-acl" authentication={["api-key"]} title="Create an IP ACL with a randomly generated Id"/>
+
+<API method="POST" uri="/api/ip-acl/{ipAccessControlListId}" authentication={["api-key"]} title="Create an IP ACL with the provided unique Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="ipAccessControlListId" type="UUID" optional defaults="secure random UUID">
+    The Id to use for the new IP ACL. If not specified a secure random UUID will be generated.
+  </APIField>
+</APIBlock>
+
+<IpAclRequestBody />
+
+### Response
+
+The response for this API contains the IP ACL that was created.
+
+<StandardPostResponseCodes never_search_error />
+
+<IpAclResponseBody />
+
+## Retrieve an IP ACL
+
+This API is used to retrieve a single IP ACL by unique Id.
+
+### Request
+
+<API method="GET" uri="/api/ip-acl/{ipAccessControlListId}" authentication={["api-key"]} title="Retrieve an IP ACL by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="ipAccessControlListId" type="UUID" required>
+    The unique Id of the IP ACL to retrieve.
+  </APIField>
+</APIBlock>
+
+### Response
+
+<StandardGetResponseCodes never_search_error />
+
+<IpAclResponseBody />
+
+## Search for IP ACLs
+
+### Request
+
+<API method="GET" uri="/api/ip-acl/search?name={name}" authentication={["api-key"]} title="Searches the IP ACLs using the given search criteria"/>
+
+When calling the API using a `GET` request you will send the search criteria on the URL using request parameters. In order to simplify the example URL above, only the IP ACL specific parameter is shown, however you may add any of the documented request parameters to the URL.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="name" type="String" optional>
+    The string to match all or part of the IP ACL name. This can contain wildcards using the asterisk character (`*`). If no wildcards are present, this parameter value will be interpreted as `*value*`.
+  </APIField>
+  <APIField name="numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="orderBy" type="String" optional defaults="name ASC">
+    The database column to order the search results on plus the order direction.
+
+    The possible values are:
+
+     * `id` - the id of the IP ACL
+     * `insertInstant` - the [instant](/docs/reference/data-types#instants) when the IP ACL was created
+     * `lastUpdateInstant` - the last [instant](/docs/reference/data-types#instants) that the IP ACL was updated
+     * `name` - the name of the IP ACL
+
+    For example, to order the results by the insert instant in descending order, the value would be provided as `insertInstant DESC`. The final string is optional, can be set to `ASC` or `DESC`, or omitted and will default to `ASC`.
+  </APIField>
+  <APIField name="startRow" type="Integer" optional defaults="0">
+    The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+  </APIField>
+</APIBlock>
+
+<br/>
+
+<API method="POST" uri="/api/ip-acl/search" authentication={["api-key"]} title="Searches the IP ACLs using the given search criteria"/>
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="search.name" type="String" optional>
+    The string to match all or part of the IP ACL name. This can contain wildcards using the asterisk character (`*`). If no wildcards are present, this parameter value will be interpreted as `*value*`.
+  </APIField>
+  <APIField name="search.numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="search.orderBy" type="String" optional defaults="insertInstant DESC">
+    The database column to order the search results on plus the order direction.
+
+    The possible values are:
+
+     * `id` - the id of the IP ACL
+     * `insertInstant` - the [instant](/docs/reference/data-types#instants) when the IP ACL was created
+     * `lastUpdateInstant` - the last [instant](/docs/reference/data-types#instants) that the IP ACL was updated
+     * `name` - the name of the IP ACL
+
+    For example, to order the results by the insert instant in descending order, the value would be provided as `insertInstant DESC`. The final string is optional, can be set to `ASC` or `DESC`, or omitted and will default to `ASC`.
+  </APIField>
+  <APIField name="search.startRow" type="Integer" optional defaults="0">
+    The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API contains the IP ACLs matching the search criteria in paginated format.
+
+<StandardGetResponseCodes never_search_error />
+
+<IpAclResponseBodySearch />
+
+## Update an IP ACL
+
+<GenericUpdateExplanationFragment capitalized_object_name="IP ACL" />
+
+### Request
+
+<API method="PUT" uri="/api/ip-acl/{ipAccessControlListId}" authentication={["api-key"]} showPatch={true} title="Update the IP ACL with the given Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="ipAccessControlListId" type="UUID" required>
+    The Id of the IP ACL to update.
+  </APIField>
+</APIBlock>
+
+<IpAclRequestBody />
+
+### Response
+
+The response for this API contains the IP ACL that was updated.
+
+<StandardPutResponseCodes never_search_error />
+
+<IpAclResponseBody />
+
+## Delete an IP ACL
+
+This API is used to permanently delete an IP ACL. Deleting an IP ACL will remove it from any tenants and/or applications it was assigned. Delete will fail with a validation error if the IP ACL is still in use.
+
+### Request
+
+<API method="DELETE" uri="/api/ip-acl/{ipAccessControlListId}" authentication={["api-key"]} title="Delete an IP ACL by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="ipAccessControlListId" type="UUID" required>
+    The unique Id of the IP ACL to delete.
+  </APIField>
+</APIBlock>
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes never_search_error />

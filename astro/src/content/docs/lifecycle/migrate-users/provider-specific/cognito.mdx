@@ -1,0 +1,720 @@
+---
+title: Migration From Amazon Cognito
+description: Learn how to migrate your users to FusionAuth from Amazon Cognito.
+section: lifecycle
+subcategory: migrate users
+tertcategory: provider specific
+---
+import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/provider-specific/_mapping-user-attributes.mdx';
+import Aside from 'src/components/Aside.astro';
+import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-migration.mdx';
+import OtherEntitiesIntro from 'src/content/docs/lifecycle/migrate-users/provider-specific/_other-entities-intro.mdx';
+import Identifiers from 'src/content/docs/lifecycle/migrate-users/provider-specific/_identifiers.mdx';
+import SetUpFusionauth from 'src/content/docs/lifecycle/migrate-users/provider-specific/_set-up-fusionauth.mdx';
+import CreateTestTenant from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-tenant.mdx';
+import CreateTestApplication from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-application.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import JSON from 'src/components/JSON.astro';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import VerifyImport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_verify-import.mdx';
+import WhatNext from 'src/content/docs/lifecycle/migrate-users/provider-specific/_what-next.mdx';
+import WhatNextCognito from 'src/content/docs/lifecycle/migrate-users/provider-specific/_what-next-cognito.mdx';
+import SlowMigrationTimeline from 'src/content/docs/lifecycle/migrate-users/provider-specific/_slow-migration-timeline.mdx';
+import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_additional-support.mdx';
+import CreateApiKey from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-api-key.mdx';
+import {RemoteCode} from '@fusionauth/astro-components';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+
+export const migration_source_name = 'Cognito';
+export const migration_source_dir = 'cognito';
+export const add_tenant_image_role = 'bottom-cropped';
+
+## Overview
+
+This document will help you migrate your users off of Amazon Cognito. If you are looking to compare FusionAuth and Cognito, [this document may help](/blog/2018/09/18/amazon-cognito-and-fusionauth-comparison).
+
+There are a number of different ways applications can be integrated with Cognito, and it would be difficult to cover them all. This guide focuses on migrating user data, including profile data and passwords. However, [Cognito does not allow for password hash export](https://forums.aws.amazon.com/thread.jspa?threadID=296932&tstart=0). Therefore, you must perform a slow migration if you don't want to force users to reset their passwords.
+
+Alternatively, you can do a bulk migration and force everyone to reset their passwords. This option is discussed below, but the primary focus of this guide is enabling you to migrate your users from Cognito without requiring any password resets.
+
+## Prerequisites
+
+This guide assumes intermediate level familiarity with AWS, in particular Cognito, CloudFormation and AWS Lambda.
+
+This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin. For more general migration information, please view the [FusionAuth migration guide](/docs/lifecycle/migrate-users/general-migration).
+
+
+## Planning Considerations
+
+### Slow Migration or Bulk Migration
+
+To preserve your user's passwords, you need to perform a slow migration. Users log in to FusionAuth with their Cognito credentials, and FusionAuth transparently migrates their data. Slow migrations in FusionAuth use [Connectors](/docs/apis/connectors), a paid feature.
+
+If, on the other hand, resetting user passwords is acceptable, a [Bulk Migration](#bulk-migration) can work for you. Review that section for more details on the required steps. You may also perform a bulk migration after a slow migration has run for a while. Active users can be transparently migrated and infrequent users may not mind resetting their password.
+
+You can learn more about the [types of migrations that FusionAuth supports here](/docs/lifecycle/migrate-users/general-migration#types-of-migrations).
+
+### Mapping User Attributes
+
+<MappingUserAttributes migration_source_name={migration_source_name} />
+
+### One Tenant or Many
+
+In Cognito, users are placed in [User Pools](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools.html). FusionAuth has a similar concept called [Tenants](/docs/get-started/core-concepts/tenants). Both of these include data about users, applications and other configuration.
+
+Each tenant in FusionAuth is a distinct user space. You may choose to merge multiple Cognito User Pools into one FusionAuth tenant or keep them separate.
+
+Learn more about [FusionAuth tenants](/docs/extend/examples/multi-tenant).
+
+### Identity Pools
+
+In Cognito, external identity providers are managed using [Identity Pools](https://docs.aws.amazon.com/cognito/latest/developerguide/external-identity-providers.html). With FusionAuth, these are called [Identity Providers](/docs/lifecycle/authenticate-users/identity-providers/). 
+
+Review the supported FusionAuth [Identity Providers](/docs/lifecycle/authenticate-users/identity-providers/) to ensure any you need are supported. At this time, all Cognito external identity providers are supported by FusionAuth, except `Login with Amazon`.
+
+If not supported explicitly, a provider may work with an OIDC or SAML connection. Otherwise, please open a [feature request](https://github.com/fusionauth/fusionauth-issues/).
+
+<Aside type="note">
+Importing Cognito users stored in an external identity provider is more straightforward because you can use the Import API; you don't have to perform a slow migration. Many of the steps in [Bulk Migration](#bulk-migration) will apply.
+</Aside>
+
+To retrieve the user information, use the approach documented in the [Export User Data From Cognito](#export-user-data-from-cognito) section.
+
+<SocialLoginMigration />
+
+### Other Entities
+
+<OtherEntitiesIntro other_migrated_entities="app clients or password policies" migration_source_name={migration_source_name}/>
+
+* [Lambda Triggers](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html) are ways for you to customize authentication or authorization workflows with AWS Lambdas. FusionAuth has a similar concept called [Lambdas](/docs/extend/code/lambdas/). FusionAuth also has [webhooks](/docs/extend/events-and-webhooks/) fired at certain points in the user lifecycle; in certain configurations, they can also stop a particular authentication flow.
+* Cognito is deeply integrated with [AWS IAM](https://aws.amazon.com/iam/), in particular with respect to roles and permissions. FusionAuth has [roles](/docs/get-started/core-concepts/roles) that are configured on an application by application basis and made available in a token after a successful authentication. FusionAuth can also issue tokens which can be used with [AWS IAM OIDC federation](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_oidc.html).
+* Cognito has the concept of a [Hosted UI](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-app-integration.html) where users can log in or register. FusionAuth has [hosted login pages](/docs/get-started/core-concepts/integration-points#hosted-login-pages) which offer a superset of the functionality of Cognito's Hosted UI. They are [customized via themes](/docs/customize/look-and-feel/).
+* In Cognito, users log into [app clients](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-app-idp-settings.html) if using the Hosted UI. In FusionAuth, [Applications](/docs/get-started/core-concepts/applications) are a similar construct, but users are associated with them through [Registrations](/docs/get-started/core-concepts/registrations). You can migrate both your Client Id and Client Secret from Cognito to FusionAuth.
+* Cognito sends emails on your behalf, such as forgot password notifications. FusionAuth can do so too; [the templates are customizable](/docs/customize/email-and-messages/).
+* Cognito offers the Client Credentials grant. FusionAuth offers a constrained version of this using [Entity Management](/docs/get-started/core-concepts/entity-management); this is available in all paid plans.
+* Refresh tokens allow JWTs to be refreshed without a user logging in. These can be migrated from Cognito using the [Import Refresh Tokens API](/docs/apis/users#import-refresh-tokens).
+* Cognito allows for custom attributes, but they must be configured at User Pool creation. In FusionAuth, as mentioned above, custom user attributes are stored on the `user.data` field and are dynamic, searchable and unlimited in size. Any valid JSON value may be stored in this field.
+* Cognito supports MFA. FusionAuth also [supports MFA](/docs/lifecycle/authenticate-users/multi-factor-authentication), which may be enabled for a tenant and configured for a user at any time.
+
+<Aside type="note">
+In FusionAuth, users are explicitly mapped to applications with a [Registration](/docs/get-started/core-concepts/registrations). 
+
+Cognito, in contrast, gives users access to all Cognito applications In a User Pool by default. 
+</Aside>
+
+#### Identifiers 
+
+<Identifiers migration_source_name={migration_source_name}/>
+
+#### Differences
+
+In addition to the different names for common functionality outlined above in [Other Entities](#other-entities), there are some fundamental differences between FusionAuth and Cognito. If your application relies on Cognito specific functionality, please review this section carefully.
+
+* Cognito has [quotas](https://docs.aws.amazon.com/cognito/latest/developerguide/limits.html) that apply to logins and operations. FusionAuth has no quotas. Instead, you are limited by the resources provided to a FusionAuth instance, such as memory, CPU and database capacity.
+* Cognito has [the ability to retrieve AWS credentials](https://docs.aws.amazon.com/cognito/latest/developerguide/getting-credentials.html) when a user logs in. FusionAuth has no inherent ability to do so. If this is required, you could use FusionAuth as a [Cognito OIDC External Identity Provider](https://docs.aws.amazon.com/cognito/latest/developerguide/open-id.html) and have Cognito provision the AWS credentials.
+* FusionAuth has no analog to [Cognito Sync](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-sync.html). If you need this feature, use a specialized syncing library. Users report that FusionAuth works fine with [AWS AppSync](https://aws.amazon.com/appsync/).
+* Cognito does not support Cross-Region Replication, which syncs data across multiple geographic regions for higher availability. In contract, [FusionAuth supports this](/docs/get-started/run-in-the-cloud/disaster-recovery).
+
+Once you've planned the migration of other entities, the next step is to set up FusionAuth to connect to Cognito to import users during login.
+
+## Importing Users
+
+Because you are implementing a slow migration, it will take place over time. But you can set up a test environment to confirm it will work before deploying to production. Here are the steps we need to take.
+
+1. Set Up FusionAuth
+2. Set Up AWS
+3. Set Up the Connector
+4. Log In as a Test User
+5. Verify the Import
+6. Migrate Everything Else
+
+### Set Up FusionAuth
+
+<SetUpFusionauth />
+
+#### Create a Test Tenant
+
+<CreateTestTenant migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} add_tenant_image_role={add_tenant_image_role} />
+
+#### Create a Test Application
+
+<CreateTestApplication migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} />
+
+### Set Up AWS
+
+There are two main components you need to set up to enable this migration. The first is an App Client. The second is an [AWS Lambda](https://docs.aws.amazon.com/lambda/latest/dg/welcome.html) to accept login requests from FusionAuth over TLS and proxy them to Cognito.
+
+Set up both of these components for each Cognito User Pool whose users you are migrating.
+
+<Aside type="caution">
+FusionAuth Connectors will send user credentials to Cognito for authentication. Secure both the data in transit and the AWS Lambda endpoint.
+
+In this guide, all communication is over TLS and the Lambda requires a certain `Authorization` header value. You could add additional layers of security, such as:
+
+* Rotating the header periodically.
+* Requiring a client certificate.
+* [Locking down the API gateway](https://aws.amazon.com/premiumsupport/knowledge-center/api-gateway-resource-policy-access/) to only allow access from the FusionAuth IP address(es).
+* Running FusionAuth within the same VPC as the Lambda and [using a VPC endpoint](https://docs.aws.amazon.com/lambda/latest/dg/configuration-vpc-endpoints.html).
+</Aside>
+
+
+#### Configuring the App Client in Cognito
+
+FusionAuth will send login requests to Cognito but needs a client Id to do so. You can re-use an existing app client, but it is better practice to create a new one to receive these requests. This guide will walk through configuration using the AWS Console, but you can also configure this using CloudFormation, Terraform or any other IAC tool.
+
+<Aside type="note">
+These instructions use the new Cognito user interface released in the fall of 2021. 
+</Aside>
+
+Visit the Cognito User Pool configuration containing the users you want to migrate. Navigate to the <Breadcrumb>Create app client</Breadcrumb> screen. Configure the new app client:
+
+* Select `Other` for the <InlineField>App type</InlineField>. Give it a name, such as `FusionAuth migration`.
+* Ensure the <InlineField>Client secret</InlineField> field is set to not generate a secret. 
+* For the <InlineField>Authentication flows</InlineField> field, select `ALLOW_USER_PASSWORD_AUTH` to enable username/password based authentication. This is the form of authentication FusionAuth will use to migrate over your users. 
+* You must enter a value in the <InlineField>Allowed callback URLs</InlineField> field, but this won't be used. Use a value like `https://example.com`.
+* Make sure the client can read whatever attributes should be migrated; include the username or email address at a minimum.
+
+Everything else can be left with default values. 
+
+At the end, you'll end up with an app client configuration looking similar to this:
+
+![Configuring an app client for migration.](/img/docs/lifecycle/migrate-users/provider-specific/cognito/cognito-app-client-configuration.png)
+
+Save the new configuration. On the list of app clients, you'll see your new one.
+
+Record the client Id. This will be a value like `5pmi4ct0o4n6ulqj7vlnkm6nhh`. Also, note the AWS region your User Pool is in, such as `us-east-2`.
+
+![Finding the app client Id.](/img/docs/lifecycle/migrate-users/provider-specific/cognito/cognito-app-client-list.png)
+
+Next, you'll need to set up an Lambda with an API Gateway to receive the login requests from FusionAuth. The lambda will pass the credentials on to Cognito and, when the authentication succeeds, return a FusionAuth friendly JSON object.
+
+#### Configuring the AWS Lambda
+
+The AWS lambda receives the login request from FusionAuth, attempts to log the user in via Cognito, and then returns a FusionAuth user object on success. The lambda will call the [GetUser](https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_GetUser.html) API after successful authentication to get additional user attributes, which will then be transformed into a FusionAuth compatible format.
+
+When setting this up, modify the example lambda code provided in this guide. Here's the entire sample AWS lambda, tested with the node 14 runtime:
+
+<Aside type="caution">
+This code will not work with the node 18 runtime or greater. Be sure to select the proper version of the node runtime when creating the AWS lambda.
+</Aside>
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-cdk-cognito-migration/main/resources/index.js"
+            lang="js"
+            title="AWS Connector Lambda code" />
+
+First, modify the constants at the top of the file with values you've previously recorded.
+
+```javascript title="AWS Connector Lambda constants to modify"
+const clientId = // the value of the App Client Id you created above
+const region = // the AWS region where your user pool exists
+const fusionAuthApplicationId = // the Id of the FusionAuth application to which you want to register the users automatically. Must exist in the test tenant.
+const authorizationHeaderValue = // a random string to ensure that only the Connector can execute this lambda
+```
+
+You must modify the `processUserJSON` function as well. This converts the JSON returned from Cognito into the JSON format FusionAuth requires. You can see samples of both below. 
+
+The exact implementation depends on your UserPool custom attributes and business logic. You could, for example, give users certain FusionAuth roles, register them for more than one application or add them to a previously created FusionAuth group.
+
+<Aside type="tip">
+To test the AWS lambda you can configure the test event in the AWS management console. You will need to supply the `Event JSON`. It should look something like this:
+
+```json title="Test Event JSON"
+{
+  "path": "/",
+  "httpMethod": "POST",
+  "headers": {
+    "Authorization": "2687EE95-AF19-4CE6-A8BD-963139DED32E"
+  },
+  "body": "{\"loginId\":\"user1\",\"password\":\"Password#1\"}"
+} 
+```
+
+Update the Authorization header value and supply a known Cognito username and password.
+</Aside>
+
+```json title="Sample User Data Response from Cognito"
+{
+  "Username": "06744664-df6e-48cc-9421-3d56a9732172",
+  "Attributes": [
+    {
+      "Name": "sub",
+      "Value": "06744664-df6e-48cc-9421-3d56a9732172"
+    },
+    {
+      "Name": "website",
+      "Value": "http://example.com"
+    },
+    {
+      "Name": "given_name",
+      "Value": "Test"
+    },
+    {
+      "Name": "middle_name",
+      "Value": "T"
+    },
+    {
+      "Name": "family_name",
+      "Value": "Testerson"
+    },
+    {
+      "Name": "email",
+      "Value": "test@example.com"
+    }
+  ]
+}
+```
+
+The `processUserJSON` will transform the above into a FusionAuth compatible format, as displayed below:
+
+<JSON title="Sample Successful Login JSON" src="users/login-migrated-response.json" />
+
+Once you have the custom lambda logic updated, it is time to deploy the AWS Lambda. Since it will be communicating over HTTP, it also needs an API Gateway.
+
+#### Deploying the AWS Lambda
+
+You have a number of options here. It's simplest to deploy with [CloudFormation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/Welcome.html), but pick the option that works best for you.
+
+##### CloudFormation
+
+Below is a sample template which sets up an API gateway that forwards POSTs to the AWS lambda. The lambda function definition is subject to the [limits outlined in the AWS documentation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-lambda-function-code.html) for the `ZipFile` property.
+
+Note the one looooong line containing the AWS lambda code. 
+
+You'll modify that next.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-cdk-cognito-migration/main/cloudformation/cloudformation.yaml"
+            lang="yaml"
+            title="CloudFormation AWS Lambda Deployment Template" />
+
+Find a JavaScript minifier online and minify your custom lambda code. It's best if the minifier puts everything on one line; [this one is fine](https://www.toptal.com/developers/javascript-minifier/). 
+
+Update the template; replace the line after `ZipFile: |` with your minified JavaScript code.
+
+```yaml title="CloudFormation Customization Point"
+  lambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+          # REPLACE THIS LINE
+```
+
+Next, create this stack as you would any other CloudFormation stack. Skip to [Testing The Deployed API](#testing-the-deployed-api).
+
+##### AWS CDK
+
+If you'd like to set up your Lambda with the AWS CDK, use [this example project](https://github.com/FusionAuth/fusionauth-example-cdk-cognito-migration).
+
+Here's an [introduction to the CDK](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html).
+
+{/*  TODO you can apparently call lambdas directly via a URL now? https://twitter.com/0xdabbad00/status/1461785704212709379 */}
+
+Next, proceed to [Testing The Deployed API](#testing-the-deployed-api).
+
+##### Deploy In Your Environment With Your Tools
+
+If you already have an API gateway set up or want to build the environment from scratch, use the lambda code and deploy it in whatever fashion you wish. It doesn't need any special permissions other than CloudWatch logs for logging. When you deploy this infrastructure, make sure the lambda code is only available for `POST`s.
+
+Here's the [AWS documentation about setting up an API gateway with a lambda](https://docs.aws.amazon.com/apigateway/latest/developerguide/getting-started.html).
+
+#### Testing The Deployed API
+
+Now that you've deployed the API backed by your custom AWS lambda, you should have a URL that looks something like this: `https://j2xbdwi6hf.execute-api.us-east-2.amazonaws.com/prod/`.
+
+Test the login process with the lambda. You can use curl and an account whose username and password you know to do so.
+
+```shell title="Testing the API and AWS Lambda with Curl"
+curl -XPOST -H 'Authorization: <the value of authorizationHeaderValue>' \
+https://j2xbdwi6hf.execute-api.us-east-2.amazonaws.com/prod/  -H 'Content-type: application/json' -d '{
+  "loginId": "test@example.com",
+  "password": "password"
+}' 
+```
+
+If the user is authenticated, you should receive a response similar, though differing based on how you modified the lambda code, to this:
+
+```json title="Successful Results of Testing the API and AWS Lambda"
+{
+  "user": {
+    "data": {
+      "migratedDate": "2021-11-19T21:50:19.048Z",
+      "migratedFrom": "cognito",
+      "website": "http://example.com"
+    },
+    "username": "06744664-df6e-48cc-9421-3d56a9732172",
+    "email": "test@example.com",
+    "id": "06744664-df6e-48cc-9421-3d56a9732172",
+    "firstName": "Test",
+    "lastName": "Testerson",
+    "active": true,
+    "tenantId": "30663132-6464-6665-3032-326466613934",
+    "registrations": [{
+      "applicationId": "85a03867-dccf-4882-adde-1a79aeec50df"
+    }]
+  }
+}
+```
+
+If the authorization header or account credentials are incorrect, an empty body and an HTTP status code are returned. You can view the status code by running `curl` with the `-vv` switch.
+
+### Set Up the Connector
+
+Now you need to set up a Connector to use the AWS API you created. You should set up a different Connector for each Cognito User pool.
+
+Log back into the FusionAuth administrative user interface if needed.
+
+<PremiumPlanBlurb />
+
+Connectors are a feature limited to paid plans, so you must ensure you have a valid reactor license. Learn more about [activating reactor](/docs/get-started/core-concepts/licensing).
+
+Next:
+
+* Configure the Connector with the API URL and authorization header
+* Configure the Tenant to use the Connector
+
+#### Configure a Connector
+
+Create and configure the Connector. Navigate to <Breadcrumb>Settings -> Connectors</Breadcrumb> and add a new Generic Connector.
+
+![Adding a Generic Connector.](/img/docs/lifecycle/migrate-users/provider-specific/cognito/add-generic-connector.png)
+
+Configure the Connector:
+
+* Add a name like `Cognito migration`.
+* Set the <InlineField>Authentication URL</InlineField> to the value of the API gateway endpoint created above.
+* Navigate to the <Breadcrumb>Headers</Breadcrumb> tab. Add the custom header value the AWS Lambda requires. Unless you modified the code, the header name is `Authorization`.
+
+At the end, you should have a screen like this:
+
+![Configuring a Generic Connector.](/img/docs/lifecycle/migrate-users/provider-specific/cognito/configured-generic-connector.png)
+
+Save the Connector. Next, configure your tenant to use this Connector.
+
+#### Configuring the Tenant
+
+Navigate to your tenant settings: <Breadcrumb>Tenants -> Cognito import tenant -> Connectors</Breadcrumb>.
+
+Click the <InlineField>Add policy</InlineField> button to set up a new Connector policy. 
+
+![Connector policies for this Tenant.](/img/docs/lifecycle/migrate-users/provider-specific/cognito/connector-policies.png)
+
+Set the <InlineField>Connector</InlineField> field value to the name of the Connector created previously. Make sure that the <InlineField>Migrate user</InlineField> field is enabled. You can leave the <InlineField>Domains</InlineField> field with the value of `*`, which will apply this Connector to every user.
+
+After configuration, the Policy entry form should look similar to this:
+
+![Add Connector policy.,width=1200](/img/docs/lifecycle/migrate-users/provider-specific/cognito/add-connector-policy.png)
+
+Save it.
+
+Next, ensure this Connector Policy is in the correct order by using the arrows in the administrative user interface to put it at the top. With this configuration, all users are checked against this Connector the first time they are seen. If they log in, they'll be migrated to the FusionAuth user database.
+
+![Cognito Connector policy added and in list.](/img/docs/lifecycle/migrate-users/provider-specific/cognito/connector-policy-list-after-adding.png)
+
+### Log In With a Test User
+
+To test that users will be migrated, log in as a test user via the FusionAuth interface. 
+
+When you set up the test application, you recorded the <InlineField>OAuth IdP login URL</InlineField>.
+
+![Finding the login URL.,width=1200](/img/docs/lifecycle/migrate-users/provider-specific/cognito/find-login-url.png)
+
+Copy this URL and open it in a new incognito browser window. (If you don't use an incognito window, the admin user session will interfere with the test.) You should see the login screen:
+
+![The login page.](/img/docs/lifecycle/migrate-users/provider-specific/cognito/user-login.png)
+
+Enter credentials for a Cognito user account; it can be the same one you used to test the API with curl and log in. The user will be transparently migrated over to FusionAuth.
+
+If the user was not migrated or the login was unsuccessful, you can troubleshoot. In the administrative user interface, enable the <InlineField>Debug enabled</InlineField> field in the Connector configuration by navigating to <Breadcrumb>Settings -> Connectors</Breadcrumb> and editing the Generic Connector you added.
+
+After enabling enhanced debug messages, try to log in again with the test user. In the administrative user interface, navigate to <InlineField>System -> Event Log</InlineField> and look for useful messages.
+
+<Aside type="note">
+After a successful test login, the user will be redirected to a URL like `https://example.com/?code=FlZF97WIYLNxt4SGD_22qvpRh4fZ6kg_N89ZbBAy1E4&locale=fr&userState=Authenticated`. This occurs because you haven't set up a web application to handle the authorization code redirect yet.
+
+That is an important next step but is beyond the scope of this document. Consult the [5 minute setup guide](/docs/quickstarts/5-minute-setup-guide) for an example of how to do this.
+</Aside>
+
+Let's check that the import succeeded in another way: by viewing the user in the administrative user interface.
+
+### Verify the Migration
+
+<VerifyImport migration_source_dir={migration_source_dir} />
+
+At this point, you've successfully migrated a user from Cognito into FusionAuth. Any further changes for this user will occur against the FusionAuth database; this includes profile and password changes.
+
+### Clean Up Your Test Environment
+
+After you are done testing, deploy these same configuration changes to production.
+
+Depending on your architecture, you can choose to migrate users into the default tenant or a new tenant of the production instance. Whichever you choose, configure the Connector policy of the destination tenant.
+
+If you aren't keeping users in the test tenant, delete it. This is also useful if you want to start over because you need to tweak a setting such as the default application registration. In either case, delete the tenant you created. 
+
+This will remove all the users and other configuration for this tenant, giving you a fresh start. To delete a tenant, navigate to <Breadcrumb>Tenants</Breadcrumb> and choose the red trash can icon corresponding to the tenant to be deleted. 
+
+![Deleting a tenant.](/img/docs/lifecycle/migrate-users/provider-specific/cognito/list-of-tenants-delete-highlighted.png)
+
+Confirm your desire to delete the tenant. Depending on how many users exist in that tenant, this may take some time. If it is easier, you may also delete migrated users one at a time using the administrative user interface.
+
+### Migrate Everything Else
+
+<WhatNext />
+
+<WhatNextCognito />
+
+### Estimate the Slow Migration Timeline
+
+When using a slow migration, you can estimate how many accounts will be migrated in a given period of time.
+
+<SlowMigrationTimeline />
+
+After this period of time, you may want to bulk migrate the rest of the users, or treat them as inactive and not migrate them. Plan to disable the Connector and remove the tenant's Connector Policy after the slow migration is complete.
+
+Learn more about [general slow migration considerations](/docs/lifecycle/migrate-users/general-migration#slow-migration-implementation).
+
+### Additional Support
+
+<AdditionalSupport />
+
+## Bulk Migration
+
+As mentioned above, a bulk migration of Cognito users requires all imported users to reset their passwords, since Cognito password hashes are inaccessible. This is typically a poor choice as it negatively affects users. However, if a slow migration won't work because of timing or other reasons, you can move all user information other than passwords from Cognito to FusionAuth, and then send password reset emails.
+
+The benefits of a bulk migration are:
+
+* You can move your users all at once.
+* You no longer have a dependency on Cognito.
+
+The downsides of a bulk import:
+
+* You must require all users to reset their password. You can do this in bulk via API calls or you can have users reset their passwords when they try to login. 
+
+To bulk migrate users, do the following:
+
+* Set up FusionAuth
+* Extract all user data from Cognito
+* Reformat the data into FusionAuth compatible JSON
+* Import the users using the [Import User API](/docs/apis/users#import-users)
+* Reset all user passwords
+
+Let's look at each of these steps in more detail.
+
+### Set Up FusionAuth For a Bulk Migration
+
+You need to set up FusionAuth, including a tenant and API key.
+
+<CreateTestTenant migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} add_tenant_image_role={add_tenant_image_role} />
+
+The next step is to create an API key. This will be used by the import script. To do so, navigate to <Breadcrumb>Settings -> API Keys</Breadcrumb> in the administrative user interface.
+
+![Adding an API key](/img/docs/lifecycle/migrate-users/provider-specific/cognito/add-api-key.png)
+
+This key needs to have the permission to run a bulk import of users. In the spirit of the principle of least privilege, give it the permission to `POST` to the `/api/user/import` endpoint. Also, give the key permissions to `POST` to the API endpoint `/api/user/change-password`. Record the API key string, as you'll use it below.
+
+![Setting API key permissions](/img/docs/lifecycle/migrate-users/provider-specific/cognito/set-api-key-permissions.png)
+
+### Export User Data From Cognito
+
+You need to export whatever data you can from Cognito before you can import it to FusionAuth. 
+
+<Aside type="note">
+These instructions use the `aws` command line tool. If you don't have that installed, please install and configure it using [the AWS documentation](https://aws.amazon.com/cli/).
+</Aside>
+
+Log in to the AWS console to find your User Pool Id. It will look something like `us-east-2_ud90QwSeF`. Then, get a list of all your users with the `list-users` command:
+
+```shell title="Listing users in a pool"
+aws cognito-idp list-users --user-pool-id us-east-2_ud90QwSeF
+```
+
+```json title="list-users results"
+{
+    "Users": [
+        {
+            "Username": "05f1780a-17d4-4bba-befb-07c074a89d7b",
+            "Attributes": [
+                {
+                    "Name": "sub",
+                    "Value": "05f1780a-17d4-4bba-befb-07c074a89d7b"
+                },
+                {
+                    "Name": "website",
+                    "Value": "http://example.com"
+                },
+                {
+                    "Name": "email_verified",
+                    "Value": "true"
+                },
+                {
+                    "Name": "given_name",
+                    "Value": "testverified"
+                },
+                {
+                    "Name": "middle_name",
+                    "Value": "T"
+                },
+                {
+                    "Name": "family_name",
+                    "Value": "Testerson"
+                },
+                {
+                    "Name": "email",
+                    "Value": "testverified@example.com"
+                }
+            ],
+            "UserCreateDate": "2021-11-16T17:27:47.442000-07:00",
+            "UserLastModifiedDate": "2021-11-16T17:30:05.292000-07:00",
+            "Enabled": true,
+            "UserStatus": "CONFIRMED"
+        },
+        {
+            "Username": "06744664-df6e-48cc-9421-3d56a9732172",
+            "Attributes": [
+                {
+                    "Name": "sub",
+                    "Value": "06744664-df6e-48cc-9421-3d56a9732172"
+                },
+                {
+                    "Name": "website",
+                    "Value": "http://example.com"
+                },
+                {
+                    "Name": "given_name",
+                    "Value": "Test"
+                },
+                {
+                    "Name": "middle_name",
+                    "Value": "T"
+                },
+                {
+                    "Name": "family_name",
+                    "Value": "Testerson"
+                },
+                {
+                    "Name": "email",
+                    "Value": "test@example.com"
+                }
+            ],
+            "UserCreateDate": "2021-11-15T15:51:01.512000-07:00",
+            "UserLastModifiedDate": "2021-11-15T15:53:06.566000-07:00",
+            "Enabled": true,
+            "UserStatus": "CONFIRMED"
+        }
+    ]
+}
+```
+
+If you have more than a few users, you may need to paginate the results. If this is the case, you'll receive a `NextToken` value in the JSON output:
+
+```json title="NextToken sample value"
+{
+  "Users": [ ... ],
+   "NextToken": "eyJQYWdpbmF0aW9uVG9rZW4iOiBudWxsLCAiYm90b190cnVuY2F0ZV9hbW91bnQiOiAxfQ=="
+}
+```
+
+Use that value in your next call `list-users` request:
+
+```shell title="Listing users in a pool using pagination"
+aws cognito-idp list-users --user-pool-id us-east-2_ud90QwSeF --starting-token eyJQYWdpbmF0aW9uVG9rZW4iOiBudWxsLCAiYm90b190cnVuY2F0ZV9hbW91bnQiOiAxfQ==
+```
+
+You'll need to do this until you have all your user data.
+
+You are now ready to transform your data. Use a tool like `jq` or any other programming language to transform the JSON from the Cognito format to the FusionAuth format. In addition to fields you are directly translating, such as from `family_name` to `lastName`, make sure you:
+
+* Ensure every user has a valid email address so they can reset their password.
+* Create any registrations for users for existing FusionAuth Applications.
+* Configure the users to be part of the test tenant by setting their `tenantId`.
+* Set a `user.data` field indicating these users are from a bulk import. That is, set `user.data.importSource` to `"cognito"`.
+* Set the password to a random string, such as a UUID. Set the encryption and salt methods to any valid value, because the password will be reset in the last stage of the bulk migration.
+* Optionally use the `sub` claim from Cognito as your user Id.
+* Ensure that the email address is unique across all users imported to the same tenant.
+
+Here's an example of JSON suitable for import:
+
+<JSON title="Example Import Request JSON" src="users/import-request.json" />
+
+You can put as many as 100,000 users in each FusionAuth import JSON file.
+
+{/* TODO write ruby script to do this. */}
+
+### Import the Users
+
+After you have transformed your data to the format expected by the Import Users API, load the user data. Place all the JSON files in a directory, and update the shell script below with the location of that directory, the FusionAuth instance hostname and the API key you created above. Then you can run this shell script.
+
+```sh title="Example Import Shell Script"
+#!/bin/sh
+
+API_KEY=...
+JSON_FILE_DIR=...
+FA_HOST=...
+
+for file in $JSON_FILE_DIR/*.json; do
+  echo "Processing $file";
+  RES=`curl --max-time 600 \
+       -s -w "%{http_code}" \
+       -H "Authorization: $API_KEY" \
+       -H "Content-type: application/json" \
+       -XPOST \
+       $FA_HOST/api/user/import \
+       -d@$file`
+  if [ "$RES" -ne "200" ]; then
+    echo "Error: $RES";
+    exit 1;
+  fi
+done
+```
+
+You can also review the [Import scripts repository](https://github.com/FusionAuth/fusionauth-import-scripts) for other example scripts which process export data in a more robust fashion; the Auth0 import script is a good example. Pull requests to add Cognito compatibility are welcome!
+
+Now that you have all the users imported, you must reset their passwords. Ouch. Don't worry, you can script it.
+
+### Reset Passwords
+
+Users may reset their password using the `Forgot Password` link on the login page, or you can use the API calls documented below to do it.
+
+<Aside type="caution">
+This script will send an email to every imported user. Ensure your SMTP server, configured in <Breadcrumb>Tenants -> Your Tenant -> Email</Breadcrumb>, is able to handle the volume. 
+</Aside>
+
+Review the `Change Password` template to ensure the messaging is correct. Here is [more information on modifying the template](/docs/customize/email-and-messages/templates-replacement-variables#forgot-password).
+
+Retrieve the `loginId` from the Cognito JSON export files and place it in a single file. The `loginId` will either be the username or the email address. Update the script below to use the API key created in [Set Up FusionAuth For a Bulk Migration](#set-up-fusionauth-for-a-bulk-migration) step.
+
+The script below will call the [forgot password API](/docs/apis/users#start-forgot-password-workflow) for every user. It sleeps periodically to avoid overloading the SMTP server.
+
+```shell title="Example User Password Reset"
+#!/bin/bash
+API_KEY=...
+LOGIN_ID_FILE=...
+FA_HOST=...
+
+for loginId in `cat $LOGIN_ID_FILE`; do
+  sleep $[( $RANDOM % 10 > 8)] # sleeps 1 second ~10% of the time
+  RES=`curl --max-time 600 \
+       -s -w "%{http_code}" \
+       -H "Authorization: $API_KEY" \
+       -H "Content-type: application/json" \
+       -XPOST \
+       $FA_HOST/api/user/forgot-password \
+       -d '{"loginId": "'$loginId'","sendForgotPasswordEmail": true}'`
+  if [ "$RES" -ne "200" ]; then
+    echo "Error: $RES";
+    exit 1;
+  fi
+done
+```
+
+At the end of this process, you have imported the user data and enabled users to reset their passwords to a known value.
+
+### What To Do Next
+
+<WhatNext />
+
+<WhatNextCognito />
+
+### Additional Support
+
+<AdditionalSupport />

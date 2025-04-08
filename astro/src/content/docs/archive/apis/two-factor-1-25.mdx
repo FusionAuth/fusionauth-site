@@ -1,0 +1,258 @@
+---
+title: Pre 1.26 Two Factor APIs (Deprecated)
+description: Learn about the APIs for enabling and disabling Two Factor Authentication.
+section: archive
+subcategory: apis
+---
+import Aside from 'src/components/Aside.astro';
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import JSON from 'src/components/JSON.astro';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+
+## Overview
+
+<Aside type="caution">
+This documentation is for version 1.25 and earlier. Breaking changes were introduced to this API in 1.26.
+
+Do not use this API unless you are on a version of FusionAuth earlier than 1.26. You can view the [current two factor documentation if you are on version 1.26 or higher](/docs/apis/two-factor).
+</Aside>
+
+## Enable Two Factor
+
+This API is used to enable Two Factor authentication for a single User. To use this API the User must provide a valid
+Two Factor verification code.
+
+To enable using `TextMessage` delivery, you may use the [Two Factor Send](/docs/apis/two-factor#send-a-multi-factor-code-when-enabling-mfa) API to deliver a
+code to the User, the User will then provide this code as input.
+
+### Request
+
+<API method="POST" uri="/api/user/two-factor/{userId}" authentication={["api-key"]} title="Enable Two Factor Authentication"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userId" type="UUID" required>
+    The Id of the User to enable Two Factor authentication.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<br/>
+<API method="POST" uri="/api/user/two-factor" authentication={["jwt"]} title="Enable Two Factor Authentication"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="code" type="String" required>
+    A valid Two Factor verification code. This value should be provided by the User to verify they are able to produce codes using
+    an application or receive them using their mobile phone.
+  </APIField>
+  <APIField name="delivery" type="String" required>
+    The User's preferred delivery for verification codes during a two factor login request.
+
+    The possible values are:
+
+    * `None`
+    * `TextMessage`
+
+    When using `TextMessage` the User will also need a valid `mobilePhone`. The User's mobile phone is not validated during this request. Because the `code` is provided on this request it is assumed the User has been able to receive a `code` on their mobile phone when setting the delivery to `TextMessage`.
+  </APIField>
+  <APIField name="secret" type="String" optional>
+    A base64 encoded secret.
+
+    You may optionally use the <InlineField>secret</InlineField> value returned by the [Two Factor Secret](/docs/apis/two-factor#generate-a-secret) API instead of generating this value yourself. This value is a secure random byte array that is Base-64 encoded.
+
+    If you omit this field, then <InlineField>secretBase32Encoded</InlineField> is required.
+  </APIField>
+  <APIField name="secretBase32Encoded" type="String" optional>
+    A base32 encoded secret.
+
+    You may optionally use the <InlineField>secretBase32Encoded</InlineField> value returned by the [Two Factor Secret](/docs/apis/two-factor#generate-a-secret) API instead of generating this value yourself. This value is a secure random byte array that is Base-32 encoded.
+
+    If you omit this field, then <InlineField>secret</InlineField> is required.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="two-factor/request-pre-1-26.json" />
+
+### Response
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                         |
+|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful. Two Factor has been enabled for the User.                                                                                                               |
+| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                            |
+| 401  | You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See [Authentication](/docs/apis/authentication). |
+| 404  | The User does not exist. The response will be empty.                                                                                                                                |
+| 421  | The `code` request parameter is not valid. The response will be empty.                                                                                                              |
+| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                          |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                            |
+
+## Disable Two Factor
+
+This API is used to disable Two Factor authentication for a single User. To use this API the User must provide a valid
+Two Factor verification code.
+
+If the User has configured `TextMessage` delivery, you may use the [Two Factor Send](/docs/apis/two-factor#send-a-multi-factor-code-when-enabling-mfa) API to deliver a
+code to the User, the User will then provide this code as input.
+
+### Request
+
+<API method="DELETE" uri="/api/user/two-factor/{userId}?code={code}" authentication={["api-key"]} title="Disable Two Factor Authentication"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userId" type="UUID" required>
+    The Id of the User to enable Two Factor authentication.
+  </APIField>
+  <APIField name="code" type="String" required>
+    The time based one time use password, also called a Two Factor verification code.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<br/>
+<API method="DELETE" uri="/api/user/two-factor?code={code}" authentication={["jwt"]} title="Disable Two Factor Authentication"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="code" type="String" required>
+    The time based one time use password, also called a Two Factor verification code.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Response
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                         |
+|------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful. Two Factor has been disabled for the User.                                                                                                              |
+| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                            |
+| 401  | You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See [Authentication](/docs/apis/authentication). |
+| 404  | The User does not exist. The response will be empty.                                                                                                                                |
+| 421  | The `code` request parameter is not valid. The response will be empty.                                                                                                              |
+| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                          |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                            |
+
+## Send a Two Factor Code
+
+This API is used to send a Two Factor verification code to a User. This may be useful during Two Factor authentication if the initial
+code is no longer valid. It may be also used to send a code to a User to assist in enabling or disabling Two Factor authentication.
+
+To send a code to a User that already has Two Factor enabled, it is not required they have `TextMessage` set as their preferred delivery.
+As long as the User has a mobile phone defined you may send the User a code.
+
+This API requires that the [Twilio](/docs/customize/email-and-messages/deprecated/twilio) integration is enabled and configured properly.
+
+### Request
+
+<API method="POST" uri="/api/two-factor/send" authentication={["api-key"]} title="Send a Two Factor code to an existing User by Id"/>
+
+This request is intended to be used to send a Two Factor code to a User that already has enabled Two Factor authentication to assist in disabling Two Factor authentication. The User must already have Two Factor enabled and have a valid mobile phone for this to succeed.
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="userId" type="UUID" required>
+    The User Id of the User to send a Two Factor verification code. This User is expected to already have Two Factor enabled.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="two-factor/send/request_userId-pre-1-26.json" />
+
+<API method="POST" uri="/api/two-factor/send" authentication={["api-key"]} title="Send a Two Factor code to a mobile phone"/>
+
+This request is intended to be used to send a Two Factor code to a User to assist in enabling Two Factor authentication.
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="mobilePhone" type="String" required>
+    A mobile phone to send the Two Factor verification code.
+  </APIField>
+  <APIField name="secret" type="String" required>
+    The Two Factor secret used to generate a Two Factor verification code to send to the provided mobile phone.
+
+    You may optionally use value provided in the `secret` field returned by the [Two Factor Secret](/docs/apis/two-factor#generate-a-secret) API instead of generating this value yourself.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="two-factor/send/request-pre-1-26.json" />
+
+<API method="POST" uri="/api/two-factor/send/{twoFactorId}" authentication={["none"]} title="Send a Two Factor code to complete Two Factor Login"/>
+
+This request is intended to send additional messages to the User's mobile phone during login.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="twoFactorId" type="String" required>
+    The `twoFactorId` returned by the Login API.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<br/>
+<API method="POST" uri="/api/two-factor/send" authentication={["jwt"]} title="Send a Two Factor code to an authenticated User using a JWT"/>
+
+This request is intended to be used to send a Two Factor code to a User that already has enabled Two Factor authentication to assist
+in disabling Two Factor authentication. When using JWT authentication the User's Id is retrieved from the JWT. The User must already have
+Two Factor enabled and have a valid mobile phone for this to succeed.
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Response
+
+<StandardPostResponseCodes success_code="200" success_message="The request was successful." />
+
+## Generate a Secret
+
+This API is used to generate a new Two Factor secret for use when enabling Two Factor authentication for a User. This is provided
+as a helper to assist you in enabling Two Factor authentication.
+
+If this secret will be used with a QR code to allow the User to scan the value it will need utilize the Base32 encoded value returned in
+the response.
+
+### Request
+
+<API method="GET" uri="/api/two-factor/secret" authentication={["api-key"]} title="Generate a Two Factor Secret"/>
+
+<API method="GET" uri="/api/two-factor/secret" authentication={["jwt"]} title="Generate a Two Factor Secret"/>
+
+### Response
+
+The response for this API contains the a Two Factor secret.
+
+<StandardGetResponseCodes never_missing no_errors />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="secret" type="String">
+    A Base64 encoded secret that may be used to enable Two Factor authentication.
+  </APIField>
+  <APIField name="secretBase32Encoded" type="String">
+    A Base32 encoded form of the provided secret. This useful if you need to provide a QR code to the User to enable Two Factor authentication.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src="two-factor/secret/response-pre-1-26.json" />

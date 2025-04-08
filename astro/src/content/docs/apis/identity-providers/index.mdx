@@ -1,0 +1,119 @@
+---
+title: Overview
+description: Learn about the APIs for creating, retrieving, updating and deleting identity providers.
+section: apis
+subcategory: identity providers
+navOrder: 0
+---
+import API from 'src/components/api/API.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import MultipleResponseBody from 'src/content/docs/apis/identity-providers/_multiple-response-body.mdx';
+import Aside from 'src/components/Aside.astro';
+import IdentityProviderSearchRequestParameters from 'src/content/docs/apis/identity-providers/_identity-provider-search-request-parameters.mdx';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import LookupResponseBody from 'src/content/docs/apis/identity-providers/_lookup-response-body.mdx';
+
+## Identity Providers
+
+An Identity Provider is a named object that provides configuration to describe an external and/or social identity provider. This configuration will be used to perform an alternative login to the standard FusionAuth local login. FusionAuth currently supports a number of different identity provider types:
+
+* [Apple](/docs/apis/identity-providers/apple)
+* [Epic Games](/docs/apis/identity-providers/epicgames) - requires a paid plan.
+* [External JWT](/docs/apis/identity-providers/external-jwt)
+* [Facebook](/docs/apis/identity-providers/facebook)
+* [Google](/docs/apis/identity-providers/google)
+* [HYPR](/docs/apis/identity-providers/hypr)
+* [LinkedIn](/docs/apis/identity-providers/linkedin)
+* [Nintendo](/docs/apis/identity-providers/nintendo) - requires a paid plan.
+* [OpenID Connect](/docs/apis/identity-providers/openid-connect)
+* [SAML v2](/docs/apis/identity-providers/samlv2)
+* [SAML v2 IdP Initiated](/docs/apis/identity-providers/samlv2-idp-initiated) - requires a paid plan.
+* [Sony PlayStation Network](/docs/apis/identity-providers/sonypsn) - requires a paid plan.
+* [Steam](/docs/apis/identity-providers/steam) - requires a paid plan.
+* [Twitch](/docs/apis/identity-providers/twitch) - requires a paid plan.
+* [Twitter](/docs/apis/identity-providers/twitter)
+* [Xbox](/docs/apis/identity-providers/xbox) - requires a paid plan.
+
+The type of the identity provider will determine the object's properties as well as the validation that is performed. You can click into any of the identity provider API docs to get a list of that identity provider's properties.
+
+To learn how to configure these Identity Providers using the FusionAuth UI, go here [Identity Providers](/docs/lifecycle/authenticate-users/identity-providers/).
+
+### Link APIs
+
+The way a link is established between an identity provider and FusionAuth is determined by the `linkingStrategy` for each identity provider. An API is provided to manually link and unlink a user to a 3rd party identity provider. To learn more about managing links between FusionAuth and a 3rd party identity provider, see the [Link APIs](/docs/apis/identity-providers/links).
+
+### Global Operations
+
+## Retrieve all Identity Providers
+
+### Request
+
+<API method="GET" uri="/api/identity-provider" authentication={["api-key"]} title="Retrieve all of the Identity Providers"/>
+
+### Response
+
+<StandardGetResponseCodes never_missing never_search_error />
+
+<MultipleResponseBody include_total={false} />
+
+## Search for Identity Providers
+
+<Aside type="version">
+This API has been available since 1.45.0
+</Aside>
+
+This API is used to search for Identity Providers and may be called using the `GET` or `POST` HTTP methods. Examples of each are provided below. The `POST` method is provided to allow for a richer request object without worrying about exceeding the maximum length of a URL. Calling this API with either the `GET` or `POST` HTTP method will provide the same search results given the same query parameters.
+
+### Request
+
+<API method="GET" uri="/api/identity-provider/search?name={name}" authentication={["api-key"]} title="Search for Identity Providers"/>
+
+### Request Parameters
+
+<IdentityProviderSearchRequestParameters parameter_prefix="" />
+
+
+<API method="POST" uri="/api/identity-provider/search" authentication={["api-key"]} title="Search for Identity Providers"/>
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+### Request Body
+
+<IdentityProviderSearchRequestParameters parameter_prefix="search." />
+
+### Response
+
+The response for this API contains the Identity Providers matching the search criteria in paginated format and the total number of results matching the search criteria.
+
+<StandardGetResponseCodes never_missing never_search_error />
+
+<MultipleResponseBody include_total />
+
+## Lookup an Identity Provider
+
+The Lookup API is intended to be used during an external login workflow.
+
+For example, you might build your own login page. This page might collect the user's email as the first step. That email address can be sent to this API to determine which identity provider was designated as the provider for this email address. If the identity provider is an OpenID Connect provider, then you might redirect the user over to that provider.
+
+### Request
+
+<API method="GET" uri="/api/identity-provider/lookup?domain={domain}" authentication={["none"]} title="Lookup an Identity Provider by domain/email"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="domain" type="String" required>
+    The email domain or the full email address of the user.
+
+    > For example, `jenny@acme.com` and `acme.com` are functionally equivalent.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The Lookup response is a subset of the Identity Provider configuration that would be returned by the normal identity provider retrieve operation. A `200` response code indicates the domain is managed and the response will contain a JSON body, a `404` response code indicates it is not managed by a configured Identity Provider.
+
+<StandardGetResponseCodes never_search_error no_authorization missing_message="The requested domain is not being managed by a configured Identity Provider." />
+
+<LookupResponseBody />

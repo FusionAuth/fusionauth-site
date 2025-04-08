@@ -1,0 +1,40 @@
+name: invalidate_cache
+
+# Controls when the action will run.
+on:
+  # run once a weekday at ~8am/8pm MT
+  schedule:
+    - cron: '31 1,13 * * *'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "deploy_website"
+  invalidate_cache:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Global environment
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Setup the system with the repository code
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      # v4
+      - name: Set prod env vars based on branch
+        if: startsWith(github.ref, 'refs/heads/main')
+        run: |
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> ${GITHUB_ENV}
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ${GITHUB_ENV}
+        shell: bash
+
+      # Invalidate the cache
+      - name: Invalidate cache
+        run: |
+          CLOUDFRONT_DISTRIBUTION_ID=$(grep cloudfront_distribution_id s3_website.yml|awk -F: '{print $2}' |sed 's/ //g')
+          aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+        shell: bash

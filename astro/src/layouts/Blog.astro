@@ -1,0 +1,243 @@
+---
+import '../css/style.css';
+import BlogNewsletterCTA from '../components/BlogNewsletterCTA.astro';
+import HeadComponent from '../components/Head.astro';
+import Nav from '../components/nav/BlogNav.astro';
+import Footer from '../components/Footer.astro';
+import TwitterLink from '../components/blog/TwitterLink.astro';
+import LinkedInLink from '../components/blog/LinkedInLink.astro';
+import SubscribeFooter from '../components/SubscribeFooterCTA.astro';
+import { getHref, mapRelated } from "src/tools/blog";
+import { getCollection } from 'astro:content';
+import { getDateString } from '../tools/date';
+import { BlogContent } from '../tools/blog';
+
+interface Props {
+  frontmatter: any;
+  title: string;
+}
+
+let { frontmatter, title } = Astro.props;
+let { slug } = Astro.params;
+
+title = frontmatter.title ? frontmatter.title : title;
+const description = frontmatter.description ? frontmatter.description : '';
+const categories = frontmatter.categories ? frontmatter.categories.split(',').map(cat => cat.trim()) : [];
+const image = frontmatter.image ? frontmatter.image : '/img/blogs/header-example.svg';
+const authors = frontmatter.authors ? frontmatter.authors.split(',').map(author => author.trim()) : [];
+const publishedDate = frontmatter.publish_date;
+const updatedDate = frontmatter.updated_date;
+const tags = frontmatter.tags ? frontmatter.tags.split(',').map(tag => tag.trim()) : [];
+const featuredTag = frontmatter.featured_tag ? frontmatter.featured_tag : tags ? tags[0] : 'passwords';
+const featuredCategory = frontmatter.featured_category ? frontmatter.featured_category : categories ? categories[0] : 'tutorials';
+
+const collection = await getCollection<BlogContent>('blog');
+
+const relatedPosts = mapRelated(collection, 'categories', featuredCategory, slug);
+const relatedTags = mapRelated(collection, 'tags', featuredTag, slug);
+
+const searchFilters = {
+  author: authors,
+  category: categories,
+}
+
+const markdownStyles = [
+  "prose max-w-max prose:font-inter md:basis-full max-w-2xl xl:pr-7 2xl:pr-5",
+  // a
+  "prose-a:no-underline hover:prose-a:decoration-auto hover:prose-a:underline hover:prose-a:underline-offset-2 prose-a:text-indigo-600",
+  // blockquote
+  "prose-blockquote:border-indigo-500 prose-blockquote:font-inter prose-blockquote:not-italic prose-blockquote:font-medium prose-blockquote:border-l-4 prose-blockquote:my-4 prose-blockquote:px-4 prose-blockquote:py-1 prose-blockquote:sm:my-7",
+  // code
+  "prose-code:bg-slate-100 prose-code:border prose-code:border-blue-300 prose-code:border-dashed prose-code:p-0.5 prose-code:rounded-sm prose-code:break-words",
+  // headings
+  "prose-headings:font-bold prose-headings:leading-6 prose-headings:md:leading-7 prose-headings:text-slate-800 prose-headings:capitalize",
+  // h2
+  "prose-h2:mb-5 prose-h2:mt-7 prose-h2:text-xl prose-h2:md:text-2xl",
+  // h3
+  "prose-h3:mb-3 prose-h3:mt-5 prose-h3:text-lg prose-h3:md:text-xl",
+  // h4
+  "prose-h4:leading-5 prose-h4:mb-2 prose-h4:md:leading-7 prose-h4:md:text-lg  prose-h4:mt-5",
+  // img
+  "prose-img:max-w-1xl lg:prose-img:max-w-1xl prose-img:rounded-lg",
+  // li
+  "prose-li:mb-3 marker:prose-li:text-slate-900",
+  // p
+  "prose-p:font-inter prose-p:text-slate-900 prose-p:leading-6 prose-p:sm:text-base prose-p:md:leading-7 prose-p:md:text-lg",
+  // strong
+  "prose-strong:text-slate-900 prose-strong:font-bold",
+  // table
+  "prose-td:align-top prose-td:pr-8",
+  // ul
+  "prose-ul:font-inter prose-ul:leading-6 prose-ul:list-disc prose-ul:list-inside prose-ul:my-3 prose-ul:px-0 prose-ul:sm:my-6 prose-ul:sm:text-base prose-ul:md:leading-7 prose-ul:md:ml-5 prose-ul:md:text-lg",
+];
+---
+<!DOCTYPE html>
+<html class="antialiased" lang="en">
+<HeadComponent title={ title } description={description} openGraphImage={image} {searchFilters}></HeadComponent>
+<body class="antialiased leading-tight">
+<Nav/>
+<!-- Hero -->
+<section id="hero" class="bg-slate-900 flex h-auto justify-center relative lg:pt-10 2xl:pt-14">
+  <div class="flex flex-col max-w-8xl mx-auto pt-2 px-6 relative lg:mx-auto lg:w-5/6 xl:container xl:w-4/6 2xl:ml-auto 2xl:px-20 2xl:w-7/12">
+    <div class="mb-10 mt-7 md:pr-40 lg:pr-48">
+      <ul class="capitalize font-bold inline-block mb-3 text-base text-indigo-500">
+        { categories && categories.map(category =>
+          <a href={ getHref(category, 'category')}>
+            <li class="inline-block mr-3">{ category }</li>
+          </a>
+        )}
+      </ul>
+      <h1 data-pagefind-meta="title" data-pagefind-body class="capitalize font-extrabold leading-8 mb-3 text-3xl text-white lg:text-4xl xl:text-4xl 2xl:text-5xl">
+        { title }
+      </h1>
+      <p data-pagefind-meta="description" data-pagefind-body class="font-normal leading-5 mb-1 text-slate-400">
+        { description }
+      </p>
+    </div>
+    <div class="relative z-20">
+      <img class="rounded-2xl" src={ image }>
+    </div>
+  </div>
+  <div data-empty-placeholder class="-bottom-1 absolute bg-white h-14 text-white w-full z-10 sm:h-12 2xl:h-28"></div>
+</section>
+<section id="author" class="mt-5">
+  <div class="flex flex-col max-w-8xl mx-auto px-6 relative lg:mx-auto lg:w-5/6 xl:container xl:w-4/6 2xl:ml-auto 2xl:px-20 2xl:w-7/12" id="responsive-container">
+    <div id="social" class="flex justify-end self-start w-full md:flex lg:flex lg:self-start">
+      <TwitterLink />
+      <LinkedInLink />
+      <a href="https://www.reddit.com/submit" class="mr-3" target="_blank"><img src="/img/blogs/social/reddit.svg" class="pr-0 w-9 md:w-11 lg:pr-0 lg:w-9"></a>
+      <a href="https://news.ycombinator.com/submit" class="mr-3" target="_blank"><img src="/img/blogs/social/hacker-news.svg" class="pr-0 w-9 md:w-11 lg:pr-0 lg:w-9"></a>
+    </div>
+    <div>
+      <p class="font-mono mb-1 text-base text-slate-500">Authors</p>
+    </div>
+    <div class="flex flex-row items-start justify-between mb-3">
+      <div class="flex flex-col sm:flex-row">
+        { authors && authors.map(author =>
+          <a href={ getHref(author, 'author') } class="font-bold hover:text-indigo-600 hover:underline hover:underline-offset-2 text-base text-slate-800">
+            <div class="leading-tight mr-4 sm:leading-tight">{ author }</div>
+          </a>
+        )}
+      </div>
+      <div>
+        <div class="border-slate-400 border-solid flex flex-row px-3">
+          { updatedDate
+              ? <p class="border-l border-slate-400 font-mono mb-4 pl-4 text-base text-left text-slate-500 underline-offset-8" id="updated-date">Updated: { getDateString(updatedDate) }</p>
+              : <p class="border-l border-slate-400 font-mono mb-4 pl-4 text-base text-left text-slate-500 underline-offset-8" id="publish-date">Published: { getDateString(publishedDate) }</p>
+          }
+        </div>
+      </div>
+    </div>
+    <hr class="bg-indigo-600 border-t-0 h-0.5"/>
+  </div>
+</section>
+<section id="blog-content">
+  <div class="container mx-auto pt-2 px-6 md:pt-6 lg:mx-auto lg:pr-0 lg:pt-4 lg:w-5/6 xl:mx-auto xl:pl-36 xl:w-5/6 2xl:container 2xl:ml-auto 2xl:pl-20 2xl:pr-0 2xl:w-7/12">
+      <div class="md:flex md:flex-col md:justify-start lg:flex-row lg:pt-4 lg:self-start">
+        <div id="content" class="mb-16 md:basis-full md:mr-10 md:w-full lg:w-4/6 xl:mr-0 2xl:mr-12">
+          <main>
+            <article data-pagefind-body id="blog-article" class:list={markdownStyles}>
+              <slot/>
+            </article>
+            <div id="blog-tags" class="mt-14 max-w-2xl">
+              <div data-empty-placeholder class="bg-indigo-500 block h-2 mb-4 min-h-full w-10"></div>
+              <div class="flex font-mono justify-start">
+                <span class="mt-1 text-base">Tags:</span>
+                <ul class="flex-wrap inline-flex items-center ml-4 self-start md:ml-12 lg:ml-12">
+                  { tags && tags.map((tag, idx, arr) =>
+                    <span>
+                      <a href={ getHref(tag, 'tag') } class="hover:decoration-auto hover:underline hover:underline-offset-2 inline-block mt-1 text-indigo-600">
+                        <li class="text-base blog-tag">{tag}</li>
+                      </a>{ idx + 1 < arr.length && <span class="mr-1">,</span> }
+                    </span>
+                  )}
+                </ul>
+              </div>
+              {updatedDate &&
+                <div id="published-date" class="2xl:inline-block">
+                  <p class="font-mono mt-10 text-base text-left text-slate-500 underline-offset-8">
+                    <span><b>Original Publish Date:</b> { getDateString(publishedDate) }</span>
+                    <span>&bull;&nbsp;<b>Last Updated:</b> { getDateString(updatedDate) } </span>
+                  </p>
+                </div>
+              }
+            </div>
+          </main>
+        </div>
+        <div id="blog-sidebar" class="block sm:block md:block lg:w-64 2xl:w-72">
+          <BlogNewsletterCTA/>
+          { relatedTags && relatedTags.length > 0 &&
+            <h2 class="capitalize font-bold mb-3 text-slate-800 text-xl md:font-inter md:font-bold md:leading-tight md:text-xl spellcheck-ignore">More
+              on {featuredTag}</h2>
+          }
+          { relatedTags && relatedTags.map((relatedTag, idx) =>
+            <article class="border-slate-200 border-t-2 flex flex-col py-6" >
+              <!--Only image on the first one -->
+              { relatedTag.image && idx == 0 &&
+                <a href={ "/blog/" + relatedTag.slug } class="mb-5">
+                  <img class="rounded-lg" src={ relatedTag.image }/>
+                </a>
+              }
+              <h3 class="capitalize font-bold leading-6 mb-3 text-slate-800 text-lg md:font-inter md:font-bold md:leading-7 md:text-xl lg:leading-6">
+                <a href={"/blog/" + relatedTag.slug }
+                   class="hover:decoration-1 hover:text-indigo-600 hover:underline hover:underline-offset-2">
+                  { relatedTag.title }
+                </a>
+              </h3>
+              <p class="font-Inter leading-6 text-slate-600 sm:text-base md:leading-6 md:text-base break-words" set:html={relatedTag.blurb}></p>
+              <div class="flex flex-col mt-4 sm:flex-row">
+                {relatedTag.authors && relatedTag.authors.map(author =>
+                  <a href={getHref(author, 'author')}
+                     class="font-bold hover:decoration-1 hover:text-indigo-600 hover:underline hover:underline-offset-2 text-slate-800 text-base">
+                    <div class="leading-tight mr-4 sm:leading-tight">{author}</div>
+                  </a>
+                )}
+              </div>
+            </article>
+            )}
+        </div>
+    </div>
+  </div>
+</section>
+<section id="related-posts" class="mb-20 px-6 lg:container lg:mx-auto">
+  <div class="mb-6">
+    <h2 class="capitalize font-bold leading-6 mb-5 mt-10 text-slate-800 text-xl md:font-inter md:font-bold md:leading-7 md:text-2xl">Related
+      Posts</h2>
+    <hr class="bg-slate-200 border-t-0 h-0.5"/>
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    { relatedPosts && relatedPosts.map(relatedPost =>
+      <article class="flex flex-col py-6 md:px-4">
+        { relatedPost.image &&
+          <a href={ "/blog/" + relatedPost.slug } class="mb-5">
+            <img class="rounded-lg" src={relatedPost.image}>
+          </a>
+        }
+        <div>
+          { relatedPost.categories && relatedPost.categories.map(category =>
+            <a href={ getHref(category, 'category') }>
+              <li class="ease-in duration-75 hover:text-indigo-300 hover:underline mr-3 capitalize font-bold inline-block mb-3 text-base text-indigo-500">{ category }</li>
+            </a>
+          )}
+        </div>
+
+        <h3 class="capitalize font-bold leading-6 mb-3 text-slate-800 text-lg md:font-inter md:font-bold md:leading-7 md:text-xl" id="blog-h2">
+          <a href={"/blog/" + relatedPost.slug} class="hover:text-indigo-600 hover:underline hover:underline-offset-2">{relatedPost.title}</a>
+        </h3>
+        <p class="font-inter leading-6 text-slate-600 sm:text-base md:leading-7 md:text-lg break-words" set:html={relatedPost.blurb}></p>
+        <div class="flex flex-col mt-4 sm:flex-row">
+          {relatedPost.authors && relatedPost.authors.map(author =>
+            <a href={getHref(author, 'author')}
+               class="font-bold hover:text-indigo-600 hover:underline hover:underline-offset-2 text-slate-800 text-base">
+              <div class="leading-tight mr-4 sm:leading-tight">{author}</div>
+            </a>
+          )}
+        </div>
+      </article>
+    )}
+  </div>
+</section>
+<SubscribeFooter />
+<Footer/>
+</body>
+</html>

@@ -1,0 +1,242 @@
+---
+title: Express
+description: Quickstart integration of an Express web application with FusionAuth
+navcategory: getting-started
+prerequisites: npm, node
+section: web
+technology: Express.js
+language: JavaScript
+icon: /img/icons/javascript.svg
+faIcon: fa-x
+color: fuchsia
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-javascript-express-web/main
+cta: EmailListCTA
+---
+import Aside from '/src/components/Aside.astro';
+import DockerSpinup from '/src/components/quickstarts/DockerSpinup.astro';
+import Intro from '/src/components/quickstarts/Intro.astro';
+import LoginArchitectureWeb from '/src/components/quickstarts/LoginArchitectureWeb.astro';
+import NextSteps from '/src/components/quickstarts/NextSteps.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+import QuickstartTshirtCTA from '/src/components/quickstarts/QuickstartTshirtCTA.astro'
+
+<Intro technology={frontmatter.technology}
+       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-web"/>
+
+
+## Prerequisites
+* [Node LTS](https://nodejs.org/en/download)
+* [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](/docs/get-started/download-and-install/)).
+* [git](https://git-scm.com/downloads/)
+
+## General architecture
+
+<LoginArchitectureWeb />
+
+## Getting Started
+In this section, you'll get FusionAuth up and running, and configured with the ChangeBank application.
+
+### Clone the Code
+First off, grab the code from the repository and change into that directory.
+
+```
+git clone https://github.com/FusionAuth/fusionauth-quickstart-javascript-express-web.git
+cd fusionauth-quickstart-javascript-express-web
+```
+
+### Run FusionAuth via Docker
+
+<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} />
+
+### Setup Application
+
+In this section, you'll set up a basic Express application.
+
+Create a new directory to hold your application, and go into it.
+
+```shell
+mkdir changebank
+cd changebank
+```
+
+The `@fusionauth/typescript-client` will be used to exchange the OAuth Code for Access Token using PKCE, and also to retrieve the User using JWT.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/package.json"}
+  lang="json" />
+
+Install dependencies using npm.
+
+```shell
+npm install
+```
+
+Create a new directory to hold your source code, and go into it.
+
+```shell
+mkdir src
+cd src
+```
+
+## Authentication
+
+Make sure once again that you are in the directory `change-bank/src`.
+Create a file called `index.ts` and start by setting up your imports and constants. These constants have already been created by running the kickstart when running FusionAuth.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="top"/>
+
+<Aside type="note">
+If you want to see where the FusionAuth values came from, they can be found in the 
+FusionAuth app (http://localhost:9011/admin). The tenant Id is found on the Tenants
+page. To see the Client Id and Client Secret, go to the Applications page and 
+click the `View` icon under the actions for the ChangeBank application. You'll 
+find the Client Id and Client Secret values in the `OAuth configuration` section.
+</Aside>
+
+### Static files
+
+You need a way to serve your static files, luckily Express makes this easy with `express.static`. These files will include all of the CSS and images that are required for the UI of the ChangeBank application. 
+
+Make sure that you are in the directory `change-bank` when running these commands to create new directories and copy the CSS and images required from `complete-application`.
+
+```shell
+mkdir ../static && mkdir ../static/css && mkdir ../static/img && mkdir ../templates &&
+cp ../../complete-application/static/css/changebank.css ../static/css/changebank.css && 
+cp ../../complete-application/static/img/money.jpg ../static/img/money.jpg && 
+cp ../../complete-application/templates/account.html ../templates/account.html && 
+cp ../../complete-application/templates/home.html ../templates/home.html && 
+cp ../../complete-application/templates/make-change.html ../templates/make-change.html
+```
+
+At the bottom of your `index.ts` file include the below code to serve any assets in the static directory.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="static"/>
+
+### Homepage
+
+In order to show off your homepage you need to create a route with the base URL `/`. In this route check to see if `userDetails` cookie has any user values and correctly respond with either the `home.html` or `account.html` template. Also if there is no user you can generate the PKCE challenge pair and store them into `userSession` cookie (this is an `HttpOnly` cookie, inaccessible to JavaScript).
+
+<Aside type="note">
+In this file you will use the [`pkce-challenge`](https://www.npmjs.com/package/pkce-challenge) package to generate a Proof Key for Code Exchange (PKCE) challenge pair. Read more about [PKCE](/articles/oauth/modern-guide-to-oauth).
+</Aside>
+
+At the bottom of `index.ts` file include the below code, so that the homepage can be displayed when a user is not logged in. If a user is logged in this route will redirect to the `/account` route.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="homepage"/>
+
+### Login Route
+
+In the ChangeBank application there is a `Login` button which will open the `/login` route when clicked. This route will redirect them to a login page managed by FusionAuth. Include the below code to the bottom of `index.ts`.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="login"/>
+
+- `client_id`: Your Client Id.
+- `response_type`: `code` since you are using the Authorization Code grant
+- `redirect_uri`: Where your FusionAuth will redirect back to during the OAuth grant. In this example, this is our route `oauth-redirect`, which you'll build next.
+- `state`: A random string created in your homepage route and stored in the cookie as `stateValue`
+- `code_challenge`: Created in the homepage route using `pkce-challenge` and stored in a cookie as `challenge`, this is one half of the PKCE 
+
+### OAuth Redirect
+
+When FusionAuth redirects back to your Express application, it will return to your `/oauth-redirect` route. In this response it will have two query parameters that you need to further examine: `code` and `state`. 
+
+You'll need to do the following:
+
+1. Check that the `stateValue` stored in the cookie matches the `state` query parameter.
+1. Make a request to the FusionAuth token endpoint exchanging the `code`, `clientId`, `clientSecret`, Redirect URI, and `verifier` from our `userSession` cookie. The response will contain the required `accessToken`.
+1. Retrieve the user by passing the access token to FusionAuth.
+1. Store access token details in the `userToken` cookie.
+1. Store retrieved user in `userDetails` cookie.
+1. Redirect to `/account` route.
+
+Add the following code to the bottom of `index.ts`.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="oauth-redirect"/>
+
+### Account Route
+
+The `/account` page represents what a user sees when they’re logged into their ChangeBank account. A user that isn’t logged in who tries to access this page will just be taken to the home page.
+
+Add the following code to the bottom of `index.ts`.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="account"/>
+
+### Make Change
+
+Two functions are needed to accept both `GET` and `POST` requests on the `/make-change` route. The `GET` verifies that the user is logged in, then serves the HTML file required for the page. The `POST` takes the amount form value as a body parameter and uses the it to calculate how many quarters, dimes, nickels and pennies to return. If `total` is not a valid dollar value or cannot be converted an `error` message is returned. The return string `message` is received by asynchronously and updates the `change-message` or `error-message` div accordingly.
+
+Add the following code to the bottom of `index.ts`.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="make-change"/>
+
+### Logout Route
+
+<Aside type="tip">
+Click the `Logout` button and watch the browser first go to FusionAuth to log out the user, then return to your home page.
+</Aside>
+
+The `/logout` route in your application will redirect to the FusionAuth server. FusionAuth will then end the FusionAuth SSO session for this user and redirect back to the application's`logoutURL` specified in the `kickstarter.json` file. You'll build that URL handler below.
+
+Add the following code to the bottom of `index.ts`.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="logout"/>
+
+ The application's logout route is `/oauth2/logout`. Within this route we can safely clear all of the cookies related to this user.
+
+Add the following code to the bottom of `index.ts`.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="oauth-logout"/>
+
+### Listen for connection
+
+Listen for connections on port `http://localhost:8080` and serve the Express application.
+
+Add the below code to the bottom of `index.ts`.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/index.ts"}
+  lang="ts"
+  tags="app"/>
+
+### Run Application
+
+Return to the root directory of your application `/changebank` by running the below command.
+
+```shell
+cd ..
+```
+
+Include the necessary environment variables by creating a file called `.env`. Include the following variables in this file.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/.env"}
+  lang="ts"/>
+
+Now that your application is complete you can run it with the below command.
+
+```shell
+npm run dev
+```
+
+You can now open up an incognito window and visit the Express app at http://localhost:8080/ . Log in with the user account mentioned above, `richard@example.com`.
+
+<QuickstartTshirtCTA/>
+
+## Next Steps
+
+<NextSteps />

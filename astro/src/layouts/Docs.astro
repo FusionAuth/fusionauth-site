@@ -1,0 +1,46 @@
+---
+import Default from './Default.astro';
+import DocsNav from '../components/nav/DocsNav.astro';
+import DocsSideNav from 'src/components/side-nav/DocsSideNav.astro';
+import { Category } from '../tools/docs';
+
+let { frontmatter, headings, navContext, noSideNav } = Astro.props;
+
+const openGraphImage = '/img/og/docs-developers-v1.png'
+
+let currentCat: Category = navContext.category;
+const breadcrumbs = [];
+const searchFilters: { [key: string]: string[] } = {
+  environment: ['docs'],
+  section: [currentCat.name],
+}
+breadcrumbs.push({href: currentCat.href, title: currentCat.name});
+if (frontmatter.subcategory) {
+  searchFilters.subcategory = [frontmatter.subcategory];
+  const sub = currentCat.subcategories.find(sub => sub.name === frontmatter.subcategory);
+  breadcrumbs.push({href: sub.href, title: sub.name});
+  if (frontmatter.tertcategory) {
+    searchFilters.tertcategory = [frontmatter.tertcategory];
+    const tert = sub.subcategories.find(tert => tert.name == frontmatter.tertcategory);
+    breadcrumbs.push({href: tert.href, title: tert.name});
+    if (frontmatter.quatercategory) {
+      searchFilters.quatercategory = [frontmatter.quatercategory];
+      const quat = tert.subcategories.find(quat => quat.name === frontmatter.quatercategory);
+      breadcrumbs.push({href: quat.href, title: quat.name})
+    }
+  }
+}
+---
+<Default {frontmatter}
+         {headings}
+         cta="NONE"
+         contribute={false}
+         {breadcrumbs}
+         {openGraphImage}
+         {searchFilters}
+         maxTocDepth={3}
+         {...Astro.props}>
+  <DocsNav {noSideNav} {breadcrumbs} slot="nav" darkModeToggle={true} />
+  <DocsSideNav slot="sideNav" context={navContext} {frontmatter} />
+  <slot></slot>
+</Default>

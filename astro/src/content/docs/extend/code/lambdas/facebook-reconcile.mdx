@@ -1,0 +1,63 @@
+---
+title: Facebook Reconcile Lambda
+description: An overview of the Facebook Reconcile lambda.
+navcategory: customization
+section: extend
+subcategory: code
+tertcategory: lambdas
+---
+import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/extend/code/lambdas/_reconcile-lambda-user-registration-parameters.mdx';
+import ReconcileLambdaIntro from 'src/content/docs/extend/code/lambdas/_reconcile-lambda-intro.mdx';
+
+<ReconcileLambdaIntro identity_provider_name="Facebook" prefix="a" />
+
+## Lambda Structure
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+```javascript
+function reconcile(user, registration, facebookUser) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `reconcile` that takes three parameters. The parameters that the lambda is passed are:
+
+<ReconcileLambdaUserRegistrationParameters />
+* `facebookUser` - the User returned from the Facebook Me API. This object is read-only.
+
+The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The `facebookUser` may contain various user claims depending upon the user's Facebook configuration.
+
+## Assigning The Lambda
+
+Once a lambda is created, you may assign it to the Facebook identity provider in the IdP configuration.
+
+Navigate to <strong>Settings -> Identity Providers</strong> and select your existing Facebook configuration or click <strong>Add provider</strong> and select Facebook if it has not yet been configured.
+
+## Default Lambda
+
+A default Facebook reconcile lambda is available in FusionAuth that may be used or modified. The default Facebook lambda function is documented below.
+
+```javascript
+// This is the default Facebook reconcile, modify this to your liking.
+function reconcile(user, registration, facebookUser) {
+  // Un-comment this line to see the facebookUser object printed to the event log
+  // console.info(JSON.stringify(facebookUser, null, 2));
+
+  user.firstName = facebookUser.first_name;
+  user.middleName = facebookUser.middle_name;
+  user.lastName = facebookUser.last_name;
+  user.fullName = facebookUser.name;
+
+  if (facebookUser.picture && !facebookUser.picture.data.is_silhouette) {
+    user.imageUrl = facebookUser.picture.data.url;
+  }
+
+  if (facebookUser.birthday) {
+    // Convert MM/dd/yyyy -> YYYY-MM-DD
+    var parts = facebookUser.birthday.split('/');
+    user.birthDate = parts[2] + '-' +  parts[0] + '-' +  parts[1];
+  }
+}
+```
+

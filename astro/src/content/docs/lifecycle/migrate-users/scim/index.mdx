@@ -1,0 +1,182 @@
+---
+title: SCIM Overview
+description: An overview of SCIM Support in FusionAuth.
+navcategory: premium
+section: lifecycle
+subcategory: migrate users
+tertcategory: scim
+navOrder: 0
+tags: b2b2e
+---
+import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
+import Aside from 'src/components/Aside.astro';
+import JSON from 'src/components/JSON.astro';
+import ScimLimits from 'src/content/docs/_shared/_scim-limits.mdx';
+import ScimServerPermissions from 'src/content/docs/_shared/_scim-server-permissions.md'
+
+<EnterprisePlanBlurb />
+
+## Overview
+
+<Aside type="version">
+This functionality has been available since 1.36.0
+</Aside>
+
+SCIM (System for Cross-domain Identity Management) is a specification for a client to provision users and groups on a server using a standard protocol. FusionAuth can consume SCIM formatted requests and act as the provisioning server in a SCIM client/server environment.
+
+## Common SCIM Use Cases
+
+SCIM lets you provision and deprovision users from external identity stores into FusionAuth. Here are some scenarios where this is useful:
+
+* When your customers are themselves businesses with a centralized user data store. This is common when you are a business to business SaaS product. Customers want to control access to their instance of your application. They can do so by using SCIM to set up accounts for their users. When an employee leaves the customer's company, the employee account is automatically disabled in FusionAuth. Since SCIM is configured at the FusionAuth tenant level, this is an enterprise feature that FusionAuth makes it easy to offer.
+* Ensuring your employees have access to your custom applications which use FusionAuth as an identity store. When a new employee is added into your corporate directory (Azure AD/Microsoft Entra ID, Okta, or otherwise), SCIM can provision them into the custom application, accelerating their onboarding experience. Equally important, when the employee departs, their access to the app also departs.
+
+## Specifications
+
+The links below include details about the SCIM specification as well as detailed information about the protocols and schemas.
+
+- [The RFC defining the overall concepts and requirements](https://datatracker.ietf.org/doc/html/rfc7642)
+- [The RFC defining the protocol](https://datatracker.ietf.org/doc/html/rfc7644)
+- [The RFC defining the core schema definitions](https://datatracker.ietf.org/doc/html/rfc7643)
+
+## FusionAuth SCIM Support
+
+Any SCIM client can make requests to FusionAuth using the SCIM specification for defining Users and Groups. In this scenario FusionAuth acts as the provisioning server and can respond with SCIM compliant responses.
+
+FusionAuth is not a SCIM compatible client, but if you are interested in similar functionality, review [available Webhooks](/docs/extend/events-and-webhooks/).
+
+### The FusionAuth SCIM Workflow
+
+This is an example of a basic interaction between an external SCIM client provisioning request to create a FusionAuth User:
+
+1. The client would send a SCIM compliant request to the [SCIM User endpoint](/docs/apis/scim/scim-user) `/api/scim/resource/v2/Users`. Other [SCIM API endpoints](/docs/apis/scim/) are also available.
+
+<JSON title="Example User Create Request JSON" src="scim/user-create-request.json" />
+
+2. FusionAuth will authenticate the incoming request to ensure the request is from a known SCIM client. Each SCIM client and server instance is represented as an Entity and will authenticate using a [Client Credentials Grant](/docs/apis/authentication#client-credentials). An example [client credentials grant using Entities](/docs/lifecycle/authenticate-users/oauth/#example-client-credentials-grant).
+3. FusionAuth will call the assigned incoming request lambda, passing the SCIM request data and a FusionAuth User object. The lambda is responsible for converting the incoming SCIM request data into a FusionAuth User object. For example, the `name.givenName` property shown above could be mapped to `user.firstName`.
+- [SCIM Group Request Converter Lambda](/docs/extend/code/lambdas/scim-group-request-converter)
+- [SCIM User Request Converter Lambda](/docs/extend/code/lambdas/scim-user-request-converter)
+4. FusionAuth will attempt to create the FusionAuth User using the mapped object from the incoming request lambda.
+5. Upon successful creation of the User, FusionAuth will call the outgoing response lambda, passing the newly created FusionAuth User and the SCIM response. The outgoing lambda is responsible for mapping the FusionAuth User properties to the appropriate SCIM representation.
+- [SCIM Group Response Converter Lambda](/docs/extend/code/lambdas/scim-group-response-converter)
+- [SCIM User Response Converter Lambda](/docs/extend/code/lambdas/scim-user-response-converter)
+
+The lambdas will need to map the SCIM data to the appropriate FusionAuth object property. Below are some suggested strategies, but the data can be mapped in any way you choose.
+
+*Suggested lambda mapping between SCIM Group schema extension and FusionAuth Group*
+|SCIM Group Attribute | FusionAuth Group and members property |
+| --- | --- |
+|`externalId` | This field is handled automatically so it does not need to be mapped in the lambdas |
+|`displayName` |`group.name` |
+|`members[x].value` |`members[x].userId` |
+|`members[x].$ref` |`members[x].data.$ref` |
+
+*Suggested lambda mapping between SCIM User schema and FusionAuth User*
+|SCIM User Attribute | FusionAuth User property |
+| --- | --- |
+|`active` |`user.active` |
+|`emails[x].value` |`user.email` |
+|`externalId` | This field is handled automatically so it does not need to be mapped in the lambdas |
+|`name.familyName` |`user.lastName` |
+|`name.formatted` |`user.fullName` |
+|`name.givenName` |`user.firstName` |
+|`name.honorifixPrefix` |`user.data.honorificPrefix` |
+|`name.honorifixSuffix` |`user.data.honorificSuffix` |
+|`name.middleName` |`user.middleName` |
+|`password` |`user.password` |
+|`name.givenName` |`user.firstName` |
+|`phoneNumbers[x].value` |`user.mobilePhone` |
+|`userName` |`user.userName` |
+
+The SCIM EnterpriseUser schema is an extension of the SCIM User schema so the suggested mappings would include the ones from Table 1 above and the additional mappings in Table 2 below. This is the suggested mapping strategy for all SCIM schema extensions.
+
+*Suggested lambda mapping between SCIM EnterpriseUser schema extension and FusionAuth User where `schema` is `urn:ietf:params:scim:schemas:extension:enterprise:2.0:User`*
+|SCIM EnterpriseUser Attribute | FusionAuth User property |
+| --- | --- |
+|`costCenter` |`user.data.extensions[schema].costCenter` |
+|`department` |`user.data.extensions[schema].department` |
+|`division` |`user.data.extensions[schema].division` |
+|`employeeNumber` |`user.data.extensions[schema].employeeNumber` |
+|`manager.displayName` |`user.data.extensions[schema].managerDisplayName` |
+|`manager.$ref` |`user.data.extensions[schema].managerURI` |
+
+## Configuration
+
+In order for FusionAuth to accept requests from SCIM clients, you need to perform a few one time configuration steps.
+
+- You need to enable SCIM support for your tenant.
+- You need to define your incoming request and outgoing response lambdas for each the supported SCIM resource types (User, Enterprise User, Group)
+- You will need to verify that the default SCIM schemas provided match your desired SCIM schema for each of the SCIM resource types or provide your own.
+- You will need an Entity defined for each SCIM client and SCIM Server. [Default entity types](/docs/get-started/core-concepts/entity-management#scim-configuration) are provided for you. You can create the entities from those default types or create your own types.
+
+### Permissions
+
+<ScimServerPermissions />
+
+## FusionAuth SCIM API Endpoints
+
+In order to use FusionAuth as your SCIM provisioning server for SCIM clients, you will need to call the correct FusionAuth SCIM API endpoint. FusionAuth provides endpoints for retrieving, creating, replacing, and deleting SCIM [Users](https://datatracker.ietf.org/doc/html/rfc7643#section-4.1), [EnterpriseUsers](https://datatracker.ietf.org/doc/html/rfc7643#section-4.3), and [Groups](https://datatracker.ietf.org/doc/html/rfc7643#section-4.2).
+
+See the [SCIM API Overview](/docs/apis/scim/) for details about the supported endpoints.
+
+## Adding Registrations
+
+With SCIM, users are provisioned. They are not registered for applications within FusionAuth.
+
+Options to automatically add a registration to a new user include:
+
+* Listen for the [user.create.complete](/docs/extend/events-and-webhooks/events/user-create-complete) webhook and add the registration using an API call on the receiver.
+* Make an API call registering the user to an application from the [SCIM User Response Converter lambda](/docs/extend/code/lambdas/scim-user-response-converter) which is called after the user is created. Ensure this idempotent as the lambda will be called any time the user is updated as well.
+* If you enable self service registration for your application, and the user logs in to the application, they will be automatically registered for the application. [Learn more](/docs/get-started/core-concepts/registrations#registrations-and-self-service-registration).
+
+## SCIM Client Authentication
+
+FusionAuth requires the token from a completed Client Credentials grant for SCIM server authentication, as mentioned above. The token generated from the grant is used in the `Authorization` header as a `Bearer` token.
+
+However, some SCIM clients can't dynamically complete a client credentials grant. Instead, they need a static authorization header value.
+
+To correctly integrate with such clients, do the following:
+
+* Optionally change the JWT duration of the SCIM Client Entity Type to a larger value, such as a year, which is `31536000`. The generated JWT will not be able to be revoked, so pick a duration that balances the security risk with the effort of updating the JWT in the SCIM client configuration (Azure AD/Microsoft Entra ID, Okta, etc).
+* Gather the Client Id of the SCIM Client, the Client Secret of the SCIM Client, and the SCIM Server Client Id. These values are available from the respective Entity details screen.
+* Determine the SCIM permissions you want to grant the SCIM Client.
+* Perform the Client Credentials grant manually using a tool like curl (see below for an example).
+
+```shell title="Performing the Client Credentials grant for a SCIM Client."
+# This curl script grants all SCIM permissions to the client via the JWT.
+# Edit the scope below if you need restricted permissions for this token.
+SCIM_CLIENT_CLIENT_ID=...
+SCIM_CLIENT_CLIENT_SECRET=...
+SCIM_SERVER_CLIENT_ID=...
+FUSIONAUTH_HOSTNAME=https://local.fusionauth.io # update this
+
+SCIM_ENTITY_PERMISSIONS='scim:enterprise:user:create,scim:enterprise:user:update,scim:user:update,scim:group:read,scim:group:create,scim:enterprise:user:delete,scim:group:delete,scim:group:update,scim:user:delete,scim:enterprise:user:read,scim:user:create,scim:user:read'
+
+curl -u $SCIM_CLIENT_CLIENT_ID:$SCIM_CLIENT_CLIENT_SECRET $FUSIONAUTH_HOSTNAME/oauth2/token \
+--data-urlencode "grant_type=client_credentials" \
+--data-urlencode "scope=target-entity:$SCIM_SERVER_CLIENT_ID:$SCIM_ENTITY_PERMISSIONS"
+```
+
+This script will return JSON, including an `access_token` value.
+
+```json title="Sample JSON returned from the Client Credentials grant."
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJjbGllbnRfY3JlZGVudGlhbHMiXSwia2lkIjoiZWQzNzU4NThkIiwidXNlIjoic2NpbV9zZXJ2ZXIifQ.eyJhdWQiOiI3MGYxOTViYS0wNzI5LTRiMjAtYjA3YS1kYjhiNjkxNGFjYzQiLCJleHAiOjE2NjM4MDY1NDYsImlhdCI6MTY2MzgwMjk0NiwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIzY2ZiYTdjNi1jMTc4LTQxZTMtOWQ0Yi1hYzU1MjY2NmM2MzkiLCJqdGkiOiI0NWFkYzZhNC0wZDQzLTQ4Y2UtOGI4Ni01OGU2MTJkYmU3MzgiLCJzY29wZSI6InRhcmdldC1lbnRpdHk6NzBmMTk1YmEtMDcyOS00YjIwLWIwN2EtZGI4YjY5MTRhY2M0OnNjaW06ZW50ZXJwcmlzZTp1c2VyOmNyZWF0ZSxzY2ltOmVudGVycHJpc2U6dXNlcjp1cGRhdGUsc2NpbTp1c2VyOnVwZGF0ZSxzY2ltOmdyb3VwOnJlYWQsc2NpbTpncm91cDpjcmVhdGUsc2NpbTplbnRlcnByaXNlOnVzZXI6ZGVsZXRlLHNjaW06Z3JvdXA6ZGVsZXRlLHNjaW06Z3JvdXA6dXBkYXRlLHNjaW06dXNlcjpkZWxldGUsc2NpbTplbnRlcnByaXNlOnVzZXI6cmVhZCxzY2ltOnVzZXI6Y3JlYXRlLHNjaW06dXNlcjpyZWFkIiwidGlkIjoiMzA2NjMxMzItNjQ2NC02NjY1LTMwMzItMzI2NDY2NjEzOTM0IiwicGVybWlzc2lvbnMiOnsiNzBmMTk1YmEtMDcyOS00YjIwLWIwN2EtZGI4YjY5MTRhY2M0IjpbInNjaW06ZW50ZXJwcmlzZTp1c2VyOmNyZWF0ZSIsInNjaW06ZW50ZXJwcmlzZTp1c2VyOmRlbGV0ZSIsInNjaW06ZW50ZXJwcmlzZTp1c2VyOnJlYWQiLCJzY2ltOmVudGVycHJpc2U6dXNlcjp1cGRhdGUiLCJzY2ltOmdyb3VwOmNyZWF0ZSIsInNjaW06Z3JvdXA6ZGVsZXRlIiwic2NpbTpncm91cDpyZWFkIiwic2NpbTpncm91cDp1cGRhdGUiLCJzY2ltOnVzZXI6Y3JlYXRlIiwic2NpbTp1c2VyOmRlbGV0ZSIsInNjaW06dXNlcjpyZWFkIiwic2NpbTp1c2VyOnVwZGF0ZSJdfX0.ZHqaZAn9SFJ10HGfvQ1ACLS3ys8JjzH1W_Cmgq_hOOU",
+  "expires_in": 3599,
+  "scope": "target-entity:70f195ba-0729-4b20-b07a-db8b6914acc4:scim:enterprise:user:create,scim:enterprise:user:update,scim:user:update,scim:group:read,scim:group:create,scim:enterprise:user:delete,scim:group:delete,scim:group:update,scim:user:delete,scim:enterprise:user:read,scim:user:create,scim:user:read",
+  "token_type": "Bearer"
+}
+```
+
+Place the `access_token` in the authorization header configuration field of your SCIM client.
+
+<Aside type="caution">
+When the token expires, the SCIM integration will fail. Document how to regenerate the token and update the client configuration.
+</Aside>
+
+Learn more about [the Client Credentials grant](/docs/lifecycle/authenticate-users/oauth/#example-client-credentials-grant).
+
+## Limits
+
+<ScimLimits />

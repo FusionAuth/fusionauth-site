@@ -1,0 +1,102 @@
+---
+title: Signing Webhooks
+description: Learn how to sign your Webhook events so you can verify they were sent by FusionAuth.
+navcategory: developer
+section: extend
+subcategory: events and webhooks
+---
+import InlineField from 'src/components/InlineField.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+import Aside from 'src/components/Aside.astro';
+
+<Aside type="version">
+Available since 1.48.0
+</Aside>
+
+## Signing Webhooks
+
+Signing Webhook events allows you to verify each event was sent by FusionAuth. Webhook signatures provide an extra layer of security in addition to the methods described in [Securing a Webhook](/docs/extend/events-and-webhooks/securing). Signature verification provides protection against bad actors spoofing webhook event payloads to look like they came from FusionAuth.
+
+This document covers configuring webhook signatures, verifying signatures in your webhook listener, and key rotation.
+
+### Configuration
+
+Configuring webhook signatures in FusionAuth consists of generating a key and configuring your webhook to sign using that key.
+
+![Webhook Key Generation](/img/docs/extend/events-and-webhooks/webhook-key-gen.png)
+
+Keys are generated or imported from **Settings -> Key Master**. Webhooks can be signed with three types of keys
+
+* EC key - strongest cryptography, public key can be available
+* RSA key - strong cryptography, public key can be available
+* HMAC key - fast cryptography, requires manual key distribution
+
+EC and RSA keys allow you to make public keys available through the `/.well-known/jwks.json` endpoint, which facilitates key rotation. If your webhook listener cannot make outbound network connections or you prefer to manually configure your key in your webhook listener, HMAC keys are a good option.
+
+For this example, we'll use an RSA key pair. More information on keys is available in the [Key Master Guide](/docs/operate/secure/key-master).
+
+Next, you configure your webhook to sign the event with this key. From **Settings -> Webhooks**, click on the Edit button for your webhook (or create a new webhook). Select the **Security** tab panel. Once you enable <InlineField>Sign events</InlineField>, a <InlineField>Signing key</InlineField> select dropdown allows you to choose the generated key. Be sure to click Save in the upper right corner.
+
+![Webhook Settings Signature](/img/docs/extend/events-and-webhooks/webhook-settings-signature.png)
+
+### Signature Verification
+
+The webhook signature is provided in the HTTP header `X-FusionAuth-Signature-JWT` as a signed JWT with a claim of `request_body_sha256` containing the SHA-256 hash of the webhook event payload.
+
+Your webhook listener can verify the signature by:
+
+- Verifying the JWT is properly signed
+- Decoding the JWT
+- Comparing the JWT's `request_body_sha256` claim against your own calculated SHA-256 hash of the event body
+
+```ini title="Example webhook HTTP header"
+X-FusionAuth-Signature-JWT: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Il9IMDd3VkcxZlYzbDVpaDc0ck54SUMzbmV2RSJ9.eyJyZXF1ZXN0X2JvZHlfc2hhMjU2IjoiS2VWKy9IR29JUXJ4dUU1WVBDUlI2QXVRT0p2ZWxkWU5OaGJWaTFpMjJxaz0ifQ.J70gqZVuTej8FfriQqJJZecCT6XOZKH6h6Te2ir_yrSwR3luhoj_R1vAZULdrktaFPqXFXbnq9prN8j3ddelUVA5SU51J-MWVhz1bkimLo8EEdJ47ytI_97rPqVK1YJ6FSiS8_o37gablaQZv2WDbZ6ap-t4hNU5m7uwZTW9DerKg9iQjMDUIlfafEwsROLfNPfK49IsCzBNCQ8SsinVbGU0dNbs9YfMAxNzSuEKdZOIXkRNgjPfWpPnkwBbroWUrrpcoAcBSQIYFajKV-MFRISnFZ_blYps16f95iQsuTfqBkBH3r59R5tFBP66FA1bvQJZVlAHJfdNTXnXx2F2BQ
+```
+
+The JWT decodes with:
+
+```json title="JWT header"
+{
+   "alg": "RS256",
+   "typ": "JWT",
+   "kid": "_H07wVG1fV3l5ih74rNxIC3nevE"
+ }
+```
+
+
+```json title="JWT payload"
+{
+  "request_body_sha256": "KeV+/HGoIQrxuE5YPCRR6AuQOJveldYNNhbVi1i22qk="
+}
+```
+
+The `kid` identifies the Id of the key used to sign the JWT. JWT libraries can look the key up from the JWKS endpoint, or a locally stored key can be used. After verifying the JWT signature, the JWT's `request_body_sha256` payload claim is compared against your own calculated SHA-256 hash of the event body
+
+### Example Webhook Listener Code
+
+The following code ([available on GitHub](https://github.com/FusionAuth/fusionauth-example-javascript-webhooks/blob/main/signature-verify/app.js)) demonstrates webhook signature verification with a simple Node server.
+
+<RemoteCode title="Example Node.js Webhook Signature Verifier" lang="javascript" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-javascript-webhooks/main/signature-verify/app.js" />
+
+### Testing
+
+The [Webhook Testing](/docs/extend/events-and-webhooks#test-a-webhook) page provides a quick way to test your webhook signature configuration and signature verification on your webhook listener.
+
+### Key Rotation
+
+[Rotating keys](/docs/operate/secure/key-rotation) regularly is an important part of a defense-in-depth strategy. The type of key used for signing webhook events and the method used for fetching that key determines the process for rotating keys.
+
+* Signatures validated using a public key (RSA or EC) where signature verification dynamically fetches public key from `.well-known/jwks.json` endpoint
+  * Generate new key in FusionAuth
+  * Update webhook signing key to use new key
+  * Test
+  * Delete old key
+* Other cases
+  * Generate new key
+  * Update your webhook listener to accept new key in addition to old key
+  * Update webhook to use new key
+  * Test
+  * Update your webhook listener to only accept new key
+  * Delete old key from FusionAuth
+
+

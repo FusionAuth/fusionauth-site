@@ -1,0 +1,65 @@
+---
+interface Props {
+  success_code: boolean,
+  success_message: string,
+  never_search_error: boolean,
+  webhook_event: boolean,
+  omit_error_malformed: boolean,
+  omit_missing_header: boolean,
+  missing_message: string,
+  omit_internal_error: boolean
+}
+
+const {success_code, success_message, never_search_error, webhook_event, omit_error_malformed, omit_missing_header, missing_message, omit_internal_error}: Props  = Astro.props;
+
+---
+<i class="mb-0">Response Codes</i>
+<table class="overflow-x-scroll flex flex-grow-0 flex-col mb-14 mt-1">
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{ success_code ? success_code : 200 }</td>
+      { success_code
+          ? <td>{ success_message }</td>
+          : <td>The request was successful. The response will contain a JSON body.</td>
+      }
+    </tr>
+    {!omit_error_malformed &&
+      <tr>
+        <td>400</td>
+        <td>
+          The request was invalid and/or malformed. The response will contain an <a href="/docs/apis/errors">Errors</a> JSON Object with the specific errors. This status will also be returned if a paid FusionAuth license is required and is not present.
+        </td>
+      </tr>
+    }
+    {!omit_missing_header && <tr>
+      <td>401</td>
+      <td>
+        You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See <a href="/docs/apis/authentication">Authentication</a>.
+      </td>
+    </tr>}
+    {missing_message && <tr>
+      <td>404</td>
+      <td>{ missing_message }</td>
+    </tr>}
+    {!omit_internal_error && <tr>
+      <td>500</td>
+      <td>
+        There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.
+      </td>
+    </tr>}
+    {!never_search_error && <tr>
+      <td>503</td>
+      <td>The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.</td>
+    </tr>}
+    {webhook_event && <tr>
+      <td>504</td>
+      <td>One or more Webhook endpoints returned an invalid response or were unreachable. Based on the transaction configuration for this event your action cannot be completed. A stack trace is provided and logged in the FusionAuth log files.</td>
+    </tr>}
+  </tbody>
+</table>

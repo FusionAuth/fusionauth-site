@@ -1,0 +1,191 @@
+---
+title: Keys
+description: Learn about the APIs for generating, importing, retrieving, updating and deleting keys.
+section: apis
+---
+import Aside from 'src/components/Aside.astro';
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import KeyResponseBody from 'src/content/docs/apis/_key-response-body.mdx';
+import KeyResponsesBody from 'src/content/docs/apis/_key-responses-body.mdx';
+import UpdateKeyNote from 'src/content/docs/_shared/_update-key-note.mdx';
+import KeyPutRequestBody from 'src/content/docs/apis/_key-put-request-body.mdx';
+import StandardPutResponseCodes from 'src/content/docs/apis/_standard-put-response-codes.astro';
+import StandardDeleteResponseCodes from 'src/content/docs/apis/_standard-delete-response-codes.astro';
+import KeySearchRequestParameters from 'src/content/docs/apis/_key-search-request-parameters.mdx';
+import KeyGeneratePostRequestBody from 'src/content/docs/apis/_key-generate-post-request-body.mdx';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import KeyImportPostRequestBody from 'src/content/docs/apis/_key-import-post-request-body.mdx';
+
+## Overview
+
+<Aside type="version">
+This API has been available since 1.6.0
+</Aside>
+
+Cryptographic keys are used in signing and verifying JWTs and verifying responses for third party identity providers. It is more likely you will interact with keys using the FusionAuth UI in the Key Master menu. If you do have a need to retrieve or manage keys using the API the following APIs have been provided.
+
+## Retrieve a Key
+
+This API is used to retrieve a single Key by unique Id or all of the configured Keys.
+
+### Request
+
+<API method="GET" uri="/api/key" authentication={["api-key"]} title="Retrieve all of the Keys"/>
+
+<API method="GET" uri="/api/key/{keyId}" authentication={["api-key"]} title="Retrieve a Key by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="keyId" type="UUID" required>
+    The unique Id of the Key to retrieve.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API contains either a single Key or all of the Keys. When you call this API with an Id the response will contain a single Key. When you call this API without an Id the response will contain all of the Keys. Both response types are defined below along with an example JSON response.
+
+<StandardGetResponseCodes />
+
+<KeyResponseBody />
+
+<KeyResponsesBody />
+
+## Update a Key
+
+This API method is used to update an existing Key.
+
+<UpdateKeyNote />
+
+<API method="PUT" uri="/api/key/{keyId}" authentication={["api-key"]} title="Update the Key with the given Id"/>
+
+### Request Parameters
+
+<APIBlock>
+  <APIField name="keyId" type="UUID" required>
+    The unique Id of the Key to update.
+  </APIField>
+</APIBlock>
+
+<KeyPutRequestBody />
+
+### Response
+
+The response for this API contains the Key that was updated.
+
+<StandardPutResponseCodes />
+
+<KeyResponseBody />
+
+## Delete a Key
+
+This API is used to delete a Key.
+
+<API method="DELETE" uri="/api/key/{keyId}" authentication={["api-key"]} title="Delete the Key with the given Id"/>
+
+### Request Parameters
+
+<APIBlock>
+  <APIField name="keyId" type="UUID" required>
+    The unique Id of the Key to delete.
+  </APIField>
+</APIBlock>
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes />
+
+## Search for Keys
+
+<Aside type="version">
+This API has been available since 1.45.0
+</Aside>
+
+This API is used to search for Keys and may be called using the `GET` or `POST` HTTP methods. Examples of each are provided below. The `POST` method is provided to allow for a richer request object without worrying about exceeding the maximum length of a URL. Calling this API with either the `GET` or `POST` HTTP method will provide the same search results given the same query parameters.
+
+### Request
+
+<API method="GET" uri="/api/key/search?algorithm=RS256&name={name}&type=RSA" authentication={["api-key"]} title="Search for Keys"/>
+
+### Request Parameters
+
+<KeySearchRequestParameters parameter_prefix="" />
+
+
+<API method="POST" uri="/api/key/search" authentication={["api-key"]} title="Search for Keys"/>
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+### Request Body
+
+<KeySearchRequestParameters parameter_prefix="search." />
+
+### Response
+
+The response for this API contains the Keys matching the search criteria in paginated format and the total number of results matching the search criteria.
+
+<StandardGetResponseCodes never_missing never_search_error />
+
+<KeyResponsesBody include_total />
+
+## Generate a Key
+
+This API is used to generate a new Key.
+
+<API method="POST" uri="/api/key/generate" authentication={["api-key"]} title="Generate a new Key with a randomly generated Id"/>
+
+<API method="POST" uri="/api/key/generate/{keyId}" authentication={["api-key"]} title="Generate a new Key with the provided unique Id"/>
+
+### Request Parameters
+
+<APIBlock>
+  <APIField name="keyId" type="UUID" optional defaults="secure random UUID">
+    The Id to use for the new key. If not specified a secure random UUID will be generated.
+  </APIField>
+</APIBlock>
+
+<KeyGeneratePostRequestBody />
+
+### Response
+
+The response for this API contains the Key that was generated.
+
+<StandardPostResponseCodes />
+
+<KeyResponseBody />
+
+## Import a Key
+
+This API is used to import an existing Key into FusionAuth.
+
+For RSA pairs, possible key lengths are: `1024` (only valid when importing a public key for signature verification), `2048`, `3072` or `4096`.
+
+For EC pairs, possible key lengths are: `256`, `384`, or `521`.
+
+<API method="POST" uri="/api/key/import" authentication={["api-key"]} title="Import an existing Key with a randomly generated Id"/>
+
+<API method="POST" uri="/api/key/import/{keyId}" authentication={["api-key"]} title="Import an existing Key with the provided unique Id"/>
+
+### Request Parameters
+
+<APIBlock>
+  <APIField name="keyId" type="UUID" optional>
+    The unique Id of the Key. Use if you want to specify a known UUID. This is useful if you are migrating from an existing system or will otherwise depend on having a known key Id.
+  </APIField>
+</APIBlock>
+
+<KeyImportPostRequestBody />
+
+### Response
+
+The response for this API contains the Key that was imported.
+
+<StandardPostResponseCodes />
+
+<KeyResponseBody />

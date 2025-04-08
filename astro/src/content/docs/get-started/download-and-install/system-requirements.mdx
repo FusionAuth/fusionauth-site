@@ -1,0 +1,169 @@
+---
+title: System Requirements
+description: Learn the minimum system requirements required to install and run FusionAuth.
+section: get started
+subcategory: download and install
+---
+import Aside from 'src/components/Aside.astro';
+import ElasticsearchVersion from 'src/content/docs/_shared/_elasticsearch-version.mdx';
+import ElasticsearchRam from 'src/content/docs/_shared/_elasticsearch-ram.mdx';
+
+## System Requirements
+
+FusionAuth will install and run on nearly any system. We have done our best to document the supported configurations here. If you
+have any questions about platform support, please ask a question on <a href="/community/forum/" target="_blank">the forum</a> or open an issue on <a href="https://github.com/FusionAuth/fusionauth-issues/issues/new/choose" target="_blank">GitHub</a>. If you have a licensed plan with support included, you may open a <a href="https://account.fusionauth.io" target="_blank">support request from your account</a>.
+
+Please read through this documentation and ensure you have met all of the requirements before continuing with the installation of FusionAuth.
+
+## Operating System
+
+FusionAuth will run on most platforms.  The following list summarizes the supported platforms.
+
+* Linux - all distributions
+* macOS 10.15 (Catalina) or newer
+* Windows Server 2019
+* Windows 10
+
+Docker, k8s and other container platforms are supported because the host operating system is based upon Linux.
+
+## Java
+
+FusionAuth ships with its own version of Java. The version that is contained in the bundle is the required and supported version.
+
+Currently, Java 21 is the supported major version. The versions of Java that are supported for prior versions of FusionAuth are:
+
+| FusionAuth Version | Java Version |
+|--------------------|--------------|
+| 1.53.0 and newer   | Java 21      |
+| 1.32.0 - 1.52.1    | Java 17      |
+| 1.31.0 and earlier | Java 14      |
+
+To determine the Java version required for any given version of FusionAuth, [download the appropriate FusionAuth package](/direct-download) and examine the install script.
+
+## Compute RAM
+
+The minimum memory required to run FusionAuth will vary depending upon the number of users you expect and the general intended system capacity.
+
+General guideline: `512M`
+
+If you have memory lying around, feel free to throw more at it - but in a multi-node configuration `512M` to `1GB` assigned per node should be very adequate.
+
+<Aside type="note">
+This memory is required for the FusionAuth application. Other programs as well as the operating system take memory too. If you are going to run another application on the same server or a local database, increase your memory appropriately.
+</Aside>
+
+If you intend to run Elasticsearch and FusionAuth on the same host you will need to ensure the host has adequate memory for both services and ensure you have adequate disk space for the Elasticsearch index to be stored.
+
+Considerations that may require a larger amount of memory:
+
+* Bulk importing users into FusionAuth. If you are importing in chunks of 250k to 500k it is possible FusionAuth will require additional memory to complete this request.
+* Lambdas (>1k). Lambdas need to be pre-compiled, cached and sandboxed in their own JavaScript engine for use a runtime. Creating thousands of Lambdas will increase your memory requirements due to what is needed to keep in memory at runtime.
+* Tenants (>1k). There are tasks that require a full traversal of all tenants, when you have 1000's of tenants these tasks may affect performance and will increase your memory requirements.
+* Applications (>1k). There are tasks that require a full traversal of all applications, when you have 1000's of applications these tasks may affect performance and will increase your memory requirements.
+* When using the Advanced Threat Detection feature, a minimum of `2GB` of heap is required, and `3GB` is recommended.
+
+<Aside type="caution">
+When using Advanced Threat Detection before version 1.47.0, it is recommended to allow for adequate memory headspace on the deployment.  If the FusionAuth application is taking `3GB` of an in-memory heap, then its best to allocate at least `4GB` (in total, possibly more) for the host system.
+
+When using Advanced Threat Detection with version 1.47.0 or after, you can follow the general guideline for compute RAM.
+</Aside>
+
+
+## Compute Disk Space
+
+The minimum disk space for a compute node (that is nodes that are running `fusionauth-app`) required to run FusionAuth can generally be minimal. We recommend providing compute nodes with between `10GB` and `50GB` of disk space. The `fusionauth-app` installation is only a few hundred megabytes and the operating system is usually on a gigabyte or two. Therefore, you only need to provide enough space for logging and operations performed on the server.
+
+This recommendation assumes that you aren't running `fusionauth-search` on the node and leveraging Elasticsearch. If you intend to use Elasticsearch, please see the disk space recommendations below.
+
+## Compute CPU
+
+The CPU required for compute nodes (that is nodes that are running `fusionauth-app`) depends mostly on the login and registration volume you expect and the password hashing algorithm you use. Here are some general guidelines based on AWS EC2 nodes and using `PBKDF2` with a load factor of `24,000` for the password hashing algorithm:
+
+| Node type | Logins/registrations per second |
+|-----------|---------------------------------|
+| t3.medium | 10 - 20 logins per second       |
+| m5.large  | 30 - 50 logins per second       |
+
+## Database
+
+<Aside type="note">
+FusionAuth Cloud runs on PostgreSQL.
+
+If you would like the option to migrate to FusionAuth Cloud in the future, you must use PostgreSQL. If you use MySQL, you will not have the option to ever migrate your data to FusionAuth Cloud.
+</Aside>
+
+* MySQL 8.0 or newer
+  * MysQL platforms that utilize MySQL Group Replication are not supported.
+  * MariaDB and Percona may work, however these variants are not actively tested against by FusionAuth.
+  * See [MariaDB known issues](https://github.com/FusionAuth/fusionauth-issues/issues/327) on our GitHub issues.
+* PostgreSQL 10 or newer
+  * PostgreSQL 15 or newer is not supported for FusionAuth versions older than 1.43.0.
+
+### Database RAM
+
+The RAM required by the database depends on your login volume and object counts. If you expect to have a few logins per minute and only a few thousand objects, `1GB-2GB` of RAM will be sufficient. If you have hundreds of millions of objects and 1,000 logins per second, you'll might need `256GB` of RAM. We recommend running load tests of FusionAuth to help determine the amount of RAM that is required for your needs.
+
+### Database Disk Space
+
+The amount of disk space required by the database depends on your configuration, login volumes, and total object counts. We recommend that you estimate the disk space based on the amount of data and storage configuration (event logs, audit logs, and raw login). It is also a good idea to use a system that allows you to expand the disk space if needed (such as Amazon RDS).
+
+In most cases, if you have thousands of objects and low login volumes, `10GB` of disk space will be sufficient. If you have millions of objects and high login volumes, you might need `1TB` of disk or more.
+
+## Elasticsearch
+
+Elasticsearch is optional, and may be leveraged for improving user search functionality.  See the [Core Concepts - User](/docs/get-started/core-concepts/users#user-search) documentation for reference in configuration and usage.
+
+If you will be running Elasticsearch on the same host as FusionAuth, please ensure there is adequate RAM for both services to operate normally. Elasticsearch may also protect the index by moving it to read-only if the underlying host is running low on disk space, ensure you have plenty of free storage for the Elasticsearch index.
+
+You can use the [`fusionauth-search`](/docs/get-started/download-and-install/packages#fusionauth-search) package or any other Elasticsearch service including a cloud hosted service or just downloading it and installing it yourself from [elastic.co](https://www.elastic.co/products/elasticsearch).
+
+<ElasticsearchVersion />
+
+### Elasticsearch RAM
+
+<ElasticsearchRam />
+
+### Elasticsearch Disk Space
+
+The amount of disk space required by Elasticsearch depends on your total user and entity counts. We recommend that you estimate the disk space based on the amount of data you will have.
+
+In most cases, if you have thousands of users and entities, `10GB` of disk space will be sufficient. If you have more users and entities please size up accordingly.
+
+## Network Access
+
+FusionAuth offers instructions on downloading the MySQL JDBC driver at install time. Due to the drivers' licensing, it cannot be bundled into the application. You have to download and install the drivers even if the server has network access.
+
+Prior to 1.16.0, the drivers were downloaded no matter which database you used. Prior to 1.40.0, the drivers were downloaded if you are using MySQL.
+
+If you are running FusionAuth in an environment with no network access and are using MySQL, you must download the MySQL driver jar file and place it in `fusionauth-app/web/WEB-INF/lib`.
+
+### Paid Plans
+
+If you are using the Community plan, you can block all outbound network connectivity. Lack of connectivity will not affect the product. 
+
+On a paid plan, you must enable network access to FusionAuth or the license and features will not function properly.
+
+If you are in a firewalled or restricted environment and have a paid plan, add the following hostnames to your network allow list for proper functionality:
+
+* `https://reactor.fusionauth.io`
+* `https://metrics.fusionauth.io`
+* `https://license.fusionauth.io`
+
+### Egress Proxies
+
+You may set up an outbound proxy and route required network connections through it. To use a proxy, set one or more of the following configuration parameters:
+
+* `proxy.host`
+* `proxy.port`
+* `proxy.username`
+* `proxy.password`
+
+When these are set, FusionAuth will use the configured proxy for all outbound connections.
+
+Learn more about [these parameters in the Configuration Reference](/docs/reference/configuration).
+
+### Collected Metrics
+
+Currently FusionAuth sends a payload to the metrics endpoint for all instances. A self-hosted community user can disable network egress or block access to the metrics endpoint without affecting functionality. Customers on a paid plan must allow a metrics connection [per the license agreement](/license), unless they have an air-gapped license. 
+
+To learn more about what metrics we collect and how they are used, view the [collected metrics documentation](/docs/get-started/download-and-install/collected-metrics).

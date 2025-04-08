@@ -1,0 +1,72 @@
+---
+title: API Gateways Overview
+description: How to use an API gateway with a FusionAuth token.
+navcategory: developer
+section: extend
+subcategory: examples
+tertcategory: api gateways
+navOrder: 0
+---
+import ApiGatewayArchitectureDiagram from 'src/diagrams/docs/extend/examples/api-gateways/_example-api-gateway-architecture.astro';
+import InlineField from 'src/components/InlineField.astro';
+
+## Overview
+
+FusionAuth is an OIDC and OAuth server, which means it integrates with a variety of third party systems out of the box. One of those systems is an API gateway. It is a common architectural pattern to have an authentication system generate a token which is then presented to other services. These services can sit behind an API Gateway, which offers throttling, billing and checks for authenticated requests.
+
+## General Integration Guidance
+
+In general, you'll want to do the following to perform an API gateway integration using OIDC.
+
+In FusionAuth:
+
+* Create an Application in FusionAuth.
+* Record the <InlineField>Client Id</InlineField> and the <InlineField>Client Secret</InlineField>.
+* Provide the <InlineField>Client Id</InlineField> and the <InlineField>Client Secret</InlineField> to the web application which will complete the Authorization Code grant. This may be the API gateway or a custom application.
+* Add the configured redirect URL to the <InlineField>Authorized redirect URLs</InlineField> field. This may be the API gateway or a custom application.
+
+You typically need to ensure that FusionAuth is signing the JWT with an asymmetric key. Do that by navigating to <strong>Settings -> Key Master</strong> to create or import the key pair. Then configure the Application to use the key by navigating to <strong>Applications -> Your Application -> JWT</strong>.
+
+In the API gateway:
+
+* Provide the URL for FusionAuth, often called the `issuer`.
+* Configure the API gateway with the client Id, and sometimes the secret, from the Application.
+* Configure which claims of the JWT the API gateway should inspect.
+* Add routes in the API gateway to forward requests to services.
+
+If the API gateway does not support token exchange, but instead expects a token:
+
+* Create a web application which can receive the one-time Authorization Code and exchange it for an access token. Provide this web application with the client secret.
+* Have the web application securely provide the client the token.
+
+After this is configured, when the user tries to access a service, they'll be prompted to login. After they successfully do so, the API gateway will examine the token and allow access if applicable.
+
+FusionAuth also supports SAML integrations. Learn more about [how FusionAuth can act as a SAML IdP](/docs/lifecycle/authenticate-users/saml/).
+
+## Sample Architecture
+
+Here's a sequence diagram with an example API gateway protecting two services.
+
+<ApiGatewayArchitectureDiagram alt="API gateway sample architecture." />
+
+## Token Location
+
+The location of the token in the request is typically in one of two places:
+
+* The `Authorization` header
+* A secure, `HttpOnly` cookie
+
+The former is compatible with a variety of API gateways and open source libraries.
+
+The latter is more secure when used for browser based clients such as SPAs, since JavaScript doesn't have access to the token. It is also compatible with the [Hosted Backend APIs](/docs/apis/hosted-backend), which use FusionAuth to perform the token exchange.
+
+## Example Integrations
+
+Here are some example API gateway integrations.
+
+* [Amazon API Gateway](/docs/extend/examples/api-gateways/aws-api-gateway)
+* [HAProxy](/docs/extend/examples/api-gateways/haproxy-api-gateway)
+* <a href="https://hasura.io/learn/graphql/hasura-authentication/integrations/fusion-auth/">Hasura</a> (external documentation)
+* [Kong Gateway](/docs/extend/examples/api-gateways/kong-gateway)
+* [ngrok Cloud Edge](/docs/extend/examples/api-gateways/ngrok-cloud-edge)
+

@@ -1,0 +1,100 @@
+---
+publish_date: 2024-05-03
+title: "Custom OAuth Scopes, Third-Party Applications, And FusionAuth"
+description: 'How to use custom OAuth scopes in a third-party application with FusionAuth.'
+authors: Mark Robustelli
+image: /img/blogs/custom-scopes-in-third-party-applications/custom-scopes-blog-header.png
+categories: Tutorial
+tags: scopes, oauth
+excerpt_separator: "{/* more */}"
+---
+
+import Aside from '/src/components/Aside.astro';
+import { RemoteCode } from '@fusionauth/astro-components';
+
+What are third-party applications and custom scopes? How would I implement OAuth scopes using FusionAuth?
+
+{/* more */}
+
+In today's API-driven world, it's common to open up your application's APIs to others, including those created by external parties. These applications that consume your APIs are known as third-party applications.
+
+Securing API calls to your application is crucial. This is where scopes come into play. Similar to user roles, custom scopes can be created for applications, ensuring your APIs are only accessed by authorized parties.
+
+## The Setup
+For the purposes of this blog, you will be reading about a fictional up-and-coming application named [Budget Buddy](https://github.com/FusionAuth/fusionauth-example-ruby-on-rails-custom-scopes) and the APIs created for [Change Bank](https://www.youtube.com/watch?v=CXDxNCzUspM). Change Bank is the fictional company used in many FusionAuth quickstarts. It is important to note that Change Bank uses FusionAuth as its identity provider and Budget Buddy uses a separate system.
+
+Change Bank has [existing APIs](https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api) for their application. They provide methods for making change and alerting the authorities of an incident should it occur. The owner of the up-and-coming Budget Buddy application has reached out to the owner of Change Bank. He has asked if it would be possible to integrate with Change Bank by allowing Budget Buddy users to see their Change Bank balance in the Budget Buddy application. They agreed and now Budget Buddy has become a third-party application for Change Bank.
+
+How is this implemented?
+
+<Aside type="note">
+Please note that the custom scope feature is only available in an Essentials or Enterprise plan. You can visit the [pricing page](/pricing) to learn more.
+</Aside>
+
+## FusionAuth Setup For Third-Party Application
+Change Bank is lucky because they use FusionAuth and it supports custom scopes as of version 1.50.0.
+
+The first thing they will need to do is create the Budget Buddy application in their FusionAuth instance. Notice that the Budget Buddy Client Id starts with `4581` and the Change Bank Client Id starts with `e9fd`. Change Bank will need to provide the Budget Buddy organization with the Client Id that begins with `4581`, the Client Secret for the Budget Buddy application, and the Change Bank login URL. 
+
+![Adding Budget Buddy Application.](/img/blogs/custom-scopes-in-third-party-applications/new-budget-buddy-application.png)
+
+Then, they will need to configure the application as a third-party application by updating the `Scopes` settings for the application. They should set the Relationship to `Third-party. The application is external to the authorization server.`
+
+![Budget Buddy Scopes Settings.](/img/blogs/custom-scopes-in-third-party-applications/budget-buddy-scopes.png)
+
+Next, they will need to add the custom scope for the Budget Buddy application. In this case, the custom scope `balance:read` has been created. This will be the scope that the Change Bank API will look for when determining if the application can retrieve the balance.
+
+![Budget Buddy Custom Scopes.](/img/blogs/custom-scopes-in-third-party-applications/budget-buddy-custom-scopes.png)
+
+## Updating Change Bank API
+
+Now all that is left is to create the `get-balance' endpoint for the API. To accomplish this, a new controller (along with a bit of internal plumbing) is added to the API project. 
+
+<Aside type="note">
+The APIs use the [rack-jwt](https://github.com/FusionAuth/rack-jwt) Gem to help with parsing and validation of the token that will be sent with the API request. The 'internal plumbing' of the API is beyond the scope (no pun intended) of this blog. For more details, please see the [FusionAuth API Quickstart for Ruby on Rails](https://github.com/FusionAuth/fusionauth-quickstart-ruby-on-rails-api). 
+</Aside>
+
+The important part of the code in the controller is that it checks for the correct Budget Buddy Client Id and checks for the scope `balance:read`.  If those values are confirmed, then a balance is returned. If this were a real application, it would also retrieve the `change_bank_user_id` and look up the actual balance for the user.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-ruby-on-rails-custom-scopes/main/fusionauth-quickstart-ruby-on-rails-api-modifications/app/controllers/get_balance_controller.rb" lang="ruby" />
+
+## Budget Buddy Integration
+
+To make this example simple and demonstrate that the Budget Buddy application uses a completely separate identity provider, the login has been set up to accept any email.
+
+![Budget Buddy Log In.](/img/blogs/custom-scopes-in-third-party-applications/budget-buddy-login.png)
+
+Once logged in, the user can choose to see their balance. Notice they will first need to connect to Change Bank to allow this.
+
+![Budget Buddy Connect to Change Bank.](/img/blogs/custom-scopes-in-third-party-applications/budget-buddy-get-balance-start.png)
+
+When the user clicks connect, they will be prompted for a Change Bank login. Here they must enter their username and password for the Change Bank application.
+
+<Aside type="note">
+Behind the scenes, Budget Buddy uses [OmniAuth](https://rubygems.org/gems/omniauth) to help with the OAuth login flow for Change Bank.  Again, this is beyond the scope of this blog. For further details please see the [FusionAuth Custom Scopes Example Application](https://github.com/FusionAuth/fusionauth-example-ruby-on-rails-custom-scopes).
+</Aside>
+
+![Change Bank Login.](/img/blogs/custom-scopes-in-third-party-applications/change-bank-login.png)
+
+After the user logs in, they will be presented with consent options. This allows the user to choose what Change Bank information and actions the Budget Buddy application has access to. In this case, the `Allow Budget Buddy to read your Change Bank balance` consent grants the `balance:read` scope.
+
+![Change Bank Consent.](/img/blogs/custom-scopes-in-third-party-applications/change-bank-consent.png)
+
+When the user allows the consent, Budget Buddy can read the user's Change Bank balance.
+
+![Budget Buddy Read Change Bank Balance.](/img/blogs/custom-scopes-in-third-party-applications/budget-buddy-balance-read.png)
+
+From here the user can choose to disconnect Change Bank from the Budget Buddy application or leave it connected. As long as Budget Buddy has a valid authorization token it will be allowed to read the user's balance from the Change Bank APIs.
+
+## Conclusion
+
+It can be confusing with the screenshots all showing the local host due to the way Safari renders the URL. In the example application, there are two applications (Change Bank API / Budget Buddy Web App) and FusionAuth is the IdP for the Change Bank applications. In a real-world example, Change Bank would likely also have a web application. A diagram of what that may look like would be as follows: 
+
+<img src="/img/blogs/custom-scopes-in-third-party-applications/custom-scopes-in-third-party-applications-diagram.png" alt="Diagram showing Change Bank Web App, Change Bank API, and Budget Buddy Get Balance login to Change Bank IDP. Beside that diagram is another diagram that shows Budget Buddy Web App login to Budget Buddy IDP." />
+
+It should be clear that Budget Buddy is its own application with its own identity provider. In the case that it requests the user's Change Bank balance, the Change Bank login flow would be initiated against the Change Bank IdP. The user would then log in and grant Budget Buddy the necessary consent to retrieve the balance.
+
+In the future, should Budget Buddy want to integrate further with Change Bank, the same process could be followed. Let's say at some point Budget Buddy would like to allow their users to transfer money from their Change Bank account to another account. Change Bank would have to create an additional scope on the Budget Buddy application like `balance:transfer` and implement the endpoint checking for that scope. Budget Buddy would have to request this scope and the user would have to grant consent. Then Budget Buddy could transfer money from the user's account.
+
+For a full working example and all the code for this blog, please see the [FusionAuth Custom Scopes example application](https://github.com/FusionAuth/fusionauth-example-ruby-on-rails-custom-scopes).
+

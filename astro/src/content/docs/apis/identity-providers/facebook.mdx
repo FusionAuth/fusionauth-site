@@ -1,0 +1,146 @@
+---
+title: Facebook
+description: Learn about the APIs for creating, retrieving, updating and disabling the Facebook identity provider.
+section: apis
+subcategory: identity providers
+---
+import Aside from 'src/components/Aside.astro';
+import TokenStorageNote from 'src/content/docs/apis/identity-providers/_token-storage-note.mdx';
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import InlineField from 'src/components/InlineField.astro';
+import FacebookPostRequestBody from 'src/content/docs/apis/identity-providers/_facebook-post-request-body.mdx';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import FacebookResponseBody from 'src/content/docs/apis/identity-providers/_facebook-response-body.mdx';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import GenericUpdateExplanationFragment from 'src/content/docs/apis/_generic-update-explanation-fragment.mdx';
+import FacebookPutRequestBody from 'src/content/docs/apis/identity-providers/_facebook-put-request-body.mdx';
+import StandardPutResponseCodes from 'src/content/docs/apis/_standard-put-response-codes.astro';
+import StandardDeleteResponseCodes from 'src/content/docs/apis/_standard-delete-response-codes.astro';
+import CompleteLoginText from 'src/content/docs/apis/identity-providers/_complete-login-text.mdx';
+import XForwardedForHeader from 'src/content/docs/apis/identity-providers/_x-forwarded-for-header.mdx';
+import XFusionauthTenantIdHeaderScopedOperationRowOnly from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.mdx';
+import IdentityProviderLoginRequestBody from 'src/content/docs/apis/identity-providers/_identity-provider-login-request-body.astro';
+import IdentityProviderLoginResponseBody from 'src/content/docs/apis/identity-providers/_identity-provider-login-response-body.mdx';
+
+export const idp_display_name = "Facebook";
+export const idp_since = 10100;
+export const idp_linking_strategy="LinkByEmail";
+
+## Overview
+
+<Aside type="version">
+This API has been available since 1.1.0
+</Aside>
+
+The Facebook identity provider type will use the Facebook OAuth login API. It will provide a `Login with Facebook` button on FusionAuth's login page that will leverage the Facebook login pop-up dialog. Additionally, this identity provider will call Facebook's Graph API to load additional details about the user and store them in FusionAuth.
+
+The email address returned by the Facebook Graph API will be used to create or lookup the existing user. Additional claims returned by Facebook can be used to reconcile the User to FusionAuth by using a Facebook Reconcile Lambda. Unless you assign a reconcile lambda to this provider, on the `email` address will be used from the available claims returned by Facebook.
+
+When the `picture` field is not requested FusionAuth will also call Facebook's `/me/picture` API to load the user's profile image and store it as the `imageUrl` in FusionAuth. When the `picture` field is requested, the user's profile image will be returned by the `/me` API and a second request to the `/me/picture` endpoint will not be required.
+
+<TokenStorageNote idp_long_lived_token_type="long-lived" idp_display_name={idp_display_name} idp_linking_strategy={idp_linking_strategy} token_name="long-lived token" return_text="/oauth/access_token (after presenting the login token)" />
+
+Please note if an `idp_hint` is appended to the OAuth Authorize endpoint, then the interaction behavior will be defaulted to `redirect`, even if popup interaction is explicitly configured.
+
+## Create the Facebook Identity Provider
+
+### Request
+
+<API method="POST" uri="/api/identity-provider" authentication={["api-key"]} title="Create the Facebook Identity Provider"/>
+
+The <InlineField>type</InlineField> in the request JSON is used to determine that you are managing the Facebook identity provider.
+
+<FacebookPostRequestBody idp_since={idp_since}
+                         idp_linking_strategy={idp_linking_strategy}
+                         idp_display_name={idp_display_name} />
+
+### Response
+
+<StandardPostResponseCodes never_search_error />
+
+<FacebookResponseBody idp_since={idp_since}
+                      idp_linking_strategy={idp_linking_strategy}
+                      idp_display_name={idp_display_name} />
+
+## Retrieve the Facebook Identity Provider
+
+There is only one Facebook Identity Provider, so this Identity Provider may be retrieved by type or Id.
+
+### Request
+
+<API method="GET" uri="/api/identity-provider?type=Facebook" authentication={["api-key"]} title="Retrieve the Facebook Identity Provider by type"/>
+
+<API method="GET" uri="/api/identity-provider/56abdcc7-8bd9-4321-9621-4e9bbebae494" authentication={["api-key"]} title="Retrieve the Facebook Identity Provider by Id"/>
+
+### Response
+
+<StandardGetResponseCodes />
+
+<FacebookResponseBody idp_since={idp_since}
+                      idp_linking_strategy={idp_linking_strategy}
+                      idp_display_name={idp_display_name} />
+
+## Update the Facebook Identity Provider
+
+<GenericUpdateExplanationFragment extra_id_verbiage="There is only one Facebook Identity Provider, so this Identity Provider may be updated by type or Id." capitalized_object_name="Facebook Identity Provider" />
+
+### Request
+
+<API method="PUT" uri="/api/identity-provider?type=Facebook" authentication={["api-key"]} showPatch={true} title="Update the Facebook Identity Provider by type"/>
+
+<API method="PUT" uri="/api/identity-provider/56abdcc7-8bd9-4321-9621-4e9bbebae494" authentication={["api-key"]} showPatch={true} title="Update the Facebook Identity Provider by Id"/>
+
+<FacebookPutRequestBody idp_since={idp_since}
+                        idp_linking_strategy={idp_linking_strategy}
+                        idp_display_name={idp_display_name} />
+
+### Response
+
+The response for this API contains the Facebook Identity Provider.
+
+<StandardPutResponseCodes />
+
+<FacebookResponseBody idp_since={idp_since}
+                      idp_linking_strategy={idp_linking_strategy}
+                      idp_display_name={idp_display_name} />
+
+## Delete the Facebook Identity Provider
+
+There is only one Facebook Identity Provider, so this Identity Provider may be deleted by type or Id.
+
+### Request
+
+<API method="DELETE" uri="/api/identity-provider?type=Facebook" authentication={["api-key"]} title="Delete the Facebook Identity Provider by type"/>
+
+<API method="DELETE" uri="/api/identity-provider/56abdcc7-8bd9-4321-9621-4e9bbebae494" authentication={["api-key"]} title="Delete the Facebook Identity Provider by Id"/>
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes />
+
+## Complete the Facebook Login
+
+<CompleteLoginText idp_display_name={idp_display_name} token_text_with_article="an access token" token_text="access token" />
+
+### Request
+
+<API method="POST" uri="/api/identity-provider/login" authentication={["none"]} title="Complete Facebook Login"/>
+
+#### Request Headers
+
+<APIBlock>
+  <XForwardedForHeader />
+  <XFusionauthTenantIdHeaderScopedOperationRowOnly />
+</APIBlock>
+
+<IdentityProviderLoginRequestBody idp_display_name={idp_display_name} idp_since={idp_since} />
+
+### Response
+
+The response for this API contains the User object.
+
+<IdentityProviderLoginResponseBody />
+

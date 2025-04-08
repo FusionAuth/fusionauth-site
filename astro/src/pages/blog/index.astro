@@ -1,0 +1,222 @@
+
+---
+import '../../css/style.css';
+import HeadComponent from '../../components/Head.astro';
+import BlogNav from '../../components/nav/BlogNav.astro';
+import Footer from '../../components/Footer.astro';
+import SubscribeFooter from '../../components/SubscribeFooterCTA.astro';
+import { getCollection } from 'astro:content';
+import { getHref, parseContent, sortByDate } from 'src/tools/blog';
+import { getDateString, getLatestDateString } from 'src/tools/date';
+import { BlogContent } from '../../tools/blog';
+
+const pageData = {
+  categoryCallouts: [
+    'Tutorial',
+    'Company',
+    'Product'
+  ],
+  // use slug
+  pinnedPosts: [
+    'fusionauth-momentum-2024',
+    'fusionauth-partner-program',
+  ]
+}
+
+const rawBlogs: BlogContent[] = await getCollection('blog');
+const blogs = rawBlogs.sort(sortByDate).map(parseContent);
+
+const onThePage = [];
+const latestPost = blogs[0];
+onThePage.push(latestPost);
+const pinnedPosts = blogs.filter(blog => pageData.pinnedPosts.includes(blog.slug));
+onThePage.push(...pinnedPosts);
+const callouts = pageData.categoryCallouts.map(cat => {
+  const callout = blogs.find(blog => blog.categories.includes(cat) && !onThePage.includes(blog));
+  onThePage.push(callout);
+  return callout;
+});
+const latestPosts = blogs.filter(blog => !onThePage.includes(blog)).slice(0, 4);
+---
+<!DOCTYPE html>
+<html class="antialiased" lang="en">
+<HeadComponent 
+  title="FusionAuth Blog"
+  description="Get the latest on FusionAuth: insights on CIAM, OAuth, Passwordless Auth, and more."
+/>
+<body class="antialiased leading-tight" data-pagefind-ignore="all">
+<BlogNav/>
+<!-- Header w/ border on bottom, full width and is sticky -->
+<!--<section class="container mb-14 mx-auto px-7 md:mb-20 2xl:mb-24">-->
+<section class="max-w-8xl mx-auto px-4 py-8">
+  <div class="grid mt-10 sm:mt-10 lg:grid-cols-2 lg:mt-14 xl:grid-cols-2 xl:mt-20 2xl:flex 2xl:grid-cols-none">
+    <div class="lg:px-6">
+      <article>
+        <a href={"/blog/" + latestPost.slug}>
+          <img class="rounded-2xl" src={latestPost.image} alt={latestPost.title}>
+        </a>
+        <div class="mb-10 mt-7">
+          <div>
+            {latestPost.categories && latestPost.categories.map(cat =>
+              <a href={ getHref(cat, 'category')}>
+                <li class="ease-in duration-75 hover:text-indigo-300 hover:underline capitalize font-bold inline-block mb-3 mr-3 text-base text-indigo-500">{ cat }</li>
+              </a>
+            )}
+          </div>
+          <h2 class="capitalize font-extrabold leading-8 mb-3 text-3xl text-slate-900 lg:text-4xl xl:text-4xl 2xl:text-5xl">
+            <a href={"/blog/" + latestPost.slug} class="hover:decoration-auto hover:text-indigo-600 hover:underline hover:underline-offset-auto">{ latestPost.title }</a>
+          </h2>
+          <p class="font-Inter leading-tight text-slate-600 md:leading-7 md:text-lg break-words" set:html={latestPost.blurb}></p>
+          <div class="flex flex-row max-w-8xl mt-8 mx-auto relative lg:mx-auto xl:container 2xl:ml-auto" >
+            <div class="flex flex-row justify-between">
+              <div class="flex flex-col sm:flex-row">
+                {latestPost.authors && latestPost.authors.map(author =>
+                  <a href={ getHref(author, 'author') } class="font-bold text-base text-slate-800 2xl:hover:decoration-auto 2xl:hover:text-indigo-600 2xl:hover:underline 2xl:hover:underline-offset-2">
+                    <div class="leading-tight mr-4 sm:leading-tight">{ author }</div>
+                  </a>
+                )}
+              </div>
+              <div>
+                <div>
+                  <p class="font-mono mb-4 text-base text-slate-500">{ getLatestDateString(latestPost) }</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <hr class="bg-indigo-600 border-t-0 h-0.5"/>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+    <div>
+      { callouts.map((callout, idx) =>
+        <article class={idx === 0 ? "flex flex-row-reverse place-items-start xl:flex-row 2xl:flex-row" : "border-slate-200 border-t-2 flex flex-row-reverse mt-10 place-items-start pt-10 lg:mt-5 lg:pt-8 xl:flex-row 2xl:flex-row"}>
+          <div class="2xl:mr-6 2xl:w-auto flex lg:w-36 place-content-start w-3/4 xl:mr-6 xl:w-52">
+            <a href={"/blog/" + callout.slug}>
+              <img src={callout.image} alt={callout.title} class="2xl:w-44 block lg:w-36 max-w-max md:max-w-xs md:w-auto rounded-lg xl:max-w-min xl:w-52" width="170">
+            </a>
+          </div>
+          <div class="pr-6 lg:mt-0 2xl:mt-0">
+            <div>
+              <a href={ getHref(pageData.categoryCallouts[idx], 'category')}>
+                <li class="ease-in duration-75 hover:text-indigo-300 hover:underline capitalize font-bold inline-block mb-3 text-base text-indigo-500">{ pageData.categoryCallouts[idx] }</li>
+              </a>
+            </div>
+            <h3 class="capitalize font-bold leading-6 mb-3 text-lg text-slate-900 md:font-Inter md:font-bold md:leading-7 md:text-xl">
+              <a href={"/blog/" + callout.slug } class="hover:text-indigo-600 hover:underline hover:underline-offset-2">{callout.title}</a>
+            </h3>
+            <p class="font-Inter font-normal leading-snug text-base text-slate-600 break-words" set:html={callout.blurb}></p>
+            <div class="block flex-row items-center justify-between mt-3">
+              <div class="flex flex-col sm:flex-row">
+                {callout.authors && callout.authors.map(author =>
+                  <a href={getHref(author, 'author')}
+                     class="font-bold hover:text-indigo-600 hover:underline hover:underline-offset-2 text-base text-slate-800">
+                    <div class="leading-tight mr-4 sm:leading-tight">{author}</div>
+                  </a>
+                )}
+              </div>
+              <div>
+                <div>
+                  <p class="font-mono mt-1 text-base text-slate-500">{ getLatestDateString(callout) }</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      )}
+    </div>
+  </div>
+  <div class="gap-x-10 grid grid-cols-1 sm:grid-cols-2 lg:mb-16">
+    {pinnedPosts && pinnedPosts.map(pinned =>
+      <article class="border-slate-200 border-solid border-t-2 mt-10 pt-10">
+        <a href={"/blog/" + pinned.slug }>
+          <img class="rounded-2xl" src={pinned.image} alt={pinned.title}>
+        </a>
+        <div class="mt-7">
+          <div>
+            {pinned.categories && pinned.categories.map(cat =>
+              <a href={ getHref(cat, 'category') }>
+                <li class="ease-in duration-75 hover:text-indigo-300 hover:underline capitalize font-bold inline-block mb-3 mr-3 text-base text-indigo-500">{ cat }</li>
+              </a>
+            )}
+          </div>
+          <h3 class="capitalize font-extrabold leading-6 mb-3 text-slate-800 text-xl lg:text-2xl xl:text-3xl">
+            <a href={"/blog/" + pinned.slug } class="2xl:hover:decoration-auto 2xl:hover:text-indigo-600 2xl:hover:underline 2xl:hover:underline-offset-2">{ pinned.title }</a>
+          </h3>
+          <p class="font-Inter leading-6 text-slate-600 sm:text-base md:leading-7 md:text-lg break-words" set:html={pinned.blurb}></p>
+          <div class="flex flex-row max-w-8xl mt-8 mx-auto relative lg:mx-auto xl:container 2xl:ml-auto">
+            <div class="flex flex-row justify-between">
+              <div class="flex flex-col sm:flex-row">
+                {pinned.authors && pinned.authors.map(author =>
+                  <a href={getHref(author, 'author')}
+                     class="font-bold text-base text-slate-800 2xl:hover:decoration-auto 2xl:hover:text-indigo-600 2xl:hover:underline 2xl:hover:underline-offset-2">
+                    <div class="leading-tight mr-4 sm:leading-tight">{author}</div>
+                  </a>
+                )}
+              </div>
+              <div>
+                <div>
+                  <p class="font-mono mb-4 text-base text-slate-500">{ getLatestDateString(pinned) }</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <hr class="bg-indigo-600 border-t-0 h-0.5"/>
+            </div>
+          </div>
+        </div>
+      </article>
+    )}
+  </div>
+  <div class="mt-11 xl:mt-24">
+    <div class="border-b border-slate-800 border-solid border-t-4 flex items-center justify-between leading-6 py-3">
+      <h2 class="capitalize font-extrabold leading-6 pb-2 pt-4 text-slate-900 text-xl lg:text-2xl xl:text-3xl">Latest posts</h2>
+      <a href="/blog/latest/">
+        <button class="border border-slate-700 border-solid font-bold hover:bg-slate-700 hover:delay-75 hover:ease-linear hover:text-white hover:transition-all leading-none px-3 py-2 rounded text-slate-600 text-xs lg:text-sm">Read More</button>
+      </a>
+    </div>
+    <div class="md:gap-x-7 md:grid md:grid-cols-4">
+      {latestPosts && latestPosts.map((post, idx) =>
+        <article class={idx === 0 ? "border-slate-200 border-solid mt-10 sm:border-t-0 sm:mt-4 md:border-t-0 md:mt-0" : "border-slate-200 border-solid mt-10 sm:border-t-0 sm:mt-4 md:border-t-0 md:mt-0"}>
+          <div class="mt-7">
+            <div>
+              {post.categories && post.categories.map(cat =>
+                <a href={ getHref(cat, 'category') }>
+                  <li class="ease-in duration-75 hover:text-indigo-300 hover:underline capitalize font-bold inline-block mb-3 mr-3 text-base text-indigo-500">{ cat }</li>
+                </a>
+              )}
+            </div>
+            <h3 class="capitalize font-extrabold leading-snug mb-3 text-slate-800 text-xl lg:leading-tight lg:text-2xl xl:text-2xl">
+              <a href={"/blog/" + post.slug } class="2xl:hover:decoration-auto 2xl:hover:text-indigo-600 2xl:hover:underline 2xl:hover:underline-offset-2">{ post.title }</a>
+            </h3>
+            <p class="font-Inter leading-6 text-slate-600 sm:text-base md:leading-6 md:text-base break-words" set:html={ post.blurb }></p>
+            <div class="flex flex-row max-w-8xl mt-8 mx-auto relative lg:mx-auto xl:container 2xl:ml-auto">
+              <div class="flex flex-col justify-between">
+                <div class="flex flex-col text-slate-800 sm:flex-row">
+                  { post.authors && post.authors.map(author =>
+                    <a href={ getHref(author, 'author') } class="font-bold text-slate-800 text-base 2xl:hover:decoration-auto 2xl:hover:text-indigo-600 2xl:hover:underline 2xl:hover:underline-offset-2">
+                      <div class="leading-tight mr-4 sm:leading-tight">{ author }</div>
+                    </a>
+                  )}
+                </div>
+                <div>
+                  <div>
+                    <p class="font-mono mb-4 text-base text-slate-500">{ getDateString(post.updated_date ? post.updated_date : post.publish_date) }</p>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <hr class="bg-indigo-600 border-t-0 h-0.5"/>
+              </div>
+            </div>
+          </div>
+        </article>
+      )}
+    </div>
+  </div>
+</section>
+<SubscribeFooter />
+<Footer/>
+</body>
+</html>

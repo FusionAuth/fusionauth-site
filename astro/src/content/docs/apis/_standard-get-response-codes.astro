@@ -1,0 +1,96 @@
+---
+import { marked } from 'marked';
+
+interface Props {
+  success_code: boolean,
+  success_message: string,
+  not_registered: boolean,
+  never_search_error: boolean,
+  no_errors: boolean,
+  errors_message: string,
+  no_authorization: boolean,
+  authorization_message: string,
+  omit_missing_header: boolean,
+  never_missing: boolean,
+  missing_message: string
+}
+
+const {success_code, success_message, not_registered, never_search_error, no_errors, errors_message, no_authorization, authorization_message, never_missing, missing_message}: Props  = Astro.props;
+
+---
+<i class="mb-0">Response Codes</i>
+<table class="overflow-x-scroll flex flex-grow-0 flex-col mb-14 mt-1">
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{ success_code ? success_code : 200}</td>
+      { success_code
+          ? <td set:html={marked.parse(success_message)} />
+          : <td>The request was successful. The response will contain a JSON body.</td>
+      }
+    </tr>
+    {not_registered && <tr>
+      <td>202</td>
+      <td>
+        The request was successful. The response will contain a JSON body. The user is not authorized to the requested application, the returned access token will not contain claims for an application. This user is authenticated but not registered.
+      </td>
+    </tr>}
+    {!no_errors &&
+      <tr>
+        <td>400</td>
+        {errors_message
+            ? <td>
+              { errors_message }
+              </td>
+            : <td>
+                The request was invalid and/or malformed. The response will contain an <a href="/docs/apis/errors">Errors</a> JSON Object with the specific errors. This status will also be returned if a paid FusionAuth license is required and is not present.
+              </td>
+        }
+
+      </tr>
+    }
+    {!no_authorization &&
+      <tr>
+        <td>401</td>
+        {authorization_message
+            ? <td>
+              { authorization_message }
+              </td>
+            : <td>
+                You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See <a href="/docs/apis/authentication">Authentication</a>.
+              </td>
+        }
+
+      </tr>
+    }
+    {!never_missing &&
+      <tr>
+        <td>404</td>
+        {missing_message
+            ? <td>
+              { missing_message }
+              </td>
+            : <td>
+                The object you requested doesn't exist. The response will be empty.
+              </td>
+        }
+
+      </tr>
+    }
+     <tr>
+      <td>500</td>
+      <td>
+        There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.
+      </td>
+    </tr>
+    {!never_search_error && <tr>
+      <td>503</td>
+      <td>The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.</td>
+    </tr>}
+  </tbody>
+</table>

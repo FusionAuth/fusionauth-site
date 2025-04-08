@@ -1,0 +1,54 @@
+---
+title: Google Reconcile Lambda
+description: An overview of the Google Reconcile lambda.
+navcategory: customization
+section: extend
+subcategory: code
+tertcategory: lambdas
+---
+import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/extend/code/lambdas/_reconcile-lambda-user-registration-parameters.mdx';
+import ReconcileLambdaIntro from 'src/content/docs/extend/code/lambdas/_reconcile-lambda-intro.mdx';
+
+<ReconcileLambdaIntro identity_provider_name="Google" prefix="a" />
+
+## Lambda Structure
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+```javascript
+function reconcile(user, registration, idToken) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `reconcile` that takes three parameters. The parameters that the lambda is passed are:
+
+<ReconcileLambdaUserRegistrationParameters />
+* `idToken` - the JSON payload returned by the Google Token Info API. This object is read-only.
+
+The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The `idToken` may contain various user claims to utilize during the reconcile process.
+
+## Assigning The Lambda
+
+Once a lambda is created, you may assign it to the Google identity provider in the IdP configuration.
+
+Navigate to <strong>Settings -> Identity Providers</strong> and select your existing Google configuration or click <strong>Add provider</strong> and select Google if it has not yet been configured.
+
+## Default Lambda
+
+A default Google reconcile lambda is available in FusionAuth that may be used or modified. The default Google lambda function is documented below.
+
+```javascript
+// This is the default Google reconcile, modify this to your liking.
+function reconcile(user, registration, idToken) {
+  // Un-comment this line to see the idToken object printed to the event log
+  // console.info(JSON.stringify(idToken, null, 2));
+
+  // The idToken is the response from the tokeninfo endpoint
+  // https://developers.google.com/identity/sign-in/web/backend-auth#calling-the-tokeninfo-endpoint
+  user.firstName = idToken.given_name;
+  user.lastName = idToken.family_name;
+  user.fullName = idToken.name;
+  user.imageUrl = idToken.picture;
+}
+```

@@ -1,0 +1,79 @@
+---
+title: SCIM User Response Converter Lambda
+description: An overview of the SCIM User Response Converter lambda.
+navcategory: customization
+section: extend
+subcategory: code
+tertcategory: lambdas
+---
+
+If you would like to convert an outgoing FusionAuth User response into a SCIM User and optionally SCIM EnterpriseUser, you must specify a lambda in the SCIM configuration. This lambda will be invoked after the User was acted upon.
+
+When you create a new lambda using the FusionAuth UI we will provide you an empty function for you to implement.
+
+## Lambda Structure
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+```javascript
+function convert(scimUser, user) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `convert` that takes two parameters. The parameters that the lambda is passed are:
+
+* `scimUser` - the SCIM response object. You can modify this object.
+* `user` - the FusionAuth User object. This object is read-only.
+
+The FusionAuth `user` object is well documented in the [User API](/docs/apis/users) documentation. The SCIM User object is a JavaScript object containing the SCIM User and optionally the SCIM EnterpriseUser response JSON payload. See [SCIM User](https://datatracker.ietf.org/doc/html/rfc7643#section-4.1) and [SCIM EnterpriseUser extension](https://datatracker.ietf.org/doc/html/rfc7643#section-4.3).
+
+You may add or modify anything in the `scimUser` object.
+
+## Assigning The Lambda
+
+Once a lambda is created, you must assign it to a Tenant. See the SCIM tab in the Tenant configuration.
+
+## Default Lambda
+
+A default SCIM User Response Converter Lambda that converts an outgoing FusionAuth User to a SCIM USER and SCIM EnterpriseUser response to a FusionAuth User is available and may be used or modified. The lambda function is documented below.
+
+```javascript
+function convert(scimUser, user) {
+  // Un-comment this line to see the user object printed to the event log
+  // console.info(JSON.stringify(user, null, 2));
+
+  scimUser.active = user.active;
+  scimUser.userName = user.username;
+  scimUser.name = {
+    formatted: user.fullName,
+    familyName: user.lastName,
+    givenName: user.firstName,
+    middleName: user.middleName,
+    honorificPrefix: user.data.honorificPrefix,
+    honorificSuffix: user.data.honorificSuffix
+  };
+
+  scimUser.phoneNumbers = [{
+    primary: true,
+    value: user.mobilePhone,
+    type: "mobile"
+  }];
+
+  scimUser.emails = [{
+    primary: true,
+    value: user.email,
+    type: "work"
+  }];
+
+  // Optionally return any custom extensions stored in user.data
+  if (user.data && user.data.extensions) {
+    for (var extension in user.data.extensions) {
+      if (scimUser.schemas.indexOf(extension) === -1) {
+        scimUser.schemas.push(extension);
+      }
+      scimUser[extension] = user.data.extensions[extension];
+    }
+  }
+}
+```

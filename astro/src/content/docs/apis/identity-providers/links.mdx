@@ -1,0 +1,283 @@
+---
+title: Links
+description: Learn about the APIs for creating, retrieving, and deleting Identity Provider Links.
+section: apis
+subcategory: identity providers
+tags: authorization hub
+---
+import Aside from 'src/components/Aside.astro';
+import API from 'src/components/api/API.astro';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import JSON from 'src/components/JSON.astro';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import LinksPostResponseBody from 'src/content/docs/apis/identity-providers/_links-post-response-body.mdx';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import LinkResponseBody from 'src/content/docs/apis/identity-providers/_link-response-body.mdx';
+import LinksResponseBody from 'src/content/docs/apis/identity-providers/_links-response-body.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import PendingLinkResponseBody from 'src/content/docs/apis/identity-providers/_pending-link-response-body.mdx';
+import StandardDeleteResponseCodes from 'src/content/docs/apis/_standard-delete-response-codes.astro';
+
+## Overview
+
+<Aside type="version">
+This API has been available since 1.28.0
+</Aside>
+
+This page contains the APIs that are used to manage Links that establish a relationship between a FusionAuth User and an Identity Provider.
+
+## Link a User
+
+This API is used to create a link between a FusionAuth User and a user in a 3rd party identity provider. This API may be useful when you already know the unique Id of a user in a 3rd party identity provider and the corresponding FusionAuth User.
+
+### Request
+
+<Aside type="version">
+This API has been available since 1.43.0
+</Aside>
+
+<API method="POST" uri="/api/identity-provider/link" authentication={["api-key"]} title="Link a User"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="identityProviderLink.displayName" type="String" optional>
+    A optional human readable name for this link such as an email address, username or given name. This value should be used to make it easier to identify the user this link represents in the remote identity provider.
+
+    Please note, that this value will always be overwritten during login to reflect the most current information from the identity provider. In most cases this value will be an email address or username.
+  </APIField>
+  <APIField name="identityProviderLink.identityProviderId" type="UUID" required>
+    The Id of the identify provider that will be linked to the User.
+  </APIField>
+  <APIField name="identityProviderLink.identityProviderUserId" type="String" required>
+    The Id for the user that is provided by the upstream identity provider. This is the value that will allow FusionAuth to link this User on future logins. This value is expected to be immutable.
+  </APIField>
+  <APIField name="identityProviderLink.userId" type="UUID" required>
+    The unique Id of the FusionAuth User that is being linked to the identity provider.
+  </APIField>
+  <APIField name="identityProviderLink.token" type="String" optional>
+    The token returned from the identity provider. This is treated as an opaque token as the type varies by identity provider, this value may not be returned by all identity providers. When provided, this token is typically a long lived access or refresh token, but consult individual identity provider documentation for specifics.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="identity-providers/links/request.json" />
+
+<Aside type="note">
+Deprecated in version 1.43.0.
+
+While this API is still functional, its usage is discouraged. When available please use the [Link a User endpoint](/docs/apis/identity-providers/links#link-a-user) which takes a different request body.
+</Aside>
+
+<API method="POST" uri="/api/identity-provider/link" authentication={["api-key"]} title="Link a User"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="displayName" type="String" optional since="1.28.1">
+    An optional human readable name for this link such as an email address, username or given name. This value should be used to make it easier to identify the user this link represents in the remote identity provider.
+
+    Please note, that this value will always be overwritten during login to reflect the most current information from the identity provider. In most cases this value will be an email address or username.
+  </APIField>
+  <APIField name="identityProviderId" type="UUID" required>
+    The Id of the identity provider.
+  </APIField>
+  <APIField name="identityProviderUserId" type="String" required>
+    The Id for the User that is provided by the identity provider. This is the value that will allow FusionAuth to link this user on future logins. This value is expected to be immutable.
+  </APIField>
+  <APIField name="userId" type="UUID" required>
+    The FusionAuth Id of the User that is being linked to the identity provider.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="identity-providers/links/request-deprecated.json" />
+
+### Response
+
+<StandardPostResponseCodes never_search_error webhook_event />
+
+<LinksPostResponseBody />
+
+## Complete a pending Link
+
+This API is used complete a pending link. If an identity provider is configured with a linking strategy of `Create a pending link`, a `pendingLinkId` will be returned by the Identity Provider API (see the `Complete the Login` section for each respective IdP). This value can be used in the request below.
+
+### Request
+
+<Aside type="version">
+Available Since Version 1.43.0
+</Aside>
+<API method="POST" uri="/api/identity-provider/link" authentication={["api-key"]} title="Complete a pending Link"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="pendingIdPLinkId" type="String" required>
+    The pending identity provider link Id.
+  </APIField>
+  <APIField name="identityProviderLink.userId" type="String" required>
+    The unique Id of the FusionAuth User that is being linked to the identity provider.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="identity-providers/links/pending-request.json" />
+
+<Aside type="note">
+Deprecated in version 1.43.0.
+
+While this API is still functional, its usage is discouraged. When available please use the [Complete a Pending Link](/docs/apis/identity-providers/links#complete-a-pending-link) which takes a different request body.
+</Aside>
+
+<API method="POST" uri="/api/identity-provider/link" authentication={["api-key"]} title="Complete a pending Link"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="pendingIdPLinkId" type="String" required>
+    The pending identity provider link Id.
+  </APIField>
+  <APIField name="userId" type="String" required>
+    The Id of the User that is being linked to the identity provider.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="identity-providers/links/pending-request-deprecated.json" />
+
+### Response
+
+<StandardPostResponseCodes never_search_error webhook_event />
+
+<LinksPostResponseBody />
+
+## Retrieve a Link
+
+This API is used to retrieve a single Link, all Links for a specific identity provider and user, or all Links for a user.
+
+### Request
+
+<API method="GET" uri="/api/identity-provider/link?identityProviderId={identityProviderId}&identityProviderUserId={identityProviderUserId}&userId={userId}" authentication={["api-key"]} title="Retrieve a single link"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="identityProviderId" type="UUID" required>
+    The unique Id of the identity provider.
+  </APIField>
+  <APIField name="identityProviderUserId" type="String" required>
+    The unique user Id in the 3rd party identity provider. Ideally this value never change and will always uniquely identify the user in the 3rd party identity provider.
+  </APIField>
+  <APIField name="userId" type="UUID" optional>
+    The FusionAuth User Id that is linked to the identity provider. When this value is provided, a `404` status code will be returned if the link does not exist, or the link exists but is linked to a different `userId`. If you wish to identify if any user is linked, omit this parameter.
+  </APIField>
+</APIBlock>
+
+<API method="GET" uri="/api/identity-provider/link?identityProviderId={identityProviderId}&userId={userId}" authentication={["api-key"]} title="Retrieve all links for a specific user by identity provider"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="identityProviderId" type="UUID" required>
+    The unique Id of the identity provider.
+  </APIField>
+  <APIField name="userId" type="UUID" required>
+    The FusionAuth User Id that is linked to the identity provider.
+  </APIField>
+</APIBlock>
+
+<API method="GET" uri="/api/identity-provider/link?userId={userId}" authentication={["api-key"]} title="Retrieve all links for a user"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userId" type="UUID" required>
+    The FusionAuth User Id that is linked to the identity provider.
+  </APIField>
+</APIBlock>
+
+### Response
+
+<StandardGetResponseCodes never_search_error />
+
+<LinkResponseBody />
+
+<LinksResponseBody />
+
+## Retrieve a Pending Link
+
+<Aside type="version">
+This API has been available since 1.46.0
+</Aside>
+
+This API is used to retrieve a pending IdP Link. A pending IdP Link is created after a user completes login with an Identity Provider configured with a linking strategy of <InlineField>Create a Pending Link</InlineField>. This pending IdP link is then used to link a user in a 3rd party identity provider to a user in FusionAuth.
+
+Retrieving this link may be useful if you are building your own login pages, and need to identify the Identity Provider or various meta-data associated with his pending link.
+
+### Request
+
+<API method="GET" uri="/api/identity-provider/link/pending/{pendingLinkId}?userId={userId}" authentication={["api-key"]} title="Retrieve a single pending link by Id"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="pendingLinkId" type="String" required>
+    The unique pending IdP Link Id.
+  </APIField>
+  <APIField name="userId" type="UUID" optional>
+    The optional User Id that you intend to link using this pending IdP Link. When provided the user's current link count will be returned in the response body.
+
+    This can be useful if you are limiting the number of links a user may have to a single identity provider. This will help you understand if the link will succeed for this user.
+  </APIField>
+</APIBlock>
+
+### Response
+
+<StandardGetResponseCodes never_search_error />
+
+<PendingLinkResponseBody />
+
+## Unlink a User
+
+This API is used to remove a link between a FusionAuth User and a 3rd party identity provider.
+
+### Request
+
+<API method="DELETE" uri="/api/identity-provider/link?identityProviderId={identityProviderId}&identityProviderUserId={identityProviderUserId}&userId={userId}" authentication={["api-key"]} title="Delete the Link with the given Id"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="identityProviderId" type="UUID" required>
+    The unique Id of the identity provider.
+  </APIField>
+  <APIField name="identityProviderUserId" type="String" required>
+    The Id for the user that is provided by the upstream identity provider. This is the value that will allow FusionAuth to link this user on future logins. This value is expected to be immutable.
+  </APIField>
+  <APIField name="userId" type="UUID" required>
+    The FusionAuth User Id that is linked to the identity provider.
+  </APIField>
+</APIBlock>
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes never_search_error />

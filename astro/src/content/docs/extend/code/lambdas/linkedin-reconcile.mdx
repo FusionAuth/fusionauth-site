@@ -1,0 +1,89 @@
+---
+title: LinkedIn Reconcile Lambda
+description: An overview of the LinkedIn Reconcile lambda.
+navcategory: customization
+section: extend
+subcategory: code
+tertcategory: lambdas
+---
+import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/extend/code/lambdas/_reconcile-lambda-user-registration-parameters.mdx';
+import ReconcileLambdaIntro from 'src/content/docs/extend/code/lambdas/_reconcile-lambda-intro.mdx';
+
+<ReconcileLambdaIntro identity_provider_name="LinkedIn" prefix="a" />
+
+## Lambda Structure
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+```javascript
+function reconcile(user, registration, linkedInUser) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `reconcile` that takes three parameters. The parameters that the lambda is passed are:
+
+<ReconcileLambdaUserRegistrationParameters />
+* `linkedInUser` - the JSON payload returned by the LinkedIn Email and Me APIs. This object is read-only.
+
+The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The `linkedInUser` may contain various user claims depending upon the user's LinkedIn configuration and the scopes requested in the LinkedIn configuration.
+
+## Assigning The Lambda
+
+Once a lambda is created, you may assign it to the LinkedIn identity provider in the IdP configuration.
+
+Navigate to <strong>Settings -> Identity Providers</strong> and select your existing LinkedIn configuration or click <strong>Add provider</strong> and select LinkedIn if it has not yet been configured.
+
+## Default Lambda
+
+A default LinkedIn reconcile lambda is available in FusionAuth that may be used or modified. The default LinkedIn lambda function is documented below.
+
+Note that in this lambda we handle two different response objects depending on what type of integration with LinkedIn your application is using. See [Set Up Your LinkedIn App Client Credentials](/docs/lifecycle/authenticate-users/identity-providers/social/linkedin#set-up-your-linkedin-app-client-credentials) for more information.
+
+The best way to know which format your user's data is being return in is to use the `console.log` statement and print the `linkedInUser` field to the event log.
+
+```javascript
+// This is the default LinkedIn reconcile, modify this to your liking.
+function reconcile(user, registration, linkedInUser) {
+  // Un-comment this line to see the linkedInUser object printed to the event log
+  // console.info(JSON.stringify(linkedInUser, null, ' '));
+
+  // Depending on how and when you have set up your LinkedIn application you may get a different response back in the linkedInUser.
+  //
+  // The first checks apply if you are using the "Sign In with LinkedIn using OpenID Connect" with the "openid", "email", and "profile" scopes.
+  // If so FusionAuth will call the LinkedIn UserInfo API.
+  // See https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2#api-request-to-retreive-member-details
+  //
+  // The second checks apply if you are using the legacy program and Profile API with the "r_liteprofile" or "r_basicprofile" scopes.
+  // See https://learn.microsoft.com/en-us/linkedin/shared/integrations/people/profile-api
+
+  if (linkedInUser.given_name) {
+    user.firstName = linkedInUser.given_name;
+  } else if (linkedInUser.localizedFirstName) {
+    user.firstName = linkedInUser.localizedFirstName;
+  }
+
+  if (linkedInUser.family_name) {
+    user.lastName = linkedInUser.family_name;
+  } else if (linkedInUser.localizedLastName) {
+    user.lastName = linkedInUser.localizedLastName;
+  }
+
+  if (linkedInUser.picture) {
+    // UserInfo will only supply one image size
+    user.imageUrl = linkedInUser.picture;
+  } else if (linkedInUser.profilePicture){
+    // LinkedIn may return several images sizes.
+    // See https://docs.microsoft.com/en-us/linkedin/shared/references/v2/profile/profile-picture
+    // We'll sort the array by descending size and then grab the largest one.
+    var images = linkedInUser.profilePicture['displayImage~'].elements || [];
+    images.sort(function(a, b) {
+      return b.data["com.linkedin.digitalmedia.mediaartifact.StillImage"].displaySize.width - a.data["com.linkedin.digitalmedia.mediaartifact.StillImage"].displaySize.width;
+    });
+    if (images.length > 0) {
+      user.imageUrl = images[0].identifiers[0].identifier;
+    }
+  }
+}
+```
+

@@ -1,0 +1,123 @@
+---
+publish_date: 2023-08-24
+title: From ALB to Caddy - Our Wandering Path to Supporting Thousands of Domain Names
+description: A few weeks ago we announced that FusionAuth Cloud now supports unlimited custom domains. Here’s how we actually built it. 
+authors: Mark Manes
+image: /img/blogs/unlimited-domains/fusionauth-unlimited-domains.png
+categories: Product, Education
+tags: fusionauth cloud, aws, domains, hosting, caddy
+excerpt_separator: "{/* more */}"
+---
+In the world of cloud services, offering 'unlimited' often feels like a stretch. But we've done just that. We recently unveiled support for unlimited custom domains in FusionAuth Cloud. This marked a significant milestone in our journey and changed the game for our customers.  Dive in as we unpack the architectural wizardry behind this transformative feature.
+
+When customers use our FusionAuth Cloud managed hosting service, they can configure one or more custom domain names for their authentication server.
+
+For example, a hosted deployment located at piedpiper.fusionauth.io could also be accessed at auth.piedpiper.com or id.piedpiper.com. This allows customers to keep their users on the same domain and maintain their branding throughout authentication flows.
+
+For most companies, one or two custom domains is sufficient. However some business models have thousands of domain names, representing different applications or customers. In an ideal world, the same authentication source would serve all of these domain names..
+
+FusionAuth supports [multiple tenants](/docs/get-started/core-concepts/tenants) and applications, so this shouldn't be a problem, right?
+
+Right?
+
+Correct! This is not an issue for FusionAuth as a product!
+
+But things get a bit more complicated inside of [FusionAuth Cloud](/platform/fusionauth-cloud), our managed hosting option, which runs on Amazon Web Services (AWS).
+
+How It Works Today
+------------------
+
+Let's take a look at the architecture of FusionAuth Cloud, which includes both FusionAuth the product and surrounding infrastructure, called a deployment.
+
+Internet traffic flowing into FusionAuth Cloud first arrives via a Global Accelerator and is then forwarded to an [Application Load Balancer](https://aws.amazon.com/elasticloadbalancing/application-load-balancer) (ALB) for routing. The ALB is responsible for handling the TLS handshake, the routing of traffic to customer deployments, as well as performing distributed denial of service (DDoS) protection and web application firewall (WAF) filtering. This ALB must be configured with a TLS certificate and a routing rule for each of our customer's domains.
+
+However, AWS imposes limitations on:
+
+-   The number of Subject Alternative Names (hostnames) per certificate
+-   The number of certificates associated with an ALB
+-   The number of hostname routing rules associated with an ALB
+
+This makes it impossible to use a single ALB to handle the traffic for all of our FusionAuth Cloud customers in a given region. In order to work around these limitations, we have provisioned additional ALBs and Global Accelerators. This also meant we imposed a limit on customers: they may only have four custom domains per deployment.
+
+What's This Unlimited Domains Stuff Anyway?
+-------------------------------------------
+
+[Unlimited Domains](./introducing-unlimited-custom-domains-for-fusionauth-cloud) is a new feature of FusionAuth Cloud that utilizes a modern edge infrastructure, providing dynamic TLS certificate provisioning and has no limits on the number of custom domains for a given deployment<sup>1</sup>. It is currently an option available to select use cases for customers using High-Availability FusionAuth Cloud deployments.
+
+<sup>1</sup> Nothing is truly infinite, but we have your use-case covered!
+
+Coming Up With An Alternative
+-----------------------------
+
+Conceptually, the problem we were looking at is simple: We need to replicate the functionality of AWS's ALB, but without the limitations. Effectively, this should be implemented as a reverse-proxy that:
+
+-   Is highly-available across multiple [AWS Availability Zones](https://aws.amazon.com/about-aws/global-infrastructure/regions_az/) (AZs)
+-   Is horizontally scalable and can handle load as we grow
+-   Can support dynamic management of TLS certificates without downtime
+-   Has no limits on the number of hostnames it can route
+
+We decided to use AWS's Elastic Container Service (ECS) as our foundation, since it is fully managed and can automatically scale instances across AZs.
+
+For the reverse proxy, either HAProxy or nginx worked, but we needed to determine how we could reconfigure them at runtime to automatically provision certificates as customers added domain names. We spent some time researching their respective APIs to see how they would fit into the FusionAuth Cloud management infrastructure.
+
+During this research we stumbled upon [Caddy](https://caddyserver.com/), a software project that seemed to fit perfectly with our needs:
+
+-   It natively supports ACME, the certificate provisioning protocol used by LetsEncrypt.
+-   It is happy running in a container.
+-   It has an API for dynamic configuration.
+
+Since Caddy was a new kid on the block, it required a more thorough investigation than the battle-tested incumbents.
+
+We set up a simulation environment to run it through its paces. Specifically, we wanted to ensure that when it was loaded up with 100k certificates, each with a unique hostname, it was able to perform TLS termination and route requests with throughput comparable to an ALB.
+
+We found that with minimal resources allocated to the container, there was no increase in request processing time as the number of installed certificates grew. We felt confident enough in Caddy to move forward with integrating it into a test environment which mirrored our production infrastructure.
+
+Building It Out
+---------------
+
+To avoid disruptions to our existing cloud deployments, we decided to build the new infrastructure in parallel with the existing systems.
+
+The new design consisted of:
+
+-   A multi-AZ ECS cluster of Caddy instances running on Fargate. This cluster would manage certificates, terminate TLS, and forward requests back to each customer deployment.
+-   An EFS volume for Caddy to store certificates. Sometimes you just need a filesystem.
+-   A Network Load Balancer (NLB) to distribute traffic across the Caddy instances.
+-   A Global Accelerator to forward all edge traffic to the NLB.
+-   An internal service which authorizes Caddy to provision certificates for only the domains that we explicitly allow.
+-   Additional internal DNS records to map custom domain names to their respective deployments.
+
+This design was simple, but lacked one important component: a [Web Application Firewall](https://aws.amazon.com/waf/) (WAF). We use AWS's WAF to protect our customers' deployments against DDoS and bot attacks.
+
+Since WAF can only inspect plaintext traffic and only works with ALBs, we had to insert a new ALB between Caddy and our customer deployments to get this protection. The alternative was running a WAF from a different vendor, which is possible but would balloon the scope of this project.
+
+![FusionAuth Unlimited Domains Diagram](/img/blogs/unlimited-domains/unlimited-domains-diagram-fusionauth.png)
+
+A Wrinkle With The WAF
+----------------------
+
+A WAF can also get in the way sometimes. Integrations requiring frequent API access occasionally trigger DDoS rules, which means legitimate traffic is blocked. Customers may wish to add certain static IP addresses to an allowlist, guaranteeing unfettered access to their authentication servers.
+
+To implement the allowlist, we need to know the source IP address of the traffic as it enters the Global Accelerator.
+
+Luckily for us, Global Accelerator has an option to preserve the client IP address, so Caddy can pass it through in an `X-Fowarded-For` header where the WAF can compare it against our allow lists.
+
+Unluckily for us, this option is only [available](https://docs.aws.amazon.com/global-accelerator/latest/dg/preserve-client-ip-address.html) when Global Accelerator is forwarding traffic to either an ALB or directly to EC2 instances. Since using an ALB here would re-introduce the limitations that we're trying to workaround, we were forced to ditch Fargate and use bare EC2 instances as our ECS capacity provider.
+
+Running ECS workloads on EC2 is not difficult, but does require us to build out the automation to deploy, scale and keep the instances up to date. The Global Accelerator's endpoint group must also remain in sync with these instances.
+
+These instances need to do only one thing: run Caddy containers. In order to minimize the attack surface, we did not want them running any services other than Docker. They do not need to run SSHD or most other services which are included in standard Linux distributions, so we searched for the most minimal distribution that would satisfy our basic requirements.
+
+[Bottlerocket](https://aws.amazon.com/bottlerocket) is one such distribution. It is maintained by AWS, includes only the necessities to run Docker containers and it easily integrates with ECS. After building out our new ECS cluster with Bottlerocket as a base image, we found that our Caddy containers were failing to start with only a cryptic error message pointing to a failed EFS mount.
+
+We verified that all of the IAM roles, security groups and file system policies were correct, but finally came across this [issue](https://github.com/bottlerocket-os/bottlerocket/issues/1080). Bottlerocket does not support authenticated EFS volumes, and probably never will.
+
+The next best distribution turned out to be Amazon's ECS-optimized AMI. It wasn't as minimal as Bottlerocket, but with some tweaks we were able to lock it down and swap it into our ECS cluster. After this change, everything was working. From dynamic certificate provisioning to load balancing to deployment routing.
+
+At last, we had fully integrated Caddy end-to-end into our infrastructure. Our existing monitoring and alerting systems were easily attached to the new resources and we found no issues during our final testing.
+
+What This Means For FusionAuth Cloud Customers
+----------------------------------------------
+
+With this architecture change we can now support unlimited custom domains in FusionAuth Cloud. Whatever your use case -- we can handle it. All plans include a private instance (no shared public cloud) fully managed by FusionAuth, with options for backup, custom availability zones, uptime SLAs, and more to meet your infrastructure requirements.
+
+You can start a [free trial of FusionAuth Cloud](/pricing?step%3Dhosting) now or for more complex projects or infrastructure questions, reach out to our [identity experts](/contact) for help.

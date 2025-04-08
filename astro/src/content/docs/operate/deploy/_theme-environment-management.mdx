@@ -1,0 +1,61 @@
+import Aside from 'src/components/Aside.astro';
+
+When moving themes from one environment to another, the theme logic and look and feel may be the same, but the assets may be different. FusionAuth templates only have access to [the documented variables](/docs/customize/look-and-feel/template-variables). FusionAuth does not resolve environment variables in the themes templates.
+
+You have a few options to handle the difference in assets between theme environments.
+
+You can set variables at theme build time in the [Helpers](/docs/customize/look-and-feel/helpers) template using the [`assign`](https://freemarker.apache.org/docs/ref_directive_assign.html) directive. These variables can then be used in other templates. You can use a templating language like jinja to build the `Helpers` template at build time.
+
+Another option is to use custom fields in the `tenant.data` field. The `tenant` object is available to every template. Then you can reference these variables for different hostnames. 
+
+<Aside type="note">
+You can only set `tenant.data` values using the [client libraries](/docs/sdks) or the [API](/docs/apis).
+</Aside>
+
+For example, if your development assets are at `dev.example.com/assets` and your production assets are at `prod.example.com/assets`, set a variable such as `asset_base_url` in the `tenant.data` field.
+
+Here's an excerpt of what the development tenant `data` object might look like:
+
+```json
+{
+  "tenant" : {
+    "data" : {
+      "themes": {
+         "asset_base_url" : "dev.example.com/assets",
+         "css_base_url" : "cdn-dev.example.com"
+      }
+    }
+  }
+}
+```
+
+Production, in contrast, will use different hostnames.
+
+```json
+{
+  "tenant" : {
+    "data" : {
+      "themes": {
+         "asset_base_url" : "prod.example.com/assets",
+         "css_base_url" : "cdn-prod.example.com"
+      }
+    }
+  }
+}
+```
+
+Then, in your template, reference images using `${tenant.data.themes.asset_base_url}` and CSS files using `${tenant.data.themes.css_base_url}`. For example, a simplified theme page might look like this:
+
+```html
+<html>
+  <head>
+    <link rel="stylesheet" href="${tenant.data.themes.css_base_url}/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="${tenant.data.themes.css_base_url}/css/app.css"/>
+  </head>
+  <body>
+    <img src="${tenant.data.themes.asset_base_url}/logo.png" />
+    ...
+    <img src="${tenant.data.themes.asset_base_url}/other_image.png" />
+  </body>
+</html>
+```

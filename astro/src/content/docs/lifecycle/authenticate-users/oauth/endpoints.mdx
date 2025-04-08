@@ -1,0 +1,1803 @@
+---
+title: OAuth2 Endpoints
+description: This page details FusionAuth's OAuth2 endpoints. Learn about the Authorization Code grant, Implicit grant, and other OAuth2 grants.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: oauth
+---
+import Aside from 'src/components/Aside.astro';
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import AvailableSince from 'src/components/api/AvailableSince.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import OauthAuthorizeRedirectParameters from 'src/content/docs/_shared/_oauth-authorize-redirect-parameters.mdx';
+import AuthorizationHeader from 'src/content/docs/lifecycle/authenticate-users/oauth/_authorization-header.mdx';
+import DeviceTypeList from 'src/content/docs/_shared/_device-type-list.mdx';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import ClientCredentialsScopesOmitted from 'src/content/docs/lifecycle/authenticate-users/oauth/_client_credentials_scopes_omitted.mdx';
+import ClientCredentialsScopesSingleEntity from 'src/content/docs/lifecycle/authenticate-users/oauth/_client_credentials_scopes_single_entity.mdx';
+import ClientCredentialsScopesMultipleEntities from 'src/content/docs/lifecycle/authenticate-users/oauth/_client_credentials_scopes_multiple_entities.mdx';
+import ClientCredentialsPermissionsExplanation from 'src/content/docs/lifecycle/authenticate-users/oauth/_client_credentials_permissions_explanation.mdx';
+import UserInfoAudClaimLimits from 'src/content/docs/_shared/_userinfo-aud-claim-limits.mdx';
+import UserInfoResponse from 'src/content/docs/_shared/_userinfo-response.mdx';
+import JSON from 'src/components/JSON.astro';
+
+## Overview
+
+In support of [OAuth 2.0 IETF RFC 6749](https://tools.ietf.org/html/rfc6749), [OAuth 2.0 IETF RFC 8628](https://tools.ietf.org/html/rfc8628), [JWK IETF RFC 7517](https://tools.ietf.org/html/rfc7517), and [OAuth 2.0 IETF RFC 7662](https://tools.ietf.org/html/rfc7662), the following endpoints are provided.
+
+In support of [OpenID Connect](http://openid.net/specs/openid-connect-core-1_0.html), the following endpoints are provided:
+
+Error responses to the OAuth endpoints are described in the following section.
+
+Additional information about common parameters are described in this section:
+
+<Aside type="note">
+If present in a query string, request parameters must be URL encoded.
+</Aside>
+
+## Authorize
+
+This is an implementation of the Authorization endpoint as defined by the [IETF RFC 6749 Section 3.1](https://tools.ietf.org/html/rfc6749#section-3.1).
+
+### Authorization Code Grant Request
+
+To begin the Authorization Code Grant you will redirect to the Authorization endpoint from your application.
+
+<API method="GET" uri="/oauth2/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&tenantId={tenantId}"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="client_id" type="String" required>
+    The unique client identifier.
+    The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+  </APIField>
+  <APIField name="code_challenge" type="String" optional since="1.8.0">
+    The `code_challenge` parameter as described in the [Proof Key for Code Exchange by OAuth Public Clients (PKCE)](https://tools.ietf.org/html/rfc7636) specification.
+    When this parameter is provided during the Authorization request, a corresponding <InlineField>code_verifier</InlineField> parameter is required on the subsequent `POST` to the `/oauth2/token` endpoint.
+  </APIField>
+  <APIField name="code_challenge_method" type="String" optional since="1.8.0">
+    The `code_challenge_method` parameter as described in the [Proof Key for Code Exchange by OAuth Public Clients (PKCE)](https://tools.ietf.org/html/rfc7636) specification.
+
+    The possible values are:
+
+    - `S256` - SHA-256
+  </APIField>
+  <APIField name="idp_hint" type="UUID" optional since="1.19.0">
+    An optional unique Identity Provider Id that can allow you to bypass the FusionAuth login page.
+
+    Adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end user clicking on the "Login with Pied Piper" button, or entering their email address when using the IdP configuration with managed domains.
+  </APIField>
+  <APIField name="locale" type="String" optional>
+    The [locale](/docs/reference/data-types#locales) to be used to render the login page.
+    This is useful if you already know the user's preferred locale before redirecting the user to FusionAuth.
+    See the [Theme Localization](/docs/customize/look-and-feel/localization) documentation for more information.
+  </APIField>
+  <APIField name="login_hint" type="String" optional since="1.19.0">
+    An optional email address or top level domain that can allow you to bypass the FusionAuth login page when using managed domains.
+
+    If using managed domains, adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end entering their email address when using the IdP configuration with managed domains.
+
+    If not using managed domains, providing an email address using this parameter prepopulates the email address in the login page.
+  </APIField>
+  <APIField name="metaData.device.description" type="String" optional>
+    A human readable description of the device used during login.
+    This metadata is used to describe the refresh token that may be generated for this login request.
+  </APIField>
+  <APIField name="nonce" type="String" optional since="1.5.0">
+    The `nonce` parameter as described in the [OpenID Connect core](https://openid.net/specs/openid-connect-core-1_0.html) specification.
+    When this parameter is provided during the Authorization request, the value will be returned in the `id_token`.
+  </APIField>
+  <APIField name="redirect_uri" type="String" required>
+    The URI to redirect to upon a successful request.
+    This URI must have been configured previously in the FusionAuth Application OAuth configuration.
+    See Applications in the FusionAuth User Guide for additional information on configuring the redirect URI.
+  </APIField>
+  <APIField name="response_mode" type="String" optional since="1.11.0">
+    Determines how the result parameters are to be returned to the caller.
+    When this parameter is not provided the default response mode will be used based upon the <InlineField>response_type</InlineField> field.
+
+    The default when the <InlineField>response_type</InlineField> is set to `code` is `query`, the default when the <InlineField>response_type</InlineField> is set to `token`, `token id_token` or `id_token` is `fragment`.
+
+    The possible values are:
+
+    * `form_post`
+    * `fragment`
+    * `query` - This response mode can only be used when the <InlineField>response_type</InlineField> is set to `code`.
+
+    In general, you only need to provide this parameter when you wish to use the `form_post` response mode.
+  </APIField>
+  <APIField name="response_type" type="String" required>
+    The requested response type.
+    For the Authorization Code Grant, this value must be set to `code`.
+  </APIField>
+  <APIField name="scope" type="String" optional>
+    If you are using OpenID Connect, the request must contain this parameter and at minimum it must contain `openid`.
+    This parameter may contain multiple scopes space separated.
+    For example, the value of `openid offline_access` provides two scopes on the request.
+
+    These scopes modify the behavior of the endpoint:
+
+    * `openid` - This scope is used to request an `id_token` be returned in the response
+    * `offline_access` - This scope is used to request a `refresh_token` be returned in the response
+  </APIField>
+  <APIField name="state" type="String" optional>
+    The optional state parameter. This is generally used as a Cross Site Request Forgery (CSRF) token or to provide deeplinking support.
+    Any value provided in this field will be returned on a successful redirect.
+    See [OpenID Connect core](https://openid.net/specs/openid-connect-core-1_0.html) specification for additional information on how this parameter may be utilized.
+  </APIField>
+  <APIField name="tenantId" type="UUID" required since="1.8.0">
+    The unique Tenant Id used for applying the proper theme.
+  </APIField>
+  <APIField name="user_code" type="String" optional since="1.11.0">
+    The end-user verification code.
+    This parameter is required on requests implementing the user-interaction of the Device Authorization Grant flow.
+  </APIField>
+</APIBlock>
+
+### Response
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                                                    |
+|------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful. The user is not logged in, the response will contain an HTML form to collect login credentials.                                                                                                                    |
+| 302  | The requested user is already logged in, the request will redirect to the location specified in the `redirect_uri` on the request.                                                                                                             |
+| 400  | The request was invalid and/or malformed. The response will contain a JSON message with the specific errors or errors on the redirect URI. The error responses are covered in the [OAuth Error section](#oautherror) of the API documentation. |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                                                                       |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                                                       |
+
+The following is an example HTTP 302 redirect, line breaks added to improve readability.
+
+```plaintext title="Example HTTP Redirect Response"
+HTTP/1.1 302 Found
+Location: https://piedpiper.com/callback?
+           code=pU2DHOWjSCVh6NJKi1ClhBYNKfuqbZVT
+           &locale=fr
+           &state=abc123
+           &userState=Authenticated
+```
+
+#### Redirect Parameters
+
+<OauthAuthorizeRedirectParameters />
+
+### Implicit Grant Request
+
+To begin the Implicit Grant you will redirect to the Authorization endpoint from your application.
+
+<API method="GET" uri="/oauth2/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=token%20id_token&tenantId={tenantId}"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="client_id" type="String" required>
+    The unique client identifier.
+    The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+  </APIField>
+  <APIField name="idp_hint" type="UUID" optional since="1.19.0">
+    An optional unique Identity Provider Id that can allow you to bypass the FusionAuth login page.
+
+    Adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end user clicking on the "Login with Pied Piper" button, or entering their email address when using the IdP configuration with managed domains.
+  </APIField>
+  <APIField name="locale" type="String">
+    The [locale](/docs/reference/data-types#locales) to be used to render the login page.
+    This is useful if you already know the user's preferred locale before redirecting the user to FusionAuth.
+    See the [Theme Localization](/docs/customize/look-and-feel/localization) documentation for more information.
+  </APIField>
+  <APIField name="login_hint" type="String" optional since="1.19.0">
+    An optional email address or top level domain that can allow you to bypass the FusionAuth login page when using managed domains.
+
+    If using managed domains, adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end entering their email address when using the IdP configuration with managed domains.
+
+    If not using managed domains, providing an email address using this parameter prepopulates the email address in the login page.
+  </APIField>
+  <APIField name="nonce" type="String" optional since="1.5.0">
+    The `nonce` parameter as described in the [OpenID Connect core](https://openid.net/specs/openid-connect-core-1_0.html) specification.
+    When this parameter is provided during the Authorization request, the value will be returned in the `id_token` if requested by the `response_type` parameter.
+  </APIField>
+  <APIField name="redirect_uri" type="String" required>
+    The URI to redirect to upon a successful request.
+    This URI must have been configured previously in the FusionAuth Application OAuth configuration.
+    See Applications in the FusionAuth User Guide for additional information on configuring the redirect URI.
+  </APIField>
+  <APIField name="response_mode" type="String" optional since="1.11.0">
+    Determines how the result parameters are to be returned to the caller.
+    When this parameter is not provided the default response mode will be used based upon the <InlineField>response_type</InlineField> field.
+
+    The default when the <InlineField>response_type</InlineField> is set to `code` is `query`, the default when the <InlineField>response_type</InlineField> is set to `token`, `token id_token` or `id_token` is `fragment`.
+
+    The possible values are:
+
+    * `form_post`
+    * `fragment`
+    * `query` - This response mode can only be used when the <InlineField>response_type</InlineField> is set to `code`.
+
+    In general, you only need to provide this parameter when you wish to use the `form_post` response mode.
+  </APIField>
+  <APIField name="response_type" type="String" required>
+    The requested response type, this value determines which tokens will be returned in the redirect URL.
+
+    For the Implicit Grant, this value must be set to one of the following values:
+
+    * `token` - Return an `access_token`
+    * `token id_token` - Return both the `access_token` and the `id_token`
+    * `id_token` - Return an `id_token`
+
+    The `token` response type is not supported when using OpenID Connect.
+    This means that if you specify the `openid` scope the `token` response type is not allowed.
+  </APIField>
+  <APIField name="nonce" type="String" optional since="1.5.0">
+    The `nonce` parameter as described in the [OpenID Connect core](https://openid.net/specs/openid-connect-core-1_0.html) specification.
+    When this parameter is provided during the Authorization request, the value will be returned in the `id_token` if requested by the `response_type` parameter.
+  </APIField>
+  <APIField name="scope" type="String" optional>
+    If you are using OpenID Connect, the request must contain this parameter and at minimum it must contain `openid`.
+
+    These scopes modify the behavior of the endpoint:
+
+    * `openid` - This scope is used to request an `id_token` be returned in the response
+  </APIField>
+  <APIField name="state" type="String" optional>
+    The optional state parameter. This is generally used as a Cross Site Request Forgery (CSRF) token or to provide deeplinking support.
+    Any value provided in this field will be returned on a successful redirect.
+    See [OpenID Connect core](https://openid.net/specs/openid-connect-core-1_0.html) specification for additional information on how this parameter may be utilized.
+  </APIField>
+  <APIField name="tenantId" type="UUID" required since="1.8.0">
+    The unique Tenant Id.
+  </APIField>
+  <APIField name="user_code" type="String" optional since="1.11.0">
+    The end-user verification code.
+    This parameter is required on requests implementing the user-interaction of the Device Authorization Grant flow.
+  </APIField>
+</APIBlock>
+
+### Response
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                                                   |
+|------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful. The user is not logged in, the response will contain an HTML form to collect login credentials.                                                                                                                   |
+| 302  | The requested user is already logged in, the request will redirect to the location specified in the `redirect_uri` on the request.                                                                                                            |
+| 400  | The request was invalid and/or malformed. The response will contain a JSON message with the specific errors or errors on the redirect URI. The error responses are covered in the [OAuth Error section](#oautherror) of the API documentation. |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                                                                      |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                                                      |
+
+```plaintext title="Example HTTP Redirect Response"
+HTTP/1.1 302 Found
+Location: https://piedpiper.com/callback#
+           access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo
+           &expires_in=3599
+           &id_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo
+           &locale=fr
+           &scope=openid
+           &state=abc123
+           &token_type=Bearer
+           &userState=Authenticated
+```
+
+#### Redirect Parameters
+
+<APIBlock>
+  <APIField name="access_token" type="String">
+    The OAuth access token as described by [RFC 6749 Section 1.4](https://tools.ietf.org/html/rfc6749#section-1.4).
+    This request parameter will be omitted if an access token was not requested in the <InlineField>response_type</InlineField> request parameter.
+    See the [OAuth Tokens](/docs/lifecycle/authenticate-users/oauth/tokens#access-token) documentation for more information.
+  </APIField>
+  <APIField name="expires_in" type="String">
+    The number of seconds the access token will remain active.
+    This request parameter will be omitted if an access token was not requested in the <InlineField>response_type</InlineField> request parameter.
+  </APIField>
+  <APIField name="id_token" type="String">
+    The OpenID Id Token.
+    This token is represented as a JSON Web Token (JWT).
+    This request parameter will be omitted if an id token was not requested in the <InlineField>response_type</InlineField> request parameter.
+    See the [OAuth Tokens](/docs/lifecycle/authenticate-users/oauth/tokens#id-token) documentation for more information.
+  </APIField>
+  <APIField name="locale" type="String">
+    The [locale](/docs/reference/data-types#locales) that was used to render the login page, or a previously selected locale by the user during a previous session.
+    This may be useful to know in your own application so you can continue to localize the interface for the language the user selected while on the FusionAuth login page.
+    See the [Theme Localization](/docs/customize/look-and-feel/localization) documentation for more information.
+  </APIField>
+  <APIField name="state" type="String">
+    The state that was provided on the Authorization request.
+    This parameter will be omitted if the <InlineField>state</InlineField> request parameter was not provided.
+  </APIField>
+  <APIField name="token_type" type="String">
+    The token type.
+    The value will be `Bearer` if an access token was requested in the <InlineField>response_type</InlineField> request parameter, this request parameter will otherwise be omitted.
+  </APIField>
+  <APIField name="userState" type="String">
+    The FusionAuth user state.
+
+    The possible values are:
+
+    * `Authenticated` - The user is successfully authenticated for the requested application.
+    * `AuthenticatedNotRegistered` - The user is successfully authenticated, but not registered for the requested application.
+    * `AuthenticatedNotVerified` - The user is successfully authenticated, but the user's email address has not been verified.
+    * `AuthenticatedRegistrationNotVerified` - The user is successfully authenticated and registered, but the registration has not been verified for the requested application.
+  </APIField>
+</APIBlock>
+
+## Logout
+
+This endpoint provides a mechanism to invalidate the user's session held by FusionAuth, this effectively logs the user out of the FusionAuth SSO. Calling this endpoint does not revoke refresh tokens or JWTs. You can revoke the former by using the [Revoke Refresh Tokens API](/docs/apis/jwt). To revoke JWTs, [implement a revocation strategy](/articles/tokens/revoking-jwts).
+
+Since `1.10.0` The logout behavior follows that of the [OpenID Connect Front-Channel Logout](https://openid.net/specs/openid-connect-frontchannel-1_0.html) specification.
+
+The Logout URL used for each application is determined using the following precedence:
+
+1. The <InlineField>logoutURL</InlineField> of the Application if defined.
+2. The <InlineField>logoutURL</InlineField> configured on the Tenant if defined.
+3. `/`
+
+You can learn more about logout in the [Logout And Session Management guide](/docs/lifecycle/authenticate-users/logout-session-management).
+
+### Request
+
+<API method="GET" uri="/oauth2/logout?client_id={client_id}&tenantId={tenantId}" title="Log the User out of the FusionAuth SSO session using a GET request"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="client_id" type="String" optional>
+    The unique client identifier.
+    The client Id is the Id of the FusionAuth Application in which you are requesting to logout, this value is used to identify the correct redirect URI.
+
+    Generally speaking this parameter is required, if you are using the <InlineField>id_token_hint</InlineField>, this parameter becomes redundant because the application can be identified based upon the `id_token`.
+
+    If you do not provide the <InlineField>id_token_hint</InlineField> and you also omit this parameter, the request will not fail, but the logout URL defined in the Tenant configuration will be utilized.
+    If the Tenant logout URL is not defined, the request will result in a redirect to the current base URL at the root path of `/`.
+  </APIField>
+  <APIField name="id_token_hint" type="String" optional since="1.10.0">
+    The `id_token_hint` parameter as described in the [OpenID Connect Session Management](https://openid.net/specs/openid-connect-session-1_0.html#RPLogout) specification.
+
+    This is the previously issued `id_token` passed to the logout endpoint as a hint about the End-User's current authenticated session with the Client.
+
+    This parameter is only used if `client_id` is not provided.
+
+    Note that prior to version `1.37.0` this parameter would only work if it was not expired. This was corrected in version `1.37.0` and as long as the token is signed by FusionAuth, even if expired, the token can be used to identify the user and application during the logout request.
+  </APIField>
+  <APIField name="post_logout_redirect_uri" type="String" optional since="1.10.0">
+    The URI to redirect to upon a successful logout.
+    This URI must have been configured previously in the FusionAuth Application OAuth configuration as an <InlineField>Authorized Redirect URL</InlineField>.
+    See the [Core Concepts OAuth section](/docs/get-started/core-concepts/applications#oauth) for additional information on configuring redirect URIs.
+
+    If this parameter is omitted, the logout URL defined in the Application OAuth configuration will be utilized.
+    If an Application OAuth logout URL is not defined, the logout URL defined in the Tenant configuration will be utilized.
+    If the Tenant logout URL is not defined, the request will result in a redirect to the current base URL at the root path of `/`.
+  </APIField>
+  <APIField name="state" type="String" optional since="1.10.0">
+    The `state` parameter as described in the [OpenID Connect Session Management](https://openid.net/specs/openid-connect-session-1_0.html#RPLogout) specification.
+    This is an opaque value used to maintain state between the logout request and the callback.
+  </APIField>
+  <APIField name="tenantId" type="UUID" required since="1.8.0">
+    The unique Tenant Id used for applying the proper theme.
+  </APIField>
+</APIBlock>
+
+<Aside type="version">
+Available since version 1.37.0
+</Aside>
+
+<API method="POST" uri="/oauth2/logout" title="Log the User out of the FusionAuth SSO session with a POST request"/>
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="client_id" type="String" optional>
+    The unique client identifier.
+    The client Id is the Id of the FusionAuth Application in which you are requesting to logout, this value is used to identify the correct redirect URI.
+
+    Generally speaking this parameter is required, if you are using the <InlineField>id_token_hint</InlineField>, this parameter becomes redundant because the application can be identified based upon the `id_token`.
+
+    If you do not provide the <InlineField>id_token_hint</InlineField> and you also omit this parameter, the request will not fail, but the logout URL defined in the Tenant configuration will be utilized.
+    If the Tenant logout URL is not defined, the request will result in a redirect to the current base URL at the root path of `/`.
+  </APIField>
+  <APIField name="id_token_hint" type="String" optional>
+    The `id_token_hint` parameter as described in the [OpenID Connect Session Management](https://openid.net/specs/openid-connect-session-1_0.html#RPLogout) specification.
+
+    This is the previously issued `id_token` passed to the logout endpoint as a hint about the End-User's current authenticated session with the Client.
+
+    This parameter is only used if `client_id` is not provided.
+
+    Note that prior to version `1.37.0` this parameter would only work if it was not expired. This was corrected in version `1.37.0` and as long as the token is signed by FusionAuth, even if expired, the token can be used to identify the user and application during the logout request.
+  </APIField>
+  <APIField name="post_logout_redirect_uri" type="String" optional>
+    The URI to redirect to upon a successful logout.
+    This URI must have been configured previously in the FusionAuth Application OAuth configuration as an <InlineField>Authorized Redirect URL</InlineField>.
+    See the [Core Concepts OAuth section](/docs/get-started/core-concepts/applications#oauth) for additional information on configuring redirect URIs.
+
+    If this parameter is omitted, the logout URL defined in the Application OAuth configuration will be utilized.
+    If an Application OAuth logout URL is not defined, the logout URL defined in the Tenant configuration will be utilized.
+    If the Tenant logout URL is not defined, the request will result in a redirect to the current base URL at the root path of `/`.
+  </APIField>
+  <APIField name="state" type="String" optional>
+    The `state` parameter as described in the [OpenID Connect Session Management](https://openid.net/specs/openid-connect-session-1_0.html#RPLogout) specification.
+    This is an opaque value used to maintain state between the logout request and the callback.
+  </APIField>
+  <APIField name="tenantId" type="UUID" required>
+    The unique Tenant Id used for applying the proper theme.
+  </APIField>
+</APIBlock>
+
+### Response
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                                                                                                                                                                                                                                            |
+|------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 302  | The request was successful and the redirect location will be determined by using the configuration values in the following precedence: <br/>* The `post_logout_redirect_uri` request parameter if present<br/>* The <InlineField>logoutURL</InlineField> defined in the Application OAuth configuration<br/>* The <InlineField>logoutURL</InlineField> defined in the Tenant OAuth configuration<br/>* `/` {/* eslint-disable-line */} |
+| 400  | The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the [OAuth Error section](#oautherror) of the API documentation.                                                                                                                                                                                                                    |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                                                                                                                                                                                                                                                               |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                                                                                                                                                                                                                                               |
+
+## Token
+
+This is an implementation of the Token endpoint as defined by the [IETF RFC 6749 Section 3.2](https://tools.ietf.org/html/rfc6749#section-3.2).
+
+### Complete the Authorization Code Grant Request
+
+Authorization Code Grant : Exchange the Authorization Code for a Token
+
+If you will be using the Authorization Code grant, you will make a request to the Token endpoint to exchange the authorization code returned from the Authorize endpoint for an access token.
+
+<API method="POST" uri="/oauth2/token"/>
+
+#### Request Headers
+
+<APIBlock>
+  <AuthorizationHeader />
+  <APIField name="Content-Type" type="String" required>
+    This value must be set to `application/x-www-form-urlencoded`.
+  </APIField>
+</APIBlock>
+
+#### Request Body
+
+Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
+<APIBlock>
+  <APIField name="client_id" type="String" optional>
+    The unique client identifier.
+    The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+
+    This parameter is optional when the `Authorization` header is provided.
+    When the `Authorization` header is not provided, this parameter is then required.
+    Prior to version `1.3.1` this parameter was always required.
+  </APIField>
+  <APIField name="client_secret" type="String" optional since="1.5.0">
+    The client secret.
+    This parameter is optional when the `Authorization` header is provided.
+    Please see the [the Client Secret table](#client-secret) for more details.
+  </APIField>
+  <APIField name="code" type="String" required>
+    The authorization code returned on the `/oauth2/authorize` response.
+  </APIField>
+  <APIField name="code_verifier" type="String" optional since="1.8.0">
+    The `code_verifier` parameter as described in the [Proof Key for Code Exchange by OAuth Public Clients (PKCE)](https://tools.ietf.org/html/rfc7636) specification.
+
+
+    This parameter is required to complete this request when the <InlineField>code_challenge</InlineField> parameter was provided on the initial Authorize request.
+  </APIField>
+  <APIField name="grant_type" type="String" required>
+    The grant type to be used.
+    This value must be set to `authorization_code`
+  </APIField>
+  <APIField name="redirect_uri" type="String" required>
+    The URI to redirect to upon a successful request.
+    This URI must have been configured previously in the FusionAuth Application OAuth configuration.
+    See Applications in the FusionAuth User Guide for additional information on configuring the redirect URI.
+  </APIField>
+</APIBlock>
+
+```plaintext title="Example HTTP Request"
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 436
+client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&code=+WYT3XemV4f81ghHi4V+RyNwvATDaD4FIj0BpfFC4Wzg&grant_type=authorization_code&redirect_uri=https%3A%2F%2Fwww.piedpiper.com%2Flogin
+```
+
+### Resource Owner Password Credentials Grant Request
+
+Resource Owner Password Credentials Grant : Exchange User Credentials for a Token
+
+If you will be using the Resource Owner Password Credential Grant, you will make a request to the Token endpoint to exchange the user's email and password for an access token.
+
+<API method="POST" uri="/oauth2/token"/>
+
+#### Request Headers
+
+<APIBlock>
+  <AuthorizationHeader />
+  <APIField name="Content-Type" type="String" required>
+    This value must be set to `application/x-www-form-urlencoded`.
+  </APIField>
+</APIBlock>
+
+#### Request Body
+
+Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
+<APIBlock>
+  <APIField name="client_id" type="String" optional>
+    The unique client identifier.
+    The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+
+    This parameter is optional when the `Authorization` header is provided.
+    When the `Authorization` header is not provided, this parameter is then required.
+    Prior to version `1.3.1` this parameter was always required.
+  </APIField>
+  <APIField name="client_secret" type="String" optional since="1.5.0">
+    The client secret.
+    This parameter is optional when the `Authorization` header is provided.
+    Please see the [the Client Secret table](#client-secret) for more details.
+  </APIField>
+  <APIField name="grant_type" type="String" required>
+    The grant type to be used.
+    This value must be set to `password`
+  </APIField>
+  <APIField name="metaData.device.description" type="String" optional since="1.20.1">
+    A human readable description of the device used during login.
+    This metadata is used to describe the refresh token that may be generated for this login request.
+
+    For example:
+
+    > Erlich's iPhone
+
+  </APIField>
+  <APIField name="metaData.device.name" type="String" optional since="1.20.1">
+    A human readable description of the device used during login.
+    This metadata is used to name the refresh token that may be generated for this login request.
+
+    For example:
+
+    > iOS Safari
+
+  </APIField>
+  <APIField name="metaData.device.type" type="String" optional since="1.20.1">
+    The type of device represented by the `device` parameter. This metadata is used to describe the type of device represented by the refresh token that may be generated for this login request.
+
+    Prior to version 1.46.0, this value was restricted to the following types:
+
+<DeviceTypeList />
+
+    In version `1.46.0` and beyond, this value can be any string value you'd like, have fun with it!
+  </APIField>
+  <APIField name="username" type="String" required>
+    The login identifier of the user.
+    The login identifier can be either the `email` or the `username`.
+  </APIField>
+  <APIField name="password" type="String" required>
+    The user's password.
+  </APIField>
+  <APIField name="scope" type="String" optional>
+    The optional scope you are requesting during this grant.
+    This parameter may contain multiple scopes space separated.
+    For example, the value of `openid offline_access` provides two scopes on the request.
+
+    Available grant types:
+
+    * `openid` - This scope is used to request an `id_token` be returned in the response
+    * `offline_access` - This scope scope is used to request a `refresh_token` be returned in the response
+  </APIField>
+  <APIField name="user_code" type="String" optional since="1.11.0">
+    The end-user verification code.
+    This parameter is required on requests implementing the user-interaction of the Device Authorization Grant flow.
+  </APIField>
+</APIBlock>
+
+```plaintext options="wrap" title="Example HTTP Request"
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 436
+client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&grant_type=password&loginId=bishop%piedpiper.com&password=Setec+Astronomy
+```
+
+### Complete the Device Authorization Grant Request
+
+<Aside type="version">
+This API has been available since 1.11.0
+</Aside>
+
+This is the Device Access Token Request portion of the [Device Authorization Grant Specification](https://tools.ietf.org/html/rfc8628#section-3.4).
+
+<API method="POST" uri="/oauth2/token"/>
+
+#### Request Headers
+
+<APIBlock>
+  <AuthorizationHeader />
+  <APIField name="Content-Type" type="String" required>
+    This value must be set to `application/x-www-form-urlencoded`.
+  </APIField>
+</APIBlock>
+
+#### Request Body
+
+Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
+<APIBlock>
+  <APIField name="client_id" type="String" optional>
+    The unique client identifier.
+    The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+
+    This parameter is optional when the `Authorization` header is provided.
+    When the `Authorization` header is not provided, this parameter is then required.
+  </APIField>
+  <APIField name="client_secret" type="String" optional>
+    The client secret.
+    This parameter is optional when the `Authorization` header is provided.
+    Please see the [the Client Secret table](#client-secret) for more details.
+  </APIField>
+  <APIField name="device_code" type="String" required>
+  </APIField>
+  <APIField name="grant_type" type="String" required>
+    The grant type to be used.
+    This value must be set to `urn:ietf:params:oauth:grant-type:device_code`
+  </APIField>
+</APIBlock>
+
+```plaintext options="wrap" title="Example HTTP Request"
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 166
+client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&device_code=GmRhmhcxhwAzkoEqiMEg_DnyEysNkuNhszIySk9eS&grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code
+```
+
+### Response
+
+The following response applies to the [Complete the Authorization Code Grant Request](#complete-the-authorization-code-grant-request), [Refresh Token Grant Request](#refresh-token-grant-request) and [Complete the Device Authorization Grant Request](#complete-the-device-authorization-grant-request) examples.
+
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                         |
+|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful.                                                                                                                                                                                         |
+| 400  | The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the [OAuth Error section](#oautherror) of the API documentation. |
+| 401  | The client could not be verified. Verify your `client_id` and `client_secret` are valid and authorized for this request.                                                                                            |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                                            |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                            |
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="access_token" type="String">
+    The OAuth access token as described by [RFC 6749 Section 1.4](https://tools.ietf.org/html/rfc6749#section-1.4).
+    See the [OAuth Tokens](/docs/lifecycle/authenticate-users/oauth/tokens#access-token) documentation for more information.
+  </APIField>
+  <APIField name="expires_in" type="Integer">
+    The time in seconds the token will expire from the time the response was generated.
+  </APIField>
+  <APIField name="id_token" type="String">
+    The OpenID Id Token.
+    This token is represented as a JSON Web Token (JWT).
+    See the [OAuth Tokens](/docs/lifecycle/authenticate-users/oauth/tokens#id-token) documentation for more information.
+
+    This field will be returned in the response when `openid` scope was requested.
+  </APIField>
+  <APIField name="refresh_token" type="String">
+    The refresh token as described by [RFC 6749 Section 1.5](https://tools.ietf.org/html/rfc6749#section-1.5)
+
+    This field will be returned in the response when `offline_access` scope was requested unless refresh tokens have been disabled for this application.
+    Whether a refresh token is allowed for an application can be controlled by the `oauthConfiguration.generateRefreshTokens` field in the [Application API](/docs/apis/applications) or the `Generate refresh tokens` toggle in the FusionAuth admin UI.
+  </APIField>
+  <APIField name="refresh_token_id" type="UUID" since="1.37.0">
+    The unique Id of the refresh token. This Id can be used to retrieve or revoke a specific refresh token using the [Refresh Token API](/docs/apis/jwt).
+
+    This field will be returned when the `offline_access` scope was requested and refresh tokens are allowed for this application.
+    Whether a refresh token is allowed for an application can be controlled by the `oauthConfiguration.generateRefreshTokens` field in the [Application API](/docs/apis/applications) or the `Generate refresh tokens` toggle in the FusionAuth admin UI.
+  </APIField>
+  <APIField name="scope" type="String" since="1.5.0">
+    The space-separated list of scopes allowed by the user during the grant which generated this access token. This will only be present for Authorization Code and Password grants.
+  </APIField>
+  <APIField name="token_type" type="String">
+    The token type as defined by [RFC 6749 Section 7.1](https://tools.ietf.org/html/rfc6749#section-7.1).
+    This value will always be `Bearer`.
+  </APIField>
+  <APIField name="userId" type="String">
+    The unique Id of the user that has been authenticated.
+    This user Id may be used to retrieve the entire user object using the /api/user API.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Response" src="oauth/authorization_code_grant_response.json" />
+
+### Refresh Token Grant Request
+
+If you will be using the Refresh Token Grant, you will make a request to the Token endpoint to exchange the user's refresh token for an access token.
+
+<Aside type="note">
+  In version `1.50.0` and later a refresh token containing unknown scopes will be revoked when used for a Refresh Token Grant if the <InlineField>oauthConfiguration.unknownScopePolicy</InlineField> value of the associated application is `Reject`.
+</Aside>
+
+<API method="POST" uri="/oauth2/token"/>
+
+#### Request Cookies
+
+<APIBlock>
+  <APIField name="access_token" type="String" optional since="1.16.0">
+    The previously issued encoded access token.
+    When provided on the request, this value will be relayed in the related JWT Refresh webhook event within the `original` field.
+    If both the cookie and request parameter are provided, the cookie will take precedence.
+  </APIField>
+</APIBlock>
+
+#### Request Headers
+
+<APIBlock>
+  <AuthorizationHeader />
+  <APIField name="Content-Type" type="String" required>
+    This value must be set to `application/x-www-form-urlencoded`.
+  </APIField>
+</APIBlock>
+
+#### Request Parameters
+
+Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
+<APIBlock>
+  <APIField name="access_token" type="String" optional since="1.16.0">
+    The previously issued encoded access token.
+    When provided on the request, this value will be relayed in the related JWT Refresh webhook event within the `original` field.
+  </APIField>
+  <APIField name="client_id" type="String" optional>
+    The unique client identifier.
+    The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+
+    This parameter is optional when the `Authorization` header is provided.
+    When the `Authorization` header is not provided, this parameter is then required.
+    Prior to version `1.3.1` this parameter was always required.
+  </APIField>
+  <APIField name="client_secret" type="String" optional since="1.5.0">
+    The client secret.
+    This parameter is optional when the `Authorization` header is provided.
+    Please see the [the Client Secret table](#client-secret) for more details.
+  </APIField>
+  <APIField name="grant_type" type="String" required>
+    The grant type to be used.
+    This value must be set to `refresh_token`
+  </APIField>
+  <APIField name="refresh_token" type="String" required>
+    The refresh token that you would like to use to exchange for an access token.
+  </APIField>
+  <APIField name="scope" type="String" optional>
+    This parameter is optional and if omitted, the same scope requested during the authorization request will be used.
+    If provided, the scopes must be a space-delimited subset of those requested during the initial authorization request.
+    The refresh token maintains the set of scopes from the initial authorization request even if a subset of scopes is requested during a Refresh Token Grant.
+
+    Prior to version `1.50.0` the scopes must match those requested during the initial authorization request if provided.
+  </APIField>
+  <APIField name="user_code" type="String" optional since="1.11.0">
+    The end-user verification code.
+    This code is required if using this endpoint to approve the Device Authorization.
+  </APIField>
+</APIBlock>
+
+```plaintext options="wrap" title="Example HTTP Request"
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Content-Type: application/x-www-form-urlencoded
+Cookie: access_token=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IkFuYV91STRWbWxiMU5YVXZ0cV83SjZKZFNtTSJ9.eyJleHAiOjE1ODgzNTM0NjAsImlhdCI6MTU4ODM1MzQwMCwiaXNzIjoiZnVzaW9uYXV0aC5pbyIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMS0wMDAwLTAwMDAwMDAwMDAwMCIsImF1dGhlbnRpY2F0aW9uVHlwZSI6IlBBU1NXT1JEIiwiZW1haWwiOiJ0ZXN0MEBmdXNpb25hdXRoLmlvIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInByZWZlcnJlZF91c2VybmFtZSI6InVzZXJuYW1lMCJ9.ZoIHTo3Pv0DpcELeX_wu-ZB_rd988jefZc2Ozu9_p59kttwqMm5PV8IDbgxJw9xcq9TFoNG8e_B6renoc11JC54UbiyeXBjF7EH01n9LDz-zTGqu9U72470Z4E7IPAHcyvJIBx4Mp9sgsEYAUm9Tb8ChudqNHhn6ZnXYI7Sew7CtGlu62f10wdBYGX0soYARHBv9CwhJC3-gsD2HLmqHAP_XhrpaYPNr5EAvmCHlM-JlTiEQ9bXwSc4gv-XbPQWamwy8Kcdb-g0EEAml_dC_b2CduwwYg0EoPQB3tQxzTUQzADi7K6q0CtQXv2_1VrRi6aQ4lt7v7t-Na39wGry_pA
+Accept: */*
+Content-Length: 436
+client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&grant_type=refresh_token&refresh_token=ze9fi6Y9sMSf3yWp3aaO2w7AMav2MFdiMIi2GObrAi-i3248oo0jTQ
+```
+
+### Response
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                         |
+|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful.                                                                                                                                                                                         |
+| 400  | The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the [OAuth Error section](#oautherror) of the API documentation. |
+| 401  | The client could not be verified. Verify your `client_id` and `client_secret` are valid and authorized for this request.                                                                                            |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                                            |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                            |
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="access_token" type="String">
+    The OAuth access token as described by [RFC 6749 Section 1.4](https://tools.ietf.org/html/rfc6749#section-1.4).
+    See the [OAuth Tokens](/docs/lifecycle/authenticate-users/oauth/tokens#access-token) documentation for more information.
+  </APIField>
+  <APIField name="expires_in" type="Integer">
+    The time in seconds the token will expire from the time the response was generated.
+  </APIField>
+  <APIField name="id_token" type="String">
+    The OpenID Id Token.
+    This token is represented as a JSON Web Token (JWT).
+    See the [OAuth Tokens](/docs/lifecycle/authenticate-users/oauth/tokens#id-token) documentation for more information.
+
+    This field will be returned in the response when `openid` scope was requested during the initial authentication request when the refresh token was generated.
+  </APIField>
+  <APIField name="token_type" type="String">
+    The token type as defined by [RFC 6749 Section 7.1](https://tools.ietf.org/html/rfc6749#section-7.1).
+    This value will always be `Bearer`.
+  </APIField>
+  <APIField name="userId" type="String">
+    The unique Id of the user that has been authenticated.
+    This user Id may be used to retrieve the entire user object using the /api/user API.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Response" src="oauth/refresh_token_grant_response.json" />
+
+### Client Credentials Grant Request
+
+<PremiumPlanBlurb />
+
+<Aside type="version">
+This functionality has been available since version 1.26.
+</Aside>
+
+If you will be using the Client Credentials grant, you will make a request to the Token endpoint to exchange the client credentials for an access token.
+
+<API method="POST" uri="/oauth2/token"/>
+
+#### Request Headers
+
+<APIBlock>
+  <AuthorizationHeader />
+  <APIField name="Content-Type" type="String" required>
+    This value must be set to `application/x-www-form-urlencoded`.
+  </APIField>
+</APIBlock>
+
+#### Request Parameters
+
+Ensure you are sending these parameters as form encoded data in the request body.
+Do not send these parameters in a query string or as JSON.
+
+<APIBlock>
+  <APIField name="client_id" type="String" optional>
+    The unique client identifier.
+    The client Id is the Id of the FusionAuth Entity in which you are attempting to authenticate.
+
+    This parameter is optional when the `Authorization` header is provided.
+    When the `Authorization` header is not provided, this parameter is required.
+  </APIField>
+  <APIField name="client_secret" type="String" optional>
+    The client secret of the Entity.
+    This parameter is optional when the `Authorization` header is provided.
+    Please see the [the Client Secret table](#client-secret) for more details.
+  </APIField>
+  <APIField name="grant_type" type="String" required>
+    The grant type to be used.
+    This value must be set to `client_credentials`
+  </APIField>
+  <APIField name="scope" type="String" optional>
+    This parameter is optional.
+    This is a space delimited set of the requested scopes for this grant request.
+
+    You will typically provide a scope specifying the target entity:
+
+    <ClientCredentialsScopesOmitted />
+
+    You may provide append a comma separated list of permissions as well:
+
+    <ClientCredentialsScopesSingleEntity />
+
+    You may combine multiple entities and permissions in the same <InlineField>scope</InlineField> parameter:
+
+    <ClientCredentialsScopesMultipleEntities />
+
+    <ClientCredentialsPermissionsExplanation />
+  </APIField>
+</APIBlock>
+
+```plaintext options="wrap" title="Example HTTP Request"
+POST /oauth2/token HTTP/1.1
+Host: piedpiper.fusionauth.io
+Authorization: Basic MDkyZGJkZWQtMzBhZi00MTQ5LTljNjEtYjU3OGYyYzcyZjU5OitmY1hldDlJdTJrUWk2MXlXRDlUdTRSZVoxMTNQNnlFQWtyMzJ2NldLT1E9
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 436
+
+grant_type=client_credentials
+    &scope=target-entity%3Ae13365f1-a270-493e-bd1b-3d239d753d53%3Aread
+```
+
+### Response
+
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                         |
+|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful.                                                                                                                                                                                         |
+| 400  | The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the [OAuth Error section](#oautherror) of the API documentation. |
+| 401  | The client could not be verified. Verify your `client_id` and `client_secret` are valid and authorized for this request.                                                                                            |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                                            |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                            |
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="access_token" type="String">
+    The OAuth access token as described by [RFC 6749 Section 1.4](https://tools.ietf.org/html/rfc6749#section-1.4).
+    See the [OAuth Tokens](/docs/lifecycle/authenticate-users/oauth/tokens#access-token) documentation for more information.
+  </APIField>
+  <APIField name="expires_in" type="Integer">
+    The time in seconds the token will expire from the time the response was generated.
+  </APIField>
+  <APIField name="scope" type="String">
+    The scope value from the request.
+  </APIField>
+  <APIField name="token_type" type="String">
+    The token type.
+    The value will be `Bearer`.
+  </APIField>
+</APIBlock>
+
+<JSON src="oauth/client_credentials_example_json_response.json"/>
+
+## Device
+
+<Aside type="version">
+This endpoint been available since 1.11.0
+</Aside>
+
+This is an implementation of the Device Authorization endpoint as defined by the [IETF RFC 8628 Section 3.1](https://tools.ietf.org/html/rfc8628#section-3.1).
+
+### Device Authorize
+
+To begin the Device Authorization Grant you will make a request to the Device Authorization endpoint from the device.
+
+<API method="POST" uri="/oauth2/device_authorize"/>
+
+### Request Headers
+
+<APIBlock>
+  <APIField name="Content-Type" type="String" required>
+    This value must be set to `application/x-www-form-urlencoded`.
+  </APIField>
+</APIBlock>
+
+### Request Parameters
+
+Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
+<APIBlock>
+  <APIField name="client_id" type="String" required>
+    The unique client identifier.
+    The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+  </APIField>
+  <APIField name="scope" type="String" optional>
+    This parameter may contain multiple scopes space separated.
+    For example, the value of `openid offline_access` provides two scopes on the request.
+
+    These scopes modify the behavior of the endpoint:
+
+    * `openid` - This scope is used to request an `id_token` be returned in the response
+    * `offline_access` - This scope is used to request a `refresh_token` be returned in the eventual [Token](#token) response.
+    * `idp-link` - This scope is used to begin a linking request from a game console.
+
+    Supported console links include Epic, Nintendo, Sony Playstation Network, Steam, and Xbox.
+
+    This scope format is as follows: `idp-link:{identityProviderId}:{token}`. When this scope is provided on the request, the token will be verified and when the device grant is complete, a link will be established between the FusionAuth user and the user represented by the provided token. If you need to send more than one token, separate each token using a colon character `:`. Here is an example format when more than one token is required: `idp-link:{identityProviderId}:{token1}:{token2}`.
+  </APIField>
+</APIBlock>
+
+```plaintext title="Example HTTP Request"
+POST /oauth2/device_authorize HTTP/1.1
+Host: piedpiper.fusionauth.io
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 436
+client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&scope=offline_access
+```
+
+### Response
+
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                         |
+|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful.                                                                                                                                                                                         |
+| 400  | The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the [OAuth Error section](#oautherror) of the API documentation. |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                                            |
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="device_code" type="String">
+    The device verification code.
+  </APIField>
+  <APIField name="expires_in" type="Integer">
+    The number of seconds the <InlineField>device_code</InlineField> and <InlineField>user_code</InlineField> tokens returned in the response will remain active.
+  </APIField>
+  <APIField name="interval" type="Integer">
+    The minimum amount of time in seconds that the client should wait between polling requests to the token endpoint.
+  </APIField>
+  <APIField name="user_code" type="String">
+    The end-user verification code.
+    This value will generally be displayed on the device for the user to read and enter into an activation form.
+  </APIField>
+  <APIField name="verification_uri" type="String">
+    The end-user verification URI on the authorization server.
+    This value will generally be displayed on the device to instruct the user where to navigate in order to find the form where they may enter the provided <InlineField>user_code</InlineField>.
+  </APIField>
+  <APIField name="verification_uri_complete" type="String">
+    A verification URI that includes the <InlineField>user_code</InlineField>.
+    This is the same value as returned in the <InlineField>verification_uri</InlineField> with the <InlineField>user_code</InlineField> appended as a request parameter.
+    This can be used to build a QR code or provide a clickable link that may pre-populate a form with the <InlineField>user_code</InlineField>.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Response" src="oauth/device_authorization_grant_response.json" />
+
+### Device User Code
+
+<Aside type="version">
+This endpoint has been available since 1.46.0
+</Aside>
+
+This endpoint is intended to validate the end-user provided <InlineField>user_code</InlineField> and return meta-data useful when building your own interactive workflow.
+
+This endpoint is equivalent to the [Device Validate](#device-validate) endpoint, but it will return meta-data for the <InlineField>user_code</InlineField> in a JSON body.
+
+<API method="POST" uri="/oauth2/device/user-code" title="Validate and retrieve a user_code using client credentials"/>
+
+#### Request Headers
+
+<APIBlock>
+  <AuthorizationHeader />
+  <APIField name="Content-Type" type="String" required>
+    This value must be set to `application/x-www-form-urlencoded`.
+  </APIField>
+</APIBlock>
+
+#### Request Parameters
+
+Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
+<APIBlock>
+  <APIField name="client_id" type="String" optional>
+    The unique client identifier.
+    The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+
+    This parameter is optional when the `Authorization` header is provided.
+    When the `Authorization` header is not provided, this parameter is then required.
+    Prior to version `1.46.0` this parameter was always required.
+  </APIField>
+  <APIField name="client_secret" type="String" optional>
+    The client secret.
+    This parameter is optional when the `Authorization` header is provided.
+    Please see the [the Client Secret table](#client-secret) for more details.
+  </APIField>
+  <APIField name="user_code" type="String" required>
+    The end-user verification code.
+    This is the code that a user entered during the Device Authorization grant which you are requesting to be validated.
+  </APIField>
+</APIBlock>
+
+<API method="POST" uri="/oauth2/device/user-code" authentication={["api-key"]} title="Validate and retrieve a user_code using an API key"/>
+
+#### Request Headers
+
+<APIBlock>
+  <APIField name="Content-Type" type="String" required>
+    This value must be set to `application/x-www-form-urlencoded`.
+  </APIField>
+</APIBlock>
+
+#### Request Parameters
+
+Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
+<APIBlock>
+  <APIField name="user_code" type="String" required>
+    The end-user verification code.
+    This is the code that a user entered during the Device Authorization grant which you are requesting to be validated.
+  </APIField>
+</APIBlock>
+
+### Response
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                         |
+|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful. The response will contain a JSON body.                                                                                                                                                  |
+| 400  | The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the [OAuth Error section](#oautherror) of the API documentation. |
+| 401  | The provided client credentials are invalid, or the API key if provided is not valid.                                                                                                                               |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                                            |
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="client_id" type="String">
+    The unique client identifier provided on the Device Authorize request.
+  </APIField>
+  <APIField name="deviceInfo.description" type="String">
+    The optional device description provided on the Device Authorize request.
+  </APIField>
+  <APIField name="deviceInfo.name" type="String">
+    The optional device name provided on the Device Authorize request.
+  </APIField>
+  <APIField name="deviceInfo.type" type="String">
+    The optional device type provided on the Device Authorize request.
+  </APIField>
+  <APIField name="expires_in" type="Integer">
+    The number of seconds the <InlineField>device_code</InlineField> and <InlineField>user_code</InlineField> tokens will remain active.
+
+    This is how long you have to complete the Device grant.
+  </APIField>
+  <APIField name="pendingIdPLink.displayName" type="String">
+    The human readable name of the user represented by the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+  </APIField>
+  <APIField name="pendingIdPLink.identityProviderId" type="String">
+    The unique Identity Provider Id associated with the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+  </APIField>
+  <APIField name="pendingIdPLink.identityProviderName" type="String">
+    The name of the Identity Provider associated with the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+  </APIField>
+  <APIField name="pendingIdPLink.identityProviderType" type="String">
+    The type of the Identity Provider associated with the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+  </APIField>
+  <APIField name="pendingIdPLink.identityProviderUserId" type="String">
+    The unique user Id of the user represented by the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+
+    This is the value that FusionAuth will use to uniquely link a FusionAuth User to a user in the 3rd party identity provider.
+  </APIField>
+  <APIField name="scope" type="String" since="1.50.0">
+    The value that should be used for the <InlineField>scope</InlineField> parameter during the interactive portion of the Device Code Grant.
+    The value contains the same scopes as the [Device Authorize](#device-authorize) request with the following scopes excluded:
+    * `openid`
+    * `offline_access`
+    * `idp-link:` prefixed scopes
+  </APIField>
+  <APIField name="tenantId" type="UUID">
+    The unique Id of the Tenant.
+  </APIField>
+  <APIField name="user_code" type="String">
+    The end-user verification code. This is the same value that was provided in the request body.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Response" src="oauth/device_user_code_response.json" />
+
+### Device Validate
+
+<Aside type="version">
+This endpoint has been available since 1.11.0
+</Aside>
+
+This endpoint validates the end-user provided <InlineField>user_code</InlineField> from the user-interaction of the Device Authorization Grant.
+
+If you build your own activation form you should validate the user provided code prior to beginning the Authorization grant.
+If you choose to redirect to the FusionAuth provided form `/oauth2/device` then it is not necessary for you to validate the <InlineField>user_code</InlineField>.
+
+<API method="GET" uri="/oauth2/device/validate?client_id={client_id}&user_code={user_code}"/>
+
+### Request Parameters
+
+<APIBlock>
+  <APIField name="client_id" type="String" required>
+    The unique client identifier.
+    The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+  </APIField>
+  <APIField name="user_code" type="String" required>
+    The end-user verification code.
+    This is the code that a user entered during the Device Authorization grant which you are requesting to be validated.
+  </APIField>
+</APIBlock>
+
+### Response
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                         |
+|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful. No response body will be returned on successful validation.                                                                                                                             |
+| 400  | The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the [OAuth Error section](#oautherror) of the API documentation. |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                                            |
+
+### Device Approve
+
+<Aside type="version">
+This endpoint has been available since 1.46.0
+</Aside>
+
+Approve a <InlineField>user_code</InlineField> returned from the [Device Authorize](#device-authorize). If you are using the FusionAuth themed page for `/oauth2/device` you do not need to use this because the grant will be automatically approved once the user has completed authentication and the OAuth2 Grant has completed.
+
+If you are building your own integration to collect the `user_code` from the end user, and wish to approve the Device Grant after authenticating the user, use this API to approve the device code allowing the Device Grant to complete.
+
+<API method="POST" uri="/oauth2/device/approve"/>
+
+#### Request Headers
+
+<APIBlock>
+  <AuthorizationHeader />
+  <APIField name="Content-Type" type="String" required>
+    This value must be set to `application/x-www-form-urlencoded`.
+  </APIField>
+</APIBlock>
+
+#### Request Parameters
+
+Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
+<APIBlock>
+  <APIField name="client_id" type="String" optional>
+    The unique client identifier.
+    The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+
+    This parameter is optional when the `Authorization` header is provided.
+    When the `Authorization` header is not provided, this parameter is then required.
+    Prior to version `1.3.1` this parameter was always required.
+  </APIField>
+  <APIField name="client_secret" type="String" optional>
+    The client secret.
+    This parameter is optional when the `Authorization` header is provided.
+    Please see the [the Client Secret table](#client-secret) for more details.
+  </APIField>
+  <APIField name="token" type="String" required>
+    The access token returned by this OAuth provider as the result of a successful authentication. This token must contain a `sub` claim which will be used to identify the FusionAuth User.
+  </APIField>
+  <APIField name="user_code" type="String" required>
+    The end-user verification code.
+  </APIField>
+</APIBlock>
+
+### Response
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                         |
+|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful. The response will contain a JSON body.                                                                                                                                                  |
+| 400  | The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the [OAuth Error section](#oautherror) of the API documentation. |
+| 401  | The client could not be verified. Verify your `client_id` and `client_secret` are valid and authorized for this request.                                                                                            |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                                            |
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="deviceGrantStatus" type="String">
+    The device grant status. This will always be `Approved`.
+  </APIField>
+  <APIField name="deviceInfo.description" type="String">
+    The optional device description provided on the Device Authorize request.
+  </APIField>
+  <APIField name="deviceInfo.name" type="String">
+    The optional device name provided on the Device Authorize request.
+  </APIField>
+  <APIField name="deviceInfo.type" type="String">
+    The optional device type provided on the Device Authorize request.
+  </APIField>
+  <APIField name="identityProviderLink.displayName" type="String">
+    The human readable name of the user represented by the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+  </APIField>
+  <APIField name="identityProviderLink.identityProviderId" type="String">
+    The unique Identity Provider Id associated with the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+  </APIField>
+  <APIField name="identityProviderLink.identityProviderName" type="String" since="1.47.0">
+    The name of the Identity Provider associated with the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+  </APIField>
+  <APIField name="identityProviderLink.identityProviderType" type="String">
+    The type of the Identity Provider associated with the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+  </APIField>
+  <APIField name="identityProviderLink.identityProviderUserId" type="String">
+    The unique user Id of the user represented by the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
+
+    This is the value that FusionAuth will use to uniquely link a FusionAuth User to a user in the 3rd party identity provider.
+  </APIField>
+  <APIField name="identityProviderLink.insertInstant" type="Long">
+    The [instant](/docs/reference/data-types#instants) when the identity provider link was created.
+  </APIField>
+  <APIField name="identityProviderLink.lastLoginInstant" type="Long">
+    The [instant](/docs/reference/data-types#instants) when the User logged in last using this identity provider.
+  </APIField>
+  <APIField name="tenantId" type="UUID">
+    The unique Id of the Tenant.
+  </APIField>
+  <APIField name="userId" type="UUID">
+    The unique Id of the User.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Response" src="oauth/device_approve_response.json" />
+
+## Introspect
+
+This is an implementation of the Introspect endpoint as defined by the [RFC 7662](https://tools.ietf.org/html/rfc7662).
+
+### Request
+
+Inspect an access token issued by this OAuth provider
+
+<API method="POST" uri="/oauth2/introspect"/>
+
+#### Request Headers
+
+<APIBlock>
+  <AuthorizationHeader />
+  <APIField name="Content-Type" type="String" required>
+    This value must be set to `application/x-www-form-urlencoded`.
+  </APIField>
+</APIBlock>
+
+#### Request Parameters
+
+Ensure you are sending these parameters as form encoded data in the request body, do not send these parameters in a query string.
+
+<APIBlock>
+  <APIField name="client_id" type="String" optional>
+    The unique client identifier.
+    The client Id is the Id of the FusionAuth Application in which you are attempting to authenticate.
+
+    This parameter is optional when the `Authorization` header is provided.
+    When the `Authorization` header is not provided, this parameter is then required.
+    Prior to version `1.46.0` this parameter was always required.
+  </APIField>
+  <APIField name="client_secret" type="String" optional since="1.46.0">
+    The client secret.
+    This parameter is optional when the `Authorization` header is provided.
+    Please see the [the Client Secret table](#client-secret) for more details.
+  </APIField>
+  <APIField name="token" type="String" required>
+    The access token returned by this OAuth provider as the result of a successful authentication.
+
+    Starting in version `1.46.0` this endpoint will also accept a token generated by the Client Credentials Grant.
+  </APIField>
+</APIBlock>
+
+```plaintext options="wrap" title="Example HTTP Request"
+POST /oauth2/introspect HTTP/1.1
+Host: piedpiper.fusionauth.io
+Content-Type: application/x-www-form-urlencoded
+Accept: */*
+Content-Length: 436
+client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MTM3MTM3NzIsImlhdCI6MTUxMzcxMDE3MiwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiI3MWMxZjE5Yy1kZTRlLTRiZDEtODc3My0zNThkYmIwNWYxNWEiLCJlbWFpbCI6ImRhbmllbEBpbnZlcnNvZnQuY29tIiwiYXBwbGljYXRpb 25JZCI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwMDAwMSIsImF1dGhlbnRpY2F0aW9uVHlwZSI6IlBBU1NXT1JEIiwicm9sZXMiOltdfQ.KxfM37hlw-5mKXOP9bCm7O6qdQdleT4gJmudhFueiJA
+```
+
+### Response
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                        |
+|------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful.                                                                                                                                                                                        |
+| 400  | The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the [OAuth Error section](#oautherror) of the API documentation. |
+| 401  | The token provided in the request was not issued for the `client_id` provided on the request.                                                                                                                      |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                                           |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                           |
+
+#### Response Body
+This is an example response body when the provided `access_token` was issued on behalf of a user using the Authorization Code Grant, Implicit Grant ,Password Credentials Grant or Refresh Token Grant.
+
+<APIBlock>
+  <APIField name="active" type="String">
+    When this value is `true` the token is valid and additional claims will be provided in the response body.
+    When this value is `false` no claims will be provided in the response body.
+  </APIField>
+  <APIField name="applicationId" type="UUID">
+    The unique Id of the Application for which the User has been authenticated. The presence of this claim indicates the user is registered for this application.
+  </APIField>
+  <APIField name="aud" type="String">
+    The `client_id` that was used to request the access token.
+  </APIField>
+  <APIField name="auth_time" type="Long">
+    The time of the initial authentication request, expressed as UNIX time which is the number of seconds since Epoch. This claim will remain the same even when the token has been re-issued through the use of a Refresh Token.
+  </APIField>
+  <APIField name="authenticationType" type="String">
+    The method used to authenticate the User which resulted in this JWT being generated.
+    The possible values are:
+
+    * `APPLE` - The User was authenticated using Apple. <AvailableSince since="1.17.0" />
+    * `APPLICATION_TOKEN` - The User was authenticated using an [Application Authentication Token](/docs/lifecycle/authenticate-users/application-authentication-tokens).
+    * `FACEBOOK` - The User was authenticated using Facebook. &nbsp; <AvailableSince since="1.1.0" />
+    * `FEDERATED_JWT` - The User was authenticated using a JWT from an external Identity Provider.
+    * `GENERIC_CONNECTOR` - The user was authenticated using a generic connector.  &nbsp; <AvailableSince since="1.18.0" />
+    * `GOOGLE` - The User was authenticated using Google. <AvailableSince since="1.1.0" />
+    * `HYPR` - The User was authenticated using HYPR provider. <AvailableSince since="1.12.0" />
+    * `JWT_SSO` - A valid JWT authorized to one Application was exchanged for another JWT authorized to a different Application.
+    * `LDAP_CONNECTOR` - The user was authenticated using an LDAP connector.  &nbsp; <AvailableSince since="1.18.0" />
+    * `LINKEDIN` - The user was authenticated using LinkedIn.  &nbsp; <AvailableSince since="1.23.0" />
+    * `ONE_TIME_PASSWORD` The User was authenticated using a one time password. &nbsp; <AvailableSince since="1.5.0" />
+    * `OPENID_CONNECT` - The User was authenticated using an external OpenID Connect provider. <AvailableSince since="1.1.0" />
+    * `PASSWORD` - The User was authenticated using a loginId and password combination.
+    * `PASSWORDLESS` - The user was authenticated using a passwordless login link. &nbsp; <AvailableSince since="1.5.0" />
+    * `PING` - The user was authenticated using a `PUT` request on the Login API. This is used to record a login event without prompting for credentials.
+    * `REGISTRATION` - The user was created using the Registration API.  &nbsp; <AvailableSince since="1.16.0" />
+    * `REFRESH_TOKEN` - The User requested a new JWT using a Refresh Token.
+    * `SAMLv2` - The User was authenticated using an external SAMLv2 provider. <AvailableSince since="1.6.0" />
+    * `TWITTER` - The User was authenticated using Twitter. <AvailableSince since="1.1.0" />
+    * `USER_CREATE` - The user was created using the User API. &nbsp; <AvailableSince since="1.16.0" />
+  </APIField>
+  <APIField name="email" type="String">
+    The email address of the User.
+  </APIField>
+  <APIField name="email_verified" type="Boolean">
+    Indicates if the User's email has been verified.
+  </APIField>
+  <APIField name="exp" type="Long">
+    The expiration instant of the access token, expressed as UNIX time which is the number of seconds since Epoch.
+  </APIField>
+  <APIField name="iat" type="Long">
+    The instant the access token was issued, expressed as UNIX time which is the number of seconds since Epoch.
+  </APIField>
+  <APIField name="iss" type="String">
+    The issuer of the access token.
+  </APIField>
+  <APIField name="jti" type="String">
+    The unique identifier of the access token.
+  </APIField>
+  <APIField name="preferred_username" type="String" since="1.5.0">
+    The username of the User whose claims are represented by this JWT.
+  </APIField>
+  <APIField name="roles" type="String">
+    The roles assigned to the User in the authenticated Application.
+  </APIField>
+  <APIField name="scope" type="String">
+    The scope of the access token. This will only be present if scope was requested during authentication.
+  </APIField>
+  <APIField name="sub" type="UUID">
+    The subject of the access token.
+    This value is equal to the User's unique Id in FusionAuth.
+  </APIField>
+  <APIField name="tid" type="UUID" since="1.36.0">
+    The FusionAuth Tenant unique Id.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Response for a valid token" src="oauth/introspect_valid_token_response.json" />
+
+<JSON title="Example JSON Response for an invalid token" src="oauth/introspect_invalid_token_response.json" />
+
+#### Response Body
+
+<Aside type="version">
+Available Since Version 1.46.0
+</Aside>
+
+This is an example response body when the provided `access_token` was issued as the result of the Client Credentials Grant.
+
+<APIBlock>
+  <APIField name="active" type="String">
+    When this value is `true` the token is valid and additional claims will be provided in the response body.
+    When this value is `false` no claims will be provided in the response body.
+  </APIField>
+  <APIField name="aud" type="Object">
+    The intended audience of this access token. This value may be a string or an array of string values representing one to many intended entities.
+  </APIField>
+  <APIField name="exp" type="Long">
+    The expiration instant of the access token, expressed as UNIX time which is the number of seconds since Epoch.
+  </APIField>
+  <APIField name="iat" type="Long">
+    The instant the access token was issued, expressed as UNIX time which is the number of seconds since Epoch.
+  </APIField>
+  <APIField name="iss" type="String">
+    The issuer of the access token.
+  </APIField>
+  <APIField name="jti" type="String">
+    The unique identifier of the access token.
+  </APIField>
+  <APIField name="permissions">
+    The optional permissions requested for this access token. If no permissions were requested, this token represents all permissions allowed by the grant.
+  </APIField>
+  <APIField name="sub" type="UUID">
+    The subject of the access token.
+    This value is equal to the Entity unique Id in FusionAuth.
+  </APIField>
+  <APIField name="tid" type="UUID">
+    The FusionAuth Tenant unique Id.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example JSON Response for an valid token" src="oauth/introspect_client_credentials_grant_response.json" />
+
+<JSON title="Example JSON Response for an invalid token" src="oauth/introspect_invalid_token_response.json" />
+
+## UserInfo
+
+This is an implementation of the OpenId Connect UserInfo endpoint as defined by the [OpenId Connect Section 5.3](http://openid.net/specs/openid-connect-core-1_0.html#UserInfo).
+This endpoint may be called using the `GET` or the `POST` HTTP method.
+
+<Aside type="note">
+  In version `1.50.0` and later, the UserInfo response can be customized with a lambda using the <InlineField>oauthConfiguration.userinfoPopulateLambda</InlineField> value of the application object. See [UserInfo populate lambda](/docs/extend/code/lambdas/userinfo-populate).
+</Aside>
+
+### Request
+
+Returns the Claims about the authenticated End-User.
+
+<API method="GET" uri="/oauth2/userinfo"/>
+
+Returns the Claims about the authenticated End-User.
+
+<API method="POST" uri="/oauth2/userinfo"/>
+
+#### Request Headers
+
+<APIBlock>
+  <APIField name="Authorization" type="String" required>
+    The access token issued by FusionAuth as a result of completing one of the supported authorization grants.
+
+    Example header:
+
+    ```
+    Authorization: Bearer [access_token]
+    ```
+
+    <Aside type="caution">
+      <UserInfoAudClaimLimits />
+    </Aside>
+
+    <Aside type="note">
+      In version `1.50.0` and later when the application's <InlineField>oauthConfiguration.scopeHandlingPolicy</InlineField> is set to `Strict`, to use a token with this endpoint, the token must:
+
+      * Be an access token
+      * Contain the `openid` scope in the `scope` claim
+    </Aside>
+  </APIField>
+</APIBlock>
+
+### Response
+
+<Aside type="note">
+  In version `1.50.0` and later the UserInfo response changes based on the <InlineField>oauthConfiguration.scopeHandlingPolicy</InlineField> value of the application object.
+
+  * In `Strict` mode the response claims are populated based on the `scope` values of the provided token and available information on the User object. This behavior more closely aligns with the OpenID Connect 1.0 specification recommendations.
+  * In `Compatibility` mode the response claims are populated based on available information on the User object only and include some claims from the provided token. This is behavior allows for backwards compatibility with versions of FusionAuth before 1.50.0.
+</Aside>
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                        |
+|------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful. The response will contain a JSON body.                                                                                                                                                 |
+| 400  | The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the [OAuth Error section](#oautherror) of the API documentation. |
+| 401  | The `Authorization` header containing the access token is missing or malformed.                                                                                                                                    |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                                           |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                           |
+
+#### Response Body
+
+<UserInfoResponse show_since={true} />
+
+## JSON Web Key Set (JWKS)
+
+<Aside type="version">
+Available Since Version 1.4.0
+</Aside>
+
+### Request
+
+Returns public keys generated by FusionAuth, used to cryptographically verify JWTs using the JSON Web Key format.
+You may also use the [JWT Public Key](/docs/apis/jwt#retrieve-public-keys) API to retrieve these keys in PEM format.
+
+<API method="GET" uri="/.well-known/jwks.json"/>
+
+
+<Aside type="note">
+You must add an asymmetric key to FusionAuth to have keys at this endpoint.
+Since version 1.50.0, default FusionAuth installations have a single RSA public/private key pair.
+
+HMAC shared secret keys are not published by this endpoint. If they were, anyone would be able to retrieve these keys and then sign tokens with them. Those tokens would be indistinguishable from those created by FusionAuth. That would be bad.
+
+You may add key pairs using the admin UI by navigating to <Breadcrumb>Settings -> Key Master</Breadcrumb> and generating or importing them.
+You may also use the [Keys API](/docs/apis/keys) to generate or import keys.
+</Aside>
+
+### Response
+
+The response for this request should always return a `200` with a JSON body.
+
+<JSON title="Example JSON Response" src="openid/jwks/response.json" />
+
+## OpenID Configuration
+
+The OpenID metadata describing the configuration as defined by [Section 3. OpenID Provider Metadata](https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata).
+
+### Request
+
+Returns the well known OpenID Configuration JSON document
+
+<API method="GET" uri="/{tenantId}/.well-known/openid-configuration"/>
+
+#### URL segment
+
+<APIBlock>
+  <APIField name="tenantId" type="UUID" required since="1.46.0">
+    The tenant identifier.
+  </APIField>
+</APIBlock>
+
+<API method="GET" uri="/.well-known/openid-configuration"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="tenantId" type="UUID" optional since="1.8.0">
+    The tenant identifier.
+    If provided then a specific issuer will be returned, when this property is not provided the default tenant Id will be used.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this request should always return a `200` with a JSON body.
+
+<JSON title="Example JSON Response" src="openid/configuration/response.json" />
+
+## OAuthError
+
+Errors are either returned in a JSON response body, or as redirect parameters depending on expected response type.
+
+### JSON Response
+
+When an error is returned from an OAuth endpoint as a JSON body the following structure can be expected in the response.
+The `change_password_id` field will only be present on the response if a password change is required.
+
+<JSON title="Example JSON Response" src="oauth/oauth_error_password_change_response.json" />
+
+### Redirect Parameters
+
+When an error is returned from an OAuth endpoint as a redirect, the errors are put on the redirect as query parameters.
+
+```plaintext title="Example HTTP Redirect"
+HTTP/1.1 302 Found
+Location: https://piedpiper.com/callback?
+           error=unsupported_response_type
+           &error_reason=invalid_response_type
+           &error_description=Parameter+response_type+must+be+set+to+code+or+token.
+           &state=bEF7UItzlhNvE31Rf0_axShomu_vU30tMeJcqMZ9LfA0
+```
+
+### Error Fields
+
+Regardless of the way the error is returned to you, the field definitions are the same.
+Each possible value <InlineField>error</InlineField> and <InlineField>error_reason</InlineField> is documented below.
+
+
+#### Error Parameters
+
+<APIBlock>
+  <APIField name="error" type="String">
+    The OAuth error response type.
+    In most cases these values are defined or suggested by an RFC or other specification.
+
+    The possible values are:
+
+    * `access_denied`
+    * `authorization_pending`
+    * `change_password_required`
+    * `expired_token`
+    * `invalid_client`
+    * `invalid_grant`
+    * `invalid_request`
+    * `invalid_scope`
+    * `invalid_token`
+    * `not_licensed`
+    * `server_error`
+    * `two_factor_required`
+    * `unauthorized_client`
+    * `unsupported_grant_type`
+    * `unsupported_response_type`
+    * `unsupported_token_type`
+  </APIField>
+  <APIField name="error_description" type="String">
+    The human-readable OAuth error description.
+    This description should describe the error condition and it may contain a parameter value that caused the error.
+  </APIField>
+  <APIField name="error_reason" type="String">
+    The OAuth error reason.
+    These reason codes are defined by FusionAuth to provide you a specific reason code so that you may identify the specific reason the request failed.
+    The defined <InlineField>error</InlineField> codes as defined by OAuth2 or OpenID Connect only provide general indications such as an invalid request that may be caused by more than one parameter.
+    Each of the values returned in this field will represent a specific error.
+
+    The possible values are:
+
+    * `access_token_expired`
+    * `access_token_failed_processing`
+    * `access_token_invalid`
+    * `access_token_malformed`
+    * `access_token_required`
+    * `access_token_unavailable_for_processing`
+    * `auth_code_not_found`
+    * `change_password_administrative`
+    * `change_password_breached`
+    * `change_password_expired`
+    * `change_password_validation`
+    * `client_authentication_missing`
+    * `client_id_mismatch`
+    * `consent_canceled`
+    * `grant_type_disabled`
+    * `invalid_additional_client_id`
+    * `invalid_client_authentication`
+    * `invalid_client_authentication_scheme`
+    * `invalid_client_id`
+    * `invalid_device_code`
+    * `invalid_entity_permission_scope`
+    * `invalid_grant_type`
+    * `invalid_id_token_hint`
+    * `invalid_origin`
+    * `invalid_origin_opaque`
+    * `invalid_pkce_code_challenge`
+    * `invalid_pkce_code_challenge_method`
+    * `invalid_pkce_code_verifier`
+    * `invalid_post_logout_redirect_uri`
+    * `invalid_redirect_uri`
+    * `invalid_response_mode`
+    * `invalid_response_type`
+    * `invalid_target_entity_scope`
+    * `invalid_user_code`
+    * `invalid_user_credentials`
+    * `invalid_user_id`
+    * `login_prevented`
+    * `missing_client_id`
+    * `missing_client_secret`
+    * `missing_code`
+    * `missing_code_challenge`,
+    * `missing_code_verifier`,
+    * `missing_device_code`
+    * `missing_grant_type`
+    * `missing_redirect_uri`
+    * `missing_refresh_token`
+    * `missing_required_scope`
+    * `missing_response_type`
+    * `missing_token`
+    * `missing_user_code`
+    * `missing_user_id`
+    * `missing_verification_uri`
+    * `not_licensed`
+    * `refresh_token_not_found`
+    * `refresh_token_type_not_supported`
+    * `unknown`
+    * `unknown_scope`
+    * `user_code_expired`
+    * `user_expired`
+    * `user_locked`
+    * `user_not_found`
+  </APIField>
+  <APIField name="state" type="String">
+    The state that was provided on the Authorization request.
+    This parameter is only returned during an HTTP redirect if it was provided on the initial request.
+  </APIField>
+</APIBlock>
+
+## Client Secret
+
+This table describes when the <InlineField>client_secret</InlineField> is required.
+
+In each of the endpoint's documentation, it describes when and how to use the `client_secret` in the request body or the Authorization header using HTTP Basic Auth.
+
+Even when the client secret is not required, if it is provided it will be validated.
+
+Previous to version `1.28.0`, whether the client secret was required was controlled by the <InlineField>oauthConfiguration.requireClientAuthentication</InlineField> value of the application object.
+In that case, a value of `true` is equivalent to a <InlineField>clientAuthenticationPolicy</InlineField> of `Required` and a value of `false` is equivalent to a <InlineField>clientAuthenticationPolicy</InlineField> of `NotRequired`.
+
+For versions `1.28.0` or later, use <InlineField>oauthConfiguration.clientAuthenticationPolicy</InlineField> to configure this functionality.
+
+_When Is the Client Secret Required_
+
+
+| Grant                      | clientAuthenticationPolicy value | PKCE Used | Client Secret Required    |
+|----------------------------|----------------------------------|-----------|---------------------------|
+| Authorization Code Grant   | `Required`                       | -         | Yes                       |
+| Authorization Code Grant   | `NotRequired`                    | -         | No                        |
+| Authorization Code Grant   | `NotRequiredWhenUsingPKCE`       | Yes       | No                        |
+| Authorization Code Grant   | `NotRequiredWhenUsingPKCE`       | No        | Yes                       |
+| Implicit Grant             | N/A                              | -         | -                         |
+| Password Credentials Grant | `Required`                       | -         | Yes                       |
+| Password Credentials Grant | `NotRequired`                    | -         | No                        |
+| Refresh Token Grant        | `Required`                       | -         | Yes                       |
+| Refresh Token Grant        | `NotRequired`                    | -         | No                        |

@@ -1,0 +1,398 @@
+---
+title: Groups
+description: Learn about the APIs for creating, retrieving, updating and deleting groups.
+section: apis
+---
+import API from 'src/components/api/API.astro';
+import XFusionauthTenantIdHeaderCreateOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-create-operation.mdx';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import GroupRequestBody from 'src/content/docs/apis/_group-request-body.mdx';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import GroupResponseBody from 'src/content/docs/apis/_group-response-body.mdx';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import GroupsResponseBody from 'src/content/docs/apis/_groups-response-body.mdx';
+import GenericUpdateExplanationFragment from 'src/content/docs/apis/_generic-update-explanation-fragment.mdx';
+import StandardPutResponseCodes from 'src/content/docs/apis/_standard-put-response-codes.astro';
+import StandardDeleteResponseCodes from 'src/content/docs/apis/_standard-delete-response-codes.astro';
+import Aside from 'src/components/Aside.astro';
+import GroupSearchRequestParameters from 'src/content/docs/apis/_group-search-request-parameters.mdx';
+import JSON from 'src/components/JSON.astro';
+import MemberRequestBody from 'src/content/docs/apis/_member-request-body.mdx';
+import MemberResponseBody from 'src/content/docs/apis/_member-response-body.mdx';
+import GroupDeleteMembersByIdRequestBody from 'src/content/docs/apis/_group-delete-members-by-id-request-body.mdx';
+import GroupDeleteMembersRequestBody from 'src/content/docs/apis/_group-delete-members-request-body.mdx';
+import MembersResponseBodySearch from 'src/content/docs/apis/_members-response-body-search.mdx';
+
+## Overview
+
+A FusionAuth Group is a named object that optionally contains one to many Application Roles.
+
+When a Group does not contain any Application Roles it can still be utilized to logically associate users. Assigning Application Roles to a group allow it to be used to dynamically manage Role assignment to registered Users. In this second scenario as long as a User is registered to an Application the Group membership will allow them to inherit the corresponding Roles from the Group.
+
+The following APIs are provided to manage Groups and Group Membership.
+
+## Create a Group
+
+This API is used to create a new Group.
+
+### Request
+
+<API method="POST" uri="/api/group" authentication={["api-key"]} title="Create a Group with a randomly generated Id"/>
+
+<XFusionauthTenantIdHeaderCreateOperation />
+
+<br/>
+
+<API method="POST" uri="/api/group/{groupId}" authentication={["api-key"]} title="Create a Group with the provided unique Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="groupId" type="UUID" optional defaults="secure random UUID">
+    The Id to use for the new Group. If not specified a secure random UUID will be generated.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderCreateOperation />
+
+<GroupRequestBody />
+
+### Response
+
+The response for this API contains the Group that was created.
+
+<StandardPostResponseCodes never_search_error />
+
+<GroupResponseBody />
+
+## Retrieve a Group
+
+This API is used to retrieve a single Group by unique Id or all of the configured Groups.
+
+### Request
+
+<API method="GET" uri="/api/group" authentication={["api-key"]} title="Retrieve all of the Groups"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<br/>
+
+<API method="GET" uri="/api/group/{groupId}" authentication={["api-key"]} title="Retrieve a Group by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="groupId" type="UUID" required>
+    The unique Id of the Group to retrieve.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Response
+
+The response for this API contains either a single Group or all of the Groups. When you call this API with an Id the response will contain a single Group. When you call this API without an Id the response will contain all of the Groups. Both response types are defined below along with an example JSON response.
+
+<StandardGetResponseCodes never_search_error />
+
+<GroupResponseBody />
+
+<GroupsResponseBody />
+
+## Update a Group
+
+<GenericUpdateExplanationFragment capitalized_object_name="Group" />
+
+### Request
+
+<API method="PUT" uri="/api/group/{groupId}" authentication={["api-key"]} title="Update the Group with the given Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="groupId" type="UUID" required>
+    The Id of the Group to update.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<GroupRequestBody />
+
+### Response
+
+The response for this API contains the Group that was updated.
+
+<StandardPutResponseCodes never_search_error />
+
+<GroupResponseBody />
+
+## Delete a Group
+
+This API is used to permanently delete a Group. Deleting a Group that has Application Roles will effectively modify User Registrations by removing these Roles from Group members.
+
+### Request
+
+<API method="DELETE" uri="/api/group/{groupId}" authentication={["api-key"]} title="Delete a Group by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="groupId" type="UUID" required>
+    The unique Id of the Group to delete.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes never_search_error />
+
+## Search for Groups
+
+<Aside type="version">
+This API has been available since 1.45.0
+</Aside>
+
+This API is used to search for Groups and may be called using the `GET` or `POST` HTTP methods. Examples of each are provided below. The `POST` method is provided to allow for a richer request object without worrying about exceeding the maximum length of a URL. Calling this API with either the `GET` or `POST` HTTP method will provide the same search results given the same query parameters.
+
+### Request
+
+<API method="GET" uri="/api/group/search?name={name}&tenantId={tenantId}" authentication={["api-key"]} title="Search for Groups"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<GroupSearchRequestParameters parameter_prefix="" />
+
+<API method="POST" uri="/api/group/search" authentication={["api-key"]} title="Search for Groups"/>
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<GroupSearchRequestParameters parameter_prefix="search." />
+
+<JSON title="Example JSON Request" src="groups/search-post-request.json" />
+
+### Response
+
+The response for this API contains the Groups matching the search criteria in paginated format.
+
+<StandardGetResponseCodes never_missing never_search_error />
+
+#### Response Body
+
+<GroupsResponseBody base_field_name="groups[x]" include_total />
+
+## Add Users to a Group
+
+This API is used to add Users to a Group. A User that is added to a Group is called a member, a user can belong to one to many Groups.
+
+Adding a User to a Group can be used to logically group users, Group members can be returned by the Search API by searching by the Group Id. Application Roles may also be managed by a Group membership. When a User becomes a member of a Group they will inherit the Application Roles assigned to the Group for their registered Applications. If a User is not registered for an Application the Application Roles for that Application will not be applied to the User.
+
+### Request
+
+<API method="POST" uri="/api/group/member" authentication={["api-key"]} title="Add Users to Group"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<MemberRequestBody />
+
+### Response
+
+<StandardPostResponseCodes never_search_error />
+
+<MemberResponseBody />
+
+## Update Users in a Group
+
+<Aside type="version">
+This API has been available since 1.36.0
+</Aside>
+
+This API is used to completely replace the existing membership of a Group. Calling this API is equivalent to removing all Users from a Group and then making a `POST` request to the `/api/group/member` to add Users to the Group. Use this API with caution.
+
+### Request
+
+<API method="PUT" uri="/api/group/member" authentication={["api-key"]} title="Update Users in a Group"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<MemberRequestBody />
+
+### Response
+
+<StandardPutResponseCodes never_missing never_search_error />
+
+<MemberResponseBody />
+
+## Remove Users from a Group
+
+This API is used to remove Users from a Group. Removing a User from a Group removes their Group membership. Removing a User from a Group effectively modifies their assigned Roles if Application Roles are being managed through the Group membership.
+
+### Request
+
+<API method="DELETE" uri="/api/group/member/{memberId}" authentication={["api-key"]} title="Remove a single User from a Group by Member Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="memberId" type="UUID" required>
+    The unique Id of the Group Member to delete.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<br/>
+
+<API method="DELETE" uri="/api/group/member?groupId={groupId}&userId={userId}" authentication={["api-key"]} title="Remove a single User from a Group by User Id and Group Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="groupId" type="UUID" required>
+    The unique Id of the Group to remove the User from.
+  </APIField>
+  <APIField name="userId" type="UUID" required>
+    The unique Id of the User to remove from the Group.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<br/>
+
+<API method="DELETE" uri="/api/group/member?groupId={groupId}" authentication={["api-key"]} title="Remove all Users from a Group"/>
+
+<Aside type="caution">
+Note, in version `1.36.0` the Member API supports the `PUT` method allowing you to replace all members in the Group.
+
+As of version `1.36.0` this API is deprecated, in favor of using the `PUT` method. Prefer the use of `PUT /api/group/member` with an empty array of members to effectively remove all members from the group.
+</Aside>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="groupId" type="UUID" required>
+    The unique Id of the Group.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<API method="DELETE" uri="/api/group/member" authentication={["api-key"]} title="Remove Users from a Group by Member Id"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<GroupDeleteMembersByIdRequestBody />
+
+<API method="DELETE" uri="/api/group/member" authentication={["api-key"]} title="Remove specified Users from a Group by Group Id"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<GroupDeleteMembersRequestBody />
+
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes never_search_error />
+
+## Search for Group Members
+
+<Aside type="version">
+This API has been available since 1.36.0
+</Aside>
+
+The Group Member Search API allows you to search for Group Members with a paginated response.
+
+### Request
+
+<API method="GET" uri="/api/group/member/search?groupId={groupId}" authentication={["api-key"]} title="Search for all Group Members by Group Id"/>
+
+When calling the API using a `GET` request you will send the search criteria on the URL using request parameters. In order to simplify the example URL above, only the `groupId` parameter is shown, however you may add any of the documented request parameters to the URL.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="groupId" type="UUID" optional>
+    The unique Id of the Group used to search for Group Members.
+  </APIField>
+  <APIField name="numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="orderBy" type="String" optional defaults="insertInstant ASC, userId ASC, groupId ASC">
+    The database column to order the search results on plus the order direction.
+
+    The possible values are:
+
+      * `groupId` - the unique Id of the Group
+      * `id` - the id of the Group Member
+      * `insertInstant` - the [instant](/docs/reference/data-types#instants) when the Group Member was created
+      * `userId` - the unique Id of the User
+
+    For example, to order the results by the insert instant in descending order, the value would be provided as `insertInstant DESC`. The final string is optional, can be set to `ASC` or `DESC`, or omitted and will default to `ASC`.
+
+    Prior to version `1.52.0` this defaults to `insertInstant ASC`.
+  </APIField>
+  <APIField name="startRow" type="Integer" optional defaults="0">
+    The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+  </APIField>
+  <APIField name="userId" type="UUID" optional>
+    The unique Id of the User to search for Group Members. A single user may belong to one or more Groups, so searching on this field may still produce multiple results.
+  </APIField>
+</APIBlock>
+
+<br/>
+
+<API method="POST" uri="/api/group/member/search" authentication={["api-key"]} title="Search Group Members using the given search criteria"/>
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="search.groupId" type="UUID" optional>
+    The unique Id of the Group used to search for Group Members.
+  </APIField>
+  <APIField name="search.numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="search.orderBy" type="String" optional defaults="insertInstant ASC, userId ASC, groupId ASC">
+    The database column to order the search results on plus the order direction.
+
+    The possible values are:
+
+      * `groupId` - the unique Id of the Group
+      * `id` - the id of the Group Member
+      * `insertInstant` - the [instant](/docs/reference/data-types#instants) when the Group Member was created
+      * `userId` - the unique Id of the User
+
+    For example, to order the results by the insert instant in descending order, the value would be provided as `insertInstant DESC`. The final string is optional, can be set to `ASC` or `DESC`, or omitted and will default to `ASC`.
+
+    Prior to version `1.52.0` this defaults to `insertInstant ASC`.
+  </APIField>
+  <APIField name="search.startRow" type="Integer" optional defaults="0">
+    The offset row to return results from. If the search has 200 records in it and this is 50, it starts with row 50.
+  </APIField>
+  <APIField name="search.userId" type="UUID" optional>
+    The unique Id of the User to search for Group Members. A single user may belong to one or more Groups, so searching on this field may still produce multiple results.
+  </APIField>
+</APIBlock>
+
+### Response
+
+<StandardGetResponseCodes never_missing never_search_error />
+
+<MembersResponseBodySearch />

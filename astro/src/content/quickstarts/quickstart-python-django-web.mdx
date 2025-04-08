@@ -1,0 +1,202 @@
+---
+title: Python Django
+description: Quickstart integration of Python Django web application with FusionAuth
+navcategory: getting-started
+prerequisites: Python 3.8 and pip3
+section: web
+technology: Django
+language: Python
+icon: /img/icons/python.svg
+faIcon: fa-snake
+color: yellow
+cta: EmailListCTA
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main
+---
+import Aside from '/src/components/Aside.astro';
+import DockerSpinup from '/src/components/quickstarts/DockerSpinup.astro';
+import Intro from '/src/components/quickstarts/Intro.astro';
+import LoginArchitectureWeb from '/src/components/quickstarts/LoginArchitectureWeb.astro';
+import NextSteps from '/src/components/quickstarts/NextSteps.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+import QuickstartTshirtCTA from '/src/components/quickstarts/QuickstartTshirtCTA.astro'
+
+<Intro technology={`${frontmatter.language} and ${frontmatter.technology}`}
+       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-python-django-web"/>
+
+## Prerequisites
+
+For this Quickstart, you'll need:
+* [Python3.8](https://www.python.org/downloads/) or later.
+* [Docker](https://www.docker.com), which is the quickest way to start FusionAuth. (There are [other ways](/docs/get-started/download-and-install)).
+
+## General Architecture
+
+<LoginArchitectureWeb />
+
+## Getting Started
+
+Start with getting FusionAuth up and running and creating a new Django application.
+
+### Clone The Code
+
+First, grab the code from the repository and change into that directory.
+
+```
+git clone https://github.com/FusionAuth/fusionauth-quickstart-python-django-web.git
+cd fusionauth-quickstart-python-django-web
+```
+
+All shell commands in this guide can be entered in a terminal in this folder. On Windows, you need to replace forward slashes with backslashes in paths.
+
+The files you'll create in this guide already exist in the `complete-application` folder, if you prefer to copy them.
+
+### Run FusionAuth Via Docker
+
+<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} />
+
+### Create A Basic Django Application
+
+Next, you'll set up a basic Django project with a single app. While this guide builds a new Django project, you can use the same method to integrate your existing project with FusionAuth.
+
+#### Set Up Your Environment
+
+You should work in a virtual environment for this.
+
+```shell
+python3 -m venv venv && source venv/bin/activate
+```
+
+Using `venv` isolates Python dependencies for this project locally so that any dependencies used by other projects on your machine are not affected.
+
+Create a `requirements.txt` file to list the project dependencies with the following content.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/requirements.txt"
+ lang="shell" />
+
+Then install the dependencies into your virtual environment.
+
+```shell
+pip install -r requirements.txt
+```
+
+#### Create The Application
+
+Create the default Django starter project.
+
+```shell
+django-admin startproject mysite
+```
+
+Now create a `.env` file in your `mysite` folder and add the following to it (note that this is a different environment file to the one in the root folder used by Docker for FusionAuth).
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/mysite/.env"
+ lang="shell" />
+
+## Authentication
+
+Create an app within your `mysite` project.
+
+```shell
+cd mysite
+python manage.py startapp app
+cd ..
+```
+
+Now you will work from the top down to set up authentication URLs in the project `settings.py`, then in the application `urls.py`, then the `views.py`, and finally, the HTML templates for the views.
+
+### Project Settings
+
+Overwrite your `mysite/mysite/settings.py` contents with the following code.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/mysite/mysite/settings.py" lang="python" />
+
+Here, your `app` and `mozilla_django_oidc` are added to the list of `INSTALLED_APPS`. The authentication library from Mozilla is set up by `mozilla_django_oidc` and the `OIDC_OP_` constants imported from the `.env` file. This automatically handles the interaction with FusionAuth on the endpoints configured in this file and the matching ones configured in the `kickstart.json` file that you used to initialize FusionAuth.
+
+### Project URLs
+
+Overwrite the `mysite/mysite/urls.py` file with the following code.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/mysite/mysite/urls.py"
+ lang="python" />
+
+ * The `admin` site is the default Django admin.
+ * The `app` URLs are for the app you created in your project.
+ * The `oidc` URLs are automatically generated from the settings you configured in the previous step.
+
+### App URLs
+
+From this point, you'll create files in the `mysite/app` application folder, not in the main `mysite/mysite` project.
+
+Create a `mysite/app/urls.py` file and set its content to match the project URLs.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/mysite/app/urls.py"
+ lang="python" />
+
+### App Views
+
+Now overwrite the `mysite/app/views.py` file. The code below will create three pages: the home page, the account page, and the make change page.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-python-django-web/main/complete-application/mysite/app/views.py"
+ lang="python" />
+
+Here's what these views do:
+
+* The `app` view, or home page, redirects the user to the `account` view if they are already logged in.
+* The `account` view checks whether the user is logged in. If the user is logged in, it returns the account page template, passing in the user's email address returned from FusionAuth. If the user isn't logged in, they are redirected to the login page. This also happens in the change page.
+* The `logout` view is necessary because you need to clear the session for the user in Django after the user logs out of FusionAuth. FusionAuth sends the user to this view after logging them out, which then returns them to the home page.
+* The `change` view looks longer only because it demonstrates how to do some calculations if the request is a POST instead of a GET. These calculations are then passed to the template in the `change` variable to display onscreen.
+
+## Customization
+
+The final step is to create the HTML pages and style them with CSS. Copy the `static` and `templates` folders into your app. Use the appropriate command for your operating system.
+
+```batch
+# linux, mac
+cp -r complete-application/mysite/app/static mysite/app
+cp -r complete-application/mysite/app/templates mysite/app
+
+# windows
+xcopy /e complete-application\mysite\app\static mysite\app
+xcopy /e complete-application\mysite\app\templates mysite\app
+```
+
+There are only two lines in these templates related to authentication. In the `home.html` template, there is a login button.
+
+```html
+<a class="button-lg" href="{% url 'oidc_authentication_init' %}">Login</a>
+```
+This URL is made available by the Mozilla plugin in the settings file. It directs the user to FusionAuth to log in, which then redirects back to your app account page.
+
+In the account and change pages, there is a logout form.
+
+```html
+<form id="logoutForm" class="button-lg"  action="{% url 'oidc_logout' %}" method="post">
+  {% csrf_token %}
+  <a class="button-lg" href="#" onclick="document.getElementById('logoutForm').submit();">Log out</a>
+</form>
+```
+
+Log out has to be a form that submits a `POST` request to FusionAuth. Here you use an anchor element that is easy to style, but if your users might disable JavaScript, you could use a traditional form `input` element.
+
+## Run The Application
+
+Update the default SQLite database and start your server.
+
+```bash
+python mysite/manage.py migrate
+python mysite/manage.py runserver
+```
+
+You can now browse to [the Django app](http://localhost:8000/app).
+
+Log in using `richard@example.com` and `password`. The change page will allow you to enter a number and see the result of the POST. Log out and verify that you can't browse to the [account page](http://localhost:8000/app/account).
+
+<QuickstartTshirtCTA/>
+
+## Next Steps
+
+<NextSteps>
+  <Fragment slot="security">
+    <li>Learn more about configuring the [open source OIDC library](https://github.com/mozilla/mozilla-django-oidc).</li>
+  </Fragment>
+</NextSteps>

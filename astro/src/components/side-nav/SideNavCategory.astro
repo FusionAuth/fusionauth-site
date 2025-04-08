@@ -1,0 +1,96 @@
+---
+import { Category } from 'src/tools/docs';
+import Icon from 'src/components/icon/Icon.astro';
+import { specialCaps } from 'src/tools/string';
+
+const { category, level, frontmatter }: { category: Category, level: number, frontmatter: any} = Astro.props;
+
+const titleSize = {
+  0: 'text-sm',
+  1: 'text-sm',
+  2: 'text-sm',
+}[level] || 'text-xl';
+
+const titleWeight = {
+  0: 'font-semibold',
+  1: 'font-semibold',
+  2: 'font-medium',
+}[level] || 'font-bold';
+
+const categoryName = {
+  0: frontmatter.subcategory,
+  1: frontmatter.tertcategory,
+  2: frontmatter.quatercategory
+}[level] || '';
+
+const sectionName = {
+  0: frontmatter.section,
+  1: frontmatter.subcategory,
+  2: frontmatter.tertcategory,
+  3: frontmatter.quatercategory,
+}[level] || '';
+
+const indentation = {
+  0: '',
+  1: 'pl-2',
+  2: 'pl-4',
+  3: 'pl-6',
+}[level];
+
+const entries = category.entries.filter(entry => level !==0 || entry.href.split('/').length > 3);
+
+const itemClass = "block border-l border-slate-200 pl-4 text-slate-700 leading-loose hover:text-slate-900 text-sm -ml-px dark:text-slate-400 " +
+    "dark:hover:text-slate-200 dark:border-slate-700 dark:hover:border-slate-200 dark:group-[.active]:border-indigo-400 " +
+    "dark:group-[.active]:text-indigo-400 group-[.active]:border-indigo-700 group-[.active]:font-medium group-[.active]:text-indigo-700 " +
+    "hover:border-slate-900/50"
+---
+<ul class="pb-3">
+  {!entries.find(entry => entry.href === category.href) && level !== 0 &&
+    <li class:list={["group", Astro.url.pathname === category.href ? "active " : "", indentation]}>
+      <a href={category.href} class={itemClass}> Overview </a>
+    </li>
+  }
+  {entries.map(item =>
+    <li class:list={["group", category.name === sectionName && item.title === frontmatter.title ? "active " : "", indentation]}>
+      <a href={item.href} class={itemClass}>{ specialCaps(item.title) }</a>
+    </li>)
+  }
+</ul>
+{category.subcategories.map(sub =>
+  <details open={sub.name === categoryName }>
+    <summary class="list-none my-1 cursor-pointer">
+      <div class="flex flex-row justify-between w-full pb-1" >
+        <p class:list={[titleSize, titleWeight, "capitalize", sub.name === categoryName ? 'text-indigo-600 dark:text-indigo-400' : '', indentation]}>
+          {  specialCaps(sub.name) }
+        </p>
+        <span class:list={["open-icon", sub.name !== categoryName ? "" : "hidden"]}>
+          <Icon name="chevron-right" size={titleSize}/>
+        </span>
+        <span class:list={["close-icon", sub.name === categoryName ? "" : "hidden"]}>
+          <Icon name="chevron-down" size={titleSize}/>
+        </span>
+      </div>
+    </summary>
+    <Astro.self category={sub} level={level + 1} {frontmatter}/>
+  </details>
+)}
+<script>
+  const summaries = document.querySelectorAll('summary');
+  summaries.forEach(summary => summary.addEventListener('click', event => {
+    const details= summary.parentElement as HTMLDetailsElement;
+    const close = summary.querySelector('.close-icon');
+    const open = summary.querySelector('.open-icon');
+    if (!details.open) {
+      open.classList.add('hidden');
+      close.classList.remove('hidden');
+    } else {
+      close.classList.add('hidden');
+      open.classList.remove('hidden');
+    }
+  }));
+</script>
+<style>
+  summary::-webkit-details-marker {
+    display: none;
+  }
+</style>

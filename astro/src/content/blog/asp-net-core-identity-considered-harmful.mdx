@@ -1,0 +1,260 @@
+---
+publish_date: 2022-11-21 
+title: ASP.NET Core Identity Considered Harmful
+description: Why ASP.NET Core Identity just doesn't cut it.
+authors: Ted Neward
+image: /img/blogs/core-identity-considered-harmful/asp.net-core-considered-harmful.svg
+categories: Tutorial, Education
+tags: netcore, dotnet, asp net core
+excerpt_separator: "{/* more */}"
+---
+
+*"Ladies and gentlemen.... ASP.NET!" The crowd goes wild. The presenter, on stage, has just scaffolded out a fully-functional TODO list application using nothing but the .NET Core command-line interface and a series of templates. The demo has everything the application needs: persistent storage via the Entity Framework Core libraries, a snazzy interface courtesy of Bootstrap CSS, and there's even a set of pages and tables for managing user logins and passwords, which the presenter called "ASP.NET Core Identity". It's awesome! It's amazing! It's the new frontier in .NET development, and you got to see it, live!*
+
+{/* more */}
+
+Excited beyond all measure, you return home, laptop clutched eagerly to your chest, ready for that moment when management tells you, "It's time to create a new project." About three weeks later, the day comes, you're invited into the meeting, and the project kickoff is... well... kicked off. Returning to your desk, you eagerly press the most exciting keystroke combination in the world: ***command-N***; File, New Project.
+
+Swiftly moving through the dialog boxes, you feel a point of pride in your platform as you select the defaults. *ASP.NET Core Identity saves you so much time*, you think, as you watch the wizards go to work. They script out tables. They create pages. They build workflows between the pages. From the moment the wizards finish, you have a fully-fledged, working application! It takes in new users, it has login and logout, and you can restrict which pages are accessible only to authenticated users with the use of just a custom attribute, `[Authorize]`. You glance through documentation and realize, wow, this attribute can even give us "role-based access control", though whatever that is isn't entirely clear at first. There's whole reams of pages in the ASP.NET docs about things like "claims" and "permissions", but the ASP.NET Core Identity system has let you bypass all of that--you're a Really Useful Programmer.
+
+A few months go by, and you ship the application. It takes in the data from the (authenticated) users, it validates what needs validating, it calculates what needs calculating, it stores what needs storing, and it reports what needs reporting. Users are happy. Management is happy. You're happy. Everything is wonderful. Based on the success of that application, you're asked to build another. ***command-N*** And another one! ***command-N*** Your stable of applications is growing, your contributions to the company are sizable, and your reputation is growing.
+
+Then, one day, the CEO calls you into her office.
+
+It begins well enough--the CEO wants to give you kudos and express how appreciative the company is for your applications. They're really important, and she calls them a major factor in the company's growing success. Flush with pride, you're caught a little off-guard at her next question: "Some of the users have been expressing some frustration that they have to log in to each application separately, even when they're using more than one of them at the same time. I've heard that we can eliminate that by implementing single-sign on--how long would that take?"
+
+You really aren't sure. Granted, you suppose you could implement some kind of ASP.NET middleware to check for any sort of login token in any of the applications, and implement an API that any application could use to verify a user's information with any other application, but this will have to go into every application you've written thus far, and something you'd have to carry forward into every application you write from now on, and.... You realize the CEO is waiting, so you offer up the usual answer: "It depends on a lot of things; I'd have to take a look and get back to you with an idea of how much work would be involved." She nods.
+
+But she's not done. "While we're doing that, I wanted to let you know that another exciting prospect on our horizon is shaping up. We're getting ready to partner with a few big companies, which is going to mean they're going to want access to your applications, too. They're going to want to integrate with your security system as well." Vaguely you recall something from an article you read years ago that this kind of thing was called "federated identity", and you're not sure at all how you're going to do that. "Oh, and they're very concerned about user privacy and security, and so they were asking if we had anything that was considered personally identifiable information." Ah! Fortunately your applications don't deal at all with user medical or financial information, so you take a breath to reassure the CEO that there's nothing PII in your system.... and then you remember: All those passwords. That's, by definition, PII. You tell her, and she frowns. "Well, that's unfortunate, we're going to have to get an independent security audit to make sure we're conformant before the partnerships can go forward."
+
+Feeling like you've let her down, you prepare to leave the office and go get to work on the homework that's just been implicitly (and explicitly) dumped in your lap when the CEO says, "Oh, wait, one more thing--I've been hearing lots of talk amongst my peers about a new kind of security approached called 'passwordless'. It sounds pretty exciting, and I'd like to see if we can implement it for our applications too. What do you know about that?" You feel yourself deflate even further--that's not something you remember being supported by the scaffolded code generated by the templates, and so even if ASP.NET has it baked in as part of its libraries somewhere, you realize you're going to have to go back to retrofit it into all the existing applications. And you're pretty sure it's not a part of those templates.
+
+Dejected, you glance at your phone and realize it's almost time to leave for the local .NET user group meeting. You can't remember what the topic is about, but there's some pretty sharp folks that hang out there, and maybe they have some ideas. And, if nothing else, there's always pizza. Nothing ever seems quite as bad when pizza's involved.
+
+Once inside, after a few pleasantries exchanged (and a few slices of pepperoni consumed), one of the regulars, Dan, notices you're a little quiet. "Anything wrong?" It doesn't take much prompting to get the whole story out of you, and Dan nods sympathetically. "Yeah, I've always liked ASP.NET, but some of the scaffolded code doesn't always fit the bill. What about outsourcing your auth and migrating your user base over to it?"
+
+_Thinking about moving beyond ASP.NET Core Identity? [Schedule a demo](/contact) to see how FusionAuth simplifies secure authentication for your .NET applications._
+
+"Outsource...?" The confusion is apparent.
+
+"Sure. Think about it: authentication and user management is a pretty well-known problem, and there's a number of vendors and open-source solutions that can take care of that for you, so that you don't have to. There's even some industry standards that make it pretty seamless to use. Ever heard of OpenID Connect? OAuth? ASP.NET has some nice support for them right out of the box."
+
+"More generated code?"
+
+"Nah. Hang on." Taking a glance around, Dan finds a table and pulls out his laptop. "Look, let's scaffold out a barebones ASP.NET MVC app. We'll call it HelloAuth.
+
+```
+dotnet new mvc -o HelloAuth
+```
+
+"It's a stock MVC app, though even if we did Razor pages it wouldn't be all that different, since Razor pages make use of MVC under the hood. Let's do a quick `dotnet run` to make sure it's all good.... Yup. All good. OK. Now let's create a super-secret set of page views we want only authenticated people to hit, something like 'Secrets/Index.cshtml', in the Views folder, like so.
+
+```
+@{
+    ViewData["Title"] = "Secrets Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">SHHHHH</h1>
+    <p>This is all super-secret information:
+        <ol>
+        <li>Darth Vader is actually Luke Skywalker's father.</li>
+        <li>Leia Organa is actually Luke Skywalker's sister.</li>
+        <li>George Lucas can't write dialog to save his life.</li>
+        </ol>
+    </p>
+</div>
+```
+
+"In an MVC app, we secure a page by putting an `[Authorize]` attribute on the controller that redirects to the view, so let's spin up a `SecretsController` that brings up the Secrets home page.
+
+```
+// ...
+using Microsoft.AspNetCore.Authorization;
+
+namespace HelloAuth.Controllers
+{
+    public class SecretsController : Controller
+    {
+        [Authorize]
+        // GET: /<controller>/
+        public IActionResult Index()
+        {
+            return View();
+        }
+    }
+}
+```
+
+"Lastly, we need to link to this page, so we'll put a hyperlink to it on the standard menubar ASP.NET generated for us in Views/Shared/_Layout.cshtml.
+
+```
+<!-- ... -->
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Secrets" asp-action="Index">Secrets</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        </li>
+                    </ul>
+                </div>
+<!-- ... -->
+```
+
+"Good so far?"
+
+"Yup, this all seems like pretty standard ASP.NET stuff. Might want to run it, though, just in case."
+
+"Reading my mind. Release early, release often, right?" Dan types in `dotnet run` and as per the usual behavior, a browser page pops up. "Looks good. If we click on the 'Secrets' link, we get an 'unhandled exception' error, which ASP.NET throws when trying to access something that's protected by `[Authorize]`; so long as nobody's authenticated, nobody's going to get in there. So let's add the auth.
+
+"Now, there's a bunch of OpenID auth vendors out there, but I only know of one that lets us run it locally, and that's FusionAuth. Ever heard of them?" You shake your head, and Dan shrugs. "Honestly, any vendor that's OpenID Connect compliant will work, but the nice thing about these guys is that they offer the option to run their stuff in a Docker container on my laptop. Hang on." Dan surfs to [/docs/get-started/download-and-install/docker](/docs/get-started/download-and-install/docker), and then points to the screen? "See? Three lines of shell script, and we're up and running." He swipes, he clicks.
+
+```
+curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/.env 
+docker compose up
+```
+
+"Once it's up and running, if we browse to localhost:9011, we'll see their admin setup. We just need to add an admin username and credentials, and the rest of the system comes up."
+
+![Screenshot of the admin screen.](/img/blogs/core-identity-considered-harmful/admin-dashboard.png)
+
+While Dan's typing in a username and password, you ask, "So how is this going to work with ASP.NET?"
+
+"Well, we're going to install some ASP.NET Core packages, set up some configuration, and then the rest of the ASP.NET auth middleware kicks in. Before we can do that, though, we have to create a FusionAuth 'application' entry that will contain the user registrations. So, once we're in the admin dashboard, let's create an application called 'aspnetcore'.
+
+![Screenshot of the aspnetcore application creation screen.](/img/blogs/core-identity-considered-harmful/aspnetcore-application-add.png)
+
+"OK, now that we have an application, see that 'View' button that looks like a magnifying glass? That's going to give us a couple of things we need to set up in the ASP.NET Core code to be able to find the auth server when we fire up the app.
+
+![Screenshot of the aspnetcore application details view.](/img/blogs/core-identity-considered-harmful/aspnetcore-application-view-details.png)
+
+"Keep that tab handy while we go back to the code and get ASP.NET prepped to use this for our auth.
+
+"First thing we need to do is pull in the NuGet package for OpenID Connect, `Microsoft.AspNetCore.Authentication.OpenIdConnect`."
+
+"Wow, you remember that?"
+
+Dan laughs. "Well, no, I happened to search for it earlier today for a different reason. But you gotta admit, it's not that hard to forget, given that we're looking for the Microsoft ASP.NET Core Authentication package for OpenID Connect.
+
+```
+dotnet add Microsoft.AspNetCore.Authentication.OpenIdConnect
+```
+
+"So that brings down the `OpenIdConnect` package, and now we can add a few `using` statements at the top of Program.cs to make autocomplete help us not have to remember anything.
+
+```
+// Program.cs
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+
+// ...
+```
+
+"Cool. So now we need to add authentication to the app, which is standard ASP.NET middleware.
+
+```
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+    })
+    .AddCookie()
+    .AddOpenIdConnect(options =>
+    {
+
+    })
+    ;
+```
+
+"So now--"
+
+"Whoa, Dan. Hang on. You lost me for a second."
+
+"Oh, sure. `AddAuthentication` adds a middleware builder to the ASP.NET builder chain, and from there we add some authentication options--the first being `AddCookie`, which means we want to store a cookie that contains some authentication info, and `AddOpenId`, which will set up the OpenID settings we'll need from the FusionAuth server to make sure everything wires up correctly. With me so far?"
+
+"What's with the 'Default...' business in the first block?"
+
+"ASP.NET lets you stack up multiple authentication schemes if you want, so it needs to know which ones to default to." Dan shakes his head. "I love ASP.NET, but man, sometimes it seems like they like to deal with every edge case ever. I don't think I've ever used more than one, personally."
+
+Seeing you nod, Dan goes on. "OK, so once we've established that we're using authentication, the two subsequent calls set up the authentication details. `AddCookie` says that we want to use cookies, and the options there control things like the cookie name; usually I just keep the defaults. `AddOpenIdConnect` is where we customize where to find the OpenID server. That's where we're going to set things like the Client ID and Client Secret, so that FusionAuth knows which application to look up when we ask for stuff."
+
+"But we never want to put secrets in code, right?" You smile triumphantly; you remember at least *that* much from your reading on security.
+
+Dan laughs. "Well, for a demo, we can probably get away with it, but sure, let's pull it in from configuration. That could come from environment variables, or a file, or whatever. The key thing is that the `options.ClientId` field needs to match the FusionAuth application's "Client Id" field, and likewise for the "Client secret"."
+
+"OK, but what's the 'Authority' field mean?"
+
+"That's the URL that ASP.NET will use to interrogate FusionAuth about a bunch of the other settings, like where to find information about login and logout URLs and such. That's displayed in the FusionAuth "OpenID Connect Discovery" field, under the "OAuth & OpenID Connect Integration details" section.
+
+"There's a few other settings we need to set up, too, such as turning off RequireHttpsMetadata, turning on GetClaimsFromUserInfoEndpoint, and setting the ResponseType to 'code'. So our `OpenIdConnect` options block looks something like this now.
+
+```
+    .AddOpenIdConnect(options =>
+    {
+        options.SignInScheme = "Cookies";
+
+        options.ClientId = "fc4d228e-bebb-4d22-ac44-3d4087e2f9b0";
+        options.ClientSecret = "iBKij_dRBYR5xZe2JnJOpO_UvsRU5kT6UtmNOjqmAiw";
+        options.Authority = "http://localhost:9011/.well-known/openid-configuration/efee0fac-d32e-6866-d9d8-26b6d53dd286";
+
+        options.GetClaimsFromUserInfoEndpoint = true;
+        options.RequireHttpsMetadata = false;
+
+        options.ResponseType = "code";
+
+        options.Scope.Add("profile");
+        options.Scope.Add("offline");
+        options.SaveTokens = true;
+    })
+```
+
+"So now..."
+
+You can't help yourself. "Wait, so we can run it? It's all working?"
+
+Dan grins. "I dunno! Let's try it, shall we?"
+
+One `dotnet run` later, and the ASP.NET app comes up as usual, but clicking on the "Secrets" link yields a disappointing payoff. "Dan, what's that error dialog with the JSON in it saying?"
+
+```
+{
+  "error" : "invalid_request",
+  "error_description" : "Invalid redirect uri https://localhost:7281/signin-oidc",
+  "error_reason" : "invalid_redirect_uri"
+}
+```
+
+"Well, that's FusionAuth telling you that it doesn't quite agree with what ASP.NET is telling you. As part of the OAuth login protocol, your application is telling FusionAuth where to redirect the user when trying to authenticate, and ASP.NET has some strong opinions about what that URL should be. FusionAuth, however, doesn't have that URL listed in its configuration as an acceptable URL to redirect to, so it's throwing an error."
+
+"Wait, why should FusionAuth care?"
+
+"An attacker would be able to redirect the user to their own webpage and capture a password or other secrets if we didn't configure FusionAuth to know ahead of time what acceptable URLs are."
+
+"Oh. So we need to put that URL into the FusionAuth application page someplace?"
+
+Dan nods. "Yup. Right here. 
+
+![Screenshot of the aspnetcore application edit screen.](/img/blogs/core-identity-considered-harmful/aspnetcore-application-edit.png)
+
+"Wait, so that's it? It's working?"
+
+"Well, there's obviously a lot more we really need to add--the application needs a way to log out, so that we don't keep that authenticated token in the browser forever, for example. But overall, yeah, that's it for our application.
+
+"But the win here comes when you start looking at all the features that a vendor-supplied auth system gives you. FusionAuth, for example, has all the 'forgotten password' email hooks you could ask for, they provide you with a dashboard to look at all the users in all your FusionAuth-connected applications and manage them, they've got SSO, SAML, and a bunch of stuff your CEO hasn't heard about yet." Dan grins. "And the best part is, because this is all a standalone server, when it comes time to upgrade, none of your code has to change unless the OpenID spec itself changes."
+
+"Which is to say 'not often'," you grin. "Industry standards being what they are and all." Seeing that the speaker for the user group is making her way to the front of the room, you glance at Dan and the laptop again. "FusionAuth, huh? I'm going to pull that down while she's speaking and show it to my team tomorrow. Thanks, Dan!"
+
+(Dear reader, if you’d like to download the ASP.NET code and run it yourself, please [check out this GitHub repository](https://github.com/FusionAuth/fusionauth-example-netcore6).)
+
+*"Ladies and gentlemen..." It's the same conference, the following year, and the demos are out in full force... but you're already moving on to the next room. Yes, the demo will be amazing, and it will show how developers can build an application in just three keystrokes or four lines of code or two mouse clicks or whatever. But you're older and wiser now, and the demo, you realize, is just the starting point. For just a brief moment, you pause at the doorway and look in. Your eyes are not for the stage, but the wide-eyed gazes of all those developers, gazing up at the stage in wonder. Remembering when you, too, were one of those who believed that the demo was everything developers need to be successful, you sigh. Then, your moment of nostalgia passing, you move on. Yes, scaffolded code can be useful--for a time. But for serious work, you need serious tools. After all, you think to yourself, you wouldn't write your own database; why would you write your own auth system?*
+
+_Thinking about moving beyond ASP.NET Core Identity? [Schedule a demo](/contact) to see how FusionAuth simplifies secure authentication for your .NET applications._

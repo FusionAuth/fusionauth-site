@@ -1,0 +1,56 @@
+---
+publish_date: 2022-03-08 
+title: Announcing FusionAuth 1.34
+description: This release includes security updates, a new password hash plugin and more.
+authors: Dan Moore
+image: /img/blogs/release-1-34/product-update-fusionauth-1-34.png
+categories: Release Updates, Product
+tags: release notes
+excerpt_separator: "{/* more */}"
+---
+
+We're excited to announce the release of version 1.34 of FusionAuth. This version shipped the week of February 21, 2022. 1.34 includes bug fixes, security improvements and built-in support for PBKDF2 with a 512 bit derived key length.
+
+{/* more */}
+
+This release contained a number of features, enhancements, and bug fixes. Please see the [release notes](/docs/release-notes/archive#version-1-34-1) for a full breakdown of the changes between 1.33 and 1.34. 
+
+There are a few things worth calling out.
+
+## PKCE, PKCE everywhere
+
+[PKCE](https://datatracker.ietf.org/doc/html/rfc7636) is a standard which increases security when used in conjunction with OAuth. It's pronounced ('pixy'). PKCE helps prevent CSRF and authorization code injection attacks. The [security current best practices from the IETF](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-security-topics) recommend using PKCE:
+
+> Clients MUST prevent injection (replay) of authorization codes into the authorization response by attackers.  Public clients MUST use PKCE to this end.  For confidential clients, the use of PKCE is RECOMMENDED.
+
+FusionAuth has supported PKCE for years with improvements in the 1.21 and 1.28 releases.
+
+This release rolls PKCE through the entire FusionAuth internal infrastructure. In particular, FusionAuth often implements other grants or authentication flows on top of the Authorization Code grant. With this release, any time an internal Authorization Code grant happens, PKCE is used. For instance, the FusionAuth Device Code grant implementation is built on the Authorization Code grant.
+
+This change will be transparent to you and doesn't require you to modify any external integrations, such as between your application and FusionAuth.
+
+You should consider using PKCE, though!
+
+## The OIDC Identity Provider
+
+OAuth and OIDC require a Client Id and Client Secret, sent in headers or the request body. In this release, the FusionAuth engineering team reviewed the specifications and reworked how FusionAuth delivers these values when you are using the [OpenID Connect Identity Provider](/docs/lifecycle/authenticate-users/identity-providers/overview-oidc). This makes FusionAuth more compliant with certain third party identity providers which expect the Client Id and Client Secret to be present or absent in certain scenarios.
+
+This shouldn't require any modifications to your applications or integrations, but if you use the OIDC Identity Provider, test your integrations before upgrading in prod.
+
+## Additional PBKDF2 algorithm support
+
+Some IdPs, such as KeyCloak, use a 512-bit key for PBKDF2 with their password hashing algorithm.
+
+While you could previously use a [custom password hashing plugin](/docs/extend/code/password-hashes/custom-password-hashing) to import hashes and transparently migrate users from such IdPs, this scenario occurred frequently enough that FusionAuth now ships with a plugin supporting this algorithm.
+
+This is available using the `salted-pbkdf2-hmac-sha256-512` value on the User Import API or via the Tenant settings.
+
+## Upgrade at will
+
+The [release notes](/docs/release-notes/archive#version-1-34-1) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified.
+
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/operate/deploy/upgrade). 
+
+If you have a FusionAuth Cloud deployment, proceed to the "Deployments" tab on your [account dashboard](https://account.fusionauth.io/account/deployment/) and upgrade your instances. If you have any questions about the upgrade, [please open a support ticket](https://account.fusionauth.io/account/support/).
+
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).

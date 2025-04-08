@@ -1,0 +1,188 @@
+---
+title: OpenID Connect
+description: Learn about the APIs for creating, retrieving, updating and deleting OpenID Connect identity providers.
+section: apis
+subcategory: identity providers
+---
+import Aside from 'src/components/Aside.astro';
+import TokenStorageNote from 'src/content/docs/apis/identity-providers/_token-storage-note.mdx';
+import API from 'src/components/api/API.astro';
+import InlineField from 'src/components/InlineField.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import OpenidConnectRequestBody from 'src/content/docs/apis/identity-providers/_openid-connect-request-body.mdx';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import OpenidConnectResponseBody from 'src/content/docs/apis/identity-providers/_openid-connect-response-body.mdx';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import GenericUpdateExplanationFragment from 'src/content/docs/apis/_generic-update-explanation-fragment.mdx';
+import StandardPutResponseCodes from 'src/content/docs/apis/_standard-put-response-codes.astro';
+import StandardDeleteResponseCodes from 'src/content/docs/apis/_standard-delete-response-codes.astro';
+import CompleteLoginText from 'src/content/docs/apis/identity-providers/_complete-login-text.mdx';
+import XForwardedForHeader from 'src/content/docs/apis/identity-providers/_x-forwarded-for-header.mdx';
+import XFusionauthTenantIdHeaderScopedOperationRowOnly from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.mdx';
+import IdentityProviderLoginRequestBody from 'src/content/docs/apis/identity-providers/_identity-provider-login-request-body.astro';
+import IdentityProviderLoginResponseBody from 'src/content/docs/apis/identity-providers/_identity-provider-login-response-body.mdx';
+
+export const idp_display_name = 'OpenID Connect';
+export const idp_enforce_email_verified_claim = true;
+export const idp_linking_strategy = 'LinkByEmail';
+export const idp_since = 10100;
+export const optional_tag = true;
+
+## Overview
+
+<Aside type="version">
+This API has been available since 1.1.0
+</Aside>
+
+OpenID Connect identity providers connect to external OpenID Connect login systems. This type of login will optionally provide a `Login with ...` button on FusionAuth's login page. This button is customizable by using different properties of the identity provider.
+
+Optionally, this identity provider can define one or more domains it is associated with. This is useful for allowing employees to log in with their corporate credentials. As long as the company has an identity solution that provides OpenID Connect, you can leverage this feature. This is referred to as a **Domain Based Identity Provider**. If you enable domains for an identity provider, the `Login with ...` button will not be displayed. Instead, only the `email` form field will be displayed initially on the FusionAuth login page. Once the user types in their email address, FusionAuth will determine if the user is logging in locally or if they should be redirected to this identity provider. This is determined by extracting the domain from their email address and comparing it to the domains associated with the identity provider.
+
+FusionAuth will also leverage the `/userinfo` API that is part of the OpenID Connect specification. The email address returned from the Userinfo response will be used to create or lookup the existing user. Additional claims from the Userinfo response can be used to reconcile the User in FusionAuth by using an OpenID Connect Reconcile Lambda. Unless you assign a reconcile lambda to this provider, on the `email` address will be used from the available claims returned by the OpenID Connect identity provider.
+
+[//]: # (display_name blank on purpose)
+<TokenStorageNote idp_display_name=""
+                  idp_linking_strategy={idp_display_name}
+                  token_name="refresh_token"
+                  return_text="external OpenID Connect provider, if such a token is provided,"
+                  idp_long_lived_token_type="refresh"
+                  idp_refresh_additional_info_url="https://datatracker.ietf.org/doc/html/rfc6749#section-1.5" />
+
+## Create an OpenID Connect Identity Provider
+
+### Request
+
+<API method="POST" uri="/api/identity-provider" authentication={["api-key"]} title="Create an OpenID Connect Identity Provider using a randomly generated Id"/>
+
+<API method="POST" uri="/api/identity-provider/{identityProviderId}" authentication={["api-key"]} title="Create an OpenID Connect Identity Provider with the provided unique id"/>
+
+The <InlineField>type</InlineField> property in the request JSON is used to determine that you are managing an OpenID Connect identity provider.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="identityProviderId" type="UUID" optional defaults="secure random UUID">
+    The Id to use for the new Identity Provider. If an Id is not provided, a secure random UUID is generated.
+  </APIField>
+</APIBlock>
+
+<OpenidConnectRequestBody idp_display_name={idp_display_name}
+                          idp_enforce_email_verified_claim={idp_enforce_email_verified_claim}
+                          idp_since={idp_since}
+                          idp_linking_strategy={idp_linking_strategy}
+                          optional_tag={optional_tag} />
+
+### Response
+
+<StandardPostResponseCodes never_search_error />
+
+<OpenidConnectResponseBody idp_display_name={idp_display_name}
+                           idp_since={idp_since}
+                           idp_linking_strategy={idp_linking_strategy}
+                           optional_tag={optional_tag} />
+
+## Retrieve an OpenID Connect Identity Provider
+
+### Request
+<API method="GET" uri="/api/identity-provider/{identityProviderId}" authentication={["api-key"]} title="Retrieve an Identity Provider by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="identityProviderId" type="UUID" required>
+    The unique Id of the OpenID Connect Identity Provider to retrieve.
+  </APIField>
+</APIBlock>
+
+### Response
+
+<StandardGetResponseCodes never_search_error />
+
+<OpenidConnectResponseBody idp_display_name={idp_display_name}
+                           idp_since={idp_since}
+                           idp_linking_strategy={idp_linking_strategy}
+                           optional_tag={optional_tag} />
+
+## Update an OpenID Connect Identity Provider
+
+<GenericUpdateExplanationFragment capitalized_object_name="OpenID Connect Identity Provider" />
+
+### Request
+
+<API method="PUT" uri="/api/identity-provider/{identityProviderId}" authentication={["api-key"]} showPatch={true} title="Update an Identity Provider"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="identityProviderId" type="UUID" required>
+    The unique Id of the OpenID Connect Identity Provider to update.
+  </APIField>
+</APIBlock>
+
+<OpenidConnectRequestBody idp_display_name={idp_display_name}
+                          idp_enforce_email_verified_claim={idp_enforce_email_verified_claim}
+                          idp_since={idp_since}
+                          idp_linking_strategy={idp_linking_strategy}
+                          optional_tag={optional_tag} />
+
+### Response
+
+The response for this API contains the OpenID Connect Identity Provider that was updated.
+
+<StandardPutResponseCodes never_search_error />
+
+<OpenidConnectResponseBody idp_display_name={idp_display_name}
+                           idp_since={idp_since}
+                           idp_linking_strategy={idp_linking_strategy}
+                           optional_tag={optional_tag} />
+
+## Delete an OpenID Connect Identity Provider
+
+### Request
+
+<API method="DELETE" uri="/api/identity-provider/{identityProviderId}" authentication={["api-key"]} title="Delete an OpenId Connect Identity Provider by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="identityProviderId" type="UUID" required>
+    The unique Id of the OpenId Connect Identity Provider to delete.
+  </APIField>
+</APIBlock>
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes never_search_error />
+
+## Complete an OpenID Connect Login
+
+<CompleteLoginText idp_display_name={idp_display_name} token_text_with_article="an authorization code" token_text="authorization code" />
+
+### Request
+
+<API method="POST" uri="/api/identity-provider/login" authentication={["none"]} title="Complete OpenID Connect Login"/>
+
+#### Request Headers
+
+<APIBlock>
+  <XForwardedForHeader />
+  <XFusionauthTenantIdHeaderScopedOperationRowOnly />
+</APIBlock>
+
+<IdentityProviderLoginRequestBody idp_display_name={idp_display_name}
+                                  idp_since={idp_since}
+                                  idp_linking_strategy={idp_linking_strategy}
+                                  optional_tag={optional_tag} />
+
+### Response
+
+The response for this API contains the User object.
+
+<IdentityProviderLoginResponseBody idp_display_name={idp_display_name}
+                                   idp_since={idp_since}
+                                   idp_linking_strategy={idp_linking_strategy}
+                                   optional_tag={optional_tag} />
+

@@ -1,0 +1,228 @@
+---
+title: SAML v2 with Azure AD
+description: Configure SAML v2 for Azure Active Directory (Azure AD)/Microsoft Entra ID.
+section: lifecycle
+subcategory: authenticate users
+tertcategory: identity providers
+quatercategory: enterprise
+---
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import AzureAside from 'src/content/docs/_shared/_azure-ad-entra-id.mdx';
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+
+<PremiumPlanBlurb />
+
+## Configure SAML v2 for Azure AD/Microsoft Entra ID
+
+This documentation will guide you in configuring SAML v2 IdP for Azure AD/Microsoft Entra ID. In this case, FusionAuth will act as Service Provider (SP) to Azure AD (IdP). Functionally, the result will allow you to display a "Login with Azure AD" button on your FusionAuth login page and connect via SAML to Azure AD users/applications.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/new-login-button.png" alt="New Login With Azure-Button" width="1200" />
+
+<AzureAside />
+
+## Create an Application in Azure
+
+<Aside type="note">
+This guide uses SAML and Azure Single Sign-on functionality.
+</Aside>
+
+If you have already configured an Azure AD Enterprise application, skip this section. If you have not, please follow the brief steps outlined below:
+
+1. From the [Azure account portal](https://portal.azure.com/#home) navigate to `Enterprise Applications`.
+2. At the top of the screen click on `New application`
+3. Click on `Create your own application`
+4. Name the application
+5. Select the third option - `Integrate any other application you don't find in the gallery (Non-gallery)`.
+6. Click `Create`
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/create-non-gallery-application.png" alt="Create Azure AD Application" width="1200" />
+
+## Configure Your Azure Application
+
+From your application home screen, click on <strong>Single sign-on</strong>. Select the SAML option.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/configure-single-sign-on-saml.png" alt="Configure Single-sign with SAML" width="1200" />
+
+There are five steps to configure Azure AD. However, there is a bit of a procedural dilemma. Before you can move forward, you need an Entity ID (in this case, this will be obtained from our FusionAuth IdP once created) so that Azure AD can generate a X.509 certificate. However, before you can create an IdP in FusionAuth to get the Entity ID, you need an X.509 certificate. The below steps will solve this problem by:
+
+1. Creating a "placeholder" X.509 certificate and importing this into Key Master.
+2. Making a SAML IdP in FusionAuth (Entity Id) with a placeholder certificate selected.
+3. Updating your Azure AD Enterprise application with values from your newly created IdP, thereby getting a valid X.509 certificate.
+4. Revisiting your SAML IdP in FusionAuth and updating with the correct X.509 certificate from the above step.
+5. Completing your integration.
+
+If you already have a valid X.509 certificate, you can complete step two above using this valid certificate and skip a few of the steps below.
+
+With that discussed, let us begin!
+
+## Import a "placeholder" X.509 Certificate
+
+The first step is to import a "placeholder" certificate into Key Master.
+
+```
+-----BEGIN CERTIFICATE-----
+MIIC1DCCAj2gAwIBAgIBADANBgkqhkiG9w0BAQ0FADCBhjELMAkGA1UEBhMCdXMx
+DzANBgNVBAgMBkRlbnZlcjETMBEGA1UECgwKRnVzaW9uQXV0aDEWMBQGA1UEAwwN
+RnVzaW9uQXV0aC5pbzETMBEGA1UECwwKRnVzaW9uQXV0aDEkMCIGCSqGSIb3DQEJ
+ARYVcmljaGFyZEBwaWVkcGlwZXIuY29tMB4XDTIyMDcxNjA1MDc1N1oXDTIzMDcx
+NjA1MDc1N1owgYYxCzAJBgNVBAYTAnVzMQ8wDQYDVQQIDAZEZW52ZXIxEzARBgNV
+BAoMCkZ1c2lvbkF1dGgxFjAUBgNVBAMMDUZ1c2lvbkF1dGguaW8xEzARBgNVBAsM
+CkZ1c2lvbkF1dGgxJDAiBgkqhkiG9w0BCQEWFXJpY2hhcmRAcGllZHBpcGVyLmNv
+bTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA2FmZJHJFVEM9JwFd6Za87T0Z
+MtIL5djSFC/TBVqhCx15eauNGAV/RoulESA6qsI4LNrbJ8uEYDQa9UXAZCc9yRMa
+e/+E5XAApV4K06duo+vKon5L21YZ7HxzjUfL3bhLqKvpFWCQkNrH0rxgPCGwzh7N
+T24sFcKwaVvBdknm9i8CAwEAAaNQME4wHQYDVR0OBBYEFLdhYvqAwTBCEQsSZdKj
+UVR57CwDMB8GA1UdIwQYMBaAFLdhYvqAwTBCEQsSZdKjUVR57CwDMAwGA1UdEwQF
+MAMBAf8wDQYJKoZIhvcNAQENBQADgYEAIpQags/uHj0dyFcCtRcPeVEDUqBPZaGO
+M9kbFiGATlMNX4OiDvMUKs7Ag9109o0iLWPvLBQrMDn87fSy6+MUXZRS4asjzJCp
+5aVWSevI85H6xS8WXxFr21etaqfiE88Lw86gK5O4iKtMBtCnWA5iUc2EJ0citQ0G
+Pk8ybmMP1r8=
+-----END CERTIFICATE-----
+```
+
+Using the above "placeholder" certificate, navigate to <strong>Settings -> Key Master</strong> and click `Import Certificate`.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/import-certificate.png" alt="Import Certificate" width="1200" />
+
+After you configure Azure AD, you'll get another X.509 certificate which will be the one actually used during a SAML login.
+
+## Create a SAML v2 Identity Provider
+
+In the FusionAuth administrative user interface, navigate to <strong>Settings -> Identity Providers -> Add</strong>.
+
+The identity provider you will be adding is a `SAML V2` identity provider.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/idp-saml-configuration.png" alt="IdP SAML configuration" width="1200" />
+
+The following fields will need to be completed.
+
+- <InlineField>Name</InlineField>. This is user-defined, so pick something that describes this connection such as "Pied Piper Azure AD".
+- <InlineField>IdP endpoint</InlineField>. This value can be obtained from your Azure AD Application as demonstrated below. You will want to copy the `Login URL` value from Azure AD into this field.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/step-four-idp-endpoint.png" alt="Get Login URL values From Step Four" width="1200" />
+
+- <InlineField>Verification key</InlineField>. For this value, use the placeholder certificate imported above. You will change this later.
+
+Be sure to check `Debug Enabled`. This will ensure debug information is written to the Event Log, which you can see by navigating to <strong>System -> Event Log</strong>. 
+
+Remember to disable this option when running in production.
+
+<Aside type="note">
+More information regarding the Event Log can be found below
+
+- [API for Event Log](/docs/apis/event-logs#overview)
+- [Admin UI and Troubleshooting](/docs/operate/troubleshooting/troubleshooting#event-log)
+</Aside>
+
+Lastly, navigate to the <strong>Applications</strong> tab in your SAML V2 Idp.
+
+Enable this IdP for the appropriate Application.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/enable-idp.png" alt="Enable IdP On Application" width="1200" />
+
+Once saved, you may receive a CORS warning. Be sure to follow the onscreen instructions and this [documentation](/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2#cors-configuration).
+
+### Linking Options
+
+If you are [linking to a user on email](/docs/lifecycle/authenticate-users/identity-providers/#linking-strategies), please configure the SAML IdP to find the email claim. This can be done by navigating to
+
+<strong>Settings -> Identity Providers -> Your SAML IdP -> Edit</strong>
+
+and then click on the <strong>Options</strong> tab. The mapping can be referenced in the <InlineField>Email Claim</InlineField> field as below
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/email-claim.png" alt="Setup custom email claim" width="1200" />
+
+If you are using an existing Azure AD Application this email claim location may vary. Below is a demonstration of the email claim found in a default Azure AD Application.
+
+```
+http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
+```
+
+<Aside type="note">
+If you are unsure of the best mapping in this step, the Event Log will provide valuable guidance indicating how FusionAuth and Azure are connecting.
+</Aside>
+
+This claim can be found in the event log of a SAML auth handshake. In the case of a default Azure AD application, the email claim is nested.
+ 
+```
+<AttributeStatement>
+{/*  ... */}
+    <Attribute Name="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress">
+        <AttributeValue>*your*email*</AttributeValue>
+    </Attribute>
+{/*  ... */}
+</AttributeStatement>
+```
+
+## Finish Setup of Azure AD Application
+
+With the FusionAuth Identity Provider set up, the next step is to input the newly created values into your Azure AD Application.
+
+Navigate to your Azure AD application. Under step one, click on the pencil to edit.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/saml-5-steps-overview.png" alt="SAML 5 steps overview" width="1200" />
+
+On this screen add the <InlineField>Entity ID</InlineField> and <InlineField>Reply URL</InlineField>. The Entity ID can be obtained by going to <strong>Setting -> Identity Providers</strong> and clicking on the magnifying glass in the row of your Identity Provider. This value is synonymous with the Issuer value in FusionAuth. Input the <InlineField>Entity</InlineField> and <InlineField>ACS</InlineField> value from FusionAuth into Azure AD.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/integration-details.png" alt="Integration Details" width="1200" />
+
+## Download and Import X.509 Certificate
+
+Previously, you created and used a "placeholder" X.509 certificate. At this point, you can change this. From the overview of your SAML application in Azure AD, under step three, you should find a Certificate (Base64) to download.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/generated-certificate.png" alt="Generated Certificate" width="1200" />
+
+Next, import this certificate into Key Master (<strong>Settings -> Key Master -> Import Certificate</strong>). Leave the Key identifier property blank, as this will be autogenerated from the thumbprint in the existing certificate.
+
+Update the certificate used on your IdP configuration (<strong>Settings -> Identity Providers -> your SAML IdP -> Verification Key</strong>) with this new X.509 certificate. You can also remove the "placeholder" certificate from Key Master once complete.
+
+<Aside type="caution">
+Leave the Key identifier property blank, as this will be autogenerated from the thumbprint of the existing certificate. Otherwise, FusionAuth will not be able to validate the signature of the AuthN response from Azure AD when using this integration.
+</Aside>
+
+## Configure the FusionAuth Application Redirect URL
+
+You also need to configure where you will redirect users once they are complete with their Azure AD login.
+
+<Aside type="note">
+This URL is where a user will end up after authentication and may be any value URL.
+</Aside>
+
+Navigate to <strong>Applications -> Your Application -> OAuth</strong>. Update the <InlineField>Authorized redirect URLs</InlineField> field as appropriate.
+
+Ensure the Authorization Code grant is enabled.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/configure-redirect-in-admin-ui.png" alt="Configure a redirect URL within FusionAuth" width="1200" />
+
+## Assign Users
+
+<Aside type="note">
+If you are using an existing Azure AD application with assigned users, you may skip this step.
+</Aside>
+
+Before you can complete your integration, assign Azure AD users to your Azure AD application. Add a user by navigating to <strong>Users and groups</strong> and clicking on the `Add user/group` button. Follow the instructions to select and add a user.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/add-user-azure.png" alt="Add a User to Azure" width="1200" />
+
+## Complete the Login
+
+At this point, what remains is to attempt a login. To test quickly, log into the FusionAuth administrative user interface. Navigate to <strong>Applications -> Your Application</strong> Click the <strong>View</strong> link (the magnify icon), then scroll to the <strong>OAuth2 & OpenID Connect Integration details</strong> section and look for the Login URL. Copy this.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/get-login-url.png" alt="Get OAuth2 Login URL" width="1200" />
+
+Open a new tab, paste in the login URL, and you should see your new SAML Azure AD IdP login button.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/new-login-button.png" alt="New Login With Azure-Button" width="1200" />
+
+Click on that button, log in with one of the Azure AD users you configured above, and you should arrive back at your redirect URL.
+
+If your integration fails, remember to review the Event Logs (`System > Event Log`)
+
+<Aside type="note">
+More information regarding the Event Log can be found below:
+
+- [API for Event Log](/docs/apis/event-logs#overview)
+- [Admin UI and Troubleshooting](/docs/operate/troubleshooting/troubleshooting#event-log)
+</Aside>
+

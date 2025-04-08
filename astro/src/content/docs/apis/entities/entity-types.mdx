@@ -1,0 +1,288 @@
+---
+title: Entity Types
+description: Learn about the APIs for creating, retrieving, updating and deleting entity types.
+section: apis
+subcategory: entities
+---
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import Aside from 'src/components/Aside.astro';
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import EntityTypeRequestBody from 'src/content/docs/apis/entities/_entity-type-request-body.mdx';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import EntityTypeResponseBody from 'src/content/docs/apis/entities/_entity-type-response-body.mdx';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import EntityTypesResponseBody from 'src/content/docs/apis/entities/_entity-types-response-body.mdx';
+import GenericUpdateExplanationFragment from 'src/content/docs/apis/_generic-update-explanation-fragment.mdx';
+import StandardPutResponseCodes from 'src/content/docs/apis/_standard-put-response-codes.astro';
+import StandardDeleteResponseCodes from 'src/content/docs/apis/_standard-delete-response-codes.astro';
+import InlineField from 'src/components/InlineField.astro';
+import PermissionRequestBody from 'src/content/docs/apis/entities/_permission-request-body.mdx';
+import PermissionResponseBody from 'src/content/docs/apis/entities/_permission-response-body.mdx';
+import PermissionUpdateRequestBody from 'src/content/docs/apis/entities/_permission-update-request-body.mdx';
+
+<PremiumPlanBlurb />
+
+## Overview
+
+<Aside type="version">
+This API has been available since 1.26.0
+</Aside>
+
+This page contains the APIs for managing Entity Types. Here are the APIs:
+
+## Create an Entity Type
+
+This API is used to create an Entity Type. Specifying an Id on the URI will instruct FusionAuth to use that Id when creating the Entity Type. Otherwise, FusionAuth will generate an Id for the Entity Type.
+
+### Request
+
+<API method="POST" uri="/api/entity/type" authentication={["api-key"]} title="Create an Entity Type without providing an Id. An Id will be automatically generated."/>
+
+<API method="POST" uri="/api/entity/type/{entityTypeId}" authentication={["api-key"]} title="Create an Entity Type with the provided Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="entityTypeId" type="UUID" optional defaults="secure random UUID">
+    The Id to use for the new Entity Type. If not specified a secure random UUID will be generated.
+  </APIField>
+</APIBlock>
+
+<EntityTypeRequestBody />
+
+### Response
+
+The response for this API contains the information for the Entity Type that was created.
+
+<StandardPostResponseCodes />
+
+<EntityTypeResponseBody />
+
+
+## Retrieve an Entity Type
+
+This API is used to retrieve one or all of the configured Entity Types. Specifying an Id on the URI will retrieve a single Entity Type. Leaving off the Id will retrieve all of the Entity Types.
+
+### Request
+
+<API method="GET" uri="/api/entity/type" authentication={["api-key"]} title="Retrieve all of the Entity Types"/>
+
+<API method="GET" uri="/api/entity/type/{entityTypeId}" authentication={["api-key"]} title="Retrieve a single Entity Type by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="entityTypeId" type="UUID" optional>
+    The Id of the Entity Type to retrieve.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API contains either a single Entity Type or all of the Entity Types. When you call this API with an Id the response will contain just that Entity Type. When you call this API without an Id the response will contain all of the Entity Types. Both response types are defined below along with an example JSON response.
+
+<StandardGetResponseCodes no_errors />
+
+<EntityTypeResponseBody />
+
+<EntityTypesResponseBody />
+
+
+## Update an Entity Type
+
+<GenericUpdateExplanationFragment capitalized_object_name="Entity Type" />
+
+### Request
+
+<API method="PUT" uri="/api/entity/type/{entityTypeId}" authentication={["api-key"]} showPatch={true} title="Update an Entity Type by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="entityTypeId" type="UUID" required>
+    The Id of the Entity Type to update.
+  </APIField>
+</APIBlock>
+
+<EntityTypeRequestBody />
+
+### Response
+
+The response for this API contains the new information for the Entity Type that was updated.
+
+<StandardPutResponseCodes />
+
+<EntityTypeResponseBody />
+
+
+## Delete an Entity Type
+
+This API is used to delete an Entity Type. You must specify the Id of the Entity Type on the URI.
+
+### Request
+
+<API method="DELETE" uri="/api/entity/type/{entityTypeId}" authentication={["api-key"]} title="Delete an Entity Type By Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="entityTypeId" type="UUID" required>
+    The Id of the Entity Type to delete.
+  </APIField>
+</APIBlock>
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes />
+
+## Search for an Entity Type
+
+This API is used to search for matching Entity Types.
+
+### Request
+
+<API method="GET" uri="/api/entity/type/search?name={name}" authentication={["api-key"]} title="Search Entity Types"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="name" type="String" required>
+    The name of the Entity Type for which to search.
+
+    The search matches against the name field and any entity type matching. The match is case-insensitive, and you may not search by prefix or suffix. Whitespace is not allowed in the search. Regular expressions may not be used. A value of `*` will match all records.
+  </APIField>
+  <APIField name="numberOfResults" type="Integer" optional defaults="25">
+    The number of results to return from the search.
+  </APIField>
+  <APIField name="orderBy" type="String" optional defaults="name ASC">
+    The database column to order the search results on plus the order direction.
+
+    The columns you can use for this are:
+
+     * `insertInstant` - the [instant](/docs/reference/data-types#instants) when the Entity Type was created
+     * `lastUpdateInstant` - the [instant](/docs/reference/data-types#instants) when the Entity Type was last updated
+     * `name` - the name of the Entity Type
+
+    For example, to order the results by the insert instant in a descending order, the value would be provided as `insertInstant DESC`. The final string is optional can be set to `ASC` or `DESC`.
+  </APIField>
+  <APIField name="startRow" type="Integer" optional defaults="0">
+    The offset into the total results. In order to paginate the results, increment this value by the <InlineField>numberOfResults</InlineField> for subsequent requests.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API contains the Entity Type matching the search criteria in paginated format.
+
+<StandardGetResponseCodes no_errors never_search_error/>
+
+<EntityTypesResponseBody />
+
+## Create an Entity Type Permission
+
+This API is used to create a permission for an Entity Type. Specifying an Id on the URI will instruct FusionAuth to use that Id when creating the permission. Otherwise, FusionAuth will generate an Id for the permission.
+
+### Request
+
+<API method="POST" uri="/api/entity/type/{entityTypeId}/permission" authentication={["api-key"]} title="Create a Permission with a randomly generated Id"/>
+
+<API method="POST" uri="/api/entity/type/{entityTypeId}/permission/{permissionId}" authentication={["api-key"]} title="Create a Permission with a given Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="entityTypeId" type="UUID" required>
+    The Id of the Entity Type.
+  </APIField>
+  <APIField name="permissionId" type="UUID" optional defaults="secure random UUID">
+    The Id to use for the new permission. If not specified a secure random UUID will be generated.
+  </APIField>
+</APIBlock>
+
+#### Request Body
+
+<PermissionRequestBody />
+
+### Response
+
+The response for this API contains the information for the permission that was created.
+
+<StandardPostResponseCodes never_search_error />
+
+<PermissionResponseBody />
+
+
+## Update an Entity Type Permission
+
+This API is used to update an existing Entity Type permission. You must specify the Entity Type Id and the permission Id on the URI to identify the permission that is being updated.
+
+### Request
+
+<API method="PUT" uri="/api/entity/type/{entityTypeId}/permission/{permissionId}" authentication={["api-key"]} showPatch={true} title="Update an Entity Type Permission by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="entityTypeId" type="UUID" required>
+    The Id of the Entity Type.
+  </APIField>
+  <APIField name="permissionId" type="UUID" required>
+    The Id of the permission that is being updated.
+  </APIField>
+</APIBlock>
+
+#### Request Body
+
+<PermissionUpdateRequestBody />
+
+### Response
+
+The response for this API contains the new information for the permission that was updated.
+
+<StandardPostResponseCodes never_search_error />
+
+<PermissionResponseBody />
+
+
+## Delete an Entity Type Permission
+
+This API is used to delete a permission from an Entity Type.
+
+### Request
+
+<API method="DELETE" uri="/api/entity/type/{entityTypeId}/permission/{permissionId}" authentication={["api-key"]} title="Delete an Entity Type Permission by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="entityTypeId" type="UUID" required>
+    The Id of the Entity Type the permission belongs.
+  </APIField>
+  <APIField name="permissionId" type="UUID" required>
+    The Id of the permission to delete.
+  </APIField>
+</APIBlock>
+
+<API method="DELETE" uri="/api/entity/type/{entityTypeId}/permission?name={name}" authentication={["api-key"]} title="Delete an Entity Type Permission by name"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="entityTypeId" type="UUID" required>
+    The Id of the Entity Type the permission belongs.
+  </APIField>
+  <APIField name="name" type="String" required>
+    The name of the permission to delete.
+  </APIField>
+</APIBlock>
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes never_search_error />
+

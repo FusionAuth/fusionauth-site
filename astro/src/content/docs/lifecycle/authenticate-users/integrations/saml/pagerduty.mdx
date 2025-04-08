@@ -1,0 +1,90 @@
+---
+title: SAML v2 & PagerDuty
+description: Setting up PagerDuty to allow users to log in using FusionAuth via SAML v2.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: integrations
+quatercategory: saml
+---
+import Icon from 'src/components/icon/Icon.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import { YouTube } from '@astro-community/astro-embed-youtube';
+
+## PagerDuty + FusionAuth Integration Benefits
+
+* Simplify the user login experience because each user only has to remember one set of credentials.
+* Maintain centralized control of who has access to your Pager Duty account.
+* Authorized users gain transparent access between all applications using FusionAuth as an identity provider.
+* Increase security and flexibility of login credentials, including using passkeys and multi-factor authentication
+
+## How it Works
+
+* When a user reaches the PagerDuty login screen, they can sign in using their credentials from FusionAuth.
+* User management and access is managed by FusionAuth.
+
+## Requirements
+
+**In PagerDuty:** you must have a [Business or Digital Operations plan](https://www.pagerduty.com/pricing/) and be the *Account Owner* in order to enable Single Sign-On. For more information about this feature, please visit their [SSO support page](https://support.pagerduty.com/docs/sso). If you do not have this role, please reach out to the **Account Owner** within your organization to configure the integration.
+
+**In FusionAuth:** you need to be able to configure a SAML connection on an application. This can be done manually with a user account assigned either the `admin` or `application_manager` role. It can also be done with an API key that has the `application` permission.
+
+## Support
+
+If you need help with this integration, you can request assistance in one of two ways.
+
+* If you have a plan which includes technical support, please [open a support ticket](https://account.fusionauth.io/account/support/).
+* If you do not have a plan which includes technical support, [please create a forum post](/community/forum/).
+
+You can review our [Technical Support documentation](/docs/operate/troubleshooting/technical-support) for more details.
+
+## Integration Walkthrough
+
+### In PagerDuty
+
+1. The _Account Owner_ can configure the SSO settings by navigating to <strong>User Icon -> Account Settings -> Single Sign-On</strong>.
+2. Select the **SAML** radio button.
+3. Copy the **SAML Endpoint URL**.
+
+### In FusionAuth
+
+1. Click the <strong>Applications</strong> link in the sidebar.
+2. Create a new Application by clicking the green *+* button in the top right corner of the page.
+3. Enter a name, such as *PagerDuty*, for the app and then click on the <strong>SAML</strong> tab.
+4. Set the <InlineField>Enabled</InlineField> field to true to turn the integration on.
+5. Configure SAML functionality to integrate with your PagerDuty account.
+   * Set the <InlineField>Issuer</InlineField> value to `https://YOUR-SUBDOMAIN.pagerduty.com`, where `YOUR-SUBDOMAIN` is the value of your PagerDuty subdomain.
+   * Leave the <InlineField>Audience</InlineField> blank.
+   * Paste the <InlineUIElement>SAML Endpoint URL</InlineUIElement> you copied from PagerDuty into the <InlineField>Authorized redirect URLs</InlineField> field. The value in this field will be blue when entered.
+6. Save the application by clicking the *blue floppy disk icon* in the top right corner of the page.
+7. When redirected back to the <strong>Applications</strong> page, view your application details by clicking the magnifier green icon.
+   * In the dialog, scroll down to the <InlineUIElement>SAML v2 Integration details</InlineUIElement> section.
+   * Copy the <InlineUIElement>Entity Id</InlineUIElement> URL and open it in a new browser tab. This will contain configuration you'll need shortly.
+     * _Note: This address contains an XML file. If your browser doesn’t automatically format it, you can copy everything and use [an online XML beautifier](https://xmlviewer.org/)_.
+     * Copy the contents of the `X509Certificate` element from the XML file and paste them in PagerDuty.
+       * You should paste the contents enclosed between `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----`, like the example below:
+
+
+```
+-----BEGIN CERTIFICATE-----
+<contents of X509Certificate copied from FusionAuth>
+-----END CERTIFICATE-----
+```
+
+_Here's a walkthrough of these steps_
+
+<YouTube id="ljhSRa8dy6I" />
+
+   * Copy the <InlineUIElement>Login URL</InlineUIElement> from FusionAuth <InlineUIElement>SAML v2 Integration details</InlineUIElement> section and paste it in PagerDuty’s own <InlineField>Login URL</InlineField> field.
+8. In PagerDuty, click *Save Changes* at the bottom of the screen.
+
+### Testing
+
+. To test the integration, open your PagerDuty application address in another browser or in private mode.
+* Below the login form, click the blue <InlineUIElement>Sign In With Your Identity Provider</InlineUIElement> button to navigate to the FusionAuth login screen.
+* After logging in, you should be automatically redirected to your PagerDuty application already signed in with that same account.
+
+## How to Uninstall
+
+In PagerDuty, the **Account Owner** can disable SSO settings by navigating to the <strong>User Icon -> Account Settings -> Single Sign-On</strong> and choosing the **PagerDuty** radio button.

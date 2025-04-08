@@ -1,0 +1,227 @@
+---
+title: Golang
+description: Quickstart integration of a Golang web application with FusionAuth using the CoreOS OIDC library
+navcategory: getting-started
+prerequisites: Go 1.16
+section: web
+technology: CoreOS go-oidc
+language: Golang
+icon: /img/icons/golang.svg
+faIcon: fa-g
+color: blue
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-quickstart-golang-web/main
+cta: EmailListCTA
+---
+import Aside from '/src/components/Aside.astro';
+import DockerSpinup from '/src/components/quickstarts/DockerSpinup.astro';
+import Intro from '/src/components/quickstarts/Intro.astro';
+import LoginArchitectureWeb from '/src/components/quickstarts/LoginArchitectureWeb.astro';
+import NextSteps from '/src/components/quickstarts/NextSteps.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+import QuickstartTshirtCTA from '/src/components/quickstarts/QuickstartTshirtCTA.astro'
+
+<Intro technology={frontmatter.language}
+       repositoryUrl="https://github.com/FusionAuth/fusionauth-quickstart-golang-web"/>
+
+## Prerequisites
+* [Go v1.16](https://go.dev/doc/install)
+* [Docker](https://www.docker.com): The quickest way to stand up FusionAuth. (There are [other ways](/docs/get-started/download-and-install)).
+
+## General Architecture
+
+<LoginArchitectureWeb />
+
+## Getting Started
+In this section, you'll get FusionAuth up and running, and configured with the ChangeBank application.
+
+### Clone the Code
+First off, grab the code from the repository and change into that directory.
+
+```
+git clone https://github.com/FusionAuth/fusionauth-quickstart-golang-web.git
+cd fusionauth-quickstart-golang-web
+```
+
+### Run FusionAuth via Docker
+
+<DockerSpinup kickstartUri={frontmatter.codeRoot + "/kickstart/kickstart.json"} />
+
+### Create a Basic Golang Application
+In this section, you'll set up a basic Golang application with a single page.
+
+#### Setup Your Environment
+Create a new directory to hold your application, and go into it.
+
+```shell
+mkdir changebank
+cd changebank
+```
+
+Create a go.mod file listing these dependencies:
+
+`go.mod`
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/go.mod"}
+  lang="go" />
+
+#### Create the Application
+Now create a base Go app, which will consist of a single file named main.go. You can either copy the code shown
+here, or you can copy the file `/complete-application/base-app.go` from the quickstart repo and name it `main.go`.
+
+This app sets up a handful of routes that just serve a home page for now. Over the course of this quickstart 
+you'll be modifying each of these route handler functions to complete the integration with FusionAuth.
+
+`main.go`
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/base-app.go"}
+ lang="go"
+ tags="baseApplication"/>
+
+And then load your dependencies and generate go.sum
+
+```shell
+go mod download all
+```
+
+#### Run the App!
+You should now be able to start your Go application with 
+
+```shell
+go run main.go
+``` 
+
+Note that you won't be able to 
+access it with a browser, since you haven't created any pages yet.
+
+#### Create a Home Page
+The next step is to get a basic home page up and running. We'll take this opportunity to copy in all 
+of the static assets that you'll need for the application, including web page templates, images, and CSS.
+
+Run the following copy commands to copy these files from the quickstart repo into your project. This assumes
+that you checked the quickstart repo out into the parent directory. If that's not the case, replace the
+`..` below with your actual repo location.
+
+```shell
+cp -r ../fusionauth-quickstart-go-web/complete-application/templates . && \
+cp -r ../fusionauth-quickstart-go-web/complete-application/static .
+```
+
+<Aside type="tip">
+With the home page template in place, you can view the home page in your browser at http://localhost:8080!
+</Aside>
+
+## Authentication
+In this section, you'll add the ability for a user to log in to your application using FusionAuth as the identity provider.
+To accomplish this, you'll do the following.
+* Configure an OIDC client
+* Modify the `/login` route to redirect the user to FusionAuth to log in
+* Add code to the `/callback` route to accept the redirect from FusionAuth and to exchange an authorization code for an access token
+* Add protection to the `/account` route to only allow access by logged-in users
+* Modify the `/` route to detect if a user is logged in, and take them to `/account` when they are
+* Add a `/logout` endpoint
+
+### Configure the OIDC Client
+The CoreOS OpenID Connect client needs to be set up so that it knows how to talk to FusionAuth.
+
+First, create some constants that you can use throughout your program. Put these after your `import` block and before `func main()`.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/main.go"}
+ lang="go"
+ tags="oidcConstants"/>
+
+<Aside type="note">
+If you want to see where the FusionAuth values came from, they can be found in the 
+FusionAuth app (http://localhost:9011/admin). The tenant ID is found on the Tenants
+page. To see the client ID and client secret, go to the Applications page and 
+click the `View` icon under the actions for the Changebank application. You'll 
+find the client id and client secret values in the `OAuth configuration` section.
+</Aside>
+
+Next, create variables for the OAuth config and the OIDC provider, and initialize
+them in an `init()` function. Put this code after the `const` block you just added.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/main.go"}
+ lang="go"
+ tags="oidcClient"/>
+
+You'll also need to add some additional imports. Modify your `import` block to look like this.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/main.go"}
+ lang="go"
+ tags="imports"/>
+
+### Modify the `/login` Route
+When the user clicks the `Login` button in your Changebank app, they'll be 
+taken to your `/login` endpoint. Have this redirect them to FusionAuth so that
+FusionAuth can present them with a login page. Change the `handleLoginRequest`
+function to do that.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/main.go"}
+ lang="go"
+ tags="loginRoute"/>
+
+The `Login` button on your home page will now take you to FusionAuth to log in. 
+You can log in, but nothing will happen after you do until you add the callback 
+handler in the next section.
+
+### Handle the OAuth Callback
+After the user successfully authenticates with FusionAuth, FusionAuth will redirect
+the user back to your application along with an authorization code. Your application
+needs to exchange this code for an access token using FusionAuth's token endpoint.
+This is the defining action of the OAuth code grant flow. An access token can
+only be acquired for a user by an application that has a valid authorization code, 
+as well as a valid client ID and client secret.
+
+Modify the `handleFusionAuthCallback` function to do this.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/main.go"}
+ lang="go"
+ tags="callbackRoute"/>
+
+This function writes three tokens out to HTTP-only cookies. This means they aren't 
+available to code running in the browser, but they'll be sent back to your go
+application when requests are made to the back end.
+
+### Create a Protected Web Page
+The `/account` page represents what a user sees when they're logged into their
+Changebank account. A user that isn't logged in, who tries to access this page, 
+should just be taken to the home page.
+
+Edit the `handleAccount()` function to do this. There is also a `getLogoutUrl()` 
+function that you'll need to add. 
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/main.go"}
+ lang="go"
+ tags="accountRoute"/>
+
+<Aside type="tip">
+At this point, you should be able to successfully log into your application!
+</Aside>
+
+### Change the Home Route
+Next you'll modify the `handleMain()` function to automatically take a logged-in
+user to their account page.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/main.go"}
+ lang="go"
+ tags="accountRoute"/>
+
+### Implement Logout
+The last step is to implement logout. When you log a user out of an application, you'll take them to 
+FusionAuth's `/oauth2/logout` endpoint. After logging the user out, FusionAuth will redirect the user
+to your app's `/logout` endpoint, which you'll create now. This endpoint deletes any cookies that your
+application created, clearing the user's session.
+
+Update the `handleLogout()` function to do this.
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/main.go"}
+ lang="go"
+ tags="logoutRoute"/>
+
+<Aside type="tip">
+Click the `Logout` button and watch the browser first go to FusionAuth to log out the user, then return to your home page.
+</Aside>
+
+<QuickstartTshirtCTA/>
+
+## Next Steps
+
+<NextSteps />

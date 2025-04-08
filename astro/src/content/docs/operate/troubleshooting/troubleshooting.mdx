@@ -1,0 +1,356 @@
+---
+title: Troubleshooting
+description: Learn how to troubleshoot issues that might arise while install or running FusionAuth.
+navcategory: admin
+section: operate
+subcategory: troubleshooting
+---
+import AccountManagementTroubleshooting from 'src/content/docs/lifecycle/manage-users/account-management/_account-management-troubleshooting.mdx';
+import Aside from 'src/components/Aside.astro';
+import EmailTroubleshooting from 'src/content/docs/customize/email-and-messages/_email-troubleshooting.mdx';
+import ExposingLocalInstance from 'src/content/docs/get-started/download-and-install/development/_exposing-local-instance.mdx';
+import IdpManagedDomainsTroubleshooting from 'src/content/docs/lifecycle/authenticate-users/identity-providers/_idp-managed-domains-troubleshooting.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import KafkaTroubleshooting from 'src/content/docs/extend/events-and-webhooks/kafka/_kafka_troubleshooting.mdx';
+import KickstartTroubleshooting from 'src/content/docs/get-started/download-and-install/development/_kickstart-troubleshooting.mdx';
+import MfaTroubleshooting from 'src/content/docs/lifecycle/authenticate-users/_mfa-troubleshooting.mdx';
+import ProxyTroubleshooting from 'src/content/docs/operate/deploy/_proxy-troubleshooting.mdx';
+import ThemeTroubleshooting from 'src/content/docs/customize/look-and-feel/_theme-troubleshooting.mdx';
+import Troubleshooting from 'src/content/docs/lifecycle/manage-users/account-management/troubleshooting.mdx';
+import TroubleshootingApiCalls from 'src/content/docs/_shared/_troubleshooting-api-calls.mdx';
+import TroubleshootingElasticsearchQueries from 'src/content/docs/lifecycle/manage-users/search/_troubleshooting-elasticsearch-queries.mdx';
+import TroubleshootingGating from 'src/content/docs/lifecycle/manage-users/verification/_troubleshooting-gating.mdx';
+import TroubleshootingPlugin from 'src/content/docs/extend/code/password-hashes/_troubleshooting-plugin.mdx';
+import TroubleshootingRuntimeModesAtStartup from 'src/content/docs/get-started/download-and-install/_troubleshooting-runtime-modes-at-startup.mdx';
+import TroubleshootingUninstallUpgradeReinstallRpm from 'src/content/docs/_shared/_troubleshooting-uninstall-upgrade-reinstall-rpm.mdx';
+import { YouTube } from '@astro-community/astro-embed-youtube';
+
+## Overview
+
+If any problems arise or if you are unable to access FusionAuth, consult the FusionAuth log files. In most cases, API errors will be written out to the `fusionauth-app.log` file, but for some installations such as Docker, the errors will be sent to `stdout`.
+
+If you need further assistance, please ask a question in the <a href="/community/forum/" target="_blank">FusionAuth forum</a> or open an issue on <a href="https://github.com/FusionAuth/fusionauth-issues/issues/new/choose" target="_blank">GitHub</a> if you have found a bug (please provide replication steps).
+
+If you have a paid plan that includes technical support, you may open a support request from your <a href="https://account.fusionauth.io/account/support/" target="_blank">FusionAuth Account</a> page. Learn more about [purchasing support](/pricing).
+
+## Logs
+
+### System Log UI
+
+The system logs may be reviewed in the FusionAuth admin UI by navigating to <strong>System -> Logs</strong>. This feature was added in version 1.16.0. This UI will only render logs for systems that write their logs out to disk. Deployments that write logs to `stdout`, such is the case with Docker, will not be able to review logs through this interface.
+
+The system log UI organizes and renders the most recent 64KB of all logs for all nodes in the deployment. If you need the entire log, use the download action in the upper-right hand corner of the UI to download a zip of all logs.
+
+<img src="/img/docs/operate/troubleshooting/system-logs-single-node.png" alt="System Logs - Single Node" width="1200" />
+
+<img src="/img/docs/operate/troubleshooting/system-logs-multiple-nodes.png" alt="System Logs - Multiple Nodes" width="1200" />
+
+#### System Logs in FusionAuth Cloud
+
+When accessing the system log UI on a FusionAuth Cloud deployment, be aware of the following limitations:
+
+- `fusionauth-search.log` files logs may not be available
+- `fusionauth-app.log` files may be limited to the last start of each node
+
+If you are a FusionAuth Cloud customer and require access to logs that are unavailable in the UI, you may open a support request from your <a href="https://account.fusionauth.io/account/support/" target="_blank">FusionAuth Account</a> page.
+
+
+### Filesystem Logs
+
+Alternatively, the logs may be accessed directly. The following are the default locations for each of the FusionAuth log files. You may or may not have all of the FusionAuth services installed for your system, so you may not have all of the following logs on your server.
+
+```shell title="Linux and macOS"
+/usr/local/fusionauth/logs/fusionauth-app.log
+/usr/local/fusionauth/logs/fusionauth-search.log
+```
+
+These paths assume the suggested product location of `\fusionauth`. This path may be different on your system depending on where you unpacked the zip files.
+
+```plaintext title="Windows"
+\fusionauth\logs\fusionauth-app.log
+\fusionauth\logs\fusionauth-search.log
+```
+
+Note that if you started Windows via Fast Path, the `fusionauth-app.log` file will not be created. Instead, the services are running interactively and all logging is written to stdout.
+
+### Event Log
+
+<Aside type="version">
+Available since 1.6.0
+</Aside>
+
+The event log is a FusionAuth message store designed to capture different types of events that may be necessary to communicate to a FusionAuth developer or admin user.
+
+The event log may contain helpful details to indicate the cause of the failure, or a failure condition you need to be aware of in FusionAuth. See <strong>System -> Event Log</strong> to view this log.
+
+While not limited to, generally speaking, the event log will contain events or errors related to external systems or asynchronous issues that are difficult to communicate to the API caller or the FusionAuth admin at runtime. While not intended to be an exhaustive list, examples of these types of errors are:
+
+- SMTP connection issues
+- Lambda invocation errors
+- External identity provider failures or configuration issues
+- Failure to deliver a webhook event
+
+## Enabling Debugging
+
+### Functionality specific
+
+Many features have additional debugging that can be enabled via the administrative user interface or the API. These features include, but are not limited to:
+
+* Application OAuth configuration
+* Identity Providers
+* Application SAML IdP configuration
+* Connectors
+
+If you are having issues with certain functionality, look for a <InlineField>Debug enabled</InlineField> checkbox in the user interface. If present, set it to true.
+
+<img src="/img/docs/operate/troubleshooting/generic-connector-debug-enabled.png" alt="Enabling debugging for a generic connector." width="1200" role="bottom-cropped" />
+
+The additional debugging information will be written to the [Event Log](#event-log). You can find in the administrative user interface by navigating to <strong>System -> Event Log</strong>.
+
+### Enabling JMX
+
+[JMX](https://openjdk.java.net/groups/jmx/) is an API that allows deeper insight and monitoring of Java applications, including FusionAuth. To use JMX, you’ll need to include a few modules:
+
+* `jdk.management.agent`
+* `jdk.httpserver` if you are using the JMX HTTP adapter
+
+These should be part of a recent, standard Java install. However, if you are using the Docker image, which is built with jlink, you'll need to build a new image with these modules. There's a [GitHub issue about adding these modules to the FusionAuth image](https://github.com/FusionAuth/fusionauth-containers/issues/70).
+
+When the above modules are available to your Java runtime, configure JMX by passing additional arguments to FusionAuth using any of the supported [configuration options](/docs/reference/configuration) such as adding a `fusionauth-app.additional-java-args` entry to the `fusionauth.properties` file.
+
+## Troubleshooting Email
+
+<EmailTroubleshooting />
+
+## Troubleshooting Identity Provider Configuration
+
+<IdpManagedDomainsTroubleshooting />
+
+## Troubleshooting Email and Registration Verification
+
+<TroubleshootingGating />
+
+
+### SAML and Apple Identity Providers
+
+SAML and Apple Identity Providers will not work without the proper CORS configuration. If CORS is misconfigured, you will see a `403` status code during the login process in the browser network console.
+
+When setting up a SAML Identity Provider in FusionAuth, [ensure you have configured CORS correctly](/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2#cors-configuration).
+
+When setting up an Apple Identity Provider in FusionAuth, [ensure you have configured CORS correctly](/docs/lifecycle/authenticate-users/identity-providers/social/apple#cors-configuration).
+
+To further debug CORS issues:
+
+* Enable debugging by navigating to <strong>Settings -> System -> CORS</strong>, selecting <InlineField>Debug enabled</InlineField>, and saving the settings.
+* Attempt to log in again using the provider.
+* Review the Event Log for relevant messages. See <strong>System -> Event Log</strong> to view this log.
+
+After debugging is complete, ensure you disable CORS debugging to avoid spamming the Event Log with unnecessary information. Disable debugging by navigating to <strong>Settings -> System -> CORS</strong>, deselecting <InlineField>Debug enabled</InlineField>, and saving the settings.
+
+## Troubleshooting Themes
+
+<ThemeTroubleshooting />
+
+## Troubleshooting Two Factor Authentication
+
+If you are receiving an invalid code for your two factor authentication and you are using a [time based one time password (TOTP) application such as Google Authenticator or Authy](/docs/customize/email-and-messages/deprecated/authenticator-app-pre-1-26), confirm that the system time is correct on the server.
+
+The TOTP two factor auth system is time dependent and if there is any slippage between the system time of the client and the system time of the server, the generated code will not be correct. This is also known as "clock skew".
+
+The fix is to ensure that the FusionAuth server has the correct system time. How exactly do that depends on the type of system; please consult your operating system documentation.
+
+## Troubleshooting Database Connections
+
+If you find that FusionAuth is unable to connect to the database, ensure you can use a command line client connection to successfully make a connection using the same port and credentials.
+
+Some MySQL services such as Microsoft Azure may require a specific version of TLS to connect successfully. At the time of writing this note, the MySQL connector will not attempt to utilize TLSv1.2 by default, so when connecting to a service that requires this version you will need to explicitly request this version of TLS on the connection string. For example, appending this `enabledTLSProtocols=TLSv1.2` to the connection string will allow you to successfully connect to an Azure managed MySQL database. See [MySQL Connector : Connecting Securely Using SSL](https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-reference-using-ssl.html) for additional information.
+
+## Troubleshooting Performance
+
+If you are not seeing the logins per second you'd expect from FusionAuth, you can take some steps to troubleshoot the issue. Generally speaking the primary bottleneck for logins per second is CPU. Hashing the password is intentionally slow. FusionAuth will not be able to perform more logins per second than your CPU can handle. The database is the other likely bottleneck.
+
+One way to identify if the password hashing is the bottleneck in load tests is to reduce the hash strength. See <strong>Tenants -> Edit -> Password -> Cryptographic hash settings</strong>. Set this to Salted MD5 with a factor of 1 and then enable Re-hash on login. This will cause each user to have their password re-hashed the next time they log in to use MD5. Salted MD5 is *not* a good password hashing strategy for several reasons, but is useful to test whether your system is CPU bound. Make sure you switch back after testing is done.
+
+If you can still get a lower number of logins per second than you'd expect with this configuration, then the database is likely the bottleneck and you should update your system to use a database with more resources and load test that system.
+
+If the MD5 configuration allows you to achieve much higher logins per second, then the CPU is your bottleneck. If you are CPU bound, the only way to get more logins per second is to horizontally scale (add more nodes) or vertically scale (use larger CPUs with each node).
+
+## Troubleshooting Kickstart
+
+<KickstartTroubleshooting />
+
+## Troubleshooting Self Service Account Management
+
+<AccountManagementTroubleshooting />
+
+## Troubleshooting Install with RPMs
+
+<TroubleshootingUninstallUpgradeReinstallRpm />
+
+## Troubleshooting User Import
+
+If you are importing password hashes, ensure you provide only the hash in the `password` import field. For some formats, you'll need to separate out the hash and the salt when using the [Import API](/docs/apis/users#import-users). If you do not, the import will succeed, but the user will not be able to log in, as the hash will not be correct.
+
+For example, a bcrypt value of `$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy` would be split out to the following import fields:
+
+* `factor`: `10`
+* `salt`:  `N9qo8uLOickgx2ZMRZoMye`
+* `password`: `IjZAgcfl7p92ldGxad68LJZdL17lhWy`
+
+Learn more about the [bcrypt hash format](https://en.wikipedia.org/wiki/Bcrypt#Description).
+
+## Troubleshooting Application Startup
+
+<TroubleshootingRuntimeModesAtStartup />
+
+## Troubleshooting API Calls
+
+<TroubleshootingApiCalls />
+
+## Troubleshooting FusionAuth Cloud API Calls
+
+If you are on FusionAuth Cloud and you find that some requests are failing, you may be being rate limited.
+
+This isn't intentional, but an automated part of our infrastructure to ensure FusionAuth Cloud performance and security.
+
+If you are rate limited but need these requests to occur, please open a [support ticket](https://account.fusionauth.io/account/support/) with details.
+
+## Troubleshooting Custom Password Hashing Plugins
+
+<TroubleshootingPlugin />
+
+## Troubleshooting Proxies
+
+<ProxyTroubleshooting />
+
+## Troubleshooting Kafka Integrations
+
+<KafkaTroubleshooting />
+
+## Troubleshooting User Search With Elasticsearch
+
+<TroubleshootingElasticsearchQueries />
+
+## Exposing A Local Instance To The Internet
+
+<ExposingLocalInstance />
+
+## Troubleshooting Multi-Factor Authentication
+
+<MfaTroubleshooting />
+
+## Common Errors
+
+### Access Denied
+
+If you see an Access Denied error in your browser while using the FusionAuth UI, this could be caused by a misconfigured CDN or proxy. This error often produces a 4xx error code such as a 403. To fix this issue, ensure that your CDN, proxy, or gateway does not prevent traffic from flowing directly to FusionAuth. FusionAuth can handle all HTTP traffic and any network handling between the browser and FusionAuth should be as simple as possible.
+
+### FusionAuth Stops Unexpectedly
+
+If you are running FusionAuth on a server with limited memory, it may stop unexpectedly. This can also happen when many other applications are competing for memory on the server. Make sure you verify you are running with the minimum requirements specified in the [system requirements](/docs/get-started/download-and-install/system-requirements).
+
+When FusionAuth is killed because of an out-of-memory issue (OOM), it dies with no explanation in the FusionAuth logs. You might see lines like this in server system logs (typically under `/var/log/`):
+
+```
+Dec 30 12:00:38 vps kernel: Out of memory: Kill process 30047 (java) score 98 or sacrifice child
+```
+
+The OOM killer will begin killing services once the kernel runs out of memory. The solution will be to allocate less memory to FusionAuth or to increase the amount of RAM available.
+
+You can do the former with the `fusionauth-app.memory` setting. See the [configuration reference](/docs/reference/configuration) for more details.
+
+You may do the latter by running a larger server or running fewer competing applications. In particular, applications used by FusionAuth such as Elasticsearch or the database may be moved off to external servers.
+
+#### FusionAuth Docker Containers Stop Unexpectedly
+
+The same memory issues can happen with Docker. If you are running FusionAuth in a container you may see a log line like this, where `fusionauth_1` is the name of the container:
+
+```
+fusionauth_1 exited with code 137
+```
+
+The remedy is to increase the amount of memory available to the FusionAuth docker container using the `FUSIONAUTH_APP_MEMORY` environment variable. Or, if the Elasticsearch container is failing, the `FUSIONAUTH_SEARCH_MEMORY` variable.
+
+You also may need to increase the amount of memory for the docker environment where the containers run. How to do this varies based on how you are running Docker; please consult that software's documentation.
+
+### MapperParsingException
+
+If you are using the Elasticsearch search engine, attributes in the `user.data`, `registration.data`, and `entity.data` fields are indexed. The data fields can contain arbitrary JSON objects.
+
+If your user search is failing mysteriously and you see an error like this one in your system logs:
+
+```
+org.elasticsearch.index.mapper.MapperParsingException: failed to parse field [data.field] of type [text] in document with id 'b8f1ad7d-def0-48d1-a983-aeabf0122b90'. Preview of field's value: '{bar=123}'
+```
+
+or
+```
+org.elasticsearch.index.mapper.MapperParsingException: Could not dynamically add mapping for field [field.email]. Existing mapping for [data.field] must be of type object but found [text].
+```
+
+This means that the type of a field in one of the data fields was changed.
+In this case, `data.field` was originally text, but the request causing this error message was trying to put an object into that attribute.
+This can interfere with user imports, searches and more.
+
+The schema is reset every time you issue a reindex command so manual fixes will not be persisted.
+
+You have two options.
+You can fix your data so that each custom field has a consistent data type.
+Or you can instruct Elasticsearch to ignore fields that don't match the data type it expects.
+
+#### Fixing Your Data
+
+To fix your data, follow these steps:
+
+* Understand how the field types changed.
+* Find the user's Id.
+* Modify the problematic `data` fields via the User API to remove the mismatched fields.
+
+Unfortunately, you often can't search for the user by email, username, or other characteristics using the User Search API. If you have the user's Id, which may be available in the error messages, you can use that. Searching by UUID doesn't use Elasticsearch. You can also try to search for all emails, using a `queryString` of `email:*` if you don't have too many users. Another option is to change to the database search engine to find the user. You can switch back to Elasticsearch after you have corrected the `data` field.
+
+If you have a support contract, please [open a ticket](https://account.fusionauth.io/account/support/) and we'll help you out. If not, please back up your FusionAuth database and test the fix thoroughly in a staging environment before applying it to your production instance.
+
+Suppose you had a data field called `customPermissions` which was a `string` on some users and an `object` on others. Below is a script which converts the type of `customPermissions` from `string` to an `object` for all users.
+
+```javascript title="Script to convert mismatched data fields"
+import FusionAuthClient from "@fusionauth/typescript-client"
+const client = new FusionAuthClient('YOUR_API_KEY', 'https://yourinstance.fusionauth.io')
+
+const response = await client.searchUsersByQuery( request: {queryString: "email:*"}) // or whatever other query gets you a list of users
+for (let i = 0; i < response.data.users.length; i++) {
+  const user = response.data.users[i];
+  if (typeof user.data.customPermissions === "string") {
+     const body = {
+               user: { data: { customPermissions: JSON.parse(user.data.customPermissions) } }
+     }
+     await client.patchUser(user.id, { request: body })
+  }
+}
+```
+
+The complexity of the fix depends on how you find affected users and how far apart the data fields in their type. For instance, the above would be more complicated if `customPermissions` were sometimes a `string`, sometimes an `object`, sometimes an `integer`, and sometimes were missing.
+
+If you can't fix your data, you can instruct Elasticsearch to ignore mismatches.
+
+#### Ignore Fields With a Mismatched Data Type
+
+<Aside type="caution">
+This option is only available to self-hosted FusionAuth instances.
+
+It is not available in FusionAuth Cloud.
+</Aside>
+
+You can configure Elasticsearch to ignore fields that don't match their expected data type. This is done with the [`ignore_malformed` parameter](https://www.elastic.co/guide/en/elasticsearch/reference/7.10/ignore-malformed.html).
+You can apply this to the FusionAuth Elasticsearch indices.
+Whenever [you reindex](/docs/lifecycle/manage-users/search/search#reindexing-elasticsearch), this setting will be lost, so ensure you can reapply it, via a post reindex build step.
+There's an [open issue](https://github.com/FusionAuth/fusionauth-issues/issues/1639) to expose this configuration from within FusionAuth.
+
+When fields are mismatched, you won't be able to search on the ones that have been ignored.
+In the example above, when `data.field` is an object, you won't be able to search on that, because Elasticsearch ignores it.
+However, the data will be safely stored in FusionAuth.
+Elasticsearch is only used for searching, not for data storage.
+
+The below video outlines this approach in more detail.
+
+<YouTube id="MUHcB1kdaP8" />
+

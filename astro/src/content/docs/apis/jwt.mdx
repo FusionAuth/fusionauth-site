@@ -1,0 +1,519 @@
+---
+title: JWTs & Refresh Tokens
+description: Learn about the APIs that allow you to manage Refresh Tokens, verify Access Tokens and retrieve public keys used for verifying JWT signatures.
+section: apis
+---
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import InlineField from 'src/components/InlineField.astro';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import ExternalJwtProviderWarning from 'src/content/docs/_shared/_external-jwt-provider-warning.mdx';
+import XFusionauthTenantIdHeaderScopedOperationRowOnly from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation-row-only.mdx';
+import ReconcileRequestBody from 'src/content/docs/apis/_reconcile-request-body.mdx';
+import UserResponseBody from 'src/content/docs/apis/_user-response-body.mdx';
+import Aside from 'src/components/Aside.astro';
+import JSON from 'src/components/JSON.astro';
+import RefreshTokenResponseBody from 'src/content/docs/apis/_refresh-token-response-body.mdx';
+import RefreshTokensResponseBody from 'src/content/docs/apis/_refresh-tokens-response-body.mdx';
+import StandardDeleteResponseCodes from 'src/content/docs/apis/_standard-delete-response-codes.astro';
+import { YouTube } from '@astro-community/astro-embed-youtube';
+
+## Overview
+
+JSON Web Tokens (JWTs) are portable identity tokens. A JWT is issued after completing a [Login](/docs/apis/login#authenticate-a-user) request and is used to identify a user. JWTs can be used to call various FusionAuth APIs or they can be used to authenticate and authorize your APIs. In this document the term JWT and access token are used interchangeably.
+
+Here's a presentation discussing how to use JWTs in a microservices architecture:
+
+<YouTube id="SLc3cTlypwM" />
+
+## Issue a JWT
+This API is used to issue a new access token (JWT) using an existing access token (JWT).
+
+This API provides the single sign-on mechanism for access tokens. For example you have an access token for application A and you need an access
+token for application B. You may use this API to request an access token to application B with the authorized token to application A. The returned access token will have the same expiration of the one provided.
+
+This API will use a JWT as authentication. See [JWT Authentication](/docs/apis/authentication#jwt-authentication) for examples of how you can send the JWT to FusionAuth.
+
+### Request
+
+<API method="GET" uri="/api/jwt/issue?applicationId={applicationId}&refreshToken={refreshToken}" authentication={["jwt"]} title="Issue a JWT"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" required>
+    The Id of the application for which authorization is being requested.
+  </APIField>
+  <APIField name="refreshToken" type="String" optional>
+    An existing refresh token used to request a refresh token in addition to a JWT in the response. If the cookie `refresh_token` is also on the request it will take precedence over this value.
+
+    The target application represented by the <InlineField>applicationId</InlineField> request parameter must have refresh tokens enabled in order to receive a refresh token in the response.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Cookies
+
+<APIBlock>
+  <APIField name="refresh_token" type="String" optional>
+    The refresh token to be used to exchange for a refresh token in the application represented by the <InlineField>applicationId</InlineField> request parameter.
+  </APIField>
+</APIBlock>
+
+```shell title="Example HTTP Request using cookie"
+GET /api/jwt/issue HTTP/1.1
+Cookie: refresh_token=xRxGGEpVawiUak6He367W3oeOfh+3irw+1G1h1jc
+```
+
+### Response
+
+<StandardGetResponseCodes authorization_message="You did not supply a valid Authorization header, the header was omitted or your access token is expired. The response will be empty. See [Authentication](/docs/apis/authentication)." not_registered never_missing no_errors />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="token" type="String">
+    The encoded access token.
+  </APIField>
+  <APIField name="refreshToken" type="String">
+    The refresh token. This value will only be returned if a valid non-expired refresh token was provided on the request and <InlineField>application.loginConfiguration.generateRefreshTokens</InlineField> is `true`. The returned refresh token will share the same creation time as the original refresh token in regards to how the token expiration is calculated.
+
+    The refresh token expiration policy as defined by <InlineField>jwtConfiguration.refreshTokenExpirationPolicy</InlineField> must be the same as the source application, if the policies are different a refresh token will not be returned.
+
+    <JSON title="Example Response JSON" src="jwt/issue-get-response.json" />
+  </APIField>
+</APIBlock>
+
+## Reconcile a JWT Using the External JWT Provider
+
+The Reconcile API is used to take a JWT issued by a third party identity provider as described by an [External JWT Identity Provider](/docs/apis/identity-providers/external-jwt/)
+configuration and reconcile the User represented by the JWT to FusionAuth.
+
+<ExternalJwtProviderWarning />
+
+### Request
+
+<API method="POST" uri="/api/jwt/reconcile" authentication={["none"]} title="Reconcile a JWT"/>
+
+#### Request Headers
+
+<APIBlock>
+  <APIField name="X-Forwarded-For" type="String" optional>
+    The IP address of a client requesting authentication. If the IP address is provided it will be stored for login history of the user. It is
+    generally preferred to specify the IP address in the request body. If it is not provided in the request body this header value will be used
+    if available, the request body value will take precedence.
+    <XFusionauthTenantIdHeaderScopedOperationRowOnly />
+  </APIField>
+</APIBlock>
+
+<ReconcileRequestBody />
+
+### Response
+
+The response for this API contains the User object.
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                                                                                                                                                                                                       |
+|------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The reconcile was successful. The response will contain the User object that was authenticated.                                                                                                                                                                                                                                                   |
+| 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                                                                                                                                                                                          |
+| 401  | The request cannot be completed. The `identityProviderId` is invalid, the JWT signature cannot be validated, the JWT does not contain a claim identified by the `uniqueIdentityClaim` property in the Identity Provider configuration, or the domain of the email address claim in the JWT is not managed by the Identity Provider Configuration. |
+| 404  | The user was not found or the password was incorrect. The response will be empty.                                                                                                                                                                                                                                                                 |
+| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                                                                                                                                                                                        |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                                                                                                                                                          |
+
+<UserResponseBody login_response />
+
+#### Response Cookies
+
+<APIBlock>
+  <APIField name="access_token" type="String">
+    The encoded access token. This cookie is written in the response as an `HttpOnly` session cookie.
+  </APIField>
+  <APIField name="refresh_token" type="String">
+    The refresh token. This cookie is written in the response as an `HttpOnly` persistent cookie. The cookie expiration is configured in the JWT
+    configuration for the application or the global JWT configuration.
+  </APIField>
+</APIBlock>
+
+## Retrieve Public Keys
+
+This API is used to retrieve Public Keys generated by FusionAuth. These can be used to cryptographically verify JWTs signed with the corresponding RSA or ECDSA private key.
+
+### Request
+
+<API method="GET" uri="/api/jwt/public-key" authentication={["none"]} title="Retrieve all Public Keys"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<API method="GET" uri="/api/jwt/public-key?applicationId={applicationId}" authentication={["none"]} title="Retrieve a single Public Key for a specific Application by Application Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" optional>
+    The Application Id is used to retrieve a specific Public Key. This will return the Public Key that has been specifically configured for the provided Application to sign the access token.
+
+    A public key may not be available for an Application if it is configured to use the global JWT configuration or a HMAC is the configured algorithm for JWT signing.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+
+<Aside type="version">
+This API has been available since 1.8.0
+</Aside>
+
+<API method="GET" uri="/api/jwt/public-key?kid={kid}" authentication={["none"]} title="Retrieve a single Public Key by Key Identifier"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="kid" optional>
+    The Key Id used to retrieve a specific Public Key. This will return the Public Key associated with the Key Id.
+  </APIField>
+</APIBlock>
+
+### Response
+
+<StandardGetResponseCodes no_errors />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="publicKeys" type="Map<String, String>">
+    The public keys keyed by the <InlineField>kid</InlineField>.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON for all Public Keys" src="jwt/public-keys-response.json" />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="publicKey" type="String">
+    The public key configured for the specified Application.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON for a single Public Key" src="jwt/public-key-response.json" />
+
+## Refresh a JWT
+
+This can be used to extend a centrally managed session when a refresh token represents a user session. [Learn more about using refresh tokens to model sessions](/docs/lifecycle/authenticate-users/logout-session-management).
+
+### Request
+
+<API method="POST" uri="/api/jwt/refresh" authentication={["none"]} title="Request a new Access Token by presenting a valid Refresh Token."/>
+
+The refresh token may be provided either in the HTTP request body or as a cookie. If both are provided, the cookie will take precedence.
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Cookies
+
+<APIBlock>
+  <APIField name="refresh_token" type="String" optional>
+    The refresh token to be used to obtain a new access token.
+
+    This value is required but optional as a cookie. It must be provided in either the request body or as a cookie.
+  </APIField>
+  <APIField name="access_token" type="String" optional>
+    The previously issued encoded access token.  When provided on the request, this value will be relayed in the related JWT Refresh webhook event within the `original` field.
+  </APIField>
+</APIBlock>
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="refreshToken" type="String" optional>
+    The refresh token to be used to obtain a new access token.
+
+    This value is required but optional in the request body. It must be provided in either the request body or as a cookie.
+  </APIField>
+  <APIField name="token" type="String" optional>
+    The previously issued encoded access token.  When provided on the request, this value will be relayed in the related JWT Refresh webhook event within the `original` field.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="jwt/refresh-post-request.json" />
+
+```shell title="Example POST HTTP Request containing Cookie Header"
+POST /api/jwt/refresh HTTP/1.1
+Cookie: refresh_token=xRxGGEpVawiUak6He367W3oeOfh+3irw+1G1h1jc; access_token=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IkFuYV91STRWbWxiMU5YVXZ0cV83SjZKZFNtTSJ9.eyJleHAiOjE1ODgzNTM0NjAsImlhdCI6MTU4ODM1MzQwMCwiaXNzIjoiZnVzaW9uYXV0aC5pbyIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMS0wMDAwLTAwMDAwMDAwMDAwMCIsImF1dGhlbnRpY2F0aW9uVHlwZSI6IlBBU1NXT1JEIiwiZW1haWwiOiJ0ZXN0MEBmdXNpb25hdXRoLmlvIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInByZWZlcnJlZF91c2VybmFtZSI6InVzZXJuYW1lMCJ9.ZoIHTo3Pv0DpcELeX_wu-ZB_rd988jefZc2Ozu9_p59kttwqMm5PV8IDbgxJw9xcq9TFoNG8e_B6renoc11JC54UbiyeXBjF7EH01n9LDz-zTGqu9U72470Z4E7IPAHcyvJIBx4Mp9sgsEYAUm9Tb8ChudqNHhn6ZnXYI7Sew7CtGlu62f10wdBYGX0soYARHBv9CwhJC3-gsD2HLmqHAP_XhrpaYPNr5EAvmCHlM-JlTiEQ9bXwSc4gv-XbPQWamwy8Kcdb-g0EEAml_dC_b2CduwwYg0EoPQB3tQxzTUQzADi7K6q0CtQXv2_1VrRi6aQ4lt7v7t-Na39wGry_pA
+```
+
+### Response
+
+<StandardGetResponseCodes no_authorization errors_message="The provided Refresh Token is either expired, was not found, or has been revoked." />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="refreshToken" type="String">
+    The refresh token.
+
+    When <InlineField>jwtConfiguration.refreshTokenUsagePolicy</InlineField> is equal to `Reusable` this will be equal to the refresh token provided in the request. When <InlineField>jwtConfiguration.refreshTokenUsagePolicy</InlineField> is equal to `OneTimeUse` a new value will be returned and the previous refresh token value will no longer be valid.
+
+    The <InlineField>jwtConfiguration.refreshTokenUsagePolicy</InlineField> is configured at the tenant, and optionally per application.
+  </APIField>
+  <APIField name="refreshTokenId" type="String" since="1.37.0">
+    This unique Id is the persistent identifier for this refresh token, and will not change even when using one-time use refresh tokens. This value may optionally be used to revoke the token using the [Refresh Token API](/docs/apis/jwt#revoke-refresh-tokens).
+  </APIField>
+  <APIField name="token" type="String">
+    The encoded access token.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src="jwt/refresh-post-response.json" />
+
+#### Response Cookies
+
+<APIBlock>
+  <APIField name="access_token" type="String">
+    The encoded access token. This cookie is written in the response as an `HttpOnly` session cookie.
+  </APIField>
+  <APIField name="refresh_token" type="String">
+    The encoded refresh token.
+
+    This cookie is written in the response as an `HttpOnly` cookie. When <InlineField>jwtConfiguration.refreshTokenUsagePolicy</InlineField> is equal to `Reusable` this will be equal to the refresh token provided in the request. When <InlineField>jwtConfiguration.refreshTokenUsagePolicy</InlineField> is equal to `OneTimeUse` a new value will be returned and the previous refresh token value will no longer be valid.
+
+    The <InlineField>jwtConfiguration.refreshTokenUsagePolicy</InlineField> is configured at the tenant, and optionally per application.
+  </APIField>
+</APIBlock>
+
+## Retrieve Refresh Tokens
+
+This can be used to examine a centrally managed session when the refresh token represents a user session. [Learn more about using refresh tokens to model sessions](/docs/lifecycle/authenticate-users/logout-session-management).
+
+### Request
+
+<API method="GET" uri="/api/jwt/refresh/{tokenId}" authentication={["api-key"]} title="Retrieve a Single Refresh Token"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="tokenId" type="UUID" required>
+    The Id of the token.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Response
+
+<StandardGetResponseCodes no_errors missing_message="The refresh token specified by the tokenId is missing or revoked." />
+
+<RefreshTokenResponseBody />
+
+<API method="GET" uri="/api/jwt/refresh?userId={userId}" authentication={["api-key"]} title="Retrieve Refresh Tokens issued to a User"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userId" type="UUID" required>
+    The Id of the user for whom to retrieve issued Refresh Tokens.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Response
+
+<StandardGetResponseCodes no_errors never_missing />
+
+<RefreshTokensResponseBody />
+
+## Revoke Refresh Tokens
+
+This can be used to revoke a centrally managed session, when the refresh token is being used to model a session. [Learn more about using refresh tokens to model sessions](/docs/lifecycle/authenticate-users/logout-session-management).
+
+### Request
+
+<API method="DELETE" uri="/api/jwt/refresh?applicationId={applicationId}" authentication={["api-key"]} title="Revoke all Refresh Tokens for an entire Application"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" required>
+    The Id of the application to revoke all issued Refresh Tokens. This will result in any user issued a Refresh Token for this application being required to be issued a new Refresh Token, in other words they'll need to be authenticated again.
+
+    This essentially provides a kill switch for all Refresh Tokens scoped to the application.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<API method="DELETE" uri="/api/jwt/refresh?userId={userId}" authentication={["api-key"]} title="Revoke all Refresh Tokens issued to a User"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userId" type="UUID" required>
+    The Id of the user to revoke issued Refresh Tokens.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<API method="DELETE" uri="/api/jwt/refresh?applicationId={applicationId}&userId={userId}" authentication={["api-key"]} title="Revoke all Refresh Tokens issued to a User for an Application"/>
+
+<Aside type="version">
+Available Since Version 1.19.0
+</Aside>
+
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" required>
+    The Id of the application.
+  </APIField>
+  <APIField name="userId" type="UUID" required>
+    The Id of the user.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<API method="DELETE" uri="/api/jwt/refresh/{tokenId}" authentication={["jwt"]} title="Revoke a single Refresh Token by Id"/>
+
+This API may be authenticated using a JWT or an API key. If using JWT authentication, the JWT owner and token owner must match. See [Authentication](/docs/apis/authentication) for examples of authenticating using a JWT.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="tokenId" type="UUID" required>
+    The Id of the refresh token to be revoked.
+
+    When deleting a single token, using this parameter is recommended. Using this parameter does not expose the refresh token.
+  </APIField>
+</APIBlock>
+
+<API method="DELETE" uri="/api/jwt/refresh?token={token}" authentication={["jwt"]} title="Revoke a single Refresh Token by value"/>
+
+This API may be authenticated using a JWT or an API key. If using JWT authentication, the JWT owner and token owner must match. See [Authentication](/docs/apis/authentication) for examples of authenticating using a JWT.
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="token" type="String" required>
+    The refresh token in string form that is to be revoked. This string may contain characters such as a plus sign that need to be encoded to be valid on the URL. If you're manually building this request ensure you are properly URL encoding this value.
+
+    You can also pass the refresh token in the HTTP body by specifying a Content-Type header of `application/x-www-form-urlencoded` and providing the proper URL encoded value for the parameter. This will prevent the refresh token from being written to HTTP access logs.
+
+    If possible, it is recommended use the <InlineField>tokenId</InlineField> parameter rather than this one.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes no_errors />
+
+## Validate a JWT
+
+This API is used to validate a JSON Web Token. A valid JWT indicates the signature is valid and the payload has not be tampered with and the token is not expired.
+
+You can also validate a JWT without using this API call. To do so, validate the JWT attributes and signature locally. Many programming languages have libraries to do this. Here's an [example in Java](https://github.com/fusionauth/fusionauth-jwt#verify-and-decode-a-jwt-using-hmac).
+
+### Request
+
+<API method="GET" uri="/api/jwt/validate" authentication={["none"]} title="Validate Access Token."/>
+
+The access token can be provided to the API using an HTTP request header, or a cookie. The response body will contain the decoded JWT payload.
+
+#### Request Headers
+
+<APIBlock>
+  <APIField name="Authorization" type="String" optional>
+    The encoded JWT to validate sent in on the Authorization request header.
+
+    The header is expected be in the following form: `Authorization: Bearer [encoded_access_token]`.
+
+    See [Authentication](/docs/apis/authentication) for additional examples.
+  </APIField>
+</APIBlock>
+
+#### Request Cookies
+
+<APIBlock>
+  <APIField name="access_token" type="String" optional>
+    The encoded JWT. This cookie is written to the client by the Login API.
+  </APIField>
+</APIBlock>
+
+_Response Codes_
+
+| Code | Description                                                                                                                                                    |
+|------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 200  | The request was successful. The response will contain a JSON body.                                                                                             |
+| 401  | The access token is not valid. A new access token may be obtained by authentication against the Login API, the Token Endpoint or by utilizing a Refresh Token. |
+| 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                     |
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="jwt" type="Object">
+    The decoded JWT payload. The payload contains the identity claims for the user.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src="jwt/validate-response.json" />
+
+## Vend a JWT
+
+This API is used to create a free-form access token (JWT) with claims defined by the caller. The only "reserved" claims that cannot be specified are `exp` and `iat`. The `iat` claim is the issued at time of the JWT and the `exp` is the expiration time of the JWT as computed by adding to the `iat` value either the user passed <InlineField>timeToLiveInSeconds</InlineField> or the tenant JWT <InlineField>timeToLiveInSeconds</InlineField>. If a reserved claim is passed into the <InlineField>claims</InlineField> object, it will be ignored.
+
+<Aside type="note">
+This API has been available since 1.30.0
+</Aside>
+
+Here's a video showing how to use this feature.
+
+<YouTube id="Kd6l5NPd_L0" />
+
+### Request
+
+<API method="POST" uri="/api/jwt/vend" authentication={["api-key"]} title="Vend a JWT"/>
+
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="claims" type="Object" optional>
+    A set of claims to add to this JWT.  If any of the "reserved" claims, `exp` or `iat`, are specified they will be ignored. Otherwise, the claims can be any valid JSON value.
+  </APIField>
+  <APIField name="keyId" type="UUID" optional>
+    The Id of the signing key to use when signing this JWT. If this is not supplied, the tenant's JWT access token signing key will be used.
+  </APIField>
+  <APIField name="timeToLiveInSeconds" type="Integer" optional>
+    The length of time in seconds before the JWT expires and is no longer valid. Any integer value greater than `0` is allowed. If omitted, the tenant's <InlineField>timeToLiveInSeconds</InlineField> value will be used instead.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="jwt/vend-post-request.json" />
+
+### Response
+
+<StandardGetResponseCodes never_missing />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="token" type="String">
+    The encoded access token.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src="jwt/vend-post-response.json" />

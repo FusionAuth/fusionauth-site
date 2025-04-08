@@ -1,0 +1,116 @@
+---
+title: "OIDC & Salesforce"
+description: Learn how to set up Salesforce to allow users to log in using FusionAuth via OIDC.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: integrations
+quatercategory: oidc
+---
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import Aside from 'src/components/Aside.astro';
+import Icon from 'src/components/icon/Icon.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+
+## Overview
+
+[Salesforce](https://www.salesforce.com/) is a robust customer relationship management software that allows users to sign in into their accounts using an external Identity Provider. This document covers the configuration necessary to get Salesforce working with FusionAuth as the identity provider using OpenID Connect.
+
+### Prerequisites
+
+This document assumes you have a running instance of FusionAuth and a working Salesforce application. You will also need admin accounts for both to configure them correctly and a FusionAuth user that you will use to sign into Salesforce. You can use an existing user or create a new user for this purpose.
+
+## Configure FusionAuth
+
+Navigate to <strong>Applications</strong> and click on <Icon name="plus"/> to create an application named `Salesforce`.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/add-application.png" alt="Create an Application." width="1200" role="bottom-cropped" />
+
+Click on <Icon name="save"/> to save your application. After being redirected to the <strong>Applications</strong> page, click on the <Icon name="fa-search" /> icon to view the application details. Write down the <InlineField>OAuth IdP login URL</InlineField>, <InlineField>Logout URL</InlineField>, <InlineField>Token endpoint</InlineField> and <InlineField>Userinfo endpoint</InlineField> fields, located in the <InlineUIElement>OAuth2 & OpenID Connect Integration details</InlineUIElement> section, as you'll need that information later.
+
+## Configure Salesforce
+
+Before configuring FusionAuth as an identity provider in Salesforce, you need to create some code that will map the information returned from FusionAuth into a user entity that will then be persisted in Salesforce using [Apex](https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_intro_what_is_apex.htm), their object-oriented programming language.
+
+Navigate to <strong>PLATFORM TOOLS -> Custom Code -> Apex Classes</strong> and click the <InlineUIElement>New</InlineUIElement> button to create a new class.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/apex-class-new.png" alt="Create an Apex class." width="1276" role="bottom-cropped" />
+
+In the editor, paste the following code as a starting point:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-salesforce-oidc/main/RegistrationHandler.cls" />
+
+Complete the code above by making the following changes:
+
+- Update the `ORG_SUFFIX` to your actual FusionAuth instance URL
+- Set `STANDARD_PROFILE` to the profile name you want to add users to (you can find the available options by navigating to <strong>ADMINISTRATION -> Users -> Profiles</strong>)
+- Add a default time zone by setting `u.timeZoneSidKey` to a time zone code from [this list](https://help.salesforce.com/s/articleView?id=sf.admin_supported_timezone.htm&type=5). This will be used as a fallback when one is not received from FusionAuth.
+
+Finally, click <InlineUIElement>Save</InlineUIElement> to create the class.
+
+Browse to <strong>SETTINGS -> Identity -> Auth. Providers</strong> to get to the Authentication Providers page and click <InlineUIElement>New</InlineUIElement>.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/auth-provider-new.png" alt="Create an Authentication Provider." width="1200" role="bottom-cropped" />
+
+Fill in the values as shown in the image below, using the information you copied from your FusionAuth application earlier.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/auth-provider-form.png" alt="Fill in Authentication Provider values." width="1200" />
+
+The following table describes the necessary values that you need to copy from your FusionAuth application onto the fields in Salesforce.
+
+| Salesforce field                                                         | FusionAuth field                                                                                         | Sample value                                                                                           |
+|--------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| <InlineField>Provider Type</InlineField>                                 |                                                                                                          | `Open ID Connect`                                                                                      |
+| <InlineField>Name</InlineField>                                          |                                                                                                          | FusionAuth                                                                                             |
+| <InlineField>URL Suffix</InlineField>                                    |                                                                                                          | FusionAuth                                                                                             |
+| <InlineField>Consumer Key</InlineField>                                  | Your FusionAuth application <InlineField>Client Id</InlineField>                                         | `fb45c33d-72db-4852-b764-3e8556916193`                                                                 |
+| <InlineField>Consumer Secret</InlineField>                               | Your FusionAuth application <InlineField>Client secret</InlineField>                                     | `QCuUxBdSq-B-GKpydrh63ASkHZnJZS7P-6Ib2PYZNQw`                                                          |
+| <InlineField>Authorize Endpoint URL</InlineField>                        | Your FusionAuth application <InlineField>OAuth IdP login URL</InlineField> until the question mark (`?`) | `https://your.fusionauth.application.url/oauth2/authorize`                                             |
+| <InlineField>Token Endpoint URL</InlineField>                            | Your FusionAuth application <InlineField>Token endpoint</InlineField>                                    | `https://your.fusionauth.application.url/oauth2/token`                                                 |
+| <InlineField>User Info Endpoint URL</InlineField>                        | Your FusionAuth application <InlineField>Userinfo endpoint</InlineField>                                 | `https://your.fusionauth.application.url/oauth2/userinfo`                                              |
+| <InlineField>Token Issuer</InlineField>                                  | Your FusionAuth application <InlineField>Userinfo issuer</InlineField>                                   | `https://your.fusionauth.application.url`                                                              |
+| <InlineField>Default Scopes</InlineField>                                |                                                                                                          | `openid email`                                                                                         |
+| <InlineField>Send access token in header</InlineField>                   |                                                                                                          | Checked                                                                                                |
+| <InlineField>Send client credentials in header</InlineField>             |                                                                                                          | Unchecked                                                                                              |
+| <InlineField>Include Consumer Secret in SOAP API Responses</InlineField> |                                                                                                          | Unchecked                                                                                              |
+| <InlineField>Custom Logout URL</InlineField>                             | Your FusionAuth application <InlineField>Logout Url</InlineField>                                        | `https://your.fusionauth.application.url/oauth2/logout?client_id=fb45c33d-72db-4852-b764-3e8556916193` |
+
+In <InlineField>Registration Handler</InlineField>, click the <Icon name="fa-search" /> magnifying glass button to open a window with the existing Apex Classes in your Salesforce organization. There, click `FusionAuthRegHandler` to select it. Click the other <Icon name="fa-search" /> magnifying glass button in <InlineField>Execute Registration As</InlineField> and select the user that will be responsible for executing the registration (you can select your own user here).
+
+Click <InlineUIElement>Save</InlineUIElement> to finish configuring the provider. Scroll down to the <InlineUIElement>Salesforce Configuration</InlineUIElement> section and open the address from <InlineUIElement>Test-Only Initialization URL</InlineUIElement> in an incognito window.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/auth-provider-values.png" alt="Copy Test-Only Initialization URL from the Authentication Provider." width="1200" />
+
+After logging in with your FusionAuth credentials, you should be redirected to an XML file with the user details that Salesforce will receive from FusionAuth, like the example below.
+
+```xml
+<user>
+    <full_name>Your Full Name</full_name>
+    <provider>Open ID Connect</provider>
+    <org_id>000000000000000</org_id>
+    <last_name>Your Last Name</last_name>
+    <id>00000000-0000-0000-0000-000000000000</id>
+    <portal_id>000000000000000</portal_id>
+    <first_name>Your First Name</first_name>
+    <email>Your Email</email>
+</user>
+```
+
+<Aside type="note">
+If you are not seeing these values, click <InlineUIElement>Edit</InlineUIElement> in the Salesforce <strong>Auth. Providers</strong> page and double-check the values.
+</Aside>
+
+Now, go back to the <InlineUIElement>Salesforce Configuration</InlineUIElement> section in Salesforce and write down <InlineField>Callback URL</InlineField>, <InlineField>Single Sign-On Initialization URL</InlineField> and <InlineField>Single Logout URL</InlineField> values. In your FusionAuth instance, edit the `Salesforce` application you just created and paste <InlineField>Callback URL</InlineField> in <InlineField>Authorized redirect URLs</InlineField> and <InlineField>Single Logout URL</InlineField> in <InlineField>Logout URL</InlineField>.
+
+Click on <Icon name="save"/> to save the changes.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/edit-application.png" alt="Editing the Application." width="1200" />
+
+## Log in
+
+Open the <InlineField>Single Sign-On Initialization URL</InlineField> you copied from the <InlineUIElement>Salesforce Configuration</InlineUIElement> in a new browser or an incognito window. You should be taken to the FusionAuth login page. Fill in your credentials and you should be redirected back to your Salesforce account already logged in.
+
+## Troubleshooting
+
+Most errors occur due to misconfiguration of the Authentication Provider while copying values from FusionAuth into Salesforce. Make sure you have provided the right values there.

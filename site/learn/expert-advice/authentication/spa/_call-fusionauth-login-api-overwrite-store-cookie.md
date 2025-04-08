@@ -1,3 +1,0 @@
-1. The user inputs their credentials and clicks the submit button. The browser AJAX `POST`s the form data directly to the Login API in FusionAuth. The refresh token cookie from the Store application is sent to FusionAuth here as well. **NOTE** this refresh token cookie is for the wrong application
-1. FusionAuth returns a 200 status code stating that the credentials were okay. It also returns a JWT in JSON and a refresh token cookie with the domain of the FusionAuth server (which could be different than the application backend)
-1. The browser updates the cookie that stores the refresh token to the new cookie value for the forums. This clobbers the refresh token for the store and will force the user to log into the store next time they open that application

@@ -1,0 +1,75 @@
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+import JSON from 'src/components/JSON.astro';
+import SearchPreprocessingWarning from 'src/content/docs/_shared/_search-preprocessing-warning.mdx';
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="dryRun" type="Boolean" optional defaults="false">
+    To preview the user Ids to be deleted by the request without applying the requested action set this value to `true`.
+  </APIField>
+
+  <APIField name="hardDelete" type="Boolean" optional defaults="false">
+    To Permanently delete a user from FusionAuth set this value to `true`. Once a user has been permanently deleted, the action cannot be undone. When this value is set to `false` the user is marked as inactive and the user will be unable log into FusionAuth. This action may be undone by reactivating the user.
+  </APIField>
+
+  <APIField name="limit" type="Integer" optional defaults="10,000" since="1.48.0">
+    The maximum number of users to delete in one call.
+
+    You may use this parameter to process deletes in batches in order to limit individual request processing time and the number of user Ids on the response.
+  </APIField>
+
+  <APIField name="query" type="String" optional since="1.13.0">
+    The raw JSON Elasticsearch query that is used to search for Users. The <InlineField>userIds</InlineField>, <InlineField>query</InlineField>, and <InlineField>queryString</InlineField>  parameters are mutually exclusive, they are listed here in order of precedence.
+
+    It is necessary to use the <InlineField>query</InlineField> parameter when querying against `registrations` in order to achieve expected results, as this field is defined as a [nested datatype](https://www.elastic.co/guide/en/elasticsearch/reference/6.3/nested.html) in the Elasticsearch mapping.
+
+    <Aside type="note" title="Database search engine">
+      This parameter is not compatible with the database search engine, it may only be used when Elasticsearch is configured as the user search engine.
+    </Aside>
+  </APIField>
+
+  <APIField name="queryString" type="String" optional since="1.13.0">
+    The Elasticsearch query string that is used to search for Users to be deleted. The <InlineField>userIds</InlineField>, <InlineField>query</InlineField>, and <InlineField>queryString</InlineField>  parameters are mutually exclusive, they are listed here in order of precedence.
+
+    <SearchPreprocessingWarning/>
+
+    <Aside type="note" title="Database search engine">
+      The Elasticsearch query string DSL is not supported for the database search engine.  Database search limits effective queries to single search terms that may match the following fields on the User:
+
+      * `firstName`
+      * `lastName`
+      * `fullName`
+      * `email`
+      * `username`
+
+      The following is an example bulk delete request with a `queryString` value that is compatible with the database search engine:
+
+      `DELETE /api/user/bulk?queryString=jared%40fusionauth.io`
+    </Aside>
+  </APIField>
+
+</APIBlock>
+####
+
+  <APIField name="userIds" type="Array" optional>
+    An array of User Ids to delete. The <InlineField>userIds</InlineField>, <InlineField>query</InlineField>, and <InlineField>queryString</InlineField>  parameters are mutually exclusive, they are listed here in order of precedence.
+  </APIField>
+<JSON title="Example Request JSON searching by userIds" src="users/bulk-delete-ids-request.json" />
+
+<JSON title="Example JSON for the query parameter to search for users with unverified registrations to a specific application" src="users/unverified-registrations-query.json" />
+
+<JSON title="Example JSON searching by query for users with unverified registrations to a specific application" src="users/bulk-delete-query-request.json" />
+
+<JSON title="Example JSON for the query parameter to search for users with a specific role" src="users/role-query.json" />
+
+<JSON title="Example JSON searching by query for users with with a specific role" src="users/bulk-delete-role-query-request.json" />
+
+<JSON title="Example Request JSON searching by queryString for users with an email address matching a pattern" src="users/bulk-delete-queryString-email-request.json" />
+
+<JSON title="Example Request JSON searching by queryString for users belonging to a specific group with a limit" src="users/bulk-delete-queryString-group-request.json" />
+
+<JSON title="Example Request JSON searching by queryString for users of a specific tenant. A global API key must be used, and you may not use the X-FusionAuth-TenantId header when the search parameters include tenantId" src="users/bulk-delete-queryString-tenant-request.json" />

@@ -1,0 +1,443 @@
+---
+title: Authentication With WebAuthn & Passkeys
+description: Learn how to create a passwordless experience for your end users using WebAuthn and passkeys.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: passwordless
+---
+import LicensedPlanBlurb from 'src/content/docs/_shared/_licensed-plan-blurb.mdx';
+import Aside from 'src/components/Aside.astro';
+import JSON from 'src/components/JSON.astro';
+import InlineField from 'src/components/InlineField.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+import {YouTube} from '@astro-community/astro-embed-youtube';
+
+<LicensedPlanBlurb version="1.52.0" />
+
+<Aside type="version">
+Available since 1.41.0
+</Aside>
+
+## Overview
+
+WebAuthn is a W3C [specification](https://www.w3.org/TR/webauthn-2/) that defines an API to create and use public-key credentials in web applications that provides the ability for users to authenticate in their browser using the same method they use to unlock their device, like a biometric scan or PIN. WebAuthn has some big security benefits over the traditional username and password. Continue reading to learn how you can integrate WebAuthn with your FusionAuth instance. If you’re an administrator looking for details on configuring WebAuthn in your FusionAuth instance, check out the [WebAuthn Admin Guide](/docs/lifecycle/authenticate-users/passwordless/webauthn).  If you want more information on the basics of WebAuthn and its security benefits, FusionAuth's [WebAuthn blog post](/blog/2022/09/13/what-is-webauthn-why-do-you-care) is a good place to start.
+
+<Aside type="note">
+What about passkeys?
+
+"Passkey" is the user-friendly term for WebAuthn credentials. Use this guide to integrate FusionAuth's WebAuthn systems with your application login to allow your users to log in with passkeys.
+</Aside>
+
+## Video Walkthrough For Community License
+
+<YouTube id="5fnqo_13ZYk" />
+
+<Aside type="note">
+If you’re already using the Community plan, you’ll need to upgrade to 1.52.0 to get passkeys. Regardless of whether you’re a new or existing user, you’ll need to register for a free license of FusionAuth. Our Admin UI will walk you through the process. Your free license is good forever, and will remain active as we add even more features to the Community plan over time.
+</Aside>
+
+## Setting Up For WebAuthn
+If you are planning to use WebAuthn, you have two options. The first option is the FusionAuth hosted login pages interface. FusionAuth’s hosted login pages are customizable via themes to make each of the web pages look like your application. The other option is using the WebAuthn API. Both approaches are covered in the sections below.
+
+In either case, you should:
+
+* Enable WebAuthn under the "WebAuthn" tab of the tenant configuration:
+
+<img src="/img/docs/lifecycle/authenticate-users/passwordless/tenant-enable-webauthn.png" alt="Enable WebAuthn" width="1200" role="shadowed" />
+
+* Enable one or more WebAuthn workflows on the tenant configuration:
+
+<img src="/img/docs/lifecycle/authenticate-users/passwordless/tenant-enable-workflows.png" alt="Enable Workflows" width="1200" role="shadowed" />
+
+* Add a user and register them with an application belonging to the tenant
+
+The [WebAuthn Admin Guide](/docs/lifecycle/authenticate-users/passwordless/webauthn) has more information on the tenant configuration options and overriding workflow availability per application.
+
+## Using the FusionAuth Hosted Login Pages
+
+Using the FusionAuth hosted login pages will handle the client-side portion of WebAuthn ceremonies for you. This includes necessary data conversions between the FusionAuth APIs and the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) as well as the WebAuthn API call itself. There is no additional configuration required for this approach.
+
+FusionAuth supports two WebAuthn workflows: re-authentication and bootstrap authentication.
+
+### Re-authentication
+
+The re-authentication workflow is used to provide a streamlined user experience for repeated logins from the same device. FusionAuth will automatically prompt users to opt in to this workflow when it detects a compatible device. The next time the user is prompted to sign in, they will be redirected to a WebAuthn re-authentication page that lists available passkeys. The user can sign in by clicking a passkey in the list and completing the WebAuthn authentication ceremony.
+
+#### Registration
+
+After a successful login, users will automatically be redirected to prompt them to register or select a WebAuthn passkey for re-authentication if:
+
+1. The re-authentication workflow is enable
+2. FusionAuth detects a device suitable for re-authentication using the [isUserVerifyingPlatformAuthenticatorAvailable()](https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential/isUserVerifyingPlatformAuthenticatorAvailable) JavaScript method
+
+<img src="/img/docs/lifecycle/authenticate-users/passwordless/reauth-enable.png" alt="Re-authentication Prompt" width="1200" role="bottom-cropped" />
+
+The re-authentication prompt page lists a user's WebAuthn passkeys that meet the attachment and user verification requirements for the tenant configuration. It also has a section to register a new passkey for re-authentication.
+
+There are a few important notes about this page:
+
+* The listed passkeys may have been registered with an authenticator that is not currently available (e.g. a removable security key)
+* The listed passkeys may have been registered in another browser. Typically passkeys registered with a platform authenticator in one browser will not work in a different browser
+* If the user tries to register a new passkey using the same authenticator as another of their passkeys, the registration ceremony will fail
+
+The user is also presented with the option to skip selecting a re-authentication passkey. Choosing the "Don't ask me again on this device" and then clicking the "Not now" button will skip the prompt to sign in with a passkey in the future.
+
+The user can select a passkey from the list to complete a WebAuthn authentication ceremony and mark that passkey for re-authentication. Otherwise, they can enter a display name and complete a WebAuthn registration ceremony to generate a new passkey that will be marked for re-authentication. In either case, FusionAuth will redirect to the WebAuthn re-authentication page the next time a login page would be presented.
+
+#### Authentication
+
+When a user visits the hosted login pages and begins an authentication, FusionAuth will check to see if the user has previously set up a passkey for this device. If this can be determined, the user will be redirected to the WebAuthn re-authentication page.
+
+<img src="/img/docs/lifecycle/authenticate-users/passwordless/reauth.png" alt="Re-authentication Login" width="1200" role="bottom-cropped" />
+
+WebAuthn passkeys determined to be present will be listed. A user can select which passkey and, by extension, account they would like to use for re-authentication. Clicking a passkey on the list will start the WebAuthn authentication ceremony. Only the selected passkey will be eligible to complete the re-authentication. Once the WebAuthn authentication ceremony has been completed successfully, the user will be authenticated.
+
+The user also has the option to return to the normal login page by clicking the "Return to the normal login" link.
+
+These pages can be modified by the themes just as any other hosted login page.
+
+### Bootstrap Authentication
+
+The bootstrap workflow requires that the user "bootstrap" the WebAuthn authentication ceremony by providing identifying information such as a username or email address. You could think of this as a "manual" WebAuthn login as opposed to the re-authentication workflow where users are automatically prompted. Users can use any of their passkeys whose authenticator meets the attachment and user verification requirements to complete this authentication process.
+
+#### Registration
+
+If the re-authentication workflow is disabled for the tenant, users need another way to register passkeys for WebAuthn bootstrap authentication because they won't be prompted to add a passkey during authentication. Users can register and manage their own passkeys through [Self Service Account Management](/docs/lifecycle/manage-users/account-management/).
+
+<img src="/img/docs/lifecycle/authenticate-users/passwordless/self-service.png" alt="Passkey Self Service" width="1200" role="bottom-cropped" />
+
+Users can see a list of passkeys along with a button to delete each one. Below the list of registered passkeys is a button to add a new passkey. Passkey registration on this page will use authenticator attachment and user verification requirements designed to cover the broadest set of use cases. Depending on the tenant configuration, passkeys registered here may not be usable with all enabled WebAuthn workflows. For instance, if passkey ABC is cross-platform, but the tenant is only configured to accept platform authenticators, passkey ABC won't work even though it shows up in this list.
+
+#### Authentication
+
+If the bootstrap workflow is enabled, users will see a button to authenticate with "Fingerprint, device or key" on the initial FusionAuth login page.
+
+<img src="/img/docs/lifecycle/authenticate-users/passwordless/bootstrap-button.png" alt="Bootstrap Login Button" width="1200" role="bottom-cropped" />
+
+When a re-authentication passkey has been registered in this browser, users will see a link just above the alternative login methods sections with the text "Return to passkey authentication." This link will take the user back to the re-authentication page.
+
+Clicking the "Fingerprint, device or key" button will take the user to the WebAuthn bootstrap login page.
+
+<img src="/img/docs/lifecycle/authenticate-users/passwordless/bootstrap-login.png" alt="Bootstrap Login Page" width="1200" role="bottom-cropped" />
+
+The user must identify themselves with their username or email address and then click the "Submit" button to begin the WebAuthn authentication ceremony. They can use any of their registered passkeys whose authenticator meets the configured attachment and user verification requirements for the bootstrap workflow.
+
+Once the WebAuthn authentication ceremony has been completed successfully, the user will be authenticated.
+
+These pages can be modified by the themes just as any other hosted login page.
+
+## Using the API Directly
+
+While using the FusionAuth's hosted login pages works for many, you may need more control. You can use the WebAuthn API to register new passkeys and authenticate a user with a passkey. The [WebAuthn API reference docs](/docs/apis/webauthn) cover each of the API calls, but this guide will walk you through an implementation.
+
+There are a couple of reasons you might choose this method of integration.
+
+* You can customize every part of the user login experience
+* You can use a different method to track re-authentication passkey availability
+
+When using this option, you must set up an [API key](/docs/apis/authentication) with the appropriate permissions. The minimum level of privilege required is the `POST` permission to the `/api/webauthn/start` and `/api/webauthn/register/start` endpoints.
+
+The WebAuthn registration and authentication ceremonies both have a similar set of steps.
+
+1. Start the WebAuthn ceremony via an API call to FusionAuth
+2. Transform the API response containing the options for the ceremony
+3. Invoke the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) in the browser using the transformed options
+4. Transform the authenticator response to prevent issues during network transport
+5. Include the transformed response in an API call to FusionAuth to complete the ceremony
+
+The registration and authentication ceremonies are covered in their own sections below.
+
+### Registration
+
+Use the WebAuthn registration ceremony to create a new passkey for a user.
+
+#### Starting the Registration
+
+You start a WebAuthn registration by calling the [`/api/webauthn/register/start`](/docs/apis/webauthn#start-a-webauthn-passkey-registration) endpoint.
+
+```shell title="Start WebAuthn Registration API call"
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
+curl  -H "Content-type: application/json" -H "Authorization: $API_KEY" https://local.fusionauth.io/api/webauthn/register/start -d $REQUEST_PAYLOAD
+```
+
+Here's an example request payload:
+
+<JSON title="Start WebAuthn Registration Request JSON" src="webauthn/register-start-request.json" />
+
+The call to [`/api/webauthn/register/start`](/docs/apis/webauthn#start-a-webauthn-passkey-registration) begins the registration ceremony and returns a response with options for the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API), including a one-time challenge specific to this ceremony:
+
+<JSON title="Start WebAuthn Registration Response JSON" src="webauthn/register-start-response.json" />
+
+#### Transform the Options Response
+
+Certain fields on the [`/api/webauthn/register/start`](/docs/apis/webauthn#start-a-webauthn-passkey-registration) response are returned as base64url-encoded strings. These have to be translated to JavaScript [ArrayBuffers](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer)s before being passed to the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API). The response should be left as-is other than the transformations for these particular fields.
+
+The following response fields need to be converted to ``ArrayBuffer``s if they are present:
+
+* <InlineField>options.challenge</InlineField>
+* <InlineField>options.excludeCredentials[x].id</InlineField>
+* <InlineField>options.user.id</InlineField>
+
+See the [`/api/webauthn/register/start`](/docs/apis/webauthn#start-a-webauthn-passkey-registration) response body section for more details.
+
+You can use the following JavaScript function to perform the conversion:
+
+<RemoteCode title="Function to convert a base64url-encoded string to an ArrayBuffer" lang="javascript" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-javascript-webauthn/main/base64url-to-buffer.js" />
+
+The following is an ES6 JavaScript snippet to convert the API response to the object that is passed to the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API). In the following example `options` is the value of the <InlineField>options</InlineField> field on the [`/api/webauthn/register/start`](/docs/apis/webauthn#start-a-webauthn-passkey-registration) API response, and `creationOptions` is the object that is passed to the WebAuthn JavaScript API's `navigator.credentials.create()` function.
+
+```javascript title="Transform API response for WebAuthn JavaScript API"
+const creationOptions = {
+  // publicKey indicates this is for WebAuthn
+  publicKey: {
+    ...options,
+    challenge: base64URLToBuffer(options.challenge),
+    excludeCredentials: options.excludeCredentials?.map(c => {
+      return {
+        ...c,
+        id: base64URLToBuffer(c.id)
+      }
+    }) ?? [],
+    user: {
+      ...options.user,
+      id: base64URLToBuffer(options.user.id)
+    }
+  }
+};
+```
+
+#### Invoke the WebAuthn JavaScript API
+
+Invoke [navigator.credentials.create()](https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/create) on the WebAuthn JavaScript API, passing the transformed FusionAuth API response (`creationOptions` in the snippet above) as a parameter.
+
+The function returns a [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) that resolves with a [PublicKeyCredential](https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential). Reference MDN documentation or the WebAuthn [specification](https://www.w3.org/TR/webauthn-2/) for details.
+
+#### Transform the Authenticator Response
+
+Certain fields on the [PublicKeyCredential](https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential) response from the [navigator.credentials.create()](https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/create) WebAuthn JavaScript API call need to be transformed from [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer)s to base64url-encoded strings for transport over the network.
+
+The following response fields need to be converted from ``ArrayBuffer``s to base64url-encoded strings if they are present where <InlineField>credential</InlineField> refers to the `PublicKeyCredential` returned by the `navigator.credentials.create()` call:
+
+* <InlineField>credential.response.attestationObject</InlineField>
+* <InlineField>credential.response.clientDataJSON</InlineField>
+
+See the [`/api/webauthn/register/complete`](/docs/apis/webauthn#complete-a-webauthn-passkey-registration) request body section for more details.
+
+You can use the following JavaScript function to perform the conversion:
+
+<RemoteCode lang="javascript" title="Function to convert an ArrayBuffer to a base64url-encoded string" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-javascript-webauthn/main/buffer-to-base64url.js" />
+
+You should also use convenience methods on the `PublicKeyCredential` and its <InlineField>response</InlineField> field to extract information on transports supported by the authenticator and any requested client extension results. The <InlineField>response</InlineField> field contains an [AuthenticatorAttestationResponse](https://developer.mozilla.org/en-US/docs/Web/API/AuthenticatorAttestationResponse) object after a successful call to `navigator.credentials.create()`. The following is an ES6 JavaScript snippet to convert the `PublicKeyCredential` to a suitable format for the FusionAuth [`/api/webauthn/register/complete`] API call. In the following example, `credential` is the `PublicKeyCredential` object returned by the WebAuthn JavaScript API's `navigator.credentials.create()` function, and `transformedCredential` is the object that will be included in the [credential](/docs/apis/webauthn#complete-a-webauthn-passkey-registration) on the FusionAuth [`/api/webauthn/register/complete`](/docs/apis/webauthn#complete-a-webauthn-passkey-registration) API request.
+
+```javascript title="Transform WebAuthn JavaScript API response for FusionAuth API request"
+const transformedCredential = {
+  id: credential.id,
+  response: {
+    attestationObject: bufferToBase64URL(credential.response.attestationObject),
+    clientDataJSON: bufferToBase64URL(credential.response.clientDataJSON)
+  },
+  type: credential.type,
+  clientExtensionResults: credential.getClientExtensionResults(),
+  transports: typeof credential.response.getTransports === 'undefined' ? [] : credential.response.getTransports()
+};
+```
+
+#### Completing the Registration
+
+You complete a WebAuthn registration by calling the [`/api/webauthn/register/complete`](/docs/apis/webauthn#complete-a-webauthn-passkey-registration) endpoint.
+
+```shell title="Complete WebAuthn Registration API call"
+REQUEST_PAYLOAD='{...}'
+curl  -H "Content-type: application/json" https://local.fusionauth.io/api/webauthn/register/complete -d $REQUEST_PAYLOAD
+```
+
+Here's an example request payload where <InlineField>credential</InlineField> is the `transformedCredential` from the snippet above:
+
+<JSON title="Complete WebAuthn Registration Request JSON" src="webauthn/register-complete-request.json" />
+
+The call to [`/api/webauthn/register/complete`](/docs/apis/webauthn#complete-a-webauthn-passkey-registration) completes the registration ceremony by validating the request against the WebAuthn [specification](https://www.w3.org/TR/webauthn-2/), extracting the public key, and associating the new passkey with the user. This API returns the new WebAuthn passkey registered for the user.
+
+<JSON title="Complete WebAuthn Registration Response JSON" src="webauthn/response.json" />
+
+### Authentication
+
+Use the WebAuthn authentication ceremony to authenticate a user with a passkey. There is also a separate FusionAuth API to [complete the assertion](#completing-the-assertion), which will validate the authenticator response without logging the user in.
+
+#### Starting the Authentication
+
+You start a WebAuthn authentication ceremony by calling the [`/api/webauthn/start`](/docs/apis/webauthn#start-a-webauthn-passkey-assertion-or-authentication) endpoint.
+
+```shell title="Start WebAuthn Authentication API call"
+API_KEY=...
+REQUEST_PAYLOAD='{...}'
+curl  -H "Content-type: application/json" -H "Authorization: $API_KEY" https://local.fusionauth.io/api/webauthn/start -d $REQUEST_PAYLOAD
+```
+
+Here's an example request payload:
+
+<JSON title="Start WebAuthn Authentication Request JSON" src="webauthn/authenticate-start-request.json" />
+
+The call to [`/api/webauthn/start`](/docs/apis/webauthn#start-a-webauthn-passkey-assertion-or-authentication) begins the authentication ceremony and returns a response with options for the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API), including a one-time challenge specific to this ceremony:
+
+<JSON title="Start WebAuthn Authentication Response JSON" src="webauthn/authenticate-start-response.json" />
+
+#### Transform the Options Response
+
+Certain fields on the [`/api/webauthn/start`](/docs/apis/webauthn#start-a-webauthn-passkey-assertion-or-authentication) response are returned as base64url-encoded strings. These have to be translated to JavaScript [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer)s before being passed to the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API). The response should be left as-is other than the transformations for these particular fields.
+
+The following response fields need to be converted to `ArrayBuffer`s if they are present:
+
+* <InlineField>options.challenge</InlineField>
+* <InlineField>options.allowCredentials[x].id</InlineField>
+
+See the [`/api/webauthn/start`](/docs/apis/webauthn#start-a-webauthn-passkey-assertion-or-authentication) response body section for more details.
+
+You can use the following JavaScript function to perform the conversion:
+
+<RemoteCode lang="javascript" url="Function to convert a base64url-encoded string to an `ArrayBuffer`" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-javascript-webauthn/main/base64url-to-buffer.js" />
+
+The following is an ES6 JavaScript snippet to convert the API response to the object that is passed to the [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API). In the following example `options` is the value of the <InlineField>options</InlineField> field on the [`/api/webauthn/start`](/docs/apis/webauthn#start-a-webauthn-passkey-assertion-or-authentication) API response, and `requestOptions` is the object that is passed to the WebAuthn JavaScript API's `navigator.credentials.get()` function.
+
+```javascript title="Transform API response for WebAuthn JavaScript API"
+const requestOptions = {
+  // publicKey indicates this is for WebAuthn
+  publicKey: {
+    ...options,
+    challenge: base64URLToBuffer(options.challenge),
+    allowCredentials: options.allowCredentials.map(c => {
+      return {
+        ...c,
+        id: base64URLToBuffer(c.id)
+      }
+    })
+  }
+};
+```
+
+#### Invoke the WebAuthn JavaScript API
+
+Invoke [navigator.credentials.get()](https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/get) on the WebAuthn JavaScript API, passing the transformed FusionAuth API response (`requestOptions` in the snippet above) as a parameter.
+
+The function returns a [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) that resolves with a [PublicKeyCredential](https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential). Reference MDN documentation or the WebAuthn [specification](https://www.w3.org/TR/webauthn-2/) for details.
+
+#### Transform the Authenticator Response
+
+Certain fields on the [PublicKeyCredential](https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential) response from the [navigator.credentials.get()](https://developer.mozilla.org/en-US/docs/Web/API/CredentialsContainer/get) WebAuthn JavaScript API call need to be transformed from [ArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer)s to base64url-encoded strings for transport over the network.
+
+The following response fields need to be converted from ``ArrayBuffer``s to base64url-encoded strings if they are present where <InlineField>credential</InlineField> refers to the `PublicKeyCredential` returned by the `navigator.credentials.get()` call:
+
+* <InlineField>credential.response.authenticatorData</InlineField>
+* <InlineField>credential.response.clientDataJSON</InlineField>
+* <InlineField>credential.response.signature</InlineField>
+* <InlineField>credential.response.userHandle</InlineField>
+
+See the [`/api/webauthn/login`](/docs/apis/webauthn#complete-a-webauthn-passkey-authentication) or [`/api/webauthn/assert`](/docs/apis/webauthn#complete-a-webauthn-passkey-assertion) request body sections for more details.
+
+You can use the following JavaScript function to perform the conversion:
+
+<RemoteCode title="Function to convert an ArrayBuffer to a base64url-encoded string" lang="javascript" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-javascript-webauthn/main/buffer-to-base64url.js" />
+
+You should also use convenience methods on the `PublicKeyCredential` to extract information on any requested client extension results. The <InlineField>response</InlineField> field contains an [AuthenticatorAssertionResponse](https://developer.mozilla.org/en-US/docs/Web/API/AuthenticatorAssertionResponse) object after a successful call to `navigator.credentials.get()`. The following is an ES6 JavaScript snippet to convert the `PublicKeyCredential` to a suitable format for the FusionAuth [`/api/webauthn/login`](/docs/apis/webauthn#complete-a-webauthn-passkey-authentication) or [`/api/webauthn/assert`] API call. In the following example, `credential` is the `PublicKeyCredential` object returned by the WebAuthn JavaScript API's `navigator.credentials.get()` function, and `transformedCredential` is the object that will be included in the [credential](/docs/apis/webauthn#complete-a-webauthn-passkey-assertion) field on the FusionAuth API request.
+
+```javascript title="Transform WebAuthn JavaScript API response for FusionAuth API request"
+let userHandle = undefined;
+if (credential.response.userHandle) {
+  userHandle = bufferToBase64URL(credential.response.userHandle);
+}
+const transformedCredential = {
+  id: credential.id,
+  response: {
+    authenticatorData: bufferToBase64URL(credential.response.authenticatorData),
+    clientDataJSON: bufferToBase64URL(credential.response.clientDataJSON),
+    signature: bufferToBase64URL(credential.response.signature),
+    userHandle
+  },
+  type: credential.type,
+  clientExtensionResults: credential.getClientExtensionResults()
+};
+```
+
+#### Completing the Authentication
+
+You complete a WebAuthn authentication by calling the [`/api/webauthn/login`](/docs/apis/webauthn#complete-a-webauthn-passkey-authentication) endpoint.
+
+```shell title="Complete WebAuthn Authentication API call"
+REQUEST_PAYLOAD='{...}'
+curl  -H "Content-type: application/json" https://local.fusionauth.io/api/webauthn/login -d $REQUEST_PAYLOAD
+```
+
+Here's an example request payload where <InlineField>credential</InlineField> is the `transformedCredential` from the snippet above:
+
+<JSON title="Complete WebAuthn Authentication Request JSON" src="webauthn/authenticate-complete-request.json" />
+
+The call to [`/api/webauthn/login`](/docs/apis/webauthn#complete-a-webauthn-passkey-authentication) completes the authentication ceremony by validating the request against the WebAuthn [specification](https://www.w3.org/TR/webauthn-2/), verifying the signature, and authenticating the user. This API returns the user object for the authenticated user along with access tokens for the successful authentication.
+
+<JSON title="Complete WebAuthn Authentication Response JSON" src="users/login-response.json" />
+
+#### Completing the Assertion
+
+You can also complete a WebAuthn authentication ceremony by calling the [`/api/webauthn/assert`](/docs/apis/webauthn#complete-a-webauthn-passkey-assertion) endpoint. This endpoint performs the same request validation and signature verification as [`/api/webauthn/login`](/docs/apis/webauthn#complete-a-webauthn-passkey-authentication), but it does not authenticate the user. It may be useful to validate that a user has access to passkey without authenticating them.
+
+```shell title="Complete WebAuthn Assertion API call"
+REQUEST_PAYLOAD='{...}'
+curl  -H "Content-type: application/json" https://local.fusionauth.io/api/webauthn/assert -d $REQUEST_PAYLOAD
+```
+
+Here's an example request payload where <InlineField>credential</InlineField> is the `transformedCredential` from the snippet above:
+
+<JSON title="Complete WebAuthn Assertion Request JSON" src="webauthn/authenticate-complete-request.json" />
+
+The call to [`/api/webauthn/assert`](/docs/apis/webauthn#complete-a-webauthn-passkey-assertion) completes the authentication ceremony by validating the request against the WebAuthn [specification](https://www.w3.org/TR/webauthn-2/) and verifying the signature, but it does _not_ authenticate the user. This API returns the WebAuthn passkey that was used to complete the assertion.
+
+<JSON title="Complete WebAuthn Assertion Response JSON" src="webauthn/response.json" />
+
+## Customizing WebAuthn
+
+You can configure the FusionAuth WebAuthn implementation to meet your application's needs in a number of ways. For details on WebAuthn workflow configuration, check out the [WebAuthn Admin Guide](/docs/lifecycle/authenticate-users/passwordless/webauthn).
+
+### Themes
+
+If you are using FusionAuth's hosted login pages to present WebAuthn pages to users, you can customize those pages using a theme. There are several themed pages related to WebAuthn:
+
+* User account self service
+  * List WebAuthn passkeys
+  * Add WebAuthn passkey
+  * Delete WebAuthn passkey
+* OAuth
+  * WebAuthn bootstrap login
+  * WebAuthn re-authentication enable
+  * WebAuthn re-authentication login
+
+Here is more information about [themes](/docs/customize/look-and-feel/).
+
+### Challenge Customization
+
+You can modify the lifetime of the one-time challenge generated for WebAuthn registration and authentication ceremonies. By default both are 180 seconds; change this in the tenant settings under <strong>Advanced -> External identifier durations</strong>:
+
+<img src="/img/docs/lifecycle/authenticate-users/passwordless/challenge-settings.png" alt="The tenant settings to customize challenge lifetime." width="1200" role="top-cropped" bottom-cropped="undefined" />
+
+You may want to adjust the lifetime of these challenges to change how long a user has to complete a ceremony once it has been started. If an attempt is made to complete the ceremony after the challenge expires, it will fail. These values are also used as the timeout for the corresponding [WebAuthn JavaScript API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API) calls by returning the value in milliseconds as part of the [`/api/webauthn/register/start`](/docs/apis/webauthn#start-a-webauthn-passkey-registration) and [`/api/webauthn/start`] API responses. The WebAuthn JavaScript APIs treat the timeout value as a hint. The browser may allow the user more time to complete the ceremony (e.g. if the timeout is deemed too short), but FusionAuth will still expire the challenge, preventing the ceremony from being completed. The <InlineField>WebAuthn authentication</InlineField> value is used for both authentication and assertion.
+
+## Troubleshooting
+
+Due to the server- and client-side components of each of the WebAuthn ceremonies and compatibility depending on both the browser and operating system, troubleshooting issues can be difficult. These tips may help you when issues come up.
+
+### Browser Compatibility
+
+WebAuthn is now supported across a variety of web browsers, but if you experience issues, it's worth checking whether your browser is [compatible](https://caniuse.com/webauthn). Be sure to check the notes section for limitations based on specific authenticators or operating systems and evaluate whether you may be experiencing one of those limitations.
+
+### Secure Context
+
+WebAuthn can only be used in [secure contexts](https://w3c.github.io/webappsec-secure-contexts/#secure-contexts). Briefly, this means that the browser must have a valid TLS connection for the current page. If WebAuthn is called from an `iframe`, then both the `iframe` and the embedding page must be secured.
+
+### Relying Party Id
+
+A WebAuthn passkey is scoped to a specific relying party Id at the time it is created. Passkeys cannot be used with a different relying party Id than they were registered, and there are restrictions on allowed relying party Ids during a WebAuthn ceremony based on the browser request origin's effective domain.
+
+If the relying party Id for a tenant is changed because of a configuration change or a domain change, passkeys registered prior to the change will no longer work. See the [Relying Party Id](/docs/lifecycle/authenticate-users/passwordless/webauthn#relying-party-id) section in the WebAuthn Admin Guide for more detail on constraints and configuration options.
+
+### WebAuthn JavaScript Binary Format
+
+As mentioned earlier in this guide, certain request and response fields on FusionAuth's [WebAuthn APIs](/docs/apis/webauthn) must be encoded as base64url strings for transport over the network, but the WebAuthn JavaScript API uses JavaScript's `ArrayBuffer` type for these values. See the transform sections in this guide for more information on which fields must be converted.

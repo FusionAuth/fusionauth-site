@@ -1,0 +1,252 @@
+---
+title: Tenants
+description: Learn about the APIs for creating, retrieving, updating and deleting tenants.
+section: apis
+---
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import API from 'src/components/api/API.astro';
+import Aside from 'src/components/Aside.astro';
+import GenericUpdateExplanationFragment from 'src/content/docs/apis/_generic-update-explanation-fragment.mdx';
+import JSON from 'src/components/JSON.astro';
+import StandardDeleteResponseCodes from 'src/content/docs/apis/_standard-delete-response-codes.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import StandardPutResponseCodes from 'src/content/docs/apis/_standard-put-response-codes.astro';
+import TenantCopyRequestBody from 'src/content/docs/apis/_tenant-copy-request-body.mdx';
+import TenantPasswordValidationRulesResponseBody from 'src/content/docs/apis/_tenant-password-validation-rules-response-body.mdx';
+import TenantRequestBody from './_tenant-request-body.mdx';
+import TenantResponseBody from './_tenant-response-body.mdx';
+import TenantResponseBodyBase from 'src/content/docs/apis/_tenant-response-body-base.mdx';
+import TenantsResponseBody from 'src/content/docs/apis/_tenants-response-body.mdx';
+import TenantSearchRequestParameters from 'src/content/docs/apis/_tenant-search-request-parameters.mdx';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+
+## Overview
+
+A FusionAuth Tenant is a named object that represents a discrete namespace for Users, Applications and Groups. A user is unique by email
+address or username within a tenant.
+
+Tenants may be useful to support a multi-tenant application where you wish to use a single instance of FusionAuth but require the ability to
+have duplicate users across the tenants
+in your own application. In this scenario a user may exist multiple times with the same email address and different passwords across tenants.
+
+Tenants may also be useful in a test or staging environment to allow multiple users to call APIs and create and modify users without
+possibility of collision.
+
+The following APIs are provided to manage Tenants.
+
+The following APIs provide a subset of the Tenant configuration without an API Key.
+
+## Create a Tenant
+
+This API is used to create a new Tenant.
+
+### Request
+
+<API method="POST" uri="/api/tenant" authentication={["api-key"]} title="Create a Tenant with a randomly generated Id"/>
+
+<API method="POST" uri="/api/tenant/{tenantId}" authentication={["api-key"]} title="Create a Tenant with the provided unique Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="tenantId" type="UUID" optional defaults="secure random UUID">
+    The Id to use for the new Tenant. If not specified a secure random UUID will be generated.
+  </APIField>
+</APIBlock>
+
+<TenantRequestBody />
+
+<Aside type="version">
+This API has been available since 1.14.0
+</Aside>
+
+<API method="POST" uri="/api/tenant" authentication={["api-key"]} title="Create a Tenant from an existing Tenant with a randomly generated Id"/>
+
+<Aside type="version">
+This API has been available since 1.14.0
+</Aside>
+
+<API method="POST" uri="/api/tenant/{tenantId}" authentication={["api-key"]} title="Create a Tenant from an existing Tenant with the provided unique Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="tenantId" type="UUID" optional defaults="secure random UUID">
+    The Id to use for the new Tenant. If not specified a secure random UUID will be generated.
+  </APIField>
+</APIBlock>
+
+<TenantCopyRequestBody />
+
+### Response
+
+The response for this API contains the Tenant that was created.
+
+<StandardPostResponseCodes never_search_error />
+
+<TenantResponseBody />
+
+
+## Retrieve a Tenant
+
+This API is used to retrieve a single Tenant by unique Id or all of the configured Tenants.
+
+### Request
+
+<API method="GET" uri="/api/tenant" authentication={["api-key"]} title="Retrieve all of the Tenants"/>
+
+<API method="GET" uri="/api/tenant/{tenantId}" authentication={["api-key"]} title="Retrieve a Tenant by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="tenantId" type="UUID" required>
+    The unique Id of the Tenant to retrieve.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Response
+
+The response for this API contains either a single Tenant or all of the Tenants. When you call this API with an Id the response will
+contain a single Tenant. When you call this API without an Id the response will contain all of the Tenants. Both response types are
+defined below along with an example JSON response.
+
+<StandardGetResponseCodes never_search_error />
+
+<TenantResponseBody />
+
+<TenantsResponseBody />
+
+## Search for Tenants
+
+<Aside type="version">
+This API has been available since 1.45.0
+</Aside>
+
+This API is used to search for Tenants and may be called using the `GET` or `POST` HTTP methods. Examples of each are provided below. The `POST` method is provided to allow for a richer request object without worrying about exceeding the maximum length of a URL. Calling this API with either the `GET` or `POST` HTTP method will provide the same search results given the same query parameters.
+
+**Note:** API key authentication must be made using a global API key. The request may not contain the `X-FusionAuth-TenantId` request header. Requests made using an API key scoped to a specific tenant, or containing the `X-FusionAuth-TenantId` request header will fail with a `401` status code.
+
+### Request
+
+<API method="GET" uri="/api/tenant/search?name={name}" authentication={["api-key"]} title="Search for Tenants"/>
+
+#### Request Parameters
+
+<TenantSearchRequestParameters parameter_prefix='' />
+
+<API method="POST" uri="/api/tenant/search" authentication={["api-key"]} title="Search for Tenants"/>
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+#### Request Body
+
+<TenantSearchRequestParameters parameter_prefix="search." />
+
+<JSON title="Example JSON Request" src="tenants/search-post-request.json" />
+
+### Response
+
+The response for this API contains the Tenants matching the search criteria in paginated format.
+
+<StandardGetResponseCodes authorization_message="You did not supply a valid Authorization header. The header was omitted, your API key was not valid, your API key is scoped to a single tenant, or the request contains a `X-FusionAuth-TenantId` header.  The response will be empty. See <a href='/docs/apis/authentication'>Authentication</a>." never_missing never_search_error />
+
+#### Response Body
+
+<TenantResponseBodyBase base_field_name="tenants[x]" include_total />
+
+
+## Update a Tenant
+
+<GenericUpdateExplanationFragment capitalized_object_name="Tenant" />
+
+### Request
+
+<API method="PUT" uri="/api/tenant/{tenantId}" authentication={["api-key"]} showPatch={true} title="Update the Tenant with the given Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="tenantId" type="UUID" required>
+    The Id of the Tenant to update.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+<TenantRequestBody />
+
+### Response
+
+The response for this API contains the Tenant that was updated.
+
+<StandardPutResponseCodes never_search_error />
+
+<TenantResponseBody />
+
+
+## Delete a Tenant
+
+This API is used to permanently delete a Tenant. Deleting a Tenant will delete all Users, Applications and Groups that belong to this
+tenant. Proceed with caution.
+
+### Request
+
+<API method="DELETE" uri="/api/tenant/{tenantId}" authentication={["api-key"]} title="Delete a Tenant by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="tenantId" type="UUID" required>
+    The unique Id of the Tenant to delete.
+  </APIField>
+  <APIField name="async" type="Boolean" optional defaults="false">
+    Set this value to `true` to perform this request asynchronously, this means the API will return a response indicating the request has been accepted and will not wait for the operation to complete.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes async_enabled never_search_error />
+
+## Retrieve the Password Validation Rules
+
+<Aside type="version">
+This API has been available since 1.8.0
+</Aside>
+
+This API is used to retrieve the Password Validation Rules. This configuration is a subset of the Tenant configuration.
+
+### Request
+
+<API method="GET" uri="/api/tenant/password-validation-rules/{tenantId}" authentication={["none"]} title="Retrieve the Password Validation Rules"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="tenantId" type="UUID" required>
+    The Id of the tenant.
+  </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Response
+
+The response for this API contains the Password Validation Rules.
+
+*Response Codes*
+|Code |Description
+| --- | --- |
+|200 |The request was successful. The response will contain a JSON body. |
+|500 |There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty. |
+
+<TenantPasswordValidationRulesResponseBody />

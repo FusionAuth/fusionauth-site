@@ -1,0 +1,599 @@
+---
+title: Applications
+description: An overview of FusionAuth Applications.
+section: get started
+subcategory: core concepts
+---
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import Icon from 'src/components/icon/Icon.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import AvailableSince from 'src/components/api/AvailableSince.astro';
+import PremiumPlanBlurbApi from 'src/content/docs/_shared/_premium-plan-blurb-api.astro';
+import RoleAttributes from 'src/content/docs/get-started/core-concepts/_role_attributes.mdx';
+import ReadOnly from 'src/components/api/ReadOnly.astro';
+import Optional from 'src/components/api/Optional.astro';
+import EmailTemplates from 'src/content/docs/get-started/core-concepts/_email-templates.mdx';
+import ApplicationLambdaSettings from 'src/content/docs/get-started/core-concepts/_application-lambda-settings.mdx';
+import ApplicationJsonWebTokenSettings from 'src/content/docs/get-started/core-concepts/_application-json-web-token-settings.mdx';
+import ApplicationOAuthSettings from 'src/content/docs/_shared/_application-oauth-settings.mdx';
+import ApplicationScopesSettings from 'src/content/docs/_shared/_application-scopes-settings.mdx';
+import RefreshTokenSettings from 'src/content/docs/get-started/core-concepts/_refresh-token-settings.mdx';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import AdvancedPlanBlurb from 'src/content/docs/_shared/_advanced-plan-blurb.astro';
+import Aside from 'src/components/Aside.astro';
+import { YouTube } from '@astro-community/astro-embed-youtube';
+
+## Overview
+
+A FusionAuth Application is simply something a user can log into. When you use the Login API, you will provide an `applicationId` to indicate what resource you're attempting to obtain authorization. When you use one of the OAuth2 / OpenID Connect authorization grants you will provide a `client_id` in some fashion. This client identifier will be unique to a single FusionAuth Application which allows FusionAuth to verify the User is registered for the requested Application and subsequently return the correct roles. The `applicationId` and `client_id` can be considered synonymous, both concepts use the same `Id` value.
+
+A FusionAuth Application holds configuration for how your applications interact with FusionAuth. A one to one mapping between an external web, mobile or desktop application and a FusionAuth Application is not required. All of these mappings are supported:
+
+* One to one. Each application has one Application configuration.
+* Many to one. Multiple web and mobile applications use one FusionAuth Application config.
+* One to many. One web application can auth against multiple FusionAuth Applications, if different authentication scenarios needed to be handled in one application (this isn't very common, though).
+
+Here's a brief video covering some aspects of applications:
+
+<YouTube id="DaZbwrA7M90" />
+
+## Core Concepts Relationships
+
+Below is a visual reminder of the relationships between FusionAuth's primary core concepts.
+
+<img src="/img/docs/get-started/core-concepts/core-concepts-relationships-applications.png" alt="Diagram showing Applications used within FusionAuth" />
+
+## Admin UI
+
+This page describes the admin UI for creating and configuring an Application.
+
+### Add an Application
+
+Before you start your integration with FusionAuth you need to set up at least one Application. Click on <strong>Applications</strong> from the left navigation to begin.
+
+<img src="/img/docs/get-started/core-concepts/create-application.png" alt="Create an Application" width="1200" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Id" optional>
+    An optional UUID. When this value is omitted a unique Id will be generated automatically. This will also be used as the <InlineField>Client Id</InlineField> in the <strong>OAuth</strong> configuration, so if you require a specific value for that, set it here. Application Ids are unique across all tenants.
+  </APIField>
+  <APIField name="Name" required>
+    The name of the Application. This value is for display purposes only and can be changed at any time.
+  </APIField>
+  <APIField name="Tenant" required>
+    The tenant in which to create this Application.
+
+    This field is only displayed once multiple tenants exist in FusionAuth. When only a single tenant exists, the Application will always be created in the default tenant.
+  </APIField>
+  <APIField name="Theme" optional since="1.27.0">
+    When a theme is selected, it will  be used for this application instead of the tenant theme.
+
+    <PremiumPlanBlurbApi feature="application themes" />
+
+  </APIField>
+</APIBlock>
+
+### Roles
+
+The Roles tab will only be available on the Add Application form. To manage roles after the Application has been created you will use the Manage Roles action.
+
+#### Table Columns
+
+<RoleAttributes />
+
+To manage Application Roles after you have added an Application, click the <Icon name="user"/> Manage Roles button on the index page. To edit an Application click the <Icon name="edit"/> edit icon. The following sections will walk you through each panel for the edit action.
+
+<img src="/img/docs/get-started/core-concepts/applications.png" alt="Applications" width="1200" role="shadowed bottom-cropped" />
+
+### OAuth
+
+The OAuth tab allows you to configure the OAuth2 and OpenID Connect settings specific to this Application.
+
+<img src="/img/docs/get-started/core-concepts/application-oauth.png" alt="Application OAuth configuration" width="1200" />
+
+#### Form Fields
+
+<ApplicationOAuthSettings />
+
+### Scopes
+
+<Aside type="version">
+  Available since 1.50.0
+</Aside>
+
+The Scopes tab allows you to configure OAuth scope settings specific to this Application. To manage custom OAuth Scopes, click the <InlineUIElement>Manage Scopes</InlineUIElement> button in the action dropdown a the top of the page or click the link to `Manage custom scopes` from the <Breadcrumb>Scopes</Breadcrumb> tab. See [Scopes](/docs/get-started/core-concepts/scopes) for more detail.
+
+<img src="/img/docs/get-started/core-concepts/application-scopes.png" alt="Application Scopes configuration" width="1200" />
+
+#### Form Fields
+
+<ApplicationScopesSettings />
+
+### CleanSpeak
+
+The CleanSpeak configuration panel allows you to optionally configure username filtering through the use of a CleanSpeak integration. See [CleanSpeak Integration](/docs/lifecycle/manage-users/cleanspeak) for additional configuration details.
+
+The use of this feature requires a licensed instance of CleanSpeak. See https://cleanspeak.com for additional information.
+
+<img src="/img/docs/get-started/core-concepts/application-cleanspeak.png" alt="No Application Webhooks" width="1200" role="bottom-cropped top-cropped" />
+
+### Email
+
+The email configuration allows you to optionally select customized email templates for this Application. When configured, an application specific template will be used instead of the tenant configured email template.
+
+<img src="/img/docs/get-started/core-concepts/application-email.png" alt="Application Email" width="1200" />
+
+#### Form Fields
+
+<EmailTemplates page="application" />
+
+
+### JWT
+
+The JWT configuration allows you to provide application specific JWT configuration. When this panel is left in the default state as shown in this screenshot without the enable toggle turned on, the JWT configuration provided by the Tenant will be utilized.
+
+<img src="/img/docs/get-started/core-concepts/application-jwt-disabled.png" alt="Application JWT disabled" width="1200" />
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled you may configure Application specific JWT configuration including signing keys, durations, etc.
+  </APIField>
+</APIBlock>
+
+#### Lambda Settings
+
+<ApplicationLambdaSettings />
+
+Once you have enabled JWT configuration for this Application you will be provided with additional configuration options.
+
+<img src="/img/docs/get-started/core-concepts/application-jwt-enabled-configuration.png" alt="Application JWT enabled" width="1200" role="bottom-cropped top-cropped" />
+
+#### JWT Settings
+
+<ApplicationJsonWebTokenSettings />
+
+<img src="/img/docs/get-started/core-concepts/application-jwt-enabled-refresh-token.png" alt="Application Refresh Token configuration" width="1200" role="shadowed top-cropped" />
+
+#### Refresh Token Settings
+
+<RefreshTokenSettings />
+
+### Multi-Factor
+
+<PremiumPlanBlurb />
+
+The multi-factor configuration allows you to provide Application specific multi-factor settings.
+
+<img src="/img/docs/get-started/core-concepts/application-mfa.png" alt="Multi-Factor Authentication configuration" width="1200" role="bottom-cropped top-cropped" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="On login policy" optional>
+    When set to `Enabled` a two-factor challenge will be required during login when a user has configured one or more two-factor methods. When set to `Disabled`, even when a user has one or more two-factor methods configured, a two-factor challenge will not be required during login. When set to `Required`, a two-factor challenge will be required during login. If a user does not have configured two-factor methods, they will not be able to log in.
+
+    Supported values include:
+
+    * No application policy selected. Multi-factor authentication is managed by the tenant.
+    * Enabled. A challenge will be required during login when an eligible method is available.
+    * Disabled. A challenge will not be required during login.
+    * Required. A challenge will be required during login. &nbsp; <AvailableSince since="1.42.0"/>
+  </APIField>
+  <APIField name="Trust policy" optional>
+    When <InlineField>On login policy</InlineField> is set to `Enabled` or `Required`, the following field will be displayed. This value will control how the two-factor trust value is utilized.
+
+    Supported values include:
+
+    * Any. Trust obtained from any application is sufficient to bypass the challenge during login.
+    * This Application. Only trust obtained from this application is sufficient to bypass to challenge during login.
+    * None. The user will always be prompted to complete a challenge during login.
+  </APIField>
+  <APIField name="Email template" optional>
+    When a template is selected, it will be used to send a multi-factor authentication code when the email MFA method is used and a user is signing in to this application.
+  </APIField>
+  <APIField name="SMS template" optional>
+    When a template is selected, it will be used to send a multi-factor authentication code when the SMS MFA method is used and a user is signing in to this application.
+  </APIField>
+</APIBlock>
+
+### WebAuthn
+
+<AdvancedPlanBlurb />
+
+The WebAuthn configuration allows you to configure which WebAuthn workflows are enabled for the Application, overriding the Tenant configuration.
+
+<img src="/img/docs/get-started/core-concepts/application-webauthn.png" alt="WebAuthn configuration" width="1200" role="shadowed" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When disabled, the tenant configuration for enabled WebAuthn workflows will be used. When enabled, the options on this page will be used to override which WebAuthn workflows are enabled for this application.
+  </APIField>
+</APIBlock>
+
+#### Bootstrap settings
+
+The bootstrap workflow is used when the user must "bootstrap" the authentication process by identifying themselves prior to the WebAuthn ceremony and can be used to authenticate from a new device using WebAuthn.
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, users will be able to use the WebAuthn bootstrap workflow to sign in, including on new devices.
+  </APIField>
+</APIBlock>
+
+#### Re-authentication settings
+
+The re-authentication workflow is used to streamline the login process for repeat logins on a device.
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, users will be able to use the WebAuthn re-authentication workflow for repeat logins on their device.
+  </APIField>
+</APIBlock>
+
+### Registration
+
+The registration configuration allows you to provide Application specific registration configuration.
+
+<img src="/img/docs/get-started/core-concepts/application-registration-verify.png" alt="Application Registration" width="1200" role="bottom-cropped top-cropped" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Verify registrations" optional>
+    When enabled a registration can be verified using an email workflow. This is similar to the email verification process, which occurs when a user is first created. Verifying a registration allows you to send an email to an end user and allows them to confirm they registered for this specific application.
+  </APIField>
+  <APIField name="Verification template" required>
+    The email template to be used when sending the Registration Verification email to the end user.
+
+    Required when <InlineField>Verify registrations</InlineField> field toggle has been enabled.
+  </APIField>
+  <APIField name="Delete unverified registrations" optional>
+    When enabled, the system will delete registrations for users who have not verified their registration for this application after a configurable duration since the registration occurred.
+  </APIField>
+  <APIField name="Delete after" required>
+    The duration in days for which a user's registration to this application must exist and remain unverified before being deleted.
+
+    Required when <InlineField>Delete unverified registrations</InlineField> field toggle has been enabled.
+  </APIField>
+</APIBlock>
+
+
+#### Self Service Registration
+
+Self service registration allows users to register for this application themselves. If this is not enabled, users must be created using the APIs or the administrative user interface.
+
+There are two types of self service registration, basic and advanced.
+
+<img src="/img/docs/get-started/core-concepts/application-registration-self-service-enabled.png" alt="Self Service Registration" width="1200" role="bottom-cropped" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, a button on the login page will be rendered to allow users to create a new account.
+  </APIField>
+  <APIField name="Type" optional>
+    Select `Basic` or `Advanced` self service registration forms.
+
+    A paid plan of FusionAuth is required to use the Advanced self service registration forms.
+  </APIField>
+</APIBlock>
+
+<img src="/img/docs/get-started/core-concepts/application-registration-basic.png" alt="Basic Self Service Registration" width="1200" role="bottom-cropped top-cropped" />
+
+#### Basic Self Service Registration
+
+<APIBlock>
+  <APIField name="Confirm password" optional>
+    Toggle this field if you want FusionAuth to require a password confirmation during registration.
+  </APIField>
+  <APIField name="Login type" optional>
+    This field indicates if the email address or username should be the user's unique identifier.
+  </APIField>
+  <APIField name="Registration fields" optional>
+    The optional fields to be displayed on the registration form.
+  </APIField>
+
+  <APIField name="Field" readonly>
+     The user attribute that can be shown on the registration form. Each field can be <InlineField>Enabled</InlineField> and/or <InlineField>Required</InlineField>.
+  </APIField>
+
+  <APIField name="Enabled" optional>
+     This field will be shown on the registration form.
+  </APIField>
+
+  <APIField name="Required" optional>
+        This field will be required and the user will be unable to complete registration unless the field is provided. If this field is not also <InlineField>Enabled</InlineField> then it will not be required.
+  </APIField>
+</APIBlock>
+
+<img src="/img/docs/get-started/core-concepts/application-registration-advanced.png" alt="Advanced Self Service Registration" width="1200" role="bottom-cropped top-cropped" />
+
+#### Advanced Self Service Registration
+
+<PremiumPlanBlurb />
+
+Advanced self service registration allows you to create a custom registration form, including validation, custom form fields, and multiple steps. [Learn more in the guide](/feature/user-registration).
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, a button on the login page will be rendered to allow users to create a new account.
+  </APIField>
+  <APIField name="Form" required>
+    The selected form will be used to provide self service registration for this application.
+  </APIField>
+  <APIField name="Self-service registration validation" optional since="1.43.0">
+    The lambda that will be used to perform additional validation on registration form steps. See [Self-Service Registration Validation lambda](/docs/extend/code/lambdas/self-service-registration)
+  </APIField>
+</APIBlock>
+
+<img src="/img/docs/get-started/core-concepts/application-registration-form.png" alt="Custom Registration Form" width="1200" role="top-cropped" />
+
+
+#### Form Settings
+
+<PremiumPlanBlurb />
+
+<APIBlock>
+  <APIField name="Admin Registration" optional since="1.20.0">
+    The form that will be used in the FusionAuth UI for adding and editing user registrations.
+  </APIField>
+  <APIField name="User self-service" optional since="1.26.0">
+    The form that will be used with the hosted login pages for user self-service account management.
+  </APIField>
+  <APIField name="Require current password" optional since="1.45.0">
+    When enabled a user will be required to provide their current password when changing their password on a self-service account form.
+  </APIField>
+</APIBlock>
+
+### SAML
+
+The SAML configuration allows you to reveal FusionAuth as a SAML v2 Identity Provider (IdP).
+
+<img src="/img/docs/get-started/core-concepts/application-saml-disabled.png" alt="Application SAML" width="1200" role="bottom-cropped" />
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled you may configure FusionAuth to reveal this application as a SAML v2 Identity Provider (IdP).
+
+    Once you have enabled SAML for this Application you will be provided with additional configuration options.
+  </APIField>
+</APIBlock>
+
+<img src="/img/docs/get-started/core-concepts/application-saml-enabled.png" alt="Application SAML enabled" width="1200" role="bottom-cropped" />
+
+#### Form Fields
+
+<APIBlock>
+  <APIField name="Issuer" required>
+    The issuer used by service providers (i.e. Google, Zendesk, etc.) to identify themselves to FusionAuth's SAML identity provider. Often you cannot set this in the service provider and need to read their documentation or test the integration and use the error messages to determine the correct value.
+  </APIField>
+  <APIField name="Audience" optional>
+    Some service providers require a different audience (such as Zendesk). You can leave this blank if the audience is the same as the issuer.
+  </APIField>
+  <APIField name="Authorized redirect URLs" required>
+    One or more allowed URLs that FusionAuth may redirect to after the user has logged in via SAML v2, also known as the Assertion Consumer Service URL (ACS).
+  </APIField>
+  <APIField name="Logout URL" optional>
+    The URL that the user is redirected to after they are logged out. Usually this is the starting location of the application.
+  </APIField>
+  <APIField name="Debug enabled" optional>
+    Enable debug to create an event log to assist you in debugging integration errors.
+  </APIField>
+</APIBlock>
+
+<img src="/img/docs/get-started/core-concepts/application-saml-authentication-request.png" alt="Application SAML authentication request settings" width="1200" role="bottom-cropped top-cropped" />
+
+#### Authentication Request
+
+<APIBlock>
+  <APIField name="Require signature" optional>
+    When enabled, all unsigned requests will be rejected.
+  </APIField>
+  <APIField name="Default verification key" optional since="1.20.0">
+    The verification key used to verify a signature when the SAML v2 Service Provider is using HTTP Redirect Bindings.
+
+    When HTTP POST Bindings are used, this is the default verification key used if a `KeyInfo` element is not found in the SAML AuthNRequest. If a `KeyInfo` element is found, Key Master will be used to resolve the key and this configuration will not be used to verify the request signature.
+
+    This field is required when <InlineField>Require signature</InlineField> is enabled.
+  </APIField>
+  <APIField name="Enable login hint" since="1.47.0">
+    When enabled, FusionAuth will accept a username or email address as a login hint on a custom HTTP request parameter.
+  </APIField>
+  <APIField name="Login hint parameter name" optional defaults="login_hint" since="1.47.0">
+    The name of the login hint parameter provided by the service provider on an AuthnRequest. If this parameter is present, its value will be used to pre-populate the username field on the FusionAuth login form.
+
+    For example, suppose <InlineField>Enable login hint</InlineField> is enabled and <InlineField>Login hint parameter name</InlineField> has the value `login_name`. When FusionAuth is set up as an IdP, the SP can send a request which includes the parameter `login_name=richard@example.com`, and FusionAuth will pre-populate richard@example.com into the login form the end user sees.
+
+    Note that this setting names an HTTP query parameter, not an element in the SAML AuthnRequest XML.
+  </APIField>
+</APIBlock>
+
+<img src="/img/docs/get-started/core-concepts/application-saml-authentication-response.png" alt="Application SAML authentication response settings" width="1200" role="bottom-cropped top-cropped" />
+
+#### Authentication Response
+
+<APIBlock>
+  <APIField name="Signing key" optional>
+    The signing key used to sign the SAML request. When this value is not selected the default selection will cause FusionAuth to generate a new key pair and assign it to this configuration.
+  </APIField>
+  <APIField name="Signature canonicalization method" optional>
+    The XML signature canonicalization method. If you are unsure which method to select, leave the default and begin testing, or contact your service provider for configuration assistance.
+  </APIField>
+  <APIField name="Signature location" optional defaults="Assertion" since="1.21.0">
+    The location of the XML signature in the SAML response.
+  </APIField>
+  <APIField name="Populate lambda" optional>
+    The lambda used to add additional values from the user and registration to the SAML response.
+  </APIField>
+  <APIField name="Enable IdP initiated login" optional defaults="false" since="1.41.0">
+    When enabled, FusionAuth will be able to initiate a login request to a SAML v2 Service Provider.
+
+    Once enabled, open the View dialog or this application to view the integration URI. You will find this value in the view dialog in the SAML v2 Integration details, and the value will be named <InlineField>Initiate login URL:</InlineField>.
+  </APIField>
+  <APIField name="NameID format" optional defaults="Persistent" since="1.41.0">
+    The NameId format to send in the AuthN response to the SAML v2 Service Provider. There are two valid values:
+
+        * Persistent - The `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent` NameID format will be used.
+        * Email - The `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress` NameID format will be used.
+  </APIField>
+</APIBlock>
+
+<img src="/img/docs/get-started/core-concepts/application-saml-logout-request.png" alt="Application SAML logout request settings" width="1200" role="top-cropped bottom-cropped" />
+
+#### Logout Request
+
+<APIBlock>
+  <APIField name="Require signature" optional since="1.25.0">
+    When enabled the SAML service provider (SP) will be required to sign the Logout request. All unsigned Logout requests will be rejected.
+  </APIField>
+  <APIField name="Default verification key" optional since="1.25.0">
+    The unique Id of the Key used to verify the signature if the public key cannot be determined by the KeyInfo element when using POST bindings, or the key used to verify the signature when using HTTP Redirect bindings.
+
+    This field is required when <InlineField>Require signature</InlineField> is enabled.
+  </APIField>
+  <APIField name="Logout behavior" optional since="1.25.0">
+    This selector allows you to modify the behavior when logout occurs. There are two valid values:
+
+        * All session participants - This is the default behavior. Each session participant that has enabled single logout will be sent a Logout Request.
+        * Only logout request originator - no other session participants will be notified when a logout request is sent for this application.
+  </APIField>
+  <APIField name="Enable single logout" optional since="1.25.0">
+    Enable this to receive a LogoutRequest as a session participant when any other SAML enabled application within the same tenant receives a LogoutRequest.
+  </APIField>
+  <APIField name="Logout URL" optional since="1.25.0">
+    The URL where you want to receive the LogoutRequest from FusionAuth.
+
+    This field is required when <InlineField>Enable single logout</InlineField> is enabled.
+  </APIField>
+  <APIField name="Signing key" optional since="1.25.0">
+    The Key used to sign the SAML Single Logout response.
+  </APIField>
+  <APIField name="Signature canonicalization method" optional since="1.25.0">
+    The XML signature canonicalization method. If you are unsure which method to select, leave the default and begin testing, or contact your service provider for configuration assistance.
+  </APIField>
+</APIBlock>
+
+
+<img src="/img/docs/get-started/core-concepts/application-saml-logout-response.png" alt="Application SAML logout response settings" width="1200" role="top-cropped" />
+
+#### Logout Response
+
+<APIBlock>
+  <APIField name="Signing key" optional defaults="Assertion" since="1.25.0">
+    The signing key used to sign the SAML logout request. When this value is not selected the Authentication Response <InlineField>Signing key</InlineField> will be used.
+  </APIField>
+  <APIField name="Signature canonicalization method" optional since="1.25.0">
+    The XML signature canonicalization method. If you are unsure which method to select, leave the default and begin testing, or contact your service provider for configuration assistance.
+  </APIField>
+</APIBlock>
+
+
+<img src="/img/docs/get-started/core-concepts/application-saml-assertion-encryption.png" alt="Application SAML assertion encryption settings" role="top-cropped" />
+
+#### Assertion Encryption
+
+<APIBlock>
+  <APIField name="Enabled" optional defaults="false" since="1.47.0">
+    When enabled, assertions in SAML responses will be encrypted.
+  </APIField>
+  <APIField name="Encryption algorithm" optional since="1.47.0">
+    The symmetric key encryption algorithm used to encrypt the SAML assertion.
+  </APIField>
+  <APIField name="Key location" optional defaults="Child" since="1.47.0">
+    The location that the encrypted symmetric key information will be placed in the SAML response in relation to the `EncryptedData` element containing the encrypted assertion value.
+  </APIField>
+  <APIField name="Key transport algorithm" optional since="1.47.0">
+    The encryption algorithm used to encrypt the symmetric key for transport in the SAML response.
+  </APIField>
+  <APIField name="Digest algorithm" optional since="1.47.0">
+    The message digest algorithm to use when encrypting the symmetric key for transport.
+  </APIField>
+  <APIField name="Mask generation function" optional since="1.47.0">
+    The mask generation function and hash function to use for the Optimal Asymmetric Encryption Padding when encrypting a symmetric key for transport. This configuration is only available when <InlineField>Key transport algorithm</InlineField> is set to `RSA OAEP with MGF1`.
+  </APIField>
+  <APIField name="Key transport encryption certificate" optional since="1.47.0">
+    The RSA certificate from Key Master that will be used to encrypt the SAML assertion encryption symmetric key for transport.
+
+    This field is required when SAML assertion encryption is enabled.
+  </APIField>
+</APIBlock>
+
+
+### Security
+
+The security tab contains some additional security configuration for this application.
+
+<img src="/img/docs/get-started/core-concepts/application-security.png" alt="Application Security" width="1200" />
+
+#### Login API Settings
+
+<APIBlock>
+  <APIField name="Require an API key" optional>
+    When enabled the Login API will require an API key. This is functionally equivalent to requiring client authentication during OAuth2.
+  </APIField>
+  <APIField name="Generate Refresh Tokens" optional>
+    When enabled the Login API will return refresh tokens. This is functionally equivalent to requesting the offline_scope during an OAuth2 grant.
+  </APIField>
+  <APIField name="Enable JWT refresh" optional>
+    When enabled a JWT may be refreshed using the JWT Refresh API. This is functionally equivalent to enabling the OAuth2 Refresh Grant.
+  </APIField>
+</APIBlock>
+
+##### Access control lists settings
+
+<PremiumPlanBlurb />
+
+<APIBlock>
+  <APIField name="Access control list" optional since="1.30.0">
+    The IP access control list that will be used to restrict or allow access to hosted login pages in FusionAuth. Using this, you can allow access to or block specific IP addresses from an application's authentication pages (login, forgot password, etc).
+
+    When configured, this value will override the IP access control list configuration on the tenant.
+  </APIField>
+</APIBlock>
+
+#### Passwordless Login
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, allow users to request login using a link sent via email. Enabling this feature will cause a button to be displayed on the FusionAuth login form and allow you to utilize the Passwordless Login API.
+  </APIField>
+</APIBlock>
+
+#### Authentication Tokens
+
+<APIBlock>
+  <APIField name="Enabled" optional>
+    When enabled, allow users to optionally authenticate using an Application specific token in place of their password. This should only be used when the security requirements are low and the user's normal password is not a good option for authentication.
+
+    For example, if a password needs to be stored in an external configuration and the exposure risk is low, a token can be used in place of the user's password. This token may only be used for authorization for this application.
+  </APIField>
+</APIBlock>
+
+
+### Webhooks
+
+<Aside type="caution">
+This feature is removed as of version 1.37.0.
+</Aside>
+
+The Webhooks tab allows you to select one or more webhooks to be used for this Application. In this example screenshot either no webhooks have been configured, or no application specific webhooks are configured.
+
+<img src="/img/docs/get-started/core-concepts/application-webhooks-none.png" alt="No Application Webhooks" width="1200" role="bottom-cropped" />
+
+In most cases you will not need to configure this panel. Only a few specific events are considered application specific, and when a webhook is configured to be application specific, only those events will be sent to the webhook.
+
+This example screenshot shows one Application specific webhook selected. This option will be visible if at least one webhook is configured as application specific.
+
+<img src="/img/docs/get-started/core-concepts/application-webhooks-selected.png" alt="Application Webhooks Selected" width="1200" role="bottom-cropped" />

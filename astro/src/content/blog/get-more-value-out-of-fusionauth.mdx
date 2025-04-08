@@ -1,0 +1,120 @@
+---
+publish_date: 2023-09-01
+title: Get More Value Out of FusionAuth Using the APIs for User Maintenance
+description: Customizing the order for your favorite food can make a good meal better. Customizing your end-users experience with user maintenance can make their experience with your application even better.
+authors: Mark Robustelli
+image: /img/blogs/get-more-value/fusionauth-using-apis-user-maintenance.png
+categories: Product, Education
+tags: api user maintenance windows forms dotnet
+excerpt_separator: "{/* more */}"
+---
+import {RemoteCode} from '@fusionauth/astro-components';
+
+So, you have just set up FusionAuth and are excited to take your new [customer identity and access management](/articles/ciam/) platform out for a spin. You spend some time setting up your Users, Applications, Tenants, etc. in the robust admin interface provided. Things are looking great. You have integrated your applications and are humming along. Now comes a real test, user maintenance.
+
+{/* more */} 
+
+## Introduction
+*“A new user with extra pickles, please.”*
+
+Customizing the order for your favorite food can make a good meal better. Customizing your end-users' experience with user maintenance can make their experience with your application even better.
+
+For any [secure application](/articles/security/steps-secure-your-authentication-system), user maintenance is a must. As a developer, you can often overlook the time and effort it takes to maintain the user's access and permissions for the shiny new application you created. In an ideal world, you do not want to be the ones to maintain the users. You want to give the task of user maintenance to the power users of the applications by making them application administrators. While those power users may be great at using the application, you don’t necessarily want to make them expert users of the FusionAuth admin interface. Well, we at FusionAuth would think it would be great if everyone was a master with it, but you may not share that same vision.
+
+Imagine you have an application that controls a machine that applies the toppings to a burger. Custom Burger, the popular new burger joint just bought your application. The tech-savvy manager, Sally Power-User, has been given admin rights. Sally just hired Joe Limited-Access to work the night shift. She now needs to add Joe as a user of your application. She needs to ensure Joe can add pickles to a burger order but make sure he does not have access to apply the famous Flaming Carolina Reaper Sauce until he goes through training. Your application will have to support this.
+
+You can harness the full power of FusionAuth in your application, hand off the user maintenance to the power users, and make it seamless for them. The application will need to ensure that Sally Power-User enters the correct information (**Validation**), guide her through setting up the new Joe Limited-Access user correctly (**Workflow**), and you want to make the process feel like it is part of your application (**Branding**). You can accomplish all these through the use of the FusionAuth APIs.
+
+Newer developers should be aware the examples below are written with the assumption that you are familiar with how to make REST calls using the [HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient?view=net-7.0) in C#, the use of [asynchronous](https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/) calls and Windows Forms applications. In order for the sample application to run you must have a working [FusionAuth server](/docs/quickstarts/5-minute-setup-guide). Even if you are not totally familiar with these concepts, you will likely be able to follow the code snippets with general programming knowledge. If you need a refresher on some of these topics, there are some links at the end.
+
+If you are only interested in jumping into the code, it can be found [here](https://github.com/FusionAuth/fusionauth-example-dotnet-windowsform-api).
+
+## Custom Validation With FusionAuth APIs
+*“With great power, comes great responsibility!”*
+
+One of FusionAuth’s strengths is its flexibility. However, with the flexibility comes some complexity. To create a user in the FusionAuth admin user interface, you only need two pieces of information. You will need to supply either the username or the email in addition to a password. (If you are using multiple tenants, you will need the tenant ID as well.) The FusionAuth admin user interface gives you other optional fields to fill in, however none are required. When using the [Create a User API](/docs/apis/users#create-a-user), only the username or email in addition to the password is still required but there are also over 30 additional request parameters available for customization. Creating a custom admin interface around the APIs will not only allow you to choose which of the username or email fields to use, but also what other meta-data is appropriate and required for your application. Below is sample code for creating a user using the FusionAuth API.
+
+### Setting Up The User Object
+First, you need to create a few objects to hold some values. By constructing the classes and decorating properties with the proper attributes, you can still use the strongly typed objects and standard naming conventions in your C# application while also using the JSON Serializer to easily format the request body when it is time.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionDemoAPI/Helper/User.cs" lang="c#" />
+
+### Taking Input From The User
+Next, you need to take the input from the user and assign them to the values in your User object. In this case, you are performing those actions on a click event from the `Create User` button on a [Windows Form](https://learn.microsoft.com/en-us/visualstudio/ide/create-csharp-winform-visual-studio?view=vs-2022). Pictured below is a screen shot of the interface for the sample application. 
+
+![The Windows demo front end.](/img/blogs/get-more-value/fusionauth-windows-api-demo-front-end.png)
+
+You can also take this chance to validate any information deemed relevant to your application. The logic in the `IsUserValid` function can be edited to suit your needs. In this sample application it simply returns true. I know, not very creative, but useful in the demo. You can also validate age, location or anything else you choose. Once the validation is successful, you will then pass the user object to the method that will submit your request to the FusionAuth server. Validating input like this will ensure Sally Power-User enters the correct information for the system every time she adds a new employee.
+
+It is important to note that the `FusionAuthClient` that has been created for this applications handles the setting of the [API Key](/docs/apis/api-keys#overview) and location of the FusionAuth server. These settings are stored in the `App.settings` file for the project.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionAuthAPIDemoFrontEnd/frmMain.cs" lang="c#" tags="btnCreateUser" />
+
+### Creating The User
+
+Because you decorated your User objects correctly using the JSONProperty attribute, you can use the JSON Serializer to serialize the object with the `JsonConvert.SerializeObject` method. You also need to encode it properly before you submit it. Once that is complete, you can submit the request to the FusionAuth server. You will do so here using the async pattern so as to not hold up the processing for a request that may take some time or give the application an unresponsive feel. Once you receive the return values, you can interrogate them and act accordingly.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionDemoAPI/FusionAuthClient.cs" lang="c#" tags="CreateUser" />
+
+## User Workflow With FusionAuth APIs
+*“Amateurs do it till they get it right. Professionals do it until they can not get it wrong.”*
+
+You may have originally set up the users manually in the FusionAuth admin user interface and that is fine to get started. However, the more steps and requirements you have for creating a user, the more likely something will be missed. There can be several steps required to set up a user correctly such as making sure they belong to the correct group(s). While you may be infallible as a developer and get it right every time, wink wink, most likely your users will not.
+
+You can use the FusionAuth APIs to ensure the user is added to the correct group or groups so their permissions will be set properly. After the user is created, you can take this opportunity to automatically assign the user to a specific group or present an admin interface to the administrator that will guide them in selecting the proper group(s). For example, you can ensure Sally Power-User cannot add Joe Limited-Access to the Flaming Carolina Reaper Sauce Appliers on the day she creates him as a user because you know he has not had time to go through the training.
+
+### Setting Up The Group Object
+Once again, you will need to create a few objects to help us organize your groups. The [Add Users to a Group API](/docs/apis/groups#add-users-to-a-group) call you are using requires a collection of groups that each contain an array of user information. In this case, you will only be using the user Id for the new GroupUser information.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionDemoAPI/Helper/Group.cs" lang="c#" />
+
+### Taking Input From The User
+As with creating the user, you need to take the input from the application and assign the values to your Group objects. Again, the `IsGroupValid` function simply returns true for the sample application but you can also validate any data you want before actually adding the user to the group. After you are satisfied the user should be added, you can submit the information to the method that will submit your request to the FusionAuth server.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionAuthAPIDemoFrontEnd/frmMain.cs" lang="c#" tags="btnAddUserToGroup" />
+
+### Adding The User To The Group
+Because the JSON format expected in the request body is not readily serializable given the Group objects you have created, you will have to perform a little wizardry to manipulate the Group objects. While this does not have to do with FusionAuth specifically, the code has been abstracted in the `FormatGroupUserJSON` function and can be found [here](https://github.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/blob/35307a11e43caa098d3366be58b07cf0452b6488/sourcecode/FusionDemoAPI/FusionAuthClient.cs#L267-L295) if you are interested. Once the API call has returned, you can retrieve whichever values you see as relevant and pass it back in the result object.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-dotnet-windowsform-api/main/sourcecode/FusionDemoAPI/FusionAuthClient.cs" lang="c#" tags="AddUserToGroup" />
+
+## Branding Your User Management With FusionAuth
+*“Design is the silent ambassador of your brand.”*
+
+One of the best parts about using the APIs to allow application admins to manage their own users is they never have to leave your application. Users are accustomed to things such as Single Page Applications or at least applications that have a consistent look and feel. Depending on the use case, a user may feel uncomfortable switching to the FusionAuth admin interface to manage users. While FusionAuth has a well designed and functional admin interface, the look and feel will likely be different than your application. By using the APIs you can still use all of your own style sheets and design principles.
+
+You may ask yourself, “If I create an admin end for user management in my application, shouldn’t I just create the authentication and authorization framework as well?” The answer to that question is a resounding “No!” The security, power and flexibility FusionAuth gives you has taken years to build. You should focus on providing the unique business value your application provides versus reinventing the authentication wheel. The best part is that you can leverage our investment by creating a simple [customer identity and access management](/articles/ciam/) interface around the security and power of FusionAuth. You get the best of both worlds.
+
+You don’t even have to tell your users you are using FusionAuth. It’s okay, we don’t mind. We want to make you look good, help you secure your users, and let you focus on building the features your users want.
+
+![One does not simply implement user access management.](/img/blogs/get-more-value/one-does-not-simply.png)
+
+## Conclusion
+It is important to note that as an alternative, FusionAuth does allow the creation of [custom forms](/docs/get-started/core-concepts/tenants#form-settings) in the admin user interface. This solution is only available for paid plans, may not support the workflow you are trying to accomplish and would not work if you did not want to give users access to the FusionAuth admin interface.
+
+These are a few examples of how to use the FusionAuth APIs to get more value out of FusionAuth. Please take some time to explore the [FusionAuth API documentation](/docs/apis/) and get some more ideas of ways to use them to better serve your development. For instance, you have used the APIs to create a user, but you can use similar APIs to delete users or remove their application access. For example, you can monitor an external application and remove the user from FusionAuth on a given event.
+ By integrating the FusionAuth APIs not only can you automate the validation process, setup users, and make it all look like your own, but you can add almost any ability within FusionAuth to your application.
+
+## Next steps
+
+If you enjoyed this article, please check out some of the other links and resources about FusionAuth.
+
+### FusionAuth APIs
+
+* [General API Documentation](/docs/apis/)
+* [Create a User](/docs/apis/users#create-a-user)
+* [Delete a User](/docs/apis/users#delete-a-user)
+* [Add Users to a Group](/docs/apis/groups#add-users-to-a-group)
+
+### FusionAuth Server Setup
+
+* [5-Minute Setup Guide](/docs/quickstarts/5-minute-setup-guide)
+
+### Sample Application Source
+
+* [FusionAuth API Demo](https://github.com/FusionAuth/fusionauth-example-dotnet-windowsform-api)
+
+### General
+
+* [HttpClient](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.httpclient?view=net-7.0)
+* [Asynchronous programming with async and await](https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/)

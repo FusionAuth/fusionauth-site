@@ -1,0 +1,194 @@
+---
+title: User Comments
+description: Learn about the APIs for creating and retrieving comments on users.
+section: apis
+---
+import API from 'src/components/api/API.astro';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import JSON from 'src/components/JSON.astro';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import Aside from 'src/components/Aside.astro';
+import UserCommentSearchRequestParameters from 'src/content/docs/apis/_user-comment-search-request-parameters.mdx';
+import InlineField from 'src/components/InlineField.astro';
+
+## Overview
+
+This page contains the APIs that are used for managing comments left by admins on user accounts.
+
+## Add a Comment to a User
+
+This API is used to add a User Comment to a User's account. User Comments are used to allow administrators and moderators the ability to take notes on Users.
+
+### Request
+
+<API method="POST" uri="/api/user/comment" authentication={["api-key"]} title="Add a User Comment"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="userComment.comment" type="String" required>
+    The text of the User Comment.
+  </APIField>
+  <APIField name="userComment.commenterId" type="UUID" required>
+    The Id of the User that wrote the User Comment.
+  </APIField>
+  <APIField name="userComment.userId" type="UUID" required>
+    The Id of the User that the User Comment was written for.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="user-comments/request.json" />
+
+### Response
+
+The response for this API contain the User Comment that was added to the User's account.
+
+<StandardPostResponseCodes />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="userComment.comment" type="String">
+    The text of the User Comment.
+  </APIField>
+  <APIField name="userComment.commenterId" type="UUID">
+    The Id of the User that wrote the User Comment.
+  </APIField>
+  <APIField name="userComment.createInstant" type="Long" deprecated>
+    The [instant](/docs/reference/data-types#instants) when the comment was written. This was deprecated in 1.18.0. Use `insertInstant` instead.
+  </APIField>
+  <APIField name="userComment.insertInstant" type="Long">
+    The [instant](/docs/reference/data-types#instants) when the comment was written.
+  </APIField>
+  <APIField name="userComment.id" type="UUID">
+    The Id of the User Comment.
+  </APIField>
+  <APIField name="userComment.userId" type="UUID">
+    The Id of the User that the User Comment was written for.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src="user-comments/response.json" />
+
+
+## Retrieve a User's Comments
+
+This API is used to retrieve all of the User Comments on a User's account. User Comments are used to allow administrators and moderators the ability to take notes on Users.
+
+### Request
+
+<API method="GET" uri="/api/user/comment/{userId}" authentication={["api-key"]} title="Retrieve all Comments for a User by Id"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="userId" type="UUID" required>
+    The Id of the User to retrieve the User Comments for.
+  </APIField>
+</APIBlock>
+
+
+### Response
+
+The response for this API contains all of the User Comments for the User.
+
+<StandardGetResponseCodes />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="userComments" type="Array">
+    The list of User Comment objects.
+  </APIField>
+  <APIField name="userComments[x].comment" type="String">
+    The text of the User Comment.
+  </APIField>
+  <APIField name="userComments[x].commenterId" type="UUID">
+    The Id of the User that wrote the User Comment.
+  </APIField>
+  <APIField name="userComments[x].createInstant" type="Long" deprecated>
+    The [instant](/docs/reference/data-types#instants) when the comment was written. This was deprecated in 1.18.0. Use `insertInstant` instead.
+  </APIField>
+  <APIField name="userComments[x].id" type="UUID">
+    The Id of the User Comment.
+  </APIField>
+  <APIField name="userComments[x].insertInstant" type="Long">
+    The [instant](/docs/reference/data-types#instants) when the comment was written.
+  </APIField>
+  <APIField name="userComments[x].userId" type="UUID">
+    The Id of the User that the User Comment was written for.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src="user-comments/responses.json" />
+
+## Search for User Comments
+
+<Aside type="version">
+This API has been available since 1.45.0
+</Aside>
+
+This API is used to search for User Comments and may be called using the `GET` or `POST` HTTP methods. Examples of each are provided below. The `POST` method is provided to allow for a richer request object without worrying about exceeding the maximum length of a URL. Calling this API with either the `GET` or `POST` HTTP method will provide the same search results given the same query parameters.
+
+### Request
+
+<API method="GET" uri="/api/user/comment/search?comment={comment}" authentication={["api-key"]} title="Search for User Comments"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+### Request Parameters
+
+<UserCommentSearchRequestParameters parameter_prefix="" />
+
+<API method="POST" uri="/api/user/comment/search" authentication={["api-key"]} title="Search for User Comments"/>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+### Request Body
+
+<UserCommentSearchRequestParameters parameter_prefix="search." />
+
+
+### Response
+
+The response for this API contains the User Comments matching the search criteria in paginated format and the total number of results matching the search criteria.
+
+<StandardGetResponseCodes never_missing never_search_error />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="total" type="Integer">
+    The total number of User Comments matching the search criteria. Use this value along with the <InlineField>numberOfResults</InlineField> and <InlineField>startRow</InlineField> in the search request to perform pagination.
+  </APIField>
+  <APIField name="userComments" type="Array">
+    The list of User Comment objects.
+  </APIField>
+  <APIField name="userComments[x].comment" type="String">
+    The text of the User Comment.
+  </APIField>
+  <APIField name="userComments[x].commenterId" type="UUID">
+    The Id of the User that wrote the User Comment.
+  </APIField>
+  <APIField name="userComments[x].id" type="UUID">
+    The Id of the User Comment.
+  </APIField>
+  <APIField name="userComments[x].insertInstant" type="Long">
+    The [instant](/docs/reference/data-types#instants) when the comment was written.
+  </APIField>
+  <APIField name="userComments[x].userId" type="UUID">
+    The Id of the User that the User Comment was written for.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src="user-comments/search-response.json" />
+

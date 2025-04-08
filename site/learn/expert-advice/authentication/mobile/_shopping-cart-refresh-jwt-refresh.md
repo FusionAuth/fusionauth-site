@@ -1,4 +1,0 @@
-1. A while later, the user's JWT expires and the user clicks on their shopping cart again. The application requests the shopping cart from the application backend and sends the JWT and refresh token to the application backend
-1. The application backend verifies the JWT and realizes it is expired. Since the browser also sent across the refresh token, the application backend calls the JWT refresh API in FusionAuth with the refresh token
-1. FusionAuth looks up the refresh token and returns a new JWT
-1. The application backend responds with the user's shopping cart contents. It also includes the new JWT that replaces the old JWT

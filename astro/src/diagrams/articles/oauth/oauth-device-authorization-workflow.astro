@@ -1,0 +1,31 @@
+---
+import Diagram from "../../../components/mermaid/SequenceDiagram.astro";
+const { alt } = Astro.props;
+
+//language=Mermaid
+const diagram = `
+sequenceDiagram
+    autonumber
+    participant Roku
+    participant Smartphone Browser as Browser on <br/> Smartphone
+    participant FusionAuth
+    participant App Backend
+
+    Roku->>Roku : Open Nerd Stuff on Demand app
+    Roku->>FusionAuth : GET /oauth2/device_authorize
+    FusionAuth->>Roku : URL and code to display
+    Roku->>Roku : Display URL and code on TV
+    Roku-->>FusionAuth : GET /oauth2/token (polling every 2-5 seconds)
+    FusionAuth-->>Roku : "Not completed yet"
+    Smartphone Browser->>App Backend: GET https://nsod.tv/activate
+    App Backend->>Smartphone Browser : 302 redirect to /oauth2/device
+    Smartphone Browser->>FusionAuth : GET /oauth2/device
+    FusionAuth->>Smartphone Browser : HTML & CSS for start page that collects code
+    Smartphone Browser->>FusionAuth : POST /oauth/device w/ code
+    FusionAuth->>Smartphone Browser : 302 redirect to /oauth/authorize
+    Note over Smartphone Browser, FusionAuth: User logs in via standard<br/>OAuth v2 Authorization Code Grant
+    FusionAuth->>Smartphone Browser : 302 redirect to /oauth/device <br/> with activationComplete set to true
+    Roku-->>FusionAuth : GET /oauth2/token (polling every 2-5 seconds)
+    FusionAuth-->>Roku : Success! An access_token and refresh_token are returned`;
+---
+<Diagram code={diagram} alt={alt}/>

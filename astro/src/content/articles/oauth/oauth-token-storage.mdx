@@ -1,0 +1,205 @@
+---
+title: Storing OAuth Tokens
+description: OAuth grants return tokens, but what should you do with them?
+image: advice/oauth-token-storage/tokens-oauth-authorization-code-grant.png
+author: Dan Moore
+section: OAuth
+date: 2023-02-07
+dateModified: 2023-02-07
+icon: /img/icons/storing-oauth-tokens.svg
+darkIcon: /img/icons/storing-oauth-tokens-dark.svg
+---
+import ClientSideStorage from 'src/diagrams/articles/oauth/oauth-token-storage/client-side-storage.astro';
+import ClientSideStorageIntrospection from 'src/diagrams/articles/oauth/oauth-token-storage/client-side-storage-introspection.astro';
+import ClientSideStorageRefreshToken from 'src/diagrams/articles/oauth/oauth-token-storage/client-side-storage-refresh-token.astro';
+import ClientSideStorageWithProxy from 'src/diagrams/articles/oauth/oauth-token-storage/client-side-storage-with-proxy.astro';
+import OauthUpToToken from 'src/diagrams/articles/oauth/oauth-token-storage/oauth-up-to-token.astro';
+import RecommendedTokenStorageOptions from 'src/content/docs/_shared/_recommended-token-storage-options.mdx';
+import SessionStorage from 'src/diagrams/articles/oauth/oauth-token-storage/session-storage.astro';
+import SessionStorageApiCalls from 'src/diagrams/articles/oauth/oauth-token-storage/session-storage-api-calls.astro';
+import TokenStorageOptionsTable from 'src/content/docs/_shared/_token-storage-options.mdx';
+import ValidatingTokens from 'src/diagrams/articles/oauth/oauth-token-storage/validating-tokens.astro';
+
+OAuth grants specify particular flows of formatted data between the various parties, including the authorization server, the client and the resource server. At the end of a grant, one or more tokens are delivered. These tokens are time bound credentials that give access to protected data and functionality.
+
+These tokens include an access token, an optional refresh token (if the proper scope is requested), and an optional id token (if using OpenID Connect).
+
+At a high level, these each serve different purposes.
+
+* The access token allows for access to different APIs and protected resources.
+* The refresh token lets you mint new access tokens.
+* The id token from OpenID Connect (OIDC) is used by the client to display information about the user.
+
+[![The Modern Guide to OAuth](/img/cta/modern-guide-2.png)](/ebooks/modern-guide-to-oauth?utm_medium=cta&utm_source=articles&utm_campaign=oauth_token_storage)
+
+What should you do with all of these tokens? How can they be used by your application to ensure that only the correct users get access to data and functionality?
+
+Here's a diagram of a common grant, the Authorization Code grant, from the start until tokens are obtained.
+
+<OauthUpToToken alt={"The Authorization Code grant up to the point where tokens are requested from the token endpoint."}/>
+
+This article will look at the options for storing these tokens.
+
+## Why Use OAuth Grants?
+
+But first, why use the Authorization Code grant or other grants at all? There are, after all, simpler ways to offload authentication. You could use the direct username and password flows. Why bother with the OAuth dance of redirects?
+
+When you use the OAuth grants, you stand on the shoulders of giants. Many people in the Internet Engineering Task Force (IETF) working group have spent lots of time refining this grant, poking and fixing holes in these flows' security, as well as documenting and building libraries for them. You also benefit from documents such as [OAuth 2.0 for browser based apps](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps), currently being developed, and [OAuth 2.0 for native apps](https://www.rfc-editor.org/rfc/rfc8252).
+
+Using standard OAuth grants to integrate a third party authorization server into your application architecture allows you to leverage these benefits. It also leaves open migration possibilities, should your authorization server fail to meet your needs. (OIDC is another standard which layers identity information onto OAuth grants.)
+
+When using the Authorization Code grant in particular, in addition to the wisdom of the IETF members, you get the following benefits:
+
+* Users' personally identifiable information is stored in one safe and secure location. You can take extra steps to defend and protect this location, or outsource it to a vendor focused on the problem.
+* You gain a single view of your customer across all your apps.
+* You can offer users granular control of data permissions using standardize and custom scopes.
+* Advanced authentication functionality such as multi-factor authentication, enterprise single sign-on and login rate limiting are implemented in one place for all your applications.
+* You can upgrade authentication functionality without modifying downstream applications.
+* With proper configuration, you can offer single sign-on across all your custom, commercial and open source applications.
+* Common login related workflows such as changing profile data or passwords are centralized.
+
+If you've decided to use an OAuth grant, you need to store the resulting tokens. There are two main options:
+
+* storing them on the client
+* storing them in a server-side session
+
+## Storage Options
+
+In a hurry? Here's our recommendations on how to store tokens such as JWTs.
+
+<RecommendedTokenStorageOptions />
+
+Here's a table with all token storage options, including the strengths and weaknesses of each choice.
+
+<TokenStorageOptionsTable />
+
+## Client-side Storage
+
+The first option is to store the access token and refresh token on the client, whether that is a browser, desktop or native application. Only the access token is presented to APIs or protected resources. The refresh token should be presented to the authorization server, but that workflow will be covered in more detail below. If the refresh token cookie is sent to a resource server, it can be safely ignored.
+
+When using a browser, store these as `HttpOnly`, secure cookies with a `SameSite` value of `Lax` or `Strict`.
+
+If you choose this option, the browser, whether a simple HTML page with some JavaScript or a complicated single page application (SPA), makes requests against APIs; the access token is then taken along for the ride.
+
+This works great as long as APIs and the server setting the token cookies live on a domain with shared cookies. For example, the code which gets the tokens can live at `auth.example.com` and if you set the cookie domain to `.example.com`, APIs living at `api.example.com`, `todo.example.com`, or any other host under `.example.com`, will receive the token.
+
+<ClientSideStorage alt={"Storing the tokens as secure, HttpOnly cookies."} />
+
+When using a native app, store these tokens in a secure location, such as the [iOS Keychain](https://developer.apple.com/documentation/security/keychain_services) or [Android internal data](https://developer.android.com/topic/security/best-practices#safe-data). This protects these credentials from any other applications running on your device. Retrieve them and append them to the proper header before making API requests.
+
+### Validating the Tokens At the Resource Server
+
+In the diagram above, there's a `Validate Access Token` step. Validating the access token when it is presented to securing your application. Each API validates the token presented by the client every time, even if the token has been seen before, as is the case with `api.example.com`.
+
+One validation approach that is an option if the token is signed and has internal structure is illustrated below. This is true of a JSON Web Token (JWT) based access token. JWTs are used by FusionAuth and other authorization servers for access tokens, but this is not guaranteed by the [OAuth specification](https://www.rfc-editor.org/rfc/rfc6749#section-1.4).
+
+With a signed token, an API server validates the access token without communicating with any other system, by checking the signature and the claims.
+
+<ValidatingTokens alt={"Zooming in on token validation."}/>
+
+The APIs must validate the following:
+
+* the signature
+* the expiration time (the `exp` claim)
+* the not valid before time (the `nbf` claim)
+* the audience (the `aud` claim)
+* the issuer (the `iss` claim)
+* any other business specific claims: *this is important*, make sure you validate non-standard claims
+
+This validation should be performed as soon as the request is received, possibly by an API gateway. If any of these checks fail, the requester is essentially unknown. Therefore, the request is from, at best, buggy software and, at worst, an attacker.
+
+The signature and standard claims checks can and should be done with a language specific open source library, such as [fusionauth-jwt (Java)](https://github.com/fusionauth/fusionauth-jwt), [node-jsonwebtoken (JavaScript)](https://github.com/auth0/node-jsonwebtoken), or [golang-jwt (golang)](https://github.com/golang-jwt/jwt).
+
+Checking other claims is business logic and can be handled by the API developer. Again, it's important that you take this extra step.
+
+### Token Validation With Introspection
+
+If the access token doesn't meet the criteria above, you can introspect the token by presenting it to the authorization server. With this process, the validity of the token is confirmed by the token issuing software.
+
+<ClientSideStorageIntrospection alt={"Storing the tokens as secure, HttpOnly cookies and using introspection to validate them."}/>
+
+A successful introspection request returns JSON. Claims in this response still need to be checked:
+
+* the expiration time (the `exp` claim)
+* the not valid before time (the `nbf` claim)
+* the audience (the `aud` claim)
+* the issuer (the `iss` claim)
+* any other business specific claims
+
+Using introspection adds a dependency on the authorization server, but removes the need for APIs to validate the token signature.
+
+### Using the Refresh Token Grant
+
+At some point every access token expires, and the client will, when presenting it to an API, be denied access. The client must be ready to handle this type of error.
+
+When you initially request the `offline_access` scope, you will receive a refresh token as well as an access token after a user authenticates.
+
+<ClientSideStorageRefreshToken alt={"Using a refresh token."} />
+
+When the access token expires, the client can present the refresh token to the authorization server. That server validates the user's account is still active, that there is still an active session, and any other required logic. The authorization server can then issue a new access token. This can be sent to the client and transparently extends the user's access to the APIs.
+
+### Benefits of Client-side Tokens
+
+If you use client stored tokens, you gain horizontal scalability, since each API can take requests directly from every client. As mentioned above, this approach is a great fit for a single page JavaScript application using data from multiple APIs on the same domain.
+
+Using secure `HttpOnly` cookies protects you from cross-site scripting (XSS) attacks. XSS is a common way for attackers to gain access to tokens. When they gain the tokens, they can make requests masquerading as the user for whom the token was granted. Secure `HttpOnly` cookies, however, are not available to JavaScript running on the page, and therefore can't be accessed by malicious scripts.
+
+If your APIs are on multiple domains, or on domains different than what can set a token cookie, you have two options:
+
+* You can use a proxy which can ingest the token, validate it and pass on requests to other domains.
+* You can use a session based approach, discussed later.
+
+Below is a diagram of the proxy approach, where an API from `todos.com` is called via a proxy at `proxy.example.com`. Cookies set from the `.example.com` domain will never be sent to the `todos.com` domain due to browser rules.
+
+<ClientSideStorageWithProxy alt={"Using a proxy to access APIs on different domains."} />
+
+### Alternatives To Browser Client-side Tokens
+
+Why use browser cookies as opposed to another storage mechanism such as memory or localstorage? Why not bind the cookie to the browser? All options have tradeoffs, and using cookies works for many applications.
+
+Localstorage is an insecure option because, unless you also set a fingerprint cookie, as [recommended by OWASP](https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html#token-sidejacking), you are exposed to XSS attacks. Any JavaScript running on the page has access to localstorage. If you do follow the OWASP recommendations by adding a fingerprint to your token and sending a cookie down with a related value, you are limited to API requests on the domain to which the cookie is scoped, which doesn't win you much.
+
+If you use an in-memory storage solution, when the browser is refreshed, the token is gone. The user has to log in again; not a great experience.
+
+Another option is a service worker to isolate access to the tokens. This is a good choice, but then all requests from the application must then pass through the service worker. You're essentially building an in-browser proxy, which may be over-complicated.
+
+Client binding measures, such as [Distributed Proof of Possession (DPoP)](https://datatracker.ietf.org/doc/html/rfc9449) and [Mutual-TLS (MTLS)](https://datatracker.ietf.org/doc/html/rfc8705), remove the danger of XSS. A token can't be used without the private key only the proper client possesses. However, these approaches require additional setup on the client side. DPoP is relatively new and requires the API server to take additional verification steps.
+
+If client storage options don't meet your needs, another option is web sessions.
+
+## Server-side Token Storage
+
+You can store the access token and refresh token in the server-side session. The application can use web sessions to communicate with the server. The token is then available for any requests originating from server-side code. This is also known as the backend for frontend (BFF) proxy.
+
+<SessionStorage alt={"Storing the tokens server-side in a session."} />
+
+If you need to retrieve data from other APIs with no domain limits, over secure, server-side channels, this is a good option. If you don't really care about what the token gets you access to, you can examine the claims and validity, then discard it, assured the user has authenticated at the authorization server.
+
+Below is an example of proxying API requests through server-side components. The APIs receiving the tokens still need to validate them.
+
+<SessionStorageApiCalls alt={"Proxying API calls using tokens stored in a server-side session."} />
+
+Even if you don't use token to gain access to APIs from server-side code, you still get benefits from using the OAuth Authorization Code grant:
+
+* Customer personally identifiable information (PII) is stored in one safe and secure location.
+* You have one view of your customer across all your apps.
+* Granular user permissions with scopes, some of which are standardized.
+* Advanced authentication functionality such as MFA, enterprise single sign-on and login rate limiting can be implemented in one place for all applications.
+* You can upgrade such authentication functionality without modifying downstream applications.
+* You can offer single sign-on across all your custom, commercial and open source applications.
+* Common login related workflows such as changing profile data or passwords can be centralized and managed by the authorization server.
+
+## The Id Token
+
+What about the id token? That was mentioned above as an optional token, but not discussed further.
+
+The token is delivered when you request a scope of `profile` in the initial authorization sequence. After successful authentication, there is an id token as well as an access token provided by the authorization server. There are other OIDC scopes as well, beyond `profile`, which can get you access to different user data.
+
+The id token can be safely sent to the browser or client and stored in a relatively insecure location, such as localstorage. The id token should never be used to access protected data, but instead is for displaying information about a user such as their name. Id tokens are guaranteed to be JWTs, so you can validate them client side.
+
+## Summing Up
+
+The two options of client-side cookie based token storage or server-side session based token storage handle many systems using OAuth and OIDC to safely authenticate and authorize users.
+
+Client-side storage is a great choice when you have disparate APIs and need to scalably support highly distributed clients such as mobile devices or browsers. Server-side session storage is simpler and easier to integrate into monolithic applications.
+

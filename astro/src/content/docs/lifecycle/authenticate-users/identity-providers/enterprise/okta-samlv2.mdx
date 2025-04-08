@@ -1,0 +1,113 @@
+---
+title: SAML v2 with Okta
+description: Configure SAML v2 for Okta.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: identity providers
+quatercategory: enterprise
+---
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import InlineField from 'src/components/InlineField.astro';
+
+## Configure SAML v2 for Okta
+
+This documentation will guide you in configuring SAML v2 IdP for Okta. In this case, FusionAuth will act as Service Provider (SP) to Okta (IdP). Functionally, the result will allow you to display a <InlineUIElement>Login with Okta</InlineUIElement> button on your FusionAuth application's login page and allow users to connect via SAML to Okta applications.
+
+![Login With Okta End Result](/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-result.png)
+
+## Prerequisites
+* A FusionAuth instance running on a publicly accessible URL. You can spin up a [basic FusionAuth Cloud instance](/pricing), use [ngrok](/docs/get-started/download-and-install/development/exposing-instance), or [install it on any server](/docs/get-started/download-and-install).
+* An [Okta Workforce Identity Cloud account](https://www.okta.com/free-trial/) connected to a business email address.
+  * The [Okta Verify app](https://help.okta.com/eu/en-us/Content/Topics/end-user/ov-overview.htm?cshid=csh-user-ov-overview) if your Okta account is not configured to send SMS messages for 2FA.
+
+## Okta Configuration
+
+Log in to Okta and navigate to the <strong>Admin</strong> panel.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-admin-button.png" alt="Okta admin button" width="1200" />
+
+Navigate to <strong>Applications -> Applications</strong> and click the <InlineUIElement>Create App Integration</InlineUIElement> button.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-create-app-integration.png" alt="create app integration" width="1200" role="bottom-cropped" />
+
+Select <InlineField>SAML 2.0</InlineField> and click <InlineUIElement>Next</InlineUIElement>.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-samlv2.png" alt="SAML v2" width="1200" />
+
+Give the app a name and click <InlineUIElement>Next</InlineUIElement>.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-name.png" alt="name Okta app" width="1200" />
+
+Provide values for the <InlineField>Single sign-on URL</InlineField> and <InlineField>Audience URI (SP Entity ID)</InlineField>. You will have to change these values later, but you need to enter something in order to obtain information that will allow you to get the correct values from FusionAuth.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-dummy-values.png" alt="Okta dummy values" width="1200" />
+
+Scroll down to <strong>Attribute Statements</strong> and add the <InlineField>user.Id</InlineField> and <InlineField>user.email</InlineField> values. You can choose any names, but record them because you will need to supply them to FusionAuth later.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-attribute-statements.png" alt="attribute statements" width="1200" role="bottom-cropped" />
+
+Click <InlineUIElement>Next</InlineUIElement>, select one of the radio buttons on the <strong>Feedback</strong> tab, and click <InlineUIElement>Finish</InlineUIElement>. Scroll to the bottom of the following page and click the <InlineUIElement>View SAML setup instructions</InlineUIElement> button. You will need to provide the information on this page to FusionAuth, so keep it open in a separate tab or window.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-configuration-details.png" alt="SAML configuration details" width="1200" role="bottom-cropped" />
+
+Return to the previous window and navigate to the <strong>Assignments</strong> tab. Click <InlineUIElement>Assign</InlineUIElement> and then <InlineUIElement>Assign to People</InlineUIElement>.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-assign-to-people.png" alt="assign to people" width="1200" role="bottom-cropped" />
+
+Click the <InlineUIElement>Assign</InlineUIElement> button next to the user you would like to authenticate. Click <InlineUIElement>Save and Go Back</InlineUIElement>, then <InlineUIElement>Done</InlineUIElement>.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-assign-button.png" alt="assign button" width="1200" />
+
+## FusionAuth Configuration
+
+Open a new tab and go to your FusionAuth dashboard.
+
+From your FusionAuth dashboard, navigate to <strong>Settings -> Key Master</strong> and click the downward arrow next to <InlineUIElement>Generate Elliptic</InlineUIElement>. Then click <InlineUIElement>Import Certificate</InlineUIElement>.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-import-certificate.png" alt="import certificate" width="1200" />
+
+Give this key a <InlineField>Name</InlineField>, for example, `OKTA SAML`. Then, copy the <InlineField>X.509</InlineField> certificate from the Okta <strong>SAML setup instructions</strong> page that you left open previously. Paste it into the <InlineField>Certificate</InlineField> box in the FusionAuth Key Master and <InlineUIElement>Submit</InlineUIElement>.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-paste-certificate.png" alt="paste certificate" width="1200" />
+
+Navigate to <strong>Settings -> Identity Providers</strong> and add a new `SAML v2` identity provider.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-new-idp.png" alt="new identity provider" width="1200" role="bottom-cropped" />
+
+Provide a <InlineField>Name</InlineField>, for example, `OKTA SAML`. For the <InlineField>IdP endpoint</InlineField>, paste the <InlineField>Identity Provider Single Sign-On URL</InlineField> from the Okta <strong>SAML setup instructions</strong> page. For the verification key, select from the dropdown the name of the key you just created in the Key Master. Optionally, change the <InlineField>Button text</InlineField> to `Login with Okta`.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-new-idp-settings.png" alt="new idp settings" width="1200" />
+
+Make sure your application has the <InlineField>Enabled</InlineField> switch toggled. Then, navigate to the <strong>Options</strong> tab and supply the names that you chose for the <InlineField>user.Id</InlineField> and <InlineField>user.email</InlineField> attribute statements in Okta.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-claim-options.png" alt="claim options" width="1200" />
+
+Hit <InlineUIElement>Save</InlineUIElement> and <InlineUIElement>View</InlineUIElement> the identity provider you just created. Scroll down to the <strong>SAML v2 Integration details</strong> section and record the <InlineField>Callback URL (ACS)</InlineField> and <InlineField>Issuer</InlineField> values so you can supply them to Okta.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-integration-details.png" alt="integration details" width="1200" />
+
+You may receive a warning after saving the identity provider.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-cors-warning.png" alt="CORS warning" width="1200" role="bottom-cropped" />
+If you receive such a warning after saving the identity provider, navigate to <strong>Settings -> System</strong> and add your Okta URL to the <InlineField>Allowed origins</InlineField> list. This configures FusionAuth to send the correct CORS headers.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-cors-settings.png" alt="CORS settings" width="1200" />
+
+Return to your Okta dashboard. Navigate to <strong>Applications -> Your Application</strong> and edit the <strong>SAML Settings</strong>.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-edit-saml-settings.png" alt="edit SAML settings" width="1200" role="bottom-cropped" />
+
+Click <InlineUIElement>Next</InlineUIElement> to get to the <strong>Configure SAML</strong> tab. Replace the <InlineField>Single sign-on URL</InlineField> with the <InlineField>Callback URL (ACS)</InlineField> value from FusionAuth. Replace the <InlineField>Audience URI (SP Entity ID)</InlineField> with the <InlineField>Issuer</InlineField> value from FusionAuth. Click <InlineUIElement>Next</InlineUIElement> and then <InlineUIElement>Finish</InlineUIElement> to save these settings.
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-settings-from-fusionauth.png" alt="settings from FusionAuth" width="1200" />
+
+## Testing the Login
+
+To test, navigate to the applications page in FusionAuth. Click on the <InlineUIElement>View</InlineUIElement> icon (magnifying glass) next to the application you enabled Okta login on and copy the <InlineField>OAuth IdP login URL</InlineField> address. Navigate to this address. You should see a <InlineUIElement>Login with Okta</InlineUIElement> option on your app's sign-in page:
+
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-saml-result.png" alt="result" width="1200" role="bottom-cropped" />
+
+Click the <InlineUIElement>Login with Okta</InlineUIElement> button. Test logging in with the username and password, as well as the 2FA method you selected when you configured your account on Okta.
+
+If it is all set up correctly, you should be redirected back to your app, successfully logged in. The user will be added to FusionAuth and you can examine the <strong>Linked accounts</strong> section of the user details screen to see that the Okta SAML link was created.

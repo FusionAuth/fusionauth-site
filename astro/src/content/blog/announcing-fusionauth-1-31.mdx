@@ -1,0 +1,50 @@
+---
+publish_date: 2021-11-22 
+title: Announcing FusionAuth 1.31
+description: This release includes a number of bug fixes as well as enhancements to reconcile lambda functionality.
+authors: Dan Moore
+image: /img/blogs/release-1-31/product-update-fusionauth-1-31.png
+categories: Release Updates, Product
+tags: release notes
+excerpt_separator: "{/* more */}"
+---
+
+We're excited to announce the release of version 1.31.0 of FusionAuth. This version shipped on November 18, 2021. 1.31.0 includes a ton of bug fixes and improvements to the Identity Providers feature.
+
+{/* more */}
+
+This release contained a number of features, enhancements, and bug fixes. Please see the [release notes](/docs/release-notes/archive#version-1-31-0) for a full breakdown of the changes between 1.30 and 1.31. 
+
+There are a few items worth calling out.
+
+## Modify the username and email in a reconcile lambda
+
+FusionAuth lambdas are JavaScript functions that run at specific points in the authentication or authorization process. Identity Providers are external sources of account data, such as Facebook, Google, SAML or OIDC servers. Identity Provider reconcile lambdas run when an Identity Provider returns after a successful login. 
+
+Previous to this release, with a few exceptions, the username and email claims could not be modified in a reconcile lambda. This increases flexibility when you have a remote identity datasource which does not provide either an email or a username. Sometimes identity linking can suffice, but there are other times when it does not. However, any time code can modify login Ids, make sure you threat model out the ramifications, particularly the danger of inadvertent account takeover. Your lambda may be called two times if you modify these claims as well.
+
+
+## Access to the id_token in the OIDC reconcile lambda
+
+The OIDC process returns not a single token, but two. The Access Token and the Id Token. Previously, the OIDC reconcile lambda only provided the Access Token. With this release, the JavaScript code running in your lambda now has access to the Id Token. As with the Access Token, the lambda can examine the properties of the Id Token and modify the user or registration based on those properties. An example of data available in the Id Token is Azure AD group membership.
+
+If there is no Id Token available, or if it is signed with an asymmetric key, it will not be available. Your lambda code should be able to handle either case.
+ 
+## The rest of it
+
+Some of the other 20+ enhancements and fixes included in this release:
+
+* Performance improvements were made in the 1.30 point releases. In testing, FusionAuth handled over 2,000 registrations per second on properly sized hardware. These improvements are included in this release.
+* A subtle bug in the SAML implementation, relating to the casing of URL encoded characters in a query string, was squashed.
+* Often you'll want to send users directly to an Identity Provider, skipping the FusionAuth login screen. With this release, you can now do that, using the `idp_hint` parameter, for the Twitter and Apple Identity Providers. They join the other Identity Providers, as link:/docs/lifecycle/authenticate-users/identity-providers/#hints[documented here], in supporting this parameter.
+* Locale handling has been overhauled and improved to support locales such as `es_419`.
+
+## Upgrade at will
+
+The [release notes](/docs/release-notes/archive#version-1-31-0) are a guide of the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified.
+
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/operate/deploy/upgrade). 
+
+If you have a FusionAuth Cloud deployment, proceed to the "Deployments" tab on your <a href="https://account.fusionauth.io/account/deployment/" target="_blank">account dashboard</a> and upgrade your servers. If you have any questions about the upgrade, <a href="https://account.fusionauth.io/account/support/" target="_blank">please open a support ticket</a>.
+
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).

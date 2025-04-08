@@ -1,0 +1,100 @@
+---
+publish_date: 2023-11-20
+title: Announcing FusionAuth 1.48
+description: This update includes webhook improvements, the ability to retrieve more than 10,000 users, and exposes the access token to your lambdas.
+authors: Dan Moore
+image: /img/blogs/release-1-48/fusionauth-1-48.png
+categories: Release Updates, Product
+tags: release notes, lambdas, webhooks, security, search, user search
+excerpt_separator: "{/* more */}"
+---
+import JSON from 'src/components/JSON.astro';
+import Aside from '../../components/Aside.astro';
+
+FusionAuth version 1.48 shipped in late October, 2023. This version includes webhook improvements, the ability to retrieve more than 10,000 users, and exposes the access token to your lambdas.
+
+{/* more */}
+
+The focus of these updates is webhooks, a critical integration feature. In fact, I hereby dub 1.48 the "Webhook Walrus" release.
+
+All in all there are 34 issues, enhancements, and bug fixes included in the 1.48.0 and 1.48.1 releases. As always, please see the [release notes](/docs/release-notes/#version-1-48-1) for a full breakdown of the changes between 1.47.1 and 1.48.1, including any schema changes.
+
+## Webhook Improvements
+
+![Oooh, webhook signatures.](/img/blogs/release-1-48/walrus-meme.png)
+
+There were a number of webhook improvements in the "Webhook Walrus" release. The most notable is webhook signing, a request from a number of users and customers. 
+
+It's [fully documented here, including sample code](/docs/extend/events-and-webhooks/signing), but I want to talk about why you might want to do this too.
+
+There are many ways to secure the contents of webhooks in transit and ensure that what FusionAuth sends is what your application receives. These include:
+
+* using a custom client certificate
+* adding a header value and checking for it on receipt
+* adding FusionAuth IP addresses to an allow list and disallowing traffic from other IPs
+
+However, signing the webhook contents means they can't be tampered with in transit without you, the recipient, knowing. You have cryptographic certainty the payload FusionAuth sent is the payload you received. This is important whenever you depend on webhook contents being correct. That is to say, always.
+
+Here's how it works: 
+
+* When webhook signing is configured, you choose a signing key.
+* On webhook creation FusionAuth hashes the payload of the webhook message.
+* It then creates a JWT with a `request_body_sha256` claim, and sets the value to that calculated hash.
+* The JWT is signed using the signing key.
+* The JWT is sent along with the webhook in a custom header, `X-FusionAuth-Signature-JWT`.
+
+Then, the application which receives the webhook needs to verify the message integrity. To do so: 
+
+* Create a SHA 256 hash of the payload you receive.
+* Extract the JWT from the `X-FusionAuth-Signature-JWT` header.
+* Verify the signature of the JWT. This step is important, otherwise someone might modify the JWT in the header, and tweak the hash to match the modified payload.
+* Then, compare the payload hash you first calculated with the value from the `request_body_sha256` claim.
+
+If they match, you can be certain the payload is unchanged.
+
+But it's not just webhook signing. There were other webhook related improvements too, including:
+
+* Webhook test messages now include more information if the webhook does not succeed.
+* You can use [key master](/docs/operate/secure/key-master) to manage webhook certificates. This is the recommended solution going forward.
+* A bug was fixed. Previously tenant specific webhooks were removed when `PATCH`-ing a tenant, and now they are not.
+* Test messages sent using the admin UI now preserve the body payload, making it easier to develop webhooks.
+
+## User Search
+
+Previous to this release, there was a limit on the number of user or entity search results. You could only get 10,000 users or entities in each search response. If you had more than that, which many of our community and clients do, you had to run multiple queries and join the JSON results. While this [could be scripted](https://github.com/FusionAuth/fusionauth-example-scripts/tree/main/full-user-search), it was a hassle.
+
+With the 1.48 release, you can [paginate through all user and entity search results](/docs/lifecycle/manage-users/search/search#extended-pagination). This allows you to have tens of millions of users and retrieve them all, and is helpful for reporting, syncing and querying your users' profiles. This functionality works across both the API and the admin UI.
+
+When running a search, examine the `nextResults` parameter in your results. Provide it in the next request to the User Search API. Here's an example of the JSON request you'd provide to the API. The `nextResults` value starting with `eyJscyI6WyIx...` was retrieved from a previous search API request.
+
+<JSON title="Example Request JSON using `nextResults`" src="users/search-nextResults-request.json" />
+
+You can also use one of [our client libraries](/docs/sdks) to issue the search request.
+
+<Aside type="tip" nodark="true">Bonus! If you are requesting a large number of users, you may want profile data, but not group membership or application registration data. To speed up your requests and omit data, use the `expand` parameter to specify what, if any, secondary data should be sent. To omit both group and registration data, pass `"expand" : []` in your search request.</Aside>
+
+## Access Tokens Available In Lambdas
+
+OIDC Identity Providers send an access token after a successful authentication. This is stored on the identity link, but there are times when it is useful to have the access token in the lambda function. With it, you can use [Lambda HTTP Connect](/docs/extend/code/lambdas#using-lambda-http-connect) to request data from the Identity Provider's Userinfo or other API endpoints.
+
+As of this release, the access token will be available to a lambda in the `tokens` argument under the `access_token` key.
+
+## The Rest Of It
+
+As mentioned above, there were 34 issues, enhancements, and bug fixes included in these releases. A selection of the changes not covered above includes:
+
+* A critical fix to avoid deleting users who were verified and then changed their email address. Until you have upgraded to version 1.48.1, please disable `Delete unverified users` if you currently have enabled `Email verification`, `Verify email when changed` and `Delete unverified users`. 
+* Updated internal dependencies, including the latest Java 17 LTS.
+* Modal windows in the admin UI now can be closed using the escape key.
+
+Read more about all the changes in the [release notes](/docs/release-notes/#version-1-48-1).
+
+## Upgrade At Will
+
+The [release notes](/docs/release-notes/#version-1-48-1) are a guide to the changes, fixes, and new features. Please read them carefully to see if any features you use have been modified or enhanced.
+
+If you'd like to upgrade your self-hosted FusionAuth instance, see our [upgrade guide](/docs/operate/deploy/upgrade). 
+
+If you have a FusionAuth Cloud deployment, proceed to the "Hosting" tab on your <a href="https://account.fusionauth.io/account/deployment/" target="_blank">account dashboard</a> and upgrade your instances. If you have any questions about the upgrade, <a href="https://account.fusionauth.io/account/support/" target="_blank">please open a support ticket</a>.
+
+Or, if we've piqued your interest and you'd like to use FusionAuth, [check out your options](/pricing).

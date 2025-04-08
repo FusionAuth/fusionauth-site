@@ -1,0 +1,56 @@
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import DeviceTypeList from 'src/content/docs/_shared/_device-type-list.mdx';
+import JSON from 'src/components/JSON.astro';
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="refreshTokens" type="Array" required>
+    The list of refresh tokens to import.
+  </APIField>
+  <APIField name="refreshTokens[x].applicationId" type="UUID" required>
+    The unique Application Id that corresponds to the User Registration for this refresh token.
+  </APIField>
+  <APIField name="refreshTokens[x].metaData.device.description" type="String" optional>
+    A human readable description of the device represented by the `device` parameter.
+  </APIField>
+  <APIField name="refreshTokens[x].metaData.device.lastAccessedAddress" type="String" optional>
+    The IP address of this login request.
+  </APIField>
+  <APIField name="refreshTokens[x].metaData.device.lastAccessedInstant" type="Long" optional>
+    The [instant](/docs/reference/data-types#instants) of this login request.
+  </APIField>
+  <APIField name="refreshTokens[x].metaData.device.name" type="String" optional>
+    A human readable name of the device represented by the `device` parameter.
+  </APIField>
+  <APIField name="refreshTokens[x].metaData.device.type" type="String" optional>
+    The type of device represented by the `device` parameter.
+
+    Prior to version 1.46.0, this value was restricted to the following types:
+
+<DeviceTypeList />
+
+    In version `1.46.0` and beyond, this value can be any string value you'd like, have fun with it!
+  </APIField>
+  <APIField name="refreshTokens[x].startInstant" type="String" required>
+    The [instant](/docs/reference/data-types#instants) of the start of this token. This value will be used to calculate the token expiration.
+  </APIField>
+  <APIField name="refreshTokens[x].token" type="String" required>
+    The string representation of the refresh token.
+
+    Prior to version `1.33.0`, this value was limited to a maximum length of `191` characters. If you need to import a token that is longer than `191` characters, ensure you have upgraded to version `1.33.0` or later.
+  </APIField>
+  <APIField name="refreshTokens[x].userId" type="UUID" required>
+    The unique user Id of the refresh token owner.
+  </APIField>
+  <APIField name="validateDbConstraints" type="Boolean" optional defaults="false">
+    Set this value to `true` in order to perform additional validation of the request. This validation includes, among other things, confirming that a user exists and is registered for the application which this `refreshToken` was created for.
+
+    If this is `false`, any errors such as duplicated refresh token values will return a `500` error without any additional messages.  If this is `true`, additional validation will be performed on the input request and a `400` response will be returned with a JSON body indicating duplicate values or other error conditions encountered.
+
+    Setting this value to `true` will dramatically decrease the performance of this request. If importing large numbers of tokens in a single request you may need to increase request timeouts to ensure this request does not timeout before it has completed.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="users/refresh-tokens/import-request.json" />

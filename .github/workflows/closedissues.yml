@@ -1,0 +1,47 @@
+name: check_closed_github_issues
+
+# this checks to see what issues are closed in GH but still in our doc. 
+# we should update doc to reflect closed issues
+
+# Controls when the action will run. 
+on:
+  # Triggers the workflow once a day
+  schedule:
+    - cron: '31 18 * * *'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  check_closed_github_issues:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Check for closed issues referenced in documentation
+        run: |
+          # check docs for references to closed issues
+          count=`src/scripts/check-for-closed-github-issues-in-docs.sh`
+          exit $count
+        shell: bash
+  send_mail_on_failure:
+    needs: check_closed_github_issues
+    runs-on: ubuntu-latest
+    if: ${{ failure() }}
+    steps:
+      - uses: dawidd6/action-send-mail@4226df7daafa6fc901a43789c49bf7ab309066e7 # v3
+        with:
+          server_address: ${{secrets.MAIL_HOST}}
+          server_port: ${{secrets.MAIL_PORT}}
+          username: ${{secrets.MAIL_USERNAME}}
+          password: ${{secrets.MAIL_PASSWORD}}
+          subject: Failed linkcheck2
+          to: ${{secrets.WEBSITE_SLACK_CHANNEL_NOTIFICATION_EMAIL}}
+          from: FusionAuth GitHub Actions <noreply@fusionauth.io>
+          body: "Closed issue check failed, https://github.com/FusionAuth/fusionauth-site/actions/workflows/closedissues.yml has more."

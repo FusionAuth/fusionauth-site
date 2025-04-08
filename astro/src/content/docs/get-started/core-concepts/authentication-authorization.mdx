@@ -1,0 +1,92 @@
+---
+title: Authentication and Authorization
+description: Learn about the difference between authentication and authorization in FusionAuth.
+section: get started
+subcategory: core concepts
+---
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import JSON from 'src/components/JSON.astro';
+import Aside from 'src/components/Aside.astro';
+
+## Overview
+
+Authentication and authorization are two fundamental concepts in FusionAuth. The traditional definitions are:
+
+* authentication: who you are
+* authorization: what you can do
+
+Authentication is sometimes referred to as `authn` or `AuthN` and authorization is sometimes referred to as `authz` or `AuthZ`.
+
+### Authentication in FusionAuth
+
+Authentication means that a user has provided credentials which the system has accepted. This is often a username and password, but could be a code from a magic link, a token from a social auth provider, or a JWT from an external identity provider.
+
+Authentication occurs with users, who are scoped to the tenant. When authentication happens, if you are using the [Login API](/docs/apis/login), a `2xx` response is returned from FusionAuth. See the API documentation for the specific `2xx` value. When using an [Authorization Code grant](/docs/lifecycle/authenticate-users/oauth/), the user is redirected to the provided `redirect_uri`.
+
+In either case, the end result of the request will be a JWT containing information about the user. Each JWT has a header, a payload and a signature. You can [decode JWTs using any number of online tools](/dev-tools/jwt-decoder), because it's two base 64 encoded strings joined by periods, with the signature for integrity checking. Here's a diagram of a JWT:
+
+![The components of a JWT.](/img/shared/json-web-token.png)
+
+The JWT will contain information about the user. Here's an example of the payload of a JWT for a user that has been authenticated but not authorized:
+
+<JSON title="Example JWT For an Authenticated But Not Authorized User" src="login/jwt-unauthorized.json" />
+
+### Authorization in FusionAuth
+
+Authorization means that the user has been registered with an application. Authentication is a necessary prerequisite to authorization; if FusionAuth doesn't know who the user is, it can't know what resources the user is allowed to access.
+
+If using the [Login API](/docs/apis/login), the status code returned for an authorized user is typically `200`. See the API documentation for more details. When using an [Authorization Code grant](/docs/lifecycle/authenticate-users/oauth/), the user is redirected to the provided `redirect_uri`.
+
+In either case, the end result of the request will be a JWT containing information about the user. Here's an example:
+
+<JSON title="Example JWT For an Authorized User" src="login/jwt.json" />
+
+### Authorization and Securing Your Application
+
+These concepts are critical to application security.
+
+If you are utilizing the JWT to authorize a user to your application, you must do more than just ensure the JWT has a valid signature and is not expired. You must also ensure the JWT has provided adequate claims to the user's authorization.
+
+<Aside type="note">
+Checking the JWT signature and expiration are only a part of the story. Make sure you check the `roles` and `applicationId` claim to ensure the user is properly registered for the application they are trying to access.
+
+This check must be done by your web, mobile or native app.
+</Aside>
+
+If you enable <InlineField>Require registration</InlineField> on an application, a JWT won't be provided until the user is registered for this application if you are using the hosted login pages.
+
+The `aud` claim identifies the context of the request, in other words who is this JWT for: a Payroll application, a mobile application, etc. The presence of the `applicationId` and `roles` claims identifies the User's registration (authorization) and access (roles) to the requested resource identified by the `aud` claim.
+
+### An Example
+
+Say you have three people trying to log in:
+
+* Richard
+* Monica
+* Erlich
+
+The following Applications are configured in FusionAuth:
+
+* Pied Piper
+* Pied Piper Video Chat
+* Raviga Notes
+* Raviga Payroll
+* Hooli Jobs
+
+You grant access to a particular application with a [User Registration](/docs/get-started/core-concepts/registrations). Once registered, a user can have 0 or more [roles](/docs/get-started/core-concepts/roles) as defined by the [Application](/docs/get-started/core-concepts/applications).
+
+Richard is registered for Pied Piper and Pied Piper Video Chat. Monica is registered for Pied Piper, Raviga Notes, and Raviga Payroll. Neither Richard nor Monica is registered for Hooli Jobs. Erlich does not have an account.
+
+What happens when each user tries to log in to a particular application?
+
+| Application           | Richard Authenticated | Richard Authorized | Monica Authenticated | Monica Authorized | Erlich Authenticated | Erlich Authorized |
+|-----------------------|-----------------------|--------------------|----------------------|-------------------|----------------------|-------------------|
+| Pied Piper            | Yes                   | Yes                | Yes                  | Yes               | No                   | No                |
+| Pied Piper Video Chat | Yes                   | Yes                | Yes                  | No                | No                   | No                |
+| Raviga Notes          | Yes                   | No                 | Yes                  | Yes               | No                   | No                |
+| Raviga Payroll        | Yes                   | No                 | Yes                  | Yes               | No                   | No                |
+| Hooli Jobs            | Yes                   | No                 | Yes                  | No                | No                   | No                |
+
+FusionAuth successfully authenticates Richard and Monica because they exist, and the credentials they provided were correct. But if a user is not authorized to the Application, the access token (JWT) returned will not contain authorization (`applicationId`, `roles`) claims for the resource.
+

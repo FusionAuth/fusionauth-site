@@ -1,0 +1,212 @@
+---
+title: Provision a Microsoft AKS (Azure Kubernetes Service) Kubernetes Cluster
+description: Learn how to provision an AKS cluster in Microsoft Azure.
+keywords: docker kubernetes k8s container aws
+section: get started
+subcategory: download and install
+tertcategory: kubernetes
+---
+import Kubectl from 'src/content/docs/get-started/download-and-install/kubernetes/_kubectl.mdx';
+import Aside from 'src/components/Aside.astro';
+
+## Overview
+
+This guide will show you how to quickly setup an AKS cluster on Microsoft Azure. When completed, you will have a fully functional Kubernetes cluster ready to deploy FusionAuth as well as a supporting Azure Database for PostgresSQL.
+The following method uses the default settings when provisioning an AKS cluster with the required resources and services. It is recommended that you consult the [Azure Kubernetes Service docs](https://docs.microsoft.com/en-us/azure/aks/) for details on how to customize the configuration for your use case.
+
+## Requirements
+
+* A [Microsoft Azure account](https://portal.azure.com/) and active subscription with sufficient permissions to create resources.
+* `az` - Azure command Line tool used to manage resources on Azure. For installation instructions, see [How to install the Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli).
+<Kubectl />
+
+## Architecture
+
+The resulting architecture for this guide centers around creating an AKS cluster. By default, AKS creates a virtual network hosted in the Azure cloud; the worker nodes will connect to this network. You will create a PostgreSQL database and Elasticsearch cluster that will reside within the same virtual network.
+
+The following reference architecture shows an example application deployed in AKS.
+
+<img src="/img/docs/get-started/download-and-install/kubernetes/aks.png" alt="EKS Architecture" width="1200" />
+
+## Create an AKS cluster
+
+### Create a Resource Group
+
+Before you create the cluster, you need to first create a [Resource Group](https://docs.microsoft.com/en-us/azure/azure-resource-manager/management/), a logical grouping of Azure resources. A resource group location is where resources will run by default when a region is not provided on creation.
+
+```shell title="Create a new resource group"
+az group create --name fusionauthResourceGroup --location westus
+```
+
+```json title="JSON output of the resource group creation command"
+{
+  "id": "/subscriptions/2683a458-c361-4b5e-87d9-a4e5237d5b91/resourceGroups/fusionauthResourceGroup",
+  "location": "westus",
+  "managedBy": null,
+  "name": "fusionauthResourceGroup",
+  "properties": {
+    "provisioningState": "Succeeded"
+  },
+  "tags": null,
+  "type": "Microsoft.Resources/resourceGroups"
+}
+```
+
+### Create the cluster
+
+```shell title="Create a new AKS cluster"
+az aks create \
+  --resource-group fusionauthResourceGroup \
+  --name fusionauthCluster \
+  --node-count 1 \
+  --enable-addons monitoring \
+  --generate-ssh-keys
+```
+
+More on these arguments:
+
+* `resource-group` - The name of the resource group where the cluster will be created.
+* `name` - The name of the cluster.
+* `node-count` - The number of nodes in the replica set.
+* `enable-addons` - The Kubernetes addons to enable.
+* `generate-ssh-keys` - Generates SSH public and private key files in the ~/.ssh directory.
+
+For more information on the [`create`](https://docs.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest#az_aks_create) command, see [`az aks create`](https://docs.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest#az_aks_create) documentation.
+
+### Update Kubernetes Configuration
+
+The following retrieves credentials for the newly created cluster and then configures your `~/.kube/config` file so that you can use `kubectl` to connect to this cluster.
+
+```shell title="Get access credentials and update Kubeconfig"
+az aks get-credentials \
+  --resource-group fusionauthResourceGroup \
+  --name fusionauthCluster
+```
+
+### Verify Cluster Information
+
+Execute the [list](https://docs.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest#az_aks_list) command to see AKS clusters that have been configured.
+
+```shell title="Get list of AKS clusters"
+az aks list
+```
+
+You now have a fully functional provisioned AKS cluster. For good measure, view the nodes that have been created.
+Use `kubectl` to make requests to the Kubernetes API Server.
+
+```shell title="Get list of nodes running on the cluster"
+kubectl get nodes -o wide
+
+NAME                                STATUS   ROLES   AGE     VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION     CONTAINER-RUNTIME
+aks-nodepool1-13281124-vmss000000   Ready    agent   8m42s   v1.20.9   10.240.0.4    <none>        Ubuntu 18.04.6 LTS   5.4.0-1059-azure   containerd://1.4.9+azure
+```
+
+Great! You have a node in a `READY` status. This means that the node is healthy and ready to accept pods.
+
+## Create a Database
+
+For this setup, you will create a PostgreSQL database. Such a database is required for FusionAuth. Replace `fusionauth-db-<my-organization>` with the desired database name.
+
+<Aside type="caution">
+Azure database names are globally unique and you may encounter the error, "Specified server name is already used". Consider appending your own unique identifier such as an organization name in this example.
+</Aside>
+
+```shell title="Create a PostgreSQL flexible server"
+az postgres flexible-server create \
+  --resource-group fusionauthResourceGroup \
+  --name fusionauth-db-<my-organization> \
+  --location westus \
+  --admin-user postgres \
+  --admin-password changeMeToSomethingSecure \
+  --version 12 \
+  --public-access 0.0.0.0
+```
+
+More on these arguments:
+
+* `resource-group` - The name of the resource group where the cluster will be created.
+* `name` - The name of the database.
+* `location` - The location.
+* `admin-user` - The database admin user.
+* `admin-password` - The database admin user password.
+* `version` - The version of PostgreSQL to install.
+* `public-access` - Allows public access in the firewall rules. The `0.0.0.0` parameter allows access to this database from any resource deployed in Azure.
+
+For more information on the [create](https://docs.microsoft.com/en-us/cli/azure/postgres/flexible-server?view=azure-cli-latest#az_postgres_flexible_server_create) command, see [`az postgres flexible-server create`](https://docs.microsoft.com/en-us/cli/azure/postgres/flexible-server?view=azure-cli-latest#az_postgres_flexible_server_create) documentation.
+
+Upon successful database creation, you will receive a JSON object that contains important information about your new database.
+
+```json title="JSON output from a successful database creation"
+{
+  "connectionString": "postgresql://postgres:<your-password>@fusionauth-db-example.postgres.database.azure.com/postgres?sslmode=require",
+  "databaseName": "flexibleserverdb",
+  "firewallName": "AllowAllAzureServicesAndResourcesWithinAzureIps_2021-10-10_23-34-29",
+  "host": "fusionauth-db-example.postgres.database.azure.com",
+  "id": "/subscriptions/2683a458-c361-4b5e-87d9-a4e5237d5b91/resourceGroups/fusionauthResourceGroup/providers/Microsoft.DBforPostgreSQL/flexibleServers/fusionauth-db-example",
+  "location": "West US",
+  "password": "your-password",
+  "resourceGroup": "fusionauthResourceGroup",
+  "skuname": "Standard_D2s_v3",
+  "username": "postgres",
+  "version": "12"
+}
+```
+
+Take note of the database username, password and hostname, as those will be needed to configure FusionAuth. If you need to retrieve this information later, you can use the following command to get a list:
+
+```shell title="List available flexible servers"
+az postgres flexible-server list
+```
+
+## Deploy Elasticsearch using Elastic Cloud
+
+Azure offers its Elasticsearch Service through Elastic Cloud. This section will guide you through setting up your account and deploying an Elasticsearch cluster.
+
+From the Azure Portal home screen, enter a search for "Elasticsearch" and click on the Elasticsearch (Elastic Cloud) service.
+
+<img src="/img/docs/get-started/download-and-install/kubernetes/az-es-start.png" alt="Navigate to Elasticsearch service" width="1200" role="top-cropped bottom-cropped" />
+
+Click on the **Create Elasticsearch (Elastic Cloud)** button.
+
+<img src="/img/docs/get-started/download-and-install/kubernetes/az-es-create.png" alt="Create Elasticsearch" width="1200" role="top-cropped bottom-cropped" />
+
+Create an Elastic Resource by selecting the resource group you created in the first section of this guide and a name for the resource. Click on **Review + Create** after providing the required fields.
+
+<img src="/img/docs/get-started/download-and-install/kubernetes/az-es-create-resource.png" alt="Create resource screen" width="1200" role="top-cropped bottom-cropped" />
+
+Review your selections and press the **Create** button when ready.
+
+<img src="/img/docs/get-started/download-and-install/kubernetes/az-es-review-create.png" alt="Review and create screen" width="1200" role="top-cropped bottom-cropped" />
+
+Your deployment will now be in-progress as indicated on the next screen. This may take a few minutes to complete.
+
+<img src="/img/docs/get-started/download-and-install/kubernetes/az-es-in-progress.png" alt="In-progress screen" width="1200" role="top-cropped bottom-cropped" />
+
+When the deployment is complete, click on **Go to resource group** and then click on the Elasticsearch resource that you just created.
+
+<img src="/img/docs/get-started/download-and-install/kubernetes/az-es-resource-group.png" alt="Resources screen" width="1200" role="top-cropped bottom-cropped" />
+
+Click on the **Manage changes in Elastic Cloud** link.
+
+<img src="/img/docs/get-started/download-and-install/kubernetes/az-es-example.png" alt="Elasticsearch resource detail screen" width="1200" role="top-cropped bottom-cropped" />
+
+You will be directed to your Elastic Cloud dashboard and will see your new deployment listed.
+
+Click on the name of your deployment to manage it. On the next page, you have access to all of the necessary endpoint information you will need to connect to your deployment.
+Under **Applications**, click on the `Copy endpoint` link next to **Elasticsearch** to copy the URL to your clipboard. You will need to save this URL for use when [deploying FusionAuth](/docs/get-started/download-and-install) to your AKS cluster.
+Next, click on the **Security** link seen on the left navigation panel.
+
+<img src="/img/docs/get-started/download-and-install/kubernetes/az-es-copy-endpoint.png" alt="Example dashboard on Elastic Cloud" width="1200" role="top-cropped bottom-cropped" />
+
+Click on the **Reset Password** button to set your administrative credentials for your cluster.
+
+<img src="/img/docs/get-started/download-and-install/kubernetes/az-es-security.png" alt="Security screen" width="1200" role="top-cropped bottom-cropped" />
+
+You now have your Elasticsearch cluster deployed and the required credentials to connect to it.
+
+## Next Steps
+
+You now are running all the necessary infrastructure to deploy a containerized application to AKS.
+
+Next up, [Deploy FusionAuth in Kubernetes](/docs/get-started/download-and-install/kubernetes/fusionauth-deployment).
+

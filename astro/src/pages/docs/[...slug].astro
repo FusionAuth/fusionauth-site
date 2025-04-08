@@ -1,0 +1,42 @@
+---
+import { getCollection } from "astro:content";
+import Layout from 'src/layouts/Docs.astro';
+import { getDocNavContext } from '../../tools/docs';
+
+export async function getStaticPaths() {
+  const entry = await getCollection("docs");
+  return entry.map(entry => ({
+    params: { slug: entry.slug }, props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const navContext = await getDocNavContext(entry.data.section);
+let { Content, headings, remarkPluginFrontmatter = [] } = await entry.render();
+if ((entry.data.section === 'apis') &&
+  (entry.data.subcategory === 'identity providers') &&
+  (headings.length === 1) &&
+  ('idpDisplayName' in remarkPluginFrontmatter)) {
+  const globs = await Astro.glob('../../content/docs/apis/identity-providers/_oauth-idp-operations.mdx');
+  if (globs[0]) {
+    const fileHeadings = globs[0].getHeadings();
+    if (fileHeadings) {
+      for (const h of fileHeadings) {
+        h.text = h.text.replace('props.manual_idp_display_name', remarkPluginFrontmatter.idpDisplayName);
+        // We have a bug that we aren't replacing propsidp_display_name in the slug
+      }
+      fileHeadings.unshift(headings[0]); // adding the "Overview" header
+      headings = fileHeadings;
+    }
+  }
+} else if (headings.length === 0 && entry.data.nestedHeadings && !entry.data.disableTOC) {
+  const globs = await Astro.glob('../../content/docs/**/**.mdx');
+  const myglob = globs.find(glob => glob.url.endsWith(entry.id));
+  if (myglob && myglob.headings) {
+    headings = myglob.headings;
+  }
+}
+---
+<Layout frontmatter={entry.data} {headings} {navContext} disableTOC={entry.data.disableTOC || headings.length ===0}>
+  <Content />
+</Layout>

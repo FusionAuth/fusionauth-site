@@ -1,0 +1,187 @@
+---
+title: What Is SCIM, The System For Cross-Domain Identity Management?
+description: What is SCIM, why would you use it, and how does it work?
+author: Dan Moore
+icon: /img/icons/what-is-scim.svg
+darkIcon: /img/icons/what-is-scim-dark.svg
+section: Identity Basics
+date: 2022-10-10
+dateModified: 2022-10-10
+---
+import ScimNewDeveloper from "../../../diagrams/articles/identity-basics/scim-new-developer.astro";
+
+SCIM, which stands for System for Cross-domain Identity Management, is a specification to add and remove users and groups using a standard protocol. 
+
+This article will cover what SCIM is, why you might want to use it, and how it works.
+
+## What Does SCIM Allow?
+
+At a high level, using a user data store which supports SCIM allows you to provision and deprovision users and groups from your identity systems. Provision and deprovision are fancy terms for add and remove.
+
+When a new user is added to one system, that user's details can fan out to other systems with their own user stores.
+
+An example would be when a new developer is added to an HR system, they can be added to other systems required to do their job, such as a cloud computing provider, a source control system and a ping-pong tournament management system.
+
+If a new customer is added to a SaaS application, SCIM can add them to the support ticketing system and the accounting system as well.
+
+Of course, best practice is to have a single user store and use single sign-on, but that simply isn't reality. For technical, security, and organizational reasons, you may need to maintain multiple user data stores.
+
+As you can imagine, implementing SCIM is only useful if you have multiple systems. If you only have ten customers and bring on one a month, automating this may not be your highest priority. But there are many companies out there with large numbers of employees and users, for which SCIM makes sense.
+
+
+## Why Would You Use SCIM?
+
+By implementing SCIM, you can integrate with a [number of existing applications](http://www.simplecloud.info/#Implementations2). Just like with any other standard, interoperability is a major win with SCIM.
+
+As mentioned above, SCIM is useful for large organizations, so complying with SCIM may open up opportunities to sell to said large organizations.
+
+With SCIM, you are replicating data across many systems. This is an approach that contrasts with single sign-on and federation, where identity data is consolidated and users and applications rely on a source of truth to determine identity information, access levels and more.
+
+But when you have applications which want to manage their own user storage or which don't support standards like OIDC (OpenID Connect) and SAML (Security Assertion Markup Language), then you may need to replicate user data. Rather than set up the application to rely on a single user data store, you can send the needed identity information to the application. If those applications support SCIM, then you can add, update and remove users as needed.
+
+You can also use SCIM to move portions of your identity from a source of truth to another system, possibly outside of your organization. For example, if you sign up for a SaaS application and you have your data stored in an identity server, the identity server can use SCIM to push some of your information, such as your email address, over to the SaaS application, while withholding other information, such as your birth date.
+
+Another common use case is where you are not necessarily provisioning the same resources in multiple systems, but rather just provisioning them on to a single SCIM server. If you have multiple SCIM clients that want to provision users, this can make sense, especially if the clients are third party products that already know how to "speak" SCIM.
+
+Identity systems often need to provision users, and SCIM can help you do so. For CIAM (Customer Identity and Access Management) systems, self-registration can work in certain scenarios, but there are often applications for which user self-provisioning is not acceptable, especially if they offer sensitive business data or functionality.
+
+There are additional [use cases outlined in the RFC](https://datatracker.ietf.org/doc/html/rfc7642#section-3).
+
+Let's dive into some of the major pieces of SCIM.
+
+## Client and Server
+
+There are two players in the SCIM game: the client and the server. The client provides the user data to the server.
+
+In the example above, when a new developer is added to an HR system, SCIM adds them to other systems too. In this case, the HR system is the *client* and the other systems are *servers*.
+
+<ScimNewDeveloper/>
+
+When you are evaluating SCIM solutions, make sure you understand if they implement SCIM as a client, a server, or both. The nomenclature is a bit weird, but clients send data about users and groups; servers receive it.
+
+## Users and Groups
+
+Everything managed by SCIM is a resource. 
+
+There are three core resources: `Users`, `Groups` and `EnterpriseUsers`. SCIM can be extended to support other types of resources. These can be refinements of the core resources to model particular kinds of users. If you are using SCIM to provision users at a university you might have `Professors` and `Students` as resources. They can also model other kinds of identity management concepts, such as `Permissions`.
+
+Since SCIM is about identity, the `Users` concept is central.`Users` and `EnterpriseUsers` are similar, but the `EnterpriseUsers` schema extends `Users`. Therefore, for the rest of this post, I'm going to focus on `Users`.
+
+`Users` have a defined set of attributes, many of which you might expect. These include `userName`, `name`, `userType` and more. Exactly what you'd expect a user to have. You can also put a user in a group.
+
+`Users` can also have emails, phone numbers, addresses and more. They can even have a list of x.509 certificates. Each user also has a password, which is write only.
+
+The required fields are few: the `userName` field is required. In addition, an `id` field must be created and assigned by the server.
+
+Review the [relevant section of the RFC](https://datatracker.ietf.org/doc/html/rfc7643#section-4.1) for the full list of attributes for this resource. 
+
+`Groups`, on the other hand, are much simpler. They have a required `displayName` and a list of members, as well as an `id`.
+
+### Schemas
+
+Schemas control what attributes each resource type has.
+
+The `Users`, `EnterpriseUsers` and `Groups` resources discussed above have their own standardized schema, but you can create your own or, as mentioned above, extend them.
+
+Schemas support single value attributes like `name` and `userType` with a variety of data types, as well as multi-valued attributes like phone numbers or emails.
+
+### Identifiers
+
+There are up to two identifiers for every resource in SCIM.
+
+The first is the `id`, which is a required attribute and is a globally unique identifier managed by the SCIM server. It must be stable and always refer to the same resource.
+
+The `externalId`, on the other hand, is provided by the client. It is optional and allows for identifiers from the provisioning process to be stored in the server.
+
+For example, the HR system discussed above might have an identifier for the developer. It could be stored in the cloud computing provider's SCIM datastore. That way, you could query directly in the cloud computing system for a given record based on the HR id.
+
+In addition, `$ref` attribute is commonly used. This string is an HTTP addressable resource which points to additional information about this item, and is often used to convey relationships between resources in SCIM. For example, a user object may contain group membership information. That group information may contain a `$ref` attribute pointing to the SCIM identifier of that group.
+
+## Supported Operations
+
+There are a number of supported operations. As you'd expect, CRUDL is supported for each resource, and the API is broadly RESTful:
+
+* `Create`, which uses the HTTP `POST` method
+* `Read`, which uses the HTTP `GET` method
+* `Update`, which uses the HTTP `PUT` or `PATCH` method
+* `Delete`, which uses the HTTP `DELETE` method
+* `List`, which uses the HTTP `GET` or `POST` method (in certain circumstances)
+
+The `List` operation optionally supports filtering, so you could look up all the users with a userName containing `dan`, and sorting, so you can sort resources returned by their type. You can also specify certain attributes to return or exclude.
+
+The `Update` operation must support the `PUT` method, but can optionally support `PATCH`. In the former case, the resource is overwritten entirely by the request. In the latter, the attributes contained in the request are merged into the resource.
+
+There are also bulk operations, designed to apply any of the mutation operations (`Create`, `Update`, `Delete`) on many resources at one time.
+
+The specification has more `MAY`s than `MUST`s, so review the documentation and/or machine readable configuration endpoints for any SCIM software you are considering using, before counting on any of these operations being implemented.
+
+## Configuration Endpoints
+
+A SCIM server defines a number of configuration endpoints, which can be used to inform and automatically configure SCIM clients. These include:
+
+* `ServiceProviderConfig`, which specifies which optional features are implemented, including authentication schemes, bulk endpoints, filtering of queries and patch support.
+* `ResourceTypes` outlines the types of resources available from the SCIM server, such as `Users`, as well as their schema id.
+* `Schemas` describes the fields for each available resource type, including the data type and whether the field is mutable.
+
+These configuration endpoints are JSON. This means any SCIM client, or other piece of software, can read these endpoints. They can then determine if required features are present. This configuration can also be useful for assessing what resources or attributes are available.
+
+## Using SCIM
+
+So, how do you actually use SCIM?
+
+First, determine if you are going to be receiving data or sending it. Are you a SCIM server or a client? Next, determine if you can use the core schemas, if you require a standardized extension, or if you need to extend one.
+
+There are a number of open source libraries out there, and evaluating those before starting your integration is a good idea.
+
+When you are building a client, determine how to authenticate against the server, by reviewing the server documentation. Then, map your user, group, and specialized attributes, if any, into the schemas supported by the server. 
+
+If you are, on the other hand, implementing a SCIM server, determine what authentication methods you are going to support. Map the schemas you will support into your internal identity data storage.
+
+Other considerations:
+
+* Will you be syncing data on a batch basis, a user-by-user basis or on a schedule?
+* Is there an expected timeframe for creation or deletion of users?
+* What are the performance characteristics of the client and the server?
+* How will you secure the connection between the client and the server? Authentication is built into SCIM, but do you need other measures, such as a VPN, IP restrictions or client certificates?
+* What [security measures do you need to take](https://datatracker.ietf.org/doc/html/rfc7643#section-9)?
+
+### How Does The User Syncing Actually Work
+
+After the configuration above, your SCIM integration should be ready to go.
+
+When changes are made to a user or users in a SCIM client, a message fires from the client to any SCIM servers that it has been configured to work with.
+
+The SCIM server ingests the message, processes it, updates its own datastore, and then returns a [standardized HTTP status code](https://datatracker.ietf.org/doc/html/rfc7644#section-3.12), which varies based on the operation and result.
+
+The status code lets the SCIM client know that the operation has succeeded, or failed.
+
+## What's Outside the Scope of SCIM
+
+There can be a lot of user information, such as specific permissions, which are important and yet outside the scope of SCIM. To get that information into the SCIM server, you have the following options
+
+* using a custom schema
+* using proprietary APIs for the SCIM server
+
+When possible, the former is preferable.
+
+## SCIM and CIAM
+
+As mentioned above, SCIM can work well with CIAM systems, such as FusionAuth.
+
+SCIM is useful when your customers are themselves businesses with a centralized user data store. This is common when you are a business to business SaaS product. Customers want to control access to their instance of your application. They can do so by using SCIM to set up accounts for their users.
+
+When an employee leaves the customer's company, the employee account is automatically disabled in the SCIM server because of a message from the central user data store.
+
+You can also use SCIM to ensure employees have access to any custom applications which use a valid SCIM server as an identity store. When a new employee is added into your corporate directory (such as Azure AD/Microsoft Entra ID, or Okta), the directory, acting as a SCIM client, can provision them into custom applications, accelerating their onboarding experience.
+
+Equally important, when the employee departs, their access to the app also departs.
+
+## Additional Resources
+
+Here are additional resources:
+
+* [An overview of the specification and links to all relevant RFCs](http://www.simplecloud.info/)
+* [The RFC defining the overall concepts and requirements](https://datatracker.ietf.org/doc/html/rfc7642)
+* [The RFC defining the protocol](https://datatracker.ietf.org/doc/html/rfc7644)
+* [The RFC defining the core schema definitions](https://datatracker.ietf.org/doc/html/rfc7643)
+

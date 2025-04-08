@@ -1,0 +1,53 @@
+---
+title: Apple Reconcile Lambda
+description: An overview of the Apple Reconcile lambda.
+navcategory: customization
+section: extend
+subcategory: code
+tertcategory: lambdas
+---
+import ReconcileLambdaUserRegistrationParameters from 'src/content/docs/extend/code/lambdas/_reconcile-lambda-user-registration-parameters.mdx';
+import ReconcileLambdaIntro from 'src/content/docs/extend/code/lambdas/_reconcile-lambda-intro.mdx';
+
+<ReconcileLambdaIntro identity_provider_name="Apple" prefix="an" />
+
+## Lambda Structure
+
+If you are using the API to create the lambda you will need to ensure your function has the following signature:
+
+```javascript
+function reconcile(user, registration, idToken) {
+  // Lambda code goes here
+}
+```
+
+This lambda must contain a function named `reconcile` that takes three parameters. The parameters that the lambda is passed are:
+
+<ReconcileLambdaUserRegistrationParameters />
+* `idToken` - the JSON payload of the validated and decoded Id Token returned from Apple. This object is read-only.
+
+The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The Id Token object that contains the payload returned by Apple and may contain well known OpenID Connect registered claims as well as any custom claims defined by Apple.
+
+## Assigning The Lambda
+
+Once a lambda is created, you may assign it to the Apple identity provider in the IdP configuration.
+
+Navigate to <strong>Settings -> Identity Providers</strong> and select your existing Apple configuration or click <strong>Add provider</strong> and select Apple if it has not yet been configured.
+
+## Default Lambda
+
+A default Apple reconcile lambda is available in FusionAuth that may be used or modified. The default Apple lambda function is documented below.
+
+```javascript
+// This is the default Apple reconcile, modify this to your liking.
+function reconcile(user, registration, idToken) {
+  // Un-comment this line to see the idToken object printed to the event log
+  // console.info(JSON.stringify(idToken, null, 2));
+
+  // During the first login attempt, the user object will be available which may contain first and last name.
+  if (idToken.user && idToken.user.name) {
+    user.firstName = idToken.user.name.firstName || user.firstName;
+    user.lastName = idToken.user.name.lastName || user.lastName;
+  }
+}
+```

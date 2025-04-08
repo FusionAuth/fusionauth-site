@@ -1,0 +1,40 @@
+---
+import Diagram from "src/components/mermaid/SequenceDiagram.astro";
+const { alt, identityProviderName } = Astro.props;
+
+let idpName = 'Identity Provider';
+
+if (identityProviderName) {
+  idpName = identityProviderName;
+}
+
+//language=Mermaid
+const diagram = `
+sequenceDiagram
+    participant User as User/Browser
+    participant App
+    participant FusionAuth
+    participant IdentityProvider as ${idpName}
+
+    User ->> App : View Initial Page<br/>Click Login
+    App ->> User : Redirect To <br/>FusionAuth Authorization URL
+    User ->> FusionAuth : Request Login Page
+    FusionAuth ->> User : Return Login Page
+    User ->> FusionAuth : Clicks On 'Login With ${idpName}'
+    FusionAuth ->> User : Redirect To Identity Provider Authorization URL
+    User ->> IdentityProvider : Enter Credentials
+    IdentityProvider ->> IdentityProvider : Validate Credentials
+    IdentityProvider ->> User : Redirect To FusionAuth With ${idpName} Authorization Code
+    User ->> FusionAuth : Requests Page, Has ${idpName} Authorization Code
+    FusionAuth ->> IdentityProvider : Exchange Authorization Code For ${idpName} Token
+    IdentityProvider ->> FusionAuth : Returns ${idpName} Token
+    FusionAuth ->> FusionAuth : Stores ${idpName} Token, Calls Lambda, Creates User And Registrations (If Needed), Generates FusionAuth Tokens
+    FusionAuth ->> User : Redirect To Redirect URI With FusionAuth Authorization Code
+    User ->> App : Request Redirect URI, Has FusionAuth Authorization Code
+    App ->> FusionAuth : Request FusionAuth Tokens
+    FusionAuth ->> App : Return FusionAuth Tokens
+    App ->> App : Create Session Or<br/>Otherwise Log User In
+    Note over User, FusionAuth: User Is Logged In And App Can Proceed<br/>Delivering Data And Functionality
+`;
+---
+<Diagram code={diagram} alt={alt} />

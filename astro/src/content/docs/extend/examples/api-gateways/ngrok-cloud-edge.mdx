@@ -1,0 +1,183 @@
+---
+title: ngrok Cloud Edge
+description: Learn about the ngrok Cloud Edge OIDC integration.
+navcategory: developer
+section: extend
+subcategory: examples
+tertcategory: api gateways
+---
+import InlineField from 'src/components/InlineField.astro';
+
+## Overview
+
+ngrok Cloud Edge allows you to protect any resource which is proxied by an ngrok agent. This can be an on-premise server, something in a different cloud, or an IoT device running out in the field.
+
+You can configure ngrok Cloud Edge to allow connections to the resource, and then configure it to delegate authentication to FusionAuth. This is done with what is called the OIDC module.
+
+In this document, you'll learn how to set up ngrok Cloud Edge and FusionAuth to protect a static site running on your computer.
+
+You can view the [ngrok guide](https://ngrok.com/docs/integrations/fusionauth/sso-oidc) as well.
+
+## Prerequisites
+
+* A FusionAuth instance running on a publicly accessible URL. You can spin up a [basic FusionAuth Cloud instance](/pricing) or [install it on any server](/docs/get-started/download-and-install).
+* A local server with a website or application running. This document will use python's built-in web server, but any option will do.
+* The `ngrok` CLI. You can [download it for free](https://ngrok.com/download), but you have to register. 
+* An ngrok account with the appropriate plan. ngrok Cloud Edge is a paid feature. Please [contact ngrok](https://ngrok.com/enterprise/contact) for pricing and licensing options.
+
+You can test if you have `ngrok` installed by running this command.
+
+```shell title="Testing if you have ngrok installed"
+ngrok -v
+```
+
+```shell title="Output of testing if you have ngrok installed"
+ngrok version 3.1.0
+```
+
+## Set Up The Application
+
+This is going to be a sample application that you want to protect. For this document, it'll be a simple web page.
+
+First, make a directory.
+
+```shell title="Make a directory"
+mkdir apptoprotect && cd apptoprotect
+```
+
+Then, copy this HTML into a file called `index.html`.
+
+```html title="Content of the index.html file"
+<html>
+<head>
+<title>My application</title>
+</head>
+<body>
+<h1>The application</h1>
+<p>
+This is a protected application.
+</p>
+</body>
+</html>
+```
+
+Then, start a python web server.
+
+```shell title="Start the web server"
+python3 -m http.server
+```
+
+You should be able to visit `http://localhost:8080` and see something like this.
+
+<img src="/img/docs/extend/examples/api-gateways/example-application.png" alt="The example application" role="bottom-cropped" width="1200" />
+
+## Set Up FusionAuth
+
+Navigate to your FusionAuth instance.
+
+First, you need to make sure the issuer setting is correct. Navigate to **Tenants -> Your Tenant** and change the issuer to the URL of your FusionAuth instance. For example, `https://local.fusionauth.io`.
+
+Next, you need to configure an application which will correspond to the ngrok Cloud Edge instance.
+
+Navigate to **Applications** and then create a new Application. Fill out the <InlineField>Name</InlineField> field, then click the **OAuth** tab.
+
+Make sure that the <InlineField>Enabled grants</InlineField> checkboxes have the `Authorization Code` and `Refresh Token` grants enabled.
+
+Your application should look like this.
+
+<img src="/img/docs/extend/examples/api-gateways/application-configuration.png" alt="The FusionAuth example configuration" width="1200" />
+
+Click the `Save` button.
+
+Edit the new application. You should see values in the <InlineField>Client Id</InlineField> and <InlineField>Client secret</InlineField> fields. Copy them and put them in a text file. You'll use them in the [Set Up ngrok Cloud Edge](#set-up-ngrok-cloud-edge) step.
+
+<img src="/img/docs/extend/examples/api-gateways/application-client-id-client-secret.png" alt="Extracting the Client Id and secret" width="1200" />
+
+Now, open up a new tab. Next, you are going to set up ngrok Cloud Edge.
+
+## Set Up ngrok Cloud Edge
+
+Log into an account with ngrok Cloud Edge enabled. Navigate to [the ngrok dashboard](https://dashboard.ngrok.com/cloud-edge/edges) and then to **Cloud Edge -> Edges**.
+
+<img src="/img/docs/extend/examples/api-gateways/ngrok-edges.png" alt="The ngrok Cloud Edges configuration screen" width="1200" role="bottom-cropped" />
+
+Click `Create Edge` and select an `HTTPS Edge`. Click `Create HTTPS Edge`.
+
+Copy the endpoint, which might look like `https://pe07g5cn.ngrok.io` and paste it into the text file. You'll use that in the [Test It Out](#test-it-out) step.
+
+Click on `Start a Tunnel`. This will give you an `ngrok` command to run.
+
+<img src="/img/docs/extend/examples/api-gateways/ngrok-start-tunnel.png" alt="The screen with the start tunnel command" width="1200" role="bottom-cropped" />
+
+It'll look something like this.
+
+```shell title="Command to start the ngrok tunnel"
+ngrok tunnel --region us --label edge=edghts_2HhKN3ozOCbPO6eDYlXnUgUyiEn http://localhost:80
+```
+
+Copy and paste it, and then modify that to point to your web server. If you are following this document, you need to point it to port 8000.
+
+```shell title="Command to start the ngrok tunnel to the python protected app"
+ngrok tunnel --region us --label edge=edghts_2HhKN3ozOCbPO6eDYlXnUgUyiEn http://localhost:8000
+```
+
+Then paste the command into the same text file.
+
+Next, navigate to the **OIDC** tab.
+
+<img src="/img/docs/extend/examples/api-gateways/ngrok-configure-oidc-start.png" alt="The ngrok Cloud Edges OIDC configuration screen" width="1200" />
+
+Click on `Begin setup`.
+
+Configure it by taking the following steps.
+
+* Add the URL of the FusionAuth server into the <InlineField>Issuer URL (Open ID Provider)</InlineField> field.
+* Put the Client Id you copied in the [Set Up FusionAuth](#set-up-fusionauth) step into the <InlineField>Client ID</InlineField> field.
+* Put the Client secret you copied in the [Set Up FusionAuth](#set-up-fusionauth) step into the <InlineField>Client Secret</InlineField> field.
+
+Here's how the configuration will look after you are done. 
+
+<img src="/img/docs/extend/examples/api-gateways/ngrok-configure-oidc-end.png" alt="The filled-out ngrok Cloud Edges OIDC configuration screen" width="1200" />
+
+Next, copy the value in the <InlineField>Redirect URI</InlineField> read-only field. This should be something like `https://idp.ngrok.com/oauth2/callback`.
+
+Save the configuration.
+
+## Finishing Up With FusionAuth
+
+Switch back to the FusionAuth admin screen. Edit the FusionAuth application config, if you previously navigated away.
+
+Add the value from the ngrok Cloud Edge <InlineField>Redirect URI</InlineField> read-only field to the FusionAuth <InlineField>Authorized redirect URLs</InlineField> field.
+
+<img src="/img/docs/extend/examples/api-gateways/application-redirect-urls.png" alt="Adding the redirect URL to the FusionAuth application configuration" width="1200" />
+
+Save the updated configuration.
+
+## Test It Out
+
+Now it is time to test the integration. Open up another terminal and start up the ngrok tunnel.
+
+```shell title="Start the ngrok tunnel to the protected app"
+ngrok tunnel --region us --label edge=edghts_2HhKN3ozOCbPO6eDYlXnUgUyiEn http://localhost:8000
+```
+
+Open an incognito browser window to ensure that you aren't logged into FusionAuth.
+
+Visit the endpoint you copied above: `https://pe07g5cn.ngrok.io`.
+
+You will be prompted to log into FusionAuth.
+
+<img src="/img/docs/extend/examples/api-gateways/fusionauth-login-screen.png" alt="The login screen" width="1200" role="bottom-cropped" />
+
+If you login, you'll see the protected application. You won't be able to access it without doing so.
+
+## Next Steps
+
+There's a lot more you can do with ngrok Cloud Edge. 
+
+You can configure the ngrok Cloud Edge OIDC module to force users to reauthenticate, expire after a certain amount of inactivity and more.
+
+You can also combine the OIDC module with other security limitations, such as IP restrictions. You can also configure ngrok to proxy different paths to different applications and add or remove headers.
+
+Finally, you can tweak your FusionAuth settings to ensure that the user is registered for the ngrok Cloud Edge application or fire off webhooks when the user logs in.
+

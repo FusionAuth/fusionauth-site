@@ -1,0 +1,238 @@
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import InlineField from 'src/components/InlineField.astro';
+import SearchPreprocessingWarning from "src/content/docs/_shared/_search-preprocessing-warning.mdx";
+
+{/*  parameter_prefix is either blank for parameters or "search." for body */}
+{/*  query_string_request is set to anything for query string requests */}
+{/*  query_string_request is undefined for body requests */}
+{/*  database_search_engine_type is defined if this is a database search engine entry */}
+{/*  elasticsearch_search_engine_type is defined if this is a elasticsearch search engine entry */}
+
+<APIBlock>
+
+  {/* On a GET request this is does not have a prefix. */}
+  { props.query_string_request &&
+      <APIField name={props.parameter_prefix + 'accurateTotal'} type="Boolean" optional defaults="false" since="1.24.0">
+        <p>Set this value equal to <code>true</code> to receive an accurate hit count on the API response.</p>
+
+        <p>By default the search engine will limit the hit count to 10,000 users. This means that even if your query may match more than 10,000 users, the returned total count will be 10,000. This is adequate for many use cases such as pagination and general purpose queries.</p>
+
+        <p>If you are looking for an accurate user count that can exceed 10,000 matches, you will want to set this value equal to <code>true</code>.</p>
+      </APIField>
+  }
+
+  <APIField name="expand" type="Array<String>" optional defaults="[memberships, registrations]" since="1.48.0">
+    This parameter allows you to optionally remove the `memberships` and `registrations` from the API response. Removing these fields from the response may improve performance on large search requests, specifically when you are managing application roles through User Registrations and Group Memberships.
+
+    For backwards compatibility, the default behavior will be to return both `memberships` and `registrations`.
+
+    To request only the `registrations` but omit the `memberships` from the response, provide a value of `[registrations]`. To omit both the `memberships` and `registrations` from the response, provide a value of `[]`.
+  </APIField>
+
+  {/* On a POST request this does have a prefix. */}
+  { !props.query_string_request &&
+  <APIField name={props.parameter_prefix + 'accurateTotal'} type="Boolean" optional defaults="false" since="1.24.0">
+    <p>Set this value equal to <code>true</code> to receive an accurate hit count on the API response.</p>
+
+    <p>By default the search engine will limit the hit count to 10,000 users. This means that even if your query may match more than 10,000 users, the returned total count will be 10,000. This is adequate for many use cases such as pagination and general purpose queries.</p>
+
+    <p>If you are looking for an accurate user count that can exceed 10,000 matches, you will want to set this value equal to <code>true</code>.</p>
+  </APIField>
+  }
+
+  {/* The only field with a different definition between body and query string is ids */}
+  { props.query_string_request &&
+    <APIField name={props.parameter_prefix + 'ids'} type="UUID" optional>
+
+      <p>A User Id to retrieve. By specifying this URL parameter multiple times you can lookup multiple Users.</p>
+
+      { props.database_search_engine_type &&
+        <p>Using this parameter is mutually exclusive with the <InlineField>queryString</InlineField> field and is not paginated or sorted using the <InlineField>sortFields</InlineField> field.</p>
+      }
+
+      { props.elasticsearch_search_engine_type && <>
+        <p>Using this parameter is mutually exclusive with the <InlineField>query</InlineField> and <InlineField>queryString</InlineField> fields and is not paginated or sorted using <InlineField>sortFields</InlineField> field.</p>
+
+        <p>Using this parameter will not hit the Elasticsearch index, instead it will cause users to be retrieved by Id only. </p>
+        </>
+      }
+    </APIField>
+  }
+
+  { !props.query_string_request &&
+    <APIField name={props.parameter_prefix + 'ids'} type="Array<UUID>" optional>
+      <p>A list of User Ids to retrieve. When using this parameter, the results are not paginated or sorted using the <InlineField>sortFields</InlineField>. </p>
+
+      { props.database_search_engine_type &&
+        <p>
+        The <InlineField>{props.parameter_prefix}ids</InlineField> and <InlineField>queryString</InlineField> parameters are mutually exclusive, they are listed here in order of precedence.
+        </p>
+      }
+
+      { props.elasticsearch_search_engine_type && <>
+        <p>
+        The <InlineField>{props.parameter_prefix}ids</InlineField>, <InlineField>query</InlineField>, and <InlineField>queryString</InlineField> parameters are mutually exclusive, they are listed here in order of precedence.
+        </p>
+
+        <p>
+        Using this parameter will not hit the Elasticsearch index, instead it will cause users to be retrieved by Id only.
+        </p>
+        </>
+      }
+    </APIField>
+  }
+
+  <APIField name={props.parameter_prefix + 'nextResults'} type="String" optional since="1.48.0" renderif={!!props.elasticsearch_search_engine_type}>
+    The encoded token returned in the <InlineField>nextResults</InlineField> field of a previous search response. Providing this token will return a result set for the page following the last result from the previous search response.
+
+    This parameter can be used to successfully page past the `max_result_window` limitation.
+
+    This parameter cannot be used with the <InlineField>ids</InlineField>, <InlineField>query</InlineField>, <InlineField>queryString</InlineField>, or <InlineField>sortFields</InlineField> parameters. The <InlineField>startRow</InlineField> parameter must be 0 or omitted.
+
+    See [Extended Pagination](/docs/lifecycle/manage-users/search/search#extended-pagination) for more information.
+  </APIField>
+
+  <APIField name={props.parameter_prefix + 'numberOfResults'} type="Integer" optional defaults="25">
+    The number of search results to return. Used for pagination.
+  </APIField>
+
+  {props.elasticsearch_search_engine_type &&
+    <APIField name={props.parameter_prefix + 'query'} type="String" optional since="1.13.0">
+      <p>
+      The raw JSON Elasticsearch query that is used to search for Users.  The <InlineField>ids</InlineField>, <InlineField>query</InlineField>, and <InlineField>queryString</InlineField>  parameters are mutually exclusive, they are listed here in order of precedence.
+      </p>
+
+      <p>
+      It is necessary to use the <InlineField>{props.parameter_prefix}query</InlineField> parameter when querying against <code>registrations</code> in order to achieve expected results, as this field is defined as a <a href="https://www.elastic.co/guide/en/elasticsearch/reference/6.3/nested.html">nested datatype</a> in the Elasticsearch mapping.
+      </p>
+    </APIField>
+  }
+
+  {props.database_search_engine_type &&
+    <APIField name={props.parameter_prefix + 'queryString'} type="String" optional>
+      <p>
+        A query string that is used to search for Users. Using this parameter is mutually exclusive with the <InlineField>ids</InlineField> field.
+      </p>
+
+      <p>
+        Database search limits effective queries to single search terms that may match the following fields on the User:
+      </p>
+      <ul>
+        <li><code>firstName</code></li>
+        <li><code>lastName</code></li>
+        <li><code>fullName</code></li>
+        <li><code>email</code></li>
+        <li><code>username</code></li>
+      </ul>
+
+      <p>
+      The search matches against all of these fields and any user with a matching field will be returned. The match is case-insensitive, and you may not search by prefix or suffix. Whitespace is not allowed in the search. Regular expressions may not be used. A value of <code>*</code> will match all records.
+      </p>
+    </APIField>
+  }
+
+  { props.elasticsearch_search_engine_type &&
+    <APIField name={props.parameter_prefix + 'queryString'} type="String" optional>
+      <p>
+      The Elasticsearch query string that is used to search for Users.  The <InlineField>ids</InlineField>, <InlineField>query</InlineField>, and <InlineField>queryString</InlineField>  parameters are mutually exclusive, they are listed here in order of precedence.
+      </p>
+
+      <p>
+      The match is case-insensitive. Whitespace is allowed in the search, but must be URL escaped; for example, using <code>%20</code> for a space character. Elasticsearch compatible regular expressions may be used, so you may search by prefix or suffix using the <code>*</code> wildcard.
+      </p>
+
+      <p>
+      You may search against specific fields like so: <code>email:*fusionauth.io</code>. This will match only users with a <code>fusionauth.io</code> email address. Here are [the available fields for matching](/docs/reference/user-fields).
+      </p>
+
+      <SearchPreprocessingWarning/>
+    </APIField>
+  }
+
+  <APIField name={props.parameter_prefix + 'startRow'} type="Integer" optional defaults="0">
+    The start row within the search results to return. Used for pagination.
+  </APIField>
+
+  <APIField name={props.parameter_prefix + 'sortFields'} type="Array" optional>
+    An array of sort fields used to sort the result. The order the sort fields are provided will be maintained in the sorted output.
+  </APIField>
+
+  { props.elasticsearch_search_engine_type &&
+    <APIField name={props.parameter_prefix + 'sortFields[x].missing'} type="String" optional defaults="_last">
+      <p>
+      The value to substitute if this field is not defined. Two special values may be used:
+      </p>
+
+      <ul>
+        <li><code>_first</code> When the field is not defined sort this record first.</li>
+        <li><code>_last</code> When the field is not defined sort this record last.</li>
+      </ul>
+    </APIField>
+  }
+
+  { props.database_search_engine_type &&
+    <APIField name={props.parameter_prefix + 'sortFields[x].name'} type="String" required>
+      <p>
+      The name of the field to sort.
+      </p>
+
+      <p>
+      Required if <InlineField>sortFields</InlineField> is provided.
+      </p>
+
+      <p>
+      The following field names are supported for the database search engine:
+      </p>
+      <ul>
+        <li><code>birthDate</code></li>
+        <li><code>email</code></li>
+        <li><code>fullName</code></li>
+        <li><code>id</code></li>
+        <li><code>insertInstant</code></li>
+        <li><code>lastLoginInstant</code></li>
+        <li><code>login</code></li>
+        <li><code>tenantId</code></li>
+        <li><code>username</code></li>
+      </ul>
+    </APIField>
+  }
+
+  {props.elasticsearch_search_engine_type &&
+    <APIField name={props.parameter_prefix + 'sortFields[x].name'} type="String" optional>
+      <p>
+      The name of the field to sort.
+      </p>
+
+      <p>
+      Required if <InlineField>sortFields</InlineField> is provided.
+      </p>
+
+      <p>
+      Due to how the search index is structured not all fields on the user are sortable. The following field names are currently supported.
+      </p>
+      <ul>
+        <li><InlineField name="birthDate" /></li>
+        <li><InlineField name="email" /></li>
+        <li><InlineField name="fullName" /></li>
+        <li><InlineField name="id" since="1.13.0" /></li>
+        <li><InlineField name="insertInstant" /></li>
+        <li><InlineField name="lastLoginInstant" since="1.13.0" /></li>
+        <li><InlineField name="login" /></li>
+        <li><InlineField name="registrations.applicationId" since="1.13.0" /></li>
+        <li><InlineField name="registrations.id" since="1.13.0" /></li>
+        <li><InlineField name="registrations.insertInstant" since="1.13.0" /></li>
+        <li><InlineField name="registrations.lastLoginInstant" since="1.13.0" /></li>
+        <li><InlineField name="registrations.roles" since="1.13.0" /></li>
+        <li><InlineField name="tenantId" /></li>
+        <li><InlineField name="username" /></li>
+      </ul>
+    </APIField>
+  }
+
+  <APIField name={props.parameter_prefix + 'sortFields[x].order'} type="String" optional defaults="asc">
+    The order to sort the specified field. Possible values are:
+    * `asc`
+    * `desc`
+  </APIField>
+</APIBlock>

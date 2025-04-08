@@ -1,0 +1,293 @@
+---
+title: Emails
+description: Learn about the APIs for creating, retrieving, updating and deleting email templates as well as sending emails to users.
+section: apis
+---
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import EmailTemplateRequestBody from 'src/content/docs/apis/_email-template-request-body.mdx';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import EmailTemplateResponseBody from 'src/content/docs/apis/_email-template-response-body.mdx';
+import StandardGetResponseCodes from 'src/content/docs/apis/_standard-get-response-codes.astro';
+import EmailTemplatesResponseBody from 'src/content/docs/apis/_email-templates-response-body.mdx';
+import Aside from 'src/components/Aside.astro';
+import EmailTemplateSearchRequestParameters from 'src/content/docs/apis/_email-template-search-request-parameters.mdx';
+import JSON from 'src/components/JSON.astro';
+import EmailTemplateResponseBodyBase from 'src/content/docs/apis/_email-template-response-body-base.mdx';
+import GenericUpdateExplanationFragment from 'src/content/docs/apis/_generic-update-explanation-fragment.mdx';
+import StandardPutResponseCodes from 'src/content/docs/apis/_standard-put-response-codes.astro';
+import StandardDeleteResponseCodes from 'src/content/docs/apis/_standard-delete-response-codes.astro';
+import EmailPreviewResponseBody from 'src/content/docs/apis/_email-preview-response-body.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import SendResponseBody from 'src/content/docs/apis/_send-response-body.mdx';
+
+## Overview
+
+This page contains the APIs for managing Email Templates as well as emailing users using those templates. Here are the APIs:
+
+## Create an Email Template
+
+This API is used to create an Email Template. Specifying an Id on the URI will instruct FusionAuth to use that Id when creating the Email Template. Otherwise, FusionAuth will generate an Id for the Email Template.
+
+### Request
+
+<API method="POST" uri="/api/email/template" authentication={["api-key"]} title="Create an Email Template without providing an Id. An Id will be automatically generated."/>
+
+<API method="POST" uri="/api/email/template/{emailTemplateId}" authentication={["api-key"]} title="Create an Email Template with the provided Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="emailTemplateId" type="UUID" optional defaults="secure random UUID">
+    The Id to use for the new Email Template. If not specified a secure random UUID will be generated.
+  </APIField>
+</APIBlock>
+
+<EmailTemplateRequestBody />
+
+### Response
+
+The response for this API contains the information for the Email Template that was created.
+
+<StandardPostResponseCodes never_search_error />
+
+<EmailTemplateResponseBody />
+
+## Retrieve an Email Template
+
+This API is used to retrieve one or all of the configured Email Templates. Specifying an Id on the URI will retrieve a single Email Template. Leaving off the Id will retrieve all of the Email Templates.
+
+### Request
+
+<API method="GET" uri="/api/email/template" authentication={["api-key"]} title="Retrieve all of the Email Templates" />
+
+<API method="GET" uri="/api/email/template/{emailTemplateId}" authentication={["api-key"]} title="Retrieve a single Email Template by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="emailTemplateId" type="UUID" optional>
+    The Id of the Email Template to retrieve.
+  </APIField>
+</APIBlock>
+
+### Response
+
+The response for this API contains either a single Email Template or all of the Email Templates. When you call this API with an Id the response will contain just that Email Template. When you call this API without an Id the response will contain all of the Email Templates. Both response types are defined below along with an example JSON response.
+
+<StandardGetResponseCodes no_errors never_search_error />
+
+<EmailTemplateResponseBody />
+
+<EmailTemplatesResponseBody />
+
+## Search for Email Templates
+
+<Aside type="version">
+This API has been available since 1.45.0
+</Aside>
+
+This API is used to search for Email Templates and may be called using the `GET` or `POST` HTTP methods. Examples of each are provided below. The `POST` method is provided to allow for a richer request object without worrying about exceeding the maximum length of a URL. Calling this API with either the `GET` or `POST` HTTP method will provide the same search results given the same query parameters.
+
+### Request
+
+<API method="GET" uri="/api/email/template/search?name={name}" authentication={["api-key"]} title="Search for Email Templates"/>
+
+#### Request Parameters
+
+<EmailTemplateSearchRequestParameters parameter_prefix="" />
+
+<API method="POST" uri="/api/email/template/search"  authentication={["api-key"]} title="Search for Email Templates"/>
+
+When calling the API using a `POST` request you will send the search criteria in a JSON request body.
+
+#### Request Body
+
+<EmailTemplateSearchRequestParameters parameter_prefix="search." />
+
+<JSON title="Example JSON Request" src="email-templates/search-post-request.json" />
+
+### Response
+
+The response for this API contains the Email Templates matching the search criteria in paginated format.
+
+<StandardGetResponseCodes never_missing never_search_error />
+
+#### Response Body
+
+<EmailTemplateResponseBodyBase base_field_name="emailTemplates[x]" include_total />
+
+
+## Update an Email Template
+
+<GenericUpdateExplanationFragment capitalized_object_name="Email Template" />
+
+### Request
+
+<API method="PUT" uri="/api/email/template/{emailTemplateId}" authentication={["api-key"]} showPatch={true} title="Update an Email Template by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="emailTemplateId" type="UUID" required>
+    The Id of the Email Template to update.
+  </APIField>
+</APIBlock>
+
+<EmailTemplateRequestBody />
+
+### Response
+
+The response for this API contains the new information for the Email Template that was updated.
+
+<StandardPutResponseCodes never_search_error />
+
+<EmailTemplateResponseBody />
+
+
+## Delete an Email Template
+
+This API is used to delete an Email Template. You must specify the Id of the Email Template on the URI.
+
+### Request
+
+<API method="DELETE" uri="/api/email/template/{emailTemplateId}"  authentication={["api-key"]} title="Delete an Email Template By Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="emailTemplateId" type="UUID" required>
+    The Id of the Email Template to delete.
+  </APIField>
+</APIBlock>
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardDeleteResponseCodes never_search_error />
+
+## Preview an Email Template
+
+This API is used to preview an Email Template. You simply pass all of the information for the Email Template in the request and a rendered version of the Email is sent back to you in the response. The Email Template in the request does not need to be completely filled out either. You can send in a partial Email Template and the response will contain only what you provided.
+
+### Request
+
+<API method="POST" uri="/api/email/template/preview"  authentication={["api-key"]} title="Preview an Email Template"/>
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="emailTemplate.defaultFromName" required>
+    The default From Name used when sending emails. This is the display name part of the email address ( i.e. **Jared Dunn** jared@piedpiper.com).
+  </APIField>
+  <APIField name="emailTemplate.defaultHtmlTemplate" required>
+    The default HTML Email Template.
+  </APIField>
+  <APIField name="emailTemplate.defaultSubject" required>
+    The default Subject used when sending emails.
+  </APIField>
+  <APIField name="emailTemplate.defaultTextTemplate" required>
+    The default Text Email Template.
+  </APIField>
+  <APIField name="emailTemplate.fromEmail" type="String" required>
+    The email address that this email will be sent from. This is the address part email address (i.e.  Jared Dunn jared@piedpiper.com).
+  </APIField>
+  <APIField name="emailTemplate.localizedFromNames" optional>
+    The From Name used when sending emails to users who speak other languages. This overrides the default From Name based on the user's list of preferred languages.
+  </APIField>
+  <APIField name="emailTemplate.localizedHtmlTemplates" optional>
+    The HTML Email Template used when sending emails to users who speak other languages. This overrides the default HTML Email Template based on the user's list of preferred languages.
+  </APIField>
+  <APIField name="emailTemplate.localizedSubjects" optional>
+    The Subject used when sending emails to users who speak other languages. This overrides the default Subject based on the user's list of preferred languages.
+  </APIField>
+  <APIField name="emailTemplate.localizedTextTemplates" optional>
+    The Text Email Template used when sending emails to users who speak other languages. This overrides the default Text Email Template based on the user's list of preferred languages.
+  </APIField>
+  <APIField name="locale" type="Locale" optional>
+    The locale to use when rendering the Email Template. If this is null, the defaults will be used and the localized versions will be ignored.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="email-templates/preview-request.json" />
+
+### Response
+
+The response for this API contains the rendered Email and also an Errors that contains any rendering issues FusionAuth found. The template might have syntax or logic errors and FusionAuth will put these errors into the response.
+
+<StandardPostResponseCodes never_search_error />
+
+<EmailPreviewResponseBody />
+
+
+## Send an Email
+
+This API is used to send an Email to one or more users using an Email Template.
+
+### Request
+
+<API method="POST" uri="/api/email/send/{emailTemplateId}"  authentication={["api-key"]} title="Send an email using a template by Id"/>
+
+#### Request Parameters
+
+<APIBlock>
+  <APIField name="emailTemplateId" type="UUID" required>
+    The Id of the Email Template to use to generate the Email from.
+  </APIField>
+</APIBlock>
+
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="applicationId" type="UUID" optional since="1.28.0">
+    An optional application Id, when provided the application object will be available in the email template for variable replacement.
+  </APIField>
+  <APIField name="bccAddresses" type="Array<String>" optional>
+    A list of email addresses to BCC when sending the Email.
+  </APIField>
+  <APIField name="ccAddresses" type="Array<String>" optional>
+    A list of email addresses to CC when sending the Email.
+  </APIField>
+  <APIField name="preferredLanguages" type="Array<String>" since="1.28.0">
+    An ordered list of locale strings to utilize when localizing the email template for address provided in the <InlineField>toAddresses</InlineField>. See [Locales](/docs/reference/data-types#locales).
+  </APIField>
+  <APIField name="requestData" type="Object" optional>
+    An optional JSON object that is passed to the Email Template during rendering. The variables in the JSON object will be accessible to the FreeMarker templates of the Email Template.
+  </APIField>
+  <APIField name="toAddresses" type="Array" optional since="1.28.0">
+    A list of email addresses to send the Email to. It is not required that a user exist in FusionAuth with this email address, this may be useful when sending invitations to users that do not yet exist in FusionAuth.
+
+    This field may be used in addition to, or as an alternative to the <InlineField>userIds</InlineField> field.
+  </APIField>
+  <APIField name="toAddresses.address" type="String" required>
+    The email address for the user. Using the <InlineField>toAddresses</InlineField> is optional, but when providing one or more entries, this field is required.
+  </APIField>
+  <APIField name="toAddresses.display" type="String" optional>
+    An optional display name that can be used to construct the to address.
+
+    For example, in this example string `Erlich Bachman<bachman@piedpiper.com>`, `Erlich Bachman` is the display name and `bachman@piedpiper.com` is the address.
+  </APIField>
+  <APIField name="userIds" type="Array<UUID>" optional>
+    The list of User Ids to send the Email to.
+
+    This field may be used in addition to, or as an alternative to the <InlineField>toAddresses</InlineField> field.
+
+    Prior to version `1.28.0`, this field was required.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Request JSON" src="email-templates/send-request.json" />
+
+### Response
+
+<StandardPostResponseCodes success_code="202"
+                           success_message="The request was successful. The response will contain a JSON body. If the JSON body is empty the template was rendered correctly and queued to be sent for all user Ids provided. If one or more failed the response will contain errors in the response format documented below."
+                           never_search_error />
+
+<SendResponseBody success_code="202"
+                  success_message="The request was successful. The response will contain a JSON body. If the JSON body is empty the template was rendered correctly and queued to be sent for all user Ids provided. If one or more failed the response will contain errors in the response format documented below." />
+
+{/*  Unset the variables used in this part. */}

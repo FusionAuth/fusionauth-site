@@ -1,0 +1,129 @@
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import DeprecatedSince from 'src/components/api/DeprecatedSince.astro';
+import InlineField from 'src/components/InlineField.astro';
+import EventTypes from 'src/content/docs/apis/_event-types.mdx';
+import JSON from 'src/components/JSON.astro';
+import RemovedSince from 'src/components/api/RemovedSince.astro';
+
+<APIBlock>
+
+{ props.include_total &&
+  <APIField name="total" type="Integer">
+    The total number of Webhooks matching the search criteria. Use this value along with the <InlineField>numberOfResults</InlineField> and <InlineField>startRow</InlineField> in the search request to perform pagination.
+  </APIField>
+}
+
+  <APIField name={`${props.base_field_name}.applicationIds`} type="Array<UUID>" optional deprecated>
+    <>
+    <p>
+    The Ids of the Applications that this Webhook is associated with. If no Ids are returned and the <InlineField>global</InlineField> field is `false`, this Webhook is not used. Typically <InlineField>global</InlineField> should be set to `true`.
+    </p>
+
+    <RemovedSince since="1.37.0" >
+      In version 1.37.0 and beyond, Webhooks are optionally associated with Tenants instead of Applications. See new field <InlineField>tenantIds</InlineField>.
+    </RemovedSince>
+    </>
+  </APIField>
+
+  <APIField name={`${props.base_field_name}.connectTimeout`} type="Integer">
+    The connection timeout in milliseconds used when FusionAuth sends events to the Webhook.
+  </APIField>
+
+  <APIField name={`${props.base_field_name}.data`} type="Object" since="1.15.0">
+    An object that can hold any information about the Webhook that should be persisted.
+  </APIField>
+
+  <APIField name={`${props.base_field_name}.description`} type="String">
+    A description of the Webhook. This is used for display purposes only.
+  </APIField>
+
+  <APIField name={`${props.base_field_name}.eventsEnabled`} type="Object">
+    A mapping for the events that are enabled for this Webhook. The key of the Object property is the name of the event and the value is a boolean. It should look like this:
+
+    ```json
+    {
+      "user.create": true,
+      "user.delete": false
+    }
+    ```
+
+    The possible event types are:
+
+    <EventTypes />
+  </APIField>
+
+  <APIField name={`${props.base_field_name}.global`} type="Boolean">
+    Whether or not this Webhook is used for all Tenants or just for specific Tenants.
+
+    <span class="text-green-600">
+    Before 1.37.0
+    </span>
+    Whether or not this Webhook is used for all events or just for specific Applications.
+  </APIField>
+
+  <APIField name={`${props.base_field_name}.headers`} type="Map<String, String>">
+    An object that contains headers that are sent as part of the HTTP request for the events.
+  </APIField>
+
+  <APIField name={`${props.base_field_name}.httpAuthenticationPassword`} type="String">
+    The HTTP basic authentication password that is sent as part of the HTTP request for the events.
+  </APIField>
+
+  <APIField name={`${props.base_field_name}.httpAuthenticationUsername`} type="String">
+    The HTTP basic authentication username that is sent as part of the HTTP request for the events.
+  </APIField>
+
+  <APIField name={`${props.base_field_name}.id`} type="UUID">
+    The Id of the Webhook.
+  </APIField>
+
+  <APIField name={`${props.base_field_name}.insertInstant`} type="Long">
+    The [instant](/docs/reference/data-types#instants) that the Webhook was added to the FusionAuth database.
+  </APIField>
+
+  <APIField name={`${props.base_field_name}.lastUpdateInstant`} type="Long">
+    The [instant](/docs/reference/data-types#instants) that the Webhook was last updated in the FusionAuth database.
+  </APIField>
+
+  <APIField name={`${props.base_field_name}.readTimeout`} type="Integer">
+    The read timeout in milliseconds used when FusionAuth sends events to the Webhook.
+  </APIField>
+
+  <APIField name={`${props.base_field_name}.signatureConfiguration.enabled`} type="Boolean" defaults="false">
+    Whether or not webhook events are signed.
+  </APIField>
+  <APIField name={`${props.base_field_name}.signatureConfiguration.signingKeyId`} type="UUID" optional>
+    The Id of the key used to sign webhook events.
+  </APIField>
+  <APIField name={`${props.base_field_name}.sslCertificate`} type="String" deprecated>
+    An SSL certificate in PEM format that is used to establish the SSL (TLS specifically) connection to the Webhook.
+
+    <DeprecatedSince since="1.48.0">
+      In version 1.48.0 and beyond, the webhook SSL certificate can be managed via <InlineField>webhook.sslCertificateKeyId</InlineField>.
+    </DeprecatedSince>
+  </APIField>
+  <APIField name={`${props.base_field_name}.sslCertificateKeyId`} type="UUID" since="1.48.0">
+    The Id of an existing [Key](/docs/apis/keys). The X.509 certificate is used for client certificate authentication in requests to the Webhook.
+  </APIField>
+
+  <APIField name={`${props.base_field_name}.tenantIds`} type="Array<UUID>" optional since="1.37.0">
+    The Ids of the Tenants that this Webhook is associated with. If no Ids are returned and the <InlineField>global</InlineField> field is `false`, this Webhook is not used.
+  </APIField>
+
+  <APIField name={`${props.base_field_name}.url`} type="String">
+    The fully qualified URL of the Webhook's endpoint that will accept the event requests from FusionAuth.
+  </APIField>
+
+{ props.base_field_name === 'webhook' &&
+<JSON title="Example Response JSON for a Single Webhook" src="webhooks/response.json" />
+}
+
+{ props.base_field_name !== 'webhook' && props.include_total &&
+<JSON title="Example Response JSON" src="webhooks/search-response.json" />
+}
+
+{ props.base_field_name !== 'webhook' && !props.include_total &&
+<JSON title="Example Response JSON for all the Webhooks" src="webhooks/responses.json" />
+}
+</APIBlock>
