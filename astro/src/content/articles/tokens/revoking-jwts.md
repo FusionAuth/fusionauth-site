@@ -45,7 +45,7 @@ Of course, this comes at a cost. The JWT is no longer a decoupled store of ident
 
 Again, if you use "self-contained" access tokens such as JWTs, then the authorization server (the IdP) and the resource server (the Todo Backend) must have some non-standardized "backend interaction" in order to invalidate a JWT.
 
-If you don't have self-contained access tokens, then the "resource server [issues] a request to the respective authorization server to retrieve the content of the access token every time a client presents an access token". Again, in that case, JWTs don't buy you much.
+If you don't have self-contained access tokens, then the "resource server \[issues] a request to the respective authorization server to retrieve the content of the access token every time a client presents an access token". Again, in that case, JWTs don't buy you much.
 
 ## Rotate the keys
 
