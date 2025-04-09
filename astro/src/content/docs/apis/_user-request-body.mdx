@@ -1,5 +1,6 @@
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
+import Aside from 'src/components/Aside.astro';
 import InlineField from 'src/components/InlineField.astro';
 import JSON from 'src/components/JSON.astro';
 import RemovedSince from 'src/components/api/RemovedSince.astro';
@@ -29,9 +30,13 @@ You must specify either the **email** or the **username** or both for the User. 
   }
 
   <APIField name="skipVerification" type="Boolean" optional defaults="false">
-    Indicates to FusionAuth that it should skip email verification even if it is enabled. This is useful for creating admin or internal User accounts.
+    Indicates to FusionAuth that it should skip email and phone verification even if it is enabled. This is useful for creating admin or internal User accounts.
 
-    Setting this to `true` will set the <InlineField>user.verified</InlineField> field to `true` as well.
+    Setting this to `true` will, for all identities created or updated in this request:
+
+    * Set <InlineField>user.identities\[x].verified</InlineField> field to `false`
+    * Set <InlineField>user.identities\[x].verifiedReason</InlineField> field to `Skipped`, which will exempt this identity from any verification gating requirements configured at the tenant level
+    * Set <InlineField>user.verified</InlineField> field to `true` (if an email identity was created or added)
   </APIField>
 
   <APIField name="user.birthDate" type="String" optional>
@@ -45,28 +50,28 @@ You must specify either the **email** or the **username** or both for the User. 
   <UserDataEmailFieldRequest />
 
   <APIField name="user.email" type="String" optional>
-    The User's email address. An email address is a unique in FusionAuth and stored in lower case.
+    The User's email address. An email address is unique in FusionAuth and stored in lower case.
 
-    If email is not provided, then the <InlineField>username</InlineField> will be required.
+    If email is not provided, then the <InlineField>username</InlineField> or <InlineField>phoneNumber</InlineField> will be required.
   </APIField>
 
   <APIField name="user.encryptionScheme" type="String" optional>
     The method for encrypting the User's password. The following encryptors are provided with FusionAuth:
 
-        * [salted-md5](/docs/reference/password-hashes#salted-md5)
-        * [salted-sha256](/docs/reference/password-hashes#salted-sha-256)
-        * [salted-hmac-sha256](/docs/reference/password-hashes#salted-hmac-sha-256)
-        * [salted-pbkdf2-hmac-sha256](/docs/reference/password-hashes#salted-pbkdf2-hmac-sha-256)
-        * [salted-pbkdf2-hmac-sha256-512](/docs/reference/password-hashes#salted-pbkdf2-hmac-sha-256) <span class="text-green-600 px-2">Available since 1.34.0</span>
-        * [bcrypt](/docs/reference/password-hashes#salted-bcrypt)
-        * [phpass-md5](/docs/reference/password-hashes#phpass-md5) <span class="text-green-600 px-2">Available since 1.45.0</span>
-        * [phpass-sha512](/docs/reference/password-hashes#phpass-sha-512)<span class="text-green-600 px-2">Available since 1.45.0</span>
+    * [salted-md5](/docs/reference/password-hashes#salted-md5)
+    * [salted-sha256](/docs/reference/password-hashes#salted-sha-256)
+    * [salted-hmac-sha256](/docs/reference/password-hashes#salted-hmac-sha-256)
+    * [salted-pbkdf2-hmac-sha256](/docs/reference/password-hashes#salted-pbkdf2-hmac-sha-256)
+    * [salted-pbkdf2-hmac-sha256-512](/docs/reference/password-hashes#salted-pbkdf2-hmac-sha-256) <span class="text-green-600 px-2">Available since 1.34.0</span>
+    * [bcrypt](/docs/reference/password-hashes#salted-bcrypt)
+    * [phpass-md5](/docs/reference/password-hashes#phpass-md5) <span class="text-green-600 px-2">Available since 1.45.0</span>
+    * [phpass-sha512](/docs/reference/password-hashes#phpass-sha-512)<span class="text-green-600 px-2">Available since 1.45.0</span>
 
     { props.http_method === 'PUT' &&
-      <p>
-        This field is ignored unless the <code>password</code> field is also provided. If omitted and the <code>password</code> is specified, the default encryption scheme will be used.
-      </p>
-    }
+        <p>
+          This field is ignored unless the <code>password</code> field is also provided. If omitted and the <code>password</code> is specified, the default encryption scheme will be used.
+        </p>
+      }
 
     You can also create your own password encryptor. See the [Custom Password Hashing](/docs/extend/code/password-hashes/custom-password-hashing) section for more information.
   </APIField>
@@ -79,10 +84,10 @@ You must specify either the **email** or the **username** or both for the User. 
     The factor used by the password encryption scheme. If not provided, the `PasswordEncryptor` provides a default value. Generally this will be used as an iteration count to generate the hash. The actual use of this value is up to the `PasswordEncryptor` implementation.
 
     { props.http_method === 'PUT' &&
-      <p>
-        This field is ignored unless the <code>password</code> field is also provided. If omitted and the <code>password</code> is specified, the default factor for the encryption scheme will be used.
-      </p>
-    }
+        <p>
+          This field is ignored unless the <code>password</code> field is also provided. If omitted and the <code>password</code> is specified, the default factor for the encryption scheme will be used.
+        </p>
+      }
   </APIField>
 
   <APIField name="user.firstName" type="String" optional>
@@ -126,6 +131,10 @@ You must specify either the **email** or the **username** or both for the User. 
 
   <APIField name="user.mobilePhone" type="String" optional>
     The User's mobile phone number. This is useful is you will be sending push notifications or SMS messages to the User.
+
+    <Aside>
+      <InlineField>user.mobilePhone</InlineField> is a user attribute that cannot be used to log in. For logging in with a phone number, see <InlineField>user.phoneNumber</InlineField>.
+    </Aside>
   </APIField>
 
   <APIField name="user.parentEmail" type="String" optional since="1.7.0">
@@ -138,20 +147,30 @@ You must specify either the **email** or the **username** or both for the User. 
     The User's plain text password. This password will be hashed and the provided value will never be stored and cannot be retrieved.
 
     { props.http_method === 'POST' &&
-      <p>
-        This field is optional only if <code>sendSetPasswordEmail</code> is set to <code>true</code>. By default <code>sendSetPasswordEmail</code> is <code>false</code>, and then this field will be required.
-      </p>
-    }
+        <p>
+          This field is optional only if <code>sendSetPasswordEmail</code> is set to <code>true</code>. By default <code>sendSetPasswordEmail</code> is <code>false</code>, and then this field will be required.
+        </p>
+      }
 
     { props.http_method === 'PUT' &&
-      <p>
-        If this parameter is provided it indicates you wish to change the User's password. If you do not want to change the User's password omit this field from the request.
-      </p>
-    }
+        <p>
+          If this parameter is provided it indicates you wish to change the User's password. If you do not want to change the User's password omit this field from the request.
+        </p>
+      }
   </APIField>
 
   <APIField name="user.passwordChangeRequired" type="Boolean" optional defaults="false">
     Indicates that the User's password needs to be changed during their next login attempt.
+  </APIField>
+
+  <APIField name="user.phoneNumber" type="String" optional since="1.99.9">
+    The phone number of the User. The phone number is stored and returned in E.164 canonical format, however a phone number is considered unique regardless of the format. `303-555-1212` is considered equal to `+13035551212` so either version of this phone number can be used whenever providing it as input to an API.
+
+    If <InlineField>phoneNumber</InlineField> is not provided, then <InlineField>email</InlineField> or <InlineField>username</InlineField> will be required.
+
+    <Aside>
+      This differs from <InlineField>user.mobilePhone</InlineField> in that <InlineField>user.phoneNumber</InlineField> can be used to log in, just like an email address or a username.
+    </Aside>
   </APIField>
 
   <APIField name="user.preferredLanguages" type="Array<String>" optional>
@@ -163,9 +182,7 @@ You must specify either the **email** or the **username** or both for the User. 
   <APIField name="user.timezone" type="String" optional>
     The User's preferred timezone. The string must be in an [IANA](https://www.iana.org/time-zones) time zone format. For example:
 
-    <blockquote>
-      `America/Denver` or `US/Mountain`
-    </blockquote>
+    > `America/Denver` or `US/Mountain`
   </APIField>
 
   <APIField name="user.twoFactor.methods[x].authenticator.algorithm" type="String" optional>
@@ -181,7 +198,7 @@ You must specify either the **email** or the **username** or both for the User. 
   </APIField>
 
   <APIField name="user.twoFactor.methods[x].email" type="String" optional>
-    The value of the email address for this method. Only present if <InlineField>user.twoFactor.methods``[x]``.method</InlineField> is `email`.
+    The value of the email address for this method. Only present if <InlineField>user.twoFactor.methods\[x].method</InlineField> is `email`.
   </APIField>
 
   <APIField name="user.twoFactor.methods[x].method" type="String" optional>
@@ -193,7 +210,7 @@ You must specify either the **email** or the **username** or both for the User. 
   </APIField>
 
   <APIField name="user.twoFactor.methods[x].mobilePhone" type="String" optional>
-    The value of the mobile phone for this method. Only present if <InlineField>user.twoFactor.methods``[x]``.method</InlineField> is `sms`.
+    The value of the mobile phone for this method. Only present if <InlineField>user.twoFactor.methods\[x].method</InlineField> is `sms`.
   </APIField>
 
   <APIField name="user.twoFactor.methods[x].secret" type="String" optional>
@@ -207,17 +224,17 @@ You must specify either the **email** or the **username** or both for the User. 
 
     The possible values are:
 
-        * `None`
-        * `TextMessage`
+    * `None`
+    * `TextMessage`
 
     When using `TextMessage` the User will also need a valid `mobilePhone`.
 
     { props.http_method === 'PUT' &&
-      <p>
-        If Two Factor authentication is already enabled for this user, the delivery may not be modified. In order to change the delivery type you
-        must first disable Two Factor authentication and re-enable with a new delivery type.
-      </p>
-    }
+        <p>
+          If Two Factor authentication is already enabled for this user, the delivery may not be modified. In order to change the delivery type you
+          must first disable Two Factor authentication and re-enable with a new delivery type.
+        </p>
+      }
 
     <RemovedSince since="1.26.0" />
   </APIField>
@@ -226,8 +243,8 @@ You must specify either the **email** or the **username** or both for the User. 
     Determines if the User has two factor authentication enabled for their account or not.
 
     { props.http_method === 'PUT' &&
-      <p>If Two Factor authentication is already enabled for this user disabling Two Factor authentication will reset the delivery type and secret.</p>
-    }
+        <p>If Two Factor authentication is already enabled for this user disabling Two Factor authentication will reset the delivery type and secret.</p>
+      }
 
     See the [Enable Two Factor](/docs/apis/two-factor#enable-multi-factor) and [Disable Two Factor](/docs/apis/two-factor#disable-multi-factor) APIs
     as an alternative to performing this action using the User API.
@@ -248,11 +265,11 @@ You must specify either the **email** or the **username** or both for the User. 
     When using `None` as the `twoFactorDelivery` this value will be required.
 
     { props.http_method === 'PUT' &&
-      <p>
-        If Two Factor authentication is already enabled for this user, the secret may not be modified. In order to change the secret you
-        must first disable Two Factor authentication and re-enable with a new secret.
-      </p>
-    }
+        <p>
+          If Two Factor authentication is already enabled for this user, the secret may not be modified. In order to change the secret you
+          must first disable Two Factor authentication and re-enable with a new secret.
+        </p>
+      }
 
     <RemovedSince since="1.26.0" />
   </APIField>
@@ -260,7 +277,7 @@ You must specify either the **email** or the **username** or both for the User. 
   <APIField name="user.username" type="String" optional>
     The username of the User. The username is stored and returned as a case sensitive value, however a username is considered unique regardless of the case. `bob` is considered equal to `BoB` so either version of this username can be used whenever providing it as input to an API.
 
-    If username is not provided, then the `email` will be required.
+    If username is not provided, then <InlineField>email</InlineField> or <InlineField>phoneNumber</InlineField> will be required.
   </APIField>
 
   <APIField name="user.usernameStatus" type="String" optional>
@@ -274,5 +291,4 @@ You must specify either the **email** or the **username** or both for the User. 
   { props.http_method === 'PUT' &&
     <JSON title="Example Request JSON" src="users/update-request.json" />
   }
-
 </APIBlock>
