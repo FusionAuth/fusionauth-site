@@ -17,7 +17,7 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 
 The backend for frontend (BFF) design pattern was popularized by [SoundCloud in 2015](https://philcalcado.com/2015/09/18/the_back_end_for_front_end_pattern_bff.html) as a way to make the development of multiple apps in large teams simpler, faster, and more modular.
 
-Most companies build a service with some web, Android, iOS, and desktop applications that naturally defaults to having a single API that serves all the apps. The SoundCloud diagram below shows this.
+Most large companies build a service with some web, Android, iOS, and desktop applications that naturally defaults to having a single API that serves all the apps. The SoundCloud diagram below shows this.
 
 ![One API](../../../../public/img/articles/authentication/bff/bff1.png)
 
@@ -30,17 +30,59 @@ The BFF pattern, shown below, solves these problems by splitting the single API 
 
 ![BFF APIs](../../../../public/img/articles/authentication/bff/bff2.png)
 
-Each backend can now be considered part of the app. Features can be implemented freely by working on both a backend and frontend simultaneously, with affecting any other app.
+Each backend can now be considered part of the app. Features can be implemented freely by working on a backend and frontend pair, with affecting any other app.
 
-## BFF And Authentication
+## BFF For Authentication
 
 As you can see above, BFFs were proposed for developer ease, not for security (authentication and authorization). After all, most web apps ten years ago had a server, whether it ran PHP, ASP, or Node.js, and most apps today still do. Even single page apps (SPAs) that used AJAX (fetch calls) to dynamically update web pages still updated them by calling a server.
 
-So when it comes to security, isn't "BFF" just an unnecessary synonym for "server"? Mostly yes, but not always. If your app doesn't have a server, or stores OAuth access tokens in the browser, BFF has a special meaning and purpose, which you'll learn about in this article.
+So why are you seeing security practitioners and authentication gateway providers talking about BFFs in 2025? When it comes to security, isn't "BFF" just an unnecessary synonym for "server"? Mostly yes, but not always. If your app doesn't have a server, or stores OAuth access tokens in the browser, BFF has a special meaning and purpose, which you'll learn about in this article.
+
+But first, you need a quick review of website security history to understand server designs, attacks, and countermeasures.
+
+## Old-fashioned Web Apps
+
+Let's start with the simplest client-server design that most small web apps use (without OAuth). This is shown in the diagram below.
+
+```mermaid
+graph LR
+	Browser --> ws(Web service)
+	subgraph Server
+		ws --> Database
+	end
+```
+
+Here, a user logs in to the server by entering a username and password, and the server marks the user as authenticated by storing a cookie in the browser. The browser sends the cookie to the server with subsequent requests, allowing the user to interact with the site securely.
+
+It doesn't matter whether this app serves static HTML pages that submit forms to talk to the server, in the old style of PHP or the modern style of HTMX, or whether the app is a SPA written entirely in Vue or React that unfolds into an application in the browser. In both cases, assume the authentication token is a cookie.
+
+## Why Are Cookies Secure?
+
+The use of a cookie as the authentication credential in the browser is crucial, as opposed storing the credential in the browser's local or session storage. A cookie can be set as `HttpOnly` and `SameSite`, meaning that JavaScript cannot access the cookie, and the cookie won't be sent in a request to any server except that one that created it.
+
+In contrast, any data in local and session storage can be accessed by JavaScript, and potentially sent to an attacker's server to be used to impersonate the user later. This theft is called token exfiltration.
+
+## Common Web Attacks
+
+The two most common attacks on web apps are cross-site scripting (XSS) and cross-site request forgery (CSRF).
+
+In an XSS attack, the attacker has managed to get malicious JavaScript onto a page of the website that the user loads. For example:
+- The user might click a link to search results from the site, with a hidden `<script>` tag in the search parameters.
+- The user might view a forum post with a hidden script tag.
+- An npm JavaScript package might have malicious code, or rely on another package that does.
+
+The first two cases emphasize how important it is to sanitize data input by users, and HTML-encode data returned to the user for display.
+
+Once an attacker has their own code running in the browser, they have full power to act on the user's behalf — making any requests to add, delete, edit, buy, or sell things. It doesn't matter what security measures you have taken at this point: cookies, server design, and OAuth are all useless when JS can act as the authenticated user.
+
+One thing XSS code can't do however, is send the user's cookie to another web server to be used to impersonate them. Because cookies can't be touched by JS. This means the attack can run only as long as the user is running the site in their browser.
+
+In a CSRF attack,
+
+## OAuth Apps
 
 
-
-
+## Backendless Apps And Public API Apps
 
 How does authentication differ with BFF?
 
@@ -81,6 +123,8 @@ FusionAuth’s Hosted Backend, which is provided out of the box
 - brief: https://docs.google.com/document/d/1M4OsCz77gStNObeejCtTRbv2Iib4DNqNyVDN3DPd0VI/edit?tab=t.0
 - remove todo
 - FA
+- MJ malicious JavaScript
+- JS
 - References where "BFF" is discussed with a strong security focus:
 
     Auth0's documentation on the BFF pattern: They heavily emphasize the security advantages of using a BFF for token management and protection in SPAs. Their articles and documentation often present the BFF as a crucial security layer.
