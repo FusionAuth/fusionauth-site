@@ -19,7 +19,8 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 - [Why Are Cookies Secure?](#why-are-cookies-secure)
 - [Common Web Attacks](#common-web-attacks)
 - [OAuth Apps](#oauth-apps)
-- [Serverless Apps And Public API Apps](#serverless-apps-and-public-api-apps)
+- [Serverless Apps](#serverless-apps)
+- [BFF For Security](#bff-for-security)
 - [BFF Authentication Is More Secure Than TODO](#bff-authentication-is-more-secure-than-todo)
 - [BFF authentication design use case](#bff-authentication-design-use-case)
 - [Benefits of using FusionAuth Hosted Backend vs. building your own BFF endpoints](#benefits-of-using-fusionauth-hosted-backend-vs-building-your-own-bff-endpoints)
@@ -128,7 +129,7 @@ graph LR
 
 In all designs so far, the web service technically could be called a BFF, but it's still meaningless. For a BFF to have meaning in the context of security, you first need to understand what it means **not** to have a backend for an app, which is discussed in the next section.
 
-## Serverless Apps And Public API Apps
+## Serverless Apps
 
 For an example of a web app without a server, consider the typical todo or task list app. You might write a todo app to help people keep track of their chores, but not want to spend money and develpment time storing user data in your own server and database hosted somewhere online. So you use the Dropbox file storage API for your app to store user data in their service. Now your server can be entirely static, merely a file host that serves HTML and JavaScript files, such as GitHub pages or Cloudflare. This design is called a serverless app, and is shown below.
 
@@ -148,20 +149,60 @@ Let's consider possible attacks on this protocol:
 - If an attacker is able to read the browser's address bar, they can see the authorization code returned from the server, but won't have access to the challenge secret, so will not be able to obtain access tokens.
 - If the app has MJ, the attacker will be able to exfiltrate the authorization code, refresh token, and access token. The attacker can then wait until the user goes offline, and use the latest refresh token to generate access tokens until the user login timeout expires (which could be days or weeks).
 
-Exactly what an attacker can steal depends on how the app stores the tokens and secrets. If the app keeps them only as variables in RAM, MJ probably won't be able to find them unless it knows specifically where to look (but this means the user will have to log in every single time they open the app). But if the secrets are kept in the browser's session or local storage, the attacker will get everything. Note that `HttpOnly` cookies can't be used in this situation, because the app's JavaScript has to be able to read and write the token values.
+Exactly what an attacker can steal depends on how the app stores the tokens and secrets. If the app keeps them only as variables in RAM, MJ probably won't be able to find them unless it knows specifically where to look. But if tokens are kept only in RAM the user will have to log in every single time they open the app. If the secrets are persisted in the browser's session or local storage, the attacker will steal everything. Note that `HttpOnly` cookies can't be used in this situation, because the app's JavaScript has to be able to read and write the token values.
 
+Serverless design isn't limited to web apps. Desktop apps and mobile apps are also usually serverless. Mobile apps that connect your bank account, file storage, or medical record provider probably don't have their own servers. If an attacker gains access to your phone or computer, either through a malicious app or through physical theft, they will have access to all tokens on your device.
 
+## BFF For Security
 
+"But I don't want to create an entire server for my app!" you say. "That's why I use all these online services."
 
-How does authentication differ with BFF?
+And that's the beauty of the BFF pattern — you don't have to. You can create a tiny backend with no database that is merely a proxy server, or trusted intermediary, that does nothing else except handle tokens. You can still use external services for OAuth, resource servers, and file hosting.
+
+If we ignore the file host as it is inconsequential, the design will look like the diagram below, which is almost identical to the earlier OAuth diagram.
+
+```mermaid
+graph LR
+	wa("Web app (browser)") --> ws("Web service")
+	ws --> os(Dropbox)
+	os --> wa
+	os --> ws
+```
+
+Of course, your OAuth server and your resource server might be separate servers (for example, you might use Google Accounts for OAuth to request authorization for Gemini as the AI resource). Then the design will look as below.
+
+```mermaid
+graph LR
+	wa("Web app (browser)")--> ws("Web service (server)")
+	os(OAuth Server) --> wa
+	ws --> rs(Resource server)
+	ws --> os
+	os --> ws
+```
+
+Again, this design is identical to the previous app design that had a standard server. The reason that it is called a BFF server is that it is designed exclusively to provide authorization services to the front end. The real business service server is actually the resource server.
+
+However, your business might have its own comprehensive server for business logic. In this case you still might want to use the BFF pattern, keeping a separate server purely for authentication, so that mobile, web, and desktop apps can all have dedicated BFF servers of their own. This design would look like the diagram below, and leads us back to design in the introduction of the article.
+
+```mermaid
+graph LR
+	wa("Web app")--> ws("BFF server")
+	ma("Mobile app")--> wsm("BFF server")
+	da("Desktop app")--> wsd("BFF server")
+	ws --> os("OAuth server")
+	wsd --> os
+	wsm --> os
+	os --> rs(Resource server)
+	ws --> bsl("Business logic server")
+	wsd --> bsl("Business logic server")
+	wsm --> bsl("Business logic server")
+```
+
+## BFF Authentication Is More Secure Than TODO
 
 - All auth flows and interactions with the authorization server are handled securely in the backend
 - Frontend uses backend endpoints to interact with auth-related capabilities
 
-![Security BFF](../../../../public/img/articles/authentication/bff/securityBff.png)
-
-
-## BFF Authentication Is More Secure Than TODO
 - No sensitive flows taking place in the frontend
 - No secure artifacts stored in the frontend
 - Reduced attack surface
@@ -200,3 +241,5 @@ FusionAuth’s Hosted Backend, which is provided out of the box
     Auth0's documentation on the BFF pattern: They heavily emphasize the security advantages of using a BFF for token management and protection in SPAs. Their articles and documentation often present the BFF as a crucial security layer.
     Duende Software's BFF product and documentation: Duende Software provides a specific implementation of the BFF pattern focused on security for applications using OpenID Connect and OAuth 2.0. Their documentation clearly outlines the security benefits.
     Security-focused articles and talks on SPA authentication: Many security professionals recommend the BFF pattern as a way to mitigate the inherent security risks of client-side token handling in SPAs. While they might not explicitly say "BFF = server," the context implies that a server-side component (which aligns with the BFF concept) is necessary for security.
+
+![Security BFF](../../../../public/img/articles/authentication/bff/securityBff.png)
