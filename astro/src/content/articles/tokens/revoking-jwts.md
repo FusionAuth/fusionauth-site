@@ -1,5 +1,6 @@
 ---
-title: How to Manage JWT Expiration and Revoke JWTs | FusionAuth
+title: How to Manage JWT Expiration and Revoke JWTs
+htmlTitle: How to Manage JWT Expiration and Revoke JWTs | FusionAuth
 description: Understand how to manage JWT expiration and revoke JWTs effectively to maintain secure user sessions and prevent unauthorized access in your application.
 author: Brian Pontarelli
 icon: /img/icons/revoking-jwts.svg

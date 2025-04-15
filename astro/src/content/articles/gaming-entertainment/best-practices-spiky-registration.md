@@ -1,5 +1,6 @@
 ---
-title: "Handling Spiky Game Traffic: Registration & Autoscaling Best Practices During Launch | FusionAuth"
+title: "Handling Spiky Game Traffic: Registration & Autoscaling Best Practices During Launch"
+htmlTitle: "Handling Spiky Game Traffic: Registration & Autoscaling Best Practices During Launch | FusionAuth"
 description: Learn how to manage spiky traffic during game launches or promotions. Explore best practices for autoscaling game servers and handling high registration volumes smoothly.
 section: Gaming & Entertainment
 author: Muhammad Yasoob Ullah Khalid

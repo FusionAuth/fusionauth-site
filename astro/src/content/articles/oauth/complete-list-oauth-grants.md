@@ -1,5 +1,6 @@
 ---
-title: Oauth 2.0 Grant Types | Complete List of Oauth Grants | FusionAuth
+title: The Complete List of Oauth Grants
+htmlTitle: Oauth 2.0 Grant Types | Complete List of Oauth Grants | FusionAuth
 description: Get a complete list of OAuth 2.0 grant types, including authorization code, client credentials.
 image: articles/complete-oauth-grants/complete-oauth-grants.png
 author: Ravgeet Dhillon
