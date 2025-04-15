@@ -61,12 +61,12 @@ Let's start with the simplest client-server design that most small web apps use 
 
 ```mermaid
 graph LR
-	wa["Web app (browser)"] --> ws["Web service (server)"]
+	wa("Web app (browser)") --> ws("Web service (server)")
 ```
 
 Here, a user logs in to the server by entering a username and password, and the server marks the user as authenticated by storing a cookie in the browser. The browser sends the cookie to the server with subsequent requests, allowing the user to interact with the site securely.
 
-It doesn't matter whether this app serves static HTML pages that submit forms to talk to the server, in the old style of PHP or the modern style of HTMX, or whether the app is a SPA written entirely in Vue or React that unfolds into an application in the browser. In both cases, assume the authentication token is a cookie.
+It doesn't matter whether this app serves static HTML pages that submit forms to talk to the server, in the old style of PHP or the modern style of HTMX, or whether the app is a SPA written entirely in Vue or React that unfolds into an application in the browser. In both cases, the authentication token is a cookie.
 
 The web service here is technically a BFF because the backend is used to serve the frontend. But it's meaningless to call the server a BFF as there is only one frontend and one backend.
 
@@ -99,8 +99,8 @@ Instead of a basic username/password login system, you can upgrade to the OAuth 
 
 ```mermaid
 graph LR
-	wa["Web app (browser)"] --> ws["Web service (server)"]
-	os(OAuth Server) --> wa
+	wa("Web app (browser)") --> ws("Web service (server)")
+	os(OAuth Server) ----> wa
 	ws --> os
 	os --> ws
 ```
@@ -115,7 +115,18 @@ Since the OAuth tokens are never sent to the browser, they cannot be stolen by M
 
 If you have a web app and have been using an authentication gateway, like FusionAuth or KeyCloak, this is probably the flow you currently use.
 
-As in the previous design, the web service here technically could be called a BFF, but it's still meaningless. For a BFF to have meaning in the context of security, you first need to understand what it means **not** to have a backend for an app, which is discussed in the next section.
+In this design, OAuth is being used to authenticate the user on the web service, and not for the web service to get authorization to perform actions on another site (the resource server) on the client's behalf. If the web service were to make requests to an external server, it would send that server the access token. Once again, that token would never be sent to the browser. This design would look like the below.
+
+```mermaid
+graph LR
+	wa("Web app (browser)")--> ws("Web service (server)")
+	os(OAuth Server) --> wa
+	ws --> rs(Resource server)
+	ws --> os
+	os --> ws
+```
+
+In all designs so far, the web service technically could be called a BFF, but it's still meaningless. For a BFF to have meaning in the context of security, you first need to understand what it means **not** to have a backend for an app, which is discussed in the next section.
 
 ## Backendless Apps And Public API Apps
 
