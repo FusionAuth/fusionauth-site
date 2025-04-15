@@ -15,7 +15,7 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 
 - [What Is Backend For Frontend?](#what-is-backend-for-frontend)
 - [BFF For Authentication](#bff-for-authentication)
-- [Old-fashioned Web Apps](#old-fashioned-web-apps)
+- [Simple Web Apps](#simple-web-apps)
 - [Why Are Cookies Secure?](#why-are-cookies-secure)
 - [Common Web Attacks](#common-web-attacks)
 - [OAuth Apps](#oauth-apps)
@@ -55,21 +55,20 @@ So why are you seeing security practitioners and authentication gateway provider
 
 But first, you need a quick review of website security history to understand server designs, attacks, and countermeasures.
 
-## Old-fashioned Web Apps
+## Simple Web Apps
 
 Let's start with the simplest client-server design that most small web apps use (without OAuth). This is shown in the diagram below.
 
 ```mermaid
 graph LR
-	Browser --> ws(Web service)
-	subgraph Server
-		ws --> Database
-	end
+	wa["Web app (browser)"] --> ws["Web service (server)"]
 ```
 
 Here, a user logs in to the server by entering a username and password, and the server marks the user as authenticated by storing a cookie in the browser. The browser sends the cookie to the server with subsequent requests, allowing the user to interact with the site securely.
 
 It doesn't matter whether this app serves static HTML pages that submit forms to talk to the server, in the old style of PHP or the modern style of HTMX, or whether the app is a SPA written entirely in Vue or React that unfolds into an application in the browser. In both cases, assume the authentication token is a cookie.
+
+The web service here is technically a BFF because the backend is used to serve the frontend. But it's meaningless to call the server a BFF as there is only one frontend and one backend.
 
 ## Why Are Cookies Secure?
 
@@ -96,8 +95,31 @@ In a CSRF attack, while browsing an attacker's website, the site sends a request
 
 ## OAuth Apps
 
+Instead of a basic username/password login system, you can upgrade to the OAuth code flow. This protocol is shown below.
+
+```mermaid
+graph LR
+	wa["Web app (browser)"] --> ws["Web service (server)"]
+	os(OAuth Server) --> wa
+	ws --> os
+	os --> ws
+```
+
+In addition to the browser and server components from the first design, there is now also an OAuth server. In the code flow, login works as follows:
+- The user clicks "Log in" in the web app.
+- The web server receives the request and redirects the user to the website of the OAuth server, where the user enters their credentials.
+- The OAuth server redirects the browser back the web service, with a code in the URL.
+- The web service receives the code and sends it to the OAuth server to get a refresh token and access token. (This exchange happens without using the browser so it is more secure.) The web service stores the tokens, then returns a cookie to the user marking them as logged in.
+
+Since the OAuth tokens are never sent to the browser, they cannot be stolen by MJ on the client side. The initial code redirected from the OAuth server is in the browser, and is thus vulnerable to client side attacks, but the code can't be used to get access tokens by any server other than web service because the OAuth will reject other URLs.
+
+If you have a web app and have been using an authentication gateway, like FusionAuth or KeyCloak, this is probably the flow you currently use.
+
+As in the previous design, the web service here technically could be called a BFF, but it's still meaningless. For a BFF to have meaning in the context of security, you first need to understand what it means **not** to have a backend for an app, which is discussed in the next section.
 
 ## Backendless Apps And Public API Apps
+
+
 
 How does authentication differ with BFF?
 
