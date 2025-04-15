@@ -25,6 +25,7 @@ const devToolsCollection = defineCollection({
     description: z.string(),
     disableTOC: z.boolean().default(false),
     faIcon: z.string().optional(),
+    htmlTitle: z.string().optional(),
     icon: z.string().optional(),
     title: z.string()
   }),
