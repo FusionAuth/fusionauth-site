@@ -14,14 +14,15 @@ import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 
 - [What Is Backend For Frontend?](#what-is-backend-for-frontend)
-- [BFF For Authentication](#bff-for-authentication)
-- [Simple Web Apps](#simple-web-apps)
+- [What Is BFF For Authentication?](#what-is-bff-for-authentication)
+- [Simple Web App Design](#simple-web-app-design)
 - [Why Are Cookies Secure?](#why-are-cookies-secure)
 - [Common Web Attacks](#common-web-attacks)
-- [OAuth Apps](#oauth-apps)
-- [Serverless Apps](#serverless-apps)
-- [BFF For Security](#bff-for-security)
-- [BFF Authentication Is More Secure Than TODO](#bff-authentication-is-more-secure-than-todo)
+- [OAuth App Design](#oauth-app-design)
+- [Serverless Apps And Security Vulnerabilities](#serverless-apps-and-security-vulnerabilities)
+- [BFF For Security Design](#bff-for-security-design)
+- [How Much Riskier Is A Serverless App Really?](#how-much-riskier-is-a-serverless-app-really)
+- [OAuth Allows Serverless Apps, But Don't Use Them](#oauth-allows-serverless-apps-but-dont-use-them)
 - [BFF authentication design use case](#bff-authentication-design-use-case)
 - [Benefits of using FusionAuth Hosted Backend vs. building your own BFF endpoints](#benefits-of-using-fusionauth-hosted-backend-vs-building-your-own-bff-endpoints)
 - [Code tutorial/examples using a React frontend and Node backend](#code-tutorialexamples-using-a-react-frontend-and-node-backend)
@@ -48,7 +49,7 @@ The BFF pattern, shown below, solves these problems by splitting the single API 
 
 Each backend can now be considered part of the app. Features can be implemented freely by working on a backend and frontend pair, with affecting any other app.
 
-## BFF For Authentication
+## What Is BFF For Authentication?
 
 As you can see above, BFFs were proposed for developer ease, not for security (authentication and authorization). After all, most web apps ten years ago had a server, whether it ran PHP, ASP, or Node.js, and most apps today still do. Even single page apps (SPAs) that used AJAX (fetch calls) to dynamically update web pages still updated them by calling a server.
 
@@ -56,7 +57,7 @@ So why are you seeing security practitioners and authentication gateway provider
 
 But first, you need a quick review of website security history to understand server designs, attacks, and countermeasures.
 
-## Simple Web Apps
+## Simple Web App Design
 
 Let's start with the simplest client-server design that most small web apps use (without OAuth). This is shown in the diagram below.
 
@@ -75,7 +76,7 @@ The web service here is technically a BFF because the backend is used to serve t
 
 The use of a cookie as the authentication credential in the browser is crucial, as opposed storing the credential in the browser's local or session storage. A cookie can be set as `HttpOnly` and `SameSite=Strict`, meaning that JavaScript cannot access the cookie, and the cookie won't be sent in a request to any server except that one that created it.
 
-In contrast, any data in local and session storage can be accessed by JavaScript, and potentially sent to an attacker's server to be used to impersonate the user later. This theft is called token exfiltration.
+In contrast, any data in local and session storage can be accessed by JavaScript, and potentially sent to an attacker's server to be used to impersonate the user later. This theft is called token exfiltration ("exfiltration" is what happens after "infiltration").
 
 ## Common Web Attacks
 
@@ -94,7 +95,7 @@ One thing XSS code can't do however, is send the user's cookie to another web se
 
 In a CSRF attack, while browsing an attacker's website, the site sends a request from JS to the target site where the user is logged in, trying to act on their behalf. If the target site uses strict `SameSite` cookies CSRF attacks are practically impossible. If the site uses non-strict cookies (to allow for redirection back to the site after a credit card payment for example), CSRF attacks can be avoided by using anti-CSRF tokens.
 
-## OAuth Apps
+## OAuth App Design
 
 Instead of a basic username/password login system, you can upgrade to the OAuth code flow. This protocol is shown below.
 
@@ -129,7 +130,7 @@ graph LR
 
 In all designs so far, the web service technically could be called a BFF, but it's still meaningless. For a BFF to have meaning in the context of security, you first need to understand what it means **not** to have a backend for an app, which is discussed in the next section.
 
-## Serverless Apps
+## Serverless Apps And Security Vulnerabilities
 
 For an example of a web app without a server, consider the typical todo or task list app. You might write a todo app to help people keep track of their chores, but not want to spend money and develpment time storing user data in your own server and database hosted somewhere online. So you use the Dropbox file storage API for your app to store user data in their service. Now your server can be entirely static, merely a file host that serves HTML and JavaScript files, such as GitHub pages or Cloudflare. This design is called a serverless app, and is shown below.
 
@@ -153,13 +154,13 @@ Exactly what an attacker can steal depends on how the app stores the tokens and 
 
 Serverless design isn't limited to web apps. Desktop apps and mobile apps are also usually serverless. Mobile apps that connect your bank account, file storage, or medical record provider probably don't have their own servers. If an attacker gains access to your phone or computer, either through a malicious app or through physical theft, they will have access to all tokens on your device.
 
-## BFF For Security
+## BFF For Security Design
 
 "But I don't want to create an entire server for my app!" you say. "That's why I use all these online services."
 
-And that's the beauty of the BFF pattern — you don't have to. You can create a tiny backend with no database that is merely a proxy server, or trusted intermediary, that does nothing else except handle tokens. You can still use external services for OAuth, resource servers, and file hosting.
+And that's the beauty of the BFF pattern — you don't have to create a complex server. You can create a tiny backend with no database that is merely a proxy server, or trusted intermediary, that does nothing except handle tokens. You can still use external services for OAuth, resource servers, and file hosting.
 
-If we ignore the file host as it is inconsequential, the design will look like the diagram below, which is almost identical to the earlier OAuth diagram.
+If we ignore the file host, since it is inconsequential, the design will look like the diagram below, which is identical to the earlier OAuth diagram, as Dropbox is both the OAuth server and resource server.
 
 ```mermaid
 graph LR
@@ -180,7 +181,7 @@ graph LR
 	os --> ws
 ```
 
-Again, this design is identical to the earlier app design that had a traditional web server. The reason that this pattern is called a BFF server is that it is designed exclusively to provide authorization services to the front end. The real business service server is actually the resource server.
+Again, this design is identical to the earlier app design that had a traditional web server. The reason that this pattern is now called a BFF server is that it is designed exclusively to provide authorization services to the front end. The real business service server is actually the resource server.
 
 However, your business might have its own full-featured server for business logic, or a public API. In this case you still might want to use the BFF pattern, keeping separate servers purely for authentication, so that mobile, web, and desktop apps can all have dedicated BFF servers of their own. This design would look like the diagram below, and leads us back to design in the introduction of the article.
 
@@ -198,15 +199,27 @@ graph LR
 	wsm --> bsl("Business logic server")
 ```
 
-## BFF Authentication Is More Secure Than TODO
+## How Much Riskier Is A Serverless App Really?
 
-- All auth flows and interactions with the authorization server are handled securely in the backend
-- Frontend uses backend endpoints to interact with auth-related capabilities
+You might not see the value in all the work to create a BFF for your serverless app. After all, if an attacker already has enough access to a user's browser or device to steal a refresh token, surely it's too late to protect the user? The answer is, it depends:
 
-- No sensitive flows taking place in the frontend
-- No secure artifacts stored in the frontend
-- Reduced attack surface
-- more todo
+- For a web app, there is a huge amount of value in creating a BFF. It allows the app to store nothing but a cookie, which an attacker can't steal.
+- For a mobile or desktop app, there is less value because these apps don't store cookies like browsers do. However, the BFF can still return a short-lived authentication credential, so if the attacker steals the credential, they won't have long to act. If you didn't use a BFF, once the attacker steals the refresh token, they might be able to impersonate a user for days.
+
+As mentioned earlier, in the event that there is MJ in the frontend itself, even if you use a BFF, then while an attacker may not be able to steal refresh token, they can still perform any action they want from the user's device while impersonating the user.
+
+Additionally, a BFF might expose fewer endpoints to the frontend, limiting the actions an attacker can take.  The BFF might be able to check for unusual behavior that indicates an attack, and not forward the request to business server (similarly to how banks check for credit card fraud).
+
+## OAuth Allows Serverless Apps, But Don't Use Them
+
+In his 2023 [talk on the non-security of serverless OAuth apps](https://www.youtube.com/watch?v=OpFN6gmct8c), Philippe de Ryck noted that the OAuth organization doesn't discourage programmers from using serverless apps strongly enough:
+
+- They recommend PKCE, which you've seen still allows theft of refresh tokens.
+- They recommend frequently changing refresh tokens, which doesn't prevent an attacker from waiting until a user closes the website and then using the latest refresh token to impersonate the user for hours or days.
+- They recommend hiding credentials in service workers in the browser, as service workers are less vulnerable to XSS attacks, but service workers are started by JavaScript and so can be stopped by MJ.
+
+Philippe's conclusion is that there is utterly no way to adequately protect a serverless OAuth frontend.
+
 
 ## BFF authentication design use case
 
