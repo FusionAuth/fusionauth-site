@@ -8,6 +8,9 @@ darkIcon: /img/icons/oauth-authorization-grant-dark.svg
 date: 2022-09-01
 dateModified: 2022-09-01
 ---
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
 
 OAuth (pronounced “oh-auth”) grants are various types of authorization methods that enable users to share information between services and across devices without entering or compromising their password or username.
 
@@ -76,7 +79,7 @@ Go to the Docker dashboard. You should see two containers running, one with Fusi
 
 ### Set Up FusionAuth for Device Authorization
 
-Now that your Docker image for FusionAuth is running, you need to configure the identity provider for your demo application. Go to [http://localhost:9011/admin/setup-wizard](http://localhost:9011/admin/setup-wizard) and fill in your name, email, and password. Click **Submit**. (You can learn more about the [Setup Wizard here](/docs/get-started/download-and-install/setup-wizard).)
+Now that your Docker image for FusionAuth is running, you need to configure the identity provider for your demo application. Go to [http://localhost:9011/admin/setup-wizard](http://localhost:9011/admin/setup-wizard) and fill in your name, email, and password. Click <InlineUIElement>Submit</InlineUIElement>. (You can learn more about the [Setup Wizard here](/docs/get-started/download-and-install/setup-wizard).)
 
 Go to Applications on the navigation bar and click on "Create a new application". Name the application `Test Grant` and save it.
 
@@ -256,7 +259,7 @@ The JSON response should look like this:
 }
 ```
 
-You have successfully logged in to the game without needing to enter a username or password on the demo application. Now, you can play the game or you can click on `Click to Reset` and start over. 
+You have successfully logged in to the game without needing to enter a username or password on the demo application. Now, you can play the game or you can click on <InlineUIElement>Click to Reset</InlineUIElement> and start over. 
 
 ![Playing the game.](/img/articles/device-grant-gaming/play-the-game.png)
 
