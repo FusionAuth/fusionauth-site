@@ -115,7 +115,7 @@ Since the OAuth tokens are never sent to the browser, they cannot be stolen by M
 
 If you have a web app and have been using an authentication gateway, like FusionAuth or KeyCloak, this is probably the flow you currently use.
 
-In this design, OAuth is being used to authenticate the user on the web service, and not for the web service to get authorization to perform actions on another site (the resource server) on the client's behalf. If the web service were to make requests to an external server, it would send that server the access token. Once again, that token would never be sent to the browser. This design would look like the below.
+In this design, OAuth is used to authenticate the user on the web service, and not for the web service to get authorization to perform actions on another site (the resource server) on the client's behalf. If the web service were to make requests to an external server, it would send that server the access token. Once again, that token would never be sent to the browser. This design would look like the below.
 
 ```mermaid
 graph LR
@@ -130,7 +130,7 @@ In all designs so far, the web service technically could be called a BFF, but it
 
 ## Serverless Apps And Public API Apps
 
-For an example of a web app without a server, consider the typical todo or task list app. You might write a todo app to help people keep track of their chores, but not want to spend time and money having the app store user data in your own server and database hosted somewhere online. So you use the Dropbox file storage API for your app to store user data in Dropbox. Now your server can be entirely static, merely a file host that serves HTML and JavaScript files, such as a domain name that points to GitHub pages or Cloudflare. This design can be called a serverless app, and is shown below.
+For an example of a web app without a server, consider the typical todo or task list app. You might write a todo app to help people keep track of their chores, but not want to spend money and develpment time storing user data in your own server and database hosted somewhere online. So you use the Dropbox file storage API for your app to store user data in their service. Now your server can be entirely static, merely a file host that serves HTML and JavaScript files, such as GitHub pages or Cloudflare. This design is called a serverless app, and is shown below.
 
 ```mermaid
 graph LR
@@ -138,7 +138,18 @@ graph LR
 	wa --> os(Dropbox)
 ```
 
-While the Dropbox supports OAuth, your design doesn't have a server, so you can't use the OAuth code flow. In this case, the OAuth specification recommends the client-only PKCE flow.
+While the Dropbox supports OAuth, this design doesn't have a server, so you can't use the OAuth code flow. In this case, the OAuth specification recommends the client-only PKCE flow.
+
+The PKCE (proof key for code exchange) flow is similar to the code flow but has two differences:
+- When the initial request for an authorization code is sent, the browser includes a secret, which the OAuth server stores.
+- The access and refresh tokens are obtained directly from the app in the browser, and are stored in the browser. The request for an access tokens includes not only the authorization code, but also the original secret. If the secret the OAuth server stored does not match the one from the browser, the server will not return an access token.
+
+Let's consider possible attacks on this protocol:
+- If an attacker is able to read the browser's address bar, they can see the authorization code returned from the server, but won't have access to the challenge secret, so will not be able to obtain access tokens.
+- If the app has MJ, the attacker will be able to exfiltrate the authorization code, refresh token, and access token. The attacker can then wait until the user goes offline, and use the latest refresh token to generate access tokens until the user login timeout expires (which could be days or weeks).
+
+Exactly what an attacker can steal depends on how the app stores the tokens and secrets. If the app keeps them only as variables in RAM, MJ probably won't be able to find them unless it knows specifically where to look (but this means the user will have to log in every single time they open the app). But if the secrets are kept in the browser's session or local storage, the attacker will get everything. Note that `HttpOnly` cookies can't be used in this situation, because the app's JavaScript has to be able to read and write the token values.
+
 
 
 
