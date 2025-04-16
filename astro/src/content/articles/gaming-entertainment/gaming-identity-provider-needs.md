@@ -1,5 +1,6 @@
 ---
-title: Identity Verification Solutions for Online Gaming | What Game Platforms Need | FusionAuth
+title: Identity Verification Solutions for Online Gaming
+htmlTitle: Identity Verification Solutions for Online Gaming | What Game Platforms Need | FusionAuth
 description: Explore identity verification solutions for online gaming. Learn what gaming platforms need to securely manage player identities and meet verification requirements.
 author: Deborah Ruck
 section: Gaming & Entertainment
