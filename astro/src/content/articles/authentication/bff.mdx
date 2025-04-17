@@ -29,8 +29,7 @@ import {RemoteCode} from '@fusionauth/astro-components';
 - [OAuth Allows Serverless Apps, But Don't Use Them](#oauth-allows-serverless-apps-but-dont-use-them)
 - [How To Create A Server For your App](#how-to-create-a-server-for-your-app)
 - [Use A Premade BFF](#use-a-premade-bff)
-- [Benefits of using FusionAuth Hosted Backend vs. building your own BFF endpoints](#benefits-of-using-fusionauth-hosted-backend-vs-building-your-own-bff-endpoints)
-- [Code tutorial/examples using a React frontend and Node backend](#code-tutorialexamples-using-a-react-frontend-and-node-backend)
+- [Competitor Authentication Gateways](#competitor-authentication-gateways)
 - [Summary](#summary)
 - [Further Reading](#further-reading)
 - [TODO](#todo)
@@ -247,6 +246,8 @@ Wait a minute for `Kickstarting 🤘` to finish, then browse to http://localhost
 In a new terminal, run the commands below to start the Node web app.
 
 ```sh
+cd nodeApp
+
 docker run --init -it --rm --platform=linux/amd64 --name "app" -v ".:/app" -w "/app" -p 3000:3000 --network faNetwork node:23-alpine3.19 sh -c  "npm install && node app.js"
 ```
 
@@ -290,30 +291,45 @@ There are two ways to use the [hosted backend API](https://fusionauth.io/docs/ap
 
 Since there is already documentation on how to use React, in this section you'll learn how to code custom calls to the hosted backend. The example uses vanilla JavaScript, so you can use the code in any framework you prefer.
 
-https://www.npmjs.com/package/http-server
+If you ran the node server in the previous section, close it by pushing <kbd>Ctrl-C</kbd>, but leave the FA server running. In a new terminal, run the command below to start the serverless web app.
 
+```sh
+cd serverlessApp
 
+docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" -p 3000:3000 --network faNetwork node:23-alpine3.19 sh -c  "npm install http-server && npx http-server -d false -a 0.0.0.0 -p 3000 --proxy http://localhost:3000?"
+```
 
+Note that in this example there is no Node server in the backend. The HTML file is served from the [static file host, `http-server`](https://www.npmjs.com/package/http-server).
 
-Back in 2022, [FA didn't support BFF directly](https://fusionauth.io/blog/how-to-authenticate-your-react-app). which other gateways still don't?
+As before, browse to http://localhost:3000 to view the app. Click the login link to authenticate with FA. Use the credentials `richard@example.com` and `password`.
 
-hosted backend meant only browsers, not mobile - https://fusionauth.io/docs/apis/hosted-backend
+TODO screenshot with idt cookie and get username from cookie in code
 
-What BFF architecture looks like in an auth scenario
-FusionAuth’s Hosted Backend, which is provided out of the box
+Though this app looks identical to the previous one, it has no server and uses only FusionAuth for all authentication. The entire application is contained in the `index.html` file in the `serverlessApp` directory.
 
-todo show cookies in node and hosted apps in browser.
+<RemoteCode url={frontmatter.url + "/serverlessApp/index.html"} lang="html"/>
 
-## Benefits of using FusionAuth Hosted Backend vs. building your own BFF endpoints
+In a full single page app, you'll probably be using a client-side routing framework. But this example checks for only two cases: either it is handling a callback from the authentication server, or it displays the login link on the page for any other route.
 
-##Benefits of using Hosted Backend vs. implementing Auth Code w/ PKCE in your frontend
+All the logging link does is redirect the user to the FusionAuth hosted backend API endpoint. If the handleCallback function detects that the page is on the callback URL when the page loads, it extracts the username from the identity cookie and displays it.
 
-## Code tutorial/examples using a React frontend and Node backend
+As in the previous example, the display of the username is not essential. Since cookies are sent with every page request, the user's logged-in status is handled automatically.
+
+In summary, you can add secure authentication to your serverless app by merely running FA and writing a snippet of JavaScript. This is less work than implementing the PKCE flow, while still being more secure. If you are writing a mobile or desktop app, you can also use this secure technology, as long as your HTTP library supports cookies.
+
+## Competitor Authentication Gateways
+
+Keycloak
+ori
+Auth0
+who else
+
+    Auth0's documentation on the BFF pattern: They heavily emphasize the security advantages of using a BFF for token management and protection in SPAs. Their articles and documentation often present the BFF as a crucial security layer.
+    Duende Software's BFF product and documentation: Duende Software provides a specific implementation of the BFF pattern focused on security for applications using OpenID Connect and OAuth 2.0. Their documentation clearly outlines the security benefits.
+    Security-focused articles and talks on SPA authentication: Many security professionals recommend the BFF pattern as a way to mitigate the inherent security risks of client-side token handling in SPAs. While they might not explicitly say "BFF = server," the context implies that a server-side component (which aligns with the BFF concept) is necessary for security.
 
 
 ## Summary
-
-
 
 ## Further Reading
 
@@ -333,11 +349,4 @@ todo show cookies in node and hosted apps in browser.
 - FA
 - MJ malicious JavaScript
 - JS
-- code tags
-- References where "BFF" is discussed with a strong security focus:
 
-    Auth0's documentation on the BFF pattern: They heavily emphasize the security advantages of using a BFF for token management and protection in SPAs. Their articles and documentation often present the BFF as a crucial security layer.
-    Duende Software's BFF product and documentation: Duende Software provides a specific implementation of the BFF pattern focused on security for applications using OpenID Connect and OAuth 2.0. Their documentation clearly outlines the security benefits.
-    Security-focused articles and talks on SPA authentication: Many security professionals recommend the BFF pattern as a way to mitigate the inherent security risks of client-side token handling in SPAs. While they might not explicitly say "BFF = server," the context implies that a server-side component (which aligns with the BFF concept) is necessary for security.
-
-![Security BFF](../../../../public/img/articles/authentication/bff/securityBff.png)
