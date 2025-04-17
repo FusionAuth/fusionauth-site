@@ -226,13 +226,126 @@ Philippe's conclusion is that there is utterly no way to adequately protect a se
 
 ## How To Create A Server For your App
 
+Let's look at some actual code to create a BFF for a currently serverless app. The full project is available at TODO if you want to download and run it without having to manually create files.
 
-There are the ones I did that are kinda comparativey:
-https://fusionauth.io/docs/operate/monitor/monitor
-https://www.enterprisebot.ai/blog/comparing-enterprise-bot
+First, you need a frontend. For this, create a file called `index.html` with the content below.
+
+```html
+<!DOCTYPE html>
+<html>
+<head><title>Simplest BFF</title></head>
+<body><a href="/login">Log in</a></body>
+<script>
+  async function checkLoggedIn() {
+    const response = await fetch('/getUser');
+    if (!response.ok) return;
+    const username = await response.text();
+    if (!username) return;
+    document.body.appendChild(Object.assign(document.createElement('p'), { textContent: `Logged in as: ${username}` }));
+  }
+  checkLoggedIn();
+</script>
+</html>
+```
+
+The only text on the entire page is the login link. In reality, the HTML body could be filled with an entire Angular, React, or Vue app and it wouldn't make a difference. All you need to do to add BFF support to your real app is add a login link somewhere.
+
+This page also has a `checkLoggedIn()` function, which gets the username of the current user from the server, if they're logged in. This isn't necessary — as being logged in is determined by the presence or absence of the `fusionauth.sso` cookie for the site — but allows you to see that login worked on the page.
+
+Next, create the tiniest Express.js server possible. Add a file called `app.js` with the content below.
+
+```js
+const http = require('http');
+const express = require('express');
+const session = require("express-session");
+const passport = require('passport');
+const cookieParser = require('cookie-parser');
+
+const app = express();
+app.use(express.json());
+app.use(cookieParser());
+require('./authentication')(app);
+app.get('/', function (req, res, next) { res.sendFile('/app/index.html'); });
+app.get('/favicon.ico', function (req, res, next) { return res.send(null); });
+app.get('/login', passport.authenticate('oauth2'));
+app.get('/auth/callback', passport.authenticate('oauth2', {successRedirect: '/', failureRedirect: '/'}));
+app.get('/getUser', function (req, res, next) { return res.send(req.user); });
+app.set('port', 3000);
+const server = http.createServer(app);
+server.listen(3000, '0.0.0.0');
+```
+
+More complicated is the `authentication.js` file. Create it and add the content below.
+
+```js
+require("dotenv/config");
+const session = require("express-session");
+const passport = require("passport");
+const oauthStrategy = require("passport-oauth2");
+const jwt_decode = require("jwt-decode");
+
+function setupPassport(app) {
+  app.use(session({secret: "s3cr3t", resave: false, saveUninitialized: true,}));
+  app.use(passport.session());
+
+  const authOptions = {
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    authorizationURL: process.env.AUTH_URL,
+    tokenURL: process.env.TOKEN_URL,
+    callbackURL: process.env.AUTH_CALLBACK_URL,
+    scope: "openid email profile offline_access",
+  };
+
+  passport.use(
+    "oauth2",
+    new oauthStrategy.Strategy(authOptions, function (accessToken, refreshToken, params, profile, callback) {
+      const token = jwt_decode(accessToken);
+      const email = jwt_decode(params.id_token).email;
+      const user = { ...token, email };
+      callback(null, user);
+    }),
+  );
+
+  passport.serializeUser((user, callback) => {
+    if (!user.email)
+      throw new Error("FusionAuth did not return email for user");
+    callback(null, user.email);
+  });
+
+  passport.deserializeUser((user, callback) => {
+    callback(null, user);
+  });
+}
+
+module.exports = setupPassport;
+```
+
+In a terminal, run the command below to start FusionAuth.
+
+```sh
+docker-compose up
+```
+
+In another terminal, start the app.
+
+```sh
+cd app
+
+docker run --init  -it --rm --platform=linux/amd64 --name "app" -v ".:/app" -w "/app" -p 3000:3000 --network faNetwork node:23-alpine3.19 sh -c  "npm install && node app.js"
+```
+
 ## Use A Premade BFF
 
-FusionAuth offers a built-in BFF for your frontend app (since version 1.45).
+If creating and hosting a server like the one in the previous section is still something you want to avoid, there's an even simpler option. FusionAuth offers a built-in BFF for your frontend app (since version 1.45) called the "hosted backend". All you need is FusionAuth — it runs both as the authentication proxy and as the BFF.
+
+There are two ways to use the hosted backend API:
+- With the existing React SDK for FusionAuth. There is a tutorial, with example repository, showing [how to integrate your app with FusionAuth here](https://fusionauth.io/docs/quickstarts/quickstart-javascript-react-web).
+- By coding your own integration in JavaScript, if you use another framework like Angular, Vue, or Svelte.
+
+Since there is already documentation on how to use React, in this section you'll learn how to code custom calls to the hosted backend. The example uses vanilla JavaScript, so you can use the code in any framework you prefer.
+
+
 
 
 Back in 2022, [FA didn't support BFF directly](https://fusionauth.io/blog/how-to-authenticate-your-react-app). which other gateways still don't?
@@ -260,6 +373,7 @@ FusionAuth’s Hosted Backend, which is provided out of the box
 - [What are tokens used for](https://fusionauth.io/blog/what-happens-after-oauth-authentication-event)
 - [Token storage locations](https://fusionauth.io/articles/oauth/oauth-token-storage)
 - [Passport.js]() and the [OAuth extension]() for JavaScript servers
+- [FusionAuth React tutorial for the hosted backend](https://fusionauth.io/docs/quickstarts/quickstart-javascript-react-web)
 
 ## TODO
 - brief: https://docs.google.com/document/d/1M4OsCz77gStNObeejCtTRbv2Iib4DNqNyVDN3DPd0VI/edit?tab=t.0
@@ -267,6 +381,7 @@ FusionAuth’s Hosted Backend, which is provided out of the box
 - FA
 - MJ malicious JavaScript
 - JS
+- code tags
 - References where "BFF" is discussed with a strong security focus:
 
     Auth0's documentation on the BFF pattern: They heavily emphasize the security advantages of using a BFF for token management and protection in SPAs. Their articles and documentation often present the BFF as a crucial security layer.
