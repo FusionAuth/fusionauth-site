@@ -3,15 +3,19 @@ title: Backend For Frontend (BFF) Authentication | FusionAuth
 description: Learn what BFF is, why it's secure and maintable, and how FusionAuth supports it.
 author: FusionAuth
 section: Authentication
-tags: webauthn, passwords, security, passwordless, biometrics, passkeys
+tags: oauth, security, BFF, serverless, server, SPA, React, Angular, Vue, Svelte, cookies, tokens, hosted backend
 icon: /img/icons/sso-works-why-care.svg
 darkIcon: /img/icons/sso-works-why-care-dark.svg
+url: https://raw.githubusercontent.com/ritza-co/fusionauth-example-hostedbackend/refs/heads/main
 ---
 
 import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+
+{/* Note this article won't work until FA updates https://github.com/fusionauth/fusionauth-example-docker-compose to Ritza's latest version */}
 
 - [What Is Backend For Frontend?](#what-is-backend-for-frontend)
 - [What Is BFF For Authentication?](#what-is-bff-for-authentication)
@@ -228,116 +232,53 @@ Philippe's conclusion is that there is utterly no way to adequately protect a se
 
 todo explain fusionauth
 
-Let's look at some actual code to create a BFF for a currently serverless app. The full project is available at TODO if you want to download and run it without having to manually create files.
+Let's look at some actual code to create a BFF for a currently serverless app. Clone or download the repository from https://github.com/ritza-co/fusionauth-example-hostedbackend. First you'll see how the app runs and login works, then you'll learn how the code works.
 
-First, you need a frontend. For this, create a file called `index.html` with the content below.
+You will need Docker installed to run the examples.
 
-```html
-<!DOCTYPE html>
-<html>
-<head><title>Simplest BFF</title></head>
-<body><a href="/login">Log in</a></body>
-<script>
-  async function checkLoggedIn() {
-    const response = await fetch('/getUser');
-    if (!response.ok) return;
-    const username = await response.text();
-    if (!username) return;
-    document.body.appendChild(Object.assign(document.createElement('p'), { textContent: `Logged in as: ${username}` }));
-  }
-  checkLoggedIn();
-</script>
-</html>
+Open a terminal in the project directory you downloaded. Run the command below to start FusionAuth.
+
+```sh
+docker compose up
 ```
+
+Wait a minute for `Kickstarting 🤘` to finish, then browse to http://localhost:9011 and log in with `admin@example.com` and `password`. You can browse around FA to see the example application and users.
+
+In a new terminal, run the commands below to start the Node web app.
+
+```sh
+docker run --init -it --rm --platform=linux/amd64 --name "app" -v ".:/app" -w "/app" -p 3000:3000 --network faNetwork node:23-alpine3.19 sh -c  "npm install && node app.js"
+```
+
+Browse to http://localhost:3000 to view the app. Click the login link to authenticate with FA. Use the credentials `richard@example.com` and `password`.
+
+![FA login](../../../../public/img/articles/authentication/bff/faLogin.png)
+
+FA redirects you back to the app, which detects you're logged in and displays your username. Note that the only token stored in the browser is the `HttpOnly` cookie.
+
+![Logged in](../../../../public/img/articles/authentication/bff/nodeApp.png)
+
+The frontend for this app is very sipmle. Look at the file `index.html`.
+
+<RemoteCode url={frontmatter.url + "/nodeApp/index.html"} lang="html"/>
 
 The only text on the entire page is the login link. In reality, the HTML body could be filled with an entire Angular, React, or Vue app and it wouldn't make a difference. All you need to do to add BFF support to your real app is add a login link somewhere.
 
 This page also has a `checkLoggedIn()` function, which gets the username of the current user from the server, if they're logged in. This isn't necessary — as being logged in is determined by the presence or absence of the `fusionauth.sso` cookie for the site — but allows you to see that login worked on the page.
 
-Next, create the tiniest Express.js server possible. Add a file called `app.js` with the content below.
+The BFF is the tiniest Express.js server possible. It is in `app.js`.
 
-```js
-const http = require('http');
-const express = require('express');
-const session = require("express-session");
-const passport = require('passport');
-const cookieParser = require('cookie-parser');
+<RemoteCode url={frontmatter.url + "/nodeApp/app.js"} lang="js"/>
 
-const app = express();
-app.use(express.json());
-app.use(cookieParser());
-require('./authentication')(app);
-app.get('/', function (req, res, next) { res.sendFile('/app/index.html'); });
-app.get('/favicon.ico', function (req, res, next) { return res.send(null); });
-app.get('/login', passport.authenticate('oauth2'));
-app.get('/auth/callback', passport.authenticate('oauth2', {successRedirect: '/', failureRedirect: '/'}));
-app.get('/getUser', function (req, res, next) { return res.send(req.user); });
-app.set('port', 3000);
-const server = http.createServer(app);
-server.listen(3000, '0.0.0.0');
-```
+The code contains a lot of Node Express boilerplate, including imports of the session and the cookie parser packages. There are only four main routes, the first of which returns the HTML file, and the others use Passport.js to check the user's authentication status.
 
-More complicated is the `authentication.js` file. Create it and add the content below.
+More complicated is the `authentication.js` file.
 
-```js
-require("dotenv/config");
-const session = require("express-session");
-const passport = require("passport");
-const oauthStrategy = require("passport-oauth2");
-const jwt_decode = require("jwt-decode");
+<RemoteCode url={frontmatter.url + "/nodeApp/authentication.js"} lang="js"/>
 
-function setupPassport(app) {
-  app.use(session({secret: "s3cr3t", resave: false, saveUninitialized: true,}));
-  app.use(passport.session());
+The code in this file is copied almost exactly out of the [sample application from the Passport website](https://github.com/jaredhanson/passport-oauth2). Passport abstracts away all OAuth complexities. All you need to set are the correct configuration values to access FA.
 
-  const authOptions = {
-    clientID: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    authorizationURL: process.env.AUTH_URL,
-    tokenURL: process.env.TOKEN_URL,
-    callbackURL: process.env.AUTH_CALLBACK_URL,
-    scope: "openid email profile offline_access",
-  };
-
-  passport.use(
-    "oauth2",
-    new oauthStrategy.Strategy(authOptions, function (accessToken, refreshToken, params, profile, callback) {
-      const token = jwt_decode(accessToken);
-      const email = jwt_decode(params.id_token).email;
-      const user = { ...token, email };
-      callback(null, user);
-    }),
-  );
-
-  passport.serializeUser((user, callback) => {
-    if (!user.email)
-      throw new Error("FusionAuth did not return email for user");
-    callback(null, user.email);
-  });
-
-  passport.deserializeUser((user, callback) => {
-    callback(null, user);
-  });
-}
-
-module.exports = setupPassport;
-```
-
-In a terminal, run the command below to start FusionAuth.
-
-```sh
-docker-compose up
-```
-
-In another terminal, start the app.
-
-```sh
-cd app
-
-docker run --init -it --rm --platform=linux/amd64 --name "app" -v ".:/app" -w "/app" -p 3000:3000 --network faNetwork node:23-alpine3.19 sh -c  "npm install && node app.js"
-```
-
-Browse to the app at http://localhost:3000 and log in with `richard@example.com` and `password`.
+In summary, the frontend does nothing but show a login link and store a cookie. The Node BFF is a thin wrapper around Passport, which handles authentication with FusionAuth.
 
 ## Use A Premade BFF
 
