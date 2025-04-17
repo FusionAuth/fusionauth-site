@@ -1,6 +1,10 @@
-import { marked } from 'marked';
+import { Marked } from 'marked';
+import markedPlaintify from 'marked-plaintify';
 import { BlogContent } from "./BlogContent";
 import { ParsedBlog } from "./ParsedBlog";
+
+const stripper = new Marked()
+    .use(markedPlaintify());
 
 /**
  * Takes in the blog content as returned from getCollection and parses it to a friendly object for the blog pages to use.
@@ -11,13 +15,13 @@ import { ParsedBlog } from "./ParsedBlog";
  *
  * @param blog to be parsed.
  */
-export const parseContent = (blog: BlogContent): ParsedBlog => {
+export const parseContent = async (blog: BlogContent): Promise<ParsedBlog> => {
   // parse the excerpt "blurb"
   const blurbLines: string[] = [];
   const separator = blog.data.excerpt_separator;
   const lines = blog.body.split('\n');
 
-  for (let line of lines) {
+  for (const line of lines) {
     // stop at the excerpt_separator line
     if (separator && line.includes(separator)) {
       break;
@@ -30,11 +34,7 @@ export const parseContent = (blog: BlogContent): ParsedBlog => {
   }
 
   // remove markdown headings, code formatting, and links from the blurb
-  let blurb = blurbLines.map((l) => l.replace(/^##* /, '').replaceAll('`', '')).join('\n');
-
-  blurb = blurb.replaceAll(/\[([^\]]*)]\([^)]*\)/g, (t) => {
-    return t.replace('[', '').replace(/].*/, '');
-  });
+ let blurb = await stripper.parse(blurbLines.join('\n'));
 
   // and trim
   if (blurb.length > 160) {
