@@ -18,110 +18,147 @@ import APIConsentsPlatformDescription from 'src/content/docs/get-started/use-cas
 
 You have valuable data, robust APIs and a substantial user base and want to foster an ecosystem of applications or services on top of your data and APIs.
 
-With the api consents platform, you can let internal or external developers build on top of your platform, letting FusionAuth manage the authentication, consent gathering, and scopes management.
+With the API consents platform, you can let internal or external developers build on top of your platform, letting FusionAuth manage the authentication, consent gathering, and scopes management.
 
-This is the inverse of the authorization hub use case](/docs/get-started/use-cases/authorization-hub).
+This is the inverse of the authorization hub use case](/docs/get-started/use-cases/authorization-hub). Here, you are issuing tokens after the user offers consent.
 
 ## Solution
 
-Use FusionAuth as your hub for this functionality. FusionAuth can be a centralized repository for long lived tokens and make it easier to integrate with third party platforms.
+Use FusionAuth to manage these applications and the scopes needed for your APIs to properly respond to a request from a client.
 
-You can use FusionAuth as:
+With this use case, you can use FusionAuth to:
 
-* an adapter for social provider integrations, making it easy to add new ones and stay up to date as the providers change
-* a storage location, safely holding long-lived tokens for each user, making them available to your application via a secure API or SDK
+* centrally manage all your scopes for your APIs
+* store information about third-party applications built on top of your platform
+* to allow users to offer or revoke consent to applications
 
-This is an example of [the Third-Party Service Authorization Mode](/docs/lifecycle/authenticate-users/oauth/modes#third-party-service-authorization).
+This is an example of [the First-Party Service Authorization Mode](/docs/lifecycle/authenticate-users/oauth/modes#first-party-service-authorization).
 
 ## Prerequisites
 
-You have configured your application or applications to [delegate authentication to FusionAuth](/docs/get-started/use-cases/auth-service) via the Authorization Code grant and the hosted login pages.
+You have configured your application or applications to [delegate authentication to FusionAuth](/docs/get-started/use-cases/auth-service) via the Authorization Code grant and the hosted login pages, such that you have your user data in FusionAuth.
 
-You can also implement this use case without using the hosted login pages, using the FusionAuth APIs. The API you'd use is the `Complete the Login` [Identity Provider APIs](/docs/apis/identity-providers/), but that implementation is beyond the scope of this document.
+You have APIs you want to expose.
+
+You have a paid license installed on your FusionAuth instance. The functionality in this use case requires the Essentials plan or higher. [Learn more about pricing](/pricing).
 
 ## Example Scenario
 
-Suppose you have a video posting site, where people can post videos of their favorite pet antics. You want to:
+Suppose you are a financial services platform offering payment processing, investment management and more. You want to allow developers to build on top of your platform. You aren't quite sure what applications the developers will build, but you hope that they will build:
 
-* let a user upload a video to your site
-* allow the user to tag the video with metadata
-* enhance the video using an algorithm to make the antics extra fun
-* then upload the video to the YouTube, Facebook and Instagram accounts of this user
+* analytics tools
+* budget tracking
+* investment management and optimization
+* loan comparison tool
 
-FusionAuth can help with parts of this, including storing the tokens needed to upload the video.
+You have APIs for each of these operations already, and are ready to publish them publicly.
+
+You'll need to manage each of these applications built on top of your platform. Every user who installs one will need to give permission to each application to access their data.
+
+To make the scenario even more specific, let's say you are onboarding a analytics tool, which will help your users understand their spending habits over time, but won't be making any modifications to their accounts.
 
 ## Actors/Components
 
-* your user and their client application (mobile app or browser)
-* your application
-* the social provider platforms
-  * their identity services
-  * APIs you want to access, for video upload functionality
+* developers building on your platform
+* your users
+* your APIs
 * FusionAuth
 
 ## Implementation Steps
 
-This is a two phase implementation.
+This is a TODO phase implementation. Here's the high level plan.
 
-<Aside type="note">
-This document refers to various APIs, but you can also use the [client libraries](/docs/sdks) to interact with FusionAuth.
-</Aside>
+* Define your scopes
+* Modify your APIs to accept access tokens, including scope verification
+* Onboard developers and add a new third-party application in FusionAuth with these scopes
+* Have developers add authorize URL and store refresh token
+* Add a screen to show users which applications they have allowed access
 
-### Connecting Accounts
+### Define Your Scopes
 
-First, you need to let users connect their accounts with the platforms.
+Think about the type of operations you want your third-party developers to be able to perform. Group these into similar areas. Scopes: 
 
-* Select the social providers whose APIs you need to call. To let a user connect to YouTube, configure a connection to Google using an OIDC Identity Provider (see [Edge Cases](#edge-cases) for a note about the Google Identity Provider). Other platforms might use different providers.
-  * Make sure you configure the Identity Providers with the proper scopes. You'll want the scopes for any APIs you'll be calling at the social provider, as well as a refresh token scope. For example, to upload to YouTube, you'll want the `https://www.googleapis.com/auth/youtube.upload` scope and make sure you include the `access_type=offline` parameter. Consult the platform provider documentation for specifics on the correct values.
-* Set up the social providers in FusionAuth and enable them in the Application configuration.
-* Create a 'Connect Your Account' page that you'll display to users who are logged in.
-* Add the 'Connect To YouTube' or other appropriate buttons to this page.
-  * The for these buttons is similar to what you'd add to let someone authenticate using a social provider, but you want to use the `idp_hint` parameter. The link look likes this: `https://yourinstance.fusionauth.io/oauth2/authorize?client_id=85a03867-dccf-4882-adde-1a79aeec50df&response_type=code&redirect_uri=https%3A%2F%2Fexample.com%2F/connectaccount&idp_hint=82339786-3dff-42a6-aac6-1f1ceecb6c46` 
-* The user will connect their YouTube account by clicking on this link. Other platforms will have a different `idp_hint` value corresponding the correct identity provider.
-* You should display all accounts the user has connected by using the [Links API](/docs/apis/identity-providers/links#retrieve-a-link). You can also offer the ability to disconnect a user from a provider. You can do this after user action by unlinking the user from the identity provider.
+* should be coarse grained (not map one to one with your API endpoints)
+* can be hierarchical (you could have `account:read` and `account_details:read` where the latter is a subset of the former)
+* should be designed around business concepts not technical ones
+* must use terms intelligible to the end user
+* can contain any visible ASCII character except `"` and `\`; the `:` and `.` characters are often used as delimiters
 
-Here's a sequence diagram for requesting and storing the refresh token.
+Whatever you choose, these will be long lived once released, so consider a beta test with a small set of external and internal developers to test your assumptions about the right list of scopes. It's also better to start with a smaller set of scopes and add more later.
 
-<StoreRefreshTokensDiagram alt="Requesting and storing the refresh token." />
+In the example scenario, let's use the following scopes as a starting point:
 
-### Accessing Social Provider APIs
+* `accounts.read`: Basic account information and balances
+* `profile.read`: User profile and contact information
+* `transactions.read`: Transaction history and details
+* `transfers.write`: Initiate money transfers between accounts
+* `payments.write`: Make bill payments
+* `investments.read`: Investment portfolio information
+* `investments.trade`: Execute investment trades
+* `creditScore.read`: Access credit score information
 
-Next, when your application needs to interact with the platform, take these general steps.
+### Modify Your APIs To Check Scopes
 
-* Retrieve the [Identity Provider link](/docs/apis/identity-providers/links#retrieve-a-link) using the user's Id and the appropriate Identity Provider Id.
-* Retrieve the long lived token stored in the `token` field.
-* Offer this token to the provider's token or refresh endpoint to retrieve a new access token.
-* Use the access token to make authenticated requests to the social provider's APIs to, for example, upload a video to YouTube.
+You'll want to modify your APIs to accept an access token if they don't already.
 
- There may be slightly different steps to retrieve the access token, or they may use a different term, for certain platforms, but the general flow will be as above. Here's a sequence diagram for requesting the new access token.
+You'll need to validate the access token signature, and the claims associated with the access token. In particular, you'll need to associate every API with one or more scopes. If a request comes in with an invalid scope or no scope, fail it in the same way you would if the signature was invalid.
 
-<RetrieveAccessTokenDiagram alt="Getting the access token." />
+TODO code
+
+You can also check required claims and signatures at your API gateway rather than in your code, but the process is the same.
+
+### Build Onboarding Process
+
+Once you've decided on scopes and implemented scope checks through your APIs, you'll need to build out an application approval and onboarding process.
+
+This will include:
+
+* capturing prospective application information, including how the user's data will be used and desired scopes, both optional and required
+* evaluating the application, including which scopes are appropriate
+* configuring FusionAuth if the application is approved
+* getting required information to the developer
+* promoting the developers application to your users
+
+These are all important. However, the business processes around onboarding a new application will be specific to your organization, so let's focus on the FusionAuth configuration.
+
+As part of your evaluation, you asked what data this new application needs from your users and platform, by asking the subset of scopes needed. You can then create a new Application in FusionAuth. 
+
+Remember, you are onboarding an analytics platform, so of the scopes listed above, you need to provide only the `read` ones. In addition, after discussion with the developers, you decide that the following scopes will be required:
+
+* `accounts.read`: Basic account information and balances
+* `profile.read`: User profile and contact information
+* `transactions.read`: Transaction history and details
+
+And these scopes will be optional:
+
+* `investments.read`: Investment portfolio information
+* `creditScore.read`: Access credit score information
+
+So you create an application configuration that looks like this:
+
+TODO show application creation
+
+While this was done manually, you can also do this with [our SDKs](/docs/sdks). Here's sample code to do so:
+
+```javascript
+TODO
+```
+
+You need to allow self-service registration for this application, since you want your users to be able to access it 
 
 ## Expected Outcome
 
-You now have a central, secure repository of long-lived or refresh tokens for your users.
-
-Using the APIs, you can display connections for each user, allowing them to review and revoke them as needed.
-
-Your application can take the long-lived tokens and exchange them for access tokens, which can be used to access platform services.
+After implementing this use 
 
 ## Edge Cases
 
-When the long lived token stored in FusionAuth expires or is revoked by the user or platform, any request you make of the social provider's token endpoint will fail. At that point, the user will need to re-authorize and refresh the link. Make sure you build out this functionality.
-
-For Google, prefer the OIDC Identity Provider, which allows you to request a refresh token, rather than the Google Identity Provider, which only offers you the Id token. The OIDC Identity Provider offers more flexibility for this use case. [Learn more](/docs/lifecycle/authenticate-users/identity-providers/social/google#custom-parameters).
-
-Currently you cannot query user link attributes using the [User Search API](/docs/lifecycle/manage-users/search/user-search-with-elasticsearch). This means that you can't query FusionAuth to, for example, find out how many users have connected to a certain social provider. Please [follow this GitHub issue for more, including workarounds](https://github.com/FusionAuth/fusionauth-issues/issues/2791).
+TODO can you see what scopes have been granted? I don't think so, maybe in refresh token?
 
 ## Other Example Scenarios
 
 These include:
 
-* A social media posting site, which integrates with various social media platforms to post content.
-* An application which ingests Google or Microsoft Outlook calendars to provide syncing or reminder services.
-* A photo sharing site that accesses users photos stored in Google and Facebook and lets users comment on them.
-
-In each of these cases there's a third party platform API which is used to provide app functionality.
+In each of these cases there's a platform and API which is used to provide app functionality to third-party applications.
 
 ## Additional Documentation
 
@@ -140,3 +177,14 @@ rate limitinig
 mcp
 oauth scope design
 
+steps
+- create a template with appropriate scopes mark as a third party application
+- set up an application for each developer/custom application
+- register users for that application
+- have users log into that application with scopes requested, give consent
+- get an access token with scopes included
+- present access token to API
+- list applications that they've offered consent to? ?
+
+can localize scope values
+theming of login page for the application?
