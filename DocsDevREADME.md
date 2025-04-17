@@ -37,11 +37,12 @@ Here are some guidelines to follow when writing documentation (everything under 
 - When writing, you have access to Asides. Here's an [example blog post using an Aside](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/blog/log4j-fusionauth.mdx). You can assign the following values to the type: `tip` for tips. `note` for things for the user to be aware of. `important` for things the user should pay attention to. `warn` for dangerous actions like deleting a tenant.
 - For links, don't use the absolute URL for the FusionAuth website (https://fusionauth.io), only relative URLs. This allows us to deploy to our local and staging environments and not get sent over to prod.
 - If you have a list element containing more than one paragraph, indent the second paragraph by the same amount as the start of the text in the first paragraph to make sure that it renders correctly.
+- The `title` frontmatter element is used in several places: an H1 tag on the page, in any dynamically created menus, and in the HTML title tag. Sometimes, for SEO purposes, we want to add extra stuff to the HTML title tag, such as `| FusionAuth`. But that looks bad in the menu item. If this is the case, use the `htmlTitle` frontmatter element, which is only used for the HTML title tag. If not present, the HTML title tag defaults to the `title` frontMatter element. This is set up for docs, articles, blog posts and any other layouts that inherit from `Default.astro`.
 
 ## Docs 
 - Don't use complex breadcrumbs styling in docs. Use `->`. Use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component. Breadcrumbs should look like this `<Breadcrumb>foo -> bar -> baz</Breadcrumb>`.
 - If you are referencing a field in a form or JSON API doc, use the [InlineField](astro/src/components/InlineField.astro) component: `<InlineField>Issuer</InlineField>`.
-- If you are referencing a UI element or button, use the [InlineUIElement](astro/src/components/InlineUIElement.astro) component: `Click the <UIelement>Ok</UIelement> button`.
+- If you are referencing a UI element or button, use the [InlineUIElement](astro/src/components/InlineUIElement.astro) component: `Click the <InlineUIElement>Ok</InlineUIElement> button`.
 - If you are referencing a tab in the UI, use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component: `On the <Breadcrumb>OAuth</Breadcrumb> tab`.
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
 - When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
@@ -81,7 +82,7 @@ Review [the component for all options and icons](astro/src/components/icon/Icon.
 
 ### Docs Navigation
 
-Make descriptions full sentences.
+Make descriptions full sentences. They must end in a period. Titles, on the other hand, should not end with punctuation.
 
 If you want to order pages within a section, use `navOrder`. The default value for every page is [defined here](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/config.js#L61).
 
@@ -176,7 +177,7 @@ Follow everything in the `Content Style Guidelines` section.
 - Images should be pulled in using markdown: `![alt text](/path/to/images)`
 - Images for a blog post should go under /astro/public/img/blogs/` in a directory related to the blog title.
 - We use rouge for code formatting. Supported languages are listed here: https://github.com/rouge-ruby/rouge/tree/master/lib/rouge/lexers
-- For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
+- For site navigation, use Breadcrumb: Navigate to <Breadcrumb>Tenants</Breadcrumb> and then to the <Breadcrumb>Password</Breadcrumb> tab.
 - For field names, use double quotes: "Login Identifier Attribute".
 - For values, use back ticks: `userPrincipalName`.
 - Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/main/config/contentcheck/known-blog-categories.txt). You can separate categories with commas.
@@ -184,6 +185,8 @@ Follow everything in the `Content Style Guidelines` section.
 - You can use the `get-images-from-markdown.rb` script to extract images from markdown and store them in a directory.
 - All references to `stackoverflow.com` should be updated and direct to the community forum at `https://fusionauth.io/community/forum/`
 - When using an aside in the blog, please use the `nodark="true"` attribute.
+- Make descriptions full sentences. They must end in a period or other punctuation.
+- Titles should not end in a period. They can end in a ? or ! if needed.
 
 ## Lists
 
@@ -436,7 +439,7 @@ Prior to requesting review on a PR, please complete the following checklist.
    - The screenshot should not look fuzzy. If it does, the compression may be incorrect. 
 2. If you are referring to a navigatable element, use `<Breadcrumb>Tenants</Breadcrumb>` or `<Breadcrumb>Tenants -> Your Tenant</Breadcrumb>`. In other words, use it even for singular elements.
 3. If you are referring to a field the user can fill out, use `<InlineField>Authorized Redirect URLs</InlineField>`.
-4. If you are referring to any other UI element, such as a submit button or read-only name, use `<UIelement>Submit</UIelement>` or (on the application view screen) `<UIelement>Introspect endpoint</UIelement>`.
+4. If you are referring to any other UI element, such as a submit button or read-only name, use `<InlineUIElement>Submit</InlineUIElement>` or (on the application view screen) `<InlineUIElement>Introspect endpoint</InlineUIElement>`.
 
 
 ## Content checklist
