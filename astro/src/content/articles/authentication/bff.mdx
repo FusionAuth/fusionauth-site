@@ -3,7 +3,7 @@ title: Backend For Frontend (BFF) Authentication | FusionAuth
 description: Learn what BFF is, why it's secure and maintable, and how FusionAuth supports it.
 author: FusionAuth
 section: Authentication
-tags: oauth, security, BFF, serverless, server, SPA, React, Angular, Vue, Svelte, cookies, tokens, hosted backend
+tags: oauth, security, BFF, serverless, server, SPA, React, Angular, Vue, Svelte, cookies, tokens, hosted backend, oauth proxy, token handler pattern
 icon: /img/icons/sso-works-why-care.svg
 darkIcon: /img/icons/sso-works-why-care-dark.svg
 url: https://raw.githubusercontent.com/ritza-co/fusionauth-example-hostedbackend/refs/heads/main
@@ -17,6 +17,7 @@ import {RemoteCode} from '@fusionauth/astro-components';
 
 {/* Note this article won't work until FA updates https://github.com/fusionauth/fusionauth-example-docker-compose to Ritza's latest version */}
 
+- [Introduction](#introduction)
 - [What Is Backend For Frontend?](#what-is-backend-for-frontend)
 - [What Is BFF For Authentication?](#what-is-bff-for-authentication)
 - [Simple Web App Design](#simple-web-app-design)
@@ -33,6 +34,10 @@ import {RemoteCode} from '@fusionauth/astro-components';
 - [Summary](#summary)
 - [Further Reading](#further-reading)
 - [TODO](#todo)
+
+## Introduction
+
+ OAuth proxy, BFF, or hosted auth proxy. Curity calls it the [token handler pattern]
 
 
 ## What Is Backend For Frontend?
@@ -94,11 +99,11 @@ In an XSS attack, the attacker has managed to get malicious JavaScript onto a pa
 
 The first two cases emphasize how important it is to sanitize data input by users, and HTML-encode data returned to the user for display.
 
-Once an attacker has their own code running in the browser, they have full power to act on the user's behalf. Depending on the purpose of the site, the attacker could make requests to add, delete, edit, buy, sell, or send illegal or offensive messages. It doesn't matter what security measures you have taken at this point: cookies, server design, and OAuth are all useless when JS can act as the authenticated user.
+Once an attacker has their own code running in the browser, they have full power to act on the user's behalf. Depending on the purpose of the site, the attacker could make requests to add, delete, edit, buy, sell, or send illegal or offensive messages. It doesn't matter what security measures you have taken at this point: cookies, server design, and OAuth are all useless when JavaScript can act as the authenticated user.
 
-One thing XSS code can't do however, is send the user's cookie to another web server, because cookies can't be touched by JS. This means the attack can run only as long as the user is running the site in their browser.
+One thing XSS code can't do however, is send the user's cookie to another web server, because cookies can't be touched by JavaScript. This means the attack can run only as long as the user is running the site in their browser.
 
-In a CSRF attack, while browsing an attacker's website, the site sends a request from JS to the target site where the user is logged in, trying to act on their behalf. If the target site uses strict `SameSite` cookies CSRF attacks are practically impossible. If the site uses non-strict cookies (to allow for redirection back to the site after a credit card payment for example), CSRF attacks can be avoided by using anti-CSRF tokens.
+In a CSRF attack, while browsing an attacker's website, the site sends a request from JavaScript to the target site where the user is logged in, trying to act on their behalf. If the target site uses strict `SameSite` cookies CSRF attacks are practically impossible. If the site uses non-strict cookies (to allow for redirection back to the site after a credit card payment for example), CSRF attacks can be avoided by using anti-CSRF tokens.
 
 ## OAuth App Design
 
@@ -118,7 +123,7 @@ In addition to the browser and server components from the first design, there is
 - The OAuth server redirects the browser back the web service, with a code in the URL.
 - The web service receives the code and sends it to the OAuth server to get a refresh token and access token. (This exchange happens without using the browser so it is more secure.) The web service stores the tokens, then returns a cookie to the user marking them as logged in. (Read this guide to understand [what each token is used for](https://fusionauth.io/blog/what-happens-after-oauth-authentication-event))
 
-Since the OAuth tokens are never sent to the browser, they cannot be stolen by MJ on the client side. The initial code redirected from the OAuth server is in the browser, and is thus vulnerable to client side attacks, but the code can't be used to get access tokens by any server other than web service because the OAuth will reject other URLs.
+Since the OAuth tokens are never sent to the browser, they cannot be stolen by malicious JavaScript on the client side. The initial code redirected from the OAuth server is in the browser, and is thus vulnerable to client side attacks, but the code can't be used to get access tokens by any server other than web service because the OAuth will reject other URLs.
 
 If you have a web app and have been using an authentication gateway, like FusionAuth or KeyCloak, this is probably the flow you currently use.
 
@@ -153,9 +158,9 @@ The PKCE (proof key for code exchange) flow is similar to the code flow but has 
 
 Let's consider possible attacks on this protocol:
 - If an attacker is able to read the browser's address bar, they can see the authorization code returned from the server, but won't have access to the challenge secret, so will not be able to obtain access tokens.
-- If the app has MJ, the attacker will be able to exfiltrate the authorization code, refresh token, and access token. The attacker can then wait until the user goes offline, and use the latest refresh token to generate access tokens until the user login timeout expires (which could be days or weeks).
+- If the app has malicious JavaScript, the attacker will be able to exfiltrate the authorization code, refresh token, and access token. The attacker can then wait until the user goes offline, and use the latest refresh token to generate access tokens until the user login timeout expires (which could be days or weeks).
 
-Exactly what an attacker can steal depends on how the app stores the tokens and secrets. If the app keeps them only as variables in RAM, MJ probably won't be able to find them unless it knows specifically where to look. But if tokens are kept only in RAM the user will have to log in every single time they open the app. If the secrets are persisted in the browser's session or local storage, the attacker will steal everything. Note that `HttpOnly` cookies can't be used in this situation, because the app's JavaScript has to be able to read and write the token values.
+Exactly what an attacker can steal depends on how the app stores the tokens and secrets. If the app keeps them only as variables in RAM, malicious JavaScript probably won't be able to find them unless it knows specifically where to look. But if tokens are kept only in RAM the user will have to log in every single time they open the app. If the secrets are persisted in the browser's session or local storage, the attacker will steal everything. Note that `HttpOnly` cookies can't be used in this situation, because the app's JavaScript has to be able to read and write the token values.
 
 Serverless design isn't limited to web apps. Desktop apps and mobile apps are also usually serverless. Mobile apps that connect your bank account, file storage, or medical record provider on our behalf probably don't have their own servers. If an attacker gains access to your phone or computer, either through a malicious app or through physical theft, they will have access to all tokens on your device.
 
@@ -215,7 +220,7 @@ Additionally, a BFF might expose fewer endpoints to the frontend, limiting the a
 
 You can read more about [where to store tokens on different devices](https://fusionauth.io/articles/oauth/oauth-token-storage).
 
-As mentioned earlier, in the event that there is MJ in the frontend itself, even if you use a BFF, then while an attacker may not be able to steal refresh token, they can still perform any action they want from the user's device while impersonating the user.
+As mentioned earlier, in the event that there is malicious JavaScript in the frontend itself, even if you use a BFF, then while an attacker may not be able to steal refresh token, they can still perform any action they want from the user's device while impersonating the user.
 
 ## OAuth Allows Serverless Apps, But Don't Use Them
 
@@ -223,17 +228,17 @@ In his 2023 [talk on the non-security of serverless OAuth apps](https://www.yout
 
 - OAuth recommends PKCE, which you've seen still allows theft of refresh tokens.
 - OAuth recommends frequently changing refresh tokens, which doesn't prevent an attacker from waiting until a user closes the website and then using the latest refresh token to impersonate the user for hours or days.
-- OAuth recommends hiding credentials in service workers in the browser, as service workers are less vulnerable to XSS attacks. But service workers are started by JavaScript and so can be stopped by MJ.
+- OAuth recommends hiding credentials in service workers in the browser, as service workers are less vulnerable to XSS attacks. But service workers are started by JavaScript and so can be stopped by malicious JavaScript.
 
 Philippe's conclusion is that there is utterly no way to adequately protect a serverless OAuth frontend.
 
 ## How To Create A Server For your App
 
-todo explain fusionauth
-
 Let's look at some actual code to create a BFF for a currently serverless app. Clone or download the repository from https://github.com/ritza-co/fusionauth-example-hostedbackend. First you'll see how the app runs and login works, then you'll learn how the code works.
 
 You will need Docker installed to run the examples.
+
+In this example, you use an authentication gateway called FusionAuth as your OAuth provider. FusionAuth is free for basic usage for unlimited users and applications, and can act as an identity provider itself or as a way to connect to identity providers such as GitHub and Google.
 
 Open a terminal in the project directory you downloaded. Run the command below to start FusionAuth.
 
@@ -241,7 +246,7 @@ Open a terminal in the project directory you downloaded. Run the command below t
 docker compose up
 ```
 
-Wait a minute for `Kickstarting 🤘` to finish, then browse to http://localhost:9011 and log in with `admin@example.com` and `password`. You can browse around FA to see the example application and users.
+Wait a minute for `Kickstarting 🤘` to finish, then browse to http://localhost:9011 and log in with `admin@example.com` and `password`. You can browse around FusionAuth to see the example application and users.
 
 In a new terminal, run the commands below to start the Node web app.
 
@@ -251,11 +256,11 @@ cd nodeApp
 docker run --init -it --rm --platform=linux/amd64 --name "app" -v ".:/app" -w "/app" -p 3000:3000 --network faNetwork node:23-alpine3.19 sh -c  "npm install && node app.js"
 ```
 
-Browse to http://localhost:3000 to view the app. Click the login link to authenticate with FA. Use the credentials `richard@example.com` and `password`.
+Browse to http://localhost:3000 to view the app. Click the login link to authenticate with FusionAuth. Use the credentials `richard@example.com` and `password`.
 
-![FA login](../../../../public/img/articles/authentication/bff/faLogin.png)
+![FusionAuth login](../../../../public/img/articles/authentication/bff/faLogin.png)
 
-FA redirects you back to the app, which detects you're logged in and displays your username. Note that the only token stored in the browser is the `HttpOnly` cookie.
+FusionAuth redirects you back to the app, which detects you're logged in and displays your username. Note that the only token stored in the browser is the `HttpOnly` cookie.
 
 ![Logged in](../../../../public/img/articles/authentication/bff/nodeApp.png)
 
@@ -277,7 +282,7 @@ More complicated is the `authentication.js` file.
 
 <RemoteCode url={frontmatter.url + "/nodeApp/authentication.js"} lang="js"/>
 
-The code in this file is copied almost exactly out of the [sample application from the Passport website](https://github.com/jaredhanson/passport-oauth2). Passport abstracts away all OAuth complexities. All you need to set are the correct configuration values to access FA.
+The code in this file is copied almost exactly out of the [sample application from the Passport website](https://github.com/jaredhanson/passport-oauth2). Passport abstracts away all OAuth complexities. All you need to set are the correct configuration values to access FusionAuth.
 
 In summary, the frontend does nothing but show a login link and store a cookie. The Node BFF is a thin wrapper around Passport, which handles authentication with FusionAuth.
 
@@ -291,7 +296,7 @@ There are two ways to use the [hosted backend API](https://fusionauth.io/docs/ap
 
 Since there is already documentation on how to use React, in this section you'll learn how to code custom calls to the hosted backend. The example uses vanilla JavaScript, so you can use the code in any framework you prefer.
 
-If you ran the node server in the previous section, close it by pushing <kbd>Ctrl-C</kbd>, but leave the FA server running. In a new terminal, run the command below to start the serverless web app.
+If you ran the node server in the previous section, close it by pushing <kbd>Ctrl-C</kbd>, but leave the FusionAuth server running. In a new terminal, run the command below to start the serverless web app.
 
 ```sh
 cd serverlessApp
@@ -301,7 +306,7 @@ docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" -p 3000:3000 --ne
 
 Note that in this example there is no Node server in the backend. The HTML file is served from the [static file host, `http-server`](https://www.npmjs.com/package/http-server).
 
-As before, browse to http://localhost:3000 to view the app. Click the login link to authenticate with FA. Use the credentials `richard@example.com` and `password`.
+As before, browse to http://localhost:3000 to view the app. Click the login link to authenticate with FusionAuth. Use the credentials `richard@example.com` and `password`.
 
 TODO screenshot with idt cookie and get username from cookie in code
 
@@ -315,13 +320,13 @@ All the logging link does is redirect the user to the FusionAuth hosted backend 
 
 As in the previous example, the display of the username is not essential. Since cookies are sent with every page request, the user's logged-in status is handled automatically.
 
-In summary, you can add secure authentication to your serverless app by merely running FA and writing a snippet of JavaScript. This is less work than implementing the PKCE flow, while still being more secure. If you are writing a mobile or desktop app, you can also use this secure technology, as long as your HTTP library supports cookies.
+In summary, you can add secure authentication to your serverless app by merely running FusionAuth and writing a snippet of JavaScript. This is less work than implementing the PKCE flow, while still being more secure. If you are writing a mobile or desktop app, you can also use this secure technology, as long as your HTTP library supports cookies.
 
 ## Other Hosted BFFs
 
 The ability of FusionAuth to provide a hosted backend massively simplifies the work you have to do for SPAs and mobile apps. Almost no other authentication gateways offer this feature at the time of writing (early 2025).
 
-When looking for such a feature, it might be called an OAuth proxy or BFF. Curity calls it the [token handler pattern](https://curity.io/blog/token-handler-the-single-page-applications-new-bff/).
+When looking for such a feature, it might be called an OAuth proxy, BFF, or hosted auth proxy. Curity calls it the [token handler pattern](https://curity.io/blog/token-handler-the-single-page-applications-new-bff/).
 
 If you don't want to use FusionAuth and don't want to write your own BFF, there are open-source projects which will handle cookies and tokens for you, like the [OAuth2 Proxy](https://oauth2-proxy.github.io/oauth2-proxy), written in Go. You still need a server somewhere to host it though.
 
@@ -339,7 +344,7 @@ Though this article was long, the recommendations are simple:
 
 - Use cookies in the browser. Never store secrets in local storage or session storage.
 - Always use a server for your apps that use OAuth, even mobile and desktop apps if possible, so tokens are never sent to the browser. If your apps are currently serverless, add an OAuth proxy to make them safer.
-- The easiest way to add an OAuth Proxy is with FA hosted backend, the Go Auth2 proxy, or building on the Passport.js Node sample in this article.
+- The easiest way to add an OAuth Proxy is with FusionAuth hosted backend, the Go Auth2 proxy, or building on the Passport.js Node sample in this article.
 - The greatest danger to your app is malicious dependencies. Be very careful which packages you build with.
 - For dangerous actions, like buying, selling, or accessing private information, consider using [multifactor authentication](https://fusionauth.io/docs/lifecycle/authenticate-users/multi-factor-authentication) in addition to any other security practices you have.
 
@@ -360,7 +365,5 @@ Though this article was long, the recommendations are simple:
 - brief: https://docs.google.com/document/d/1M4OsCz77gStNObeejCtTRbv2Iib4DNqNyVDN3DPd0VI/edit?tab=t.0
 - bug - https://github.com/FusionAuth/fusionauth-issues/issues/3054
 - remove todo
-- FA
-- MJ malicious JavaScript
-- JS
+
 
