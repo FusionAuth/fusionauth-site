@@ -1,6 +1,6 @@
 ---
 title: Backend For Frontend (BFF) Authentication | FusionAuth
-description: Learn what BFF is, why it's secure and maintable, and how FusionAuth supports it.
+description: Learn what the OAuth proxy server is, why it's secure, and how FusionAuth supports it.
 author: FusionAuth
 section: Authentication
 tags: oauth, security, BFF, serverless, server, SPA, React, Angular, Vue, Svelte, cookies, tokens, hosted backend, oauth proxy, token handler pattern
@@ -15,36 +15,40 @@ import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
 
-{/* Note this article won't work until FA updates https://github.com/fusionauth/fusionauth-example-docker-compose to Ritza's latest version */}
+{/* Note this article won't work until FA updates https://github.com/fusionauth/fusionauth-example-docker-compose to Ritza's latest version
+
+- brief: https://docs.google.com/document/d/1M4OsCz77gStNObeejCtTRbv2Iib4DNqNyVDN3DPd0VI/edit?tab=t.0
+-
+*/}
 
 - [Introduction](#introduction)
-- [What Is Backend For Frontend?](#what-is-backend-for-frontend)
+- [What Is BFF?](#what-is-bff)
 - [What Is BFF For Authentication?](#what-is-bff-for-authentication)
 - [Simple Web App Design](#simple-web-app-design)
 - [Why Are Cookies Secure?](#why-are-cookies-secure)
 - [Common Web Attacks](#common-web-attacks)
 - [OAuth App Design](#oauth-app-design)
-- [Serverless Apps And Security Vulnerabilities](#serverless-apps-and-security-vulnerabilities)
+- [Security Vulnerabilities In Serverless Apps](#security-vulnerabilities-in-serverless-apps)
 - [BFF For Security Design](#bff-for-security-design)
 - [How Much Riskier Is A Serverless App Really?](#how-much-riskier-is-a-serverless-app-really)
 - [OAuth Allows Serverless Apps, But Don't Use Them](#oauth-allows-serverless-apps-but-dont-use-them)
-- [How To Create A Server For your App](#how-to-create-a-server-for-your-app)
+- [How To Create A BFF For A Serverless App](#how-to-create-a-bff-for-a-serverless-app)
 - [Use A Premade BFF](#use-a-premade-bff)
 - [Other Hosted BFFs](#other-hosted-bffs)
 - [Summary](#summary)
 - [Further Reading](#further-reading)
-- [TODO](#todo)
 
 ## Introduction
 
- OAuth proxy, BFF, or hosted auth proxy. Curity calls it the [token handler pattern]
+This article discusses the dangers of storing OAuth tokens in the browser or client-side device, which is common for serverless apps like single page apps (SPAs) and mobile apps, and how to upgrade to using an OAuth proxy server. An OAuth proxy is also known as the token handler pattern, or an OAuth backend for frontend (BFF).
 
+Many articles were written about the BFF pattern for authentication back in 2021, but the term BFF's origins are earlier, and for a different purpose. Let's start at the beginning.
 
-## What Is Backend For Frontend?
+## What Is BFF?
 
 The backend for frontend (BFF) design pattern was popularized by [SoundCloud in 2015](https://philcalcado.com/2015/09/18/the_back_end_for_front_end_pattern_bff.html) as a way to make the development of multiple apps in large teams simpler, faster, and more modular.
 
-Most large companies build a service with some web, Android, iOS, and desktop applications that naturally defaults to having a single API that serves all the apps. The SoundCloud diagram below shows this.
+SoundCloud had a single API that served web, Android, iOS, and desktop applications. The diagram below shows this.
 
 ![One API](../../../../public/img/articles/authentication/bff/bff1.png)
 
@@ -80,7 +84,7 @@ Here, a user logs in to the server by entering a username and password, and the 
 
 It doesn't matter whether this app serves static HTML pages that submit forms to talk to the server, in the old style of PHP or the modern style of HTMX, or whether the app is a SPA written entirely in Vue or React that unfolds into an application in the browser. In both cases, the authentication token is a cookie.
 
-The web service here is technically a BFF because the backend is used to serve the frontend. But it's meaningless to call the server a BFF as there is only one frontend and one backend.
+The web service here is technically a BFF because the backend is used to serve the frontend. But in this case everyone just calls it a server.
 
 ## Why Are Cookies Secure?
 
@@ -107,7 +111,7 @@ In a CSRF attack, while browsing an attacker's website, the site sends a request
 
 ## OAuth App Design
 
-Instead of a basic username/password login system, you can upgrade to the OAuth code flow. This protocol is shown below.
+One step up in complexity from the simple web server, is the OAuth code flow protocol. This protocol is shown below.
 
 ```mermaid
 graph LR
@@ -127,7 +131,7 @@ Since the OAuth tokens are never sent to the browser, they cannot be stolen by m
 
 If you have a web app and have been using an authentication gateway, like FusionAuth or KeyCloak, this is probably the flow you currently use.
 
-In this design, OAuth is used to authenticate the user on the web service, and not for the web service to get authorization to perform actions on another site (the resource server) on the client's behalf. If the web service were to make requests to an external server, it would send that server the access token. Once again, that token would never be sent to the browser. This design would look like the below.
+In this design above, OAuth is used to authenticate the user on the app's web service, not for an external service (the resource server) on the client's behalf. If the web service were to make requests to an external server, it would send that server the access token. Once again, that token would never be sent to the browser. This design would look like the below.
 
 ```mermaid
 graph LR
@@ -140,9 +144,9 @@ graph LR
 
 In all designs so far, the web service technically could be called a BFF, but it's still meaningless. For a BFF to have meaning in the context of security, you first need to understand what it means **not** to have a backend for an app, which is discussed in the next section.
 
-## Serverless Apps And Security Vulnerabilities
+## Security Vulnerabilities In Serverless Apps
 
-For an example of a web app without a server, consider the typical todo or task list app. You might write a todo app to help people keep track of their chores, but not want to spend money and development time storing user data in your own server and database hosted somewhere online. So you use the Dropbox file storage API for your app to store user data in their service. Now your server can be entirely static, merely a file host, like GitHub pages or Cloudflare, that serves HTML and JavaScript files. This design is called a serverless app, and is shown below.
+For an example of a web app without a server, consider the typical todo or task list app. You might write a todo app to help people keep track of their chores, but not want to spend money and development time storing user data in your own server and database hosted somewhere online. So you use the Dropbox file storage API for your app to store user data in Dropbox. Now your server can be entirely static, merely a file host, like GitHub pages or Cloudflare, that serves HTML and JavaScript files. This design is called a serverless app, and is shown below.
 
 ```mermaid
 graph LR
@@ -150,7 +154,7 @@ graph LR
 	wa --> os(Dropbox)
 ```
 
-While the Dropbox supports OAuth, this design doesn't have a server, so you can't use the OAuth code flow. In this case, the OAuth specification recommends the client-only PKCE flow.
+While the Dropbox API supports OAuth, this design doesn't have a server, so you can't use the OAuth code flow. In this case, the OAuth specification recommends the client-only PKCE flow.
 
 The PKCE (proof key for code exchange) flow is similar to the code flow but has two differences:
 - When the initial request for an authorization code is sent, the browser includes a secret, which the OAuth server stores.
@@ -160,21 +164,21 @@ Let's consider possible attacks on this protocol:
 - If an attacker is able to read the browser's address bar, they can see the authorization code returned from the server, but won't have access to the challenge secret, so will not be able to obtain access tokens.
 - If the app has malicious JavaScript, the attacker will be able to exfiltrate the authorization code, refresh token, and access token. The attacker can then wait until the user goes offline, and use the latest refresh token to generate access tokens until the user login timeout expires (which could be days or weeks).
 
-Exactly what an attacker can steal depends on how the app stores the tokens and secrets. If the app keeps them only as variables in RAM, malicious JavaScript probably won't be able to find them unless it knows specifically where to look. But if tokens are kept only in RAM the user will have to log in every single time they open the app. If the secrets are persisted in the browser's session or local storage, the attacker will steal everything. Note that `HttpOnly` cookies can't be used in this situation, because the app's JavaScript has to be able to read and write the token values.
+Exactly what an attacker can steal depends on how the app stores the tokens and secrets. If the app keeps them only as variables in RAM, malicious JavaScript probably won't be able to find them unless it knows specifically where to look. But if tokens are kept only in RAM, the user will have to log in every single time they open the app. If the secrets are persisted in the browser's session or local storage, the attacker will steal everything. Note that `HttpOnly` cookies can't be used in this situation, because the app's JavaScript has to be able to read and write the token values.
 
-Serverless design isn't limited to web apps. Desktop apps and mobile apps are also usually serverless. Mobile apps that connect your bank account, file storage, or medical record provider on our behalf probably don't have their own servers. If an attacker gains access to your phone or computer, either through a malicious app or through physical theft, they will have access to all tokens on your device.
+Serverless design isn't limited to web apps. Desktop apps and mobile apps are also usually serverless. Mobile apps that connect your bank account, file storage, or medical record provider on our behalf probably don't have their own servers. If an attacker gains access to your phone or computer, either through a malicious app or through physical theft, they might gain access to all tokens on your device.
 
 ## BFF For Security Design
 
-"But I don't want to create an entire server for my app" you say. "That's why I use all these online services."
+"But I don't want to create an entire server for my app" you might say as a frontend developer. "That's why I use all these online services."
 
 And that's the beauty of the BFF pattern — you don't have to create a complex server. You can create a tiny backend with no database that is merely a proxy server, or trusted intermediary, that does nothing except handle tokens. You can still use external services for OAuth, resource servers, and file hosting.
 
-If we ignore the file host, since it is inconsequential, the design will look like the diagram below, which is identical to the earlier OAuth diagram, as Dropbox is both the OAuth server and resource server.
+If we ignore the file host, since it is inconsequential, this design will look like the diagram below, which is identical to the earlier OAuth diagram, as Dropbox is both the OAuth server and resource server.
 
 ```mermaid
 graph LR
-	wa("Web app (browser)") --> ws("Web service")
+	wa("Web app (browser)") --> ws("Web service (BFF)")
 	ws --> os(Dropbox)
 	os --> wa
 	os --> ws
@@ -184,7 +188,7 @@ Of course, your OAuth server and your resource server might be separate servers 
 
 ```mermaid
 graph LR
-	wa("Web app (browser)")--> ws("Web service (server)")
+	wa("Web app (browser)")--> ws("Web service (BFF)")
 	os(OAuth Server) --> wa
 	ws --> rs(Resource server)
 	ws --> os
@@ -193,13 +197,13 @@ graph LR
 
 Again, this design is identical to the earlier app design that had a traditional web server. The reason that this pattern is now called a BFF server is that it is designed exclusively to provide authorization services to the front end. The real business service server is actually the resource server.
 
-However, your business might have its own full-featured server for business logic, or a public API. In this case you still might want to use the BFF pattern, keeping separate servers purely for authentication, so that mobile, web, and desktop apps can all have dedicated BFF servers of their own. This design would look like the diagram below, and leads us back to design in the introduction of the article.
+However, your business might have its own full-featured server for business logic, or a public API. In this case you still might want to use the BFF pattern, keeping separate servers purely for authentication, so that mobile, web, and desktop apps can all have dedicated BFFs of their own. This design would look like the diagram below, and leads us back to the Soundcloud design in the introduction of the article.
 
 ```mermaid
 graph LR
-	wa("Web app")--> ws("BFF server")
-	ma("Mobile app")--> wsm("BFF server")
-	da("Desktop app")--> wsd("BFF server")
+	wa("Web app")--> ws("BFF")
+	ma("Mobile app")--> wsm("BFF")
+	da("Desktop app")--> wsd("BFF ")
 	ws --> os("OAuth server")
 	wsd --> os
 	wsm --> os
@@ -214,7 +218,7 @@ graph LR
 You might not see the value in all the work to create a BFF for your serverless app. After all, if an attacker already has enough access to a user's browser or device to steal a refresh token, surely it's too late to protect the user? The answer is, it depends:
 
 - For a web app, there is a huge amount of value in creating a BFF. It allows the app to store nothing but a cookie, which an attacker can't steal.
-- For a mobile or desktop app, there is less value because these apps don't store cookies like browsers do. However, the BFF can still return a short-lived authentication credential, so if the attacker steals the credential, they won't have long to act. If you didn't use a BFF, once the attacker steals the refresh token, they might be able to impersonate a user for days.
+- For a mobile or desktop app, there is less value because these apps might not store cookies like browsers do. However, the BFF can still return a short-lived authentication credential, so if the attacker steals the credential, they won't have long to act. If you didn't use a BFF, once the attacker steals the refresh token, they might be able to impersonate a user for days.
 
 Additionally, a BFF might expose fewer endpoints to the frontend, limiting the actions an attacker can take.  The BFF might be able to check for unusual behavior that indicates an attack, and not forward the request to business server (similarly to how banks check for credit card fraud).
 
@@ -230,11 +234,11 @@ In his 2023 [talk on the non-security of serverless OAuth apps](https://www.yout
 - OAuth recommends frequently changing refresh tokens, which doesn't prevent an attacker from waiting until a user closes the website and then using the latest refresh token to impersonate the user for hours or days.
 - OAuth recommends hiding credentials in service workers in the browser, as service workers are less vulnerable to XSS attacks. But service workers are started by JavaScript and so can be stopped by malicious JavaScript.
 
-Philippe's conclusion is that there is utterly no way to adequately protect a serverless OAuth frontend.
+Philippe's conclusion is that there is ultimately no way to adequately protect a serverless OAuth frontend.
 
-## How To Create A Server For your App
+## How To Create A BFF For A Serverless App
 
-Let's look at some actual code to create a BFF for a currently serverless app. Clone or download the repository from https://github.com/ritza-co/fusionauth-example-hostedbackend. First you'll see how the app runs and login works, then you'll learn how the code works.
+Let's look at some code to create a BFF for a currently serverless app. Clone or download the repository from https://github.com/ritza-co/fusionauth-example-hostedbackend. First you'll see how the app runs and login works, then you'll learn how the code works.
 
 You will need Docker installed to run the examples.
 
@@ -264,19 +268,19 @@ FusionAuth redirects you back to the app, which detects you're logged in and dis
 
 ![Logged in](../../../../public/img/articles/authentication/bff/nodeApp.png)
 
-The frontend for this app is very sipmle. Look at the file `index.html`.
+The frontend for this app is simple. Look at the file `index.html`.
 
 <RemoteCode url={frontmatter.url + "/nodeApp/index.html"} lang="html"/>
 
 The only text on the entire page is the login link. In reality, the HTML body could be filled with an entire Angular, React, or Vue app and it wouldn't make a difference. All you need to do to add BFF support to your real app is add a login link somewhere.
 
-This page also has a `checkLoggedIn()` function, which gets the username of the current user from the server, if they're logged in. This isn't necessary — as being logged in is determined by the presence or absence of the `fusionauth.sso` cookie for the site — but allows you to see that login worked on the page.
+This page also has a `checkLoggedIn()` function, which gets the username of the current user from the server if they're logged in. This isn't necessary to make calls to a resource server  — as being logged in is determined by the presence or absence of the `fusionauth.sso` cookie for the site — but allows you to see that login worked on the page.
 
 The BFF is the tiniest Express.js server possible. It is in `app.js`.
 
 <RemoteCode url={frontmatter.url + "/nodeApp/app.js"} lang="js"/>
 
-The code contains a lot of Node Express boilerplate, including imports of the session and the cookie parser packages. There are only four main routes, the first of which returns the HTML file, and the others use Passport.js to check the user's authentication status.
+The code contains a lot of Node Express boilerplate, including imports of the session and the cookie parser packages. There are only four main routes, the first of which returns the HTML file, and the others use Passport.js to check the user's authentication status. Passport.js is a JavaScript wrapper to call OAuth servers.
 
 More complicated is the `authentication.js` file.
 
@@ -308,7 +312,7 @@ Note that in this example there is no Node server in the backend. The HTML file 
 
 As before, browse to http://localhost:3000 to view the app. Click the login link to authenticate with FusionAuth. Use the credentials `richard@example.com` and `password`.
 
-TODO screenshot with idt cookie and get username from cookie in code
+TODO screenshot with idt cookie and get username from cookie in code once bug is fixed - https://github.com/FusionAuth/fusionauth-issues/issues/3054
 
 Though this app looks identical to the previous one, it has no server and uses only FusionAuth for all authentication. The entire application is contained in the `index.html` file in the `serverlessApp` directory.
 
@@ -330,7 +334,7 @@ When looking for such a feature, it might be called an OAuth proxy, BFF, or host
 
 If you don't want to use FusionAuth and don't want to write your own BFF, there are open-source projects which will handle cookies and tokens for you, like the [OAuth2 Proxy](https://oauth2-proxy.github.io/oauth2-proxy), written in Go. You still need a server somewhere to host it though.
 
-Below is a list of which authentication gateway brands offer OAuth proxies:
+Below is a list of which authentication gateways offer OAuth proxies:
 - Amazon Cognito offers an [OAuth proxy called "managed login"](https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools-managed-login.html).
 - Auth0 agrees that [storing tokens in the browser is dangerous](https://auth0.com/docs/secure/security-guidance/data-security/token-storage), and recommends storing them in RAM, not local storage. They don't provide a hosted backend. Their [SPA SDK for Auth0](https://auth0.com/docs/quickstart/spa/vanillajs/interactive) sends the access token directly to the browser.
 - Curity provides a downloadable [token handler that you host yourself](https://curity.io/resources/learn/token-handler-getting-started/#curity-token-handler) and connect to their API gateway.
@@ -340,11 +344,11 @@ Below is a list of which authentication gateway brands offer OAuth proxies:
 
 ## Summary
 
-Though this article was long, the recommendations are simple:
+Though this article was complex, the recommendations are simple:
 
-- Use cookies in the browser. Never store secrets in local storage or session storage.
+- Use `HttpOnly` cookies in the browser. Never store secrets in local storage or session storage.
 - Always use a server for your apps that use OAuth, even mobile and desktop apps if possible, so tokens are never sent to the browser. If your apps are currently serverless, add an OAuth proxy to make them safer.
-- The easiest way to add an OAuth Proxy is with FusionAuth hosted backend, the Go Auth2 proxy, or building on the Passport.js Node sample in this article.
+- The easiest way to add an OAuth Proxy is with FusionAuth hosted backend, the Go Auth2 proxy, or building on the Passport.js Node sample in this article. (For other languages, there are OAuth wrappers too, so you won't have to write your own protocol code.)
 - The greatest danger to your app is malicious dependencies. Be very careful which packages you build with.
 - For dangerous actions, like buying, selling, or accessing private information, consider using [multifactor authentication](https://fusionauth.io/docs/lifecycle/authenticate-users/multi-factor-authentication) in addition to any other security practices you have.
 
@@ -352,18 +356,12 @@ Though this article was long, the recommendations are simple:
 
 - [BFF pattern at SoundCloud (2015)](https://philcalcado.com/2015/09/18/the_back_end_for_front_end_pattern_bff.html)
 - [Dropbox OAuth documentation](https://www.dropbox.com/developers/documentation/http/documentation)
-- [What are tokens used for](https://fusionauth.io/blog/what-happens-after-oauth-authentication-event)
+- [What are OAuth tokens used for](https://fusionauth.io/blog/what-happens-after-oauth-authentication-event)
 - [Token storage locations](https://fusionauth.io/articles/oauth/oauth-token-storage)
-- [Passport.js]() and the [OAuth extension]() for JavaScript servers
+- [Passport.js](https://www.passportjs.org/) and the [OAuth extension](https://github.com/jaredhanson/passport-oauth2) for JavaScript servers
 - [FusionAuth React tutorial for the hosted backend](https://fusionauth.io/docs/quickstarts/quickstart-javascript-react-web)
 - [FusionAuth hosted backend API](https://fusionauth.io/docs/apis/hosted-backend)
 - [Node http-server package](https://www.npmjs.com/package/http-server)
 - [Go OAuth2 Proxy](https://oauth2-proxy.github.io/oauth2-proxy)
 - [Multifactor authentication in FusionAuth](https://fusionauth.io/docs/lifecycle/authenticate-users/multi-factor-authentication)
-
-## TODO
-- brief: https://docs.google.com/document/d/1M4OsCz77gStNObeejCtTRbv2Iib4DNqNyVDN3DPd0VI/edit?tab=t.0
-- bug - https://github.com/FusionAuth/fusionauth-issues/issues/3054
-- remove todo
-
 
