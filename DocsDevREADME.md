@@ -48,7 +48,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
 - Include fragments that are shared between different sections of the doc should be stored in the [shared](astro/src/content/docs/_shared) directory.
 - All links elements should be fully-qualified and never include a slash at the end (i.e. `[users](/docs/apis/users)` not `[users](./users)`)
-- If something is new in a version, mark it with something like this (this is great in toward the top of a page):
+- If something is new in a version, mark it with something like this (this is great toward the top of a page documenting a version introduced in a particular version):
 
   <Aside type="version">
     Available since 1.5.0
