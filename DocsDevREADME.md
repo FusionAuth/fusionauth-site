@@ -55,7 +55,7 @@ Here are some guidelines to follow when writing documentation (everything under 
   </Aside>
 
 If there is a description of the feature that is part of a set of paragraphs, use the title element and put the description in the slot.
-  <Aside since="Available since 1.5.0" type="version">
+  <Aside title="Available since 1.5.0" type="version">
     You can use the advanced version of the feature with ...
   </Aside>
 
