@@ -48,7 +48,7 @@ Many articles were written about the BFF pattern for authentication back in 2021
 
 The backend for frontend (BFF) design pattern was popularized by [SoundCloud in 2015](https://philcalcado.com/2015/09/18/the_back_end_for_front_end_pattern_bff.html) as a way to make the development of multiple apps in large teams simpler, faster, and more modular.
 
-SoundCloud had a single API that served web, Android, iOS, and desktop applications. The diagram below shows this.
+SoundCloud had a single API that served web, Android, iOS, and desktop applications. Their diagram below shows this.
 
 ![One API](../../../../public/img/articles/authentication/bff/bff1.png)
 
@@ -75,10 +75,7 @@ But first, you need a quick review of website security history to understand ser
 
 Let's start with the simplest client-server design that most small web apps use (without OAuth). This is shown in the diagram below.
 
-```mermaid
-graph LR
-	wa("Web app (browser)") --> ws("Web service (server)")
-```
+![Website to server](../../../../public/img/articles/authentication/bff/bff1.svg)
 
 Here, a user logs in to the server by entering a username and password, and the server marks the user as authenticated by storing a cookie in the browser. The browser sends the cookie to the server with subsequent requests, allowing the user to interact with the site securely.
 
@@ -91,6 +88,8 @@ The web service here is technically a BFF because the backend is used to serve t
 The use of a cookie as the authentication credential in the browser is crucial, as opposed storing the credential in the browser's local or session storage. A cookie can be set as `HttpOnly` and `SameSite=Strict`, meaning that JavaScript cannot access the cookie, and the cookie won't be sent in a request to any server except that one that created it.
 
 In contrast, any data in local and session storage can be accessed by JavaScript, and potentially sent to an attacker's server to be used to impersonate the user later. This theft is called token exfiltration ("exfiltration" is what happens after "infiltration").
+
+![Secure cookies](../../../../public/img/articles/authentication/bff/bff2.svg)
 
 ## Common Web Attacks
 
@@ -113,13 +112,8 @@ In a CSRF attack, while browsing an attacker's website, the site sends a request
 
 One step up in complexity from the simple web server, is the OAuth code flow protocol. This protocol is shown below.
 
-```mermaid
-graph LR
-	wa("Web app (browser)") --> ws("Web service (server)")
-	os(OAuth Server) ----> wa
-	ws --> os
-	os --> ws
-```
+
+![OAuth](../../../../public/img/articles/authentication/bff/bff3.svg)
 
 In addition to the browser and server components from the first design, there is now also an OAuth server. In the code flow, login works as follows:
 - The user clicks "Log in" in the web app.
@@ -133,14 +127,7 @@ If you have a web app and have been using an authentication gateway, like Fusion
 
 In this design above, OAuth is used to authenticate the user on the app's web service, not for an external service (the resource server) on the client's behalf. If the web service were to make requests to an external server, it would send that server the access token. Once again, that token would never be sent to the browser. This design would look like the below.
 
-```mermaid
-graph LR
-	wa("Web app (browser)")--> ws("Web service (server)")
-	os(OAuth Server) --> wa
-	ws --> rs(Resource server)
-	ws --> os
-	os --> ws
-```
+![Resource server](../../../../public/img/articles/authentication/bff/bff4.svg)
 
 In all designs so far, the web service technically could be called a BFF, but it's still meaningless. For a BFF to have meaning in the context of security, you first need to understand what it means **not** to have a backend for an app, which is discussed in the next section.
 
@@ -148,11 +135,7 @@ In all designs so far, the web service technically could be called a BFF, but it
 
 For an example of a web app without a server, consider the typical todo or task list app. You might write a todo app to help people keep track of their chores, but not want to spend money and development time storing user data in your own server and database hosted somewhere online. So you use the Dropbox file storage API for your app to store user data in Dropbox. Now your server can be entirely static, merely a file host, like GitHub pages or Cloudflare, that serves HTML and JavaScript files. This design is called a serverless app, and is shown below.
 
-```mermaid
-graph LR
-	ws("File host") -.-> wa("Web app (browser)")
-	wa --> os(Dropbox)
-```
+![Website to Dropbox](../../../../public/img/articles/authentication/bff/bff5.svg)
 
 While the Dropbox API supports OAuth, this design doesn't have a server, so you can't use the OAuth code flow. In this case, the OAuth specification recommends the client-only PKCE flow.
 
