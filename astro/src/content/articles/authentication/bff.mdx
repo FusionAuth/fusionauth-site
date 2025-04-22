@@ -258,6 +258,10 @@ There are two ways to use the [hosted backend API](https://fusionauth.io/docs/ap
 
 Since there is already documentation on how to use React, in this section you'll learn how to code custom calls to the hosted backend. The example uses vanilla JavaScript, so you can use the code in any framework you prefer.
 
+{/* Tatenda, you can remove this if Dan explains how to fix: https://github.com/FusionAuth/fusionauth-issues/issues/3054 */}
+
+Browse to the Applications tab of FusionAuth at http://localhost:9011/admin/application. For the `Example App`, click <Breadcrumb>Select -> Edit</Breadcrumb>. On the <InlineUIElement>Scopes tab</InlineUIElement>, for <InlineUIElement>Scope handling policy</InlineUIElement>, change to <InlineUIElement>Compatibility</InlineUIElement>. If you leave this value on <InlineUIElement>Strict</InlineUIElement>, the user's email won't be returned.
+
 If you ran the node server in the previous section, close it by pushing <kbd>Ctrl-C</kbd>, but leave the FusionAuth server running. In a new terminal, run the command below to start the serverless web app.
 
 ```sh
@@ -270,17 +274,19 @@ Note that in this example there is no Node server in the backend. The HTML file 
 
 As before, browse to http://localhost:3000 to view the app. Click the login link to authenticate with FusionAuth. Use the credentials `richard@example.com` and `password`.
 
-TODO screenshot with idt cookie and get username from cookie in code once bug is fixed - https://github.com/FusionAuth/fusionauth-issues/issues/3054
+![Id token](../../../../public/img/articles/authentication/bff/idToken.png)
 
 Though this app looks identical to the previous one, it has no server and uses only FusionAuth for all authentication. The entire application is contained in the `index.html` file in the `serverlessApp` directory.
 
 <RemoteCode url={frontmatter.url + "/serverlessApp/index.html"} lang="html"/>
 
-In a full single page app, you'll probably be using a client-side routing framework. But this example checks for only two cases: either it is handling a callback from the authentication server, or it displays the login link on the page for any other route.
+In a full single page app, you'll probably be using a client-side routing framework. But this example checks for only two cases: either it is handling a callback from the authentication server and checks the challenge code matches, or it displays the login link on the page for any other route. In either case, if there is a logged-in user Id cookie present, the user's email address is displayed on the screen.
 
-All the logging link does is redirect the user to the FusionAuth hosted backend API endpoint. If the handleCallback function detects that the page is on the callback URL when the page loads, it extracts the username from the identity cookie and displays it.
+All the logging link does is redirect the user to the FusionAuth hosted backend API endpoint.
 
-As in the previous example, the display of the username is not essential. Since cookies are sent with every page request, the user's logged-in status is handled automatically.
+When making the request, you need to specify the `openid` and `email` [scopes](https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/scopes), or the user's email address won't be returned in the `app.idt` token.
+
+As in the previous example, the display of the username is not essential. Since cookies are sent with every page request, the user's logged-in status is handled automatically on the server.
 
 In summary, you can add secure authentication to your serverless app by merely running FusionAuth and writing a snippet of JavaScript. This is less work than implementing the PKCE flow, while still being more secure. If you are writing a mobile or desktop app, you can also use this secure technology, as long as your HTTP library supports cookies.
 
@@ -319,6 +325,7 @@ Though this article was complex, the recommendations are simple:
 - [Passport.js](https://www.passportjs.org/) and the [OAuth extension](https://github.com/jaredhanson/passport-oauth2) for JavaScript servers
 - [FusionAuth React tutorial for the hosted backend](https://fusionauth.io/docs/quickstarts/quickstart-javascript-react-web)
 - [FusionAuth hosted backend API](https://fusionauth.io/docs/apis/hosted-backend)
+- [FusionAuth OAuth scopes](https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/scopes)
 - [Node http-server package](https://www.npmjs.com/package/http-server)
 - [Go OAuth2 Proxy](https://oauth2-proxy.github.io/oauth2-proxy)
 - [Multifactor authentication in FusionAuth](https://fusionauth.io/docs/lifecycle/authenticate-users/multi-factor-authentication)
