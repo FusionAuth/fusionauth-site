@@ -6,6 +6,7 @@ section: lifecycle
 subcategory: authenticate users
 tags: auth as a service
 ---
+import Breadcrumb from 'src/components/Breadcrumb.astro';
 import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
 import DifferenceTwoFactorMultiFactor from 'src/content/docs/_shared/_difference-two-factor-multi-factor.mdx';
 import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
@@ -17,6 +18,7 @@ import MfaMigration from 'src/content/docs/lifecycle/authenticate-users/_mfa-mig
 import MfaTroubleshooting from 'src/content/docs/lifecycle/authenticate-users/_mfa-troubleshooting.mdx';
 import StepUpDiagram from 'src/diagrams/docs/lifecycle/authenticate-users/step-up-auth.astro';
 import { YouTube } from '@astro-community/astro-embed-youtube';
+import StaticPatchNote from 'src/content/docs/sdks/_static-patch-note.mdx';
 
 <YouTube id="GM2JPTu-EE4" />
 
@@ -152,7 +154,7 @@ curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'ht
 
 This API call will send a unique code to the user using the method specified.
 
-The lifetime and length of this code can be configured by navigating to <strong>Tenants -> Your Tenant -> Advanced</strong> and modifying the <InlineField>Two-Factor One Time Code</InlineField> settings.
+The lifetime and length of this code can be configured by navigating to <Breadcrumb>Tenants -> Your Tenant -> Advanced</Breadcrumb> and modifying the <InlineField>Two-Factor One Time Code</InlineField> settings.
 
 #### Collect the Code
 
@@ -403,7 +405,7 @@ You have four options:
 
 ### Using the Administrative User Interface
 
-Navigate to <strong>Users -> The User</strong> and manage the user. Then go to the <strong>Multi-Factor</strong> tab. Remove any of the MFA methods by clicking the red trash can icon and confirming the deletion:
+Navigate to <Breadcrumb>Users -> The User</Breadcrumb> and manage the user. Then go to the <Breadcrumb>Multi-Factor</Breadcrumb> tab. Remove any of the MFA methods by clicking the red trash can icon and confirming the deletion:
 
 <img src="/img/docs/lifecycle/authenticate-users/delete-factor-admin-view.png" alt="Delete an MFA method from the admin screen." width="1200" role="bottom-cropped" />
 
@@ -428,8 +430,7 @@ user_two_factor_removed=`echo $user| jq 'del(.[].twoFactor[])' -`
 curl -XPUT -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'https://sandbox.fusionauth.io/api/user/00000000-0000-0000-0000-000000000004' -d "$user_two_factor_removed"
 ```
 
-The reason you need to retrieve the user and modify the data, then use `PUT` to update it, is because of how `PATCH` handles arrays.
-[Read this tracking issue for more info.](https://github.com/FusionAuth/fusionauth-issues/issues/441)
+The reason you need to retrieve the user and modify the data then use `PUT` to update it, is [because of how `PATCH` handles arrays](/docs/apis/#the-patch-http-method).
 
 ### Building Your Own Interface
 
@@ -588,7 +589,7 @@ If you have other MFA methods that you'd like to use with FusionAuth, you have a
 * If you can send a code out of band, you may use step up auth to protect all the pages in your system. As soon as a user logs in, require step up auth. Users don't have to have MFA enabled to use step up.
 * If your additional factor can receive a webhook, configure your webhooks to be transactional and send one on login. The service can then perform the MFA check, perhaps doing something like fingerprint recognition. If any status other than `200` is returned, the login will fail. The downside of this approach is that the message to the end user won't be helpful, and that MFA will be required on every login. Here is an [example of a webhook stopping a login](/blog/2020/08/13/locking-an-account-with-breached-password).
 * Use the [Login API](/docs/apis/login) and build custom login flows, inserting your custom MFA functionality where needed.
-* Set up an OpenID Connect server with the required MFA functionality. Then set up an [Identity Provider](/docs/lifecycle/authenticate-users/identity-providers/) that delegates to that OIDC server. Modify your theme so that this Identity Provider is the only login option.
+* Set up an OpenID Connect server with the required MFA functionality. Then set up an [Identity Provider](/docs/lifecycle/authenticate-users/identity-providers/) that delegates to that OIDC server. Add a [Login Validation Lambda](/docs/extend/code/lambdas/login-validation) so that this Identity Provider is the only login option.
 
 ## Migrating MFA Methods From a Different System
 

@@ -10,8 +10,17 @@ const validExtensions = ['js', 'mjs', 'cjs', 'ts', 'md', 'mdx'];
 const validStatus = ['added', 'modified'];
 
 // Get the list of changed files in the pull request
-const modifiedFilesJson = execSync(`gh api repos/FusionAuth/fusionauth-site/pulls/${prNumber}/files`).toString();
-const modifiedFiles = JSON.parse(modifiedFilesJson);
+let modifiedFiles = [];
+let page = 1;
+let modifiedFilesJson;
+
+do {
+  modifiedFilesJson = execSync(`gh api repos/FusionAuth/fusionauth-site/pulls/${prNumber}/files?page=${page}`).toString();
+  const pageData = JSON.parse(modifiedFilesJson);
+  modifiedFiles = modifiedFiles.concat(pageData);
+  console.log(`Fetched page ${page}`);
+  page++;
+} while (JSON.parse(modifiedFilesJson).length > 0 && page < 30);
 
 const changedSrcFiles = modifiedFiles
     .filter(file => file.filename.startsWith('astro/src/'))
