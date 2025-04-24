@@ -4,12 +4,47 @@ description: This page contains upgrade notes for required theme changes in rece
 section: customize
 subcategory: look and feel
 ---
+import Aside from 'src/components/Aside.astro';
 
 ## Overview
 
 New versions of FusionAuth sometimes include new or updated theme templates. If a new template is not part of a custom theme, FusionAuth will render the template from the default theme. Occasionally, modifications to existing templates or [helper macros](/docs/customize/look-and-feel/helpers) introduced in a FusionAuth release will require changes to an existing custom theme in order for it to continue functioning correctly.
 
 This page contains notes on changes in recent versions of FusionAuth that require changes to a customized theme.
+
+## Version 1.99.9
+
+Version `1.99.9` does not *require* any theme changes. There are new fields, for example `tenant.passwordEnabled`, that can be used to hide password fields on the hosted login page.
+
+For example, before:
+
+```html
+<fieldset>
+  [@helpers.input type="text" name="loginId" id="loginId" autocomplete="username" autocapitalize="none" autocomplete="on" autocorrect="off" spellcheck="false" autofocus=(!loginId?has_content) placeholder=theme.message("loginId") leftAddon="user" disabled=(showPasswordField && hasDomainBasedIdentityProviders)/]
+  [#if showPasswordField]
+    [@helpers.input type="password" name="password" id="password" autocomplete="current-password" autofocus=loginId?has_content placeholder=theme.message("password") leftAddon="lock"/]
+    [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+  [/#if]
+</fieldset>
+```
+
+After:
+
+```html
+<fieldset>
+  [@helpers.input type="text" name="loginId" id="loginId" autocomplete="username" autocapitalize="none" autocomplete="on" autocorrect="off" spellcheck="false" autofocus=(!loginId?has_content) placeholder=theme.message("loginId") leftAddon="user" disabled=(showPasswordField && hasDomainBasedIdentityProviders)/]
+  [#if showPasswordField && tenant.passwordEnabled]
+    [@helpers.input type="password" name="password" id="password" autocomplete="current-password" autofocus=loginId?has_content placeholder=theme.message("password") leftAddon="lock"/]
+    [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+  [/#if]
+</fieldset>
+```
+
+This will hide the password field if [Managed domains](/docs/lifecycle/authenticate-users/identity-providers/overview-oidc#managed-domains) is enabled for an identity provider in-use by the application (this is the `showPasswordField` field) OR if [Password enabled](/docs/get-started/core-concepts/tenants#password) is set to `false` (because of the `tenant.passwordEnabled` addition to the `if`).
+
+<Aside type="caution">
+  Consider the security posture of your application when deciding whether to hide passwords. There may be risk in communicating what channels are accepted.
+</Aside>
 
 ## Version 1.53.3
 
