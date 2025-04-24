@@ -2,7 +2,7 @@
 import Code from 'src/components/Code.astro';
 import Kickstart from 'src/components/download/Kickstart.astro';
 
-const {kickstartEnabled, kickstartName, includeDocker = true, includeFastPath = true, includeHostedOptions, includeKubernetes, includePackages, includeSandbox} = Astro.props;
+var {dockerArgs = " ", includeDocker = true, includeFastPath = true, includeHostedOptions, includeKubernetes, includePackages, includeSandbox, kickstartEnabled, kickstartName} = Astro.props;
 
 var tabs = [];
 
@@ -141,6 +141,12 @@ const tabClass = "bg-indigo-950 border border-slate-700 flex-1 overflow-hidden r
 const subTabClass = "block border-b-2 border-transparent font-semibold px-7 py-3 text-md text-slate-400 group-[.active]:border-indigo-400 group-[.active]:text-white";
 const subSubTabClass = subTabClass.replace("text-md", "text-xs");
 var step = 1;
+
+// Add a space so the command prints out nicely
+dockerArgs = dockerArgs.trim();
+if (dockerArgs !== "" && !dockerArgs.endsWith(" ")) {
+  dockerArgs = dockerArgs + " ";
+}
 ---
 <div class="bg-indigo-900 flex gap-3 mb-10 not-prose p-3 rounded-2xl text-sm text-white">
   <ul class="bg-indigo-950 border border-slate-700 flex flex-col gap-1 p-2 rounded-lg text-[13px]">
@@ -196,7 +202,7 @@ var step = 1;
         <strong>Step { step++ }:</strong> Start the Docker Compose containers
       </p>
       <Code>
-        docker compose up
+        docker compose {dockerArgs}up
       </Code>
       <p class="mb-6">
         Then open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
@@ -223,7 +229,7 @@ var step = 1;
         <strong>Step { step++ }:</strong> Start the Docker container
       </p>
       <Code>
-        docker run -it -p 9011:9011 --add-host host.docker.internal:host-gateway { kickstartEnabled && "-e FUSIONAUTH_APP_KICKSTART_FILE=\"/usr/local/fusionauth/kickstart/kickstart.json\" --mount type=bind,src=./kickstart,dst=/usr/local/fusionauth/kickstart " }fusionauth/fusionauth-app
+        docker run {dockerArgs}-it -p 9011:9011 --add-host host.docker.internal:host-gateway { kickstartEnabled && "-e FUSIONAUTH_APP_KICKSTART_FILE=\"/usr/local/fusionauth/kickstart/kickstart.json\" --mount type=bind,src=./kickstart,dst=/usr/local/fusionauth/kickstart " }fusionauth/fusionauth-app
       </Code>
       <p class="mb-6">
         <em>NOTE: If you are running the database on the host machine, use the hostname `host.docker.internal` to connect FusionAuth to the database rather than `localhost`.</em>
