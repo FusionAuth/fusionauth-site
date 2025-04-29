@@ -7,11 +7,12 @@ const articlesCollection = defineCollection({
     description: z.string(),
     disableTOC: z.boolean().default(false),
     excludeFromNav: z.boolean().default(false),
+    htmlTitle: z.string().optional(),
     icon: z.string().optional(),
     darkIcon: z.string().optional(),
     section: z.string(),
-    title: z.string(),
     sortTitle: z.string().optional(),
+    title: z.string(),
     featured: z.boolean().default(false),
   }),
 });
@@ -24,6 +25,7 @@ const devToolsCollection = defineCollection({
     description: z.string(),
     disableTOC: z.boolean().default(false),
     faIcon: z.string().optional(),
+    htmlTitle: z.string().optional(),
     icon: z.string().optional(),
     title: z.string()
   }),
@@ -36,6 +38,7 @@ const quickstartsCollection = defineCollection({
     description: z.string(),
     disableTOC: z.boolean().default(false),
     excludeFromNav: z.boolean().default(false),
+    htmlTitle: z.string().optional(),
     icon: z.string().optional(),
     section: z.string(),
     title: z.string(),
@@ -58,6 +61,7 @@ const docsCollection = defineCollection({
         { message: "Description must end with a period" }
     ),
     canonicalUrl: z.string().optional(),
+    htmlTitle: z.string().optional(),
     section: z.string().optional(),
     subcategory: z.string().optional(),
     tertcategory: z.string().optional(),
@@ -79,6 +83,7 @@ const blogCollection = defineCollection({
         desc => /[.!?]$/.test(desc),
         { message: "Description must end with punctuation" }
     ),
+    htmlTitle: z.string().optional(),
     image: z.string().optional(),
     authors: z.string().optional(), // comma-separated string
     categories: z.string().optional(), // comma-separated string

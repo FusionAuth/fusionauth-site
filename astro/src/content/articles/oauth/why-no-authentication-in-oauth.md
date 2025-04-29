@@ -1,5 +1,6 @@
 ---
-title: Is OAuth for Authentication or Authorization? | FusionAuth
+title: Is OAuth for Authentication or Authorization?
+htmlTitle: Is OAuth for Authentication or Authorization? | FusionAuth
 description: Understand why OAuth is an authorization framework, not an authentication protocol. Learn the differences and how to use OAuth correctly in your application.
 image: advice/no-auth-in-oauth/why-no-auth-in-oauth.png
 author: Dan Moore
