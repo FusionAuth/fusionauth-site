@@ -10,6 +10,7 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 import UserAuthorizeDiagram from 'src/diagrams/docs/get-started/use-cases/api-consents/user-authorize.astro';
 import ApplicationAPIRequestDiagram from 'src/diagrams/docs/get-started/use-cases/api-consents/application-api-request.astro';
 import APIConsentsPlatformDescription from 'src/content/docs/get-started/use-cases/_api-consents-platform-description.mdx';
+import {RemoteCode} from '@fusionauth/astro-components';
 
 ## Overview
 
@@ -132,45 +133,19 @@ Next, associate every API with one or more scopes. If a request comes in with an
 
 Here are two routes that offer up banking information and check scopes.
 
-TODO pull from remote
-```javascript
-router.get('/read-balance', hasScope('accounts.read'), function (req, res, next) {
-  // add real implementation
-  res.json({ balance: 42 });
-});
-
-router.post('/make-transfer', hasScope('transfers.write'), function (req, res, next) {
-  // add real implementation
-  const amount = req.query.newbalance;
-
-  // update balance
-
-  res.json({ message: "ok"});
-});
-```
+<RemoteCode lang="javascript"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-api-consents-platform/refs/heads/main/changebank-apis/routes/index.js"
+            title="Example Changebank API routes" 
+            tags="routes"
+            />
 
 The `hasScope` method looks like this:
 
-TODO pull from remote
-```javascript
-const jose = require('jose');
-
-function hasScope(scope) {
-  return (req, res, next) => {
-    const decodedToken = jose.decodeJwt(req.verifiedToken);
-    let scopes = []
-    if (decodedToken.scope) {
-      // need to check array, not string, to avoid partial matches
-      scopes = decodedToken.scope.split(" ");
-    }
-    if (scopes.includes(scope)) return next();
-    res.status(403);
-    res.send({ error: `You do not have permissions to do this.` });
-  }
-}
-
-module.exports = hasScope;
-```
+<RemoteCode lang="javascript"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-api-consents-platform/refs/heads/main/changebank-apis/services/hasScope.js"
+            title="The hasScope logic" 
+            tags="hasScope"
+            />
 
 You could check claims and signatures at your API gateway rather than in your code, but the process for handling scopes is the same:
 
@@ -215,135 +190,31 @@ These scopes will be optional, which means the user can choose to allow or disal
 * `investments.read`: Investment portfolio information
 * `creditScore.read`: Access credit score information
 
-MoneyScope should fully function without the APIs or data corresponding to these scopes.
+MoneyScope should fully function without the APIs or data corresponding to these scopes. 
 
-Configure the scopes for an application to look like this:
+You can use the admin UI to configure scopes for your application.
 
 ![Configured scopes for the example scenario.](/img/docs/get-started/use-cases/api-consents-scopes.png)
 
-While the above configuration was manual, you can also do this with [our SDKs](/docs/sdks). Here's sample code to do so:
+You can also do this with [our SDKs](/docs/sdks). Here's sample code to create the application:
 
-TODO remote
-```javascript
-import {FusionAuthClient} from '@fusionauth/typescript-client';
-import 'dotenv/config'
+<RemoteCode lang="javascript"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-api-consents-platform/refs/heads/main/create-application/create-application.js"
+            title="Using the TypeScript SDK to create the application" 
+            tags="createApplication"
+            />
 
-const FUSIONAUTH_API_KEY = process.env.FUSIONAUTH_API_KEY;
-const BASE_URL = process.env.BASE_URL;
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
+Here's sample code to add needed scopes:
 
-const client = new FusionAuthClient(FUSIONAUTH_API_KEY, BASE_URL);
+<RemoteCode lang="javascript"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-api-consents-platform/refs/heads/main/create-application/create-application.js"
+            title="Using the TypeScript SDK to create the application" 
+            tags="createScopes"
+            />
 
-async function createApplication() {
-  try {
-    const response = await client.createApplication(CLIENT_ID, {
-      application: {
-        name: 'MoneyScope',
-        registrationConfiguration: { 
-          enabled: true,
-          type: 'basic'
-        },
-        oauthConfiguration: {
-          clientSecret: CLIENT_SECRET,
-          authorizedRedirectURLs: [
-            "http://localhost:8080/oauth-redirect"
-          ],
-          enabledGrants: [
-            'authorization_code',
-            'refresh_token'
-          ],
-          generateRefreshTokens: true,
-          consentMode: 'AlwaysPrompt',
-          relationship: 'ThirdParty',
-          providedScopePolicy: {
-            profile: {
-              required: true
-            },
-            email: {
-              required: true
-            }
-          }
-        }
-      }
-    });
-    
-    console.log('Application created:', response.response);
-    return response.response.application.id;
-  } catch (error) {
-    console.error('Error creating application:', error);
-  }
-}
+You could also use the [FusionAuth Terraform provider](/docs/operate/deploy/terraform) to manage the application and scopes.
 
-async function createScopes(applicationId) {
-
-  const analyticsScopes = [
-    {
-      name: "accounts.read",
-      description: "Basic account information and balances",
-      required: true,
-      consent: "Read basic account and balance information",
-    },
-    {
-      name: "profile.read",
-      description: "User profile and contact information",
-      required: true,
-      consent: "Read user profile information",
-    },
-    {
-      name: "transactions.read",
-      description: "Transaction history and details",
-      required: true,
-      consent: "Read transaction history",
-    },
-    {
-      name: "investments.read",
-      description: "Investment portfolio information",
-      required: false,
-      consent: "Read investment profile information",
-    },
-    {
-      name: "creditScore.read",
-      description: "Access credit score information",
-      required: false,
-      consent: "Read credit score information",
-    }
-  ];
-
-
-  try {
-    for (const scope of analyticsScopes) {
-      const req = {
-        scope: {
-          name: scope.name,
-          required: scope.required,
-          defaultConsentMessage: scope.consent,
-          defaultConsentDetail: "",
-          description: scope.description
-        }
-      };
-      const use_created_scope_id = "";
-      const response = await client.createOAuthScope(applicationId, use_created_scope_id, req);
-      
-      console.log('Scope created:', response);
-    }
-
-  } catch (error) {
-    console.error('Error creating scope:', JSON.stringify(error));
-  }
-}
-
-(async () => {
-  const applicationId = await createApplication();
-  if (applicationId) {
-    await createScopes(applicationId);
-  }
-})();
-```
-
-Either approach works. You could also use the [FusionAuth Terraform provider](/docs/operate/deploy/terraform).
-
-While this is not done, if you need to support multiple languages, you can [localize the displayed consent messages](/docs/customize/look-and-feel/localization#oauth-scope-consent-prompt). This allows every user can see the consent screen in their preferred language.
+If you need to support multiple languages, you can [localize the displayed consent messages](/docs/customize/look-and-feel/localization#oauth-scope-consent-prompt). This allows every user can see the consent screen in their preferred language.
 
 #### Communicate With The Third-Party Developer
 
@@ -380,8 +251,6 @@ You can read more about [the other parameters for the authorization code grant](
 
 Should this URL be available to anyone or do users have to log in to MoneyScope before they can authorize the application to access their data held by Changebank? Third-party developers could entirely delegate authentication to the Changebank application. Or they could run their own login system and have Changebank login be an authorization process. Choose this option if there is useful functionality in an application even without the access to the Changebank APIs. In that case, there'd be a button to connect with Changebank within the MoneyScope.
 
-TODO change name of `Analytics application` and remove backticks around it and take new screenshot
-
 After this is done, you should test the MoneyScope application and make sure it works as advertised. Things to test for:
 
 * Scopes are in the URL, and therefore can be edited by a malicious end user. Make sure the third party developer's application handles when scopes are not exactly as they expect.
@@ -399,7 +268,7 @@ Here's a diagram of the user authorization flow:
 
 Here's an example of the consent screen the MoneyScope user will see.
 
-![Configured scopes for the example scenario.](/img/docs/get-started/use-cases/api-consents-consent-screen.png) TODO
+![Configured scopes for the example scenario.](/img/docs/get-started/use-cases/api-consents-consent-screen.png)
 
 MoneyScope stores the Changebank access and refresh tokens. Then, when it needs it, it makes requests of the Changebank APIs. Depending on the timeframe, it may need to refresh the access token before it calls the APIs.
 
@@ -462,4 +331,5 @@ All of these have a platform with valuable data behind APIs and want to allow AP
 * [The Authorization endpoint](/docs/lifecycle/authenticate-users/oauth/endpoints#authorize)
 * [API gateways integration documentation](/docs/extend/examples/api-gateways/)
 * [Custom OAuth scopes blog post](/blog/custom-scopes-in-third-party-applications)
+* [Example application GitHub repository](https://github.com/fusionauth/fusionauth-example-api-consents-platform)
 
