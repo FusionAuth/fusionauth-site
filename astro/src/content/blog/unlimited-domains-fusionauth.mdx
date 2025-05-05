@@ -34,9 +34,9 @@ Internet traffic flowing into FusionAuth Cloud first arrives via a Global Accele
 
 However, AWS imposes limitations on:
 
--   The number of Subject Alternative Names (hostnames) per certificate
--   The number of certificates associated with an ALB
--   The number of hostname routing rules associated with an ALB
+- The number of Subject Alternative Names (hostnames) per certificate
+- The number of certificates associated with an ALB
+- The number of hostname routing rules associated with an ALB
 
 This makes it impossible to use a single ALB to handle the traffic for all of our FusionAuth Cloud customers in a given region. In order to work around these limitations, we have provisioned additional ALBs and Global Accelerators. This also meant we imposed a limit on customers: they may only have four custom domains per deployment.
 
@@ -54,10 +54,10 @@ Coming Up With An Alternative
 
 Conceptually, the problem we were looking at is simple: We need to replicate the functionality of AWS's ALB, but without the limitations. Effectively, this should be implemented as a reverse-proxy that:
 
--   Is highly-available across multiple [AWS Availability Zones](https://aws.amazon.com/about-aws/global-infrastructure/regions_az/) (AZs)
--   Is horizontally scalable and can handle load as we grow
--   Can support dynamic management of TLS certificates without downtime
--   Has no limits on the number of hostnames it can route
+- Is highly-available across multiple [AWS Availability Zones](https://aws.amazon.com/about-aws/global-infrastructure/regions_az/) (AZs)
+- Is horizontally scalable and can handle load as we grow
+- Can support dynamic management of TLS certificates without downtime
+- Has no limits on the number of hostnames it can route
 
 We decided to use AWS's Elastic Container Service (ECS) as our foundation, since it is fully managed and can automatically scale instances across AZs.
 
@@ -65,9 +65,9 @@ For the reverse proxy, either HAProxy or nginx worked, but we needed to determin
 
 During this research we stumbled upon [Caddy](https://caddyserver.com/), a software project that seemed to fit perfectly with our needs:
 
--   It natively supports ACME, the certificate provisioning protocol used by LetsEncrypt.
--   It is happy running in a container.
--   It has an API for dynamic configuration.
+- It natively supports ACME, the certificate provisioning protocol used by LetsEncrypt.
+- It is happy running in a container.
+- It has an API for dynamic configuration.
 
 Since Caddy was a new kid on the block, it required a more thorough investigation than the battle-tested incumbents.
 
@@ -82,12 +82,12 @@ To avoid disruptions to our existing cloud deployments, we decided to build the 
 
 The new design consisted of:
 
--   A multi-AZ ECS cluster of Caddy instances running on Fargate. This cluster would manage certificates, terminate TLS, and forward requests back to each customer deployment.
--   An EFS volume for Caddy to store certificates. Sometimes you just need a filesystem.
--   A Network Load Balancer (NLB) to distribute traffic across the Caddy instances.
--   A Global Accelerator to forward all edge traffic to the NLB.
--   An internal service which authorizes Caddy to provision certificates for only the domains that we explicitly allow.
--   Additional internal DNS records to map custom domain names to their respective deployments.
+- A multi-AZ ECS cluster of Caddy instances running on Fargate. This cluster would manage certificates, terminate TLS, and forward requests back to each customer deployment.
+- An EFS volume for Caddy to store certificates. Sometimes you just need a filesystem.
+- A Network Load Balancer (NLB) to distribute traffic across the Caddy instances.
+- A Global Accelerator to forward all edge traffic to the NLB.
+- An internal service which authorizes Caddy to provision certificates for only the domains that we explicitly allow.
+- Additional internal DNS records to map custom domain names to their respective deployments.
 
 This design was simple, but lacked one important component: a [Web Application Firewall](https://aws.amazon.com/waf/) (WAF). We use AWS's WAF to protect our customers' deployments against DDoS and bot attacks.
 
