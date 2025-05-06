@@ -8,10 +8,54 @@ codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-example-expres
 ---
 
 <div className="border border-green-700 px-3 rounded-md">
-  <i className="fa-duotone fa-stopwatch fa-2x mr-2 text-green-700 align-middle"/> Estimated time to complete this step: 5 minutes
+  <i className="fa-duotone fa-stopwatch fa-2x mr-2 text-green-700 align-middle"/> Estimated time to complete this step: **5 minutes**
 </div>
 
-This doc will explain how to prevent access to a button or a page based on a user's roles.
+## Setting up roles
+
+The [Kickstart](/docs/get-started/download-and-install/development/kickstart) from step one created two roles for our Changebank application. These are `admin` and `user`. It assigned these roles to the two users it created as well. The user `admin@example.com` was granted the `admin` role and the user `richard@example.com` was granted the `user` role.
+
+Roles are the way that FusionAuth manages user authorization to applications. When a user logs in, the roles that the user has been granted to the application they are logged into are included in their access token. Since FusionAuth access tokens are JWTs, it is simple to decode the JWT and analyze the roles a user has been granted.
+
+Let's take a look at how our example application uses roles to verify the user's access.
+
+If you open the `src/sdk.ts` file and scroll to the `userHasAccess` function, you'll see that the final parameter of this function is an array. This array contains the names of the roles that are allowed to access a specific page in the application. For example, the `/account` route calls this method like this:
+
+```typescript
+if (!await sdk.userHasAccess(req, res, ["admin", "user"])) {
+  res.redirect(302, '/login');
+  return;
+}
+```
+
+This means that the user must have either the `admin` or the `user` role in order to access the `/account` page.
+
+Similarly, the `/admin` route makes a similar check like this:
+
+```typescript
+if (!await sdk.userHasAccess(req, res, ["admin"])) {
+  res.redirect(302, '/account');
+  return;
+}
+```
+
+However, this route requires that the user has the `admin` role.
+
+The check for the roles is located in the `userHasAccess` function of the `src/sdk.ts` file. If you jump over to that function, you can see that the function confirms that the user has one of the specified roles like this:
+
+```typescript
+async userHasAccess(req: Request, res: Response, roles: Array<string>): Promise<boolean> {
+  const jwt = await this.getUser(req, res);
+
+  if (!jwt || !jwt.roles || jwt.roles.length === 0) {
+    return false;
+  }
+
+  return jwt.roles.some(role => roles.includes(role));
+}
+```
+
+You can write a similar function to verifies roles and in some languages you can leverage security frameworks and libraries as well. The general rule is to ensure that every protected route has a access control check before it renders the response.
 
 ## Next steps
 

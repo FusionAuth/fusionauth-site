@@ -6,14 +6,19 @@ subcategory: start here
 navOrder: 0
 codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-example-express-start-here/main
 ---
+import Aside from 'src/components/Aside.astro';
 
 <div className="border border-green-700 px-3 rounded-md">
-  <i className="fa-duotone fa-stopwatch fa-2x mr-2 text-green-700 align-middle"/> Estimated time to complete this step: 5 minutes
+  <i className="fa-duotone fa-stopwatch fa-2x mr-2 text-green-700 align-middle"/> Estimated time to complete this step: **5 minutes**
 </div>
 
-This doc will explain how to get the example application up and running and show them the login button.
-
 ## Get the example app
+
+To get a better understanding of how FusionAuth works, let's take a look at an example application. This application uses Node, Express, Typescript, and FusionAuth to secure a section of the application.
+
+<Aside type="note" title="Prequisites">
+You will need Node 22.x or newer to run this example.
+</Aside>
 
 ```shell
 git clone git@github.com:FusionAuth/fusionauth-example-express-start-here.git
@@ -24,14 +29,51 @@ Now start the application:
 ```shell
 cd fusionauth-example-express-start-here/app
 npm install
-npm run
+npm run dev
 ```
 
-Open your browser to http://localhost:3000 and you'll see the example application. Click the login button and you'll be taken over to FusionAuth's OAuth login page. Yay!
+Open your browser to http://localhost:8080 and you'll see the example application. Click the login button, and you'll be taken over to FusionAuth's login page.
+
+Now, one of two things might have happened. If you were still logged into the FusionAuth admin with the user from the previous step, you would have seen a few redirects in the browser and ended up back at the Changebank example application. This is an example of FusionAuth's single sign-on (SSO) capabilities.
+
+On the flip side, if you had logged out in the previous step, you should be looking at a login page. From here, you can log in as an "ordinary" user, rather than the admin user from the previous step. Here are some credentials for an ordinary user that were set up by the [Kickstart](/docs/get-started/download-and-install/development/kickstart) process from Step 1.
+
+* Login id: **richard@example.com**
+* Password: **password**
+
+You can determine the user that you are logged in with by looking at the top right of the screen.
 
 ## How it works
 
-Open the file login.html. See the glory of the login button! Explanation here.
+Let's take a quick look at how this application interacts with FusionAuth. First, open the file `app/templates/home.html`. This contains the homepage of the application. In this file, you'll see a bit of code that looks like this:
+
+```html
+<div id="logo-header">
+  <img src="https://fusionauth.io/cdn/samplethemes/changebank/changebank.svg" />
+  <a class="button-lg" href="/login">Login</a>
+</div>
+```
+
+This renders a login button that when clicked will take the browser to `/login`. Let's see how this URL is connected to the application.
+
+Open the file `app/src/index.mts`. This file contains the Node and Express backend code for the example app. In this file, you will find a route that looks like this:
+
+```typescript
+app.get('/login', async (req, res) => {
+  if (await sdk.userLoggedIn(req, res)) {
+    res.redirect(302, '/account');
+    return;
+  }
+
+  sdk.sendToLoginPage(res);
+});
+```
+
+Anytime the browser requests this route, the code will first check to see if the user is already logged in. If the user is logged in, they are simply redirected to the `/account` page. If they aren't logged in, this will redirect them to the FusionAuth login page.
+
+In this example app, most of the complex OAuth, JWT, and cookie logic has been pulled out into a separate file named `sdk.ts`. Feel free to take a look at this code if you want to get a better understanding of how this all comes together.
+
+The main piece that takes the user to the FusionAuth login page is in the function `sendToLoginPage`. This performs a redirect following the OAuth specification. We won't go into detail about OAuth here, but the key takeaway is that this application integrates with FusionAuth using the OAuth standard.
 
 ## Next steps
 
