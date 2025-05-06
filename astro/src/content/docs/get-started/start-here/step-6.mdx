@@ -8,13 +8,64 @@ codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-example-expres
 ---
 
 <div className="border border-green-700 px-3 rounded-md">
-  <i className="fa-duotone fa-stopwatch fa-2x mr-2 text-green-700 align-middle"/> Estimated time to complete this step: 5 minutes
+  <i className="fa-duotone fa-stopwatch fa-2x mr-2 text-green-700 align-middle"/> Estimated time to complete this step: **5 minutes**
 </div>
 
-This doc will explain how to log users out via the OAuth logout action in FusionAuth.
+## Logging users out
+
+Similar to login, logout is handled using the FusionAuth OAuth logout process. In order to ensure a full log out, the user must be logged out of all applications, including the FusionAuth SSO system.
+
+To accomplish this, applications need to redirect the browser to the FusionAuth logout system. Let's look at how this is done.
+
+First, open the `templates/account.html` file. You'll see at the top of the file there is a button that sends the browser to `/logout` like this:
+
+```html
+<a class="button-lg" href="/logout">Logout</a>
+```
+
+Open the file `src/index.mts` and find the route for `/logout`. This code is simple and delegates to the SDK like this:
+
+```typescript
+app.get('/logout', (_req, res) => {
+  sdk.sendToLogoutPage(res);
+});
+```
+
+Open the `src/sdk.ts` file and find the function named `sendToLogoutPage`. This function constructs a URL to FusionAuth's logout system and sends a redirect back to the browser like this:
+
+```typescript
+sendToLogoutPage(res: Response) {
+  res.redirect(302, `${this.configuration.baseURL}/oauth2/logout?client_id=${this.configuration.clientId}`);
+}
+```
+
+Luckily, FusionAuth does all the work of logging the user out of the FusionAuth SSO system and deleting their refresh tokens, effectively closing all of their sessions. It also attempts to log the user out of other applications if possible. You'll also notice that the URL contains a parameter called `client_id`. This helps FusionAUth identify the application the initiated the log out request and also helps with themeing and tenant handling as well.
+
+Once FusionAuth has completed the logout, it redirects back to the application. This is when the application can complete its own log out process. Open the `src/index.mts` file and find the route for `/oauth2/logout`. This function looks like this:
+
+```typescript
+app.get('/oauth2/logout', (_req, res) => {
+  sdk.handleOAuthLogoutRedirect(res);
+  res.redirect(302, '/')
+});
+```
+
+This leverages a function in the SDK called `handleOAuthLogoutRedirect` and then redirects the browser back to the homepage. Go ahead and open that function in `src/sdk.ts`. It should look like this:
+
+```typescript
+handleOAuthLogoutRedirect(res: Response) {
+  res.clearCookie(this.configuration.accessTokenCookieName);
+  res.clearCookie(this.configuration.idTokenCookieName);
+  res.clearCookie(this.configuration.oauthPKCECookieName);
+  res.clearCookie(this.configuration.oauthStateCookieName);
+  res.clearCookie(this.configuration.refreshTokenCookieName);
+}
+```
+
+You'll see that this function clears all of the cookies that helped to identify the user, specifically the access, refresh, and id tokens. Once the cookies are deleted from the browser, all futures requests will not contain them and the user will no longer be logged in.
 
 ## Next steps
 
-[\< Go back to step 5 - Session management](step-5) <span class="inline-block mx-6 font-bold">Ready for the next step?</span> [Step 7 - Theming \>](step-7)
+[\< Go back to step 5 - Session management](step-5) <span class="inline-block mx-6 font-bold">Congrats you're done!</span> [Step 7 - Finished \>](step-7)
 
 
