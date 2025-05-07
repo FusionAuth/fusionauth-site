@@ -22,8 +22,6 @@ While other messaging platforms can work with magic links, due to the ubiquity o
 
 The process starts when a user inputs their email address or phone number into a login form. The backend API service either generates a unique token and attaches it to a URL, which we term as the "magic link", or generates a code when using a phone number. This link or code is then sent to the user via email or SMS. For email use cases, the user opens their email, clicks the magic link, which leads back to the application or service. The server then verifies the token and logs in the user. For phone use cases, the user enters the code from an SMS message into the login form.
 
-By doing so, magic links leverage the security of the user's email or SMS provider. If someone can access the magic link -- this paragraph gets awkward --, they already have access to the user's email. If the user's email account is compromised, then they likely have bigger problems than someone accessing your service. The magic link is a one-time URL that can only be used once. This means that if someone steals a magic link that has already been used, they cannot use it again. This means that the user gets the ease of logging in to your system without having to present a credential. But they still benefit from the security around the email account, including any protections the email provider has put in place or MFA the user has added.
-
 ## What Are The Benefits Of Using Magic Links
 
 ### How Do Magic Links Impact User Experience (UX)?
