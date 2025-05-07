@@ -28,34 +28,38 @@ test('FA has title', async ({ page }) => {
 });
 ```
 
-You'll see that this test makes a request to `http://localhost:9011/admin` and ensures that HTML is returned with a title tag of `Login`. This test actually verifies that FusionAuth redirects to its login page when the admin UI is accessed.
+You'll see that this test makes a request to `http://localhost:9011/admin` and ensures that HTML is returned with a title tag of `Login`. This test verifies that FusionAuth is running and that it redirects to the login page when the admin UI is accessed.
 
-A more complex test in this test suite is called `log in`. This test actually logs a user into FusionAuth and then ensures that the user can access the application. Here's the code of this test:
+A more complex test in this test suite is called `log in`. This test logs a user into FusionAuth and then ensures that the user can access the application. Here's the code of this test:
 
 ```typescript
 test('log in', async ({ page }) => {
+  // #1
   await page.goto('http://localhost:8080/');
 
-  // Create a locator.
+  // #2
   const login = page.getByRole('link', { name: 'Login' });
   await login.click();
-  await expect(page).toHaveTitle(/Login | FusionAuth/);
-  // await page.screenshot({ path: 'screenshot.png' });
 
+  // #3
+  await expect(page).toHaveTitle(/Login | FusionAuth/);
   await expect(page.locator('#loginId')).toBeVisible();
   await expect(page.locator('#password')).toBeVisible();
 
+  // #4
   const loginId = await page.locator('#loginId');
   await loginId.fill("richard@example.com");
   const pw = await page.locator('#password');
   await pw.fill("password");
 
-  //only button
+  // #5
   const button = await page.locator('.button.blue');
   await button.click();
+
+  // #6
   await expect(page).toHaveTitle(/FusionAuth Start Here Application | Home/);
 
-  // Expect to see the user's email on the page
+  // #7
   await expect(page.getByText('richard@example.com')).toBeVisible();
 });
 ```
@@ -63,13 +67,14 @@ test('log in', async ({ page }) => {
 This test executes these steps in order:
 
 1. Hit the homepage of the application
-2. Clicks the login button and verifies that the browser is redirected to FusionAuth's OAuth login page
-3. Fills out the login form with the ordinary user's credentials (`richard@fusionauth.io` - `password`)
-4. Submits the login form
-5. Ensures that the browser is redirected back to the application
-6. Ensure the user is logged in
+2. Clicks the login button
+3. Verifies that the browser is redirected to FusionAuth's OAuth login page
+4. Fills out the login form with the ordinary user's credentials (`richard@fusionauth.io` - `password`)
+5. Submits the login form
+6. Ensures that the browser is redirected back to the application
+7. Ensure the user is logged in
 
-This is a complete test that logs a real user into the application without the need to mock or simulate the actual login flow. Rather, this uses a real running version of FusionAuth to log the user in.
+This is a complete test that logs a real user into the application without the need to mock or simulate the login flow. Rather, this uses a real running version of FusionAuth to log the user in.
 
 ## Resetting FusionAuth
 
@@ -102,11 +107,11 @@ If you open the file `.github/workflows/main.yaml`, you'll see that this file is
 - name: Start FusionAuth
   uses: fusionauth/fusionauth-github-action@v1
   with:
-    FUSIONAUTH_VERSION: 1.48.3
+    FUSIONAUTH_VERSION: latest
     FUSIONAUTH_APP_KICKSTART_DIRECTORY_PATH: kickstart
 ```
 
-This leverages a Github Marketplace action called [fusionauth/fusionauth-github-action](https://github.com/FusionAuth/fusionauth-github-action). This action will run FusionAuth within Github Actions such that our tests can leverage it.
+This leverages a Github Marketplace action called [fusionauth/fusionauth-github-action](https://github.com/FusionAuth/fusionauth-github-action). This action will run FusionAuth within Github Actions such that our tests can leverage it. This might also require you to configure a Kickstart file that FusionAuth will use, but we'll leave that as an exercise for you to handle.
 
 The next step of our example app's Github Action is to run the tests. This is done with these commands:
 
@@ -116,14 +121,15 @@ The next step of our example app's Github Action is to run the tests. This is do
     npm install
     npx playwright install-deps
     npx playwright install
-  working-directory: ./app
+  working-directory: .
+
 - name: Start app
   run: npm run dev & # & in background
-  working-directory: ./app
+  working-directory: .
 
 - name: Run Playwright tests
   run: npx playwright test --project=chromium
-  working-directory: ./app
+  working-directory: .
 ```
 
 These steps load any necessary dependencies, start our application, and then run the Playwright tests.
