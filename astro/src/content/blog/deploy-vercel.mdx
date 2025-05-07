@@ -1,0 +1,187 @@
+---
+publish_date: 2025-05-08
+title: "How To Deploy An Application On Vercel That Uses FusionAuth For Authentication"
+description: 'Learn how to set up a GitHub repository to deploy a Vue.js application on Vercel that uses FusionAuth for authentication.'
+authors: Mark Robustelli
+image: /img/blogs/vercel-deploy/deploy-using-vercel.png
+categories: Tutorial
+tags: vercel, github, fusionauth, vue
+excerpt_separator: "{/* more */}"
+---
+
+import Aside from '/src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+
+In this tutorial, you will walk through how to configure a GitHub repository containing a Vue.js application, which uses FusionAuth for authentication, that will deploy to Vercel on each merge to the main branch. Once the application has been deployed, it will use an instance of FusionAuth for authentication.
+
+{/* more */}
+
+Vercel is a cloud platform that enables developers to deploy and host websites and web applications, with a particular focus on frontend frameworks like Next.js. It's known for:
+* Instant deployment: You can push code to GitHub, GitLab, or Bitbucket, and Vercel automatically builds and deploys your site.
+* Serverless architecture: Vercel runs serverless functions for backend logic, so you don't have to manage servers.
+* Global CDN: Your content is distributed worldwide for fast load times.
+
+Vercel is especially popular among React and Next.js developers, but it also supports other frameworks like Vue, Svelte, and plain HTML/CSS/JS. You will be using Vue for this tutorial.
+
+## The Setup
+
+For the purpose of this blog, pretend you own a software company named Code Gremlins. Code Gremlins offers a web based app called Changebank that converts dollars and cents into coins. You will use an instance of FusionAuth to authenticate the users of the application.
+
+* You own the company domain of `codegremlins.net` and it is registered with GoDaddy (or another domain registrar).
+* The url for your application will be `changebank.codegremlins.net`.
+* Your hosted FusionAuth instance is available at the following URL: `auth.codegremlins.net`. 
+<Aside type="tip">You can set up a local instance of FusionAuth as well as long as it is [exposed to the Internet](/docs/get-started/download-and-install/development/exposing-instance).</Aside>
+* You have a [Vercel](https://vercel.com) account.
+* You have a [GitHub](https://github.com) account.
+
+If you are creating your own application, you will need your own domain. For simplicity of the blog, the `codegremlins` domain will be used.
+
+## Get The Code
+Since the purpose of this blog is not to teach you to code a Vue application and our [Vue.js quickstart](/docs/quickstarts/quickstart-javascript-vue-web) does such a good job of that, we are going to simply clone an existing repository for the code.
+
+Log into your GitHub account and navigate to the [FusionAuth/fusionauth-example-vercel-vue-depoly](https://github.com/FusionAuth/fusionauth-example-vercel-vue-deploy) repository.
+
+Select <InlineUIElement>Fork</InlineUIElement>. You will be presented with a screen that contains the new fork information. Select <InlineUIElement>Create Fork</InlineUIElement>.
+
+![Fork repository from FusionAuth GitHub.](/img/blogs/vercel-deploy/github-fork.png)
+
+After you create the fork, GitHub should take you to the newly forked repo under your account. You will now want to detach the fork from the original repo so you don't try and accidentally push code to it. Perform the following steps.
+
+* Click on <InlineUIElement>Settings</InlineUIElement> for the repo.
+* Scroll down until you see the <InlineField>Danger Zone</InlineField>.
+* Select <InlineUIElement>Leave fork network</InlineUIElement>.
+* Click <InlineUIElement>I have read and understand these effects</InlineUIElement>.
+* Enter the repository name in the confirmation box that appears.
+* Click <InlineUIElement>Leave fork network</InlineUIElement>.
+
+## Set Up A New Project in Vercel
+
+Navigate to the [Vercel](https://vercel.com) website and log in. There are a few different ways to log into Vercel and it may affect some of the way the following steps appear. There should be a similar path for what you are seeing and fairly intuitive to match up. For the purpose of this tutorial, you will be following the path of logging into Vercel with your GitHub account.
+
+![The login is the same, but different.](/img/blogs/vercel-deploy/same-but-different.jpg)
+
+Once you are logged in, you should be on the <InlineField>Overview</InlineField> tab. Select <InlineUIElement>Add New..</InlineUIElement> and choose <InlineUIElement>Project</InlineUIElement>.
+
+Under the <InlineField>Import Git Repository</InlineField> section, connect your GitHub account by selecting <InlineUIElement>Continue with GitHub</InlineUIElement>. Vercel may ask to install itself into your GitHub account. You can choose All repositories or Only select repositories. For this tutorial choose Only select repositories, you can change this at a later time if needed. For this tutorial, select the fusionauth-example-vercel-vue-deploy repository. Click <InlineUIElement>Install</InlineUIElement>. Now click <InlineUIElement>Import</InlineUIElement>.
+
+![Install Vercel to your GitHub repository.](/img/blogs/vercel-deploy/vercel-install.png)
+
+Next you will need to set values for your new project.
+ 
+* Set the <InlineField>Framework Preset</InlineField> to `Vue.js`.
+* Set the <InlineField>Root Directory</InlineField> to `complete-application`.
+* Click <InlineUIElement>Deploy</InlineUIElement>
+
+![Vercel project settings screen.](/img/blogs/vercel-deploy/vercel-project-settings.png)
+
+The button will indicate the application is deploying. If everything works, you should see a Congratulations message and a screen shot of your Changebank application.
+
+![Vercel screenshot of Changebank application.](/img/blogs/vercel-deploy/vercel-initial-deploy.png)
+
+* Click <InlineUIElement>Continue to Dashboard</InlineUIElement>.
+
+## Configure The DNS
+
+Next we will need to set up the domain name.
+
+* Click on <InlineUIElement>Domains</InlineUIElement>. You will be taken to the domain settings for the project.
+
+![Vercel Domains button.](/img/blogs/vercel-deploy/vercel-domains.png)
+
+* Click on <InlineUIElement>Add Domain</InlineUIElement>.
+* In the <InlineField>Configure Domain</InlineField> section, type the domain name in the text box. This tutorial uses `changebank.codegremlins.net`, but you will need to add your own domain.
+* Click on <InlineUIElement>Add Domain</InlineUIElement>.
+
+![Vercel add domain button.](/img/blogs/vercel-deploy/vercel-add-domain.png)
+
+* On the next screen, accept the value of `Production` for the `Connect to an environment` field.
+* Click <InlineUIElement>Save</InlineUIElement>.
+
+The next screen will ask you to make some changes to your DNS records.  As mentioned earlier, this tutorial uses GoDaddy as the registar for `codegremlines.net`
+
+* Make note the DNS setting provided by Vercel
+
+![Vercel DNS settings request.](/img/blogs/vercel-deploy/vercel-dns-settings.png)
+
+* Log in to your registar.
+* Add the cname record.
+
+![GoDaddy DNS add CNAME record.](/img/blogs/vercel-deploy/godaddy-dns-add-record.png)
+
+Vercel will continue to check and let you know the configuration is correct when the changes happen.
+
+![Vercel DNS configuration success.](/img/blogs/vercel-deploy/vercel-dns-config-success.png)
+
+If you visit the web site `changebank.codegremlins.net` (or the domain you choose), you should see the Changebank application. This is the application as it comes with the repo. There are some values you will need to update to make work in your environment.
+
+
+## Get Project Info From Vercel For GitHub
+
+You will need three things from Vercel to update your GitHub repo with. You will need:
+
+* `VERCEL_TOKEN`
+  * Go to your Vercel Account Settings. This can be found by selecting the icon in the upper right corner and selecting <InlineUIElement>Account Settings</InlineUIElement>. 
+  * Once on the Account Settings page, select <InlineUIElement>Tokens</InlineUIElement>.
+  * In the <InlineField>Create Token</InlineField> area fill in the token name, scope and expiration date.
+    * Token Name - "Changbank App."
+    * Scope - Select your account.
+    * Expiration - Select a date in the future.
+    * Click <InlineUIElement>Create</InlineUIElement>.
+    * Copy the Token information and put it somewhere safe.
+    * Click <InlineUIElement>Done</InlineUIElement>.
+* `VERCEL_ORG_ID`
+  * Go to your Vercel Account Settings. This can be found by selecting the icon in the upper right corner and selecting <InlineUIElement>Account Settings</InlineUIElement>. 
+  * Once on the Account Settings page, select <InlineUIElement>General</InlineUIElement>.
+  * Scroll down until you see the <InlineField>Vercel ID</InlineField>.
+  * Copy the ID and put it somewhere safe.
+* `VERCEL_PROJECT_ID`
+  * Click on the Vercel logo in the upper left corner of the page.
+  * Select your project.
+  * Click <InlineUIElement>Settings</InlineUIElement>.
+  * Copy the <InlineField>Project ID</InlineField> and put it somewhere safe.
+
+
+## Update And Configure GitHub Repository
+
+After you have the relevant information from Vercel, you will need to update your GitHub repo with the information and make a few changes to work with your configuration. These secrets will be used by the GitHub Action defined in .github/workflows/deploy-to-vercel.yml. This action deploys the application to Vercel on a push to the main branch. It also allows the deployment on a button push from the GitHub Actions page.
+
+### Add Secrets to GitHub
+* Log in to your GitHub account
+* Select the <InlineField>fusionauth-example-vercel-vue-deploy</InlineField> repository.
+* Click on <InlineUIElement>Settings</InlineUIElement>.
+* Click on <InlineUIElement>Secrets and variables</InlineUIElement>.
+* Click on <InlineUIElement>Actions</InlineUIElement>.
+* Click on <InlineUIElement>New repository secret</InlineUIElement>.
+  * <InlineField>Name</InlineField> - VERCEL_TOKEN
+  * <InlineField>Secret</InlineField> - the value of the Vercel token you received in the previous section.
+* Click <InlineUIElement>Add secret</InlineUIElement>.
+* Repeat, adding secrets for `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` and their respective values.
+
+### Enable Actions In Repository
+* Click on the <InlineUIElement>Actions</InlineUIElement> tab in the repository.
+* Select <InlineUIElement>Enable Actions on this repository</InlineUIElement>.
+
+### Update Application For Your Setup
+* Edit the `main.ts` file in the `complete-application/src` folder.
+* Update the `clientId`, `serverUrl`, `redirectUri`, and `postLogoutRedirectUri` with the values from your FusionAuth instance. The default settings for these values in the forked repository are:
+  * <InlineField>clientId</InlineField> - `ec526002-35cc-4e6e-8f5b-0e4fba2b08c8` - This is the application Id in FusionAuth.
+  * <InlineField>serverUrl</InlineField> - `https://auth.codegremlins.net` - This is the URL of your FusionAuth instance.
+  * <InlineField>redirectUri</InlineField> - `https://changebank.codegremlins.net` - This is the URL of your Changebank application.
+  * <InlineField>postLogoutRedirectUri</InlineField> - `https://changebank.codegremlins.net` - This is the URL to return the user to after they log out. In this case, it is the same as the application itself.
+* Commit the changes to GitHub.
+
+You can now click on the <InlineUIElement>Actions</InlineUIElement> tab and watch the status of the Action that was created. If everything is configured correctly it should complete successfully.
+
+## Verify The Application Has Deployed
+
+Log into Vercel and check out the main page for the project. You should see the <InlineField>Created</InlineField> date and it should be within the last few minutes. You can click on the URL and see your newly deployed application.
+
+## Next Steps
+This is a basic tutorial on how to deploy an application to Vercel using FusionAuth as the authentication provider. For production applications, you may want to do things like set up [custom environments](https://vercel.com/docs/deployments/environments) and GitHub actions based on each. For example, you may want each branch to have its own environment or set up a development environment to deploy to before you deploy to production.
+And just like that, with a push to GitHub, your humble little app is live on Vercel—fully authenticated and dangerously close to being mistaken for a production app.
+
+But before you start sending out press releases and quitting your day job, a word of caution: deploying straight to production is like skydiving without a backup parachute—it's exhilarating until it isn't. If you're planning on adding new features (or “breaking things” as we call it in tech), you might want to set up [custom environments](https://vercel.com/docs/deployments/environments) in Vercel. That way, you can deploy to development or preview environments first, make sure everything still works.
+
+In the end, deploying a FusionAuth-secured app to Vercel is as easy as git push, however staying sane in production? Well, that's another story. Happy coding, and may your auth tokens never expire at the worst possible moment!
