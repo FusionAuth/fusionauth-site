@@ -34,9 +34,9 @@ Normally, the types of data accessed by an application talking to a service or A
 * the API or service holds data about the end user, such as bank data or offers functionality related to the user, such as sending an email on their behalf
 * the application requesting the data or functionality is *not* owned by the same entity as the API or service
 
-If the application *is* owned by the same organization as the API or service, then the user has implicitly or explicitly given permission to their data in order to get it into the API or service. In this case, scopes have minimal value. They could ratchet down permissions, but there are other ways of achieve this without user consent.
+If the application *is* owned by the same organization as the API or service, then the user has implicitly or explicitly given permission to their data in order to get it into the API or service. In this case, scopes have minimal value. They could ratchet down permissions, but there are other ways of achieving this without user consent.
 
-Scopes are set of space separated strings in a request, with each string representing a user-understandable set of permissions.
+Scopes are a set of space separated strings in a request, with each string representing a user-understandable set of permissions.
 
 Since a bank has a different set of permissions than an email service, scopes are specific to the business offering the data or functionality. The organization running the platform holding the data and the server the user logs in to, the Authorization Server to use the jargon of the OAuth spec, defines the meaning of each scope. Scopes are not further defined in the OAuth specification, though there are standard scopes defined in some other standards ([such as OIDC](https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims)).
 
@@ -46,7 +46,7 @@ The meaning of a scope is tied to its implementation. When you are building a sy
 
 Here's a sequence diagram illustrating the Authorization Code grant for a scoped access token, and subsequent API requests.
 
-TODO put diagram back
+<OAuthScopesDiagram alt="An example request flow with OAuth scopes." />
 
 It's similar to a standard [Authorization Code grant](/articles/oauth/complete-list-oauth-grants) with the following additions:
 
@@ -94,7 +94,7 @@ Scopes are [defined in the OAuth 2 RFC (6759)](https://datatracker.ietf.org/doc/
    indicating an invalid scope.  The authorization server SHOULD
    document its scope requirements and default value (if defined).
 
-Scopes are also defined in more detail in the [OAuth 2.1 draft](https://www.ietf.org/archive/id/draft-ietf-oauth-v2-1-12.html). This is currently a draft but is worth reading because [updates the OAuth2 RFCs](/articles/oauth/differences-between-oauth-2-oauth-2-1) based on a decade plus of experience. The key aspects of scopes in the standards documents are:
+Scopes are also defined in more detail in the [OAuth 2.1 draft](https://www.ietf.org/archive/id/draft-ietf-oauth-v2-1-12.html). This is currently a draft but is worth reading because [it updates the OAuth2 RFCs](/articles/oauth/differences-between-oauth-2-oauth-2-1) based on a decade plus of experience. The key aspects of scopes in the standards documents are:
 
 * scope values are strings
 * the scope URL parameter contains scope values separated by spaces; there's no internal structure
@@ -114,11 +114,11 @@ Per the standards, all the actors in an OAuth grant affect scopes:
 
 Great, enough with the RFC jargon. No more authorization servers or resource owners for the rest of this post. Promise!
 
-Scopes relate to permissions, but so to other common authorization concepts like roles. Let's look at how scopes are different than roles.
+Scopes relate to permissions, but so to other common authorization concepts like roles. Let's look at how scopes are different from roles.
 
 ## Scopes vs Roles
 
-The table below outlines the differences between scopes and roles in an role-based access control (RBAC) system.
+The table below outlines the differences between scopes and roles in a role-based access control (RBAC) system.
 
 |             | RBAC Roles       | Scopes      |   
 |-------------|-------------|-------------|
@@ -151,8 +151,8 @@ You also need to decide what the actual scope values are. These are the strings 
 * end user comprehensibility
 * short, understandable names
 * business needs
-* appropriate granularity--not too narrow or too sprawling
-* future-rpoofing; you want them to make sense both now and in the context of future functionality
+* appropriate granularity; not too narrow or sprawling
+* future-proofing; you want them to make sense both now and in the context of future functionality
 * implementation simplicity, particularly within the APIs and services that are receiving the scoped access token
 
 Whatever you choose, scopes are long lived once released and incorporated into third-party applications. Beta test with a known set of external and internal developers to test assumptions about the right definitions. 
@@ -172,7 +172,7 @@ Below is a list of scopes for a fake fintech company, Changebank. Changebank is 
 
 Each of these permission groupings are clear in intent, make sense to the end user, and are something Changebank can expose to a set of developers. 
 
-Because scopes requre consent, user understanding of what they mean is critical. If a user can't understand the third-party access they are allowing based on the scope name and any additional information on the consent screen, then you have a problem and need to reconsider your scopes.
+Because scopes require user consent, making sure users understand what they represent is critical. If a user can't understand the third-party access they are allowing based on the scope name and any additional information on the consent screen, then you have a problem and need to reconsider your scopes.
 
 Also, keep  in mind that there are two parties that are involved in picking scopes:
 
@@ -218,7 +218,7 @@ Use suffixes to brainstorm complete sets of operations on resources, but you don
 
 #### Non-Resource Scopes
 
-Scopes don't have to be tied explicitly to a resource. If you have APIs that offer functionality not directly related to a resource, such as a way to calculate a credit score, can create scopes for that functionality.
+Scopes don't have to be tied explicitly to a resource. If you have APIs that offer functionality not directly related to a resource, such as a way to calculate a credit score, you can create scopes for that functionality.
 
 One example for Changebank would be a `creditScore.calculate` scope. This could be used by a third-party application that wanted to trigger a recalculation of a user's credit score.
 
@@ -318,17 +318,17 @@ You should track which scopes are used by which applications, and how often. You
 
 Of course, it's a good idea to have these insights into all of your API usage. But they are particularly important to capture when using scopes because the main users of scopes, third-party developers:
 
-* are unlikley to be responsive when asked how they use data access
+* are unlikely to be responsive when asked how they use data access
 * may be malicious 
-* are the reason you are designing and building scope functionality in the first palce
+* are the reason you are designing and building scope functionality in the first place
 
 Observability is the way to understand how your APIs and scopes are being used.
 
 ### Lifetime
 
-Because scopes are embedded in third-party software, they live for a long long time. Once someone has a working integration with your platform, they are typically loathe to invest effort in updating their solution unless there are significant benefits to them.
+Because scopes are embedded in third-party software, they live for a long long time. Once someone has a working integration with your platform, they are typically loath to invest effort in updating their solution unless there are significant benefits to them.
 
-Such benefits could be positive, such as access to enhanced functionality or data. Or they can be negative, such as the integration continuing to work after upgrade. Don't lean too hard on negative "benefits". When you break an integratoin, developers get frustrated. When developers are frustrated, they explore alternate solutions.
+Such benefits could be positive, such as access to enhanced functionality or data. Or they can be negative, such as the integration continuing to work after upgrade. Don't lean too hard on negative "benefits". When you break an integration, developers get frustrated. When developers are frustrated, they explore alternate solutions.
 
 This is another reason to start with a small set of scopes, because if you have designed the scopes incorrectly, you'll have fewer to revise and fewer developers will be impacted.
 
@@ -346,13 +346,13 @@ You'll need to be more communicative if you are removing a scope entirely than i
 
 ## Setting Up A Developer Program
 
-Documenting the specifics of a developer program for fostering an ecosystem of successful applications built on your APIs is beyond the scope of this post. It's a challenge and is at least as much an organizational effort as it is technical one. An outline of [the process is documented in the API Consents Platform use case](/docs/get-started/use-cases/api-consents-platform#implementation-steps) but the exact required steps are always specific to your organization or business. 
+Documenting the specifics of a developer program for fostering an ecosystem of successful applications built on your APIs is beyond the scope of this post. It's a challenge and is at least as much an organizational effort as it is a technical one. An outline of [the process is documented in the API Consents Platform use case](/docs/get-started/use-cases/api-consents-platform#implementation-steps) but the exact required steps are always specific to your organization or business. 
 
 Don't neglect the effort, however. If you are going to the trouble of implementing scopes, you want everything else in place to allow third-party developers to be successful when using scopes to access your users' data.
 
 ## Consuming Scopes
 
-Let's talk a bit about what the API or service that gets an access token containing a scope needs to do. APIs must check scopes correctly when responding to a request. Here's example routes from a fictitious Changebank API which check for scopes.
+Let's talk a bit about what the API or service that gets an access token containing a scope needs to do. APIs must check scopes correctly when responding to a request. Here's a few example routes from a fictitious Changebank API which check for scopes.
 
 <RemoteCode lang="javascript"
             url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-api-consents-platform/refs/heads/main/changebank-apis/routes/index.js"
@@ -415,7 +415,7 @@ You can also see how they deprecate a scope like `conversations:history`. Intere
 
 ### Zendesk
 
-Zendesk has CRUD oriented scopes, with a focus on resources, such as tickets, users, and organizations. Scopes consist of an resource and/or an operation. Operations can be appended to a resource or standalone, in which case they apply for all resources available to that user.
+Zendesk has CRUD oriented scopes, with a focus on resources, such as tickets, users, and organizations. Scopes consist of a resource and/or an operation. Operations can be appended to a resource or standalone, in which case they apply for all resources available to that user.
 
 The Zendesk API also returns an access token even if a requested scope is invalid; they validate the token on the API request and will respond with an error message during that request.
 
@@ -444,10 +444,10 @@ When you are designing scopes, remember:
 
 * they are going to be used by third-party developers, but also need to make sense to end users who will approve or deny them
 * if they don't involve such end user consent, don't bother
-* there is substantial non-tehcnical work required to help a platform using scopes succeed
+* there is substantial non-technical work required to help a platform using scopes succeed
 * if scopes are useful be used for a long long time; plan for that
 
-When designed thoughtfully, scopes help third-party developers request data and functionality and enhance your users experiences. Scopes are a standardized part of OAuth and one component of a solid foundation on which to build a platform.
+When designed thoughtfully, scopes help third-party developers request data and functionality and enhance your users' experiences. Scopes are a standardized part of OAuth and one component of a solid foundation on which to build a platform.
 
-If you'd like to read more about how to use FusionAuth to manage scopes, capture user consent and build out your platform, [read the API Consents Platform use case](/docs/get-started/use-cases/api-consents-platform).
+If you'd like to read more about how to use FusionAuth to manage scopes, capture user consent and build out your platform, [check out the API Consents Platform use case](/docs/get-started/use-cases/api-consents-platform).
 
