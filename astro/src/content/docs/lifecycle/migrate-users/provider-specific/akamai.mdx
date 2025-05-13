@@ -66,7 +66,14 @@ To follow this tutorial, you need [Docker](https://docs.docker.com/get-docker).
 
 ## Planning Considerations
 
+Akamai (previously Janrain) and FusionAuth have [different words for the same concepts](https://identitydocs.akamai.com/getting-started/api-login/step1/page1-deliverables):
+- Applications (e.g. a website or mobile app) are called clients in FusionAuth and properties in Akamai. Properties are also used as API keys in Akamai.
+- User records are users in FA and profiles or entities in Akamai, stored in an entity type. The default entity type is called user.
+- In Akamai, a registration flow is called a form. Every application has one called `standard` to start with.
+
 ### Obtaining User Data
+
+Akamai supports images, but FA does not support them, so they will not be imported in this guide.
 
 While the {frontmatter.technology} platform allows you to export your user data using its API, it does not allow you to export user password hashes. This means you cannot migrate your user passwords into FusionAuth and allow your users to log in if you do a bulk migration. Your users will need to use the FusionAuth forgot password flow to set a new password and log in.
 
@@ -146,7 +153,7 @@ This repository has a directory called Akamai, which holds JavaScript files to i
 Akamai stores users in [schemas](https://techdocs.akamai.com/identity-cloud/docs/manage-user-profile-schemas-in-console). The default schema is called `user`, but you might have another one, like `employee`. If so, change references to `user` in any calls to Akamai for the rest of this guide.
 </Aside>
 
-If you want to add a lot of users, you can send each user with the API call below. You need to replace the values with your own URL, client Id, and flow version. You can find these in the Akamai console.
+If you want to add a lot of users, you can send each user with the API call below. You need to replace the values with your own URL, client Id, and flow version. You can find these in the Akamai console under <Breadcrumb>MANAGE PROPERTIES</Breadcrumb>. API keys are called properties in Akamai.
 
 ```sh
 curl -X POST \
@@ -173,81 +180,111 @@ You can export your own schema from the <Breadcrumb>MANAGE SCHEMAS</Breadcrumb> 
 
 ![Export user schema from the web interface](../../../../../../public/img/docs/lifecycle/migrate-users/provider-specific/akamai/exportSchema.webp)
 
-TODO get api key and client id
+While you can export users from the Akamai web interface, it [does not export all properties](https://techdocs.akamai.com/identity-cloud/docs/why-you-only-get-back-a-limited-set-of-attributes-when-you-export-your-user-profiles) unless you [modify the search setting](https://techdocs.akamai.com/identity-cloud/docs/modify-user-profile-search-display-attributes). The problem is setting documentation does not explain how to get lists of values for a user — like addresses and clients. It is therefore simpler to [use the API to get all information for a user](https://techdocs.akamai.com/identity-cloud/docs/search-for-user-profiles#example-1-return-all-the-users-in-an-entity-type).
 
-You're now done working with the {frontmatter.technology} web portal and have sample user data to test a migration.
+To access the API you need an API key (property).
+
+- Browse to <Breadcrumb>MANAGE PROPERTIES</Breadcrumb> in the sidebar and click <InlineUIElement>CREATE PROPERTY</InlineUIElement>.
+- Give it any name.
+- For permissions, disable `login_client` and enable `owner` and `direct_access`.
+- Save using the floppy icon at the bottom right.
+
+![Give API key permissions](../../../../../../public/img/docs/lifecycle/migrate-users/provider-specific/akamai/propertyPermissions.webp)
+
+- Edit the property and note the client Id and secret values.
+
+![API key values](../../../../../../public/img/docs/lifecycle/migrate-users/provider-specific/akamai/property.webp)
+
+You're now done working with the {frontmatter.technology} web interface and have sample user data to test a migration.
 
 ### Export The Users With The API
 
-While you can export users from the Akamai web interface, it (https://techdocs.akamai.com/identity-cloud/docs/why-you-only-get-back-a-limited-set-of-attributes-when-you-export-your-user-profiles) unless you (https://techdocs.akamai.com/identity-cloud/docs/modify-user-profile-search-display-attributes). The problem is this documentation does not explain how to get lists of values for a user — like addresses and clients. It is therefore simpler to [use the API to get all information for a user](https://techdocs.akamai.com/identity-cloud/docs/search-for-user-profiles#example-1-return-all-the-users-in-an-entity-type).
-
-
-
-
+Open a terminal and run the code below to extract all your Akamai users to the file `users.json`. Replace the start of the URL with your own, and use your client Id and secret from your property.
 
 ```sh
-cd fusionauth-import-scripts/frontegg/src
+cd fusionauth-import-scripts/akamai/src
+
+curl -X POST https://companyname.janraincapture.com/entity.find \
+  -u 'clientid:secret' \
+  -d type_name=user \
+  -d timeout=60 \
+> users.json
 ```
 
-Install the required npm dependencies by running the following command.
+If you get the error `"error_description":"the provided client does not have authorization for this action"`, go back to the property and add more permissions.
 
-```sh
-npm install
+If you have a large number of users, you might have to [partition your extract requests](https://techdocs.akamai.com/identity-cloud/docs/search-for-user-profiles#example-2-find-users-with-a-birthday). You can use filters to separate users into groups. For exaple: `-d filter="gender='male'"`
+
+The users file should look like the (trimmed) results below. Note that lists, like clients and roles, are kept in arrays, and the user's password hash is returned in the `password` sub-property using bcrypt.
+
+```js
+{
+  "result_count": 2,
+  "results": [
+    {
+      "accountDataRequestTime": null,
+      "accountDeleteRequestTime": null,
+      "birthday": "1980-05-01",
+      "clients": [
+        {
+          "clientId": "9a55jnetfgjf8mzdmjbugdmyr55tc2j9",
+          "firstLogin": "2025-05-08 09:35:22 +0000",
+          "id": 130,
+          "lastLogin": "2025-05-08 09:35:22 +0000",
+          "name": null
+        }
+      ],
+      "familyName": "Smith",
+      "fullName": "Jane Smith",
+      "gender": "Female",
+      "id": 129,
+      "password": {
+        "created": "2025-05-08 09:35:22.555420794 +0000",
+        "type": "password-bcrypt",
+        "value": "$2b$10$fGr0/0QnnDkv9VG0BtyaiOj9Fb5rNQTXkrCcidzQqR061kc6e5VBu"
+      },
 ```
 
-Export your users from {frontmatter.technology} by running the command below. Use the Frontegg client Id and API key you noted in the previous section.
-
-```sh
-node 1_exportUsers.mjs yourclientid yourapikey
-```
-
-This command will create a `users.json` file in the current `frontegg/src` directory. The `users.json` file should contain user data similar to the data in `exampleData/1_fronteggExport/users.json`.
-
-The `1_exportUsers.mjs` script makes two calls to the {frontmatter.technology} API:
-- `httpClient.get('identity/resources/users/v3')` gets all your users and some basic data on each.
-- `httpClient.get('identity/resources/vendor-only/users/v1/' + user.id)` gets comprehensive data for each user, including roles, but not features.
+To see a complete users sample, look at `akamai/exampleData/1_akamaiExport/users.json`.
 
 ### Create Roles For Your Users
 
-If you look at `exampleData/1_fronteggExport/users.json`, you'll see the users have two roles, `ReadOnly` and `Admin`, in the keys.
+Next, you're going to start FusionAuth and import the roles your users have, so they are ready for the full import.
 
-```json
-       "tenants": [
-            {
-                "tenantId": "1d378739-a1ac-4a79-9d2f-e7eb53e6dcd7",
-                "roles": [
-                    {
-                        "id": "f4c43bb0-d9ae-4837-8a97-8688abcd8404",
-                        "vendorId": "0d0c5e4b-6c5c-4a85-96fc-7c17b31ee36a",
-                        "tenantId": null,
-                        "key": "ReadOnly",
-                        "name": "Read Only",
-```
-
-You need to add these role names in your FusionAuth Application. Users will be linked to an application through a registration object, which includes the role. If the users in your exported data have different role names to the ones in the example data, change them in the script `frontegg/src/2_addRoles.mjs`. The role UUIDs are random in this script — you can use any Ids you like, including the ones matching the UUIDs of your roles in {frontmatter.technology}.
-
-To use this script, you need an instance of FusionAuth running. Start a local instance of FusionAuth running in Docker by running the commands below in a new terminal.
+Open a new terminal and run the commands below to start FA.
 
 ```sh
-cd fusionauth-import-scripts/frontegg/fusionAuthDockerFiles
+cd fusionauth-import-scripts/akamai/fusionauthData
 docker compose up
 ```
+After a minute, FusionAuth will be running and accessible at `http://localhost:9011`. You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and `password`. The container is called `fa`.
 
-FusionAuth will now be running and accessible at `http://localhost:9011`. You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and `password`. The container is called `fa`.
+This configuration makes use of a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart), defined in `fusionauth-import-scripts/frontegg/fusionAuthDockerFiles/kickstart/kickstart.json`. When FusionAuth comes up for the first time, it will look at the `kickstart.json` file and configure FusionAuth to the specified state. In summary, the defined Kickstart sets up an API Key, an admin user to log in with, and a test application in FusionAuth.
 
-This configuration makes use of a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart), defined in `fusionauth-import-scripts/frontegg/fusionAuthDockerFiles/kickstart/kickstart.json`. When FusionAuth comes up for the first time, it will look at the `kickstart.json` file and configure FusionAuth to the specified state. In summary, the defined Kickstart sets up an API Key, an admin user to log in with, and a Test application in FusionAuth.
-
-In another terminal, navigate to the `frontegg/src/` directory. Now you can run the role creation script below.
+Back in the original terminal in the `/src` directory, run the command below to import your user roles from `users.json`.
 
 ```sh
-node 2_addRoles.mjs
+docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" node:24.0.1-alpine3.21 sh -c  "npm install";
+
+docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" --network faNetwork node:24.0.1-alpine3.21 sh -c  "node 1_addRoles.mjs";
 ```
 
-Now in the [FusionAuth admin interface](http://localhost:9011/admin), if you browse to <Breadcrumb>Applications -> Test</Breadcrumb> and click the <InlineUIElement>Manage Roles</InlineUIElement> button, you can see the roles have been added for your sample Application.
+Check that the roles have been imported by browsing to http://localhost:9011/admin/application/manage-roles?applicationId=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e.
+
+If you don't have your own `users.json` file, copy the sample from `exampleData/1_akamaiExport/users.json` to `src/`.
+
+The code in `1_addRoles.mjs` loops through every user and every role, creates a random UUID for each role, and sends them to FA using the API key created in `fusionauthDocker/kickstart/kickstart.json`. When running this code against your real FA instance, alter the constants at the top of the file.
+
+Note that both FA and the JavaScript files in this guide must use the same network. In the Docker compose file currently, that network is called faNetwork.
 
 <img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/added-roles.png`} alt="Roles added to the import application" width="1200" />
 
 ### Prepare Users For Import To FusionAuth
+
+```sh
+docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" node:24.0.1-alpine3.21 sh -c  "node 2_convertUserToFaUser.mjs";
+```
+
 
 The next script, `3_convertFeUserToFaUser.mjs`, is the most important. It maps the fields of `users.json` to FusionAuth fields. You may wish to alter this script to change which fields are ignored, or where they are mapped.
 
@@ -272,6 +309,10 @@ node 3_convertFeUserToFaUser.mjs
 The script will output users ready to import to FusionAuth to the `faUsers.json` file.
 
 ### Save The User Details To FusionAuth
+
+```sh
+docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" --network faNetwork node:24.0.1-alpine3.21 sh -c  "node 3_import.mjs";
+```
 
 Now you'll run the Node.js import script to import the users into FusionAuth.
 
@@ -501,3 +542,9 @@ Check what roles and features are used in {frontmatter.technology} for your real
 
 - [Akamai schemas](https://techdocs.akamai.com/identity-cloud/docs/manage-user-profile-schemas-in-console)
 todo all all links
+todo upload import script repo
+- provider-specific/akamai -> provider-specific/${migration_source_dir}
+
+FA
+<Breadcrumb></Breadcrumb>
+<InlineUIElement></InlineUIElement>
