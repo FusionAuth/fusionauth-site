@@ -136,7 +136,7 @@ You can find help for {props.topic} at [help](/help)
   - you may need to coerce a prop into a boolean to use as a conditional for an expression. Such as `{!!props.message && <span>{props.message}</span>}`;
 - JSON files are their own content collection in astro. You can reference these using the [JSON component](astro/src/components/JSON.astro)
 - We have an alias mapped in [tsconfig](astro/tsconfig.json) that allows you to use absolute references from 'src'. Otherwise, imports must use relative paths.
-- If a doc pulls code from an example application, use the [RemoteContent](astro/src/components/RemoteContent.astro). You can also pull sections with tags: `<RemoteContent url="https://raw.githubusercontent.com/FusionAuth/fusionauth-javascript-sdk/main/packages/sdk-react/README.md" tags="forDocSite" />`
+- If a doc pulls code from an example application, use the [RemoteCode or RemoteValue](https://github.com/FusionAuth/fusionauth-astro-components). You can also pull sections with tags: `<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-javascript-sdk/main/packages/sdk-react/README.md" tags="forDocSite" />`
 
 ### For API docs
 - We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
