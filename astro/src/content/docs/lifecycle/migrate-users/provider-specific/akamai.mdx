@@ -51,6 +51,7 @@ export const script_supports_social_logins = false;
   - [Estimate The Slow Migration Timeline](#estimate-the-slow-migration-timeline)
 - [What To Do Next](#what-to-do-next)
 - [Additional Support](#additional-support)
+- [Further Reading](#further-reading)
 
 
 ## Overview
@@ -130,34 +131,59 @@ Be aware that the steps outlined for bulk migrating users from {frontmatter.tech
 
 ### Exporting User Data From {frontmatter.technology}
 
-In this section, you create two sample {frontmatter.technology} users in the web portal and export them with the API.
+In this section, you export your {frontmatter.technology} users with the API.
 
-If you have existing users, you can use them to follow this migration tutorial. If not, add users as described below.
+- Clone or download the GitHub repository at https://github.com/ritza-co/fusionauth-import-scripts.
 
-- Log in to your account at https://portal.frontegg.com.
-- Add an environment, like `Development`.
-- Navigate to <Breadcrumb>Environments -> Development -> Env settings</Breadcrumb> and note your <InlineUIElement>Client ID</InlineUIElement>, <InlineUIElement>API Key</InlineUIElement>, and <InlineUIElement>Login URL</InlineUIElement>.
+This repository has a directory called Akamai, which holds JavaScript files to import users, and sample data.
 
-<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/env-settings.png`} alt="Frontegg environment settings" width="1200" />
+- Log in to your account at https://console.janrain.com.
+- If you don't have existing users, or wish to create ones purely for testing, browse to <Breadcrumb>MANAGE PROFILES -> user</Breadcrumb> and click <InlineUIElement>CREATE PROFILE</InlineUIElement> to add some users.
 
-- In the environment's <Breadcrumb>Backoffice -> Accounts</Breadcrumb>, create a new account (tenant) called `a`.
-- In <Breadcrumb>Backoffice -> Users</Breadcrumb>, create two new users called `a` and `b` assigned to account `a`. Assign roles for the users. The default roles available are "Admin" and "Read Only". For the user email addresses, you can use most web email addresses with an alias. For instance, if you use Gmail and your address is `myemail@gmail.com`, you can give the two new users the email aliases `myemail+a@gmail.com` and `myemail+b@gmail.com`. Emails sent to the users will come to your inbox.
-- For each user, open the hamburger menu on the right and click <InlineField>Edit user & Metadata</InlineField>. Give them some JSON metadata (like `{"country": "france"}`) and save.
-- When you receive the welcome emails for these users, verify them by clicking the link.
+![Add an Akamai user](../../../../../../public/img/docs/lifecycle/migrate-users/provider-specific/akamai/addUser.webp)
+
+<Aside type="note">
+Akamai stores users in [schemas](https://techdocs.akamai.com/identity-cloud/docs/manage-user-profile-schemas-in-console). The default schema is called `user`, but you might have another one, like `employee`. If so, change references to `user` in any calls to Akamai for the rest of this guide.
+</Aside>
+
+If you want to add a lot of users, you can send each user with the API call below. You need to replace the values with your own URL, client Id, and flow version. You can find these in the Akamai console.
+
+```sh
+curl -X POST \
+https://test-env.us-dev.janraincapture.com/oauth/register_native_traditional \
+	-H 'Content-Type: application/x-www-form-urlencoded' \
+	-d 'client_id=955jnefgf8mzdmjugdmy55tc2j9' \
+	-d 'redirect_uri=http://localhost/redirect' \
+	-d 'response_type=code' \
+	-d 'flow=standard' \
+	-d 'flow_version=20250503165259394537' \
+	-d 'locale=en-US' \
+	-d 'form=traditionalRegistrationForm' \
+	-d 'displayName=Jane' \
+	-d 'firstName=Jane' \
+	-d 'lastName=Smith' \
+	-d 'emailAddress=janesmith@example.com' \
+	-d 'newPassword=p@ssw0rd3xamp!e' \
+	-d 'newPasswordConfirm=p@ssw0rd3xamp!e'
+```
+
+To learn what properties a user can have, look at the user schema file in the downloaded repository, in the `akamai/exampleData/1_akamaiExport` directory.
+
+You can export your own schema from the <Breadcrumb>MANAGE SCHEMAS</Breadcrumb> page.
+
+![Export user schema from the web interface](../../../../../../public/img/docs/lifecycle/migrate-users/provider-specific/akamai/exportSchema.webp)
+
+TODO get api key and client id
 
 You're now done working with the {frontmatter.technology} web portal and have sample user data to test a migration.
 
 ### Export The Users With The API
 
-FusionAuth provides export and import scripts under a permissive open-source license. To get the scripts, clone the Git repository.
+While you can export users from the Akamai web interface, it (https://techdocs.akamai.com/identity-cloud/docs/why-you-only-get-back-a-limited-set-of-attributes-when-you-export-your-user-profiles) unless you (https://techdocs.akamai.com/identity-cloud/docs/modify-user-profile-search-display-attributes). The problem is this documentation does not explain how to get lists of values for a user — like addresses and clients. It is therefore simpler to [use the API to get all information for a user](https://techdocs.akamai.com/identity-cloud/docs/search-for-user-profiles#example-1-return-all-the-users-in-an-entity-type).
 
-```sh
-git clone https://github.com/FusionAuth/fusionauth-import-scripts
-```
 
-The `frontegg` directory contains all the scripts you need for this tutorial, and `frontegg/exampleData` has the output of the scripts.
 
-Navigate to the `frontegg/src` directory.
+
 
 ```sh
 cd fusionauth-import-scripts/frontegg/src
@@ -470,3 +496,8 @@ Check what roles and features are used in {frontmatter.technology} for your real
 ## Additional Support
 
 <AdditionalSupport />
+
+## Further Reading
+
+- [Akamai schemas](https://techdocs.akamai.com/identity-cloud/docs/manage-user-profile-schemas-in-console)
+todo all all links
