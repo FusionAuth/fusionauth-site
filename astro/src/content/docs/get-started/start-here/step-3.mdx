@@ -15,6 +15,8 @@ codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-example-get-st
 
 Now that we have the FusionAuth and the example app running, let's take a look at how the application protects pages that require a user to be logged in.
 
+This process is also know as access control. It is the process of controlling the users that have access to specific pages and functions of an application. The first step is to protect a page such that only users that have logged in can view it.
+
 Open the file `src/index.mts` and find the route named `/account`. It should look something like this:
 
 ```typescript
@@ -30,7 +32,7 @@ app.get("/account", async (req, res) => {
 
 The first check is where the application determines if the user is logged in or not. This is done by calling the SDK function `userHasAccess` (you can ignore the last parameter, which we will cover in the next section). This function returns true if the user has access, which implicitly verifies that they are logged in. Let's take a look at this function.
 
-Open the file `src/sdk.ts` and find the function named `userHasAccess`. One note is that this application uses `jose` which is a Node library used for validating and parsing JWTs. If you want to learn more about `jose`, you can visit the project at Github here: https://github.com/panva/jose
+Open the file `src/sdk.ts` and find the function named `userHasAccess`. One note is that this application uses `jose` which is a Node library used for validating and parsing [JSON Web Tokens (JWTs)](/docs/lifecycle/authenticate-users/login-api/json-web-tokens). If you want to learn more about `jose`, you can visit the project at Github here: https://github.com/panva/jose
 
 The `userHasAccess` method begins by loading the user from the request. This is accomplished by calling the `getUser` function of the SDK, which returns the user's access token. If the access token comes back `null`, that means the user is not logged in and this function returns false.
 
@@ -45,11 +47,13 @@ async userHasAccess(req: Request, res: Response, roles: Array<string>): Promise<
 Let's take a quick peek at the `getUser` function of the SDK. This function looks like this:
 
 ```typescript
+// 1. Load the user's access token from a cookie in the request
 let accessToken = req.cookies[this.configuration.accessTokenCookieName];
 if (!accessToken) {
   return null;
 }
 
+// 2. Verify that the access token is valid
 let payload: JWTPayload;
 try {
   payload = (await jose.jwtVerify(accessToken, this.JWKS, {
