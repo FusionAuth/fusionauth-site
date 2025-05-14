@@ -304,6 +304,39 @@ You can use either the console or the API request. The rest of this tutorial ass
 
 If you did not complete the bulk migration tutorial earlier, you need to complete the first steps that download the git repository with the export scripts, export your {frontmatter.technology} users, and import their roles to FusionAuth. Follow section [Exporting User Data From Akamai](#exporting-user-data-from-akamai) to section [Export The Users With The API](#export-the-users-with-the-api).
 
+Once you have user available, test if you can verify the user's email address and password with the curl command below.
+
+```sh
+curl https://test-env.us-dev.janraincapture.com/oauth/auth_native_traditional \
+     -H 'accept: application/json' \
+     -H 'content-type: application/x-www-form-urlencoded' \
+     -d client_id=9a55jnetfgjf8mzdmjbugdmyr55tc2j9 \
+     -d flow_version=20250502165159394037 \
+     -d flow=standard \
+     -d locale=en-US \
+     -d form=signInForm \
+     -d redirect_uri=http://localhost \
+     -d 'currentPassword=p@ssw0rd3xamp!e' \
+     -d 'signInEmailAddress=janesmith@example.com'
+
+# Example output:
+# {"capture_user":{"accountDataRequestTime":null,"accountDeleteRequestTime":null,"birthday":"1980-05-01","clients":...},"sso_code": null, "stat": "ok", "access_token": "ksaxf732ruvsc2rw"}
+```
+
+Change the parameters above to match your application:
+- The request URL to matches your Akamai hostname in your browser address bar.
+- In the same way you created an `owner` property in the [Exporting User Data From Akamai](#exporting-user-data-from-akamai) section, browse back to <Breadcrumb>MANAGE PROPERTIES</Breadcrumb> and create a `login_client` property, or just use the default login property. Set the property's client Id in the command above.
+- In <Breadcrumb>MANAGE APPLICATION</Breadcrumb>, get your `flow_version`.
+- You should be able to leave the default form and field names. But if yours differ, browse to <Breadcrumb>REGISTRATION BUILDER</Breadcrumb> and edit the `standard` form.
+  ![Akamai forms](../../../../../../public/img/docs/lifecycle/migrate-users/provider-specific/akamai/akamaiForms.webp)
+
+Note that the JSON response returns the user's details in the `capture_user` field.
+
+Any HTTP response other than code 200 is an error. Even if the response is 200, you still need to check that `"stat": "ok"`. Akamai API error messages are very descriptive and should help you find the problem with your command quickly. For example:
+```
+{"stat":"error", "code":200, "error_description":"no such form 'sign'", "error":"invalid_argument", "request_id":"yc4qc2u8qsz27mkb"}
+```
+
 ### Configure A Connector Between FusionAuth And {frontmatter.technology}
 
 <PremiumPlanBlurb />
@@ -357,17 +390,23 @@ Save the changes by clicking the save icon at the top right.
 
 ### Build An Authentication Intermediary Web Service
 
-The next step is to write the small service available on port 6252 that forwards the user's login Id and password to {frontmatter.technology} and returns the user details that will be saved to FusionAuth if the login is successful.
+The next step is to write the small service available that forwards the user's login Id and password to {frontmatter.technology} and returns the user details that will be saved to FusionAuth if the login is successful.
 
 <Aside type='note'>
  Documentation on the inputs and outputs a Connector expects is [here](/docs/lifecycle/migrate-users/connectors/generic-connector).
 </Aside>
 
-The Connector makes a POST request to the URL you specify, and expects a JSON object back containing a `user`.
+make your command here
+https://techdocs.akamai.com/identity-cloud-auth/reference/post-oauth-auth-native-traditional
+
+The Connector makes a POST request to the URL you specify, and expects a JSON object back containing a user.
 
 TODO
+<Breadcrumb>MANAGE PROPERTIES</Breadcrumb>
+- To find your form name, browse to <Breadcrumb>MANAGE REGISTRATIONS</Breadcrumb> and edit the standard registration. Look on the <Breadcrumb>FORMS</Breadcrumb> tab for login forms.
 
-An example web service is in `akamai/src/5_connectorService.mjs`.
+
+An example web service is in `akamai/src/4_connectorService.mjs`.
 
 This file has an Express HTTP POST handler that gets the login Id and password from the request and forwards them to {frontmatter.technology} by calling the following function.
 
