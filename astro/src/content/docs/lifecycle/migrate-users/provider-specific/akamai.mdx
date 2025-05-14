@@ -324,17 +324,9 @@ Click the dropdown button on the top right and select <InlineUIElement>Add Gener
 Enter the field values below.
 
 - <InlineField>Name:</InlineField> `AkamaiConnector`
-- <InlineField>Authentication URL:</InlineField> `http://host.docker.internal:6252`. If you are running FusionAuth directly on your machine and not in Docker you can use `http://localhost:6252`.
-- Adjust the timeout values to higher values to cater for network latency when the API requests are being made
+- <InlineField>Authentication URL:</InlineField> `http://app`.
+- Adjust the timeout values to higher values to cater for network latency when the API requests are being made, such as `5000`.
 - Enable <InlineUIElement>Debug enabled</InlineUIElement>
-
-<Aside>
-  You may need to update your hosts file to include an entry for `127.0.0.1 host.docker.internal` if it's not already present. On macOS and Linux you can achieve this by running the following command:
-
-  ```
-  echo "127.0.0.1 host.docker.internal" | sudo tee -a /etc/hosts
-  ```
-</Aside>
 
 <img src={`/img/docs/lifecycle/migrate-users/provider-specific/frontegg/connector.png`} alt="Connector details in FusionAuth" width="1200" />
 
@@ -348,14 +340,14 @@ Now browse to <Breadcrumb>Tenants</Breadcrumb> and do the following.
 - Click <InlineUIElement>Edit</InlineUIElement> on the default tenant.
 - Click the <Breadcrumb>Connectors</Breadcrumb> tab.
 - Click <InlineUIElement>Add policy</InlineUIElement>.
-- Select `{frontmatter.technology}Connector`.
+- Select `AkamaiConnector`.
 - Leave <InlineField>Domains</InlineField> with the value `*` to apply this Connector to every user.
 - Enable <InlineUIElement>Migrate user</InlineUIElement> so that FusionAuth will no longer use {frontmatter.technology} for subsequent logins of the same user.
 - Click <InlineUIElement>Submit</InlineUIElement>.
 
 <img src={`/img/docs/lifecycle/migrate-users/provider-specific/frontegg/connector-policy.png`} alt="Connector policy details in FusionAuth" width="1200" />
 
-Move the `{frontmatter.technology}Connector` policy to the top of the list. Use the arrow buttons to move the policy if necessary. With this configuration, all users are checked against this Connector the first time they are seen. If they log in, they’ll be migrated to the FusionAuth user database.
+Move the `AkamaiConnector` policy to the top of the list. Use the arrow buttons to move the policy if necessary. With this configuration, all users are checked against this Connector the first time they are seen. If they log in, they’ll be migrated to the FusionAuth user database.
 
 After configuration, the Connector entry form should look similar to this:
 
@@ -373,7 +365,9 @@ The next step is to write the small service available on port 6252 that forwards
 
 The Connector makes a POST request to the URL you specify, and expects a JSON object back containing a `user`.
 
-An example web service is in `{frontmatter.technology}/src/5_connectorService.mjs`.
+TODO
+
+An example web service is in `akamai/src/5_connectorService.mjs`.
 
 This file has an Express HTTP POST handler that gets the login Id and password from the request and forwards them to {frontmatter.technology} by calling the following function.
 
@@ -396,6 +390,12 @@ node 5_connectorService.mjs your{frontmatter.technology}clientid your{frontmatte
 ```
 
 ### Log In With A Test User
+
+![Akamai login property](../../../../../../public/img/docs/lifecycle/migrate-users/provider-specific/akamai/akamaiLoginProperty.webp)
+
+![Akamai hosted login URL](../../../../../../public/img/docs/lifecycle/migrate-users/provider-specific/akamai/akamaiHostedLogin.webp)
+
+![Akamai login screen](../../../../../../public/img/docs/lifecycle/migrate-users/provider-specific/akamai/akamaiLogin.webp)
 
 In the FusionAuth admin interface, browse to <Breadcrumb>Applications</Breadcrumb> and click the magnifying glass next to the <InlineUIElement>Test</InlineUIElement> application. Copy the value of the <InlineField>OAuth IdP login URL</InlineField> and open it in an incognito window in your browser (if you don't use an incognito window, you need to log out of the FusionAuth admin session to prevent the active session from interfering with the test). This URL is a login page for the Test application so that you can test the web service and Connector.
 
