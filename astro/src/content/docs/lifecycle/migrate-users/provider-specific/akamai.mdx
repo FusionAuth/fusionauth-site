@@ -66,14 +66,14 @@ To follow this tutorial, you need [Docker](https://docs.docker.com/get-docker).
 
 ## Planning Considerations
 
-Akamai (previously Janrain) and FusionAuth have [different words for the same concepts](https://identitydocs.akamai.com/getting-started/api-login/step1/page1-deliverables):
-- Applications (e.g. a website or mobile app) are called clients in FusionAuth and properties in Akamai. Properties are also used as API keys in Akamai.
-- User records are users in FA and profiles or entities in Akamai, stored in an entity type. The default entity type is called user.
-- In Akamai, a registration flow is called a form. Every application has one called `standard` to start with.
+{frontmatter.technology} (previously Janrain) and FusionAuth have [different words for the same concepts](https://identitydocs.akamai.com/getting-started/api-login/step1/page1-deliverables):
+- Applications (e.g. a website or mobile app) are called clients in FusionAuth and properties in {frontmatter.technology}. Properties are also used as API keys in {frontmatter.technology}.
+- User records are users in FA and profiles or entities in {frontmatter.technology}, stored in an entity type. The default entity type is called user.
+- In {frontmatter.technology}, a registration flow is called a form. Every application has one called `standard` to start with.
 
 ### Obtaining User Data
 
-Akamai supports images, but FA does not support them, so they will not be imported in this guide.
+{frontmatter.technology} supports images, but FA does not support them, so they will not be imported in this guide.
 
 While the {frontmatter.technology} platform allows you to export your user data using its API, it does not allow you to export user password hashes. This means you cannot migrate your user passwords into FusionAuth and allow your users to log in if you do a bulk migration. Your users will need to use the FusionAuth forgot password flow to set a new password and log in.
 
@@ -142,18 +142,18 @@ In this section, you export your {frontmatter.technology} users with the API.
 
 - Clone or download the GitHub repository at https://github.com/ritza-co/fusionauth-import-scripts.
 
-This repository has a directory called Akamai, which holds JavaScript files to import users, and sample data.
+This repository has a directory called {frontmatter.technology}, which holds JavaScript files to import users, and sample data.
 
 - Log in to your account at https://console.janrain.com.
 - If you don't have existing users, or wish to create ones purely for testing, browse to <Breadcrumb>MANAGE PROFILES -> user</Breadcrumb> and click <InlineUIElement>CREATE PROFILE</InlineUIElement> to add some users.
 
-![Add an Akamai user](../../../../../../public/img/docs/lifecycle/migrate-users/provider-specific/akamai/addUser.webp)
+![Add an {frontmatter.technology} user](../../../../../../public/img/docs/lifecycle/migrate-users/provider-specific/akamai/addUser.webp)
 
 <Aside type="note">
-Akamai stores users in [schemas](https://techdocs.akamai.com/identity-cloud/docs/manage-user-profile-schemas-in-console). The default schema is called `user`, but you might have another one, like `employee`. If so, change references to `user` in any calls to Akamai for the rest of this guide.
+{frontmatter.technology} stores users in [schemas](https://techdocs.akamai.com/identity-cloud/docs/manage-user-profile-schemas-in-console). The default schema is called `user`, but you might have another one, like `employee`. If so, change references to `user` in any calls to {frontmatter.technology} for the rest of this guide.
 </Aside>
 
-If you want to add a lot of users, you can send each user with the API call below. You need to replace the values with your own URL, client Id, and flow version. You can find these in the Akamai console under <Breadcrumb>MANAGE PROPERTIES</Breadcrumb>. API keys are called properties in Akamai.
+If you want to add a lot of users, you can send each user with the API call below. You need to replace the values with your own URL, client Id, and flow version. You can find these in the {frontmatter.technology} console under <Breadcrumb>MANAGE PROPERTIES</Breadcrumb>. API keys are called properties in {frontmatter.technology}.
 
 ```sh
 curl -X POST \
@@ -180,7 +180,7 @@ You can export your own schema from the <Breadcrumb>MANAGE SCHEMAS</Breadcrumb> 
 
 ![Export user schema from the web interface](../../../../../../public/img/docs/lifecycle/migrate-users/provider-specific/akamai/exportSchema.webp)
 
-While you can export users from the Akamai web interface, it [does not export all properties](https://techdocs.akamai.com/identity-cloud/docs/why-you-only-get-back-a-limited-set-of-attributes-when-you-export-your-user-profiles) unless you [modify the search setting](https://techdocs.akamai.com/identity-cloud/docs/modify-user-profile-search-display-attributes). The problem is setting documentation does not explain how to get lists of values for a user — like addresses and clients. It is therefore simpler to [use the API to get all information for a user](https://techdocs.akamai.com/identity-cloud/docs/search-for-user-profiles#example-1-return-all-the-users-in-an-entity-type).
+While you can export users from the {frontmatter.technology} web interface, it [does not export all properties](https://techdocs.akamai.com/identity-cloud/docs/why-you-only-get-back-a-limited-set-of-attributes-when-you-export-your-user-profiles) unless you [modify the search setting](https://techdocs.akamai.com/identity-cloud/docs/modify-user-profile-search-display-attributes). The problem is setting documentation does not explain how to get lists of values for a user — like addresses and clients. It is therefore simpler to [use the API to get all information for a user](https://techdocs.akamai.com/identity-cloud/docs/search-for-user-profiles#example-1-return-all-the-users-in-an-entity-type).
 
 To access the API you need an API key (property).
 
@@ -199,7 +199,7 @@ You're now done working with the {frontmatter.technology} web interface and have
 
 ### Export The Users With The API
 
-Open a terminal and run the code below to extract all your Akamai users to the file `users.json`. Replace the start of the URL with your own, and use your client Id and secret from your property.
+Open a terminal and run the code below to extract all your {frontmatter.technology} users to the file `users.json`. Replace the start of the URL with your own, and use your client Id and secret from your property.
 
 ```sh
 cd fusionauth-import-scripts/akamai/src
@@ -281,50 +281,39 @@ Note that both FA and the JavaScript files in this guide must use the same netwo
 
 ### Prepare Users For Import To FusionAuth
 
+The next script, `src/1_convertUserToFaUser.mjs`, is the most important. It maps the fields of `users.json` to FusionAuth fields. You may wish to alter this script to change which fields are ignored, or where they are mapped. For more information on the FA fields, see the [import API documentation](https://fusionauth.io/docs/apis/users#request-6). For more information on the {frontmatter.technology} fields, see the user schema file in the `exampleData/1_akamaiExport/userSchema.js`.
+
+The script will output users to the `faUsers.json` file that are ready for import to FusionAuth. To run it, use the command below in the terminal you hhave open in the `src` directory.
+
 ```sh
 docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" node:24.0.1-alpine3.21 sh -c  "node 2_convertUserToFaUser.mjs";
 ```
 
-
-The next script, `3_convertFeUserToFaUser.mjs`, is the most important. It maps the fields of `users.json` to FusionAuth fields. You may wish to alter this script to change which fields are ignored, or where they are mapped.
-
-The script uses `stream-json`, a JSON library that can incrementally read massive files with millions of users. It opens the `users.json` file for reading in the line `new Chain([fs.createReadStream(inputFilename), parser(), new StreamArray(),]);`. For more information, read https://github.com/uhop/stream-json. The `processUsers()` function calls `getFaUserFromUser()` to map the {frontmatter.technology} user to FusionAuth, and then saves the user to an `faUsers.json` file.
+The script uses `stream-json`, a JSON library that can incrementally read massive files with millions of users. It opens the `users.json` file for reading in the line `new Chain([fs.createReadStream(inputFilename ), Pick.withParser({filter: 'results'}), new StreamArray()]);`, and ignores top level properties other than the `results` array of {frontmatter.technology} users. For more information, read https://github.com/uhop/stream-json. The `processUsers()` function calls `getFaUserFromUser()` to map the {frontmatter.technology} user to FusionAuth, and then saves the user to`faUsers.json`.
 
 The `getFaUserFromUser()` function does a few things:
 - Maps as many matching fields from {frontmatter.technology} to FusionAuth as possible.
-- Creates a random UUID in plain text for the user password. This will require users to create a new password when logging in to your application after migration.
-- Stores all {frontmatter.technology} user details that don't map to FusionAuth in the JSON `data` field. This is where the {frontmatter.technology} `metadata` field is saved to.
-- Adds FusionAuth User Registrations (the link between a FusionAuth User and an Application) to users. You will need to change these Ids to match those of your application when doing a real migration. This section is marked with `TODO`.
+- Extracts the bcrypt password strength (10), the salt, and hash from the {frontmatter.technology} password field. bcrypt stores these all in one field, separated by `$`, but to import the fields to FA you have to send them individually.
+- Stores all {frontmatter.technology} user details that don't map to FusionAuth in the JSON `data` field.
+- Adds FusionAuth User Registrations (the link between a FusionAuth User and an Application) to users. You will need to change these Ids to match those of your application when doing a real migration. The roles here were imported into FA in the first script, and are matched on the `value` field.
 
 Carefully read this function and make sure that the user information you need is imported correctly. If any information is not needed, you can comment out the related lines.
 
 If you are uncertain about what a user attribute in FusionAuth does, read more in the [user guide](/docs/apis/users), as linked in the [general migration guide](/docs/lifecycle/migrate-users/general-migration) recommended earlier.
 
-In a terminal in the `fusionauth-import-scripts/frontegg/src` directory, run the script with the following command.
-
-```sh
-node 3_convertFeUserToFaUser.mjs
-```
-
-The script will output users ready to import to FusionAuth to the `faUsers.json` file.
-
 ### Save The User Details To FusionAuth
+
+Now you'll run the Node.js import script to import the users into FusionAuth.
+
+In the terminal in the `fusionauth-import-scripts/akamai/src` directory, run the command below.
 
 ```sh
 docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" --network faNetwork node:24.0.1-alpine3.21 sh -c  "node 3_import.mjs";
 ```
 
-Now you'll run the Node.js import script to import the users into FusionAuth.
-
-In a terminal in the `fusionauth-import-scripts/frontegg/src` directory, run the command below.
-
-```sh
-node 4_import.mjs
-```
-
-This script uses the FusionAuth SDK for Node.js `@fusionauth/typescript-client`. It's used only for a single operation, `fa.importUsers(importRequest)`. For more information, read the [FusionAuth Typescript Client Library](/docs/sdks/typescript) documentation.
-
 The script imports users individually. If this is too slow when running the production migration, wrap the `importUsers()` FusionAuth SDK call in a loop that bundles users in batches of 1000.
+
+If you experience an error running the script on your own users, you'll need to debug. Take the example data that works, from `exampleData/2_faImport/faUsers.json`, and gradually swap out each field in that file for a field from a user in your file that fails import. This will show you which of your fields is problematic and needs adjustment.
 
 ### Verify The Import
 
