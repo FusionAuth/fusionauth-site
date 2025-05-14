@@ -4,8 +4,9 @@ description: Learn how to use FusionAuth by using an example application that ha
 section: get started
 subcategory: start here
 navOrder: 0
-codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-example-get-started/main
+codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-example-express-start-here/refs/heads/bpontarelli/getting-started-with-steps
 ---
+import {RemoteCode} from '@fusionauth/astro-components';
 
 <div className="border border-green-700 px-3 rounded-md">
   <i className="fa-duotone fa-stopwatch fa-2x mr-2 text-green-700 align-middle"/> Estimated time to complete this step: **5 minutes**
@@ -19,16 +20,7 @@ This process is also know as access control. It is the process of controlling th
 
 Open the file `src/index.mts` and find the route named `/account`. It should look something like this:
 
-```typescript
-app.get("/account", async (req, res) => {
-  if (!await sdk.userHasAccess(req, res, ["admin", "user"])) {
-    res.redirect(302, '/login');
-    return;
-  }
-
-  res.sendFile(path.join(__dirname, '../templates/account.html'));
-});
-```
+<RemoteCode url={frontmatter.codeRoot + "/src/index.mts"} lang="typescript" tags="account"/>
 
 The first check is where the application determines if the user is logged in or not. This is done by calling the SDK function `userHasAccess` (you can ignore the last parameter, which we will cover in the next section). This function returns true if the user has access, which implicitly verifies that they are logged in. Let's take a look at this function.
 
@@ -36,34 +28,11 @@ Open the file `src/sdk.ts` and find the function named `userHasAccess`. One note
 
 The `userHasAccess` method begins by loading the user from the request. This is accomplished by calling the `getUser` function of the SDK, which returns the user's access token. If the access token comes back `null`, that means the user is not logged in and this function returns false.
 
-```typescript
-async userHasAccess(req: Request, res: Response, roles: Array<string>): Promise<boolean> {
-  const jwt = await this.getUser(req, res);
-
-  // ...
-}
-```
+<RemoteCode url={frontmatter.codeRoot + "/src/index.mts"} lang="typescript" tags="userHasAccess"/>
 
 Let's take a quick peek at the `getUser` function of the SDK. This function looks like this:
 
-```typescript
-// 1. Load the user's access token from a cookie in the request
-let accessToken = req.cookies[this.configuration.accessTokenCookieName];
-if (!accessToken) {
-  return null;
-}
-
-// 2. Verify that the access token is valid
-let payload: JWTPayload;
-try {
-  payload = (await jose.jwtVerify(accessToken, this.JWKS, {
-    issuer: this.configuration.oauthIssuer,
-    audience: this.configuration.applicationId,
-  })).payload;
-} catch (e) {
-  // ...
-}
-```
+<RemoteCode url={frontmatter.codeRoot + "/src/index.mts"} lang="typescript" tags="getUser"/>
 
 The first part of this function loads a cookie from the request that contains the user's access token. The access token is part of the OAuth specification, and is generated after the user successfully logs in. FusionAuth uses JWTs for access tokens. 
 
