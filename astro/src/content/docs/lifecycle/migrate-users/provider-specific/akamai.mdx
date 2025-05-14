@@ -97,7 +97,7 @@ Permissions work slightly differently in the two systems. FusionAuth groups perm
 
 This section of the guide walks you through migrating all users from {frontmatter.technology} to FusionAuth in one batch.
 
-### Exporting User Data From {frontmatter.technology}
+### Exporting User Data From Akamai
 
 In this section, you export your {frontmatter.technology} users with the API.
 
@@ -286,6 +286,8 @@ If you experience an error running the script on your own users, you'll need to 
 
 Manage users by clicking on the <InlineUIElement>Manage</InlineUIElement> button (black button) to the right of the user in the list of users. Review the details of the imported user’s profile. In the <InlineUIElement>Source</InlineUIElement> tab, you can see all the user details as a JSON object.
 
+Finally, check that passwords were correctly imported by logging out of FusionAuth and attempting to log back in with a username and password from the imported users.
+
 ## Slow Migration
 
 This step of the tutorial is optional. In this section, you'll learn how to create a Connector for FusionAuth to import your users' passwords individually as each user logs in.
@@ -296,61 +298,11 @@ If you don't need to do this, please skip to the [What To Do Next](#what-to-do-n
 
 ### Create A User With A Password
 
-To test the slow migration, you need a user with a password you know. To create a user with a password that you can use to test authentication, alter your login form in the {frontmatter.technology} web portal as follows:
+To test the slow migration, you need a user in {frontmatter.technology} with a password you know. To create one, follow the instructions at the top of the [Exporting User Data From Akamai](#exporting-user-data-from-akamai) section in the bulk migration tutorial above.
 
-- Click <InlineUIElement>Go to builder</InlineUIElement> on the sidebar in {frontmatter.technology} dashboard.
+You can use either the console or the API request. The rest of this tutorial assumed you created a user called `janesmith@example.com` with password `p@ssw0rd3xamp!e`.
 
-<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/goto-builder.png`} alt="Go to builder in {frontmatter.technology}" width="1200" />
-
-- Disable all sign-in types on the left, except for <InlineUIElement>Email sign on</InlineUIElement> with <InlineUIElement>Password</InlineUIElement>, which you enable.
-- Enable <InlineUIElement>Allow signup</InlineUIElement>.
-- Use the <InlineUIElement>Review to Publish</InlineUIElement> button at the top right to review and publish this change.
-
-<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/signup.png`} alt="Customize signup in {frontmatter.technology}" width="1200" />
-
-Confirm the changes when asked and then publish the changes to your environment.
-
-Get the signup URL for your environment:
-
-- Log in to your account at https://portal.{frontmatter.technology}.com.
-- Go to the environment, like <Breadcrumb>Development</Breadcrumb>.
-- Go to <Breadcrumb>Environments -> Development -> Env settings</Breadcrumb> and note down the <InlineUIElement>Login URL</InlineUIElement>.
-
-<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/env-settings.png`} alt="Get login URL" width="1200" />
-
-Now visit the signup URL by appending `/account/sign-up` to the login URL to get a URL such as `https://app-xyhd7853hsngq.{frontmatter.technology}.com/oauth/account/sign-up`.
-
-Create a new user with an alias like `myemail+test@gmail.com` and password `password`.
-
-<Aside type="note">
-  If you did not go through the steps mentioned earlier in the bulk migration section, get export scripts by going through the steps in the [Export The Users With The API](#export-the-users-with-the-api) and [Create Roles For Your Users](#create-roles-for-your-users) sections. The steps are summarized below.
-</Aside>
-
-Export the new user by running the `{frontmatter.technology}/src/1_exportUsers.mjs` script.
-
-```sh
-node 1_exportUsers.mjs yourclientid yourapikey
-```
-
-If not already created, create roles in FusionAuth by running the `{frontmatter.technology}/src/2_addRoles.mjs` script.
-
-```sh
-node 2_addRoles.mjs
-```
-
-In the `{frontmatter.technology}/src/3_convertFeUserToFaUser.mjs` script, comment out the following code lines that assign a random password and require a password change.
-
-```javascript
-  faUser.password = uuidv4();
-  faUser.passwordChangeRequired = true;
-  faUser.passwordChangeReason = "Administrative";
-```
-
-Map the users in the exported `users.json` file to FusionAuth-compatible objects by running the `3_convertFeUserToFaUser.mjs` script.
-
-```sh
-node 3_convertFeUserToFaUser.mjs
-```
+If you did not complete the bulk migration tutorial earlier, you need to complete the first steps that download the git repository with the export scripts, export your {frontmatter.technology} users, and import their roles to FusionAuth. Follow section [Exporting User Data From Akamai](#exporting-user-data-from-akamai) to section [Export The Users With The API](#export-the-users-with-the-api).
 
 ### Configure A Connector Between FusionAuth And {frontmatter.technology}
 
@@ -367,11 +319,11 @@ In your [FusionAuth admin UI](https://localhost:9011), browse to <Breadcrumb>Set
 
 Click the dropdown button on the top right and select <InlineUIElement>Add Generic connector</InlineUIElement>.
 
-<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/create-connector.png`} alt="Create a Connector in FusionAuth" width="1200" />
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/frontegg/create-connector.png`} alt="Create a Connector in FusionAuth" width="1200" />
 
 Enter the field values below.
 
-- <InlineField>Name:</InlineField> `{frontmatter.technology}Connector`
+- <InlineField>Name:</InlineField> `AkamaiConnector`
 - <InlineField>Authentication URL:</InlineField> `http://host.docker.internal:6252`. If you are running FusionAuth directly on your machine and not in Docker you can use `http://localhost:6252`.
 - Adjust the timeout values to higher values to cater for network latency when the API requests are being made
 - Enable <InlineUIElement>Debug enabled</InlineUIElement>
@@ -384,7 +336,7 @@ Enter the field values below.
   ```
 </Aside>
 
-<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/connector.png`} alt="Connector details in FusionAuth" width="1200" />
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/frontegg/connector.png`} alt="Connector details in FusionAuth" width="1200" />
 
 <MakeWebservicePublic ngrok_port='6252' />
 
@@ -401,16 +353,15 @@ Now browse to <Breadcrumb>Tenants</Breadcrumb> and do the following.
 - Enable <InlineUIElement>Migrate user</InlineUIElement> so that FusionAuth will no longer use {frontmatter.technology} for subsequent logins of the same user.
 - Click <InlineUIElement>Submit</InlineUIElement>.
 
-<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/connector-policy.png`} alt="Connector policy details in FusionAuth" width="1200" />
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/frontegg/connector-policy.png`} alt="Connector policy details in FusionAuth" width="1200" />
 
 Move the `{frontmatter.technology}Connector` policy to the top of the list. Use the arrow buttons to move the policy if necessary. With this configuration, all users are checked against this Connector the first time they are seen. If they log in, they’ll be migrated to the FusionAuth user database.
 
 After configuration, the Connector entry form should look similar to this:
 
-<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/connector-added.png`} alt="Connector policy list in FusionAuth" width="1200" />
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/frontegg/connector-added.png`} alt="Connector policy list in FusionAuth" width="1200" />
 
 Save the changes by clicking the save icon at the top right.
-
 
 ### Build An Authentication Intermediary Web Service
 
@@ -448,7 +399,7 @@ node 5_connectorService.mjs your{frontmatter.technology}clientid your{frontmatte
 
 In the FusionAuth admin interface, browse to <Breadcrumb>Applications</Breadcrumb> and click the magnifying glass next to the <InlineUIElement>Test</InlineUIElement> application. Copy the value of the <InlineField>OAuth IdP login URL</InlineField> and open it in an incognito window in your browser (if you don't use an incognito window, you need to log out of the FusionAuth admin session to prevent the active session from interfering with the test). This URL is a login page for the Test application so that you can test the web service and Connector.
 
-<img src={`/img/docs/lifecycle/migrate-users/provider-specific/${migration_source_dir}/login-url.png`} alt="Test application login URL" width="1200" />
+<img src={`/img/docs/lifecycle/migrate-users/provider-specific/frontegg/login-url.png`} alt="Test application login URL" width="1200" />
 
 Log in with the username and password you entered earlier, such as `myemail+test@gmail.com` and `password`. Your web service should show `Request received` on the console and the login request succeeding.
 
