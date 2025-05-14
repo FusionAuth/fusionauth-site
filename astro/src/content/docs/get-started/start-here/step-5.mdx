@@ -4,8 +4,9 @@ description: Learn how to use FusionAuth by using an example application that us
 section: get started
 subcategory: start here
 navOrder: 0
-codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-example-get-started/main
+codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-example-express-start-here/refs/heads/bpontarelli/getting-started-with-steps
 ---
+import {RemoteCode} from '@fusionauth/astro-components';
 
 <div className="border border-green-700 px-3 rounded-md">
   <i className="fa-duotone fa-stopwatch fa-2x mr-2 text-green-700 align-middle"/> Estimated time to complete this step: **5 minutes**
@@ -25,67 +26,17 @@ Our example app handles refresh tokens automatically. Let's look at how this is 
 
 Open the file `src/sdk.ts` and locate the function named `logInUser`. This function is where the access token, refresh token, and id token (part of the OpenID Connect specification) are written out to the browser as cookies. This function looks like this:
 
-```typescript
-logInUser(accessToken: AccessToken, res: Response) {
-  res.cookie(this.configuration.accessTokenCookieName, accessToken.access_token, { httpOnly: true });
-  res.cookie(this.configuration.idTokenCookieName, JSON.stringify(jose.decodeJwt(accessToken.id_token)), { httpOnly: false });
-
-  if (this.configuration.enableRefreshTokens && accessToken.refresh_token) {
-    res.cookie(this.configuration.refreshTokenCookieName, accessToken.refresh_token, { httpOnly: true });
-  }
-}
-```
+<RemoteCode url={frontmatter.codeRoot + "/src/sdk.ts"} lang="typescript" tags="logInUser"/>
 
 You can see that the access and refresh token are written out as `HttpOnly`. Our example application doesn't run over TLS, therefore we can't set the `Secure` flag. But for production applications, you should use TLS and mark cookies as `Secure`.
 
 Next, let's look at how the refresh token is used when the access token expires. Scroll to the `getUser` function in this file. This function loads the same cookie that was written out above. We are using the `jose` library, which throws an exception when the access token has expired. This exception is handled in the `catch` block like this:
 
-```typescript
-try {
-  payload = (await jose.jwtVerify(accessToken, this.JWKS, {
-    issuer: this.configuration.oauthIssuer,
-    audience: this.configuration.applicationId,
-  })).payload;
-} catch (e) {
-  // NOTE: Check if the JWT is expired
-  if (e instanceof jose.errors.JWTExpired) {
-    // ...
-  }
-}
-```
+<RemoteCode url={frontmatter.codeRoot + "/src/sdk.ts"} lang="typescript" tags="getUser"/>
 
-Inside this `catch` block, we check if the exception is due to an expired JWT. If the JWT is expired, we refresh it using this code:
+Inside this `catch` block, we call a handle function called `handleJWTException`. If you scroll down to that code you will see that we check if the exception is due to an expired JWT. If the JWT is expired, we refresh it. This code block looks like this:
 
-```typescript
-// Refreshing is disabled, so the user is logged out after the access token expires
-if (!this.configuration.enableRefreshTokens) {
-  return null;
-}
-
-// Load the refresh token from the cookie
-let refreshToken = req.cookies[this.configuration.refreshTokenCookieName];
-if (!refreshToken) {
-  return null;
-}
-
-// Try refreshing the token
-let response = await this.refreshToken(refreshToken);
-if (!response) {
-  return null;
-}
-
-// Update the cookies making the assumption that they are both valid since we just got them from FusionAuth
-accessToken = response.access_token;
-res.cookie(this.configuration.accessTokenCookieName, accessToken, { httpOnly: true });
-
-if (response.refresh_token) {
-  refreshToken = response.refresh_token;
-  res.cookie(this.configuration.refreshTokenCookieName, refreshToken, { httpOnly: true });
-}
-
-payload = jose.decodeJwt(response.id_token);
-res.cookie(this.configuration.idTokenCookieName, JSON.stringify(payload), { httpOnly: false });
-```
+<RemoteCode url={frontmatter.codeRoot + "/src/sdk.ts"} lang="typescript" tags="handleJWTException"/>
 
 You can see that we first verify if refresh tokens have been enabled and then load the refresh token from the cookie. The code then uses the FusionAuth Typescript client library to call a standard OAuth API that handles what is known as the `Refresh Grant`. You can read up more about this API and the grant in our [OAuth documentation](/docs/lifecycle/authenticate-users/oauth/).
 
