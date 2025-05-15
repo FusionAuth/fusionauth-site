@@ -28,7 +28,7 @@ class CopyToClipboard {
 
       // This is for code blocks that are always dark, so we don't need dark states for the button
       const icon = document.createElement('i');
-      icon.className = 'fa-duotone fa-copy leading-4 py-2 px-2 rounded text-center text-white-900 hover:bg-indigo-700';
+      icon.className = 'fa-duotone fa-copy leading-4 py-2 px-2 rounded text-center text-white hover:bg-indigo-700';
       icon.title = 'Copy contents';
       copyButton.appendChild(icon);
 

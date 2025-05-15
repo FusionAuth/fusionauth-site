@@ -1,0 +1,108 @@
+---
+title: "Step 7 - Testing"
+description: Learn how to use FusionAuth in a local tests and a CI/CD system.
+section: get started
+subcategory: start here
+navOrder: 0
+codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-example-get-started/main
+---
+import ExpectedTime from 'src/components/ExpectedTime.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+
+<ExpectedTime duration={8}/>
+
+## Local testing
+
+Testing is a critical component of all software development. FusionAuth makes testing simple and awesome. Rather than having to create new accounts or wait hours for testing accounts to be reset as you would have to do with a cloud-only auth provider, you can instead run FusionAuth locally, test against it, and reset it to a known state. 
+
+Let's take a look again at our example app, which runs full end-to-end tests against FusionAuth.
+
+Open the file `example.spec.ts` in the `tests` directory. This is a Playwright test file and contains a handful of tests. If we look at the test named `FA has title` it looks something like this:
+
+<RemoteCode url={frontmatter.codeRoot + "/tests/example.spec.ts"} lang="typescript" tags="fa-has-title"/>
+
+You'll see that this test makes a request to `http://localhost:9011/admin` and ensures that HTML is returned with a title tag of `Login`. This test verifies that FusionAuth is running and that it redirects to the login page when the admin UI is accessed.
+
+A more complex test in this test suite is called `log in`. This test logs a user into FusionAuth and then ensures that the user can access the application. Here's the code of this test:
+
+<RemoteCode url={frontmatter.codeRoot + "/tests/example.spec.ts"} lang="typescript" tags="log-in"/>
+
+This test executes these steps in order:
+
+1. Hit the homepage of the application
+2. Clicks the login button
+3. Verifies that the browser is redirected to FusionAuth's OAuth login page
+4. Fills out the login form with the ordinary user's credentials (`richard@fusionauth.io` - `password`)
+5. Submits the login form
+6. Ensures that the browser is redirected back to the application
+7. Ensure the user is logged in
+
+This is a complete test that logs a real user into the application without the need to mock or simulate the login flow. Rather, this uses a real running version of FusionAuth to log the user in.
+
+## Resetting FusionAuth
+
+Now, let's say our tests have made changes to FusionAuth's state such as creating users or deleting users. In this case, we will need to reset FusionAuth. Assuming we are running FusionAuth inside Docker, we simply run these 2 commands in the terminal window that was running FusionAuth via Docker:
+
+```shell
+docker compose down -v
+docker compose up
+```
+
+The first command brings FusionAuth down and clears its database. The second command starts FusionAuth back up, which will again use [Kickstart](/docs/get-started/download-and-install/development/kickstart) to configure FusionAuth for our application.
+
+If you are using a different installation method, no problem. You can simply stop FusionAuth, delete the database, and restart it. Usually this looks something like this:
+
+```shell
+bin/shutdown.sh
+psql -U postgres -c 'drop database fusionauth;'
+bin/startup.sh
+```
+
+You might need to tweak these commands for your platform and database.
+
+## Testing in CI/CD
+
+Beyond testing locally, most development teams leverage a CI/CD system to automate tests and deploy their software. There are a ton of different CI/CD systems, but let's review how our example app runs its own tests in the Github Actions CI system.
+
+If you open the file `.github/workflows/main.yaml`, you'll see that this file is a Github action that performs a number of steps. The important steps in this file are the ones that start FusionAuth and run the tests. Here's the command that starts FusionAuth via Docker in Github Actions:
+
+```yaml
+- name: Start FusionAuth
+  uses: fusionauth/fusionauth-github-action@v1
+  with:
+    FUSIONAUTH_VERSION: latest
+    FUSIONAUTH_APP_KICKSTART_DIRECTORY_PATH: kickstart
+```
+
+This leverages a Github Marketplace action called [fusionauth/fusionauth-github-action](https://github.com/FusionAuth/fusionauth-github-action). This action will run FusionAuth within Github Actions such that our tests can leverage it. This might also require you to configure a Kickstart file that FusionAuth will use, but we'll leave that as an exercise for you to handle.
+
+The next step of our example app's Github Action is to run the tests. This is done with these commands:
+
+```yaml
+- name: Install npm dependencies
+  run: |
+    npm install
+    npx playwright install-deps
+    npx playwright install
+  working-directory: .
+
+- name: Start app
+  run: npm run dev & # & in background
+  working-directory: .
+
+- name: Run Playwright tests
+  run: npx playwright test --project=chromium
+  working-directory: .
+```
+
+These steps load any necessary dependencies, start our application, and then run the Playwright tests.
+
+Depending on the CI/CD tool you are using, you might need to tweak all of these items to get them working.
+
+The key takeaway from this step is that since FusionAuth is downloadable, it provides the best way to run real tests against it without the need for mocking, simulations, or any cumbersome test environment resets.
+
+## Next steps
+
+[\< Go back to step 6 - Logout](step-6) <span class="inline-block mx-6 font-bold">Congrats you're finished!</span> [Step 8 - Finished \>](step-8)
+
+

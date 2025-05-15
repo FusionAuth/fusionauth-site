@@ -1,0 +1,48 @@
+---
+title: "Step 6 - Logout"
+description: Learn how to use FusionAuth by using an example application with a logout button.
+section: get started
+subcategory: start here
+navOrder: 0
+codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-example-get-started/main
+---
+import ExpectedTime from 'src/components/ExpectedTime.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+
+<ExpectedTime duration={5}/>
+
+## Logging users out
+
+Similar to login, logout is handled using the FusionAuth OAuth logout process. In order to ensure a full log out, the user must be logged out of all applications, including the FusionAuth SSO system.
+
+To accomplish this, applications need to redirect the browser to the FusionAuth logout URL. Let's look at how this is done.
+
+First, open the `templates/account.html` file. You'll see at the top of the file there is a button that sends the browser to `/logout` like this:
+
+<RemoteCode url={frontmatter.codeRoot + "/templates/account.html"} lang="html" tags="logout"/>
+
+Open the file `src/index.mts` and find the route for `/logout`. This code is simple and delegates to the SDK like this:
+
+<RemoteCode url={frontmatter.codeRoot + "/src/index.mts"} lang="typescript" tags="logout"/>
+
+Open the `src/sdk.ts` file and find the function named `sendToLogoutPage`. This function constructs a URL to FusionAuth's logout system and sends a redirect back to the browser like this:
+
+<RemoteCode url={frontmatter.codeRoot + "/src/sdk.ts"} lang="typescript" tags="sendToLogoutPage"/>
+
+Luckily, FusionAuth does all the work of logging the user out of the FusionAuth SSO system and deleting their refresh tokens, effectively closing all of their sessions. It also attempts to log the user out of other applications if possible. You'll also notice that the URL contains a parameter called `client_id`. This helps FusionAuth identify the application the initiated the log out request and also helps with themeing and tenant handling as well.
+
+Once FusionAuth has completed the logout, it redirects back to the application. This is when the application can complete its own log out process. Open the `src/index.mts` file and find the route for `/oauth2/logout`. This function looks like this:
+
+<RemoteCode url={frontmatter.codeRoot + "/src/index.mts"} lang="typescript" tags="oauth2-logout"/>
+
+This leverages a function in the SDK called `handleOAuthLogoutRedirect` and then redirects the browser back to the homepage. Go ahead and open that function in `src/sdk.ts`. It should look like this:
+
+<RemoteCode url={frontmatter.codeRoot + "/src/sdk.ts"} lang="typescript" tags="handleOAuthLogoutRedirect"/>
+
+You'll see that this function clears all of the cookies that helped to identify the user, specifically the access, refresh, and id tokens. Once the cookies are deleted from the browser, all futures requests will not contain them and the user will no longer be logged in.
+
+## Next steps
+
+[\< Go back to step 5 - Session management](step-5) <span class="inline-block mx-6 font-bold">Ready for the next step?</span> [Step 7 - Testing \>](step-7)
+
+
