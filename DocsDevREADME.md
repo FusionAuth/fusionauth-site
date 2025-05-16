@@ -85,6 +85,11 @@ import Icon from 'src/components/icon/Icon.astro';
 
 Review [the component for all options and icons](astro/src/components/icon/Icon.astro).
 
+When importing a component, always use the full path, not a relative path:
+```
+import Icon from 'src/components/icon/Icon.astro';
+```
+
 ### Docs Navigation
 
 Make descriptions full sentences. They must end in a period. Titles, on the other hand, should not end with punctuation.
