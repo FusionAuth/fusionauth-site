@@ -9,11 +9,6 @@ async function renderAstroComponent(filePath: string): Promise<string> {
   return content.replace(/^---[\s\S]*?---/, "").trim();
 }
 
-// Helper to convert path to file URL
-function pathToFileUrl(p: string): URL {
-  return new URL("file://" + path.resolve(p));
-}
-
 // Check if a component should be inlined
 function shouldInline(importPath: string): boolean {
   return (
