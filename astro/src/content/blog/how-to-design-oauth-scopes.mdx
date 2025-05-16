@@ -8,6 +8,7 @@ categories: Education
 tags: oauth, scopes, apis, api design, permissions
 excerpt_separator: "{/* more */}"
 ---
+import Aside from 'src/components/Aside.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
 import OAuthScopesDiagram from 'src/diagrams/blog/oauth-scopes/oauth-scopes.astro';
 
@@ -42,24 +43,12 @@ Since a bank has a different set of permissions than an email service, scopes ar
 
 The meaning of a scope is tied to its implementation. When you are building a system which uses scopes, you need to design them to meet your needs. This post will help you do that.
 
-### The OAuth Flow With Scopes
-
-Here's a sequence diagram illustrating the Authorization Code grant for a scoped access token, and subsequent API requests.
-
-<OAuthScopesDiagram alt="An example request flow with OAuth scopes." />
-
-It's similar to a standard [Authorization Code grant](/articles/oauth/complete-list-oauth-grants) with the following additions:
-
-* a `scope` parameter is included in the authorization URL kicking off the login
-* there's a consent screen displayed to the user 
-* a `scope` claim is included in the access token
-* the API validation must check the `scope` claim
-
 ## What Do the Standards Say
 
 Let's look at the RFCs which define OAuth scopes. Before we do that, here's a primer to help translate RFC jargon into terms a developer might use:
 
 * A token: a string or value which proves the holder has access 
+* A claim: a piece of information, typically about a user or software program
 * Grant: a standardized flow a user or other entity can follow; when successful, the entity ends up with a token
 * Resource owner: the end user, usually a person
 * Client: an application which needs access to data or functionality; it is seeking a token
@@ -98,7 +87,26 @@ Per the standards, all the actors in an OAuth grant affect scopes:
 
 Great, enough with the RFC jargon. No more authorization servers or resource owners for the rest of this post. Promise!
 
-Scopes relate to permissions, but so to other common authorization concepts like roles. Let's look at how scopes are different from roles.
+Let's take a look at how a request with scopes actually happens.
+
+## The OAuth Flow With Scopes
+
+Here's a sequence diagram illustrating the Authorization Code grant for a scoped access token, and subsequent API requests.
+
+<OAuthScopesDiagram alt="An example request flow with OAuth scopes." />
+
+It's similar to an [Authorization Code grant](/articles/oauth/complete-list-oauth-grants) with no scopes requested, except with the following differences:
+
+* a `scope` parameter is included in the authorization URL kicking off the login
+* there's a consent screen displayed to the user 
+* the `scope` value is included in the access token (which may or may not exactly match the scope parameter)
+* the API validation must check the `scope` claim
+
+Here's an example of a consents page that a user might see:
+
+![Example consents page.](/img/docs/get-started/use-cases/api-consents-consent-screen.png)
+
+Scopes are related to permissions, but so to other common authorization concepts like roles. Let's look at how scopes are different from roles.
 
 ## Scopes vs Roles
 
@@ -154,7 +162,7 @@ Below is a list of scopes for a fake fintech company, Changebank. Changebank is 
 * `investments.write`: Execute investment trades
 * `creditScore.read`: Access credit score information
 
-Each of these permission groupings are clear in intent, make sense to the end user, and are something Changebank can expose to a set of developers. 
+Each of these permission groupings are clear in intent, make sense to the end user, and are something Changebank can expose to a set of developers. There is both a string: `creditScore.read`, and a description: "Access credit score information". The string is used in the URL as a parameter. The description is often stored by the server which displays the consent page to make that page more understandable to the end user.
 
 Because scopes require user consent, making sure users understand what they represent is critical. If a user can't understand the third-party access they are allowing based on the scope name and any additional information on the consent screen, then you have a problem and need to reconsider your scopes.
 
@@ -164,6 +172,10 @@ Also, keep  in mind that there are two parties that are involved in picking scop
 * the user needs to know whether or not the application should be allowed to access the data represented by the scopes
 
 This means that you don't want your scopes to be too granular, otherwise you'll run into fatigue from both of these sets of users.
+
+<Aside type="caution">
+Don't design overly broad or narrow scopes, otherwise you'll confuse developers and users, both of whom need to understand them.
+</Aside>
 
 The Changebank scope list is good but can be improved. Let's take a look at how.
 
@@ -253,12 +265,13 @@ A one to many mapping between scopes and API endpoints is relatively easy to rea
 
 #### Versioning
 
-There are two approaches to versioning: 
+There are three approaches to versioning: 
 
+* don't version your APIs
 * add `v1` somewhere in the scope when you first release it
 * add `v2` or other version info when you need to introduce subsequent version
 
-Large providers supporting scopes, such as Google, Slack and Zendesk, do not have version information in their scope strings. If it isn't needed for them, you can skip it.
+Large providers, such as Google, Slack and Zendesk, do not have version information in their scope strings. You probably don't need it.
 
 #### Admin Scopes
 
@@ -291,6 +304,8 @@ ${fusionAuthURL}/oauth2/authorize?client_id=${clientId}
 ```
 
 You'll make developers extra happy if you have SDK wrappers or example applications. A scope implementation simply isn't complete until you document how a third-party developer can integrate with your APIs using them.
+
+Finally, make sure you communicate what third-party developers need to do from a non-technical perspective to get access to your APIs managed by scopes. For example, paying you money, accepting terms of service, or even just verifying an email address for communication purposes. If you aren't going to grant developers access to APIs, don't bother building scopes into them.
 
 ### Telemetry
 
@@ -327,12 +342,6 @@ Consider future deprecation when designing your scopes. Things to consider:
 Like many decisions, the precise plan for scope deprecation depends on the size of your platform ecosystem, the length of time the scope has been available, and the severity of possible changes.
 
 You'll need to be more communicative if you are removing a scope entirely than if you are changing functionality accessed when using it. You'll need a different communication strategy if you can call the five developers who have built on your platform than if you have thousands of developers who've been using a scope for years. In the latter case, it may be impossible to remove the scope!
-
-## Setting Up A Developer Program
-
-Documenting the specifics of a developer program for fostering an ecosystem of successful applications built on your APIs is beyond the scope of this post. It's a challenge and is at least as much an organizational effort as it is a technical one. An outline of [the process is documented in the API Consents Platform use case](/docs/get-started/use-cases/api-consents-platform#implementation-steps) but the exact required steps are always specific to your organization or business. 
-
-Don't neglect the effort, however. If you are going to the trouble of implementing scopes, you want everything else in place to allow third-party developers to be successful when using scopes to access your users' data.
 
 ## Consuming Scopes
 
@@ -402,8 +411,6 @@ You can also see how they deprecate a scope like `conversations:history`. Intere
 Zendesk has CRUD oriented scopes, with a focus on resources, such as tickets, users, and organizations. Scopes consist of a resource and/or an operation. Operations can be appended to a resource or standalone, in which case they apply for all resources available to that user.
 
 The Zendesk API also returns an access token even if a requested scope is invalid; they validate the token on the API request and will respond with an error message during that request.
-
-Zendesk also manages to overload the term "scopes" in their API, with OAuth `scope` as one thing and OAuth `scopes` as a different concept, to allow for programmatic access.
 
 ### Other Examples
 
