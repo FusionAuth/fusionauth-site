@@ -302,7 +302,7 @@ To test the slow migration, you need a user in {frontmatter.technology} with a p
 
 You can use either the console or the API request. The rest of this tutorial assumed you created a user called `janesmith@example.com` with password `p@ssw0rd3xamp!e`.
 
-If you did not complete the bulk migration tutorial earlier, you need to complete the first steps that download the git repository with the export scripts, export your {frontmatter.technology} users, and import their roles to FusionAuth. Follow section [Exporting User Data From Akamai](#exporting-user-data-from-akamai) to section [Export The Users With The API](#export-the-users-with-the-api).
+If you did not complete the bulk migration tutorial earlier, you need to complete the first steps that download the git repository with the export scripts, export your {frontmatter.technology} users, and import their roles to FusionAuth. Follow section [Exporting User Data From Akamai](#exporting-user-data-from-akamai) to section [Create Roles For Your Users](#create-roles-for-your-users).
 
 <Aside type="note">
 If you did complete the bulk import tutorial, you need to delete the test user Jane from FusionAuth, so that you can import her again in this section.
@@ -416,25 +416,13 @@ await isLoginValid(email, request.body.password);
 
 A 404 is returned if the user login credentials are not valid.
 
-If the credentials are valid, the user's details stored in the `faUsers.json` file are returned. The search for the user details is done in the following function.
-
-```js
-await getUserDetailsFromFile(email);
-```
+If the credentials are valid, the user's details returned from {frontmatter.technology} are converted to a FusionAuth user in the function `getFaUserFromUser(user)`. This is the same function that was used in the script `2_convertUserToFaUser.mjs`, except the password is in plaintext, not a hash.
 
 - Run the service with the command below.
 
 ```sh
 docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" --network faNetwork node:24.0.1-alpine3.21 sh -c  "node 4_connectorService.mjs";
 ```
-
-Ensure that there is a `faUsers.json` file in the `akamai/src` directory. You should have created it when following the section [Export The Users With The API](#export-the-users-with-the-api).
-
-<Aside type='tip'>
-On your production server, instead of using the file of all users from the bulk migration, you can call the [Akamai entity API request](https://techdocs.akamai.com/identity-cloud-entity/reference/post-entity) with the result of the fetch request to Akamai in the function `isLoginValid()` to get the user individually.
-
-You will need to use the code in the roles and conversion JavaScript files to create a new function that prepares the JSON returned from Akamai as a new FusionAuth user.
-</Aside>
 
 ### Log In With A Test User
 
