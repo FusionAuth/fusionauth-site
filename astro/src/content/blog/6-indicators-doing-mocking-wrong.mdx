@@ -9,6 +9,7 @@ tags: testing, CIDC, software development, software testing
 excerpt_separator: "{/* more */}"
 ---
 import Aside from 'src/components/Aside.astro';
+import DownloadWidget from 'src/components/download/DownloadWidget.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
 
 Developers love mocking. It’s been a go-to solution for years: Simulate external services, run tests faster, and avoid the overhead of real APIs. But here’s the truth — **mocking is sometimes overused and can be dangerous**. It can deceive you into thinking your system is stable, hiding critical failures that only appear when your code hits the real world. APIs change. Rate limits throttle you. Authentication flows break. Your tests will still pass with green colors while your app silently crashes in production.
@@ -189,79 +190,37 @@ The tests can reflect production-like conditions, catching issues like authentic
 
 ### FusionAuth Kickstart
 
-[FusionAuth Kickstart](about:blank) allows you to build a template that replicates a development or production environment.
+[FusionAuth Kickstart](/docs/get-started/download-and-install/development/kickstart) allows you to build a template that replicates a development or production environment.
 
 - Developers can spin up a local FusionAuth instance to test full authentication flows, including OAuth and SSO, ensuring tests align with production.
 - Kickstart automates environment setup, account creation, and configuration of any resources. Then you have a FusionAuth instance with available data.
 - Unlike mocks, this approach handles real-world complexities like security updates and multi-step flows, reducing the risk of surprises in production.
 
-To see how effective a real dev server can be, let’s write a mock that simulates a [login](about:blank) on the FusionAuth API.
+To see how effective a real dev server can be, let’s write a mock that simulates a [login](/docs/lifecycle/authenticate-users/oauth/) on the FusionAuth API.
 
 Here’s how you might mock the login in Python:
 
 <RemoteCode url="https://raw.githubusercontent.com/fusionauth/fusionauth-example-mock-testing-vs-dev-server/refs/heads/main/fusionauth_test_with_mocking.py" lang="python"  />
 
-The fusionauth\_login function simulates a login request to FusionAuth’s /api/login endpoint. It handles various responses — success, incorrect credentials, locked accounts, and unexpected errors. The unit tests use unittest.mock.patch to replace real API calls, ensuring tests pass without needing a live FusionAuth server.
+The `fusionauth_login` function simulates a login request to FusionAuth’s `/api/login` endpoint. It handles various responses — success, incorrect credentials, locked accounts, and unexpected errors. The unit tests use `unittest.mock.patch` to replace real API calls, ensuring tests pass without needing a live FusionAuth server.
 
 But this approach doesn’t scale. For every new scenario, another mock is needed. More tests mean more mocks, more maintenance, and more fragile tests. What starts as a simple test suite quickly turns into a tangled web of artificial responses, each one detached from reality.
 
 And when FusionAuth updates? Your mocks stay frozen in time. New fields, changed response structures, evolving authentication flows — none of these are reflected in your tests. The mocks keep passing, but your application is broken in production.
 
-The alternative? Run a real FusionAuth instance locally.
+The alternative? Run a _real FusionAuth_ instance locally.
 
 <Aside type="tip">
-  The easiest way to run FusionAuth is in a Docker container. Clone the [fusionauth-example-docker-compose](https://github.com/fusionauth/fusionauth-example-docker-compose) GitHub repository. Open a terminal in the `light` subdirectory, and run `docker compose up` in a terminal to start FusionAuth. Log in at http://localhost:9011 with `admin@example.com` and `password`. The example repository will use the sample [Kickstart file](https://github.com/FusionAuth/fusionauth-example-docker-compose/blob/main/light/kickstart/kickstart.json) to configure the FusionAuth instance.
+  The easiest way to run FusionAuth is to follow the installation instructions in our [Getting Started](/docs/get-started/start-here/step-1) guide. This guide walks you through step-by-step how to install FusionAuth and add features like login, access controls, and logout to an application.
 </Aside>
 
-Below is an outline of the steps you can use to set up a FusionAuth instance with [Kickstart](about:blank) and Docker Compose, as configured in the [`fusionauth-example-docker-compose`](https://github.com/FusionAuth/fusionauth-example-docker-compose/tree/main/light) repository, to test authentication without mocks.
+Let's get FusionAuth installed and configured so that we can start testing against it. Pick an option below and follow the installation steps.
 
-#### Step 1: Create The Kickstart File
+<DownloadWidget includeDocker={true} kickstartEnabled={true} kickstartName="basic"/>
 
-A [Kickstart](about:blank) file is a JSON file containing instructions for setting up an environment.
+This installation also uses [Kickstart](/docs/get-started/download-and-install/development/kickstart) to configure FusionAuth. The `basic` Kickstart we are using configures FusionAuth with an application, a user, and registers the user for the application.
 
-To create a test case that registers a user, the Kickstart file might look like the example below.
-
-<RemoteCode url="https://raw.githubusercontent.com/fusionauth/fusionauth-example-mock-testing-vs-dev-server/refs/heads/main/fusionauth/kickstart/kickstart.json" lang="json"  />
-This code declares variables to avoid repetition, and then defines an API key. It then executes a series of requests to:
-
-- Create a new application.
-- Create a new user.
-- Register the user to the application.
-
-#### Step 2: Download The Docker Compose And Environment Files
-
-```sh
-curl -o docker-compose.yml https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/.env
-```
-
-Edit these files to match your environment. In the `.env` file, modify `DATABASE_PASSWORD` and ensure the `POSTGRES_USER` and `POSTGRES_PASSWORD` are set correctly. Add the `FUSIONAUTH_APP_KICKSTART_FILE` environment variable with the path to the Kickstart file, and mount the Kickstart directory as a volume on the `fusionauth` service.
-
-#### Step 3: Start The FusionAuth Containers
-
-Run the following commands to bring up the services:
-
-```sh
-docker compose up
-```
-
-This command starts three services:
-
-1. `db` - A PostgreSQL instance to store your data.
-2. `search`- An OpenSearch instance for advanced search features.
-3. `fusionauth` - The main application handling authentication flows.
-
-#### Step 4: Explore And Configure FusionAuth
-
-FusionAuth will now be accessible at [`http://localhost:9011`](http://localhost:9011). You can configure your application, manage users, and integrate authentication workflows from here.
-
-The setup uses OpenSearch by default, but you can modify the docker-compose.yml file to switch between different search engines if needed.
-
-#### Step 5: Customize The Services
-
-You can further customize the services by editing the docker-compose.yml and .env files. FusionAuth supports various deployment methods (for example, Kubernetes and Helm), making it adaptable to different environments. Learn more about working in a development environment in the [development documentation](about:blank).
-
-Now, you can rewrite the tests without mocking the FusionAuth API.
+Now, you can rewrite your tests without mocking the FusionAuth API.
 
 <RemoteCode url="https://raw.githubusercontent.com/fusionauth/fusionauth-example-mock-testing-vs-dev-server/refs/heads/main/fusionauth_test_with_dev_server.py" lang="python"  />
 

@@ -6,26 +6,26 @@ section: extend
 subcategory: examples
 ---
 
-import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
-import Breadcrumb from 'src/components/Breadcrumb.astro';
-import InlineField from 'src/components/InlineField.astro';
-import InlineUIElement from 'src/components/InlineUIElement.astro';
 import Aside from 'src/components/Aside.astro';
-import TypesDiagram from 'src/diagrams/docs/extend/examples/modeling-hierarchies/types.astro'
+import Breadcrumb from 'src/components/Breadcrumb.astro';
 import CompanyDiagram from 'src/diagrams/docs/extend/examples/modeling-hierarchies/company.astro'
 import HierarchyDiagram from 'src/diagrams/docs/extend/examples/modeling-hierarchies/hierarchy.astro'
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import TypesDiagram from 'src/diagrams/docs/extend/examples/modeling-hierarchies/types.astro'
 
 This guide discusses ways of modeling hierarchical organizations and entities, with users and permissions, and provides an example script you can use in your own website. Entities are not available in the free version of FusionAuth.
 
 <PremiumPlanBlurb />
 
-## Understand FusionAuth Types And Their Relationships
+## Understand FusionAuth Types and Their Relationships
 
 Before continuing, please read the [review of FusionAuth types](/docs/get-started/core-concepts/types-and-relationships) and how they relate. You need to understand these types well to adjust the hierarchical system design in this guide to suit your situation.
 
 To avoid confusion with FusionAuth applications in this guide, the service you provide your users will be called your "website", as opposed to an application, app, or service.
 
-## An Example Company Hierarchy With Permissions
+## An Example Company Hierarchy with Permissions
 
 None of the FusionAuth types are hierarchical. In other words, no types can be nested in any other types. Groups can't be members of groups, applications can't contain other applications, and entities don't have sub-entities.
 
@@ -47,7 +47,7 @@ You can probably see some challenges already:
 There are solutions to these problems, such as including "Deny access" permissions and a "Common" department for shared documents, and you need to pick what works for your organization. These challenges won't be discussed in this guide, as you can use the techniques shown here to implement your own solution.
 </Aside>
 
-## How To Model Hierarchy In FusionAuth With Entities And Grants
+## How to Model Hierarchy in FusionAuth with Entities and Grants
 
 The best way to model a hierarchy in FusionAuth is with Entities. 
 
@@ -67,36 +67,11 @@ Finally, note that you should use a matching UUID for every document in your doc
 
 This section demonstrates how to create all the entities for the example company hierarchy, and how to write a script to determine a user's permissions to any document in the hierarchy.
 
-### Download Example Project And Start FusionAuth
+### Install FusionAuth
 
-Use `git clone` to clone the repository at https://github.com/FusionAuth/fusionauth-example-docker-compose, or download and unzip it.
+If you haven't already installed FusionAuth, you should follow the instructions on our [Download](/download) page or you can follow the process in our [Getting Started](/docs/get-started/start-here/step-1) guide.
 
-Open a terminal in the directory containing the repository files.
-
-Run the command below to start FusionAuth.
-
-```sh
-cd light
-docker compose up
-```
-
-<Aside type="note">
-  If you have completed any FusionAuth tutorials before, you might need to first delete any existing FusionAuth containers with the same name and the database volumes. Run the command below to do that.
-
-  ```sh
-  docker rm fa fa_db; docker compose down -v
-  ```
-</Aside>
-
-This command starts FusionAuth using Kickstart, which automatically creates an example application with an example user called Richard. It saves you the time of having to configure everything yourself when following this tutorial.
-
-- Log in to your FusionAuth web interface at http://localhost:9011/admin with credentials `admin@example.com` and `password`.
-- Browse to <Breadcrumb>Reactor</Breadcrumb>.
-- Enter your license key to activate Reactor and refresh the page.
-
-<Aside type="note">
-If you have any trouble with this tutorial, try replacing the FusionAuth image in the Docker compose file with `fusionauth/fusionauth-app:1.54.0`, in case future versions of FusionAuth introduced a breaking change.
-</Aside>
+If you already have FusionAuth running locally, you are welcome to use that instance. However, the rest of this guide assumes you have a user with the email `richard@example.com` and an admin user with the email `admin@example.com`. You might need to translate those users depending on your setup.
 
 ### Create Hierarchy Entities
 
@@ -132,23 +107,23 @@ Next you'll populate FusionAuth with some entities of these types:
 
 Finally, you need to connect the entities in a hierarchy using permissions as a link.
 
-- In the <InlineUIElement>Select</InlineUIElement> menu for the Change Bank Operations department entity, click <InlineUIElement>Manage</InlineUIElement>.
+- In the <InlineUIElement>Select</InlineUIElement> menu for the `Change Bank Operations` department entity, click <InlineUIElement>Manage</InlineUIElement>.
 - Click <InlineUIElement>+ Add</InlineUIElement> to add an entity grant.
 - In the search box, enter `Change Bank`, and select it from the dropdown list.
 - Enable the <InlineUIElement>IsMember</InlineUIElement> permission.
 - Save.
 - Return to <Breadcrumb>Entity Management -> Entities</Breadcrumb>.
-- Add the Change Bank Finance department entity to the Change Bank company in the same way as above.
-- Add the Change Insurance Operations department entity to the Change Insurance company in the same way as above.
-- Change Bank now has two departments and Change Insurance has one.
-- Manage the Passwords document, and give it an entity grant to the Change Bank Operations department with permission IsMember.
-- Manage the Statements document, and give it an entity grant to the Change Bank Finance department with permission IsMember.
+- Add the `Change Bank Finance` department entity to the `Change Bank` company in the same way as above.
+- Add the `Change Insurance Operations` department entity to the `Change Insurance` company in the same way as above.
+- Change Bank now has two departments and `Change Insurance` has one.
+- Manage the `Passwords` document, and give it an entity grant to the `Change Bank Operations` department with permission IsMember.
+- Manage the `Statements` document, and give it an entity grant to the `Change Bank Finance` department with permission IsMember.
 
 <Aside type="caution">
 Notice here that when you search for `Operations`, the search dropdown list provides you only the names `Change Bank Operations` and `Change Insurance Operations`, with no Ids or hierarchical links displayed. So if you had instead called both departments just `Operations`, without indicating the company they belonged to in their name, you wouldn't know which department to choose when trying to add the document to the department. Though it would be more elegant to call the entity by the same name as the real department, just `Operations`, you need to work with the limitations of FusionAuth here to create a makeshift hierarchy. Alternatively, you could create all entities programmatically using the API and entity Ids. That would allow you to use any names you wanted.
 </Aside>
 
-### Grant Entity Permissions To A User
+### Grant Entity Permissions to a User
 
 You haven't set any read or write permissions yet, because those are linked only to users, or flow implicitly downwards through the company hierarchy set by `IsMember`. So let's add a user to the Operations department.
 
@@ -162,123 +137,149 @@ You haven't set any read or write permissions yet, because those are linked only
 
 FusionAuth now represents your corporate hierarchy and you can start work on the website.
 
-### Run Your Website To Calculate All The User Permissions
+### Calculate all the User Permissions
 
-In this section, you'll write a script to get all the direct and indirect (through the company hierarchy) permissions a user has to all documents in FusionAuth. All you need is the user's email address or Id. Though this is a simple script, you can use exactly the same code after the user has logged in to your website with FusionAuth. (To learn how to make a simple Node.js website that uses FusionAuth, read the [quickstart](/docs/quickstarts/quickstart-javascript-express-web).)
+<Aside type="note" title="Prequisites">
+  You will need Node 22.x or newer to run this example. Use the [Node installation guide](https://nodejs.org/en/download) to install Node if you haven't already
+</Aside>
 
-For this script, you'll use TypeScript. It's easy to make errors when working with a tree structure, like these parent and child entities. TypeScript's strong typing will prevent errors, and enable you to see exactly which properties are available on each object. If you prefer JavaScript, you can delete all the type syntax, rename the file with `.js`, and the code will still run fine.
+In this section, you'll write a small application that retrieves the direct and indirect (through the company hierarchy) permissions a user has to all documents in FusionAuth. All you need is the user's email address or Id. Though this is a simple script, you can use exactly the same code after the user has logged in to your website with FusionAuth. (To learn how to make a simple Node.js website that uses FusionAuth, read the [quickstart](/docs/quickstarts/quickstart-javascript-express-web).)
 
-Start by creating the script, called `getPermissions.ts` in the current `light` working directory, and add the type definitions below. Axios will be used to call the FusionAuth API on the network.
+For this script, you'll use TypeScript. It's easy to make errors when working with a tree structure, like these parent and child entities. TypeScript's strong typing will prevent errors, and enable you to see exactly which properties are available on each object.
 
-```ts
-import axios from "npm:axios@1.7.9";
+Start by creating a directory for our application called `app`. Then change into this directory and set up a Node project like this:
 
-type TUser = {
-  id: string,
-  email: string,
-};
+```shell
+mkdir app
+cd app
+npm init --yes
+npm install @fusionauth/typescript-client
+npm install typescript
+```
 
-type TEntity = {
-  id: string,
-  name: string,
-  type: {
-    id: string,
-    name: string,
+This example is also using ESM and Typescript modules, so you'll need to create a file named `tsconfig.json` and add this to it:
+
+```json
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "noEmit": true,
+    "module": "NodeNext",
+    "rewriteRelativeImportExtensions": true,
+    "target": "ESNext",
+    "verbatimModuleSyntax": true
   }
-};
-
-type Grant = {
-  id: string,
-  permissions: string[]
-  entity: TEntity,
-};
-type TUserGrant = Grant & { userId: string };
-type TEntityGrant = Grant & { recipientEntityId: string };
-
-type TPermission = {
-  entityId: string,
-  entityName : string,
-  permissions: Set<string>
 }
 ```
 
-These types show all the objects returned when calling FusionAuth, listing only the important properties, and ignoring the other properties. An entity has only a name and a type. There are two types of grants, one for users and one for entities. Note the Id here points to the grant object itself, not the target entity. You usually want to use the Id of the entity inside the grant. A grant's permissions are an array of strings.
+And finally, open the `package.json` file and add this attribute to the top level:
 
-The goal of this script is to find the permission type: A document (an entity with a name and Id) and all the permissions a user has to it. These permissions are a set, not an array, to avoid duplicates.
-
-Next, add a function to calculate the user's permissions to every document, which starts with code to get the user from FusionAuth, all entities, and all grants from every entity to every other.
-
-```ts
-async function getUserPermissions(emailAddress: string): Promise<TPermission[]> {
-  // get user, entities, and grants from fusionauth
-  const api = axios.create({ baseURL: 'http://fa:9011/api', headers: { 'Authorization': '33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod' } });
-
-  const { data: { user } }  =              await api.get(`/user`, { params: { email: emailAddress } }) as {data: {user: TUser}};
-  const { data: { grants: userGrants } } = await api.get(`/entity/grant/search?userId=${user.id}`) as {data: {grants: TUserGrant[]}};
-  const { data: { entities } } =           await api.post(`/entity/search`, { search: { numberOfResults: 10000, queryString: "*" } }) as {data: {entities: TEntity[]}};
-
-  const entityGrants: TEntityGrant[] = [];
-  for (const entity of entities) {
-    const { data: { grants } } = await api.get(`/entity/grant/search?entityId=${entity.id}`);
-    entityGrants.push(...grants);
-  }
+```json
+"type": "module",
 ```
 
-Note that the FusionAuth API key is hardcoded into this file and passed to Axios. In reality, you should never commit your key to Git, but keep it in a `.env` file. The rest of the code is straightforward: It calls the FusionAuth API for each type and stores the result returned. Read more about the APIs for [users](/docs/apis/users), [entities](/docs/apis/entities/entities), and [grants](/docs/apis/entities/grants).
+This will ensure that Typescript and Node correctly execute the code below.
 
-Continue the function above by calculating the permissions for the user for every document, and end the script by calling the function.
+Next, create a file called `getPermissions.mts` and copy the code below into it.
+
+This code uses the FusionAuth Typescript client library to retrieve all of the entity information for our documents. Here's the code:
 
 ```ts
-  // the goal: all documents and user's permissions to them
-  const permissionsToDocuments: TPermission[] = [];
+// #1 - Import the FusionAuth client and initialize it
+import {type Entity, type EntityGrant, FusionAuthClient} from '@fusionauth/typescript-client';
+const client = new FusionAuthClient('<YOUR-API-KEY>', 'http://localhost:9011');
 
-  // for each document
+// #2 - Create a Permission type we can use for displaying the result to the console
+type Permission = {
+  entityId: string;
+  entityName: string;
+  permissions: Set<string>;
+};
+
+// #3 - Determine all the permissions for a user
+async function getUserPermissions(emailAddress: string): Promise<void> {
+  // #4 - get user, entities, and grants from fusionauth
+  const user = (await client.retrieveUserByEmail(emailAddress)).response.user;
+  const userGrants = (await client.searchEntityGrants({search: {userId: user.id}})).response.grants;
+  const entities = (await client.searchEntities({search: {queryString: "*"}})).response.entities
+
+  // #5 - get all grants for all the entities
+  const entityGrants: EntityGrant[] = [];
+  for (const entity of entities) {
+    const grants = (await client.searchEntityGrants({search: {entityId: entity.id}})).response.grants;
+    entityGrants.push(...grants);
+  }
+
+  // #6 - determine all the permissions to documents
+  const permissionsToDocuments: Permission[] = [];
   for (const document of entities.filter(e => e.type.name == 'Document')) {
-    // add document with no starting permissions to list of documents
+    // Add an empty permission to start
     permissionsToDocuments.push({ entityId: document.id, entityName: document.name, permissions: new Set() });
 
-    // get list of document and all ancestor entities
-    const entitiesWithPermissionsToDocument : TEntity[] = [];
-    let currentEntity: TEntity | null = document;
+    // Loop through all the entities in the hierarchy, starting from the document and traversing to its ancestors
+    const entitiesWithPermissionsToDocument : Entity[] = [];
+    let currentEntity: Entity | null = document;
     while (currentEntity != null) {
       entitiesWithPermissionsToDocument.push(currentEntity);
       currentEntity = getEntityParent(currentEntity, entities, entityGrants);
     }
 
-    // if user has permissions to ancestor, add those permissions to document permissions for the user
-    for (const entityWithPermissionsToDocument of entitiesWithPermissionsToDocument)
+    // If the user has access to any of the documents directly, or the document's ancestors, add it to the list
+    for (const entityWithPermissionsToDocument of entitiesWithPermissionsToDocument) {
       userGrants.find(grant => grant.entity.id === entityWithPermissionsToDocument.id)
-        ?.permissions.map(p => permissionsToDocuments.at(-1)?.permissions.add(p));
+          ?.permissions
+          .map(p => permissionsToDocuments.at(-1)?.permissions.add(p));
+    }
   }
 
+  // #7 - Output the permissions
   console.log('All documents and permissions to them for ' + emailAddress + '\n');
   console.dir(permissionsToDocuments, { depth: null });
-  return permissionsToDocuments;
 }
 
-function getEntityParent(entity: TEntity, entities: TEntity[], entityGrants: TEntityGrant[]): TEntity | null {
-  for (const entityGrant of entityGrants)
-    if (entityGrant.recipientEntityId == entity.id && entityGrant.permissions.includes('IsMember'))
-      for (const parentEntity of entities)
-        if (parentEntity.id == entityGrant.entity.id)
+// #8 - Traverse up the hierarchy to find additional permissions
+function getEntityParent(entity: Entity, entities: Entity[], entityGrants: EntityGrant[]): Entity | null {
+  for (const entityGrant of entityGrants) {
+    if (entityGrant.recipientEntityId == entity.id && entityGrant.permissions.includes('IsMember')) {
+      for (const parentEntity of entities) {
+        if (parentEntity.id == entityGrant.entity.id) {
           return parentEntity;
+        }
+      }
+    }
+  }
+
   return null;
 }
 
+// #9 - Call the main function for a user
 await getUserPermissions('richard@example.com');
 ```
 
-This code is a little tricky if you haven't worked with a tree structure before. Luckily, our example assumes that every entity has only one owner (parent node), so in all searches, once you find a grant with `IsMember`, you know you have found the node's only parent. The code starts by looping through every entity that is a document, because you can ignore entities that aren't documents. For each document, the code gets all ancestors (the document's department and the department's company). Then it finally checks if the user has any permissions to any of those entities, and adds the permissions to the list of permissions the user has to the document.
+Let's walk through what this script is doing in each step.
 
-In a new terminal, run the commands below to install Axios and run the script to check what permissions Richard has to both documents. Here, to save time, you use Docker again, with the Deno 2 image, which can run TypeScript without any compile step, as well as allowing you to freely mix JavaScript, ES modules, and CommonJS modules. In reality, you could use the TypeScript compiler, and Node, Bun, or any other JavaScript environment you like.
+1. Here we are importing the FusionAuth client library for Typescript and initializing it. You'll need to supply a valid API key and we recommend not hardcoding API keys in code for production applications
+2. Create a simple type that we can use to track permissions the user has to entities in the hierarchy. This will be displayed at the end
+3. The main function that determines the permissions
+4. Fetch the user, entity grants the user has, and all of the entities. In a real-world application, we don't recommend fetching all of the entities. We also recommend adding lots of null and error checks to ensure that the user exists an they have entity grants with permissions
+5. Retrieve all of the entity grants for all of the entities. Again, this is not recommended in production applications since you could have thousands or even millions of entities and this code could crash the server
+6. This is the tricky part of the code. It loops over all of the documents by finding the entities with the type of `Document`. Then it creates an empty `Permission` object as a placeholder. From there, it determines if the user has any entity grants with permissions to that entity. If they don't, it checks the parent of the entity using the `IsMember` permission which connects one entity to another entity.
+7. After all of the permissions have been determined, they are output to the console
+8. This function is a traversal of the hierarchy. It loops of all of the entity grants and determines if the current entity is connected to another entity using the `IsMember` permission
+9. This calls the main function with the email address for one of our users. If you don't have a user with the email `richard@example.com`, you'll have to change this line of code
+
+If you want to learn more about the obejcts used in the example above, you can view out API docs for [users](/docs/apis/users), [entities](/docs/apis/entities/entities), and [grants](/docs/apis/entities/grants).
+
+Let's run this code and see what it outputs. In the console, run this command:
 
 ```sh
-docker run --platform=linux/amd64 --rm --network faNetwork -v ".:/app" -w "/app" denoland/deno:alpine-2.1.3 sh -c  "deno run --allow-net --allow-read ./getPermissions.ts"
+node --experimental-strip-types getPermissions.mts
 ```
 
-The result should be as below.
+The result should look something like this:
 
-```sh
+```text
 All documents and permissions to them for richard@example.com
 
 [
@@ -297,11 +298,13 @@ All documents and permissions to them for richard@example.com
 
 You can see the user has permissions to the passwords document because he is a member of the Operations department where the document is a member.
 
-The user has no permissions to the financial statements. In the FusionAuth web interface, browse to the list of users and manage Richard. Give him an entity grant with permission `Write` to the Change Bank entity.
+On the flip side, the user has no permissions to the financial statements.
 
-Now when you run the script again, you'll see he has been given indirect write permissions to the financial statements too.
+Let's change the user's permissions in the FusionAuth admin UI. Navigate to the User and click on his Entity Grants. Here, let's give him `Write` permission to the `Change Bank` entity. Since the `Change Bank` is the parent of the `Change Bank Finance` entity, which is the parent of the `Statements` entity, this will grant Richard permission to that document.
 
-```sh
+Let's run the script again and see the new output. It should look something like this:
+
+```text
 All documents and permissions to them for richard@example.com
 
 [
@@ -318,43 +321,20 @@ All documents and permissions to them for richard@example.com
 ]
 ```
 
-## Clean Up
+## Alternative Methods to Model Hierarchy in FusionAuth
 
-To remove all the Docker volumes, containers, images, and networks used in this guide, run the commands below.
+The code above demonstrates modeling hierarchies using entities, but there are other ways to model the example company structure in FusionAuth.
 
-```sh
-docker compose down -v
-docker rm fa fa_db
-docker rmi postgres:16.0-bookworm fusionauth/fusionauth-app:latest denoland/deno:alpine-2.1.3
-docker network prune;
-```
+Once approach is to use custom data on the User object. In this option, you store every user's company and department as properties in their JSON `user.data` field. This has to be done through the FusionAuth API, and cannot be maintained in the FusionAuth web interface. You will need to write your own UI app for your staff to work with FusionAuth. With this approach, you technically don't need to use Entity or any other objects in FusionAuth outside of the User object. Below is example JSON data for Alice:
 
-## Alternative Methods To Model Hierarchy In FusionAuth
-
-The code above demonstrates modeling hierarchies using entities, but there are other ways to model the example company structure in FusionAuth. Documents must be entities, or stored outside FusionAuth, and employees must be users. No other types in FusionAuth will work for this.
-
-With these constraints in mind, below are the two alternatives to using entities and grants.
-
-### Applications And Roles
-
-In this option, you add the finance employee, Alice, to an application representing her company and department, like Change Bank Operations application, instead of an entity representing the company. Each application will have two roles, read and write, which are effectively permissions not roles. You can't use groups instead of applications to model this example because groups do not have permissions. Alice will need to be a member of multiple applications, for different departments and companies.
-
-You would have to keep record of what department each document belongs to outside FusionAuth. This approach offers no benefit over using entities, unless you are using the free version of FusionAuth, which does not have entities.
-
-### User JSON Data
-
-In this option, you store every user's company and department as properties in their JSON `user.data` field. This has to be done through the FusionAuth API, and cannot be maintained in the FusionAuth web interface. You will need to write your own UI app for HR staff to work with FusionAuth. With this approach, you don't need to use applications, roles, or groups. Below is example JSON data for Alice:
-
-  ```js
+```json
+{
   "permissions": {
     "Change Bank": [],
     "Change Bank Operations": ["read", "write"],
-    "Change Bank Human Resources manual": ["read"],
+    "Change Bank Human Resources manual": ["read"]
   }
-  ```
+}
+```
 
-The last line, regarding permissions to a document, could either be stored manually, as is shown above, or could be an entity grant from Alice to the document. If you remove the last line, you would keep only company permissions in JSON and store document permissions using entities.
-
-Using entities, as the example script demonstrated earlier, or using JSON, are opposite approaches. Using entities explicitly stores the relationship between all organizational departments and all documents and their related permissions in FusionAuth. In contrast, using JSON doesn't use any FusionAuth features to store a user's departments and permissions. Instead, you can choose any naming scheme you want to represent your hierarchy. Here it's very important that you are able to map the text in the JSON with the names of your departments stored elsewhere. For instance, your permissions manager code would have to consistently use "Change Bank" and not "ChangeBank" for thousands of lines of JSON across hundreds of users.
-
-If you are using the free plan of FusionAuth, using JSON might be suitable for you, but may become confusing. A better alternative would be to use FusionAuth only for user authentication, and keep all authorization and company structure information in a separate dedicated document management system that uses FusionAuth as its authentication gateway. Example document management systems that can use an external OAuth provider like FusionAuth are [Nuxeo](https://doc.nuxeo.com/nxdoc/using-openid-oauth2-in-login-screen) and [M-Files](https://www.m-files.com/products/platform-security). (There may be other document management systems that allow the use of FusionAuth, but their documentation does not state it.)
+You can also use ids rather than strings for the keys inside this JSON object.
