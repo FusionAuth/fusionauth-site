@@ -13,6 +13,8 @@ A common pattern for modern organizations is to centralize user management with 
 
 In this architectural pattern, applications delegate user management to a specific system designed for the purpose. Many applications can delegate their auth needs to a standards based system. Examples include custom applications written by internal teams, third party services used by employees, such as Salesforce and Zendesk, and applications used by customers, such as forums, help desk software, or account management. 
 
+[![FusionAuth CTA Banner](/img/cta/modern-guide-2.png)](/ebooks/modern-guide-to-oauth)
+
 By choosing one user management application for your customer and employee needs, you reduce training time. You can also easily allow different types of users access to different types of applications.
 
 There are a number of identity management standards, including OpenID Connect (OIDC), released in the mid 2010s, and Security Assertion Markup Language (SAML), which was standardized in the 2000s. Applications choosing to delegate user management typically support one or more of these standards.
