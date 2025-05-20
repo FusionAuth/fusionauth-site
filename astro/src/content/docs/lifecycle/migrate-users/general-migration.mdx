@@ -14,6 +14,7 @@ import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro
 import SlowMigrationTimeline from 'src/content/docs/lifecycle/migrate-users/provider-specific/_slow-migration-timeline.mdx';
 import PerformanceTips from 'src/content/docs/lifecycle/migrate-users/_performance-tips.mdx';
 import InlineField from 'src/components/InlineField.astro';
+import InlineFieldValue from 'src/components/InlineFieldValue.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import DecisionChart from 'src/diagrams/docs/lifecycle/migrate-users/generic-migration-flow-chart.astro';
@@ -131,7 +132,7 @@ The [Core Concepts section](/docs/get-started/core-concepts/) is worth reviewing
 * Groups contain users and may have associated roles.
 * Users have registrations with applications. You can create registrations at the same time you are creating a user.
 
-All entities have a [UUID](/docs/reference/data-types#uuids) identifier. This Id can be specified on creation, but must be a valid UUID. If you have an identifier that is not a valid UUID, one option is to store the old Id in the `data` field of the FusionAuth configuration.
+All entities have a [UUID](/docs/reference/data-types#uuids) identifier. This Id can be specified on creation, but must be a valid UUID. If you have an identifier that is not a valid UUID, one option is to store the old Id in the <InlineField>data</InlineField> field of the FusionAuth configuration.
 
 #### Evaluating FusionAuth
 
@@ -169,7 +170,7 @@ Think about the edge cases. What fields are required and optional in the old aut
 
 Is there a clean one-to-one mapping between the original system's auth fields and FusionAuth? The answer is usually "no". Therefore plan to spend some time examining the current system's data and seeing how it maps to FusionAuth's user schema, [as documented](/docs/apis/users). We'll look at an example of a mapping process in the next section.
 
-What should you do if you have data which doesn't map cleanly to any of the fields available in FusionAuth? FusionAuth provides a `data` field on a number of entities, including the user entity and application registrations. This `data` field can be used to store arbitrary key value data, and is a good place to save any fields from the old system which don't map well to the FusionAuth user or application registration data models. In fact, it's often useful to store all the original user data in this field, so that you have it should you need it post-migration. Having access to the original, unmigrated data can be helpful in the future. If there was mistranslated data or fields, you'll be able to examine what was present in the old system without accessing it.
+What should you do if you have data which doesn't map cleanly to any of the fields available in FusionAuth? FusionAuth provides a <InlineField>data</InlineField> field on a number of entities, including the user entity and application registrations. This <InlineField>data</InlineField> field can be used to store arbitrary key value data, and is a good place to save any fields from the old system which don't map well to the FusionAuth user or application registration data models. In fact, it's often useful to store all the original user data in this field, so that you have it should you need it post-migration. Having access to the original, unmigrated data can be helpful in the future. If there was mistranslated data or fields, you'll be able to examine what was present in the old system without accessing it.
 
 Consider how to handle unexpected data during the migration process. You can save off the record for further examination, toss it as malformed, or ignore only fields containing unexpected data. Which choice you make depends on your business needs and the value of each account.
 
@@ -188,7 +189,7 @@ If you have user data in multiple systems and are planning to merge the data, ma
 
 #### An Example Of Data Mapping
 
-Let's examine a data mapping example. Suppose an old auth system has the following user data model (let's ignore `email` and `password` fields, as they won't be necessarily be mapped):
+Let's examine a data mapping example. Suppose an old auth system has the following user data model (let's ignore `email` and <InlineField>password</InlineField> fields, as they won't be necessarily be mapped):
 
 * `fname` - string
 * `lname` - string
@@ -207,9 +208,9 @@ There are a number of mappings required.
 
 The first is converting from `fname` to `first_name` and `lname` to `last_name`, which might seem trivial. It is, but you need to make sure you handle any field which needs to be renamed. Spreadsheets are your friend.
 
-The second mapping task is parsing the `datebirth` field into an ISO-8601 formatted string, to be placed in the `birthDate` field. Depending on how clean the original data is, this could be simple or it could be painful. If the latter, use a date parsing library; it'll handle edge cases.
+The second mapping task is parsing the <InlineField>datebirth</InlineField> field into an ISO-8601 formatted string, to be placed in the <InlineField>birthDate</InlineField> field. Depending on how clean the original data is, this could be simple or it could be painful. If the latter, use a date parsing library; it'll handle edge cases.
 
-Then, consider how to handle the `phone_num` field. If you know that every number in your original datastore is a mobile number, you could use the `mobilePhone` FusionAuth field. You could also store it in `user.data`, in the `user.data.phoneNumber` field, for example.
+Then, consider how to handle the <InlineField>phone_num</InlineField> field. If you know that every number in your original datastore is a mobile number, you could use the `mobilePhone` FusionAuth field. You could also store it in `user.data`, in the `user.data.phoneNumber` field, for example.
 
 Finally, you need to map role values. Roles in FusionAuth are stored on the `registration` object, because they are associated with applications and users. When you are creating a user, you can create a registration at the same time, and then associate any roles for that application with that registration.
 
@@ -247,7 +248,7 @@ Create one or many applications and add any roles needed for them. Create a Fusi
 
 ![Adding an application.](/img/docs/lifecycle/migrate-users/provider-specific/add-application.png)
 
-Map user attributes, as discussed above, into the FusionAuth `user` or `registration` objects. If some of your data doesn't fit into the FusionAuth model, add it to the appropriate `data` field.
+Map user attributes, as discussed above, into the FusionAuth `user` or `registration` objects. If some of your data doesn't fit into the FusionAuth model, add it to the appropriate <InlineField>data</InlineField> field.
 
 All of this configuration can be done via the API or the administrative user interface. If you want to use the former, you'll have to [create an API key](/docs/apis/authentication#managing-api-keys) with appropriate permissions.
 
@@ -316,7 +317,7 @@ Consult the [documentation for this API](/docs/apis/users#import-users) for more
 
 If the original system hashes passwords using an algorithm other than those [schemes FusionAuth supports](/docs/reference/password-hashes), write and install a [custom password hashing plugin](/docs/extend/code/password-hashes/custom-password-hashing). In either case, specify the scheme in the user import JSON file. (It is called an `encryptionScheme` for backwards compatibility, but is actually a hashing scheme.)
 
-In FusionAuth, duplicate emails are not allowed within the same tenant. If you may have duplicate emails, de-duplicate them before importing. If you don't want to do so, set the `validateDbConstraints` property to `true` in the import JSON. When this is done, the import API will return a user friendly error message when duplicate addresses are found.
+In FusionAuth, duplicate emails are not allowed within the same tenant. If you may have duplicate emails, de-duplicate them before importing. If you don't want to do so, set the `validateDbConstraints` property to <InlineFieldValue>true</InlineFieldValue> in the import JSON. When this is done, the import API will return a user friendly error message when duplicate addresses are found.
 
 ```json title="Import Error Message When validateDbConstraints is true"
 {
@@ -338,7 +339,7 @@ In FusionAuth, duplicate emails are not allowed within the same tenant. If you m
 }
 ```
 
-The extra validation comes at a performance cost, however, so you may want to run your import with `validateDbConstraints` equal to `true` to find the duplicate email addresses and remove or remediate them. After that, you can run an import with `validateDbConstraints` equal to `false` and reap the performance benefits.
+The extra validation comes at a performance cost, however, so you may want to run your import with `validateDbConstraints` equal to <InlineFieldValue>true</InlineFieldValue> to find the duplicate email addresses and remove or remediate them. After that, you can run an import with `validateDbConstraints` equal to <InlineFieldValue>false</InlineFieldValue> and reap the performance benefits.
 
 #### Rehashing User Passwords
 
@@ -438,13 +439,13 @@ This API should return a FusionAuth login response, which includes the `User` ob
 
 <JSON title="Example of a Successful Login Response JSON" src="users/login-migrated-response.json" />
 
-This is an example of all the JSON data you could return, but you can omit most fields. The only requirement is that either the `username` or the `email` field must be returned.
+This is an example of all the JSON data you could return, but you can omit most fields. The only requirement is that either the `username` or the <InlineField>email</InlineField> field must be returned.
 
 The password is not included. That password will have been hashed according to your FusionAuth tenant password settings.
 
 The generated JWT will be delivered to the client to present to any resource servers (other API servers, etc). For maximum compatibility, it should have [FusionAuth claim values](/docs/apis/jwt).
 
-The JSON response above has a `user.data.migrated` value of `true`. This indicates that this user has been migrated. As mentioned above, adding this custom attribute allows you to query migration progress. You can read more about the [Generic Connector requirements](/docs/lifecycle/migrate-users/connectors/generic-connector) in the documentation.
+The JSON response above has a `user.data.migrated` value of <InlineFieldValue>true</InlineFieldValue>. This indicates that this user has been migrated. As mentioned above, adding this custom attribute allows you to query migration progress. You can read more about the [Generic Connector requirements](/docs/lifecycle/migrate-users/connectors/generic-connector) in the documentation.
 
 #### Configure Your Connector
 
@@ -462,7 +463,7 @@ Map each attribute from the LDAP directory into the FusionAuth user object. You 
 
 <LdapConnectorReconcile />
 
-Make sure you uncomment the lines where `user.data.migrated` is set to `true`, as that will be needed to monitor the migration progress. More details about LDAP configuration are available in the [LDAP Connector documentation](/docs/lifecycle/migrate-users/connectors/ldap-connector).
+Make sure you uncomment the lines where `user.data.migrated` is set to <InlineFieldValue>true</InlineFieldValue>, as that will be needed to monitor the migration progress. More details about LDAP configuration are available in the [LDAP Connector documentation](/docs/lifecycle/migrate-users/connectors/ldap-connector).
 
 ##### Generic
 
@@ -472,7 +473,7 @@ Make sure you use TLS and other security measures to connect to this endpoint, s
 
 #### Capturing Migration Progress
 
-As discussed above, you want to make sure you can identify that a user has been migrated, rather than created directly in FusionAuth. Having this data allows you to determine progress toward your migration goal. Ensure that every migrated user has a `user.data.migrated` attribute set to `true`. Whichever connection you use, make sure you set this attribute, as illustrated above.
+As discussed above, you want to make sure you can identify that a user has been migrated, rather than created directly in FusionAuth. Having this data allows you to determine progress toward your migration goal. Ensure that every migrated user has a `user.data.migrated` attribute set to <InlineFieldValue>true</InlineFieldValue>. Whichever connection you use, make sure you set this attribute, as illustrated above.
 
 #### Testing
 
@@ -592,7 +593,7 @@ You can look for failed logins.
 
 * Set up a webhook for [failed login](/docs/extend/events-and-webhooks/events/user-login-failed).
 * Check to see if the email address exists in your legacy user data store.
-* If the user exists, migrate the user data via the [User API](/docs/apis/users#create-a-user), setting <InlineField>sendSetPasswordEmail</InlineField> to `true`.
+* If the user exists, migrate the user data via the [User API](/docs/apis/users#create-a-user), setting <InlineField>sendSetPasswordEmail</InlineField> to <InlineFieldValue>true</InlineFieldValue>.
 
 This will force the user to reset their password, which may be a surprise to them, but will let them continue to access their account without contacting customer service. If you pursue this option, make sure you consider the content of the Set Password email template.
 
