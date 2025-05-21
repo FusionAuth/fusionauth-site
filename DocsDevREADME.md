@@ -41,8 +41,8 @@ Here are some guidelines to follow when writing documentation (everything under 
 
 ## Docs 
 - Don't use complex breadcrumbs styling in docs. Use `->`. Use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component. Breadcrumbs should look like this `<Breadcrumb>foo -> bar -> baz</Breadcrumb>`.
-- If you are referencing a field in a form or JSON API doc, use the [InlineField](astro/src/components/InlineField.astro) component: `<InlineField>Issuer</InlineField>`. The field can writable or read-only. It should be used for all fields, including those that are not editable in the UI.
-- If you are defining or describing an input to a field in a form or JSON API doc, use the [InlineFieldValue](astro/src/components/InlineFieldValue.astro) component: `<InlineFieldValue>Issuer</InlineFieldValue>`.
+- If you are referencing a field in a form or JSON API doc, or a parameter use the [InlineField](astro/src/components/InlineField.astro) component: `<InlineField>Issuer</InlineField>`. The field can writable or read-only. It should be used for all fields, including those that are not editable in the UI.
+- If you are defining or describing an input or output to a inline field in a form or JSON API doc, or a parameter value use the [InlineFieldValue](astro/src/components/InlineFieldValue.astro) component: `<InlineFieldValue>acme</InlineFieldValue>`.
 - If you are referencing a UI element or button, use the [InlineUIElement](astro/src/components/InlineUIElement.astro) component: `Click the <InlineUIElement>Ok</InlineUIElement> button`.
 - If you are referencing a tab in the UI, use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component: `On the <Breadcrumb>OAuth</Breadcrumb> tab`.
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
