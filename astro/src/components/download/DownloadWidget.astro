@@ -2,7 +2,7 @@
 import Code from 'src/components/Code.astro';
 import Kickstart from 'src/components/download/Kickstart.astro';
 
-const {kickstartEnabled, kickstartName, includeDocker = true, includeFastPath = true, includeHostedOptions, includeKubernetes, includePackages, includeSandbox} = Astro.props;
+const {dockerComposeArgs = "up", dockerComposeExtraDownloads = [], kickstartEnabled = false, kickstartName = "", includeDocker = true, includeDockerVanilla = true, includeFastPath = true, includeHostedOptions, includeKubernetes, includePackages, includeSandbox} = Astro.props;
 
 var tabs = [];
 
@@ -157,7 +157,9 @@ var step = 1;
   <div data-tab-content id="download-widget-docker" class:list={[tabClass, includeDocker ? "active" : "hidden"]}>
     <ul class="flex mt-3 mx-4">
       <li class="group active"><a data-tab-button href="#download-widget-docker-compose" class={subTabClass}>Docker Compose</a></li>
-      <li class="group"><a data-tab-button href="#download-widget-docker-vanilla" class={subTabClass}>Docker Vanilla</a></li>
+      { includeDockerVanilla &&
+        <li class="group"><a data-tab-button href="#download-widget-docker-vanilla" class={subTabClass}>Docker Vanilla</a></li>
+      }
     </ul>
     <hr class="border-slate-700"/>
     <div data-tab-content id="download-widget-docker-compose" class="m-8" data-reset={step = 1}>
@@ -174,14 +176,20 @@ var step = 1;
       </ul>
       <div data-tab-content id="download-widget-docker-compose-download-nix">
         <Code>
-          curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/docker-compose.yml > docker-compose.yml && \
+          curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/docker-compose.yml > docker-compose.yml
           curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/.env > .env
+          {dockerComposeExtraDownloads.map(download =>
+              "curl -fsSL " + download.source + " > " + download.destination + "\n"
+          )}
         </Code>
       </div>
       <div data-tab-content id="download-widget-docker-compose-download-windows" class="hidden">
         <Code>
           Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/docker-compose.yml -OutFile docker-compose.yml
           Invoke-WebRequest -UseBasicParsing https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/.env -OutFile .env
+          {dockerComposeExtraDownloads.map(download =>
+              "Invoke-WebRequest -UseBasicParsing " + download.source + " -OutFile " + download.destination + "\n"
+          )}
         </Code>
       </div>
       { kickstartEnabled &&
@@ -197,7 +205,7 @@ var step = 1;
         <strong>Step { step++ }:</strong> Start the Docker Compose containers
       </p>
       <Code>
-        docker compose up
+        docker compose {dockerComposeArgs}
       </Code>
       <p class="mb-6">
         Then open <a href="http://localhost:9011" class={anchorClass}>http://localhost:9011</a> in your browser.
@@ -252,7 +260,7 @@ var step = 1;
         <strong>Step { step++ }:</strong> Download and install the ZIP files
       </p>
       <Code>
-        curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-install/master/install.sh | bash -s && \
+        curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-install/master/install.sh | bash -s
         cd fusionauth
       </Code>
       { kickstartEnabled &&
@@ -286,7 +294,7 @@ var step = 1;
         <strong>Step { step++ }:</strong> Download and install the ZIP files
       </p>
       <Code>
-        curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-install/master/install.sh | bash -s && \
+        curl -fsSL https://raw.githubusercontent.com/FusionAuth/fusionauth-install/master/install.sh | bash -s
         cd fusionauth
       </Code>
       { kickstartEnabled &&
@@ -362,9 +370,9 @@ var step = 1;
         Follow the steps below to install FusionAuth on a Debian/Ubuntu style Linux. This installation method installs the FusionAuth platform packages (DEBs) and will require sudo or root access. This command assumes you are using Bash. You might need to modify it if you are using a different shell. You'll also need to manually install a database for FusionAuth to work. Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
       </p>
       <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-<code class="block whitespace-pre">VERSION=$(curl -fsSL https://license.fusionauth.io/api/latest-version) && \
-curl -fsSL https://files.fusionauth.io/products/fusionauth/$&lbrace;VERSION}/fusionauth-app_\$&lbrace;VERSION}-1_all.deb > fusionauth-app_\$&lbrace;VERSION}-1_all.deb && \
-sudo dpkg -i fusionauth-app_\$&lbrace;VERSION}-1_all.deb && \
+<code class="block whitespace-pre">VERSION=$(curl -fsSL https://license.fusionauth.io/api/latest-version)
+curl -fsSL https://files.fusionauth.io/products/fusionauth/$&lbrace;VERSION}/fusionauth-app_\$&lbrace;VERSION}-1_all.deb > fusionauth-app_\$&lbrace;VERSION}-1_all.deb
+sudo dpkg -i fusionauth-app_\$&lbrace;VERSION}-1_all.deb
 sudo systemctl start fusionauth-app</code>
       </pre>
       <p>
@@ -383,9 +391,9 @@ sudo systemctl start fusionauth-app</code>
         Follow the steps below to install FusionAuth on Red Hat or other RPM-based distribution. This installation method installs the FusionAuth platform packages (RPMs) and will require sudo or root access. This command assume s you are using Bash. You might need to modify it if you are using a different shell. You'll also need to manually install a database for FusionAuth to work. Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
       </p>
       <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-<code class="block whitespace-pre">VERSION=$(curl -fsSL https://license.fusionauth.io/api/latest-version) && \
-curl -fsSL https://files.fusionauth.io/products/fusionauth/$&lbrace;VERSION}/fusionauth-app-$&lbrace;VERSION}-1.noarch.rpm > fusionauth-app-$&lbrace;VERSION}-1.noarch.rpm && \
-sudo rpm -i fusionauth-app-$&lbrace;VERSION}-1.noarch.rpm && \
+<code class="block whitespace-pre">VERSION=$(curl -fsSL https://license.fusionauth.io/api/latest-version)
+curl -fsSL https://files.fusionauth.io/products/fusionauth/$&lbrace;VERSION}/fusionauth-app-$&lbrace;VERSION}-1.noarch.rpm > fusionauth-app-$&lbrace;VERSION}-1.noarch.rpm
+sudo rpm -i fusionauth-app-$&lbrace;VERSION}-1.noarch.rpm
 sudo systemctl start fusionauth-app</code>
       </pre>
       <p>
@@ -445,10 +453,10 @@ sudo systemctl start fusionauth-app</code>
         Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
       </p>
       <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-<code class="block whitespace-pre">helm repo add fusionauth https://fusionauth.github.io/charts && \
-curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/master/chart/values.yaml && \
-helm install my-release fusionauth/fusionauth -f values.yaml && \
-export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="&lbrace;.items[0].metadata.name}") && \
+<code class="block whitespace-pre">helm repo add fusionauth https://fusionauth.github.io/charts
+curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/master/chart/values.yaml
+helm install my-release fusionauth/fusionauth -f values.yaml
+export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="&lbrace;.items[0].metadata.name}")
 kubectl port-forward svc/$SVC_NAME 9011:9011</code>
       </pre>
       <p>
@@ -463,10 +471,10 @@ kubectl port-forward svc/$SVC_NAME 9011:9011</code>
         Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
       </p>
       <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-<code class="block whitespace-pre">helm repo add fusionauth https://fusionauth.github.io/charts && \
-curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/master/chart/values.yaml && \
-helm install my-release fusionauth/fusionauth -f values.yaml && \
-export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="&lbrace;.items[0].metadata.name}") && \
+<code class="block whitespace-pre">helm repo add fusionauth https://fusionauth.github.io/charts
+curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/master/chart/values.yaml
+helm install my-release fusionauth/fusionauth -f values.yaml
+export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="&lbrace;.items[0].metadata.name}")
 kubectl port-forward svc/$SVC_NAME 9011:9011</code>
       </pre>
       <p>
@@ -481,10 +489,10 @@ kubectl port-forward svc/$SVC_NAME 9011:9011</code>
         Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
       </p>
       <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-<code class="block whitespace-pre">helm repo add fusionauth https://fusionauth.github.io/charts && \
-curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/master/chart/values.yaml && \
-helm install my-release fusionauth/fusionauth -f values.yaml && \
-export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="&lbrace;.items[0].metadata.name}") && \
+<code class="block whitespace-pre">helm repo add fusionauth https://fusionauth.github.io/charts
+curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/master/chart/values.yaml
+helm install my-release fusionauth/fusionauth -f values.yaml
+export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="&lbrace;.items[0].metadata.name}")
 kubectl port-forward svc/$SVC_NAME 9011:9011</code>
       </pre>
       <p>
@@ -499,10 +507,10 @@ kubectl port-forward svc/$SVC_NAME 9011:9011</code>
         Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
       </p>
       <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-<code class="block whitespace-pre">helm repo add fusionauth https://fusionauth.github.io/charts && \
-curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/master/chart/values.yaml && \
-helm install my-release fusionauth/fusionauth -f values.yaml && \
-export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="&lbrace;.items[0].metadata.name}") && \
+<code class="block whitespace-pre">helm repo add fusionauth https://fusionauth.github.io/charts
+curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/master/chart/values.yaml
+helm install my-release fusionauth/fusionauth -f values.yaml
+export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="&lbrace;.items[0].metadata.name}")
 kubectl port-forward svc/$SVC_NAME 9011:9011</code>
       </pre>
       <p>
@@ -523,10 +531,10 @@ kubectl port-forward svc/$SVC_NAME 9011:9011</code>
         Feel free to open an issue in <a href="https://github.com/FusionAuth/fusionauth-issues" class={anchorClass}>GitHub</a> if you find any issues.
       </p>
       <pre class="astro-code bg-slate-950 mb-8 overflow-x-scroll pt-4 px-4 [&::-webkit-scrollbar-thumb]:bg-indigo-400 [&::-webkit-scrollbar-track]:bg-slate-950 [&::-webkit-scrollbar]:h-1">
-<code class="block whitespace-pre">helm repo add fusionauth https://fusionauth.github.io/charts && \
-curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/master/chart/values.yaml && \
-helm install my-release fusionauth/fusionauth -f values.yaml && \
-export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="&lbrace;.items[0].metadata.name}") && \
+<code class="block whitespace-pre">helm repo add fusionauth https://fusionauth.github.io/charts
+curl -o values.yaml https://raw.githubusercontent.com/FusionAuth/charts/master/chart/values.yaml
+helm install my-release fusionauth/fusionauth -f values.yaml
+export SVC_NAME=$(kubectl get svc --namespace default -l "app.kubernetes.io/name=fusionauth,app.kubernetes.io/instance=my-release" -o jsonpath="&lbrace;.items[0].metadata.name}")
 kubectl port-forward svc/$SVC_NAME 9011:9011</code>
       </pre>
       <p>
