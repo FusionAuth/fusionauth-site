@@ -10,6 +10,7 @@ excerpt_separator: "{/* more */}"
 ---
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
+import InlineFieldValue from 'src/components/InlineFieldValue.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 
 Microsoft's Active Directory is a common enterprise user data store. If you are building apps for users authenticated by Active Directory, you might want to connect FusionAuth to it. Another common use case is to have some applications for internal users which should be authenticated against Active Directory and other applications for people outside your organization, with user data stored in FusionAuth. FusionAuth can act as a CIAM for your external users, but delegate authentication of internal accounts to Active Directory.
@@ -129,7 +130,7 @@ function reconcile(user, userAttributes) {
 
 This code isn't too helpful though, as no user attributes are copied. At a minimum, you must set `user.id` and either `user.username` or `user.email` values. You also probably want to configure the `registrations` collection, which is the set of FusionAuth applications for which this user is authorized. If you have multiple tenants, populate `user.tenantId` as well.
 
-The lambda will receive a `userAttributes` variable from the Connector. This contains attributes requested from Active Directory. You'll see how to request specific attributes below. From `userAttributes`, you'll want to assemble a FusionAuth `user` object. All the normal [lambda limitations apply](/docs/extend/code/lambdas/#limitations). The attributes of the `user` object are thoroughly documented in the [API docs](/docs/apis/users#create-a-user), but in general you'll be copying values from `userAttributes` to `user`, or hardcoding values. Here's a more full featured example lambda function, which copies some attributes, sets `active` to `true`, and registers the user for a given application:
+The lambda will receive a `userAttributes` variable from the Connector. This contains attributes requested from Active Directory. You'll see how to request specific attributes below. From `userAttributes`, you'll want to assemble a FusionAuth `user` object. All the normal [lambda limitations apply](/docs/extend/code/lambdas/#limitations). The attributes of the `user` object are thoroughly documented in the [API docs](/docs/apis/users#create-a-user), but in general you'll be copying values from `userAttributes` to `user`, or hardcoding values. Here's a more full featured example lambda function, which copies some attributes, sets `active` to <InlineFieldValue>true</InlineFieldValue>, and registers the user for a given application:
 
 ```javascript
 // Using the response from an LDAP connector, reconcile the User.
@@ -199,7 +200,7 @@ function guidToString(b64)
 }
 ```
 
-The functions `guidToString` and `decodeBase64` convert the `objectGUID` attribute, stored as a set of bytes in Active Directory, to a FusionAuth friendly UUID. 
+The functions `guidToString` and `decodeBase64` convert the <InlineField>objectGUID</InlineField> attribute, stored as a set of bytes in Active Directory, to a FusionAuth friendly UUID.
 
 If you are using version 1.19.7 or later, use the built in function instead: `FusionAuth.ActiveDirectory.b64GuidToString(userAttributes['objectGuid;binary'])`. See [the LDAP lambda docs](/docs/extend/code/lambdas/ldap-connector-reconcile) for more information about that function.
 
@@ -226,7 +227,7 @@ As mentioned above, these attributes will be passed to the lambda as the `userAt
 
 Add each attribute one at a time in the administrative user interface; you can't cut and paste them. You'll want to make sure you also include in the set of requested values a unique identifier to be converted into a UUID. Set the `user.id` value to this UUID. 
 
-Good news: Active Directory has a user id that is a GUID. Bad news: Active Directory stores the user's id in binary in the `objectGUID` attribute, so there are a few complications to convert it. The underlying LDAP access method tries to treat this value as a string, so you need to specify it as a binary object by appending `;binary` to the attribute name, like so: `objectGUID;binary`. The lambda then decodes this to a FusionAuth friendly UUID using the `guidToString` method (or, as mentioned above, a built in method, if you are on version 1.19.7 or later).
+Good news: Active Directory has a user id that is a GUID. Bad news: Active Directory stores the user's id in binary in the <InlineField>objectGUID</InlineField> attribute, so there are a few complications to convert it. The underlying LDAP access method tries to treat this value as a string, so you need to specify it as a binary object by appending `;binary` to the attribute name, like so: `objectGUID;binary`. The lambda then decodes this to a FusionAuth friendly UUID using the `guidToString` method (or, as mentioned above, a built in method, if you are on version 1.19.7 or later).
 
 After you've added everything, the configuration will look like this, though of course the URL and other properties will be different:
 
