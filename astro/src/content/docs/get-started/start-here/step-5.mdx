@@ -1,0 +1,52 @@
+---
+title: "Step 5 - Session Management"
+description: Learn how to use FusionAuth by using an example application that uses refresh tokens for session management.
+section: get started
+subcategory: start here
+navOrder: 0
+codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-example-get-started/main
+---
+import ExpectedTime from 'src/components/ExpectedTime.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+
+<ExpectedTime duration={7}/>
+
+## Sessions
+
+When using FusionAuth as an OAuth identity provider, a user is logged in using what is known as the Authorization Code grant. This leverages FusionAuth's hosted login pages to authenticate the user and provide an access token to the application.
+
+Access tokens are designed to have short lifespans though. In most cases, an access token will only be valid for a few minutes before it expires. It would be brutal to force users to log in every few minutes. Instead, it would be ideal to control how long the user is logged in via a user session.
+
+Luckily, the OAuth standard provides a simple way to manage user sessions. This is done using refresh tokens.
+
+Refresh tokens are long-lived tokens that should never be shared with any other application, user, or system. These are the most secure tokens and therefore access to them must be strictly controlled. In many cases, refresh tokens are stored in cookies in the browser. These cookies must be marked as `HttpOnly` and `Secure`. These two settings ensure that the refresh token cannot be stolen in any way. Ideally, the access token is also marked with the same attributes.
+
+Our example app handles refresh tokens automatically. Let's look at how this is accomplished.
+
+Open the file `src/sdk.ts` and locate the function named `logInUser`. This function is where the access token, refresh token, and id token (part of the OpenID Connect specification) are written out to the browser as cookies. This function looks like this:
+
+<RemoteCode url={frontmatter.codeRoot + "/src/sdk.ts"} lang="typescript" tags="logInUser"/>
+
+You can see that the access and refresh token are written out as `HttpOnly`. Our example application doesn't run over TLS, therefore we can't set the `Secure` flag. But for production applications, you should use TLS and mark cookies as `Secure`.
+
+Next, let's look at how the refresh token is used when the access token expires. Scroll to the `getUser` function in this file. This function loads the same cookie that was written out above. We are using the `jose` library, which throws an exception when the access token has expired. This exception is handled in the `catch` block like this:
+
+<RemoteCode url={frontmatter.codeRoot + "/src/sdk.ts"} lang="typescript" tags="getUser"/>
+
+Inside this `catch` block, we call a handle function called `handleJWTException`. If you scroll down to that code you will see that we check if the exception is due to an expired JWT. If the JWT is expired, we refresh it. This code block looks like this:
+
+<RemoteCode url={frontmatter.codeRoot + "/src/sdk.ts"} lang="typescript" tags="handleJWTException"/>
+
+You can see that we first verify if refresh tokens have been enabled and then load the refresh token from the cookie. The code then uses the FusionAuth Typescript client library to call a standard OAuth API that handles what is known as the `Refresh Grant`. You can read up more about this API and the grant in our [OAuth documentation](/docs/lifecycle/authenticate-users/oauth/).
+
+Once FusionAuth responds with a new set of tokens, which might include a new access token, new refresh token, and new id token, these are all stored in their respective cookies again.
+
+If at any point the refresh token expires or is deleted, this code will immediately return `null`, which will cause the `userHasAccess` and `userLoggedIn` checks to fail, sending the user back to the login page.
+
+FusionAuth also provides numerous methods for managing user sessions directly using the API or SDKs, including the ability to terminate any session, sessions that meet certain criteria, or all sessions associated with a user or an application.
+
+## Next steps
+
+[\< Go back to step 4 - Role-based access control](step-4) <span class="inline-block mx-6 font-bold">Ready for the next step?</span> [Step 6 - Logout \>](step-6)
+
+

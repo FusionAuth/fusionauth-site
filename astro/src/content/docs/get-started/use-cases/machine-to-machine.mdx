@@ -11,6 +11,7 @@ import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 import DataFieldDataTypeChanges from 'src/content/docs/_shared/_data-field-data-type-changes.mdx';
 import JSON from 'src/components/JSON.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
 
 ## Overview
 
@@ -94,61 +95,10 @@ For each clock radio, create an Entity in FusionAuth which will function as a di
 
 Here's example code to create the entity and then grant the `news` permission:
 
-```javascript
-import {FusionAuthClient} from '@fusionauth/typescript-client';
-import 'dotenv/config'
-
-const FUSIONAUTH_API_KEY = process.env.FUSIONAUTH_API_KEY;
-const BASE_URL = process.env.BASE_URL;
-const ENTITY_TYPE_ID = process.env.ENTITY_TYPE_ID;
-const TARGET_ENTITY_ID = process.env.TARGET_ENTITY_ID;
-const PERMISSION = 'news';
-
-const client = new FusionAuthClient(FUSIONAUTH_API_KEY, BASE_URL);
-
-async function createEntity() {
-  try {
-    const response = await client.createEntity(null, {
-      entity: {
-        name: 'ClockRadioForUser EXAMPLEUUID',
-        data: { plan: 'basic', user_id:'EXAMPLEUUID' },
-        type: {
-          id: ENTITY_TYPE_ID
-        }
-      }
-    });
-    
-    console.log('Entity created:', response.response);
-    return response.response.entity.id;
-  } catch (error) {
-    console.error('Error creating entity:', error);
-  }
-}
-
-
-async function grantPermission(entityId) {
-  try {
-    const req = {
-      grant: {
-        permissions: [PERMISSION],
-        recipientEntityId: entityId
-      }
-    }
-    const response = await client.upsertEntityGrant(TARGET_ENTITY_ID, req);
-    
-    console.log('Permission granted:', response);
-  } catch (error) {
-    console.error('Error granting permission:', JSON.stringify(error));
-  }
-}
-
-(async () => {
-  const entityId = await createEntity();
-  if (entityId) {
-    await grantPermission(entityId);
-  }
-})();
-```
+<RemoteCode lang="javascript"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-machine-to-machine/refs/heads/main/create-entity/create-entity.js"
+            title="Create the entity and grant the permission" 
+            />
 
 Finally, distribute the client Id and secret to each clock radio so that it can request an access token. If you want to do this in reverse order, and set up the device with a known client Id and secret and then set up the entity, you can do that as well, as long as the [client Id is a UUID](/docs/reference/data-types#uuids).
 
@@ -160,95 +110,29 @@ When the radio is ready to make the API request, it must obtain an access token.
 
 You obtain the access token using [the Client Credentials grant](/docs/lifecycle/authenticate-users/oauth/#example-client-credentials-grant). If needed, modify the body of the access token by using a [Client Credentials JWT Populate lambda](/docs/extend/code/lambdas/client-credentials-jwt-populate). Here's an example of the grant request made by a clock radio.
 
-```javascript
-function buildScope(targetEntityId, permissionString) {
-  return 'target-entity:'+targetEntityId+':'+permissionString;
-}
-
-async function requestAccessTokenSuccess() {
-  let access_token = null;
-  try {
-    const response = await client.clientCredentialsGrant(RECIPIENT_ENTITY_ID, 
-                                                         RECIPIENT_ENTITY_SECRET, 
-                                                         buildScope(TARGET_ENTITY_ID,PERMISSION)); 
-    access_token = response.response.access_token;
-  } catch (error) {
-    console.error('Error getting access token:', JSON.stringify(error));
-  }
-  return access_token;
-}
-
-```
+<RemoteCode lang="javascript"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-machine-to-machine/refs/heads/main/request-api/request-news.js"
+            title="Request the access token" 
+            tags="requestAccessToken"
+            />
 
 Present the access token to the API along with your request. This is typically done using the `Authorization` header, but can be customized based on what the API expects.
 
-```javascript
-async function fetchNews(access_token) {
-  try {
-    const response = await fetch(API_BASE_URL + '/api/news', {
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + access_token,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log(data);
-  } catch (error) {
-    console.error('Error fetching news:', error);
-  }
-}
-```
+<RemoteCode lang="javascript"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-machine-to-machine/refs/heads/main/request-api/request-news.js"
+            title="Make the API request with the access token in the Authorization header" 
+            tags="fetchNews"
+            />
 
 ### Building The API Response 
 
 The API validates the access token, using a library to check the signature and the other claims. Here's an example helper middleware validating an access token in an Express API, which reads the token either from a cookie or from the `Authorization` header.
 
-```javascript
-require('dotenv/config');
-const jose = require('jose');
 
-const jwksClient = jose.createRemoteJWKSet(
-  new URL(`${process.env.BASE_URL}/.well-known/jwks.json`)
-);
-
-const verifyJWT = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  const tokenFromHeader = authHeader ? authHeader.split(' ')[1] : null;
-  const access_token = req.cookies['app.at'] || tokenFromHeader;
-  if (!access_token) {
-    res.status(401);
-    res.send({ error: 'Missing token cookie and Authorization header' });
-  } else {
-    try {
-      // console.log(access_token);
-      const result = await jose.jwtVerify(access_token, jwksClient, {
-        issuer: process.env.BASE_URL,
-        audience: process.env.API_ENTITY_ID,
-      });
-
-      req.verifiedToken = access_token;
-      next();
-    } catch (e) {
-      if (e instanceof jose.errors.JOSEError) {
-        res.status(401);
-        res.send({ error: e.message, code: e.code });
-      } else {
-        console.dir(`Internal server error: ${e}`);
-        res.status(500);
-        res.send({ error: JSON.stringify(e) });
-      }
-    }
-  }
-};
-
-module.exports = verifyJWT;
-```
+<RemoteCode lang="javascript"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-machine-to-machine/refs/heads/main/apis/services/verifyJWT.js"
+            title="Validating the access token in the API" 
+            />
 
 This code checks the following parts of the access token:
 
@@ -259,56 +143,17 @@ This code checks the following parts of the access token:
 
 You must further check the permissions from the validated token using code like this helper method:
 
-```javascript
-const jose = require('jose');
-
-function hasPermission(apiEntityId, expectedPermission) {
-  return (req, res, next) => {
-    const decodedToken = jose.decodeJwt(req.verifiedToken);
-    if (checkPermission(decodedToken, apiEntityId, expectedPermission)) {
-      return next();
-    }
-
-    res.status(403);
-    res.send({ error: `You do not have permissions to do this.` });
-  }
-}
-
-function checkPermission(json, uuid, permission) {
-  if (!json.permissions || typeof json.permissions !== 'object') {
-    return false;
-  }
-  
-  return json.permissions[uuid]?.includes(permission) || false;
-}
-
-module.exports = hasPermission;
-```
+<RemoteCode lang="javascript"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-machine-to-machine/refs/heads/main/apis/services/hasPermission.js"
+            title="Validating the access token in the API" 
+            />
 
 You can do this in the API route:
 
-```javascript
-var express = require('express');
-var router = express.Router();
-const hasPermission = require('../services/hasPermission');
-
-require('dotenv/config');
-const API_ENTITY_ID = process.env.API_ENTITY_ID;
-
-router.get('/', function (req, res, next) {
-  res.render('index', { title: 'Express' });
-});
-
-router.get('/api/news', hasPermission(API_ENTITY_ID,'news'), function (req, res, next) {
-  res.json({ news: [ { title: "news item", description: "news description" }]});
-});
-
-router.get('/api/weather', hasPermission(API_ENTITY_ID,'weather'), function (req, res, next) {
-  res.json({ weather: { description: "weather description", high: 30, low: 10 }});
-});
-
-module.exports = router;
-```
+<RemoteCode lang="javascript"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-machine-to-machine/refs/heads/main/apis/routes/index.js"
+            title="Validating the access token in the API" 
+            />
 
 Implementation of the actual APIs is incomplete in this example application.
 
@@ -409,3 +254,4 @@ Whenever software talks to other software without a human in the mix, that's mac
 * [Videos on using the Client Credentials grant for API authentication](https://www.youtube.com/watch?v=rT-VTtgligI&list=PLUOVyt5DYPpNzRdTKrio0P0a4mktqLPN9)
 * [Securing your API blog post](/blog/securing-your-api)
 * [Types of Kubernetes authentication](/articles/authentication/types-of-kubernetes-auth)
+* [Example machine to machine application](https://github.com/FusionAuth/fusionauth-example-machine-to-machine)
