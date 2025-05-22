@@ -7,6 +7,10 @@ The FusionAuth site is open source. Found a bug, an issue, or a typo in our docs
 Thanks!<br/>
 &nbsp;&nbsp;&nbsp;– FusionAuth team
 
+## Review us on G2!
+
+https://www.g2.com/products/fusionauth/take_survey 
+
 ## Building
 
 If you want to submit a PR or test a change to fix a link, etc it may be helpful for you to build and run locally.
