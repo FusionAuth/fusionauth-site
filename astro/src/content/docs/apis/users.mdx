@@ -778,7 +778,7 @@ If FusionAuth sends an email to the user, it will either use the `email` top lev
 
 ### Request
 
-Calling this API without an API key will always send a message to the user. If FusionAuth is unable to deliver a message based on the resolved identity and tenant configuration, a forgot password workflow will not be started.
+Calling this API without an API key always attempts to send a message to the user. If FusionAuth is unable to deliver a message based on the resolved identity and tenant configuration, a forgot password workflow will not be started.
 
 <API method="POST" uri="/api/user/forgot-password" authentication={["none"]} title="Start the forgot password workflow without an API Key."/>
 
@@ -826,9 +826,12 @@ Calling this API without an API key will always send a message to the user. If F
     <DeprecatedSince since="1.99.9">Prefer using the new <InlineField>sendForgotPasswordMessage</InlineField> field.</DeprecatedSince>
   </APIField>
   <APIField name="sendForgotPasswordMessage" type="Boolean" optional defaults="true" since="1.99.9">
-    Whether or not calling this API should attempt to send the user a message using the configured Forgot Password template. Setting this to `false` will begin the Forgot Password workflow without sending a message and only create the `changePasswordId`, this may be useful if you want to send a message outside of FusionAuth, or complete this workflow without the use of email/SMS.
+    Determines whether a forgot password message is sent to the user. Setting this to `true` will cause a message to be sent. Setting this to `false` will begin the Forgot Password workflow without sending a message and only create the `changePasswordId`, which may be useful if you want to send a message outside of FusionAuth, or complete this workflow without the use of email/SMS.
 
-    The template and delivery method are based on the type of the identity resolved by the request. FusionAuth will attempt to deliver the message via SMS when the provided login Id and type resolve to a phone number. This requires <InlineField>tenant.phoneConfiguration.forgotPasswordTemplateId</InlineField> to be configured, otherwise the request will fail.
+    The template and delivery method are based on the type of the identity resolved by the request.
+
+    * FusionAuth will attempt to deliver the message via SMS when the provided login Id and type resolve to a phone number identity. This requires <InlineField>tenant.phoneConfiguration.forgotPasswordTemplateId</InlineField> to be configured, otherwise the request will fail.
+    * If the provided login Id and type resolve to an email or username identity, FusionAuth will attempt to deliver the message via email. This requires <InlineField>tenant.emailConfiguration.forgotPasswordEmailTemplateId</InlineField> to be configured, otherwise the request will fail.
   </APIField>
   <APIField name="state" type="Object" optional>
     An optional object that will be returned un-modified when you complete the forgot password request. This may be useful to return the user to particular state once they complete the password change.
