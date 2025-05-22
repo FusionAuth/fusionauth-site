@@ -1,12 +1,37 @@
+/**
+ * HubSpot Custom Form Handler
+ * Handles form submission using HubSpot's Forms API with custom HTML.
+ * Allows multiple HTML forms on a page to be managed independently,
+ * even if they submit to the same or different HubSpot Form GUIDs.
+ *
+ * Each HTML form is identified by a unique client-side selector,
+ * and the HubSpot Form GUID for submission is passed separately.
+ */
 
 const HUBSPOT_PORTAL_ID = '634739';
 
 class HubSpotForm {
-  constructor(formId) {
+  /**
+   * @param {string} htmlFormSelector - A CSS selector to uniquely identify the HTML form element (e.g., '#myForm', 'form[data-unique-id="footer-contact"]').
+   * @param {string} hubSpotFormGuid - The GUID of the HubSpot form to submit data to.
+   */
+  constructor(htmlFormSelector, hubSpotFormGuid) {
     this.portalId = HUBSPOT_PORTAL_ID;
-    this.formId = formId;
-    this.apiUrl = `https://api.hsforms.com/submissions/v3/integration/submit/${this.portalId}/${formId}`;
-    this.init();
+    this.hubSpotFormGuid = hubSpotFormGuid; // GUID for the HubSpot API endpoint
+    this.apiUrl = `https://api.hsforms.com/submissions/v3/integration/submit/${this.portalId}/${this.hubSpotFormGuid}`;
+
+    // Find the specific HTML form element using the provided selector
+    this.htmlFormElement = document.querySelector(htmlFormSelector);
+
+    if (!this.htmlFormElement) {
+      // console.warn(`HubSpotForm: No HTML form found with selector "${htmlFormSelector}". This instance will not initialize.`);
+      return; // Do not proceed if the specific form is not found
+    }
+    
+    // Ensure a generic 'data-hubspot-form' attribute exists for general targeting if needed.
+    this.htmlFormElement.setAttribute('data-hubspot-form', ''); 
+
+    this.init(); // Call init only if the specific form element is found
   }
 
   init() {
@@ -30,10 +55,9 @@ class HubSpotForm {
   }
 
   setupFormHandlers() {
-    const forms = document.querySelectorAll('[data-hubspot-form]');
-    forms.forEach(form => {
-      form.addEventListener('submit', (e) => this.handleSubmit(e));
-    });
+    if (this.htmlFormElement) {
+        this.htmlFormElement.addEventListener('submit', (e) => this.handleSubmit(e));
+    }
   }
 
   getCookie(name) {
@@ -72,7 +96,7 @@ class HubSpotForm {
   async handleSubmit(event) {
     event.preventDefault();
 
-    const form = event.target;
+    const form = event.target; // This is this.htmlFormElement
     const submitButton = form.querySelector('[type="submit"]');
     const originalButtonText = submitButton.textContent;
 
@@ -83,7 +107,6 @@ class HubSpotForm {
     const formFieldsData = this.getFormData(form);
     let clientSideErrors = [];
 
-    // Client-Side Email Validation, HubSpot allows test@test without tld
     const emailFieldData = formFieldsData.find(field => field.name.toLowerCase() === 'email'); 
     if (emailFieldData) {
       if (!emailFieldData.value) {
@@ -110,7 +133,8 @@ class HubSpotForm {
         context: context
       };
 
-      const response = await fetch(this.apiUrl, {
+      // API URL uses this.hubSpotFormGuid passed in constructor
+      const response = await fetch(this.apiUrl, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -120,7 +144,7 @@ class HubSpotForm {
         this.handleSuccess(form);
       } else {
         const errorData = await response.json();
-        if (errorData.message && !errorData.errors) {
+        if (errorData.message && !errorData.errors) { 
             this.handleError(form, { errors: [{ message: errorData.message }] });
         } else {
              this.handleError(form, errorData);
@@ -157,7 +181,7 @@ class HubSpotForm {
       form.appendChild(successMessage); 
     }
     successMessage.innerHTML = `
-      <div class="border border-green-200 rounded-md p-4">
+      <div class="border border-green-200 rounded-md p-2">
         <div class="flex">
           <div class="ml-3">
             <p class="text-sm font-medium">
@@ -175,7 +199,7 @@ class HubSpotForm {
     if (!errorContainer) {
       errorContainer = document.createElement('div');
       errorContainer.className = 'error-container mb-4';
-      form.insertBefore(errorContainer, form.firstChild);
+      form.insertBefore(errorContainer, form.firstChild); 
     }
 
     let errorMessagesHTML = '';
@@ -195,13 +219,13 @@ class HubSpotForm {
             const fieldNameFromPath = error.path.split('.').pop();
             if (message.includes("VALIDATION_ERROR_MESSAGE") && fieldNameFromPath) {
                  message = `Invalid input for ${fieldNameFromPath.replace(/([A-Z])/g, ' $1').toLowerCase()}.`; 
-            } else if (!message.toLowerCase().includes(fieldNameFromPath?.toLowerCase())) {
-                 // Prepend field name if not already in message
+            } else if (fieldNameFromPath && !message.toLowerCase().includes(fieldNameFromPath.toLowerCase())) {
                  message = `${fieldNameFromPath.charAt(0).toUpperCase() + fieldNameFromPath.slice(1)}: ${message}`;
             }
         } else if (error.name && !message.toLowerCase().includes(error.name.toLowerCase())) {
             message = `${error.name.charAt(0).toUpperCase() + error.name.slice(1)}: ${message}`;
         }
+        
         if (!uniqueMessages.has(message)) {
             errorMessagesHTML += `<li>${message}</li>`;
             uniqueMessages.add(message);
@@ -221,7 +245,7 @@ class HubSpotForm {
     }
 
     errorContainer.innerHTML = `
-      <div class="border border-red-400 rounded-md p-4">
+      <div class="border border-red-400 rounded-md p-2">
         <div class="flex">
           <div class="ml-3">
             ${errorMessagesHTML}
@@ -243,6 +267,12 @@ class HubSpotForm {
 
 export default HubSpotForm;
 
-export function initHubSpotForm(formId) {
-  return new HubSpotForm(formId);
+// Convenience function to quickly initialize a form
+// Now expects the HTML form selector and the HubSpot Form GUID
+export function initHubSpotForm(htmlFormSelector, hubSpotFormGuid) {
+  if (!htmlFormSelector || !hubSpotFormGuid) {
+    // console.error("initHubSpotForm: Both htmlFormSelector and hubSpotFormGuid are required.");
+    return null;
+  }
+  return new HubSpotForm(htmlFormSelector, hubSpotFormGuid);
 }
