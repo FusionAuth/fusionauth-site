@@ -6,6 +6,7 @@ import tailwind from "@astrojs/tailwind";
 import indexPages from "astro-index-pages/index.js";
 import {rehypeTasklistEnhancer} from './src/plugins/rehype-tasklist-enhancer';
 import {codeTitleRemark} from './src/plugins/code-title-remark';
+import * as markdownExtract from './src/plugins/markdown-extract.js';
 import remarkMdx from 'remark-mdx';
 
 const optionalIntegrations = [];
@@ -35,6 +36,8 @@ const config = defineConfig({
       applyBaseStyles: true,
       nesting: true,
     })
+    ,
+    markdownExtract.default()
   ],
   markdown: {
     remarkPlugins: [
