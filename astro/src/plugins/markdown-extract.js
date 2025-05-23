@@ -1,11 +1,6 @@
 // src/plugins/markdown-extract.ts
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-function stripFrontmatter(markdown) {
-  return markdown.replace(/^---[\s\S]*?---\s*/g, '');
-}
 
 function extractFrontmatter(markdown) {
   const frontmatterMatch = markdown.match(/^---([\s\S]*?)---/);
@@ -122,7 +117,6 @@ function rewritePath(relPath) {
 
 
 export default function markdownExtractIntegration() {
-  const pageMap = new Map(); // Map pathname -> file path
   return {
     name: 'markdown-extract',
     hooks: {
