@@ -3,6 +3,38 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+function stripFrontmatter(markdown) {
+  return markdown.replace(/^---[\s\S]*?---\s*/g, '');
+}
+
+function extractFrontmatter(markdown) {
+  const frontmatterMatch = markdown.match(/^---([\s\S]*?)---/);
+  if (!frontmatterMatch) return { title: null, description: null, content: markdown };
+
+  const fmContent = frontmatterMatch[1];
+  const contentWithoutFM = markdown.slice(frontmatterMatch[0].length).trimStart();
+
+  // Simple frontmatter parse for title and description (YAML-ish)
+  const lines = fmContent.split(/\r?\n/);
+  let title = null;
+  let description = null;
+
+  for (const line of lines) {
+    const [key, ...rest] = line.split(':');
+    if (!key) continue;
+    const value = rest.join(':').trim();
+
+    if (key.trim() === 'title') title = value;
+    if (key.trim() === 'description') description = value;
+  }
+
+  return { title, description, content: contentWithoutFM };
+}
+
+
+
+
+
 function walk(dir, extFilter = ['.md', '.mdx']) {
   const results = [];
 
@@ -20,26 +52,9 @@ function walk(dir, extFilter = ['.md', '.mdx']) {
   return results;
 }
 
-async function renderAstroComponent(filePath) {
-  const content = await fs.readFile(filePath, "utf8");
-  return content.replace(/^---[\s\S]*?---/, "").trim();
-}
+const importRegex = /^\s*import\s+.*?['"](.+?)['"]\s*;?\s*$/gm;
 
-function shouldInline(importPath) {
-  return (
-    importPath.startsWith("src/content") ||
-    importPath.startsWith("src/diagrams")
-  );
-}
 
-const importRegex = /^\s*import\s+.*?['"](.+?\.mdx?)['"]\s*;?\s*$/gm;
-
-/**
- * Recursively inlines imports from .md/.mdx files
- * @param {string} filePath - Absolute path to the initial file
- * @param {Set<string>} seen - Tracks files already inlined to avoid cycles
- * @returns {string} - Final inlined content
- */
 function inlineMarkdownImports(filePath, seen = new Set()) {
   if (seen.has(filePath)) {
     console.warn(`Skipping already inlined file: ${filePath}`);
@@ -50,21 +65,59 @@ function inlineMarkdownImports(filePath, seen = new Set()) {
 
   let content = fs.readFileSync(filePath, 'utf-8');
 
+  // Map of import name => file path (only for inlining)
+  const importMap = new Map();
+
+  // Strip ALL import statements, but collect paths we care about
   content = content.replace(importRegex, (match, importPath) => {
-    const baseDir = "";
-    const resolvedPath = path.resolve(baseDir, importPath);
-    console.log(resolvedPath);
+    const importNameMatch = match.match(/import\s+(\w+)\s+from/);
+    if (!importNameMatch) return ''; // remove malformed import
+
+    const importName = importNameMatch[1];
+    const resolvedPath = path.resolve('./', importPath);
 
     if (!fs.existsSync(resolvedPath)) {
       console.warn(`Import not found: ${resolvedPath}`);
       return `<!-- Missing import: ${importPath} -->`;
     }
 
-    const inlined = inlineMarkdownImports(resolvedPath, seen);
-    return `<!-- Inlined from ${importPath} -->\n${inlined}`;
+    // Only inline if it's in src/diagrams or src/content
+    if (
+      resolvedPath.includes(path.normalize('/src/diagrams/')) ||
+      resolvedPath.includes(path.normalize('/src/content/'))
+    ) {
+      importMap.set(importName, resolvedPath);
+    }
+
+    // Regardless of whether we inline, we remove the import line
+    return '';
   });
 
-  return content;
+  // Replace usages of inlined components with their content
+  for (const [name, resolvedPath] of importMap.entries()) {
+    const componentTagRegex = new RegExp(`<${name}(\\s*[^>]*)?\\s*/>`, 'g');
+    const inlinedContent = inlineMarkdownImports(resolvedPath, seen);
+    content = content.replace(
+      componentTagRegex,
+      `<!-- Inlined from ${resolvedPath} -->\n${inlinedContent}`
+    );
+  }
+
+  const { title, description, content: bodyContent } = extractFrontmatter(content);
+
+  let header = '';
+  if (title) header += `# ${title}\n\n`;
+  if (description) header += `${description}\n\n`;
+
+  return header + bodyContent;
+
+}
+
+function rewritePath(relPath) {
+  if (relPath.endsWith('/index.mdx')) {
+    return relPath.replace(/\/index\.mdx$/, '.mdx');
+  }
+  return relPath;
 }
 
 
@@ -80,7 +133,7 @@ export default function markdownExtractIntegration() {
 
         for (const file of contentFiles) {
           // console.log(file);
-          const relPath = path.relative(contentDir, file);
+          const relPath = rewritePath(path.relative(contentDir, file));
           const outPath = path.join(dir.pathname || dir,'docs', relPath);
           const inlinedContent = inlineMarkdownImports(file);
 
