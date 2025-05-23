@@ -10,8 +10,17 @@ const validExtensions = ['js', 'mjs', 'cjs', 'ts', 'md', 'mdx'];
 const validStatus = ['added', 'modified'];
 
 // Get the list of changed files in the pull request
-const modifiedFilesJson = execSync(`gh api repos/FusionAuth/fusionauth-site/pulls/${prNumber}/files`).toString();
-const modifiedFiles = JSON.parse(modifiedFilesJson);
+let modifiedFiles = [];
+let page = 1;
+let modifiedFilesJson;
+
+do {
+  modifiedFilesJson = execSync(`gh api repos/FusionAuth/fusionauth-site/pulls/${prNumber}/files?page=${page}`).toString();
+  const pageData = JSON.parse(modifiedFilesJson);
+  modifiedFiles = modifiedFiles.concat(pageData);
+  console.log(`Fetched page ${page}`);
+  page++;
+} while (JSON.parse(modifiedFilesJson).length > 0 && page < 30);
 
 const changedSrcFiles = modifiedFiles
     .filter(file => file.filename.startsWith('astro/src/'))
@@ -19,12 +28,16 @@ const changedSrcFiles = modifiedFiles
     .filter(file => validStatus.includes(file.status))
     .map(file => file.filename.replace('astro/', ''));
 
-console.log(`Linting changed files: ${changedSrcFiles.join(', ')}`);
-
-try {
-  const output = execSync(`npm run lint -- ${changedSrcFiles.join(' ')}`);
-  console.log(output.toString());
-} catch (e) {
-  console.error(e.stdout.toString());
-  process.exit(1);
+if (changedSrcFiles.length > 0) {
+  console.log(`Linting changed files: ${changedSrcFiles.join(', ')}`);
+  try {
+    const output = execSync(`npm run lint -- ${changedSrcFiles.join(' ')}`);
+    console.log(output.toString());
+  } catch (e) {
+    console.error(e.stdout.toString());
+    process.exit(1);
+  }
+} else {
+  console.log('No changed files to lint.');
+  process.exit(0);
 }

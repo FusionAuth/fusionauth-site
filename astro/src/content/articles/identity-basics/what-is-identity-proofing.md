@@ -1,6 +1,7 @@
 ---
-title: What Is Identity Proofing?
-description: What is identity proofing and why might you need it?
+title: What Is Identity Proofing? - Identity Verification Explained
+htmlTitle: What Is Identity Proofing? | Identity Verification Explained | FusionAuth
+description: Learn and how identity proofing helps verify a user's identity during onboarding. Understand common methods and its role in secure authentication systems.
 author: Deborah Ruck
 icon: /img/icons/identity-proofing.svg
 darkIcon: /img/icons/identity-proofing-dark.svg

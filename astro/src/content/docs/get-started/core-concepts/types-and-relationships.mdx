@@ -1,0 +1,67 @@
+---
+title: Types And Their Relationships
+description: Learn about the core types in FusionAuth and how they interact to manage authentication and authorization.
+section: get started
+subcategory: core concepts
+---
+
+import Aside from 'src/components/Aside.astro';
+import TypesDiagram from 'src/diagrams/docs/extend/examples/modeling-hierarchies/types.astro'
+
+This overview summarizes all the FusionAuth types and how they relate. To avoid confusion with FusionAuth Applications, this guide refers to the service you provide your users as your "website", rather than an application, app, or service.
+
+The first set of FusionAuth types are **Tenants**, **Applications**, **Groups**, **Roles**, and **Users**. These types manage users logging in to an application. (Applications are sometimes called clients in other systems.)
+
+The second set of types are **Entity Types**, **Entities**, **Permissions**, and **Entity Grants**. These types were added to FusionAuth in 2021, after the original set of types in the previous paragraph. These types are used for machine-to-machine authentication, and provide a case-specific way to model things (entities), rather than organizations. 
+
+### Applications And Users
+
+A tenant in FusionAuth is a completely isolated environment, with its own set of users, applications, and configurations, independent of other tenants, even if they share the same FusionAuth instance.
+
+An application represents an organization, website, or service that a person (a user) logs in to. A user is associated with an application through a registration, and can be registered with many applications, or none. A user has personal data, an email address, and a variable quantity of custom data stored in JSON. 
+
+Applications have roles. A role is just a string. A registration can assign multiple roles to a user for an application. Your website can use a user's role in any way, such as authorizing a user to perform specific actions or choosing to ignore roles entirely.
+
+A group is a collection of users. A user can belong to multiple groups, so you can think of a group as a tag that can be applied to a user. A group can have many roles in many applications. If a user belongs to a group and is also registered with an application, they will automatically be granted any roles the group has in the application.
+
+Consider the example of a bank website with clients and employees. The bank website is an application in FusionAuth. The application has two roles, client and employee. Clients and employees are users, and each has a single registration in the bank application. Each registration gives a user the role of client, employee, or both.
+
+In this scenario, you could make groups called "client" and "employee", each assigned the corresponding roles in the application. Users could be added to either or both groups on registration with the application and roles would not need to be assigned manually. This approach would be useful if an application has many roles. 
+
+You could also use groups to tag users with certain attributes, such as VIP users.
+
+<Aside type="caution">
+Digital security usually involves three types: users, roles, and permissions. A user can have many roles, and roles can have many permissions. The advantages of not granting users permissions directly are:
+- You can add (or remove) permissions to a role and they automatically apply to every user in that role. You don't have to add a permission to many users individually.
+- A user can have multiple roles, each with its own permissions, and automatically inherits the combined permissions from all their assigned roles. You don't have to evaluate each user individually or define the exact combination of permissions they require.
+- Your website can rely on permissions to determine whether a user has rights to do something, without needing to map users through roles to permissions.
+
+Although FusionAuth does not currently support permissions, there is a GitHub feature request for this functionality. You can vote for it [here](https://github.com/FusionAuth/fusionauth-issues/issues/15).
+
+In the meantime, there are two workarounds you can implement:
+
+- Treat roles as permissions. In other words, instead of the "employee" role, make roles called "can edit clients", "can adjust salaries", and so on. When a user logs in with FusionAuth, your website will receive a list of exactly which "permissions" (roles) the user has. The trade-off of this approach is that the advantages of working with roles described above are lost.
+- Manage permissions in your website code. Keep the user and role associations in FusionAuth, but link roles to permissions in your website database, not in FusionAuth. When a user logs in with FusionAuth, your website queries the database to retrieve all permissions associated with their roles and applies them to the user. This treats FusionAuth more as an authentication system than an authorization system.
+</Aside>
+
+### Entities And Permissions
+
+An entity in FusionAuth is just a name, and can represent anything — a company, document, or refrigerator. The only functional aspect to an entity is that it can be used for machine-to-machine authentication with the client credentials OAuth flow. In this case, an entity usually represents a service. Entities are only available with a paid FusionAuth license.
+
+An entity has an entity type. The type of an entity cannot be changed once an entity is created. An entity type can have many permissions, which are also just strings.
+
+Both users and entities can be linked to entities by entity grants. An entity grant lists which permissions of an entity the linked user or entity has access to.
+
+For example, you could make an entity type called "Company", with entities like "Changebank" and "ChangeInsurance". The "Changebank" entity could have permissions like "ReadAccess" and "WriteAccess". An entity grant could link "ChangeInsurance" to "Changebank" and grant it "ReadAccess" permission. Similarly, an employee who is a user (as described in the previous section) could also have an entity grant providing "ReadAccess" to the "Changebank" entity.
+
+As with roles, permissions in FusionAuth have no functional meaning. They are merely strings passed to your website when a user logs in, and your website can use them in any way.
+
+### A Diagram Of All FusionAuth Types
+
+The diagram below illustrates the relationships between FusionAuth types as described in the previous sections, pairing each type name with its corresponding example object. Read the diagram from bottom to top to see who is a member of what, or who has what attributes.
+
+Note that entities and applications cannot be related, even if they represent the same physical company. Only users can have entity grants to entities.
+
+![Types diagram](/img/docs/extend/examples/modeling-hierarchy/mermaid1.webp)
+
+To reduce clutter, this diagram includes only two permission blocks. However, this simplification isn't quite accurate, as in FusionAuth, each entity grant would point to a separate permission — objects don't share permissions.

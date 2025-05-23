@@ -1,6 +1,7 @@
 ---
-title: Why Is There No Auth In OAuth?
-description: OAuth and OIDC are all about authentication, right? Why is there no process of authentication defined in the specifications?
+title: Is OAuth for Authentication or Authorization?
+htmlTitle: Is OAuth for Authentication or Authorization? | FusionAuth
+description: Understand why OAuth is an authorization framework, not an authentication protocol. Learn the differences and how to use OAuth correctly in your application.
 image: advice/no-auth-in-oauth/why-no-auth-in-oauth.png
 author: Dan Moore
 section: OAuth

@@ -3,9 +3,34 @@ interface Props {
   since: string
 }
 
-const { since }: Props = Astro.props;
+const { since, showSince }: Props = Astro.props;
+
 if (!since) {
   throw new Error("No since field");
 }
+
+const semverToPaddedNumber = function (semver) {
+  const [major, minor, patch] = semver.split('.').map(Number);
+
+  if (isNaN(major) || isNaN(minor) || isNaN(patch)) {
+    throw new Error("Invalid semver format");
+  }
+
+  return `${major}${String(minor).padStart(3, '0')}${String(patch).padStart(2, '0')}`;
+};
+
+// showSince is a semver string
+// the first one is the major version
+// the next three are the minor version
+// the last two are the patch version
+// it is used to only show availableSince on feature doc that were created before this field was added.
+// If the field was added before the feature was added, availableSince makes no sense.
+
+// For example, the user.login.suspicious event was added in 1.30.0 and returns an authentication type. But some of those authentication types (Apple) were added before this event was added.
+// in this case, we'd provide showSince of 1.30.0 and only authentication types added after 1.30.0 would show the available since value
+
+const alwaysShow = showSince === undefined;
+const show = alwaysShow || (semverToPaddedNumber(since) > semverToPaddedNumber(showSince));
+
 ---
-<span class='text-green-500 text-sm italic'>Available since {since}</span>
+<span class='text-green-500 text-sm italic'>{show ? 'Available since ' + since : ''</span>

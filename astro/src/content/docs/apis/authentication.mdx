@@ -3,20 +3,21 @@ title: API Authentication
 description: Learn how the FusionAuth APIs authenticate requests.
 section: apis
 navOrder: 0
-tags: b2b2c
+tags: b2b2c, b2b2e
 ---
 import APIAuthenticationIcon from "src/components/api/APIAuthenticationIcon.astro";
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
 import APIKeyCrossTenantNote from 'src/content/docs/apis/_api-key-cross-tenant-note.mdx';
 import Aside from 'src/components/Aside.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
 import ClientSideApiKeys from 'src/content/docs/_shared/_client-side-api-keys.mdx';
 import NewApiKey401 from 'src/content/docs/apis/_new-api-key-401.mdx';
 import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
-import ScrollRef from 'src/components/ScrollRef.astro';
 import TenantAuthentication from 'src/content/docs/apis/_tenant-authentication.mdx';
-import Breadcrumb from 'src/components/Breadcrumb.astro';
 import { YouTube } from '@astro-community/astro-embed-youtube';
+import InlineField from '../../../components/InlineField.astro';
 
 ## Overview
 
@@ -24,12 +25,12 @@ The FusionAuth APIs are primarily secured using API keys. A few APIs may use alt
 
 Each API endpoint is marked with an icon describing supported authentication methods:
 
-* <APIAuthenticationIcon classList={["mr-1"]} type="api-key"/> <ScrollRef target="API Key Authentication" />
-* <APIAuthenticationIcon classList={["mr-1"]} type="basic"/> <ScrollRef target="Basic Authentication using an API Key" />
-* <APIAuthenticationIcon classList={["mr-1"]} type="client-credentials"/> <ScrollRef target="Client Credentials" />
-* <APIAuthenticationIcon classList={["mr-1"]} type="jwt"/> <ScrollRef target="JWT Authentication" />
-* <APIAuthenticationIcon classList={["mr-1"]} type="none"/> <ScrollRef target="No Authentication Required" />
-* <APIAuthenticationIcon classList={["mr-1"]} type="local-bypass"/> <ScrollRef target="Localhost Authentication Bypass" />
+* <APIAuthenticationIcon classList={["mr-1"]} type="api-key"/> [API Key Authentication](#api-key-authentication)
+* <APIAuthenticationIcon classList={["mr-1"]} type="basic"/> [Basic Authentication using an API Key](#basic-authentication-using-an-api-key)
+* <APIAuthenticationIcon classList={["mr-1"]} type="client-credentials"/> [Client Credentials](#client-credentials)
+* <APIAuthenticationIcon classList={["mr-1"]} type="jwt"/> [JWT Authentication](#jwt-authentication)
+* <APIAuthenticationIcon classList={["mr-1"]} type="none"/> [No Authentication Required](#no-authentication-required)
+* <APIAuthenticationIcon classList={["mr-1"]} type="local-bypass"/> [Localhost Authentication Bypass](#localhost-authentication-bypass)
 
 You can also learn about:
 
@@ -39,7 +40,7 @@ Below you will find a detailed explanation of each type of authentication used i
 
 When an API is marked with a red locked icon such as <APIAuthenticationIcon classList={["px-1"]} type="api-key"/> it means you are required to provide an API key.
 
-To enable access to a secured API, create one or more API keys. The API key is then supplied in the HTTP request using the Authorization header. See <ScrollRef target="Managing API Keys" /> for more information on adding additional keys.
+To enable access to a secured API, create one or more API keys. The API key is then supplied in the HTTP request using the Authorization header. See [Managing API Keys](#managing-api-keys) for more information on adding additional keys.
 
 The following example demonstrates the HTTP Authorization header with an API key of: `7DUrRlA75b5LBRARYoTmScCTk6G6U1nG8R9mr7MGnvzA7AMxEXAMPLE`
 
@@ -187,8 +188,20 @@ Prior to version `1.26.0`, the FusionAuth administrative user interface was the 
   <APIField name="Key">
     The unique string representing the API key. This is what is presented in the `Authorization` header for requests to FusionAuth.
   </APIField>
+  <APIField name="Name">
+    The name of this API key. If the <InlineField>Retrievable</InlineField> selector is set to `Not Retrievable`, this field is required.
+  </APIField>
   <APIField name="Description">
     An optional description of this API key.
+  </APIField>
+  <APIField name="Retrievable">
+    This selector allows you to determine whether or not an API key can be retrieved after it is created.
+
+    The possible values are:
+    * `Retrievable` - The API key can be retrieved after it is created. This is the default setting.
+    * `Not Retrievable` - The API key cannot be retrieved after it is created. So keep it safe!
+
+    If a key is `Not Retrievable` then a <InlineField>Name</InlineField> is required.
   </APIField>
   <APIField name="Tenant">
     The optional tenant to which this API key will be assigned. This value cannot be changed once the API key is created.
@@ -233,7 +246,7 @@ API keys are limited to the allowed endpoints and HTTP methods.
 If you do not grant any endpoint permissions to an API key, the key has access to *all endpoints* and is essentially a 'super user' key.
 </Aside>
 
-These permissions are managed via the [API Key API](/docs/apis/api-keys) or in the administrative user interface under the <Breadcrumb>Endpoints</Breadcrumb> section.
+These permissions are managed via the [API Key API](/docs/apis/api-keys) or in the administrative user interface under the <InlineUIElement>Endpoints</InlineUIElement> section.
 When using the administrative user interface, you may click on the HTTP method column or the endpoint row.
 Either will toggle all the settings for the column or row, respectively.
 
@@ -243,6 +256,14 @@ For example, if you were to grant an API key `POST` permissions on `/api/user`, 
 Any calls with this API key would be denied access to any other functionality, including listing users, creating applications, and deleting registrations.
 
 Calling other endpoints would result in a `401` response code.
+
+## Tenant Scoped API Keys
+
+When you assign an API key to a tenant, any requests made with this key will only be able to operate on users, applications, groups, and other entities in the selected tenant.
+
+<APIKeyCrossTenantNote />
+
+Protect such API keys in the same way you would any other API key.
 
 ## Client Side API Keys
 

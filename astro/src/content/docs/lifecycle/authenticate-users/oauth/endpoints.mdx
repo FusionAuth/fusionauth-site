@@ -1,10 +1,11 @@
 ---
-title: Endpoints
-description: A description of each of the OAuth and OIDC endpoints provided by FusionAuth.
+title: OAuth2 Endpoints
+description: This page details FusionAuth's OAuth2 endpoints. Learn about the Authorization Code grant, Implicit grant, and other OAuth2 grants.
 navcategory: login-methods
 section: lifecycle
 subcategory: authenticate users
 tertcategory: oauth
+tags: api consents
 ---
 import Aside from 'src/components/Aside.astro';
 import API from 'src/components/api/API.astro';
@@ -13,10 +14,10 @@ import APIField from 'src/components/api/APIField.astro';
 import AvailableSince from 'src/components/api/AvailableSince.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
 import OauthAuthorizeRedirectParameters from 'src/content/docs/_shared/_oauth-authorize-redirect-parameters.mdx';
 import AuthorizationHeader from 'src/content/docs/lifecycle/authenticate-users/oauth/_authorization-header.mdx';
 import DeviceTypeList from 'src/content/docs/_shared/_device-type-list.mdx';
-import ScrollRef from 'src/components/ScrollRef.astro';
 import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
 import ClientCredentialsScopesOmitted from 'src/content/docs/lifecycle/authenticate-users/oauth/_client_credentials_scopes_omitted.mdx';
 import ClientCredentialsScopesSingleEntity from 'src/content/docs/lifecycle/authenticate-users/oauth/_client_credentials_scopes_single_entity.mdx';
@@ -48,7 +49,7 @@ This is an implementation of the Authorization endpoint as defined by the [IETF 
 
 To begin the Authorization Code Grant you will redirect to the Authorization endpoint from your application.
 
-<API method="GET" uri="/oauth2/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&tenantId={tenantId}"/>
+<API method="GET" uri="/oauth2/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&tenantId={tenantId}&scope=openid%20offline_access%20profile%20email"/>
 
 #### Request Parameters
 
@@ -71,7 +72,7 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
   <APIField name="idp_hint" type="UUID" optional since="1.19.0">
     An optional unique Identity Provider Id that can allow you to bypass the FusionAuth login page.
 
-    Adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end user clicking on the "Login with Pied Piper" button, or entering their email address when using the IdP configuration with managed domains.
+    Adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end user clicking on the <InlineUIElement>Login with Pied Piper</InlineUIElement> button, or entering their email address when using the IdP configuration with managed domains.
   </APIField>
   <APIField name="locale" type="String" optional>
     The [locale](/docs/reference/data-types#locales) to be used to render the login page.
@@ -118,13 +119,15 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
   </APIField>
   <APIField name="scope" type="String" optional>
     If you are using OpenID Connect, the request must contain this parameter and at minimum it must contain `openid`.
-    This parameter may contain multiple scopes space separated.
+    This parameter may contain multiple space separated scopes.
     For example, the value of `openid offline_access` provides two scopes on the request.
 
-    These scopes modify the behavior of the endpoint:
+    Example scopes which modify the behavior of the endpoint:
 
     * `openid` - This scope is used to request an `id_token` be returned in the response
     * `offline_access` - This scope is used to request a `refresh_token` be returned in the response
+
+    [Learn more about scopes, including custom scopes.](/docs/lifecycle/authenticate-users/oauth/scopes)
   </APIField>
   <APIField name="state" type="String" optional>
     The optional state parameter. This is generally used as a Cross Site Request Forgery (CSRF) token or to provide deeplinking support.
@@ -183,7 +186,7 @@ To begin the Implicit Grant you will redirect to the Authorization endpoint from
   <APIField name="idp_hint" type="UUID" optional since="1.19.0">
     An optional unique Identity Provider Id that can allow you to bypass the FusionAuth login page.
 
-    Adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end user clicking on the "Login with Pied Piper" button, or entering their email address when using the IdP configuration with managed domains.
+    Adding this request parameter will cause the FusionAuth login page to be skipped, and instead a `302` will be returned with a `Location` header of the IdP login URL. The end result is functionally equivalent to the end user clicking on the <InlineUIElement>Login with Pied Piper</InlineUIElement> button, or entering their email address when using the IdP configuration with managed domains.
   </APIField>
   <APIField name="locale" type="String">
     The [locale](/docs/reference/data-types#locales) to be used to render the login page.
@@ -431,12 +434,12 @@ Available since version 1.37.0
 
 _Response Codes_
 
-| Code | Description                                                                                                                                                                                                                                                                                                                                                                                                    |
-|------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 302  | The request was successful and the redirect location will be determined by using the configuration values in the following precedence: <br/>* The `post_logout_redirect_uri` request parameter if present<br/>* The <InlineField>logoutURL</InlineField> defined in the Application OAuth configuration<br/>* The <InlineField>logoutURL</InlineField> defined in the Tenant OAuth configuration<br/>* `/` |
-| 400  | The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the [OAuth Error section](#oautherror) of the API documentation.                                                                                                                                                                                             |
-| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                                                                                                                                                                                                                                       |
-| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                                                                                                                                                                                                                       |
+| Code | Description                                                                                                                                                                                                                                                                                                                                                                                                                            |
+|------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 302  | The request was successful and the redirect location will be determined by using the configuration values in the following precedence: <br/>* The `post_logout_redirect_uri` request parameter if present<br/>* The <InlineField>logoutURL</InlineField> defined in the Application OAuth configuration<br/>* The <InlineField>logoutURL</InlineField> defined in the Tenant OAuth configuration<br/>* `/` {/* eslint-disable-line */} |
+| 400  | The request was invalid and/or malformed. The response will contain a JSON message with the specific errors. The error response JSON is covered in the [OAuth Error section](#oautherror) of the API documentation.                                                                                                                                                                                                                    |
+| 500  | There was a FusionAuth internal error. A stack trace is provided and logged in the FusionAuth log files.                                                                                                                                                                                                                                                                                                                               |
+| 503  | The search index is not available or encountered an exception so the request cannot be completed. The response will contain a JSON body.                                                                                                                                                                                                                                                                                               |
 
 ## Token
 
@@ -481,7 +484,8 @@ Ensure you are sending these parameters as form encoded data in the request body
     The authorization code returned on the `/oauth2/authorize` response.
   </APIField>
   <APIField name="code_verifier" type="String" optional since="1.8.0">
-    The `code_verifier` parameter as described in the https://tools.ietf.org/html/rfc7636[Proof Key for Code Exchange by OAuth Public Clients (PKCE)] specification.
+    The `code_verifier` parameter as described in the [Proof Key for Code Exchange by OAuth Public Clients (PKCE)](https://tools.ietf.org/html/rfc7636) specification.
+
 
     This parameter is required to complete this request when the <InlineField>code_challenge</InlineField> parameter was provided on the initial Authorize request.
   </APIField>
@@ -580,10 +584,10 @@ Ensure you are sending these parameters as form encoded data in the request body
   </APIField>
   <APIField name="scope" type="String" optional>
     The optional scope you are requesting during this grant.
-    This parameter may contain multiple scopes space separated.
+    This parameter may contain multiple space separated scopes.
     For example, the value of `openid offline_access` provides two scopes on the request.
 
-    Available grant types:
+    Available scopes:
 
     * `openid` - This scope is used to request an `id_token` be returned in the response
     * `offline_access` - This scope scope is used to request a `refresh_token` be returned in the response
@@ -658,7 +662,7 @@ client_id=3c219e58-ed0e-4b18-ad48-f4f92793ae32&device_code=GmRhmhcxhwAzkoEqiMEg_
 
 ### Response
 
-The following response applies to the <ScrollRef target="Complete the Authorization Code Grant Request" />, <ScrollRef target="Refresh Token Grant Request" /> and <ScrollRef target="Complete the Device Authorization Grant Request" /> examples.
+The following response applies to the [Complete the Authorization Code Grant Request](#complete-the-authorization-code-grant-request), [Refresh Token Grant Request](#refresh-token-grant-request) and [Complete the Device Authorization Grant Request](#complete-the-device-authorization-grant-request) examples.
 
 
 _Response Codes_
@@ -984,7 +988,7 @@ Ensure you are sending these parameters as form encoded data in the request body
     These scopes modify the behavior of the endpoint:
 
     * `openid` - This scope is used to request an `id_token` be returned in the response
-    * `offline_access` - This scope is used to request a `refresh_token` be returned in the eventual <ScrollRef target="Token" /> response.
+    * `offline_access` - This scope is used to request a `refresh_token` be returned in the eventual [Token](#token) response.
     * `idp-link` - This scope is used to begin a linking request from a game console.
 
     Supported console links include Epic, Nintendo, Sony Playstation Network, Steam, and Xbox.
@@ -1050,7 +1054,7 @@ This endpoint has been available since 1.46.0
 
 This endpoint is intended to validate the end-user provided <InlineField>user_code</InlineField> and return meta-data useful when building your own interactive workflow.
 
-This endpoint is equivalent to the <ScrollRef target="Device Validate" /> endpoint, but it will return meta-data for the <InlineField>user_code</InlineField> in a JSON body.
+This endpoint is equivalent to the [Device Validate](#device-validate) endpoint, but it will return meta-data for the <InlineField>user_code</InlineField> in a JSON body.
 
 <API method="POST" uri="/oauth2/device/user-code" title="Validate and retrieve a user_code using client credentials"/>
 
@@ -1215,7 +1219,7 @@ _Response Codes_
 This endpoint has been available since 1.46.0
 </Aside>
 
-Approve a <InlineField>user_code</InlineField> returned from the <ScrollRef target="Device Authorize" />. If you are using the FusionAuth themed page for `/oauth2/device` you do not need to use this because the grant will be automatically approved once the user has completed authentication and the OAuth2 Grant has completed.
+Approve a <InlineField>user_code</InlineField> returned from the [Device Authorize](#device-authorize). If you are using the FusionAuth themed page for `/oauth2/device` you do not need to use this because the grant will be automatically approved once the user has completed authentication and the OAuth2 Grant has completed.
 
 If you are building your own integration to collect the `user_code` from the end user, and wish to approve the Device Grant after authenticating the user, use this API to approve the device code allowing the Device Grant to complete.
 
@@ -1586,7 +1590,6 @@ You may also use the [JWT Public Key](/docs/apis/jwt#retrieve-public-keys) API t
 
 <API method="GET" uri="/.well-known/jwks.json"/>
 
-<br/>
 
 <Aside type="note">
 You must add an asymmetric key to FusionAuth to have keys at this endpoint.
