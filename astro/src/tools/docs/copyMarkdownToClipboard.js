@@ -1,5 +1,5 @@
-const button = document.querySelector('#copy-docs-markdown-llm-button');
-button.addEventListener('click',async event => {
+document.querySelector('#copy-docs-markdown-llm-button').addEventListener('click',async event => {
+  const button = event.currentTarget;
   const href = button.dataset.href;
   const resetTextMS = 2000;
 
