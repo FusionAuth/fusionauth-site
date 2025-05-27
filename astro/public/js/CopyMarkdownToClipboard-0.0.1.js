@@ -2,15 +2,12 @@
 
 class CopyMarkdownToClipboard {
   constructor() {
-    console.log("in constructor");
     document.addEventListener('click', event => this.#handleClick(event));
   }
 
   async #handleClick(event) {
-    console.log("in click");
     const button = event.target;
     const href = button.getAttribute('data-href');
-    console.log(href);
 
     try {
       const response = await fetch(href);
