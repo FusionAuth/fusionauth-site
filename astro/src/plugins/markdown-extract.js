@@ -26,10 +26,6 @@ function extractFrontmatter(markdown) {
   return { title, description, content: contentWithoutFM };
 }
 
-
-
-
-
 function walk(dir, extFilter = ['.md', '.mdx']) {
   const results = [];
 
@@ -94,7 +90,7 @@ function inlineMarkdownImports(filePath, seen = new Set()) {
     const inlinedContent = inlineMarkdownImports(resolvedPath, seen);
     content = content.replace(
       componentTagRegex,
-      `<!-- Inlined from ${resolvedPath} -->\n${inlinedContent}`
+      inlinedContent
     );
   }
 
