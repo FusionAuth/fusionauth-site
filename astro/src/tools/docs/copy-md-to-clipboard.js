@@ -1,5 +1,5 @@
-const button = document.querySelector('#copyBtn');
-button.addEventListener(async event => {
+const button = document.querySelector('#copy-docs-markdown-llm-button');
+button.addEventListener('click',async event => {
   const href = button.dataset.href;
   try {
     const response = await fetch(href);
