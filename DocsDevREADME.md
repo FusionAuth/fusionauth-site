@@ -38,6 +38,11 @@ Here are some guidelines to follow when writing documentation (everything under 
 - For links, don't use the absolute URL for the FusionAuth website (https://fusionauth.io), only relative URLs. This allows us to deploy to our local and staging environments and not get sent over to prod.
 - If you have a list element containing more than one paragraph, indent the second paragraph by the same amount as the start of the text in the first paragraph to make sure that it renders correctly.
 - The `title` frontmatter element is used in several places: an H1 tag on the page, in any dynamically created menus, and in the HTML title tag. Sometimes, for SEO purposes, we want to add extra stuff to the HTML title tag, such as `| FusionAuth`. But that looks bad in the menu item. If this is the case, use the `htmlTitle` frontmatter element, which is only used for the HTML title tag. If not present, the HTML title tag defaults to the `title` frontMatter element. This is set up for docs, articles, blog posts and any other layouts that inherit from `Default.astro`.
+- Use the `RemoteCode` component or the `RemoteValue` to include any code or configuration in fusionauth-site blog posts, articles, or docs. This lets us have running code to update over time, as well as letting us write tests. It also lets us leverage GitHub as a discovery mechanism.
+- Use `fetch` for all JavaScript http requests.
+- Use `requests` for all Python http requests.
+- When starting up FusionAuth, make sure you use the new Download widget and put the kickstart into the single repo. See [#download-instructions] for more.
+- Make sure you check of everything in the PR checklist for new/updated blog posts and docs
 
 ## Docs 
 - Don't use complex breadcrumbs styling in docs. Use `->`. Use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component. Breadcrumbs should look like this `<Breadcrumb>foo -> bar -> baz</Breadcrumb>`.
@@ -531,4 +536,17 @@ Whenever you receive an error, you need to determine if you should:
 * Typo fixes don't need review.
 * If a piece of content is significant (blog post, guide, article) give it the label `content` and it will be published to a slack channel for marketing awareness.
 
+## Download Instructions
 
+The new download widget gives folks supported choices on how to install FusionAuth.
+
+To use our new download widget, do the following.
+
+* import the component: `import DownloadWidget from 'src/components/download/DownloadWidget.astro';`
+* Add your kickstart.json and any related files (css, email templates) to a directory in this project: https://github.com/FusionAuth/fusionauth-example-kickstart/
+* Add the following: `<DownloadWidget kickstartEnabled={true} kickstartName={"saml-example"}/>`
+* Whatever you named the directory, use the name in the widget.
+
+You can see the options available for the component here: https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/components/download/DownloadWidget.astro
+
+This component is shared widely, so be careful when changing it.
