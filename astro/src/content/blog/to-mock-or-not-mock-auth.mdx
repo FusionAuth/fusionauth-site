@@ -1,14 +1,16 @@
 ---
 title: "To Mock Or Not To Mock Your Auth: The Checklist"
 description: Mocking is widely used in software development, but often for the wrong reasons. Learn about when mocking is justified and how to do it safely.
-author: FusionAuth
-section: Authentication
-tags: mock, security, server, hosted backend
-icon: /img/icons/sso-works-why-care.svg
-darkIcon: /img/icons/sso-works-why-care-dark.svg
-url: https://raw.githubusercontent.com/fusionauth/fusionauth-example-mocking/refs/heads/main/
-publish_date: 2025-01-15
+authors: FusionAuth
+image: /img/blogs/header-example.svg
+categories: Education
+tags: mock, security
+excerpt_separator: "{/* more */}"
+url: https://raw.githubusercontent.com/fusionauth/fusionauth-example-to-mock-or-not-mock/refs/heads/main/
+publish_date: 2025-05-29
 ---
+import { RemoteCode } from '@fusionauth/astro-components';
+import Aside from '../../components/Aside.astro';
 
 # To Mock Or Not To Mock Your Auth: The Checklist
 
@@ -30,7 +32,7 @@ Here's a quick overview of common test doubles used to mock auth:
 
 For example, here is a service mock that acts as an authentication server.
 
-<RemoteCode url={frontmatter.url + "app.py"} lang="python"/>
+<RemoteCode url={frontmatter.url + "service_mock_auth_server.py"} lang="python"/>
 
 You can run this service mock in Docker and point your tests to it for full control without needing access to the real system.
 
@@ -44,7 +46,7 @@ You may also encounter these test doubles in broader testing scenarios:
 
 Authentication is the entry point of any system. No authentication means no identity, authorization, access control, billing, or auditing. Your application doesn't know who the user is, what they can do, or how to track their activity. And if authentication breaks, nothing else matters, your system just stops working.
 
-If you don't give some thought as to which situations require which testing scenarios, you might end up stuck from one of these gotchas: 
+If you don't give some thought as to which situations require which testing scenarios, you might end up stuck from one of these gotchas:
 
 - **False Sense Of Confidence:** Mocks always return what you expect. If your real provider changes a token format or an auth flow breaks, your test suite won't catch it – but your users will.
 - **Disconnect From Edge Cases:** Mocks won't expose edge cases that you haven't considered, such as token expiration, clock drift, rate limits, or slow auth responses. These surprises only show up in production. However, once you discover edge cases, testing with a mock that exhibits the behavior is a great way to prevent regressions.
@@ -52,13 +54,13 @@ If you don't give some thought as to which situations require which testing scen
 - **Oversimplified Real-World Auth Behavior:** Auth involves multiple requests, redirects, cookies, and headers. Mocks flatten that into one fake call and miss the full complexity of how your system really works.
 - **Missing Critical Security Logic:** You're not testing token parsing, signature validation, audience checks, or scope enforcement. It's often tempting to essentially bypass large parts of your authentication system entirely during tests, which can lead to critical gaps in your testing.
 
-Want to know the signs you're doing mocking wrong? [This article breaks them down](https://dzone.com/articles/why-mocking-sucks). 
+Want to know the signs you're doing mocking wrong? [This article breaks them down](https://dzone.com/articles/why-mocking-sucks).
 
 But there is a philosophy behind mocking that is worth considering.
 
 ## When Mocking Auth Makes Sense
 
-In some scenarios, mocking is not only acceptable, it's also practical – especially when you understand exactly what you're testing and why. 
+In some scenarios, mocking is not only acceptable, it's also practical – especially when you understand exactly what you're testing and why.
 
 - Are you bypassing the login flow entirely?
 - Are you skipping token validation logic?
@@ -71,7 +73,7 @@ Here are the cases when mocking auth is justified.
 
 ### 1. You're Testing Logic That Requires a User, Not How the User is Authenticated
 
-Mocking authentication is often the right approach when testing code that assumes the user is already authenticated. If you're testing business logic, not the auth flow, mimicking real authentication adds complexity: Network calls, external dependencies, and failure points in a test that should stay fast and focused. 
+Mocking authentication is often the right approach when testing code that assumes the user is already authenticated. If you're testing business logic, not the auth flow, mimicking real authentication adds complexity: Network calls, external dependencies, and failure points in a test that should stay fast and focused.
 
 Here is an example of a test that does not use mocking to check the reference field on the object created when a `POST` request is made to an API.
 
@@ -139,7 +141,7 @@ Now imagine your webhook handler uses a helper function to authenticate and veri
 
 So, during testing, you can bypass the signature verification entirely.
 
-<RemoteCode url={frontmatter.url + "webhook.py"} lang="python"/>
+<RemoteCode url={frontmatter.url + "webhook_app.py"} lang="python"/>
 
 In your test, you now **bypass** the `verify_signature` function to focus on what happens after a valid webhook is received.
 
@@ -201,7 +203,7 @@ Relatedly, mocks might bypass your audit and compliance systems. For example:
 
 In short, you're disabling the protections your system and your auditors depend on. Before using a mock, you should determine if doing so is acceptable for the system and environment you are running.
 
-Instead, you should always: 
+Instead, you should always:
 
 - Run integration tests that validate real tokens your provider or test tenant issued.
 - Include MFA flows in critical end-to-end scenarios, even slower ones.
@@ -209,7 +211,9 @@ Instead, you should always:
 - Include auth logs and user context in test telemetry for traceability.
 - Write contract tests that enforce your system's expected claim formats, scopes, and signature algorithms.
 
-**Note:** A [contract test](https://www.browserstack.com/guide/contract-testing) checks that two systems agree on how they talk to each other, like making sure tokens have the expected claims, fields, and formats your app depends on.
+<Aside type="note">
+A [contract test](https://www.browserstack.com/guide/contract-testing) checks that two systems agree on how they talk to each other, like making sure tokens have the expected claims, fields, and formats your app depends on.
+</Aside>
 
 You don't have to run a full security stack in every test. But if your system is regulated or security-critical, you need a layer of integration tests that treat authentication as real, not optional.
 
