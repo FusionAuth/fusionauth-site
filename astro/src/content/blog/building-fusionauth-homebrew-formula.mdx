@@ -1,5 +1,6 @@
 ---
-publish_date: 2019-04-18 
+publish_date: 2019-04-18
+updated_date: 2025-05-31
 title: Building the FusionAuth Homebrew Formula
 description: FusionAuth easily installs through Homebrew. Here's how we built the Homebrew formula.
 authors: Tyler Scott
@@ -43,20 +44,12 @@ The next steps were unpacking the zip into a format that brew could use effectiv
 * `config` -> `etc/fusionauth`
 * `logs` -> `var/log/fusionauth`
 * `java` -> `var/fusionauth/java`
-* `data` -> `var/fusionauth/data` (Used for the fusionauth-search package)
-
-Finally, I found that `brew` was trying to move any dynamic libraries (`dylib` files) it found inside of the package to a common location. Brew is pretty aggressive about moving `dylib`s to a standard location, even though they are already portable binaries. This was spitting out a nasty looking error to anyone that installed the formula. Not what we want to see.
-
-To solve this problem, I modified our Homebrew formula to `tar` up the `dylib`s from the Elasticsearch package during the install phase and extract them back out during post install phase. This ensured that brew stopped spitting out those nasty error messages.
-
-Just one more note on this. It seems that Homebrew can't differentiate between library formulas that are meant to be linked against and dynamically loaded binaries used internally by a program. There are some good forum threads and StackOverflow questions on this, but it would be great if Homebrew allowed formula designers to specify a configuration file of `dylib`s it should ignore.
 
 During development I was able to test this using the following command, which allowed me to test the formulas locally without constantly iterating through GitHub. This command is very handy and allows you to avoid the cycle of push, test, debug and repeat:
 
-`brew install --debug -v ./Formula/fusionauth-${app}.rb`
+`brew install --debug -v ./Formula/fusionauth-app.rb`
 
 After working though a few other minor issues, I ended up with a solid Homebrew formula that makes it simple to install and manage the FusionAuth files. I hope it works well for you, but let me know if you have any questions or issues.
-
 
 ## The Code
 
@@ -129,39 +122,9 @@ def install
 end
 ```
 
-As mentioned above, we had to remove the `dylib`s in the `fusionauth-search` package to avoid having Homebrew move them into a different location. Here is the `install` function of the `fusionauth-search` formula with the code to remove the `dylib`s:
-
-```ruby
-def install
-    prefix.install "fusionauth-search"
-    etc.install "config" => "fusionauth" unless File.exists? etc/"fusionauth"
-    prefix.install_symlink etc/"fusionauth" => "config"
-    (var/"log/fusionauth").mkpath unless File.exists? var/"log/fusionauth"
-    prefix.install_symlink var/"log/fusionauth" => "logs"
-    (var/"fusionauth/java").mkpath unless File.exists? var/"fusionauth/java"
-    prefix.install_symlink var/"fusionauth/java"
-    (var/"fusionauth/data").mkpath unless File.exists? var/"fusionauth/data"
-    prefix.install_symlink var/"fusionauth/data"
-
-    # Hide all the dylibs from brew
-    system("tar", "-cPf", prefix/"fusionauth-search/elasticsearch/modules.tar", prefix/"fusionauth-search/elasticsearch/modules", "-C", prefix/"fusionauth-search/elasticsearch")
-    (prefix/"fusionauth-search/elasticsearch/modules").rmtree
-end
-```
-
 #### Post Install
 
 After install is complete you can do any post install tasks you like. For `fusionauth-app` I didn't do any special tasks in post install so mine was empty.
-
-The `post_install` for the `fusionauth-search` on the other hand requires that we replace the `dylib`s we removed during installation. In order to replace the `dylib`s, we simply extracted the `tar` file that we created in the `install` function above. Here is the `post_install` function for `fusionauth-search`:
-
-```ruby
-def post_install
-  # Fix all the dylibs now that brew will leave them alone
-  system("tar", "-xPf", prefix/"fusionauth-search/elasticsearch/modules.tar", "-C", prefix/"fusionauth-search/elasticsearch")
-  rm_f prefix/"fusionauth-search/elasticsearch/modules.tar"
-end
-```
 
 #### Caveats
 
