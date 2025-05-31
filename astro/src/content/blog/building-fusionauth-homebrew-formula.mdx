@@ -79,8 +79,8 @@ This is the most basic state for a formula which contains meta data for descript
 class FusionauthApp < Formula
   desc "FusionAuth App"
   homepage "https://fusionauth.io"
-  url "https://files.fusionauth.io/products/fusionauth/1.5.0/fusionauth-app-1.5.0.zip"
-  sha256 "14bdc6d65622d502149d175ee0765a586e832ae4ef5b5946ff82aee3c7cfde04"
+  url "https://files.fusionauth.io/products/fusionauth/1.57.0/fusionauth-app-1.57.0.zip"
+  sha256 "e6e5e65566d2e98ac99ddcd5b7feb423ad5c3417d0b88c0421a6006d7c3e3c8c"
 
   def install
     # install stuff
@@ -113,12 +113,12 @@ Here is the `install` function for the `fusionauth-app` formula:
 ```ruby
 def install
   prefix.install "fusionauth-app"
-  etc.install "config" => "fusionauth" unless File.exists? etc/"fusionauth"
-  prefix.install_symlink etc/"fusionauth" => "config"
-  (var/"fusionauth/java").mkpath unless File.exists? var/"fusionauth/java"
-  prefix.install_symlink var/"fusionauth/java"
-  (var/"log/fusionauth").mkpath unless File.exists? var/"log/fusionauth"
-  prefix.install_symlink var/"log/fusionauth" => "logs"
+  etc.install "config" => "fusionauth" unless File.exist? etc / "fusionauth"
+  prefix.install_symlink etc / "fusionauth" => "config"
+  (var / "fusionauth/java").mkpath unless File.exist? var / "fusionauth/java"
+  prefix.install_symlink var / "fusionauth/java"
+  (var / "log/fusionauth").mkpath unless File.exist? var / "log/fusionauth"
+  prefix.install_symlink var / "log/fusionauth" => "logs"
 end
 ```
 
@@ -135,7 +135,8 @@ The return value of the `caveats` function is a String that is displayed to the 
 Here is the `caveats` method of our `fusionauth-app` formula:
 
 ```ruby
-def caveats; <<~EOS
+def caveats
+  <<~EOS
     Logs:   #{var}/log/fusionauth/fusionauth-app.log
     Config: #{etc}/fusionauth/fusionauth.properties
   EOS
@@ -157,32 +158,12 @@ If you would like your application to run as a service, you will need to include
 Here is the `plist` function of our `fusionauth-app` formula that allows brew to start FusionAuth as a service:
 
 ```ruby
-def plist; <<~EOS
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-    <dict>
-      <key>KeepAlive</key>
-      <true/>
-      <key>Label</key>
-      <string>#{plist_name}</string>
-      <key>ProgramArguments</key>
-      <array>
-        <string>sh</string>
-        <string>catalina.sh</string>
-        <string>run</string>
-      </array>
-      <key>RunAtLoad</key>
-      <true/>
-      <key>WorkingDirectory</key>
-      <string>#{prefix}/fusionauth-app/apache-tomcat/bin</string>
-      <key>StandardOutPath</key>
-      <string>#{var}/log/fusionauth/fusionauth-app.log</string>
-      <key>StandardErrorPath</key>
-      <string>#{var}/log/fusionauth/fusionauth-app.log</string>
-    </dict>
-    </plist>
-  EOS
+service do
+  run ["sh", "-x", "start.sh", "--debug"]
+  keep_alive true
+  working_dir opt_prefix/"fusionauth-app/bin"
+  log_path var/"log/fusionauth/fusionauth-app.log"
+  error_log_path var/"log/fusionauth/fusionauth-app.log"
 end
 ```
 
