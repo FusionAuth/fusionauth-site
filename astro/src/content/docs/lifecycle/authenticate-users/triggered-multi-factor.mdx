@@ -1,0 +1,97 @@
+---
+title: Triggered Multi-Factor Authentication (MFA)
+description: Learn about how to FusionAuth decides to trigger multi-factor authentication (MFA) in the login flow.
+navcategory: developer
+section: lifecycle
+subcategory: authenticate users
+tags: auth as a service
+---
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
+import DifferenceTwoFactorMultiFactor from 'src/content/docs/_shared/_difference-two-factor-multi-factor.mdx';
+import JSON from 'src/components/JSON.astro';
+import InlineField from 'src/components/InlineField.astro';
+import RecoveryCodesBlurb from 'src/content/docs/lifecycle/authenticate-users/_recovery-codes-blurb.mdx';
+import Aside from 'src/components/Aside.astro';
+import MfaMigration from 'src/content/docs/lifecycle/authenticate-users/_mfa-migration.mdx';
+import MfaTroubleshooting from 'src/content/docs/lifecycle/authenticate-users/_mfa-troubleshooting.mdx';
+import MfaDecisionTree from 'src/diagrams/docs/lifecycle/authenticate-users/mfa-decision-tree.astro';
+import ApplicationMfaDecisionTree from 'src/diagrams/docs/lifecycle/authenticate-users/app-mfa-decision-tree.astro';
+import { YouTube } from '@astro-community/astro-embed-youtube';
+import StaticPatchNote from 'src/content/docs/sdks/_static-patch-note.mdx';
+
+
+## Overview
+
+FusionAuth applies multi-factor authentication based on a number of configuration and situational behaviors. In this document you'll learn about the way FusionAuth automatically applies MFA.
+
+## MFA Inside The Authentication Process
+
+There are XXX major considerations for whether MFA is applied during the login process.
+
+* Is MFA enabled on the tenant or application?
+* Does the user have MFA enabled? If this is the case, then MFA is never triggered.
+* Did the user log in using an identity provider such as Google or OIDC?
+* Has the device passed FusionAuth contextual checks?
+
+Here's a diagram of the logic when the tenant has a policy for MFA.
+
+<MfaDecisionTree />
+
+Here's a diagram of the logic when the application has a policy for MFA. Application policies supersede the tenant policy.
+
+<ApplicationMfaDecisionTree />
+
+The contextual checks are based on attributes of the request evaluated every time an authentication happens and and include:
+
+* Has this device been seen before for this user?
+* Is there a suspicious login detected for this authentication attempt?
+
+TODO if tenant has email policy enabled but user only has TOTP, do we prompt for MFA?
+TODO after we force user to set up MFA do we prompt for it?
+TODO does https://github.com/FusionAuth/fusionauth-issues/issues/2357 apply if the application MFA policy is present?
+
+TODO Has this device been seen before for this user? is it for the user/device pair or just the device
+
+## License Limitations
+
+The type of plan you are on affects what MFA occurs. 
+
+<EnterprisePlanBlurb />
+* Application MFA policies
+* Suspicious Login Contextual Check
+
+<PremiumPlanBlurb />
+* Email MFA
+* SMS MFA
+* User MFA Enrollment Account Management Pages
+
+Features on the Community plan:
+
+* TOTP MFA
+* User MFA Enrollment APIs
+
+## MFA After Identity Provider Login
+
+If a user logs in with an Identity Provider such as Google or OIDC, FusionAuth assumes that MFA is taken care of at the remote identity source.
+
+[Learn more about this.](/docs/lifecycle/authenticate-users/identity-providers/#account-security)
+
+TODO issue reflecting alternative policy
+
+## MFA On Certain Segments
+
+Make sure everyone on that group has MFA method using login validation lambda or webhook or API and also set tenant MFA to enabled.
+
+TODO or add MFA required application and bounce everyone in the group through that application first
+
+## MFA Outside Of The Login Process
+
+If you need to prompt for MFA outside of the login process, you want to use step-up authentication. This is an integration you can use the SDKs or APIs to do. 
+
+Learn more about [step-up authentication](/docs/lifecycle/authenticate-users/multi-factor-authentication#step-up-auth).
+
+## Limitations
+
+There's an [open issue](https://github.com/FusionAuth/fusionauth-issues/issues/2357) when a user logs in with an identity provider but SSOs to an application with a loginPolicy of required.
