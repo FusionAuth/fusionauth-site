@@ -1,0 +1,40 @@
+---
+import Diagram from 'src/components/mermaid/FlowchartDiagram.astro';
+
+const { alt } = Astro.props;
+
+//language=Mermaid
+const code = `
+graph TD
+    applicationMfaPolicy[What is MFA Policy At Application Level] --> |No application policy| deferToTenant[Defer To The Tenant Policy]
+    applicationMfaPolicy[What is MFA Policy At Application Level] --> |Disabled| noChallenge[Do Not Challenge User For MFA]
+    applicationMfaPolicy --> |Enabled| checkUserConfigEnabled[Check MFA Present On User]
+    checkUserConfigEnabled --> |MFA Configured| contextualMFACheck[Check Request Context]
+    checkUserConfigEnabled --> |No MFA Configured| noChallengeNoMFAConfigured[Do Not Challenge User For MFA]
+    applicationMfaPolicy --> |Required| checkUserConfigRequired[Check MFA Present On User]
+    checkUserConfigRequired --> |MFA Configured| contextualMFACheckRequired[Check Request Context]
+    checkUserConfigRequired --> |No MFA Configured| forceUserToSetupMFA[Prompt User To Set Up MFA]
+    contextualMFACheck --> |New device or<br/> suspicious login| challenge[Challenge User For MFA]
+    contextualMFACheck --> |Known device, normal login| trustPolicyMFACheck[What is application MFA trust policy?]
+    contextualMFACheckRequired --> |New device or<br/> suspicious login| challengeRequired[Challenge User For MFA]
+    contextualMFACheckRequired --> |Known device, normal login| trustPolicyMFACheck[What is application MFA trust policy?]
+    trustPolicyMFACheck --> |Any| noChallengeTrustPolicyAny[Do Not Challenge User For MFA]
+    trustPolicyMFACheck --> |This application| trustSource[Is MFA Trust From This Application]
+    trustSource --> |This application| noChallengeAppMatch[Do Not Challenge User For MFA]
+    trustSource --> |Any other application| challengeTrustSource[Challenge User For MFA]
+    trustPolicyMFACheck --> |None| challengeTrustPolicyNone[Challenge User For MFA]
+    style noChallenge stroke:#00FF00,stroke-width:4px
+    style noChallengeNoMFAConfigured stroke:#00FF00,stroke-width:4px
+    style noChallengeTrustPolicyAny stroke:#00FF00,stroke-width:4px
+    style noChallengeAppMatch stroke:#00FF00,stroke-width:4px
+
+    style challenge stroke:#FF0000,stroke-width:4px
+    style challengeRequired stroke:#FF0000,stroke-width:4px
+    style challengeTrustSource stroke:#FF0000,stroke-width:4px
+    style challengeTrustPolicyNone stroke:#FF0000,stroke-width:4px
+    style forceUserToSetupMFA stroke:#FF0000,stroke-width:4px
+`;
+
+---
+<Diagram {code} alt={alt}/>
+

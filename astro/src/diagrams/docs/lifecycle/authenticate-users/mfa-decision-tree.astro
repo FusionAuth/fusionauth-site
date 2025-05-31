@@ -1,0 +1,33 @@
+---
+import Diagram from 'src/components/mermaid/FlowchartDiagram.astro';
+
+const { alt } = Astro.props;
+
+//language=Mermaid
+const code = `
+graph TD
+    applicationMfaPolicy[MFA Policy At Application Level Configured] --> |True| applicationMfaPolicyControls[Application MFA Policy Controls]
+    applicationMfaPolicy --> |False| tenantMfaPolicy
+    tenantMfaPolicy[What is MFA Policy At Tenant Level] --> |Disabled| noChallenge[Do Not Challenge User For MFA]
+    tenantMfaPolicy --> |Enabled| checkUserConfigEnabled[Check MFA Present On User]
+    tenantMfaPolicy --> |Required| checkUserConfigRequired[Check MFA Present On User]
+    checkUserConfigEnabled --> |MFA Configured| contextualMFACheck[Check Request Context]
+    checkUserConfigEnabled --> |No MFA Configured| noChallengeUserConfig[Do Not Challenge User For MFA]
+    checkUserConfigRequired --> |MFA Configured| contextualMFACheckRequired[Check Request Context]
+    checkUserConfigRequired --> |No MFA Configured| forceUserToSetupMFA[Prompt User To Set Up MFA]
+    contextualMFACheck --> |Is new device or <br/> suspicious login| challenge[Challenge User For MFA]
+    contextualMFACheck --> |Not new device or <br/> suspicious login| noChallengeContextual[Do Not Challenge User For MFA]
+    contextualMFACheckRequired --> |Is new device or <br/> suspicious login| challengeRequired[Challenge User For MFA]
+    contextualMFACheckRequired --> |Not new device or <br/> suspicious login| noChallengeContextualRequired[Do Not Challenge User For MFA]
+    style noChallengeContextualRequired stroke:#00FF00,stroke-width:4px
+    style noChallenge stroke:#00FF00,stroke-width:4px
+    style noChallengeContextual stroke:#00FF00,stroke-width:4px
+    style noChallengeUserConfig stroke:#00FF00,stroke-width:4px
+    style challengeRequired stroke:#FF0000,stroke-width:4px
+    style challenge stroke:#FF0000,stroke-width:4px
+    style forceUserToSetupMFA stroke:#FF0000,stroke-width:4px
+`;
+
+---
+<Diagram {code} alt={alt}/>
+
