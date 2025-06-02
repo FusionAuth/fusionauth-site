@@ -14,6 +14,8 @@ import Aside from '/src/components/Aside.astro';
 import Breadcrumb from '/src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
+import BulkMigration from 'src/content/docs/lifecycle/migrate-users/_bulk-migration.mdx';
+import GradualMigration from 'src/content/docs/lifecycle/migrate-users/_gradual-migration.mdx';
 import MakeWebservicePublic from 'src/content/docs/lifecycle/migrate-users/provider-specific/_make-webservice-public.mdx';
 import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/provider-specific/_mapping-user-attributes.mdx';
 import OtherEntitiesIntro from 'src/content/docs/lifecycle/migrate-users/provider-specific/_other-entities-intro.mdx';
@@ -40,13 +42,25 @@ To follow this tutorial, you need [Docker](https://docs.docker.com/get-docker).
 ## Planning Considerations
 
 {frontmatter.technology} (previously Janrain) and FusionAuth have [different words for the same concepts](https://identitydocs.akamai.com/getting-started/api-login/step1/page1-deliverables):
-- Applications (for example, a website or mobile app) are called clients in FusionAuth and properties in {frontmatter.technology}. Properties are also used as API keys in {frontmatter.technology} (called client Ids and secrets).
-- User records are users in FusionAuth and profiles or entities in {frontmatter.technology}. Profiles are stored in an entity type, or schema. The default schema is called user.
-- In {frontmatter.technology}, a registration flow is called a form. Every application has a flow called `standard` to start with.
+- Applications (for example, a website or mobile app) are called applications in FusionAuth and properties in {frontmatter.technology}. In {frontmatter.technology}, properties can have multiple clients for authentication (such as a login client and an administration client), which are used as API keys (called client Ids and secrets).
+- User records are called users in FusionAuth and called profiles or entities in {frontmatter.technology}. Profiles are stored in an entity type, also called a schema. The default schema is called user.
+- In {frontmatter.technology}, a registration flow is called a form. Every application has a flow called `standard` to start with. Flows will be used to create example users for export testing.
 
 ### Obtaining User Data
 
-{frontmatter.technology} supports images, but FusionAuth does not, so images will not be imported in this guide.
+{frontmatter.technology} and FusionAuth both support images (e.g. user profile photos) as URLs to files hosted on cloud storage. After migration, check that your photo storage host is still usable.
+
+When you are migrating from another provider, you can do a bulk or slow migration.
+
+#### Bulk Migration
+
+<BulkMigration />
+
+#### Slow Migration
+
+<GradualMigration />
+
+#### Migration Options in {frontmatter.technology}
 
 Here is how a bulk migration process might work:
 
@@ -106,6 +120,10 @@ In this section, you export your {frontmatter.technology} users with the API.
 - Clone or download the GitHub repository at https://github.com/fusionauth/fusionauth-import-scripts.
 
 This repository has a directory called {frontmatter.technologyLower}. It contains JavaScript files to import users, as well as sample data.
+
+- Clone or download the GitHub repository at https://github.com/fusionauth/fusionauth-example-docker-compose.
+
+This repository has a Docker compose file to start a local instance of FusionAuth.
 
 - Log in to your {frontmatter.technology} account at https://console.janrain.com.
 - If you don't have existing users, or wish to create ones purely for testing, browse to <Breadcrumb>MANAGE PROFILES -> user</Breadcrumb> and click <InlineUIElement>CREATE PROFILE</InlineUIElement> to add some users.
@@ -214,18 +232,18 @@ To see a complete users sample, look at `akamai/exampleData/1_akamaiExport/users
 
 Next, you're going to start FusionAuth and import the roles your users have, so they are ready for the full import.
 
-- Open a new terminal and run the commands below to start FusionAuth.
+- Open a new terminal in the `fusionauth-example-docker-compose` directory and run the commands below to start FusionAuth.
 
 ```sh
-cd fusionauth-import-scripts/akamai/fusionauthDocker
+cd light
 docker compose up
 ```
 
 After the containers are ready, FusionAuth will be running and accessible at `http://localhost:9011`. You can log in to the [FusionAuth admin UI](http://localhost:9011/admin) with `admin@example.com` and `password`. The container is called `fa`.
 
-This configuration uses a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart), defined in `fusionauth-import-scripts/akamai/fusionAuthDocker/kickstart/kickstart.json`. When FusionAuth starts for the first time, it will look at the `kickstart.json` file and configure FusionAuth to the specified state. In summary, the defined Kickstart sets up an API Key, an admin user to log in with, and a test application in FusionAuth.
+This configuration uses a bootstrapping feature of FusionAuth called [Kickstart](/docs/get-started/download-and-install/development/kickstart), defined in `light/kickstart/kickstart.json`. When FusionAuth starts for the first time, it will look at the `kickstart.json` file and configure FusionAuth to the specified state. In summary, the defined Kickstart sets up an API Key, an admin user to log in with, and a test application in FusionAuth.
 
-- Back in the original terminal in the `src` directory, run the command below to import your user roles from `users.json`.
+- Back in the original terminal in the `fusionauth-import-scripts/akamai/src` directory, run the command below to import your user roles from `users.json`.
 
 ```sh
 docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" node:24.0.1-alpine3.21 sh -c  "npm install";
@@ -255,16 +273,16 @@ To run the script, use the command below in the terminal you have open in the `s
 docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" node:24.0.1-alpine3.21 sh -c  "node 2_convertUserToFaUser.mjs";
 ```
 
-The script uses `stream-json`, a JSON library that can incrementally read massive files with millions of users. It opens the `users.json` file for reading in the line `new Chain([fs.createReadStream(inputFilename ), Pick.withParser({filter: 'results'}), new StreamArray()]);`, and ignores top-level properties other than the `results` array of {frontmatter.technology} users. For more information, see the [`stream-json` GitHub repository](https://github.com/uhop/stream-json). 
+The script uses `stream-json`, a JSON library that can incrementally read massive files with millions of users. It opens the `users.json` file for reading in the line `new Chain([fs.createReadStream(inputFilename ), Pick.withParser({filter: 'results'}), new StreamArray()]);`, and ignores top-level properties other than the `results` array of {frontmatter.technology} users. For more information, see the [`stream-json` GitHub repository](https://github.com/uhop/stream-json).
 
 The `processUsers()` function calls `getFaUserFromUser()` to map the {frontmatter.technology} user to FusionAuth, and then saves the user to `faUsers.json`.
 
 The `getFaUserFromUser()` function does a few things:
 
 - Maps as many matching fields from {frontmatter.technology} to FusionAuth as possible.
-- Extracts the bcrypt password strength (10), the salt, and hash from the {frontmatter.technology} password field. 
+- Extracts the bcrypt password strength (10), the salt, and hash from the {frontmatter.technology} password field.
 - Stores all {frontmatter.technology} user details that don't map to FusionAuth in the JSON `data` field.
-- Adds FusionAuth User Registrations (the link between a FusionAuth User and an Application) to users. 
+- Adds FusionAuth User Registrations (the link between a FusionAuth User and an Application) to users.
 
 bcrypt stores all password components in one field, separated by `$`. However, FusionAuth requires these values to be provided as separate fields during import.
 
@@ -312,12 +330,10 @@ To test the slow migration, you need a user in {frontmatter.technology} with a p
 
 You can use either the console or the API request. The rest of this tutorial assumes you created a user called `janesmith@example.com` with the password `p@ssw0rd3xamp!e`.
 
+<Aside type="caution">
 If you did not complete the bulk migration tutorial earlier, you need to complete the first steps, which download the Git repository with the export scripts, export your {frontmatter.technology} users, and import their roles to FusionAuth. Follow the instructions from the [Export User Data From Akamai](#export-user-data-from-akamai) section to the [Create Roles For Your Users](#create-roles-for-your-users) section.
 
-<Aside type="note">
-If you did complete the bulk import tutorial, you need to delete the test user Jane from FusionAuth, so that you can import her again in this section.
-
-Browse to http://localhost:9011/admin/user, select the user Jane, and delete her.
+If you did complete the bulk import tutorial, you need to delete the test user Jane from FusionAuth, so that you can import her again in this section. Browse to http://localhost:9011/admin/user, select the user Jane, and delete her.
 </Aside>
 
 Once you have a user available in Akamai, test if you can verify the user's email address and password with the curl command below. More information on this command is available in the [Akamai documentation](https://techdocs.akamai.com/identity-cloud-auth/reference/post-oauth-auth-native-traditional).
@@ -388,7 +404,7 @@ Enter the field values below.
 <MakeWebservicePublic ngrok_port='6252' />
 
 <Aside type="caution">
-  In production, you will want to add some authentication to the web service.
+  In production, you will want to add some authentication to the web service. You can add basic authentication using the <Breadcrumb>Security</Breadcrumb> tab in the Connector details page.
 </Aside>
 
 Now browse to <Breadcrumb>Tenants</Breadcrumb> and do the following.
@@ -441,6 +457,8 @@ If the credentials are valid, the user's details returned from {frontmatter.tech
 ```sh
 docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" --network faNetwork node:24.0.1-alpine3.21 sh -c  "node 4_connectorService.mjs";
 ```
+
+Note that the container is named `app`, which matches the URL entered for the connector service in FusionAuth earlier, `http://app`. When configuring your real import service for production, ensure both values match its new location.
 
 ### Log In With A Test User
 
