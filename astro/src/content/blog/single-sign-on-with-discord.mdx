@@ -1,7 +1,8 @@
 ---
 publish_date: 2022-04-25 
 title: "Using Single Sign-on with Discord and FusionAuth"
-description: By configuring an integration between Discord and FusionAuth, you can use FusionAuth in your applications to allow users to log in with their Discord credentials.
+htmlTitle: "How to Set Up Discord SSO With FusionAuth"
+description: Enable Discord single sign-on in your app using FusionAuth. This guide walks through setup and integration for Discord SSO support.
 authors: Cameron Pavey
 image: /img/blogs/single-sign-on-discord/sso-discord-fusionauth.svg
 categories: Tutorial
@@ -9,6 +10,9 @@ tags: single sign on, discord
 excerpt_separator: "{/* more */}"
 ---
 import Aside from "../../components/Aside.astro";
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
 import {Content as WhatIsFusionAuth} from "../../components/blog/what-is-fusionauth.md";
 
 Discord is a popular instant messaging and VoIP platform that allows users to form communities around common interests. There are a few reasons you might want to use Discord as your SSO identity provider. Discord is often used by hobby communities ranging from programming, gaming, and electronics to less technical things like finance and cooking. If there’s a community, there’s a good chance they have a Discord server. If you’re building a service aimed at one of these communities, using Discord as your SSO provider can make a lot of sense, allowing your users to log in with an account they already have rather than going through yet another registration process.
@@ -25,15 +29,17 @@ Before diving into the tutorial, it’s important to understand what you’ll be
 
 <WhatIsFusionAuth />
 
+_[Schedule a demo](/contact) to see how easy it is to set up SSO for Discord — or any other app._
+
 ## Implementing SSO with Discord and FusionAuth
 
 To get started, you’ll need an account with [Discord](https://discord.com/), a code editor of your choice, and [Docker](https://www.docker.com) for running the FusionAuth server. It’s possible to run FusionAuth without Docker if you’d prefer, but the Docker approach is the cleanest and easiest to set up. Please refer to the [official documentation](https://docs.docker.com/get-started/) to install and configure Docker, and make sure you have a recent version of both Docker and Docker Compose installed.
 
-Once you have these prerequisites in place, you need to log in to Discord and navigate to the [Developer Portal](https://discordapp.com/developers/applications/) to register a new application. Do this by selecting the "New Application" button near the top of the page. You’ll be presented with a dialog asking you to name your application. The name doesn’t matter for this tutorial, so give it any name that makes it easy for you to identify your application in the future.
+Once you have these prerequisites in place, you need to log in to Discord and navigate to the [Developer Portal](https://discordapp.com/developers/applications/) to register a new application. Do this by selecting the <InlineUIElement>New Application</InlineUIElement> button near the top of the page. You’ll be presented with a dialog asking you to name your application. The name doesn’t matter for this tutorial, so give it any name that makes it easy for you to identify your application in the future.
 
 ![Discord Application.](/img/blogs/single-sign-on-discord/discord-application.png)
 
-After entering a name, you’ll be taken to your new application and presented with details about it. From here, navigate to the "OAuth2" menu in the sidebar. Here you can see further details such as your Discord Client Id and Secret. Make a note of these values, as you’ll need them to configure your FusionAuth Identity Provider. On this page, there is also an option to add redirect URLs. Add `http://localhost:9011/oauth2/callback` as your redirect URL. This address will resolve to the FusionAuth instance that you will set up in the next step.
+After entering a name, you’ll be taken to your new application and presented with details about it. From here, navigate to the <Breadcrumb>OAuth2</Breadcrumb> menu in the sidebar. Here you can see further details such as your Discord Client Id and Secret. Make a note of these values, as you’ll need them to configure your FusionAuth Identity Provider. On this page, there is also an option to add redirect URLs. Add `http://localhost:9011/oauth2/callback` as your redirect URL. This address will resolve to the FusionAuth instance that you will set up in the next step.
 
 Next, you need to set up a FusionAuth instance. If you already have a FusionAuth Cloud instance, you can use that, but for the sake of simplicity, this tutorial will assume you are using a locally hosted instance. There are detailed setup guides in the [documentation](/docs/get-started/download-and-install/docker/), but the short version is that once you have Docker and Docker Compose set up and installed correctly, you can run the following command in a new directory to download and execute the necessary files.
 
@@ -43,11 +49,11 @@ curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/
 docker compose up
 ```
 
-Next, it's time to configure FusionAuth. If this is your first time logging in to your FusionAuth instance, you need to register an account. Just enter your name, email, password, and click "Submit". There's also [a tutorial about setting up an instance the first time](/docs/get-started/download-and-install/setup-wizard).
+Next, it's time to configure FusionAuth. If this is your first time logging in to your FusionAuth instance, you need to register an account. Just enter your name, email, password, and click <InlineUIElement>Submit</InlineUIElement>. There's also [a tutorial about setting up an instance the first time](/docs/get-started/download-and-install/setup-wizard).
 
-You can also use this [sample kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/example-apps/discord-sso.json) to set up everything if you don't want to do these steps manually. Make sure to review the kickstart file and update the authorized redirect URLs, at a minimum. Learn more about [Kickstart here](/docs/get-started/download-and-install/development/kickstart).
+You can also use this [sample kickstart file](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/discord-sso/kickstart.json) to set up everything if you don't want to do these steps manually. Make sure to review the kickstart file and update the authorized redirect URLs, at a minimum. Learn more about [Kickstart here](/docs/get-started/download-and-install/development/kickstart).
 
-Once you’ve created your administrator account, you need to create a new application. Navigate to "Applications" in the sidebar, and click the Plus button at the top of the screen.
+Once you’ve created your administrator account, you need to create a new application. Navigate to <Breadcrumb>Applications</Breadcrumb> in the sidebar, and click the Plus button at the top of the screen.
 
 ![Application creation screen.](/img/blogs/single-sign-on-discord/application-creation.png)
 
@@ -59,7 +65,7 @@ Save your changes, then click the View icon (the magnifying glass) from the list
 
 ![Application details view screen.](/img/blogs/single-sign-on-discord/application-view.png)
 
-Navigate to "Settings" and then to "Identity Providers". This is where you’ll configure the actual Discord Identity Provider. Click the dropdown menu at the top and select "Add OpenID Connect".
+Navigate to <Breadcrumb>Settings</Breadcrumb> and then to "Identity Providers". This is where you’ll configure the actual Discord Identity Provider. Click the dropdown menu at the top and select "Add OpenID Connect".
 
 ![Add the OpenID Connect Identity Provider.](/img/blogs/single-sign-on-discord/add-openid-connect.png)
 
@@ -87,13 +93,13 @@ Next, make sure this Identity Provider is enabled for the FusionAuth application
 
 ![Configuring the Unique Id claim.](/img/blogs/single-sign-on-discord/id-provider-details-update-unique-id-claim.png)
 
-Finally, go to the "Options" tab, and update the "Unique Id claim" from `sub` to `id`.
+Finally, go to the <Breadcrumb>Options</Breadcrumb> tab, and update the "Unique Id claim" from `sub` to `id`.
 
 Whew. You can now save your Identity Provider.
 
 The last thing you need to do in the FusionAuth admin panel is to create an API key for the sample application.
 
-To do this, navigate to "Settings" then "API Keys", and click the "Plus" button at the top.
+To do this, navigate to <Breadcrumb>Settings -> API Keys</Breadcrumb>, and click the <InlineUIElement>Plus</InlineUIElement> button at the top.
 
 ![Add API Key.](/img/blogs/single-sign-on-discord/add-api-key.png)
 
@@ -118,7 +124,7 @@ Once you have entered these details and saved them, do as the repo’s ReadMe pr
 
 ![Example Application.](/img/blogs/single-sign-on-discord/example-application.png)
 
-Click the "sign in" button, which will take you to your FusionAuth instance’s login screen, complete with a shiny new "Sign in with Discord" button. Click this button, and you will be prompted to authorize through Discord.
+Click the <InlineUIElement>sign in</InlineUIElement> button, which will take you to your FusionAuth instance’s login screen, complete with a shiny new <InlineUIElement>Sign in with Discord</InlineUIElement> button. Click this button, and you will be prompted to authorize through Discord.
 
 ![Discord authorization prompt.](/img/blogs/single-sign-on-discord/discord-authorization-prompt.png)
 
@@ -139,3 +145,5 @@ Some areas that you may want explore:
 - Adding logins to other providers, such as Google or Facebook.
 - Exploring roles and self-registration. Have the React app get information about the roles and offer different functionality for different roles.
 - Install a [different example application](/docs/sdks/examples/) and set up Discord login for that application. Then you can SSO between both of them. For more, read the [SSO guide](/docs/lifecycle/authenticate-users/single-sign-on).
+
+_[Schedule a demo](/contact) to see how easy it is to set up SSO for Discord — or any other app._

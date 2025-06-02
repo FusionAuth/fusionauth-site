@@ -13,15 +13,18 @@ import ArticleNav from '../components/nav/ArticleNav.astro';
 import Icon from '../components/icon/Icon.astro';
 import { specialCaps } from '../tools/string';
 import IndexableBody from '../components/search/IndexableBody.astro';
+import CopyMdButton from '../components/docs/CopyMdButton.astro';
 
 interface Props {
   author?: string;
   date?: string;
   description?: string;
+  copyMarkdown?: boolean;
   disableTOC?: boolean;
   excludeFromSearchIndex?: boolean,
   frontmatter?: Record<string, any>,
   headings?: any[];
+  htmlTitle?: string;
   icon?: string;
   image?: string;
   openGraphImage?: string;
@@ -37,12 +40,14 @@ interface Props {
 
 let {
   author,
+  copyMarkdown = false,
   date,
   description = "Looks like the developers forgot to include a description for this page. Sorry about that.",
   disableTOC,
   excludeFromSearchIndex = false,
   frontmatter,
   headings = [],
+  htmlTitle = "",
   icon,
   darkIcon,
   image,
@@ -66,6 +71,7 @@ darkIcon = frontmatter.darkIcon ? frontmatter.darkIcon : darkIcon;
 image = frontmatter.image ? frontmatter.image : image;
 section = frontmatter.section ? frontmatter.section : section;
 title = frontmatter.title ? frontmatter.title : title;
+htmlTitle = frontmatter.htmlTitle ? frontmatter.htmlTitle : title;
 disableTOC = frontmatter.disableTOC ? frontmatter.disableTOC : disableTOC;
 cta = frontmatter.cta ? frontmatter.cta : cta;
 
@@ -115,13 +121,18 @@ const sideNavStyles = [
 ];
 
 const tocStyles = [
-  "bottom-0 hidden overflow-y-auto pb-10 pt-0 lg:block w-full max-w-[240px] ml-6 sticky top-24 self-start overflow-y-auto lg:max-h-[calc(100vh-100px)] z-10"
+  "bottom-0 hidden overflow-y-auto pb-10 pt-0 xl:block w-full max-w-[240px] ml-6 sticky top-24 self-start overflow-y-auto lg:max-h-[calc(100vh-100px)] z-10"
 ];
+
+// used for copying markdown only
+const path = Astro.url.pathname;
+const fullMarkdownPath = path.replace(/.html$/,'.mdx');
+
 ---
 
 <!DOCTYPE html>
 <html class="antialiased min-h-full" lang="en">
-<Head title={title} description={description} canonicalUrl={frontmatter.canonicalUrl} {openGraphImage} {searchFilters} />
+<Head title={htmlTitle} description={description} canonicalUrl={frontmatter.canonicalUrl} {openGraphImage} {searchFilters} />
 <IndexableBody {excludeFromSearchIndex}>
   <slot name="nav"/>
   <main class:list={mainStyles}>
@@ -177,6 +188,8 @@ const tocStyles = [
 
           {breadcrumbs.length === 0 && section && <p class="font-semibold mb-4 mt-0 text-indigo-700 text-lg dark:text-indigo-500">{ specialCaps(section) }</p>}
           <h1 data-pagefind-meta="title" class:list={["text-3xl", image ? "mt-16" : "", author ? "mb-0" : ""]}>{title}</h1>
+          {copyMarkdown && <CopyMdButton mdpath={fullMarkdownPath} />}
+
           {author &&
             <p class="m-0 text-sm">By {author} {date && <span>- {new Date(date).toDateString()}</span>}</p>
           }
