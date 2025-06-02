@@ -16,7 +16,7 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
 
 
-This article discusses the dangers of storing OAuth tokens in the browser or on a client-side device – a common pattern in serverless architectures like single-page applications (SPAs) and mobile apps – and explains how to upgrade to using an OAuth proxy server. An OAuth proxy is also known as the token handler pattern, or an OAuth backend for frontend (BFF).
+This article discusses the dangers of storing OAuth tokens in the browser or on a client-side device – a common pattern in serverless architectures like single-page applications (SPAs) and mobile apps – and explains how to upgrade to using an OAuth proxy server. An OAuth proxy is also known as the token handler pattern, a token-mediating backend, or an OAuth backend for frontend (BFF).
 
 ## What Is BFF?
 
@@ -50,7 +50,7 @@ But first, let's briefly review web development history to understand how web se
 
 ## Authentication In A Simple Web App
 
-The diagram below shows the simplest client–server design used by most small web apps (without OAuth).
+The diagram below shows the simplest client–server design used by most small web apps (without OAuth or OpenID Connect).
 
 ![Diagram of a simple client-server design](/img/articles/authentication/bff/bff1.svg)
 
@@ -62,7 +62,7 @@ In this design, the backend could technically be considered a BFF, since it serv
 
 ## Why Are Cookies More Secure Than The Web Storage API?
 
-The use of a cookie as the authentication credential in the browser is crucial for security, as opposed to storing the credential in the browser's local or session storage. A cookie can be set to `HttpOnly` and `SameSite=Strict` to prevent JavaScript access and ensure the cookie is only sent to the server that created it.
+The use of a cookie as the authentication (or authorization) credential in the browser is crucial for security, as opposed to storing the credential in the browser's local or session storage. A cookie can be set to `HttpOnly` and `SameSite=Strict` to prevent JavaScript access and ensure the cookie is sent only to the server that created it.
 
 By contrast, data in local and session storage can be accessed by JavaScript, and potentially sent to an attacker's server to be used to impersonate the user later. This type of theft is called token exfiltration – the act of extracting data after a system has been infiltrated.
 
@@ -92,20 +92,26 @@ Building on the simple web server model, the next level in complexity is the OAu
 
 ![Diagram of the OAuth authorization code flow](/img/articles/authentication/bff/bff3.svg)
 
-In this design, an OAuth server is added to the browser and server components from the previous example. 
+In this design, an authorization server is added to the browser and server components from the previous example.
 
-Here's how the OAuth authorization code flow handles user login:
+<Aside type="note">
+Authentication is handled by OpenID Connect (OIDC), a layer on top of OAuth, and by not OAuth directly. OIDC specifies how an authorization server can issue Id tokens, whereas OAuth governs authorization of access to resources and does not cover user identification.
+
+FusionAuth (and other similar providers) provide an authorization server that issues both Id and access tokens, thereby implementing both OIDC and OAuth 2.0, respectively, which supports both login and API authorization.
+</Aside>
+
+Here's how the authorization code flow handles user login:
 
 - The user clicks **Log in** in the web app.
-- The web server receives the request and redirects the user to the OAuth server's website, where they enter their credentials.
-- The OAuth server redirects the browser to the web service with an authorization code in the URL.
-- The web service receives the code and sends it to the OAuth server to get refresh and access tokens. (For better security, this exchange does not involve the browser.) The web service stores the tokens, then returns a cookie to the user, marking them as logged in. (Read [this guide](/blog/what-happens-after-oauth-authentication-event) to understand what each token is used for.)
+- The web server receives the request and redirects the user to the authorization server's website, where they enter their credentials.
+- The authorization server redirects the browser to the web service with an authorization code in the URL.
+- The web service receives the code and sends it to the authorization server to get Id, access, and (optionally) refresh tokens. (For better security, this exchange does not involve the browser.) The web service stores the tokens, then returns a cookie to the user, marking them as logged in. (Read [What Happens to the Tokens After an OAuth Authorization Code Grant?](/blog/what-happens-after-oauth-authentication-event) to understand what each token is used for.)
 
-Since the OAuth tokens are never sent to the browser, they cannot be stolen by malicious JavaScript on the client side. While the initial authorization code from the OAuth server is returned to the browser and is therefore vulnerable to client-side attacks, only the web service can exchange it for access tokens, as the OAuth server will reject requests from other URLs.
+Since the OAuth tokens are never sent to the browser, they cannot be stolen by malicious JavaScript on the client side. While the initial authorization code from the authorization server is returned to the browser and is therefore vulnerable to client-side attacks, only the web service can exchange it for access tokens, as the authorization server will reject requests from other URLs.
 
 If you use an authentication gateway like FusionAuth or Keycloak for a web app, this is probably the flow currently in use.
 
-In this design, OAuth is used to authenticate the user on the app's web service, not with an external resource server on the client's behalf. 
+In this design, the authorization code flow is used to authenticate the user on the app's web service, not with an external resource server on the client's behalf.
 
 If the web service were to make requests to an external server, it would send the access token with each request. As before, the token would never be sent to the browser. This design is illustrated in the diagram below.
 
@@ -123,8 +129,8 @@ While the Dropbox API supports OAuth, this design doesn't have a server, so you 
 
 The PKCE (proof key for code exchange) flow is similar to the authorization code flow, with two differences:
 
-- When the initial request for an authorization code is sent, the browser includes a secret, which the OAuth server stores.
-- When the request for an access token is sent, the browser includes not only the authorization code, but also the original secret. If the secret the OAuth server stored does not match the one from the browser, the server will not return an access token. The access and refresh tokens are obtained directly from the app in the browser and are stored there.
+- When the initial request for an authorization code is sent, the browser includes a secret, which the authorization server stores.
+- When the request for an access token is sent, the browser includes not only the authorization code, but also the original secret. If the secret the authorization server stored does not match the one from the browser, the server will not return an access token. The access and refresh tokens are obtained directly from the app in the browser and are stored there.
 
 Let's consider possible attacks on this protocol:
 
@@ -141,13 +147,13 @@ As a frontend developer, you may be reluctant to build a server for your app. Th
 
 That's the beauty of the BFF pattern — you don't have to create a complex server. You can create a tiny backend with no database that is merely a proxy server or trusted intermediary, and does nothing but handle tokens. You can still use external services for OAuth, resource servers, and file hosting.
 
-Ignoring the file host (since it's inconsequential), a minimal backend for secure token exchange looks like the diagram below. Notice how similar this diagram is to the earlier OAuth example, with Dropbox acting as both the OAuth server and resource server.
+Ignoring the file host (since it's inconsequential), a minimal backend for secure token exchange looks like the diagram below. Notice how similar this diagram is to the earlier OAuth example, with Dropbox acting as both the authorization server and resource server.
 
-![Diagram showing a minimal backend for secure token exchange with Dropbox acting as both the OAuth server and resource server](/img/articles/authentication/bff/bff6.svg)
+![Diagram showing a minimal backend for secure token exchange with Dropbox acting as both the authorization server and resource server](/img/articles/authentication/bff/bff6.svg)
 
-Of course, your OAuth server and your resource server might be separate servers (for example, you might use Google Accounts for OAuth to request authorization for Gemini as the AI resource). Then the design will look as follows.
+Of course, your authorization server and your resource server might be separate servers (for example, you might use Google Accounts for OAuth to request authorization for Gemini as the AI resource). Then the design will look as follows.
 
-![Diagram showing separate Oauth server and resource server](/img/articles/authentication/bff/bff7.svg)
+![Diagram showing separate authorization server and resource server](/img/articles/authentication/bff/bff7.svg)
 
 Again, this design closely resembles the earlier traditional web server example. The term BFF applies here because the server is designed exclusively to provide authorization services to the frontend. The business service is provided by the resource server.
 
@@ -180,7 +186,7 @@ Philippe's conclusion is that there is ultimately no way to adequately protect a
 
 Let's look at some code to create a BFF for a currently serverless app – first to see how the app runs and login works, then to see how the code works.
 
-Clone or download the repository from https://github.com/fusionauth/fusionauth-example-hostedbackend. 
+Clone or download the repository from https://github.com/fusionauth/fusionauth-example-hostedbackend.
 
 You will need Docker installed to run the example.
 
@@ -222,7 +228,7 @@ The BFF is the tiniest Express.js server possible. It is in `app.js`.
 
 <RemoteCode url={frontmatter.url + "/nodeApp/app.js"} lang="js"/>
 
-The code contains a lot of Node Express boilerplate, including imports of the session and the cookie parser packages. There are only four main routes: the first returns the HTML file, and the others use Passport.js to check the user's authentication status. Passport.js is a JavaScript wrapper to call OAuth servers.
+The code contains a lot of Node Express boilerplate, including imports of the session and the cookie parser packages. There are only four main routes: the first returns the HTML file, and the others use Passport.js to check the user's authentication status. Passport.js is a JavaScript wrapper to call authorization servers.
 
 The `authentication.js` file is more complicated.
 
