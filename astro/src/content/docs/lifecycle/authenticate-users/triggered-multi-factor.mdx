@@ -9,18 +9,9 @@ tags: auth as a service
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
 import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
-import DifferenceTwoFactorMultiFactor from 'src/content/docs/_shared/_difference-two-factor-multi-factor.mdx';
-import JSON from 'src/components/JSON.astro';
-import InlineField from 'src/components/InlineField.astro';
-import RecoveryCodesBlurb from 'src/content/docs/lifecycle/authenticate-users/_recovery-codes-blurb.mdx';
-import Aside from 'src/components/Aside.astro';
-import MfaMigration from 'src/content/docs/lifecycle/authenticate-users/_mfa-migration.mdx';
-import MfaTroubleshooting from 'src/content/docs/lifecycle/authenticate-users/_mfa-troubleshooting.mdx';
 import MfaDecisionTree from 'src/diagrams/docs/lifecycle/authenticate-users/mfa-decision-tree.astro';
+import TenantMfaDecisionTree from 'src/diagrams/docs/lifecycle/authenticate-users/tenant-mfa-decision-tree.astro';
 import ApplicationMfaDecisionTree from 'src/diagrams/docs/lifecycle/authenticate-users/app-mfa-decision-tree.astro';
-import { YouTube } from '@astro-community/astro-embed-youtube';
-import StaticPatchNote from 'src/content/docs/sdks/_static-patch-note.mdx';
-
 
 ## Overview
 
@@ -28,35 +19,42 @@ FusionAuth applies multi-factor authentication based on a number of configuratio
 
 ## MFA Inside The Authentication Process
 
-There are XXX major considerations for whether MFA is applied during the login process.
+There are four major considerations for whether MFA is applied during the login process.
 
-* Is MFA enabled on the tenant or application?
-* Does the user have MFA enabled? If this is the case, then MFA is never triggered.
-* Did the user log in using an identity provider such as Google or OIDC?
-* Has the device passed FusionAuth contextual checks?
+* What is the MFA policy for the tenant or application? It can be either `Disabled`, `Enabled`, or `Required`.
+* Does the user have MFA enabled? If this is not the case, then an MFA challenge is never triggered, but the user may be prompted to set up MFA.
+* Did the user log in using an Identity Provider such as Google or OIDC? In this case, MFA is never required for the user.
+* Has the device passed FusionAuth contextual checks such as being on a known device.
 
-Here's a diagram of the logic when the tenant has a policy for MFA.
+Here's a high level diagram of the logic:
 
-<MfaDecisionTree />
+<MfaDecisionTree alt="High level diagram of MFA logic."/>
 
-Here's a diagram of the logic when the application has a policy for MFA. Application policies supersede the tenant policy.
+The goal is to challenge the user for another factor of authentication whenever FusionAuth determines the risk of incorrect access is higher than the user hassle.
 
-<ApplicationMfaDecisionTree />
+Depending on [your license](#license-limitations), you can configure MFA policies at both the tenant and application level. Let's take a look at each of these in more depth.
+
+### Tenant Level MFA Configuration
+
+Here's a diagram of the MFA challenge logic when the tenant has a policy for MFA.
+
+<TenantMfaDecisionTree alt="Diagram of tenant MFA logic."/>
+
+### Application Level MFA Configuration
+
+Here's a diagram of MFA challenge logic when the application has a policy for MFA. Application policies supersede the tenant policy.
+
+<ApplicationMfaDecisionTree alt="Diagram of application MFA logic."/>
 
 The contextual checks are based on attributes of the request evaluated every time an authentication happens and and include:
 
-* Has this device been seen before for this user?
+* Has this device been seen before?
+* Has this user been seen before on this device?
 * Is there a suspicious login detected for this authentication attempt?
-
-TODO if tenant has email policy enabled but user only has TOTP, do we prompt for MFA?
-TODO after we force user to set up MFA do we prompt for it?
-TODO does https://github.com/FusionAuth/fusionauth-issues/issues/2357 apply if the application MFA policy is present?
-
-TODO Has this device been seen before for this user? is it for the user/device pair or just the device
 
 ## License Limitations
 
-The type of plan you are on affects what MFA occurs. 
+Not all plans support all MFA feature. The plan you are on affects the MFA options available to you and your users.
 
 <EnterprisePlanBlurb />
 * Application MFA policies
@@ -70,28 +68,34 @@ The type of plan you are on affects what MFA occurs.
 Features on the Community plan:
 
 * TOTP MFA
+* Tenant MFA policies
 * User MFA Enrollment APIs
 
 ## MFA After Identity Provider Login
 
-If a user logs in with an Identity Provider such as Google or OIDC, FusionAuth assumes that MFA is taken care of at the remote identity source.
+If a user logs in with an Identity Provider such as Google or OIDC, FusionAuth assumes that MFA is taken care of at the remote identity source. [Learn more about this scenario.](/docs/lifecycle/authenticate-users/identity-providers/#account-security)
 
-[Learn more about this.](/docs/lifecycle/authenticate-users/identity-providers/#account-security)
+There's an [open issue to add a policy to allow for more control in this scenario](https://github.com/FusionAuth/fusionauth-issues/issues/2005).
 
-TODO issue reflecting alternative policy
+## Enforcing MFA Checks On Certain Users 
 
-## MFA On Certain Segments
+You may need more granularity on who is prompted for an additional factor during the login process. For example, you might want everyone who is a member of a certain group or who has a certain `user.data` field to go through MFA.
 
-Make sure everyone on that group has MFA method using login validation lambda or webhook or API and also set tenant MFA to enabled.
+There are a couple of ways to do this. Let's use the example of making sure everyone in the `mfa_required` group is challenged whenever they log in. Options include:
 
-TODO or add MFA required application and bounce everyone in the group through that application first
+* Set a tenant or application policy to `Enabled` and then use the API to ensure that everyone in the `mfa_required` group has an MFA method. Use a transactional `user.update` webhook to ensure that the MFA method can't be removed while the user is in that group.
+* Create an MFA check application with an MFA policy of `Required` and a trust policy of `None`. After a user logs in, examine their profile and, if they are in the `mfa_required` group, redirect them to this application. They will be prompted for MFA and then redirected on to the application. Users that are not in the `mfa_required` group can be sent directly through to the application. Make sure the MFA check application uses a lambda to set the `aud` and `applicationId` claims to values expected by any access token consumers.
+
+There's an [open GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/2309) to the MFA process more flexible by using a lambda.
 
 ## MFA Outside Of The Login Process
 
-If you need to prompt for MFA outside of the login process, you want to use step-up authentication. This is an integration you can use the SDKs or APIs to do. 
+If you need to prompt for MFA outside of the login process, you want to use step up authentication. For example, if you want to challenge for MFA when a user performs a high-risk action like initiating a money transfer. Use the [APIs](/docs/apis/two-factor#start-multi-factor) to perform this process.
 
-Learn more about [step-up authentication](/docs/lifecycle/authenticate-users/multi-factor-authentication#step-up-auth).
+Learn more about [step up authentication](/docs/lifecycle/authenticate-users/multi-factor-authentication#step-up-auth).
 
 ## Limitations
 
-There's an [open issue](https://github.com/FusionAuth/fusionauth-issues/issues/2357) when a user logs in with an identity provider but SSOs to an application with a loginPolicy of required.
+There's an [open issue](https://github.com/FusionAuth/fusionauth-issues/issues/2357) about unexpected MFA behavior and workarounds when a user logs in with an identity provider but SSOs to an application with a login policy of `required`.
+
+If a user signs up with an MFA method that is allowed for a tenant, such as email, and the tenant configuration changes later to disable that MFA method, the user can still use that MFA method. Users cannot, however, add the disabled MFA method. If you are disabling an MFA method, it's recommended you search for users using that method and remove it by updating the user.
