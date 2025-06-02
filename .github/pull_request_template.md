@@ -15,7 +15,7 @@
 
 - [ ] Read aloud to make sure it flows. Prefer direct imperative instructions. Use "you", never "we". "Let's" is acceptable.
 - [ ] The software is FusionAuth, never FA. Use "admin UI" to refer to the admin application, and "hosted login pages" to refer to the screens a normal user uses to log in.
-- [ ] Run through Google spell/grammar check
+- [ ] Run through spelling/grammar check (google, in your IDE, etc)
 - [ ] Run through an LLM of your choosing with the prompt "I'm writing a (blog post|doc) about [topic]. Here it is. The reader is going to be a senior developer. What would you do to improve it?" (You don't have to mindlessly do everything the LLM suggests, but you should see if the suggestions improve your post).
 - [ ] Code spacing is 2 spaces per indent
 - [ ] Any referenced github repositories points to FusionAuth organization
@@ -31,9 +31,14 @@
 #### Example App
 
 - [ ] If there is an example app, add it to to astro/src/content/json/exampleapps.json 
-- [ ] Add a kickstart file, ensure example app runs with kickstart
-- [ ] Use the Download widget
+- [ ] Use appropriate FusionAuth SDK for any connection with FusionAuth
+- [ ] Use the Download.astro widget if running FusionAuth
+- [ ] Add a kickstart file to the kickstart repo, ensure example app runs with kickstart
 - [ ] Add a README to the example app repo
+- [ ] Repo has appropriate tags and permissions
+- [ ] No kickstart in the example app repo
+- [ ] No Dockerfile in the example app repo
+
 
 #### Blog Post
 
