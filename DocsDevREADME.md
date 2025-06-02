@@ -39,8 +39,9 @@ Here are some guidelines to follow when writing documentation (everything under 
 - If you have a list element containing more than one paragraph, indent the second paragraph by the same amount as the start of the text in the first paragraph to make sure that it renders correctly.
 - The `title` frontmatter element is used in several places: an H1 tag on the page, in any dynamically created menus, and in the HTML title tag. Sometimes, for SEO purposes, we want to add extra stuff to the HTML title tag, such as `| FusionAuth`. But that looks bad in the menu item. If this is the case, use the `htmlTitle` frontmatter element, which is only used for the HTML title tag. If not present, the HTML title tag defaults to the `title` frontMatter element. This is set up for docs, articles, blog posts and any other layouts that inherit from `Default.astro`.
 - Use the `RemoteCode` component or the `RemoteValue` to include any code or configuration in fusionauth-site blog posts, articles, or docs. This lets us have running code to update over time, as well as letting us write tests. It also lets us leverage GitHub as a discovery mechanism.
-- Use `fetch` for all JavaScript http requests.
-- Use `requests` for all Python http requests.
+- Use the FusionAuth SDK whenever making API calls to FusionAuth.
+- Use `fetch` for all non-FusionAuth JavaScript http requests.
+- Use `requests` for all non-FusionAuth Python http requests.
 - When starting up FusionAuth, make sure you use the new Download widget and put the kickstart into the single repo. See [#download-instructions] for more.
 - Make sure you check of everything in the PR checklist for new/updated blog posts and docs
 
