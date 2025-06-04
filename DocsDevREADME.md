@@ -220,6 +220,7 @@ Fruits were domesticated at different times.
 
 ## Proper names and other verbiage
 - .NET Core
+- air-gapped (not airgapped or air gapped)
 - Azure AD
 - CAPTCHA
 - client-side
