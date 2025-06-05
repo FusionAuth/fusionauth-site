@@ -119,20 +119,31 @@ There's an [open issue to add a policy to allow for more control](https://github
 
 ## Enforcing MFA Challenges On Certain Users 
 
-You may need more granularity on who is prompted for an additional factor during the login process. For example, you might want everyone who is a member of a certain group or who has a certain `user.data` field to go through MFA.
+You may need more granularity on who is challenged for an additional factor during login.
 
-There are a couple of ways to do this. Let's use the example of making sure everyone in the `mfa_required` group is challenged whenever they log in, and no one else is. Options include:
+For example, you might want everyone who is a member of a certain group or who has a certain `user.data` field to go through MFA. While there's an [open GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/2309) to enhance the flexibility of the MFA process by using a lambda, you can also accomplish this now.
+
+Let's use the example of making sure everyone in the `mfa_required` group is challenged whenever they log in, and no one else is.
+
+These two options rely on different aspects of the challenge decision trees outlined above.
+
+### Use a Webhook
 
 * Set a tenant or application policy to `Enabled` and then use the API to ensure that everyone in the `mfa_required` group has an MFA method.
-  * Use a [transactional `user.update` webhook](/docs/extend/events-and-webhooks/events/user-update) to ensure that the MFA method can't be removed while the user is in that group.
-  * If you are using the tenant, set the trust duration to be the same or less than your session length.
-  * If you are using the application policy, set the trust policy to `None`.
-* Create an "MFA check" application with an MFA policy of `Required` and a trust policy of `None`.
-  * After a user logs in, examine their profile on an interstitial page. If they are in the `mfa_required` group, redirect them to this application. They will be prompted for MFA and then redirected to the application.
-  * Users that are not in the `mfa_required` group can be sent directly through to the application.
-  * Make sure the MFA check application uses a lambda to set the `aud` and `applicationId` claims to values expected by any access token consumers.
+* Use a [transactional `user.update` webhook](/docs/extend/events-and-webhooks/events/user-update) to ensure that the MFA method can't be removed while the user is in that group.
+* Set the trust duration to be the same or less than your session length.
+* If you are using the application policy, set the trust policy to `This`.
 
-There's an [open GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/2309) to enhance the MFA process and make it more flexible by using a lambda. This functionality is currently unimplemented; please add your vote or comments to that issue.
+### Redirect Users Through a Special Application
+
+* Create an "MFA check" application with an MFA policy of `Required` and a trust policy of `None`.
+* After a user logs in, examine their profile on an interstitial page.
+  * If they are in the `mfa_required` group, redirect them to this application. They will be prompted for MFA and then redirected to the initial application.
+  * Users that are not in the `mfa_required` group can be sent directly through to the application.
+
+Make sure the MFA check application uses a lambda to set the `aud` and `applicationId` claims to values expected by any access token consumers.
+
+This is similar to doing a conditional step-up authentication on the interstitial page but avoids using the step up API.
 
 ## MFA Challenges Outside Of The Login Process
 
