@@ -1,21 +1,20 @@
-document.querySelector('#copy-docs-markdown-llm-button').addEventListener('click',async event => {
+document.querySelector('#copy-docs-markdown-llm-button').addEventListener('click', async event => {
   const button = event.currentTarget;
   const href = button.dataset.href;
   const resetTextMS = 2000;
-
-  // if you change this, change the initial value in the astro component as well
   const btnText = 'Copy as Markdown for LLMs';
 
   try {
-    const response = await fetch(href);
-    if (!response.ok) throw new Error('Failed to fetch file');
+    // Create the clipboard item immediately within the user gesture
+    const clipboardItem = new ClipboardItem({
+      'text/plain': fetch(href).then(async response => {
+        if (!response.ok) throw new Error('Failed to fetch file');
+        return response.text();
+      })
+    });
 
-    const text = await response.text();
-
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.write([clipboardItem]);
     button.textContent = 'Copied';
-
-    // Optionally reset button text after 2 seconds
     setTimeout(() => {
       button.textContent = btnText;
     }, resetTextMS);
