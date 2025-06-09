@@ -107,9 +107,9 @@ Here's how the authorization code flow handles user login:
 - The authorization server redirects the browser to the web service with an authorization code in the URL.
 - The web service receives the code and sends it to the authorization server to get Id, access, and (optionally) refresh tokens. (For better security, this exchange does not involve the browser.) The web service stores the tokens, then returns a cookie to the user, marking them as logged in. (Read [What Happens to the Tokens After an OAuth Authorization Code Grant?](/blog/what-happens-after-oauth-authentication-event) to understand what each token is used for.)
 
-Since the OAuth tokens are never sent to the browser, they cannot be stolen by malicious JavaScript on the client side. While the initial authorization code from the authorization server is returned to the browser and is therefore vulnerable to client-side attacks, only the web service can exchange it for access tokens, as the authorization server will reject requests from other URLs.
+Since the tokens are never sent to the browser, they cannot be stolen by malicious JavaScript on the client side. While the initial authorization code from the authorization server is returned to the browser and is therefore vulnerable to client-side attacks, only the web service can exchange it for access tokens, as the authorization server will reject requests from other URLs.
 
-If you use an authentication gateway like FusionAuth or Keycloak for a web app, this is probably the flow currently in use.
+If you use an authentication gateway like [FusionAuth](https://fusionauth.io) or Keycloak for a web app, this is probably the flow currently in use.
 
 In this design, the authorization code flow is used to authenticate the user on the app's web service, not with an external resource server on the client's behalf.
 
@@ -125,19 +125,19 @@ Let's say you build a to-do app to help people keep track of their chores. Inste
 
 ![Illustration of a serverless app using the Dropbox file storage API](/img/articles/authentication/bff/bff5.svg)
 
-While the Dropbox API supports OAuth, this design doesn't have a server, so you can't use the OAuth code flow. In this case, the OAuth specification recommends the client-only PKCE flow.
+While the Dropbox API supports OAuth, this design doesn't have a server, so you can't use the OAuth code flow. In this case, the OAuth specification recommends the authorization code flow with PKCE (Proof Key for Code Exchange).
 
-The PKCE (proof key for code exchange) flow is similar to the authorization code flow, with two differences:
+PKCE adds the following steps to the authorization code flow:
 
-- When the initial request for an authorization code is sent, the browser includes a secret, which the authorization server stores.
-- When the request for an access token is sent, the browser includes not only the authorization code, but also the original secret. If the secret the authorization server stored does not match the one from the browser, the server will not return an access token. The access and refresh tokens are obtained directly from the app in the browser and are stored there.
+- When the initial request for an authorization code is sent, the client hashes a secret to create a challenge, which it sends to the authorization server where it is stored.
+- When the request for an access token is sent, the client includes not only the authorization code, but also the un-hashed secret. The authorization server hashes the secret to reproduce the challenge, and if the resulting challenge does not match the challenge from the client, the server will not return an access token. The access and refresh tokens are obtained from the authorization server and stored in the app in the browser.
 
 Let's consider possible attacks on this protocol:
 
-- If an attacker can read the browser's address bar, they can see the authorization code returned from the server. However, without the challenge secret, they can't obtain access tokens.
+- If an attacker can read the browser's address bar, they can see the authorization code returned from the server. However, if the secret or the challenge doesn't match between the client and authorization server, the attacker can't obtain access tokens.
 - If the app has malicious JavaScript, the attacker will be able to exfiltrate the authorization code, refresh token, and access token. The attacker can then wait until the user goes offline, and use the latest refresh token to generate access tokens until the user login timeout expires (which could be days or weeks).
 
-What an attacker can steal depends on how the app stores the tokens and secrets. If the app keeps this sensitive data only as variables in RAM, malicious JavaScript probably won't be able to find it, unless it knows exactly where to look. But if tokens are kept only in RAM, the user will have to log in every single time they open the app. If the secrets are persisted in the browser's session or local storage, the attacker will steal everything. Note that `HttpOnly` cookies can't be used in this situation, because the app's JavaScript has to be able to read and write the token values.
+What an attacker can steal depends on how the app stores the tokens and secrets. If the app keeps this sensitive data only as variables in app memory, malicious JavaScript probably won't be able to find it, unless it knows exactly where to look. But if tokens are kept only in app memory, the user will have to log in every single time they open the app. If the secrets are persisted in the browser's session or local storage, the attacker will steal everything. Note that `HttpOnly` cookies can't be used in this situation, because the app's JavaScript has to be able to read and write the token values.
 
 Serverless design isn't limited to web apps. Desktop apps and mobile apps are also often serverless. Mobile apps that connect your bank account, file storage, or medical record provider probably don't have their own servers. If an attacker gains access to your phone or computer, either through a malicious app or through physical theft, they might gain access to all the tokens on your device.
 
@@ -157,7 +157,7 @@ Of course, your authorization server and your resource server might be separate 
 
 Again, this design closely resembles the earlier traditional web server example. The term BFF applies here because the server is designed exclusively to provide authorization services to the frontend. The business service is provided by the resource server.
 
-If your business has its own full-featured server for business logic, or a public API, you may still want to use the BFF pattern, keeping separate servers purely for authentication, so that mobile, web, and desktop apps can each have a dedicated BFF. This design is shown in the diagram below and echoes the Soundcloud design discussed in the introduction.
+If your business has its own full-featured server for business logic, or a public API, you may still want to use the BFF pattern, keeping separate servers purely for authentication/authorization, so that mobile, web, and desktop apps can each have a dedicated BFF. This design is shown in the diagram below and echoes the Soundcloud design discussed in the introduction.
 
 ![Diagram showing mobile, web, and desktop apps, each with a dedicated BFF, and a separate server for authentication](/img/articles/authentication/bff/bff8.svg)
 
@@ -165,14 +165,14 @@ If your business has its own full-featured server for business logic, or a publi
 
 You might not see the value in all the work to create a BFF for your serverless app. After all, if an attacker already has enough access to a user's browser or device to steal a refresh token, surely it's too late to protect the user? The answer is, it depends:
 
-- For a web app, a BFF is highly valuable: It allows the app to store nothing but a cookie, which attackers can't exfiltrate.
+- For a web app, a BFF is highly valuable: it allows the app to store nothing but a cookie, which attackers can't exfiltrate.
 - For a mobile or desktop app, a BFF is less valuable because these apps may not store cookies like browsers do. However, a BFF can still return a short-lived authentication credential, so even if it's stolen, the attacker has limited time to use it. Without a BFF, a stolen refresh token could allow an attacker to impersonate a user for days.
 
 A BFF may also expose fewer endpoints to the frontend, limiting the actions an attacker can take, and detect unusual behavior – blocking suspicious requests before they reach the business server, much like banks check for credit card fraud.
 
 Read more about [where to store tokens on different devices](/articles/oauth/oauth-token-storage).
 
-## OAuth Allows Serverless Apps, But Don't Use Them
+## OAuth Allows Serverless Apps, But Don't Beware Security Risks
 
 In his 2023 [talk on the non-security of serverless OAuth apps](https://www.youtube.com/watch?v=OpFN6gmct8c), Philippe de Ryck noted that the OAuth organization doesn't discourage programmers from using serverless apps strongly enough. OAuth recommends:
 
@@ -279,13 +279,15 @@ When making the request, you need to specify the `openid` [scope](/docs/lifecycl
 
 As in the previous example, the display of the username is not essential. Since cookies are sent with every page request, the user's logged in status is handled automatically on the server.
 
-In summary, you can add secure authentication to your serverless app by simply running FusionAuth and writing a snippet of JavaScript. This is less work than implementing the PKCE flow, and it's a more secure approach. If you are writing a mobile or desktop app, you can also use this secure technology, as long as your HTTP library supports cookies.
+In summary, you can add secure authentication to your serverless app by simply running FusionAuth and writing a snippet of JavaScript. This is less work than implementing the PKCE flow manually in the front end, but more importantly, it's a more secure approach. If you are writing a mobile or desktop app, you can also use this secure technology, as long as your HTTP library supports cookies.
 
 ## Other Hosted BFFs
 
 By providing a hosted backend, FusionAuth massively simplifies the work you need to do for SPAs and mobile apps. As of early 2025, FusionAuth remains one of the few authentication gateways to offer this feature.
 
 Depending on the provider, this feature might be called an OAuth proxy, BFF, or hosted auth proxy. Curity calls it the [token handler pattern](https://curity.io/blog/token-handler-the-single-page-applications-new-bff/).
+
+The OAuth 2.0 for Browser-Based Applications draft specification names this pattern the [Token-Mediating Backend](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend). If you have full control over your backend, you could implement a [BFF pattern that handles authentication, authorization, and all API interactions](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff) as well.
 
 If you don't want to use FusionAuth or write your own BFF, open-source projects like [OAuth2 Proxy](https://oauth2-proxy.github.io/oauth2-proxy) (written in Go) offer cookie and token management, but still require server-side hosting.
 
@@ -322,4 +324,6 @@ This article covers a lot, but the recommendations are straightforward:
 - [Node `http-server` package](https://www.npmjs.com/package/http-server)
 - [Go OAuth2 Proxy](https://oauth2-proxy.github.io/oauth2-proxy)
 - [Multifactor authentication in FusionAuth](/docs/lifecycle/authenticate-users/multi-factor-authentication)
+- [OAuth 2.0 for Browser-Based Applications](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff): [Backend For Frontend](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-backend-for-frontend-bff) and [Token-Mediating Backend](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend)
+
 
