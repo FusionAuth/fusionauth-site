@@ -1,0 +1,234 @@
+---
+publish_date: 2025-06-13
+title: "How to Make Your Developer Documentation Work with LLMs: Lessons from the Trenches"
+description: Engineering leaders increasingly use LLMs to evaluate authentication solutions, but most documentation isn't optimized for AI consumption. This guide shares four proven strategies we've used at FusionAuth to make our developer docs work better with ChatGPT, Claude, and other AI tools.
+authors: Dan Moore
+image: /img/blogs/llms-for-docs/make-your-devtool-docs-work-smarter-with-llms.png
+categories: Education
+tags: llms, technical documentation, astro, genai
+excerpt_separator: "{/* more */}"
+---
+import {RemoteCode} from '@fusionauth/astro-components';
+
+Large language models (LLMs) are in use by more and more developers. They use them to write code, but also to discover and leverage tools. In this post, you will learn how to make your docs more accessible to LLMs and to developers using them, based on our real world experience.
+
+{/* more */}
+
+LLMs and LLM enabled tools such as [Claude](https://claude.ai/), [ChatGPT](https://chatgpt.com/) and [Cursor](https://www.cursor.com/) are used by developers in their daily workflow. In 2024, [a survey from GitHub](https://github.blog/news-insights/research/survey-ai-wave-grows/) found over 97% of the 2000 developers surveyed "used AI coding tools at work at some point".
+
+Here at FusionAuth, we have also noticed a trend in the last few months. We started getting inbound sales calls from people who asked ChatGPT about us. We ask people who install our software where they heard about us from and many answer with a specific LLM name or "LLMs/GenAI".
+
+Helping developers be successful by using our documentation to get to what they are trying to accomplish is something we spend a lot of time on here at FusionAuth. In this post, we'll talk about ways we have modified our documentation to make it work better with LLMs, and show you how to do so.
+
+There are two ways LLMs can help your company:
+
+* discovery, where an LLM surfaces your tool and helps users discover it--basically a replacement for Google
+* building, where an LLM helps a developer build using your tool--basically a replacement for Stack Overflow
+
+The boundaries between these are blurry, but definitely exist. Some doc improvements help with one more than the other.
+
+Here's a table of the options that will be examined below.
+
+| Option | Pros | Cons | Primary Use |
+|--------|------|------|------|
+| Build great docs | Helps everyone, including LLMs, developers and search engines     | Large, ongoing time investment | Discovery and building |
+| LLM powered chatbot        | Familiar user interface, aggregates across multiple sources of doc, easy buy decision     | Costs money (or time to build), can be inaccurate     | Building |
+| Generate a `llms.txt` file        | Helps LLMs discover and ingest content, can be auto-updated, emerging standard    | Fuzzy effectiveness, updating may be tough depending on where content lives, no current support for multiple sections | Discovery, a bit of building |
+| Copy to markdown button        | Lets devs use the LLM of their choosing, leverage LLM for use cases you can't imagine or document     | Development time required, may not be used, UX issues | Building |
+
+Now, let's take a deeper look into each of the options above.
+
+## Foundation First: Building Documentation That Works for Both Humans and AI
+
+The first and most important way to help developers and LLMs use your docs is to, well, write them. If they don't exist, they won't help anyone. In addition to writing them, you should:
+
+* structure them well, both in how they are arranged and linked and on the page with headings
+* include frequently asked questions and troubleshooting tips
+* keep them up to date, including generating them from specs or code where applicable
+* make them fast to download
+* make them consistent
+* offer public long tail content like a forum
+
+If this seems like boring hard work, that's *because it is*.
+
+Docs are their own product. They are a key way for your community to learn your product. They also allow prospective developers to evaluate your product with lower risk than downloading or signing up. They're a signal about product quality too.
+
+The effort of good documentation pays off in multiple ways, because in addition to helping LLMs, it also helps SEO. Organic search is still a massive source of traffic. And, following those guidelines above, it helps developers who are reading the docs.
+
+The good folks at [Kapa.ai](https://www.kapa.ai/), who provide documentation based LLM chatbots for many companies, including FusionAuth, wrote a great page about [how to structure your technical documentation for LLMs](https://docs.kapa.ai/improving/writing-best-practices).
+
+There is a lot of good advice in that post, but an important tip for content structure is: "When planning content structure, consider how users would find any given section without search. Ensure each section includes enough context to be understood independently", including product family, name, versions, components and functional goals.
+
+Based on how people read (or don't) today, you might see the benefits of this approach toward content structure for humans as well.
+
+The downside of building and maintaining good documentation is it takes a lot of effort to do so. But if you don't get this right, the rest of the tips in this post are not going to help you much. 
+
+Solid, updated, accurate documentation is the foundation for anything else related to helping LLMs and developers using them.
+
+### Success Metrics
+
+After building and maintaining docs, make sure they are working for your LLMs for both discovery and building.
+
+For discovery, ask developers how they found you. We've seen a notable uptick in users mentioning finding FusionAuth via LLMs. In fact, since we started tracking it in our [setup wizard](/docs/get-started/download-and-install/setup-wizard#complete-the-setup-wizard), it has been one of our top three sources. You can also manually look for references or unique strings from your docs that are returned by an LLM of your choice. You can also examine the traffic to your website using your access logs, and see which of your content is being retrieved by the LLM user agents. This is something you'll need access logs to ascertain, since JavaScript tools like Google Analytics don't track direct requests to files at a certain location.
+
+For building, you'd need to understand the questions people are asking in the LLM of their choice. The field of analytics around LLM served content is nascent. I couldn't find a better solution than asking questions in a variety of LLMs, then checking response accuracy. Don't forget to prompt the LLMs for links as well to check if the LLM is sending the user to the right location in your documentation.
+
+Here's a sample access log line showing ChatGPT retrieving API documentation.
+
+```
+52.255.111.85 - - [01/May/2025:00:17:59 +0000] "GET /docs/apis/two-factor HTTP/2.0" 200 661 "-" "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot"
+```
+
+While folks talk about LLM scrapers being a major source of traffic, I looked at our logs from January 1 to June 5, 2025 and didn't see the impact of any LLM scrapers. Here are the percentages of scrapers that identified themselves and made any request resulting in a `200` status code during that timeframe.
+
+| Scraper                | Percent Of Total Successful Requests |
+|------------------------|--------------------|
+| OpenAI                 | 0.99 | 
+| Anthropic              | 0.55 |
+| Perplexity             | 0.18 |
+| GoogleBot (for Gemini) | 0.54 | 
+| BingBog (for Copilot)  | 0.30 | 
+
+All in all, LLM based traffic for these well known options was, at most, 2.6% of our total traffic over this timeframe. 
+
+This seemed weird, so I looked at all the user agents making successful requests. There were a significant number of requests from other types of bots, but not other high-profile LLMs.
+
+## Deploy an AI-Powered Documentation Assistant (Yes, a Chatbot)
+
+Offering up an LLM based chatbot lets you leverage the docs with a convenient interface. It can be interactive on the docs site and also integrate with other support channels such as Slack, Discord or ticketing systems.
+
+While you can build your own documentation focused chatbot, unless you are an AI focused company wanting to dogfood your solution, you're better off buying this functionality. Doing so is an easy way to trade money for time.
+
+FusionAuth [installed Kapa.ai's chatbot in 2023](/blog/llm-for-fusionauth-documentation) and we have been using it heavily ever since. There are alternatives out there but I haven't seen any as focused on technical documentation as Kapa.
+
+We don't just have our technical documentation ingested in Kapa, we also ingest our [OpenAPI spec](https://github.com/FusionAuth/fusionauth-openapi), our [YouTube channel](https://www.youtube.com/c/fusionauth), our [forum posts](/community/forum/) and a number of other sources. Kapa has answered tens of thousands of queries, both for external and internal users. It's great for discovery of documentation or other resources.
+
+Make sure whatever chatbot you use can say "I don't know" and includes links to sources. We've had few reported hallucinations, but they do happen. Having the source means users can verify the answers.
+
+Our recommendation for this option is to find an LLM chatbot vendor and follow their installation instructions.
+
+### Success Metrics
+
+The measure of success here is twofold:
+
+* Are people using this tool?
+* Are they finding the answers they need?
+
+Both of these metrics should be delivered by any chatbot you use. If you do end up building a solution, make sure you allow time to build such reporting.
+
+## Implement llms.txt: The Emerging Standard for AI Discoverability
+
+Another way you can help developers using LLMs succeed with your docs is to build an `llms.txt` file and other associated files.
+
+LLMs don't have an understanding of text in the same way humans do. Instead, they decompose text into tokens, which are ["a word, part of a word (subword), or even a character"](https://thenewstack.io/the-building-blocks-of-llms-vectors-tokens-and-embeddings/). All LLMs have a context window, which limits the number of tokens they can process. Offering semantic density in your documentation is important for helping LLMs to process your docs better. And markdown text has more density than HTML because there are more tokens that have meaning.
+
+[`llms.txt` is a relatively new standard](https://llms-txt.org/) analogous to the `sitemap.xml` or `robots.txt` files, but for LLMs rather than search engine crawlers. There are actually two files:
+
+* `llms.txt` is a list of URLs with useful content, organized by section. Here's our [docs `llms.txt` file](/docs/llms.txt). 
+* `llms-full.txt` is a similar list but includes the full text rather than just the URL of the pages. Here is our [docs `llms-full.txt` file](/docs/llms-full.txt). 
+
+It's unclear if you can have more than one set of `llms.txt` files for different sections of your site; the standard is still evolving. [Here's an open issue to discuss this](https://github.com/AnswerDotAI/llms-txt/issues/59).
+
+These files are typically located at the root of your domain: `https://example.com/llms.txt` for example. This is so LLMs have one place to look.
+
+If you put these files somewhere else or have more than one of them, add a link from your HTML pages to the files. Crawlers for LLMs hunt around, but not too much. We shipped an `llms.txt` file for our docs in December, but it wasn't at the root location above. This file was downloaded by the OpenAI chatbot nearly 60 times more often after we linked to it from [our documentation portal](/docs).
+
+In addition, when you make these files available to developers browsing your site, they can retrieve one or both of them and upload them to an LLM of their choosing. This allows developers to interrogate the content or learn more about the product using their tool of choice.
+
+Ensure these files are automatically updated in the same way your `sitemap.xml` file is. You want any new or updated documentation to be included with minimal effort.
+
+Here's a table showing the relative percentages of downloads of either our `llms.txt` file or our `llms-full.txt` file, January 1 to June 5, 2025. There may be other LLMs downloading this file as well.
+
+| Scraper                     | Percent Of LLMs Downloading |
+|-----------------------------|--------------------|
+| OpenAI                      | 71.59 | 
+| GoogleBot (used for Gemini) | 17.20 | 
+| Perplexity                  | 8.22 |
+| BingBog (used for Copilot)  | 2.80 | 
+| Anthropic                   | 0.19 |
+
+### Implementation Notes
+
+We build these files for our docs section. Here's the code for the `llms.txt` file:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-site/refs/heads/main/astro/src/pages/docs/llms.txt.ts" lang="javascript" />
+
+You could make this more sophisticated by giving documents rankings and sorting more important docs to the top. We haven't done that yet. For other sections of our website, we handcrafted the `llms.txt` file.
+
+For the `llms-full.txt` generated from our documentation, the code looks similar: 
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-site/refs/heads/main/astro/src/pages/docs/llms-full.txt.ts" lang="javascript" />
+
+This pulls in the entire body (`${doc.body}`) rather than just the URL, but is otherwise the same.
+
+We use a lot of includes in our docs. I did some work to inline the include file markdown, but that ended up making the `llms-full.txt` file too big for the popular LLMs' context windows.
+
+### Success Metrics
+
+Are these files downloaded? How often? By what user agents? Are they primarily downloaded by LLMs or users?
+
+The answers to these questions lie in your access logs, since JavaScript tools like Google Analytics don't track direct requests of files.
+
+## Enable Developer Self-Service with a Copy-to-Markdown Button
+
+Adding a "copy to markdown" button like below helps developers leverage LLMs in a similar way to providing the `llms-full.txt` file mentioned above. Folks can copy the text and paste it into their favorite LLM, while using fewer tokens than the `llms-full.txt` file.
+
+We've installed this on every page on our docs site; an example is below:
+
+![A copy to markdown button on a FusionAuth documentation page.](/img/blogs/llms-for-docs/markdown-button.png)
+
+By offering this button, you let developers transform your documentation for their purpose. Here are some examples of prompts a developer might do for a technical doc like an API:
+
+* summarize all the error statuses of this API
+* explain the key concepts here to me "like I'm 5" or "like I'm an expert software architect" or "like I'm a front end developer"
+* how does this API compare with a similar API from \[competitor]
+* show me how to use this API in Rust or C++ (or other possibly unsupported languages)
+* provide me 10 sets of fake API requests for this API to use in my test harness
+* translate this page to Spanish or Swedish
+
+Basically, you don't know exactly what is important to the developer at that moment in time, but they do. And they can ask the LLM to provide it.
+
+Of course someone could copy the HTML and then do the transformation, but that uses more tokens and is more cumbersome.
+
+### Implementation Notes
+
+We used JavaScript to perform the copy operation when a button was clicked:
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-site/refs/heads/main/astro/src/tools/docs/copyMarkdownToClipboard.js" lang="javascript" />
+
+We also used an astro `post:build` plugin to generate the markdown file at a sibling location to the HTML, so the JavaScript above could retrieve it.
+
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-site/refs/heads/main/astro/src/plugins/markdown-extract.js" lang="javascript" />
+
+This astro plugin code:
+
+* finds all the files in our `src/content/docs` directory
+* inlines any content in the file that is a component in either the `diagrams` or `content` directory so the markdown file is more useful
+* removes the frontmatter
+* writes a markdown file in a specific location, peer to the HTML file generated by the astro build
+
+There are still component tags in the output markdown because components provide functionality and HTML. We may use alternative solutions that take HTML and turn it into pure markdown in the future.
+
+### Success Metrics
+
+The success metric for this is how many times the copy to markdown button is pressed.
+
+Since this is a user driven event, tracking it via a tool like Google Analytics is great.
+
+Unfortunately, you can't know what transformation is done on your documentation without asking your users.
+
+## Where Is MCP In This?
+
+The [Model Context Protocol](https://modelcontextprotocol.io/introduction), or MCP, allows you to let an LLM directly interface with your developer focused product.
+
+We've explored but not implemented an MCP for FusionAuth. MCP is great for learning a tool, building prototypes, or debugging. But I'm not sure folks will be using it to replace [configuration management](/docs/operate/deploy/configuration-management) in production systems.
+
+MCP is not covered here because it is doc-adjacent but not part of documentation. If you have an opinion about the usefulness of a FusionAuth MCP server, well, there's [an open issue for sharing your feedback](https://github.com/FusionAuth/fusionauth-issues/issues/3046). We'd love to hear from you.
+
+## Summing It Up
+
+LLMs are here.
+
+Developers are using them to interact with your documentation.
+
+Use one, two, or all of the options presented above to make it easier for them to do so.
