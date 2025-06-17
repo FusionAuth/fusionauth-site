@@ -6,10 +6,8 @@ section: lifecycle
 subcategory: authenticate users
 tertcategory: saml
 quatercategory: examples
-codeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-example-saml/refs/heads/main/completed-app
+codeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-example-saml/refs/heads/main/completed-app
 ---
-
-{/* @Tatenda to get screenshot for https://github.com/FusionAuth/fusionauth-site/pull/3684#discussion_r2103712507 */}
 
 import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
@@ -69,12 +67,19 @@ Start by running a new instance of FusionAuth and configuring it to use SAML. Yo
 
 <DownloadWidget kickstartEnabled={true} kickstartName={"get-started"} />
 
-This command starts FusionAuth using Kickstart, which automatically creates an example application with example users. Using Kickstart saves you from having to configure everything yourself.
+The instructions above start FusionAuth using Kickstart, which automatically creates an example application with example users. Using Kickstart saves you from having to configure everything yourself.
 
-- Run the command below in a terminal to clone the [FusionAuth Example SAML Repository](https://github.com/FusionAuth/fusionauth-example-saml), or download and unzip the repository.
-  ```sh
-  git clone https://github.com/FusionAuth/fusionauth-example-saml
-  ```
+You will need to change the authorized redirect URLS for this example.
+
+- Log in to your FusionAuth web interface at http://localhost:9011/admin with the credentials `admin@example.com` and `password`.
+- Browse to <Breadcrumb>Applications -> Start Here App -> Select -> Edit -> OAuth tab</Breadcrumb>.
+- Change <InlineUIElement>Authorized redirect URLS</InlineUIElement> to `http://localhost:3000/auth/callback`. (be sure to click the dropdown text that appears to confirm the entry).
+- Save and logout of the admin interface.
+
+Run the command below in a terminal to clone the [FusionAuth Example SAML repository](https://github.com/FusionAuth/fusionauth-example-saml), or download and unzip the repository.
+```sh
+git clone https://github.com/fusionauth/fusionauth-example-saml.git
+```
 
 The repository contains a website in the `app` directory. This website represents the example Changebank website, for which FusionAuth is the authentication provider. The site currently uses OAuth for login, not bespoke authentication, which is slightly different from the example description but unimportant — the focus of this example is on changing the site to use SAML authentication.
 
@@ -99,7 +104,7 @@ These commands install the Node.js packages in `package.json` and run the Expres
 Configure FusionAuth to use SAML as an identity provider for the Changebank application in the FusionAuth web interface.
 
 - Log in to your FusionAuth web interface at http://localhost:9011/admin with the credentials `admin@example.com` and `password`.
-- Browse to <Breadcrumb>Applications -> Example App -> Select -> Edit -> SAML tab</Breadcrumb>.
+- Browse to <Breadcrumb>Applications -> Start Here App -> Select -> Edit -> SAML tab</Breadcrumb>.
 - Toggle the <InlineUIElement>Enabled</InlineUIElement> option on.
 - Set <InlineField>Issuer</InlineField> to `passport-saml`.
 - Set <InlineField>Authorized redirect URLs</InlineField> to `http://localhost:3000/saml/callback` (be sure to click the dropdown text that appears to confirm the entry).
@@ -109,7 +114,7 @@ Configure FusionAuth to use SAML as an identity provider for the Changebank appl
 
 ![SAML setup](/img/docs/lifecycle/examples/saml/saml.png)
 
-- Click <InlineUIElement>Select</InlineUIElement> then <InlineUIElement>View</InlineUIElement> for the application to see the SAML endpoints. You will need to scroll to the `SAML v2 Integration Details`section. The endpoints should look like the ones in the image below. Copy the `Metadata URL` value to a text file or to your clipboard.
+- Click <InlineUIElement>Select</InlineUIElement> then <InlineUIElement>View</InlineUIElement> for the Start Here App to see the SAML endpoints. You will need to scroll to the `SAML v2 Integration Details` section. The endpoints should look like the ones in the image below. Copy the `Metadata URL` value to a text file or to your clipboard.
 
 ![SAML settings](/img/docs/lifecycle/examples/saml/samlSettings.png)
 
@@ -132,7 +137,9 @@ If you do this, you will need to update `cert/cert.pem` and the SAML URL in `.en
 </Aside>
 
 - Browse to the `Metadata URL` endpoint from the `SAML v2 Integration Details` section above, which is `http://localhost:9011/samlv2/metadata/d7d09513-a3f5-401c-9685-34ab6c552453`. Your `Metadata URL` will be different; use the value you copied above.
-- Create an `app/cert/cert.pem` file. This is going to be used by the Changebank application to ensure that the SAML communication is secure and from the FusionAuth server. From the `Metadata URL` text in your browser, find the text between the tags labeled `<X509Certificate>` and paste it into the `app/cert/cert.pem` file. Add the line `-----BEGIN CERTIFICATE-----` above the text and the line `-----END CERTIFICATE-----` below it, and save the file.
+- Create an `app/cert/cert.pem` file. This is going to be used by the Changebank application to ensure that the SAML communication is secure and from the FusionAuth server. From the `Metadata URL` text in your browser, find the text between the tags labeled `<X509Certificate>` and paste it into the `app/cert/cert.pem` file.
+  ![SAML certificate](/img/docs/lifecycle/examples/saml/certificate.png)
+- Add the line `-----BEGIN CERTIFICATE-----` above the text and the line `-----END CERTIFICATE-----` below it, and save the file.
 - Add the `Login URL` from the SAML metadata to `app/.env`. Again, your value will look similar but the UUID will be different.
   ```
   SAML_URL="http://localhost:9011/samlv2/login/d7d09513-a3f5-401c-9685-34ab6c552453"
@@ -190,9 +197,8 @@ For more information on SAML in Passport, please see the [Passport-SAML](https:/
 
 ## Clean Up
 
-To remove all the Docker volumes, containers, images, and networks used in this guide, run the commands below in the terminal where you installed FusionAuth.
+To remove the Docker volumes and containers used in this guide, run the command below in the terminal where you installed FusionAuth.
 
 ```sh
 docker compose down -v
-docker network prune
 ```
