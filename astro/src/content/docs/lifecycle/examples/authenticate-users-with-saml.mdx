@@ -25,7 +25,7 @@ Consider the following scenario:
 
 You provide online financial services to users who log in to your website, Changebank.com. Until now, the website has managed its own user authentication with usernames and passwords, and you haven't used FusionAuth before.
 
-You are contacted by a new corporate client, called Corpo.com, which wants all its employees to use your service. However, Corpo requires authentication to be done with SAML. Changebank will continue acting as the identity provider (often shortened to IdP) which is the party that holds the database of users. You want to add SAML authentication to your website without coding it yourself, so you are considering using FusionAuth as your gateway.
+You are contacted by a new corporate client, called Corpo.com, which wants all its employees to use your service. However, Corpo requires authentication to be done with SAML. Changebank will continue acting as the identity provider (often shortened to IdP), which is the party that holds the database of users. You want to add SAML authentication to your website without coding it yourself, so you are considering using FusionAuth as your gateway.
 
 If instead Corpo had its own database of users (in other words, if Corpo was the IdP) and FusionAuth would be used only as an intermediary to handle the SAML connection between Changebank and Corpo, then FusionAuth would be only a service provider (SP). Configuring FusionAuth as a SAML SP is explained in the [SAML guide to Okta](/docs/lifecycle/authenticate-users/identity-providers/enterprise/okta-samlv2), not in this guide.
 
@@ -53,7 +53,7 @@ Finally, consider if Corpo were to act as the identity provider. In this case, t
 
 You can read more about [using FusionAuth as a service provider to connect to another identity provider in the documentation](/docs/lifecycle/authenticate-users/identity-providers/overview-samlv2).
 
-In any of these cases, if the user already has authenticated with the Changebank application, they will bypass the login page and be redirected to their account page. That is, if the user has a valid session with Changebank, they won't need to log in.
+In any of these cases, if the user has already authenticated with the Changebank application, they will bypass the login page and be redirected to their account page. That is, if the user has a valid session with Changebank, they won't need to log in.
 
 ## Use FusionAuth As A SAML Identity Provider
 
@@ -61,7 +61,7 @@ In the rest of the guide, you'll configure FusionAuth as the SAML identity provi
 
 ## Run FusionAuth And The Initial Website
 
-Start by running a new instance of FusionAuth and configuring it to use SAML. You'll use [Docker](https://www.docker.com/get-started/) to run FusionAuth and [Node version 22](https://nodejs.org/en/download) to run the example application.
+Start by running a new instance of FusionAuth and configuring it to use SAML. You'll use [Docker](https://www.docker.com/get-started/) to run FusionAuth and [Node.js version 22](https://nodejs.org/en/download) to run the example application.
 
 - Use the instructions below to download and run FusionAuth on your computer. The standard `Docker Compose` option will work fine.
 
@@ -71,7 +71,7 @@ The instructions above start FusionAuth using Kickstart, which automatically cre
 
 You will need to change the authorized redirect URLs for this example.
 
-- Log in to your FusionAuth web interface at http://localhost:9011/admin with the credentials `admin@example.com` and `password`.
+- Log in to your FusionAuth web interface at http://localhost:9011/admin with the credentials, `admin@example.com` and `password`.
 - Browse to <Breadcrumb>Applications -> Start Here App -> Select -> Edit -> OAuth</Breadcrumb>.
 - Change <InlineUIElement>Authorized redirect URLs</InlineUIElement> to `http://localhost:3000/auth/callback`. (Be sure to click the dropdown text that appears to confirm the entry.)
 - Save and log out of the admin interface.
@@ -103,7 +103,7 @@ Let's see how the website currently looks before configuring SAML.
 
 Configure FusionAuth to use SAML as an identity provider for the Changebank application in the FusionAuth web interface.
 
-- Log in to your FusionAuth web interface at http://localhost:9011/admin with the credentials `admin@example.com` and `password`.
+- Log in to your FusionAuth web interface at http://localhost:9011/admin with the credentials, `admin@example.com` and `password`.
 - Browse to <Breadcrumb>Applications -> Start Here App -> Select -> Edit -> SAML</Breadcrumb>.
 - Toggle the <InlineUIElement>Enabled</InlineUIElement> option on.
 - Set <InlineField>Issuer</InlineField> to `passport-saml`.
@@ -140,11 +140,11 @@ If you do this, you will need to update `cert/cert.pem` and the SAML URL in `.en
 - Create an `app/cert/cert.pem` file. This is going to be used by the Changebank application to ensure that the SAML communication is secure and from the FusionAuth server. From the `Metadata URL` text in your browser, find the text between the tags labeled `<X509Certificate>` and paste it into the `app/cert/cert.pem` file.
   ![SAML certificate](/img/docs/lifecycle/examples/saml/certificate.png)
 - Add the line `-----BEGIN CERTIFICATE-----` above the text and the line `-----END CERTIFICATE-----` below it, and save the file.
-- Add the `Login URL` from the SAML metadata to `app/.env`. Again, your value will look similar but the UUID will be different.
+- Add the `Login URL` from the SAML metadata to `app/.env`. Again, your value will look similar, but the UUID will be different.
   ```
   SAML_URL="http://localhost:9011/samlv2/login/d7d09513-a3f5-401c-9685-34ab6c552453"
   ```
-- Now you want to let the Changebank application interact with SAML. You'll be using `passport.js`, a common node library for authentication. The steps will be similar for any SAML library, though the terms and specific tasks might be slightly different. Add the following line to the top of the `dependencies` section of `package.json`.
+- Now you want to let the Changebank application interact with SAML. You'll be using `passport.js`, a common Node.js library for authentication. The steps will be similar for any SAML library, though the terms and specific tasks might be slightly different. Add the following line to the top of the `dependencies` section of `package.json`.
   ```js
   "@node-saml/passport-saml": "^5.0.0",
   ```
@@ -173,13 +173,13 @@ If you do this, you will need to update `cert/cert.pem` and the SAML URL in `.en
 
 The FusionAuth configuration changes and Express.js code changes are complete. Now, let's test whether the login works.
 
-- In the website terminal (in the `app` directory), push <kbd>Ctrl</kbd>+<kbd>c</kbd>, and run the Node commands again to install the new SAML package and restart the web server.
+- In the website terminal (in the `app` directory), push <kbd>Ctrl</kbd>+<kbd>c</kbd>, and run the Node.js commands again to install the new SAML package and restart the web server.
   ```sh
   npm install
   npm run start
   ```
 
-You can now browse to http://localhost:3000 and log in exactly the same way as before, except you're now using SAML. If you see an error that your account isn't registered, it's because you logged in previously with the administration account. Try log in using an incognito browser window instead.
+You can now browse to http://localhost:3000 and log in exactly the same way as before, except you're now using SAML. If you see an error that your account isn't registered, it's because you logged in previously with the administration account. Try to log in using an incognito browser window instead.
 
 If you see `oauth` in the browser address bar, don't worry; FusionAuth translates SAML to OAuth calls internally before returning. To satisfy yourself that SAML is indeed being used, edit the example application again in FusionAuth, disable SAML, and save. Now when you attempt to log in, you'll see the error, `The AuthnRequest contained an invalid issuer [passport-saml]. That Application does not have SAML enabled`.
 
@@ -187,11 +187,11 @@ If you see `oauth` in the browser address bar, don't worry; FusionAuth translate
 
 SAML depends on certificates, whereas OAuth and OIDC depend on the client secret. You need to copy the certificate from FusionAuth into the Changebank application in order for SAML to work.
 
-In the `authentication.js` JavaScript file, you add SAML as a strategy. Passport can use multiple strategies, so you don't need to remove OAuth. Each strategy is identified by a different label, like `saml`. The `setupSaml` function sets some options to match the settings from FusionAuth. The function then instantiates the new Passport SAML strategy with two functions that handle the user profile returned from the identity provider. You can further process the user in these functions, for instance by saving the user to a database. However, in this example, you do nothing except say that you are done. Express.js session storage (`express-session`) is already being used to store the user profile in a cookie that is sent to the user's browser.
+In the `authentication.js` JavaScript file, you add SAML as a strategy. Passport can use multiple strategies, so you don't need to remove OAuth. Each strategy is identified by a different label, like `saml`. The `setupSaml` function sets some options to match the settings from FusionAuth. The function then instantiates the new Passport SAML strategy with two functions that handle the user profile returned from the identity provider. You can further process the user in these functions, for instance, by saving the user to a database. However, in this example, you do nothing except say that you are done. Express.js session storage (`express-session`) is already being used to store the user profile in a cookie that is sent to the user's browser.
 
 While SAML allows the identity provider to sign both the response to a request (`wantAuthnResponseSigned`) and assertions in the response (`wantAssertionsSigned`), some providers, like FusionAuth, are limited to signing only one or the other. Signing both is the most secure configuration, but since you're forced to choose, signing the whole response is safer than only the assertions. You choose to sign the response by changing the <InlineUIElement>Signature location</InlineUIElement> while configuring SAML in FusionAuth.
 
-The code changes to the routes file are minimal, barely changing what is in the Passport documentation. You comment out the OAuth login route (because in this example the customer wanted to switch entirely to SAML), you add a SAML login route to direct the user to FusionAuth, and you use a callback handler to direct the logged in user to their account.
+The code changes to the routes file are minimal, barely changing what is in the Passport documentation. You comment out the OAuth login route (because, in this example, the customer wanted to switch entirely to SAML), you add a SAML login route to direct the user to FusionAuth, and you use a callback handler to direct the logged in user to their account.
 
 For more information on SAML in Passport, please see the [Passport-SAML](https://github.com/node-saml/passport-saml) and [Passport](https://github.com/jaredhanson/passport) documentation on GitHub.
 
