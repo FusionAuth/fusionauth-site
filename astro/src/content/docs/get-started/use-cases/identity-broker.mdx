@@ -1,0 +1,264 @@
+---
+title: Identity Broker
+description: Ship FusionAuth with your application to your customer's datacenter or private cloud.
+section: get started
+subcategory: use cases
+navOrder: 70
+---
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import UserLoggingInDiagram from 'src/diagrams/docs/get-started/use-cases/identity-broker/user-logging-in.astro';
+import IdentityBrokerDescription from 'src/content/docs/get-started/use-cases/_identity-broker-description.mdx';
+
+## Overview
+
+<IdentityBrokerDescription />
+
+## Problem 
+
+You have an application that is embedded in your customer's environment, which could be a private cloud, an on-premises data center, or a remote location. Such deployment often happens for security, compliance or data gravity reasons.
+
+Each of your customers has their own identity system they want to use to control access to your application. You want to integrate with a wide variety of identity systems to offer easy single sign-on, but also want to avoid writing extra integration code or support documentation.
+
+## Solution
+
+With the identity broker implementation, you can integrate your application with FusionAuth once and let your customers configure their identity provider to allow for user login. Supported providers include:
+
+* Google Workspace
+* Okta
+* Microsoft Entra ID
+
+In fact, any provider supporting OIDC, SAML, or LDAP can be used.
+
+With this approach, your application is simpler to build and maintain and your customers can integrate with their preferred identity store.
+
+## Prerequisites
+
+You have configured your application to [delegate authentication to FusionAuth](/docs/get-started/use-cases/auth-service) via the Authorization Code grant and the hosted login pages.
+
+You have a license for reselling FusionAuth, obtained by [talking to our sales team](/contact). Deploying FusionAuth alongside your application in customer environments requires a reseller license.
+
+## Example Scenario
+
+Suppose you have a data analytics tool that you deploy into a customer's environment. This application allows analysts to apply your proprietary algorithms to their sales data.
+
+But the analysts logging into this application don't want to have yet another set of credentials. They want to use single sign-on against their employer's directory.
+
+## Actors/Components
+
+* your user and their client application (mobile app or browser)
+* your application
+* the customer's identity store (Okta, Entra Id, Active Directory, etc)
+* FusionAuth
+
+## Implementation Steps
+
+This is a four phase implementation, where you do the following:
+
+* integrate FusionAuth into your application deployment process
+* build logic to map between remote profile data and your application's user objects
+* help customers configure their identity provider
+* allow customer's users to log in and access your application
+
+### Embed FusionAuth
+
+You already have FusionAuth working for your application, but when you are building your deployment package, you'll need to include FusionAuth and a compatible database, as well as other [system requirements](/docs/get-started/download-and-install/system-requirements).
+
+You can deploy FusionAuth as a Docker image on Kubernetes or another orchestration system, or as a zip, DEB or RPM file if deploying on a VM or hardware. Either way, make sure there is a network path between your application and FusionAuth.
+
+Make sure you [configure FusionAuth correctly](/docs/reference/configuration). You'll usually want to deploy FusionAuth using the [database search engine](/docs/lifecycle/manage-users/search/search#using-the-database-search-engine) to make deployment simpler.
+
+For the initial install, script FusionAuth to a known state using [Kickstart](/docs/get-started/download-and-install/development/kickstart) to set up an API key with no user intervention. Then script further configuration using [an SDK](/docs/sdks) or [Terraform](/docs/operate/deploy/terraform). Pick the solution closest to how you configure your own application.
+
+You'll want to configure:
+
+* a local admin user 
+* an Application representing your analytics application
+* a placeholder Identity Provider
+* any branding login page customization; prefer a [simple theme](/docs/customize/look-and-feel/simple-theme-editor) for forward compatibility
+* the FusionAuth license key or text
+
+Other configuration you may or may not need:
+
+* reconcile and login validation lambdas
+* additional API keys
+* extra users
+
+For subsequent upgrades, use scripts or Terraform to apply FusionAuth configuration changes, such as adding a new application.
+
+Share the local admin user with your customer so they have access in case their identity provider is not available or is not configured correctly.
+
+#### Configuring The Admin User
+
+Give the admin user the `lambda_manager` and `system_manager` roles. The `lambda_manager` allows for lambda editing. The `system_manager` role gives access to create, update and delete identity provider configuration. 
+
+Give this user a known password that you can share with your customer. You can require them to change it at first login by setting the `passwordChangeRequired` field to `true` when creating the user.
+
+#### Configuring The Identity Provider
+
+This placeholder identity provider can be partially configured with whatever information you have from customer onboarding. Configure these settings as well:
+
+* a known `Id` so that later `idp_hint` operations are simpler
+* set `name` to `Customer identity provider`
+* set `debug` to `false`
+* set `createRegistration` to `true`
+* set `enabled` to `true` for your application to enable this identity provider
+
+If you have gathered all needed information during an onboarding, you can configure the identity provider fully.
+
+#### Configuring The Application
+
+The application configuration should include the following:
+
+* the appropriate local redirect URL or URLs for your analytics application
+* `application.oauthConfiguration.requireRegistration` to `true` to require user registration
+
+Configuring these settings secures application access and limits it to users with an account in the customer's identity store.
+
+### Mapping Roles
+
+If you use role-based access control (RBAC), you'll need to map roles between the customer's identity store and your application's expected roles. Say your data analytics application has these roles, which each have different functionality available:
+
+* `admin`
+* `developer`
+* `business_analyst`
+
+
+Each customer will have roles in their identity store that map to roles in your application, but they'll vary. Here's an example of different possible role names for two customers:
+
+| Your Application   | Customer 1      | Customer 2       |
+|--------------------|-----------------|------------------|
+| `admin`            | `administrator` | `superadmin`     |
+| `developer`        | `dev`           | `engineer`       |
+| `business_analyst` | `ba`            | `data_analyst`   |
+
+To map between these, use a custom reconcile lambda. This ensures user data in FusionAuth and any tokens FusionAuth generates have the expected application specific role. 
+
+Here's the body of [an example OIDC reconcile lambda](/docs/extend/code/lambdas/openid-connect-response-reconcile) which maps roles from a customer data store to the application roles:
+
+```javascript
+function reconcile(user, registration, jwt, id_token, tokens) {
+  registration.roles = [mapCustomerRoleToAppRole(jwt.role)];
+}
+
+function mapCustomerRoleToAppRole(customerRole) {
+  const roleMap = {
+    administrator: 'admin',
+    dev: 'developer',
+    ba: 'business_analyst',
+  };
+
+  return roleMap[customerRole] || null;
+}
+```
+
+The above lambda should be installed in Customer 1's FusionAuth instance. For customer 2, you'd use a different `mapCustomerRoleToAppRole` function. Associate the lambda with the identity provider during the initial configuration.
+
+There may be other profile attributes such as name or title that need mapping. Lambdas can help with these too.
+
+These mappings depend on the customer implementation and may need to be iterated upon.
+
+### Enable Identity Providers
+
+A customer employee or implementation engineer needs to configure FusionAuth to use the customer's identity provider. You can do this in one of two ways:
+
+* give the configurer direct access to the admin UI and the FusionAuth documentation
+* add a page to your application which collects needed information and use the [Identity Provider API](/docs/apis/identity-providers/) and/or SDKs to configure it
+
+In either case, plan to guide the customer through the configuration process with support and documentation.
+
+#### Direct Access
+
+For direct access to the admin UI, have the customer log in with the previously created admin user account and follow FusionAuth documentation.
+
+You can also customize the admin UI, to a limited extent. Use the [System API](/docs/apis/system) to modify these aspects by changing the `systemConfiguration.uiConfiguration.*` properties. You can add a custom logo and tweak the color scheme of the admin UI.
+
+Choose this approach if you want to leverage the existing admin UI screens and FusionAuth docs. You can add links in your product docs to the FusionAuth documentation for common identity provider configuration, including options such as Okta or Entra ID. For example, here's documentation for setting up [Microsoft Entra ID](/docs/lifecycle/authenticate-users/identity-providers/enterprise/azure-ad-oidc).
+
+#### Integrated Approach
+
+With the integrated approach, add a configuration screen to your application capturing all the information needed to set up an OIDC or SAMLv2 connection. Create an API key for your application to use, and use one of the SDKs to create, update or manage the identity provider directly from your application.
+
+This option gives you full control over the user interface and allows you to hide the admin UI from the customer. In addition to the engineering effort required to build that custom interface, this approach requires you to:
+
+* document the values of the form fields
+* update your integration when new features that you want to use, such as encrypted SAML assertions, are added
+
+### User Log In
+
+After the customer has configured the identity provider, FusionAuth is set up. The next time an unauthenticated user visits your application, forward them to the identity provider by constructing the authorization URL and providing an `idp_hint`.
+
+If the application you've configured has an Id of `85a03867-dccf-4882-adde-1a79aeec50df` and the identity provider has an Id of `82339786-3dff-42a6-aac6-1f1ceecb6c46`, the login URL might look like this (newlines added for clarity): 
+
+```
+https://yourinstance.local/oauth2/authorize?
+  client_id=85a03867-dccf-4882-adde-1a79aeec50df&response_type=code&
+  redirect_uri=https%3A%2F%2Fyourapp.local%2F/oauth-redirect&
+  idp_hint=82339786-3dff-42a6-aac6-1f1ceecb6c46
+```
+
+Here's a diagram of the user login process.
+
+<UserLoggingInDiagram alt="User logging in to the application." />
+
+#### Blocking Users
+
+There may be certain sets of users that you don't want to have access to your analytics application, even if they can log in using the remote identity server.
+
+Block these users from logging in using the [login validation lambda](/docs/extend/code/lambdas/login-validation). Say you wanted to prevent anyone with the `dev` role from logging to the analytics application. You'd use a lambda body similar to this one:
+
+```javascript
+function validate(result, user, registration, context) {
+  if (registration.roles && registration.roles.contains('dev')) {
+    result.errors.generalErrors = [{
+      code: "[LoginRestricted]",
+      message: "Sorry, you can't log in. Please contact the app administrator for more details."
+    }];
+  }
+}
+```
+
+#### Troubleshooting The Login Process
+
+If there are issues, enable the `debug` setting in the Identity Provider configuration and review the event log, under <Breadcrumb>System -> Event Log</Breadcrumb>.
+
+## Expected Outcome
+
+Deploy your application into any environment and have FusionAuth take care of the authentication integration.
+
+Your engineering team leverages FusionAuth tokens for identity data. They can code against the FusionAuth API or use the SDKs if user information beyond that is needed.
+
+Your customers can configure their own identity store and have all their users log in using that.
+
+## Edge Cases
+
+If you are using LDAP instead of OIDC or SAML, you'll use a [LDAP connector](/docs/lifecycle/migrate-users/connectors/ldap-connector) with migration disabled instead of an OIDC or SAMLv2 Identity Provider. Follow the documentation to configure the connector. The customer's users will see the FusionAuth login screen, which you can customize, instead of being redirected.
+
+You can also add local users to your FusionAuth instance, to enable access if a customer's identity store becomes unavailable or is misconfigured.
+
+Deploying FusionAuth into an [air-gapped environment](/docs/get-started/core-concepts/licensing#air-gapping) is supported.
+
+You can support more than one remote identity data store. If, for example, you're deploying into an enterprise and there are two departments with two different identity stores, configure both of them. You'll need to either remove the `idp_hint` and let users choose which identity store to log in with, or update the logic which builds the initial login URL to provide the correct `idp_hint` for users from each department.
+
+While you do not have to use internet routable addresses or domain names, FusionAuth and the application delegating authentication to it must be able to communicate over the network.
+
+With this use case, you can support social identity providers such as Facebook or LinkedIn. These require internet access.
+
+## Other Example Scenarios
+
+These include:
+
+* healthcare software deployed into a hospital network
+* a retail analytics engine running in stores
+* an IoT management system deployed in a remote geography
+* a legal discovery platform installed inside a client's firewall
+
+## Additional Documentation
+
+* [The auth facade pattern](/articles/ciam/auth-facade-pattern)
+* [Unsupervised case study](/blog/unsupervised-avoids-development-maintenance-with-with-fusionauth)
+* [OIDC reconcile lambda](/docs/extend/code/lambdas/openid-connect-response-reconcile)
+* [SAMLv2 reconcile lambda](/docs/extend/code/lambdas/samlv2-response-reconcile)
+* [Login validation lambda](/docs/extend/code/lambdas/login-validation)
+* [LDAP connector](/docs/lifecycle/migrate-users/connectors/ldap-connector)
+

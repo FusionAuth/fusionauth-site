@@ -21,6 +21,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - `log in` is the verb, `login` is the noun
 - Use `UserInfo` instead of `Userinfo`
 - Don't abbreviate FusionAuth, use the full name.
+- Use "a" or "an" before an initialism or acronym based on how the first letter sounds when spoken - for example, "an SSO" because "S" sounds like "ess" (vowel sound), but "a VPN" because "V" sounds like "vee" (consonant sound).
 - References to `http://127.0.0.1` should be updated to `http://localhost`. Remove hyperlinks to `localhost`.
 - Always provide an alt text for images. It should always be a full sentence describing the content of the image.
 - In general, put screenshot images after the text describing the image. That is "This functionality....\n\n<screenshot of functionality>". However, when describing fields for screens, as in the core concepts section, put the screenshot first.
@@ -37,20 +38,26 @@ Here are some guidelines to follow when writing documentation (everything under 
 - When writing, you have access to Asides. Here's an [example blog post using an Aside](https://github.com/FusionAuth/fusionauth-site/blob/main/astro/src/content/blog/log4j-fusionauth.mdx). You can assign the following values to the type: `tip` for tips. `note` for things for the user to be aware of. `important` for things the user should pay attention to. `warn` for dangerous actions like deleting a tenant.
 - For links, don't use the absolute URL for the FusionAuth website (https://fusionauth.io), only relative URLs. This allows us to deploy to our local and staging environments and not get sent over to prod.
 - If you have a list element containing more than one paragraph, indent the second paragraph by the same amount as the start of the text in the first paragraph to make sure that it renders correctly.
+- The `title` frontmatter element is used in several places: an H1 tag on the page, in any dynamically created menus, and in the HTML title tag. Sometimes, for SEO purposes, we want to add extra stuff to the HTML title tag, such as `| FusionAuth`. But that looks bad in the menu item. If this is the case, use the `htmlTitle` frontmatter element, which is only used for the HTML title tag. If not present, the HTML title tag defaults to the `title` frontMatter element. This is set up for docs, articles, blog posts and any other layouts that inherit from `Default.astro`.
 
 ## Docs 
 - Don't use complex breadcrumbs styling in docs. Use `->`. Use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component. Breadcrumbs should look like this `<Breadcrumb>foo -> bar -> baz</Breadcrumb>`.
 - If you are referencing a field in a form or JSON API doc, use the [InlineField](astro/src/components/InlineField.astro) component: `<InlineField>Issuer</InlineField>`.
-- If you are referencing a UI element or button, use the [InlineUIElement](astro/src/components/InlineUIElement.astro) component: `Click the <UIelement>Ok</UIelement> button`.
+- If you are referencing a UI element or button, use the [InlineUIElement](astro/src/components/InlineUIElement.astro) component: `Click the <InlineUIElement>Ok</InlineUIElement> button`.
 - If you are referencing a tab in the UI, use the [Breadcrumb](astro/src/components/Breadcrumb.astro) component: `On the <Breadcrumb>OAuth</Breadcrumb> tab`.
 - When you have a list of values, use this phrase to prefix it: "The possible values are:"
 - When using images that are cropped, add `top-cropped` and/or `bottom-cropped` roles as appropriate. Use `box-shadow` only when an image isn't captured in the manner documented below. It's used only when we have screenshots of things that do not have a box shadow and are all white and blend in too much with our white background. No other image classes are needed when creating documentation.
 - Include fragments that are shared between different sections of the doc should be stored in the [shared](astro/src/content/docs/_shared) directory.
 - All links elements should be fully-qualified and never include a slash at the end (i.e. `[users](/docs/apis/users)` not `[users](./users)`)
-- If something is new in a version, mark it with something like this:
+- If something is new in a version, mark it with something like this (this is great toward the top of a page documenting a version introduced in a particular version):
 
   <Aside type="version">
-    Available Since Version 1.5.0
+    Available since 1.5.0
+  </Aside>
+
+If there is a description of the feature that is part of a set of paragraphs, use the title element and put the description in the slot.
+  <Aside title="Available since 1.5.0" type="version">
+    You can use the advanced version of the feature with ...
   </Aside>
 
 If it is inline (for a field), use <AvailableSince since="1.5.0"> - [AvailableSince](astro/src/components/api/AvailableSince.astro)
@@ -78,6 +85,11 @@ import Icon from 'src/components/icon/Icon.astro';
 ```
 
 Review [the component for all options and icons](astro/src/components/icon/Icon.astro).
+
+When importing a component, always use the full path, not a relative path:
+```
+import Icon from 'src/components/icon/Icon.astro';
+```
 
 ### Docs Navigation
 
@@ -130,7 +142,7 @@ You can find help for {props.topic} at [help](/help)
   - you may need to coerce a prop into a boolean to use as a conditional for an expression. Such as `{!!props.message && <span>{props.message}</span>}`;
 - JSON files are their own content collection in astro. You can reference these using the [JSON component](astro/src/components/JSON.astro)
 - We have an alias mapped in [tsconfig](astro/tsconfig.json) that allows you to use absolute references from 'src'. Otherwise, imports must use relative paths.
-- If a doc pulls code from an example application, use the [RemoteContent](astro/src/components/RemoteContent.astro). You can also pull sections with tags: `<RemoteContent url="https://raw.githubusercontent.com/FusionAuth/fusionauth-javascript-sdk/main/packages/sdk-react/README.md" tags="forDocSite" />`
+- If a doc pulls code from an example application, use the [RemoteCode or RemoteValue](https://github.com/FusionAuth/fusionauth-astro-components). You can also pull sections with tags: `<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-javascript-sdk/main/packages/sdk-react/README.md" tags="forDocSite" />`
 
 ### For API docs
 - We have many APIs which return the same objects either singly (if called with an Id) or in an array (if called without an Id). If you are creating or modifying an API with this, see if you can use the -base pattern that the tenants and applications do to reduce duplicates.
@@ -176,7 +188,7 @@ Follow everything in the `Content Style Guidelines` section.
 - Images should be pulled in using markdown: `![alt text](/path/to/images)`
 - Images for a blog post should go under /astro/public/img/blogs/` in a directory related to the blog title.
 - We use rouge for code formatting. Supported languages are listed here: https://github.com/rouge-ruby/rouge/tree/master/lib/rouge/lexers
-- For site navigation, use double quotes: Navigate to "Tenants" and then to the "Password" tab.
+- For site navigation, use Breadcrumb: Navigate to <Breadcrumb>Tenants</Breadcrumb> and then to the <Breadcrumb>Password</Breadcrumb> tab.
 - For field names, use double quotes: "Login Identifier Attribute".
 - For values, use back ticks: `userPrincipalName`.
 - Put each blog post into one or more of the known categories. [Here's the list](https://github.com/FusionAuth/fusionauth-site/blob/main/config/contentcheck/known-blog-categories.txt). You can separate categories with commas.
@@ -208,6 +220,7 @@ Fruits were domesticated at different times.
 
 ## Proper names and other verbiage
 - .NET Core
+- air-gapped (not airgapped or air gapped)
 - Azure AD
 - CAPTCHA
 - client-side
@@ -320,7 +333,7 @@ end tell
 - To size and compress images without losing too much quality, follow these steps:
 	1. Resize to width of 1600 in Preview.app ( or you can use `sips --resampleWidth 1600 *.png` from the command line)
 	2. Crop the image vertically to only display the necessary content.
-- Use https://local.fusionauth.io and use the correct kickstart to add the Silicon Valley characters ( https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/fusionauth/kickstart-development.json )
+- Use https://local.fusionauth.io and use the correct kickstart to add the Silicon Valley characters ( https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/development/kickstart.json )
 - Make sure that the same character is used for every screenshot on a page (unless you are demonstrating a view from the admin and also user perspective)
 - The shrink-images GitHub Action will call https://tinypng.com/ to compress the images that you commit.
 
@@ -438,7 +451,7 @@ Prior to requesting review on a PR, please complete the following checklist.
    - The screenshot should not look fuzzy. If it does, the compression may be incorrect. 
 2. If you are referring to a navigatable element, use `<Breadcrumb>Tenants</Breadcrumb>` or `<Breadcrumb>Tenants -> Your Tenant</Breadcrumb>`. In other words, use it even for singular elements.
 3. If you are referring to a field the user can fill out, use `<InlineField>Authorized Redirect URLs</InlineField>`.
-4. If you are referring to any other UI element, such as a submit button or read-only name, use `<UIelement>Submit</UIelement>` or (on the application view screen) `<UIelement>Introspect endpoint</UIelement>`.
+4. If you are referring to any other UI element, such as a submit button or read-only name, use `<InlineUIElement>Submit</InlineUIElement>` or (on the application view screen) `<InlineUIElement>Introspect endpoint</InlineUIElement>`.
 
 
 ## Content checklist

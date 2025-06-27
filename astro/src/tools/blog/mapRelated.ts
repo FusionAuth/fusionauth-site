@@ -12,12 +12,12 @@ type MetaSection = "categories" | "authors" | "tags";
  * @param target the target metaSection value to filter for
  * @param currentSlug the current post to exclude from the results
  */
-export const mapRelated = (collection: BlogContent[], metaSection: MetaSection, target: string, currentSlug: string): ParsedBlog[] =>
-    collection ? collection
+export const mapRelated = async (collection: BlogContent[], metaSection: MetaSection, target: string, currentSlug: string): Promise<ParsedBlog[]> =>
+    collection ? Promise.all(collection
         .filter(blog => blog.data
             && blog.data[metaSection]
             && blog.data[metaSection].split(',').includes(target)
             && blog.slug !== currentSlug)
         .sort(sortByDate)
         .slice(0, 3)
-        .map(parseContent) : [];
+        .map(parseContent)) : [];

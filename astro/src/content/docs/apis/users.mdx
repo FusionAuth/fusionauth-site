@@ -1,5 +1,6 @@
 ---
 title: Users
+htmlTitle: FusionAuth User API Documentation
 description: Learn how to integrate with the FusionAuth User API. This documentation provides a comprehensive reference for managing users.
 section: apis
 ---
@@ -32,7 +33,8 @@ import UsersResponseBody from 'src/content/docs/apis/_users-response-body.mdx';
 import XFusionauthTenantIdHeaderAmbiguousOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-ambiguous-operation.mdx';
 import XFusionauthTenantIdHeaderCreateOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-create-operation.mdx';
 import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
-import ChangePassResponseCodes from './_change-pass-response-codes.astro';
+import ChangePassResponseCodes from 'src/content/docs/apis/_change-pass-response-codes.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
 
 ## Overview
 
@@ -338,7 +340,7 @@ The response for this API contains the information for the User that was reactiv
 
 ## Import Users
 
-This API is used to bulk import multiple Users into FusionAuth. Each User must have at least an **email** or a **username**. This request is useful for migrating data from an existing database into FusionAuth. Additionally, you can provide an Id for each User inside the JSON User object of the request body. When using this API, the recommended batch size per request is dependent on deployment scale (note: 100,000 users per request is a reasonable batch size for a production capable deployment). After completing an import, you should [reindex the Elasticsearch database](/docs/lifecycle/manage-users/search/search#reindexing-elasticsearch) as well.
+This API is used to bulk import multiple Users into FusionAuth. Each User must have at least an **email** or a **username**, and a **password** (plaintext or hash). If you don't have the User's password, you can set this field to a long random string and require the User to reset their password at their next login. This request is useful for migrating data from an existing database into FusionAuth. Additionally, you can provide an Id for each User inside the JSON User object of the request body. When using this API, the recommended batch size per request is dependent on deployment scale (note: 100,000 users per request is a reasonable batch size for a production capable deployment). After completing an import, you should [reindex the Elasticsearch database](/docs/lifecycle/manage-users/search/search#reindexing-elasticsearch) as well.
 
 You should not make multiple calls to this API in parallel. Multiple sequential calls to this API are fine.
 
@@ -805,9 +807,9 @@ If FusionAuth sends an email to the user, it will either use the `email` top lev
   <APIField name="sendForgotPasswordEmail" type="Boolean" optional defaults="true">
     Whether or not calling this API should attempt to send the user an email using the configured Forgot Password email template. Setting this to `false` will begin the Forgot Password workflow without sending an email and only create the `changePasswordId`, this may be useful if you want to send an email outside of FusionAuth, or complete this workflow without the use of email.
 
-    <span class="text-green-800">Since 1.43.0</span>
-
-    Beginning in version `1.43.0`, when setting this to `false` you will not be required to have configured the Forgot Password email template in the FusionAuth tenant. Prior to this version, even when setting this to `false` the Tenant would be required to have configured the Forgot Password email template.
+    <Aside type="version" title="Available since 1.43.0">
+      When setting this to `false` you will not be required to have configured the Forgot Password email template in the FusionAuth tenant. Prior to `1.43.0`, even when setting this to `false`, the Tenant would be required to have configured the Forgot Password email template.
+    </Aside>
   </APIField>
   <APIField name="state" type="Object" optional>
     An optional object that will be returned un-modified when you complete the forgot password request. This may be useful to return the user to particular state once they complete the password change.
@@ -827,7 +829,7 @@ __Response Codes__
 |200 |The request was successful. A JSON response body will be provided when authenticated using an API key, when the API key has been omitted from the request, no response body is provided. |
 |400 |The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors. |
 |401 |You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See [Authentication](/docs/apis/authentication). |
-|403 |The forgot password functionality has been disabled. This is caused by an administrator setting the Forgot Password Email Template to the option _Feature Disabled. No template selected._ in the Tenant Email configuration. See **Tenants -> Email -> Template settings** in the FusionAuth admin UI. |
+|403 |The forgot password functionality has been disabled. This is caused by an administrator setting the Forgot Password Email Template to the option _Feature Disabled. No template selected._ in the Tenant Email configuration. See <Breadcrumb>Tenants -> Email -> Template settings</Breadcrumb> in the FusionAuth admin UI. |
 |404 |The User could not be found. |
 |422 |The User does not have an email address, this request cannot be completed. Before attempting the request again add an email address to the user. |
 |500 |There was an internal error. A stack trace is provided and logged in the FusionAuth log files. |
