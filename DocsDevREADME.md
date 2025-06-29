@@ -21,6 +21,7 @@ Here are some guidelines to follow when writing documentation (everything under 
 - `log in` is the verb, `login` is the noun
 - Use `UserInfo` instead of `Userinfo`
 - Don't abbreviate FusionAuth, use the full name.
+- Use "a" or "an" before an initialism or acronym based on how the first letter sounds when spoken - for example, "an SSO" because "S" sounds like "ess" (vowel sound), but "a VPN" because "V" sounds like "vee" (consonant sound).
 - References to `http://127.0.0.1` should be updated to `http://localhost`. Remove hyperlinks to `localhost`.
 - Always provide an alt text for images. It should always be a full sentence describing the content of the image.
 - In general, put screenshot images after the text describing the image. That is "This functionality....\n\n<screenshot of functionality>". However, when describing fields for screens, as in the core concepts section, put the screenshot first.
@@ -219,6 +220,7 @@ Fruits were domesticated at different times.
 
 ## Proper names and other verbiage
 - .NET Core
+- air-gapped (not airgapped or air gapped)
 - Azure AD
 - CAPTCHA
 - client-side
