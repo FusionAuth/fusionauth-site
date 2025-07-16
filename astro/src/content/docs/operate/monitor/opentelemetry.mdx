@@ -6,7 +6,6 @@ section: operate
 subcategory: monitor
 ---
 import Aside from 'src/components/Aside.astro';
-import DownloadWidget from 'src/components/download/DownloadWidget.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
 import WhatIsOpenTelemetry from 'src/components/docs/operate/secure-and-monitor/whatIsOpentelemetry.mdx';
 import Diagram1 from 'src/components/docs/operate/secure-and-monitor/opentelemetryDiagram1.astro';
@@ -71,21 +70,43 @@ This guide focuses on OpenTelemetry, not Prometheus and Grafana, and so uses the
 
 ![Grafana Alloy](/img/docs/operate/secure-and-monitor/opentelemetry/alloy.png)
 
-## Run OpenTelemetry and Prometheus in Docker to Monitor FusionAuth
+### Install FusionAuth
 
-Our standard Docker Compose configuration file includes OpenTelemetry and Prometheus as optional services. It is simple to enable these services using [Docker Compose profiles](https://docs.docker.com/compose/how-tos/profiles/).
+If you haven't already installed FusionAuth, you should follow the instructions on our [Download](/download) page or you can follow the process in our [Getting Started](/docs/get-started/start-here/step-1) guide.
 
-Even if you have already installed FusionAuth using Docker Compose, you'll need to follow these instructions in order to pull down the correct OpenTelemetry and Prometheus configuration files. If you skip this step, you'll need to download and manually configure these files. Here are the installation instructions:
+If you already have FusionAuth running locally or are using FusionAuth Cloud, you are welcome to use that instance as well.
 
-<DownloadWidget dockerComposeArgs="--profile opentelemetry --profile prometheus up" dockerComposeExtraDownloads={dockerComposeExtraDownloads} includeDocker={true} includeDockerVanilla={false} includeFastPath={false} kickstartEnabled={true} kickstartName="get-started"/>
+## Install and Configure OpenTelemetry and Prometheus
 
-<Aside type="note">
-  The commands you just ran configured FusionAuth using [Kickstart](/docs/get-started/download-and-install/development/kickstart) in order to have an API key configured for OpenTelemetry to use. You can always configure OpenTelemetry and Prometheus by hand if you profer. If you want to manually configure these services, you'll need to edit the `opentelemetry-collector-config.yml` and `prometheus-config.yml` files. Configuring those files is out of scope of this document, but you can consult the [OpenTelemetry](https://opentelemetry.io/docs/collector/configuration/) and [Prometheus](https://prometheus.io/docs/prometheus/latest/configuration/configuration/) docs to learn more.
-</Aside>
+There are a couple of ways to install [OpenTelemetry](https://opentelemetry.io) and [Prometheus](https://prometheus.io). We'll walk through using our various Docker Compose files, but you can also download everything by-hand. If you download and install everything yourself, you'll need to configure it by-hand as well.
 
-The Collector is configured to pull metrics from the apps it monitors (`receivers`) and allow other apps (`exporters`) to pull metrics from it. Let's look at how this is configured. Open the file `opentelemetry-collector-config.yml`. It should look something like this:
+First, let's create a sub-directory for all of our monitoring items:
 
-<RemoteCode lang="yaml" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/develop/docker/fusionauth/opentelemetry-collector-config.yml"/>
+```shell
+mkdir monitoring
+cd monitoring
+```
+
+This is a subdirectory off of the main project. We're using a subdirectory because if you are using the main FusionAuth Docker Compose installation method, it references the monitoring configuration files in a subdirectory named `monitoring`.
+
+### Configuration Files
+
+Next, you'll need to create a handful of configuration files for these services. We've created example configuration files that you can download and use with only minor modifications. To download these files, use these URLs:
+
+* https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/monitoring/alertmanager-config.yml
+* https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/monitoring/opentelemetry-collector-config.yml
+* https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/monitoring/prometheus-opentelemetry-config.yml
+* https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/monitoring/prometheus-rules.yml
+
+Once you've downloaded each of these files, you'll need to rename the Prometheus file from `prometheus-opentelemetry-config.yml` to `prometheus-config.yml`. You can run a command like this to rename this file (this command should work on Windows and *nix systems):
+
+```shell
+mv prometheus-opentelemetry-config.yml prometheus-config.yml
+```
+
+The OpenTelemetry Collector is configured to pull metrics from the apps it monitors (`receivers`) and allow other apps (`exporters`) to pull metrics from it. Let's look at how this is configured. Open the file `opentelemetry-collector-config.yml`. It should look something like this:
+
+<RemoteCode lang="yaml" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/opentelemetry-collector-config.yml"/>
 
 Notice that the `receivers` section contains a scrapper that pulls in data from FusionAuth's Prometheus endpoint every 15 seconds. This uses the Docker Compose name of `fusionauth` to pull from that service running inside the Docker Compose network (making the full URL `http://fusionauth:9011/api/prometheus/metrics`).
 
@@ -95,9 +116,36 @@ One other item to call out in this configuration file is that the `pipeline` def
 
 Next, let's look at how Prometheus is configured. Open the file `prometheus-config.yml`. It should look something like this:
 
-<RemoteCode lang="yaml" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/develop/docker/fusionauth/prometheus-opentelemetry-config.yml"/>
+<RemoteCode lang="yaml" url="https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/prometheus-opentelemetry-config.yml"/>
 
 This configures Prometheus to pull metrics from the OpenTelemetry Collector every fifteen seconds.
+
+### Docker Compose Files
+
+Finally, you'll need to download our monitoring Docker Compose files or tell the main FusionAuth Docker Compose to start up the monitoring services. We'll cover both of these options below. As we mentioned above, if you installed these services by-hand, you'll need to configure them by-hand as well. That process is out-of-scope of this document, so review the documentation for OpenTelemetry and Prometheus to determine how to configure them.
+
+#### Main Docker Compose
+
+If you are using the FusionAuth Docker Compose file from our download page, this file contains optional profiles that start OpenTelemetry and Prometheus in their own containers. To start Docker Compose with these profiles, you will execute this command:
+
+```shell
+docker compose --profile opentelemetry --profile prometheus up
+```
+
+#### Monitoring Docker Compose
+
+If you prefer to run the monitoring services separately, we've built a Docker Compose that runs just those services and doesn't include FusionAuth itself. To download these Docker Compose files, use these URLs:
+
+* https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/monitoring/docker-compose.yml
+* https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/main/docker/fusionauth/monitoring/.env
+
+Make sure you download these files into the `monitoring` directory we created above. These files reference the configuration files in the same directory as the Docker Compose files, so make sure everything is in one place. This Docker Compose can be run using this command:
+
+```shell
+docker compose up
+```
+
+### Test the Services
 
 You can open Prometheus' monitoring interface in a browser at http://localhost:9090. To check that metrics are being pulled correctly, enter `up` on the Prometheus graph page and see whether any values appear after a minute. If you see nothing, check the Docker log files in the terminal for any errors.
 
