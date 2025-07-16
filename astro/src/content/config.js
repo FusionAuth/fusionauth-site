@@ -3,6 +3,7 @@ import { defineCollection, z } from 'astro:content';
 const articlesCollection = defineCollection({
   schema: z.object({
     author: z.string().optional(),
+    canonicalUrl: z.string().optional(),
     cta: z.string().optional(),
     description: z.string(),
     disableTOC: z.boolean().default(false),
@@ -93,6 +94,7 @@ const blogCollection = defineCollection({
     featured_tag: z.string().optional(),
     featured_category: z.string().optional(),
     excerpt_separator: z.string().optional(),
+    canonicalUrl: z.string().optional(),
     blurb: z.string().optional(),
   }),
 });
