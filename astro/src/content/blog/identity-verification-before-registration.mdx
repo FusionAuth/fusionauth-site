@@ -5,12 +5,13 @@ description: Can you verify the user's identity before allowing them to create a
 authors: Dan Moore
 image: /img/blogs/device-grant-gaming/oauth-device-grant-game-users.png
 categories: Tutorial
-tags: identity verification, email verification, self-service registtration, registration, lambda, lambda http connect, api, fideo
+tags: identity verification, email verification, self-service registration, registration, lambda, lambda http connect, api, fideo
 excerpt_separator: "{/* more */}"
 ---
 import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import DownloadWidget from 'src/components/download/DownloadWidget.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
 import { RemoteValue, RemoteCode } from '@fusionauth/astro-components';
 
 Self service registration is a key component of many customer identity and access management systems. Registration lets users sign up for an account, providing credentials and other required profile attributes, and immediately gain access to the application.
@@ -147,7 +148,7 @@ Kickstart will set up FusionAuth with the correct configuration for this use cas
 * a self-service registration lambda which calls the Fideo API
 * a custom error message
 
-You can log in and review this setup by [accessing the admin UI](http://localhost:9011).
+You can log in and review this setup by [accessing the admin UI](http://localhost:9011). You should log out of the admin UI so you can easily register a user for the example application below.
 
 ## Start The Example Application
 
@@ -171,31 +172,31 @@ npm run dev
 
 This starts up the sample application on your laptop. Visit [http://localhost:8080](http://localhost:8080) to make sure it is running.
 
-TODO image
+![A screenshot of the initial Changebank screen.](/img/blogs/identity-verification/changebank-logged-out.png)
 
 ## Test The Registration Flow
 
 Next up, let's register a new user. Click the "To get started, create a new account." link.
 
-TODO image
+![A screenshot of the initial Changebank screen with the registration link highlighted.](/img/blogs/identity-verification/changebank-register-highlighted.png)
 
 You are going to register two times, once with a fake email address and then once with a real one.
 
 Provide a first name, email address, and password. First, try a fake address, like `test@example.com`. Such an address has a high risk value. The registration will be blocked.
 
-TODO image
+![A screenshot of the registration screen when registration fails.](/img/blogs/identity-verification/registration-denied.png)
 
-Then try it with a real email address of yours, such as a `gmail.com` address. Since this is a real email address, it has a low risk value. The registration will succeed and you will be logged in.
+Then try to register with a real email address of yours, such as a `gmail.com` address. Since this is a real email address, it has a low risk value. The registration will succeed and you will be logged in.
 
-TODO image
+![A screenshot of the registration screen with an email address that will succeed.](/img/blogs/identity-verification/registration-will-succeed.png)
 
-Click logout to log out from this account.
-
-TODO image
+Click <Breadcrumb>Logout</Breadcrumb> to log out from this account.
 
 ## A Closer Look At The Validation Logic
 
-Let's take a look at the JavaScript code for the self-service registration lambda. Here's the validation function that Kickstart installed for you:
+Let's take a look at the JavaScript code for the self-service registration lambda ([full code here](https://github.com/FusionAuth/fusionauth-example-kickstart/blob/main/identity-verification/lambdas/fideo.js)).
+
+Here's the validation function that Kickstart installed for you:
 
 <RemoteCode 
    url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/lambdas/fideo.js"
@@ -208,10 +209,10 @@ This code does the following:
 * extracts profile data from the user, which they provided during registration
 * makes a request to the Fideo API
 * examines the API response and compares the calculated risk to a configured threshold
-  * if the value is above the threshold, the code adds an error
-  * if it is below the threshold, the registration succeeds
 
-The threshold value is defined in the lambda function as well:
+If the value is above the threshold, the code adds an error. If it is below the threshold, the registration succeeds.
+
+The threshold value is defined in the lambda function:
 
 <RemoteCode 
    url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/lambdas/fideo.js"
@@ -221,22 +222,20 @@ The threshold value is defined in the lambda function as well:
 A few things worth calling out:
 
 * storing the Fideo API key on the application object makes the key easier to rotate, but it is still available to API keys and users with sufficient access; there's an open GitHub issue to add [lambda secrets management](https://github.com/FusionAuth/fusionauth-issues/issues/1629)
-* the error displayed is stored in the [`messages.properties` file](/docs/customize/look-and-feel/advanced-theme-editor#displaying-messages) and can be customized and localized
-* if the API is not available or the request times out, this code fails open and defaults to allowing registrations; you may want different behavior
+* the error the user sees is stored in the [`messages.properties` file](/docs/customize/look-and-feel/advanced-theme-editor#displaying-messages) and can be customized and localized
+* if the API is not available or the request times out, this code fails open and defaults to allowing registrations; you could have it deny registrations by default as well
 
 ## Modify The Lambda
 
 Next up, let's change the lambda code and see how that affects the registration process. While you could add any logic, let's change our risk threshold.
 
-Open up the [admin UI](http://localhost:9011). Use an incognito window or a different browser than you used to test the registration process.
+Open up the [admin UI](http://localhost:9011). Use an incognito window or a different browser than you used to test the registration process. Log in as the admin user, with an email of "<RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/kickstart.json" selector="$.variables.adminEmail" />" and a password of "<RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/kickstart.json" selector="$.variables.adminPassword" />".
 
-Log in as the admin user, with an email of "<RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/kickstart.json" selector="$.variables.adminEmail" />" and a password of "<RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/kickstart.json" selector="$.variables.adminPassword" />".
+Navigate to <Breadcrumb>Customizations -> Lambdas</Breadcrumb>. Find and edit the `Fideo Self Service Registration Validation` lambda. Change the `FAIL_THRESHOLD` value at the top of the edit screen to `0.99`. This threshold lets almost any identity successfully register.
 
-Navigate to <Breadcrumb>Customizations -> Lambdas</Breadcrumb>. Find and edit the `Fideo Self Service Registration Validation` lambda. Change the `FAIL_THRESHOLD` value at the top of the edit screen to `0.99`. This will let almost anyone register.
+![A screenshot of the admin lambda screen.](/img/blogs/identity-verification/modify-lambda.png)
 
-TODO image
-
-Save the new lambda code.
+Save the new lambda code by clicking the <InlineUIElement>Save</InlineUIElement> button at the top right.
 
 To test: 
 
@@ -246,31 +245,32 @@ To test:
 
 They were denied last time but now can register because of the relaxed threshold.
 
-TODO image
-
+![A screenshot of the admin lambda screen.](/img/blogs/identity-verification/registration-succeeded-with-test-user.png)
 
 ## Measuring Success and Iteration
 
-You should measure the success and failure of your registration rates. The success rate can be tracked using the [User Registration Create webhook](/docs/extend/events-and-webhooks/events/user-registration-create).
+You should measure the success and failure of your registration rates. The success rate can be tracked by capturing the [User Registration Create webhook](/docs/extend/events-and-webhooks/events/user-registration-create).
 
-Tracking the failures is a bit trickier, but you can make another fetch call for every registration event. Here's a sample implementation which captures the failed email address and which you could call after the risk threshold is reached.
+Tracking the failures is a bit trickier, but you can make a fetch call for every attempted registration.
+
+Here's a sample implementation which captures the failed email address, which would be called at validation failure, when the risk threshold is reached.
 
 <RemoteCode 
    url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/lambdas/fideo.js"
    language="javascript" 
-   tags="startofregistration" />
-
-Subtracting successful registrations from total gives the number of failed registrations.
+   tags="registrationfail" />
 
 Keep an eye on the failure rate and tweak your business logic to balance between letting users register and preventing fake registrations. The exact ratio depends on how costly each of these are.
 
 ## Next Steps
 
-This is just a start. Other things you might want to explore using this sample app include:
+Congrats on finishing the tutorial! But since you already have it up and running, you can explore more.
 
-* collect more on registration, such as last name, phone number or zip code, which you can then pass to the Fideo API for more precise scoring
+Other areas you might want to explore using this sample app include:
+
 * change the registration to collect [registration data over more than one page](/docs/lifecycle/register-users/advanced-registration-forms#create-a-form)
-* add more business logic to the lambda, looking at other aspects of the data returned by the API call, such as the email checks
-* store the risk value on the user's data field and add a [JWT populate lambda](/docs/extend/code/lambdas/jwt-populate) to add it to the access token so downstream services can limit service based on the value
+* update the form to collect more on registration, such as last name, phone number or zip code, and pass the additional information to the Fideo API for more precise scoring
+* examine other aspects of the data returned by the API call to improve the validation logic
+* store the risk value on the user's data field and add a [JWT populate lambda](/docs/extend/code/lambdas/jwt-populate) to add it to the access token so downstream services can limit functionality based on the value
 
 Enjoy your verified user identities!
