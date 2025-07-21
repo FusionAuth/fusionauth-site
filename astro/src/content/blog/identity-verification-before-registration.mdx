@@ -250,20 +250,37 @@ They were denied last time but now can register because of the relaxed threshold
 
 ## Measuring Success and Iteration
 
-You should measure the success and failure of your registration rates. The success rate can be tracked by capturing the [User Registration Create webhook](/docs/extend/events-and-webhooks/events/user-registration-create).
+You should measure the success and failure of your registration rates. The success rate can be tracked by capturing the [User Registration Create webhook](/docs/extend/events-and-webhooks/events/user-registration-create). Tracking the failures is a bit trickier. You have two options, explored below. 
 
-Tracking the failures is a bit trickier, but you can make a fetch call for every attempted registration.
+Either way, keep an eye on the failure rate and tweak your business logic to balance between letting users register and preventing fake registrations. The exact ratio depends on how costly each of these are.
 
-Here's a sample implementation which captures the failed email address, which would be called at validation failure, when the risk threshold is reached.
+If the user is flagged, you can offer alternate registration mechanisms. You could let them register using a chatbot or customer support ticket. Tracking these lets you know if the identity verification logic needs to be changed.
+
+### Tracking Failures With Fetches
+
+You can make a fetch call for every failed registration.
+
+Here's a sample implementation which captures the failed email address. This is called when the risk threshold is reached.
 
 <RemoteCode 
    url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/lambdas/fideo.js"
    language="javascript" 
-   tags="registrationfail" />
+   tags="registrationfailfetch" />
 
-Keep an eye on the failure rate and tweak your business logic to balance between letting users register and preventing fake registrations. The exact ratio depends on how costly each of these are.
+This requires you to set up a remote API.
 
-You can also provide a way for users to register via a chatbot or customer support ticket in case they are incorrectly flagged. Tracking this also lets you know if the identity verification logic needs to be changed.
+### Tracking Failures With Fetches
+
+You can also create an event log entry. In this case, you make a `console.log` function call when the risk threshold is reached. This creates an Event Log entry.
+
+<RemoteCode 
+   url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/lambdas/fideo.js"
+   language="javascript" 
+   tags="registrationfaillog" />
+
+You can be notified of this via the Event Log webhook](/docs/extend/events-and-webhooks/events/event-log-create). You can also poll [the event logs](/docs/apis/event-logs#search-event-logs) for the prefix.
+
+Event log entries are only written if debugging is enabled for this lambda.
 
 ## Next Steps
 
