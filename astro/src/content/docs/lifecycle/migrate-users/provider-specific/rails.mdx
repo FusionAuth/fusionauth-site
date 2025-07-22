@@ -1,0 +1,466 @@
+---
+title: Migrate From Ruby on Rails
+description: Learn how to migrate your users to FusionAuth from Ruby on Rails.
+section: lifecycle
+subcategory: migrate users
+tertcategory: provider specific
+---
+
+import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_additional-support.mdx';
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import CreateApiKeySocial from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-api-key-social.mdx';
+import CreateTestApplication from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-application.mdx';
+import CreateTestTenant from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-tenant.mdx';
+import FinalDestination from 'src/content/docs/lifecycle/migrate-users/provider-specific/_final-destination.mdx';
+import GetScript from 'src/content/docs/lifecycle/migrate-users/provider-specific/_get-script.mdx';
+import Identifiers from 'src/content/docs/lifecycle/migrate-users/provider-specific/_identifiers.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/provider-specific/_mapping-user-attributes.mdx';
+import OtherEntitiesIntro from 'src/content/docs/lifecycle/migrate-users/provider-specific/_other-entities-intro.mdx';
+import PasswordHashNote from 'src/content/docs/lifecycle/migrate-users/provider-specific/_password-hash-note.mdx';
+import SetUpFusionauth from 'src/content/docs/lifecycle/migrate-users/provider-specific/_set-up-fusionauth.mdx';
+import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-migration.mdx';
+import SocialLoginNote from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-note.mdx';
+import VerifyImport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_verify-import.mdx';
+import WhatNext from 'src/content/docs/lifecycle/migrate-users/provider-specific/_what-next.mdx';
+
+export const migration_source_name = 'rails';
+export const migration_source_dir = 'rails';
+export const migration_source_social_name = 'OmniAuth';
+export const script_supports_social_logins = true;
+export const add_tenant_image_role = 'bottom-cropped';
+
+## Overview
+
+This document will help you migrate your users from a Ruby on Rails application to FusionAuth.
+
+This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin. For more general migration information, please view the [FusionAuth migration guide](/docs/lifecycle/migrate-users/general-migration).
+
+Rails applications can implement authentication in several different ways, and this guide covers the three most common approaches:
+
+- **Devise** – The most popular Rails authentication gem, providing an authentication solution with email/password, confirmations, and account locking.
+- **OmniAuth** – A flexible authentication system focused on external providers like Google, Facebook, and GitHub.
+* **Rails built-in authentication** – Rails native authentication feature using `has_secure_password` with bcrypt for email/password authentication.
+
+Each approach stores user data differently and requires specific migration considerations. This guide provides export scripts and migration strategies tailored to each authentication method, focusing on preserving user passwords, account states, and any social login connections.
+
+The migration process will preserve your users existing passwords (where applicable) so they can continue logging in with their current credentials after the migration to FusionAuth.
+
+## Planning Considerations
+
+### Obtaining User Data
+
+#### Devise
+
+Devise applications store comprehensive user authentication data in your database. The standard Devise User model includes valuable migration data such as:
+
+- `encrypted_password` – The bcrypt-hashed password that can be migrated directly to FusionAuth.
+- `email` and `username` – Primary user identifiers.
+- `confirmed_at` – Email confirmation status for user verification.
+- `sign_in_count`, `current_sign_in_at`, `last_sign_in_at`
+- `current_sign_in_ip`, `last_sign_in_ip`
+- `locked_at` – Account lockout status for security features.
+
+All of this data can be exported directly from your database and preserved during migration to FusionAuth.
+
+#### OmniAuth
+
+OmniAuth applications typically store minimal local user data since authentication happens through external providers. Your export will focus on:
+
+- Basic profile information (`email`, `name`, `username`).
+- Provider connection data (`provider`, `uid`) – This maps to the external service's user identifier.
+- Any locally stored profile images or additional user metadata.
+
+The critical piece for OmniAuth migrations is the provider/uid combination, which allows FusionAuth to link the migrated user account to the appropriate external identity provider.
+
+#### Rails Built-in Authentication
+
+Applications using Rails' `has_secure_password` feature store user data similarly to Devise but with a simpler structure:
+
+- `password_digest` - The bcrypt-hashed password.
+- `email` - Primary identifier.
+- Any custom user profile fields your application has added.
+
+This approach typically requires the least complex migration since the data structure is straightforward.
+
+### Mapping User Attributes
+
+The attributes of the User object in FusionAuth are [well documented](/docs/apis/users).
+
+If there is an attribute in your Rails user which cannot be directly mapped to a FusionAuth attribute, you can place it in the `user.data` field. This field can store arbitrary JSON values and will be indexed and searchable.
+
+For example, Rails-specific fields like `sign_in_count` from Devise or `has_secure_password` indicators can be saved in the `user.data` field.
+
+If you need users to access applications, you can also set the `user.registrations` field with the data required to register a user to an application. However, this process is simplified when using the import script. See [Use the Script](#use-the-script) for more details.
+
+### Social Logins
+
+<SocialLoginNote migration_source_name={migration_source_social_name} script_supports_social_logins={script_supports_social_logins} />
+
+<SocialLoginMigration />
+
+### Other Entities
+
+<OtherEntitiesIntro migration_source_name={migration_source_social_name} other_migrated_entities="roles" />
+
+#### Identifiers
+
+<Identifiers />
+
+## Exporting Users
+
+To export users from a Rails application, you'll need a script that queries your database and formats the data for FusionAuth import. The following export scripts work for each authentication system.
+
+Before running any export script, update the `applicationId` values to match your FusionAuth application Ids.
+
+### Devise
+
+Most Rails applications using Devise can use this straightforward export script:
+
+```ruby
+#!/usr/bin/env ruby
+
+# User Export Script for Devise
+require_relative 'config/environment'
+require 'json'
+require 'securerandom'
+
+puts "Starting user export for Devise users..."
+puts "Found #{User.count} users to export"
+
+users_data = User.all.map do |user|
+  puts "Exporting user: #{user.email}"
+  
+  # Parse bcrypt hash according to FusionAuth requirements:
+  # Example: $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+  # Should be split to:
+  # factor: 10 (the cost factor)
+  # salt: N9qo8uLOickgx2ZMRZoMye (first 22 chars of the base64 string)
+  # password: IjZAgcfl7p92ldGxad68LJZdL17lhWy (remaining chars)
+  
+  bcrypt_factor = 10  # default cost factor
+  bcrypt_salt = ""
+  bcrypt_password = ""
+  
+  if user.encrypted_password&.match(/^\$2[aby]\$(\d+)\$(.+)$/)
+    bcrypt_factor = $1.to_i
+    salt_and_hash = $2
+    
+    # FusionAuth expects the salt and password to be split:
+    # - Salt: first 22 characters (in bcrypt base64 format)
+    # - Password: remaining characters (in bcrypt base64 format)
+    bcrypt_salt = salt_and_hash[0, 22]
+    bcrypt_password = salt_and_hash[22..-1]
+  end
+  
+  user_data = {
+    email: user.email,
+    username: user.email,
+    password: bcrypt_password,  # Just the hash portion
+    encryptionScheme: "bcrypt",
+    factor: bcrypt_factor,      # The cost factor (e.g., 10, 12)
+    salt: bcrypt_salt,          # The salt portion (22 chars)
+    passwordChangeRequired: false,  # Required by FusionAuth for imports
+    verified: user.respond_to?(:confirmed?) ? user.confirmed? : true,
+    active: true,
+    registrations: [
+      {
+        id: SecureRandom.uuid,
+        applicationId: "YOUR_APPLICATION_ID_HERE", # Update this
+        verified: user.respond_to?(:confirmed?) ? user.confirmed? : true,
+        roles: ["user"]
+      }
+    ],
+    data: {
+      source_system: "devise",
+      original_user_id: user.id,
+      sign_in_count: user.respond_to?(:sign_in_count) ? user.sign_in_count : 0,
+      last_sign_in_ip: user.respond_to?(:last_sign_in_ip) ? user.last_sign_in_ip : nil,
+      current_sign_in_ip: user.respond_to?(:current_sign_in_ip) ? user.current_sign_in_ip : nil
+    }
+  }
+  
+  user_data
+end
+
+# Write to file with proper FusionAuth format
+export_data = { users: users_data }
+filename = "users_export_#{Time.current.strftime('%Y%m%d_%H%M%S')}.json"
+File.write(filename, JSON.pretty_generate(export_data))
+
+puts "Export completed successfully!"
+puts "File saved as: #{filename}"
+puts "Total users exported: #{users_data.count}"
+```
+
+The script handles bcrypt password hashes directly. Since bcrypt includes the salt in the hash, the `salt` field is not needed.
+
+### OmniAuth
+
+For OmniAuth users, passwords are not stored locally, so the export focuses on profile data and provider information:
+
+```ruby
+#!/usr/bin/env ruby
+
+# User Export Script for OmniAuth
+require_relative 'config/environment'
+require 'json'
+require 'securerandom'
+
+puts "Starting user export for OmniAuth users..."
+puts "Found #{User.count} users to export"
+
+users_data = User.all.map do |user|
+  puts "Exporting user: #{user.email} (#{user.provider})"
+  
+  {
+    email: user.email,
+    username: user.email,
+    fullName: user.name,
+    verified: true,
+    active: true,
+    imageUrl: user.image,
+    registrations: [
+      {
+        id: SecureRandom.uuid,
+        applicationId: "YOUR_APPLICATION_ID_HERE", # Update this
+        verified: true,
+        roles: ["user"]
+      }
+    ],
+    data: {
+      source_system: "omniauth",
+      original_user_id: user.id,
+      oauth_provider: user.provider,
+      oauth_uid: user.uid
+    }
+  }
+end
+
+# Write to file with proper FusionAuth format
+export_data = { users: users_data }
+filename = "users_export_#{Time.current.strftime('%Y%m%d_%H%M%S')}.json"
+File.write(filename, JSON.pretty_generate(export_data))
+
+puts "Export completed successfully!"
+puts "File saved as: #{filename}"
+puts "Total users exported: #{users_data.count}"
+puts "Providers: #{users_data.group_by { |u| u[:data][:oauth_provider] }.transform_values(&:count)}"
+```
+
+The `oauth_provider` and `oauth_uid` data will be used later to link user accounts to FusionAuth identity providers.
+
+### Rails Built-in Authentication
+
+For Rails applications using `has_secure_password`, the export is similar to Devise:
+
+```ruby
+#!/usr/bin/env ruby
+
+# User Export Script for Rails Built-in Authentication
+require_relative 'config/environment'
+require 'json'
+require 'securerandom'
+
+puts "Starting user export for Rails Authentication users..."
+puts "Found #{User.count} users to export"
+
+users_data = User.all.map do |user|
+  puts "Exporting user: #{user.email}"
+  
+  # Parse bcrypt hash according to FusionAuth requirements:
+  # Example: $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+  # Should be split to:
+  # factor: 10 (the cost factor)
+  # salt: N9qo8uLOickgx2ZMRZoMye (first 22 chars of the base64 string)
+  # password: IjZAgcfl7p92ldGxad68LJZdL17lhWy (remaining chars)
+  
+  bcrypt_factor = 10  # default cost factor
+  bcrypt_salt = ""
+  bcrypt_password = ""
+  
+  if user.password_digest&.match(/^\$2[aby]\$(\d+)\$(.+)$/)
+    bcrypt_factor = $1.to_i
+    salt_and_hash = $2
+    
+    # FusionAuth expects the salt and password to be split:
+    # - Salt: first 22 characters (in bcrypt base64 format)
+    # - Password: remaining characters (in bcrypt base64 format)
+    bcrypt_salt = salt_and_hash[0, 22]
+    bcrypt_password = salt_and_hash[22..-1]
+  end
+  
+  user_data = {
+    email: user.email,
+    username: user.email,
+    fullName: user.name,
+    password: bcrypt_password,  # Just the hash portion
+    encryptionScheme: "bcrypt",
+    factor: bcrypt_factor,      # The cost factor (e.g., 10, 12)
+    salt: bcrypt_salt,          # The salt portion (22 chars)
+    passwordChangeRequired: false,  # Required by FusionAuth for imports
+    verified: true, # Adjust based on your confirmation logic
+    active: true,
+    registrations: [
+      {
+        id: SecureRandom.uuid,
+        applicationId: "YOUR_APPLICATION_ID_HERE", # Update this
+        verified: true,
+        roles: ["user"]
+      }
+    ],
+    data: {
+      source_system: "rails_auth",
+      original_user_id: user.id
+    }
+  }
+  
+  user_data
+end
+
+# Write to file with proper FusionAuth format
+export_data = { users: users_data }
+filename = "users_export_#{Time.current.strftime('%Y%m%d_%H%M%S')}.json"
+File.write(filename, JSON.pretty_generate(export_data))
+
+puts "Export completed successfully!"
+puts "File saved as: #{filename}"
+puts "Total users exported: #{users_data.count}"
+```
+
+All scripts generate timestamped JSON files ready for import into FusionAuth. Update the `applicationId` values and modify the User model field references to match your application's schema before running.
+
+## Importing Users
+
+Next up, import the user data. Here are the steps you need to take:
+
+1. Set Up FusionAuth
+2. Get the Script
+3. Install Needed Gems
+4. Use the Script
+5. Verify the Import
+6. The Final Destination of Imported Users
+
+### Set Up FusionAuth
+
+<SetUpFusionauth />
+
+#### Create a Test Tenant
+
+<CreateTestTenant migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} add_tenant_image_role={add_tenant_image_role} />
+
+#### Create a Test Application
+
+<CreateTestApplication migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} />
+
+#### Add an API Key
+
+<CreateApiKeySocial migration_source_dir={migration_source_dir} />
+
+### Get the Script
+
+<GetScript migration_source_dir={migration_source_dir} />
+
+### Install Needed Gems
+
+The following gems must be available to the import script:
+
+* `date`
+* `json`
+* `optargs`
+* `securerandom`
+* `fusionauth_client`
+
+Most likely all of these will be on your system already, except the `fusionauth_client` gem.
+
+If you have `bundler` installed, run `bundle install` in the `rails` project directory. Otherwise install the needed gems in some other way.
+
+### Use the Script
+
+You can see the output of the script by running it with the `-h` option:
+
+```sh title="Running the import script with the help command line switch"
+./import.rb -h
+```
+
+The output will be similar to this:
+
+```sh title="The help output of the import.rb script"
+Usage: import.rb [options]
+    -u, --users-file USERS_FILE      The exported JSON user data file from Rails. Defaults to users.json.
+    -f FUSIONAUTH_URL,               The location of the FusionAuth instance. Defaults to http://localhost:9011.
+        --fusionauth-url
+    -k, --fusionauth-api-key API_KEY The FusionAuth API key.
+    -t TENANT_ID,                    The FusionAuth tenant id. Required if more than one tenant exists.
+        --fusionauth-tenant-id
+    -r APPLICATION_IDS,              A comma separated list of existing application Ids. All users will be registered for these applications.
+        --register-users
+    -l, --link-social-accounts       Link social accounts for OmniAuth users after import.
+    -v, --verbose                    Enable verbose logging.
+    -h, --help                       Prints this help.
+```
+
+For this script to work correctly, set the following switches, unless the defaults work for you:
+
+* `-u` should point to the location of the user export file you obtained, unless the default works.
+* `-f` must point to your FusionAuth instance. If you are testing locally, it will probably be `http://localhost:9011`.
+* `-k` needs to be set to the value of the API key created above.
+* `-t` should be set to the Id of the testing tenant created above.
+
+The `-l` switch will attempt to create links for any OmniAuth social users found in the users data file. If you are loading OmniAuth users, you must create the social providers in FusionAuth beforehand, or the links will fail.
+
+When you run the script, you'll see output like:
+
+```title="Import script output"
+$ ./import.rb -k rEWq7js-JBeWfNMFveXp0nN8CaArBt1xfuhUn4Jn617tGl2zLiGZnCwG -u users_export_20250721_042512.json
+FusionAuth Importer : Rails Authentication Systems
+ > User file: users_export_20250721_042512.json
+ > FusionAuth URL: http://localhost:9011
+ > Tenant ID: default
+
+ > Detected source system: rails_auth
+
+ > Processing 12 valid users
+ > Importing 12 users to FusionAuth...
+ > Import successful!
+
+ > Successfully imported 12 users
+
+Import completed successfully!
+ > Total users imported: 12
+ > Duplicates skipped: 0
+```
+
+#### Enhancing the Script
+
+You may also want to migrate additional data. Currently, the following attributes are migrated:
+
+* `email`
+* `username` 
+* `fullName` (when available)
+* `verified`
+* `active`
+* `password` (for Devise and Rails built-in authentication)
+* `registrations`
+* `data` - Custom metadata including source system and original user Id
+
+If you have additional user attributes to migrate, review and modify the script's user mapping logic.
+
+You may also want to assign Roles, or associate users with Groups, by creating the appropriate JSON data structures in the import call. These are documented in the [Import User API docs](/docs/apis/users#import-users). This will require modifying the `import.rb` code.
+
+### Verify the Import
+
+<VerifyImport migration_source_dir={migration_source_dir} />
+
+### The Final Destination of Imported Users
+
+<FinalDestination migration_source_dir={migration_source_dir} />
+
+## What to Do Next
+
+<WhatNext />
+
+## Additional Support
+
+<AdditionalSupport />
