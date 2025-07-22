@@ -16,7 +16,13 @@ This page contains notes on changes in recent versions of FusionAuth that requir
 
 Version `1.99.9` does not *require* any theme changes. User passwords are optional in version `1.99.9` at the tenant level.
 
-For advanced registration forms, each application can decide, by including or omitting a password field in its advanced registration form, whether to require a password for a user (new or existing).
+<Aside type="caution">
+  Consider the security posture of your application when deciding whether to make passwords optional. There may be risk in communicating what channels are accepted.
+</Aside>
+
+For advanced registration and Self Service User forms, each application can decide, by including or omitting a password field in its advanced registration form, whether to require a password for a user (new or existing).
+
+### Registration
 
 Basic registration always requires a password. To accommodate the use case of an existing user, without a password, registering for an application with basic registration, there is a new field, `passwordSet`, that can be used on the `OAuth complete registration` page to display the password field with basic registrations.
 
@@ -46,9 +52,42 @@ For example, before:
 [/#if]
 ```
 
-<Aside type="caution">
-  Consider the security posture of your application when deciding whether to make passwords optional. There may be risk in communicating what channels are accepted.
-</Aside>
+### Self Service User
+
+To accommodate the use case of an existing user, without a password, setting a password for the first time, there is a new field, `passwordSet`, that can be used on the `Helpers` page to hide the "current password" field for users that do not have a password.
+
+```html title="Before"
+<form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
+  ...
+  [#list fieldValues as field]
+    [#if field.key == "user.password"]
+      [@helpers.passwordField field application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange/]
+    [#else]
+      [@helpers.customField field=field key=field.key autofocus=false placeholder=field.key label=theme.optionalMessage(field.key) leftAddon="false"/]
+      [#if field.confirm]
+        [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
+      [/#if]
+    [/#if]
+  [/#list]
+</form>
+```
+
+```html title="After"
+<form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
+  ...
+  [#list fieldValues as field]
+    [#if field.key == "user.password"]
+      [@helpers.passwordField field=field
+                              showCurrentPasswordField=(passwordSet && application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange)/]
+    [#else]
+      [@helpers.customField field=field key=field.key autofocus=false placeholder=field.key label=theme.optionalMessage(field.key) leftAddon="false"/]
+      [#if field.confirm]
+        [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
+      [/#if]
+    [/#if]
+  [/#list]
+</form>
+```
 
 ## Version 1.53.3
 
