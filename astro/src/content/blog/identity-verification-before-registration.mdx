@@ -24,10 +24,12 @@ Users enjoy the easy sign up process, but attackers can register too. In this po
 
 FusionAuth supports both basic and advanced self-service registration to provision users (that's fancy for 'add them into your user datastore'). 
 
-* [Basic registration](/docs/lifecycle/register-users/basic-registration-forms) offers a single-page themeable registration flow with a limited number of user provided fields, such as first name and last name.
+* [Basic registration](/docs/lifecycle/register-users/basic-registration-forms) offers a single-page themeable registration flow with a limited number of fields, such as first name and last name.
 * [Advanced registration](/docs/lifecycle/register-users/advanced-registration-forms) supports multi-step themeable registration with unlimited user provided fields.
 
-Both basic and advanced registration let you mark registration fields as required. Advanced registration offers custom validation options, including matching fields against regular expressions, and a lambda to run custom logic.
+Both basic and advanced registration let you mark registration fields as required. Advanced registration offers custom validation options, including matching fields against regular expressions. 
+
+Advanced registration also lets you run custom JavaScript logic during the registration lifecycle. FusionAuth calls these custom snippets of logic [lambdas](/docs/extend/code/lambdas/). Lambdas can be configured to run at other points in the user lifecyle as well, such as when the user logs in using a social provider or when a token is created.
 
 Both registration options trust the end user to provide accurate information and are well suited to consumer facing applications. But advanced registration lets you configure a validation lambda which can improve registration conversion and security.
 
@@ -126,7 +128,7 @@ The API returns JSON similar to this:
 }
 ```
 
-Consult [the Fideo docs](https://docs.fideo.ai/docs/verify#api-output) for details about these fields. Contact them directly to discuss what makes sense for your use case. A KYC flow for a bank would use different checks and logic than an online gaming company trying to keep bots out.
+Consult [the Fideo docs](https://docs.fideo.ai/docs/verify#api-output) for details about these fields. Contact them directly to discuss what makes sense for your use case. A [Know Your Client (KYC)](https://www.investopedia.com/terms/k/knowyourclient.asp) flow for a bank would use different checks and logic than an online gaming company trying to keep bots out.
 
 For the purpose of this tutorial, the logic will rely heavily on the top level `risk` value. The `risk` is a number between 0 and 1, with 0 being safe and 1 being as risky as it gets.
 
@@ -142,7 +144,7 @@ The simplest way to run FusionAuth is to install it on your development machine 
 
 Kickstart will set up FusionAuth with the correct configuration for this use case. This includes:
 
-* a sample Changebank application with a custom look and feel
+* a sample application with a custom look and feel
 * an admin user with an email of "<RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/kickstart.json" selector="$.variables.adminEmail" />" and a password of "<RemoteValue url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-kickstart/refs/heads/main/identity-verification/kickstart.json" selector="$.variables.adminPassword" />".
 * an advanced registration form which asks for email address, password and first name
 * a self-service registration lambda which calls the Fideo API
@@ -205,7 +207,7 @@ Here's the validation function that Kickstart installed for you:
 
 This code does the following:
 
-* retrieves our Fideo API key from the application's configuration (where the Kickstart put it)
+* retrieves our Fideo API key from the application's `data` field (where the Kickstart put it)
 * extracts profile data from the user, which they provided during registration
 * makes a request to the Fideo API
 * examines the API response and compares the calculated risk to a configured threshold
@@ -244,7 +246,7 @@ To test this change:
 * Click the "To get started, create a new account." link.
 * Register with the `test@example.com` user.
 
-They were denied last time but now can register because of the relaxed threshold.
+The same registration was denied last time, but a user with that email can register now because of the relaxed threshold.
 
 ![A screenshot of the admin lambda screen.](/img/blogs/identity-verification/registration-succeeded-with-test-user.png)
 
@@ -269,7 +271,7 @@ Here's a sample implementation which captures the failed email address. This is 
 
 This requires you to set up a remote API.
 
-### Tracking Failures With Fetches
+### Tracking Failures With Logging
 
 You can also create an event log entry. In this case, you make a `console.log` function call when the risk threshold is reached. This creates an Event Log entry.
 
@@ -278,7 +280,7 @@ You can also create an event log entry. In this case, you make a `console.log` f
    language="javascript" 
    tags="registrationfaillog" />
 
-You can be notified of this via the Event Log webhook](/docs/extend/events-and-webhooks/events/event-log-create). You can also poll [the event logs](/docs/apis/event-logs#search-event-logs) for the prefix.
+You can be notified of this via the Event Log webhook](/docs/extend/events-and-webhooks/events/event-log-create). You can also poll [the event logs](/docs/apis/event-logs#search-event-logs) for the `fideo-registration-failed` prefix.
 
 Event log entries are only written if debugging is enabled for this lambda.
 
