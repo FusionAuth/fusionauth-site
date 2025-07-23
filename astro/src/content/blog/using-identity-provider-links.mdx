@@ -1,0 +1,1071 @@
+---
+publish_date: 2025-07-23
+title: "Multi-Platform Video Uploads: Using Identity Provider Links"
+htmlTitle: "Multi-Platform Video Uploads: Using Identity Provider Links"
+description: Learn how to build a video upload application that connects to multiple services like Google and Twitter using FusionAuth's Identity Provider Links.
+image: /img/blogs/identity-provider-links/identity-provider-links-header.png
+authors: Colin Frick, Aaron Ritter
+categories: Education
+tags: identity provider, social login, google, twitter, links, oauth, video upload, youtube
+excerpt_separator: "{/* more */}"
+---
+import Aside from 'src/components/Aside.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+
+In today's content-driven world, creators often need to share their videos across multiple platforms to maximize reach and engagement. However, managing separate accounts and authentication flows for each platform can be cumbersome. What if you could build an application that allows users to upload videos to both YouTube (Google) and Twitter with a single login? This is where FusionAuth's Identity Provider Links feature becomes invaluable.
+
+Identity Provider (IDP) Links allow you to connect a FusionAuth user account with multiple social identity providers through access and refresh tokens, enabling your application to securely access APIs from different platforms while maintaining a single unified user account.
+
+{/* more */}
+
+## What Are Identity Provider Links?
+
+Identity Provider Links establish a relationship between a FusionAuth user and users in third-party identity providers such as Google and Twitter. When a link is created, FusionAuth stores information about the connection, including:
+
+- The identity provider ID
+- The user ID in the identity provider
+- The FusionAuth user ID
+- A display name (usually an email or username)
+- A access or refresh token from the identity provider
+
+## Preparation
+
+Before we dive into the implementation, let's set up our environment. We'll need:
+
+1. A running FusionAuth instance
+2. Google and Twitter developer accounts with API access
+3. A video upload application that connects to multiple services
+
+### Setting Up FusionAuth
+
+If you don't already have FusionAuth running, you can follow [Step-1](/docs/get-started/start-here/step-1) of the [Get Started Tutorial](/docs/get-started/start-here/).
+
+TODO Alternative, checkout example app with a pre-defined kickstart which needs to be modified.
+
+Once FusionAuth is running, we'll need to create an application:
+
+TODO
+
+### Creating the Video Upload Application
+
+For our demo, we'll create a Node.js application that will:
+
+1. Allow users to log in with FusionAuth
+2. Connect to both Google (YouTube) and Twitter accounts
+3. Upload videos to multiple platforms simultaneously
+
+TODO
+
+## Setting Up Identity Providers
+
+Now, let's configure the identity providers we'll be using: Google and Twitter.
+
+### Setting Up OpenID Connect for YouTube API Access
+
+To set up YouTube API access in FusionAuth, we need to use the [OpenID Connect](/docs/apis/identity-providers/openid-connect) identity provider instead of the standard [Google](/docs/apis/identity-providers/google) identity provider.
+
+<Aside type="caution">
+The standard Google identity provider in FusionAuth stores an id_token in the identityProviderLink object that cannot be used for API access. For YouTube API integration, you must use the OpenID Connect identity provider configured for Google.
+</Aside>
+
+TODO
+
+#### Enabling the YouTube Data API
+
+TODO
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com)
+2. Navigate to APIs & Services → Library
+3. Search for "YouTube Data API v3"
+4. Click on the API and then click "Enable"
+
+#### Creating an Application in Google Cloud
+
+TODO
+
+#### Creating Google OAuth 2.0 Credentials with YouTube Scopes
+
+TODO
+
+1. Navigate to APIs & Services → Credentials
+2. Create a new OAuth client ID
+3. Set the application type to "Web application"
+4. Add an authorized redirect URI: `https://[your-fusionauth-domain]/oauth2/callback`
+5. Note the Client ID and Client Secret
+6. When configuring scopes in the consent screen, include the following for YouTube uploads:
+   - `https://www.googleapis.com/auth/youtube.upload` - Required for uploading videos
+   - `https://www.googleapis.com/auth/youtube` - Full access to YouTube account
+   - `https://www.googleapis.com/auth/youtube.readonly` - Read-only access for metrics
+   - `email profile openid` - Standard user information
+
+#### Configuring the OpenID Connect Identity Provider for Google in FusionAuth
+
+TODO
+
+1. In FusionAuth, go to Settings → Identity Providers
+2. Click "Add OpenID Connect"
+3. Enter a name like "Google YouTube API"
+4. Enter the Client ID and Client Secret from Google
+5. Set the following endpoints:
+   - Authorization endpoint: `https://accounts.google.com/o/oauth2/v2/auth`
+   - Token endpoint: `https://oauth2.googleapis.com/token`
+   - Userinfo endpoint: `https://openidconnect.googleapis.com/v1/userinfo`
+6. Set "Discover endpoints" to "No" since we're manually entering them
+7. In the scope field, add: `email profile openid https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube.readonly`
+8. Set the button text to "Login with Google for YouTube"
+9. Select the applications that should use this identity provider
+10. Save the configuration
+
+<Aside type="note">
+For YouTube API access, you'll need to ensure your Google Cloud project has been verified by Google if you plan to publish your application. During development, you can test with unverified apps, but they have limitations on the number of users.
+</Aside>
+
+### Setting Up Twitter as an Identity Provider for Media Uploads
+
+TODO
+
+To set up Twitter as an identity provider with media upload capabilities, follow these steps:
+
+1. Create a Twitter developer account
+2. Apply for Elevated access (required for media uploads)
+3. Create a Twitter app with appropriate permissions
+4. Configure the authentication settings
+5. Create a Twitter Identity Provider in FusionAuth
+
+For detailed instructions on the basic setup, refer to the [Twitter Identity Provider documentation](https://fusionauth.io/docs/lifecycle/authenticate-users/identity-providers/social/twitter).
+
+Here's a detailed walkthrough for setting up Twitter media uploads:
+
+#### Applying for Elevated Access
+
+TODO
+
+1. Go to the [Twitter Developer Portal](https://developer.twitter.com)
+2. Navigate to the Projects & Apps section
+3. Apply for Elevated access, which is required for media uploads
+4. Provide details about your application's use case
+
+#### Creating a Twitter App with Media Upload Permissions
+
+TODO
+
+1. Create a new app or use an existing one
+2. Under "App permissions", select "Read and Write" (required for media uploads)
+3. Under "Authentication settings", enable "3-legged OAuth"
+4. Add a callback URL: `https://[your-fusionauth-domain]/oauth2/callback`
+5. Enable "Request email from users"
+6. Save the settings
+7. Note the API Key and API Secret Key
+
+#### Configuring the Twitter Identity Provider in FusionAuth
+
+TODO
+
+1. In FusionAuth, go to Settings → Identity Providers
+2. Click "Add Twitter"
+3. Enter the Consumer Key (API Key) and Consumer Secret (API Secret Key)
+4. Configure the button text
+5. Select the applications that should use this identity provider
+6. Save the configuration
+
+<Aside type="caution">
+Twitter has rate limits for media uploads. For production applications, you'll need to implement appropriate rate limiting and error handling to manage these constraints.
+</Aside>
+
+## Using Identity Provider Links
+
+Now that we have our identity providers set up, let's explore how to use the Identity Provider Links API to connect social identities to a FusionAuth user account.
+
+### Understanding Token Storage in Identity Provider Links
+
+TODO
+
+When working with API access to services like YouTube, it's crucial to understand how different identity providers store tokens in the identityProviderLink object.
+
+<Aside type="caution">
+The standard Google identity provider in FusionAuth stores an **id_token** in the identityProviderLink object. While this token is useful for authentication, it **cannot be used for API access** to Google services like YouTube.
+</Aside>
+
+In contrast, the OpenID Connect identity provider configured for Google stores a **refresh_token** in the identityProviderLink object. This refresh token can be exchanged for access tokens, which are required for API access to Google services.
+
+This is why we use the OpenID Connect identity provider instead of the standard Google identity provider for our YouTube integration.
+
+When implementing API access using Identity Provider Links, you need to:
+
+1. Configure the appropriate identity provider (OpenID Connect for Google/YouTube)
+2. Extract the token from the identityProviderLink object
+3. For Google/YouTube, exchange the refresh token for an access token before making API calls
+4. For Twitter, parse the token string to extract the access token and secret
+
+The code examples in this tutorial demonstrate these patterns for both YouTube and Twitter integrations.
+
+### Understanding the Links API
+
+TODO
+
+FusionAuth provides several API endpoints for managing identity provider links:
+
+1. **Link a User**: Create a link between a FusionAuth user and a social identity
+2. **Complete a Pending Link**: Finalize a link that was created during the login process
+3. **Retrieve Links**: Get information about existing links
+4. **Unlink a User**: Remove a link between a FusionAuth user and a social identity
+
+Let's look at how to use these endpoints in our application.
+
+### Implementing Video Uploads with Identity Provider Links
+
+TODO
+
+Now, let's implement our video upload application with identity provider links. We'll start by setting up the basic application structure:
+
+```javascript
+// app.js
+const express = require('express');
+const session = require('express-session');
+const axios = require('axios');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const config = require('./config');
+const youtubeService = require('./services/youtube');
+const twitterService = require('./services/twitter');
+const fusionauthService = require('./services/fusionauth');
+
+const app = express();
+
+// Configure multer for video uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB limit
+  fileFilter: (req, file, cb) => {
+    // Accept video files only
+    if (file.mimetype.startsWith('video/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only video files are allowed!'));
+    }
+  }
+});
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
+app.use(session({
+  secret: 'your-secret-key',
+  resave: false,
+  saveUninitialized: true
+}));
+
+app.set('view engine', 'ejs');
+
+// Routes will go here
+
+app.listen(3000, () => {
+  console.log('Server running on http://localhost:3000');
+});
+```
+
+```javascript
+// config.js
+module.exports = {
+  fusionauth: {
+    apiKey: 'your-api-key',
+    baseUrl: 'http://localhost:9011',
+    clientId: 'your-client-id',
+    clientSecret: 'your-client-secret',
+    redirectUri: 'http://localhost:3000/oauth-callback'
+  },
+  youtube: {
+    clientId: 'your-google-client-id',
+    clientSecret: 'your-google-client-secret'
+  },
+  twitter: {
+    apiKey: 'your-twitter-api-key',
+    apiSecret: 'your-twitter-api-secret'
+  }
+};
+```
+
+Next, let's create the service files for interacting with YouTube and Twitter:
+
+```javascript
+// services/youtube.js
+const { google } = require('googleapis');
+const fs = require('fs');
+const axios = require('axios');
+const config = require('../config');
+
+// Function to get an access token using a refresh token
+async function getAccessToken(refreshToken) {
+  try {
+    const response = await axios.post('https://oauth2.googleapis.com/token', {
+      client_id: config.youtube.clientId,
+      client_secret: config.youtube.clientSecret,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token'
+    });
+    
+    return response.data.access_token;
+  } catch (error) {
+    console.error('Error getting access token:', error);
+    throw error;
+  }
+}
+
+async function uploadVideo(refreshToken, filePath, title, description, tags) {
+  try {
+    // Get a fresh access token using the refresh token
+    const accessToken = await getAccessToken(refreshToken);
+    
+    const youtube = google.youtube({
+      version: 'v3',
+      auth: accessToken
+    });
+
+    const fileSize = fs.statSync(filePath).size;
+    
+    const res = await youtube.videos.insert({
+      part: 'snippet,status',
+      requestBody: {
+        snippet: {
+          title,
+          description,
+          tags
+        },
+        status: {
+          privacyStatus: 'unlisted' // or 'public', 'private'
+        }
+      },
+      media: {
+        body: fs.createReadStream(filePath)
+      }
+    }, {
+      onUploadProgress: evt => {
+        const progress = (evt.bytesRead / fileSize) * 100;
+        console.log(`${Math.round(progress)}% complete`);
+      }
+    });
+
+    return {
+      id: res.data.id,
+      link: `https://www.youtube.com/watch?v=${res.data.id}`
+    };
+  } catch (error) {
+    console.error('Error uploading to YouTube:', error);
+    throw error;
+  }
+}
+
+async function getVideoStats(refreshToken, videoId) {
+  try {
+    // Get a fresh access token using the refresh token
+    const accessToken = await getAccessToken(refreshToken);
+    
+    const youtube = google.youtube({
+      version: 'v3',
+      auth: accessToken
+    });
+
+    const res = await youtube.videos.list({
+      part: 'statistics',
+      id: videoId
+    });
+
+    return res.data.items[0].statistics;
+  } catch (error) {
+    console.error('Error getting YouTube stats:', error);
+    throw error;
+  }
+}
+
+module.exports = {
+  uploadVideo,
+  getVideoStats,
+  getAccessToken
+};
+```
+
+```javascript
+// services/twitter.js
+const Twitter = require('twitter-api-v2');
+
+async function uploadVideo(accessToken, accessTokenSecret, filePath, text) {
+  try {
+    const client = new Twitter({
+      appKey: process.env.TWITTER_API_KEY,
+      appSecret: process.env.TWITTER_API_SECRET,
+      accessToken,
+      accessSecret: accessTokenSecret
+    });
+
+    // Upload media
+    const mediaId = await client.v1.uploadMedia(filePath);
+    
+    // Create tweet with media
+    const tweet = await client.v2.tweet({
+      text,
+      media: { media_ids: [mediaId] }
+    });
+
+    return {
+      id: tweet.data.id,
+      link: `https://twitter.com/user/status/${tweet.data.id}`
+    };
+  } catch (error) {
+    console.error('Error uploading to Twitter:', error);
+    throw error;
+  }
+}
+
+async function getTweetStats(accessToken, accessTokenSecret, tweetId) {
+  try {
+    const client = new Twitter({
+      appKey: process.env.TWITTER_API_KEY,
+      appSecret: process.env.TWITTER_API_SECRET,
+      accessToken,
+      accessSecret: accessTokenSecret
+    });
+
+    const tweet = await client.v2.singleTweet(tweetId, {
+      'tweet.fields': 'public_metrics'
+    });
+
+    return tweet.data.public_metrics;
+  } catch (error) {
+    console.error('Error getting Twitter stats:', error);
+    throw error;
+  }
+}
+
+module.exports = {
+  uploadVideo,
+  getTweetStats
+};
+```
+
+```javascript
+// services/fusionauth.js
+const axios = require('axios');
+const config = require('../config');
+
+async function getUserLinks(userId) {
+  try {
+    const response = await axios.get(`${config.fusionauth.baseUrl}/api/identity-provider/link?userId=${userId}`, {
+      headers: {
+        'Authorization': config.fusionauth.apiKey
+      }
+    });
+    
+    return response.data.identityProviderLinks || [];
+  } catch (error) {
+    console.error('Error fetching links:', error);
+    throw error;
+  }
+}
+
+async function unlinkProvider(userId, identityProviderId, identityProviderUserId) {
+  try {
+    await axios.delete(`${config.fusionauth.baseUrl}/api/identity-provider/link?identityProviderId=${identityProviderId}&identityProviderUserId=${identityProviderUserId}&userId=${userId}`, {
+      headers: {
+        'Authorization': config.fusionauth.apiKey
+      }
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Error unlinking provider:', error);
+    throw error;
+  }
+}
+
+module.exports = {
+  getUserLinks,
+  unlinkProvider
+};
+```
+
+Now, let's implement the routes for our application:
+
+```javascript
+// Home page
+app.get('/', (req, res) => {
+  res.render('index', { user: req.session.user });
+});
+
+// Login with FusionAuth
+app.get('/login', (req, res) => {
+  const authorizationUrl = `${config.fusionauth.baseUrl}/oauth2/authorize?client_id=${config.fusionauth.clientId}&response_type=code&redirect_uri=${encodeURIComponent(config.fusionauth.redirectUri)}`;
+  res.redirect(authorizationUrl);
+});
+
+// OAuth callback
+app.get('/oauth-callback', async (req, res) => {
+  try {
+    const { code } = req.query;
+    
+    // Exchange code for token
+    const tokenResponse = await axios.post(`${config.fusionauth.baseUrl}/oauth2/token`, {
+      client_id: config.fusionauth.clientId,
+      client_secret: config.fusionauth.clientSecret,
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: config.fusionauth.redirectUri
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const { access_token, id_token } = tokenResponse.data;
+    
+    // Get user info
+    const userResponse = await axios.get(`${config.fusionauth.baseUrl}/oauth2/userinfo`, {
+      headers: {
+        'Authorization': `Bearer ${access_token}`
+      }
+    });
+    
+    req.session.user = userResponse.data;
+    req.session.accessToken = access_token;
+    
+    res.redirect('/dashboard');
+  } catch (error) {
+    console.error('OAuth callback error:', error);
+    res.redirect('/');
+  }
+});
+
+// Dashboard
+app.get('/dashboard', async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/');
+  }
+  
+  try {
+    // Get user's identity provider links
+    const links = await fusionauthService.getUserLinks(req.session.user.sub);
+    
+    // Get user's videos (in a real app, you'd store these in a database)
+    const videos = req.session.videos || [];
+    
+    // Check for YouTube access via OpenID Connect provider
+    // The name should match what you configured in the OpenID Connect provider setup
+    const hasYouTube = links.some(link => 
+      link.identityProviderName === 'Google YouTube API' || 
+      (link.identityProviderName === 'OpenID Connect' && link.displayName && link.displayName.includes('@gmail.com'))
+    );
+    
+    res.render('dashboard', { 
+      user: req.session.user,
+      links,
+      videos,
+      hasYouTube,
+      hasTwitter: links.some(link => link.identityProviderName === 'Twitter')
+    });
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.render('dashboard', { 
+      user: req.session.user,
+      links: [],
+      videos: [],
+      hasYouTube: false,
+      hasTwitter: false,
+      error: 'Failed to fetch data'
+    });
+  }
+});
+
+// Upload page
+app.get('/upload', async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/');
+  }
+  
+  try {
+    // Get user's identity provider links
+    const links = await fusionauthService.getUserLinks(req.session.user.sub);
+    
+    // Check for YouTube access via OpenID Connect provider
+    const hasYouTube = links.some(link => 
+      link.identityProviderName === 'Google YouTube API' || 
+      (link.identityProviderName === 'OpenID Connect' && link.displayName && link.displayName.includes('@gmail.com'))
+    );
+    const hasTwitter = links.some(link => link.identityProviderName === 'Twitter');
+    
+    // Check if user has linked at least one provider
+    if (!hasYouTube && !hasTwitter) {
+      return res.redirect('/dashboard?error=Please link at least one provider before uploading');
+    }
+    
+    res.render('upload', {
+      user: req.session.user,
+      hasYouTube,
+      hasTwitter
+    });
+  } catch (error) {
+    console.error('Error fetching links:', error);
+    res.redirect('/dashboard?error=Failed to load upload page');
+  }
+});
+
+// Handle video upload
+app.post('/upload', upload.single('video'), async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/');
+  }
+  
+  try {
+    const { title, description, platforms } = req.body;
+    const videoPath = req.file.path;
+    const selectedPlatforms = Array.isArray(platforms) ? platforms : [platforms];
+    
+    // Get user's identity provider links
+    const links = await fusionauthService.getUserLinks(req.session.user.sub);
+    
+    const results = {
+      youtube: null,
+      twitter: null
+    };
+    
+    // Initialize videos array if it doesn't exist
+    if (!req.session.videos) {
+      req.session.videos = [];
+    }
+    
+    // Upload to YouTube if selected
+    if (selectedPlatforms.includes('youtube')) {
+      // Find the OpenID Connect provider for YouTube
+      const youtubeLink = links.find(link => 
+        link.identityProviderName === 'Google YouTube API' || 
+        (link.identityProviderName === 'OpenID Connect' && link.displayName && link.displayName.includes('@gmail.com'))
+      );
+      
+      if (youtubeLink && youtubeLink.token) {
+        // The token stored by OpenID Connect is a refresh token
+        // Our YouTube service will exchange it for an access token
+        results.youtube = await youtubeService.uploadVideo(
+          youtubeLink.token, // This is a refresh token
+          videoPath,
+          title,
+          description,
+          ['multipost', 'fusionauth']
+        );
+      }
+    }
+    
+    // Upload to Twitter if selected
+    if (selectedPlatforms.includes('twitter')) {
+      const twitterLink = links.find(link => link.identityProviderName === 'Twitter');
+      
+      if (twitterLink && twitterLink.token) {
+        // For Twitter, we need to extract the token and secret
+        const [accessToken, accessTokenSecret] = twitterLink.token.split('|');
+        
+        results.twitter = await twitterService.uploadVideo(
+          accessToken,
+          accessTokenSecret,
+          videoPath,
+          `${title} - ${description.substring(0, 200)}` // Twitter has character limits
+        );
+      }
+    }
+    
+    // Save the upload results
+    req.session.videos.push({
+      id: Date.now().toString(),
+      title,
+      description,
+      path: req.file.filename,
+      uploadDate: new Date(),
+      platforms: results
+    });
+    
+    res.redirect('/dashboard?success=Video uploaded successfully');
+  } catch (error) {
+    console.error('Error uploading video:', error);
+    res.redirect('/upload?error=Failed to upload video');
+  }
+});
+
+// Unlink an identity provider
+app.post('/unlink', async (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/');
+  }
+  
+  const { identityProviderId, identityProviderUserId } = req.body;
+  
+  try {
+    await fusionauthService.unlinkProvider(
+      req.session.user.sub,
+      identityProviderId,
+      identityProviderUserId
+    );
+    
+    res.redirect('/dashboard');
+  } catch (error) {
+    console.error('Error unlinking provider:', error);
+    res.redirect('/dashboard?error=Failed to unlink provider');
+  }
+});
+
+// Link a new provider
+app.get('/link/:provider', (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/');
+  }
+  
+  const { provider } = req.params;
+  
+  // Store the user ID in the session for later use
+  req.session.linkUserId = req.session.user.sub;
+  
+  // For YouTube, we need to use the OpenID Connect provider
+  const idpHint = provider === 'google' ? 'google-youtube-api' : provider;
+  
+  // Redirect to FusionAuth's OAuth endpoint with the identity provider hint
+  const authorizationUrl = `${config.fusionauth.baseUrl}/oauth2/authorize?client_id=${config.fusionauth.clientId}&response_type=code&redirect_uri=${encodeURIComponent(config.fusionauth.redirectUri)}&idp_hint=${idpHint}`;
+  
+  res.redirect(authorizationUrl);
+});
+
+// Logout
+app.get('/logout', (req, res) => {
+  req.session.destroy();
+  res.redirect('/');
+});
+```
+
+Now, let's create the views for our application:
+
+```html
+<!-- views/index.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MultiPost Video Uploader</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>MultiPost Video Uploader</h1>
+    <p>Upload videos to multiple platforms with a single click</p>
+    
+    <% if (user) { %>
+      <p>Welcome back, <%= user.email %>!</p>
+      <div class="button-group">
+        <a href="/dashboard" class="button">Go to Dashboard</a>
+        <a href="/logout" class="button button-secondary">Logout</a>
+      </div>
+    <% } else { %>
+      <p>Please log in to start uploading videos to multiple platforms.</p>
+      <a href="/login" class="button">Login with FusionAuth</a>
+    <% } %>
+  </div>
+</body>
+</html>
+```
+
+```html
+<!-- views/dashboard.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard - MultiPost Video Uploader</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Your Dashboard</h1>
+    <p>Welcome, <%= user.email %>!</p>
+    
+    <% if (error) { %>
+      <div class="alert alert-error"><%= error %></div>
+    <% } %>
+    
+    <h2>Connected Platforms</h2>
+    <% if (links.length === 0) { %>
+      <p>You don't have any platforms connected yet. Connect at least one platform to start uploading videos.</p>
+    <% } else { %>
+      <div class="platform-grid">
+        <% links.forEach(link => { %>
+          <div class="platform-card">
+            <% if (link.identityProviderName === 'Google YouTube API' || 
+                  (link.identityProviderName === 'OpenID Connect' && link.displayName && link.displayName.includes('@gmail.com'))) { %>
+              <h3>YouTube (OpenID Connect)</h3>
+            <% } else { %>
+              <h3><%= link.identityProviderName %></h3>
+            <% } %>
+            <p>Connected as: <%= link.displayName %></p>
+            <p>Last used: <%= new Date(link.lastLoginInstant).toLocaleString() %></p>
+            <form action="/unlink" method="post">
+              <input type="hidden" name="identityProviderId" value="<%= link.identityProviderId %>">
+              <input type="hidden" name="identityProviderUserId" value="<%= link.identityProviderUserId %>">
+              <button type="submit" class="button button-small button-danger">Disconnect</button>
+            </form>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+    
+    <h2>Connect More Platforms</h2>
+    <div class="button-group">
+      <% if (!hasYouTube) { %>
+        <a href="/link/google" class="button">Connect YouTube (OpenID Connect)</a>
+      <% } %>
+      <% if (!hasTwitter) { %>
+        <a href="/link/twitter" class="button">Connect Twitter</a>
+      <% } %>
+    </div>
+    
+    <% if (hasYouTube || hasTwitter) { %>
+      <div class="upload-section">
+        <h2>Upload a New Video</h2>
+        <a href="/upload" class="button button-primary">Upload Video</a>
+      </div>
+    <% } %>
+    
+    <% if (videos.length > 0) { %>
+      <h2>Your Videos</h2>
+      <div class="video-grid">
+        <% videos.forEach(video => { %>
+          <div class="video-card">
+            <div class="video-thumbnail">
+              <video width="320" height="240" controls>
+                <source src="/uploads/<%= video.path %>" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+            <div class="video-info">
+              <h3><%= video.title %></h3>
+              <p><%= video.description %></p>
+              <p>Uploaded: <%= new Date(video.uploadDate).toLocaleString() %></p>
+              <div class="platform-links">
+                <% if (video.platforms.youtube) { %>
+                  <a href="<%= video.platforms.youtube.link %>" target="_blank" class="platform-link">View on YouTube</a>
+                <% } %>
+                <% if (video.platforms.twitter) { %>
+                  <a href="<%= video.platforms.twitter.link %>" target="_blank" class="platform-link">View on Twitter</a>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="empty-state">
+        <h2>No Videos Yet</h2>
+        <p>Upload your first video to get started!</p>
+      </div>
+    <% } %>
+    
+    <div class="footer">
+      <a href="/" class="button button-secondary">Back to Home</a>
+      <a href="/logout" class="button button-secondary">Logout</a>
+    </div>
+  </div>
+</body>
+</html>
+```
+
+```html
+<!-- views/upload.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload Video - MultiPost Video Uploader</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Upload a New Video</h1>
+    
+    <form action="/upload" method="post" enctype="multipart/form-data" class="upload-form">
+      <div class="form-group">
+        <label for="video">Select Video File:</label>
+        <input type="file" id="video" name="video" accept="video/*" required>
+        <small>Maximum file size: 100MB</small>
+      </div>
+      
+      <div class="form-group">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="description">Description:</label>
+        <textarea id="description" name="description" rows="4" required></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label>Upload to:</label>
+        <div class="checkbox-group">
+          <% if (hasYouTube) { %>
+            <div class="checkbox">
+              <input type="checkbox" id="youtube" name="platforms" value="youtube" checked>
+              <label for="youtube">YouTube</label>
+            </div>
+          <% } %>
+          <% if (hasTwitter) { %>
+            <div class="checkbox">
+              <input type="checkbox" id="twitter" name="platforms" value="twitter" checked>
+              <label for="twitter">Twitter</label>
+            </div>
+          <% } %>
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="button button-primary">Upload Video</button>
+        <a href="/dashboard" class="button button-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</body>
+</html>
+```
+
+Finally, let's implement the routes for linking new providers:
+
+```javascript
+// Link a new provider
+app.get('/link/:provider', (req, res) => {
+  if (!req.session.user) {
+    return res.redirect('/');
+  }
+  
+  const { provider } = req.params;
+  
+  // Store the user ID in the session for later use
+  req.session.linkUserId = req.session.user.sub;
+  
+  // For YouTube, we need to use the OpenID Connect provider
+  const idpHint = provider === 'google' ? 'google-youtube-api' : provider;
+  
+  // Redirect to FusionAuth's OAuth endpoint with the identity provider hint
+  const authorizationUrl = `${config.fusionauth.baseUrl}/oauth2/authorize?client_id=${config.fusionauth.clientId}&response_type=code&redirect_uri=${encodeURIComponent(config.fusionauth.redirectUri)}&idp_hint=${idpHint}`;
+  
+  res.redirect(authorizationUrl);
+});
+
+// Handle the case where a user logs in with a new provider
+app.get('/oauth-callback', async (req, res) => {
+  try {
+    const { code } = req.query;
+    
+    // Exchange code for token
+    const tokenResponse = await axios.post(`${config.fusionauth.baseUrl}/oauth2/token`, {
+      client_id: config.fusionauth.clientId,
+      client_secret: config.fusionauth.clientSecret,
+      code,
+      grant_type: 'authorization_code',
+      redirect_uri: config.fusionauth.redirectUri
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const { access_token, id_token } = tokenResponse.data;
+    
+    // Get user info
+    const userResponse = await axios.get(`${config.fusionauth.baseUrl}/oauth2/userinfo`, {
+      headers: {
+        'Authorization': `Bearer ${access_token}`
+      }
+    });
+    
+    const newUser = userResponse.data;
+    
+    // If we're linking a new provider
+    if (req.session.linkUserId) {
+      // Check if the user is different from the one we're trying to link
+      if (newUser.sub !== req.session.linkUserId) {
+        // We need to create a link between the two users
+        try {
+          // Get the identity provider information from the JWT
+          const idpInfo = newUser.identities && newUser.identities[0];
+          
+          if (idpInfo) {
+            // Create a link
+            await axios.post(`${config.fusionauth.baseUrl}/api/identity-provider/link`, {
+              identityProviderLink: {
+                identityProviderId: idpInfo.identityProviderId,
+                identityProviderUserId: idpInfo.identityProviderUserId,
+                userId: req.session.linkUserId
+              }
+            }, {
+              headers: {
+                'Authorization': `${config.fusionauth.apiKey}`,
+                'Content-Type': 'application/json'
+              }
+            });
+          }
+        } catch (linkError) {
+          console.error('Error creating link:', linkError);
+        }
+      }
+      
+      // Clear the linking session variable
+      delete req.session.linkUserId;
+    } else {
+      // Normal login flow
+      req.session.user = newUser;
+      req.session.accessToken = access_token;
+    }
+    
+    res.redirect('/dashboard');
+  } catch (error) {
+    console.error('OAuth callback error:', error);
+    res.redirect('/');
+  }
+});
+```
+
+### Testing the Implementation
+
+TODO
+
+To test our implementation:
+
+1. Start the demo application: `node app.js`
+2. Navigate to `http://localhost:3000`
+3. Log in with your FusionAuth credentials
+4. On the dashboard, you should see options to link Google and Twitter accounts
+5. Click on one of the link buttons
+6. Authenticate with the selected provider
+7. You should be redirected back to the dashboard, now showing the linked provider
+8. You can unlink providers by clicking the "Unlink" button
+
+## Conclusion
+
+TODO
+
+Identity Provider Links are a powerful feature of FusionAuth that enable you to build sophisticated multi-platform applications like our video uploader. By connecting multiple social identities to a single user account, you can provide a seamless experience for content creators who need to publish videos across different platforms.
+
+In this tutorial, we've covered:
+
+1. Setting up FusionAuth with Google and Twitter as identity providers with the necessary API access for video uploads
+2. Understanding how Identity Provider Links store tokens that can be used for API access
+3. Implementing a video upload application that publishes content to multiple platforms simultaneously
+4. Exploring advanced use cases like retrieving cross-platform metrics and handling large video uploads
+
+By leveraging Identity Provider Links, you can create a unified video publishing experience that simplifies the workflow for content creators. Instead of manually uploading videos to each platform and managing separate accounts, users can publish once and reach audiences across multiple platforms.
+
+This approach not only improves the user experience but also opens up possibilities for more advanced features like:
+
+- Consolidated analytics dashboards showing performance across platforms
+- Synchronized comment moderation across YouTube and Twitter
+- Coordinated publishing schedules and content strategies
+- Backup options if one platform experiences issues
+
+For more information, check out the [FusionAuth documentation on Identity Provider Links](https://fusionauth.io/docs/apis/identity-providers/links) and the guides for setting up [Google](https://fusionauth.io/docs/lifecycle/authenticate-users/identity-providers/social/google) and [Twitter](https://fusionauth.io/docs/lifecycle/authenticate-users/identity-providers/social/twitter) identity providers.
