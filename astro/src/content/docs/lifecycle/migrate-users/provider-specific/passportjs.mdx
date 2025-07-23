@@ -1,0 +1,173 @@
+---
+title: Migrate from Node/Express/Passport.js
+description: Learn how to migrate your users to FusionAuth from Node.js applications using Passport.js.
+section: lifecycle
+subcategory: migrate users
+tertcategory: provider specific
+---
+
+import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_additional-support.mdx';
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import CreateApiKeySocial from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-api-key-social.mdx';
+import CreateTestApplication from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-application.mdx';
+import CreateTestTenant from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-tenant.mdx';
+import FinalDestination from 'src/content/docs/lifecycle/migrate-users/provider-specific/_final-destination.mdx';
+import GetScript from 'src/content/docs/lifecycle/migrate-users/provider-specific/_get-script.mdx';
+import Identifiers from 'src/content/docs/lifecycle/migrate-users/provider-specific/_identifiers.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import MappingUserAttributes from 'src/content/docs/lifecycle/migrate-users/provider-specific/_mapping-user-attributes.mdx';
+import OtherEntitiesFrameworkIntro from 'src/content/docs/lifecycle/migrate-users/provider-specific/_other-entities-framework-intro.mdx';
+import PasswordHashNote from 'src/content/docs/lifecycle/migrate-users/provider-specific/_password-hash-note.mdx';
+import SetUpFusionauth from 'src/content/docs/lifecycle/migrate-users/provider-specific/_set-up-fusionauth.mdx';
+import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-migration.mdx';
+import SocialLoginNote from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-note-framework.mdx';
+import VerifyImport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_verify-import.mdx';
+import WhatNext from 'src/content/docs/lifecycle/migrate-users/provider-specific/_what-next.mdx';
+
+export const migration_source_name = 'passport';
+export const migration_source_dir = 'passport';
+export const migration_source_social_name = 'Passport.js ';
+export const script_supports_social_logins = true;
+export const add_tenant_image_role = 'bottom-cropped';
+export const social_integration_method = 'various strategy packages such as passport-google-oauth20, passport-github2, and passport-facebook';
+
+## Overview
+
+This document will help you migrate your users from a Node.js application using Passport.js to FusionAuth.
+
+This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin. For more general migration information, please view the [FusionAuth migration guide](/docs/lifecycle/migrate-users/general-migration).
+
+Node.js applications using Passport.js can implement authentication through various strategies, and this guide covers the two main data storage patterns:
+
+- **passport-local** – Username/password authentication using credentials stored in your application's database.
+- **OAuth strategies** – Social login through external providers like Google, GitHub, and Facebook using strategies such as `passport-google-oauth20`, `passport-github2`, and `passport-facebook`.
+
+Each approach requires different user data to be migrated. Passport.js itself doesn't manage user data: it only handles authentication. Your application defines the user model, database schema, and data storage approach.
+
+This guide provides export scripts and migration strategies tailored to each data pattern, focusing on preserving user passwords, account states, and social login connections.
+
+## Planning Considerations
+
+### Obtaining User Data
+
+To migrate users from your Node.js/Passport.js application, you'll need to export user data from your database. Since Passport.js doesn't manage user data directly, the export process depends on your database and user schema.
+
+#### Username/password (passport-local) Strategy
+
+Applications using `passport-local` store user credentials in your database. Common user data includes:
+
+- `email` or `username` – Primary user identifier.
+- `password` – The hashed password, usually bcrypt. TODO: add links or notes about password hashing.
+- `emailVerified` or `confirmed` – Email verification status.
+- Profile fields like `firstName`, `lastName`, `displayName`.
+- Security fields like `loginAttempts`, `blocked`, `lastLogin`.
+
+All of this data can be exported directly from your database and preserved during migration to FusionAuth.
+
+#### OAuth Strategies
+
+Applications using OAuth strategies store minimal local user data since authentication happens through external providers. Your export will focus on:
+
+- Profile fields such as `email`, `name`, `username` and `avatar`.
+- Provider connection data like `googleId`, `githubId` and `facebookId`.
+
+The critical piece for OAuth migrations is the provider ID, which allows FusionAuth to link the migrated user account to the appropriate external identity provider.
+
+### Mapping User Attributes
+
+The attributes of the User object in FusionAuth are [well documented](/docs/apis/users).
+
+If there is an attribute in your Rails user which cannot be directly mapped to a FusionAuth attribute, you can place it in the `user.data` field. This field can store arbitrary JSON values and will be indexed and searchable.
+
+If you need users to access [applications](/docs/get-started/core-concepts/applications), you must set the `user.registrations` field with the data required to register a user to an application. However, this process is simplified when using the import script. See [Use the Script](#use-the-script) for more details.
+
+### Social Logins
+
+<SocialLoginNote migration_source_name={migration_source_social_name} script_supports_social_logins={script_supports_social_logins} social_integration_method={social_integration_method} />
+
+<SocialLoginMigration />
+
+### Other Entities
+
+<OtherEntitiesFrameworkIntro migration_source_name={migration_sources_tools} other_migrated_entities="roles" />
+
+#### Identifiers
+
+<Identifiers />
+
+## Exporting Users
+
+TODO: add section for exporting users
+
+## Importing Users
+
+Next up, import the user data. Here are the steps you need to take:
+
+1. Set Up FusionAuth
+2. Get the Script
+3. Install Needed Gems
+4. Use the Script
+5. Verify the Import
+6. The Final Destination of Imported Users
+
+### Set Up FusionAuth
+
+<SetUpFusionauth />
+
+#### Create a Test Tenant
+
+<CreateTestTenant migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} add_tenant_image_role={add_tenant_image_role} />
+
+#### Create a Test Application
+
+<CreateTestApplication migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} />
+
+#### Add an API Key
+
+<CreateApiKeySocial migration_source_dir={migration_source_dir} />
+
+### Get the Script
+
+<GetScript migration_source_dir={migration_source_dir} />
+
+### Install Needed packages
+
+TODO: add section for installing packages
+
+### Use the Script
+
+TODO: add section for using import script
+
+#### Enhancing the Script
+
+You may also want to migrate additional data. Currently, the following attributes are migrated:
+
+* `email`
+* `username` 
+* `fullName` (when available)
+* `verified`
+* `active`
+* `password`
+* `registrations`
+* `data` - Custom metadata including source system and original user Id
+
+If you have additional user attributes to migrate, review and modify the script's user mapping logic.
+
+You may also want to assign Roles, or associate users with Groups, by creating the appropriate JSON data structures in the import call. These are documented in the [Import User API docs](/docs/apis/users#import-users). This will require modifying the `import.rb` code.
+
+### Verify the Import
+
+<VerifyImport migration_source_dir={migration_source_dir} />
+
+### The Final Destination of Imported Users
+
+<FinalDestination migration_source_dir={migration_source_dir} />
+
+## What to Do Next
+
+<WhatNext />
+
+## Additional Support
+
+<AdditionalSupport />
