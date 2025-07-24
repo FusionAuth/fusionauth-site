@@ -65,6 +65,11 @@ Before you start your integration with FusionAuth you need to set up at least on
   <APIField name="Name" required>
     The name of the Application. This value is for display purposes only and can be changed at any time.
   </APIField>
+  <APIField name="Universal" required>
+    When enabled, the created application will be a [universal application](#universal-applications). A regular application is assigned to a single tenant, while a universal application exists in all tenants. 
+
+    This setting cannot be changed after the application has been created.
+  </APIField>
   <APIField name="Tenant" required>
     The tenant in which to create this Application.
 
@@ -597,3 +602,33 @@ In most cases you will not need to configure this panel. Only a few specific eve
 This example screenshot shows one Application specific webhook selected. This option will be visible if at least one webhook is configured as application specific.
 
 ![Application Webhooks Selected](/img/docs/get-started/core-concepts/application-webhooks-selected.png)
+
+## Universal Applications
+A universal application is an application that exists for all tenants, rather than belonging to a single tenant. Universal applications are useful when you need to make the same application available to users across many or all tenants.
+
+A universal application uses the same application configuration across all tenants, including its client Id, client credentials, and more. This makes configuration management simpler, allowing you to share configuration across all uses of the application.
+
+### Universal Application Registrations
+Users from any tenant can have a registration to a universal application, and registrations work as they would for normal applications.
+
+### Universal Applications and Tenants
+Becuase a universal application does not belong to a single tenant, you will generally have to supply a tenant Id when interacting with a universal application. This is true during authentication and other user-specific workflows.  The supplied tenant Id tells FusionAuth a number of things, such as which tenant the user that is logging in belongs to, which theme to use, and more.
+
+The tenant Id is typically provided on a `tenantId` query parameter, unless otherwise specified.
+
+A universal application "inherits" settings from the tenant it is being associated with at runtime. This means that you can customize the behavior of a universal application per tenant by using different tenant configuration.
+
+Note that for tenant configuration settings that can be overridden at the application level, if you supply an application-level override, that setting will be used for all tenants. If this is not what you want, do not set a value in the universal application's configuration and let the application fall back to what is defined in the tenant.
+
+### Universal Applications and Tenant-scoped API Keys
+A tenant-scoped API key cannot make changes that could be seen or otherwise affect other tenants than the one it is scoped to. Because universal applications span all tenants, you cannot use a tenant-scoped API key with a universal application via the [Application API](/docs/apis/applications). You can, however, use a tenant-scoped API key to interact with things like registrations and refresh tokens, as these are confined to a user within a tenant.
+
+### Configure an Application as Universal
+You can only set an application as universal when it is created. Do this by setting `application.universalConfiguration.universal` to `true` when using the API, or select the `Universal` toggle on the Add Application view in the admin app.
+
+### Unversal Applications and the Self-serve Account application
+When using the [self-serve account](/docs/lifecycle/manage-users/account-management) application, users supply an application Id to edit their profile within the context of that application. To use this application with a universal application, the user will also need to specify a tenant Id in the following way:
+
+```
+/account?client_id=APPLICATION_ID&tenantId=TENANT_ID
+```
