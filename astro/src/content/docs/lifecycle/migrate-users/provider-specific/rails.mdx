@@ -47,7 +47,7 @@ export const add_tenant_image_role = 'bottom-cropped';
 
 This document will help you migrate your users from a Ruby on Rails application to FusionAuth.
 
-This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin. For more general migration information, please view the [FusionAuth migration guide](/docs/lifecycle/migrate-users/general-migration).  The screenshots, scripts and code snippets in this guide are from these examples of [Rails applications](https://github.com/ritza-co/fusionauth-migrating-rails-examples).
+This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin. For more general migration information, please view the [FusionAuth migration guide](/docs/lifecycle/migrate-users/general-migration). This guide provides general migration strategies with working examples available in our [Rails example repository](https://github.com/ritza-co/fusionauth-migrating-rails-examples).
 
 The example contains three Rails applications, each using a different authentication tool:
 
@@ -155,6 +155,8 @@ Most Rails applications using Devise can use this straightforward export script:
 
 The script handles bcrypt password hashes directly. Since bcrypt includes the salt in the hash, the `salt` field is not needed.
 
+See an result of this script [here](https://raw.githubusercontent.com/ritza-co/fusionauth-import-scripts/96927c329e79a7b126ffe99d1da45b5e41908c01/rails/export-scripts/devise/users_export.json).
+
 ### OmniAuth
 
 For OmniAuth users, passwords are not stored locally, so the export focuses on profile data and provider information:
@@ -163,6 +165,8 @@ For OmniAuth users, passwords are not stored locally, so the export focuses on p
 
 The `oauth_provider` and `oauth_uid` data will be used later to link user accounts to FusionAuth identity providers.
 
+See an result of this script [here](https://raw.githubusercontent.com/ritza-co/fusionauth-import-scripts/96927c329e79a7b126ffe99d1da45b5e41908c01/rails/export-scripts/omniauth/users_export.json).
+
 ### Rails Built-in Authentication
 
 For Rails applications using `has_secure_password`, the export is similar to Devise:
@@ -170,6 +174,8 @@ For Rails applications using `has_secure_password`, the export is similar to Dev
 <RemoteCode url="https://github.com/ritza-co/fusionauth-import-scripts/raw/6d727b139b84ed99203e1cb41875c06787da2bf7/rails/export-scripts/built-in-auth/export_users_for_fusionauth.rb" lang="ruby"  />
 
 All scripts generate JSON files ready for import into FusionAuth. Update the `applicationId` values and modify the User model field references to match your application's schema before running.
+
+See an result of this script [here](https://raw.githubusercontent.com/ritza-co/fusionauth-import-scripts/96927c329e79a7b126ffe99d1da45b5e41908c01/rails/export-scripts/built-in-auth/users_export.json).
 
 <PasswordHashSection hashing_algorithm={hashing_algorithm} />
 
@@ -392,7 +398,9 @@ The next step is to write an API endpoint that will accept the user's login Id a
 
 The Connector makes a POST request to the URL you specify, and expects a JSON object containing a user in return.
 
-An example controller is in `rails/fusionauth_connector_controller.rb`.
+An example controller can be found [here](https://github.com/ritza-co/fusionauth-migrating-rails-examples/raw/refs/heads/main/ruby-users-devise/app/controllers/fusion_auth_connector_controller.rb) for Devise and [here](https://github.com/ritza-co/fusionauth-migrating-rails-examples/raw/refs/heads/main/ruby-users-rails-auth/app/controllers/fusion_auth_connector_controller.rb) for Rails built-in authentication.
+
+You can see working implementations of this connector in our example Rails applications, which demonstrate how to handle authentication for different Rails auth systems.
 
 The controller will take the user's login Id and password, and return the user details to be imported into FusionAuth, after running the `user&.authenticate(password)` function for Rails built-in authentication and `User.find_by(email: login_id)` for Devise.
 
