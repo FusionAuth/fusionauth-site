@@ -1,5 +1,5 @@
 ---
-title: Migrate from Node/Express/Passport.js
+title: Migrate from Node.js/Express/Passport.js
 description: Learn how to migrate your users to FusionAuth from Node.js applications using Passport.js.
 section: lifecycle
 subcategory: migrate users
@@ -50,10 +50,10 @@ This document will help you migrate your users from a Node.js application using 
 
 This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin. For more general migration information, please view the [FusionAuth migration guide](/docs/lifecycle/migrate-users/general-migration).  The screenshots, scripts and code snippets in this guide are from this example [Node.js application](https://github.com/ritza-co/fusionauth-migrating-node-express-passportjs-example).
 
-The Nodejs in the example projects uses Passport.js to implement authentication through two common approaches:
+The example project uses Passport.js to implement authentication through two common approaches:
 
 * **passport-local** – Username/password authentication using credentials stored in your application's database.
-* **OAuth strategies** – Social login through external providers like Google, GitHub, and Facebook using strategies such as `passport-google-oauth20`, `passport-github2`, and `passport-facebook`.
+* **OAuth strategies** – Social login through external providers like Google, GitHub, and Facebook using strategies such as `passport-google-oauth20`, `passport-github2`, and `passport-facebook`. The example application implements `passport-google-oauth20` for Google login.
 
 Each approach requires different user data to be migrated. Passport.js itself doesn't manage user data: it only handles authentication. Your application defines the user model, database schema, and data storage approach.
 
@@ -70,7 +70,7 @@ Before beginning your migration, you'll need to plan several key aspects:
 
 ### Obtaining User Data
 
-To migrate users from your Passport.js, you'll need to export user data from your database. Since Passport.js doesn't manage user data directly, the export process depends on your database and user schema.
+To migrate users from your Node.js/Passport.js application, you'll need to export user data from your database. Since Passport.js doesn't manage user data directly, the export process depends on your database and user schema.
 
 #### Username/password (passport-local) Strategy
 
@@ -105,7 +105,7 @@ The critical piece for OAuth migrations is the provider ID, which allows FusionA
 
 The attributes of the User object in FusionAuth are [well documented](/docs/apis/users).
 
-If there is an attribute in your Node/Express application user which cannot be directly mapped to a FusionAuth attribute, you can place it in the `user.data` field. This field can store arbitrary JSON values and will be indexed and searchable.
+If there is an attribute in your Node.js/Passport.js application user which cannot be directly mapped to a FusionAuth attribute, you can place it in the `user.data` field. This field can store arbitrary JSON values and will be indexed and searchable.
 
 If you need users to access [applications](/docs/get-started/core-concepts/applications), you must set the `user.registrations` field with the data required to register a user to an application. However, this process is simplified when using the import script. See [Use the Script](#use-the-script) for more details.
 
@@ -125,22 +125,15 @@ If you need users to access [applications](/docs/get-started/core-concepts/appli
 
 ## Exporting Users
 
-Exporting users from your Node.js/Express application depends on your database and user schema. The export process involves writing a script to query your user database and output the relevant user data in JSON format.
+Exporting users from your Node.js/Passport.js application is a two-step process: first export the raw user data from your database, then convert it to FusionAuth format.
 
-There are many authentication strateegies available for Node.js/Express applications, but most of the time, you will either encounter:
+Before running any scripts, update the `applicationId` values to match your FusionAuth application IDs.
 
-* Username/password authentication strategies such as `passport-local`.
-* OAuth authentication strategies such as `passport-google-oauth20`.
+### Step 1: Export Raw User Data
 
-The following scripts are tailired for the strategies mentioned above.
+The following script exports raw user data from your Passport.js application database:
 
-Before running any export script, update the `applicationId` values to match your FusionAuth application Ids.
-
-### Exporting User Data
-
-The following script exports user data from your Express application database:
-
-<RemoteCode url="https://github.com/ritza-co/fusionauth-import-scripts/raw/4a05211097d5a0f867884de1bf057f2b68ff0ada/passportjs/4_exportUsers.mjs" lang="js" />
+<RemoteCode url="https://github.com/ritza-co/fusionauth-migrating-node-express-passportjs-example/raw/refs/heads/main/scripts/4_exportUsers.mjs" lang="js" />
 
 The script above exports data in the following format:
 
@@ -163,13 +156,15 @@ The script above exports data in the following format:
 ]
 ```
 
-### Converting User Data
+This creates a `users.json` file with your raw database data.
 
-With the exported user data, you can convert it to the format required by FusionAuth. The conversion script is as follows:
+### Step 2: Convert to FusionAuth Format  
 
-<RemoteCode url="https://github.com/ritza-co/fusionauth-import-scripts/raw/4a05211097d5a0f867884de1bf057f2b68ff0ada/passportjs/5_convertUserToFaUser.mjs" lang="js" />
+The conversion script transforms the raw data into FusionAuth's required format:
 
-The conversion script generates JSON files ready for import into FusionAuth. Update the `applicationId` values and modify the User model field references to match your application's schema before running.
+<RemoteCode url="https://github.com/ritza-co/fusionauth-migrating-node-express-passportjs-example/raw/refs/heads/main/scripts/5_convertUserToFaUser.mjs" lang="js" />
+
+The conversion script generates `faUsers.json` ready for import into FusionAuth.
 
 <PasswordHashSection hashing_algorithm={hashing_algorithm} />
 
@@ -241,6 +236,8 @@ node scripts/6_importUsersBulk.mjs
 node scripts/7_importSocialUsers.mjs
 ```
 
+Make sure the `users.json` and `faUsers.json` files are in the same directory as the scripts.
+
 #### Enhancing the Script
 
 You may also want to migrate additional data. Currently, the following attributes are migrated:
@@ -285,24 +282,24 @@ If you're using the test data created during setup, use these credentials:
 * Username: `sarah.johnson@techcorp.com`
 * Password: `SecurePass2024!`
 
-### Configure A Connector Between FusionAuth And your Node/Express Application
+### Configure A Connector Between FusionAuth And your Node.js/Passport.js Application
 
 <PremiumPlanBlurb />
 
 If you haven't done so already, activate your FusionAuth license by navigating to <Breadcrumb>Reactor</Breadcrumb> on the sidebar of the admin UI.
 
-Now configure a FusionAuth Connector to point to an intermediary web service between FusionAuth and your Node/Express application. The web service will expose an API endpoint that FusionAuth can call to retrieve user details for migration.
+Now configure a FusionAuth Connector to point to an intermediary web service between FusionAuth and your Node.js/Passport.js application. The web service will expose an API endpoint that FusionAuth can call to retrieve user details for migration.
 
 <Aside type="note">
   For a general overview of Connectors, please see this [video](https://www.youtube.com/watch?v=ks-ppMH6WXw).
 </Aside>
 
-Before proceeding, note that if you're running FusionAuth in Docker and your Node/Express application locally, you'll need to ensure FusionAuth can reach your Express application.
+Before proceeding, note that if you're running FusionAuth in Docker and your Node.js/Passport.js application locally, you'll need to ensure FusionAuth can reach your Express application.
 
 You have two main options:
 
-* **Use ngrok** - Use a tool like [ngrok](https://ngrok.com/) to expose your local Node/Express application to the internet
-* **Use your host machine's IP address** - Run the Node/Express application on `0.0.0.0` and find your host machine's IP address:
+* **Use ngrok** - Use a tool like [ngrok](https://ngrok.com/) to expose your local Node.js/Passport.js application to the internet
+* **Use your host machine's IP address** - Run the Express application on `0.0.0.0` and find your host machine's IP address:
 
 ```bash
 ifconfig | grep "inet " | grep -v 127.0.0.1 | awk '{print $2}' | head -1
@@ -314,7 +311,7 @@ In your [FusionAuth admin UI](http://localhost:9011), browse to <Breadcrumb>Sett
 
 Click the dropdown button on the top right and select <InlineUIElement>Add Generic connector</InlineUIElement>.
 
-![Create a Connector in FusionAuth](/img/docs/lifecycle/migrate-users/framework-specific/node-passport/create-connector.png)
+![Create a Connector in FusionAuth](/img/docs/lifecycle/migrate-users/provider-specific/passportjs/create-connector.png)
 
 Enter the field values below.
 
@@ -323,7 +320,7 @@ Enter the field values below.
 * Increase timeout values (for example, to `5000`) to accommodate network latency when the API requests are being made.
 * Enable <InlineUIElement>Debug enabled</InlineUIElement>
 
-![Connector details in FusionAuth](/img/docs/lifecycle/migrate-users/framework-specific/node-passport/connector.png)
+![Connector details in FusionAuth](/img/docs/lifecycle/migrate-users/provider-specific/passportjs/connector.png)
 
 <Aside type="caution">
   In production, you will want to add some authentication to the web service. You can add basic authentication using the <Breadcrumb>Security</Breadcrumb> tab in the Connector details page.
@@ -336,16 +333,16 @@ Now browse to <Breadcrumb>Tenants</Breadcrumb> and do the following.
 * Click <InlineUIElement>Add policy</InlineUIElement>.
 * Select `My App Connector`.
 * Leave <InlineField>Domains</InlineField> with the value `*` to apply this Connector to every user.
-* Enable <InlineUIElement>Migrate user</InlineUIElement> so that FusionAuth will no longer use your Node/Express backend for subsequent logins of the same user.
+* Enable <InlineUIElement>Migrate user</InlineUIElement> so that FusionAuth will no longer use your Node.js/Passport.js backend for subsequent logins of the same user.
 * Click <InlineUIElement>Submit</InlineUIElement>.
 
-![Connector policy details in FusionAuth](/img/docs/lifecycle/migrate-users/framework-specific/node-passport/connector-policy.png)
+![Connector policy details in FusionAuth](/img/docs/lifecycle/migrate-users/provider-specific/passportjs/connector-policy.png)
 
 Move the `My App Connector` policy to the top of the list. Use the arrow buttons to move the policy if necessary. With this configuration, all users are checked against this Connector the first time they are seen. If they log in, they'll be migrated to the FusionAuth user database.
 
 After configuration, the Connector entry form should look similar to this:
 
-![Connector policy list in FusionAuth](/img/docs/lifecycle/migrate-users/framework-specific/node-passport/connector-added.png)
+![Connector policy list in FusionAuth](/img/docs/lifecycle/migrate-users/provider-specific/passportjs/connector-added.png)
 
 Save the changes by clicking the save icon at the top right.
 
@@ -369,7 +366,7 @@ In the FusionAuth admin interface, browse to <Breadcrumb>Applications</Breadcrum
 
 For this tutorial, the login URL should be http://localhost:9011/oauth2/authorize?client\_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e\&response\_type=code\&redirect\_uri=http%3A%2F%2Flocalhost%3A8080%2Foauth-redirect.
 
-![Test application login URL](/img/docs/lifecycle/migrate-users/framework-specific/node-passport/login-url.png)
+![Test application login URL](/img/docs/lifecycle/migrate-users/provider-specific/passportjs/login-url.png)
 
 Log in with the username and password for the user you created earlier, such as `sarah.johnson@techcorp.com` and `SecurePass123!`. Your Connector service should show `Request received` in the terminal and the login request succeeding.
 
