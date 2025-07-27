@@ -6,6 +6,7 @@ subcategory: migrate users
 tertcategory: framework specific
 technology: Rails
 technologyLower: rails
+importCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-import-scripts/feat/add-ruby-on-rails-script
 ---
 import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_additional-support.mdx';
 import Aside from 'src/components/Aside.astro';
@@ -47,13 +48,13 @@ export const add_tenant_image_role = 'bottom-cropped';
 
 This document will help you migrate your users from a Ruby on Rails application to FusionAuth.
 
-This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin. For more general migration information, please view the [FusionAuth migration guide](/docs/lifecycle/migrate-users/genericmigration). This guide provides general migration strategies with working examples available in our [Rails example repository](https://github.com/ritza-co/fusionauth-migrating-rails-examples).
+This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin. For more general migration information, please view the [FusionAuth migration guide](/docs/lifecycle/migrate-users/genericmigration).
 
-The example contains three Rails applications, each using a different authentication tool:
+This guide provides general migration strategies with working example {frontmatter.technology} apps available [here](https://github.com/FusionAuth/fusionauth-import-scripts/rails/example-apps). The example contains three sample Rails applications, each using a different authentication framework:
 
 - **Devise** – The most popular Rails authentication gem, providing an authentication solution with email/password, confirmations, and account locking.
 - **OmniAuth** – A flexible authentication system focused on external providers like Google, Facebook, and GitHub.
-* **Rails built-in authentication** – Rails native authentication feature using `has_secure_password` with bcrypt for email/password authentication.
+- **Rails built-in authentication** – Rails native authentication feature using `has_secure_password` with bcrypt for email/password authentication.
 
 Each approach stores user data differently and requires specific migration considerations. This guide provides export scripts and migration strategies tailored to each authentication method, focusing on preserving user passwords, account states, and any social login connections.
 
@@ -64,7 +65,7 @@ The migration process will preserve your users existing passwords (where applica
 Before beginning your migration, you'll need to plan several key aspects:
 
 - Understanding what user data you're migrating
-- Identifying your password hashing schemes  
+- Identifying your password hashing schemes
 - Choosing your migration strategy (bulk vs gradual)
 - Determining how to handle social login connections
 
@@ -81,7 +82,7 @@ Devise applications store comprehensive user authentication data in your databas
 - `confirmed_at` – Email confirmation status for user verification.
 - `sign_in_count`, `current_sign_in_at`, `last_sign_in_at`
 - `current_sign_in_ip`, `last_sign_in_ip`
-- `locked_at` – Account lockout status for security features.
+- `locked_at` – Account lockout status.
 
 All of this data can be exported directly from your database and preserved during migration to FusionAuth.
 
@@ -139,7 +140,7 @@ If you need users to access applications, you can also set the `user.registratio
 
 #### Identifiers
 
-<Identifiers />
+<Identifiers migration_source_name={frontmatter.technology} />
 
 ## Exporting Users
 
@@ -151,31 +152,37 @@ Before running any export script, update the `applicationId` values to match you
 
 Most Rails applications using Devise can use this straightforward export script:
 
-<RemoteCode url="https://github.com/ritza-co/fusionauth-import-scripts/raw/6d727b139b84ed99203e1cb41875c06787da2bf7/rails/export-scripts/devise/export_users_for_fusionauth.rb" lang="ruby"  />
+<RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/devise/export_users_for_fusionauth.rb"} lang="ruby"  />
 
-The script handles bcrypt password hashes directly. Since bcrypt includes the salt in the hash, the `salt` field is not needed.
+The script handles bcrypt password hashes directly. bcrypt includes the salt in the hash.
 
-See an result of this script [here](https://raw.githubusercontent.com/ritza-co/fusionauth-import-scripts/96927c329e79a7b126ffe99d1da45b5e41908c01/rails/export-scripts/devise/users_export.json).
+A sample user exported from the script will look like:
+
+<RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/devise/users_export.json"} lang="json"  />
 
 ### OmniAuth
 
 For OmniAuth users, passwords are not stored locally, so the export focuses on profile data and provider information:
 
-<RemoteCode url="https://github.com/ritza-co/fusionauth-import-scripts/raw/6d727b139b84ed99203e1cb41875c06787da2bf7/rails/export-scripts/omniauth/export_users_for_fusionauth.rb" lang="ruby"  />
+<RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/omniauth/export_users_for_fusionauth.rb"} lang="ruby"  />
 
 The `oauth_provider` and `oauth_uid` data will be used later to link user accounts to FusionAuth identity providers.
 
-See an result of this script [here](https://raw.githubusercontent.com/ritza-co/fusionauth-import-scripts/96927c329e79a7b126ffe99d1da45b5e41908c01/rails/export-scripts/omniauth/users_export.json).
+A sample user exported from the script will look like:
+
+<RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/omniauth/users_export.json"} lang="json"  />
 
 ### Rails Built-in Authentication
 
 For Rails applications using `has_secure_password`, the export is similar to Devise:
 
-<RemoteCode url="https://github.com/ritza-co/fusionauth-import-scripts/raw/6d727b139b84ed99203e1cb41875c06787da2bf7/rails/export-scripts/built-in-auth/export_users_for_fusionauth.rb" lang="ruby"  />
+<RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/built-in-auth/export_users_for_fusionauth.rb"} lang="ruby"  />
 
 All scripts generate JSON files ready for import into FusionAuth. Update the `applicationId` values and modify the User model field references to match your application's schema before running.
 
-See an result of this script [here](https://raw.githubusercontent.com/ritza-co/fusionauth-import-scripts/96927c329e79a7b126ffe99d1da45b5e41908c01/rails/export-scripts/built-in-auth/users_export.json).
+A sample user exported from the script will look like:
+
+<RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/built-in-auth/users_export.json"} lang="json"  />
 
 <PasswordHashSection hashing_algorithm={hashing_algorithm} />
 
@@ -260,9 +267,9 @@ The `-l` switch will attempt to create links for any OmniAuth social users found
 When you run the script, you'll see output like:
 
 ```title="Import script output"
-$ ./import.rb -k rEWq7js-JBeWfNMFveXp0nN8CaArBt1xfuhUn4Jn617tGl2zLiGZnCwG -u users_export_20250721_042512.json
+$ ./import.rb -k rEWq7js-JBeWfNMFveXp0nN8CaArBt1xfuhUn4Jn617tGl2zLiGZnCwG -u users_export.json
 FusionAuth Importer : Rails Authentication Systems
- > User file: users_export_20250721_042512.json
+ > User file: users_export.json
  > FusionAuth URL: http://localhost:9011
  > Tenant ID: default
 
@@ -284,7 +291,7 @@ Import completed successfully!
 You may also want to migrate additional data. Currently, the following attributes are migrated:
 
 * `email`
-* `username` 
+* `username`
 * `fullName` (when available)
 * `verified`
 * `active`
@@ -304,7 +311,7 @@ You may also want to assign Roles, or associate users with Groups, by creating t
 
 <FinalDestination migration_source_dir={migration_source_dir} />
 
-## Slow Migration 
+## Slow Migration
 
 This step of the tutorial is optional. In this section, you'll learn how to create a Connector for FusionAuth to import your users' data individually as each user logs in.
 
@@ -314,7 +321,7 @@ If you don't need to do this, please skip to the [What To Do Next](#what-to-do-n
 
 ### Create A User With A Password
 
-To test the slow migration, you need a user with a password you know. Each Rails example project includes a setup script that creates test user accounts. 
+To test the slow migration, you need a user with a password you know. Each Rails example project includes a setup script that creates test user accounts.
 
 You can also register new users by accessing the Rails examples in your browser:
 - Devise example: `http://localhost:3000`
