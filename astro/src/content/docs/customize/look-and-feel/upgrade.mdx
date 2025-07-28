@@ -14,39 +14,85 @@ This page contains notes on changes in recent versions of FusionAuth that requir
 
 ## Version 1.99.9
 
-Version `1.99.9` does not *require* any theme changes. There are new fields, for example `tenant.passwordEnabled`, that can be used to hide the password field on the hosted login page when this value is set to `true`.
+User passwords are optional starting in version `1.99.9`. While theme updates are not required, there are some areas that you may want to consider making changes:
+* OAuth complete registration templates
+* Account edit template (self-service)
+
+### OAuth complete registration template
+
+You may need users to have passwords, but passwords are optional. Consider the following example:
+* A user has already logged in
+* The user does not have a password
+* The user performs self-serve registration for an application that uses basic registration
+
+In this case, FusionAuth takes the user to the `OAuth complete registration` page to add any required fields for the application. If the user does not have a password you can collect it on this page.
+
+To support this, FusionAuth provides a new template variable named `passwordSet`, which indicates whether or not the user has a password. Use this variable to show a password field if you require the user to have a password.
+
+Note that for a new or logged-out user that registers for this application, the password will generally be collected on the initial registration page. Logged-in users bypass the initial page.
 
 For example, before:
 
 ```html title="Before"
-<fieldset>
-  [@helpers.input type="text" name="loginId" id="loginId" autocomplete="username" autocapitalize="none" autocomplete="on" autocorrect="off" spellcheck="false" autofocus=(!loginId?has_content) placeholder=theme.message("loginId") leftAddon="user" disabled=(showPasswordField && hasDomainBasedIdentityProviders)/]
-
-  [#-- Previously, the showPasswordField was used by Managed Domains --]
-  [#if showPasswordField]
-    [@helpers.input type="password" name="password" id="password" autocomplete="current-password" autofocus=loginId?has_content placeholder=theme.message("password") leftAddon="lock"/]
-    [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
-  [/#if]
-</fieldset>
+[#if application.registrationConfiguration.mobilePhone.enabled]
+  [@helpers.input type="text" name="user.mobilePhone" id="mobilePhone" placeholder=theme.message("mobilePhone") leftAddon="phone" required=application.registrationConfiguration.mobilePhone.required/]
+[/#if]
+[#if application.registrationConfiguration.preferredLanguages.enabled]
+  [@helpers.locale_select field="" name="user.preferredLanguages"  id="preferredLanguages" label=theme.message("preferredLanguage") required=application.registrationConfiguration.preferredLanguages.required /]
+[/#if]
 ```
 
 ```html title="After"
-<fieldset>
-  [@helpers.input type="text" name="loginId" id="loginId" autocomplete="username" autocapitalize="none" autocomplete="on" autocorrect="off" spellcheck="false" autofocus=(!loginId?has_content) placeholder=theme.message("loginId") leftAddon="user" disabled=(showPasswordField && hasDomainBasedIdentityProviders)/]
-
-  [#-- Now we add an additional check to see if passwords are enabled at the tenant level --]
-  [#if showPasswordField && tenant.passwordEnabled]
-    [@helpers.input type="password" name="password" id="password" autocomplete="current-password" autofocus=loginId?has_content placeholder=theme.message("password") leftAddon="lock"/]
-    [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+[#if application.registrationConfiguration.mobilePhone.enabled]
+  [@helpers.input type="text" name="user.mobilePhone" id="mobilePhone" placeholder=theme.message("mobilePhone") leftAddon="phone" required=application.registrationConfiguration.mobilePhone.required/]
+[/#if]
+[#if !passwordSet]
+  [@helpers.input type="password" name="user.password" id="password" autocomplete="new-password" placeholder=theme.message('password') leftAddon="lock" required=true/]
+  [#if application.registrationConfiguration.confirmPassword]
+    [@helpers.input type="password" name="confirm.user.password" id="passwordConfirm" autocomplete="new-password" placeholder=theme.message('passwordConfirm') leftAddon="lock" required=true/]
   [/#if]
-</fieldset>
+[/#if]
+[#if application.registrationConfiguration.preferredLanguages.enabled]
+  [@helpers.locale_select field="" name="user.preferredLanguages"  id="preferredLanguages" label=theme.message("preferredLanguage") required=application.registrationConfiguration.preferredLanguages.required /]
+[/#if]
 ```
 
-This will hide the password field if [Managed domains](/docs/lifecycle/authenticate-users/identity-providers/overview-oidc#managed-domains) is enabled for an identity provider in-use by the application, causing `showPasswordField` to be `false`, OR if [Password enabled](/docs/get-started/core-concepts/tenants#password) is set to `false`, due to the inclusion of `tenant.passwordEnabled` in the `if`.
+### Account edit template (self-service)
 
-<Aside type="caution">
-  Consider the security posture of your application when deciding whether to hide passwords. There may be risk in communicating what channels are accepted.
-</Aside>
+To accommodate the use case of an existing user, without a password, setting a password for the first time, there is a new template variable, `passwordSet`, that can be used on the `Helpers` page to hide the "current password" field for users that do not have a password.
+
+```html title="Before"
+<form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
+  ...
+  [#list fieldValues as field]
+    [#if field.key == "user.password"]
+      [@helpers.passwordField field application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange/]
+    [#else]
+      [@helpers.customField field=field key=field.key autofocus=false placeholder=field.key label=theme.optionalMessage(field.key) leftAddon="false"/]
+      [#if field.confirm]
+        [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
+      [/#if]
+    [/#if]
+  [/#list]
+</form>
+```
+
+```html title="After"
+<form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
+  ...
+  [#list fieldValues as field]
+    [#if field.key == "user.password"]
+      [@helpers.passwordField field=field
+                              showCurrentPasswordField=(passwordSet && application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange)/]
+    [#else]
+      [@helpers.customField field=field key=field.key autofocus=false placeholder=field.key label=theme.optionalMessage(field.key) leftAddon="false"/]
+      [#if field.confirm]
+        [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
+      [/#if]
+    [/#if]
+  [/#list]
+</form>
+```
 
 ## Version 1.53.3
 
