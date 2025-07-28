@@ -6,7 +6,7 @@ subcategory: migrate users
 tertcategory: framework specific
 technology: Rails
 technologyLower: rails
-importCodeRoot: https://raw.githubusercontent.com/ritza-co/fusionauth-import-scripts/feat/add-ruby-on-rails-script
+importCodeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-import-scripts/feat/add-ruby-on-rails-script
 ---
 import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_additional-support.mdx';
 import Aside from 'src/components/Aside.astro';
@@ -50,7 +50,7 @@ This document will help you migrate your users from a Ruby on Rails application 
 
 This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin. For more general migration information, please view the [FusionAuth migration guide](/docs/lifecycle/migrate-users/genericmigration).
 
-This guide provides general migration strategies with working example {frontmatter.technology} apps available [here](https://github.com/FusionAuth/fusionauth-import-scripts/rails/example-apps). The example contains three sample Rails applications, each using a different authentication framework:
+This guide provides general migration strategies with working example {frontmatter.technology} apps available [here](https://github.com/FusionAuth/fusionauth-example-migrating-rails). The example contains three sample Rails applications, each using a different authentication framework:
 
 - **Devise** – The most popular Rails authentication gem, providing an authentication solution with email/password, confirmations, and account locking.
 - **OmniAuth** – A flexible authentication system focused on external providers like Google, Facebook, and GitHub.
@@ -146,17 +146,17 @@ If you need users to access applications, you can also set the `user.registratio
 
 To export users from a Rails application, you'll need a script that queries your database and formats the data for import into FusionAuth. The following export scripts are tailored for each Rails authentication system discussed in this guide.
 
-Before running any export script, update the `applicationId` values to match your FusionAuth application Ids.
+Before running the provided export scripts, update the application Id values to match your FusionAuth application Ids. All scripts generate JSON files ready for import into FusionAuth. Modify the User model field references to match your application's schema before running.
 
 ### Devise
 
-Most Rails applications using Devise can use this straightforward export script:
+Most Rails applications using Devise can use this export script:
 
 <RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/devise/export_users_for_fusionauth.rb"} lang="ruby"  />
 
 The script handles bcrypt password hashes directly. bcrypt includes the salt in the hash.
 
-A sample user exported from the script will look like:
+A sample user export file exported from the script will look like:
 
 <RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/devise/users_export.json"} lang="json"  />
 
@@ -168,7 +168,7 @@ For OmniAuth users, passwords are not stored locally, so the export focuses on p
 
 The `oauth_provider` and `oauth_uid` data will be used later to link user accounts to FusionAuth identity providers.
 
-A sample user exported from the script will look like:
+A sample user export file exported from the script will look like:
 
 <RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/omniauth/users_export.json"} lang="json"  />
 
@@ -178,9 +178,7 @@ For Rails applications using `has_secure_password`, the export is similar to Dev
 
 <RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/built-in-auth/export_users_for_fusionauth.rb"} lang="ruby"  />
 
-All scripts generate JSON files ready for import into FusionAuth. Update the `applicationId` values and modify the User model field references to match your application's schema before running.
-
-A sample user exported from the script will look like:
+A sample user export file exported from the script will look like:
 
 <RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/built-in-auth/users_export.json"} lang="json"  />
 
@@ -315,22 +313,16 @@ You may also want to assign Roles, or associate users with Groups, by creating t
 
 This step of the tutorial is optional. In this section, you'll learn how to create a Connector for FusionAuth to import your users' data individually as each user logs in.
 
-<PremiumPlanBlurb />
-
 If you don't need to do this, please skip to the [What To Do Next](#what-to-do-next) section below.
 
 ### Create A User With A Password
 
-To test the slow migration, you need a user with a password you know. Each Rails example project includes a setup script that creates test user accounts.
+To test the slow migration, you need a user with a password you know. The provided Rails example apps in this [repository](https://github.com/FusionAuth/fusionauth-example-migrating-rails) include setup scripts `db/seeds.rb` that create test user accounts.
 
 You can also register new users by accessing the Rails examples in your browser:
+
 - Devise example: `http://localhost:3000`
 - Rails built-in authentication example: `http://localhost:3002`
-
-If you're using the test data created during setup, use these credentials:
-
-* Username: `sarah.johnson@techcorp.com`
-* Password: `SecurePass123!`
 
 ### Configure A Connector Between FusionAuth And your Rails Application
 
@@ -353,6 +345,7 @@ You have two main options:
  ```bash
  ifconfig | grep "inet " | grep -v 127.0.0.1 | awk '{print $2}' | head -1
  ```
+
 Then construct the connector URL as `http://<IP_ADDRESS>:PORT/fusionauth/connector`.
 
 In your [FusionAuth admin UI](http://localhost:9011), browse to <Breadcrumb>Settings -> Connectors</Breadcrumb>.
@@ -363,8 +356,8 @@ Click the dropdown button on the top right and select <InlineUIElement>Add Gener
 
 Enter the field values below.
 
-- Set <InlineField>Name</InlineField> to `MyApp Connector` or anything you like.
-- Set <InlineField>Authentication URL</InlineField> to `http://<IP_ADDRESS_OR_DOMAIN>:PORT/fusionauth/connector`, replacing `IP_ADDRESS_OR_DOMAIN` with the IP address or domain name of your host machine and `PORT` with the port number of your Rails application.
+- Set <InlineField>Name</InlineField> to `My App Connector` or anything you like.
+- Set <InlineField>Authentication URL</InlineField> to the URL provided by ngrok or `http://<IP_ADDRESS_OR_DOMAIN>:PORT/fusionauth/connector`, replacing `IP_ADDRESS_OR_DOMAIN` with the IP address or domain name of your host machine and `PORT` with the port number of your Rails application.
 - Increase timeout values (for example, to `5000`) to accommodate network latency when the API requests are being made.
 - Enable <InlineUIElement>Debug enabled</InlineUIElement>
 
@@ -405,7 +398,7 @@ The next step is to write an API endpoint that will accept the user's login Id a
 
 The Connector makes a POST request to the URL you specify, and expects a JSON object containing a user in return.
 
-An example controller can be found [here](https://github.com/ritza-co/fusionauth-migrating-rails-examples/raw/refs/heads/main/ruby-users-devise/app/controllers/fusion_auth_connector_controller.rb) for Devise and [here](https://github.com/ritza-co/fusionauth-migrating-rails-examples/raw/refs/heads/main/ruby-users-rails-auth/app/controllers/fusion_auth_connector_controller.rb) for Rails built-in authentication.
+An example controller can be found [here](https://github.com/fusionauth/fusionauth-example-migrating-rails/raw/refs/heads/main/ruby-users-devise/app/controllers/fusion_auth_connector_controller.rb) for Devise and [here](https://github.com/fusionauth/fusionauth-example-migrating-rails/raw/refs/heads/main/ruby-users-rails-auth/app/controllers/fusion_auth_connector_controller.rb) for Rails built-in authentication.
 
 You can see working implementations of this connector in our example Rails applications, which demonstrate how to handle authentication for different Rails auth systems.
 
@@ -413,13 +406,13 @@ The controller will take the user's login Id and password, and return the user d
 
 ### Log In With A Test User
 
-In the FusionAuth admin interface, browse to <Breadcrumb>Applications</Breadcrumb> and click the <InlineUIElement>Select</InlineUIElement> dropdown next to the "Example App" application, then select <InlineUIElement>View</InlineUIElement>. Copy the <InlineField>OAuth IdP login URL</InlineField> and open it in an incognito window in your browser. (If you don't use an incognito window, you need to log out of the FusionAuth admin session to prevent the active session from interfering with the test.) This URL is a login page for the "Example App" application, so that you can test the web service and Connector.
+In the FusionAuth admin interface, browse to <Breadcrumb>Applications</Breadcrumb> and click the <InlineUIElement>Select</InlineUIElement> dropdown next to the your sample application, then select <InlineUIElement>View</InlineUIElement>. Copy the <InlineField>OAuth IdP login URL</InlineField> and open it in an incognito window in your browser. (If you don't use an incognito window, you need to log out of the FusionAuth admin session to prevent the active session from interfering with the test.) This URL is a login page for your sample application, so that you can test the web service and Connector.
 
 For this tutorial, the login URL should be http://localhost:9011/oauth2/authorize?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Foauth-redirect.
 
 ![Test application login URL](/img/docs/lifecycle/migrate-users/provider-specific/rails/login-url.png)
 
-Log in with the username and password for the user you created earlier, such as `sarah.johnson@techcorp.com` and `SecurePass123!`. Your Connector service should show `Request received` in the terminal and the login request succeeding.
+Log in with the username and password for a known user as defined in the seed scripts of the sample applications `db/seeds.rb`, such as `jennifer.adams@techstart.com` and `StartupLife2024!` for the devise example and `sarah.johnson@techcorp.com` and `SecurePass123!` for the Rails authentication. Your connector service should log the login request succeeding in the terminal.
 
 <Aside type="note">
   After a successful test login, the user will be redirected to a URL like `https://example.com/?code=2aUqU0ZhQCjtz0fnrFL_i7wxhIAh7cTfxAXEIpJE-5w&locale=en&userState=AuthenticatedNotRegistered`.
@@ -427,7 +420,7 @@ Log in with the username and password for the user you created earlier, such as 
   This occurs because you haven't set up a web application to handle the authorization code redirect yet. This is an important next step, but it's beyond the scope of this document. Consult the [5-minute setup guide](/docs/quickstarts/5-minute-setup-guide) for an example of how to do this.
 </Aside>
 
-If you log out and log in again with the same user, you'll notice that `Request received` will not show in the web service console. This is because FusionAuth is now using its own authentication service, as the original user password has been hashed and saved in the FusionAuth database.
+If you log out and log in again with the same user, you'll notice that the connector will no longer log the login request. This is because FusionAuth is now using its own authentication service, as the original user password has been hashed and saved in the FusionAuth database.
 
 The user has been successfully migrated, and {frontmatter.technology} authentication system is no longer needed.
 
