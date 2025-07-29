@@ -150,7 +150,56 @@ For example, before:
 ```
 
 ### OAuth passwordless template
-TBD
+
+To support passwordless logins with phone numbers, several changes must be made to allow submission of one-time or short codes on the passwordless page. The changes include: new hidden form fields, an `if` surrounding the `loginId` field with a new `oneTimeCode` field, and a change to the button text based on whether the form is being submitted or a code is being sent.
+
+```html title="Before"
+<form action="${request.contextPath}/oauth2/passwordless" method="POST" class="full">
+  [@helpers.oauthHiddenFields/]
+  <fieldset>
+    [@helpers.input type="text" name="loginId" id="loginId" autocomplete="username" autocapitalize="none" autocomplete="on" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message("loginId") leftAddon="user" required=true/]
+    [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+  </fieldset>
+
+  [@helpers.input id="rememberDevice" type="checkbox" name="rememberDevice" label=theme.message("remember-device") value="true" uncheckedValue="false"]
+  <i class="fa fa-info-circle" data-tooltip="${theme.message('{tooltip}remember-device')}"></i>[#t/]
+  [/@helpers.input]
+
+  <div class="form-row">
+    [@helpers.button icon="send" text=theme.message('send')/]
+    <p class="mt-2">[@helpers.link url="/oauth2/authorize"]${theme.message('return-to-login')}[/@helpers.link]</p>
+  </div>
+</form>
+```
+
+```html title="After"
+<form action="${request.contextPath}/oauth2/passwordless" method="POST" class="full">
+  [@helpers.oauthHiddenFields/]
+  [@helpers.hidden name="code"/]
+  [@helpers.hidden name="formField"/]
+
+  <fieldset>
+    [#if formField]
+      [@helpers.input type="text" name="oneTimeCode" id="otp" autocapitalize="none" autofocus=true autocomplete="one-time-code" autocorrect="off" placeholder="${theme.message('passwordless-code')}" leftAddon="lock"/]
+    [#else]
+      [@helpers.input type="text" name="loginId" id="loginId" autocomplete="username" autocapitalize="none" autocomplete="on" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message("loginId") leftAddon="user" required=true/]
+    [/#if]
+    [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+  </fieldset>
+
+  [@helpers.input id="rememberDevice" type="checkbox" name="rememberDevice" label=theme.message("remember-device") value="true" uncheckedValue="false"]
+  <i class="fa fa-info-circle" data-tooltip="${theme.message('{tooltip}remember-device')}"></i>[#t/]
+  [/@helpers.input]
+
+  <div class="form-row">
+    [#if formField]
+      [@helpers.button text=theme.message('submit')/]
+    [#else]
+      [@helpers.button icon="send" text=theme.message('send')/]
+    [/#if]
+  </div>
+</form>
+```
 
 ### OAuth register template
 
