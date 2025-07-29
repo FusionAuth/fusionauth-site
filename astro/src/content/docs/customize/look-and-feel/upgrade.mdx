@@ -14,10 +14,23 @@ This page contains notes on changes in recent versions of FusionAuth that requir
 
 ## Version 1.99.9
 
-### Phone Identities
+User passwords are optional starting in version `1.99.9`. While theme updates are not required, there are some areas that you may want to consider making changes.
+
+| Template                                | Changed For Phone Identities | Password |
+| --------------------------------------- | ---------------------------- | -------- |
+| Messages                                | X                            |          |
+| Account edit template (self-service)    |                              | X        |
+| Account index template (self-service)   | X                            |          |
+| Forgot password template                | X                            |          |
+| Forgot password sent template           | X                            |          |
+| OAuth complete registration template    |                              | X        |
+| OAuth passwordless template             | X                            |          |
+
+### Messages
+
 To properly support phone identities, several themed `Messages` have changed. If `forgot-password-email-sent` or `forgot-password-email-sent-title` was previously customized in a theme, the same customizations need to be applied to the new `forgot-password-message-sent` and `forgot-password-message-sent-title` messages.
 
-``` title="Before"
+``` title="Messages Before"
 forgot-password-email-sent=We have sent an email to %s containing a link that will allow you to reset your password. Once you receive the email follow the instructions to change your password.
 forgot-password-email-sent-title=Email sent
 loginId=Email
@@ -25,22 +38,64 @@ loginId=Email
 [PasswordlessRequestSent]=An email is on the way.
 ```
 
-``` title="After"
+``` title="Messages After"
 forgot-password-message-sent=We have sent a message to %s containing a link that will allow you to reset your password. Once you receive the message follow the instructions to change your password.
 forgot-password-message-sent-title=Message sent
 loginId=Login
 ...
 [PasswordlessRequestSent]=A message is on the way.
-
 ```
 
-### Users without passwords
+### Account edit template (self-service)
 
-User passwords are optional starting in version `1.99.9`. While theme updates are not required, there are some areas that you may want to consider making changes:
-* OAuth complete registration templates
-* Account edit template (self-service)
+To accommodate the use case of an existing user, without a password, setting a password for the first time, there is a new template variable, `passwordSet`, that can be used on the `Helpers` page to hide the "current password" field for users that do not have a password.
 
-#### OAuth complete registration template
+```html title="Before"
+<form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
+  ...
+  [#list fieldValues as field]
+    [#if field.key == "user.password"]
+      [@helpers.passwordField field application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange/]
+    [#else]
+      [@helpers.customField field=field key=field.key autofocus=false placeholder=field.key label=theme.optionalMessage(field.key) leftAddon="false"/]
+      [#if field.confirm]
+        [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
+      [/#if]
+    [/#if]
+  [/#list]
+</form>
+```
+
+```html title="After"
+<form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
+  ...
+  [#list fieldValues as field]
+    [#if field.key == "user.password"]
+      [@helpers.passwordField field=field
+                              showCurrentPasswordField=(passwordSet && application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange)/]
+    [#else]
+      [@helpers.customField field=field key=field.key autofocus=false placeholder=field.key label=theme.optionalMessage(field.key) leftAddon="false"/]
+      [#if field.confirm]
+        [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
+      [/#if]
+    [/#if]
+  [/#list]
+</form>
+```
+
+### Account index template (self-service)
+
+TBD
+
+### Forgot password template
+
+TBD
+
+### Forgot password sent template
+
+TBD
+
+### OAuth complete registration template
 
 You may need users to have passwords, but passwords are optional. Consider the following example:
 * A user has already logged in
@@ -79,42 +134,8 @@ For example, before:
 [/#if]
 ```
 
-#### Account edit template (self-service)
-
-To accommodate the use case of an existing user, without a password, setting a password for the first time, there is a new template variable, `passwordSet`, that can be used on the `Helpers` page to hide the "current password" field for users that do not have a password.
-
-```html title="Before"
-<form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
-  ...
-  [#list fieldValues as field]
-    [#if field.key == "user.password"]
-      [@helpers.passwordField field application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange/]
-    [#else]
-      [@helpers.customField field=field key=field.key autofocus=false placeholder=field.key label=theme.optionalMessage(field.key) leftAddon="false"/]
-      [#if field.confirm]
-        [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
-      [/#if]
-    [/#if]
-  [/#list]
-</form>
-```
-
-```html title="After"
-<form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
-  ...
-  [#list fieldValues as field]
-    [#if field.key == "user.password"]
-      [@helpers.passwordField field=field
-                              showCurrentPasswordField=(passwordSet && application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange)/]
-    [#else]
-      [@helpers.customField field=field key=field.key autofocus=false placeholder=field.key label=theme.optionalMessage(field.key) leftAddon="false"/]
-      [#if field.confirm]
-        [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
-      [/#if]
-    [/#if]
-  [/#list]
-</form>
-```
+### OAuth passwordless template
+TBD
 
 ## Version 1.53.3
 
