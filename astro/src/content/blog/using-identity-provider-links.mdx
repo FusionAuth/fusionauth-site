@@ -62,6 +62,95 @@ For our demo, we'll create a Node.js application using Fastify that will:
 
 The complete application structure is available in our [example repository](https://github.com/sonderformat-llc/fusionauth-example-using-links-fastify).
 
+#### Initializing the Application
+
+To get started, initialize the Fastify application:
+
+```bash
+npm init fastify links-app -- --lang=ts && cd links-app
+```
+
+This will initialize the Fastify application in the `links-app` directory.
+
+> Fastify is a web framework for Node.js that provides a simple, yet powerful API for building web applications.
+
+Next, we install the necessary dependencies:
+
+```bash
+npm i @fastify/view @fastify/passport @fastify/secure-session @fusionauth/typescript-client ejs passport-oauth2 jose @fastify/multipart envalid twitter-api-v2 qs
+npm i -D @types/passport-oauth2
+```
+
+Next, create a new file in the `src` directory called `utils.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/utils.ts"} lang="typescript"/>
+
+The `utils.ts` file contains helper functions that we'll use throughout the application.
+
+#### Setting Up the Views
+
+We'll use EJS to render the views for our application. Create a new file in the `src/plugins` directory called `view.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/plugins/view.ts"} lang="typescript"/>
+
+The plugin registers the EJS view engine with Fastify and configures the view directory.
+
+Next, create a new file in the `templates` directory called `_layout.ejs` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/templates/_layout.ejs"} lang="html"/>
+
+The layout file defines the basic structure of our application.
+
+Next, create a new file in the `templates` directory called `root.ejs` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/templates/root.ejs"} lang="html"/>
+
+The root template defines the layout for the home page if the user is authenticated.
+
+Finally, create a new file in the `templates` directory called `login.ejs` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/templates/login.ejs"} lang="html"/>
+
+The login template defines the layout for the login page.
+
+To render the views, we'll need to update the `src/routes/root.ts` file:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/routes/root.ts"} lang="typescript"/>
+
+#### Setting Up Authentication
+
+We'll use Passport to handle authentication.
+
+> Passport is a popular authentication library for Node.js that provides a simple, yet powerful API for building authentication and authorization systems.
+
+Create a new file in the `src/plugins` directory called `auth.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/plugins/auth.ts"} lang="typescript"/>
+
+The plugin registers the Passport OAuth2 strategy with Fastify and configures the OAuth2 settings.
+
+Next, create a new file in the `src/routes` directory called `auth.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/routes/auth.ts"} lang="typescript"/>
+
+The routes handle the authentication flow and redirect the user to the login page.
+
+#### Setting Up Uploads
+
+We'll use Fastify Multipart to handle file uploads.
+
+Create a new file in the `src/plugins` directory called `upload.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/plugins/multipart.ts"} lang="typescript"/>
+
+The plugin registers the Fastify Multipart plugin with Fastify and configures the upload settings.
+
+Next, create a new file in the `src/routes` directory called `upload.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/routes/upload.ts"} lang="typescript"/>
+
+The routes handle the file uploads and posts to the appropriate video platforms.
+
 ## Setting Up Identity Providers
 
 Now, let's configure the identity providers we'll be using: Google and Twitter.
@@ -135,7 +224,7 @@ Now that you have your Google OAuth credentials, you need to configure an OpenID
 3. Enter a name like "Google YouTube API"
 4. Enter the Client ID and Client Secret from Google
 5. Set the following endpoints:
-   - Authorization endpoint: `https://accounts.google.com/o/oauth2/v2/auth`
+   - Authorization endpoint: `https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=consent`
    - Token endpoint: `https://oauth2.googleapis.com/token`
    - Userinfo endpoint: `https://openidconnect.googleapis.com/v1/userinfo`
 6. Set "Discover endpoints" to "No" since we're manually entering them
@@ -146,6 +235,16 @@ Now that you have your Google OAuth credentials, you need to configure an OpenID
 <Aside type="note">
 For YouTube API access, you'll need to ensure your Google Cloud project has been verified by Google if you plan to publish your application. During development, you can test with unverified apps, but they have limitations on the number of users.
 </Aside>
+
+#### Adding the YouTube Identity Provider to the App
+
+Now that we have the identity provider configured, we need to add it to our application.
+
+Create a new file in the `src/links` directory called `youtube.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/links/youtube.ts"} lang="typescript"/>
+
+The `youtube.ts` file contains the logic for interacting with the YouTube API.
 
 ### Setting Up Twitter as an Identity Provider
 
@@ -165,7 +264,7 @@ Twitter's standard API access doesn't allow for media uploads. You'll need to ap
 
 1. Go to the [Twitter Developer Portal](https://developer.twitter.com)
 2. Navigate to the Projects & Apps section
-3. Apply for Elevated access by clicking on "Apply for Elevated" 
+3. Apply for Elevated access by clicking on "Apply for Elevated"
 4. Complete the application form, explaining your use case for media uploads
 5. Wait for approval (this can take a few days)
 
@@ -193,6 +292,22 @@ Now you need to configure the Twitter identity provider in FusionAuth:
 <Aside type="caution">
   Twitter has rate limits for media uploads. For production applications, you'll need to implement appropriate rate limiting and error handling.
 </Aside>
+
+#### Adding the Twitter Identity Provider to the App
+
+Now that we have the identity provider configured, we need to add it to our application.
+
+Create a new file in the `src/links` directory called `twitter.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/links/twitter.ts"} lang="typescript"/>
+
+#### Stitching It All Together
+
+Create a new file in the `src/links` directory called `index.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/links/index.ts"} lang="typescript"/>
+
+The `index.ts` file combines all of the identity provider logic into a single file.
 
 ## Using Identity Provider Links
 
@@ -239,41 +354,13 @@ In our Fastify application, we've implemented these API calls to enable the foll
 
 Let's look at how to use these endpoints in our application.
 
-### Implementing Video Uploads with Identity Provider Links
+### Add Links to the Application
 
-Let's implement our video upload application with identity provider links using Fastify. We'll focus on the key components that handle the upload process.
-
-First, let's look at the main application structure:
-
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/app.ts"} lang="typescript"/>
-
-Next, let's examine how we retrieve the user's identity provider links:
-
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/env.ts"} lang="typescript"/>
-
-Let's create the service files for interacting with YouTube and Twitter:
-
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/links/youtube.ts"} lang="typescript"/>
-
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/links/twitter.ts"} lang="typescript"/>
-
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/fusionauth.ts"} lang="typescript"/>
-
-Now, let's implement the routes for our application:
-
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/routes/root.ts"} lang="typescript"/>
-
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/routes/auth.ts"} lang="typescript"/>
+To add linking functionality to the application, create a new file in the `src/routes` directory called `links.ts` and add the following code:
 
 <RemoteCode url={frontmatter.codeRoot + "/complete-application/src/routes/links.ts"} lang="typescript"/>
 
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/routes/upload.ts"} lang="typescript"/>
-
-Finally, let's implement the routes for linking new providers:
-
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/links/index.ts"} lang="typescript"/>
-
-<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/utils.ts"} lang="typescript"/>
+The route handles linking and unlinking a user and an identity provider.
 
 ### Testing the Implementation
 
