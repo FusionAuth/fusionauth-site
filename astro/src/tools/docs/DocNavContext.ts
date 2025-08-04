@@ -1,5 +1,6 @@
 export interface DocNavEntry  {
   title: string;
+  sideNavTitle?: string;
   href: string;
   description?: string;
   navOrder?: number;
