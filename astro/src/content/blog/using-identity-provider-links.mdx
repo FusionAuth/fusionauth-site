@@ -77,15 +77,15 @@ This will initialize the Fastify application in the `links-app` directory.
 Next, we install the necessary dependencies:
 
 ```bash
-npm i @fastify/view @fastify/passport @fastify/secure-session @fusionauth/typescript-client ejs passport-oauth2 jose @fastify/multipart envalid twitter-api-v2 qs
-npm i -D @types/passport-oauth2
+npm i @fastify/view @fastify/passport @fastify/cookie @fastify/session @fusionauth/typescript-client ejs passport-oauth2 jose @fastify/multipart envalid qs
+npm i -D @types/passport-oauth2 @biomejs/biome
 ```
 
 Next, create a new file in the `src` directory called `utils.ts` and add the following code:
 
 <RemoteCode url={frontmatter.codeRoot + "/complete-application/src/utils.ts"} lang="typescript"/>
 
-The `utils.ts` file contains helper functions that we'll use throughout the application.
+The `utils.ts` file contains helper functions that we'll use throughout the application. In our utilities we initialize the `faClient` using the previously installed [FusionAuth TypeScript Client](/docs/sdks/typescript) library which we use later on to `retrievUserLinksByUserId` and `deleteUserLink`.
 
 #### Setting Up the Views
 
@@ -240,7 +240,13 @@ For YouTube API access, you'll need to ensure your Google Cloud project has been
 
 Now that we have the identity provider configured, we need to add it to our application.
 
-Create a new file in the `src/links` directory called `youtube.ts` and add the following code:
+Let's start by installing the necessary dependencies:
+
+```bash
+npm i google-auth-library googleapis
+```
+
+Then create a new file in the `src/links` directory called `youtube.ts` and add the following code:
 
 <RemoteCode url={frontmatter.codeRoot + "/complete-application/src/links/youtube.ts"} lang="typescript"/>
 
@@ -297,7 +303,13 @@ Now you need to configure the Twitter identity provider in FusionAuth:
 
 Now that we have the identity provider configured, we need to add it to our application.
 
-Create a new file in the `src/links` directory called `twitter.ts` and add the following code:
+Let's again first install the necessary dependencies:
+
+```bash
+npm i twitter-api-v2
+```
+
+Then a new file in the `src/links` directory called `twitter.ts` and add the following code:
 
 <RemoteCode url={frontmatter.codeRoot + "/complete-application/src/links/twitter.ts"} lang="typescript"/>
 
@@ -331,14 +343,14 @@ When implementing API access using Identity Provider Links, you need to:
 
 FusionAuth provides a comprehensive API for managing identity provider links:
 
-1. **Retrieve Links** - Get all identity provider links for a user
-```
-GET /api/identity-provider/link?userId=<userId>
-```
-
-2. **Create a Link** - Link a user to an identity provider
+1. **Create a Link** - Link a user to an identity provider
 ```
 POST /api/identity-provider/link
+```
+
+2. **Retrieve Links** - Get all identity provider links for a user
+```
+GET /api/identity-provider/link?userId=<userId>
 ```
 
 3. **Delete a Link** - Remove a link between a user and an identity provider
@@ -346,9 +358,10 @@ POST /api/identity-provider/link
 DELETE /api/identity-provider/link?identityProviderId=<identityProviderId>&identityProviderUserId=<identityProviderUserId>&userId=<userId>
 ```
 
-In our Fastify application, we've implemented these API calls to enable the following functionality:
+FusionAuth is handling the 1. **Link a User** through the Identity Provider configuration.
 
-1. **Link a User**: Create a link between a FusionAuth user and a social identity
+In our Fastify application, we've implemented the other two API calls with the help of the [FusionAuth TypeScript Client](/docs/sdks/typescript) library by using `retrievUserLinksByUserId` and `deleteUserLink`:
+
 2. **Retrieve Links**: Get information about existing links to determine available upload platforms
 3. **Unlink a User**: Remove a link between a FusionAuth user and a social identity
 
