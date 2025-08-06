@@ -5,23 +5,23 @@ description: TBD.
 authors: Dan Moore
 image: /img/blogs/zero-trust-idps/zero-trust-and-how-idps-factor-into-it-header-image.png
 categories: Education
-tags: zero trust, identity provider
+tags: air-gapping, self-hosted
 excerpt_separator: "{/* more */}"
 ---
 
-You may think of an authentication server as always online. After all, web and mobile apps using an auth server are usually served over the internet.
+You may think of an authentication server as always available on the internet. After all, web and mobile apps using an auth server are usually served over the internet.
 
-But sometimes, sometimes you just want to keep all your data off the internet. Your applications can run in a network that is disconnected from it. This practice is known as air-gapping. In this blog post you'll learn what air-gapping is, why you might want to do this, how an authentication server figures in, and how you can use FusionAuth in an air-gapped scenario.
+But sometimes you just want to keep all data and applications off the internet. To do this, you need to set up your applications to run in a network disconnected from the internet or any other public network. This practice is known as air-gapping.
 
 {/* more */}
 
+In this blog post you'll learn what air-gapping is at a high level, why you might want to air-gap your systems, whether you can benefit from an authentication server in such an architecture, and how you can use FusionAuth to solve your user management needs in an air-gapped environment.
+
 ## What Is Air-gapping?
 
-Air-gapping as a security practice where software systems are physically isolated from unsecured networks. As mentioned above, this includes the internet. This creates a completely disconnected environment for sensitive operations and data.
+Air-gapping as a security practice where software systems are physically isolated from unsecured networks. As mentioned above, this includes the internet. This process creates a completely disconnected environment for sensitive operations and data.
 
 There's also a version of air-gapping where your software systems are logically isolated from unsecured networks. You can accomplish this using firewalls or software defined networking that prohibits traffic entering or leaving your network.
-
-Finally, though far less typical, you can be air-gapped due to location and cost, such as on an cruise ship. This is atypical and won't be addressed below, but is included for completeness.
 
 Air-gapping can be achieved in an on-premises data center, local servers, in a private cloud, or even in a public cloud.
 
@@ -45,86 +45,91 @@ If you have high-value assets, protecting them may motivate you to implement air
 
 Another reason to consider building a system which can be air-gapped is if you are writing software to be bought and deployed into any of the above environments and want to delegate to another source of user credential and profile data. You can learn more about this scenario in the Identity Broker use case](/docs/get-started/use-cases/identity-broker).
 
+Finally, an air-gapped environment can be due to network connectivity expense, such as on an cruise ship or mining station. In this case, it's the location driving the lack of connectivity, rather than any special security needs.
+
 ## How To Use An Auth Server In An Air-gapped System
 
-Even though applications in air-gapped environments are disconnected from any outside networks, they can typically still be accessed over a normal network using standard protocols like TCP/IP, DNS and HTTP. You still have similar problems as with web apps which run on the internet. You still need to:
+Even though applications in air-gapped environments are disconnected from outside networks, the application can still be accessed over the internal network using standard protocols like TCP/IP, DNS and HTTP.
+
+As a developer in such an environment, you have similar problems as with web apps which run on the internet. You still need to:
 
 * provision users and otherwise manage them
 * authenticate users and services
 * ensure proper access using RBAC or other systems
-* allow single sign-on between 
+* allow single sign-on between different applications
 
-Auth servers are designed to solve these problems.
+Auth servers are designed to solve all these problems. Just because you aren't on the internet doesn't mean you can't benefit from them.
 
-Just like a database, an auth server can be a component for applications running in an air-gapped environment. Any such components should be fully functional without network connectivity. If they have any dependencies on outside networks, such as downloading datasets, those should be clearly delineated or not affect functionality you need.
+Just like a database, an auth server can be used as an architectural a component in applications running in an air-gapped environment. All application components should be functional without network connectivity. If any components have dependencies on servers requiring internet connectivity, such as downloading datasets, those should be clearly delineated and not degrade required functionality.
 
-If you do include an auth server in your air-gapped application running on an internal network supporting standard protocols, integrate with it in the same manner you'd do if your application was on the internet. For example, if the auth server and application support the Authorization Code grant, set up redirects and handle the token exchange.
+If you do use an auth server in your air-gapped application running on an internal network supporting HTTP, you can integrate with it just as if your application was on the internet.
+
+For example, you could use the Authorization Code grant, leverage an existing OIDC library, and configure redirect to routable domain names, and perform a token exchange to get access tokens. Those tokens could be presented to APIs to access data or functionality.
 
 ## Using Air-gapped FusionAuth 
 
-FusionAuth, being [downloadable, self-hostable software](/blog/building-self-hostable-application), can be self-hosted. Per the [license](/license), air-gapped deployments require FusionAuth's [Enterprise plan](/pricing). The Enterprise plan offers the necessary features and support for disconnected environments, including offline license validation.
+FusionAuth, being [downloadable, self-hostable software](/blog/building-self-hostable-application), can be run in an air-gapped environment. Per the [license](/license), air-gapped deployments require FusionAuth's [Enterprise plan](/pricing). The Enterprise plan offers the necessary features and support for disconnected environments, including offline license validation.
 
-After discussing your needs with [our sales team](/contact), you'll get a license key and text that can be added to your FusionAuth instances. Just as with a normal license, you'll have production and non-production keys. The latter allow development, staging, and QA instances to access the same features as production.
+After discussing your needs with [our sales team](/contact), you'll get a license key and text to add to your FusionAuth instances. Just as with a normal license, you'll have production and non-production keys. The latter allow air-gapped development, staging, and QA instances to access the same features as production.
 
-You can learn more about air-gapping FusionAuth in [the documentation](/docs/get-started/download-and-install/air-gapping).
+You can learn more about air-gapping FusionAuth in [the air-gapping documentation](/docs/get-started/download-and-install/air-gapping).
 
 ### Validating JWTs Without Auth Server Network Connectivity
 
-You can even have have multiple disjoint network segments, where FusionAuth is on one and an API needing to validate an access token is on another. To validate the tokens were properly signed by FusionAuth without network connectivity, do the following:
+You can even have have disjoint network segments, where FusionAuth is on one and an API needing to validate an access token is on another. To validate the tokens were properly signed without connectivity between the API server and FusionAuth, do the following:
 
-* Generate many public/private keypairs in FusionAuth, perhaps 100 or 1000. You want to use [the API](/docs/apis/keys#generate-a-key) or [an SDK](/docs/sdks) to do this.
-* Bundle the public keypairs into the API during the normal deployment process. The easiest way to do that is probably to download the jwks.json file from FusionAuth.
-* When an access token is presented, look up the corresponding public key from the keypairs, and [validate it](/articles/tokens/building-a-secure-jwt#consuming-a-jwt), including the signature.
+* Generate public/private keypairs in FusionAuth. Use [the API](/docs/apis/keys#generate-a-key) or [an SDK](/docs/sdks) to do this.
+* Bundle the public keypairs into the API artifact during the deployment process; for example, put them in the classpath of a jar file. If you can access FusionAuth from your build system, download the [jwks.json file](/docs/lifecycle/authenticate-users/oauth/endpoints#json-web-key-set-jwks). Otherwise build your file of public keys using the SDKs or APIs.
+* When an access token is presented to the API, it will contain a `kid`. Look up the corresponding public key from the locally available keypairs, and validate the access token signature. [Don't forget to perform claim validation](/articles/tokens/building-a-secure-jwt#consuming-a-jwt).
 
-When you want to rotate the keys, just change the key that FusionAuth is using to sign the access tokens. Keep track of how many keys you have rotated through. If you run out of key pairs, you'll need to redeploy the API with a new bundle of public keys.
+Create enough keypairs to handle your desired key rotation frequency. When you need to rotate the access token signing keys, change the key that FusionAuth is using to sign the access tokens.
 
-Of course, in this scenario, the client making the API request has to get the access token *somehow* and may be on both networks.
+You'll need to track keys you have rotated through. Before you run out of key pairs, generate new signing keys in FusionAuth and redeploy the API artifact with a new bundle of public keys.
 
+In this scenario, the client making the API request has to get the access token from FusionAuth *somehow*. It may be on both networks.
 
-## Implementation Best Practices
+## Air-gapped FusionAuth Implementation Best Practices
 
-When rolling out an auth server as part of your air-gapped application environment, you need to consider network segmentation, monitoring, and update procedures.
+When rolling out FusionAuth as part of your air-gapped application environment, consider network segmentation, monitoring, and update procedures. While this post focuses on using an auth server in an air-gapped environments, these concerns apply to any application components. You'll want to adapt them to your air-gapped environments deployment processes and security needs.
 
 ### Network Setup
 
-Network segmentation and access controls are the foundation of your secure air-gapped environment. Depending on your needs, you may implement multiple layers of network isolation using VLANs, firewalls, and possibly physical separation to create distinct security zones within your air-gapped environment. 
+Network segmentation and access controls are the foundation of your secure air-gapped environment. Depending on your needs, you may implement multiple layers of network isolation using VLANs, firewalls, and possibly physical separation to create distinct security zones within your environment. 
 
-The auth server should reside in its own network segment with strictly controlled access points, allowing only necessary communication from application servers and admin accounts.
+FusionAuth should reside in its own network segment with strictly controlled access points, allowing only necessary communication from application servers, clients and admin accounts. Deploy jump boxes or bastion hosts for administrative access, ensuring that direct connections to each server are limited and logged.
 
-Deploy jump boxes or bastion hosts for administrative access, ensuring that direct connections to each server are limited and logged.
+Network access control lists (ACLs) or other network management software should follow the principle of least privilege. Limit specific ports and protocols to those required. For the auth server, applications and clients in particular, limit the ports to those needed for OIDC communication, typically those needed for HTTPS/TLS.
 
-Network access control lists (ACLs) or other network management software should follow the principle of least privilege. Limit specific ports and protocols required. For the auth server and clients in particular, limit the ports to those needed for OIDC communication, typically TLS.
-
-You should also implement network monitoring tools to detect unusual traffic patterns or unauthorized connection attempts within the isolated environment. Doing so offers early warning of potential security incidents or bugs.
+Plan to implement network monitoring tools to detect unusual traffic patterns or unauthorized connection attempts within the isolated environment. Doing so offers early warning of potential security incidents or bugs.
 
 ## Monitoring 
 
-Monitoring require planning when traditional cloud-based security tools aren't available. 
+When traditional cloud-based security tools aren't available, you will need to run your monitoring tools locally and collate the logs within your air-gapped environment.
 
-You should plan to capture [FusionAuth application logs](/docs/operate/monitor/monitor), system logs, and network traffic data to SIEM systems in the air-gapped environment. Regularly review logs and set up automated alerting for suspicious activities such as failed authentication attempts, privilege escalations, or configuration changes.
+Capture [FusionAuth application logs](/docs/operate/monitor/monitor), [webhook events](/docs/extend/events-and-webhooks/events/), system logs, and network traffic. Send all of these to SIEM systems running in the internal network. As with any SIEM system, regularly review logs and set up automated alerting for suspicious activities such as failed authentication attempts, privilege escalations, or configuration changes.
 
 Basically, do what you should do in any environment, but with the twin caveats:
 
-* you can't use normal cloud based services
-* elevated awareness to preserve the critical data or functionality in the environment
+* you can't use cloud based services
+* you'll need a corresponding high level of security vigilance due to the sensitive nature of the data or functionality which demands air-gapping
 
 ## Update Procedures 
 
-For updates, create a formal change management process. You'll want to:
+For FusionAuth updates, use your formal change management process. You'll want to:
 
 * [stay informed about new releases](/docs/operate/roadmap/releases#release-notifications)
-* [reviewing the features](/docs/release-notes)
-* and, if it makes sense, [download and new versions](/direct-download) on an internet-connected system
+* [review the features](/docs/release-notes)
+* and, when it makes sense, [download and new versions](/direct-download) on an internet-connected system
 
-You can then performing security scans and file validation (check the sha256 checksums) on test networks that are isolated.
+You can then perform security scans using your scanning tools as well as package integrity validation by checking the sha256 checksums on isolated test networks.
 
-After you are comfortable with the new release transfer it using secure media transfer protocols. 
+After you are comfortable with the new release, transfer it to the production air-gapped network using secure media transfer protocols. What this looks like depends on your security needs. If you are deploying to a public cloud, it may mean copying it to an AWS S3 bucket accessible to the air-gapped network using a VPC endpoint. If you are deploying to a cruise ship, it mean a USB stick delivered to the shipboard IT admin.
 
 You should maintain an isolated staging environment that mirrors your production setup to test updates before deployment.
 
 Document your update procedures, including rollback plans, and ensure that critical security patches can be expedited through your approval process when necessary.
 
-Regular vulnerability assessments should be conducted using offline scanning tools, and configuration changes should be versioned and applied automatically to avoid configuration drift over time.
+Regular vulnerability assessments should be conducted using offline scanning tools, and FusionAuth [configuration changes](/docs/operate/deploy/configuration-management) should be versioned and applied automatically to avoid configuration drift over time.
 
 ## Summing Up
 
