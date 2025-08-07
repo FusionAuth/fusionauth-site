@@ -2,7 +2,7 @@
 publish_date: 2025-07-23
 title: "Multi-Platform Video Uploads: Using Identity Provider Links"
 htmlTitle: "Multi-Platform Video Uploads: Using Identity Provider Links"
-description: Learn how to build a video upload application that connects to multiple services like Google and Twitter using FusionAuth's Identity Provider Links.
+description: Learn how to build a video upload application that connects to multiple services like Google and X.com (Twitter) using FusionAuth's Identity Provider Links.
 image: /img/blogs/identity-provider-links/identity-provider-links-header.png
 authors: Colin Frick, Aaron Ritter
 categories: Education
@@ -11,9 +11,12 @@ excerpt_separator: "{/* more */}"
 codeRoot: https://raw.githubusercontent.com/sonderformat-llc/fusionauth-example-using-links-fastify/refs/heads/main
 ---
 import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
 
-In today's content-driven world, a regular requirement is to share content across multiple platforms to maximize reach and engagement. However, managing separate accounts and authentication flows for each platform can be cumbersome. What if you could build an application that allows users to upload videos to both YouTube (Google) and Twitter with a single login? This is where FusionAuth's Identity Provider Links feature becomes invaluable.
+In today's content-driven world, a regular requirement is to share content across multiple platforms to maximize reach and engagement. However, managing separate accounts and authentication flows for each platform can be cumbersome. What if you could build an application that allows users to upload videos to both YouTube (Google) and X.com (Twitter) with a single login? This is where FusionAuth's Identity Provider Links feature becomes invaluable.
 
 Identity Provider (IDP) Links allow you to connect a FusionAuth user account with multiple social identity providers through access and refresh tokens, enabling your application to securely access APIs from different platforms while maintaining a single unified user account.
 
@@ -21,7 +24,7 @@ Identity Provider (IDP) Links allow you to connect a FusionAuth user account wit
 
 ## What Are Identity Provider Links?
 
-Identity Provider Links establish a relationship between a FusionAuth user and users in third-party identity providers such as Google and Twitter. When a link is created, FusionAuth stores information about the connection, including:
+Identity Provider Links establish a relationship between a FusionAuth user and users in third-party identity providers such as Google and X.com (Twitter). When a link is created, FusionAuth stores information about the connection, including:
 
 - The identity provider ID
 - The user ID in the identity provider
@@ -36,7 +39,7 @@ This feature enables your application to securely access APIs from different pla
 Before we dive into the implementation, let's set up our environment. We'll need:
 
 1. A running FusionAuth instance
-2. Google and Twitter developer accounts with API access
+2. Google and X.com (Twitter) developer accounts with API access
 3. A video upload application that connects to multiple services
 
 ### Setting Up FusionAuth
@@ -46,9 +49,9 @@ If you don't already have FusionAuth running, you can follow [Step-1](/docs/get-
 Once FusionAuth is running, create an application:
 
 1. Log in to the FusionAuth admin UI
-2. Navigate to Applications → Add
-3. Enter a name for your application (e.g., "Video Upload App")
-4. On the OAuth tab, add a Redirect URL (e.g., `http://localhost:3000/auth/callback`)
+2. Navigate to <Breadcrumb>Applications</Breadcrumb> and click <InlineUIElement>Add</InlineUIElement>
+3. Enter a <InlineField>name</InlineField> for your application (e.g., `Video Upload App`)
+4. On the <Breadcrumb>OAuth</Breadcrumb> tab, add a <InlineField>Redirect URL</InlineField> (e.g., `http://localhost:3000/auth/callback`)
 5. Enable the Authorization Code grant
 6. Save the application and note the Client ID and Client Secret
 
@@ -57,7 +60,7 @@ Once FusionAuth is running, create an application:
 For our demo, we'll create a Node.js application using Fastify that will:
 
 1. Allow users to log in with FusionAuth
-2. Connect to both Google (YouTube) and Twitter accounts
+2. Connect to both Google (YouTube) and X.com (Twitter) accounts
 3. Upload videos to multiple platforms simultaneously
 
 The complete application structure is available in our [example repository](https://github.com/sonderformat-llc/fusionauth-example-using-links-fastify).
@@ -95,7 +98,7 @@ We'll use EJS to render the views for our application. Create a new file in the 
 
 The plugin registers the EJS view engine with Fastify and configures the view directory.
 
-Next, create a new file in the `templates` directory called `_layout.ejs` and add the following code:
+Next, create a new file in the root located `templates` directory called `_layout.ejs` and add the following code:
 
 <RemoteCode url={frontmatter.codeRoot + "/complete-application/templates/_layout.ejs"} lang="html"/>
 
@@ -153,7 +156,7 @@ The routes handle the file uploads and posts to the appropriate video platforms.
 
 ## Setting Up Identity Providers
 
-Now, let's configure the identity providers we'll be using: Google and Twitter.
+Now, let's configure the identity providers we'll be using: Google and X.com (Twitter).
 
 ### Setting Up OpenID Connect for YouTube API Access
 
@@ -171,71 +174,63 @@ Before you can upload videos to YouTube, you need to enable the YouTube Data API
 
 1. Go to the [Google Cloud Console](https://console.cloud.google.com)
 2. Create a new project or select an existing one
-3. Navigate to APIs & Services → Library
-4. Search for "YouTube Data API v3" and enable it
+3. Navigate to <Breadcrumb>APIs & Services -> Library</Breadcrumb>
+4. Search for `YouTube Data API v3` and enable it
 
 #### Creating an Application in Google Cloud
 
 After enabling the YouTube Data API, you need to create an OAuth application in Google Cloud:
 
-1. In the Google Cloud Console, navigate to APIs & Services → OAuth consent screen
-2. Select "External" as the user type (unless you have a Google Workspace)
+1. In the Google Cloud Console, navigate to <Breadcrumb>APIs & Services -> OAuth consent screen</Breadcrumb>
+2. Select <InlineUIElement>External</InlineUIElement> as the user type (unless you have a Google Workspace)
 3. Fill in the required information:
-   - App name (e.g., "Video Upload App")
-   - User support email
-   - Developer contact information
-4. Click "Save and Continue"
-5. On the Scopes screen, add the following scopes:
+   - <InlineField>App name</InlineField> (e.g., `Video Upload App`)
+   - <InlineField>User support email</InlineField>
+   - <InlineField>Developer contact information</InlineField>
+4. Click <InlineUIElement>Save and Continue</InlineUIElement>
+5. Search for <Breadcrumb>YouTube Data API v3</Breadcrumb> and add click <Breadcrumb>Create Credentials -> User data -> Add or remove scopes</Breadcrumb> to add the following scopes:
    - `https://www.googleapis.com/auth/youtube.upload`
    - `https://www.googleapis.com/auth/youtube`
    - `https://www.googleapis.com/auth/youtube.readonly`
-6. Click "Save and Continue"
-7. Add test users if you're not verifying your app
-8. Click "Save and Continue" to complete the setup
+6. Click <InlineUIElement>Save and Continue</InlineUIElement>
 
 #### Creating Google OAuth 2.0 Credentials with YouTube Scopes
 
 Now you need to create OAuth 2.0 credentials that your application will use to authenticate with Google:
 
-1. In the Google Cloud Console, navigate to APIs & Services → Credentials
-2. Click "Create Credentials" and select "OAuth client ID"
-3. Select "Web application" as the application type
-4. Enter a name for your client (e.g., "Video Upload Client")
+1. In the Google Cloud Console, navigate to <Breadcrumb>APIs & Services -> Credentials</Breadcrumb>
+2. Click <InlineUIElement>Create Credentials</InlineUIElement> and select <InlineUIElement>OAuth client ID</InlineUIElement>
+3. Select <InlineUIElement>Web application</InlineUIElement> as the application type
+4. Enter a name for your client (e.g., `Video Upload Client`)
 5. Add authorized JavaScript origins:
    - `http://localhost:3000` (for development)
 6. Add authorized redirect URIs:
    - `http://localhost:9011/oauth2/callback` (for FusionAuth)
    - `http://localhost:3000/auth/callback` (for your application)
-7. Click "Create"
+7. Click <InlineUIElement>Create</InlineUIElement>
 8. Note the Client ID and Client Secret that are generated
-
-When configuring scopes in the consent screen, make sure you've included the following for YouTube uploads:
-- `https://www.googleapis.com/auth/youtube.upload` - Required for uploading videos
-- `https://www.googleapis.com/auth/youtube` - Full access to YouTube account
-- `https://www.googleapis.com/auth/youtube.readonly` - Read-only access for metrics
-- `email profile openid` - Standard user information
 
 #### Configuring the OpenID Connect Identity Provider for Google in FusionAuth
 
 Now that you have your Google OAuth credentials, you need to configure an OpenID Connect identity provider in FusionAuth:
 
-1. In FusionAuth, go to Settings → Identity Providers
-2. Click "Add OpenID Connect"
-3. Enter a name like "YouTube"
-4. Enter the Client ID and Client Secret from Google
+1. In FusionAuth, go to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>
+2. Click <InlineUIElement>Add OpenID Connect</InlineUIElement>
+3. Enter a <InlineField>name</InlineField> like `YouTube`
+4. Enter the <InlineField>Client ID</InlineField> and <InlineField>Client Secret</InlineField> from Google
 5. Set the following endpoints:
-   - Authorization endpoint: `https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=consent`
-   - Token endpoint: `https://oauth2.googleapis.com/token`
-   - Userinfo endpoint: `https://openidconnect.googleapis.com/v1/userinfo`
-6. Set "Discover endpoints" to "No" since we're manually entering them
-7. In the scope field, add: `https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid https://www.googleapis.com/auth/youtube.upload`
-8. Set the button text to "Login with YouTube"
-9. Set "Linking strategy" to "Link by email" to connect users based on their email address
-10. Configure the claims mapping:
-    - Email claim: `email`
-    - Email verified claim: `email_verified`
-    - Unique ID claim: `sub`
-    - Username claim: `preferred_username`
+   - <InlineField>Authorization endpoint</InlineField>: `https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=consent`
+   - <InlineField>Token endpoint</InlineField>: `https://oauth2.googleapis.com/token`
+   - <InlineField>Userinfo endpoint</InlineField>: `https://openidconnect.googleapis.com/v1/userinfo`
+6. Set <InlineField>Discover endpoints</InlineField> to `No` since we're manually entering them
+7. In the <InlineField>scope</InlineField> field, add: `https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid https://www.googleapis.com/auth/youtube.upload`
+8. Set the <InlineField>button text</InlineField> to `Login with YouTube`
+9. Set <InlineField>Linking strategy</InlineField> to `Link on email. Create the user if they do not exist.` to connect users based on their email address and if a new user logs in, create them automatically
+10. Configure the claims mapping in the <Breadcrumb>Options</Breadcrumb> section:
+  - <InlineField>Unique ID claim</InlineField>: `sub`
+  - <InlineField>Email claim</InlineField>: `email`
+  - <InlineField>Email verified claim</InlineField>: `email_verified`
+  - <InlineField>Username claim</InlineField>: `preferred_username`
 11. Select the applications that should use this identity provider
 
 <Aside type="note">
@@ -258,64 +253,65 @@ Then create a new file in the `src/links` directory called `youtube.ts` and add 
 
 The `youtube.ts` file contains the logic for interacting with the YouTube API.
 
-### Setting Up Twitter as an Identity Provider
+### Setting Up X.com (Twitter) as an Identity Provider
 
-To set up Twitter as an identity provider with media upload capabilities:
+To set up X.com (Twitter) as an identity provider with media upload capabilities:
 
-1. Create a Twitter developer account
+1. Create a X.com (Twitter) developer account
 2. Apply for Elevated access (required for media uploads)
-3. Create a Twitter app with appropriate permissions
+3. Create a X.com (Twitter) app with appropriate permissions
 4. Configure the authentication settings
-5. Create a Twitter Identity Provider in FusionAuth
+5. Create a X.com (Twitter) Identity Provider in FusionAuth
 
-For detailed instructions on the basic setup, refer to the [Twitter Identity Provider documentation](/docs/lifecycle/authenticate-users/identity-providers/social/twitter).
+For detailed instructions on the basic setup, refer to the [X.com (Twitter) Identity Provider documentation](/docs/lifecycle/authenticate-users/identity-providers/social/twitter).
 
 #### Applying for Elevated Access
 
-Twitter's standard API access doesn't allow for media uploads. You'll need to apply for Elevated access:
+X.com (Twitter)'s standard API access doesn't allow for media uploads. You'll need to apply for Elevated access:
 
-1. Go to the [Twitter Developer Portal](https://developer.twitter.com)
-2. Navigate to the Projects & Apps section
-3. Apply for Elevated access by clicking on "Apply for Elevated"
+1. Go to the [X.com (Twitter) Developer Portal](https://developer.twitter.com)
+2. Navigate to the <Breadcrumb>Projects & Apps</Breadcrumb> section
+3. Apply for Elevated access by clicking on <InlineUIElement>Apply for Elevated</InlineUIElement>
 4. Complete the application form, explaining your use case for media uploads
 5. Wait for approval (this can take a few days)
 
-#### Creating a Twitter App with Media Upload Permissions
+#### Creating a X.com (Twitter) App with Media Upload Permissions
 
-Once you have Elevated access, you need to create a Twitter app with the appropriate permissions:
+Once you have Elevated access, you need to create a X.com (Twitter) app with the appropriate permissions:
 
-1. In the Twitter Developer Portal, create a new app (e.g., "Video Upload App")
-2. Under "App permissions", select "Read and Write" (required for media uploads)
-3. Under "Authentication settings", enable "3-legged OAuth"
-4. Add a callback URL: `http://localhost:9011/oauth2/callback`
-5. Enable "Request email from users"
+1. In the X.com (Twitter) Developer Portal, create a new app (e.g., `Video Upload App`)
+2. Under <Breadcrumb>App permissions</Breadcrumb>, select <InlineField>Read and Write</InlineField> (required for media uploads)
+3. Under <Breadcrumb>Authentication settings</Breadcrumb>, enable <InlineField>3-legged OAuth</InlineField>
+4. Add a <Breadcrumb>callback URL</Breadcrumb>: `http://localhost:9011/oauth2/callback`
+5. Enable <InlineField>Request email from users</InlineField>
 6. Note the API Key and API Secret Key
 
-#### Configuring the Twitter Identity Provider in FusionAuth
+#### Configuring the X.com (Twitter) Identity Provider in FusionAuth
 
-Now you need to configure the Twitter identity provider in FusionAuth:
+Now you need to configure the X.com (Twitter) identity provider in FusionAuth:
 
-1. In FusionAuth, go to Settings → Identity Providers
-2. Click "Add Twitter"
-3. Enter the Consumer Key (API Key) and Consumer Secret (API Secret Key)
-4. Configure the button text (e.g., "Login with Twitter")
+1. In FusionAuth, go to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>
+2. Click <InlineUIElement>Add X.com (Twitter)</InlineUIElement>
+3. Enter the <InlineField>Consumer Key</InlineField> `API Key` and <InlineField>Consumer Secret</InlineField> `API Secret Key`
+4. Configure the <InlineField>button text</InlineField> (e.g., `Login with X.com (Twitter)`)
 5. Select the applications that should use this identity provider
 
 <Aside type="caution">
-  Twitter has rate limits for media uploads. For production applications, you'll need to implement appropriate rate limiting and error handling.
+  X.com (Twitter) has rate limits for media uploads. For production applications, you'll need to implement appropriate rate limiting and error handling.
 </Aside>
 
-#### Adding the Twitter Identity Provider to the App
+#### Adding the X.com (Twitter) Identity Provider to the App
 
 Now that we have the identity provider configured, we need to add it to our application.
 
 Let's again first install the necessary dependencies:
 
 ```bash
+```bash
 npm i twitter-api-v2
 ```
 
-Then a new file in the `src/links` directory called `twitter.ts` and add the following code:
+Then create a new file in the `src/links` directory called `twitter.ts` and add the following code:
 
 <RemoteCode url={frontmatter.codeRoot + "/complete-application/src/links/twitter.ts"} lang="typescript"/>
 
@@ -336,14 +332,14 @@ Now that we have our identity providers set up, let's explore how to use the Ide
 When working with Identity Provider Links for API access, different identity providers store tokens differently:
 
 - The OpenID Connect identity provider configured for Google stores a **refresh_token** that can be exchanged for access tokens
-- Twitter stores access token and secret information that can be parsed for API access
+- X.com (Twitter) stores access token and secret information that can be parsed for API access
 
 When implementing API access using Identity Provider Links, you need to:
 
 1. Configure the appropriate identity provider
 2. Extract the token from the identityProviderLink object
 3. For Google/YouTube, exchange the refresh token for an access token before making API calls
-4. For Twitter, parse the token string to extract the access token and secret
+4. For X.com (Twitter), parse the token string to extract the access token and secret
 
 ### The Links API
 
@@ -391,7 +387,7 @@ To test our implementation:
 4. Start the application: `npm run dev`
 5. Navigate to `http://localhost:3000` in your browser
 6. Log in with your FusionAuth credentials
-7. Link your Google and Twitter accounts
+7. Link your Google and X.com (Twitter) accounts
 8. Upload a video file and select which platforms to post to
 9. View the results showing links to your uploaded content
 
@@ -409,10 +405,10 @@ The example application demonstrates several key concepts:
 By leveraging Identity Provider Links, you can create a unified video publishing experience that simplifies the workflow for content creators. This approach opens up possibilities for more advanced features like:
 
 - Consolidated analytics dashboards showing performance across platforms
-- Synchronized comment moderation across YouTube and Twitter
+- Synchronized comment moderation across YouTube and X.com (Twitter)
 - Coordinated publishing schedules and content strategies
 - Backup options if one platform experiences issues
 
 The complete source code for this example is available on [GitHub](https://github.com/sonderformat-llc/fusionauth-example-using-links-fastify), allowing you to explore the implementation details and adapt it to your own applications.
 
-For more information, check out the [FusionAuth documentation on Identity Provider Links](/docs/apis/identity-providers/links) and the guides for setting up [OIDC](/docs/lifecycle/authenticate-users/identity-providers/overview-oidc) for Google and [Twitter](/docs/lifecycle/authenticate-users/identity-providers/social/twitter) identity providers.
+For more information, check out the [FusionAuth documentation on Identity Provider Links](/docs/apis/identity-providers/links) and the guides for setting up [OIDC](/docs/lifecycle/authenticate-users/identity-providers/overview-oidc) for Google and [X.com (Twitter)](/docs/lifecycle/authenticate-users/identity-providers/social/twitter) identity providers.
