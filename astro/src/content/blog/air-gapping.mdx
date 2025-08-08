@@ -19,9 +19,9 @@ In this blog post you'll learn what air-gapping is at a high level, why you migh
 
 ## What Is Air-gapping?
 
-Air-gapping is a security practice where software systems are physically isolated from unsecured networks. As mentioned above, this includes the internet. This process creates a completely disconnected environment for sensitive operations and data.
+Air-gapping is a security practice where software systems are isolated from unsecured networks. As mentioned above, this includes the internet. This process creates a disconnected environment for sensitive operations and data.
 
-There's also a version of air-gapping where your software systems are logically isolated from unsecured networks. You can accomplish this using firewalls or software defined networking that prohibits traffic entering or leaving your network.
+This separation can be physical, with no wired or wireless connectivity between the internal network and external, or logical, using firewalls or software defined networking that blocks traffic from your network. You can also have physical and logical separation in the same air-gapped environment for defense in depth.
 
 Air-gapping can be achieved in an on-premises data center, local servers, in a private cloud, or even in a public cloud.
 
@@ -97,9 +97,20 @@ In this scenario, the client making the API request has to get the access token 
 
 ## Air-gapped FusionAuth Implementation Best Practices
 
-When rolling out FusionAuth as part of your air-gapped application environment, consider network segmentation, monitoring, and update procedures. While this post focuses on using an auth server in an air-gapped environment, these concerns apply to any application components. You'll want to adapt them to your air-gapped environments deployment processes and security needs.
+Remember the two major scenarios I mentioned above? You might want to air-gap because of:
 
-### Network Setup
+* data and functionality security concerns
+* physical distance and connectivity costs
+
+Each of these have different implementation implications. Let's look at each in turn.
+
+### Security Focused Air-gapping
+
+With this type of air-gapping, you're focused on meeting your security requirements.
+
+When rolling out FusionAuth as part of such an air-gapped application environment, consider network segmentation, monitoring, and update procedures. While this post focuses on using an auth server in an air-gapped environment, these concerns do apply to any software components used in an air-gapped system.
+
+#### Network Setup
 
 Network segmentation and access controls are the foundation of your secure air-gapped environment. Depending on your needs, you may implement multiple layers of network isolation using VLANs, firewalls, and possibly physical separation to create distinct security zones within your environment. 
 
@@ -109,18 +120,18 @@ Network access control lists (ACLs) or other network management software should 
 
 Plan to implement network monitoring tools to detect unusual traffic patterns or unauthorized connection attempts within the isolated environment. Doing so offers early warning of potential security incidents or bugs.
 
-### Monitoring 
+#### Monitoring 
 
 When traditional cloud-based security tools aren't available, you will need to run your monitoring tools locally and collate the logs within your air-gapped environment.
 
-Capture [FusionAuth application logs](/docs/operate/monitor/monitor), [webhook events](/docs/extend/events-and-webhooks/events/), system logs, and network traffic. Send all of these to SIEM systems running in the internal network. As with any SIEM system, regularly review logs and set up automated alerting for suspicious activities such as failed authentication attempts, privilege escalations, or configuration changes.
+Capture [FusionAuth application logs](/docs/operate/monitor/monitor), [webhook events](/docs/extend/events-and-webhooks/events/), system logs, and network traffic. Send all of these to SIEM systems running in the internal network. As with any SIEM system, regularly review logs and set up automated alerting for suspicious activities such as failed authentication attempts, unexpected privilege requests, or configuration changes.
 
 Basically, do what you should do in any environment, but with the twin caveats:
 
 * you can't use cloud based services
 * you'll need a corresponding high level of security vigilance due to the sensitive nature of the data or functionality which demands air-gapping
 
-### Update Procedures 
+#### Update Procedures 
 
 For FusionAuth updates, use your formal change management process. You'll want to:
 
@@ -128,18 +139,59 @@ For FusionAuth updates, use your formal change management process. You'll want t
 * [review the features](/docs/release-notes)
 * and, when it makes sense, [download and new versions](/direct-download) on an internet-connected system
 
-You can then perform security scans using your scanning tools as well as package integrity validation by checking the sha256 checksums on isolated test networks.
+You can then perform security scans using your scanning tools as well as package integrity validation by checking the sha256 checksums on isolated test networks. You should maintain an isolated staging environment that mirrors your production setup to test updates before deployment.
 
-After you are comfortable with the new release, transfer it to the production air-gapped network using secure media transfer protocols. What this looks like depends on your security needs. If you are deploying to a public cloud, it may mean copying it to an AWS S3 bucket accessible to the air-gapped network using a VPC endpoint. If you are deploying to a cruise ship, it may mean a USB stick delivered to the shipboard IT admin.
+After you are comfortable with the new release, transfer it to the production air-gapped network using secure media transfer protocols. What this looks like depends on your security needs. If you are deploying to a public cloud, it may mean copying it to an AWS S3 bucket accessible to the air-gapped network using a VPC endpoint. If you are deploying to a secure physically air-gapped location, it may mean a USB stick delivered to the IT admin with installation instructions.
 
-You should maintain an isolated staging environment that mirrors your production setup to test updates before deployment.
 
 Document your update procedures, including rollback plans, and ensure that critical security patches can be expedited through your approval process when necessary.
 
 Regular vulnerability assessments should be conducted using offline scanning tools, and FusionAuth [configuration changes](/docs/operate/deploy/configuration-management) should be versioned and applied automatically to avoid configuration drift over time.
 
+### Connectivity Driven Air-gapping
+
+With this type of air-gapping, you're focused on meeting functionality needs. There may also be syncing requirements, depending on whether you have intermittent connectivity.
+
+For example, if you are deplying FusionAuth to a cruise ship, you may want to allow for changes to user profiles during the cruise and syncing them up to a central server when the ship is in port.
+
+#### Monitoring 
+
+When traditional cloud-based security tools aren't available, you will need to run your monitoring tools locally and collate the logs within your air-gapped environment. This will help with both security and application debugging.
+
+Capture [FusionAuth application logs](/docs/operate/monitor/monitor), [webhook events](/docs/extend/events-and-webhooks/events/), system logs, and network traffic. Send all of these to log collection systems running in the internal network. Regularly review logs and set up alerting for problematic activities such as failed authentication attempts or configuration changes.
+
+#### Update Procedures 
+
+For FusionAuth updates, use a change management process. You'll want to:
+
+* [stay informed about new releases](/docs/operate/roadmap/releases#release-notifications)
+* [review the features](/docs/release-notes)
+* and, when it makes sense, [download and new versions](/direct-download) on an internet-connected system
+
+You can then test the new release and any integrations you have with it, including on an isolated test network. Maintain an isolated staging environment that mirrors your production setup to test updates before deployment.
+
+After you are comfortable with the new release, transfer it to the production air-gapped network. What this looks like depends on your needs. If you are deploying to a cruise ship, it may mean a USB stick delivered to the shipboard IT admin.
+
+#### Syncing Data Between Instances
+
+While users are authenticating in the air-gapped environment, they may make changes to their account profile data, or may have changes made for them. For example, on a cruise ship, you might change your favorite fruity drink or gain access to a different loyalty level.
+
+Pushing these changes up after the cruise ship has connectivity again can be done using webhooks and kafka. It looks something like this:
+
+* install and configure Kafka to run on the ship
+* set up webhooks for all needed events
+* configure webhooks [to write to kafka](/docs/extend/events-and-webhooks/kafka)
+* when the ship docks, have a process read through the kafka queues and update the existing primary database to bring it back into sync; this process should also deal with any conflicts and push down any profile changes that have been made in the primary
+
+Some configuration changes aren't captured in webhooks. You can review the webhook documentation to see [the list of available events](/docs/extend/events-and-webhooks/events/). Changes which will not be captured include:
+
+* entities, though you can [search for all entities](/docs/apis/entities/entities#request-4) with a `lastUpdateInstant` after a certain date to merge the data
+* user passwords and related values like the salt, though you can receive a webhook for when the password is changed
+
 ## Summing Up
 
 Air-gapped environments offer a more secure place to host applications. These applications usually use standard protocols and have user authentication, authorization and management needs.
 
-You can use FusionAuth as an air-gapped auth server and easily add all these features to your air-gapped applications.
+Air-gapping can also help when you have intermittent or expensive connectivity but still want to offer a world-class authentication experience for apps on a local network.
+
+You can use FusionAuth as an air-gapped auth server and easily add features to your air-gapped applications. Learn more about air-gapping FusionAuth in [the air-gapping documentation](/docs/get-started/download-and-install/air-gapping).
