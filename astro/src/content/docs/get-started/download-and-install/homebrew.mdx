@@ -17,22 +17,82 @@ To install FusionAuth using brew, first install the Tap, you will only need to d
 brew tap fusionauth/homebrew-fusionauth
 ```
 
-Next, install the FusionAuth services, you can optionally skip the `fusionauth-search` service if you would like to use the database as the User search engine, or if you already have a compatible Elasticsearch service running. See the [System Requirements](/docs/get-started/download-and-install/system-requirements) and [Configuration Reference](/docs/reference/configuration).
+Next, install the FusionAuth services. Make sure you have `postgresql` up and running, optionally you can skip the `elasticsearch`/`opensearch` service if you would like to use the database as the User search engine, or if you already have a compatible Elasticsearch service running. See the [System Requirements](/docs/get-started/download-and-install/system-requirements) and [Configuration Reference](/docs/reference/configuration).
+
+If you want to install the prerequisites with Homebrew check the [Prerequisites With Homebrew](#prerequisites-with-homebrew) section.
 
 ```
-brew install fusionauth-app fusionauth-search
+brew install fusionauth-app
 ```
 That's it!  Now fire it up!
 
 ```
-brew services start fusionauth-search
 brew services start fusionauth-app
 ```
 
 Now to get started open your browser to `http://localhost:9011`, and complete maintenance mode and the setup wizard.
+
+If you want to run FusionAuth in silent mode, you can follow the instructions in the [Configure For Silent Configuration](#configure-for-silent-configuration) section.
 
 The shared configuration file will be located here: `/usr/local/etc/fusionauth/fusionauth.properties` and the logs are here : `/usr/local/var/log/fusionauth/`.
 
 ## Homebrew Upgrade
 
 <UpgradeUsingBrew />
+
+## Prerequisites With Homebrew
+
+FusionAuth requires a database and a search engine. The recommended database is PostgreSQL, and the recommended search engine is OpenSearch.
+
+### Postgres
+
+If you don't have PostgreSQL installed, you can install it using Homebrew:
+
+```bash
+# Install PostgreSQL 16
+brew install postgresql@16
+# Check the service status
+brew services info postgresql@16
+# Start PostgreSQL 16 service
+brew services start postgresql@16
+```
+
+To run the FusionAuth installation in silent mode, you need to create a PostgreSQL user and database for FusionAuth. You can do this with the following commands:
+
+```bash
+# Ensure the PostgreSQL binaries are in your PATH
+export PATH="$PATH:$(brew --prefix postgresql@16)/bin"
+# Create the fusionauth user fusionauth with password fusionauth
+psql --command="CREATE USER fusionauth PASSWORD 'fusionauth'" --command="\du" postgres
+# Create the fusionauth database owned by the fusionauth user
+createdb --owner=fusionauth fusionauth
+```
+
+### OpenSearch
+
+If you don't have OpenSearch installed, you can install it using Homebrew:
+
+```bash
+brew install opensearch
+brew services info opensearch
+brew services start opensearch
+```
+
+## Silent Configuration
+
+After installing FusionAuth, you can configure it before starting the service to run a silent configuration. The configuration file is located at `$(brew --prefix)/etc/fusionauth/fusionauth.properties`.
+
+```bash
+# Add linebreak to the end of the fusionauth.properties file
+echo "" >> $(brew --prefix)/etc/fusionauth/fusionauth.properties
+# Add your kickstart file path
+echo "fusionauth-app.kickstart.file=/path/to/your/kickstart/kickstart.json" >> $(brew --prefix)/etc/fusionauth/fusionauth.properties
+# Add the silent mode property
+echo "fusionauth-app.silent-mode=true" >> $(brew --prefix)/etc/fusionauth/fusionauth.properties
+# Change the search.type=database to search.type=elasticsearch
+sed -i '' 's/search.type=database/search.type=elasticsearch/g' $(brew --prefix)/etc/fusionauth/fusionauth.properties
+# Add the open search URL
+echo "search.servers=http://localhost:9200" >> $(brew --prefix)/etc/fusionauth/fusionauth.properties
+# Check the full configuration
+cat $(brew --prefix)/etc/fusionauth/fusionauth.properties
+```
