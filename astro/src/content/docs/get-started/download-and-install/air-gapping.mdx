@@ -1,0 +1,144 @@
+---
+title: Air-gapping FusionAuth
+description: Run FusionAuth with no network access (air-gapped).
+section: get started
+subcategory: download and install
+---
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import DeactivateLicense from 'src/content/docs/_shared/_deactivate-license.mdx';
+import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
+import HostsToAllowNetworkAccessFor from 'src/content/docs/_shared/_hosts-to-allow-network-access.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+
+<EnterprisePlanBlurb />
+
+## Overview
+
+Air-gapping allows you to run FusionAuth in environments with custom networking or compliance requirements. These include:
+
+* high-security environments with extreme exfiltration risks
+* industrial control systems with limited networking bandwidth
+* malware analysis
+* regulatory or compliance requirements, such as PCI-DSS
+
+This document covers the differences in configuring and running an air-gapped instance of FusionAuth. You can also [use a license with network access](/docs/get-started/core-concepts/licensing).
+
+<Aside type="note">
+To run FusionAuth air-gapped requires an Enterprise license.
+</Aside>
+
+## Adding a License to Your Instance
+
+To add a license to an air-gapped instance, do these tasks:
+
+* Buy a license
+* Retrieve the license
+* Lock down the network around your instance
+* Install the license on your instance
+
+### Buy A License
+
+The air-gapped license is available for purchase only by [contacting the sales team](/contact).
+
+Once a license is purchased, you need to get the license key and text.
+
+### Retrieve A License
+
+To retrieve a license, log into your [Account](https://account.fusionauth.io/account).  Navigate to the <Breadcrumb>Plan</Breadcrumb> tab.
+
+![View the plan tab.](/img/docs/get-started/download-and-install/plan-tab-airgapped.png)
+
+Copy the appropriate license key and text. Use the "Production" license for your production server. The other license is suitable for non-production environments, such as user acceptance testing or development. 
+
+If you need your license key and text later, log in to your [Account](https://account.fusionauth.io/account) and then navigate to the <Breadcrumb>Plan</Breadcrumb> tab. You might need to do this if you are installing the license on a new instance.
+
+### Preparing Your Instance
+
+An instance of FusionAuth requires the air-gapped license text as it can't use the licensing server. However, it will still attempt to communicate with the license server. It may also originate other outbound traffic for metrics reporting and other purposes. There is an [open GitHub issue regarding this behavior](https://github.com/FusionAuth/fusionauth-issues/issues/3114). Block the following hostnames to stop any calls to FusionAuth servers:
+
+<HostsToAllowNetworkAccessFor />
+
+You can also turn off FusionAuth collecting usage data. To do this, see the [section on disabling data collection in Collected Metrics](/docs/get-started/download-and-install/collected-metrics#disabling-data-collection).
+
+Your method of blocking outbound traffic depends on your installation and environment.
+
+For example, if you're running FusionAuth in AWS, you can block outbound requests using a [security group rule](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html). If you're running Kubernetes on-premises, you can use a [network policy](https://kubernetes.io/docs/concepts/services-networking/network-policies/).
+
+### Installing The License
+
+After you have your license key and text, log in to your FusionAuth instance. You will need either the `admin` or `reactor_manager` roles in the FusionAuth Admin UI application to view the <Breadcrumb>Reactor</Breadcrumb> tab. The credentials you use to log into the instance have no connection to the credentials you used to log into your Account Portal.
+
+<Aside type="caution">
+  Ensure the instance's network connection has been blocked, as documented in the [Preparing Your Instance](#preparing-your-instance) section. Otherwise, under certain circumstances, you may end up with a non-air-gapped license replacing your air-gapped license.
+
+  Please see this [GitHub issue for more information](https://github.com/FusionAuth/fusionauth-issues/issues/3105).
+</Aside>
+
+Navigate to the <Breadcrumb>Reactor</Breadcrumb> tab and enter your license key and text in the <InlineField>License key</InlineField> field.
+
+Check the <InlineField>I have an air-gap license</InlineField> box underneath the <InlineUIElement>License Key</InlineUIElement> field. Add the license text into the <InlineField>License text</InlineField> field.
+
+![Activate your license using Reactor.](/img/docs/get-started/download-and-install/air-gapped-license-activate.png)
+
+Immediately after activating, FusionAuth validates the license. It may take a minute or two to complete activation. No network access is required for activation.
+
+Once activated, the <InlineField>Licensed</InlineField> field on the <Breadcrumb>Reactor</Breadcrumb> tab changes to a green checkmark. This may require a page refresh. You will also see a list of features and the expiration date of the license.
+
+![An activated license.](/img/docs/get-started/download-and-install/air-gapped-license.png)
+
+## Regenerating Your License
+
+You may want to regenerate your license for any number of reasons.
+
+* The process may be part of a regular secrets rotation plan.
+* You may have inadvertently exposed your license.
+* A personnel change may require rotation of licenses.
+
+You can regenerate the license via the <Breadcrumb>Plan</Breadcrumb> tab. To do so, log into your [Account](https://account.fusionauth.io/account). Then navigate to the <Breadcrumb>Plan</Breadcrumb> tab. Then click the <InlineUIElement>Action</InlineUIElement> button to display the dropdown.
+
+![The license action dropdown.](/img/docs/get-started/core-concepts/license-action-dropdown.png)
+
+After you choose which license to regenerate, you'll be prompted to confirm your choice.
+
+![Regenerate the license.](/img/docs/get-started/core-concepts/regenerate-license.png)
+
+Then, view your license to retrieve both the license key and text.
+
+Once you have that, you can update your license on your instance by using the [Reactor API](/docs/apis/reactor) or by deactivating and then reactivating the license on the admin UI <Breadcrumb>Reactor</Breadcrumb> tab.
+
+## Deactivating Your Instance
+
+<DeactivateLicense />
+
+## License Expiration
+
+Your [license is deactivated](#deactivating-your-instance) when it expires. This results in a loss of functionality until the license is renewed.
+
+Find out when the license expires by using the [Reactor API](/docs/apis/reactor#retrieve-reactor-status) or viewing the expiration date in the admin UI on the <Breadcrumb>Reactor</Breadcrumb> tab.
+
+![An expiration date displayed on the Reactor status page.](/img/docs/get-started/download-and-install/air-gapped-license-expiration.png)
+
+Please [contact support](https://account.fusionauth.io/account/support/) to obtain your new air-gapped license. 
+
+Then update your instance with the new license by [adding it to your instance](#adding-a-license-to-your-instance) before the license expiration date.
+
+There is no grace period, so make sure you update your license before it expires to avoid loss of functionality.
+
+## Licensing and Kickstart
+
+You can use [Kickstart](/docs/get-started/download-and-install/development/kickstart) to configure a FusionAuth instance to a known configuration using any API, and this includes setting up an instance with an air-gapped license. See the [Kickstart documentation to learn how to provide your license key and text](/docs/get-started/download-and-install/development/kickstart#set-your-license-id).
+
+One common use case for Kickstart is to configure the FusionAuth component of an air-gapped software package before delivering it to your customers. In this scenario, use the production license key and text.
+
+## Limits
+
+Running air-gapped limits certain features in FusionAuth, including:
+
+* breached password detection 
+* advanced threat detection
+
+Both of these features depend on downloading data over a network.
+
+Air-gapping is not available when running in FusionAuth Cloud.
