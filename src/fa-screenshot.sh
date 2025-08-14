@@ -164,7 +164,7 @@ filename="${filename}.png"
 absFile=${tempFolder}${filename}
 
 echo
-echo "-- Capturing screenshot to file : ${filename}"
+printOut "-- Capturing screenshot"
 screencapture -l $(osascript -e 'tell app "Safari" to id of window 1') ${absFile}
 
 printOut "-- Checking image properties"
@@ -176,4 +176,7 @@ magick ${absFile} -geometry 1600x ${absFile}
 # move to destination folder
 if [ "${destination}" != "" ]; then
     mv ${absFile} ${destination}/${filename}
+    echo "-- screenshot file : ${destination}/${filename}"
+else
+    echo "-- screenshot file : ${absFile}"
 fi
