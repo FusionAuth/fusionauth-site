@@ -14,9 +14,133 @@ This page contains notes on changes in recent versions of FusionAuth that requir
 
 ## Version 1.59.0
 
-User passwords are optional starting in version `1.59.0`. While theme updates are not required, there are some areas that you may want to consider making changes:
-* OAuth complete registration templates
-* Account edit template (self-service)
+Starting in version `1.59.0`, user passwords are optional and phone identities are now supported. While theme updates are not required, there are some areas that you may want to consider making changes.
+
+| Template                                | Changed For Phone Identities | Password |
+| --------------------------------------- | ---------------------------- | -------- |
+| Messages                                | X                            |          |
+| Account edit template (self-service)    |                              | X        |
+| Account index template (self-service)   | X                            |          |
+| Forgot password template                | X                            |          |
+| Forgot password sent template           | X                            |          |
+| OAuth complete registration template    |                              | X        |
+| OAuth passwordless template             | X                            |          |
+| OAuth register template                 | X                            |          |
+
+### Messages
+
+To properly support phone identities, several themed `Messages` have changed. If `forgot-password-email-sent` or `forgot-password-email-sent-title` was previously customized in a theme, the same customizations need to be applied to the new `forgot-password-message-sent` and `forgot-password-message-sent-title` messages.
+
+``` title="Messages Before"
+forgot-password-email-sent=We have sent an email to %s containing a link that will allow you to reset your password. Once you receive the email follow the instructions to change your password.
+forgot-password-email-sent-title=Email sent
+loginId=Email
+...
+[PasswordlessRequestSent]=An email is on the way.
+```
+
+``` title="Messages After"
+forgot-password-message-sent=We have sent a message to %s containing a link that will allow you to reset your password. Once you receive the message follow the instructions to change your password.
+forgot-password-message-sent-title=Message sent
+loginId=Login
+...
+[PasswordlessRequestSent]=A message is on the way.
+```
+
+### Account edit template (self-service)
+
+To accommodate the use case of an existing user, without a password, setting a password for the first time, there is a new template variable, `passwordSet`, that can be used on the `Helpers` page to hide the "current password" field for users that do not have a password.
+
+```html title="Before"
+<form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
+  ...
+  [#list fieldValues as field]
+    [#if field.key == "user.password"]
+      [@helpers.passwordField field application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange/]
+    [#else]
+      [@helpers.customField field=field key=field.key autofocus=false placeholder=field.key label=theme.optionalMessage(field.key) leftAddon="false"/]
+      [#if field.confirm]
+        [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
+      [/#if]
+    [/#if]
+  [/#list]
+</form>
+```
+
+```html title="After"
+<form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
+  ...
+  [#list fieldValues as field]
+    [#if field.key == "user.password"]
+      [@helpers.passwordField field=field
+                              showCurrentPasswordField=(passwordSet && application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange)/]
+    [#else]
+      [@helpers.customField field=field key=field.key autofocus=false placeholder=field.key label=theme.optionalMessage(field.key) leftAddon="false"/]
+      [#if field.confirm]
+        [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
+      [/#if]
+    [/#if]
+  [/#list]
+</form>
+```
+
+### Account index template (self-service)
+
+New installations of FusionAuth show the new `user.phoneNumber` field on the account index page, rather than `user.mobilePhone`.
+
+```html title="Before"
+<dl class="horizontal">
+  <dt>${theme.message("user.mobilePhone")}</dt>
+  <dd>${helpers.display(user, "mobilePhone")}</dd>
+</dl>
+```
+
+```html title="After"
+<dl class="horizontal">
+  <dt>${theme.message("user.phoneNumber")}</dt>
+  <dd>${fusionAuth.phone_format(user.phoneNumber!"\x2013")}</dd>
+</dl>
+```
+
+### Forgot password template
+
+To improve the user experience for phone number identities, the `email` field should be replaced with a `loginId` field which will use the label `Login` instead of `Email` (see Messages above). Everything will continue to function even if this change is not made, but the user experience will be improved with the new field because of the more accurate label.
+
+```html title="Before"
+<fieldset class="push-less-top">
+  [@helpers.input type="text" name="email" id="email" autocapitalize="none" autofocus=true autocomplete="on" autocorrect="off" placeholder=theme.message('email') leftAddon="user" required=true/]
+  [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+</fieldset>
+```
+
+```html title="After"
+<fieldset class="push-less-top">
+  [@helpers.input type="text" name="loginId" id="loginId" autocapitalize="none" autofocus=true autocomplete="on" autocorrect="off" placeholder=theme.message('loginId') leftAddon="user" required=true/]
+  [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+</fieldset>
+```
+
+### Forgot password sent template
+
+Similar to the `Forgot password` template, the `Forgot password sent` template should also be updated to use the `loginId` field instead of the `email` field. This will improve the user experience for phone number identities.
+
+```html title="Before"
+[@helpers.main title=theme.message('forgot-password-email-sent-title')]
+  <p>
+    ${theme.message('forgot-password-email-sent', email)}
+  </p>
+  <p class="mt-2">[@helpers.link url="/oauth2/authorize"]${theme.message('return-to-login')}[/@helpers.link]</p>
+[/@helpers.main]
+```
+
+```html title="After"
+[@helpers.main title=theme.message('forgot-password-message-sent-title')]
+  <p>
+    ${theme.message('forgot-password-message-sent', loginId)}
+  </p>
+  <p class="mt-2">[@helpers.link url="/oauth2/authorize"]${theme.message('return-to-login')}[/@helpers.link]</p>
+[/@helpers.main]
+```
 
 ### OAuth complete registration template
 
@@ -57,41 +181,78 @@ For example, before:
 [/#if]
 ```
 
-### Account edit template (self-service)
+### OAuth passwordless template
 
-To accommodate the use case of an existing user, without a password, setting a password for the first time, there is a new template variable, `passwordSet`, that can be used on the `Helpers` page to hide the "current password" field for users that do not have a password.
+To support passwordless logins with phone numbers, several changes must be made to allow submission of one-time or short codes on the passwordless page. The changes include: new hidden form fields, an `if` surrounding the `loginId` field with a new `oneTimeCode` field, and a change to the button text based on whether the form is being submitted or a code is being sent.
 
 ```html title="Before"
-<form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
-  ...
-  [#list fieldValues as field]
-    [#if field.key == "user.password"]
-      [@helpers.passwordField field application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange/]
-    [#else]
-      [@helpers.customField field=field key=field.key autofocus=false placeholder=field.key label=theme.optionalMessage(field.key) leftAddon="false"/]
-      [#if field.confirm]
-        [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
-      [/#if]
-    [/#if]
-  [/#list]
+<form action="${request.contextPath}/oauth2/passwordless" method="POST" class="full">
+  [@helpers.oauthHiddenFields/]
+  <fieldset>
+    [@helpers.input type="text" name="loginId" id="loginId" autocomplete="username" autocapitalize="none" autocomplete="on" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message("loginId") leftAddon="user" required=true/]
+    [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+  </fieldset>
+
+  [@helpers.input id="rememberDevice" type="checkbox" name="rememberDevice" label=theme.message("remember-device") value="true" uncheckedValue="false"]
+  <i class="fa fa-info-circle" data-tooltip="${theme.message('{tooltip}remember-device')}"></i>[#t/]
+  [/@helpers.input]
+
+  <div class="form-row">
+    [@helpers.button icon="send" text=theme.message('send')/]
+    <p class="mt-2">[@helpers.link url="/oauth2/authorize"]${theme.message('return-to-login')}[/@helpers.link]</p>
+  </div>
 </form>
 ```
 
 ```html title="After"
-<form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
-  ...
-  [#list fieldValues as field]
-    [#if field.key == "user.password"]
-      [@helpers.passwordField field=field
-                              showCurrentPasswordField=(passwordSet && application.formConfiguration.selfServiceFormConfiguration.requireCurrentPasswordOnPasswordChange)/]
+<form action="${request.contextPath}/oauth2/passwordless" method="POST" class="full">
+  [@helpers.oauthHiddenFields/]
+  [@helpers.hidden name="code"/]
+  [@helpers.hidden name="formField"/]
+
+  <fieldset>
+    [#if formField]
+      [@helpers.input type="text" name="oneTimeCode" id="otp" autocapitalize="none" autofocus=true autocomplete="one-time-code" autocorrect="off" placeholder="${theme.message('passwordless-code')}" leftAddon="lock"/]
     [#else]
-      [@helpers.customField field=field key=field.key autofocus=false placeholder=field.key label=theme.optionalMessage(field.key) leftAddon="false"/]
-      [#if field.confirm]
-        [@helpers.customField field "confirm.${field.key}" false "[confirm]${field.key}" /]
-      [/#if]
+      [@helpers.input type="text" name="loginId" id="loginId" autocomplete="username" autocapitalize="none" autocomplete="on" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message("loginId") leftAddon="user" required=true/]
     [/#if]
-  [/#list]
+    [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+  </fieldset>
+
+  [@helpers.input id="rememberDevice" type="checkbox" name="rememberDevice" label=theme.message("remember-device") value="true" uncheckedValue="false"]
+  <i class="fa fa-info-circle" data-tooltip="${theme.message('{tooltip}remember-device')}"></i>[#t/]
+  [/@helpers.input]
+
+  <div class="form-row">
+    [#if formField]
+      [@helpers.button text=theme.message('submit')/]
+    [#else]
+      [@helpers.button icon="send" text=theme.message('send')/]
+    [/#if]
+  </div>
 </form>
+```
+
+### OAuth register template
+
+To support phone numbers in basic registration, a `user.phoneNumber` field must be added.
+
+```html title="Before"
+[#if application.registrationConfiguration.loginIdType == 'email']
+  [@helpers.input type="text" name="user.email" id="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('email') leftAddon="user" required=true/]
+[#else]
+  [@helpers.input type="text" name="user.username" id="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('username') leftAddon="user" required=true/]
+[/#if]
+```
+
+```html title="After"
+[#if application.registrationConfiguration.loginIdType == 'email']
+  [@helpers.input type="text" name="user.email" id="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('email') leftAddon="user" required=true/]
+[#elseif application.registrationConfiguration.loginIdType == 'phoneNumber']
+  [@helpers.input type="text" name="user.phoneNumber" id="phoneNumber" autocomplete="mobile" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('phoneNumber') leftAddon="mobile" required=true/]
+[#else]
+  [@helpers.input type="text" name="user.username" id="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('username') leftAddon="user" required=true/]
+[/#if]
 ```
 
 ## Version 1.53.3
