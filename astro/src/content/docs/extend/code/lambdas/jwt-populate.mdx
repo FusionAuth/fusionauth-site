@@ -6,6 +6,7 @@ section: extend
 subcategory: code
 tertcategory: lambdas
 ---
+import AvailableSince from 'src/components/api/AvailableSince.astro';
 import { YouTube } from '@astro-community/astro-embed-youtube';
 
 If you would like to augment the claims provided in the JWT before it has been signed you can specify a lambda in the JWT configuration. This lambda will be invoked prior to the token being signed and issued to a user.
@@ -23,22 +24,23 @@ This lambda is not executed if you call the Login API directly and omit the `app
 If you are using the API to create the lambda you will need to ensure your function has the following signature:
 
 ```javascript
-function populate(jwt, user, registration) {
+function populate(jwt) {
   // Lambda code goes here
 }
 ```
 
-This lambda must contain a function named `populate` that takes three parameters. The parameters that the lambda is passed are:
+This lambda must contain a function named `populate` that takes up to 4 parameters. The following parameters are passed to the lambda:
 
 * `jwt` - the claims object to be signed and return as the JWT payload. You can modify this object.
 * `user` - the FusionAuth User object. This object is read-only.
 * `registration` - the FusionAuth UserRegistration object. This parameter will be `undefined` when the user is not registered for the application. This object is read-only.
+* `context` - <AvailableSince since="1.59.0"/> - an object containing the context of the request. This object is read-only.
 
-The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The JWT object is a JavaScript object containing the JWT payload. See [OpenID Connect & OAuth 2.0 Token](/docs/lifecycle/authenticate-users/oauth/tokens).
+### `jwt` object
 
 You may add or modify anything in the `jwt` object. However, you may not modify the header keys or values of the JWT. FusionAuth also protects certain reserved claims. The following claims are considered reserved and modifications or removal will not be reflected in the final JWT payload:
 
-- `exp`
+- `exp` - prior to version `1.59.0`, the `exp` claim was reserved and could not be removed or modified. Since version `1.59.0`, the `exp` claim can be modified but the value must be less than or equal to the original `exp` value.
 - `iat`
 - `sub`
 - `tid`
@@ -58,6 +60,15 @@ Prior to version `1.14.0` the following claims were considered reserved.
 - `preferred_username`
 - `roles`
 - `sub`
+
+### `user` and `registration` objects
+
+The two FusionAuth objects are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation. The JWT object is a JavaScript object containing the JWT payload. See [OpenID Connect & OAuth 2.0 Token](/docs/lifecycle/authenticate-users/oauth/tokens).
+
+### `context` object
+
+The context object includes the following:
+* `scopes` - <AvailableSince since="1.59.0"/> - array of scopes that were requested for the token.
 
 
 ## Assigning The Lambda
