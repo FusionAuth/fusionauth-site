@@ -1,5 +1,6 @@
 ---
-publish_date: 2019-04-18 
+publish_date: 2019-04-18
+updated_date: 2025-05-31
 title: Building the FusionAuth Homebrew Formula
 htmlTitle: "How to Build a Homebrew Formula for FusionAuth"
 description: Learn how to create a Homebrew formula to install FusionAuth on macOS. Follow this step-by-step guide to build, test, and publish a custom package.
@@ -20,13 +21,12 @@ TL;DR. If you just want to get FusionAuth up and running and aren't interested i
 
 ```bash
 brew tap fusionauth/fusionauth
-brew install fusionauth-app fusionauth-search
+brew install fusionauth-app
 ```
 
 Then run the following to start it up:
 
 ```bash
-brew services start fusionauth-search
 brew services start fusionauth-app
 ```
 
@@ -45,20 +45,12 @@ The next steps were unpacking the zip into a format that brew could use effectiv
 * `config` -> `etc/fusionauth`
 * `logs` -> `var/log/fusionauth`
 * `java` -> `var/fusionauth/java`
-* `data` -> `var/fusionauth/data` (Used for the fusionauth-search package)
-
-Finally, I found that `brew` was trying to move any dynamic libraries (`dylib` files) it found inside of the package to a common location. Brew is pretty aggressive about moving `dylib`s to a standard location, even though they are already portable binaries. This was spitting out a nasty looking error to anyone that installed the formula. Not what we want to see.
-
-To solve this problem, I modified our Homebrew formula to `tar` up the `dylib`s from the Elasticsearch package during the install phase and extract them back out during post install phase. This ensured that brew stopped spitting out those nasty error messages.
-
-Just one more note on this. It seems that Homebrew can't differentiate between library formulas that are meant to be linked against and dynamically loaded binaries used internally by a program. There are some good forum threads and StackOverflow questions on this, but it would be great if Homebrew allowed formula designers to specify a configuration file of `dylib`s it should ignore.
 
 During development I was able to test this using the following command, which allowed me to test the formulas locally without constantly iterating through GitHub. This command is very handy and allows you to avoid the cycle of push, test, debug and repeat:
 
-`brew install --debug -v ./Formula/fusionauth-${app}.rb`
+`brew install --debug -v ./Formula/fusionauth-app.rb`
 
 After working though a few other minor issues, I ended up with a solid Homebrew formula that makes it simple to install and manage the FusionAuth files. I hope it works well for you, but let me know if you have any questions or issues.
-
 
 ## The Code
 
@@ -88,8 +80,8 @@ This is the most basic state for a formula which contains meta data for descript
 class FusionauthApp < Formula
   desc "FusionAuth App"
   homepage "https://fusionauth.io"
-  url "https://files.fusionauth.io/products/fusionauth/1.5.0/fusionauth-app-1.5.0.zip"
-  sha256 "14bdc6d65622d502149d175ee0765a586e832ae4ef5b5946ff82aee3c7cfde04"
+  url "https://files.fusionauth.io/products/fusionauth/1.57.0/fusionauth-app-1.57.0.zip"
+  sha256 "e6e5e65566d2e98ac99ddcd5b7feb423ad5c3417d0b88c0421a6006d7c3e3c8c"
 
   def install
     # install stuff
@@ -122,48 +114,18 @@ Here is the `install` function for the `fusionauth-app` formula:
 ```ruby
 def install
   prefix.install "fusionauth-app"
-  etc.install "config" => "fusionauth" unless File.exists? etc/"fusionauth"
-  prefix.install_symlink etc/"fusionauth" => "config"
-  (var/"fusionauth/java").mkpath unless File.exists? var/"fusionauth/java"
-  prefix.install_symlink var/"fusionauth/java"
-  (var/"log/fusionauth").mkpath unless File.exists? var/"log/fusionauth"
-  prefix.install_symlink var/"log/fusionauth" => "logs"
-end
-```
-
-As mentioned above, we had to remove the `dylib`s in the `fusionauth-search` package to avoid having Homebrew move them into a different location. Here is the `install` function of the `fusionauth-search` formula with the code to remove the `dylib`s:
-
-```ruby
-def install
-    prefix.install "fusionauth-search"
-    etc.install "config" => "fusionauth" unless File.exists? etc/"fusionauth"
-    prefix.install_symlink etc/"fusionauth" => "config"
-    (var/"log/fusionauth").mkpath unless File.exists? var/"log/fusionauth"
-    prefix.install_symlink var/"log/fusionauth" => "logs"
-    (var/"fusionauth/java").mkpath unless File.exists? var/"fusionauth/java"
-    prefix.install_symlink var/"fusionauth/java"
-    (var/"fusionauth/data").mkpath unless File.exists? var/"fusionauth/data"
-    prefix.install_symlink var/"fusionauth/data"
-
-    # Hide all the dylibs from brew
-    system("tar", "-cPf", prefix/"fusionauth-search/elasticsearch/modules.tar", prefix/"fusionauth-search/elasticsearch/modules", "-C", prefix/"fusionauth-search/elasticsearch")
-    (prefix/"fusionauth-search/elasticsearch/modules").rmtree
+  etc.install "config" => "fusionauth" unless File.exist? etc / "fusionauth"
+  prefix.install_symlink etc / "fusionauth" => "config"
+  (var / "fusionauth/java").mkpath unless File.exist? var / "fusionauth/java"
+  prefix.install_symlink var / "fusionauth/java"
+  (var / "log/fusionauth").mkpath unless File.exist? var / "log/fusionauth"
+  prefix.install_symlink var / "log/fusionauth" => "logs"
 end
 ```
 
 #### Post Install
 
 After install is complete you can do any post install tasks you like. For `fusionauth-app` I didn't do any special tasks in post install so mine was empty.
-
-The `post_install` for the `fusionauth-search` on the other hand requires that we replace the `dylib`s we removed during installation. In order to replace the `dylib`s, we simply extracted the `tar` file that we created in the `install` function above. Here is the `post_install` function for `fusionauth-search`:
-
-```ruby
-def post_install
-  # Fix all the dylibs now that brew will leave them alone
-  system("tar", "-xPf", prefix/"fusionauth-search/elasticsearch/modules.tar", "-C", prefix/"fusionauth-search/elasticsearch")
-  rm_f prefix/"fusionauth-search/elasticsearch/modules.tar"
-end
-```
 
 #### Caveats
 
@@ -174,7 +136,8 @@ The return value of the `caveats` function is a String that is displayed to the 
 Here is the `caveats` method of our `fusionauth-app` formula:
 
 ```ruby
-def caveats; <<~EOS
+def caveats
+  <<~EOS
     Logs:   #{var}/log/fusionauth/fusionauth-app.log
     Config: #{etc}/fusionauth/fusionauth.properties
   EOS
@@ -191,37 +154,19 @@ Config: /usr/local/etc/fusionauth/fusionauth.properties
 
 #### The plist!
 
-If you would like your application to run as a service, you will need to include a plist as well. Brew automatically installs a plist file in the correct location if you define a `plist` function in your formula. Similar to the `caveat` function above, the return value of the `plist` function must be a String that is the content of the file.
+If you would like your application to run as a service, you will need to include a plist configuration as well. Brew automatically installs a plist file in the correct location if you define a `service` function in your formula.
 
-Here is the `plist` function of our `fusionauth-app` formula that allows brew to start FusionAuth as a service:
+Since homebrew is available on Linux and macOS, the [service](https://docs.brew.sh/Formula-Cookbook#service-files) function is a general configuration term. It is actually a way to define how brew should start your application as a service on macOS using launch daemons, or on Linux using systemd.
+
+Here is the `service` function of our `fusionauth-app` formula that allows brew to start FusionAuth as a service:
 
 ```ruby
-def plist; <<~EOS
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-    <dict>
-      <key>KeepAlive</key>
-      <true/>
-      <key>Label</key>
-      <string>#{plist_name}</string>
-      <key>ProgramArguments</key>
-      <array>
-        <string>sh</string>
-        <string>catalina.sh</string>
-        <string>run</string>
-      </array>
-      <key>RunAtLoad</key>
-      <true/>
-      <key>WorkingDirectory</key>
-      <string>#{prefix}/fusionauth-app/apache-tomcat/bin</string>
-      <key>StandardOutPath</key>
-      <string>#{var}/log/fusionauth/fusionauth-app.log</string>
-      <key>StandardErrorPath</key>
-      <string>#{var}/log/fusionauth/fusionauth-app.log</string>
-    </dict>
-    </plist>
-  EOS
+service do
+  run ["sh", "-x", "start.sh", "--debug"]
+  keep_alive true
+  working_dir opt_prefix/"fusionauth-app/bin"
+  log_path var/"log/fusionauth/fusionauth-app.log"
+  error_log_path var/"log/fusionauth/fusionauth-app.log"
 end
 ```
 
