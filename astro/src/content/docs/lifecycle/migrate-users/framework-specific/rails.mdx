@@ -1,0 +1,454 @@
+---
+title: Migrate From Rails
+description: Learn how to migrate your users from Rails-based authentication to FusionAuth.
+section: lifecycle
+subcategory: migrate users
+tertcategory: framework specific
+technology: Rails
+technologyLower: rails
+importCodeRoot: https://raw.githubusercontent.com/fusionauth/fusionauth-import-scripts/refs/heads/main
+---
+import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_additional-support.mdx';
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import CreateApiKeySocial from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-api-key-social.mdx';
+import CreateTestApplication from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-application.mdx';
+import CreateTestTenant from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-tenant.mdx';
+import FinalDestination from 'src/content/docs/lifecycle/migrate-users/provider-specific/_final-destination.mdx';
+import GetScript from 'src/content/docs/lifecycle/migrate-users/provider-specific/_get-script.mdx';
+import Identifiers from 'src/content/docs/lifecycle/migrate-users/provider-specific/_identifiers.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import SetUpFusionauth from 'src/content/docs/lifecycle/migrate-users/provider-specific/_set-up-fusionauth.mdx';
+import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-migration.mdx';
+import SocialLoginNote from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-note.mdx';
+import VerifyImport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_verify-import.mdx';
+import WhatNext from 'src/content/docs/lifecycle/migrate-users/provider-specific/_what-next.mdx';
+import PasswordHashSection from 'src/content/docs/lifecycle/migrate-users/provider-specific/_password-hashes-section.mdx';
+import {RemoteCode} from '@fusionauth/astro-components';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import SlowMigrationTimeline from 'src/content/docs/lifecycle/migrate-users/provider-specific/_slow-migration-timeline.mdx';
+import SetUpUserRoles from 'src/content/docs/lifecycle/migrate-users/provider-specific/_set-up-user-roles.mdx';
+
+
+export const migration_source_name = 'rails';
+export const migration_source_dir = 'rails';
+export const migration_source_social_name = 'OmniAuth';
+export const migration_sources_tools = "Devise, OmniAuth, Rails built-in authentication";
+export const hashing_algorithm = 'bcrypt';
+export const script_supports_social_logins = true;
+export const add_tenant_image_role = 'bottom-cropped';
+
+## Overview
+
+This document will help you migrate from {frontmatter.technology}-based authentication to FusionAuth.
+
+This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin. For more general migration information, please view the [FusionAuth migration guide](/docs/lifecycle/migrate-users/genericmigration).
+
+The following sections provide general migration strategies, with working example {frontmatter.technology} apps available [here](https://github.com/FusionAuth/fusionauth-example-migrating-rails). Each sample app uses a different authentication tool:
+
+- **Devise:** The most popular {frontmatter.technology} authentication gem, providing email-and-password login, confirmations, and account locking features.
+- **OmniAuth:** A flexible authentication system focused on external providers like Google, Facebook, and GitHub.
+- **{frontmatter.technology} built-in authentication:** {frontmatter.technology} native authentication feature using `has_secure_password` with bcrypt for email-and-password authentication.
+
+The export scripts and migration strategies here are tailored to each authentication method, preserving user passwords (where applicable), account states, and social login connections so users can continue logging in with their current credentials.
+
+## Prerequisites
+
+To follow this tutorial, you need:
+
+- [Ruby 3.3.0 or higher](https://www.ruby-lang.org/en/downloads/) to run the migration scripts and gems.
+- [FusionAuth](/docs/get-started/download-and-install). The easiest way to run FusionAuth locally is to use [Docker](https://docs.docker.com/get-docker/) with the configuration file provided later in this tutorial.
+- [ngrok](https://ngrok.com/) (optional) to expose your local {frontmatter.technology} application for testing purposes.
+
+## Planning Considerations
+
+### Slow Migration Or Bulk Migration
+
+To preserve your users' passwords, you need to perform a slow migration. Users log in to FusionAuth with their existing credentials, and FusionAuth transparently migrates their data. Slow migrations in FusionAuth use [Connectors](/docs/lifecycle/migrate-users/connectors), a paid feature.
+
+If, on the other hand, resetting user passwords is acceptable, a [Bulk Migration](#bulk-migration) can work for you. Review that section for more details on the required steps. You may also perform a bulk migration after a slow migration has run for a while. Active users can be transparently migrated, and infrequent users may not mind resetting their passwords.
+
+You can learn more about the types of migrations that FusionAuth supports [here](/docs/lifecycle/migrate-users/#migration-types).
+
+### Obtaining User Data
+
+Each {frontmatter.technology} authentication approach stores different user data in the database. The following sections describe the specific data fields to look for when exporting users from Devise, OmniAuth, and {frontmatter.technology} built-in authentication.
+
+#### Devise
+
+Devise stores comprehensive user authentication data in the database. The standard User model includes:
+
+- `encrypted_password`: The bcrypt-hashed password that can be migrated directly to FusionAuth.
+- `email` and `username`: Primary user identifiers.
+- `confirmed_at`: Email confirmation status for user verification.
+- `sign_in_count`, `current_sign_in_at`, and `last_sign_in_at`: User login activity.
+- `current_sign_in_ip` and `last_sign_in_ip`: IP address history.
+- `locked_at`: Account lockout status.
+
+This data can be exported from the database and preserved in FusionAuth during migration.
+
+#### OmniAuth
+
+OmniAuth typically stores minimal local user data since authentication relies on external providers. Exporting user data focuses on:
+
+- Basic profile information (`email`, `name`, `username`).
+- Provider connection data (`provider`, `uid`). This data maps to the external service's user identifier.
+- Any locally stored profile images or additional user metadata.
+
+FusionAuth depends on the combination of `provider` and `uid` to link migrated user accounts to the correct external identity provider.
+
+#### {frontmatter.technology} Built-In Authentication
+
+{frontmatter.technology} `has_secure_password` stores user data similarly to Devise but with a simpler structure:
+
+- `password_digest`: The bcrypt-hashed password.
+- `email`: Primary identifier.
+- Any custom user profile fields your application has added.
+
+### Mapping User Attributes
+
+The attributes of the User object in FusionAuth are [well documented](/docs/apis/users).
+
+If there is an attribute in your {frontmatter.technology} user that cannot be directly mapped to a FusionAuth attribute, you can place it in the `user.data` field. This field can store arbitrary JSON values and will be indexed and searchable.
+
+### Social Logins
+
+<SocialLoginNote migration_source_name={migration_source_social_name} script_supports_social_logins={script_supports_social_logins} />
+
+<SocialLoginMigration />
+
+### Other Entities
+
+There are often other important entities, such as roles, that need to be migrated. There are usually fewer of these, so an automated migration may not make sense, but plan to move this configuration somehow.
+
+Be aware that functionality may not be the same between {frontmatter.technology}-based authentication tools and FusionAuth. This is different from user data; as long as you can somehow migrate a login identifier (a username or email) and a password hash, a user will be authenticated and successfully migrated. You can [download FusionAuth](/download/) before you begin a migration and build a proof of concept to learn more about the differences.
+
+#### Identifiers
+
+<Identifiers migration_source_name={frontmatter.technology} />
+
+## Exporting Users
+
+To export users from a {frontmatter.technology} application, you'll need a script that queries the database and formats the data for import into FusionAuth.
+
+The export scripts in the following sections are tailored for each authentication system and generate a JSON file ready for import into FusionAuth. Before running a script:
+
+- Update the application Id values to match your FusionAuth application Ids.
+- Modify the User model field references to match your application's schema.
+
+### Devise
+
+The following export script will work for most {frontmatter.technology} applications using Devise.
+
+<RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/devise/export_users_for_fusionauth.rb"} lang="ruby"  />
+
+The script handles bcrypt password hashes directly since bcrypt includes the salt in the hash.
+
+The script exports a user file that looks similar to the example below.
+
+<RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/devise/users_export.json"} lang="json"  />
+
+### OmniAuth
+
+As OmniAuth doesn't store passwords locally, the following script exports profile data and provider information.
+
+<RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/omniauth/export_users_for_fusionauth.rb"} lang="ruby"  />
+
+The `oauth_provider` and `oauth_uid` data will be used later to link user accounts to identity providers in FusionAuth.
+
+The script exports a user file that looks similar to the example below.
+
+<RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/omniauth/users_export.json"} lang="json"  />
+
+### {frontmatter.technology} Built-In Authentication
+
+The following export script works for {frontmatter.technology} applications using `has_secure_password`.
+
+<RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/built-in-auth/export_users_for_fusionauth.rb"} lang="ruby"  />
+
+The script exports a user file that looks similar to the example below.
+
+<RemoteCode url={frontmatter.importCodeRoot + "/rails/export-scripts/built-in-auth/users_export.json"} lang="json"  />
+
+<PasswordHashSection hashing_algorithm={hashing_algorithm} />
+
+## Importing Users
+
+Next up, import the user data. Here are the steps you need to take:
+
+1. Set up FusionAuth
+2. Get the script
+3. Install needed gems
+4. Use the script
+5. Verify the import
+6. The final destination of imported users
+
+### Set Up FusionAuth
+
+<SetUpFusionauth />
+
+#### Create A Test Tenant
+
+<CreateTestTenant migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} add_tenant_image_role={add_tenant_image_role} />
+
+#### Create A Test Application
+
+<CreateTestApplication migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} />
+
+#### Set Up User Roles
+
+<SetUpUserRoles />
+
+#### Add An API Key
+
+<CreateApiKeySocial migration_source_dir={migration_source_dir} />
+
+## Bulk Migration
+
+### Get The Script
+
+<GetScript migration_source_dir={migration_source_dir} />
+
+### Install Needed Gems
+
+The following gems must be available to the import script:
+
+* `date`
+* `json`
+* `optargs`
+* `securerandom`
+* `fusionauth_client`
+
+It is likely that all these gems will be on your system already, except the `fusionauth_client` gem.
+
+If you have `bundler` installed, run `bundle install` in the `rails` project directory. Otherwise, install the needed gems some other way.
+
+### Use The Script
+
+You can see the output of the script by running it with the `-h` option:
+
+```sh title="Running the import script with the help command line switch"
+./import.rb -h
+```
+
+The output will be similar to this:
+
+```sh title="The help output of the import.rb script"
+Usage: import.rb [options]
+    -u, --users-file USERS_FILE      The exported JSON user data file from Rails. Defaults to users.json.
+    -f FUSIONAUTH_URL,               The location of the FusionAuth instance. Defaults to http://localhost:9011.
+        --fusionauth-url
+    -k, --fusionauth-api-key API_KEY The FusionAuth API key.
+    -t TENANT_ID,                    The FusionAuth tenant id. Required if more than one tenant exists.
+        --fusionauth-tenant-id
+    -r APPLICATION_IDS,              A comma separated list of existing application Ids. All users will be registered for these applications.
+        --register-users
+    -l, --link-social-accounts       Link social accounts for OmniAuth users after import.
+    -v, --verbose                    Enable verbose logging.
+    -h, --help                       Prints this help.
+```
+
+For this script to work correctly, set the following switches, unless the defaults work for you:
+
+* `-u` should point to the location of the user export file you obtained, unless the default works.
+* `-f` must point to your FusionAuth instance. If you are testing locally, it will probably be `http://localhost:9011`.
+* `-k` needs to be set to the value of the API key created above.
+* `-t` should be set to the Id of the testing tenant created above.
+
+If you are loading users with OmniAuth social account authentication, you must create the social identity providers in FusionAuth beforehand or the links will fail.
+
+When you run the script, you should get an output similar to the following:
+
+```title="Import script output"
+$ ./import.rb -k rEWq7js-JBeWfNMFveXp0nN8CaArBt1xfuhUn4Jn617tGl2zLiGZnCwG -u users_export.json
+FusionAuth Importer : Rails Authentication Systems
+ > User file: users_export.json
+ > FusionAuth URL: http://localhost:9011
+ > Tenant ID: default
+
+ > Detected source system: rails_auth
+
+ > Processing 12 valid users
+ > Importing 12 users to FusionAuth...
+ > Import successful!
+
+ > Successfully imported 12 users
+
+Import completed successfully!
+ > Total users imported: 12
+ > Duplicates skipped: 0
+```
+
+#### Enhancing The Script
+
+You may want to migrate additional data. Currently, the following attributes are migrated:
+
+* `email`
+* `username`
+* `fullName` (when available)
+* `verified`
+* `active`
+* `password` (for Devise and Rails built-in authentication)
+* `registrations`
+* `data` - Custom metadata including source system and original user Id
+
+If you have additional user attributes to migrate, review and modify the script's user mapping logic.
+
+You may also want to assign Roles or associate users with Groups by creating the appropriate JSON data structures in the import call. These are documented in the [Import User API docs](/docs/apis/users#import-users). This will require modifying the `import.rb` code.
+
+### Verify The Import
+
+<VerifyImport migration_source_dir={migration_source_dir} />
+
+### The Final Destination Of Imported Users
+
+<FinalDestination migration_source_dir={migration_source_dir} />
+
+## Slow Migration
+
+This step of the tutorial is optional. In this section, you'll learn how to create a Connector for FusionAuth to import your users' data individually as each user logs in.
+
+<PremiumPlanBlurb />
+
+If you don't need to do this, please skip to the [What To Do Next](#what-to-do-next) section below.
+
+### Create A User With A Password
+
+To test the slow migration, you need a user with a password you know. The provided [{frontmatter.technology} example apps](https://github.com/FusionAuth/fusionauth-example-migrating-rails) include setup scripts `db/seeds.rb` that create test user accounts.
+
+You can also register new users by accessing the {frontmatter.technology} examples in your browser:
+
+- Devise example: `http://localhost:3000`
+- {frontmatter.technology} built-in authentication example: `http://localhost:3002`
+
+### Configure A Connector Between FusionAuth And Your {frontmatter.technology} Application
+
+<PremiumPlanBlurb />
+
+If you haven't done so already, activate your FusionAuth license by navigating to <Breadcrumb>Reactor</Breadcrumb> on the sidebar of the admin UI.
+
+Now configure a FusionAuth Connector to point to an intermediary web service between FusionAuth and your {frontmatter.technology} application. The web service will expose an API endpoint that FusionAuth can call to retrieve user details for migration.
+
+<Aside type="note">
+For a general overview of Connectors, please see this [video](https://www.youtube.com/watch?v=ks-ppMH6WXw).
+</Aside>
+
+Before proceeding, note that if you're running FusionAuth in Docker and your {frontmatter.technology} application locally, you'll need to ensure FusionAuth can reach your {frontmatter.technology} application. There are two ways to do this:
+
+- **Use ngrok:** Use a tool like [ngrok](https://ngrok.com/) to expose your local {frontmatter.technology} application. Be sure to add your ngrok URL to the `config.hosts` whitelist in `config/environments/<environment>.rb` to allow external connections.
+- **Use your host machine's IP address:** Run the {frontmatter.technology} application on `0.0.0.0` and find your host machine's IP address:
+   ```bash
+   ifconfig | grep "inet " | grep -v 127.0.0.1 | awk '{print $2}' | head -1
+   ```
+
+  Then construct the connector URL as `http://<IP_ADDRESS>:PORT/fusionauth/connector`.
+
+In the [FusionAuth admin UI](http://localhost:9011), browse to <Breadcrumb>Settings -> Connectors</Breadcrumb>.
+
+Click the dropdown button on the top right and select <InlineUIElement>Add Generic connector</InlineUIElement>.
+
+![Create a Connector in FusionAuth.](/img/docs/lifecycle/migrate-users/provider-specific/rails/create-connector.png)
+
+Enter the field values below.
+
+- Set <InlineField>Name</InlineField> to `My App Connector` or anything you like.
+- Set <InlineField>Authentication URL</InlineField> to the URL provided by ngrok or `http://<IP_ADDRESS_OR_DOMAIN>:PORT/fusionauth/connector`. Replace `IP_ADDRESS_OR_DOMAIN` with the IP address or domain name of your host machine, and `PORT` with the port number of your {frontmatter.technology} application.
+- Increase timeout values (for example, to `5000`) to accommodate network latency when the API requests are being made.
+- Enable <InlineUIElement>Debug enabled</InlineUIElement>.
+
+![Connector details in FusionAuth.](/img/docs/lifecycle/migrate-users/provider-specific/rails/connector.png)
+
+<Aside type="caution">
+  In production, you will want to add authentication to the web service. You can add basic authentication using the <Breadcrumb>Security</Breadcrumb> tab in the Connector details page.
+</Aside>
+
+Now browse to <Breadcrumb>Tenants</Breadcrumb> and do the following:
+
+- Select <InlineUIElement>Edit</InlineUIElement> on the default tenant.
+- Navigate to the <Breadcrumb>Connectors</Breadcrumb> tab.
+- Click <InlineUIElement>Add policy</InlineUIElement>.
+- Select `My App Connector`.
+- Leave <InlineField>Domains</InlineField> with the value `*` to apply this Connector to every user.
+- Enable <InlineUIElement>Migrate user</InlineUIElement> so that FusionAuth will no longer use your {frontmatter.technology} backend for subsequent logins of the same user.
+- Click <InlineUIElement>Submit</InlineUIElement>.
+
+![Connector policy details in FusionAuth.](/img/docs/lifecycle/migrate-users/provider-specific/rails/connector-policy.png)
+
+
+Move the `My App Connector` policy to the top of the list, using the arrow buttons if necessary.
+
+With this configuration, all users are checked against this Connector the first time they are seen. If they log in, they'll be migrated to the FusionAuth user database.
+
+After configuration, the Connector entry form should look similar to this:
+
+![Connector policy list in FusionAuth](/img/docs/lifecycle/migrate-users/provider-specific/rails/connector-added.png)
+
+Save the changes by clicking the save icon at the top right.
+
+### Add An Authentication Intermediary Endpoint
+
+The next step is to write an API endpoint that will accept the user's login Id and password, and return the user details to be saved to FusionAuth if the login is successful.
+
+<Aside type='note'>
+ Documentation on the inputs and outputs a Connector expects is [here](/docs/lifecycle/migrate-users/connectors/generic-connector).
+</Aside>
+
+The Connector makes a POST request to the URL you specify, and expects a JSON object containing a user in return.
+
+Take a look at the example controllers for [Devise](https://github.com/fusionauth/fusionauth-example-migrating-rails/raw/refs/heads/main/ruby-users-devise/app/controllers/fusion_auth_connector_controller.rb) or [{frontmatter.technology} built-in authentication](https://github.com/fusionauth/fusionauth-example-migrating-rails/raw/refs/heads/main/ruby-users-rails-auth/app/controllers/fusion_auth_connector_controller.rb).
+
+The example {frontmatter.technology} applications show working implementations of this connector for different {frontmatter.technology} authentication systems.
+
+The controller will authenticate the user with their login Id and password, then return the user details to be imported into FusionAuth if authentication succeeds.
+
+### Log In With A Test User
+
+In the FusionAuth admin interface, browse to <Breadcrumb>Applications</Breadcrumb>. Click the <InlineUIElement>Select</InlineUIElement> dropdown next to the "Start Here" application, then select <InlineUIElement>View</InlineUIElement>. Copy the <InlineField>OAuth IdP login URL</InlineField> and open it in an incognito window in your browser (if you don't use an incognito window, you need to log out of the FusionAuth admin session to prevent the active session from interfering with the test). This URL is a login page for the "Start Here" application, so that you can test the web service and Connector.
+
+For this tutorial, the login URL should be `http://localhost:9011/oauth2/authorize?client_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Foauth-redirect`.
+
+![Test application login URL.](/img/docs/lifecycle/migrate-users/provider-specific/rails/login-url.png)
+
+Log in with the username and password for a known user as defined in the `db/seeds.rb` seed scripts of the sample applications:
+
+- Username `jennifer.adams@techstart.com` and password `StartupLife2024!` for the Devise example.
+- Username `sarah.johnson@techcorp.com` and password `SecurePass123!` for the {frontmatter.technology} built-in authentication example.
+
+You should see the successful login request logged by the connector service in the terminal.
+
+<Aside type="note">
+  After a successful test login, the user will be redirected to a URL like `https://example.com/?code=2aUqU0ZhQCjtz0fnrFL_i7wxhIAh7cTfxAXEIpJE-5w&locale=en&userState=AuthenticatedNotRegistered`.
+
+  This occurs because you haven't set up a web application to handle the authorization code redirect yet. This is an important next step, but it's beyond the scope of this document. Consult the [5-minute setup guide](/docs/quickstarts/5-minute-setup-guide) for an example of how to do this.
+</Aside>
+
+If you log out and log in again with the same user, you'll notice that the connector will no longer log the login request. This is because FusionAuth is now using its own authentication service, as the original user password has been hashed and saved in the FusionAuth database.
+
+The user has been successfully migrated, and the {frontmatter.technology}-based authentication system is no longer needed.
+
+#### Debug The Connector Service
+
+If you encounter errors in this process, try the following:
+
+- View the <Breadcrumb>System Event Logs</Breadcrumb> in the bottom left of the FusionAuth web interface.
+- Add `puts` statements to the `fusionauth_connector_controller.rb` file to see where any errors are occurring.
+- Adjust the timeout values of the Connector to higher values to accommodate network latency between API calls.
+
+### Estimate The Slow Migration Timeline
+
+When using a slow migration, you can estimate how many accounts will be migrated in a given period.
+
+<SlowMigrationTimeline />
+
+After this period, you may want to bulk migrate the rest of the users, or treat them as inactive and not migrate them. Plan to disable the Connector and remove the tenant's Connector policy after the slow migration is complete.
+
+Learn more about [general slow migration considerations](/docs/lifecycle/migrate-users/general-migration#slow-migration-implementation).
+
+## What to Do Next
+
+<WhatNext />
+
+## Additional Support
+
+<AdditionalSupport />
