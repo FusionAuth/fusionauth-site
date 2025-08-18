@@ -1,0 +1,414 @@
+---
+publish_date: 2025-08-18
+title: "Multi-Platform Video Uploads: Using Identity Provider Links"
+htmlTitle: "Multi-Platform Video Uploads: Using Identity Provider Links"
+description: Learn how to build a video upload application that connects to multiple services like Google and X.com (Twitter) using FusionAuth's Identity Provider Links.
+image: /img/blogs/identity-provider-links/identity-provider-links-header.png
+authors: Colin Frick, Aaron Ritter
+categories: Education
+tags: identity provider, social login, google, twitter, links, oauth, video upload, youtube
+excerpt_separator: "{/* more */}"
+codeRoot: https://raw.githubusercontent.com/FusionAuth/fusionauth-example-using-links-fastify/refs/heads/main
+---
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+
+In today's content-driven world, a regular requirement is to share content across multiple platforms to maximize reach and engagement. However, managing separate accounts and authentication flows for each platform can be cumbersome. What if you could build an application that allows users to upload videos to both YouTube (Google) and X.com (Twitter) with a single login? This is where FusionAuth's Identity Provider Links feature becomes invaluable.
+
+Identity Provider (IDP) Links allow you to connect a FusionAuth user account with multiple social identity providers through access and refresh tokens, enabling your application to securely access APIs from different platforms while maintaining a single unified user account.
+
+{/* more */}
+
+## What Are Identity Provider Links?
+
+Identity Provider Links establish a relationship between a FusionAuth user and users in third-party identity providers such as Google and X.com (Twitter). When a link is created, FusionAuth stores information about the connection, including:
+
+- The identity provider ID
+- The user ID in the identity provider
+- The FusionAuth user ID
+- A display name (usually an email or username)
+- Access or refresh token from the identity provider
+
+This feature enables your application to securely access APIs from different platforms while maintaining a single unified user account.
+
+## Preparation
+
+Before we dive into the implementation, let's set up our environment. We'll need:
+
+1. A running FusionAuth instance
+2. Google and X.com (Twitter) developer accounts with API access
+3. A video upload application that connects to multiple services
+
+### Setting Up FusionAuth
+
+If you don't already have FusionAuth running, you can follow [Step-1](/docs/get-started/start-here/step-1) of the [Get Started Tutorial](/docs/get-started/start-here/). Alternatively, check out our [example application on GitHub](https://github.com/FusionAuth/fusionauth-example-using-links-fastify) which includes a pre-defined Kickstart configuration.
+
+Once FusionAuth is running, create an application:
+
+1. Log in to the FusionAuth admin UI
+2. Navigate to <Breadcrumb>Applications</Breadcrumb> and click <InlineUIElement>Add</InlineUIElement>
+3. Enter a <InlineField>name</InlineField> for your application (e.g., `Video Upload App`)
+4. On the <Breadcrumb>OAuth</Breadcrumb> tab, add a <InlineField>Redirect URL</InlineField> (e.g., `http://localhost:3000/auth/callback`)
+5. Enable the Authorization Code grant
+6. Save the application and note the Client ID and Client Secret
+
+### Creating the Video Upload Application
+
+For our demo, we'll create a Node.js application using Fastify that will:
+
+1. Allow users to log in with FusionAuth
+2. Connect to both Google (YouTube) and X.com (Twitter) accounts
+3. Upload videos to multiple platforms simultaneously
+
+The complete application structure is available in our [example repository](https://github.com/FusionAuth/fusionauth-example-using-links-fastify).
+
+#### Initializing the Application
+
+To get started, initialize the Fastify application:
+
+```bash
+npm init fastify links-app -- --lang=ts && cd links-app
+```
+
+This will initialize the Fastify application in the `links-app` directory.
+
+> Fastify is a web framework for Node.js that provides a simple, yet powerful API for building web applications.
+
+Next, we install the necessary dependencies:
+
+```bash
+npm i @fastify/view @fastify/passport @fastify/cookie @fastify/session @fusionauth/typescript-client ejs passport-oauth2 jose @fastify/multipart envalid qs
+npm i -D @types/passport-oauth2 @biomejs/biome
+```
+
+Next, create a new file in the `src` directory called `utils.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/utils.ts"} lang="typescript"/>
+
+The `utils.ts` file contains helper functions that we'll use throughout the application. In our utilities we initialize the `faClient` using the previously installed [FusionAuth TypeScript Client](/docs/sdks/typescript) library which we use later on to `retrievUserLinksByUserId` and `deleteUserLink`.
+
+#### Setting Up the Views
+
+We'll use EJS to render the views for our application. Create a new file in the `src/plugins` directory called `view.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/plugins/view.ts"} lang="typescript"/>
+
+The plugin registers the EJS view engine with Fastify and configures the view directory.
+
+Next, create a new file in the root located `templates` directory called `_layout.ejs` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/templates/_layout.ejs"} lang="html"/>
+
+The layout file defines the basic structure of our application.
+
+Next, create a new file in the `templates` directory called `root.ejs` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/templates/root.ejs"} lang="html"/>
+
+The root template defines the layout for the home page if the user is authenticated.
+
+Finally, create a new file in the `templates` directory called `login.ejs` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/templates/login.ejs"} lang="html"/>
+
+The login template defines the layout for the login page.
+
+To render the views, we'll need to update the `src/routes/root.ts` file:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/routes/root.ts"} lang="typescript"/>
+
+#### Setting Up Authentication
+
+We'll use Passport to handle authentication.
+
+> Passport is a popular authentication library for Node.js that provides a simple, yet powerful API for building authentication and authorization systems.
+
+Create a new file in the `src/plugins` directory called `auth.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/plugins/auth.ts"} lang="typescript"/>
+
+The plugin registers the Passport OAuth2 strategy with Fastify and configures the OAuth2 settings.
+
+Next, create a new file in the `src/routes` directory called `auth.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/routes/auth.ts"} lang="typescript"/>
+
+The routes handle the authentication flow and redirect the user to the login page.
+
+#### Setting Up Uploads
+
+We'll use Fastify Multipart to handle file uploads.
+
+Create a new file in the `src/plugins` directory called `upload.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/plugins/multipart.ts"} lang="typescript"/>
+
+The plugin registers the Fastify Multipart plugin with Fastify and configures the upload settings.
+
+Next, create a new file in the `src/routes` directory called `upload.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/routes/upload.ts"} lang="typescript"/>
+
+The routes handle the file uploads and posts to the appropriate video platforms.
+
+## Setting Up Identity Providers
+
+Now, let's configure the identity providers we'll be using: Google and X.com (Twitter).
+
+### Setting Up OpenID Connect for YouTube API Access
+
+To set up YouTube API access in FusionAuth, we need to use the [OpenID Connect](/docs/apis/identity-providers/openid-connect) identity provider instead of the standard [Google](/docs/apis/identity-providers/google) identity provider.
+
+<Aside type="caution">
+The standard Google identity provider in FusionAuth stores an id_token in the identityProviderLink object that cannot be used for API access. For YouTube API integration, you must use the OpenID Connect identity provider configured for Google.
+</Aside>
+
+The key difference is that the OpenID Connect identity provider can be configured to request and store a refresh token, which can be exchanged for access tokens to make API calls to YouTube.
+
+#### Enabling the YouTube Data API
+
+Before you can upload videos to YouTube, you need to enable the YouTube Data API in your Google Cloud project:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com)
+2. Create a new project or select an existing one
+3. Navigate to <Breadcrumb>APIs & Services -> Library</Breadcrumb>
+4. Search for `YouTube Data API v3` and enable it
+
+#### Creating an Application in Google Cloud
+
+After enabling the YouTube Data API, you need to create an OAuth application in Google Cloud:
+
+1. In the Google Cloud Console, navigate to <Breadcrumb>APIs & Services -> OAuth consent screen</Breadcrumb>
+2. Select <InlineUIElement>External</InlineUIElement> as the user type (unless you have a Google Workspace)
+3. Fill in the required information:
+- <InlineField>App name</InlineField> (e.g., `Video Upload App`)
+- <InlineField>User support email</InlineField>
+- <InlineField>Developer contact information</InlineField>
+4. Click <InlineUIElement>Save and Continue</InlineUIElement>
+5. Search for <Breadcrumb>YouTube Data API v3</Breadcrumb> and add click <Breadcrumb>Create Credentials -> User data -> Add or remove scopes</Breadcrumb> to add the following scopes:
+- `https://www.googleapis.com/auth/youtube.upload`
+- `https://www.googleapis.com/auth/youtube`
+- `https://www.googleapis.com/auth/youtube.readonly`
+6. Click <InlineUIElement>Save and Continue</InlineUIElement>
+
+#### Creating Google OAuth 2.0 Credentials with YouTube Scopes
+
+Now you need to create OAuth 2.0 credentials that your application will use to authenticate with Google:
+
+1. In the Google Cloud Console, navigate to <Breadcrumb>APIs & Services -> Credentials</Breadcrumb>
+2. Click <InlineUIElement>Create Credentials</InlineUIElement> and select <InlineUIElement>OAuth client ID</InlineUIElement>
+3. Select <InlineUIElement>Web application</InlineUIElement> as the application type
+4. Enter a name for your client (e.g., `Video Upload Client`)
+5. Add authorized JavaScript origins:
+- `http://localhost:3000` (for development)
+6. Add authorized redirect URIs:
+- `http://localhost:9011/oauth2/callback` (for FusionAuth)
+- `http://localhost:3000/auth/callback` (for your application)
+7. Click <InlineUIElement>Create</InlineUIElement>
+8. Note the Client ID and Client Secret that are generated
+
+#### Configuring the OpenID Connect Identity Provider for Google in FusionAuth
+
+Now that you have your Google OAuth credentials, you need to configure an OpenID Connect identity provider in FusionAuth:
+
+1. In FusionAuth, go to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>
+2. Click <InlineUIElement>Add OpenID Connect</InlineUIElement>
+3. Enter a <InlineField>name</InlineField> like `YouTube`
+4. Enter the <InlineField>Client ID</InlineField> and <InlineField>Client Secret</InlineField> from Google
+5. Set the following endpoints:
+- <InlineField>Authorization endpoint</InlineField>: `https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=consent`
+- <InlineField>Token endpoint</InlineField>: `https://oauth2.googleapis.com/token`
+- <InlineField>Userinfo endpoint</InlineField>: `https://openidconnect.googleapis.com/v1/userinfo`
+6. Set <InlineField>Discover endpoints</InlineField> to `No` since we're manually entering them
+7. In the <InlineField>scope</InlineField> field, add: `https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid https://www.googleapis.com/auth/youtube.upload`
+8. Set the <InlineField>button text</InlineField> to `Login with YouTube`
+9. Set <InlineField>Linking strategy</InlineField> to `Link on email. Create the user if they do not exist.` to connect users based on their email address and if a new user logs in, create them automatically
+10. Configure the claims mapping in the <Breadcrumb>Options</Breadcrumb> section:
+- <InlineField>Unique ID claim</InlineField>: `sub`
+- <InlineField>Email claim</InlineField>: `email`
+- <InlineField>Email verified claim</InlineField>: `email_verified`
+- <InlineField>Username claim</InlineField>: `preferred_username`
+11. Select the applications that should use this identity provider
+
+<Aside type="note">
+For YouTube API access, you'll need to ensure your Google Cloud project has been verified by Google if you plan to publish your application. During development, you can test with unverified apps, but they have limitations on the number of users.
+</Aside>
+
+#### Adding the YouTube Identity Provider to the App
+
+Now that we have the identity provider configured, we need to add it to our application.
+
+Let's start by installing the necessary dependencies:
+
+```bash
+npm i google-auth-library googleapis
+```
+
+Then create a new file in the `src/links` directory called `youtube.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/links/youtube.ts"} lang="typescript"/>
+
+The `youtube.ts` file contains the logic for interacting with the YouTube API.
+
+### Setting Up X.com (Twitter) as an Identity Provider
+
+To set up X.com (Twitter) as an identity provider with media upload capabilities:
+
+1. Create a X.com (Twitter) developer account
+2. Apply for Elevated access (required for media uploads)
+3. Create a X.com (Twitter) app with appropriate permissions
+4. Configure the authentication settings
+5. Create a X.com (Twitter) Identity Provider in FusionAuth
+
+For detailed instructions on the basic setup, refer to the [X.com (Twitter) Identity Provider documentation](/docs/lifecycle/authenticate-users/identity-providers/social/twitter).
+
+#### Applying for Elevated Access
+
+X.com (Twitter)'s standard API access doesn't allow for media uploads. You'll need to apply for Elevated access:
+
+1. Go to the [X.com (Twitter) Developer Portal](https://developer.twitter.com)
+2. Navigate to the <Breadcrumb>Projects & Apps</Breadcrumb> section
+3. Apply for Elevated access by clicking on <InlineUIElement>Apply for Elevated</InlineUIElement>
+4. Complete the application form, explaining your use case for media uploads
+5. Wait for approval (this can take a few days)
+
+#### Creating a X.com (Twitter) App with Media Upload Permissions
+
+Once you have Elevated access, you need to create a X.com (Twitter) app with the appropriate permissions:
+
+1. In the X.com (Twitter) Developer Portal, create a new app (e.g., `Video Upload App`)
+2. Under <Breadcrumb>App permissions</Breadcrumb>, select <InlineField>Read and Write</InlineField> (required for media uploads)
+3. Under <Breadcrumb>Authentication settings</Breadcrumb>, enable <InlineField>3-legged OAuth</InlineField>
+4. Add a <Breadcrumb>callback URL</Breadcrumb>: `http://localhost:9011/oauth2/callback`
+5. Enable <InlineField>Request email from users</InlineField>
+6. Note the API Key and API Secret Key
+
+#### Configuring the X.com (Twitter) Identity Provider in FusionAuth
+
+Now you need to configure the X.com (Twitter) identity provider in FusionAuth:
+
+1. In FusionAuth, go to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>
+2. Click <InlineUIElement>Add X.com (Twitter)</InlineUIElement>
+3. Enter the <InlineField>Consumer Key</InlineField> `API Key` and <InlineField>Consumer Secret</InlineField> `API Secret Key`
+4. Configure the <InlineField>button text</InlineField> (e.g., `Login with X.com (Twitter)`)
+5. Select the applications that should use this identity provider
+
+<Aside type="caution">
+  X.com (Twitter) has rate limits for media uploads. For production applications, you'll need to implement appropriate rate limiting and error handling.
+</Aside>
+
+#### Adding the X.com (Twitter) Identity Provider to the App
+
+Now that we have the identity provider configured, we need to add it to our application.
+
+Let's again first install the necessary dependencies:
+
+```bash
+```bash
+npm i twitter-api-v2
+```
+
+Then create a new file in the `src/links` directory called `twitter.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/links/twitter.ts"} lang="typescript"/>
+
+#### Stitching It All Together
+
+Create a new file in the `src/links` directory called `index.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/links/index.ts"} lang="typescript"/>
+
+The `index.ts` file combines all of the identity provider logic into a single file.
+
+## Using Identity Provider Links
+
+Now that we have our identity providers set up, let's explore how to use the Identity Provider Links API.
+
+### Understanding Token Storage in Identity Provider Links
+
+When working with Identity Provider Links for API access, different identity providers store tokens differently:
+
+- The OpenID Connect identity provider configured for Google stores a **refresh_token** that can be exchanged for access tokens
+- X.com (Twitter) stores access token and secret information that can be parsed for API access
+
+When implementing API access using Identity Provider Links, you need to:
+
+1. Configure the appropriate identity provider
+2. Extract the token from the identityProviderLink object
+3. For Google/YouTube, exchange the refresh token for an access token before making API calls
+4. For X.com (Twitter), parse the token string to extract the access token and secret
+
+### The Links API
+
+FusionAuth provides a comprehensive API for managing identity provider links:
+
+1. **Create a Link** - Link a user to an identity provider
+```
+POST /api/identity-provider/link
+```
+
+2. **Retrieve Links** - Get all identity provider links for a user
+```
+GET /api/identity-provider/link?userId=<userId>
+```
+
+3. **Delete a Link** - Remove a link between a user and an identity provider
+```
+DELETE /api/identity-provider/link?identityProviderId=<identityProviderId>&identityProviderUserId=<identityProviderUserId>&userId=<userId>
+```
+
+FusionAuth is handling the 1. **Link a User** through the Identity Provider configuration.
+
+In our Fastify application, we've implemented the other two API calls with the help of the [FusionAuth TypeScript Client](/docs/sdks/typescript) library by using `retrievUserLinksByUserId` and `deleteUserLink`:
+
+2. **Retrieve Links**: Get information about existing links to determine available upload platforms
+3. **Unlink a User**: Remove a link between a FusionAuth user and a social identity
+
+Let's look at how to use these endpoints in our application.
+
+### Add Links to the Application
+
+To add linking functionality to the application, create a new file in the `src/routes` directory called `links.ts` and add the following code:
+
+<RemoteCode url={frontmatter.codeRoot + "/complete-application/src/routes/links.ts"} lang="typescript"/>
+
+The route handles linking and unlinking a user and an identity provider.
+
+### Testing the Implementation
+
+To test our implementation:
+
+1. Clone the example repository: `git clone https://github.com/FusionAuth/fusionauth-example-using-links-fastify`
+2. Install dependencies: `npm install`
+3. Create a `.env` file with your configuration
+4. Start the application: `npm run dev`
+5. Navigate to `http://localhost:3000` in your browser
+6. Log in with your FusionAuth credentials
+7. Link your Google and X.com (Twitter) accounts
+8. Upload a video file and select which platforms to post to
+9. View the results showing links to your uploaded content
+
+## Conclusion
+
+Identity Provider Links are a powerful feature of FusionAuth that enable you to build sophisticated multi-platform applications like our video uploader. By connecting multiple social identities to a single user account, you can provide a seamless experience for content creators.
+
+The example application demonstrates several key concepts:
+
+- **Single Sign-On with Multiple Providers**: Users can log in once with FusionAuth and access multiple platforms
+- **Token Management**: The application securely stores and uses tokens for API access
+- **Cross-Platform Publishing**: Videos can be uploaded to multiple platforms with a single action
+- **User Experience**: The interface allows users to easily manage their connected accounts
+
+By leveraging Identity Provider Links, you can create a unified video publishing experience that simplifies the workflow for content creators. This approach opens up possibilities for more advanced features like:
+
+- Consolidated analytics dashboards showing performance across platforms
+- Synchronized comment moderation across YouTube and X.com (Twitter)
+- Coordinated publishing schedules and content strategies
+- Backup options if one platform experiences issues
+
+The complete source code for this example is available on [GitHub](https://github.com/FusionAuth/fusionauth-example-using-links-fastify), allowing you to explore the implementation details and adapt it to your own applications.
+
+For more information, check out the [FusionAuth documentation on Identity Provider Links](/docs/apis/identity-providers/links) and the guides for setting up [OIDC](/docs/lifecycle/authenticate-users/identity-providers/overview-oidc) for Google and [X.com (Twitter)](/docs/lifecycle/authenticate-users/identity-providers/social/twitter) identity providers.
