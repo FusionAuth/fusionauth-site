@@ -14,18 +14,17 @@ cta: EmailListCTA
 ---
 
 import Aside from '/src/components/Aside.astro';
-import DockerSpinup from '/src/components/quickstarts/DockerSpinup.astro';
+import NextSteps from '/src/components/quickstarts/NextSteps.astro';
 import DownloadWidget from 'src/components/download/DownloadWidget.astro';
 import HostedBackendWarning from 'src/content/docs/_shared/_hosted-backend-warning.md';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
 
 ## Overview
 
-FusionAuth enables you to easily add login, registration, single sign-on (SSO), and multifactor authentication (MFA) to your app. This quickstart is your first step in discovering just how easy that can be.
+FusionAuth enables you to add login, registration, single sign-on (SSO), and multifactor authentication (MFA) to your app. This quickstart is your first step in discovering just how easy that can be.
 
 You’ll create a simple React application, add login, and display user details. You’ll also install and run a local instance of FusionAuth — all in 15 minutes.
-
-Only a static web server will be used, as FusionAuth provides a [hosted backend](https://fusionauth.io/docs/apis/hosted-backend) for purely frontend apps.
 
 ## Prerequisites
 
@@ -33,9 +32,9 @@ Only a static web server will be used, as FusionAuth provides a [hosted backend]
 
 If you prefer to run Node version [22](https://nodejs.org/en) directly on your computer, you can use that to run the React app.
 
-If you want to view the final app created in this tutorial, you can download [the repository](https://github.com/ritza-co/fusionauth-quickstart-javascript-react-web/draft_overhaulReactQuickstart), but it is not necessary.
-
-You need no particular skills to follow this tutorial, but the explanations assume you have basic familiarity with developing single page apps in JavaScript.
+If you want to view the final app created in this tutorial, you can download [the accompanying repository](https://github.com/ritza-co/fusionauth-quickstart-javascript-react-web/draft_overhaulReactQuickstart), but it is not necessary. This repository has two directories:
+- `1_noAuthentication`, which has the example app with placeholder pages with no authentication, and
+- `2_withAuthentication`, which has the app with authentication provided by FusionAuth.
 
 ## Create A React App With No Authentication
 
@@ -54,7 +53,7 @@ All this file does is load the React app found in `src="/index.tsx"`, which you'
 
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-react-web/draft_overhaulReactQuickstart/1_noAuthentication/index.tsx" lang="tsx"/>
 
-This landing component creates and `App` component that routes `/account` to the account component, and `/` and all other URLs to the home component. The code then uses React to insert the app into the page as the `root` element.
+This landing component creates an `App` component that routes `/account` to the account component, and routes `/` and all other URLs to the home component. The code then uses React to insert the app into the page as the `root` element.
 
 Next, let's create the home and account pages.
 
@@ -74,7 +73,7 @@ The last file you need to create is a stylesheet.
 
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-react-web/draft_overhaulReactQuickstart/1_noAuthentication/index.css" lang="css"/>
 
-Now the app is ready to run. Let's start it.
+Now the app is ready to run.
 
 ▶️ Open a terminal in the directory where you created the files above.
 
@@ -84,7 +83,7 @@ Now the app is ready to run. Let's start it.
 docker run --init -it --rm -p 3000:3000 --name "app" -v ".:/app" -w "/app" node:22.18-alpine3.21 sh
 ```
 
-▶️ Run the commands below in the Docker terminal you just opened (or in a normal terminal on your computer).
+▶️ Run the commands below to install the Node packages for React and the start the app server with Vite.
 
 ```sh
 npm install  @fusionauth/react-sdk@~2.5.1  react@~19.1.1  react-dom@~19.1.1  react-router-dom@~7.8.1
@@ -93,8 +92,6 @@ npm install --save-dev  @eslint/js@~9.33.0  @types/react@~19.1.10  @vitejs/plugi
 
 npx vite --host 0.0.0.0 --port 3000
 ```
-
-The commands above install the Node packages for React and the start the app server with Vite.
 
 ▶️ Browse to http://localhost:3000 to see the site. You can use the button at the top right to move freely between the home and account pages.
 
@@ -112,6 +109,8 @@ Before you can add authentication to the web app, you need to start FusionAuth o
 
 FusionAuth has already been configured in this example to communicate with an app on http://localhost:3000, which is where your example React app is running.
 
+Your React app needs only a static web server, as FusionAuth provides a [hosted backend](https://fusionauth.io/docs/apis/hosted-backend) for purely frontend apps.
+
 ## Add Authentication To The App With FusionAuth
 
 Now that FusionAuth is running, let's update the `.tsx` files to authenticate with it.
@@ -120,7 +119,7 @@ Now that FusionAuth is running, let's update the `.tsx` files to authenticate wi
 
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-react-web/draft_overhaulReactQuickstart/2_withAuthentication/index.tsx" lang="tsx"/>
 
-A new section, `FusionAuthProviderConfig`, is added, which tells the `@fusionauth/react-sdk` where it can talk to FusionAuth. Since this is a client-side app, not server-side, you don't need to worry about hiding any secrets in this section.
+A new section, `FusionAuthProviderConfig`, is at the top of the file, which tells the `@fusionauth/react-sdk` where it can talk to FusionAuth. Since this is a client-side app, not server-side, you don't need to worry about hiding any secrets in this section.
 
 At the bottom of the code, you can see that the app is now wrapped in `<FusionAuthProvider {...config}>`, which adds authentication features to all components inside the app. To use those features, you need to add a few lines to redirect the user to FusionAuth for login, and check if they are logged in.
 
@@ -128,22 +127,24 @@ At the bottom of the code, you can see that the app is now wrapped in `<FusionAu
 
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-react-web/draft_overhaulReactQuickstart/2_withAuthentication/home.tsx" lang="tsx"/>
 
-The `useFusionAuth()` line provides some helper functions to your code. The user is redirected to the account page if `isLoggedIn` is true. And the login button now has authentication in a single line with `startLogin`. That's all you need to add to an app to provide authentication with FusionAuth.
+The `useFusionAuth()` line provides some helper functions to your code. The user is redirected to the account page if `isLoggedIn` is true. And the login button now has authentication in a single line with `startLogin()`.
+
+That's all you need to do to provide authentication with FusionAuth.
 
 ▶️ Overwrite `account.tsx` with the content below.
 
 <RemoteCode url="https://raw.githubusercontent.com/ritza-co/fusionauth-quickstart-javascript-react-web/draft_overhaulReactQuickstart/2_withAuthentication/account.tsx" lang="tsx"/>
 
-The changes to the account page are almost the same as the home page. But the logout button has `startLogout()`. And user details are provided on the page using the `userinfo` object.
+The changes to the account page are almost the same as the home page. But the logout button has `startLogout()` instead of `startLogin()`. And user details are provided on the page using the `userinfo` object.
 
-▶️ Browse again to the app at http://localhost:3000, click the login button and log in with use `richard@example.com` and password `password`. Don't click <InlineUIElement>Keep me signed in</InlineUIElement>, or you won't be able to test logout without using an incognito browser window.
+▶️ Browse again to the app at http://localhost:3000, click the login button and log in with user `richard@example.com` and password `password`. Don't click <InlineUIElement>Keep me signed in</InlineUIElement>, or you won't be able to test logout without using an incognito browser window.
 
 ![Log in with FusionAuth](../../../public/img/quickstarts/quickstart-javascript-react-web/fa.webp)
 
-You can see that if you change the URL in the address bar to browse to the account or home page, you'll be redirected back again based on whether you're logged in or not.
-
 ![Account page](../../../public/img/quickstarts/quickstart-javascript-react-web/account.webp)
+
+You can see that if you change the URL in the address bar to browse to the account or home page, you'll be redirected back again based on whether you're logged in or not. Authentication protects your private pages.
 
 ## Next Steps
 
-If you enjoyed how simple it is to add authentication to your app with FusionAuth and want to learn more, read the [get started guide](/docs/get-started). If you'd like to know exactly what features are available in the different editions of FusionAuth (most of which are free), check the [pricing page](https://fusionauth.io/pricing). And if you have any other questions, please ask on the FusionAuth [forum](https://fusionauth.io/community/forum).
+<NextSteps />
