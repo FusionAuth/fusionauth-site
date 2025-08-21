@@ -1,0 +1,410 @@
+---
+title: Migrate From Passport
+description: Learn how to migrate your users from Passport authentication to FusionAuth.
+section: lifecycle
+subcategory: migrate users
+tertcategory: framework specific
+technology: Passport
+technologyLower: passport.js
+importCodeRoot: https://github.com/fusionauth/fusionauth-example-migrating-node/raw/refs/heads/main
+---
+
+import AdditionalSupport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_additional-support.mdx';
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import CreateApiKeySocial from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-api-key-social.mdx';
+import CreateTestApplication from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-application.mdx';
+import CreateTestTenant from 'src/content/docs/lifecycle/migrate-users/provider-specific/_create-test-tenant.mdx';
+import FinalDestination from 'src/content/docs/lifecycle/migrate-users/provider-specific/_final-destination.mdx';
+import Identifiers from 'src/content/docs/lifecycle/migrate-users/provider-specific/_identifiers.mdx';
+import InlineField from 'src/components/InlineField.astro';
+import SetUpFusionauth from 'src/content/docs/lifecycle/migrate-users/provider-specific/_set-up-fusionauth.mdx';
+import SocialLoginMigration from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-migration.mdx';
+import SocialLoginNote from 'src/content/docs/lifecycle/migrate-users/provider-specific/_social-login-note.mdx';
+import VerifyImport from 'src/content/docs/lifecycle/migrate-users/provider-specific/_verify-import.mdx';
+import WhatNext from 'src/content/docs/lifecycle/migrate-users/provider-specific/_what-next.mdx';
+import PasswordHashSection from 'src/content/docs/lifecycle/migrate-users/provider-specific/_password-hashes-section.mdx';
+import {RemoteCode} from '@fusionauth/astro-components';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import SlowMigrationTimeline from 'src/content/docs/lifecycle/migrate-users/provider-specific/_slow-migration-timeline.mdx';
+import SetUpUserRoles from 'src/content/docs/lifecycle/migrate-users/provider-specific/_set-up-user-roles.mdx';
+
+export const migration_source_name = 'passport';
+export const migration_source_dir = 'passportjs';
+export const migration_source_social_name = 'Passport.js ';
+export const script_supports_social_logins = true;
+export const add_tenant_image_role = 'bottom-cropped';
+export const social_integration_method = 'various strategy packages such as passport-google-oauth20, passport-github2, and passport-facebook';
+export const migration_sources_tools = 'Node.js/Passport.js applications';
+export const hashing_algorithm = 'bcrypt';
+
+## Overview
+
+This document will help you migrate from {frontmatter.technology} authentication to FusionAuth.
+
+This guide assumes you have installed FusionAuth. If you have not, please [view our installation guides](/docs/get-started/download-and-install) and install FusionAuth before you begin. For more general migration information, please view the [FusionAuth migration guide](/docs/lifecycle/migrate-users/genericmigration).  
+
+The screenshots, scripts, and code snippets in this guide are from this [example Express application](https://github.com/fusionauth/fusionauth-example-migrating-node), but the migration steps apply to other Node.js applications.
+
+The example project uses {frontmatter.technology} to implement authentication using two common strategies:
+
+* `passport-local`: Username-and-password authentication using credentials stored in the application's database.
+* `passport-google-oauth20`: OAuth social login using Google.
+
+Each approach requires different user data to be migrated. {frontmatter.technology} itself doesn't manage user data; it only handles authentication. Your application defines the user model, database schema, and data storage approach.
+
+The export script and migration strategies here are tailored to each authentication method, preserving user passwords (where applicable), account states, and social login connections so users can continue logging in with their current credentials.
+
+## Prerequisites
+
+To follow this tutorial, you need:
+
+- [Node.js 22 or higher](https://nodejs.org/en/download) to run the migration script.
+- [FusionAuth](/docs/get-started/download-and-install). The easiest way to run FusionAuth locally is to use [Docker](https://docs.docker.com/get-docker/) with the configuration file provided later in this tutorial.
+- [ngrok](https://ngrok.com/) (optional) to expose your local Express application for testing purposes.
+
+## Planning Considerations
+
+### Slow Migration Or Bulk Migration
+
+To preserve your users' passwords, you need to perform a slow migration. Users log in to FusionAuth with their existing credentials, and FusionAuth transparently migrates their data. Slow migrations in FusionAuth use [Connectors](/docs/lifecycle/migrate-users/connectors), a paid feature.
+
+If, on the other hand, resetting user passwords is acceptable, a [Bulk Migration](#bulk-migration) can work for you. Review that section for more details on the required steps. You may also perform a bulk migration after a slow migration has run for a while. Active users can be transparently migrated, and infrequent users may not mind resetting their passwords.
+
+You can learn more about the types of [migrations that FusionAuth supports here](/docs/lifecycle/migrate-users/#migration-types).
+
+### Obtaining User Data
+
+To migrate users from a Node.js application, you'll need to export user data from your database. Since {frontmatter.technology} doesn't manage user data directly, the export process depends on your database and user schema.
+
+#### `passport-local`
+
+Applications using `passport-local` store user credentials in their database. Common user data includes:
+
+* `email` or `username`: The primary user identifier.
+* `password`: The hashed password, usually bcrypt.
+* `emailVerified` or `confirmed`: Email verification status.
+* `firstName`, `lastName`, `displayName`: User profile information.
+* `loginAttempts`, `blocked`, `lastLogin`: Security and access control fields.
+
+This data can be exported directly from the database and preserved in FusionAuth during migration.
+
+#### OAuth Strategies
+
+Applications using OAuth strategies store minimal local user data since authentication happens through external providers. Exporting data from an application using OAuth focuses on:
+
+* Profile fields such as `email`, `name`, `username`, and `avatar`.
+* Provider connection data like the provider Id (`googleId`, `githubId`, or `facebookId`).
+
+FusionAuth uses the provider Id to link migrated user accounts to the correct external identity provider.
+
+### Mapping User Attributes
+
+The attributes of the [User object in FusionAuth are well documented](/docs/apis/users).
+
+If there is an attribute in your {frontmatter.technology} user that cannot be directly mapped to a FusionAuth attribute, you can place it in the `user.data` field. This field can store arbitrary JSON values and will be indexed and searchable.
+
+### Social Logins
+
+<SocialLoginNote migration_source_name={migration_source_social_name} script_supports_social_logins={script_supports_social_logins} social_integration_method={social_integration_method} />
+
+<SocialLoginMigration />
+
+### Other Entities
+
+There are often other important entities, such as roles, that need to be migrated. There are usually fewer of these, so an automated migration may not make sense, but plan to move this configuration somehow.
+
+Be aware that functionality may not be the same between {frontmatter.technology} and FusionAuth. This is different from user data; as long as you can somehow migrate a login identifier (a username or email) and a password hash, a user will be authenticated and successfully migrated. You can [download FusionAuth](/download/) before you begin a migration and build a proof of concept to learn more about the differences.
+
+#### Identifiers
+
+<Identifiers migration_source_name={migration_sources_tools} />
+
+## Exporting Users
+
+To export users from a Node.js application that uses {frontmatter.technology}, you'll need a script that queries the database and formats the data for import into FusionAuth.
+
+The export script in the following section generates a JSON file ready for import into FusionAuth. Before running the script:
+
+- Update the application Id values to match your FusionAuth application Ids.
+- Modify the User model field references to match your application's schema.
+
+### Step 1: Export Raw User Data
+
+The following script exports raw user data from a Node.js application database.
+
+<RemoteCode url= {frontmatter.importCodeRoot + "/scripts/4_exportUsers.mjs"} lang="js" />
+
+The script creates a `users.json` file containing the exported data, similar to the example below.
+
+```json
+[
+  {
+    "id": 5,
+    "email": "sarah.johnson@techcorp.com",
+    "password": "$2b$10$TlFbuG62ZB29BQCRA2R6IeU544NuZb4GX8bXIMds5jR6tXReLnQhK",
+    "name": "Sarah Johnson",
+    "google_id": null,
+    "avatar": null,
+    "provider": "local",
+    "verified": 1,
+    "active": 1,
+    "last_login_at": null,
+    "created_at": "2025-07-25 04:24:58",
+    "updated_at": "2025-07-25 04:24:58"
+  }
+]
+```
+
+### Step 2: Convert The User Objects To A Format Supported By FusionAuth
+
+The conversion script transforms the raw data into FusionAuth's required format.
+
+<RemoteCode url={frontmatter.importCodeRoot + "/scripts/5_convertUserToFaUser.mjs"} lang="js" />
+
+The conversion script generates a `faUsers.json` file ready for import into FusionAuth.
+
+<PasswordHashSection hashing_algorithm={hashing_algorithm} />
+
+## Importing Users
+
+Next up, import the user data. Here are the steps you need to take:
+
+1. Set up FusionAuth
+2. Get the script
+3. Install needed packages
+4. Use the script
+5. Verify the import
+6. The final destination of imported users
+
+### Set Up FusionAuth
+
+<SetUpFusionauth />
+
+#### Create A Test Tenant
+
+<CreateTestTenant migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} add_tenant_image_role={add_tenant_image_role} />
+
+#### Create A Test Application
+
+<CreateTestApplication migration_source_dir={migration_source_dir} migration_source_name={migration_source_name} />
+
+#### Set Up User Roles
+
+<SetUpUserRoles migration_source_dir={migration_source_dir} migration_source_name={migration_source_social_name}  />
+
+#### Add An API Key
+
+<CreateApiKeySocial migration_source_dir={migration_source_dir} />
+
+#### Add An Identity Provider
+
+Set up an identity provider by navigating to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>. In the dropdown, choose <InlineUIElement>Add Google</InlineUIElement>, and then enter your Google <InlineField>Client Id</InlineField> and <InlineField>Client secret</InlineField> (find these values in your Google Cloud console). Save the identity provider.
+
+![Create an Identity Provider in FusionAuth](/img/docs/lifecycle/migrate-users/provider-specific/passportjs/idp.png)
+
+## Bulk Migration
+
+### Get The Scripts
+
+FusionAuth provides a JavaScript import script under a permissive open-source license.
+
+```shell title="Getting the import scripts"
+git clone https://github.com/fusionauth/fusionauth-import-scripts
+```
+
+Navigate to the `passportjs` directory.
+
+```shell title="Navigating to the import scripts directory"
+cd fusionauth-import-scripts/passportjs
+```
+
+### Install Needed Packages
+
+Add the required packages to your Node.js project with the following command.
+
+```shell title="Installing required packages"
+npm install sqlite3 stream-json uuid @fusionauth/typescript-client
+```
+
+<Aside type="note">
+  For databases other than SQLite, install the appropriate driver package.
+</Aside>
+
+### Use The Scripts
+
+Make sure the `users.json` and `faUsers.json` files are in the same directory as the scripts.
+
+Use the following command to run the script to bulk import users into FusionAuth.
+
+```shell title="Importing users"
+node scripts/6_importUsersBulk.mjs
+```
+
+Use the following command to run the script to link users with social logins.
+
+```shell title="Importing social logins"
+node scripts/7_importSocialUsers.mjs
+```
+
+#### Enhancing The Script
+
+You may also want to migrate additional data. Currently, the following attributes are migrated:
+
+* `email`
+* `username`
+* `fullName` (when available)
+* `verified`
+* `active`
+* `password`
+* `registrations`
+* `data`: Custom metadata including source system and original user Id
+
+If you have additional user attributes to migrate, review and modify the script's user mapping logic.
+
+You may also want to assign Roles or associate users with Groups by creating the appropriate JSON data structures in the import call. These are documented in the [Import User API docs](/docs/apis/users#import-users).
+
+### Verify The Import
+
+<VerifyImport migration_source_dir={migration_source_dir} />
+
+### The Final Destination Of Imported Users
+
+<FinalDestination migration_source_dir={migration_source_dir} />
+
+## Slow Migration
+
+This step of the tutorial is optional. In this section, you'll learn how to create a Connector for FusionAuth to import your users' data individually as each user logs in.
+
+<PremiumPlanBlurb />
+
+If you don't need to do this, please skip to the [What To Do Next](#what-to-do-next) section below.
+
+### Create A User With A Password
+
+To test the slow migration, you need a user with a password you know. The example project includes a `models/users.js` setup script that creates test user accounts.
+
+You can also register new users by accessing the example in your browser at `http://localhost:3000`.
+
+### Configure A Connector Between FusionAuth And Your Application
+
+<PremiumPlanBlurb />
+
+If you haven't done so already, activate your FusionAuth license by navigating to <Breadcrumb>Reactor</Breadcrumb> in the sidebar of the admin UI.
+
+Now configure a FusionAuth Connector to point to an intermediary web service between FusionAuth and your application. The web service will expose an API endpoint that FusionAuth can call to retrieve user details for migration.
+
+<Aside type="note">
+  For a general overview of Connectors, please see this [video](https://www.youtube.com/watch?v=ks-ppMH6WXw).
+</Aside>
+
+Before proceeding, note that if you're running FusionAuth in Docker and your application locally, you'll need to ensure FusionAuth can reach the application. There are two ways to do this:
+
+* **Use ngrok:** Use a tool like [ngrok](https://ngrok.com/) to expose your local application.
+* **Use your host machine's IP address:** Run the Express application on `0.0.0.0` and find your host machine's IP address:
+
+    ```bash
+    ifconfig | grep "inet " | grep -v 127.0.0.1 | awk '{print $2}' | head -1
+    ```
+
+    Then construct the connector URL as `http://<IP_ADDRESS>:PORT/fusionauth/connector`.
+
+In your [FusionAuth admin UI](http://localhost:9011), browse to <Breadcrumb>Settings -> Connectors</Breadcrumb>.
+
+Click the dropdown button on the top right and select <InlineUIElement>Add Generic connector</InlineUIElement>.
+
+![Create a Connector in FusionAuth.](/img/docs/lifecycle/migrate-users/provider-specific/passportjs/create-connector.png)
+
+Enter the field values as follows:
+
+* Set <InlineField>Name</InlineField> to `My App Connector` or anything you like.
+* Set <InlineField>Authentication URL</InlineField> to the URL provided by ngrok or `http://<IP_ADDRESS_OR_DOMAIN>:PORT/fusionauth/connector`. Replace `IP_ADDRESS_OR_DOMAIN` with the IP address or domain name of your host machine, and `PORT` with the port number of your Express application.
+* Increase timeout values (for example, to `5000`) to accommodate network latency when the API requests are being made.
+* Enable <InlineUIElement>Debug enabled</InlineUIElement>.
+* Save the connector.
+
+![Connector details in FusionAuth.](/img/docs/lifecycle/migrate-users/provider-specific/passportjs/connector.png)
+
+<Aside type="caution">
+  In production, you will want to add authentication to the web service. You can add basic authentication using the <Breadcrumb>Security</Breadcrumb> tab in the Connector details page.
+</Aside>
+
+Now browse to <Breadcrumb>Tenants</Breadcrumb> and do the following:
+
+* Select <InlineUIElement>Edit</InlineUIElement> on the default tenant.
+* Navigate to the <Breadcrumb>Connectors</Breadcrumb> tab.
+* Click <InlineUIElement>Add policy</InlineUIElement>.
+* Select `My App Connector`.
+* Leave <InlineField>Domains</InlineField> with the value `*` to apply this Connector to every user.
+* Enable <InlineUIElement>Migrate user</InlineUIElement> so that FusionAuth will no longer use {frontmatter.technology} for subsequent logins of the same user.
+* Click <InlineUIElement>Submit</InlineUIElement>.
+
+![Connector policy details in FusionAuth.](/img/docs/lifecycle/migrate-users/provider-specific/passportjs/connector-policy.png)
+
+Move the `My App Connector` policy to the top of the list, using the arrow buttons if necessary. 
+
+With this configuration, all users are checked against this Connector the first time they are seen. If they log in, they'll be migrated to the FusionAuth user database.
+
+After configuration, the Connector entry form should look similar to this:
+
+![Connector policy list in FusionAuth.](/img/docs/lifecycle/migrate-users/provider-specific/passportjs/connector-added.png)
+
+Save the changes by clicking the save icon at the top right.
+
+### Add An Authentication Intermediary Endpoint
+
+The next step is to write an API endpoint that will accept the user's login Id and password and return the user details to be saved to FusionAuth on successful login.
+
+<Aside type="note">
+  Documentation on the [inputs and outputs a Connector expects is here](/docs/lifecycle/migrate-users/connectors/generic-connector).
+</Aside>
+
+The Connector makes a POST request to the URL you specify, and expects a JSON object containing a user in return.
+
+An example controller is in `passportjs/connectorSnippet.mjs`.
+
+### Log In With A Test User
+
+In the FusionAuth admin interface, browse to <Breadcrumb>Applications</Breadcrumb>. Click the <InlineUIElement>Select</InlineUIElement> dropdown next to the "Example App" application, then select <InlineUIElement>View</InlineUIElement>. Copy the <InlineField>OAuth IdP login URL</InlineField> and open it in an incognito window in your browser (if you don't use an incognito window, you need to log out of the FusionAuth admin session to prevent the active session from interfering with the test). This URL is a login page for the "Example App", so that you can test the web service and Connector.
+
+For this tutorial, the login URL should be `http://localhost:9011/oauth2/authorize?client\_id=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e\&response\_type=code\&redirect\_uri=http%3A%2F%2Flocalhost%3A8080%2Foauth-redirect`.
+
+![Test application login URL](/img/docs/lifecycle/migrate-users/provider-specific/passportjs/login-url.png)
+
+Log in with the username and password for a sample user as defined in the `models/user.js` file of the example application, for example, `sarah.johnson@techcorp.com` and `SecurePass2024!`. Your Connector service should show `request received` and the login request succeeding in the terminal.
+
+<Aside type="note">
+  After a successful test login, the user will be redirected to a URL like `https://example.com/?code=2aUqU0ZhQCjtz0fnrFL_i7wxhIAh7cTfxAXEIpJE-5w&locale=en&userState=AuthenticatedNotRegistered`.
+
+  This occurs because you haven't set up a web application to handle the authorization code redirect yet. This is an important next step, but it's beyond the scope of this document. Consult the [5-minute setup guide](/docs/quickstarts/5-minute-setup-guide) for an example of how to do this.
+</Aside>
+
+If you log out and log in again with the same user, you'll notice that `request received` will not show in the web service console. This is because FusionAuth is now using its own authentication service, as the original user password has been hashed and saved in the FusionAuth database.
+
+The user has been successfully migrated, and {frontmatter.technology} authentication system is no longer needed.
+
+#### Debug The Connector Service
+
+If you encounter errors in this process, try the following:
+
+* View the <Breadcrumb>System Event Logs</Breadcrumb> in the bottom left of the FusionAuth web interface.
+* Adjust the timeout values of the Connector to higher values to accommodate network latency between API calls.
+
+### Estimate The Slow Migration Timeline
+
+When using a slow migration, you can estimate how many accounts will be migrated in a given period.
+
+<SlowMigrationTimeline />
+
+After this period, you may want to bulk migrate the rest of the users, or treat them as inactive and not migrate them. Plan to disable the Connector and remove the tenant's Connector policy after the slow migration is complete.
+
+Learn more about [general slow migration considerations](/docs/lifecycle/migrate-users/general-migration#slow-migration-implementation).
+
+## What To Do Next
+
+<WhatNext />
+
+## Additional Support
+
+<AdditionalSupport />
