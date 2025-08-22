@@ -1,6 +1,7 @@
 # This is workflow for checking links
 name: linkcheck_website
-on: 
+on:
+  pull_request: {}
   # run two times a weekday 
   schedule:
     - cron: '31 18 * * 2,4'
@@ -14,14 +15,27 @@ jobs:
     steps:
       # linkcheck
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
-      - uses: filiph/linkcheck@f2c15a0be0d9c83def5df3edcc0f2d6582845f2d # 3.0.0
+      - name: linkcheck live site
+        uses: filiph/linkcheck@f2c15a0be0d9c83def5df3edcc0f2d6582845f2d # 3.0.0
+        if: github.event_name != 'pull_request'
         with:
           arguments: https://fusionauth.io/ --skip-file config/linkcheck/linkcheck-skip.txt --connection-failures-as-warnings
-        name: linkcheck
+      # link checker does not work against local filesystem
+      - name: spin up local site for testing
+        if: github.event_name == 'pull_request'
+        run: |
+          # spins up Astro on port 3000 in the background
+          npm run dev &
+      - name: linkcheck local site
+        if: github.event_name == 'pull_request'
+        uses: filiph/linkcheck@f2c15a0be0d9c83def5df3edcc0f2d6582845f2d # 3.0.0
+        with:
+          arguments: http://localhost:3000/ --skip-file config/linkcheck/linkcheck-skip.txt --connection-failures-as-warnings
   send_mail_on_failure:
     needs: check_links
     runs-on: ubuntu-latest
-    if: ${{ failure() }}
+    # PR failures are covered in the PR process
+    if: ${{ failure() && github.event_name != 'pull_request' }}
     steps:
       - uses: dawidd6/action-send-mail@4226df7daafa6fc901a43789c49bf7ab309066e7 # v3
         with:
