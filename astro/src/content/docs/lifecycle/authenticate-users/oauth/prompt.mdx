@@ -15,7 +15,7 @@ import Aside from 'src/components/Aside.astro';
   Available since 1.60.0
 </Aside>
 
-The OpenID Connect prompt parameters provides additional flexibility to control the login workflow.
+The OpenID Connect prompt parameter provides additional flexibility to control the login workflow.
 
 ### Supported values
 
@@ -31,7 +31,9 @@ Note that these are just examples, and you may also provide more than one consen
 
 I want to obtain a new access token using the authorization code grant programatically. If the user's SSO session is no longer active I do not want to see a login page, instead I want to receive an error so I can authenticate as a separate task.
 
-To do this, add `prompt=none` to the request. Make this request programatically and if the `Location` header on the response contains `error=login_required` the user requires authentication. Additionally, FusionAuth will return `error_reason` and `error_description` as parameters to provide additional information to the developer. The `error_reason` is a specific a reason code that corresponds to `login_required` tell you why login is required. This will most likely be `authentication_required`, and `error_description` will contain a human readable version of the `error_reason` such as `The user is required to complete authentication.`.
+To do this, add `prompt=none` to the request.
+
+When using the authorization code grant, if the response contains `code` you may complete the code exchange and you have completed a silent authentication. If the response contains `error` then the user is not authenticated and some sort of interaction will be required. See Error handling below for some examples.
 
 #### Reauthentication
 I want to authenticate the user, but even if they have an active SSO session, I want the user to authenticate again.
@@ -47,6 +49,25 @@ To do this, add `max_age=120` to the request.
 I want to ensure the user is prompted for consent for the requested scopes even if they had previously accepted or rejected an optional scope.
 
 To do this, add `prompt=consent` to the request.
+
+
+#### Error handling
+
+When you request a prompt value that cannot be honored, an error will be returned to the authorized redirect.
+
+You can expect the `error` to contain the named error specified by the OpenID Connect specification when defined. The `error_reason` will provide an error code that is specific to the reason the error occurred. And the `error_description` is a human readable version of the `error_reason`.
+
+For example, if you request `prompt=none` and the user does not have an SSO session, then authentication is required to complete the requested grant. In this case, instead of returning the `code` on the redirect, the redirect will contain `error`, `error_reason` and `error_description` indicating why authentication could not be completed. In this specific example, you would expect the following values to be returned:
+
+- `error=login_required`
+- `error_reason=authentication_required`
+- `error_descriotion=The user is required to complete authentication.`
+
+Another example would be even if the user has an SSO session, if the user is required to provide consent, we cannot complete the request, so an error would be returned. In this example, you would expect the following values to be returned:
+
+- `error=consent_required`
+- `error_reason=consent_required`
+- `error_descriotion=The user is required to consent to one or more scopes in order to complete authentication.`
 
 
 ### Security considerations
