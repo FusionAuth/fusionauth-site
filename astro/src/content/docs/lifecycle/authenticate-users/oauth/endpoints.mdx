@@ -52,6 +52,15 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
 
 <API method="GET" uri="/oauth2/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=code&tenantId={tenantId}&scope=openid%20offline_access%20profile%20email"/>
 
+### Request Headers
+<APIBlock>
+  <APIField name="Authorization" type="String" optional>
+    An optional request header allowing the the SSO session to be bootstrapped using an existing access token (JWT).
+
+    See [Bootstrapping Single Sign On](/docs/lifecycle/authenticate-users/single-sign-on#bootstrapping-an-sso-session-after-login) for additional information and examples.
+  </APIField>
+</APIBlock>
+
 #### Request Parameters
 
 <APIBlock>
@@ -87,6 +96,13 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
 
     If not using managed domains, providing an email address using this parameter prepopulates the email address in the login page.
   </APIField>
+  <APIField name="max_age" type="Integer" optional since="1.60.0">
+    An optional parameter indicating the maximum age in seconds of the authenticated SSO session. The OpenID specification calls this the Maximum Authentication Age.
+
+    If the user does not have a SSO session, this parameter will have no effect. If the user does have a SSO session and it is older than specified by this parameter, the user will be required to authenticate again. When this parameter is used, and the SSO session is older than the value specified, this is equivalent to requesting `prompt=login`.
+
+    The age of the SSO session is calculated from the start of the authentication event.
+  </APIField>
   <APIField name="metaData.device.description" type="String" optional>
     A human readable description of the device used during login.
     This metadata is used to describe the refresh token that may be generated for this login request.
@@ -94,6 +110,17 @@ To begin the Authorization Code Grant you will redirect to the Authorization end
   <APIField name="nonce" type="String" optional since="1.5.0">
     The `nonce` parameter as described in the [OpenID Connect core](https://openid.net/specs/openid-connect-core-1_0.html) specification.
     When this parameter is provided during the Authorization request, the value will be returned in the `id_token`.
+  </APIField>
+  <APIField name="prompt" type="String" optional since="1.60.0">
+    An optional space delimited, case sensitive parameter that allow for additional control for silent authentication, forced reauthentication and consent prompts.
+
+    The possible values are:
+
+    * `none` - No user interface will be displayed to the end user. When authentication or user interaction is required to complete the requested grant, an error will returned to the caller in the form of a redirect.
+    * `login` - The user will be asked to reauthenticate if an existing SSO session exists.
+    * `consent` - The user will be prompted for consent regardless of a previous consent decision to approve or reject a scope.
+
+    See [OIDC Prompt](docs/lifecycle/authenticate-users/oauth/prompt) for additional information, limitations and example usage.
   </APIField>
   <APIField name="redirect_uri" type="String" required>
     The URI to redirect to upon a successful request.
@@ -177,6 +204,15 @@ To begin the Implicit Grant you will redirect to the Authorization endpoint from
 
 <API method="GET" uri="/oauth2/authorize?client_id={client_id}&redirect_uri={redirect_uri}&response_type=token%20id_token&tenantId={tenantId}"/>
 
+### Request Headers
+<APIBlock>
+  <APIField name="Authorization" type="String" optional>
+    An optional request header allowing the the SSO session to be bootstrapped using an existing access token (JWT).
+
+    See [Bootstrapping Single Sign On](/docs/lifecycle/authenticate-users/single-sign-on#bootstrapping-an-sso-session-after-login) for additional information and examples.
+  </APIField>
+</APIBlock>
+
 #### Request Parameters
 
 <APIBlock>
@@ -201,9 +237,27 @@ To begin the Implicit Grant you will redirect to the Authorization endpoint from
 
     If not using managed domains, providing an email address using this parameter prepopulates the email address in the login page.
   </APIField>
+  <APIField name="max_age" type="Integer" optional since="1.60.0">
+    An optional parameter indicating the maximum age in seconds of the authenticated SSO session. The OpenID specification calls this the Maximum Authentication Age.
+
+    If the user does not have a SSO session, this parameter will have no effect. If the user does have a SSO session and it is older than specified by this parameter, the user will be required to authenticate again. When this parameter is used, and the SSO session is older than the value specified, this is equivalent to requesting `prompt=login`.
+
+    The age of the SSO session is calculated from the start of the authentication event.
+  </APIField>
   <APIField name="nonce" type="String" optional since="1.5.0">
     The `nonce` parameter as described in the [OpenID Connect core](https://openid.net/specs/openid-connect-core-1_0.html) specification.
     When this parameter is provided during the Authorization request, the value will be returned in the `id_token` if requested by the `response_type` parameter.
+  </APIField>
+  <APIField name="prompt" type="String" optional since="1.60.0">
+    An optional space delimited, case sensitive parameter that allow for additional control for silent authentication, forced reauthentication and consent prompts.
+
+    The possible values are:
+
+    * `none` - No user interface will be displayed to the end user. When authentication or user interaction is required to complete the requested grant, an error will returned to the caller in the form of a redirect.
+    * `login` - The user will be asked to reauthenticate if an existing SSO session exists.
+    * `consent` - The user will be prompted for consent regardless of a previous consent decision to approve or reject a scope.
+
+    See [OIDC Prompt](docs/lifecycle/authenticate-users/oauth/prompt) for additional information, limitations and example usage.
   </APIField>
   <APIField name="redirect_uri" type="String" required>
     The URI to redirect to upon a successful request.
@@ -1164,7 +1218,7 @@ _Response Codes_
   <APIField name="pendingIdPLink.identityProviderUserId" type="String">
     The unique user Id of the user represented by the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
 
-    This is the value that FusionAuth will use to uniquely link a FusionAuth User to a user in the 3rd party identity provider.
+    This is the value that FusionAuth will use to uniquely link a FusionAuth User to a user in the third party identity provider.
   </APIField>
   <APIField name="scope" type="String" since="1.50.0">
     The value that should be used for the <InlineField>scope</InlineField> parameter during the interactive portion of the Device Code Grant.
@@ -1307,7 +1361,7 @@ _Response Codes_
   <APIField name="identityProviderLink.identityProviderUserId" type="String">
     The unique user Id of the user represented by the linking token provided in the `idp-link:` scope value optionally provided on the Device Authorize request.
 
-    This is the value that FusionAuth will use to uniquely link a FusionAuth User to a user in the 3rd party identity provider.
+    This is the value that FusionAuth will use to uniquely link a FusionAuth User to a user in the third party identity provider.
   </APIField>
   <APIField name="identityProviderLink.insertInstant" type="Long">
     The [instant](/docs/reference/data-types#instants) when the identity provider link was created.
@@ -1696,12 +1750,15 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `access_denied`
     * `authorization_pending`
     * `change_password_required`
+    * `consent_required`
     * `expired_token`
+    * `interaction_required`
     * `invalid_client`
     * `invalid_grant`
     * `invalid_request`
     * `invalid_scope`
     * `invalid_token`
+    * `login_required`
     * `not_licensed`
     * `server_error`
     * `two_factor_required`
@@ -1729,6 +1786,7 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `access_token_required`
     * `access_token_unavailable_for_processing`
     * `auth_code_not_found`
+    * `authentication_required`
     * `change_password_administrative`
     * `change_password_breached`
     * `change_password_expired`
@@ -1736,6 +1794,8 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `client_authentication_missing`
     * `client_id_mismatch`
     * `consent_canceled`
+    * `consent_required`
+    * `email_verification_required`
     * `grant_type_disabled`
     * `invalid_additional_client_id`
     * `invalid_client_authentication`
@@ -1743,6 +1803,7 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `invalid_client_id`
     * `invalid_device_code`
     * `invalid_entity_permission_scope`
+    * `invalid_expires_in`
     * `invalid_grant_type`
     * `invalid_id_token_hint`
     * `invalid_origin`
@@ -1751,10 +1812,12 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `invalid_pkce_code_challenge_method`
     * `invalid_pkce_code_verifier`
     * `invalid_post_logout_redirect_uri`
+    * `invalid_prompt`
     * `invalid_redirect_uri`
     * `invalid_response_mode`
     * `invalid_response_type`
     * `invalid_target_entity_scope`
+    * `invalid_tenant_id`
     * `invalid_user_code`
     * `invalid_user_credentials`
     * `invalid_user_id`
@@ -1762,21 +1825,27 @@ Each possible value <InlineField>error</InlineField> and <InlineField>error_reas
     * `missing_client_id`
     * `missing_client_secret`
     * `missing_code`
-    * `missing_code_challenge`,
-    * `missing_code_verifier`,
+    * `missing_code_challenge`
+    * `missing_code_verifier`
     * `missing_device_code`
     * `missing_grant_type`
     * `missing_redirect_uri`
     * `missing_refresh_token`
     * `missing_required_scope`
     * `missing_response_type`
+    * `missing_tenant_id`
     * `missing_token`
     * `missing_user_code`
     * `missing_user_id`
     * `missing_verification_uri`
+    * `multi_factor_challenge_required`
     * `not_licensed`
+    * `phone_verification_required`
     * `refresh_token_not_found`
     * `refresh_token_type_not_supported`
+    * `registration_missing_requirement`
+    * `registration_required`
+    * `registration_verification_required`
     * `unknown`
     * `unknown_scope`
     * `user_code_expired`
