@@ -71,13 +71,21 @@ Another example would be even if the user has an SSO session, if the user is req
 
 
 ### Security considerations
-Note that you should use the `prompt` parameter with the correct security expectations. Because this is just a request parameter, a user or proxy could simpley remove this parameter from the request.
+Note that you should use `prompt=login` or `max_age` with the correct expectations. Request parameters can be easily removed from the request, so you should not rely upon these parameters for any level of security or guarantee that the user has been reauthenticated.
 
-In particular for `prompt=login` you must not rely upon this mechanism to ensure a user has been reauthenticated because the `prompt` could simply be removed and then the user's existing SSO session would be used, an authorization code would be generated and redirected back to the authorized redirect.
+If a user were to remove the `prompt=login` parameter and the user had an existing SSO session, then existing session would be used, an authorization code would be generated and redirected back to the authorized redirect.
 
-The prompt parameter is intended as a suggestion to the identity provider but provides no guarantee to the relying party (RP) that the request was honored, and the user has been reauthenticated.
+The prompt parameter is intended to be a suggestion to the identity provider but by itself provides no guarantee to the relying party (RP) that the request was honored, and the user has been reauthenticated.
 
-If you are using `prompt=login` for security purposes in order to ensure the access token is both recent, and the result of a recent authentication event, you must inspect and validate the `auth_time` claim in the token you are using whether it is the `id_token` or `access_token`. This value will represent the time the user authenticated, and if the `prompt=login` was honored, and not removed by a malicious user, then the `auth_time` will have been updated. If the parameter was removed, or the user was not reauthenticated for some other reason, the `auth_time` in the token will be equal to your previous token indicating that no authentication event has taken place.
+If you are using `prompt=login` for security purposes in order to ensure the user has recently authentication, you must inspect and validate the `auth_time` claim in the token you are using whether it is the `id_token` or `access_token`.
+
+The `auth_time` claim represents the time of the actual user authentication measured in seconds since January 1 1970 00:00:00 UTC. This point in time reference point is generally referred to as the unix epoch.
+
+Using this value, you can assert when the last user authenticate event occurred and as a result know that `prompt=login` was honored by the identity provider and was not removed by a malicious user.
+
+For example, when you utilize `login=prompt` or `max_age`, when you complete the auth code exchange when using the authorization code grant you will inspect the `auth_time` and compare it to the current token you have to assert the new token has a more recent `auth_time` claim, and that the value is within your expected time frame.
+
+If the `auth_time` has not changed from your current access token, or for whatever reason is not recent enough - you may reject the token and end the users session, or fail to allow them to perform the requested task that initiated this login request.
 
 When using `prompt=login` or `max_age=` parameters, you must also be inspecting the `auth_time` claim to prove the user has authenticated with a time frame that meets your security profile.
 
