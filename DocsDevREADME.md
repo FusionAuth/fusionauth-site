@@ -529,7 +529,7 @@ Whenever you receive an error, you need to determine if you should:
 
 ## Adding category or sub category to menu
 
-If you add a category or sub category to the menu, there is a mechanism to auto generated a landing page for that category. You can see this on the [Manage Users -> Search page](https://fusionauth.io/docs/lifecycle/manage-users/search/). To enable this, as a line to the redirect.json as in [this example](https://github.com/FusionAuth/fusionauth-site/pull/3896).
+If you add a category or sub category to the menu, there is a mechanism to auto generate a landing page for that category. You can see this on the [Manage Users -> Search page](https://fusionauth.io/docs/lifecycle/manage-users/search/). To enable this, add a line to the redirect.json as in [this example](https://github.com/FusionAuth/fusionauth-site/pull/3896).
 
 ## Pull request review process
 
