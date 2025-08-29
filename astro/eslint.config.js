@@ -47,11 +47,10 @@ export default [
     }),
     rules: {
       ...mdx.flat.rules,
-      // if you want to override some rules for md/mdx files
+      // if you want to override some rules for md/mdx files you should do it here,
+      // but the remark rules specifically need to be ignored in .remarkrc.js
       'mdx/remark': 'error',
       'no-unused-expressions': 'off',
-      'remark-lint-no-undefined-references': 'off',
-      'remark-lint-no-unused-definitions': 'off',
       'no-undef': 'off',
     }
   },
@@ -66,5 +65,5 @@ export default [
         sourceType: 'module',
       }
     }
-  }
+  },
 ];
