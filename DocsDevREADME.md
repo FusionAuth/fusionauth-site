@@ -527,6 +527,10 @@ Whenever you receive an error, you need to determine if you should:
 - Add a known word to [`the vocabulary`](./config/vale/styles/config/vocabularies/FusionAuth/accept.txt) if it's a language, library, company name, etc. But make sure you have the correct capitalization to avoid having duplicates there; or
 - In case of custom Astro components, you'd probably need to add a new `TokenIgnores` item in [`.vale.ini`](./.vale.ini).
 
+## Adding category or sub category to menu
+
+If you add a category or sub category to the menu, there is a mechanism to auto generated a landing page for that category. i.e. https://fusionauth.io/docs/lifecycle/manage-users/search/ . To enable this, as a line to the redirect.json as in [this example](https://github.com/FusionAuth/fusionauth-site/pull/3896).
+
 ## Pull request review process
 
 * If a piece of content is technical, it needs a technical review by engineering or devrel.
