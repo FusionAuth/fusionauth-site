@@ -50,6 +50,24 @@ I want to ensure the user is prompted for consent for the requested scopes even 
 
 To do this, add `prompt=consent` to the request.
 
+Please note, that the `consent` prompt only applies when FusionAuth has otherwise been configured to prompt for consent. For example, if the application is not configured as a third party application, or you have configured the consent mode to always prompt or never prompt, adding `consent` to the prompt parameter will have no effect.
+
+To explain this behavior further, review the following table to explain the expected prompt behavior in the following configurations.
+
+| Relationship | Consent mode      | prompt= | Display prompt to user  |
+|--------------|-------------------|---------|-------------------------|
+| First party  | -                 | -       | Never                   |
+| First party  | -                 | consent | Never                   |
+| Third party  | Always prompt     | -       | Always                  |
+| Third party  | Always prompt     | consent | Always                  |
+| Third party  | Never prompt      | -       | Never                   |
+| Third party  | Never prompt      | consent | Never                   |
+| Third party  | Remember decision | -       | Once, remember decision |
+| Third party  | Remember decision | consent | Always                  |
+
+As you can see, the only time adding `prompt=consent` will change when we show the consent prompt to the end user is when the application is configured as third party, and the consent mode has been set to Remember decision.
+
+
 
 #### Error handling
 
@@ -71,6 +89,7 @@ Another example would be even if the user has an SSO session, if the user is req
 - `error_reason=consent_required`
 - `error_descriotion=The user is required to consent to one or more scopes in order to complete authentication.`
 
+See [OAuth2 Error Redirect parameters](/docs/lifecycle/authenticate-users/oauth/endpoints#redirect-parameters-2) for additional information.
 
 ### Security considerations
 Note that you should use `prompt=login` or `max_age` with the correct expectations. Request parameters can be easily removed from the request, so you should not rely upon these parameters for any level of security or guarantee that the user has been reauthenticated.
@@ -81,7 +100,7 @@ The prompt parameter is intended to be a suggestion to the identity provider but
 
 If you are using `prompt=login` for security purposes in order to ensure the user has recently authentication, you must inspect and validate the `auth_time` claim in the token you are using whether it is the `id_token` or `access_token`.
 
-The `auth_time` claim represents the time of the actual user authentication measured in seconds since January 1 1970 00:00:00 UTC. This point in time reference point is generally referred to as the unix epoch.
+The `auth_time` claim represents the time of the actual user authentication and is expressed as [unix time](/docs/reference/data-types#unix-time).
 
 Using this value, you can assert when the last user authenticate event occurred and as a result know that `prompt=login` was honored by the identity provider and was not removed by a malicious user.
 
@@ -103,17 +122,16 @@ The OpenID connect specification also defines `select_account`. This parameter i
 
 The `prompt` parameter will not be forwarded to third party identity providers when clicking a "Login with" buton on the login page, or when using the `idp_hint` parameter, or a `login_hint` parameter with an IdP configured to manage the corresponding email domain that would result in FusionAuth bypassing the login page and redirecting to the third party identity provider.
 
-The reason for this decision is because this is an optional parameter in the OpenID specification, it is not known if every OpenID Connect identity provider will honor this parameter, and it is unlikely that other supported identity providers that are not OpenID Connect compliant will honor this parameter. Additionally and most important, it may cause integration failures due to unexpected parameters being sent to third party identity providers.
+The reason for this decision is because `prompt` is an optional parameter in the OpenID specification and we cannot know if every OpenID Connect identity provider will honor this parameter. Additionally FusionAuth supports many identity providers, many of which are actually OAuth2, or partial implementations of OAuth2 and OpenID Connect. If we consider all supported identity providers, it is unlikely that all will honor this parameter, and more importantly sending unknown or unexpected parameters to some identity providers will cause a failure.
+
+For these reasons, we decided to not forward the `prompt` parameter for now. This may be improved in the future by allowing for configuration to indicate if the third party identity provider supports the `prompt` parameter, and which prompt values you would like to forward. It may even be worth while to allow for this value to be translated if the third party supports similar behavior but with a differently named parameter. For example, SAML v2 has a parameter named `ForceAuthN` which provides a similar function to `prompt=login`.
 
 If you require the ability to optionally forward the `prompt` parameter to a third party identity provider, please open a GitHub issue, or contact your account manager. We would love to receive your feedback.
 
 #### Edge cases
 
-One edge case to note is that if begin a request with `idp_hint` and `prompt=login` FusionAuth will still redirect to the identity provider request by the `idp_hint`. The reason for this is generally speaking when `idp_hint` is provided, you are telling FusionAuth this user must be authenticated by a third party, do not show the login page. In this case it would not be useful to then show the user the FusionAuth login page knowing the cannot authenticate. If you encounter this edge case, you should likely just remove the `prompt=login` from the request. The same behavior will occur when using `login_hint` with managed domains. This may be improved in the future by allowing for configuration to indicate if it is safe to forward the `prompt` parameter to the third party.
+If you are using the `idp_hint` request parameter and also include `prompt=login` FusionAuth will still redirect to the identity provider resolved by request parameter.
 
-#### Consent
-The `consent` prompt only applies when FusionAuth has otherwise been configured to display consent prompts. For example, if the application is not configured as a third party application, or you have configured the consent mode to always prompt or never prompt, adding `consent` to the prompt parameter will have no effect.`
+The reason for this decision is that when the `idp_hint` is provided, you have provided explicit instruction to FusionAuth that this user must be authenticated by a third party and often the caller does not want the user to see the FusionAuth login page. In this context, it would not be useful to then show the user the FusionAuth login page knowing FusionAuth will not be able to authenticate the user. It is possible this is not the desired behavior for all customers.
 
-When the consent mode is remember decision, then adding `consent` to the prompt parameter will cause the user to be prompted again regardless of their pior decision.
-
-
+If you encounter this edge case, you should remove the `prompt=login` from the request. Using a `login_hint` request parameter with managed domains will result in the same behavior.  This may be improved in the future by allowing for additional identity provider configuration for prompt handling, see the above section on third party identity providers for additional details.
