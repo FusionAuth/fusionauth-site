@@ -51,7 +51,6 @@ export default [
       'mdx/remark': 'error',
       'no-unused-expressions': 'off',
       'remark-lint-no-undefined-references': 'off',
-      'remark-lint-no-unused-definitions': 'off',
       'no-undef': 'off',
     }
   },
