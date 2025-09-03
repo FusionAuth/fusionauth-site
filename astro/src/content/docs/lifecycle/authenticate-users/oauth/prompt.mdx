@@ -77,13 +77,13 @@ For example, if you request `prompt=none` but the user is not authenticated, an 
 
 You can expect the `error` to contain the named error specified by the OpenID Connect specification when defined. The `error_reason` will provide an error code that is specific to the reason the error occurred. And the `error_description` is a human readable version of the `error_reason`.
 
-For example, if you request `prompt=none` and the user does not have an SSO session, then authentication is required to complete the requested grant. In this case, instead of returning the `code` on the redirect, the redirect will contain `error`, `error_reason` and `error_description` indicating why authentication could not be completed. In this specific example, you would expect the following values to be returned:
+For example, when you request `prompt=none` and the user doesn't have an active SSO session, the redirect contains the following `error`, `error_reason` and `error_description`:
 
 - `error=login_required`
 - `error_reason=authentication_required`
 - `error_descriotion=The user is required to complete authentication.`
 
-Another example would be even if the user has an SSO session, if the user is required to provide consent, we cannot complete the request, so an error would be returned. In this example, you would expect the following values to be returned:
+Another example is when the user is required to provide consent even when there's an active SSO session (`prompt=consent`). The returned error contains:
 
 - `error=consent_required`
 - `error_reason=consent_required`
@@ -92,21 +92,21 @@ Another example would be even if the user has an SSO session, if the user is req
 See [OAuth2 Error Redirect parameters](/docs/lifecycle/authenticate-users/oauth/endpoints#redirect-parameters-2) for additional information.
 
 ### Security considerations
-Note that you should use `prompt=login` or `max_age` with the correct expectations. Request parameters can be easily removed from the request, so you should not rely upon these parameters for any level of security or guarantee that the user has been reauthenticated.
+Use `prompt=login` or `max_age` with the correct expectations. Don't rely on these parameters for either a security guarantee or that the user is reauthenticated. This is because request parameters can be removed easily.
 
-If a user were to remove the `prompt=login` parameter and the user had an existing SSO session, then existing session would be used, an authorization code would be generated and redirected back to the authorized redirect.
+For example, if a user with an existing SSO session removes the `prompt=login` parameter, an authorization code is generated and redirected back to the authorized redirect.
 
-The prompt parameter is intended to be a suggestion to the identity provider but by itself provides no guarantee to the relying party (RP) that the request was honored, and the user has been reauthenticated.
+The prompt parameter is a suggestion to the identity provider, but by itself provides no guarantee to the relying party (RP) that the request was honored, and the user has been reauthenticated.
 
-If you are using `prompt=login` for security purposes in order to ensure the user has recently authentication, you must inspect and validate the `auth_time` claim in the token you are using whether it is the `id_token` or `access_token`.
+To use `prompt=login` to ensure the user authenticated recently, you must also inspect and validate the `auth_time` claim in the appropriate token, either the `id_token` or `access_token`.
 
 The `auth_time` claim represents the time of the actual user authentication and is expressed as [unix time](/docs/reference/data-types#unix-time).
 
 Using this value, you can assert when the last user authenticate event occurred and as a result know that `prompt=login` was honored by the identity provider and was not removed by a malicious user.
 
-For example, when you utilize `login=prompt` or `max_age`, when you complete the auth code exchange when using the authorization code grant you will inspect the `auth_time` and compare it to the current token you have to assert the new token has a more recent `auth_time` claim, and that the value is within your expected time frame.
+For example, when using `login=prompt` or `max_age`, after completing the authorization code grant auth code exchange compare the `auth_time` to the current token. The new token must have a more recent `auth_time` claim and the value must be within your expected time frame.
 
-If the `auth_time` has not changed from your current access token, or for whatever reason is not recent enough - you may reject the token and end the users session, or fail to allow them to perform the requested task that initiated this login request.
+If `auth_time` is the same as your current access token, or isn't recent enough, reject the token and end the users session. Alternatively, don't allow the user to perform the requested task that initiated the login request.
 
 When using `prompt=login` or `max_age=` parameters, you must also be inspecting the `auth_time` claim to prove the user has authenticated with a time frame that meets your security profile.
 
