@@ -112,17 +112,19 @@ When using `prompt=login` or `max_age=` parameters, you must also be inspecting 
 
 ### Limitations and constraints
 
-The following are some known limitations and constraints that may be useful to understand as you begin using this new parameter.
+Before using this parameter make sure you understand the following are some known limitations and constraints.
 
 #### Unsupported values
 
-The OpenID connect specification also defines `select_account`. This parameter is not yet supported. Providing this or any additional values in the `prompt` parameter will be ignored.
+The Open ID `select_account` parameter is currently unsupported. Using this value in `prompt` is ignored.
 
 ##### Third party identity providers
 
-The `prompt` parameter will not be forwarded to third party identity providers when clicking a "Login with" buton on the login page, or when using the `idp_hint` parameter, or a `login_hint` parameter with an IdP configured to manage the corresponding email domain that would result in FusionAuth bypassing the login page and redirecting to the third party identity provider.
+The `prompt` parameter isn't forwarded to third party identity providers in the following cases:
+- Clicking a "Login with" button on the login page.
+- Using the `idp_hint` parameter, or a `login_hint` parameter with an IdP that is configured to manage the corresponding email domain that would result in FusionAuth bypassing the login page and redirecting to the third party identity provider.
 
-The reason for this decision is because `prompt` is an optional parameter in the OpenID specification and we cannot know if every OpenID Connect identity provider will honor this parameter. Additionally FusionAuth supports many identity providers, many of which are actually OAuth2, or partial implementations of OAuth2 and OpenID Connect. If we consider all supported identity providers, it is unlikely that all will honor this parameter, and more importantly sending unknown or unexpected parameters to some identity providers will cause a failure.
+This is because `prompt` is an optional parameter in the OpenID specification so may not be supported by every identity provider. FusionAuth supports many identity providers, some of which are OAuth2, or partial implementations of OAuth2 and OpenID Connect. Sending unknown or unexpected parameters to some of those identity providers causes a failure.
 
 For these reasons, we decided to not forward the `prompt` parameter for now. This may be improved in the future by allowing for configuration to indicate if the third party identity provider supports the `prompt` parameter, and which prompt values you would like to forward. It may even be worth while to allow for this value to be translated if the third party supports similar behavior but with a differently named parameter. For example, SAML v2 has a parameter named `ForceAuthN` which provides a similar function to `prompt=login`.
 
@@ -130,8 +132,8 @@ If you require the ability to optionally forward the `prompt` parameter to a thi
 
 #### Edge cases
 
-If you are using the `idp_hint` request parameter and also include `prompt=login` FusionAuth will still redirect to the identity provider resolved by request parameter.
+When using the `idp_hint` request parameter and including `prompt=login`, FusionAuth redirects to the identity provider resolved by request parameter.
 
-The reason for this decision is that when the `idp_hint` is provided, you have provided explicit instruction to FusionAuth that this user must be authenticated by a third party and often the caller does not want the user to see the FusionAuth login page. In this context, it would not be useful to then show the user the FusionAuth login page knowing FusionAuth will not be able to authenticate the user. It is possible this is not the desired behavior for all customers.
+The `idp_hint` indicates that this user must be authenticated by a third party and often the caller does not want the user to see the FusionAuth login page. In this context, it's not useful to show the user the FusionAuth login page as FusionAuth is unable to authenticate the user. It is possible this is not the desired behavior for all customers.
 
-If you encounter this edge case, you should remove the `prompt=login` from the request. Using a `login_hint` request parameter with managed domains will result in the same behavior.  This may be improved in the future by allowing for additional identity provider configuration for prompt handling, see the above section on third party identity providers for additional details.
+If this behavior happens, remove the `prompt=login` from the request. Using a `login_hint` request parameter with managed domains results in the same behavior.  This may be improved in the future by allowing for additional identity provider configuration for prompt handling, see the above section on third party identity providers for additional details.
