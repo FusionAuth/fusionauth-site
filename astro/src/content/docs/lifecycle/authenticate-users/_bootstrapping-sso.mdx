@@ -9,18 +9,18 @@ In certain scenarios you may have authenticated a user outside of the typical OA
 
 These are one-time setup steps in order to enable this feature:
 
-* Enable the access token bootstrap setting on the tenant via the <InlineField>Allow access token bootstrap</InlineField> setting in the [Admin UI](/docs/get-started/core-concepts/tenants#oauth) or by setting the <InlineField>tenant.ssoConfiguration.allowAccessTokenBootstrap</InlineField> field to `true` in the [Tenant API](/docs/apis/tenants).
-* You will need to configure a reverse proxy to add the required `Authorization` header.
+* Enable the access token bootstrap setting on the tenant. There are two ways to do this. Use the [Admin UI](/docs/get-started/core-concepts/tenants#oauth) or set the <InlineField>tenant.ssoConfiguration.allowAccessTokenBootstrap</InlineField> field to `true` in the [Tenant API](/docs/apis/tenants).
+* Configure a reverse proxy to add the required `Authorization` header.
 
-While the implementation of your reverse proxy is out of scope, a common scenario would be that you already have an HTTP only secure cookie that holds the user's access token. In this example, the reverse proxy can copy that cookie value into the `Authorization` header as it passes through.
+The way to set a reverse proxy varies depending on your setup. One common scenario is an existing HTTP only secure cookie that holds the user's access token. In this example, the reverse proxy copies the value of that cookie into the `Authorization` header as it passes through.
 
 ![Advanced SSO settings with allow access token bootstrap.](/img/docs/lifecycle/authenticate-users/oauth-access-token-bootstrap.png)
 
-Follow these steps to setup the request to bootstrap the SSO session for a given user:
+Follow these steps to setup the request to bootstrap the SSO session for a user:
 
-* Build the Authorize request as you normally would when redirecting to the [OAuth Authorize](/docs/lifecycle/authenticate-users/oauth/endpoints#authorize) endpoint. The host and path may very based upon your proxy configuration, but the query parameters should be the same as a normal request to this endpoint.
-* Intercept this request, adding the access token to the `Authorization` header using the `Bearer` scheme.
-* Forward the request the FusionAuth Authorize endpoint `/oauth2/authorize`.
+* Build a normal Authorize request that redirects to the [OAuth Authorize](/docs/lifecycle/authenticate-users/oauth/endpoints#authorize) endpoint. The host and path may very based upon your proxy configuration, but the query parameters are the same as a normal request to this endpoint.
+* Intercept the request and add the access token to the `Authorization` header using the `Bearer` scheme.
+* Forward the request to the FusionAuth Authorize endpoint `/oauth2/authorize`.
 
 The following is an example Authorization header using the Bearer scheme:
 
@@ -28,6 +28,6 @@ The following is an example Authorization header using the Bearer scheme:
 Authorization: Bearer <access token>
 ```
 
-If the token is valid, FusionAuth will create an SSO session and complete the requested grant by redirecting to the authorized redirect specified by the `redirect_uri` request parameter. Separate from the session being created, all of the OAuth2 parameter validation is the same as a normal request.
+If the token is valid, FusionAuth creates an SSO session and completes the requested grant by redirecting to the authorized redirect specified by the `redirect_uri` request parameter. Any other OAuth2 parameter validation is the same as a normal request.
 
 Note that FusionAuth adds the `auth_time` claim to the access token. If you remove this claim from the access token it cannot be used to bootstrap a SSO session.
