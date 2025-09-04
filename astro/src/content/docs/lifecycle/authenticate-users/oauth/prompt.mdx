@@ -19,36 +19,36 @@ The OpenID Connect prompt parameter provides additional flexibility to control t
 
 ### Supported values
 
-- **`none`:** No user interface is displayed to the end user. When authentication or user interaction is required to complete the requested grant, an error will returned to the caller in the form of a redirect.
-- **`login`:**  The user must reauthenticate when there's an existing SSO session.
-- **`consent`:** Always prompts for consent from the user.
+- **`none`:** No user interface is displayed. An error is returned if the user is not already authenticated.
+- **`login`:**  The user will be prompted for authentication when there's an existing SSO session.
+- **`consent`:** Always prompt for consent from the user.
 
 ### Example use cases
 
-Note that these are just examples, and you may also provide more than one consent on the request. The one exception to this would be when using `prompt=none`, no additional prompts may be added. By contrast, `prompt=login consent` is acceptable.
+The following examples use a single consent value. A request may contain more than one consent value unless one of the values is `none`. Using `prompt=login none` for example result in a validation error.
 
 #### Silent authentication
 
-I want to obtain a new access token using the authorization code grant programatically. If the user's SSO session is no longer active I do not want to see a login page, instead I want to receive an error so I can authenticate as a separate task.
+This is usually used when an application would like obtain a new authorization code grant without any user interaction. The application will receive an error user interaction is required. The application can then decide how and when to ask the user to authenticate.
 
-To do this, add `prompt=none` to the request.
+Add `prompt=none` to the request.
 
-For an authorization code grant response that contains `code`, complete the code exchange to finish a silent authentication. If the response contains `error` then the user is not authenticated and some sort of interaction will be required. See [Error handling](#error-handling) below for some examples.
+For an authorization code grant response that contains `code`, complete the code exchange to finish a silent authentication. If the response contains `error` then the user will require some sort of interaction to complete authentication. See [Error handling](#error-handling) below for some examples.
 
 #### Require reauthentication
 Require the user to authenticate even if they have an active SSO session.
 
-To do this, add `prompt=login` to the request.
+Add `prompt=login` to the request.
 
 #### Require reauthentication for a session older than 120 seconds
-Authenticate a user if the session was created is less than 120 seconds ago, otherwise require authentication.
+Authenticate a user if the session was created less than `120` seconds ago, otherwise require the user to authenticate again.
 
-To do this, add `max_age=120` to the request.
+Add `max_age=120` to the request.
 
 #### Force consent
-Force prompting the user for consent for the requested scopes even if they were previously accepted or rejected.
+Force prompting the user for consent for the requested scopes even if the scopes were previously accepted or rejected.
 
-Add `prompt=consent` to the request for this use case.
+Add `prompt=consent` to the request.
 
 Note that FusionAuth must be configured to prompt for consent for this prompt to have an effect. For example, adding `consent` to the prompt parameter will have no effect if the application isn't configured as a third party application, or you have configured the consent mode to always prompt or never prompt.
 
@@ -124,7 +124,7 @@ The `prompt` parameter isn't forwarded to third party identity providers.
 
 Examples would include:
 - Clicking a "Login with" button on the login page.
-- Using the `idp_hint` parameter, or a `login_hint` parameter with an IdP that is configured to manage the corresponding email domain that would result in FusionAuth bypassing the login page and redirecting to the third party identity provider.
+- Using the `idp_hint` parameter, or a `login_hint` parameter with an IdP that is configured to manage the corresponding email domain that would result in FusionAuth bypassing the login page and redirecting to the third-party identity provider.
 
 This is because `prompt` is an optional parameter in the OpenID specification so may not be supported by every OpenID Connect identity provider. FusionAuth supports many identity providers, some of which are OAuth2, or partial implementations of OAuth2 and OpenID Connect. Sending unknown or unexpected parameters to some of those identity providers may cause a failure.
 
