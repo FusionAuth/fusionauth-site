@@ -1,5 +1,7 @@
 import remarkLint from 'remark-lint';
 import remarkPresetLintRecommended from 'remark-preset-lint-recommended';
+import remarkLintNoUnusedDefinitions from 'remark-lint-no-unused-definitions';
+import remarkLintNoUndefinedReferences from 'remark-lint-no-undefined-references';
 import { lintRule } from 'unified-lint-rule';
 import { visitParents } from 'unist-util-visit-parents';
 
@@ -74,6 +76,10 @@ const remarkConfig = {
   plugins: [
     remarkLint,
     remarkPresetLintRecommended,
+    // remark-lint-no-unused-definitions
+    [remarkLintNoUnusedDefinitions, false],
+    // remark-lint-no-undefined-references
+    [remarkLintNoUndefinedReferences, false],
     noHtml
   ]
 };

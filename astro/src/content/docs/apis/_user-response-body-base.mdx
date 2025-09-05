@@ -1,0 +1,391 @@
+import APIField from 'src/components/api/APIField.astro';
+import InlineField from 'src/components/InlineField.astro';
+import Aside from 'src/components/Aside.astro';
+import JSON from 'src/components/JSON.astro';
+import DeprecatedSince from 'src/components/api/DeprecatedSince.astro';
+import ModerationStatusResponse from 'src/content/docs/apis/_moderation_status_response.mdx';
+import IdentityTypeResponse from 'src/content/docs/apis/_identity_type_response.mdx';
+import RemovedSince from 'src/components/api/RemovedSince.astro';
+import UserDataEmailFieldResponse from 'src/content/docs/apis/_user-data-email-field-response.mdx';
+import VerificationIdsFieldsResponse from 'src/content/docs/apis/_user-verification-ids-response.mdx';
+import RegistrationVerificationIdsFieldsResponse from 'src/content/docs/apis/_user-registration-verification-ids-response.mdx';
+import UserMembershipFieldsResponse from 'src/content/docs/apis/_user-memberships-response.mdx';
+import UserTokenFieldsResponse from 'src/content/docs/apis/_user-token-response.mdx';
+import UserLoginFieldsResponse from 'src/content/docs/apis/_user-login-response.mdx';
+
+{ (props.login_response || props.passwordless_login_response) &&
+<UserLoginFieldsResponse {...props}/>
+}
+
+{ props.base_field_name === 'user' &&
+<APIField name="trustToken" type="String" since="1.33.0" renderif={!!props.two_factor_login_response}>
+  A trust token that may be used to complete another API request that requires trust. For example, if you receive an error from an API indicating trust is required - indicated by this error code <code>[TrustTokenRequired]</code>, this value can be used to satisfy the trust requirement.
+</APIField>
+}
+
+{ props.base_field_name === 'user' &&
+<APIField name="twoFactorTrustId" type="String" renderif={!!props.two_factor_login_response}>
+The Two Factor Trust identifier. This value is returned when <code>trustComputer</code> was set to <code>true</code> on the request. This value can be used by
+subsequent login requests to bypass the Two Factor challenge.
+</APIField>
+}
+
+{ (props.create_user || props.login_response || props.passwordless_login_response || props.idp_response) &&
+<UserTokenFieldsResponse/>
+}
+
+{ (props.create_user || props.update_user || props.retrieve_user) &&
+<VerificationIdsFieldsResponse />
+}
+
+{ props.retrieve_user &&
+<RegistrationVerificationIdsFieldsResponse />
+}
+
+<APIField name={props.base_field_name + '.active'} type="Boolean">
+  True if the User is active. False if the User has been deactivated. Deactivated Users will not be able to log in.
+</APIField>
+
+<APIField name={props.base_field_name + '.birthDate'} type="String">
+  The User's birthdate formatted as `YYYY-MM-DD`
+</APIField>
+
+<APIField name={props.base_field_name + '.breachedPasswordLastCheckedInstant'} type="Long">
+  The [instant](/docs/reference/data-types#instants) this user's password was last checked to determine if it is compromised.
+</APIField>
+
+<APIField name={props.base_field_name + '.connectorId'} type="UUID" since="1.18.0">
+  The unique Id of the [Connector](/docs/lifecycle/migrate-users/connectors/) associated with the System of Record being used to authenticate the user.
+</APIField>
+
+<APIField name={props.base_field_name + '.cleanSpeakId'} type="UUID">
+  This Id is used by FusionAuth when the User's username is sent to CleanSpeak to be moderated (filtered and potentially sent to the approval queue). It is the **content Id** of the username inside CleanSpeak.
+</APIField>
+
+<APIField name={props.base_field_name + '.data'} type="Object">
+  An object that can hold any information about the User that should be persisted.
+</APIField>
+
+<UserDataEmailFieldResponse base_field_name={props.base_field_name} />
+
+<APIField name={props.base_field_name + '.email'} type="String">
+  The User's email address.
+</APIField>
+
+<APIField name={props.base_field_name + '.encryptionScheme'} type="String" since="1.20.1" renderif={!!props.retrieve_user}>
+  The encryption scheme used to hash the password for this user. This value is only returned when the user is retrieved using an API key.
+</APIField>
+
+<APIField name={props.base_field_name + '.expiry'} type="Long">
+  The expiration [instant](/docs/reference/data-types#instants) of the User's account. An expired user is not permitted to log in.
+</APIField>
+
+<APIField name={props.base_field_name + '.firstName'} type="String">
+  The first name of the User.
+</APIField>
+
+<APIField name={props.base_field_name + '.fullName'} type="String">
+  The User's full name as a separate field that is not calculated from <InlineField>firstName</InlineField> and <InlineField>lastName</InlineField>.
+</APIField>
+
+<APIField name={props.base_field_name + '.id'} type="UUID">
+  The User's unique Id.
+</APIField>
+
+<APIField name={props.base_field_name + '.identities'} type="Array" since="1.59.0">
+  The list of identities that exist for a User.
+</APIField>
+
+<APIField name={props.base_field_name + '.identities[x].displayValue'} type="String" since="1.59.0">
+  The display value for the identity. Only used for `username` type identities. If the unique username feature is not enabled, this value
+  will be the same as <InlineField>{props.base_field_name}.identities\[x].value</InlineField>. Otherwise, it will be the username the User has chosen. For
+  primary username identities, this will be the same value as <InlineField>{props.base_field_name}.username</InlineField>.
+</APIField>
+
+<APIField name={props.base_field_name + '.identities[x].insertInstant'} type="Long" since="1.59.0">
+  The [instant](/docs/reference/data-types#instants) when the identity was created.
+</APIField>
+
+<APIField name={props.base_field_name + '.identities[x].lastLoginInstant'} type="Long" since="1.59.0">
+  The [instant](/docs/reference/data-types#instants) when the identity was last used to log in. If a User has multiple identity types (`username`, `email`, and `phoneNumber`), then this value will represent the specific identity they last used to log in. This contrasts with <InlineField>{props.base_field_name}.lastLoginInstant</InlineField>, which represents the last time any of the User's identities was used to log in.
+
+  <Aside type="note">
+    Identity provider logins will not be reflected here (see <InlineField>{props.base_field_name}.lastLoginInstant</InlineField> for a field that includes identity provider logins).
+  </Aside>
+</APIField>
+
+<APIField name={props.base_field_name + '.identities[x].lastUpdateInstant'} type="Long" since="1.59.0">
+  The [instant](/docs/reference/data-types#instants) when the identity was last updated.
+</APIField>
+
+<APIField name={props.base_field_name + '.identities[x].moderationStatus'} type="String" since="1.59.0">
+  <ModerationStatusResponse />
+
+  Only used for `username` type identities. For primary username identities, this will be the same value as <InlineField>{props.base_field_name}.usernameStatus</InlineField>.
+</APIField>
+
+<APIField name={props.base_field_name + '.identities[x].type'} type="String" since="1.59.0">
+  <IdentityTypeResponse />
+</APIField>
+
+<APIField name={props.base_field_name + '.identities[x].value'} type="String" since="1.59.0">
+  The value represented by the identity. The contents of this field depend on <InlineField>{props.base_field_name}.identities\[x].type</InlineField>and will be one of the following:
+
+  * Email address - The User's email address, always lower cased. For primary email identities, this will be the same value as <InlineField>{props.base_field_name}.email</InlineField>
+  * Phone number - The User's phone number, in E.164 canonical format. For primary phone number identities, this will be the same value as <InlineField>{props.base_field_name}.phoneNumber</InlineField>
+  * Username - User's username - this will be the same as <InlineField>{props.base_field_name}.identities\[x].displayValue</InlineField>. For primary username identities, this will be the same value as <InlineField>{props.base_field_name}.username</InlineField>
+
+  This value is unique within a tenant for a particular <InlineField>{props.base_field_name}.identities\[x].type</InlineField>.
+
+  <Aside type="note">
+    If the unique usernames feature is enabled, `value` will be the unique username (within the tenant). For primary username identities, this will also be the same value as <InlineField>{props.base_field_name}.uniqueUsername</InlineField>.
+  </Aside>
+</APIField>
+
+<APIField name={props.base_field_name + '.identities[x].verified'} type="Boolean" since="1.59.0">
+  Whether verification was actually performed on the identity by FusionAuth. This is used in combination with the
+  <InlineField>{props.base_field_name}.identities\[x].verifiedReason</InlineField> to decide whether an identity needs verification.
+</APIField>
+
+<APIField name={props.base_field_name + '.identities[x].verifiedInstant'} type="Long" since="1.59.0">
+  The [instant](/docs/reference/data-types#instants) when verification was performed on the identity. This field is only
+  populated when verification was actually performed on the identity by FusionAuth.
+</APIField>
+
+<APIField name={props.base_field_name + '.identities[x].verifiedReason'} type="String" since="1.59.0">
+  The reason the User's identity was verified or not verified. The possible values are:
+
+  * `Skipped` - Verification was skipped due to the `skipVerification` parameter on the request
+  * `Trusted` - Identity was created via an identity provider or a connector
+  * `Unverifiable` - FusionAuth doesn't know how to verify this identity type. Usernames are an example
+  * `Implicit` - Verification was implicitly performed by sending a set password or passwordless message
+  * `Pending` - Tenant policy requires verification but no verification has been performed yet
+  * `Completed` - Verification was performed by FusionAuth
+  * `Disabled` - Tenant policy did not require verification
+  * `Import` - User was imported so verification was not performed by FusionAuth
+
+  If this field is `Disabled`, `Import`, `Skipped`, `Trusted`, or `Unverifiable`, then verification will not be required, regardless of the <InlineField>{props.base_field_name}.identities\[x].verified</InlineField> value.
+  For `Implicit`, `Pending`, or `Completed`, the identity will require verification if <InlineField>{props.base_field_name}.identities\[x].verified</InlineField> is false.
+</APIField>
+
+<APIField name={props.base_field_name + '.imageUrl'} type="String">
+  The URL that points to an image file that is the User's profile image.
+</APIField>
+
+<APIField name={props.base_field_name + '.insertInstant'} type="Long">
+  The [instant](/docs/reference/data-types#instants) when the user was created.
+</APIField>
+
+<APIField name={props.base_field_name + '.lastLoginInstant'} type="Long">
+  The [instant](/docs/reference/data-types#instants) when the User logged in last. See <InlineField>{props.base_field_name}.identities\[x].lastLoginInstant</InlineField>
+  for more granular information based on identity.
+</APIField>
+
+<APIField name={props.base_field_name + '.lastName'} type="String">
+  The User's last name.
+</APIField>
+
+<APIField name={props.base_field_name + '.lastUpdateInstant'} type="Long">
+  The [instant](/docs/reference/data-types#instants) when the User was last updated.
+</APIField>
+
+{!props.create_user &&
+<UserMembershipFieldsResponse base_field_name={props.base_field_name} />
+}
+
+<APIField name={props.base_field_name + '.middleName'} type="String">
+  The User's middle name.
+</APIField>
+
+<APIField name={props.base_field_name + '.mobilePhone'} type="String">
+  The User's mobile phone number. This is useful if you will be sending push notifications or SMS messages to the User.
+
+  <Aside>
+    This differs from <InlineField>{props.base_field_name}.phoneNumber</InlineField> and cannot be used to log in.
+  </Aside>
+</APIField>
+
+<APIField name={props.base_field_name + '.parentEmail'} type="String" since="1.7.0">
+  The email address of the user's parent or guardian. If this value was provided during a create or update operation, this value will only remain until the child is claimed by a parent.
+</APIField>
+
+<APIField name={props.base_field_name + '.passwordChangeRequired'} type="Boolean">
+  Indicates that the User's password needs to be changed during their next login attempt.
+</APIField>
+
+<APIField name={props.base_field_name + '.passwordLastUpdateInstant'} type="Long">
+  The [instant](/docs/reference/data-types#instants) that the User last changed their password.
+</APIField>
+
+<APIField name={props.base_field_name + '.phoneNumber'} type="String" since="1.59.0">
+  The User's primary phone number. The phone number is stored and returned in E.164 canonical format, however a phone number is considered unique regardless of the format. `303-555-1212` is considered equal to `+13035551212` so either version of this phone number can be used whenever providing it as input to an API.
+
+  <Aside>
+    This differs from <InlineField>{props.base_field_name}.mobilePhone</InlineField> in that <InlineField>{props.base_field_name}.phoneNumber</InlineField> can be used to log in, just like an email address or a username.
+  </Aside>
+</APIField>
+
+<APIField name={props.base_field_name + '.preferredLanguages'} type="Array<String>">
+  An array of locale strings that give, in order, the User's preferred languages. These are important for email templates and other localizable text. See [Locales](/docs/reference/data-types#locales).
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations'} type="Array">
+  The list of registrations for the User. This will include registrations for inactive applications.
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations[x].applicationId'} type="UUID">
+  The Id of the Application that this registration is for.
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations[x].authenticationToken'} type="String">
+  The Authentication Token for this registration (if one exists).
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations[x].cleanSpeakId'} type="UUID">
+  This Id is used by FusionAuth when the User's username for this registration is sent to CleanSpeak to be moderated (filtered and potentially sent to the approval queue). It is the **content Id** of the username inside CleanSpeak.
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations[x].data'} type="Object">
+  An object that can hold any information about the User for this registration that should be persisted.
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations[x].id'} type="UUID">
+  The Id of this registration.
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations[x].insertInstant'} type="Long">
+  The [instant](/docs/reference/data-types#instants) that this registration was created.
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations[x].lastLoginInstant'} type="Long">
+  The [instant](/docs/reference/data-types#instants) that the User last logged into the Application for this registration.
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations[x].preferredLanguages'} type="Array<String>">
+  An array of locale strings that give, in order, the User's preferred languages for this registration. These are important for email templates and other localizable text.
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations[x].roles'} type="Array<String>">
+  The list of roles that the User has for this registration. The string is the role's `Name` not the role's `Id`, e.g. `admin` or `user-role`.
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations[x].timezone'} type="String">
+  The User's preferred timezone for this registration. The string will be in an [IANA](https://www.iana.org/time-zones) time zone format.
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations[x].tokens'} type="Map<String,String" deprecated>
+  A map that contains tokens returned from identity providers.
+
+  For example, if this user has authenticated using the Facebook Identity Provider, the Facebook access token will be available in this map, keyed by name `Facebook`. For an OpenID Connect Identity provider, or other generic providers, if a token is stored it will be keyed by the Identity Provider unique Id.
+
+  <RemovedSince since="1.28.0">
+    The token returned and stored from the Identity Provider is now stored in the IdP link and is retrievable using the Identity Provider [Link API](/docs/apis/identity-providers/links).
+  </RemovedSince>
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations[x].username'} type="String">
+  The username of the User for this registration only. This is for display purposes and cannot be used to log in.
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations[x].usernameStatus'} type="String">
+  <ModerationStatusResponse />
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations[x].verified'} type="Boolean">
+  This value indicates if this User's registration has been verified.
+
+  For additional information, see these tutorials:
+
+  * [Email Verification](/docs/lifecycle/manage-users/verification/gate-accounts-until-user-email-verified)
+  * [Registration Verification](/docs/lifecycle/manage-users/verification/registration-gate-accounts-until-verified)
+</APIField>
+
+<APIField name={props.base_field_name + '.registrations[x].verifiedInstant'} type="Long" since="1.48.0">
+  The [instant](/docs/reference/data-types#instants) that this registration was verified.
+</APIField>
+
+<APIField name={props.base_field_name + '.tenantId'} type="UUID">
+  The Id of the Tenant that this User belongs to.
+</APIField>
+
+<APIField name={props.base_field_name + '.timezone'} type="String">
+  The User's preferred timezone. This can be used as a default to display instants, and it is recommended that you allow Users to change this per-session. The string will be in an [IANA](https://www.iana.org/time-zones) time zone format.
+</APIField>
+
+<APIField name={props.base_field_name + '.twoFactor.methods[x].authenticator.algorithm'} type="String">
+  The algorithm used by the TOTP authenticator. With the current implementation, this will always be `HmacSHA1`.
+</APIField>
+
+<APIField name={props.base_field_name + '.twoFactor.methods[x].authenticator.codeLength'} type="Integer">
+  The length of code generated by the TOTP. With the current implementation, this will always be `6`.
+</APIField>
+
+<APIField name={props.base_field_name + '.twoFactor.methods[x].authenticator.timeStep'} type="Integer">
+  The time-step size in seconds. With the current implementation, this will always be 30.
+</APIField>
+
+<APIField name={props.base_field_name + '.twoFactor.methods[x].email'} type="String">
+  The value of the email address for this method. Only present if <InlineField>{props.base_field_name}.twoFactor.methods\[x].method</InlineField> is `email`.
+</APIField>
+
+<APIField name={props.base_field_name + '.twoFactor.methods[x].id'} type="String">
+  The unique Id of the method.
+</APIField>
+
+<APIField name={props.base_field_name + '.twoFactor.methods[x].lastUsed'} type="Boolean">
+  `true` if this method was used most recently.
+</APIField>
+
+<APIField name={props.base_field_name + '.twoFactor.methods[x].method'} type="String">
+  The type of this method. There will also be an object with the same value containing additional information about this method.  The possible values are:
+
+  * `authenticator`
+  * `email`
+  * `sms`
+</APIField>
+
+<APIField name={props.base_field_name + '.twoFactor.methods[x].mobilePhone'} type="String">
+  The value of the mobile phone for this method. Only present if <InlineField>{props.base_field_name}.twoFactor.methods`[x]`.method</InlineField> is `sms`.
+</APIField>
+
+<APIField name={props.base_field_name + '.twoFactorDelivery'} type="String" deprecated>
+  The User's preferred delivery for verification codes during a two factor login request.
+
+  The possible values are:
+
+  * `None`
+  * `TextMessage`
+
+  <RemovedSince since="1.26.0" />
+</APIField>
+
+<APIField name={props.base_field_name + '.twoFactorEnabled'} type="Boolean" deprecated>
+  Determines if the User has two factor authentication enabled for their account or not.
+
+  <RemovedSince since="1.26.0" />
+</APIField>
+
+<APIField name={props.base_field_name + '.username'} type="String">
+  The username of the User.
+</APIField>
+
+<APIField name={props.base_field_name + '.usernameStatus'} type="String">
+  <ModerationStatusResponse />
+</APIField>
+
+<APIField name={props.base_field_name + '.verified'} type="Boolean" deprecated>
+  Whether or not the User's primary email identity has been verified. This does NOT indicate whether phone number identity types are verified.
+
+  For additional information, see these tutorials:
+
+  * [Email Verification](/docs/lifecycle/manage-users/verification/gate-accounts-until-user-email-verified)
+  * [Registration Verification](/docs/lifecycle/manage-users/verification/registration-gate-accounts-until-verified)
+
+  <DeprecatedSince since="1.59.0">
+    See <InlineField>{props.base_field_name}.identities\[x].verified</InlineField> and <InlineField>{props.base_field_name}.identities\[x].verifiedReason</InlineField>.
+  </DeprecatedSince>
+</APIField>
+
+<APIField name={props.base_field_name + '.verifiedInstant'} type="Long" since="1.48.0">
+  The first [instant](/docs/reference/data-types#instants) that the User's primary email address or phone number was verified. This value is immutable and cannot change for a user once set.
+</APIField>

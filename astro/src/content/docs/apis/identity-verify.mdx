@@ -1,0 +1,186 @@
+---
+title: Identity Verify
+description: Learn about the APIs for starting, sending, and completing identity verification.
+section: apis
+---
+import API from 'src/components/api/API.astro';
+import APIBlock from 'src/components/api/APIBlock.astro';
+import APIField from 'src/components/api/APIField.astro';
+import Aside from 'src/components/Aside.astro';
+import InlineField from 'src/components/InlineField.astro';
+import JSON from 'src/components/JSON.astro';
+import StandardPostResponseCodes from 'src/content/docs/apis/_standard-post-response-codes.astro';
+import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-fusionauth-tenant-id-header-scoped-operation.mdx';
+
+## Overview
+
+<Aside type="version">
+  This API has been available since 1.59.0
+</Aside>
+
+The identity verification APIs allow you to manage a workflow for verifying a user's identity.  This API is similar to the [Verify Email](/docs/apis/users#verify-a-users-email) API.
+
+An identity verification workflow involves three steps:
+1. Starting the verification process, which generates a verification code
+2. Delivering the code to a user in a way that is specific to the identity (e.g. sending and email to an email address, or an SMS message to a phone number)
+3. Having the user complete the verification workflow by presenting the code
+
+In general you will not need to call these APIs directly, as most of identity verification is handled automatically by FusionAuth. The main verification use cases and the applicability of the API are shown below.
+
+| Use Case                                                      | Start API | Send API  | Complete API    |
+|-------------------------------------------------------        |:---------:| :--------:|:---------------:|
+| **User creation**                                             | Automatic | Automatic | N/A             |
+| **User update**                                               | Automatic | Automatic | N/A             |
+| **Hosted Pages - login**                                      | N/A       | N/A       | Automatic       |
+| **Hosted Pages - resend verification**                        | Automatic | Automatic | N/A             |
+| **Login API**                                                 | N/A       | N/A       | Yes<sup>*</sup> |
+| **Login API - resending verification emails or SMS messages** | Yes       | Yes       | N/A             |
+
+_<sup>*</sup> You will need to use the Complete API if you want to use `FormField` verification or if you don't want to use FusionAuth's `ClickableLink` page._
+
+## Start Identity Verification
+
+This API allows you to generate a verification code for a User's identity. This code can be sent to the User via email or SMS using the [Send Identity Verification API](#send-identity-verification), or can be delivered by some other method of your choosing. The User will then use this code to complete the verification process.
+
+### Request
+
+<API method="POST" uri="/api/identity/verify/start" authentication={["api-key"]}
+     title="Start identity verification" />
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="loginId" type="String" required>
+    The login identifier of the User identity to begin verification for. The login identifier can be one of the following:
+    * Email address
+    * Phone number
+
+    <Aside type="note">
+      For <InlineField>email</InlineField>, the value will be used exactly as provided to resolve a User. If the provided value contains leading or trailing white space, these characters will not be removed, and then would only match if the values stored in FusionAuth also contain these same leading or trailing spaces.
+
+      For <InlineField>phoneNumber</InlineField>, <InlineField>loginId</InlineField> can be any valid phone number (in E.164, national, or international format) and FusionAuth will canonicalize the value. The User will be resolved if the User's E.164 formatted phone number matches the canonical E.164 phone number from <InlineField>loginId</InlineField>. If no country code is provided, a US/NANP country code of 1 is assumed.
+    </Aside>
+  </APIField>
+  <APIField name="loginIdType" type="String" required>
+    The identity type that FusionAuth will use when comparing the <InlineField>loginId</InlineField>. Can be one of the following:
+
+    * `email`
+    * `phoneNumber`
+  </APIField>
+
+  <APIField name="applicationId" type="UUID" optional>
+    An application Id. If this is not provided and there are multiple tenants, the <InlineField>X-FusionAuth-TenantId</InlineField> header is required.
+
+    When this value is provided, it will be used to resolve an application-specific email or message template and make `application` available as a template variable.
+
+    If not provided, only the tenant configuration will be used when resolving templates, and `application` will not be available as a template variable.
+  </APIField>
+  <APIField name="state" type="Object" optional>
+    An optional object that will be returned un-modified when you complete verification. This may be useful to return the User to particular state once verification is completed.
+  </APIField>
+  <APIField name="verificationStrategy" type="String" optional defaults="tenant value">
+    The strategy to use when verifying the User. Can be one of the following:
+
+    * `ClickableLink` - send the User a code with a clickable link.
+    * `FormField` - send the User a short code intended to be manually entered into a form field
+
+    The default, when `loginIdType` is `email`, is <InlineField>tenant.emailConfiguration.verificationStrategy</InlineField>. When `loginIdType` is `phoneNumber`, the default is <InlineField>tenant.phoneConfiguration.verificationStrategy</InlineField>.
+  </APIField>
+</APIBlock>
+
+### Response
+
+<StandardPostResponseCodes never_search_error />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="verificationId" type="String">
+    The verification Id that was generated by this API request. This identifier should be used by the [Complete Identity Verification](#complete-identity-verification) API and may be used by the [Send Identity Verification](#send-identity-verification) API.
+  </APIField>
+  <APIField name="oneTimeCode" type="String" optional>
+    The verification One Time Code is used with the gated Email or Phone Verification workflow. The User enters this code to verify their email or phone number when the `ClickableLink` strategy is not in use.
+
+    <Aside>
+      This is only returned if the effective verification strategy is `FormField`, which is determined by the tenant configuration or the <InlineField>verificationStrategy</InlineField> field, if it was used in the request.
+    </Aside>
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src="identity/verify/start-response-body.json" />
+
+<JSON title="Example Response JSON with oneTimeCode" src="identity/verify/start-response-otp-body.json" />
+
+## Send Identity Verification
+
+This API allows you to send a verification code, previously generated by the [Start Identity Verification API](#start-identity-verification), to a User via email or SMS. This is typically used to notify the User that they need to verify their identity.
+
+If the `verificationId` was generated for:
+* an email identity - the message will be sent via email using the SMTP settings for the user's tenant and the message template defined by <InlineField>tenant.emailConfiguration.verificationEmailTemplateId</InlineField>
+* a phone number identity - the message will be sent via SMS using the message template defined by <InlineField>tenant.phoneConfiguration.verificationTemplateId</InlineField> and the messenger defined by <InlineField>tenant.phoneConfiguration.messengerId</InlineField>
+
+### Request
+
+<API method="POST" uri="/api/identity/verify/send" authentication={["api-key"]}
+     title="Send identity verification" />
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="verificationId" type="String" required>
+    The verification Id that was generated by the start API.
+  </APIField>
+</APIBlock>
+
+### Response
+
+This API does not return a JSON response body.
+
+<StandardPostResponseCodes never_search_error
+                           success_code="200"
+                           success_message="The request was successful. The response will be empty." />
+
+## Complete Identity Verification
+
+This API allows you to complete the identity verification process by providing the verification code sent to the User. If the code is valid, the User's identity will be verified and <InlineField>user.identities\[x].verifiedReason</InlineField> will be set to `Completed`.
+
+### Request
+
+<API method="POST" uri="/api/identity/verify/complete" authentication={["api-key"]}
+     title="Complete identity verification" />
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
+#### Request Body
+
+<APIBlock>
+  <APIField name="verificationId" type="String" required>
+    The verification Id generated by the [Start Identity Verification API](#start-identity-verification), used to verify the User's identity is valid by ensuring they have access to the provided email address or phone number.
+
+    When using the `FormField` strategy for verification, this value is used along with the `oneTimeCode` as a pair to perform verification.
+  </APIField>
+  <APIField name="oneTimeCode" type="String" optional>
+    The short code used to verify the User's account is valid by ensuring they have access to the provided email address or phone number. This field is required when the verification strategy is `FormField`.
+  </APIField>
+
+</APIBlock>
+
+### Response
+
+<StandardPostResponseCodes never_search_error />
+
+#### Response Body
+
+<APIBlock>
+  <APIField name="state" type="Object">
+    If <InlineField>state</InlineField> was provided during the [Start Identity Verification API](#start-identity-verification) request, this value will be returned exactly as it was provided.
+  </APIField>
+</APIBlock>
+
+<JSON title="Example Response JSON" src="identity/verify/complete-response-body.json" />
+
+<JSON title="Example Response JSON with state" src="identity/verify/complete-response-body-state.json" />
