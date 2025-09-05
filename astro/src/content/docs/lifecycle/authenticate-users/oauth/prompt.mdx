@@ -1,0 +1,139 @@
+---
+title: OIDC Prompt
+description: Learn about OpenID Connect prompt and example use cases.
+navcategory: login-methods
+section: lifecycle
+subcategory: authenticate users
+tertcategory: oauth
+tags: oidc, open id connect
+---
+import Aside from 'src/components/Aside.astro';
+
+## Overview
+
+<Aside type="version">
+  Available since 1.60.0
+</Aside>
+
+The OpenID Connect prompt parameter provides additional flexibility to control the login workflow.
+
+### Supported values
+
+- `none` - No user interface is displayed. An error is returned if the user is not already authenticated.
+- `login` - The user will be prompted for authentication when there's an existing SSO session.
+- `consent` - Always prompt for consent from the user.
+
+### Example use cases
+
+The following examples use a single consent value. A request may contain more than one consent value unless one of the values is `none`. Using `prompt=login none` for example result in a validation error.
+
+#### Silent authentication
+
+This is usually used when an application would like obtain a new authorization code grant without any user interaction. The application will receive an error user interaction is required. The application can then decide how and when to ask the user to authenticate.
+
+Add `prompt=none` to the request.
+
+For an authorization code grant response that contains `code`, complete the code exchange to finish a silent authentication. If the response contains `error` then the user will require some sort of interaction to complete authentication. See [Error handling](#error-handling) below for some examples.
+
+#### Require reauthentication
+Require the user to authenticate even if they have an active SSO session.
+
+Add `prompt=login` to the request.
+
+#### Require reauthentication for a session older than 120 seconds
+Authenticate a user if the session was created less than `120` seconds ago, otherwise require the user to authenticate again.
+
+Add `max_age=120` to the request.
+
+#### Force consent
+Force prompting the user for consent for the requested scopes even if the scopes were previously accepted or rejected.
+
+Add `prompt=consent` to the request.
+
+Note that FusionAuth must be configured to prompt for consent for this prompt to have an effect. For example, adding `consent` to the prompt parameter will have no effect if the application isn't configured as a third party application, or you have configured the consent mode to always prompt or never prompt.
+
+To explain this behavior further, review the following table to explain the expected prompt behavior in the following configurations.
+
+The following table shows the expected behavior for different consent configurations:
+
+| Relationship | Consent mode      | prompt= | Display prompt to user  |
+|--------------|-------------------|---------|-------------------------|
+| First party  | -                 | -       | Never                   |
+| First party  | -                 | consent | Never                   |
+| Third party  | Always prompt     | -       | Always                  |
+| Third party  | Always prompt     | consent | Always                  |
+| Third party  | Never prompt      | -       | Never                   |
+| Third party  | Never prompt      | consent | Never                   |
+| Third party  | Remember decision | -       | Once, remember decision |
+| Third party  | Remember decision | consent | Always                  |
+
+The table shows that the only time adding `prompt=consent` changes display of the consent prompt to the end user is when the application is configured as third party, and the consent mode is set to Remember decision.
+
+
+
+#### Error handling
+
+An error will be returned when the request containing a supported prompt value cannot be completed.
+
+For example, if you request `prompt=none` and the user isn't authenticated, an error is returned to the authorized redirect.
+
+The `error` will be a more general indication of the the issue such as `login_required` or `consent_required`. The `error_reason` is an error code specific to the reason the error occurred. The `error_description` is a human-readable version of the `error_reason`.
+
+For example, when you request `prompt=none` and the user doesn't have an active SSO session, the redirect contains the following `error`, `error_reason` and `error_description`:
+
+- `error=login_required`
+- `error_reason=authentication_required`
+- `error_descriotion=The user is required to complete authentication.`
+
+Another example is when the user is required to provide consent even when there's an active SSO session (`prompt=consent`). The returned error contains:
+
+- `error=consent_required`
+- `error_reason=consent_required`
+- `error_descriotion=The user is required to consent to one or more scopes in order to complete authentication.`
+
+See [OAuth2 Error Redirect parameters](/docs/lifecycle/authenticate-users/oauth/endpoints#redirect-parameters-2) for additional information.
+
+### Security considerations
+Use `prompt=login` or `max_age` with the correct expectations. Don't rely on these parameters for either a security guarantee or that the user is reauthenticated. This is because request parameters can be removed easily.
+
+For example, if a user with an existing SSO session removes the `prompt=login` parameter, an authorization code is generated and redirected back to the authorized redirect.
+
+The prompt parameter is a suggestion to the identity provider, but by itself provides no guarantee to the relying party (RP) that the request was honored, and the user has been reauthenticated.
+
+To use `prompt=login` to ensure the user authenticated recently, you must also inspect and validate the `auth_time` claim in the appropriate token, either the `id_token` or `access_token`.
+
+The `auth_time` claim represents the time of the actual user authentication and is expressed as [unix time](/docs/reference/data-types#unix-time).
+
+Using this value, you can assert when the last user authenticate event occurred and as a result know that `prompt=login` was honored by the identity provider and was not removed by a malicious user.
+
+For example, when using `login=prompt` or `max_age`, after completing the authorization code grant auth code exchange compare the `auth_time` to the current token. The new token must have a more recent `auth_time` claim and the value must be within your expected time frame.
+
+If `auth_time` is the same as your current access token, or isn't recent enough, reject the token and end the users session. Alternatively, don't allow the user to perform the requested task that initiated the login request.
+
+### Limitations and constraints
+
+Before using this parameter make sure you understand the following limitations and constraints.
+
+#### Unsupported values
+
+The `select_account` parameter is currently unsupported. Using this value in `prompt` is ignored.
+
+##### Third party identity providers
+
+The `prompt` parameter isn't forwarded to third party identity providers.
+
+Examples would include:
+- Clicking a "Login with" button on the login page.
+- Using the `idp_hint` parameter, or a `login_hint` parameter with an IdP that is configured to manage the corresponding email domain that would result in FusionAuth bypassing the login page and redirecting to the third-party identity provider.
+
+This is because `prompt` is an optional parameter in the OpenID specification so may not be supported by every OpenID Connect identity provider. FusionAuth supports many identity providers, some of which are OAuth2, or partial implementations of OAuth2 and OpenID Connect. Sending unknown or unexpected parameters to some of those identity providers may cause a failure.
+
+If you require the ability to optionally forward the `prompt` parameter to a third party identity provider, please open a GitHub issue, or contact your account manager. We would love to receive your feedback.
+
+#### Edge cases
+
+When using the `idp_hint` request parameter and including `prompt=login`, FusionAuth redirects to the identity provider resolved by request parameter.
+
+The `idp_hint` indicates that this user must be authenticated by a third party and often the caller does not want the user to see the FusionAuth login page. In this context, it's not useful to show the user the FusionAuth login page as FusionAuth is unable to authenticate the user. It is possible this is not the desired behavior for all customers.
+
+If this behavior happens, remove the `prompt=login` from the request. Using a `login_hint` request parameter with managed domains results in the same behavior.  This may be improved in the future by allowing for additional identity provider configuration for prompt handling, see the above section on third party identity providers for additional details.
