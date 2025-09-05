@@ -225,7 +225,9 @@ This API is used to retrieve the status of a reindex request. This may be useful
 
 The Status API is used to retrieve the current status and metrics for FusionAuth. This is useful for monitoring. For health checks, prefer [the Health API](/docs/apis/system#retrieve-system-health).
 
-By default, this API requires authentication. If you prefer to allow unauthenticated access to this endpoint from local scrapers, you may set `fusionauth-app.local-metrics.enabled=true`. See the  [configuration reference](/docs/reference/configuration) for more info.
+By default, this API requires authentication to return full results. If you prefer to allow unauthenticated access to this endpoint from local scrapers, you may set `fusionauth-app.local-metrics.enabled=true`. See the [configuration reference](/docs/reference/configuration) for more info.
+
+If you call this API without an API key, you will receive a status response only.
 
 <Aside type="note">
 FusionAuth also supports a system status check [using Prometheus](/docs/operate/monitor/prometheus).
@@ -233,17 +235,35 @@ FusionAuth also supports a system status check [using Prometheus](/docs/operate/
 
 ### Request
 
-<API method="GET" uri="/api/status" authentication={["local-bypass", "none"]} title="Return the system status without an API key"/>
+<API method="GET" uri="/api/status" authentication={["none"]} title="Return the system status without an API key"/>
 
 <API method="GET" uri="/api/status" authentication={["api-key"]} title="Return the system status with an API key"/>
 
-### Response
-The JSON response from the Status API is complex and subject to change. The only exception is the `version` key.
+<API method="GET" uri="/api/status" authentication={["local-bypass"]} title="Return the system status without an API key with local bypass configured"/>
 
-The `version` key will not change and will be returned as below. As a reminder, an API key is required to obtain this value unless explicitly allowed from `localhost`.
+### Response
+
+This JSON response body varies based on whether you:
+
+* provide an API key
+* do not provide an API key
+* configure local bypass
+
+When no API key is used and local bypass is not enabled, the response consists of the `status` key.
+
 ```json
 {
-  "version": "1.26.1"
+  "status": "ok"
+}
+```
+
+When retrieved with an API key or if local bypass is enabled, the JSON response from the Status API is complex and subject to change. The only exception is the `version` key.
+
+The `version` key will not change and will be returned as below. As a reminder, an API key is required to obtain this value unless explicitly allowed from `localhost`.
+
+```json
+{
+  "version": "1.59.0"
 }
 ```
 
@@ -259,7 +279,6 @@ _Response Codes_
 | 454  | The FusionAuth database connection pool connectivity is below the healthy threshold. Additional information may be available in the JSON response which is retrieved when using an API key.<br/><br/> As of version `1.51.1` this status code will no longer be returned based upon the connectivity health check. In practice you only need to monitor for `452` to ensure FusionAuth is able to connect to the database. {/* eslint-disable-line */}                                                                                                                    |
 | 460  | FusionAuth is using Elasticsearch and the search service is reporting an unhealthy cluster status. In a cluster with 2+ nodes, this means the cluster status is being reported as `yellow` or `red`. In a single-node Elasticsearch configuration this means the cluster status is `red.`<br/><br/> As of version `1.51.1` this status code will no longer be returned based upon the Elasticsearch health check. If you are using an external Elasticsearch or OpenSearch service, you will want to monitor that separately from FusionAuth. {/* eslint-disable-line */} |
 | 500  | FusionAuth is not functioning properly. This could indicate that the database connectivity failed or one or more services within FusionAuth failed. Consult the FusionAuth [Troubleshooting](/docs/operate/troubleshooting/troubleshooting) to learn more about the failure or contact FusionAuth support for assistance.                                                                                                                                                                                                                                                 |
-
 ## Retrieve System Health
 
 <Aside type="version">
