@@ -111,11 +111,12 @@ export const getDocNavContext = async (section: string) => {
 
   const sectionDocs = await getCollection('docs', doc => doc.data.section === section);
   sectionDocs.forEach(doc => {
-    const { subcategory, tertcategory, quatercategory, title, description, navOrder } = doc.data;
+    const { subcategory, tertcategory, quatercategory, title, sidenavTitle, description, navOrder } = doc.data;
     const category = prepContext(context, subcategory, tertcategory, quatercategory);
     
     category.entries.push({
       title,
+      sidenavTitle,
       description,
       href: getDocHref(doc.slug),
       navOrder,
