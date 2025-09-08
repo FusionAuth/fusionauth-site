@@ -7,23 +7,27 @@ import InlineField from 'src/components/InlineField.astro';
 
 In certain scenarios you may have authenticated a user outside of the typical OAuth flow. If so, you can still acquire an SSO session from FusionAuth as long as you have a valid access token for the user.
 
-There are one-time setup steps:
+To enable this feature perform these one-time setup steps:
 
-* Enable the access token bootstrap setting on the tenant either via the <InlineField>Allow access token bootstrap</InlineField> setting in the [Admin UI](/docs/get-started/core-concepts/tenants#oauth) or by setting the <InlineField>tenant.ssoConfiguration.allowAccessTokenBootstrap</InlineField> field to `true` in the [Tenant API](/docs/apis/tenants).
-* FusionAuth requires the access token to be in an `Authorization` header. Because browsers do not provide a way to set the `Authorization` header when browsing to a location, you'll need to add the header using, for example, a reverse proxy.
+* Enable the access token bootstrap setting on the tenant. There are two ways to do this. Use the [Admin UI](/docs/get-started/core-concepts/tenants#oauth) or set the <InlineField>tenant.ssoConfiguration.allowAccessTokenBootstrap</InlineField> field to `true` in the [Tenant API](/docs/apis/tenants).
+* Configure a reverse proxy to add the required `Authorization` header.
+
+Configuring a reverse proxy will vary, and is out of scope. One common scenario would assume you have an HTTP only secure cookie that holds the user's access token. In this example, the reverse proxy copies the value of that cookie into the `Authorization` header as it passes through.
 
 ![Advanced SSO settings with allow access token bootstrap.](/img/docs/lifecycle/authenticate-users/oauth-access-token-bootstrap.png)
 
-To set up the SSO session for a given user:
+Follow these steps to setup the request to bootstrap the SSO session for a user:
 
-* provide the access token as a `Bearer` token in the `Authorization` header
-* redirect the user's browser to the `/oauth2/authorize` endpoint, including a `redirect_uri` parameter 
+* Build a normal Authorize request that redirects to the [OAuth Authorize](/docs/lifecycle/authenticate-users/oauth/endpoints#authorize) endpoint. The host and path may very based upon your proxy configuration, but the query parameters are the same as a normal request to this endpoint.
+* Intercept the request and add the access token to the `Authorization` header using the `Bearer` scheme.
+* Forward the request to the FusionAuth Authorize endpoint `/oauth2/authorize`.
 
-The header will need to be in the following form:
+The following is an example Authorization header using the Bearer scheme:
 
 ```
 Authorization: Bearer <access token>
 ```
 
-If the token is valid, FusionAuth will create an SSO session and redirect the browser to the provided `redirect_uri`. This `redirect_uri` parameter must be an authorized URI, registered with the given application. See the [OAuth Authorize](/docs/lifecycle/authenticate-users/oauth/endpoints#authorize) documentation for details.
+If the token is valid, FusionAuth creates an SSO session and completes the requested grant by redirecting to the authorized redirect specified by the `redirect_uri` request parameter. Any other OAuth2 parameter validation is the same as a normal request.
 
+Note that FusionAuth adds the `auth_time` claim to the access token. If you remove this claim from the access token it cannot be used to bootstrap a SSO session.
