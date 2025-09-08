@@ -64,6 +64,7 @@ const docsCollection = defineCollection({
     canonicalUrl: z.string().optional(),
     htmlTitle: z.string().optional(),
     section: z.string().optional(),
+    sidenavTitle: z.string().optional(),
     subcategory: z.string().optional(),
     tertcategory: z.string().optional(),
     quatercategory: z.string().optional(),
