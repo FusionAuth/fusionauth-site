@@ -11,7 +11,7 @@ excerpt_separator: "{/* more */}"
 
 If you're building any application with users, but especially a SaaS application, you've probably found yourself staring at a whiteboard, trying to figure out how to organize users, roles, permissions, and access control. Questions like: should users belong to organizations? Do you need multi-tenancy? How do you handle that enterprise customer who wants to run multiple separate instances?
 
-Welcome to the world of user segmentationa and modeling. It's one of those architectural decisions that seems simple on the surface but has profound implications for your application's user experience, complexity, security, and feature set.
+Welcome to the world of user segmentation and modeling. It's one of those architectural decisions that seems simple on the surface but has profound implications for your application's user experience, complexity, security, and feature set.
 
 Let's dive into the three primary models for user segmentation and help you figure out which one fits your needs. These lessons are drawn from my experience with customer identity and access management (CIAM), but apply any time you have an application that people log in to.
 
@@ -37,7 +37,7 @@ Anyone with users should care about this, but it's especially critical for SaaS 
 
 ## The Three Models
 
-There are two main options and a derivative option to consider. The options are:
+The three options are:
 
 * tenant
 * organization
@@ -62,7 +62,7 @@ The benefits of the tenant model include:
 - excellent for private-label scenarios
 - strong security isolation, decreasing the blast radius if any single identity gets compromised
 - tenant-specific customization around user related features such as password complexity
-- scales well horizontally, since you can split tenants by server (though this means you have a large number of requests logins)
+- scales well horizontally, since you can easily split tenants by server
 - supports data locality requirements, such as users whose data must remain in a certain country like Brazil or Germany
 
 This model does have some downsides:
@@ -82,7 +82,7 @@ Instead, use one or more of the following methods:
 Methods that are less reliable but may fit certain circumstances include determining a tenant through:
 
 - request attributes such as an email domain or IP address range
-- leave data on the device after a previous, though this does not work for initial logins 
+- leave data on the device after a previous login, though this does not work for an initial login
 
 In FusionAuth, implement this segmentation model [using tenants](/docs/get-started/core-concepts/tenants).
 
@@ -101,7 +101,7 @@ The key characteristics of this model include:
 
 - users can belong to multiple organizations; this is a major part of the benefits of this approach so plan for cross-organization memberships
 - authentication happens upstream of organization selection
-- there a common user identity across organizations, including profile data and credentials
+- there is a common user identity across organizations, including profile data and credentials
 - segment switching occurs without re-authentication
 
 The benefits of the organization model include:
@@ -122,19 +122,19 @@ In FusionAuth, implement this model [using entities](/docs/extend/examples/model
 
 This is a variant of the organization model. Instead of an authentication and then organization determination, the organization is determined at the time of a successful authentication. If a user needs to switch, they re-authenticate, typically silently.
 
-This model offers:
+This model has the following characteristics:
 
 - minimal segmentation overhead
-- an authentication artifact, such as a token, which can be presented to other parts of the application without additional requests
-- some standards support, if your identity provider maps applications to OIDC clients.
+- standards support, if your identity provider maps applications to OIDC clients
+- creation of an authentication artifact, such as a token, to make requests to other parts of the application simpler
 
-If you choose this, be aware that the application artifact is a cached value, with all the issues that cached values have:
+If you choose applications, be aware that the artifact is a cached value, with all the issues that cached values have:
 
 - revocation can be complicated
 - the user data can be stale
 - it adds additional complexity to the system
 
-In FusionAuth, implement this segmentation model [using tenants](/docs/get-started/core-concepts/tenants).
+In FusionAuth, implement this segmentation model [using applications](/docs/get-started/core-concepts/applications).
 
 ## Choosing Your Model
 
@@ -149,21 +149,21 @@ Here are the key questions to ask yourself to determine which of these user segm
 If you answered yes to the above questions, you probably want the tenant model.
 
 * **Are users accessing different organizations frequently?** If users regularly switch contexts, the organization model offers better UX.
-* **Do you need to be able to dynamically add and remove organization membership without re-authentiation?** This feature is a strength of the organization model.
+* **Do you need to be able to dynamically add and remove organization membership without re-authentication?** This feature is a strength of the organization model.
 
-If you answered yes to either of these questions, the organization model is a good choice
+If you answered yes to either of these questions, the organization model is a good choice.
 
-Finally, if you want to leverage tokens for authentication without further requests, the application model excels. It also may be more less overall work than the organizations model if applications are mapped to OIDC standard clients.
+Finally, if you want to leverage tokens for authentication without further requests, the application model excels. It also may be less overall work than the organizations model when applications map to OIDC clients.
 
 ## Migration Between Models
 
 AKA, is this choice a one-way door? One of the trickier aspects of user segmentation is that you might need to change models as your application evolves. This is definitely possible, but it requires careful planning:
 
-- Moving from organization to tenant model requires planning around splitting a single user-profile up. You'll also need to educate users about how to find their application login
+- Moving from organization to tenant model requires planning around splitting a single user-profile up. You'll also need to educate users about how to find their application login.
 - Consolidating users from tenants into organizations, you'll need to decide how to merge profile data and which set of credentials will apply to the single user account.
-- Reworking other features that rely on characteristics of the user segmentation model. For example, how customer service reps access specific customers' applications.
+- Identifying and reworking features that rely on characteristics of the user segmentation model need to be part of your migration plan. For example, how customer service reps access specific customers' applications differs in these models.
 
-This decision isn't set in stone, but changes become more expensive as your user base grows.
+The decision about user segmentation isn't set in stone, but changes become expensive over time. Some upfront effort is worth it.
 
 ## Implementation Considerations
 
