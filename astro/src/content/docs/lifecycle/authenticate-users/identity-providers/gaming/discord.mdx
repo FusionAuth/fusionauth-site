@@ -22,51 +22,49 @@ Once you have completed this configuration you may enable an OpenID Connect <Inl
 
 ### Register a Discord OAuth2 Application
 
-You will first need to log in to [Discord](https://discord.com/developers/applications/).
-
-Once logged in, navigate to [https://discord.com/developers/applications/](https://discord.com/developers/applications/) and create a new application.
+First, log in to [Discord](https://discord.com/developers/applications/). Then, navigate to [https://discord.com/developers/applications/](https://discord.com/developers/applications/) and create a new application.
 
 <img src="/img/docs/lifecycle/authenticate-users/identity-providers/gaming/discord-openid-connect-client-id-secret.png" alt="Discord Client ID and Secret" width="1200" role="shadowed" />
 
-Once the application has been created, note the `CLIENT ID` and the `CLIENT SECRET`.  These will be used respectively as the <InlineField>Client Id</InlineField> value and the <InlineField>Client secret</InlineField> value in your FusionAuth OpenID Connect Identity Provider configuration.
+Note the `CLIENT ID` and the `CLIENT SECRET` after the application is created. You'll use these to configure the <InlineField>Client Id</InlineField> and <InlineField>Client secret</InlineField> values for your FusionAuth OpenID Connected Identity Provider.
 
-Now navigate to <Breadcrumb>Selected App -> Settings -> OAuth2</Breadcrumb> in the navigation pane on the left side of the screen to configure OAuth2 for your Discord app.
+Finally, configure OAuth2 for your Discord app by opening <Breadcrumb>Selected App -> Settings -> OAuth2</Breadcrumb> in the navigation pane on the left side of the screen.
 
 <img src="/img/docs/lifecycle/authenticate-users/identity-providers/gaming/discord-openid-connect-register-application.png" alt="Register a new Discord OAuth Application" width="1200" />
 
-Here we have configured a `REDIRECT` for our application.  If FusionAuth is running at `https://login.piedpiper.com`, this value should be `https://login.piedpiper.com/oauth2/callback`.
+To configure the callback URL for your application, add `/oauth2/callback` to the URL for your instance of FusionAuth. In the screenshot, FusionAuth is running at `https://login.piedpiper.com` so the redirect URL is `https://login.piedpiper.com/oauth2/callback`.
 
 ### Configure a New FusionAuth OpenID Connect Identity Provider
 
-To create a Discord Identity Provider return to FusionAuth and  navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb> and click <InlineUIElement>Add OpenID Connect</InlineUIElement>.
+To create a Discord Identity Provider, open FusionAuth, navigate to <Breadcrumb>Settings -> Identity Providers</Breadcrumb>, and click <InlineUIElement>Add OpenID Connect</InlineUIElement>.
 
-This will take you to the `Add OpenID Connect` screen, and you'll fill out the required fields. <InlineField>Client Id</InlineField> and <InlineField>Client secret</InlineField> values reference the previously noted Discord Application's `CLIENT ID` and `CLIENT SECRET`. The <InlineField>Redirect URL</InlineField> is read only and generated for you based upon the URL of FusionAuth. This value should match the one you configured in your Discord application.
+On the `Add OpenID Connect` screen fill out the required fields:
 
-Discord has not implemented a well-known configuration endpoint, so you will need to disable the <InlineField>Discover endpoints</InlineField> field and specify the endpoints manually.  The values for these fields are:
+* <InlineField>Client Id</InlineField> and <InlineField>Client secret</InlineField> use the `CLIENT ID` and `CLIENT SECRET` values that you noted earlier.
+* <InlineField>Redirect URL</InlineField> is generated for you and is based on the URL for the instance FusionAuth. The value must match the redirect URL for your Discord application that you configured previously.
+
+Next, disable the <InlineField>Discover endpoints</InlineField> field as Discord doesn't implement a well-known configuration endpoint. Instead, add the endpoints manually. The values for the fields are:
 
 * `Authorization endpoint` - `https://discord.com/api/oauth2/authorize`
 * `Token endpoint` - `https://discord.com/api/oauth2/token`
 * `Userinfo endpoint` - `https://discord.com/api/users/@me`
 
-You will need to specify the scopes `identify` and `email` in the <InlineField>Scope</InlineField> field for your application.
+In the <InlineField>Scope</InlineField> field for your application specify the scopes `identify` and `email`. Also, set <InlineField>Client authentication method</InlineField> to `Request body (client_secret_post)`, as Discord expects the `client_secret` in the request body of the authentication request.
 
-You will need to set <InlineField>Client authentication method</InlineField> to `Request body (client_secret_post)`, as Discord expects the `client_secret` in the request body of the authentication request.
-
-Additionally, you will need to update the <InlineField>Unique Id Claim</InlineField> field to `id` (from the standard claim of `sub`) under the <Breadcrumb>Options</Breadcrumb> tab.
+Discord doesn't use the standard email identity claims. Open the <Breadcrumb>Options</Breadcrumb> tab and update the <InlineField>Unique Id Claim</InlineField> field to `id` and the <InlineField>Email verified claim</InlineField> field to `verified`.
 
 <img src="/img/docs/lifecycle/authenticate-users/identity-providers/gaming/discord-change-unique-claim.png" alt="FusionAuth Discord Change Claim" width="1200" role="top-cropped" />
 
+The <Breadcrumb>Applications</Breadcrumb> tab at the bottom of the screenshot below shows that the identity provider is enabled for the `Pied Piper` application. In addition, <InlineField>Create registration</InlineField> is also enbabled.
 
-In the following screenshot you will see that we have enabled this login provider for the `Pied Piper` application and enabled <InlineField>Create registration</InlineField>.
-
-Discord does not implement OpenID Connect to spec. In order to pull in some additional data for populating the user profile (Discord username, Avatar URL, etc.) you can enable a <InlineField>Reconcile lambda</InlineField>.  Review [the lambda documentation](/docs/extend/code/lambdas/openid-connect-response-reconcile) to learn about how to create and assign your own lambda.  This is optional.
+The Discord implementation of OpenID Connect doesn't currently follow the full specification. You can optionally populate additional data for the user profile, such as the Discord username and avatar URL, by enabling an <InlineField>Reconcile lambda</InlineField>. See [the lambda documentation](/docs/extend/code/lambdas/openid-connect-response-reconcile) for more information.
 
 That's it, now the <InlineUIElement>Login with Discord</InlineUIElement> button will show up on the login page of our `PiedPiper` application.
 
-Here is the upper portion of the discord Identity Provider configuration:
+The following image shows the upper portion of the discord Identity Provider configuration:
 
-<img src="/img/docs/lifecycle/authenticate-users/identity-providers/gaming/top-discord-openid-connect-configuration.png" alt="FusionAuth Discord IdP Configuration"  />
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/gaming/top-discord-openid-connect-configuration.png" alt="FusionAuth Discord IdP Configuration" />
 
-Here is the lower portion of the discord Identity Provider configuration:
+And here is an image with the lower portion of the discord Identity Provider configuration:
 
-<img src="/img/docs/lifecycle/authenticate-users/identity-providers/gaming/bottom-discord-openid-connect-configuration.png" alt="FusionAuth Discord IdP Configuration"  />
+<img src="/img/docs/lifecycle/authenticate-users/identity-providers/gaming/bottom-discord-openid-connect-configuration.png" alt="FusionAuth Discord IdP Configuration" />
