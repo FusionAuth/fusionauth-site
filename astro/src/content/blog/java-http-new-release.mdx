@@ -1,0 +1,72 @@
+---
+publish_date: 2025-09-17 
+title: java-http, A Simple, Fast HTTP Servers with Virtual Threads
+description: TBD.
+authors: Daniel DeGroff
+image: /img/blogs/10log-integrates-fusionauth/10log-integrates-fusionauth.png
+categories: Education
+tags: community story, javascript
+excerpt_separator: "{/* more */}"
+---
+
+Building HTTP servers in Java has traditionally meant choosing between complexity and simplicity. You could use heavyweight server frameworks with lots of dependencies, or you could build something from scratch using low-level APIs that were fast but difficult to maintain. java-http aims to fill this gap by providing a simple, dependency-free HTTP server library that's as easy to use as Node.js but built for the JVM.
+
+{/* more */}
+
+## What is `java-http`?
+
+[java-http](https://github.com/FusionAuth/java-http/) is a lightweight, zero-dependency HTTP server library for Java. It's designed to feel like it could have come from the JDK itself, pure, fast, and simple. Unlike other Java web server libraries that pull in numerous dependencies, java-http keeps things clean with no external requirements. Seriously. Check out [the pom](https://github.com/FusionAuth/java-http/blob/main/pom.xml).
+
+The library provides a straightforward API for creating HTTP servers with just a few lines of code. You can bind listeners, define handlers, and start serving requests without the configuration overhead of traditional application servers like Apache Tomcat. It supports simple route handlers similar to what you'd find in Node.js or Flask, making it a pleasant surprise for Java developes and familiar for developers coming from other ecosystems.
+
+java-http inverts the traditional Java web application model. Instead of your application being deployed into a container like Tomcat, your application becomes the main entry point and controls the HTTP server directly. This gives you complete control over startup, shutdown, environment variables, configuration files, and ports, all programmatically managed rather than constrained by external configuration files or what the container lets you configure.
+
+## Why Does `java-http` Exist?
+
+The Java ecosystem has long lacked a simple HTTP server solution comparable to what Node.js offers out of the box. While Apache Tomcat has been the go-to choice for Java web applications, it can be slow to adopt new standards and adds significant complexity for simple use cases. Netty is another option, but has a sprawling feature set.
+
+Existing Java solutiones often come with heavy dependency chains, pulling in libraries and functionality that many applications don't actually need. This bloat can slow down startup times, increase memory usage, and create potential security vulnerabilities through unused code paths.
+
+The goal with this project was to create something that felt native to Java; a library that could serve as the foundation for web applications without the overhead of traditional application servers. By making the application itself the entry point, developers gain flexibility in how they structure and deploy their applications.
+
+java-http also addresses the complexity gap between simple HTTP needs and full-featured web frameworks. Sometimes you just need a fast, reliable HTTP server without all the bells and whistles of enterprise frameworks. This library provides essential functionality needed to build robust web applications without unnecessary complexity.
+
+A core principle of java-http is to minimize dependencies to create purpose-built tools. The zero-dependency approach also means you won't need to worry about version conflicts or transitive dependency issues. This is a reflection of the FusionAuth team's general approach to software.
+
+## Performance: 120,000 Requests Per Second
+
+Performance is also a core principle of java-http. In synthetic benchmarks, the library achieves around 120,000 requests per second, establishing a solid baseline for throughput. The goal isn't necessarily to be the fastest HTTP server in any language, but to be faster than other Java-based HTTP servers while maintaining simplicity.
+
+That level of performance means the HTTP server itself won't be your bottleneck. In real-world applications, performance constraints typically lie elsewhere. This could be in database queries, external API calls, complex business logic, or cryptographic operations. By ensuring the HTTP layer can handle high throughput, you can focus your optimization efforts where they'll have the most impact.
+
+
+## What's New in Version 1.0: Virtual Threads
+
+![John Wick talking threads.](/img/blogs/java-http/john_wick_threads.png)
+
+The biggest change in java-http 1.0 is the adoption of virtual threads, made possible by Java 21's Project Loom. The first version of the library, released in  used traditional NIO (Non-blocking I/O), which was fast but resulted in complex, hard-to-maintain code with asynchronous operations scattered throughout. Adding new features or debugging issues required understanding complex state management and callback chains ("which socket am I thinking about now?").
+
+Virtual threads allow the library to write code that looks and behaves like traditional threaded code while maintaining the performance benefits of asynchronous operations under the hood. This means java-http developers use linear, easy-to-follow code without sacrificing performance. The complexity of asynchronous programming is hidden from developers, making the codebase much easier to understand, debug, and extend. Developers can understand the code more quickly, bugs are easier to trace and fix, and adding new features becomes more straightforward. Error handling is centralized in try-catch blocks rather than being scattered across multiple callback functions.
+
+The transition to virtual threads didn't present any significant technical challenges. Code that was previously spread across multiple callbacks and state machines is now written as straightforward, linear functions that are much easier to reason about. The code now resembles regular threaded programming. There are some minor edge cases around socket exception handling, particularly when distinguishing between clean shutdowns and other exceptions such as those caused by client-side connection closures. These are manageable complexities that exist in any socket-based system.
+
+There were some performance benefits, especially in constrained environments. For example, test suites that previously took two hours to complete in thread-limited environments like GitHub Actions have been reduced to one hour thanks to the efficiency improvements that virtual threads provide in these scenarios.
+
+Performance improvements might not always be visible on high-end development machines with abundant resources. The benefits are most pronounced where efficient thread utilization can make a significant difference in overall system performance. And, as always, performance is context dependent.
+
+## How You Can Help
+
+The easiest way to contribute to java-http is by using it.
+
+Real-world usage provides the most valuable feedback about missing features, edge cases or bugs, and areas for improvement. The project maintainers prioritize this type of contribution because they are focused on concrete use cases and demonstrated needs.
+
+Getting started is straightforward. [The project's README](https://github.com/FusionAuth/java-http/blob/main/README.md) provides clear examples showing how to create a server, bind listeners, and define handlers with just a few lines of code.
+
+If you encounter issues or have ideas for improvements, the best approach is to open an issue or pull request on the [GitHub repository](https://github.com/FusionAuth/java-http/issues/). The project welcomes contributions, but focuses on keeping the core library slim, dependency-free, and purpose-built.
+
+The java-http project prioritizes features that arise from demonstrated needs rather than theoretical requirements. This approach helps maintain the simplicity that makes java-http appealing while ensuring that new features solve real problems that users are actually facing.
+
+java-http is already production-ready and battle-tested at scale across multiple high-traffic applications, including FusionAuth. While it may not have the widespread adoption of more established alternatives like Netty or Tomcat, its use in production environments demonstrates its stability and reliability.
+
+Whether you're building microservices, API servers, or simple web applications, java-http provides a solid foundation that gets out of your way and lets you focus on your application. Give it a try and help shape its future by sharing your experience and contributing to its development.
+
