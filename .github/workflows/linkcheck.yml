@@ -16,8 +16,17 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
       - uses: filiph/linkcheck@f2c15a0be0d9c83def5df3edcc0f2d6582845f2d # 3.0.0
         with:
-          arguments: https://fusionauth.io/ --skip-file config/linkcheck/linkcheck-skip.txt --connection-failures-as-warnings
+          arguments: https://fusionauth.io/ --skip-file config/linkcheck/linkcheck-skip.txt --connection-failures-as-warnings -d 2>&1 > linkcheckoutput.txt
         name: linkcheck
+      # check for webflow links
+      - name: Check for FusionAuth webflow lines
+        run: |
+          count=$(grep -c "fusionauth.webflow.io" linkcheckoutput.txt || true)
+          echo "Found $count lines containing fusionauth.webflow.io"
+          if [ $count -gt 0 ]; then
+            echo "Error: Found fusionauth.webflow.io references in output.txt"
+            exit 1
+          fi
   send_mail_on_failure:
     needs: check_links
     runs-on: ubuntu-latest
