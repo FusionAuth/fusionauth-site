@@ -58,7 +58,7 @@ What's important to remember is that the language model doesn't call the MCP ser
 Before jumping into the lower-level details, it's probably worth discussing the high-level actors that the MCP specification mentions:
 
 * **the MCP host:** this is the "agent framework" that we discussed previously; the part that's managing the LLM and the conversation
-* **the MCP client: **manages a connection to an MCP server
+* **the MCP client:** manages a connection to an MCP server
 * **the MCP server:** where the action happens. The server is the whole reason that MCP exists.
 
 In practice the lines between client and host are somewhat blurry, and unless you're implementing that side the distinction is not  that important.
@@ -67,25 +67,27 @@ In practice the lines between client and host are somewhat blurry, and unless yo
 
 From top to bottom:
 
-| Data layer | | |
+| | | |
 |------------|-----------|-----------|
-| | Primitives | The specification defines a set of JSON-RPC endpoints that can be called to perform [tool calls](https://modelcontextprotocol.io/specification/2025-06-18/server/tools) and access other features. |
+| **Data layer** | Primitives | The specification defines a set of JSON-RPC endpoints that can be called to perform [tool calls](https://modelcontextprotocol.io/specification/2025-06-18/server/tools) and access other features. |
 | | JSON-RPC | Defines a simple remote procedure call protocol using JSON. It's a [pretty short read](https://www.jsonrpc.org/specification), and some features like batching aren't supported in MCP. |
 | **Transport layer** | | Specifies how the JSON-RPC calls will be made |
 
 Let's look at the transport layers defined in the current version of the specification.
 
-### The stdio transport (also called "local")
+### The stdio transport
 
-The simplest transport layer to understand is [the "stdio" transport](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#stdio). It gets its name from the way it communicates with the server process. The MCP client will actually start a process on the same machine; the input and output handles from that process become the input and output for the JSON-RPC calls.
+The simplest transport layer to understand is [the "stdio" transport](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#stdio). This is also called "local".
 
-### The HTTP streaming transport (also called "remote")
+This transport gets its name from the way it communicates with the server process. The MCP client will actually start a process on the same machine; the input and output handles from that process become the input and output for the JSON-RPC calls.
 
-This is actually [the second version](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#streamable-http) of an HTTP transport in the short life  of MCP – the earlier SSE transport was a little more complicated to implement.
+### The HTTP streaming transport
+
+This is actually [the second version](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#streamable-http) of an HTTP transport in the short life  of MCP – the earlier SSE transport was a little more complicated to implement. This is also called "remote".
 
 Although it's called a streaming transport, in the simplest implementation it's a very simple 1:1 HTTP request to MCP request. There is an option to allow for responses and updates to stream back, but for a lot of servers it may not be necessary to worry about this.
 
-### A tool request via HTTP streaming
+#### A tool request via HTTP streaming
 
 While we won't dive too far into the details here, let's take a quick look at what a tool request looks like. This should give you a flavour of how MCP works.
 
@@ -135,7 +137,7 @@ Probably the most unexpected thing for people new to MCP is that the response th
 
 Note that it doesn't have to be Markdown, it can be basically anything that an LLM can understand. Markdown is a common choice for LLMs as it has a little bit of semantic markup (headings, bullet lists etc) but without overwhelming the model with too much structure. The best approach is to use the minimum necessary – just imagine there's a person on the other end reading it.
 
-There is also a structured response format in the June 2025 version of the spec which allows responses more like a traditional API. Support is mixed, though; and it isn't necessarily going to work better. Ultimately LLMs are designed to process text in a variety of formats, it is often more effective to embrace this.
+There is also a structured response format in the June 2025 version of the spec which allows responses more like a traditional API. Support is mixed, though, and it isn't necessarily going to work better. Ultimately LLMs are designed to process text in a variety of formats and it is often more effective to embrace this.
 
 It can be incredibly easy to graft an MCP server onto your application. It's not as complex or as formal as defining an API; you can make changes to the result format and the LLM will adapt.
 
@@ -160,21 +162,19 @@ The access token obtained during an OAuth authorisation process becomes the bear
 
 Only the first two steps are something that the MCP server actually implements – the rest is directly between the MCP client and the authorisation server.
 
-TODO check
-
 1. **MCP client to MCP server**
-    1. **Client receives a "401 Not Authorised" response: **this response contains information pointing at a "resource metadata" document.
-    2. **MCP client fetches resource metadata from MCP server: **this metadata contains a pointer to the authorisation server.
-2. **MCP client to authorisation server**
-    3. **MCP client fetches authorisation server metadata: **this contains a lot of information about the OAuth setup, including the endpoint for Dynamic Client Registration.
-    4. **MCP client registers new dynamic client: **this gives the client the credentials it can use to start the authorisation process
-3. **Authorisation process**
-    5. **MCP client sends user to authorisation URL: **this starts the authorisation process
-    6. **User completes authorisation**
-    7. **Authorisation server redirects back to client: **this is the standard OAuth completion flow
-    8. **Client obtains access token**
+    1. **Client receives a "401 Not Authorised" response:** this response contains information pointing at a "resource metadata" document.
+    1. **MCP client fetches resource metadata from MCP server:** this metadata contains a pointer to the authorisation server.
+1. **MCP client to authorisation server**
+    1. **MCP client fetches authorisation server metadata:** this contains a lot of information about the OAuth setup, including the endpoint for Dynamic Client Registration.
+    1. **MCP client registers new dynamic client:** this gives the client the credentials it can use to start the authorisation process
+1. **Authorisation process**
+    1. **MCP client sends user to authorisation URL:** this starts the authorisation process
+    1. **User completes authorisation**
+    1. **Authorisation server redirects back to client:** this is the standard OAuth completion flow
+    1. **Client obtains access token**
 4. **MCP client to MCP server**
-    9. **Client retries the initial request that failed: **this time with the addition of the access token. Assuming everything went smoothly, this request will succeed.
+    1. **Client retries the initial request that failed:** this time with the addition of the access token. Assuming everything went smoothly, this request will succeed.
 
 ### Can any OAuth server be used with MCP?
 
@@ -247,8 +247,9 @@ MCP represents a platform shift as significant as the move to web or mobile – 
 
 For developers, the takeaway is simple: users will soon expect all software to work with their AI agents. The good news is that MCP's simplicity makes integration straightforward. Start with basic tool exposure, add OAuth when you need user context, and evolve your auth patterns as requirements grow.
 
-The question isn't whether to adopt MCP – it's how quickly you can integrate it before your users start wondering why your software doesn't work with their agents. 
----
+The question isn't whether to adopt MCP – it's how quickly you can integrate it before your users start wondering why your software doesn't work with their agents.
+
+----
 
 This article was written for FusionAuth by Simon Russell, CTO of [Prefactor](https://prefactor.tech/), the Native MCP Identity Layer for Modern SaaS.
 
