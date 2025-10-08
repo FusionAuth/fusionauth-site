@@ -17,26 +17,64 @@ import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
 
-{/* Search for TODO before publishing this. */}
+{/* Search for TODO before publishing this, like links. */}
+
+- [Introduction](#introduction)
+- [What is a Token-Mediating Backend?](#what-is-a-token-mediating-backend)
+- [How secure is a TMB?](#how-secure-is-a-tmb)
+- [When to use a TMB?](#when-to-use-a-tmb)
+- [Getting technical: how the TMB flow works](#getting-technical-how-the-tmb-flow-works)
+- [Code demonstration](#code-demonstration)
+	- [Prerequisites](#prerequisites)
+	- [Run the app](#run-the-app)
+	- [How it works](#how-it-works)
+- [Summary](#summary)
+- [Read part 3](#read-part-3)
+- [Links](#links)
+- [todo](#todo)
+
 
 ## Introduction
 
-This post discusses the token-mediating backend (TMB) authentication architecture: how secure it is, when to use it, and how to implement it. This is part two of a three part series on OAuth2 architectures. Please read [part one](/blog/TODO) if you haven't already, so you understand how the BFF architecture works, since TMB is a variation of BFF.
+This post discusses the token-mediating backend (TMB) authentication architecture for OAuth 2 apps: how secure it is, when to use it, and how to implement it.
+
+<Aside type="tip">
+This is part two of a three part series on OAuth architectures. Please read [part one](/TODO), if you haven't already, so you understand how the BFF architecture works, since TMB is a variation of BFF.
+</Aside>
 
 ## What is a Token-Mediating Backend?
 
-A TMB is identical to the BFF pattern you learnt in part one, except for one difference: access tokens are stored in the frontend (desktop app, mobile app, or web app) instead of in the backend. (Remember that the access token is the secret that gives a client permission to call a resource server). Since the access token is now available in the browser, the browser can call a resource server directly, instead of having to call the backend and get the backend to call the resource server with the token.
+The TMB is identical to the BFF pattern, except for one difference: access tokens are stored in the frontend (desktop app, mobile app, or web app) instead of in the backend. (Remember that the access token is the secret that gives a client permission to call a resource server). Since the access token is now available in the browser, the browser can call a resource server directly, instead of having to call the backend and get the backend to call the resource server with the token.
 
-
-
-
-- Link to OAuth2 TMB spec
+TMB is described in the IETF document on [best practices for OAuth apps](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend).
 
 ## How secure is a TMB?
-- Massively less secure than BFF in part 1, as tokens are stored in browser localStorage and thus vulnerable to malicious JS.
-- Massively more secure than serverless app in part 3.
-- Protected from cross site attacks.
-- Successful attacks are short-lived if you follow best practices (link to OAuth 2.1 draft and explain, with summary link to https://maida.kim/oauth2-best-practices-for-developers), which include short timeouts on tokens.
+
+TMB is massively less secure than BFF (since access tokens in the browser are vulnerable to malicious JavaScript packages and cross-site scripting (XSS)), but massively more secure than serverless web apps (browser-based OAuth clients (BBOC)), which have no secure backend at all.
+
+You can think of the security advantages as: BFF ≫ TMB ≫ BBOC.
+
+TMB has two of the security advantages of BFF:
+- Same-site HTTP-only session cookies prevent CSRF attacks.
+- Refresh tokens stay on the server, hidden from attackers.
+
+But TMB has a significant disadvantage. First, note that the access token in the browser can't be kept in an HTTP-only cookie, because JavaScript needs to access it to send it in calls to resource servers (which have different URL domains to the authorization server domain).
+
+Since the access token has to be stored in the browser's local storage, it's vulnerable in all the ways discussed in part 1:
+- Malicious npm JavaScript packages can access the token.
+- Cross-site scripts (e.g. unsanitized HTML from forum posts on your site) can access the token.
+
+A TMB is still more secure than a BBOC because of the server-side refresh token — if you follow best practices.
+
+You can set the expiry period of your access tokens to be very short (ten minutes), so that if an attacker does gain access to the token, they can't use it for long. The frontend can silently ask the server for a new access token generated from the server-side refresh token every ten minutes, so the user does not need to log in again. Or, for security-critical apps like banking, you can require the user to log in again every time their access token expires.
+
+Of course, if an attacker has managed insert malicious JS into your frontend, they can steal the access tokens again and again, so timeouts won't protect you.
+
+For a list of best practices to mitigate the danger of client-side token storage, read the recommendations by the the IETF in the [OAuth 2.1 draft](https://datatracker.ietf.org/doc/html/rfc9700/), or this [summary](https://maida.kim/oauth2-best-practices-for-developers) by a FusionAuth developer.
+
+
+
+- Successful attacks are short-lived if you follow best practices (link to OAuth 2.1 draft and explain, with summary link to ), which include short timeouts on tokens.
 
 ## When to use a TMB?
 - Only if you cannot, or may not, call a resource server through a proxy (backend) server and must call it through the frontend directly. (Can't think of an example of this, I must go find or LLM one)
@@ -87,84 +125,13 @@ But honestly, the one that would probably affect the most people is that, if you
 - kim repo - https://github.com/kmaida/auth-architecture
 - kim article on oauth best practices - https://maida.kim/oauth2-best-practices-for-developers/
 - kim's outline feedback - https://github.com/FusionAuth/fusionauth-site/pull/3949/files
+- IETF document on [best practices for OAuth apps](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend)
+- [OAuth 2.1 draft](https://datatracker.ietf.org/doc/html/rfc9700/)
+- [summary](https://maida.kim/oauth2-best-practices-for-developers)
 
----
-
-
-## kim talk notes
-
-3 archs
-authen, author
-  auth(orization) server - issues authen and author tokens
-  id tokens for authen
-  access tokens for author
-  refresh tokens renew other tokens
-browser based apps - spa, static sites
-  app, server, db, api
-  or platform as a service
-backend can safely store secrets, sessions, and tokens (incl. http only cookies)
-frontend can't safely store secrets, can't have sessions as lost on reload, can't store tokens due to xss attacks
-if you have a bff you can safely implements security
-
-- bff advantages
-  - backend is confidential
-  - no csrf attacks
-  - no token theft
-  - can't use stolen tokens
-- disadvantages
-  - complex
-  - same domain cookies only
-  - more work to proxy apis instead of calling
-  - need to learn oauth2
-  - manual implementation (unless provider like FA provides bff)
-
-### token mediating backend (TMB)
-- similar to bff - all auth done securely in backend. session in backend.
-- no refresh tokens in the browser, but access tokens are in the browser (in app memory)
-- uses authorz code flow with pkce
-- backend must keep latest access token by refreshing with refresh token so it's available when browser needs it
-- browser calls resource server directly with the access token, rather than through backend proxy
-- can use session cookie or access token to call local backend
-- advantages
-  - backend confidential
-  - no crsf attacks
-  - customisable security arch
-  - refresh token can't be stolen
-  - browser can directly call resource api (no need to use backend)
-  - common approach in many auth platform JS SDKs
-- disadvantage
-  - still complexand requires backend
-  - need to learn oauth2
-  - access token can be stolen from app memory by theft
-  - requires additional security
-- oauth 2.1 consolidates best practices, though is not yet final. summary of recommendations is here: https://maida.kim/oauth2-best-practices-for-developers.
-- frontend only (serverless apps)
-  - no safe place to store tokens
-  - use only for data that would not be disastrous to leak online
-  - authen is just for convenience
-  - least secure
-    - never store tokens
-    - short life time tokens (15m) - user has to log in again with password
-    - tokens single use and rotated
-  - advantages
-    - simpler
-    - easy to implement with sdks
-    - frontend can call resource server directly
-  - disadvantages
-    - can't store secrets
-    - user must relogin
-    - not suitable for apps that needs secrecy of any time
-    - best practices are need (see kim article link) but still don't help much
-- which to use?
-  - bff always where possible - critical information, regulations, external api requests
-  - tmb - when you can't proxy external apis
-  - bboc (browser based oauth 2 client) - architect limtations, auth for convenience not security, need to access no apis or cross origin apis
-- FA supports all three archs. TMB and serverless need manual implementation(fa provides client libraries, you must implement the design). if dev doesn't want FA hosted backend, they can use SDK to create their own
-- competitors: 30:47 for table
-- refer to ietf draft 6.2 - tmb (2.0 and 2.1)
-- 9700 best current practice (to be incorporated into 2.1)
 
 ## todo
+read IETF document on [best practices for OAuth apps](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend)
 fa - fusionauth
 remove temp niel 1 article
 rename article with -
