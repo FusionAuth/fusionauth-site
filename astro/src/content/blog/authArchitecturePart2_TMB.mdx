@@ -24,6 +24,9 @@ import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro
 - [How secure is a TMB?](#how-secure-is-a-tmb)
 	- [Demonstrating Proof of Possession (DPoP)](#demonstrating-proof-of-possession-dpop)
 - [When to use a TMB?](#when-to-use-a-tmb)
+	- [Latency](#latency)
+	- [Infrastructure](#infrastructure)
+	- [Skill and time](#skill-and-time)
 - [Getting technical: how the TMB flow works](#getting-technical-how-the-tmb-flow-works)
 - [Code demonstration](#code-demonstration)
 	- [Prerequisites](#prerequisites)
@@ -90,26 +93,33 @@ An attacker that manages to insert malicious JS into your browser could make cal
 DPoP is not yet supported by FusionAuth, but [requested](https://github.com/FusionAuth/fusionauth-issues/issues/1679).
 
 ## When to use a TMB?
-- Only if you cannot, or may not, call a resource server through a proxy (backend) server and must call it through the frontend directly. (Can't think of an example of this, I must go find or LLM one)
 
-The spec only says this:
+Since TMB is much less secure than BFF, there are very few reasons to choose TMB. Below are three.
 
-> When considering a token-mediating backend architecture, it is strongly recommended to evaluate if adopting a full BFF as discussed in Section 6.1 is a viable alternative. Only when the use cases or system requirements would prevent the use of a proxying BFF should the token-mediating backend be considered over a full BFF.
+### Latency
 
-Performance and latency costs could be a reason not to, such as in use cases like game or video streaming and realtime stuff (like collaboration tools like Figma).
+Since TMB allows the browser to call the resource server directly, it avoids the extra time taken to route the call via the app backend. For a general web application, like a bank or forum, this time is irrelevant. But for apps where real-time performance is critical, like games, voice and video chat, or collaborative document editing, this time could create noticeable lag.
 
-Infrastructure can also impact this... like PaaS that are meant to deploy static sites.
+### Infrastructure
 
-But honestly, the one that would probably affect the most people is that, if you're using a third party auth server, many of them use TMB out of the box.
+Hosting a web app with large JavaScript files and images can be costly. You might want to serve your frontend from a cheap static file host, and run only your API on a more expensive cloud server. This is not possible using BFF, because the BFF design requires that the backend lives on the same URL origin as the frontend. TMB doesn't have this constraint, as it is used only for the initial login, not proxying every call to other servers.
 
+### Skill and time
 
-- Aside, FA uses BFF by default, with easy to use hosted backend; perhaps with link to first article’s section on BFF-HB benefits
-- Even if your auth provider SDK doesn't provide a hosted backend it's still trivial to create a BFF in a tiny page of JS (see my article here https://fusionauth.io/blog/backend-for-frontend#how-to-create-a-bff-for-a-serverless-app and code here https://github.com/FusionAuth/fusionauth-example-hostedbackend/blob/main/nodeApp/app.js)
+If you are not a professional programmer and can't afford to hire one, you might be making an app by combining various low-code services. If the default architecture of your authentication provider is TMB and not BFF, that's what you're stuck with, and you don't have time to experiment with changing it.
+
+If this is the case, please know that implementing your own BFF server can literally be a single page of JavaScript. FusionAuth has an [example repository demonstrating this](https://github.com/FusionAuth/fusionauth-example-hostedbackend/tree/main/nodeApp) (see the file `app.js` and `authentication.js`) with an [accompanying tutorial](https://fusionauth.io/blog/backend-for-frontend#how-to-create-a-bff-for-a-serverless-app).
+
+Even simpler, if you use FusionAuth (which is free if you host it yourself), you can use the built-in FusionAuth [hosted backend](https://fusionauth.io/docs/apis/hosted-backend). The tutorial mentioned above also includes an example serverless HTML file with [two small JavaScript functions](https://github.com/FusionAuth/fusionauth-example-hostedbackend/blob/main/serverlessApp/index.html) that give you fully secure authentication by connecting to the hosted backed.
 
 ## Getting technical: how the TMB flow works
-- This section explains the TMB oauth flow
-- You can skip it and proceed to the demo in the next section if you don't need to implement or understand the details yourself
-- First review the BFF flow in part 1
+
+This section explains the TMB OAuth flow in more detail. You can skip it and proceed to the demonstration app in the next section if you don't need to implement or understand the details yourself.
+
+This discussion assumes you're familiar with the BFF flow from part 1 of this series, as only the differences are shown here.
+
+
+
 - Explanation the differences with an example login and resource call, include a diagram
 - Potential attacks noted
 
@@ -133,6 +143,7 @@ But honestly, the one that would probably affect the most people is that, if you
 
 - niel bff article - https://github.com/FusionAuth/fusionauth-site/pull/3942
 - my old article with diagrams to reuse - https://fusionauth.io/blog/backend-for-frontend
+- my old repo - github.com/fusionauth/fusionauth-example-hostedbackend
 - kim talk - https://drive.google.com/file/d/1B40E5zmVHaGfE9kEMAbOWRy3YS2D2EcC/view?pli=1
 - kim's 3 part brief - https://docs.google.com/document/d/1FZzTzodOd9YQOCVKhi4V46LiUPbRvnsy2XQ5dTC0mg0/edit?tab=t.0
 - kim repo - https://github.com/kmaida/auth-architecture
@@ -153,3 +164,7 @@ remove temp niel 1 article
 rename article with -
 remove unused imports
 use fa widget instead of docker?
+
+The spec only says this:
+
+> When considering a token-mediating backend architecture, it is strongly recommended to evaluate if adopting a full BFF as discussed in Section 6.1 is a viable alternative. Only when the use cases or system requirements would prevent the use of a proxying BFF should the token-mediating backend be considered over a full BFF.
