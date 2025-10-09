@@ -33,7 +33,7 @@ import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro
 	- [Run the app](#run-the-app)
 	- [How it works](#how-it-works)
 - [Summary](#summary)
-- [Read part 3](#read-part-3)
+- [Coming Up Next...](#coming-up-next)
 - [Links](#links)
 - [todo](#todo)
 
@@ -72,21 +72,21 @@ A TMB is slightly more secure than a BBOC because of the server-side refresh tok
 
 You can set the expiry period of your access tokens to be very short (ten minutes), so that if an attacker does gain access to the token, they can't use it for long. The frontend can silently ask the server for a new access token generated from the server-side refresh token every ten minutes, so the user does not need to log in again. Or, for security-critical apps like banking, you can require the user to log in again every time their access token expires. If you detect unauthorized use of an access token, you can revoke the refresh token and force a user to log in again.
 
-Of course, if an attacker has managed to insert malicious JS into your frontend, they can steal the access tokens again and again, so access token timeouts won't protect you. Mobile and desktop apps are generally much safer than web apps because they are less likely to use JavaScript.
+Of course, if an attacker has managed to insert malicious JS into your frontend, they can steal the access tokens again and again, so access token timeouts won't protect you. Mobile and desktop apps are generally safer than web apps because they are less likely to use JavaScript.
 
-For a list of best practices to mitigate the danger of client-side token storage, read the recommendations by the the IETF in the [OAuth 2.1 draft](https://datatracker.ietf.org/doc/html/rfc9700/), or this [summary](https://maida.kim/oauth2-best-practices-for-developers) by a FusionAuth developer.
+For a list of best practices mitigating the danger of client-side token storage, read the recommendations by the the IETF in the [OAuth 2.1 draft](https://datatracker.ietf.org/doc/html/rfc9700/), or this [summary](https://maida.kim/oauth2-best-practices-for-developers) by a FusionAuth developer.
 
 ### Demonstrating Proof of Possession (DPoP)
 
 There is one relatively new technology (2023) that makes client-side tokens a lot safer — DPoP, standing for Demonstrating Proof of Possession, and available as IETF [RFC 9449](https://datatracker.ietf.org/doc/rfc9449).
 
-DPoP is complicated enough to warrant an entire article, and the [official site](https://dpop.info) has a great visual walkthrough of the protocol, but the concept is simple enough to explain briefly.
+DPoP is complicated enough to warrant an entire article, and the [official site](https://dpop.info) has a great visual walkthrough of the protocol, but the concept is simple enough to understand.
 
 If an OAuth access token is like a door key, which can be stolen, using DPoP is like a door that can be unlocked only with the key and having you sign your signature when trying to enter. An attacker with only the key can't open the door because they can't fake your signature.
 
-How it actually works is the access token is cryptographically bound to the DPoP key at creation, and must both be sent to in calls to a resource server. An access token request that isn't signed by the DPoP key will be rejected.
+How it actually works is the access token is cryptographically bound to the DPoP key at creation, and both must be sent in calls to a resource server. An access token request that isn't signed by the DPoP key will be rejected.
 
-If the attacker can steal the access token in JavaScript, why can't they steal the DPoP key too? The DPoP key is stored using the browser's web cryptography API with [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable) set to `false`. This means a request to a resource server can be signed with the DPoP key in the browser, but the key can never leave the browser or be seen by JS.
+If the attacker can steal the access token in JavaScript, why can't they steal the DPoP key too? The DPoP key is stored using the browser's web cryptography API with [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable) set to `false`. This means a request to a resource server can be signed with the DPoP key in the browser, but the key can never leave the browser or be accessed by JS.
 
 An attacker that manages to insert malicious JS into your browser could make calls using both the DPoP key and access code, but if the attacker exfiltrates the access code to their own machine, it's useless without the DPoP key. So DPoP still doesn't make storing tokens in the browser as secure as using a BFF, but completely eliminates one attack type. Once the user closes their browser, all fraudulent requests must pause.
 
@@ -108,7 +108,7 @@ Hosting a web app with large JavaScript files and images can be costly. You migh
 
 If you are not a professional programmer and can't afford to hire one, you might be making an app by combining various low-code services. If the default architecture of your authentication provider is TMB and not BFF, that's what you're stuck with, and you don't have time to experiment with changing it.
 
-If this is the case, please know that implementing your own BFF server can literally be a single page of JavaScript. FusionAuth has an [example repository demonstrating this](https://github.com/FusionAuth/fusionauth-example-hostedbackend/tree/main/nodeApp) (see the file `app.js` and `authentication.js`) with an [accompanying tutorial](https://fusionauth.io/blog/backend-for-frontend#how-to-create-a-bff-for-a-serverless-app).
+If this is the case, please know that implementing your own BFF server can literally be a single page of JavaScript. FusionAuth has an [example repository demonstrating this](https://github.com/FusionAuth/fusionauth-example-hostedbackend/tree/main/nodeApp) (see the files `app.js` and `authentication.js`) with an [accompanying tutorial](https://fusionauth.io/blog/backend-for-frontend#how-to-create-a-bff-for-a-serverless-app).
 
 Even simpler, if you use FusionAuth (which is free if you host it yourself), you can use the built-in FusionAuth [hosted backend](https://fusionauth.io/docs/apis/hosted-backend). The tutorial mentioned above also includes an example serverless HTML file with [two small JavaScript functions](https://github.com/FusionAuth/fusionauth-example-hostedbackend/blob/main/serverlessApp/index.html) that give you fully secure authentication by connecting to the hosted backed.
 
@@ -133,11 +133,14 @@ This discussion assumes you're familiar with the BFF flow from part 1 of this se
 - Briefly describe what's in each file
 
 ## Summary
-- Brief repeat of the 'when to use section' because of the 'how secure' section.
-- Link to FA hosted backend
 
-## Read part 3
-- Brief description of what's in that article
+The recommendation of this article, and the whole series, is to use BFF for authentication and authorization as it is far more secure than TMB and BBOC. The only time you can justify not using a secure backend is if your app needs near real-time speed or if you have an insurmountable infrastructure constraint.
+
+If your authentication provider doesn't support BFF, you can implement one using FusionAuth for free, either as the identity provider itself or merely the gateway that securely proxies authentication. See the [tutorial](https://fusionauth.io/blog/backend-for-frontend#use-a-premade-bff) to learn how.
+
+## Coming Up Next...
+
+The final post in this series discusses the third and least secure OAuth architecture: BBOC. You'll learn how it works and the rare cases when you might choose it.
 
 ## Links
 
@@ -159,6 +162,7 @@ is not yet supported by FusionAuth, but [requested](https://github.com/FusionAut
 
 ## todo
 read IETF document on [best practices for OAuth apps](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend)
+capitals
 fa - fusionauth
 remove temp niel 1 article
 rename article with -
