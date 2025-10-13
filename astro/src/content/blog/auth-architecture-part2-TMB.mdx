@@ -48,7 +48,7 @@ This is part two of a three part series on OAuth architectures. Please read [par
 
 ## What Is A Token-Mediating Backend?
 
-The TMB is identical to the BFF pattern, except for one big difference: access tokens are stored in the frontend (desktop app, mobile app, or web app) instead of in the backend. (Refresh tokens are still stored on the backend). Since the access token is now available in the browser, the browser can call a resource server directly, instead of having to call the backend and get the backend to call the resource server with the token.
+The TMB is identical to the BFF pattern, except for one big difference: access tokens are stored in the frontend (desktop app, mobile app, or web app) instead of in the backend, and the frontend calls the resource servers directly. (Refresh tokens are still stored on the backend). Since the access token is now available in the browser, the browser can call a resource server directly, instead of having to call the backend and get the backend to call the resource server with the token.
 
 TMB is described in the IETF document on [best practices for OAuth apps](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend).
 
@@ -56,7 +56,7 @@ TMB is described in the IETF document on [best practices for OAuth apps](https:/
 
 TMB is massively less secure than BFF (since access tokens in the browser are vulnerable to exfiltration by malicious JavaScript packages and cross-site scripting (XSS)), but slightly more secure than serverless web apps (browser-based OAuth clients (BBOC)), which have no secure backend at all.
 
-Both BFF and TMB are vulnerable to fraudulent requests if an attacker manages to inject malicious JavaScript into the browser (client hijacking). But BFF prevents the attacker from using the token from the attacker's computer (token exfiltration).
+Both BFF and TMB are vulnerable to fraudulent requests if an attacker manages to inject malicious JavaScript into the browser (client hijacking). But BFF prevents the attacker from using the token from the attacker's computer (token exfiltration) while TMB does not.
 
 You can think of the security advantages as: BFF ≫ TMB > BBOC.
 
@@ -64,15 +64,13 @@ TMB has two of the security advantages of BFF:
 - Same-site HTTP-only session cookies, as well as PKCE checks and OIDC nonces, prevent CSRF attacks.
 - Refresh tokens stay on the server, hidden from attackers.
 
-In a TMB frontend the access token in the browser can't be kept in an HTTP-only cookie, because JavaScript needs to access it to send it in calls to resource servers (which have different URL domains to the authorization server domain). Since the access token has to be stored in the browser's local storage, it's vulnerable to exfiltration by XSS attacks, like malicious npm packages or unsanitized HTML from forum posts on your site.
-
-TODO list actual attacks from https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps
+In a TMB frontend the access token in the browser can't be kept in an HTTP-only cookie, because JavaScript needs to access it to send it in calls to resource servers (which have different URL domains to the authorization server domain). Since the access token has to be stored in the browser's local storage or application memory, it's vulnerable to exfiltration by XSS attacks, like malicious npm packages or unsanitized HTML from forum posts on your site.
 
 A TMB is slightly more secure than a BBOC because of the server-side refresh token — if you follow best practices.
 
 You can set the expiry period of your access tokens to be very short (ten minutes), so that if an attacker does gain access to the token, they can't use it for long. The frontend can silently ask the server for a new access token generated from the server-side refresh token every ten minutes, so the user does not need to log in again. Or, for security-critical apps like banking, you can require the user to log in again every time their access token expires. If you detect unauthorized use of an access token, you can revoke the refresh token and force a user to log in again.
 
-Of course, if an attacker has managed to insert malicious JavaScript into your frontend, they can steal the access tokens again and again, so access token timeouts won't protect you. Mobile and desktop apps are generally safer than web apps because they are less likely to use JavaScript.
+Of course, if an attacker has managed to insert malicious JavaScript into your frontend, they can steal the access tokens again and again, so access token timeouts won't protect you. However, once the user closes their browser, all fraudulent requests must pause. Mobile and desktop apps are generally safer than web apps because they are less likely to use JavaScript.
 
 For a list of best practices mitigating the danger of client-side token storage, read the recommendations by the the IETF in the [OAuth 2.1 draft](https://datatracker.ietf.org/doc/html/rfc9700/), or this [summary](https://maida.kim/oauth2-best-practices-for-developers) by a FusionAuth developer.
 
@@ -88,7 +86,7 @@ How it actually works is the access token is cryptographically bound to the DPoP
 
 If the attacker can steal the access token in JavaScript, why can't they steal the DPoP key too? The DPoP key is stored using the browser's web cryptography API with [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable) set to `false`. This means a request to a resource server can be signed with the DPoP key in the browser, but the key can never leave the browser or be accessed by JavaScript.
 
-An attacker that manages to insert malicious JavaScript into your browser could make calls using both the DPoP key and access code, but if the attacker exfiltrates the access code to their own machine, it's useless without the DPoP key. So DPoP makes storing access tokens in the browser as secure as using a BFF. Remember that if an attacker manages to run malicious JavaScript in the user's browser (client hijacking), the attacker can make fraudulent requests as the user both in TMB and BFF. Once the user closes their browser, all fraudulent requests must pause.
+An attacker that manages to insert malicious JavaScript into your browser could make calls using both the DPoP key and access code, but if the attacker exfiltrates the access code to their own machine, it's useless without the DPoP key. So DPoP makes storing access tokens in the browser as secure as using a BFF. Remember that if an attacker manages to run malicious JavaScript in the user's browser (client hijacking), the attacker can make fraudulent requests as the user both in TMB and BFF.
 
 The security ranking is: (BFF = TMB with DPoP) ≫ TMB > BBOC.
 
@@ -104,7 +102,7 @@ Since TMB allows the browser to call the resource server directly, it avoids the
 
 ### Infrastructure
 
-Hosting a web app with large JavaScript files and images can be costly. You might want to serve your frontend from a cheap static file host, and run your API on a more expensive cloud server. This is more difficult using BFF than TMB, because the BFF design requires that the backend lives on the same URL origin as the frontend, so you need a reverse proxy for URL redirects between the two servers. TMB doesn't have this constraint, as it is used only for the initial login, not proxying every call to other servers.
+Hosting a web app with large JavaScript files and images can be costly. You might want to serve your frontend from a cheap static file host, and run your API on a more expensive cloud server. This is more difficult using BFF than TMB, because the BFF design needs the backend to live on the same URL origin as the frontend (or configure complex cross-origin resource sharing (CORS)), so you need a reverse proxy for URL redirects between the two servers. TMB doesn't have this constraint, as it is used only for the initial login, not proxying every call to other servers.
 
 ### Skill And Time
 
@@ -298,6 +296,7 @@ The [final post](TODO) in this series discusses the third and least secure OAuth
 - [FusionAuth hosted backend example repository](https://github.com/fusionauth/fusionauth-example-hostedbackend)
 - [OAuth best practices summary](https://maida.kim/oauth2-best-practices-for-developers)
 - [IETF OAuth best practices](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend)
+- [OAuth 2 specification](https://www.rfc-editor.org/rfc/rfc6749)
 - [OAuth 2.1 draft](https://datatracker.ietf.org/doc/html/rfc9700)
 - [OAuth 2.0 Demonstrating Proof of Possession (DPoP)](https://dpop.info)
 - [DPoP IETF RFC 9449](https://datatracker.ietf.org/doc/rfc9449)
