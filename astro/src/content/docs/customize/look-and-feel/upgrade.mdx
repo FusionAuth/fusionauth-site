@@ -16,7 +16,7 @@ This page contains notes on changes in recent versions of FusionAuth that requir
 
 Previously the following [identity provider types](/docs/apis/identity-providers) were limited to a single configuration per FusionAuth instance: Apple, Epic Games, Facebook, Google, HYPR, LinkedIn, Nintendo, Sony PlayStation Network, Steam, Twitch, Twitter, and Xbox.
 
-To enable support for multiple identity provider configurations of these types on a single login page, you will need to make the following modifications.
+To enable support for multiple identity provider configurations of these types on a single login page, you will need to make the following modifications. In some cases, such as rendering login buttons, the upgrade notes provide an example modification that needs to be applied to other identity provider types. The default theme is available on every FusionAuth instance as a point of comparison or guide to theme upgrades.
 
 ### Helpers template
 
@@ -77,6 +77,63 @@ Here is the updated `[#if]` block. The updated logic selects the first Google Id
 [/#if]
 ```
 
+#### Macro alternativeLogins
+
+The `alternativeLogins` macro checks for various IdP types in the `identityProviders` Freemarker variable and renders the appropriate button for that type. Several identity provider types now support multiple configurations and need to update rendering a single button to looping over the IdPs of that type.alternativeLogins
+
+Here is an example rendering the "Sign in with Apple" button hard-coded to expect a single Apple IdP configuration.
+
+```title="Single configuration"
+[#if identityProviders["Apple"]?has_content]
+  <div class="form-row push-less-top">
+      [@appleButton identityProvider=identityProviders["Apple"][0] clientId=clientId/]
+  </div>
+[/#if]
+```
+
+Here is an example that supports rendering zero or more buttons based on available Apple IdP configurations by looping over all Apple IdP configurations and rendering the button with the `identityProvider` for that loop.
+
+```title="Multiple configurations"
+[#if identityProviders["Apple"]?has_content]
+  [#list identityProviders["Apple"] as identityProvider]
+    <div class="form-row push-less-top">
+        [@appleButton identityProvider=identityProvider clientId=clientId/]
+    </div>
+  [/#list]
+[/#if]
+```
+
+The above is just one example of several identity provider types requiring updates in `alternativeLogins` to render multiple buttons by replacing the hard-coded single instance with a loop. As you work through the different identity provider types, pay special attention to the key in the `identityProviders` map and the name of the button rendering macro in each case. The following identity provider types require this update in the `alternativeLogins` macro: Apple, Epic Games, Facebook, LinkedIn, Nintendo, Sony PlayStation Network, Steam, Twitch, Twitter, Xbox.
+
+The Google identity provider type requires a bit more modification in the `alternativeLogins` macro in order to render the single button using the GSI client in addition to other Google IdP configurations with the `UseRedirect` login method. Remove the existing `[#if]` block and replace with the updated code below.
+
+```title="Remove the [#if] block"
+[#if identityProviders["Google"]?has_content]
+  <div class="form-row push-less-top">
+      [@googleButton identityProvider=identityProviders["Google"][0] clientId=clientId idpRedirectState=idpRedirectState/]
+  </div>
+[/#if]
+```
+
+In its place add two `[#if]` blocks. The first block checks whether it should render a GSI client button using the `gsiIdentityProvider` variable assigned in the `alternativeLoginsScript` macro. The second block calls the `googleButton` macro to render a login button for Google IdPs configured with the `UseRedirect` login method.
+
+```title="Render GSI and UseRedirect Google buttons"
+[#-- Check whether a Google IdP was assigned to use GSI APIs and render the button --]
+[#if gsiIdentityProvider?has_content]
+  <div class="form-row push-less-top">
+      [@googleGsiButton identityProvider=gsiIdentityProvider clientId=clientId idpRedirectState=idpRedirectState/]
+  </div>
+[/#if]
+
+[#if identityProviders["Google"]?has_content]
+  [#list identityProviders["Google"] as identityProvider]
+    <div class="form-row push-less-top">
+        [#-- The googleButton macro only renders buttons for IdPs configured with the UseRedirect login methods --]
+        [@googleButton identityProvider=identityProvider clientId=clientId idpRedirectState=idpRedirectState/]
+    </div>
+  [/#list]
+[/#if]
+```
 
 ## Version 1.60.0
 
