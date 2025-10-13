@@ -69,6 +69,8 @@ Since the access token has to be stored in the browser's local storage, it's vul
 - Malicious npm JavaScript packages can access the token.
 - Cross-site scripts (e.g. unsanitized HTML from forum posts on your site) can access the token.
 
+TODO list actual attacks from https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps
+
 A TMB is slightly more secure than a BBOC because of the server-side refresh token — if you follow best practices.
 
 You can set the expiry period of your access tokens to be very short (ten minutes), so that if an attacker does gain access to the token, they can't use it for long. The frontend can silently ask the server for a new access token generated from the server-side refresh token every ten minutes, so the user does not need to log in again. Or, for security-critical apps like banking, you can require the user to log in again every time their access token expires. If you detect unauthorized use of an access token, you can revoke the refresh token and force a user to log in again.
@@ -89,7 +91,9 @@ How it actually works is the access token is cryptographically bound to the DPoP
 
 If the attacker can steal the access token in JavaScript, why can't they steal the DPoP key too? The DPoP key is stored using the browser's web cryptography API with [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable) set to `false`. This means a request to a resource server can be signed with the DPoP key in the browser, but the key can never leave the browser or be accessed by JS.
 
-An attacker that manages to insert malicious JS into your browser could make calls using both the DPoP key and access code, but if the attacker exfiltrates the access code to their own machine, it's useless without the DPoP key. So DPoP still doesn't make storing tokens in the browser as secure as using a BFF, but completely eliminates one attack type. Once the user closes their browser, all fraudulent requests must pause.
+An attacker that manages to insert malicious JS into your browser could make calls using both the DPoP key and access code, but if the attacker exfiltrates the access code to their own machine, it's useless without the DPoP key. So DPoP makes storing access tokens in the browser as secure as using a BFF. Remember that if an attacker manages to run malicious JavaScript in the user's browser (client hijacking), the attacker can make fraudulent requests as the user both in TMB and BFF. Once the user closes their browser, all fraudulent requests must pause.
+
+The security ranking is: (BFF = TMB with DPoP) ≫ TMB > BBOC.
 
 DPoP is not yet supported by FusionAuth, but [requested](https://github.com/FusionAuth/fusionauth-issues/issues/1679).
 
@@ -103,7 +107,7 @@ Since TMB allows the browser to call the resource server directly, it avoids the
 
 ### Infrastructure
 
-Hosting a web app with large JavaScript files and images can be costly. You might want to serve your frontend from a cheap static file host, and run only your API on a more expensive cloud server. This is not possible using BFF, because the BFF design requires that the backend lives on the same URL origin as the frontend. TMB doesn't have this constraint, as it is used only for the initial login, not proxying every call to other servers.
+Hosting a web app with large JavaScript files and images can be costly. You might want to serve your frontend from a cheap static file host, and run your API on a more expensive cloud server. This is more difficult using BFF than TMB, because the BFF design requires that the backend lives on the same URL origin as the frontend, so you need a reverse proxy for URL redirects between the two servers. TMB doesn't have this constraint, as it is used only for the initial login, not proxying every call to other servers.
 
 ### Skill and time
 
@@ -117,12 +121,26 @@ Even simpler, if you use FusionAuth (which is free if you host it yourself), you
 
 This section explains the TMB OAuth flow in more detail. You can skip it and proceed to the demonstration app in the next section if you don't need to implement or understand the details yourself.
 
-This discussion assumes you're familiar with the BFF flow from part 1 of this series, as only the differences are shown here.
+The diagram below shows all the authentication and authorization steps of an app using the TMB pattern. It is based on the [official text from the IETF](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-application-architecture-2).
+
+participant d@{ "type" : "database" }
+
+```mermaid
+sequenceDiagram
+	actor U as User
+	participant B as Browser
+	participant F as Static file host
+	participant T as TMB
+	participant R as Resource server
+	participant O as Token Endpoint
+	participant A as Authorization Endpoint
+
+	U->>B: Visit website
+	B->>F: Request website
+	F->>B: Send HTML, CSS, JS
+```
 
 TODO - read ietf and kim readme, explain here...
-
-- Explanation the differences with an example login and resource call, include a diagram
-- Potential attacks noted
 
 ## See TMB In Action: A Complete Demonstration
 
