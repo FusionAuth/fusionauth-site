@@ -12,6 +12,72 @@ New versions of FusionAuth sometimes include new or updated theme templates. If 
 
 This page contains notes on changes in recent versions of FusionAuth that require changes to a customized theme.
 
+## Version 1.61.0
+
+Previously the following [identity provider types](/docs/apis/identity-providers) were limited to a single configuration per FusionAuth instance: Apple, Epic Games, Facebook, Google, HYPR, LinkedIn, Nintendo, Sony PlayStation Network, Steam, Twitch, Twitter, and Xbox.
+
+To enable support for multiple identity provider configurations of these types on a single login page, you will need to make the following modifications.
+
+### Helpers template
+
+Update the `alternativeLoginsScript`, `alternativeLogins`, and various external identity provider button rendering macros. When editing a theme in the UI, this page will be shown as `Helpers`, and the API template name is `helpers`.
+
+#### Macro alternativeLoginsScript
+
+Remove the `data-app-id` attribute from the `<script>` tag including `Facebook.js`. The attribute must be set by each `facebookButton` macro invocation to support multiple Facebook IdP configurations.
+
+```title="Remove data-app-id"
+data-app-id="${identityProviders["Facebook"][0].lookupAppId(clientId)}"
+```
+
+Here is an example `<script>` tag without the attribute
+
+```title="After"
+<script src="${request.contextPath}/js/identityProvider/Facebook.js?version=${version}"></script>
+```
+
+Remove the `data-client-id` attribute from the `<script>` tag including `Twitter.js`. The attribute must be set by each `twitterButton` macro invocation to support multiple Twitter IdP configurations.
+
+```title="Remove data-client-id"
+data-client-id="${clientId}"
+```
+
+Here is an example `<script>` tag without the attribute
+
+```title="After"
+<script src="${request.contextPath}/js/identityProvider/Twitter.js?version=${version}"></script>
+```
+
+{/*  TODO : Link to Google IdP limitations. */}
+Replace the `[#if]` block including Google's GSI client JavaScript and `Google.js`. Only one Google identity provider using the GSI client can be included on the page.
+
+```title="The old [#if] block"
+[#if identityProviders["Google"]?has_content && identityProviders["Google"][0].lookupLoginMethod(clientId) != "UseRedirect"]
+  <script src="https://accounts.google.com/gsi/client" async></script>
+  <script src="${request.contextPath}/js/identityProvider/Google.js?version=${version}"
+          data-client-id="${identityProviders["Google"][0].lookupClientId(clientId)}"></script>
+[/#if]
+```
+
+Here is the updated `[#if]` block. The updated logic selects the first Google IdP configured to use the GSI client and stores it in a `gsiIdentityProvider` variable to be used later in the `alternativeLogins` macro.
+
+```title="The updated [#if] block"
+[#if identityProviders["Google"]?has_content]
+  [#list identityProviders["Google"] as idp]
+    [#if idp.lookupLoginMethod(clientId) != "UseRedirect"]
+      [#-- Only one Google IdP can use the GSI APIs on a page. Assign the IdP for later use and load scripts. --]
+      [#assign gsiIdentityProvider = idp/]
+      <script src="https://accounts.google.com/gsi/client" async></script>
+      <script src="${request.contextPath}/js/identityProvider/Google.js?version=${version}"
+              data-client-id="${gsiIdentityProvider.lookupClientId(clientId)}"
+              data-identity-provider-id="${gsiIdentityProvider.id}"></script>
+      [#break]
+    [/#if]
+  [/#list]
+[/#if]
+```
+
+
 ## Version 1.60.0
 
 To enable support of the `prompt` parameter, you will need to make the following modifications.
