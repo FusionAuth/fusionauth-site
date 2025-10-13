@@ -17,7 +17,6 @@ import Aside from 'src/components/Aside.astro';
   - Remove opensearch from the dockerfile as it's huge and unnecessary for the demo
   - Give containers in dockerfile names so it's easy to write a clean up command at the end of this article post to remove all docker stuff.
 - Search for TODO before publishing this, like links.
-
 */}
 
 - [Introduction](#introduction)
@@ -55,7 +54,9 @@ TMB is described in the IETF document on [best practices for OAuth apps](https:/
 
 ## How Secure Is A TMB?
 
-TMB is massively less secure than BFF (since access tokens in the browser are vulnerable to malicious JavaScript packages and cross-site scripting (XSS)), but slightly more secure than serverless web apps (browser-based OAuth clients (BBOC)), which have no secure backend at all.
+TMB is massively less secure than BFF (since access tokens in the browser are vulnerable to exfiltration by malicious JavaScript packages and cross-site scripting (XSS)), but slightly more secure than serverless web apps (browser-based OAuth clients (BBOC)), which have no secure backend at all.
+
+Both BFF and TMB are vulnerable to fraudulent requests if an attacker manages to inject malicious JavaScript into the browser (client hijacking). But BFF prevents the attacker from using the token from the attacker's computer (token exfiltration).
 
 You can think of the security advantages as: BFF ≫ TMB > BBOC.
 
@@ -63,11 +64,7 @@ TMB has two of the security advantages of BFF:
 - Same-site HTTP-only session cookies, as well as PKCE checks and OIDC nonces, prevent CSRF attacks.
 - Refresh tokens stay on the server, hidden from attackers.
 
-But TMB has a significant disadvantage. The access token in the browser can't be kept in an HTTP-only cookie, because JavaScript needs to access it to send it in calls to resource servers (which have different URL domains to the authorization server domain).
-
-Since the access token has to be stored in the browser's local storage, it's vulnerable in all the ways discussed in part 1:
-- Malicious npm JavaScript packages can access the token.
-- Cross-site scripts (e.g. unsanitized HTML from forum posts on your site) can access the token.
+In a TMB frontend the access token in the browser can't be kept in an HTTP-only cookie, because JavaScript needs to access it to send it in calls to resource servers (which have different URL domains to the authorization server domain). Since the access token has to be stored in the browser's local storage, it's vulnerable to exfiltration by XSS attacks, like malicious npm packages or unsanitized HTML from forum posts on your site.
 
 TODO list actual attacks from https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps
 
@@ -75,7 +72,7 @@ A TMB is slightly more secure than a BBOC because of the server-side refresh tok
 
 You can set the expiry period of your access tokens to be very short (ten minutes), so that if an attacker does gain access to the token, they can't use it for long. The frontend can silently ask the server for a new access token generated from the server-side refresh token every ten minutes, so the user does not need to log in again. Or, for security-critical apps like banking, you can require the user to log in again every time their access token expires. If you detect unauthorized use of an access token, you can revoke the refresh token and force a user to log in again.
 
-Of course, if an attacker has managed to insert malicious JS into your frontend, they can steal the access tokens again and again, so access token timeouts won't protect you. Mobile and desktop apps are generally safer than web apps because they are less likely to use JavaScript.
+Of course, if an attacker has managed to insert malicious JavaScript into your frontend, they can steal the access tokens again and again, so access token timeouts won't protect you. Mobile and desktop apps are generally safer than web apps because they are less likely to use JavaScript.
 
 For a list of best practices mitigating the danger of client-side token storage, read the recommendations by the the IETF in the [OAuth 2.1 draft](https://datatracker.ietf.org/doc/html/rfc9700/), or this [summary](https://maida.kim/oauth2-best-practices-for-developers) by a FusionAuth developer.
 
@@ -89,9 +86,9 @@ If an OAuth access token is like a door key, which can be stolen, using DPoP is 
 
 How it actually works is the access token is cryptographically bound to the DPoP key at creation, and both must be sent in calls to a resource server. An access token request that isn't signed by the DPoP key will be rejected.
 
-If the attacker can steal the access token in JavaScript, why can't they steal the DPoP key too? The DPoP key is stored using the browser's web cryptography API with [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable) set to `false`. This means a request to a resource server can be signed with the DPoP key in the browser, but the key can never leave the browser or be accessed by JS.
+If the attacker can steal the access token in JavaScript, why can't they steal the DPoP key too? The DPoP key is stored using the browser's web cryptography API with [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable) set to `false`. This means a request to a resource server can be signed with the DPoP key in the browser, but the key can never leave the browser or be accessed by JavaScript.
 
-An attacker that manages to insert malicious JS into your browser could make calls using both the DPoP key and access code, but if the attacker exfiltrates the access code to their own machine, it's useless without the DPoP key. So DPoP makes storing access tokens in the browser as secure as using a BFF. Remember that if an attacker manages to run malicious JavaScript in the user's browser (client hijacking), the attacker can make fraudulent requests as the user both in TMB and BFF. Once the user closes their browser, all fraudulent requests must pause.
+An attacker that manages to insert malicious JavaScript into your browser could make calls using both the DPoP key and access code, but if the attacker exfiltrates the access code to their own machine, it's useless without the DPoP key. So DPoP makes storing access tokens in the browser as secure as using a BFF. Remember that if an attacker manages to run malicious JavaScript in the user's browser (client hijacking), the attacker can make fraudulent requests as the user both in TMB and BFF. Once the user closes their browser, all fraudulent requests must pause.
 
 The security ranking is: (BFF = TMB with DPoP) ≫ TMB > BBOC.
 
