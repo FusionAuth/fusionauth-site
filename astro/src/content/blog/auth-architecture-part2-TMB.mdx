@@ -48,7 +48,7 @@ This is part two of a three part series on OAuth architectures. Please read [par
 
 ## What Is A Token-Mediating Backend?
 
-The TMB is identical to the BFF pattern, except for one big difference: access tokens are stored in the frontend (desktop app, mobile app, or web app) instead of in the backend, and the frontend calls the resource servers directly. (Refresh tokens are still stored on the backend). Since the access token is now available in the browser, the browser can call a resource server directly, instead of having to call the backend and get the backend to call the resource server with the token.
+The TMB is identical to the BFF pattern, except for one big difference: access tokens are stored in the frontend (desktop app, mobile app, or web app) instead of in the backend. (Refresh tokens are still stored on the backend). Since the access token is now available in the browser, the browser can call a resource server directly, instead of having to call the backend and get the backend to call the resource server with the token.
 
 TMB is described in the IETF document on [best practices for OAuth apps](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend).
 
@@ -64,7 +64,7 @@ TMB has two of the security advantages of BFF:
 - Same-site HTTP-only session cookies, as well as PKCE checks and OIDC nonces, prevent CSRF attacks.
 - Refresh tokens stay on the server, hidden from attackers.
 
-In a TMB frontend the access token in the browser can't be kept in an HTTP-only cookie, because JavaScript needs to access it to send it in calls to resource servers (which have different URL domains to the authorization server domain). Since the access token has to be stored in the browser's local storage or application memory, it's vulnerable to exfiltration by XSS attacks, like malicious npm packages or unsanitized HTML from forum posts on your site.
+In a TMB frontend, the access token in the browser can't be kept in an HTTP-only cookie, because JavaScript needs to access it to send it in calls to resource servers (which have different URL domains to the authorization server domain). Since the access token has to be stored in the browser's local storage or application memory, it's vulnerable to exfiltration by XSS attacks, like malicious npm packages or unsanitized HTML from forum posts on your site.
 
 A TMB is slightly more secure than a BBOC because of the server-side refresh token — if you follow best practices.
 
@@ -82,11 +82,11 @@ DPoP is complicated enough to warrant an entire article, and the [official site]
 
 If an OAuth access token is like a door key, which can be stolen, using DPoP is like a door that can be unlocked only with the key and having you sign your signature when trying to enter. An attacker with only the key can't open the door because they can't fake your signature.
 
-How it actually works is the access token is cryptographically bound to the DPoP key at creation, and both must be sent in calls to a resource server. An access token request that isn't signed by the DPoP key will be rejected.
+How it actually works is the access token is cryptographically bound to the DPoP key at creation, and both must be sent in calls to a resource server. A request to a resource server with an access token that isn't signed by the DPoP key will be rejected.
 
-If the attacker can steal the access token in JavaScript, why can't they steal the DPoP key too? The DPoP key is stored using the browser's web cryptography API with [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable) set to `false`. This means a request to a resource server can be signed with the DPoP key in the browser, but the key can never leave the browser or be accessed by JavaScript.
+If the attacker can steal the access token in JavaScript, why can't they steal the DPoP key too? The DPoP key is stored using the browser's web cryptography API with [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable) set to `false`. This means a request to a resource server can be signed with the DPoP key in the browser, but the key can never leave the browser or be accessed by JavaScript, preventing exfiltration.
 
-An attacker that manages to insert malicious JavaScript into your browser could make calls using both the DPoP key and access code, but if the attacker exfiltrates the access code to their own machine, it's useless without the DPoP key. So DPoP makes storing access tokens in the browser as secure as using a BFF. Remember that if an attacker manages to run malicious JavaScript in the user's browser (client hijacking), the attacker can make fraudulent requests as the user both in TMB and BFF.
+An attacker that manages to insert malicious JavaScript into your browser could make calls using both the DPoP key and access code, but if the attacker exfiltrates the access code to their own machine, it's useless without the DPoP key. So DPoP makes storing access tokens in the browser as secure as using a BFF. Remember that if an attacker manages to run malicious JavaScript in the user's browser (client hijacking), the attacker can make fraudulent requests as the user both in the TMB and BFF patterns.
 
 The security ranking is: (BFF = TMB with DPoP) ≫ TMB > BBOC.
 
@@ -132,7 +132,7 @@ sequenceDiagram
 	F->>B: Send HTML, CSS, JS
 	Note over B,T: .
 	Note over B,T: .
-	B->>T: Is there an active session?
+	B->>T: Is there an active session (include session cookie)?
 	T->>B: Yes, here is your access token
 	Note over B,T: .
 	Note over B,T: .
@@ -169,13 +169,13 @@ For a more detailed explanation of every step in the flow, please see the accomp
 
 ## See TMB In Action: A Complete Demonstration
 
-To help you get started using TMB, you can use a complete FusionAuth demonstration repository. The repository includes a React frontend and a Node.js/Express backend, demonstrating the full TMB pattern with FusionAuth as the authorization server. Of course, you can adapt the backend to any language or framework.
+To help you get started using TMB, you can use a complete FusionAuth demonstration repository. The repository includes a React frontend and a Node.js/Express backend, demonstrating the TMB pattern with FusionAuth as the authorization server. Of course, you can adapt the backend to any language or framework.
 
-The section allows you to run a simple but functional TMB web app and server with FusionAuth to see how it works.
+This section allows you to run a simple but functional TMB web app and server with FusionAuth to see how it works.
 
 ### Download And Start FusionAuth
 
-To follow along, you'll need Git, Node.js, npm, and Docker installed. (For safety, instead of Node, you should also be able to use Deno, or Node in Docker.)
+To follow along, you'll need Git, Node.js, npm, and Docker installed. While it's not explained here, you could use Deno (or Node in Docker if know how to change your network settings) instead of Node.
 
 Open a terminal and clone the repository with Git using the commands below.
 
@@ -273,7 +273,7 @@ The authentication provider, FusionAuth, stores user authentication details and 
 
 The backend project is the most complex of the three architecture components. It handles the OAuth interaction between FusionAuth and the frontend, and provides the API that acts as a resource server. The backend is an Express.js server (`server.ts`) that handles authentication in `auth.ts` and the files in the `utils` directory. You should be able to understand the code by reading the [flow process](https://github.com/kmaida/auth-architecture/tree/main/tmb#how-tmb-authentication-works) detailed in the README file.
 
-The authentication flow is hand-coded in this example to make it understandable and explicit, but in reality you should use a library like [Passport.js](https://www.passportjs.org/packages/passport-oauth2) to do most of the OAuth 2 work. Passport handles only the interaction between your backend and FusionAuth, not between your backend and your frontend. The important part of TMB left to you is getting session management correct (`utils/session.ts`) and separating the refresh token on the server from the access token returned to the browser.
+The authentication flow is hand-coded in this example to make it understandable and explicit, but in reality you should use a library like [Passport.js](https://www.passportjs.org/packages/passport-oauth2) to do most of the OAuth 2 work. Passport handles only the interaction between your backend and FusionAuth, not between your backend and your frontend. The important part of TMB Passport leaves to you is getting session management correct (`utils/session.ts`) and separating the refresh token on the server from the access token returned to the browser.
 
 The frontend project is very simple. Its only dependency is the React.js ecosystem, and authentication is handled manually in `services/AuthContext.jsx`. Since the FusionAuth webpage redirect handles login, the only authentication work the frontend needs to do is check whether the user is logged in, and get new access tokens.
 
