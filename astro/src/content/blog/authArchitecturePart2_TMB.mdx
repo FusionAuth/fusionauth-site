@@ -119,34 +119,64 @@ Even simpler, if you use FusionAuth (which is free if you host it yourself), you
 
 ## Getting technical: how the TMB flow works
 
-This section explains the TMB OAuth flow in more detail. You can skip it and proceed to the demonstration app in the next section if you don't need to implement or understand the details yourself.
+This section explains the TMB OAuth flow in more detail. It is based on the [official text from the IETF](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-application-architecture-2).
 
-The diagram below shows all the authentication and authorization steps of an app using the TMB pattern. It is based on the [official text from the IETF](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-application-architecture-2).
-
-participant d@{ "type" : "database" }
+Below is the sequence if the browser loads the app and still has a session cookie from the previously active session.
 
 ```mermaid
 sequenceDiagram
+	%%{init:{"themeVariables": { "noteBkgColor":"transparent", "noteTextColor":"transparent", "noteBorderColor":"transparent" }}}%%
 	actor U as User
 	participant B as Browser
 	participant F as Static file host
 	participant T as TMB
 	participant R as Resource server
-	participant O as Token Endpoint
-	participant A as Authorization Endpoint
 
 	U->>B: Visit website
 	B->>F: Request website
 	F->>B: Send HTML, CSS, JS
+	Note over B,T: .
+	Note over B,T: .
+	B->>T: Is there an active session?
+	T->>B: Yes, here is your access token
+	Note over B,T: .
+	Note over B,T: .
+	U->>B: Make a purchase
+	B->>R: Make a purchase (include access token)
 ```
 
-TODO - read ietf and kim readme, explain here...
+If there is no session the user has to log in. This sequence is shown below.
+
+```mermaid
+sequenceDiagram
+	%%{init:{"themeVariables": { "noteBkgColor":"transparent", "noteTextColor":"transparent", "noteBorderColor":"transparent" }}}%%
+	participant B as Browser
+	participant T as TMB
+	participant A as Authorization Endpoint (FusionAuth)
+	participant O as Token Endpoint (FusionAuth)
+	participant R as Resource server
+
+	B->>T: Is there an active session?
+	T->>B: No
+	Note over B,T: .
+	B->>T: Start Authorization Code flow with PKCE extension
+	B->>A: Redirected to log in on this web page
+	A->>B: Returns authorization code
+	B->>T: Send code
+	T->>O: Send PKCE verifier and code
+	O->>T: Return refresh token and access token
+	T->>B: Return access token and session cookie
+	Note over B,T: .
+	B->>R: Make a purchase (include access token)
+```
+
+For a more detailed explanation of every step in the flow, please see the accompanying repository [README section on TMB](https://github.com/kmaida/auth-architecture/tree/main/tmb#how-tmb-authentication-works).
 
 ## See TMB In Action: A Complete Demonstration
 
 To help you get started using TMB, you can use a complete FusionAuth demonstration repository. The repository includes a React frontend and a Node.js/Express backend, demonstrating the full TMB pattern with FusionAuth as the authorization server. Of course, you can adapt the backend to any language or framework.
 
-The section allows you to run a simple but functional TMB web app and server with FA to see how it works.
+The section allows you to run a simple but functional TMB web app and server with FusionAuth to see how it works.
 
 ### Download And Start FusionAuth
 
@@ -244,13 +274,13 @@ Once logged in, you can browse to private pages on the site. You can also see th
 
 Let's take a quick look at how this app works under the hood.
 
-The authentication provider, FusionAuth, stores user authentication details and provides the login page that the app redirects to. The user you logged in with, and the CSS styling, was created with a FA feature called [Kickstart](https://fusionauth.io/docs/get-started/download-and-install/development/kickstart). The `kickstart` directory is a set of configuration files that allow you start an instance of FA with pre-created users, applications, visual style, and other settings.
+The authentication provider, FusionAuth, stores user authentication details and provides the login page that the app redirects to. The user you logged in with, and the CSS styling, was created with a FusionAuth feature called [Kickstart](https://fusionauth.io/docs/get-started/download-and-install/development/kickstart). The `kickstart` directory is a set of configuration files that allow you start an instance of FusionAuth with pre-created users, applications, visual style, and other settings.
 
-The backend project is the most complex of the three architecture components. It handles the OAuth interaction between FA and the frontend, and provides the API that acts as a resource server. The backend is an Express.js server (`server.ts`) that handles authentication in `auth.ts` and the files in the `utils` directory. You should be able to understand the code by reading the [flow process](https://github.com/kmaida/auth-architecture/tree/main/tmb#how-tmb-authentication-works) detailed in the README file.
+The backend project is the most complex of the three architecture components. It handles the OAuth interaction between FusionAuth and the frontend, and provides the API that acts as a resource server. The backend is an Express.js server (`server.ts`) that handles authentication in `auth.ts` and the files in the `utils` directory. You should be able to understand the code by reading the [flow process](https://github.com/kmaida/auth-architecture/tree/main/tmb#how-tmb-authentication-works) detailed in the README file.
 
-The authentication flow is hand-coded in this example to make it understandable and explicit, but in reality you should use a library like [Passport.js](https://www.passportjs.org/packages/passport-oauth2) to do most of the OAuth 2 work. Passport handles only the interaction between your backend and FA, not between your backend and your frontend. The important part of TMB left to you is getting session management correct (`utils/session.ts`) and separating the refresh token on the server from the access token returned to the browser.
+The authentication flow is hand-coded in this example to make it understandable and explicit, but in reality you should use a library like [Passport.js](https://www.passportjs.org/packages/passport-oauth2) to do most of the OAuth 2 work. Passport handles only the interaction between your backend and FusionAuth, not between your backend and your frontend. The important part of TMB left to you is getting session management correct (`utils/session.ts`) and separating the refresh token on the server from the access token returned to the browser.
 
-The frontend project is very simple. Its only dependency is the React.js ecosystem, and authentication is handled manually in `services/AuthContext.jsx`. Since the FA webpage redirect handles login, the only authentication work the frontend needs to do is check whether the user is logged in, and get new access tokens.
+The frontend project is very simple. Its only dependency is the React.js ecosystem, and authentication is handled manually in `services/AuthContext.jsx`. Since the FusionAuth webpage redirect handles login, the only authentication work the frontend needs to do is check whether the user is logged in, and get new access tokens.
 
 ## Summary
 
@@ -285,13 +315,8 @@ is not yet supported by FusionAuth, but [requested](https://github.com/FusionAut
 - read IETF document on [best practices for OAuth apps](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend)
 - review my old article - https://fusionauth.io/blog/backend-for-frontend#use-a-premade-bff
 - capitals headings
-- fa - fusionauth
 - remove temp niel 1 article
 - rename article with -
 - remove unused imports
 - use fa widget instead of docker?
 - suggestions for the repo: remove opensearch from the dockerfile as it's huge and unnecessary for the demo, give containers in dockerfile names so it's easy to write a clean up command at the end of the post to remove all the docker containers, networks, and images.
-
-The spec only says this:
-
-> When considering a token-mediating backend architecture, it is strongly recommended to evaluate if adopting a full BFF as discussed in Section 6.1 is a viable alternative. Only when the use cases or system requirements would prevent the use of a proxying BFF should the token-mediating backend be considered over a full BFF.
