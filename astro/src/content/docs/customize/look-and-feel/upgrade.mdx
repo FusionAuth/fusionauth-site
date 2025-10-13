@@ -164,6 +164,52 @@ Replace the opening tag of the `<button>` element inside the macro with the foll
           data-app-id="${identityProvider.lookupAppId(clientId)}">
 ```
 
+#### Macro googleButton
+
+This macro should now only render buttons for Google IdP configurations with the `UseRedirect` login method. Replace the opening tag of the `<button>` element inside the macro with the following
+
+```title="Google <button>"
+<button class="google login-button" data-login-method="UseRedirect"
+              data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
+```
+
+Remove the `[#else]` block that renders `<div>`s with Ids `g_id_onload` and `g_id_signin`. The updated macro structure looks like this with the `<button>` children removed for brevity
+
+```title="googleButton macro structure"
+[#macro googleButton identityProvider clientId idpRedirectState=""]
+    [#-- When using this loginMethod - the Google JavaScript API is not used at all. --]
+    [#if identityProvider.lookupLoginMethod(clientId) == "UseRedirect"]
+      <button class="google login-button" data-login-method="UseRedirect"
+              data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
+        ...
+      </button>
+    [/#if]
+[/#macro]
+```
+
+#### New macro googleGsiButton
+
+The `[#else]` block removed from `googleButton` macro gets its own macro. Add the following macro to your theme
+
+```title="New googleGsiButton macro"
+[#macro googleGsiButton identityProvider clientId idpRedirectState=""]
+  [#-- UsePopup or UseVendorJavaScript --]
+  [#--
+   Use the Google Identity Service (GIS) API.
+   https://developers.google.com/identity/gsi/web/reference/html-reference
+  --]
+  <div id="g_id_onload" [#list identityProvider.lookupAPIProperties(clientId)!{} as attribute, value] data-${attribute}="${value}" [/#list]
+       data-client_id="${identityProvider.lookupClientId(clientId)}"
+       data-callback="googleLoginCallback">
+  </div>
+  [#-- This the Google Signin button. If only using One tap, you can delete or comment out this element --]
+  <div class="g_id_signin" [#list identityProvider.lookupButtonProperties(clientId)!{} as attribute, value] data-${attribute}="${value}" [/#list]
+       [#-- Optional click handler, when using ux_mode=popup. --]
+       data-click_listener="googleButtonClickHandler">
+  </div>
+[/#macro]
+```
+
 #### Macro linkedInBottom
 
 You read that correctly. If you'd like, update the name of the macro to `linkedInButton` along with the invocation from `alternativeLogins`. Replace the opening tag of the `<button>` element inside the macro with the following
