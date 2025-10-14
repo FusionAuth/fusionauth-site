@@ -379,9 +379,11 @@ The architecture looks like this:
 
 ### The authentication flow
 
-Navigate to the frontend at `http://localhost:5173/` in your browser. It displays a simple React app with a **Login** button.
+1. Navigate to the frontend at `http://localhost:5173/` in your browser, so that you can demonstrate the authentication flow in your app.
 
-#### 1. Session check on page load
+The frontend displays a simple React app with a **Login** button.
+
+#### Session check on page load
 
 When the app loads, the frontend checks for an existing session by calling the backend. Here is the simplified code from the React app (without error handling and the surrounding code):
 
@@ -405,13 +407,15 @@ Since there is no user session, the backend responds with `loggedIn: false`, and
 
 The backend's response includes an `httpOnly` cookie, `p`, with a state value, PKCE code verifier, and challenge. This is stored securely in the browser and sent with every request to the backend until the user establishes a session.
 
-Click the **Login** button to start the OAuth authorization code flow.
+2. Click the **Login** button to start the OAuth authorization code flow.
 
-#### 2. Secure login with PKCE
+#### Secure login with PKCE
 
 When you click **Login**, the frontend redirects you to the backend's `http://localhost:4001/auth/login` endpoint, which then redirects to FusionAuth's authorization endpoint with the appropriate parameters, including the PKCE challenge.
 
-If you haven't yet logged in to FusionAuth, it displays the FusionAuth login screen. You can log in with the credentials of an existing user or register a new user by clicking **Create an account**.
+If you haven't yet logged in to FusionAuth, it displays the FusionAuth login screen.
+
+3. Log in with the credentials of an existing user or register a new user by clicking **Create an account**.
 
 FusionAuth then redirects back to the backend with an authorization code. The backend exchanges the code for tokens using the client secret, which is never exposed to the browser.
 
@@ -421,24 +425,26 @@ Finally, the backend redirects you back to the frontend.
 
 The frontend calls `checkSession` again, and this time the backend responds with `loggedIn: true` and user info. The app now shows the user's name and four new navigation options: **Protected**, **Profile**, **Call API**, and **Logout**.
 
-Visiting these pages demonstrates the core BFF functionality:
+Visiting these pages demonstrates the core BFF functionality.
 
-#### 3. Proxying API requests
+#### Proxying API requests
 
 Each of the **Protected**, **Profile**, and **Call API** pages makes authenticated requests to the backend:
 
-- **Protected** and **Profile** call backend endpoints that serve data directly from the backend (without proxies to external services).
-- **Call API** calls a backend endpoint that proxies the request to the third-party resource server at `http://resource-api.local:5001`.
+- **Protected** and **Profile** call backend endpoints that serve data directly from the backend (without proxies to external services). They demonstrate that the backend can serve protected data directly, authenticated with the user's session cookie.
+- **Call API** calls a backend endpoint that proxies the request to the third-party resource server at `http://resource-api.local:5001`. It demonstrates the proxying functionality
 
-The **Protected** and **Profile** pages demonstrate that the backend can serve protected data directly, authenticated with the user's session cookie.
+4. Visit the **Call API** page.
 
-The **Call API** page demonstrates the proxying functionality. When you visit this page, the frontend calls the backend, which in turn calls the resource server with the access token.
+When you visit this page, the frontend calls the backend, which in turn calls the resource server with the access token. If everything works, the app displays a random recipe on the **Call API** page, fetched securely through the BFF proxy.
 
-If everything works, the app displays a random recipe on the **Call API** page, fetched securely through the BFF proxy.
+#### Automatic token refresh
 
-#### 4. Automatic token refresh
+The backend automatically refreshes tokens when they are close to expiring. 
 
-The backend automatically refreshes tokens when they are close to expiring. You can test this by reducing the access token lifetime in FusionAuth to one minute, then waiting a few minutes and clicking **Call API** again. The backend uses the refresh token to get a new access token before making the API call.
+5. Test the token refresh by reducing the access token lifetime in FusionAuth to one minute, then waiting a few minutes, and clicking **Call API** again.
+
+The backend uses the refresh token to get a new access token before making the API call.
 
 ## FusionAuth's Hosted Backend: BFF made simple
 
