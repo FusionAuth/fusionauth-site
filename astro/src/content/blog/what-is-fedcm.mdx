@@ -1,0 +1,85 @@
+---
+publish_date: 2025-10-17
+title: What is FedCM
+description: Learn about the Zero Trust framework and how Identity Providers factor into it to protect your network and help keep your resources secure.
+authors: Dan Moore
+image: /img/blogs/zero-trust-idps/zero-trust-and-how-idps-factor-into-it-header-image.png
+categories: Education
+tags: standards, fedcm, federated credential management
+excerpt_separator: "{/* more */}"
+---
+import FedCMPassiveFirstTimeLogin from "src/diagrams/blog/fedcm/fedcm-passive-first-time-login.astro";
+import FedCMPassiveSecondTimeLogin from "src/diagrams/blog/fedcm/fedcm-passive-second-time-login.astro";
+import RedirectFirstTimeLogin from "src/diagrams/blog/fedcm/redirect-first-time-login.astro";
+import RedirectSecondTimeLogin from "src/diagrams/blog/fedcm/redirect-second-time-login.astro";
+
+FedCM, or Federated Credential Management, is a web standard being developed by the W3C to create a more secure and privacy-conscious way for users to log into websites using third-party identity providers.
+
+Think of it as a browser-based counterpart to the "Sign in with Google" buttons you see everywhere. FedCM is built directly into the browser itself rather than relying on third-party cookies and redirects. 
+{/* more */}
+
+The core problem FedCM addresses is that traditional federated login methods—like SAML and OpenID Connect—depend on third-party cookies and iframe tricks that work great for authentication but also enable advertisers and other parties to track users across the entire web. With browsers increasingly blocking third-party cookies to protect user privacy, there's a real risk that legitimate federated login flows will break, leaving developers scrambling for alternatives.
+
+The magic of FedCM lies in how it uses native browser APIs to mediate the authentication process between a website (called the "relying party" or RP), an identity provider (an IDP like Google or Microsoft), and the user. Instead of bouncing users through redirects and hoping cookies work, the browser presents a native UI prompt asking the user which account they want to use.
+
+On subsequent logins, if the user has previously authenticated and has only one account, they can be automatically signed back in without ever leaving the original website—no redirects, no popups, just a seamless experience. The browser controls what information gets shared with each party at every step, preventing the kind of tracking that makes privacy advocates nervous while still enabling the convenience of federated login.
+
+While FedCM shows real promise and is already supported in Chrome and Edge (which together represent a majority of desktop browser traffic), this is still a work in progress. The W3C working group published a working draft in August 2024, but there's substantial work remaining before it becomes a finalized standard.
+
+ Safari doesn't support it yet, and Firefox is still in early implementation stages. Some identity providers including Google, have started adopting it. If you're using "Sign in with Google" through the Google Identity Services library, you're likely already using FedCM without realizing it.
+
+For developers and identity providers, the takeaway is clear: FedCM matters and is worth watching, but for now, you'll need to maintain fallback methods for browsers that don't support it or users who disable it.
+
+## User Experience
+
+The user's experience of FedCM varies, but here is an example of what a user sees when they are prompted to log in using FedCM.
+
+Here's a screenshot of an example application where a sample user is signing in with FedCM.
+
+![An example of the user interface for a successful FedCM login.](/img/blogs/fedcm/user-view.png)
+
+You can experience it yourself if you have a Google account by visiting Booking.com in a Chrome browser.
+
+Let's dig a bit more into a typical authentication flow and how FedCM changes it.
+
+## FedCM Authentication Flows
+
+Here is the first time a user logs in with the redirect based workflow, such as OIDC.
+
+<RedirectFirstTimeLogin alt="The first time a user logs in with the redirect based workflow." />
+
+The second time the user logs in, they are bounced to the IDP. But they don't see a login form since their cookies are valid.
+
+<RedirectSecondTimeLogin alt="The second time the user logs in, they are bounced to the IDP." />
+
+### Login Flows With FedCM
+
+The experience the first time the user logs in with FedCM depends on the particulars of the relying party request, but typically the IDP prompts for login credentials with an iframe. 
+
+This diagram shows the flow of the "passive" mode, which requires minimal user interaction. There are other modes, but this is the option that reduces friction the most.
+
+<FedCMPassiveFirstTimeLogin alt="The first time flow of the passive mode, which requires minimal user interaction." />
+
+Once a token is received by the user agent in step 12, the FedCM portion is complete. There may be more for the RP to do, such as validate the token.
+
+With the passive mode, the second time a user logs in with FedCM is really where the magic happens.
+
+When the user has previously used FedCM and has no more than one account, they are not prompted to log in and are instead auto-reauthenticated without leaving the RP:
+
+<FedCMPassiveSecondTimeLogin alt="The second time flow of the passive mode, no user interaction occurs." />
+
+While the focus of FedCM is authentication, the authors of the specification have considered related use cases, including:
+
+* when multiple accounts on a given device have logged in to an IDP
+* invalid user accounts
+* when a user has signed out of the relying party but not out of the identity provider
+* if a user has recently signed out
+
+## Learn More
+
+If you'd like to learn more about FedCM, check out:
+
+* an [in-depth article on FedCM](/articles/authentication/fedcm) which includes a history, more details about support and, and example code
+* an [on-demand webinar](/webinar/fedcm-a-new-way-to-log-in) with one of the spec contributors
+* a [public working draft from 2024](https://www.w3.org/TR/fedcm/) and the [current editors working draft](https://w3c-fedid.github.io/FedCM/)
+* [the W3C working group](https://www.w3.org/groups/wg/fedid/), which you can join
