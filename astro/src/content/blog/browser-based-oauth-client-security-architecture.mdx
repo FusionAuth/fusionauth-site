@@ -56,7 +56,7 @@ This has profound implications. Public clients:
 - Cannot authenticate to the authorization server in the traditional sense.
 - Cannot prevent an attacker with access to the browser from obtaining new tokens.
 
-Contrast this with the**confidential clients** used in BFF and TMB architectures, which can:
+Contrast this with the **confidential clients** used in BFF and TMB architectures, which can:
 
 - Store client secrets server-side where users cannot access them.
 - Authenticate to the authorization server using those secrets.
@@ -85,7 +85,7 @@ In BBOC, every token your application obtains exists in JavaScript-accessible st
 
 An attacker who compromises your browser environment gains access to everything. With TMB, an attacker gets access tokens but cannot obtain new ones after they expire. With BFF, an attacker only gets session cookies that require maintaining the session context. With BBOC, an attacker gets refresh tokens that can generate new access tokens indefinitely, even after the user closes the browser.
 
-## The many vulnerabilities of browser token dtorage
+## The many vulnerabilities of browser token storage
 
 The IETF states plainly:
 
@@ -220,14 +220,14 @@ iframe.src = 'https://auth-provider.example.com/authorize?' +
 document.body.appendChild(iframe);
 ```
 
-The IETF identifies this in [Section 5.1.3 Acquisition and Extraction of New Tokens](https://www.ietf.org/archive/id/draft-ietf-oauth-browser-based-apps-17.html#name-acquisition-and-extraction-). Even if the attacker cannot directly access existing tokens in your application's storage, they can:
+The IETF identifies this in Section 5.1.3 [Acquisition and Extraction of New Tokens](https://www.ietf.org/archive/id/draft-ietf-oauth-browser-based-apps-17.html#name-acquisition-and-extraction-). Even if the attacker cannot directly access existing tokens in your application's storage, they can:
 
 - Initiate a new authorization flow with attacker-controlled parameters.
 - Use `prompt=none` to avoid user interaction.
 - Redirect the response to an attacker-controlled endpoint.
 - Obtain fresh tokens without the user's awareness.
 
-This attack bypasses token storage security entirely. The attacker doesn't steal existing tokens, they acquire new ones using the user's active authorization server session.
+This attack bypasses token storage security entirely. The attacker doesn't steal existing tokens; they acquire new ones using the user's active authorization server session.
 
 ### Security effectiveness comparison
 
@@ -247,7 +247,7 @@ The overall effectiveness of the architectures can be summarized as follows:
 
 - **BBOC** provides 0% mitigation, making it vulnerable to all documented attacks.
 - **TMB** offers average mitigation, protecting refresh tokens and preventing new token acquisition.
-- **BFF** has above average mitigation, failing only on client hijacking, which is inherent to all web applications.
+- **BFF** has above-average mitigation, failing only on client hijacking, a vulnerability that is inherent to all web applications.
 
 ## IETF guidance: When browser-based clients become unacceptable
 
@@ -274,7 +274,7 @@ The implicit grant placed tokens directly in URL fragments, which are exposed th
 
 Implicit grants emerged when cross-origin resource sharing (CORS) adoption was limited and browsers couldn't make cross-origin token exchange requests. CORS is now universal. The Authorization Code Flow with PKCE provides better security with equivalent functionality. Implicit grant has no remaining justification.
 
-**Token storage guidance is explicit.** RFC 9700 recommends service workers as the most secure browser storage location when tokens must exist in the browser. Service workers provide a separate execution context from the DOM, offering some protection against DOM-based XSS. However, the specification acknowledges this provides only partial protection. Service workers remain vulnerable to registration manipulation, update exploitation, and proxy attacks.
+**Token storage guidance is explicit.** RFC 9700 recommends service workers as the most secure browser storage location when tokens must exist in the browser. Service workers provide a separate execution context from the DOM, offering some protection against DOM-based XSS. However, the specification acknowledges that this provides only partial protection. Service workers remain vulnerable to registration manipulation, update exploitation, and proxy attacks.
 
 You can spot implicit grant implementations by looking for `response_type=token` in authorization requests. Any application using the implicit grant must be re-architected to use the Authorization Code Flow with PKCE.
 
@@ -301,7 +301,7 @@ Moving from BBOC to TMB or BFF requires systematic changes to authentication flo
 
 ### Migration to TMB
 
-Backend endpoints handle OAuth flows using PKCE, and store refresh tokens in server-side sessions while returning short-lived access tokens to the frontend. The frontend implements in-memory token storage with automatic refresh logic that calls the backend token endpoint when tokens near expiration. With TMB much of the frontend OAuth logic remains similar to BBOC, and the migration focuses on moving token exchange and storage to the backend. The frontend remains complex due to direct API calls requiring access token management.
+Backend endpoints handle OAuth flows using PKCE and store refresh tokens in server-side sessions while returning short-lived access tokens to the frontend. The frontend implements in-memory token storage with automatic refresh logic that calls the backend token endpoint when tokens near expiration. With TMB, much of the frontend OAuth logic remains similar to BBOC, and the migration focuses on moving token exchange and storage to the backend. The frontend remains complex due to direct API calls requiring access token management.
 
 ### Migration to BFF
 
@@ -323,9 +323,9 @@ We're hesitant to even list these strategies because they provide only marginal 
 
 Use this framework to determine the appropriate architecture for your application:
 
-- **Application handles PII, PHI, or financial data?** → BFF required, no exceptions. These data types demand maximum security. Regulatory compliance typically mandates BFF.
-- **Requires compliance (SOC 2, HIPAA, PCI DSS, GDPR)?** → BFF required. Compliance frameworks increasingly view token-in-browser as control deficiency.
-- **Otherwise** → TMB minimum, BFF preferred.
+- **If your app handles PII, PHI, or financial data** → It requires BFF, no exceptions. These data types demand maximum security. Regulatory compliance typically mandates BFF.
+- **If your app requires compliance (SOC 2, HIPAA, PCI DSS, GDPR)** → It requires BFF. Compliance frameworks increasingly view token-in-browser as a control deficiency.
+- **Otherwise** → It requires TMB at minimum, although BFF is best.
 
 Any production application handling user data should not use BBOC.
 
@@ -344,7 +344,7 @@ Explore these resources for a deeper understanding of OAuth security architectur
 - [The authentication architecture examples repository](https://github.com/kmaida/auth-architecture):** Browse working implementations of BFF, TMB, and BBOC patterns with security comparisons.
 - [Part 1: Backend-for-Frontend security architecture](/blog/backend-for-frontend-security-architecture):** A comprehensive guide to the most secure OAuth pattern.
 - [Part 2: Token-Mediating Backend security architecture](/blog/auth-architecture-part2-TMB):** The middle-ground approach, balancing security and implementation complexity.
-- [OAuth 2.0 for Browser-Based Applications](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps):** IETF's authoritative specification defining browser OAuth security patterns.
+- [OAuth 2.0 for Browser-Based Applications](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps):** The IETF's authoritative specification defining browser OAuth security patterns.
 - [RFC 9700: OAuth 2.0 Security Best Current Practice](https://datatracker.ietf.org/doc/html/rfc9700):** Comprehensive security requirements for OAuth implementations.
 - [RFC 9449: OAuth 2.0 Demonstrating Proof of Possession](https://datatracker.ietf.org/doc/html/rfc9449):** The DPoP specification for sender-constrained tokens.
 - [FusionAuth Hosted Backend documentation](/docs/apis/hosted-backend):** Production BFF implementation with detailed integration guides.
