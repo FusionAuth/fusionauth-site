@@ -1,0 +1,470 @@
+---
+title: "FedCM: A New Proposed Identity Standard That Could Change How We Log In on the Web"
+description: Learn what FedCM is and how it works to enable secure federation flows and how it improves login security.
+author: Dan Moore
+section: Authentication
+tags: fedcm, standards, federated credential management, authentication
+icon: /img/icons/articles/authentication-fedCM.svg
+darkIcon: /img/icons/articles/authentication-fedCM-dark.svg
+---
+import Aside from 'src/components/Aside.astro';
+import FedCMPassiveFirstTimeLogin from "../../../diagrams/articles/authentication/fedcm/fedcm-passive-first-time-login.astro";
+import FedCMPassiveSecondTimeLogin from "../../../diagrams/articles/authentication/fedcm/fedcm-passive-second-time-login.astro";
+import RedirectFirstTimeLogin from "../../../diagrams/articles/authentication/fedcm/redirect-first-time-login.astro";
+import RedirectSecondTimeLogin from "../../../diagrams/articles/authentication/fedcm/redirect-second-time-login.astro";
+
+## Key Takeaways
+
+* FedCM is a newly proposed browser API offering frictionless federated login.
+* The API is supported across a number of Chromium browsers and using the API is simple for the typical web developer.
+* The proposal offers a secure, privacy conscious login workflow.
+* The proposal is under active development, with a public working draft moving towards a candidate recommendation. The API documented in the working draft is implemented in Chromium browsers, and support from other browser vendors ranges from "won't oppose" to "helping review the proposal".
+* As a developer, you should be aware of this proposed standard, because if fully implemented, it offers your users a secure, easy way to login.
+
+The Federated Credential Management (FedCM) API is a proposed web specification that may impact nearly everyone who logs into applications through a browser. Developed within the W3C, FedCM aims to create a more privacy-preserving web by introducing a browser-native way to handle federated logins. A federated login occurs when one application delegates the login process to another application called an identity provider.
+
+The original impetus of FedCM was to provide federated login a better foundation with browser support. Rather than general purpose web primitives, like redirects, iframes, and third-party cookies, partially because these primitives are also employed by advertisers to track users across the web, developers can use a native API. While Google Chrome has pushed the decision about blocking [third party cookies to the user](https://privacysandbox.com/news/privacy-sandbox-next-steps/), other browsers still block all or many [third party cookies by default](https://developer.mozilla.org/en-US/docs/Web/Privacy/Guides/Third-party_cookies). 
+
+With a focus on user privacy, as well as leveraging the native UI elements of a browser, FedCM intends to build a login experience significantly more consistent and secure as well as solve problems that couldn't be addressed without browser functionality. Such problems include when too many identity providers are available (the NASCAR flag problem) and discovering identity providers.
+
+If you log into a web application using a third party social provider, you may soon be using FedCM. Most developers using "Sign-In with Google" and the Google Identity Services library are using FedCM; [the library was updated in 2024 to use this API](https://developers.googleblog.com/en/federated-credential-management-fedcm-migration-for-google-identity-services/).
+
+<Aside type="caution">
+FusionAuth does not currently support this standard. See [this GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/2628) for more details.
+</Aside>
+
+## History of Web App Login
+
+While the earliest websites were static pages, the value of serving different content to different users quickly led to authentication before content was displayed. Web applications started to add authentication. This approach siloes user data, requires them to re-enter credentials between applications, and puts a security burden on each application. 
+
+Cookie-based login with a central authentication server was invented in 1994 by the Netscape Navigator team; this resolved some of the issues of single-server authentication. Such solutions, however, are limited because cookies are not shared between domains. This separation is a crucial component of the web security model. While embedded iframes can work around this, they have security issues, especially [with clickjacking](https://owasp.org/www-community/attacks/Clickjacking).
+
+With the release of SAML 1.0 in 2002, the first redirect based standardized login flow was implemented. SAML used redirects and signed XML documents to ensure users had been authenticated, allowing applications to securely delegate the authentication process. Other groups working on the same problem revised SAML and version 2.0 was released in 2005.
+
+OAuth and OIDC were released in the 2012 to 2014 timeframe and updated the format and mechanisms of SAML, but leveraged the same redirect and signed document approach. Currently, most applications either embed authentication into their application, accepting the 1990s-type security and implementation issues, or federate to a central authentication server. Such central authentication servers may not be hosted on the same domain as the originating application. Authentication functionality such as silent iframe based refreshes or JavaScript requests may therefore fail without working third-party cookies. But, third party cookies also allow tracking users across the web by advertisers and platforms. Users can be tracked across the entire internet, capturing behavior across different sites and applications.
+
+The redirect-based mechanism used by OIDC and SAML also caused the NASCAR flag problem, mentioned above. Websites must enumerate which identity providers they support. Because of the limited space on the page, this favors a few large providers, discouraging applications from allowing users to choose their own identity providers. Goals of protecting user privacy and a better user experience mediated by the browsers led to the FedCM project. Let's take a look at the timeline of this project.
+
+## Federated Credential Management Timeline
+
+It's important to view the FedCM effort in the context of the third-party cookie changes promoted by Google and the Chrome team. Work started on this project shortly after an announcement from Google about the importance of [privacy on the web](https://blog.chromium.org/2020/01/building-more-private-web-path-towards.html ). 
+
+The first commit to the repository that would become the federated identity management repository was [in March 2020](https://github.com/w3c-fedid/FedCM/commit/29573c5cdcd9476b07059103c704d4f6ecfef322) (it was originally called WebID). The W3C community group [began in 2021](https://www.w3.org/community/fed-id/2021/07/06/call-for-participation-in-federated-identity-community-group/  ) and the working group [began in 2024](https://www.w3.org/groups/wg/fedid/charters/). ([Community groups incubate ideas and working groups publish recommendations](https://w3c.github.io/publishing/)).
+
+[In 2022](https://github.com/mozilla/standards-positions/issues/618), the project was introduced to Firefox by Google employees. It was determined to be a positive[ change](https://github.com/mozilla/standards-positions/issues/701) and in [late 2022](https://bugzilla.mozilla.org/show_bug.cgi?id=1798971) the initial prototype was added to Firefox. While the path to third-party cookie deprecation took [steps](https://privacysandbox.google.com/blog/cookie-countdown-2023oct) [forward](https://privacysandbox.com/news/privacy-sandbox-update/) and [steps](https://privacysandbox.com/news/privacy-sandbox-next-steps/) back, the FedCM effort has continued. It wasn't just the spec evolving, though. Code in browsers was rolled out. Partial FedCM functionality was released in [Chrome and Edge 108, released in 2022](https://developer.mozilla.org/en-US/docs/Web/API/FedCM_API#browser_compatibility). In 2025, a tracking bug for [full release in Firefox](https://bugzilla.mozilla.org/show_bug.cgi?id=1959702) was added. 
+
+Initial FedCM support was added in Selenium [in 2023](https://github.com/SeleniumHQ/selenium/pull/12087), and is an open feature request for [playwright](https://github.com/microsoft/playwright/issues/36300). The spec has a [top-level section about browser automation](https://w3c-fedid.github.io/FedCM/#automation), so there is an understanding that this is important. The working group released a working draft spec in [Aug 2024](https://www.w3.org/TR/fedcm/), but there is still much work to be done before publishing a [candidate release](https://www.w3.org/TR/fedcm/#openissues). [An editor's draft is available](https://w3c-fedid.github.io/FedCM/) and is regularly updated.
+
+Let's take a look at the features FedCM offers.
+
+## Federated Credential Management Features
+
+Some useful definitions before we examine FedCM features:
+
+* RP or relying party: this is the website with the application or data that the user is trying to access via the browser. This app triggers an authentication event.
+* IDP or identity provider: this is the holder of the identity information that interacts with the browser. Above I referred to it as a central authentication server.
+* User-agent: this is just a fancy term for the browser.
+
+These are terms used by the FedCM specification, so we'll use them through the rest of this article. Let's take a look at the user flows, both redirect-based and using FedCM.
+
+### User Flow Diagrams With The Redirect Based Flow
+
+Here is the first time a user logs in with the redirect based workflow.
+
+<RedirectFirstTimeLogin alt="The first time a user logs in with the redirect based workflow." />
+
+The second time the user logs in, they are bounced to the IDP. But they don't see a login form since their cookies are valid.
+
+<RedirectSecondTimeLogin alt="The second time the user logs in, they are bounced to the IDP." />
+
+### Login Flows With FedCM
+
+The experience the first time the user logs in with FedCM depends on the particulars of the relying party request, but typically the IDP prompts for login credentials with an iframe. 
+
+This diagram shows the flow of the "passive" mode, which requires minimal user interaction.
+
+<FedCMPassiveFirstTimeLogin alt="The first time flow of the passive mode, which requires minimal user interaction." />
+
+Once a token is received by the user agent in step 12, the FedCM portion is complete. There may be more for the RP to do.
+
+The second time a user logs in with FedCM is where the magic happens. When the user has previously used FedCM and has no more than one account, they are not prompted to log in and are instead auto-reauthenticated without leaving the RP:
+
+<FedCMPassiveSecondTimeLogin alt="The second time flow of the passive mode, no user interaction occurs." />
+
+The authors of the FedCM specification have considered other login situations, including:
+
+* multiple accounts on this device that have logged into the authentication provider
+* an invalid user account
+* when a user has signed out of the relying party but not out of the identity provider
+* if a user has recently signed out of the identity provider
+
+Here is an example of what the user sees:
+
+![An example of the user interface for a successful FedCM login.](/img/articles/fedcm/user-view.png)
+
+## Browser Support
+
+Based on a list of [browsers by market share](https://radar.cloudflare.com/reports/browser-market-share-2025-q1) provided by Cloudflare, here are the browsers with over one percent market share as well as their [level of support](https://developer.mozilla.org/en-US/docs/Web/API/FedCM_API#browser_compatibility) for FedCM. 
+
+* Chrome: full support as of version 136. The Chrome team is active in the FedCM working group.
+* Safari: [supportive of the effort](https://github.com/WebKit/standards-positions/issues/309) but no implementation shipped as of writing. There is no mention on the [WebKit standards page](https://webkit.org/standards-positions/). 
+* Edge: full support as of version 136. 
+* Firefox: working towards support, but unsupported as of publishing. Here is the [tracking bug](https://bugzilla.mozilla.org/show_bug.cgi?id=1959702) for shipping this feature. The Firefox team is active in the FedCM working group, but is taking a pause in implementation as of Aug 2025.
+* Samsung Internet: almost complete support as of version 26.
+* Opera: almost complete support as of version 108, one feature is in preview.
+* Brave: [support for the effort mentioned in 2023](https://brave.com/privacy-updates/24-google-sign-in-permission/), [one open GitHub issue](https://github.com/brave/brave-browser/issues/31352) references it, but no recent movement.
+
+## IDP Support
+
+Identity provider support is growing, but is definitely not universal. Based on a [presentation in fall of 2024](https://docs.google.com/presentation/d/1WRGI1BlPnqRwRs40w1j1nOEYBHwDAEaNEljcTReoOic/edit?slide=id.g300c7805003_0_0#slide=id.g300c7805003_0_0), the following identity providers support FedCM:
+
+* Google ([here is their .well-known file](https://www.google.com/.well-known/web-identity ))
+* NetID (GMX/[Web.de](Web.de))
+* Shopify
+* Seznam (a Czech web portal and search engine)
+* Mobage (a portal and social network for games)
+* Times Internet (an Indian multinational technology company)
+* AMedia (a newspaper company) 
+* Ory (an infrastructure provider which supports FedCM)
+
+There is also wider interest in the FedCM working group, with many IDPs included in the list of [working group participants](https://www.w3.org/groups/wg/fedid/participants/).
+
+## RP Support
+
+Web applications that support FedCM are harder to track down, but include:
+
+* Pinterest
+* Kayak
+* Booking.com
+* Realtor.com
+
+If you are curious whether an RP supports FedCM, open a login page in your browser inspector and search for the string "IdentityCredential" embedded in the JavaScript.
+
+## Supported Use Cases
+
+FedCM focuses on the following use cases:
+
+* User login, which verifies in a privacy and security conscious way that the user of a relying party has an account at the identity provider.
+* Disconnection of the user account from the browser managed list.
+
+There are other authentication related use cases that are not the focus of FedCM, but are adjacent:
+
+* The sign up/registration flow is handled by [an extension](https://w3c-fedid.github.io/FedCM/#request-permission-signup) that can let a user sign up for an account using FedCM. Account creation is handled strictly between the IDP and the browser.
+* The logout use case is also covered. Users are logged out if no accounts are provided by the IDP when the request is made for logged in accounts. An IDP can call an API to mark a user as logged out as well.
+
+Account recovery and credential management are not handled by FedCM or its extensions.
+
+## Implementation Details
+
+The FedCM specification is not finalized. While this implementation guide is correct at publish time, there may be inaccuracies. Reviewing the specification and testing with supported browsers is the best way to ensure your implementation works.
+
+The browser, the IDP, and the RP all have implementation responsibilities. This article is not going to cover browser implementation; if you are building a browser [review the specification](https://w3c-fedid.github.io/FedCM/). 
+
+### Website Implementation Details
+
+#### Logging In
+
+The website/RP starts an authentication process by using the Identity Provider API. Test for API support and start the process (add a handler to button as coded below or trigger the login after page load):
+
+```javascript
+`$('#sign-in').addEventListener('click', async e => {`
+  try {
+    if ('IdentityCredential' in window) {
+      await signIn();
+    } else {
+      throw new Error('FedCM not supported.');
+    }
+  } catch (error) {
+    // redirect to the IDP
+  }
+}
+```
+
+You should test for FedCM support because browser support is incomplete and users can disable it. Fall back to other methods if needed.
+
+Let's look at the `signIn` function:
+
+```javascript
+const signIn = async () => {
+  const credential = await navigator.credentials.get({
+    identity: {
+      // Specify the IdP or idps this Relying Party supports
+      providers: [
+        {
+          configURL: 'https://accounts.idp-1.example/config.json',
+          mode: 'active',
+          params: {scope: 'drive'},
+          mediation: 'optional',
+          clientId: 'CLIENT_ID1'
+        },
+        {
+          configURL: 'https://accounts.idp-2.example/config.json',
+          mode: 'active',
+          params: {scope: 'drive'},
+          mediation: 'optional',
+          clientId: 'CLIENT_ID2'
+        }
+      ]
+    }
+  });
+  const { token } = credential;
+};
+```
+
+This request passes client identifiers and the configuration URL, which help the IDP identify the user. Let's look at the other parameters. The `mode` is either "active" or "passive". An "active" request requires user interaction while a passive one does not, depending on the mediation value. Mediation has [four defined values](https://w3c.github.io/webappsec-credential-management/#mediation-requirements) that determine how much of the login process can take place without user interaction. `params` contains extra params passed to the login process. An example is a `loginHint` to specify accounts to show or `nonce` to prevent replay attacks.
+
+The browser will then show the user all the IDPs that were requested and responded correctly. The RP can check which one the user logged into by looking at `credential.configURL`, which tells the RP to which IDP the browser successfully connected. A valid token is the result of a successful authentication. After receiving the token, the RP has to use it. That logic is application dependent. Once the token is acquired the FedCM flow is complete. 
+
+
+#### Disconnecting
+
+Once the IDP has been used, a record of it is stored in the browser. If this is a public browser or the account is sensitive, the user may want to break the connection. This is done by using the following JavaScript:
+
+```javascript
+async function handleIdentityCredentialDisconnect() {
+  // Check if IdentityCredential API is present
+  if (!window.IdentityCredential) {
+    console.error('IdentityCredential API is not available in this browser');
+    return;
+  }
+
+  try {
+    // Call disconnect and await the promise
+    const result = await IdentityCredential.disconnect({
+      configURL: 'https://idp.com/config.json',
+      clientId: 'rp123',
+      accountHint: 'account456'
+    });
+
+    console.log('IdentityCredential disconnect successful:', result);
+    return result;
+  } catch (error) {
+    console.error('IdentityCredential disconnect failed:', error);
+    throw error; // Re-throw if you want calling code to handle it
+  }
+}
+
+// Usage example:
+handleIdentityCredentialDisconnect()
+  .then(result => {
+    console.log('Disconnect operation completed successfully');
+  })
+  .catch(error => {
+    console.error('Disconnect operation failed:', error);
+  });
+```
+
+
+A disconnect can fail for a variety of reasons, such as if the user has disabled FedCM in the browser. Let's look at the IDP implementation next.
+
+
+### IDP Implementation Details
+
+The IDP needs to implement the HTTP API portion of the spec. You can view a [draft from August 2024](https://www.w3.org/TR/fedcm/#idp-api) and [the latest editor's draft](https://w3c-fedid.github.io/FedCM/#idp-api). Because the proposed standard is moving quickly, your best bet when implementing FedCM is to test with the browsers you want to support and to  consult both the editor's draft and the [Google FedCM documentation](https://privacysandbox.google.com/cookies/fedcm/implement/identity-provider).
+
+
+#### Implementation details
+
+There are several files that the authentication provider needs to serve. Let's assume the authentication provider is hosted at `auth.example.com`. Here are the files that need to be available for FedCM to work:
+
+* `https://example.com/.well-known/web-identity`
+* `https://auth.example.com/config.json`
+* `https://auth.example.com/accounts`
+* `https://auth.example.com/client_metadata`
+* `https://auth.example.com/id_assert`
+* `https://auth.example.com/login`
+* `https://auth.example.com/logout`
+
+Let's examine each of these.
+
+##### The .well-known file
+
+The first is a `.well-known` file, which has a defined location, but it is not required if the RP and IDP are the same site. It must be at the root of the IDPs domain under this path. If your IDP exists at `idp.example.com`, this file must exist at `example.com/.well-known/web-identity`.
+
+This file is at the root domain to protect the identity of the RP:
+
+> ["The existence of a file at the root of the IDP's domain is enforced to ensure that the file name does not introduce fingerprints about the RP being visited."](https://w3c-fedid.github.io/FedCM/#manifest-fingerprinting)
+
+
+An example of the contents of this file:
+
+
+```
+{
+  "provider_urls": ["https://auth.example.com/config.json"],
+  "accounts_endpoint" : "https://auth.example.com/accounts",
+  "login_url" : "https://auth.example.com/login"
+}
+```
+
+
+The `accounts_endpoint` and `login_url`, if present, must match the value in the configuration file mentioned below. These fields are required if the client metadata endpoint is present in the configuration file.
+
+
+##### The config file
+
+After the well-known file is requested, the browser requests the appropriate config file. The RP may request a different config file from what is present in the `provider_urls` array, as long as the `accounts_endpoint` and `login_url` are the same as what is in the well-known file. This allows for different config files for staging and prod environments.
+
+Following are the contents of a sample configuration file: 
+
+
+```
+{
+  "accounts_endpoint": "/accounts",
+  "client_metadata_endpoint": "/client_metadata",
+  "id_assertion_endpoint": "/id_assert",
+  "login_url": "/login",
+  "disconnect_endpoint": "/logout",
+  "branding": {
+    "background_color": "green",
+    "color": "0xFFEEAA",
+    "icons": [
+      {
+        "url": "https://idp.example/icon.ico",
+        "size": 25
+      }
+    ],
+    "name": "Example"
+  }
+}
+```
+
+
+Let's look at these fields in more detail.
+
+##### accounts_endpoint
+
+The code at the accounts_endpoint is what is responsible for returning the list of accounts that the user is signed in on the IDP. It will receive cookies with a SameSite of None, a Sec-Fetch-`Dest` header and nothing else (nothing to indicate which RP/website is requesting the user login). The IDP should return after verifying the `Sec-Fetch-Dest `header and cookie. It should return JSON that looks like this:
+
+
+```
+{
+ "accounts": [{
+   "id": "1234",
+   "given_name": "John",
+   "name": "John Doe",
+   "email": "john_doe@idp.example",
+   "picture": "https://idp.example/profile/123",
+   "approved_clients": ["123", "456", "789"],
+   "login_hints": ["john_doe"],
+   "domain_hints": ["idp.example"]
+  }, {
+   "id": "5678",
+   "given_name": "Johnny",
+   "email": "johnny@idp.example",
+   "picture": "https://idp.example/profile/456",
+   "approved_clients": ["abc", "def", "ghi"],
+   "login_hints": ["email=johhny@idp.example", "id=5678"],
+   "domain_hints": ["idp2.example"],
+   "label_hints:" ["l1"]
+  }]
+}
+```
+
+There are various filtering options available for the accounts returned. The `login_hint` and `domain_hint` let the RP request only accounts that match certain values. So if an RP only wants the `idp.example domain`, only the account with id `"1234"` would be returned. `label_hints` match values in the config and also limit accounts. The difference is that label_hints don't require configuration of the RP, but are instead configured using the `account_label` in the config file requested by the RP.
+
+Other fields defined in [the spec](https://w3c-fedid.github.io/FedCM/#dictdef-identityprovideraccount). 
+
+
+##### client_metadata_endpoint
+
+This endpoint receives the client identifier and can return terms of service, privacy policy and other metadata. Supporting this endpoint [is optional](https://w3c-fedid.github.io/FedCM/#idp-api-client-id-metadata-endpoint) but helpful for new account creation.
+
+
+##### id_assertion_endpoint
+
+This endpoint takes the client_id corresponding to the RP and the account id corresponding to the end user and some other parameters, including whether the user was automatically signed in. The request includes the RP origin, cookies, and the `Sec-Fetch-Dest` header.
+
+This endpoint returns a token, and optionally a URL in a continue_on field. Here is an example response:
+
+```
+{
+  "token": "..."
+}
+```
+
+
+If the `continue_on` field is provided, it contains ["A URL that the user agent will open in a popup to finish the authentication process."](https://w3c-fedid.github.io/FedCM/#dom-identityassertionresponse-continue_on) Use this field when there are additional steps required by the IDP before the authentication can finish.
+
+##### login_url
+
+This IDP URL is displayed by the browser if the user is not logged in. This page doesn't know anything about the RP which caused the login request, preserving privacy. This URL is also where additional authentication use cases might be handled, such as MFA challenges or account recovery. FedCM doesn't define these flows at all, though. When the IDP has authenticated the user to its satisfaction, it can either send a `Set-Login: logged-in` header or call `navigator.login.setStatus("logged-in")` on the HTML page, then call `IdentityProvider.close()` to close the window.
+
+##### disconnect_endpoint
+
+This is the URL that the user agent makes disconnect requests to, so that the IDP is no longer stored in the browser. It gets the `client_id` representing the RP and an account_hint containing the id of the account to disconnect. It also gets the IDP cookies and the `Sec-Fetch-Dest` header. It should respond with the id of the account disconnected. This may be different from the account id in account_hint.
+
+##### branding
+
+The branding fields allow the IDP to control the FedCM login user experience look and feel, including name, color and icon. It is minimal and controlled by the browser implementation.
+
+#### Security Measures
+
+As mentioned above, the primary reason for FedCM is that the same primitives of cookies and redirects that are critical to modern authentication on the web can be used to track users. FedCM avoids this in a couple of ways. It limits the information available to each of the endpoints the browser calls to just what is needed. Here is a table showing what is sent for each of the endpoints from [the specification](https://w3c-fedid.github.io/FedCM/#idp-api).
+
+| Endpoint | Cookies | Client_id parameter | Origin header |
+|---|---|---|---|
+| Manifests (.well-known/configURL) | no | no | no |
+| accounts_endpoint | yes | no | no |
+| client_metadata_endpoint | no | yes | yes |
+| id_assertion_endpoint | yes | yes | yes |
+| disconnect_endpoint | yes | yes | yes |
+
+To prevent legitimate browser requests from being mis-used, the `Sec-Fetch-Dest` header must be checked on every non-popup FedCM browser request. This check must be done by the IDP and the value should always be `webidentity`. Cookies are sent with `Samesite=None`, which might seem worrisome. But these requests are strictly controlled by the browser and that setting allows for cross domain authentication, where the RP and the IDP are on different domains. There is also an [entire section on security measures](https://w3c-fedid.github.io/FedCM/#security) the authors of the spec have considered and documented.
+
+## What's in Flux
+
+A lot. 
+
+While it has been rolled out in Chrome and Edge, there is still a lot of work to firm up the specification from the browser side and even more from the IDP side. There are two efforts in particular that are in flux:
+
+* [IDP registration](https://github.com/w3c-fedid/idp-registration), which aims to make it easier to increase the number of IDPs supported by FedCM.
+* [Delegation](https://github.com/w3c-fedid/delegation), which improves the privacy aspects of federated login, in particular ensuring that an IDP can't know which RP delegated authentication to it.
+
+I would expect FedCM to gain more and more momentum, but many months or perhaps years of work must be done before this becomes a published w3c standard. You can get involved by joining the [W3C working group](https://www.w3.org/groups/wg/fedid/) or the [W3C community group](https://www.w3.org/groups/cg/fed-id/). There are regular video meetings, and you can also view the [in-progress specification](https://w3c-fedid.github.io/FedCM/). You can learn more about the [browser UX changes from this conference talk](https://www.youtube.com/watch?v=FBAD4x7MWdI). Finally, you can file issues and watch PRs against the [FedCM GitHub repository](https://github.com/w3c-fedid/FedCM/). 
+
+## Impact on Stakeholders
+
+Let's look at the impact on major stakeholders.
+
+### Developers
+
+Using FedCM is an easy implementation task: calling native browser APIs. When used, FedCM lets users authenticate at an IDP without ever leaving the web application, using a native, secure and privacy conscious method. Some issues of concern:
+
+#### Coverage
+
+FedCM is an evolving proposed standard that is not currently available on many browsers, including Safari and Firefox. While Chrome has a majority of the desktop browser marketshare, that may not be enough to justify the effort of adding this feature. The lack of Safari support means that FedCM won't be a full solution for a long time on desktop, let alone mobile. Plan to maintain a fallback login method. 
+
+
+#### Alternative Methods
+
+FedCM is a long way from being the only login method. Just like magic links or passkeys, sites must offer other ways to let users log in, both because of browser support and because of  user preferences.
+
+
+#### Branding
+
+Authentication and registration are the front door to your application. By using FedCM, you're decreasing friction, but giving up UX control. This includes not just look and feel but offering up other methods for authentication, such as SAML or OIDC.
+
+
+### Identity Providers 
+
+Implementing FedCM as an identity provider is not as simple as it is for website developers, but the payoffs are higher as well. While the endpoints are pretty clearly defined, security rules such as cookie and header checks must be followed. The FedCM effort has thus far been primarily driven by browser vendors, so the IDP implementation guidelines haven't received the attention they deserve. However, supporting FedCM can offer benefits for identity providers in the same way that supporting other secure, privacy conscious authentication methods does. By supporting this proposed standard, IDPs:
+
+* Let users log in without any redirects
+* Increase the login options available to end users
+* Are prepared If browsers ever phase out third party cookies
+* Can help RPs meet privacy regulations like GDPR, CCPA, and other data protection requirements
+
+### End Users
+
+To use FedCM, end users have to change their login behavior, but due to the phased rollout, should be able to manage this in a way they deem fit.  There will be fallback methods for a long time, so if an end user is confused by a browser popup, they can fall back to a more normal login experience. It's unclear how non-brower tooling like password managers will interact with FedCM, though the prominent support for user agent automation means that such tools will likely be able to do so.
+
+## Conclusion
+
+FedCM matters. This proposed standard is already supported on a majority of desktop traffic and is under active development, with [thirty organizations in the working group](https://www.w3.org/groups/wg/fedid/participants/). However, most folks will benefit from waiting until another draft is published and the API solidified. If you like to live on the edge and Google is an identity provider you need to support, you can use FedCM with it right now. Finally, get involved in shaping this proposed standard. As mentioned above there are meetings and other opportunities to contribute.
+
+If you want to learn more about FedCM, you can view [our on-demand webinar](/webinar/fedcm-a-new-way-to-log-in) on the topic.
+
+*Thanks to Sam Goto and Bruno Couriol for their reviews of this article.*
+
+This article was originally [published on InfoQ on September 9, 2025](https://www.infoq.com/articles/federated-credentials-management-w3c-proposal/).
