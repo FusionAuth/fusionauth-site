@@ -1,0 +1,32 @@
+sequenceDiagram
+    participant Orchestrator as Orchestrator Agent
+    participant TaskRunner as Task Runner Agent
+    participant GeminiAPI as Gemini CLI Image Analysis
+    participant PlaywrightMCP as Playwright MCP
+
+%% The loop repeats, as you specified
+    loop Main Work Loop
+    %% 1. Orchestrator tells task runner to work a page
+        Orchestrator->>+TaskRunner: WorkPage(details)
+
+    %% 2. Task runner reads page
+    %% (This is a self-action, as you described it)
+        TaskRunner->>TaskRunner: Reads Page (produces image)
+
+    %% 3. Task runner sends image to gemini for analysis
+        TaskRunner->>+GeminiAPI: Analyze Image (image_data)
+        GeminiAPI-->>-TaskRunner: Return (analysis)
+
+    %% 4. Then task runner tells playwright to recreate the image
+        TaskRunner->>+PlaywrightMCP: Recreate Image In Browser(analysis)
+
+    %% 5. Task runner tells playwright to take a screen shot
+        TaskRunner->>PlaywrightMCP: Take Screenshot()
+        PlaywrightMCP-->>-TaskRunner: Return(new_screenshot)
+
+    %% 6. Then the task runner reports done to the orchestrator
+        TaskRunner->>-Orchestrator: Repor tDone(new_screenshot)
+
+    %% 7. Orchestrator updates its state
+        Orchestrator->>Orchestrator: Update project state
+    end
