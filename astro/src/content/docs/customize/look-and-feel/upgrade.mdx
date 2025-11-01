@@ -12,6 +12,201 @@ New versions of FusionAuth sometimes include new or updated theme templates. If 
 
 This page contains notes on changes in recent versions of FusionAuth that require changes to a customized theme.
 
+## Version 1.62.0
+
+To utilize the new pre-verification feature in Advanced Registration Forms, you will need to make the following modifications.
+
+### OAuth register template
+
+```html title="Before"
+[@helpers.html]
+  [@helpers.head title=theme.message("register")]
+    <script src="${request.contextPath}/js/identityProvider/InProgress.js?version=${version}"></script>
+    [@helpers.alternativeLoginsScript clientId=client_id identityProviders=identityProviders/]
+    [#if step == totalSteps]
+      [@helpers.captchaScripts showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+    [/#if]
+    <script type="text/javascript">
+      document.addEventListener('DOMContentLoaded', () => {
+        const uvpaAvailableField = document.querySelector('input[name="userVerifyingPlatformAuthenticatorAvailable"]');
+        if (uvpaAvailableField !== null && typeof(PublicKeyCredential) !== 'undefined' && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+          PublicKeyCredential
+            .isUserVerifyingPlatformAuthenticatorAvailable()
+            .then(result => uvpaAvailableField.value = result);
+        }
+      });
+    </script>
+    [#-- Custom <head> code goes here --]
+  [/@helpers.head]
+  [@helpers.body]
+    [@helpers.header]
+      [#-- Custom header code goes here --]
+    [/@helpers.header]
+
+    [@helpers.main title=theme.message("register")]
+      [#-- During a linking work flow, optionally indicate to the user which IdP is being linked. --]
+      [#if devicePendingIdPLink?? || pendingIdPLink??]
+        <p class="mt-0">
+        [#if devicePendingIdPLink?? && pendingIdPLink??]
+          ${theme.message('pending-links-register-to-complete', devicePendingIdPLink.identityProviderName, pendingIdPLink.identityProviderName)}
+        [#elseif devicePendingIdPLink??]
+          ${theme.message('pending-link-register-to-complete', devicePendingIdPLink.identityProviderName)}
+        [#else]
+          ${theme.message('pending-link-register-to-complete', pendingIdPLink.identityProviderName)}
+        [/#if]
+        [#-- A pending link can be cancled. If we also have a device link in progress, this cannot be canceled. --]
+        [#if pendingIdPLink??]
+          [@helpers.link url="" extraParameters="&cancelPendingIdpLink=true"]${theme.message("register-cancel-link")}[/@helpers.link]
+        [/#if]
+        </p>
+      [/#if]
+      <form action="${request.contextPath}/oauth2/register" method="POST" class="full">
+        [@helpers.oauthHiddenFields/]
+        [@helpers.hidden name="step"/]
+        [@helpers.hidden name="registrationState"/]
+        [@helpers.hidden name="parentEmailRequired"/]
+        [@helpers.hidden name="userVerifyingPlatformAuthenticatorAvailable"/]
+
+        [#-- Show the Password Validation Rules if there is a field error for 'user.password' --]
+        [#if (fieldMessages?keys?seq_contains("user.password")!false) && passwordValidationRules??]
+          [@helpers.passwordRules passwordValidationRules/]
+        [/#if]
+
+        [#-- Begin Self Service Custom Registration Form Steps --]
+        [#if fields?has_content]
+          <fieldset>
+            [@helpers.hidden name="collectBirthDate"/]
+            [#list fields as field]
+              [#assign key = field.key]
+              [@helpers.customField field key field?is_first field.key /]
+              [#if field.confirm]
+                [@helpers.customField field "confirm.${key}" false "[confirm]${field.key}" /]
+              [/#if]
+            [/#list]
+            [#-- If this is the last step of the form, optionally show a captcha. --]
+            [#if step == totalSteps]
+              [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+            [/#if]
+          </fieldset>
+
+          [#if step == totalSteps]
+            [@helpers.input id="rememberDevice" type="checkbox" name="rememberDevice" label=theme.message("remember-device") value="true" uncheckedValue="false"]
+              <i class="fa fa-info-circle" data-tooltip="${theme.message('{tooltip}remember-device')}"></i>[#t/]
+            [/@helpers.input]
+            <div class="form-row">
+              [@helpers.button icon="key" text=theme.message('register')/]
+            </div>
+          [#else]
+            <div class="form-row">
+              [@helpers.button icon="arrow-right" text=theme.message('next')/]
+            </div>
+          [/#if]
+        [#-- End Custom Self Service Registration Form Steps --]
+        [#else]
+        [#-- Begin Basic Self Service Registration Form --]
+        <fieldset>
+          [@helpers.hidden name="collectBirthDate"/]
+          [#if !collectBirthDate && (!application.registrationConfiguration.birthDate.enabled || hideBirthDate)]
+            [@helpers.hidden name="user.birthDate" dateTimeFormat="yyyy-MM-dd"/]
+          [/#if]
+```
+
+```html title="After"
+[@helpers.html]
+  [@helpers.head title=theme.message("register")]
+    <script src="${request.contextPath}/js/identityProvider/InProgress.js?version=${version}"></script>
+    [@helpers.alternativeLoginsScript clientId=client_id identityProviders=identityProviders/]
+    [#if readyToRegister]
+      [@helpers.captchaScripts showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+    [/#if]
+    <script type="text/javascript">
+      document.addEventListener('DOMContentLoaded', () => {
+        const uvpaAvailableField = document.querySelector('input[name="userVerifyingPlatformAuthenticatorAvailable"]');
+        if (uvpaAvailableField !== null && typeof(PublicKeyCredential) !== 'undefined' && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+          PublicKeyCredential
+            .isUserVerifyingPlatformAuthenticatorAvailable()
+            .then(result => uvpaAvailableField.value = result);
+        }
+      });
+    </script>
+    [#-- Custom <head> code goes here --]
+  [/@helpers.head]
+  [@helpers.body]
+    [@helpers.header]
+      [#-- Custom header code goes here --]
+    [/@helpers.header]
+
+    [@helpers.main title=theme.message("register")]
+      [#-- During a linking work flow, optionally indicate to the user which IdP is being linked. --]
+      [#if devicePendingIdPLink?? || pendingIdPLink??]
+        <p class="mt-0">
+        [#if devicePendingIdPLink?? && pendingIdPLink??]
+          ${theme.message('pending-links-register-to-complete', devicePendingIdPLink.identityProviderName, pendingIdPLink.identityProviderName)}
+        [#elseif devicePendingIdPLink??]
+          ${theme.message('pending-link-register-to-complete', devicePendingIdPLink.identityProviderName)}
+        [#else]
+          ${theme.message('pending-link-register-to-complete', pendingIdPLink.identityProviderName)}
+        [/#if]
+        [#-- A pending link can be cancled. If we also have a device link in progress, this cannot be canceled. --]
+        [#if pendingIdPLink??]
+          [@helpers.link url="" extraParameters="&cancelPendingIdpLink=true"]${theme.message("register-cancel-link")}[/@helpers.link]
+        [/#if]
+        </p>
+      [/#if]
+      <form action="${request.contextPath}/oauth2/register" method="POST" class="full">
+        [@helpers.oauthHiddenFields/]
+        [@helpers.hidden name="registrationState"/]
+        [@helpers.hidden name="userVerifyingPlatformAuthenticatorAvailable"/]
+
+        [#-- Show the Password Validation Rules if there is a field error for 'user.password' --]
+        [#if (fieldMessages?keys?seq_contains("user.password")!false) && passwordValidationRules??]
+          [@helpers.passwordRules passwordValidationRules/]
+        [/#if]
+
+        [#if formStep??]
+          <p>${formStep.description}</p>
+        [/#if]
+
+        [#-- Begin Self Service Advanced Registration Form Steps --]
+        [#if advancedRegistration]
+          <fieldset>
+            [#list fields as field]
+              [#assign key = field.key]
+              [@helpers.customField field key field?is_first field.key /]
+              [#if field.confirm]
+                [@helpers.customField field "confirm.${key}" false "[confirm]${field.key}" /]
+              [/#if]
+            [/#list]
+            [#-- If this is the last step of the form, optionally show a captcha. --]
+            [#if readyToRegister]
+              [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
+            [/#if]
+          </fieldset>
+
+          [#if readyToRegister]
+            [@helpers.input id="rememberDevice" type="checkbox" name="rememberDevice" label=theme.message("remember-device") value="true" uncheckedValue="false"]
+              <i class="fa fa-info-circle" data-tooltip="${theme.message('{tooltip}remember-device')}"></i>[#t/]
+            [/@helpers.input]
+            <div class="form-row">
+              [@helpers.button icon="key" text=theme.message('register')/]
+            </div>
+          [#elseif !deadEnd]
+            <div class="form-row">
+              [@helpers.button icon="arrow-right" text=theme.message('next')/]
+            </div>
+          [/#if]
+          [#if formStep?? && formStep.resendMessage??]
+            <div class="form-row">
+              <button class="link blue-text" formaction="${request.contextPath}/oauth2/register?resend=true"><i class="fa fa-arrow-right"></i> ${formStep.resendMessage} </button>
+            </div>
+          [/#if]
+        [#-- End Custom Self Service Registration Form Steps --]
+        [#else]
+        [#-- Begin Basic Self Service Registration Form --]
+        <fieldset>
+          [#if !collectBirthDate && (!application.registrationConfiguration.birthDate.enabled || hideBirthDate)]
+```
+
 ## Version 1.60.0
 
 To enable support of the `prompt` parameter, you will need to make the following modifications.
