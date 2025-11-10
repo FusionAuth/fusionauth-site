@@ -1,0 +1,159 @@
+---
+title: Phone Identity Pre-Verification
+description: Learn how to verify phone identities before user creation.
+navcategory: developer
+section: lifecycle
+subcategory: manage users
+tertcategory: verification
+---
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+
+## Overview
+
+As of version 1.62.0, FusionAuth can be configured to pre-verify users' identities, in the registration process, before user creation.
+
+To enable pre-verification, do the following:
+* Create/configure a Messenger
+* Enable verification for the identity types(s) on the tenant
+* Create an advanced registration form with the verification step
+* Enable self-service registration in your app
+
+Let's step through each of these, but first, there are some required prerequisites.
+
+## Prerequisites
+
+<PremiumPlanBlurb />
+
+This tutorial assumes you are running FusionAuth version 1.62.0 or greater. If you aren't, head on over to the [installation guide](/docs/get-started/download-and-install) or the [upgrade guide](/docs/operate/deploy/upgrade) to update to a version with support for this feature.
+
+This tutorial assumes you have a paid plan and a valid license. If you need to buy a plan, please visit the [pricing page](/pricing). If you need to activate your instance, please visit the [Reactor page](/docs/get-started/core-concepts/licensing).
+
+### Difference between Verification, Gating, and Identity Pre-Verification
+
+Verification: user created, attributes updated on user or identity
+* Available to both hosted pages (Self-service registration Advanced forms) and API
+* No automatic gating you must handle in your application code
+* User already exists
+
+Gating: hosted page concept, only enforced on hosted pages
+* If you change your email, you won’t run into the gating until you log in again
+* Available on hosted pages (Self-service registration Advanced forms) and Self-service registration Basic
+* User already exists
+
+Identity Pre-verification: user not created until phone has been verified
+* Available to both hosted pages and API
+* Can add gating manually yourself via API (prevent interactions after login if not verified)
+* User doesn’t exist (only Identity does)
+
+<Aside type="note">
+    Phone Verification and identity pre-verification are not premium features, however, enforcing pre-verification with Advanced Registration Forms as well as Gating is.
+</Aside>
+
+FusionAuth ships with registration verification and identity verification flows. These verification flows update the `verified` and `verifiedReason` attributes on a user's registration or on a user identity. You can gate the user (or prevent them from "continuing" auth) based on these attributes when writing your application and integration code.
+
+With paid FusionAuth plans, you can elect to have FusionAuth "gate" your users based on these verification attributes. Gating stops the user from receiving a JWT or essentially completing the authentication workflow. FusionAuth is enforcing a "gate" until they verify their phone or email. Gating happens *after* user creation.
+
+Identity Pre-verification applies the same concept, but user identities must be verified *before* user creation.
+
+## Create/configure a Messenger
+
+Log in to the FusionAuth administrative user interface. You could do all of this configuration with the API or kickstart, but for this tutorial you'll use the UI.
+
+We are using Twilio as an SMS service in this example. To set up the [Messenger](/docs/customize/email-and-messages/messengers) that will be used to send the SMS verification codes, navigate to <Breadcrumb>Settings -> Messengers</Breadcrumb>. Click <InlineUIElement>Add Twilio Messenger</InlineUIElement> from the dropdown in the upper right. Which you can fill with your free or paid Twilio account information as described in the [Twilio messenger](/docs/customize/email-and-messages/twilio-messenger) documentation.
+
+TODO Screenshot http://localhost:9011/admin/messenger/edit/Twilio/42d9117e-faf9-4705-9353-5910f7da594c
+
+## Enable verification for the phone identity
+
+Enable identity verification in your tenant by navigating to <Breadcrumb>Tenants -> Edit Tenant -> Identities</Breadcrumb> tab with the following steps:
+
+In the <InlineUIElement>Messaging settings</InlineUIElement> section:
+* Select your earlier created Twilio messenger configuration in the <InlineField>Phone</InlineField> dropdown.
+
+In the <InlineUIElement>Identity verification settings</InlineUIElement> <InlineUIElement>Phone</InlineUIElement> section:
+* Enable the <InlineField>Verify identity</InlineField> toggle.
+* Select the `Phone Verification` template in the <InlineField>Verification template</InlineField> dropdown.
+* Set the <InlineField>Unverified behavior</InlineField> to `Gated` (other values will be invalid).
+* All other fields can be left as default or changed based on your needs.
+
+TODO Screenshot Default Tenant Identity http://localhost:9011/admin/tenant/edit/d7d09513-a3f5-401c-9685-34ab6c552453
+
+<Aside type="note">
+    If you kickstarted your FusionAuth instance, the message templates will be missing. You can copy the default messages templates including the phone verification with following the [Retrieving Default Templates](/docs/customize/email-and-messages/message-templates-replacement-variables#retrieving-default-templates) and add them manually in <Breadcrumb>Customizations -> Message Templates</Breadcrumb>.
+</Aside>
+
+Since there are other scenarios where gating can be applied for existing users, and you need FusionAuth instead of your Application to handle [Gate Accounts Until User Phone Verified](/docs/lifecycle/manage-users/verification/gate-accounts-until-user-phone-verified) ensure that the <InlineField>Unverified behavior</InlineField> value is `Gated`.
+
+## Create an advanced registration form with the verification step
+
+Before you can use the phone identity pre-verification during registration, you need to create an [Advanced Registration Form](/docs/lifecycle/register-users/advanced-registration-forms) that includes a verification step for the phone number field.
+
+<Aside type="note">
+    Phone number form fields are created by default, but they are not set <InlineUIElement>Required</InlineUIElement> to `true` which is a prerequisite for the verification step in the Advanced Registration Form if it's the only identity.
+</Aside>
+
+First, ensure that a mandatory phone number [Form Field](/docs/lifecycle/register-users/advanced-registration-forms#form-fields-and-validation) exists. By navigating to <Breadcrumb>Customizations -> Form Fields</Breadcrumb> and create a new Form Field with the <InlineField>Field key</InlineField> `user.phoneNumber` and <InlineUIElement>Required</InlineUIElement> set to `true`, if one does not already exist.
+
+TODO Screenshot Phone number Field http://localhost:9011/admin/field/edit/5285b3aa-9915-47e0-9155-d196e67717f6
+
+<Aside type="caution">
+    There is a user.mobilePhone form field, but phone number verification only works with user.phoneNumber form fields because user.mobilePhone is not an identity type.
+</Aside>
+
+With the <InlineField>Phone number</InlineField> form field available, let's [Create a Form](/docs/lifecycle/register-users/advanced-registration-forms#create-a-form) for phone identity verification during registration.
+
+By navigating to <Breadcrumb>Customizations -> Forms</Breadcrumb> and click <InlineUIElement>Add Form</InlineUIElement> in the upper right. Give the form a <InlineField>Name</InlineField> `Phone Verification`, then add the following components to the form:
+
+* Add the first Step by clicking <Breadcrumb>Add Step -> Form Fields</Breadcrumb>
+* Where you add the field by clicking <Breadcrumb>Add field</Breadcrumb> selecting the <InlineField>Field</InlineField> `Phone number` (the phone number field you created earlier) and clicking <InlineUIElement>Submit</InlineUIElement>.
+* Followed by the second Step: <Breadcrumb>Add Step -> Verification</Breadcrumb> selecting <InlineField>Phone Verification</InlineField>
+* And always as a last step, add the password field: <Breadcrumb>Add Step -> Form Fields</Breadcrumb> selecting the <InlineField>Field</InlineField> `Password` and clicking <InlineUIElement>Submit</InlineUIElement>.
+
+TODO Screenshot Phone Verification Form http://localhost:9011/admin/form/edit/a3513e16-abb3-4cef-9ad9-b609c3707ed6
+
+## Enable self-service registration in your app
+
+With all the previous steps done, you can now enable Advanced Self-service registration by Associate the created Advanced Registration Form with an Application as described in [Associate a Form With an Application](/docs/lifecycle/register-users/advanced-registration-forms#associate-a-form-with-an-application).
+
+Navigate to <Breadcrumb>Applications -> Your Application -> Registration</Breadcrumb> tab for the Tenant you have enabled Identity verification for.
+
+In the <InlineUIElement>Self-service Registration configuration</InlineUIElement> section:
+* Enable the Self-service Registration <InlineField>Enabled</InlineField> toggle.
+* Ensure the <InlineField>Registration type</InlineField> is set to `Advanced`.
+* Select the earlier created `Phone Verification` form in the <InlineField>Advanced Registration Form</InlineField> dropdown.
+* Save the application.
+
+TODO Screenshot Application Registration http://localhost:9011/admin/application/edit?applicationId=e9fdb985-9173-4e01-9d73-ac2d60d1dc8e&tenantId=d7d09513-a3f5-401c-9685-34ab6c552453
+
+## Test It Out
+
+To test the phone identity pre-verification during registration, navigate to the Self-service registration page for your application.
+
+You will find the page either through your own application or directly via the FusionAuth link, which you can find in the <InlineUIElement>OAuth2 & OpenID Connect Integration details</InlineUIElement> located in the <Breadcrumb>Applications -> Your Application -> View</Breadcrumb> <InlineUIElement>Details</InlineUIElement> view.
+
+TODO Screenshot Application Details http://localhost:9011/admin/application/
+
+## Common Questions
+
+**Question**: Why is my verification step not showing up in registration?
+
+**Answer**: There are several reasons why this can happen:
+1. The tenant the user is created with does not have verification enabled (forms can be shared with multiple tenants, so there is no guarantee, when the form is created, which tenant the form will be used with).
+2. If the <InlineField>user.phoneNumber</InlineField> field is optional and the user chooses not to enter a value, then verification steps for those fields will be skipped.
+3. When registration is being completed for an existing user, to an application, verification steps are skipped because they only apply to new users. For existing users, see [Gate Users Until They Verify Their Phone Number
+](/docs/lifecycle/manage-users/verification/gate-accounts-until-user-phone-verified) for more details.
+
+## Troubleshooting
+
+TBD
+
+## Next Steps
+
+Now that you've successfully set up gated phone verification, take the next steps to integrate this functionality into your application:
+
+* Discover how to [modify your theme](/docs/customize/look-and-feel/) to make the phone verification gate pages look like your application.
+* Learn more about [email/message templates](/docs/customize/email-and-messages/) and how to customize them.
