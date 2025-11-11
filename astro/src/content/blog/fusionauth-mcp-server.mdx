@@ -1,0 +1,100 @@
+---
+publish_date: 2025-11-10
+title: "Introducing the FusionAuth MCP Server: Your AI Just Got Smarter"
+description: "The FusionAuth MCP server lets AI assistants like Claude interact directly with your FusionAuth instance through natural language commands."
+authors: Dan Moore
+image: /img/blogs/fusionauth-mcp-server/mcp-server.png
+categories: Product
+tags: mcp, development, local, install, developer tool
+excerpt_separator: "{/* more */}"
+---
+
+If you've been following the AI coding assistant space, you've probably heard about the Model Context Protocol (MCP) from Anthropic. It's a standardized way to give AI assistants like Claude access to external tools and data sources. And today, we released something that makes working with FusionAuth dramatically easier: the FusionAuth API MCP Server.
+
+This is a developer-focused tool that connects your AI coding assistant or other MCP clients directly to your FusionAuth instance. Want to create a complex registration form? Export your current configuration? Run sophisticated user searches? Now you can describe what you want in plain English and let your AI assistant handle the API calls.
+
+## What Is This MCP Server, Exactly?
+
+The FusionAuth API MCP Server is a bridge between AI coding assistants and your FusionAuth instance. It automatically generates MCP tools from our [OpenAPI specification](https://github.com/fusionauth/fusionauth-openapi/), giving your AI assistant the ability to interact with FusionAuth's API on your behalf.
+
+Think of it this way: instead of constantly context-switching between documentation, your IDE, and the FusionAuth admin UI, you can now tell Claude, VSCode, or any other MCP-compatible software something like "create a registration form with email, username, and phone number fields, and make the phone number optional," and it'll handle the API calls to make it happen.
+
+This is a **preview release**. It's a dev-time tool designed for local development and experimentation. It's not meant for production use, but it's perfect for rapid prototyping, learning the FusionAuth API, or automating tedious configuration tasks during development.
+
+We're also looking for feedback on how you use this MCP server and what kind of functionality you want to see in future releases. Please post it on the [community forum](/community/forum).
+
+## How It Works
+
+Under the hood, we're using an [open-source library](https://github.com/harsha-iiiv/openapi-mcp-generator) to automatically generate the MCP server from our OpenAPI specification. The [MCP server itself is open source](https://github.com/FusionAuth/fusionauth-mcp-api/), released under the Apache2 license. This means a few things.
+
+First, **it stays up to date automatically**. When we update our API, the MCP server is updated and released. You'll always have access to the latest FusionAuth API capabilities.
+
+Second, **tool descriptions are auto-generated**. The AI assistant receives accurate, current information about what each API endpoint does, what parameters it expects, and what it returns, all directly from our OpenAPI spec.
+
+Third, **it's minimal maintenance**. We're not adding another product that requires constant engineering attention. The open-source generator library handles error handling, connection validation, and translating API calls into MCP tools.
+
+Of course, things aren't perfect. We have a large number of APIs (over 300). Exposing each as a tool can use up a lot of the context window. But the MCP server is flexible enough to [exclude entire categories of tools](https://github.com/FusionAuth/fusionauth-mcp-api/?tab=readme-ov-file#restricting-tools) if you don't need them.
+
+## Getting Started Is Simple
+
+Installation is designed to be dead simple. You set two environment variables:
+
+* `API_KEY_APIKEYAUTH`: your FusionAuth API key; keep this narrowly scoped (here's doc on [creating](/docs/apis/authentication#create-an-api-key) and [setting permissions](/docs/apis/authentication#api-key-permissions) of this API key)
+* `API_BASE_URL`: where your development or test FusionAuth instance is running
+
+Then, add this MCP server however you add servers which use stdio as the transport layer. For Claude Desktop on a mac, you would update `~/Library/Application Support/Claude/claude_desktop_config.json` to add this to the `mcpServers` object:
+
+```json
+"fusionauth-mcp-api": {
+  "command": "npx",
+  "args": [
+    "@fusionauth/mcp-api"
+  ],
+  "env": {
+    "API_KEY_APIKEYAUTH": "<your fusionauth api key>",
+    "API_BASE_URL": "http://localhost:9011"
+  }
+}
+```
+
+The [README](https://github.com/FusionAuth/fusionauth-mcp-api/blob/main/README.md) includes complete setup instructions and a warning about connecting to production instances.
+
+Remember: this is a development tool. You're giving an AI assistant the ability to make API calls to your FusionAuth instance using whatever permissions you've granted to the API key.
+
+That brings me to an important point about security.
+
+## Security and API Key Permissions
+
+The security model here is three-fold:
+
+* you pick the instance you connect to
+* you optionally select the categories of tools to expose to the MCP server; these include tools which create, delete, or retrieve data using FusionAuth's APIs
+* you create an API key for the instance with exactly the permissions you want the MCP client to have; it uses that key for all requests
+
+You can combine these layers of security. Want to let your AI assistant read user data but not modify it? Create a read-only API key and configure the categories allow only the `retrieve` and `search` operations.
+
+Limiting the API key gives the most precise restrictions. Want to limit your assistant to CRUD work with applications and themes? Grant only those permissions.
+
+The principle of least privilege applies with this MCP server just like it does everywhere else.
+
+To repeat what was mentioned above, the goal here is to expose a helpful local, development time tool. There's no OAuth 2.1 support needed, no complex installation instructions. This MCP server is intentionally simple and scoped for local development and testing.
+
+## Real-World Use Cases
+
+So what would you actually use this for? Let's walk through a few particularly interesting scenarios.
+
+* Creating complex registration forms: Imagine you need to build a registration form with three steps and nine custom fields. Some fields are required, some optional, and there are validation rules for four of them. Instead of making multiple API calls and keeping track of field Ids and form step configurations, describe what you want to your AI assistant and let it handle the API calls and orchestration.
+* Exporting configurations: Ever needed to capture your current FusionAuth configuration to reproduce it in another environment or convert it to Kickstart, a python configuration script, or Terraform? You can now ask your AI assistant to export specific parts of your configuration.
+* Running complex searches: FusionAuth's [search capabilities](/docs/lifecycle/manage-users/search/user-search-with-elasticsearch) are powerful, but constructing complex Elasticsearch queries is finicky and tedious. Now you can describe search criteria in natural language. For example, you could ask it to "find all users who registered in the last 30 days, have verified emails, and belong to the 'premium' group" and let the LLM build the query. After testing and verifying, ask it to export the Elasticsearch syntax.
+
+These are just starting points. The real power comes from having the entire FusionAuth API available to your AI assistant, limited only by the permissions you grant and the context window size (the server fits comfortably within a 200k token context window, and you can exclude unused API calls).
+
+## Try It Out
+
+If you're using Claude Desktop, Cursor, or another program that supports MCP, we'd love for you to give the FusionAuth API MCP server a spin. Install it locally, point it at a development FusionAuth instance, and see how it helps your workflow.
+
+And when you do, let us know what you think. We're [counting npm downloads](https://www.npmjs.com/package/@fusionauth/mcp-api) and [actively seeking developer feedback via the forum](/community/forum). This is an experiment in making FusionAuth's API more accessible, and your feedback will shape where it goes from here.
+
+You can also view [the MCP server source](https://github.com/FusionAuth/fusionauth-mcp-api/), check [the server out on NPM](https://www.npmjs.com/package/@fusionauth/mcp-api), or [read the documentation](/docs/get-started/download-and-install/development/mcp-server).
+
+Happy building!
