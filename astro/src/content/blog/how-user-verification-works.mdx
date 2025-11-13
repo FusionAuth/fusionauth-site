@@ -21,19 +21,40 @@ The FusionAuth field `user.verified` stores whether the user has completed verif
 
 This article discusses exactly what's changed with verification and how you should verify users now.
 
-## The Old Way Of Verification
+## ⛔ The Old Way Of Verification
 
-For those of you who've used FusionAuth for a while, let's summarize the obsolete verification system you're familiar with. If you're a new FA user working on a database created after version 1.59, you can skip ahead to the next section.
+For those of you who've used FusionAuth for a while, let's summarize the obsolete verification system you're familiar with. If you're a new FA user working on a database created after version 1.59, you can skip ahead to the [next section about the new system](#✅-the-new-way-of-verification).
 
-In the database, the table `identities`, which links to the tables `users` and `tenants`, has the fields `verified` and `verified_instant`. A tenant is a way partitioning FA to work for multiple customers in the same database. For example, a user in the Company1 tenant might log in to Company1's website with FusionAuth, and have a completely separate login using the same email address but different password with Company2 (a different tenant), even though both websites use the same FusionAuth database as their authentication provider.
+### The Object Model
 
-The `user_registrations` table also has the fields `verified` and `verified_instant`, and links to the tables `users`, `applications`, and `user_registrations_applications_roles`. An Application is like a company website or product. So the Company1 tenant might have one application (website) for employees and another application for customers. A user is granted access to an application by creating a Registration — a link between user and application kept in the `user_registrations` table.
+Verification in FA prior to 1.59 is only for email addresses (and not phone numbers or other identifiers).
+
+In the database, the table `identities`, which links to the tables `users` and `tenants`, has the fields `verified` and `verified_instant`. A tenant is a way partitioning FA to work for multiple customers in the same database. For example, a user in the Company1 tenant might log in to Company1's website with FusionAuth, and have a completely separate login using the same email address but different password with Company2 (a different tenant), even though both websites use the same FusionAuth database as their authentication provider. `verified` is true or false, and `verified_instant` is the time at which the user verified.
+
+The `user_registrations` table also has the fields `verified` and `verified_instant`, and links to the tables `users`, `applications`, and `user_registrations_applications_roles`. An Application is like a company website or product. So the Company1 tenant might have one application (website) for employees and another application for customers. A user is granted access to an application by creating a Registration — a link between user and application kept in the `user_registrations` table. So an employee of the company might register with the customer application too. They will be one user with two registrations.
 
 If the user record already has a verified field, why does the registration record need another verification field? The [application registration tutorial](https://fusionauth.io/docs/lifecycle/manage-users/verification/registration-gate-accounts-until-verified) explains this:
 >  However, PiedPiper requires separate registration verification to allow access to both Not-Hotdog and PiperChat through the same email account. This registration verification is a concrete, separate step that the user must engage in by clicking a link or entering a code (sent via email). Without this verification step, **users may find it alarming their logins (jared@piedpiper.com) work for both Not-Hotdog and PiperChat (without their express consent, especially if they did not know about the parent company relationship)**.
 
+### The Verification Process
 
-## The New Way Of Verification
+To see how email verification works, you first need an SMTP server. The simplest way to test is using a fake SMTP service, like [SMTPBucket](https://www.smtpbucket.com).
+
+TODO use fusionauth/fusionauth-app:1.58.2, but with the full email templates so you can send registration emails
+
+
+
+## ✅ The New Way Of Verification
+
+### The Object Model
+
+user.identities[x].verified along with user.identities[x].verifiedReason.
+
+### The Verification Process
+
+## todo
+
+
 
 Registration verification is deprecated and will be removed in a future version of FusionAuth.
 
@@ -55,8 +76,16 @@ User Registration API
 
 sendSetPasswordEmail is deprecated. Use sendSetPasswordIdentityType instead.
 
+---
 
-## TODO
+Yup that’s it, just clarification on the new verification. Mainly that if the verifiedReason field is Disabled, Import, Skipped, Trusted, or Unverifiable then essentially we will treat them as Verified even if the actual user.identities.verified field is false
+
+---
+
 
 https://drafts.cc.ritza.co/s/LKoWCFSPP#
 FA -> FusionAuth
+
+update tutorials:
+- https://fusionauth.io/docs/lifecycle/manage-users/verification/gate-accounts-until-user-email-verified
+- https://fusionauth.io/docs/lifecycle/manage-users/verification/registration-gate-accounts-until-verified
