@@ -8,6 +8,7 @@ tertcategory: saml
 ---
 import APIBlock from 'src/components/api/APIBlock.astro';
 import APIField from 'src/components/api/APIField.astro';
+import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 import SamlIdpLimitations from 'src/content/docs/get-started/core-concepts/_saml-idp-limitations.mdx';
@@ -25,13 +26,21 @@ As a concrete example, you might have an app called `Payroll Zen` that manages y
 
 <SamlIdpNote/>
 
-FusionAuth's SAML identity provider uses the OAuth workflow under the hoods. When a service provider starts a SAML workflow by sending a SAML request to FusionAuth, FusionAuth will forward the browser to the hosted login pages. This is an important concept if you are interested in using FusionAuth's themes to customize the look and feel of your SAML identity provider user interface.
+FusionAuth's SAML identity provider uses a sub-OAuth workflow. When a service provider starts a SAML workflow by sending a SAML request to FusionAuth, FusionAuth will forward the browser to the hosted login pages. This is an important concept if you are interested in using FusionAuth's themes to customize the look and feel of your SAML identity provider user interface.
 
 ### Single Sign-on and Logout
 
 SAML is widely used to offer Single Sign-on across applications. When enabled, a user can sign in to an IdP such as FusionAuth, and then other correctly configured applications will not require authentication from that same user.
 
 SAML also offers Single Logout, which is the inverse of Single Sign-on. With Single Logout, a user logs out of the IdP and all other applications are notified of the logout and should end the user's session.
+
+<Aside type="version">
+  In version 1.61.0, FusionAuth now supports the `ForceAuthn` attribute when present in the Authn request.
+
+  When `ForceAuthn=true` is specified in the Authn request Fusionauth will begin the sub-OAuth workflow with the equivalent OAuth `prompt=login` parameter.
+
+  When using `ForceAuthn=true` it is encouraged that the SAML service provider verify the `AuthnInstant` in the Authn response to ensure authentication was forced.
+</Aside>
 
 ## Configure FusionAuth as a SAML Identity Provider
 
@@ -55,7 +64,7 @@ Navigate to <Breadcrumb>Applications -> Your application -> SAML</Breadcrumb> to
     If this isn't specified, FusionAuth will set the audience to the same value as the <InlineField>Issuer</InlineField>.
   </APIField>
   <APIField name="Authorized redirect URLs" required>
-    One or more URLs that FusionAuth may redirect to after the user has successfully logged in. 
+    One or more URLs that FusionAuth may redirect to after the user has successfully logged in.
 
     This is also known as the Assertion Consumer Service URL or ACS.
   </APIField>
@@ -65,7 +74,7 @@ Navigate to <Breadcrumb>Applications -> Your application -> SAML</Breadcrumb> to
     Usually this is the starting location of the application.
   </APIField>
   <APIField name="Debug enabled" optional>
-    Many service providers are not compliant with the SAML and XML signing specifications. This makes it challenging to get them working with FusionAuth. 
+    Many service providers are not compliant with the SAML and XML signing specifications. This makes it challenging to get them working with FusionAuth.
 
     If you are running into integration issues, toggle this setting on and FusionAuth will output debugging information into the Event Log during a SAML login. You can find the event log in <Breadcrumb>System -> Event Log</Breadcrumb>.
   </APIField>
@@ -113,7 +122,7 @@ Settings in this section configure how FusionAuth processes the SAML response.
     To add, manage or import your key, navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb>.
   </APIField>
   <APIField name="Signature canonicalization method" optional>
-    This sets the XML signature canonicalization method that FusionAuth will use when signing the SAML response. This method is also used when FusionAuth creates a message digest in the SAML response. 
+    This sets the XML signature canonicalization method that FusionAuth will use when signing the SAML response. This method is also used when FusionAuth creates a message digest in the SAML response.
 
     This option is usually the first thing to change if a service provider is rejecting the SAML response from FusionAuth. Many service providers are not compliant with the full XML signature specification and require a fixed canonicalization method. Your best bet is to try all four values until a login succeeds.
   </APIField>
@@ -157,9 +166,9 @@ Settings in this section configure SAML Logout handling. They define how FusionA
     If a <InlineField>Require signature</InlineField> is not enabled, this field is optional.
   </APIField>
   <APIField name="Logout behavior" optional>
-    When set to `All session participants`, each session participant that has <InlineField>Enable single logout</InlineField> set to true will be sent a Logout Request. 
+    When set to `All session participants`, each session participant that has <InlineField>Enable single logout</InlineField> set to true will be sent a Logout Request.
 
-    When set to `Only Originator`, no other session participants will be notified when a logout request is sent for this application. 
+    When set to `Only Originator`, no other session participants will be notified when a logout request is sent for this application.
 
     This configuration is functionally equivalent to the Logout Behavior found in the OAuth2 configuration.
   </APIField>
@@ -177,7 +186,7 @@ Settings in this section configure SAML Logout handling. They define how FusionA
     To add, manage or import your key, navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb>.
   </APIField>
   <APIField name="Signature canonicalization method" optional>
-    This sets the XML signature canonicalization method that FusionAuth will use when signing the SAML Single Logout response. 
+    This sets the XML signature canonicalization method that FusionAuth will use when signing the SAML Single Logout response.
 
     This option is usually the first thing to change if a service provider is rejecting the SAML Single Logout response from FusionAuth. Many service providers are not compliant with the full XML signature specification and require a fixed canonicalization method. Your best bet is to try all four values until a logout succeeds.
   </APIField>
@@ -196,7 +205,7 @@ Settings in this section configure how FusionAuth processes the SAML Logout resp
     To add, manage or import your key, navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb>.
   </APIField>
   <APIField name="Signature canonicalization method" optional>
-    This sets the XML signature canonicalization method that FusionAuth will use when signing the SAML Logout response. 
+    This sets the XML signature canonicalization method that FusionAuth will use when signing the SAML Logout response.
 
     This option is usually the first thing to change if a service provider is rejecting the SAML Logout response from FusionAuth. Many service providers are not compliant with the full XML signature specification and require a fixed canonicalization method. Your best bet is to try all four values until a logout succeeds.
   </APIField>
