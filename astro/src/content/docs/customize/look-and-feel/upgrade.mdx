@@ -14,6 +14,82 @@ This page contains notes on changes in recent versions of FusionAuth that requir
 
 ## Version 1.61.0
 
+To ensure that FusionAuth is able to forward the `prompt` parameter to third party identity providers, you will need to make the following modifications.
+
+### Helpers template
+
+Update the `oauthHiddenFields`, `link` and `logoutLink` macros to add the `max_age` parameter. When editing a theme in the UI, this page will be shown as `Helpers`, and the API template name is `helpers`.
+
+#### Macro oauthHiddenFields
+
+Add `max_age` to the `oauthHiddenFields` macro.
+
+```title="Add prompt"
+[@hidden name="max_age"/]
+```
+
+For example, this is a macro that includes `max_age`:
+
+``` title="After"
+[#macro oauthHiddenFields]
+  [@hidden name="captcha_token"/]
+  [@hidden name="client_id"/]
+  [@hidden name="code_challenge"/]
+  [@hidden name="code_challenge_method"/]
+  [@hidden name="metaData.device.name"/]
+  [@hidden name="metaData.device.type"/]
+  [@hidden name="nonce"/]
+  [@hidden name="oauth_context"/]
+  [@hidden name="max_age"/]
+  [@hidden name="pendingIdPLinkId"/]
+  [@hidden name="prompt"/]
+  [@hidden name="redirect_uri"/]
+  [@hidden name="response_mode"/]
+  [@hidden name="response_type"/]
+  [@hidden name="scope"/]
+  [@hidden name="state"/]
+  [@hidden name="tenantId"/]
+  [@hidden name="timezone"/]
+  [@hidden name="user_code"/]
+[/#macro]
+```
+
+#### Macro link
+Add `max_age` to the `link` macro.
+
+```title="Add max_age to the query string"
+&max_age=${(max_age?url)!''}
+```
+
+``` title="After"
+[#macro link url extraParameters=""]
+  <a href="${url}?tenantId=${(tenantId)!''}&client_id=${(client_id)!''}&nonce=${(nonce?url)!''}&pendingIdPLinkId=${(pendingIdPLinkId)!''}&redirect_uri=${(redirect_uri?url)!''}&response_mode=${(response_mode?url)!''}&response_type=${(response_type?url)!''}&scope=${(scope?url)!''}&state=${(state?url)!''}&timezone=${(timezone?url)!''}&metaData.device.name=${(metaData.device.name?url)!''}&metaData.device.type=${(metaData.device.type?url)!''}${(extraParameters!'')?no_esc}&code_challenge=${(code_challenge?url)!''}&code_challenge_method=${(code_challenge_method?url)!''}&user_code=${(user_code?url)!''}&prompt=${(prompt?url)!''}&max_age=${(max_age?url)!''}">
+      [#nested/]
+  </a>
+[/#macro]
+```
+
+#### Macro logoutLink
+
+Add `max_age` to the `logoutLink` macro.
+
+```title="Add max_age to the query string"
+&max_age=${(max_age?url)!''}
+```
+
+``` title="After"
+[#macro logoutLink redirectURI extraParameters=""]
+[#-- Note that in order for the post_logout_redirect_uri to be correctly URL escaped, you must use this syntax for assignment --]
+    [#local post_logout_redirect_uri]${redirectURI}?tenantId=${(tenantId)!''}&client_id=${(client_id)!''}&nonce=${(nonce?url)!''}&pendingIdPLinkId=${(pendingIdPLinkId)!''}&redirect_uri=${(redirect_uri?url)!''}&response_mode=${(response_mode?url)!''}&response_type=${(response_type?url)!''}&scope=${(scope?url)!''}&state=${(state?url)!''}&timezone=${(timezone?url)!''}&metaData.device.name=${(metaData.device.name?url)!''}&metaData.device.type=${(metaData.device.type?url)!''}${(extraParameters?no_esc)!''}&code_challenge=${(code_challenge?url)!''}&code_challenge_method=${(code_challenge_method?url)!''}&user_code=${(user_code?url)!''}&prompt=${(prompt?url)!''}&max_age=${(max_age?url)!''}[/#local]
+  <a
+  href="/oauth2/logout?tenantId=${(tenantId)!''}&client_id=${(client_id)!''}&post_logout_redirect_uri=${post_logout_redirect_uri?markup_string?url}">[#t]
+    [#nested/][#t]
+  </a>[#t]
+[/#macro]
+```
+
+## Version 1.61.0
+
 Previously the following [identity provider types](/docs/apis/identity-providers) were limited to a single configuration per FusionAuth instance: Apple, Epic Games, Facebook, Google, HYPR, LinkedIn, Nintendo, Sony PlayStation Network, Steam, Twitch, Twitter, and Xbox.
 
 To enable support for multiple identity provider configurations of these types on a single login page, you will need to make the following modifications. The default theme is available on every FusionAuth instance as a point of comparison or guide to theme upgrades.
@@ -307,7 +383,7 @@ For example, this is a macro that includes `prompt`:
 Add `prompt` to the `link` macro.
 
 ```title="Add prompt to the query string"
-&prompt=${(prompt?url)!''
+&prompt=${(prompt?url)!''}
 ```
 
 ``` title="After"
@@ -323,7 +399,7 @@ Add `prompt` to the `link` macro.
 Add `prompt` to the `logoutLink` macro.
 
 ```title="Add prompt to the query string"
-&prompt=${(prompt?url)!''
+&prompt=${(prompt?url)!''}
 ```
 
 ``` title="After"

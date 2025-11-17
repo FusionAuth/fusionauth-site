@@ -47,7 +47,7 @@ import { YouTube } from '@astro-community/astro-embed-youtube';
 
 Looking for release notes older than 1.44.0? Look in the [release notes archive](/docs/release-notes/archive). Looking to be [notified of new releases?](/docs/operate/roadmap/releases#release-notifications) <span class="not-prose no-underline"><a class="ml-2" href="/docs/releases.xml"><i class="fas fa-xs fa-rss text-orange-700 text-2xl" width="50px" /></a></span>
 
-<ReleaseNoteHeading version='1.61.0' releaseDate='2025' name='Kung Fu Panda Placeholder' />
+<ReleaseNoteHeading version='1.61.0' releaseDate='November 13, 2025' name='Flexible Fox' />
 
 <ThemeUpdateWarning version="1.61.0">
   Several changes are required to support multiple configurations of various identity provider types that were previously restricted to a single configuration per FusionAuth instance. References to the legacy sign with Google JavaScript library, [deprecated by Google in 2023](https://developers.google.com/identity/sign-in/web/deprecation-and-sunset), have been removed from FusionAuth. Please migrate to the updated [Sign in with Google](https://developers.google.com/identity/gsi/web/guides/overview) integration to continue using the Google identity provider.
@@ -61,19 +61,71 @@ Looking for release notes older than 1.44.0? Look in the [release notes archive]
 </DeprecationWarning>
 
 ### Fixed
-
-* <Issue issue="3111">
-    The SCIM Groups filter for `displayName` now does a correct case-insensitive equals comparison for the `eq` operator. Additionally, the `displayName` filter now supports the `co`, `ew`, and `sw` operators.
+* <Issue issue="3150">
+    In version `1.59.0` we started indexing the new `user.phoneNumber` field for searches. `IndexUser` had a new field added, but the doc annotation was missing the version.
+  </Issue>
+* <Issue issue="3179">
+    The `GET /api/user/change-password` endpoint does not allow a `loginId` type of `phoneNumber`. Additionally, client libraries are incorrectly passing a `username` parameter instead of a `loginId` parameter in `checkChangePasswordUsingLoginId` calls. This API endpoint is also lacking documentation.
+  </Issue>
+* <Issue issue="3140">
+    When federating with a Google IdP, there are situations where a user can be re-prompted for authentication when already having valid FusionAuth and Google IdP sessions. SSO should now be honored correctly in these cases.
   </Issue>
 * <Issue issue="2949">
-    When completing a password change that required a step-up MFA challenge, that trust will now carry forward to the user's next login if the user chose to trust their device for 30 days. MFA trusts for _other_ devices will continue to be removed. API integrations must capture `twoFactorTrustId` from the [Complete Multi-Factor Authentication API](/docs/apis/login#complete-multi-factor-authentication) response and provide that value on login API requests as `twoFactorTrustId`.
+    After establishing MFA trust on a device, a user is being re-challenged during a voluntary password reset, even during the trust period. The user should be able to change their password without completing another MFA challenge.
+  </Issue>
+* <Issue issue="3208">
+    During startup, FusionAuth can output duplicate log entries. This was especially present with silent mode enabled. Logging should now be more efficient.
+  </Issue>
+* <Issue issue="3227">
+    When a user first logs into a tenant configured with a connector, they will see an error when MFA is required and/or an updated and stronger password policy is in place. Subsequent logins behave normally.
+  </Issue>
+* <Issue issue="3167">
+    Searches for users using nested searches involving registration fields may return incomplete results in some cases.
+  </Issue>
+* <Issue issue="3064">
+    When using SCIM PATCH to add a user field, exiting fields are being removed. PATCH should now be handled as expected.
+  </Issue>
+* <Issue issue="3186">
+    Performing a user reindex intermittently results in an `email`, `username`, or `phoneNumber` being omitted from Elastic/OpenSearch and not being searchable.
+  </Issue>
+* <Issue issue="3225">
+    Some unwanted JavaScript errors are reported in the browser console on some pages, including the maintenance mode page and the application scope management page. These errors should now be handled more gracefully.
+  </Issue>
+* <Issue issue="3111">
+    SCIM group searches are not properly honoring the `eq` operator. This operator should be doing an exact (but case-insensitive) search, but instead is doing a wildcard search.
+  </Issue>
+* <Issue issue="3191">
+    Webhook `user.delete` events were not populating `email`, `username`, or `phoneNumber` fields when users were deleted under certain circumstances.
   </Issue>
 
 ### Enhancements
-
 * <Issue issue="1841">
-    Multiple instances of all identity provider types are now supported. Previously, many gaming and social identity provider types were limited to a single configuration per FusionAuth instance.
+    You can now create multiple instances of any identity provider type, each with its own distinct configuration and reconcile lambda. This is especially useful if you have users mapped to different tenants, and want the ability to have an identity provider of the same type in each tenant, each having its own distinct config.
   </Issue>
+* <Issue issue="3220">
+    We've added the ability to set maximum sizes on both the HTTP request header and body. These can be useful for blocking  invalid requests before they are processed by FusionAuth's HTTP server.
+  </Issue>
+* <Issue issue="2989">
+    FusionAuth now supports the SAML v2.0 ForceAuthn attribute.  When using FusionAuth as an IdP, this attribute will force re-authentication of the user, regardless of their SSO session state. This also resolves [GitHub Issue #1736](https://github.com/FusionAuth/fusionauth-issues/issues/1736)
+  </Issue>
+
+### Internal
+* <Issue issue="3176">
+    Update dependencies.
+    * Upgrade `io.fusionauth:fusionauth-jwt` `5.3.2` ->  `5.3.3`
+    * Upgrade `io.fusionauth:java-http` `0.3.7` -> `1.4.0`
+    * Upgrade `org.freemarker:freemarker` `2.3.33` -> `2.3.34`
+    * Upgrade `org.primeframework:prime-email` `0.21.1` -> `0.22.0`
+    * Upgrade `org.primeframework:prime-js` `1.7.0` -> `1.8.0`
+    * Upgrade `org.primeframework:prime-mvc` `4.36.0` -> `5.6.1`
+    * Upgrade `ch.qos.logback` `1.5.16` -> `1.5.19`
+    * Upgrade `org.mybatis:mybatis` `3.5.16` -> `3.5.19`
+    * Upgrade `com.fasterxml.jackson.*` `2.17.2` -> `2.19.2`
+    * Upgrade `org.slf4j:slf4j-api` `2.0.13` -> `2.0.17`
+    * Upgrade `org.postgresql:postgresql` `42.7.3` -> `42.7.7`
+    * Upgrade `io.fusionauth:fusionauth-samlv2` `1.0.0` -> `1.1.1`
+  </Issue>
+
 
 <ReleaseNoteHeading version='1.60.2' releaseDate='September 26, 2025' />
 
@@ -104,7 +156,7 @@ Looking for release notes older than 1.44.0? Look in the [release notes archive]
 * <IssueResolvedVia resolvedIn="1.60.1" viaIssue="3183">
   When using FusionAuth as a SAML IdP with a SAML Populate lambda that reads or modifies the SAML assertion will fail causing the login request to fail. If you have encountered this issue, please upgrade to `1.60.1` if possible, or click on the linked GitHub issue to review the temporary workaround.
   </IssueResolvedVia>
-* <KnownIssue issue="3186">Performing a user reindex occasionally results in an email, username, or phoneNumber, for a small fraction of users, to not be searchable via Elasticsearch/OpenSearch.</KnownIssue>
+* <IssueResolvedVia resolvedIn="1.61.0" viaIssue="3186">Performing a user reindex occasionally results in an email, username, or phoneNumber, for a small fraction of users, to not be searchable via Elasticsearch/OpenSearch.</IssueResolvedVia>
 * <IssueResolvedVia resolvedIn="1.60.2" viaIssue="3190">
   When using FusionAuth as a SAML Service Provider (SP), receiving a SAML Response containing an Assertion with an attribute value of `null` or of an unsupported type will result in a failure to parse the Response. If you have encountered this issue, please upgrade to `1.60.2` if possible.
   </IssueResolvedVia>
@@ -117,11 +169,11 @@ Looking for release notes older than 1.44.0? Look in the [release notes archive]
    Improvements have been made to how tokens are accepted, processed and validated to ensure they are suitable to authenticate the request. This will improve security now and will be necessary to support access tokens more extensively for authenticating requests.
   </Issue>
 
-### Changed
-
 * <Issue issue="3172">
   Improvements have been made to how FusionAuth processes signed SAML assertions to mitigate an identified vulnerability. If you are using using a SAML IdP, especially when allowing IdP initiated login, please plan to upgrade at your earliest convenience.
   </Issue>
+
+### Changed
 
 * <Issue issue="3177">
   Some changes have been made to the way JWTs are produced and  validated. Please read the following carefully to understand if any of these changes could impact you.
@@ -328,7 +380,7 @@ Looking for release notes older than 1.44.0? Look in the [release notes archive]
     - `user.update`
   </IssueResolvedVia>
 * <KnownIssue issue="3161">IdP logins do not work for Universal Apps. Instead, the error message `Invalid_Request. Missing_tenant_id` is displayed.</KnownIssue>
-* <KnownIssue issue="3186">Performing a user reindex occasionally results in an email, username, or phoneNumber, for a small fraction of users, to not be searchable via Elasticsearch/OpenSearch.</KnownIssue>
+* <IssueResolvedVia resolvedIn="1.61.0" viaIssue="3186">Performing a user reindex occasionally results in an email, username, or phoneNumber, for a small fraction of users, to not be searchable via Elasticsearch/OpenSearch.</IssueResolvedVia>
 
 ### Fixed
 * <Issue issue="3153">
@@ -373,8 +425,7 @@ Looking for release notes older than 1.44.0? Look in the [release notes archive]
 
 ### Known Issues
 * <IssueResolvedVia resolvedIn="1.59.1" viaIssue="3153">An upgrade to FusionAuth version `1.58.2` or `1.59.0` fails if the `Default Admin Registration provided by FusionAuth` form (shipped in `1.20.0`) is renamed or deleted prior to the upgrade. If you are planning an upgrade to version `1.59.0`, it is recommended that you upgrade to version `1.59.1`. If upgrading to `1.59.1` does not resolve this, please contact support.</IssueResolvedVia>
-* <KnownIssue issue="3186">Performing a user reindex occasionally results in an email, username, or phoneNumber, for a small fraction of users, to not be searchable via Elasticsearch/OpenSearch.</KnownIssue>
-
+* <IssueResolvedVia resolvedIn="1.61.0" viaIssue="3186">Performing a user reindex occasionally results in an email, username, or phoneNumber, for a small fraction of users, to not be searchable via Elasticsearch/OpenSearch.</IssueResolvedVia>
 * <IssueResolvedVia resolvedIn="1.60.0" viaIssue="3148">
     Previewing the phone verification required, complete registration, passwordless theme templates shows a template error.
   </IssueResolvedVia>
