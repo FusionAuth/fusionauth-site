@@ -12,7 +12,7 @@ New versions of FusionAuth sometimes include new or updated theme templates. If 
 
 This page contains notes on changes in recent versions of FusionAuth that require changes to a customized theme.
 
-## Version 1.61.0
+## Version 1.61.0 - `prompt` parameter
 
 To ensure that FusionAuth is able to forward the `prompt` parameter to third party identity providers, you will need to make the following modifications.
 
@@ -87,6 +87,256 @@ Add `max_age` to the `logoutLink` macro.
   </a>[#t]
 [/#macro]
 ```
+
+## Version 1.61.0 - Multiple identity provider configurations
+
+Previously the following [identity provider types](/docs/apis/identity-providers) were limited to a single configuration per FusionAuth instance: Apple, Epic Games, Facebook, Google, HYPR, LinkedIn, Nintendo, Sony PlayStation Network, Steam, Twitch, Twitter, and Xbox.
+
+To enable support for multiple identity provider configurations of these types on a single login page, you will need to make the following modifications. The default theme is available on every FusionAuth instance as a point of comparison or guide to theme upgrades.
+
+### Helpers template
+
+Update the `alternativeLoginsScript`, `alternativeLogins`, and various external identity provider button rendering macros. When editing a theme in the UI, this page will be shown as `Helpers`, and the API template name is `helpers`.
+
+#### Macro alternativeLoginsScript
+
+Remove the `data-app-id` attribute from the `<script>` tag including `Facebook.js`. The attribute must be set by each `facebookButton` macro invocation to support multiple Facebook IdP configurations.
+
+```title="Remove data-app-id"
+data-app-id="${identityProviders["Facebook"][0].lookupAppId(clientId)}"
+```
+
+Here is an example `<script>` tag without the attribute
+
+```title="After"
+<script src="${request.contextPath}/js/identityProvider/Facebook.js?version=${version}"></script>
+```
+
+Remove the `data-client-id` attribute from the `<script>` tag including `Twitter.js`. The attribute must be set by each `twitterButton` macro invocation to support multiple Twitter IdP configurations.
+
+```title="Remove data-client-id"
+data-client-id="${clientId}"
+```
+
+Here is an example `<script>` tag without the attribute
+
+```title="After"
+<script src="${request.contextPath}/js/identityProvider/Twitter.js?version=${version}"></script>
+```
+
+Replace the `[#if]` block including Google's GSI client JavaScript and `Google.js`. Only one Google identity provider using the GSI client can be included on the page. See [Google IdP limitations](/docs/lifecycle/authenticate-users/identity-providers/social/google#limitations) for more detail.
+
+```title="The old [#if] block"
+[#if identityProviders["Google"]?has_content && identityProviders["Google"][0].lookupLoginMethod(clientId) != "UseRedirect"]
+  <script src="https://accounts.google.com/gsi/client" async></script>
+  <script src="${request.contextPath}/js/identityProvider/Google.js?version=${version}"
+          data-client-id="${identityProviders["Google"][0].lookupClientId(clientId)}"></script>
+[/#if]
+```
+
+Here is the updated `[#if]` block. The updated logic selects the first Google IdP configured to use the GSI client and stores it in a `gsiIdentityProvider` variable to be used later in the `alternativeLogins` macro.
+
+```title="The updated [#if] block"
+[#if identityProviders["Google"]?has_content]
+  [#list identityProviders["Google"] as idp]
+    [#if idp.lookupLoginMethod(clientId) != "UseRedirect"]
+      [#-- Only one Google IdP can use the GSI APIs on a page. Assign the IdP for later use and load scripts. --]
+      [#assign gsiIdentityProvider = idp/]
+      <script src="https://accounts.google.com/gsi/client" async></script>
+      <script src="${request.contextPath}/js/identityProvider/Google.js?version=${version}"
+              data-client-id="${gsiIdentityProvider.lookupClientId(clientId)}"
+              data-identity-provider-id="${gsiIdentityProvider.id}"></script>
+      [#break]
+    [/#if]
+  [/#list]
+[/#if]
+```
+
+#### Macro alternativeLogins
+
+The `alternativeLogins` macro checks for various IdP types in the `identityProviders` Freemarker variable and renders the appropriate button for that type. Several identity provider types now support multiple configurations and need to update rendering a single button to looping over the IdPs of that type.alternativeLogins
+
+Here is an example rendering the "Sign in with Apple" button hard-coded to expect a single Apple IdP configuration.
+
+```title="Single configuration"
+[#if identityProviders["Apple"]?has_content]
+  <div class="form-row push-less-top">
+      [@appleButton identityProvider=identityProviders["Apple"][0] clientId=clientId/]
+  </div>
+[/#if]
+```
+
+Here is an example that supports rendering zero or more buttons based on available Apple IdP configurations by looping over all Apple IdP configurations and rendering the button with the `identityProvider` for that loop.
+
+```title="Multiple configurations"
+[#if identityProviders["Apple"]?has_content]
+  [#list identityProviders["Apple"] as identityProvider]
+    <div class="form-row push-less-top">
+        [@appleButton identityProvider=identityProvider clientId=clientId/]
+    </div>
+  [/#list]
+[/#if]
+```
+
+The above is just one example of several identity provider types requiring updates in `alternativeLogins` to render multiple buttons by replacing the hard-coded single instance with a loop. As you work through the different identity provider types, pay special attention to the key in the `identityProviders` map and the name of the button rendering macro in each case. The following identity provider types require this update in the `alternativeLogins` macro: Apple, Epic Games, Facebook, LinkedIn, Nintendo, Sony PlayStation Network, Steam, Twitch, Twitter, Xbox.
+
+The Google identity provider type requires a bit more modification in the `alternativeLogins` macro in order to render the single button using the GSI client in addition to other Google IdP configurations with the `UseRedirect` login method. Remove the existing `[#if]` block and replace with the updated code below.
+
+```title="Remove the [#if] block"
+[#if identityProviders["Google"]?has_content]
+  <div class="form-row push-less-top">
+      [@googleButton identityProvider=identityProviders["Google"][0] clientId=clientId idpRedirectState=idpRedirectState/]
+  </div>
+[/#if]
+```
+
+In its place add two `[#if]` blocks. The first block checks whether it should render a GSI client button using the `gsiIdentityProvider` variable assigned in the `alternativeLoginsScript` macro. The second block calls the `googleButton` macro to render a login button for Google IdPs configured with the `UseRedirect` login method.
+
+```title="Render GSI and UseRedirect Google buttons"
+[#-- Check whether a Google IdP was assigned to use GSI APIs and render the button --]
+[#if gsiIdentityProvider?has_content]
+  <div class="form-row push-less-top">
+      [@googleGsiButton identityProvider=gsiIdentityProvider clientId=clientId idpRedirectState=idpRedirectState/]
+  </div>
+[/#if]
+
+[#if identityProviders["Google"]?has_content]
+  [#list identityProviders["Google"] as identityProvider]
+    <div class="form-row push-less-top">
+        [#-- The googleButton macro only renders buttons for IdPs configured with the UseRedirect login methods --]
+        [@googleButton identityProvider=identityProvider clientId=clientId idpRedirectState=idpRedirectState/]
+    </div>
+  [/#list]
+[/#if]
+```
+
+#### Macro appleButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```title="Apple <button>"
+<button class="apple login-button" data-scope="${identityProvider.lookupScope(clientId)!''}"
+          data-services-id="${identityProvider.lookupServicesId(clientId)}"
+          data-identity-provider-id="${identityProvider.id}">
+```
+
+#### Macro epicButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```title="Epic Games <button>"
+<button class="epicgames login-button" data-login-method="UseRedirect"
+          data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
+```
+
+#### Macro facebookButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```title="Facebook <button>"
+<button class="facebook login-button" data-login-method="${identityProvider.lookupLoginMethod(clientId)!''}"
+          data-permissions="${identityProvider.lookupPermissions(clientId)!''}" data-identity-provider-id="${identityProvider.id}"
+          data-app-id="${identityProvider.lookupAppId(clientId)}">
+```
+
+#### Macro googleButton
+
+This macro should now only render buttons for Google IdP configurations with the `UseRedirect` login method. Replace the opening tag of the `<button>` element inside the macro with the following
+
+```title="Google <button>"
+<button class="google login-button" data-login-method="UseRedirect"
+              data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
+```
+
+Remove the `[#else]` block that renders `<div>`s with Ids `g_id_onload` and `g_id_signin`. The updated macro structure looks like this with the `<button>` children removed for brevity
+
+```title="googleButton macro structure"
+[#macro googleButton identityProvider clientId idpRedirectState=""]
+    [#-- When using this loginMethod - the Google JavaScript API is not used at all. --]
+    [#if identityProvider.lookupLoginMethod(clientId) == "UseRedirect"]
+      <button class="google login-button" data-login-method="UseRedirect"
+              data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
+        ...
+      </button>
+    [/#if]
+[/#macro]
+```
+
+#### New macro googleGsiButton
+
+The `[#else]` block removed from `googleButton` macro gets its own macro. Add the following macro to your theme
+
+```title="New googleGsiButton macro"
+[#macro googleGsiButton identityProvider clientId idpRedirectState=""]
+  [#-- UsePopup or UseVendorJavaScript --]
+  [#--
+   Use the Google Identity Service (GIS) API.
+   https://developers.google.com/identity/gsi/web/reference/html-reference
+  --]
+  <div id="g_id_onload" [#list identityProvider.lookupAPIProperties(clientId)!{} as attribute, value] data-${attribute}="${value}" [/#list]
+       data-client_id="${identityProvider.lookupClientId(clientId)}"
+       data-callback="googleLoginCallback">
+  </div>
+  [#-- This the Google Signin button. If only using One tap, you can delete or comment out this element --]
+  <div class="g_id_signin" [#list identityProvider.lookupButtonProperties(clientId)!{} as attribute, value] data-${attribute}="${value}" [/#list]
+       [#-- Optional click handler, when using ux_mode=popup. --]
+       data-click_listener="googleButtonClickHandler">
+  </div>
+[/#macro]
+```
+
+#### Macro linkedInBottom
+
+You read that correctly. If you'd like, update the name of the macro to `linkedInButton` along with the invocation from the `alternativeLogins` macro. Replace the opening tag of the `<button>` element inside the macro with the following
+
+```title="LinkedIn <button>"
+<button class="linkedin login-button" data-login-method="UseRedirect" data-identity-provider-id="${identityProvider.id}">
+```
+
+#### Macro sonypsnButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```title="Sony PlayStation Network <button>"
+<button class="sonypsn login-button" data-login-method="UseRedirect"
+          data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
+```
+
+#### Macro steamButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```title="Steam <button>"
+<button class="steam login-button" data-login-method="UseRedirect" data-scope="${identityProvider.lookupScope(clientId)!''}"
+          data-identity-provider-id="${identityProvider.id}">
+```
+
+#### Macro twitchButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```title="Twitch <button>"
+<button class="twitch login-button" data-login-method="UseRedirect"
+          data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
+```
+
+#### Macro twitterButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```title="Twitter <button>"
+<button class="twitter login-button" data-client-id="${clientId}" data-identity-provider-id="${identityProvider.id}">
+```
+
+#### Macro xboxButton
+
+Replace the opening tag of the `<button>` element inside the macro with the following
+
+```title="Xbox <button>"
+<button class="xbox login-button" data-login-method="UseRedirect" data-scope="${identityProvider.lookupScope(clientId)!''}"
+          data-identity-provider-id="${identityProvider.id}">
+```
+
 
 ## Version 1.60.0
 
