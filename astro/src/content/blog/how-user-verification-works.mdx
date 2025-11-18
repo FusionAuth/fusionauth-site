@@ -15,6 +15,16 @@ import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
 
+- [⛔ The Old Way Of Verification](#-the-old-way-of-verification)
+	- [The Object Model](#the-object-model)
+	- [The Verification Process](#the-verification-process)
+- [✅ The New Way Of Verification](#-the-new-way-of-verification)
+	- [The Object Model](#the-object-model-1)
+	- [The Verification Process](#the-verification-process-1)
+- [Summary](#summary)
+- [todo](#todo)
+
+
 User verification (proof of email address or phone number ownership) is done by the user by entering a code or clicking a link sent to the address they registered with.
 
 The FusionAuth field `user.verified` stores whether the user has completed email verification yet. But as of [FA version 1.59](https://fusionauth.io/docs/release-notes/#version-1-59-0) (August 2025), this field is deprecated. FA now handles verification for each type of identity separately (email and phone).
@@ -37,14 +47,14 @@ If you open your FA database, you'll see the user object is split in two tables:
 
 ![Old database](../../../public/img/blogs/how-user-verification-works/oldDatabase.webp)
 
-Verification in FA prior to 1.59 is only for email addresses (and not phone numbers or other identifiers). In other words, "phone number" isn't an identity type available in the identities table.
+Verification in FA prior to 1.59 is only for email addresses (and not phone numbers or other identifiers).
 
-Each user identity (email) has the fields `verified` and `verified_instant`. `verified` is false until the user clicks the verification link, when it becomes true. `verified_instant` is the time at which the user verified.
+Each user identity (email address) has the fields `verified` and `verified_instant`. `verified` is false until the user clicks the verification link, when it becomes true. `verified_instant` is the time at which the user verified.
 
 A registration also has the fields `verified` and `verified_instant`. If the user identity already has a verified field, why does the registration need another verification field? The [application registration tutorial](https://fusionauth.io/docs/lifecycle/manage-users/verification/registration-gate-accounts-until-verified) explains this:
 >  However, PiedPiper requires separate registration verification to allow access to both Not-Hotdog and PiperChat through the same email account. This registration verification is a concrete, separate step that the user must engage in by clicking a link or entering a code (sent via email). Without this verification step, **users may find it alarming their logins (jared@piedpiper.com) work for both Not-Hotdog and PiperChat (without their express consent, especially if they did not know about the parent company relationship)**.
 
-This quote explains that a user verifying that they signed up to use an application has a different purpose to a user verifying their email or phone, though both procedures are named verification and both send a link the user must click.
+This quote explains that a user verifying that they signed up to use an application has a different purpose to a user verifying their email or phone when creating an account in FA, though both procedures are named verification and both send a link the user must click.
 
 ### The Verification Process
 
@@ -120,9 +130,19 @@ The SMTP settings remain in the new version of the Email tab, but the verificati
 
 However, the Identities tab isn't just for email. FA now supports phone numbers as a unique identifier for users in addition to email addresses. You can see the Identities tab has two columns, with email on the left and identical settings for phone on the right.
 
+As well as identity verification changing, FA has also changed registration verification. **Registration verification has been removed**. FA no longer believes that users "find it alarming their logins" work for two different applications without explicit confirmation.
+
+The user object model shows these changes. You can see in the new database diagram below that user identities now hold all verification information, and the fields related to verification in other tables have been deprecated.
+
+![New database](../../../public/img/blogs/how-user-verification-works/newDatabase.webp)
+
+Each identity has a `type`, which might be email, phone, or username. The `value` field contains the actual email address or phone number.
+
+There's also a new field, `verified_reason`.
+
 user.identities[x].verified along with user.identities[x].verifiedReason.
 
-Verification in FA prior to 1.59 is only for email addresses (and not phone numbers or other identifiers).
+
 
 In the database, the table `identities`, which links to the tables `users` and `tenants`, has the fields `verified`, `verified_instant`, and `verified_reason` (this field is new). A tenant is a way partitioning FA to work for multiple customers in the same database. For example, a user in the Company1 tenant might log in to Company1's website with FusionAuth, and have a completely separate login using the same email address but different password with Company2 (a different tenant), even though both websites use the same FusionAuth database as their authentication provider. `verified` is true or false, and `verified_instant` is the time at which the user verified.
 
@@ -177,6 +197,8 @@ sendSetPasswordEmail is deprecated. Use sendSetPasswordIdentityType instead.
 https://drafts.cc.ritza.co/s/LKoWCFSPP#
 FA -> FusionAuth
 use screenshots from other tutorials
+use proper inline fields, breacrumbers, and ui control components
+
 
 update tutorials:
 - https://fusionauth.io/docs/lifecycle/manage-users/verification/gate-accounts-until-user-email-verified
