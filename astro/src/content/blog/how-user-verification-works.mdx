@@ -15,32 +15,40 @@ import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
 
-User verification (proof of email address ownership) is done by the user by entering a code or clicking a link sent to the email address they registered with.
+User verification (proof of email address or phone number ownership) is done by the user by entering a code or clicking a link sent to the address they registered with.
 
-The FusionAuth field `user.verified` stores whether the user has completed verification yet. But as of [FA version 1.59](https://fusionauth.io/docs/release-notes/#version-1-59-0) (August 2025), this field is deprecated.
+The FusionAuth field `user.verified` stores whether the user has completed email verification yet. But as of [FA version 1.59](https://fusionauth.io/docs/release-notes/#version-1-59-0) (August 2025), this field is deprecated. FA now handles verification for each type of identity separately (email and phone).
 
-This article discusses exactly what's changed with verification and how you should verify users now.
+This article discusses exactly what's changed with verification and how the new features work.
 
 ## ⛔ The Old Way Of Verification
 
-For those of you who've used FusionAuth for a while, let's summarize the obsolete verification system you're familiar with. If you're a new FA user working on a database created after version 1.59, you can skip ahead to the [next section about the new system](#✅-the-new-way-of-verification).
+Let's summarize the obsolete email verification system from before version 1.59. Even if you're a new user working on the latest version of FA, read this section first, as the verification process of sending and clicking links hasn't changed in the new version.
 
 ### The Object Model
 
-Verification in FA prior to 1.59 is only for email addresses (and not phone numbers or other identifiers).
+If you're unfamiliar with FA types, like Tenants, Applications, Users, and Registrations, please review the [documentation](https://fusionauth.io/docs/get-started/core-concepts/types-and-relationships). The relationship diagram below summarizes the types.
 
-In the database, the table `identities`, which links to the tables `users` and `tenants`, has the fields `verified` and `verified_instant`. A tenant is a way partitioning FA to work for multiple customers in the same database. For example, a user in the Company1 tenant might log in to Company1's website with FusionAuth, and have a completely separate login using the same email address but different password with Company2 (a different tenant), even though both websites use the same FusionAuth database as their authentication provider. `verified` is true or false, and `verified_instant` is the time at which the user verified.
+Notice that users are members of applications through an object called a registration (because a user "registers", or signs up, to use an application).
 
-The `user_registrations` table also has the fields `verified` and `verified_instant`, and links to the tables `users`, `applications`, and `user_registrations_applications_roles`. An Application is like a company website or product. So the Company1 tenant might have one application (website) for employees and another application for customers. A user is granted access to an application by creating a Registration — a link between user and application kept in the `user_registrations` table. So an employee of the company might register with the customer application too. They will be one user with two registrations.
+![FA type diagram](../../../public/img/docs/get-started/core-concepts/core-concepts-relationships-tenants.png)
 
-If the user record already has a verified field, why does the registration record need another verification field? The [application registration tutorial](https://fusionauth.io/docs/lifecycle/manage-users/verification/registration-gate-accounts-until-verified) explains this:
+If you open your FA database, you'll see the user object is split in two tables: `users` and `identities`. The user table holds biographical information like name, birth date, and timezone. The identities table holds multiple records for a user, which might include a username, email address, and phone number. To update users, you should use the FA web interface or the [users API](https://fusionauth.io/docs/apis/users) and mustn't access the database directly, but the user object in the API has the same structure as the database tables.
+
+![Old database](../../../public/img/blogs/how-user-verification-works/oldDatabase.webp)
+
+Verification in FA prior to 1.59 is only for email addresses (and not phone numbers or other identifiers). In other words, "phone number" isn't an identity type available in the identities table.
+
+Each user identity (email) has the fields `verified` and `verified_instant`. `verified` is false until the user clicks the verification link, when it becomes true. `verified_instant` is the time at which the user verified.
+
+A registration also has the fields `verified` and `verified_instant`. If the user identity already has a verified field, why does the registration need another verification field? The [application registration tutorial](https://fusionauth.io/docs/lifecycle/manage-users/verification/registration-gate-accounts-until-verified) explains this:
 >  However, PiedPiper requires separate registration verification to allow access to both Not-Hotdog and PiperChat through the same email account. This registration verification is a concrete, separate step that the user must engage in by clicking a link or entering a code (sent via email). Without this verification step, **users may find it alarming their logins (jared@piedpiper.com) work for both Not-Hotdog and PiperChat (without their express consent, especially if they did not know about the parent company relationship)**.
+
+This quote explains that a user verifying that they signed up to use an application has a different purpose to a user verifying their email or phone, though both procedures are named verification and both send a link the user must click.
 
 ### The Verification Process
 
 To see how email verification works, you first need an SMTP server. The simplest way to test is using a fake SMTP service, like [SMTPBucket](https://www.smtpbucket.com).
-
-TODO use fusionauth/fusionauth-app:1.58.2, but with the full email templates so you can send registration emails
 
 ---
 
@@ -110,7 +118,7 @@ The SMTP settings remain in the new version of the Email tab, but the verificati
 
 ![New Identities tab](../../../public/img/blogs/how-user-verification-works/newIdentities.svg)
 
-However, the Identities tab isn't just for email anymore (hence the new name). FA now supports phone numbers as a unique identifier for users in addition to email addresses. You can see the Identities tab has two columns, with email on the left and identical settings for phone on the right.
+However, the Identities tab isn't just for email. FA now supports phone numbers as a unique identifier for users in addition to email addresses. You can see the Identities tab has two columns, with email on the left and identical settings for phone on the right.
 
 user.identities[x].verified along with user.identities[x].verifiedReason.
 
@@ -136,6 +144,8 @@ The verification process for email remains the same in the latest version. Phone
 To send an SMS message from FusionAuth you need to configure an SMS provider. Whereas SMTP providers for email are configured per tenant, SMS is configured for the whole FA instance in the Settings -> Messengers tab. To separate SMS fees for different clients, you can create multiple Messengers and link each Tenant to their own Messenger.
 
 ![SMS settings](../../../public/img/blogs/how-user-verification-works/addMessenger.webp)
+
+## Summary
 
 ## todo
 
@@ -166,6 +176,7 @@ sendSetPasswordEmail is deprecated. Use sendSetPasswordIdentityType instead.
 
 https://drafts.cc.ritza.co/s/LKoWCFSPP#
 FA -> FusionAuth
+use screenshots from other tutorials
 
 update tutorials:
 - https://fusionauth.io/docs/lifecycle/manage-users/verification/gate-accounts-until-user-email-verified
