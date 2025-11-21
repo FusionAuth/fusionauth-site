@@ -16,9 +16,28 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 
 User verification in FusionAuth (proof of email address or phone number ownership) is done by the user by entering a code or clicking a link sent to the address they registered with.
 
-The FusionAuth field `user.verified` stores whether the user has completed email verification. But as of [FusionAuth version 1.59](https://fusionauth.io/docs/release-notes/#version-1-59-0) (August 2025), this field is deprecated. FusionAuth now handles verification for each type of email and phone separately.
+The FusionAuth field `user.verified` stores whether the user has completed email verification. But as of [FusionAuth version 1.59](https://fusionauth.io/docs/release-notes/#version-1-59-0) (August 2025), this field is deprecated. FusionAuth now handles verification for 	email and phone separately.
 
 This article discusses exactly what's changed with verification and how the new features work.
+
+## Summary
+
+The table below summarizes the differences between the old and new versions of FusionAuth verification. The details are explained in the rest of the article, but if you're experienced with FusionAuth this might be all you need:
+
+|   | Old version (&lt;1.59) | New version
+|---|---                   |---
+| Users can confirm their registration for each application | Yes | No, that's deprecated
+| User's email and phone numbers are kept in | the user object | multiple separate `user.identity` objects
+| The possible user identity types are | email and username | email, username, and phone
+| Email verification configuration is done in | the <InlineUIElement>email</InlineUIElement> tab of the tenant | the <InlineUIElement>identities</InlineUIElement> tab of the tenant
+| User verification field is found in | `user.verified` | the combined values of `user.identities[].verified` and `user.identities[].verifiedReason`
+| User is effectively verified if | `user.verified` is true | user's primary identity has verified value of true, or the identity has a verified reason that is not one of completed, implicit, or pending.
+
+From a user perspective, the experience of receiving a link or code to verify identities hasn't changed. To configure SMTP providers (email), use the Tenant page in FusionAuth. To configure SMS providers, use the Messengers page in Settings.
+
+If you want to prevent a user from using your app (signing in) until they have verified their identity, follow the [gating tutorial](https://fusionauth.io/docs/lifecycle/manage-users/verification/gate-accounts-until-user-email-verified).
+
+For more information on the user and identity objects consult the [users API](https://fusionauth.io/docs/apis/users).
 
 ## ⛔ The Old Way Of Verification
 
@@ -97,7 +116,7 @@ The SMTP settings remain in the new version of the Email tab, but the verificati
 
 The Identities tab isn't just for email. FusionAuth now supports phone numbers as a unique identifier for users in addition to email addresses. You can see the Identities tab has two columns, with email on the left and identical settings for phone on the right.
 
-As well as identity verification changing, FusionAuth has also changed registration verification. **Registration verification has been removed**. FusionAuth no longer believes that users "find it alarming their logins" work for two different applications without explicit confirmation.
+As well as identity verification changing, FusionAuth has also changed registration verification. **Registration verification has been deprecated**. FusionAuth no longer believes that users "find it alarming their logins" work for two different applications without explicit confirmation.
 
 You can see in the new database diagram below that user identities now hold all verification information, and the fields related to verification in other tables have been deprecated.
 
@@ -114,6 +133,7 @@ If the verified reason is one of the values below, then the identity does not re
 - `Skipped` — Tenant policy does not apply any verification gating requirements.
 - `Trusted` — Identity was created via an external identity provider or a connector, so verification was not performed by FusionAuth.
 - `Unverifiable` — FusionAuth doesn’t know how to verify this identity type. Usernames are an example.
+- `Administrative` — Administrator marked the user as verified.
 
 If the verified reason is one of the values below and `verified` is false, then the user does require verification:
 
@@ -121,9 +141,98 @@ If the verified reason is one of the values below and `verified` is false, then 
 - `Implicit` — Verification was implicitly performed by sending a set password or passwordless message.
 - `Pending` — Tenant policy requires verification but no verification has been performed yet.
 
-Most of the field values above are handled automatically by FusionAuth, but one you need to use manually is `Import`. If you're migrating users into FusionAuth from another authentication gateway, you need to set this field for each user.
+The field values above are handled automatically by FusionAuth, you can't set them using the API.
 
 `verified_instant` is set only if real verification was done, not when it was skipped.
+
+## How To List Effectively Verified Users
+
+One unintuitive implication of FusionAuth now using a verification reason, is that a user might have verified value of `false` but still count as being verified (so they can log in even if your application has excluded unverified users by gating).
+
+Hopefully FusionAuth will add an `effectivelyVerified` calculated field to the user object in the future. But until that exists, there is a simple algorithm to check the user identities to see if a user is effectively verified:
+- If the user's primary identity has a verified value of true, the user is verified.
+- Else if verified is false, if the reason is not one of: completed, implicit, or pending, the user is verified.
+- Else the user is not verified.
+
+If you use the FusionAuth users API to get a list of users that count as verified, you need look at the fields `user.identities[].isPrimary`, `user.identities[].verified`, and `user.identities[].verification_reason`.
+
+If you use SQL, you can run the query below to find all effectively verified users:
+
+```sql
+SELECT i.id, i.verified, i.verified_reason
+FROM identities i
+JOIN users u
+	ON u.id = i.users_id
+WHERE
+	i.is_primary = true
+	AND (i.verified = true
+		OR NOT (
+			i.verified_reason = 3 OR
+			i.verified_reason = 4 OR
+			i.verified_reason = 5
+		)
+	)
+```
+
+And you can use the following query to find all unverified users:
+
+```sql
+SELECT i.id, i.verified, i.verified_reason
+FROM identities i
+JOIN users u
+	ON u.id = i.users_id
+WHERE
+	i.is_primary = true
+	AND (i.verified = false
+		AND
+		(
+			i.verified_reason = 3 OR
+			i.verified_reason = 4 OR
+			i.verified_reason = 5
+		)
+	)
+```
+
+The `verified_reason` in the database is an integer, with values shown below:
+
+Integer | String
+---|---
+`0` | `Skipped`
+`1` | `Trusted`
+`2` | `Unverifiable`
+`3` | `Implicit`
+`4` | `Pending`
+`5` | `Completed`
+`6` | `Disabled`
+`7` | `Administrative`
+`8` | `Import`
+
+If you prefer using the FusionAuth API, you can run a query similar to the one below to find all effectively verified users.
+
+```sh
+curl --silent \
+  'http://localhost:9011/api/user/search?queryString=*' \
+  -H 'Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod' \
+| jq '
+  .users[]
+  | . as $u
+  | $u.identities[]
+  | select(.primary == true)
+  | select(
+      .verified == true
+      or (
+        .verifiedReason != "Implicit"
+        and .verifiedReason != "Pending"
+        and .verifiedReason != "Completed"
+      )
+    )
+  | {
+      userId: $u.id,
+      verified: .verified,
+      verifiedReason: .verifiedReason
+    }
+'
+```
 
 ### The Verification Process
 
@@ -162,21 +271,3 @@ In `/api/user POST` (creating a user), `sendSetPasswordEmail` is deprecated. Use
 In `/api/user/forgot-password POST`, `sendForgotPasswordEmail` is deprecated. Use `sendForgotPasswordMessage` instead.
 
 In addition to the users API, there is a new API, the [identity verify API](https://fusionauth.io/docs/apis/identity-verify). This API allows you to start and complete verification programmatically. It is almost never needed if users register with your app manually. But if you want to create a custom verification scheme (for some identifier other than email or phone) this API is the tool to use. You also need to use this API if you are sending codes to your users instead of links. Once the user types the code into your app, you need to send it to FusionAuth programmatically.
-
-## Summary
-
-The table below summarizes the differences between the old and new versions of FusionAuth verification.
-
-|   | Old version (&lt;1.59) | New version
-|---|---                   |---
-| Users can confirm their registration for each application | Yes | No, that's deprecated
-| User's email and phone numbers are kept in | the user object | multiple separate `user.identity` objects
-| The possible user identity types are | email and username | email, username, and phone
-| Email verification configuration is done in | the <InlineUIElement>email</InlineUIElement> tab of the tenant | the <InlineUIElement>identities</InlineUIElement> tab of the tenant
-| User verification field is found in | `user.verified` | the combined values of `user.identities[].verified` and `user.identities[].verifiedReason`
-
-From a user perspective, the experience of receiving a link or code to verify identities hasn't changed. To configure SMTP providers (email), use the Tenant page in FusionAuth. To configure SMS providers, use the Messengers page in Settings.
-
-If you want to prevent a user from using your app (signing in) until they have verified their identity, follow the [gating tutorial](https://fusionauth.io/docs/lifecycle/manage-users/verification/gate-accounts-until-user-email-verified).
-
-For more information on the user and identity objects consult the [users API](https://fusionauth.io/docs/apis/users).
