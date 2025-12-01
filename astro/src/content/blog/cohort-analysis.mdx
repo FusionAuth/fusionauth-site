@@ -1,0 +1,87 @@
+---
+publish_date: 2025-12-01
+title: "Analyzing why customers leave — cohort analysis in FusionAuth"
+description: ""
+authors: Person McPersonface
+image: /img/blogs/header-example.svg
+categories: Education
+tags: user, analysis, retention
+excerpt_separator: "{/* more */}"
+---
+
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+
+- [Summary](#summary)
+- [⛔ The old verification system](#-the-old-verification-system)
+	- [The object model](#the-object-model)
+	- [The verification process](#the-verification-process)
+- [✅ The new verification system](#-the-new-verification-system)
+	- [The object model](#the-object-model-1)
+	- [How to list effectively verified users](#how-to-list-effectively-verified-users)
+	- [The verification process](#the-verification-process-1)
+	- [Changes to the API](#changes-to-the-api)
+
+## Introduction
+
+Do you know how frequently your customers use your app? Do you know how many people sign up but quickly lose interest in your service? In this article, you'll learn how to use FA track customer statistics: retention rates, customer age analysis, and customer cohorts (groups). While you need to investigate your own application database for reasons *why* customers stay or leave, having a base of FA login stats to work from lets you know who to analyze.
+
+## Some useful customer statistics
+
+data available: customer identifier, registration date, series of login dates
+
+stats per customer: date registered, acquisition (date registered), login frequency, login regularity, abandonment (date of last login)
+
+groups: for each stat you can create groups to get an idea of numbers of each type of customer
+
+aggregate stats: customers per date, abandonment per date, acquisition by date
+
+stats granularity can be day, month, year
+
+look at how users used your app or support service before abandonment
+
+
+## API queries for FA customer data
+
+### Creating mock data
+
+```sh
+curl --silent \
+  'http://localhost:9011/api/user/search?queryString=*' \
+  -H 'Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod' \
+| jq '
+  .users[]
+  | . as $u
+  | $u.identities[]
+  | select(.primary == true)
+  | select(
+      .verified == true
+      or (
+        .verifiedReason != "Implicit"
+        and .verifiedReason != "Pending"
+        and .verifiedReason != "Completed"
+      )
+    )
+  | {
+      userId: $u.id,
+      verified: .verified,
+      verifiedReason: .verifiedReason
+    }
+'
+```
+
+### Getting customer stats
+
+## An customer statistics app with charts you can customize
+
+
+
+## todo
+
+fa
+
+https://github.com/FusionAuth/fusionauth-site/issues/2990 - cohort analysis
+
+not sure how this can be done in fusionauth, as user behaviour and tracking is something you do in your app. all you can do with FA is get a report of when user's signed up (age cohort) and when they last logged in (indiciation of lost customers). so i guess the "app" dan wants is just pulling out user last log in rates over time. maybe i could use some mock data and some js charts.
