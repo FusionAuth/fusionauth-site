@@ -233,6 +233,7 @@ Fruits were domesticated at different times.
 - Elasticsearch
 - esport
 - first-party
+- fine-grained authorization
 - FusionAuth Cloud
 - Google reCAPTCHA
 - Identity Provider
