@@ -17,7 +17,6 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 - [Introduction](#introduction)
 - [Some useful customer statistics](#some-useful-customer-statistics)
 - [API queries for FA customer data](#api-queries-for-fa-customer-data)
-  - [Creating mock data](#creating-mock-data)
   - [Getting customer stats](#getting-customer-stats)
 - [An customer statistics app with charts you can customize](#an-customer-statistics-app-with-charts-you-can-customize)
 - [Appendix — How to create fake customer data in FA](#appendix--how-to-create-fake-customer-data-in-fa)
@@ -45,38 +44,14 @@ look at how users used your app or support service before abandonment
 
 ## API queries for FA customer data
 
-### Creating mock data
-
-```sh
-curl --silent \
-  'http://localhost:9011/api/user/search?queryString=*' \
-  -H 'Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod' \
-| jq '
-  .users[]
-  | . as $u
-  | $u.identities[]
-  | select(.primary == true)
-  | select(
-      .verified == true
-      or (
-        .verifiedReason != "Implicit"
-        and .verifiedReason != "Pending"
-        and .verifiedReason != "Completed"
-      )
-    )
-  | {
-      userId: $u.id,
-      verified: .verified,
-      verifiedReason: .verifiedReason
-    }
-'
-```
 
 ### Getting customer stats
 
 ## An customer statistics app with charts you can customize
 
 ## Appendix — How to create fake customer data in FA
+
+To create an FA application with fake users and login data you need to run a JS and SQL script.
 
 Create a file called `main.mjs` containing the code below. It will register 10 000 new users when run.
 
@@ -112,7 +87,7 @@ async function registerUsers(num) {
 await registerUsers(10000);
 ```
 
-Adjust the URL, authorization key, and application Id to match your FA instance. Then run the file with the command below.
+Adjust the URL, authorization key, and application Id in the code above to match your FA instance. Then run the file with the command below.
 
 ```sh
 node main.mjs
@@ -124,9 +99,9 @@ If you don't have Node installed, or want to avoid running code directly on your
 docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" node:25-alpine --network faNetwork sh -c  "node 1createMockData.mjs";
 ```
 
-Once the users are created, you need randomize their registration dates and create thousand of login dates. This can't be done with the FA API, so you need to run SQL directly on the PostgreSQL FA database.
+Once the users are created, you need randomize their registration dates, set 5% of user email addresses to unverified, and create thousands of login dates. This can't be done with the FA API, so you need to run SQL directly on the PostgreSQL FA database.
 
-Run the SQL below
+Run the SQL below.
 
 ```sql
 -- randomize registration dates. a day from 2015 to 2025
@@ -141,6 +116,10 @@ SET verified = CASE
     WHEN random() < 0.05 THEN false
     ELSE true
 END
+WHERE identities.is_primary = true;
+
+UPDATE identities
+SET verified_reason = 5
 WHERE identities.is_primary = true;
 
 -- add login dates
