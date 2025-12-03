@@ -14,15 +14,15 @@ import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 
-- [Summary](#summary)
-- [⛔ The old verification system](#-the-old-verification-system)
-	- [The object model](#the-object-model)
-	- [The verification process](#the-verification-process)
-- [✅ The new verification system](#-the-new-verification-system)
-	- [The object model](#the-object-model-1)
-	- [How to list effectively verified users](#how-to-list-effectively-verified-users)
-	- [The verification process](#the-verification-process-1)
-	- [Changes to the API](#changes-to-the-api)
+- [Introduction](#introduction)
+- [Some useful customer statistics](#some-useful-customer-statistics)
+- [API queries for FA customer data](#api-queries-for-fa-customer-data)
+  - [Creating mock data](#creating-mock-data)
+  - [Getting customer stats](#getting-customer-stats)
+- [An customer statistics app with charts you can customize](#an-customer-statistics-app-with-charts-you-can-customize)
+- [Appendix — How to create fake customer data in FA](#appendix--how-to-create-fake-customer-data-in-fa)
+- [todo](#todo)
+
 
 ## Introduction
 
@@ -76,7 +76,112 @@ curl --silent \
 
 ## An customer statistics app with charts you can customize
 
+## Appendix — How to create fake customer data in FA
 
+Create a file called `main.mjs` containing the code below. It will register 10 000 new users when run.
+
+```js
+async function registerUsers(num) {
+  for (let i = 1; i <= num; i++) {
+    try {
+      const response = await fetch('http://fa:9011/api/user/registration', {
+        method: 'POST',
+        headers: {
+          Authorization: '33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          user: { email: `${i}@example.com`, password: 'password' },
+          registration: { applicationId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e' }
+        })
+      });
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.log(`httpError ${response.status} for user ${i}@example.com: ${errorBody}`);
+        return;
+      }
+      const result = await response.json();
+      console.log(JSON.stringify(result));
+    } catch (error) {
+      console.log(`networkError for user ${i}@example.com: ${(error).message}`);
+    }
+    console.log('');
+  }
+}
+
+await registerUsers(10000);
+```
+
+Adjust the URL, authorization key, and application Id to match your FA instance. Then run the file with the command below.
+
+```sh
+node main.mjs
+```
+
+If you don't have Node installed, or want to avoid running code directly on your computer, you can use Docker with the command below. (If you're running FA on your local machine, you need to put FA and the command on the same `--network`.)
+
+```sh
+docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" node:25-alpine --network faNetwork sh -c  "node 1createMockData.mjs";
+```
+
+Once the users are created, you need randomize their registration dates and create thousand of login dates. This can't be done with the FA API, so you need to run SQL directly on the PostgreSQL FA database.
+
+Run the SQL below
+
+```sql
+-- randomize registration dates. a day from 2015 to 2025
+UPDATE user_registrations SET insert_instant =
+    EXTRACT(EPOCH FROM (
+        '2015-01-01'::DATE + (FLOOR(('2025-12-31'::DATE - '2015-01-01'::DATE) * random()))::INT
+    )::TIMESTAMP WITHOUT TIME ZONE)::BIGINT;
+
+-- set 5% of users to unverified
+UPDATE identities
+SET verified = CASE
+    WHEN random() < 0.05 THEN false
+    ELSE true
+END
+WHERE identities.is_primary = true;
+
+-- add login dates
+WITH user_min_instant AS (
+    SELECT
+        user_registrations.users_id,
+        MIN(user_registrations.insert_instant) AS minInstant
+    FROM
+        user_registrations
+    GROUP BY
+        user_registrations.users_id
+),
+users_with_series AS (
+    SELECT
+        users.id AS usersId,
+        user_min_instant.minInstant,
+        generate_series(1, (10 + floor(random() * 4991))::INTEGER) AS seriesNum -- 10 to 5000 logins
+    FROM
+        users
+    JOIN
+        user_min_instant ON users.id = user_min_instant.users_id
+)
+INSERT INTO raw_logins (applications_id, instant, ip_address, identities_value, identities_type, users_id)
+SELECT
+    'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
+    EXTRACT(EPOCH FROM
+        to_timestamp(users_with_series.minInstant) + (
+            (EXTRACT(EPOCH FROM '2026-01-01 00:00:00Z'::timestamp) - users_with_series.minInstant) * random()
+        * INTERVAL '1 second')
+    )::BIGINT,
+    '127.0.0.1',
+    NULL,
+    NULL,
+    users_with_series.usersId
+FROM
+    users_with_series;
+
+-- delete logins for unverified users
+delete from raw_logins
+where users_id in (select users_id from identities WHERE is_primary=true and verified=false)
+```
 
 ## todo
 
