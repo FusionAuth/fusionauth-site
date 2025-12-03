@@ -17,8 +17,8 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 - [Introduction](#introduction)
 - [Some useful customer statistics](#some-useful-customer-statistics)
 - [Extract customer data](#extract-customer-data)
-  - [Getting customer stats](#getting-customer-stats)
-- [A customer statistics app with charts you can customize](#a-customer-statistics-app-with-charts-you-can-customize)
+- [Calculate user statistics and display in charts](#calculate-user-statistics-and-display-in-charts)
+- [Summary](#summary)
 - [Appendix — How to create fake customer data in FA](#appendix--how-to-create-fake-customer-data-in-fa)
 - [todo](#todo)
 
@@ -56,27 +56,104 @@ While application databases, like FA, store data in a denormalized structure to 
 
 The first step to analyze your user data in FA is to extract it and store it in a usable format. As this process puts the database under load, you should run it on a copy of your database, or when few users are busy.
 
-You are going to run code to extract user and login data and save it in a JSON file with the structure below.
+Create a file called `extract.mjs` and insert the code below. Change the variables at the top to match your FA instance.
 
 ```js
-{
+import * as fs from 'fs/promises';
+
+const applicationId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e';
+const apiKey = '33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod';
+const faUrl = 'http://fa:9011';
+
+async function getFaData(url) {
+	try {
+		const response = await fetch(faUrl+url, {
+			method: 'GET',
+			headers: {
+				'Authorization': apiKey,
+				'Content-Type': 'application/json'
+			}
+		});
+		if (!response.ok) {
+			console.error(`httpError! status: ${response.status}`);
+			return;
+		}
+		const result = await response.json();
+		return result;
+	}
+	catch (error) {
+		console.error(error.message);
+	}
+}
+
+async function getUsersFromFaUsers(faUsers) {
+	const users = [];
+	for (let faUser of faUsers) {
+		const identity = faUser.identities.filter((i) => i.primary)[0];
+		const registration = faUser.registrations.filter((r) => r.applicationId == applicationId)[0];
+		if (!registration || !identity) continue;
+		const user = {
+			'id': faUser.id,
+			'email': faUser.email,
+			'isVerified': identity.verified || ![`Completed`, `Implicit`, `Pending`].includes(identity.verifiedReason),
+			'registeredDate': registration.insertInstant,
+			'loginDates': []
+		}
+		const logins = await getFaData('/api/system/login-record/search?userId='+user.id+'&startRow=0&numberOfResults=999999');
+		logins.logins.map((l) => {user.loginDates.push(l.instant);});
+		user.loginDates.sort();
+		users.push(user);
+		console.log('Extracted user ' + user.email);
+	};
+	return users;
+}
+
+let faUsers = await getFaData("/api/user/search?queryString=*&numberOfResults=999999&startRow=0");
+faUsers = faUsers.users;
+console.log('Got all users');
+
+await fs.writeFile('faUsers.json', JSON.stringify(faUsers, null, 2));
+console.log('Wrote FA users to faUsers.json');
+
+const users = await getUsersFromFaUsers(faUsers);
+await fs.writeFile('users.json', JSON.stringify(users, null, 2));
+console.log('Wrote extracted users to users.json');
+```
+
+Run the file with the command below.
+
+```sh
+node extract.mjs
+```
+
+This command creates two files, `faUsers.json` containing the raw data from FA, and `users.json` containing the processed set of users with all login dates but all other fields removed.
+
+The `users.json` file has structure below.
+
+```js
+[{
+  id: string
   email: string
   isVerified: bool
-  registeredDate: date
-  loginDates: date[] // where [0] is oldest date
-}
+  registeredDate: string // timestamp since 1970
+  loginDates: string[] // where [0] is oldest date
+}]
 ```
 
-Create a file called `extract.mjs` and insert the code below.
+## Calculate user statistics and display in charts
+
+Create a file called `app.mjs` and insert the code below.
 
 ```js
-
 ```
 
+Run the code with the command below.
 
-### Getting customer stats
+```sh
+node app.mjs
+```
 
-## A customer statistics app with charts you can customize
+## Summary
 
 ## Appendix — How to create fake customer data in FA
 
