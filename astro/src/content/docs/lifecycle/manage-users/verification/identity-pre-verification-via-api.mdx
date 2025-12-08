@@ -22,8 +22,8 @@ This guide shows how to verify a user's email or phone identity using FusionAuth
 
 If you're looking for the hosted pages version with Advanced Registration Forms, see:
 
-- [Email Identity Pre-Verification](/docs/lifecycle/manage-users/verification/mail-identity-verification)
-- [Phone Identity Pre-Verification](/docs/lifecycle/manage-users/verification/phone-identity-verification)
+* [Email Identity Pre-Verification](/docs/lifecycle/manage-users/verification/mail-identity-verification)
+* [Phone Identity Pre-Verification](/docs/lifecycle/manage-users/verification/phone-identity-verification)
 
 ## Prerequisites
 
@@ -37,48 +37,52 @@ Before you begin, ensure your environment meets these requirements. This guide a
 
 ## General Flow
 
-At a glance, the identity pre-verification process follows these high-level steps.
+Identity pre-verification follows these steps:
 
 1. Start Verification Flow
-   - POST /api/identity/verify/start
-   - Provide the identity value in <InlineField>loginId</InlineField> and the type in <InlineField>loginIdType</InlineField> (`email` or `phoneNumber`).
-   - For pre-verifying identities before user creation, set <InlineField>existingUserStrategy</InlineField> to `mustNotExist`.
-   - The response includes a <InlineField>verificationId</InlineField> and may include a <InlineField>oneTimeCode</InlineField> if using the `FormField` strategy.
+   * POST /api/identity/verify/start
+   * Provide the identity value in <InlineField>loginId</InlineField> and the type in <InlineField>loginIdType</InlineField> (`email` or `phoneNumber`).
+   * For pre-verifying identities before user creation, set <InlineField>existingUserStrategy</InlineField> to `mustNotExist`.
+   * The response includes a <InlineField>verificationId</InlineField> and may include a <InlineField>oneTimeCode</InlineField> if using the `FormField` strategy.
 
 2. Send Code (optional)
-   - POST /api/identity/verify/send
-   - Provide the <InlineField>verificationId</InlineField>. Use this if you want FusionAuth to send the email or SMS containing the code or clickable link.
+   * POST /api/identity/verify/send
+   * Provide the <InlineField>verificationId</InlineField>. Use this if you want FusionAuth to send the email or SMS containing the code or clickable link.
 
 3. Complete Verification
-   - POST /api/identity/verify/complete
-   - Provide the <InlineField>verificationId</InlineField> and, if using the `FormField` strategy, the <InlineField>oneTimeCode</InlineField>.
-   - If the strategy is `ClickableLink`, you can validate using just the <InlineField>verificationId</InlineField> (the user clicks the link).
+   * POST /api/identity/verify/complete
+   * Provide the <InlineField>verificationId</InlineField> and, if using the `FormField` strategy, the <InlineField>oneTimeCode</InlineField>.
+   * If the strategy is `ClickableLink`, you can validate using just the <InlineField>verificationId</InlineField> (the user clicks the link).
 
 4. Create the User
-   - POST /api/user or /api/user/registration
-   - Include the <InlineField>verificationIds</InlineField> array from step 1 associated to the verified identity.
+   * POST /api/user or /api/user/registration
+   * Include the <InlineField>verificationIds</InlineField> array from step 1 associated with the verified identity.
 
 <Aside type="note">
   <InlineField>existingUserStrategy</InlineField> values are lowercase: `mustExist` and `mustNotExist`.
 
-  The default <InlineField>verificationStrategy</InlineField> depends on your tenant configuration (for email: `tenant.emailConfiguration.verificationStrategy`; for phone: `tenant.phoneConfiguration.verificationStrategy`), and may be either `ClickableLink` or `FormField`.
+  The default <InlineField>verificationStrategy</InlineField> depends on your tenant configuration:
+  
+  - email: `tenant.emailConfiguration.verificationStrategy`
+  - phone: `tenant.phoneConfiguration.verificationStrategy`
+  - both are either `ClickableLink` or `FormField`
 
-  See the [Identity Verify API](/docs/apis/identity-verify) for full details.
+  For full details, see the [Identity Verify API](/docs/apis/identity-verify).
 </Aside>
 
 ## Executing Flow Using Postman
 
-Use these Postman examples to exercise each step of the API-only flow in a local or test environment.
+Use these Postman examples to try each step of the API-only flow in a local or test environment.
 
 These examples assume a local FusionAuth instance at http://localhost:9011 and that you're sending an API key in the headers as required by your configuration. Adjust host, tenant header, and authorization to match your environment.
 
-### 1 Start Verification Flow
+### 1. Start Verification Flow
 
 Start by creating a verification to obtain a `verificationId` and, if processed in one step, a `oneTimeCode`.
 
-- URL: http://localhost:9011/api/identity/verify/start
-- Method: POST
-- Body:
+* URL: http://localhost:9011/api/identity/verify/start
+* Method: POST
+* Body:
   ```json
   {
     "existingUserStrategy": "mustNotExist",
@@ -101,15 +105,15 @@ Example result:
   The default <InlineField>verificationStrategy</InlineField> comes from the tenant settings and may be `FormField` or `ClickableLink`.
 </Aside>
 
-For complete parameter and response details, refer to [Start Identity Verification](/docs/apis/identity-verify#start-identity-verification)
+For complete parameter and response details, refer to [Start Identity Verification](/docs/apis/identity-verify#start-identity-verification).
 
-### 2 Send Code (optional)
+### 2. Send Code (optional)
 
 Optionally have FusionAuth deliver the verification code or clickable link to the user. If you already received a <InlineField>oneTimeCode</InlineField> from Start and have another method to deliver it to the user, you may skip sending.
 
-- URL: http://localhost:9011/api/identity/verify/send
-- Method: POST
-- Body:
+* URL: http://localhost:9011/api/identity/verify/send
+* Method: POST
+* Body:
   ```json
   {
     "verificationId": "eIXDJDjMYOrcAEPDHdlnzVGIXE1kzjogdiJDBZLLxJg"
@@ -119,20 +123,20 @@ Optionally have FusionAuth deliver the verification code or clickable link to th
 Example result: HTTP 200 with an empty body.
 
 <Aside type="note">
-  If you want FusionAuth to send the email or SMS message, call this endpoint to deliver the code or clickable link. Make sure the prerequisite email/message settings are configured.
-  - [Email servers](/docs/customize/email-and-messages/configure-email)
-  - [Messengers](/docs/customize/email-and-messages/messengers)
+  If you want FusionAuth to send the email or SMS message, call this endpoint to deliver the code or clickable link. Before calling this endpoint, configure the prerequisite email and message settings:
+  * [Email servers](/docs/customize/email-and-messages/configure-email)
+  * [Messengers](/docs/customize/email-and-messages/messengers)
 </Aside>
 
 For complete parameter and response details, refer to [Send Identity Verification](/docs/apis/identity-verify#send-identity-verification)
 
-### 3 Complete Verification
+### 3. Complete Verification
 
 Confirm the user's control of the email address or phone number using the `verificationId` and, if required, the `oneTimeCode`.
 
-- URL: http://localhost:9011/api/identity/verify/complete
-- Method: POST
-- Body (FormField strategy):
+* URL: http://localhost:9011/api/identity/verify/complete
+* Method: POST
+* Body (FormField strategy):
   ```json
   {
     "verificationId": "eIXDJDjMYOrcAEPDHdlnzVGIXE1kzjogdiJDBZLLxJg",
@@ -152,13 +156,13 @@ Example result:
 
 For complete parameter and response details, refer to [Complete Identity Verification](/docs/apis/identity-verify#complete-identity-verification)
 
-### 4 Create the User
+### 4. Create the User
 
 Create the user and associate the verified identity using the `verificationIds` from the previous steps.
 
-- URL: http://localhost:9011/api/user
-- Method: POST
-- Body:
+* URL: http://localhost:9011/api/user
+* Method: POST
+* Body:
   ```json
   {
     "verificationIds": [
@@ -187,20 +191,20 @@ You can validate the email or phone verification status by viewing the user in t
 
 Keep the following practical tips and edge cases in mind as you implement this flow.
 
-- Use `mustNotExist` when verifying identities before creating users; use `mustExist` to verify an identity for an existing user.
-- If you choose `FormField`, plan for collecting and submitting the code from the user. If you choose `ClickableLink`, ensure the link is routable for the user and that your tenant/application templates are configured.
-- For email, ensure your tenant SMTP settings are configured. For phone, ensure a messenger (for example, Twilio) is configured if you plan to call the Send API.
-- If you are running multiple tenants, include the `X-FusionAuth-TenantId` header or provide `applicationId` as appropriate. See the API docs for scoping details.
+* Use `mustNotExist` when verifying identities before creating users; use `mustExist` to verify an identity for an existing user.
+* If you choose `FormField`, plan for collecting and submitting the code from the user. If you choose `ClickableLink`, ensure the link is routable for the user and that your tenant/application templates are configured.
+* For email, ensure your tenant SMTP settings are configured. For phone, ensure a messenger (for example, Twilio) is configured if you plan to call the Send API.
+* If you are running multiple tenants, include the `X-FusionAuth-TenantId` header or provide `applicationId` as appropriate. See the API docs for scoping details.
 
 For complete parameter and response details, refer to the Identity Verify API docs:
 
-- [Start Identity Verification](/docs/apis/identity-verify#start-identity-verification)
-- [Send Identity Verification](/docs/apis/identity-verify#send-identity-verification)
-- [Complete Identity Verification](/docs/apis/identity-verify#complete-identity-verification)
+* [Start Identity Verification](/docs/apis/identity-verify#start-identity-verification)
+* [Send Identity Verification](/docs/apis/identity-verify#send-identity-verification)
+* [Complete Identity Verification](/docs/apis/identity-verify#complete-identity-verification)
 
 ## Next Steps
 
-Now that you've successfully set up identity pre-verification via API. Explore related configuration and customization options to refine your verification experience taking the next steps:
+Now that you've successfully set up identity pre-verification, refine your verification experience with the following customization:
 
-- Learn about [customizing email templates](/docs/customize/email-and-messages/email-templates-replacement-variables) used for identity verification.
-- Learn about [customizing message templates](/docs/customize/email-and-messages/message-templates-replacement-variables) used for identity verification.
+* [Customize email templates](/docs/customize/email-and-messages/email-templates-replacement-variables)
+* [Customize message templates](/docs/customize/email-and-messages/message-templates-replacement-variables)
