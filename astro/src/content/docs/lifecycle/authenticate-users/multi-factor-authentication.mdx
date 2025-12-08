@@ -21,25 +21,36 @@ import StaticPatchNote from 'src/content/docs/sdks/_static-patch-note.mdx';
 
 <YouTube id="GM2JPTu-EE4" />
 
-## Overview
+## FusionAuth MFA Overview
 
 This guide will illustrate multi-factor authentication features in FusionAuth, including how to implement it for login and step up auth. Additional factors help ensure a system authenticates users correctly. This process is also known as MFA or Two Factor Authentication.
 
-## Types of MFA Supported
+**How MFA works in FusionAuth:**
+1. User signs in
+2. FusionAuth checks tenant & user settings
+3. If policy or context requires, prompt for MFA code
+4. Validate code (TOTP/SMS/Email)
+5. Continue login or step-up flow
+
+[Start a free trial and evaluate in your environment.](/get-started)
+
+## FusionAuth MFA Methods: TOTP, SMS, Email
 
 Currently there are three methods or factors of multi-factor authentication supported.
 
 * Time-based one-time passwords (TOTP) using an application such as Google Authenticator (free with Community plan)
-* Email (requires paid plan)
-* SMS, including Twilio (requires paid plan)
+* [Email MFA](/docs/lifecycle/manage-users/account-management/two-factor-email) (requires paid plan)
+* [SMS MFA](/docs/lifecycle/manage-users/account-management/two-factor-sms), including Twilio (requires paid plan)
 
 <DifferenceTwoFactorMultiFactor />
 
-## Tenant Set Up
+[Not sure which path fits? Talk to an expert.](/contact)
+
+## Tenant MFA Settings (Enable methods, policies, templates)
 
 For each tenant, the MFA methods must be explicitly allowed in order for users within that tenant to be able to use it. This includes configuring email templates and SMS messengers. If you are using hosted login pages or the login API, enable your preferred allowed MFA methods on the tenant. If you are only using step up auth, on the other hand, you do not have to enable any tenant MFA methods.
 
-The tenant configuration also sets the default multi-factor policy. The policy controls when MFA is required
+The tenant configuration also sets the default multi-factor policy. The policy controls when MFA is required.
 
 In the image below, this tenant has all FusionAuth supported methods enabled:
 
@@ -47,7 +58,11 @@ In the image below, this tenant has all FusionAuth supported methods enabled:
 
 Please see the [Tenant configuration documentation for more information](/docs/get-started/core-concepts/tenants#multi-factor).
 
-## Application Set Up
+For configuring [message templates (for SMS/email codes)](/docs/customize/email-and-messages/message-templates), see the Message Templates documentation.
+
+[Review tenant concepts and where MFA defaults live.](/docs/get-started/core-concepts/tenants)
+
+## Application-Level MFA Settings (Overrides & requirements)
 
 <EnterprisePlanBlurb />
 
@@ -57,6 +72,8 @@ For instance, if you have one application that is used by your administrators, y
 <img src="/img/docs/lifecycle/authenticate-users/application-settings-mfa.png" alt="Configuring allowed MFA methods on the application." width="1200" role="bottom-cropped" />
 
 Please see the [Application configuration documentation for more information](/docs/get-started/core-concepts/applications#multi-factor).
+
+[See application settings that affect MFA.](/docs/get-started/core-concepts/applications)
 
 ## Enabling MFA on a User
 
@@ -71,12 +88,18 @@ You can, however, enable MFA on your own account using the administrative user i
 There are three options to allow users to enable multi-factor authentication on their account:
 
 * If you have a paid plan, users may use the self service account management feature to enable MFA for their accounts. [Learn more about that option here](/docs/lifecycle/manage-users/account-management/).
-* You may enable MFA directly using the User API.
+* You may enable MFA directly using the [User API](/docs/apis/users).
 * You can build your own MFA user interface, allowing end users to enable MFA.
 
 ### Directly Enabling MFA for a User
 
 To directly enable MFA for a user, update their user object with one or more MFA methods.
+
+**Step-by-step process:**
+1. Retrieve user object
+2. Add MFA method to `twoFactor.methods` array
+3. Update user via PATCH request
+4. Verify MFA is enabled
 
 ```shell title="Adding MFA methods to a user directly"
 API_KEY=...
@@ -207,7 +230,7 @@ By repeating this process, users can attach as many MFA methods of each type to 
 
 <RecoveryCodesBlurb />
 
-## The End User Login Experience with MFA
+## The End User Login Experience
 
 Once multi-factor authentication is enabled for a user, they'll be required to provide the additional factor whenever they log in until [they disable MFA](#disabling-mfa-on-a-user).
 
@@ -295,6 +318,8 @@ curl -XPOST -H 'Content-type: application/json' -H "Authorization: $API_KEY" 'ht
 <JSON title="Complete the MFA Login Request JSON" src="login/two-factor/request.json" />
 
 You can pass a parameter to this request indicating you want to receive a `twoFactorTrustId`. That can then be provided at future logins to bypass the MFA process. Please consult the [Login API](/docs/apis/login) documentation for more on that.
+
+[OAuth overview (challenge during login, tokens)](/docs/lifecycle/authenticate-users/oauth/) provides more context on the OAuth flow with MFA.
 
 ## Step Up Auth
 
@@ -387,15 +412,17 @@ As mentioned above, you can also store arbitrary data in the `state` field. This
 * Reconstituting the state of the application, such as displaying a modal, after a step up display screen.
 * Re-filling a multi-step form that you interrupted to display a step up challenge.
 
+[Contextual MFA](/docs/lifecycle/authenticate-users/contextual-multi-factor) for more advanced step-up scenarios.
+
 ## Disabling MFA on a User
 
 Users may need to disable an MFA method. They may switch email addresses, change their phone number, or simply want to turn off MFA.
 
 You have four options:
 
-* If you have a paid plan, users may use the self service account management feature to disable MFA for their accounts. [Learn more about that option here](/docs/lifecycle/manage-users/account-management/).
+* If you have a paid plan, users may use the [self service account management](/docs/lifecycle/manage-users/account-management/) feature to disable MFA for their accounts. 
 * You may remove MFA using the administrative user interface.
-* You may disable MFA directly using the User API.
+* You may disable MFA directly using the [User API](/docs/apis/users).
 * You can build your own MFA user interface, allowing end users to disable MFA.
 
 ### Using the Administrative User Interface
@@ -413,6 +440,12 @@ A user may also remove an MFA method by using the self service account managemen
 To do this, you'll need to update the `twoFactor` array.
 In the below example, all methods are removed.
 You could also remove just the ones with a method of `email` or one particular MFA method.
+
+**Step-by-step disable process:**
+1. Retrieve current user object
+2. Modify twoFactor array (remove methods)
+3. Update user via PUT request
+4. Confirm MFA is disabled
 
 ```shell title="Deleting MFA methods from a user directly"
 API_KEY=...
@@ -575,7 +608,7 @@ To migrate this functionality:
 * Ensure the Twilio messenger is set up correctly if you are using that.
 * Review the [API](/docs/apis/two-factor) and call the send endpoint with the correct parameters.
 
-## Integrating Other MFA Methods
+## Integrating Other MFA Methods (Generic messenger, webhooks)
 
 If you have other MFA methods that you'd like to use with FusionAuth, you have a few options:
 
@@ -586,11 +619,13 @@ If you have other MFA methods that you'd like to use with FusionAuth, you have a
 * Use the [Login API](/docs/apis/login) and build custom login flows, inserting your custom MFA functionality where needed.
 * Set up an OpenID Connect server with the required MFA functionality. Then set up an [Identity Provider](/docs/lifecycle/authenticate-users/identity-providers/) that delegates to that OIDC server. Add a [Login Validation Lambda](/docs/extend/code/lambdas/login-validation) so that this Identity Provider is the only login option.
 
+[Authentication workflows overview (where MFA appears in end-to-end flows)](/articles/login-authentication-workflows/authentication-workflows-overview) provides comprehensive guidance on integrating MFA into your authentication architecture.
+
 ## Migrating MFA Methods From a Different System
 
 <MfaMigration />
 
-## Forcing MFA
+## Enforce or Require MFA (Login policy & contextual checks)
 
 There are times when you might want to force a user to provide an additional factor of authentication before they ever get access to your application.
 For example, you might require MFA when a user logs into an accounting application, but not when they log in to a customer support application.
@@ -617,3 +652,29 @@ Each time the user accesses a sensitive part of an application, you can require 
 ## Troubleshooting
 
 <MfaTroubleshooting />
+
+### Additional Common Issues
+
+**Codes aren't arriving (SMS or email):**
+- Check [tenant/app messenger + template configuration](/docs/customize/email-and-messages/message-templates) and [verify email/SMS delivery settings](/docs/customize/email-and-messages/delivery-troubleshooting)
+- Verify [user-facing SMS factor setup steps](/docs/lifecycle/manage-users/account-management/two-factor-sms) and resend behavior
+
+**Users stuck logged in / sign-out doesn't clear MFA prompts:**
+- Confirm full sign-out across apps with [Logout & Session Management](/docs/lifecycle/authenticate-users/logout-session-management) (IdP session vs app session)
+
+**Where do I let end users add/remove factors themselves?**
+- Point admins and users to [Self-Service Account Management](/docs/lifecycle/manage-users/account-management/) (enrollment, removal, logout link)
+
+**MFA is forced for IdP users:**
+- [Why MFA triggers with external IdPs and how to adjust policy](/community/forum/topic/2653/mfa-is-forced-also-on-identity-provider-users)
+
+**Require MFA for admin portal access:**
+- Configure tenant-level MFA requirements for administrative access
+
+**Enable MFA for all users or certain projects (Essentials plan):**
+- [See community discussion on enabling MFA for specific projects](/community/forum/topic/3025/enabling-mfa-for-all-users-or-specific-projects-in-fusionauth-essentials-plan)
+
+### Related Articles
+- [What is MFA? article](/articles/authentication/multi-factor-authentication)
+- [Combine SSO + MFA article](/articles/authentication/combine-sso-mfa-fusionauth)
+- [MFA compliance article](/articles/authentication/mfa-compliance-fusionauth)
