@@ -50,8 +50,8 @@ List of charts:
 - User acquisition per year and month (sales performance)
 - Number of users per age in years (mirror image of user acquisition per year, but shows customer analysis and retention)
 - Number of logins per year and month
-- Number of users that haven't logged in for 1, 2, 6, 12 months    <-- TODO START THIS. logic done. chart to add
-- Number users that haven't logged in for 6 months by year
+- Number of users that haven't logged in for 1, 2, 6, 12 months
+- Number users that haven't logged in for 6 months by year <-- TODO START THIS
 - Number of users that log in 1,10,>10 times per month
 
 - Active users grouped by age and year of reqistration
@@ -152,6 +152,341 @@ The `users.json` file has structure below.
 Create a file called `app.mjs` in the same directory as the `users.json` file you extracted earlier and insert the code below.
 
 ```js
+// clear; docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" -p 7777:7777 node:25-alpine  sh -c  "node --watch 4app.mjs";
+
+import express from 'express';
+import * as fs from 'fs/promises';
+
+const users = await getUsersFromFile();
+const app = express();
+app.get('/', async (request, response) => {
+	const page = await getPage(users);
+	response.send(page);
+});
+app.listen(7777, '0.0.0.0', () => { console.log(`Express server listening at http://0.0.0.0:7777`); });
+
+async function getUsersFromFile() {
+	const fileContent = await fs.readFile('users.json', { encoding: 'utf8' });
+	const users = JSON.parse(fileContent);
+	for (let u of users) { // charts work with dates, not timestamp strings
+		u.registeredDate = new Date(Number(u.registeredDate) * 1000);
+		for (let i = 0; i < u.loginDates.length; i++) {
+			if (u.loginDates[i] > 30000000000) { // check for errors
+				log(" ");
+				log(u.id);
+				log(u.email);
+				log(u.loginDates[i]);
+				log(new Date(Number(u.loginDates[i]) * 1000));
+			}
+			u.loginDates[i] = new Date(Number(u.loginDates[i]) * 1000);
+		}
+	}
+	// printMemoryUse(users);
+	return users;
+}
+
+async function getPage(users) {
+	const chartData = getChartData(users);
+	const html = await fs.readFile(`5page.html`, { encoding: 'utf8' });
+	return html.replace('{{CHARTDATA}}', JSON.stringify(chartData));
+}
+
+function getChartData(users) {
+	const result = {
+		'totalUsersPerYearChart' : { 'labels': [], 'verifiedData': [], 'unverifiedData': [] },
+		'totalUsersPerMonthChart' : { 'labels': [], 'verifiedData': [], 'unverifiedData': [] },
+		'newUsersPerYearChart' : { 'labels': [], 'verifiedData': [], 'unverifiedData': [] },
+		'newUsersPerMonthChart' : { 'labels': [], 'verifiedData': [], 'unverifiedData': [] },
+		'userAgeChart' : { 'labels': [], 'verifiedData': [], 'unverifiedData': [] },
+		'loginsPerYearChart' : { 'labels': [], 'data': [] },
+		'loginsPerMonthChart' : { 'labels': [], 'data': [] },
+		'abandonmentPerMonthChart' : { 'labels': [1, 2, 6, 12], 'data': [0,0,0,0] },
+	}
+	const thisYear = new Date().getFullYear();
+	const now = new Date();
+	let minYear = thisYear;
+	let maxYear = 0;
+	let minMonth = 12;
+	let yearContainingMinMonth = thisYear;
+	log("Start user loop");
+	users.forEach(user => {
+		const yearRegistered = user.registeredDate.getFullYear();
+		const monthRegistered = user.registeredDate.getMonth();
+		if (yearRegistered < minYear) minYear = yearRegistered;
+		if (yearRegistered > maxYear) maxYear = yearRegistered;
+		if (yearRegistered < yearContainingMinMonth || (yearRegistered == yearContainingMinMonth && monthRegistered < minMonth)) {
+			yearContainingMinMonth = yearRegistered;
+			minMonth = monthRegistered;
+		}
+		let mostRecentLoginDate = new Date('1800-01-01');
+		user.loginDates.forEach(loginDate => {
+			if (loginDate.getFullYear() > maxYear) maxYear = loginDate.getFullYear();
+			if (loginDate > mostRecentLoginDate) mostRecentLoginDate = loginDate;
+		});
+		addUserToAbandonmentPerMonthChart(now, mostRecentLoginDate, result.abandonmentPerMonthChart);
+		const age = thisYear - yearRegistered;
+		if (!result.userAgeChart.verifiedData[age]) result.userAgeChart.verifiedData[age] = 0;
+		if (!result.userAgeChart.unverifiedData[age]) result.userAgeChart.unverifiedData[age] = 0;
+		if (user.isVerified) result.userAgeChart.verifiedData[age]++;
+		else result.userAgeChart.unverifiedData[age]++;
+	});
+	log("End user loop");
+	for (let age = 0; age <= thisYear - minYear; age++) {
+		result.userAgeChart.labels.push(age.toString());
+		result.userAgeChart.verifiedData[age] = result.userAgeChart.verifiedData[age] || 0;
+		result.userAgeChart.unverifiedData[age] = result.userAgeChart.unverifiedData[age] || 0;
+		result.userAgeChart.verifiedData = result.userAgeChart.verifiedData.slice(0, thisYear - minYear + 1);
+		result.userAgeChart.unverifiedData = result.userAgeChart.unverifiedData.slice(0, thisYear - minYear + 1);
+	}
+	let runningVerifiedCountYearly = 0;
+	let runningUnverifiedCountYearly = 0;
+	let runningVerifiedCountMonthly = 0;
+	let runningUnverifiedCountMonthly = 0;
+	log("Start year loop");
+	for (let year = minYear; year <= maxYear; year++) {
+		result.totalUsersPerYearChart.labels.push(year.toString());
+		result.newUsersPerYearChart.labels.push(year.toString());
+		const newVerifiedThisYear = users.filter(user => user.registeredDate.getFullYear() === year && user.isVerified === true).length;
+		const newUnverifiedThisYear = users.filter(user => user.registeredDate.getFullYear() === year && user.isVerified === false).length;
+		result.newUsersPerYearChart.verifiedData.push(newVerifiedThisYear);
+		result.newUsersPerYearChart.unverifiedData.push(newUnverifiedThisYear);
+		runningVerifiedCountYearly += newVerifiedThisYear;
+		runningUnverifiedCountYearly += newUnverifiedThisYear;
+		result.totalUsersPerYearChart.verifiedData.push(runningVerifiedCountYearly);
+		result.totalUsersPerYearChart.unverifiedData.push(runningUnverifiedCountYearly);
+		const loginsThisYear = users.reduce((sum, user) => sum + user.loginDates.filter(loginDate => loginDate.getFullYear() === year).length, 0);
+		result.loginsPerYearChart.labels.push(year.toString());
+		result.loginsPerYearChart.data.push(loginsThisYear);
+		for (let month = 0; month < 12; month++) {
+			if (year === minYear && month < minMonth) continue;
+			if (year === maxYear && month > new Date().getMonth()) break;
+			const newVerifiedThisMonth = users.filter(user => user.registeredDate.getFullYear() === year && user.registeredDate.getMonth() === month && user.isVerified === true).length;
+			const newUnverifiedThisMonth = users.filter(user => user.registeredDate.getFullYear() === year && user.registeredDate.getMonth() === month && user.isVerified === false).length;
+			runningVerifiedCountMonthly += newVerifiedThisMonth;
+			runningUnverifiedCountMonthly += newUnverifiedThisMonth;
+			result.totalUsersPerMonthChart.labels.push(`${year}-${String(month + 1).padStart(2, '0')}`);
+			result.totalUsersPerMonthChart.verifiedData.push(runningVerifiedCountMonthly);
+			result.totalUsersPerMonthChart.unverifiedData.push(runningUnverifiedCountMonthly);
+			result.newUsersPerMonthChart.labels.push(`${year}-${String(month + 1).padStart(2, '0')}`);
+			result.newUsersPerMonthChart.verifiedData.push(newVerifiedThisMonth);
+			result.newUsersPerMonthChart.unverifiedData.push(newUnverifiedThisMonth);
+			const loginsThisMonth = users.reduce((sum, user) => sum + user.loginDates.filter(loginDate => loginDate.getFullYear() === year && loginDate.getMonth() === month).length, 0);
+			result.loginsPerMonthChart.labels.push(`${year}-${String(month + 1).padStart(2, '0')}`);
+			result.loginsPerMonthChart.data.push(loginsThisMonth);
+		}
+	}
+	log("End year loop");
+	return result;
+}
+
+function addUserToAbandonmentPerMonthChart(now, mostRecentLoginDate, abandonmentPerMonthChart) {
+	const diffTime = now.getTime() - mostRecentLoginDate.getTime();
+	const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+	if (diffDays >= 365) abandonmentPerMonthChart.data[3]++;
+	else if (diffDays >= 182) abandonmentPerMonthChart.data[2]++;
+	else if (diffDays >= 60) abandonmentPerMonthChart.data[1]++;
+	else if (diffDays >= 30) abandonmentPerMonthChart.data[0]++;
+}
+
+function printMemoryUse(users) {
+	const jsonString = JSON.stringify(users);
+	const arraySizeInBytes = Buffer.byteLength(jsonString, 'utf8');
+	const arraySizeInMiB = (arraySizeInBytes / (1024 * 1024)).toFixed(2);
+	console.log(`Users array is approximately ${arraySizeInBytes} bytes, or ${arraySizeInMiB} MiB.`);
+}
+
+function log(msg) {
+	console.log(msg);
+}
+```
+
+page.html
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>User statistics</title>
+		<style>
+			body{background-color:#eee}
+			.chart{max-width:820px;padding-right:20px;margin:20px auto;margin-bottom:40px; background-color:#fff; border-radius:12px;}
+		</style>
+	</head>
+	<body>
+		<div class="chart"><canvas id="totalUsersPerYearChart"></canvas></div>
+		<div class="chart"><canvas id="totalUsersPerMonthChart"></canvas></div>
+		<div class="chart"><canvas id="newUsersPerYearChart"></canvas></div>
+		<div class="chart"><canvas id="newUsersPerMonthChart"></canvas></div>
+		<div class="chart"><canvas id="userAgeChart"></canvas></div>
+		<div class="chart"><canvas id="loginsPerYearChart"></canvas></div>
+		<div class="chart"><canvas id="loginsPerMonthChart"></canvas></div>
+		<div class="chart"><canvas id="abandonmentPerMonthChart"></canvas></div>
+	</body>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script>
+		const data = JSON.parse('{{CHARTDATA}}');
+
+// Total users per year chart--------------------------------------------------
+		new Chart(document.getElementById('totalUsersPerYearChart'), {
+			type: 'bar',
+			data: {
+				labels: data.totalUsersPerYearChart.labels,
+				datasets: [{
+					label: 'Unverified',
+					data: data.totalUsersPerYearChart.unverifiedData,
+					backgroundColor: 'rgba(255, 99, 132, 0.7)',
+				},
+				{
+					label: 'Verified',
+					data: data.totalUsersPerYearChart.verifiedData,
+					backgroundColor: 'rgba(75, 192, 192, 0.7)',
+				}]
+			},
+			options: getBarChartOptions('Total users per year', true)
+		});
+
+// Total users per month chart--------------------------------------------------
+		new Chart(document.getElementById('totalUsersPerMonthChart'), {
+			type: 'bar',
+			data: {
+				labels: data.totalUsersPerMonthChart.labels,
+				datasets: [{
+					label: 'Unverified',
+					data: data.totalUsersPerMonthChart.unverifiedData,
+					backgroundColor: 'rgba(255, 99, 132, 0.7)',
+				},
+				{
+					label: 'Verified',
+					data: data.totalUsersPerMonthChart.verifiedData,
+					backgroundColor: 'rgba(75, 192, 192, 0.7)',
+				}]
+			},
+			options: getBarChartOptions('Total users per month', true)
+		});
+
+// New users per year chart--------------------------------------------------
+		new Chart(document.getElementById('newUsersPerYearChart'), {
+			type: 'bar',
+			data: {
+				labels: data.newUsersPerYearChart.labels,
+				datasets: [{
+					label: 'Unverified',
+					data: data.newUsersPerYearChart.unverifiedData,
+					backgroundColor: 'rgba(255, 99, 132, 0.7)',
+				},
+				{
+					label: 'Verified',
+					data: data.newUsersPerYearChart.verifiedData,
+					backgroundColor: 'rgba(75, 192, 192, 0.7)',
+				}]
+			},
+			options: getBarChartOptions('New users per year', true)
+		});
+
+// New users per month chart--------------------------------------------------
+		new Chart(document.getElementById('newUsersPerMonthChart'), {
+			type: 'bar',
+			data: {
+				labels: data.newUsersPerMonthChart.labels,
+				datasets: [{
+					label: 'Unverified',
+					data: data.newUsersPerMonthChart.unverifiedData,
+					backgroundColor: 'rgba(255, 99, 132, 0.7)',
+				},
+				{
+					label: 'Verified',
+					data: data.newUsersPerMonthChart.verifiedData,
+					backgroundColor: 'rgba(75, 192, 192, 0.7)',
+				}]
+			},
+			options: getBarChartOptions('New users per month', true)
+		});
+
+// User age chart --------------------------------------------------
+		new Chart(document.getElementById('userAgeChart'), {
+			type: 'bar',
+			data: {
+				labels: data.userAgeChart.labels,
+				datasets: [{
+					label: 'Unverified',
+					data: data.userAgeChart.unverifiedData,
+					backgroundColor: 'rgba(255, 99, 132, 0.7)',
+				},
+				{
+					label: 'Verified',
+					data: data.userAgeChart.verifiedData,
+					backgroundColor: 'rgba(75, 192, 192, 0.7)',
+				}]
+			},
+			options: getBarChartOptions('Number of years since user registered', true)
+		});
+
+// Logins per year chart --------------------------------------------------
+		new Chart(document.getElementById('loginsPerYearChart'), {
+			type: 'bar',
+			data: {
+				labels: data.loginsPerYearChart.labels,
+				datasets: [{
+					data: data.loginsPerYearChart.data,
+					backgroundColor: 'rgba(75, 192, 192, 0.7)',
+				}]
+			},
+			options: getBarChartOptions('Logins per year', false, false)
+		});
+
+// Logins per month chart --------------------------------------------------
+		new Chart(document.getElementById('loginsPerMonthChart'), {
+			type: 'bar',
+			data: {
+				labels: data.loginsPerMonthChart.labels,
+				datasets: [{
+					data: data.loginsPerMonthChart.data,
+					backgroundColor: 'rgba(75, 192, 192, 0.7)',
+				}]
+			},
+			options: getBarChartOptions('Logins per month', false, false)
+		});
+
+// Abandonment per month chart --------------------------------------------------
+		new Chart(document.getElementById('abandonmentPerMonthChart'), {
+			type: 'bar',
+			data: {
+				labels: data.abandonmentPerMonthChart.labels,
+				datasets: [{
+					data: data.abandonmentPerMonthChart.data,
+					backgroundColor: 'rgba(75, 192, 192, 0.7)',
+				}]
+			},
+			options: getBarChartOptions('Number of users who haven\'t logged in for months', false, false, 'Number of months')
+		});
+
+
+// Helper functions --------------------------------------------------
+		function getBarChartOptions(title, isStackedBar=true, shouldShowLegend=true, xAxisTitle='') {
+			return {
+				responsive: true,
+				plugins: {
+					legend: {display: shouldShowLegend,position: 'bottom',},
+					title: {display: true,text: title}
+				},
+				scales: {
+					x: {
+						grid: {display: false},
+						stacked: isStackedBar,
+						title: {display: true,text: xAxisTitle}
+					},
+					y: {
+						stacked: isStackedBar,
+						title: {display: true,text: ''},
+						beginAtZero: true
+					}
+				}
+			}
+		}
+	</script>
+</html>
 ```
 
 Run the code with the command below.
@@ -224,7 +559,10 @@ UPDATE user_registrations SET insert_instant =
         '2015-01-01'::DATE + (FLOOR(('2025-12-31'::DATE - '2015-01-01'::DATE) * random()))::INT
     )::TIMESTAMP WITHOUT TIME ZONE)::BIGINT;
 
--- set 5% of users to unverified
+-- check dates if you want
+-- SELECT * FROM user_registrations
+
+-- set 5% users to unverified
 UPDATE identities
 SET verified = CASE
     WHEN random() < 0.05 THEN false
@@ -250,7 +588,7 @@ users_with_series AS (
     SELECT
         users.id AS usersId,
         user_min_instant.minInstant,
-        generate_series(1, (10 + floor(random() * 4991))::INTEGER) AS seriesNum -- 10 to 5000 logins
+        generate_series(1, (1 + floor(random() * 4991))::INTEGER) AS seriesNum -- 10 to 5000 logins
     FROM
         users
     JOIN
@@ -259,11 +597,9 @@ users_with_series AS (
 INSERT INTO raw_logins (applications_id, instant, ip_address, identities_value, identities_type, users_id)
 SELECT
     'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
-    EXTRACT(EPOCH FROM
-        to_timestamp(users_with_series.minInstant) + (
-            (EXTRACT(EPOCH FROM '2026-01-01 00:00:00Z'::timestamp) - users_with_series.minInstant) * random()
-        * INTERVAL '1 second')
-    )::BIGINT,
+    (users_with_series.minInstant + FLOOR(
+        (EXTRACT(EPOCH FROM '2026-01-01 00:00:00Z'::timestamp) - users_with_series.minInstant) * random()
+    ))::BIGINT,
     '127.0.0.1',
     NULL,
     NULL,
@@ -283,5 +619,3 @@ copy in correct sql date creation code into article.
 fa
 
 https://github.com/FusionAuth/fusionauth-site/issues/2990 - cohort analysis
-
-not sure how this can be done in fusionauth, as user behaviour and tracking is something you do in your app. all you can do with FA is get a report of when user's signed up (age cohort) and when they last logged in (indiciation of lost customers). so i guess the "app" dan wants is just pulling out user last log in rates over time. maybe i could use some mock data and some js charts.
