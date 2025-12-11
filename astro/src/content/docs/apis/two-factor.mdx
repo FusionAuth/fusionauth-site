@@ -4,6 +4,7 @@ description: Learn about the APIs for enabling and disabling multi-factor authen
 section: apis
 ---
 import Aside from 'src/components/Aside.astro';
+import AvailableSince from 'src/components/api/AvailableSince.astro';
 import InlineField from 'src/components/InlineField.astro';
 import TwoFactorTotpLimits from 'src/content/docs/_shared/_two-factor-totp-limits.mdx';
 import PlanBlurb from 'src/content/docs/_shared/_plan-blurb.astro';
@@ -211,6 +212,10 @@ Retrieves a user's multi-factor status. This is helpful to understand if a user 
 
 This API may also be used to identify if an existing multi-factor trust value obtained during a multi-factor login is expired, or valid for a specific application when configured to restrict multi-factor trust.
 
+<Aside>
+    Since version 1.62.0, using the POST method of this endpoint is preferable because it provides more information to any MFA requirement lambda functions that may be configured.
+</Aside>
+
 ### Request
 
 <API method="GET" uri="/api/two-factor/status/{twoFactorTrustId}" authentication={["api-key"]} title="Retrieve multi-factor status"/>
@@ -231,14 +236,45 @@ This API may also be used to identify if an existing multi-factor trust value ob
   </APIField>
 </APIBlock>
 
+<API method="POST" uri="/api/two-factor/status" authentication={["api-key"]} title="Retrieve multi-factor status using request payload"/>
+
+<AvailableSince since="1.62.0"/>
+
+#### Request Body
+
+<APIBlock>
+    <APIField name="action" type="String" optional defaults="login">
+        The action the user is attempting to perform. This value may be used by an MFA requirement lambda to determine if multi-factor authentication should be required.
+
+        Valid values are:
+        * `changePassword`
+        * `login`
+        * `stepUp`
+    </APIField>
+    <APIField name="applicationId" type="String" optional>
+        A unique application Id. When Application multi-factor configuration is enabled, providing this parameter will ensure the returned status applies to the expected result when attempting to login into this application.
+    </APIField>
+    <APIField name="token" type="String" optional>
+        An access token (not an Id token) returned by FusionAuth as the result of a successful authentication. The claims from this token will be available in `context.jwt` in an MFA requirement lambda function. See the [MFA requirement lambda](/docs/extend/code/lambdas/mfa-requirement) documentation. This must be a valid token that was issued and signed by FusionAuth.
+    </APIField>
+    <APIField name="twoFactorTrustId" type="String" optional>
+        The existing multi-factor trust obtained by completing a multi-factor login. This is the value that allows you to bypass multi-factor during the next login attempt.
+    </APIField>
+    <APIField name="userId" type="String" required>
+        The unique Id of the user for which to retrieve multi-factor status.
+    </APIField>
+</APIBlock>
+
+<XFusionauthTenantIdHeaderScopedOperation />
+
 ### Response
 
-.Response Codes
+Response Codes
 
 | Code | Description                                                                                                                                                                                                                                          |
 |------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 200  | The user does not have multi-factor enabled, or the provided trust is still valid for the next login.                                                                                                                                                |
-| 242  | The user has multi-factor authentication enabled. Since version `1.42.0`, this status code is also returned when two factor authentication is required.  The user will be required to complete a two-factor challenge during the next login attempt. |
+| 200  | The user does not have multi-factor enabled, a challenge is not required, or the provided trust is still valid for the next login.                                                                                                                                                |
+| 242  | The user has multi-factor authentication enabled. Since version `1.42.0`, this status code is also returned when multi-factor authentication is required.  The user will be required to complete a multi-factor challenge during the next login attempt. This status code can also be used to determine whether step up is required.|
 | 400  | The request was invalid and/or malformed. The response will contain an [Errors](/docs/apis/errors) JSON Object with the specific errors.                                                                                                             |
 | 401  | You did not supply a valid Authorization header. The header was omitted or your API key was not valid. The response will be empty. See [Authentication](/docs/apis/authentication).                                                                  |
 | 500  | There was an internal error. A stack trace is provided and logged in the FusionAuth log files. The response will be empty.                                                                                                                           |
