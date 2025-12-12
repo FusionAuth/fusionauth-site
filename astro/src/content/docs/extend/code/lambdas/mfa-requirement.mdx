@@ -10,7 +10,7 @@ import AuthenticationTypeValues from 'src/content/docs/_shared/authentication-ty
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 
-During logins, password changes, and MFA Status API calls, FusionAuth performs various validations to decide whether to challenge the user on one of their MFA methods. Using this lambda function, you may extend this functionality to change FusionAuth's MFA decision for that user and/or trigger a suspicious login event.
+During logins, password changes, and [MFA Status API](/docs/apis/two-factor#retrieve-multi-factor-status) calls, FusionAuth performs various validations to decide whether to challenge the user on one of their MFA methods. Using this lambda function, you may extend this functionality to change FusionAuth's MFA decision for that user and/or trigger a suspicious login event.
 
 The MFA Requirement Lambda has access to: the action being taken, FusionAuth's out of the box MFA decision, the user record, the user's registration for the application they're trying to authenticate to if applicable, the MFA policy settings on the tenant and application, and meta-data about the request. While Lambda HTTP Connect may be used in this function in order to utilize external resources to perform validation, please be aware that adding latency will likely be observable to your end user.
 
@@ -25,6 +25,19 @@ function validate(action, user, result, application, policies, context) {
   // Lambda code goes here
 }
 ```
+
+This lambda must contain a function named `validate` that takes six parameters. The parameters that the lambda is passed are:
+
+* `action` - a string representing the action being taken. Possible values are `login`, `changePassword`, and `stepUp`. Logins and password changes via FusionAuth APIs or hosted pages will always use either `login` or `changePassword` respectively. `stepUp` is a value that may be passed in to the [MFA Status API](/docs/apis/two-factor#retrieve-multi-factor-status) using the `action` field.
+* `user` - the FusionAuth User object. This object is read-only.
+* `result` - an object used for returning modified MFA requirements back to FusionAuth.
+* `application` - the FusionAuth Application object (if applicable). This object is read-only.
+* `policies` - an object containing the MFA policies for the tenant and application. This object is read-only.
+* `context` - an object containing context for the current request. This object is read-only and contains several optional fields.
+
+`user` and `application` are well documented in the [User API](/docs/apis/users) and [Application API](/docs/apis/applications) documentation.
+
+TODO - Explain result, policies, and context structures.
 
 ## Assigning The Lambda
 
