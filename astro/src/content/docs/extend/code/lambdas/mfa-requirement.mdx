@@ -40,9 +40,170 @@ This lambda must contain a function named `validate` that takes six parameters. 
 
 `user` and `application` are well documented in the [User API](/docs/apis/users) and [Application API](/docs/apis/applications) documentation.
 
-TODO - Explain result, policies, and context structures.
+`result` is of type `MFARequiredLambdaResult` and the object will look like this:
+```javascript
+class MFARequiredLambdaResult {
+    /**
+     * This value will be set to FusionAuth's out of the box decision on whether an MFA challenge
+     * should be required for the user. Mutate this to change the decision.
+     * @type {boolean}
+     */
+    required;
 
-TODO - Explain that `eventInfo.location` will only be available if the [Advanced Threat Detection](/docs/operate/secure/advanced-threat-detection) feature is licensed.
+    /**
+     * To force a suspicious login event to be created, set this to true. This will have no effect
+     * unless the action is `login`.
+     * @type {boolean}
+     */
+    sendSuspiciousLoginEvent;
+}
+```
+
+`policies` is an immutable argument of type `MFAPolicies` and the object will look like this:
+```javascript
+class MFAPolicies {
+    /**
+     * This value will be set to the application's MFA login policy, if set.
+     * @type {string} - Possible values are [Disabled], [Enabled], or [Required].
+     */
+    applicationLoginPolicy;
+
+    /**
+     * If the Application has an MFA trust policy set, this value will be set to that policy.
+     * @type {string} - Possible values are [Any], [This], or [None].
+     */
+    applicationMultiFactorTrustPolicy;
+
+    /**
+     * This value will be set to the tenant's MFA login policy.
+     * @type {string} - Possible values are [Disabled], [Enabled], or [Required].
+     */
+    tenantLoginPolicy;
+}
+```
+
+`context` is an immutable argument of type `MFAContext` and the object will look like this:
+```javascript
+class MFAContext {
+    /**
+     * A list of authentication threats detected for this request. This will only be populated when the action is `login` and Advanced Threat Detection is enabled.
+     * @type {Set<String>} - Possible values are [ImpossibleTravel].
+     */
+    authenticationThreats;
+
+    /**
+     * Event information about the current request. This is an optional value and may be null,
+     * depending on what is provided to FusionAuth via API calls.
+     * @type {EventInfo} - see below for details
+     */
+    eventInfo;
+
+    /**
+     * A list of the user's JWT claims. This is an optional value and may be null. It will be
+     * populated if the /api/user/change-password was authenticated to via a JWT or if a `token`
+     * is POSTed to /api/two-factor/status
+     * @type {Map<String, Object>}
+     */
+    jwt;
+
+    /**
+     * If existing two-factor trust was supplied (via a cookie/hosted pages or
+     * `twoFactorTrustId` on the API), this value will contain details about that trust.
+     * @type {MFATrust}
+     */
+    mfaTrust;
+
+    /**
+     * When available, the user's registration. For SSO cases where an existing user is signing
+     * in to a new application, at the time the lambda would be called, the user will not have
+     * a registration yet. That doesn’t happen until later (in complete registration).
+     * @type {UserRegistration}
+     */
+    registration;
+}
+
+class EventInfo {
+    /**
+     * Additional data associated with the event. This is an optional value and may be null.
+     * @type {Map<String, Object>}
+     */
+    data;
+
+    /**
+     * @type {string}
+     */
+    deviceDescription;
+
+    /**
+     * @type {string}
+     */
+    deviceName;
+
+    /**
+     * @type {string}
+     */
+    deviceType;
+
+    /**
+     * @type {string}
+     */
+    ipAddress;
+
+
+    /**
+     * Location details based on the user's IP address. This will only be populated when
+     * Advanced Threat Detection is enabled.
+     * @type {Location}
+     */
+    location;
+
+    /**
+     * @type {string}
+     */
+    os;
+
+    /**
+     * @type {string}
+     */
+    userAgent;
+}
+
+class Location {
+    /**
+     * @type {string}
+     */
+    city;
+
+    /**
+     * @type {string}
+     */
+    country;
+
+    /**
+     * @type {double}
+     */
+    latitude;
+
+    /**
+     * @type {double}
+     */
+    longitude;
+
+    /**
+     * @type {string}
+     */
+    region;
+
+    /**
+     * @type {string}
+     */
+    zipcode;
+}
+```
+
+See [Registration API](/docs/apis/registrations) documentation for the `context.registration` object details.
+
+See [Advanced Threat Detection](/docs/operate/secure/advanced-threat-detection) for more information on this licensed feature.
 
 ## Assigning The Lambda
 
