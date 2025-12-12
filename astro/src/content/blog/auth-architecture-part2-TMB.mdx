@@ -1,0 +1,232 @@
+---
+publish_date: 2025-10-08
+title: "Token-Mediating Backend: An alternative to the BFF architecture"
+htmlTitle: "Part 2 of 3 on authentication architecture | FusionAuth"
+description: "Learn how a token-mediating backend (TMB) is less secure than a BFF and when to use it. Part 2 of 3 in the architecture-driven auth series."
+image: /img/blogs/bff/bff-header.png # TODO: replace image
+authors: Kim Maida
+categories: Education, Security
+tags: oauth, security, BFF, TMB, React, tokens, architecture, FusionAuth
+excerpt_separator: "{/* more */}"
+---
+
+import Aside from 'src/components/Aside.astro';
+import BrowserActiveSessionDiagram from "../../diagrams/blog/auth-architecture-part2-TMB/browser-active-session.astro";
+import BrowserNoSessionDiagram from "../../diagrams/blog/auth-architecture-part2-TMB/browser-no-session.astro";
+
+
+This post discusses the Token-Mediating Backend (TMB) authentication architecture for OAuth 2 applications. It covers how secure TMB is, when to use it, and how to implement it.
+
+<Aside type="tip">
+This is part two of a three-part series on OAuth architectures. Please read [part one](/blog/backend-for-frontend-security-architecture) if you haven't already, so you understand how the Backend-for-Frontend (BFF) architecture works, since TMB is a variation of BFF.
+</Aside>
+
+## Understanding TMB architecture
+
+The TMB architecture is identical to the BFF pattern, except for one major difference: Access tokens are stored in the frontend (desktop app, mobile app, or web app) rather than the backend. (Refresh tokens are still stored on the backend.) Since the access token is available in the browser, the browser can call a resource server directly, instead of having to call the backend and get the backend to call the resource server with the token.
+
+TMB is described in the Internet Engineering Task Force (IETF) [OAuth 2.0 for Browser-Based Applications](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend) draft.
+
+### TMB security
+
+TMB is massively less secure than BFF because access tokens in the browser are vulnerable to exfiltration by malicious JavaScript packages and cross-site scripting (XSS). However, it's slightly more secure than serverless web apps, which use the Browser-Based OAuth Client (BBOC) architecture, as they have no secure backend at all.
+
+Both BFF and TMB are vulnerable to fraudulent requests if an attacker manages to inject malicious JavaScript into the browser (client hijacking). But BFF prevents the attacker from using the token from the attacker's computer (token exfiltration) while TMB does not.
+
+You can think of the security advantages as: BFF ≫ TMB > BBOC.
+
+TMB has two of the security advantages of BFF:
+
+- Same-site HTTP-only session cookies (as well as PKCE checks and OIDC nonces) prevent CSRF attacks.
+- Refresh tokens stay on the server, hidden from attackers.
+
+In a TMB frontend, the access token in the browser can't be kept in an HTTP-only cookie, because JavaScript needs to access it to send it in calls to resource servers (which have different URL domains to the authorization server domain). Since the access token has to be stored in the browser's local storage or application memory, it's vulnerable to exfiltration by XSS attacks, like malicious npm packages or unsanitized HTML from forum posts on your site.
+
+A TMB is slightly more secure than a BBOC because of the server-side refresh token — if you follow best practices.
+
+You can set a very short expiry period for your access tokens (ten minutes), so that if an attacker does gain access to the token, they can't use it for long. The frontend can silently ask the server for a new access token generated from the server-side refresh token every ten minutes, so the user does not need to log in again, or for security-critical apps like banking, you can require the user to log in again every time their access token expires. If you detect unauthorized use of an access token, you can revoke the refresh token and force a user to log in again.
+
+Of course, if an attacker has managed to insert malicious JavaScript into your frontend, they can steal the access tokens again and again, so access token timeouts won't protect you. However, once the user closes their browser, all fraudulent requests must pause. Mobile and desktop apps are generally safer than web apps because they are less likely to use JavaScript.
+
+For a list of best practices mitigating the danger of client-side token storage, read the IETF's [Best Current Practice for OAuth 2.0 Security](https://datatracker.ietf.org/doc/html/rfc9700/), or this [summary](https://maida.kim/oauth2-best-practices-for-developers) by a FusionAuth developer.
+
+### TMB with DPoP
+
+There is one relatively new technology (2023) that makes client-side tokens a lot safer — the Demonstrating Proof of Possession (DPoP) mechanism, available as the IETF [RFC 9449](https://datatracker.ietf.org/doc/rfc9449).
+
+DPoP is complicated enough to warrant an entire article, and the [official DPoP site](https://dpop.info) has a great visual walkthrough of the protocol, but the concept is simple enough to understand.
+
+If an OAuth access token is like a door key that can be stolen, using DPoP is like using a door that you can unlock only if you have the key and you have signed your signature when trying to enter. An attacker with only the key can't open the door because they can't fake your signature.
+
+DPoP works by cryptographically binding the access token to the DPoP key at creation, then requiring both the access token and the DPoP key in calls to resource servers. The resource servers reject any request with an access token that isn't signed by the DPoP key.
+
+If an attacker steals the access token in JavaScript, they can't steal the DPoP key because it's stored using the browser's web cryptography API with [`extractable`](https://developer.mozilla.org/en-US/docs/Web/API/CryptoKey/extractable) set to `false`. This means a request to a resource server can be signed with the DPoP key in the browser, but the key can never leave the browser or be accessed by JavaScript, preventing exfiltration.
+
+An attacker that manages to insert malicious JavaScript into your browser could make calls using both the DPoP key and access code, but if the attacker exfiltrates the access code to their own machine, it's useless without the DPoP key. So DPoP makes storing access tokens in the browser as secure as using BFF. Remember that if an attacker manages to run malicious JavaScript in the user's browser (client hijacking), the attacker can make fraudulent requests as the user in both TMB and BFF patterns.
+
+The security ranking is: BFF = TMB with DPoP ≫ TMB > BBOC.
+
+DPoP is not yet supported by FusionAuth, but it has been [requested](https://github.com/FusionAuth/fusionauth-issues/issues/1679).
+
+## When to use TMB
+
+Since TMB is much less secure than BFF, there are few reasons to choose TMB. Below are three:
+
+### Latency
+
+By allowing the browser to call the resource server directly, TMB avoids the extra time it takes to route the call via the app backend. For a general web application, like a bank or forum, this time is irrelevant. But for apps where real-time performance is critical, like games, voice and video chat, or collaborative document editing, this time can create noticeable lag.
+
+### Infrastructure constraints
+
+Hosting a web app with large JavaScript files and images can be costly. You might want to serve your frontend from a cheap static file host and run your API on a more expensive cloud server. This is more difficult using BFF than TMB, because the BFF design needs the backend to live on the same URL origin as the frontend (unless you configure complex cross-origin resource sharing), so you need a reverse proxy for URL redirects between the two servers. TMB doesn't have this constraint, as it's used only for the initial login, not for proxying every call to other servers.
+
+### Limited skill and time
+
+If you aren't a professional programmer and can't afford to hire one, you may make an app by combining various low-code services. If the default architecture of your authentication provider is TMB and not BFF, and you don't have time to experiment with changing it, that's what you're stuck with.
+
+If this is the case, please know that you can implement your own BFF server with a single page of JavaScript. FusionAuth demonstrates this in the Hosted Backend [example repository](https://github.com/FusionAuth/fusionauth-example-hostedbackend/tree/main/nodeApp) (see the files `app.js` and `authentication.js`) and [accompanying tutorial](/blog/backend-for-frontend#how-to-create-a-bff-for-a-serverless-app).
+
+Even simpler, if you use FusionAuth (which is free if you host it yourself), you can use the built-in FusionAuth [Hosted Backend](/docs/apis/hosted-backend). The tutorial mentioned above also includes an example serverless HTML file with [two small JavaScript functions](https://github.com/FusionAuth/fusionauth-example-hostedbackend/blob/main/serverlessApp/index.html) that give you fully secure authentication by connecting to the Hosted Backend.
+
+## Getting technical: How the TMB flow works
+
+This section explains the TMB OAuth flow in more detail. It is based on the [official text from the IETF](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-application-architecture-2).
+
+Below is the sequence if the browser loads the app and still has a session cookie from the previously active session.
+
+<BrowserActiveSessionDiagram />
+
+If there is no session, the user has to log in. This sequence is shown below.
+
+<BrowserNoSessionDiagram />
+
+For a more detailed explanation of every step in the flow, please see the accompanying repository [README section on TMB](https://github.com/kmaida/auth-architecture/tree/main/tmb#how-tmb-authentication-works).
+
+## See TMB in action: A complete demo
+
+To help you get started using TMB, you can use a complete FusionAuth demonstration repository. The repository includes a React frontend and a Node.js/Express backend, demonstrating the TMB pattern with FusionAuth as the authorization server. Of course, you can adapt the backend to any language or framework.
+
+This section allows you to run a simple but functional TMB web app and server with FusionAuth to see how it works.
+
+### Download and start FusionAuth
+
+To follow along, you need Git, Node.js, npm, and Docker installed. While it's not explained here, you could use Deno (or Node in Docker if you know how to change your network settings) instead of Node.
+
+1. Open a terminal and clone the repository with Git using the commands below:
+
+```sh
+git clone https://github.com/kmaida/auth-architecture.git
+cd auth-architecture
+cp .env.sample .env
+```
+
+2. Start the FusionAuth server with Docker:
+
+```sh
+docker compose up -d
+```
+
+This should download Docker images and start FusionAuth on `http://localhost:9011/admin`. You can log in with the default admin credentials provided in the README: `admin@example.com` and `password`.
+
+Now you have an authentication provider running.
+
+### Start the backend app server
+
+1. Run the following commands to prepare the backend settings file for editing:
+
+```sh
+cd tmb/backend
+cp .env.sample .env
+```
+
+2. Open the `tmb/backend/.env` file in a text editor and change the first two lines to match the following settings:
+
+```js
+CLIENT_ID="e72dca1d-626c-4f4b-8f36-b7c8c2c0af33"
+CLIENT_SECRET="TC3Kmq9yNgudIHl8BKLJXJFAhd8AmzfTwjJSqAFJJ-k"
+```
+
+3. Start the server with the following command:
+
+```sh
+npm install
+npm run dev
+```
+
+The backend is now running at http://localhost:4001, but does not provide a website. It is only an API.
+
+Now you have an authentication provider and an API to call.
+
+### Start the frontend
+
+1. In a new terminal in the repository directory, run the following commands to prepare the frontend settings file:
+
+```sh
+cd tmb/frontend
+cp .env.sample .env
+```
+
+2. Start the server with the following command:
+
+```sh
+npm install
+npm run dev
+```
+
+Now you have an authentication provider, backend API, and frontend website running and can test the full system.
+
+3. Browse to the frontend at http://localhost:5173.
+
+![TMB website homepage when logged out](/img/blogs/auth-architecture/loggedOut.png)
+
+4. Click the login button at the top right and log in with the test user `user@example.com` and the password `password`.
+
+![TMB website login page](/img/blogs/auth-architecture/logIn.png)
+
+  <Aside type="note">
+    The login page is served by FusionAuth, not by the app, but both pages have matching visual styles.
+  </Aside>
+
+Once logged in, you can browse to private pages on the site. You can also see that all the FusionAuth authentication cookies are set as `HttpOnly`, so they can't be stolen. The access token is stored in application memory, where there is less chance of theft than if you kept it in browser storage, which malicious JavaScript might scan by default.
+
+![TMB website showing user profile when logged in](/img/blogs/auth-architecture/loggedIn.png)
+
+### Architecture overview
+
+Let's take a quick look at how this app works under the hood.
+
+**The authentication provider**, FusionAuth, stores user authentication details and provides the login page that the app redirects to. The user you logged in with, and the CSS styling, were created with a FusionAuth feature called [Kickstart](/docs/get-started/download-and-install/development/kickstart). The `kickstart` directory is a set of configuration files that allow you to start an instance of FusionAuth with premade users, applications, visual styles, and other settings.
+
+**The backend project** is the most complex of the three architecture components. It handles the OAuth interaction between FusionAuth and the frontend, and provides the API that acts as a resource server. The backend is an Express.js server (`server.ts`) that handles authentication in `auth.ts` and the files in the `utils` directory. You should be able to understand the code by reading the [flow process](https://github.com/kmaida/auth-architecture/tree/main/tmb#how-tmb-authentication-works) detailed in the README file.
+
+**The authentication flow** is hand-coded in this example to make it understandable and explicit, but in reality you should use a library like [Passport.js](https://www.passportjs.org/packages/passport-oauth2) to do most of the OAuth 2 work. Passport handles only the interaction between your backend and FusionAuth, not between your backend and your frontend. The important part of TMB that Passport leaves to you is getting session management correct (`utils/session.ts`) and separating the refresh token on the server from the access token returned to the browser.
+
+**The frontend project** is very simple. Its only dependency is the React.js ecosystem, and authentication is handled manually in `services/AuthContext.jsx`. Since the FusionAuth webpage redirect handles login, the only authentication work the frontend needs to do is check whether the user is logged in and get new access tokens.
+
+## Summary
+
+The recommendation of this article, and the whole series, is to use BFF for authentication and authorization. BFF is far more secure than TMB and BBOC. You can only justify using TMB instead of a secure backend if your app needs near real-time speed or if you have an insurmountable infrastructure constraint.
+
+If your authentication provider doesn't support BFF, you can implement one using FusionAuth for free, either as the Identity Provider itself or as merely the gateway that securely proxies authentication. See the [BFF tutorial](/blog/backend-for-frontend#use-a-premade-bff) to learn how.
+
+## Next in this series
+
+The [final post](/blog/browser-based-oauth-client-security-architecture) in this series discusses the third and least secure OAuth architecture: Browser-Based OAuth Client (BBOC). Learn how it works and the rare cases when you might choose to use it.
+
+## Further reading
+
+Explore these resources for a deeper understanding of OAuth security architectures:
+
+- [The authentication architecture examples repository](https://github.com/kmaida/auth-architecture)
+- [Part 1: Backend-for-Frontend security architecture](/blog/backend-for-frontend-security-architecture)
+- [Part 3: Browser-Based OAuth Client security architecture](/blog/browser-based-oauth-client-security-architecture)
+- [The history of BFF and the FusionAuth Hosted Backend](/blog/backend-for-frontend)
+- [The FusionAuth Hosted Backend example repository](https://github.com/fusionauth/fusionauth-example-hostedbackend)
+- [OAuth best practices summary](https://maida.kim/oauth2-best-practices-for-developers)
+- [OAuth 2.0 for Browser-Based Applications](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#name-token-mediating-backend)
+- [RFC 6749: The OAuth 2.0 Authorization Framework](https://www.rfc-editor.org/rfc/rfc6749)
+- [RFC 9700: OAuth 2.0 Security Best Current Practice](https://datatracker.ietf.org/doc/html/rfc9700)
+- [RFC 9449: OAuth 2.0 Demonstrating Proof of Possession](https://datatracker.ietf.org/doc/rfc9449)
+- [OAuth 2.0 Demonstrating Proof of Possession (DPoP)](https://dpop.info)
+- [Passport.js OAuth strategy](https://www.passportjs.org/packages/passport-oauth2)
+- [The FusionAuth DPoP feature request](https://github.com/FusionAuth/fusionauth-issues/issues/1679)
