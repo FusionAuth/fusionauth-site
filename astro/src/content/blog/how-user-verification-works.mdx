@@ -29,9 +29,9 @@ The table below summarizes the differences between the old and new versions of F
 | Users can confirm their registration for each application | Yes                                                            | No, that's deprecated                                                                                                                         |
 | User's email and phone numbers are kept in                | the user object                                                | multiple separate `user.identity` objects                                                                                                     |
 | The possible user identity types are                      | email and username                                             | email, username, and phone                                                                                                                    |
-| Email verification configuration is done in               | the <InlineUIElement>email</InlineUIElement> tab of the tenant | the <InlineUIElement>identities</InlineUIElement> tab of the tenant                                                                           |
+| Email verification configuration is done in               | the <InlineUIElement>Email</InlineUIElement> tab of the tenant | the <InlineUIElement>Identities</InlineUIElement> tab of the tenant                                                                           |
 | User verification field is found in                       | `user.verified`                                                | the combined values of `user.identities[].verified` and `user.identities[].verifiedReason`                                                    |
-| User is effectively verified if                           | `user.verified` is true                                        | user's primary identity has verified value of true, or the identity has a verified reason that is not one of completed, implicit, or pending. |
+| User is effectively verified if                           | `user.verified` is true                                        | the user's primary identity has a verified value of true, or the identity has a verified reason that is not one of completed, implicit, or pending. |
 
 From a user perspective, the experience of receiving a link or code to verify identities hasn't changed. To configure SMTP providers (email), use the <Breadcrumb>Tenant</Breadcrumb> page in FusionAuth. To configure SMS providers, use the <Breadcrumb>Messengers</Breadcrumb> page in <Breadcrumb>Settings</Breadcrumb>.
 
@@ -51,7 +51,7 @@ Notice that users are members of applications through an object called a registr
 
 ![FusionAuth type diagram](/img/docs/get-started/core-concepts/core-concepts-relationships-tenants.png)
 
-If you open your FusionAuth database, you'll see the user object is split into two tables: `users` and `identities`. The users table holds biographical information like name, birth date, and timezone. The identities table holds multiple records for a user, which may include a username, email address, and phone number. (To update users, you should use the FusionAuth web interface or the [Users API](/docs/apis/users) and mustn't access the database directly, but the user object in the API has the same structure as the database tables, so the diagram below should help your understanding.)
+If you open your FusionAuth database, you'll see the user object is split into two tables: `users` and `identities`. The users table holds biographical information like name, birth date, and timezone. The identities table holds multiple records for a user, which may include a username, email address, and phone number. (To update users, you should use the FusionAuth admin UI or the [Users API](/docs/apis/users) and mustn't access the database directly, but the user object in the API has the same structure as the database tables, so the diagram below should help your understanding.)
 
 ![Old database](/img/blogs/how-user-verification-works/oldDatabase.webp)
 
@@ -59,17 +59,17 @@ Verification in FusionAuth prior to version 1.59 uses only email addresses (and 
 
 Each user identity (email address) has the fields `verified` and `verified_instant`. The `verified` field is `false` until the user clicks the verification link, when it becomes `true`. The `verified_instant` is the time at which the user verified.
 
-A registration also has the `verified` and `verified_instant` fields. If the user identity already has a `verified` field, why does the registration need another verification field? The [application registration tutorial](/docs/lifecycle/manage-users/verification/registration-gate-accounts-until-verified) explains this:
+A registration also has the `verified` and `verified_instant` fields. If the user identity already has a `verified` field, why does the registration need another verification field? The [application registration tutorial](/docs/lifecycle/manage-users/verification/registration-gate-accounts-until-verified) explains this: a user verifying that they signed up to use an application has a different purpose to a user verifying their email or phone when creating an account in FusionAuth, although both procedures are named verification and both send a link the user must click. Verifying your identity proves ownership, whereas verifying your registration avoids surprise.
+
+The tutorial gives an example using applications called Non-Hotdog and PiperChat:
 
 >  However, PiedPiper requires separate registration verification to allow access to both Not-Hotdog and PiperChat through the same email account. This registration verification is a concrete, separate step that the user must engage in by clicking a link or entering a code (sent via email). Without this verification step, **users may find it alarming their logins (jared@piedpiper.com) work for both Not-Hotdog and PiperChat (without their express consent, especially if they did not know about the parent company relationship)**.
-
-This quote says that a user verifying that they signed up to use an application has a different purpose to a user verifying their email or phone when creating an account in FusionAuth, although both procedures are named verification and both send a link the user must click. Verifying your identity proves ownership, whereas verifying your registration avoids surprise.
 
 ### The verification process
 
 This section demonstrates what email verification looks like. If you want to test it for yourself, you need an SMTP server. The simplest way to test the process is to use a free fake SMTP service, like [SMTPBucket](https://www.smtpbucket.com).
 
-Configure SMTP and email verification in the <Breadcrumb>Email</Breadcrumb> tab of the default tenant in the FusionAuth web interface. This is also the tab where you enable <InlineUIElement>Verify email</InlineUIElement> and choose the
+Configure SMTP and email verification in the <Breadcrumb>Email</Breadcrumb> tab of the default tenant in the FusionAuth admin UI. This is also the tab where you enable <InlineUIElement>Verify email</InlineUIElement> and choose the
 <InlineField>Verification template</InlineField> `Email Verification`.
 
 ![Email settings](/img/blogs/how-user-verification-works/email.png)
@@ -93,7 +93,7 @@ As does the confirmation page it links to:
 
 ![Verify registration](/img/blogs/how-user-verification-works/verifyRegistration.png)
 
-Back in the FusionAuth web interface, as the administrator, manage the new user on the <Breadcrumb>Users</Breadcrumb> page. Below, you can see the green verified tick in the header, as well as the `verified` field in the user data.
+Back in the FusionAuth admin UI, as the administrator, manage the new user on the <Breadcrumb>Users</Breadcrumb> page. Below, you can see the green verified tick in the header, as well as the `verified` field in the user data.
 
 ![Verified user](/img/blogs/how-user-verification-works/userVerified.png)
 
