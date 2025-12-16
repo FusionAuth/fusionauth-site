@@ -8,7 +8,8 @@ The build targets are
 
 ## Content Style Guidelines
 
-Here are some guidelines to follow when writing documentation (everything under [docs](astro/src/content/docs)), articles (everything under [articles](astro/src/content/articles)), and blogs [blog](astro/src/content/blog).
+Here are some guidelines to follow when writing documentation (everything under [docs](astro/src/content/docs)), articles (everything under [articles](astro/src/content/articles)), and blogs [blog](astro/src/content/blog):
+
 - Capitalize all domain objects, especially when working the object's API in which it is created and updated in FusionAuth. 
   For example, see the API Key APIs description for `apiKeyId`, where API Key is capitalized: `The unique Id of the API Key to create. If not specified a secure random UUID will be generated.`
 - If referring to something that exists as a domain object in FusionAuth, but you are not explicitly referring to an object being created/updated in FusionAuth, use lowercase. Here are some examples:
@@ -20,6 +21,8 @@ Here are some guidelines to follow when writing documentation (everything under 
 - Use `logged in` instead of `logged-in`
 - `log in` is the verb, `login` is the noun
 - Use `UserInfo` instead of `Userinfo`
+- Use "self-hosted" as an adjective, e.g. "Self-hosted instances are the best way to try FusionAuth!"
+- Use "self-hosting" as a noun, e.g. "FusionAuth supports self-hosting". If you aren't sure whether to use "self-hosting" or "self-hosted", try "self-hosted".
 - Don't abbreviate FusionAuth, use the full name.
 - Use "a" or "an" before an initialism or acronym based on how the first letter sounds when spoken - for example, "an SSO" because "S" sounds like "ess" (vowel sound), but "a VPN" because "V" sounds like "vee" (consonant sound).
 - References to `http://127.0.0.1` should be updated to `http://localhost`. Remove hyperlinks to `localhost`.
