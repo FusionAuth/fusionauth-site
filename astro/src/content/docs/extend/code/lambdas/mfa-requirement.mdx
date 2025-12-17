@@ -24,20 +24,19 @@ When you create a new lambda using the FusionAuth UI we will provide you an empt
 If you are using the API to create the lambda you will need to ensure your function has the following signature:
 
 ```javascript
-function checkRequired(result, action, user, application, context) {
+function checkRequired(result, user, registration, context) {
   // Lambda code goes here
 }
 ```
 
-This lambda must contain a function named `checkRequired` that takes six parameters. The parameters that the lambda is passed are:
+This lambda must contain a function named `checkRequired` that takes four parameters. The parameters that the lambda is passed are:
 
 * `result` - an object used for returning modified MFA requirements back to FusionAuth.
-* `action` - a string representing the action being taken. Possible values are `login`, `changePassword`, and `stepUp`. Logins and password changes via FusionAuth APIs or hosted pages will always use either `login` or `changePassword` respectively. `stepUp` is a value that may be passed in to the [MFA Status API](/docs/apis/two-factor#retrieve-multi-factor-status) using the `action` field.
 * `user` - the FusionAuth User object. This object is read-only.
-* `application` - the FusionAuth Application object (if applicable). This object is read-only.
+* `registration` - the FusionAuth `UserRegistration` object. This parameter will be `undefined` when the user is not registered for the application. For SSO cases where an existing user is signing in to a new application, at the time the lambda would be called, the user will not have a registration yet. That doesn’t happen until later (in complete registration). This object is read-only.
 * `context` - an object containing context for the current request. This object is read-only and contains several optional fields.
 
-`user` and `application` are well documented in the [User API](/docs/apis/users) and [Application API](/docs/apis/applications) documentation.
+`user` and `application` are well documented in the [User API](/docs/apis/users) and [Registration API](/docs/apis/registrations) documentation.
 
 `result` is of type `RequiredLambdaResult` and the object will look like this:
 ```javascript
@@ -60,6 +59,19 @@ class RequiredLambdaResult {
 `context` is an immutable argument of type `Context` and the object will look like this:
 ```javascript
 class Context {
+    /**
+     * represents the action being taken. Logins and password changes via FusionAuth APIs or hosted pages will always use either `login` or `changePassword` respectively.
+     * `stepUp` is a value that may be passed in to the [MFA Status API](/docs/apis/two-factor#retrieve-multi-factor-status) using the `action` field.
+     * @type {string} - Possible values are [login], [changePassword], or [stepUp].
+     */
+    action;
+
+    /**
+     * The FusionAuth Application object (if applicable). This only exists if an applicationId was passed in to the relevant API, upstream from the lambda.
+     * @type {Application}
+     */
+    application;
+
     /**
      * A list of authentication threats detected for this request. This will only be populated when the action is `login` and Advanced Threat Detection is enabled.
      * @type {Set<String>} - Possible values are [ImpossibleTravel].
@@ -93,14 +105,6 @@ class Context {
      * @type {Policies}
      */
     policies;
-
-    /**
-     * When available, the user's registration. For SSO cases where an existing user is signing
-     * in to a new application, at the time the lambda would be called, the user will not have
-     * a registration yet. That doesn’t happen until later (in complete registration).
-     * @type {UserRegistration}
-     */
-    registration;
 }
 
 class EventInfo {
@@ -274,7 +278,7 @@ class Trust {
 }
 ```
 
-See [Registration API](/docs/apis/registrations) documentation for the `context.registration` object details.
+See [Application API](/docs/apis/applications) documentation for the `context.application` object details.
 
 See [Advanced Threat Detection](/docs/operate/secure/advanced-threat-detection) for more information on this licensed feature.
 
@@ -293,7 +297,7 @@ Or if you are using the Application API, assign the lambda Id to the `applicatio
 Here is an example lambda that will require MFA if the user's email address contains `gilfoyle`. Otherwise, FusionAuth's out of the box decision will be used.
 
 ```javascript
-function checkRequired(result, action, user, application, context) {
+function checkRequired(result, user, registration, context) {
   if (user.email.includes('gilfoyle')) {
     result.required = true;
   }
@@ -303,7 +307,7 @@ function checkRequired(result, action, user, application, context) {
 A more complex example might involve using the user's location to determine if MFA should be required. In this example, if the user is logging in from outside the United States, MFA will be required. Note that this example assumes you are licensed for the [Advanced Threat Detection](/docs/operate/secure/advanced-threat-detection) feature.
 
 ```javascript
-function checkRequired(result, action, user, application, context) {
+function checkRequired(result, user, registration, context) {
     if (context.eventInfo?.location?.country !== "USA") {
         result.required = true;
     }
