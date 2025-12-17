@@ -19,18 +19,75 @@ While having a decent registration and login page happens by default with FA, it
 
 ## List Of Best Practices For Registration And Login
 
-Let's start by reviewing everything authentication pages should have. In the next section you'll learn how to implement them in FusionAuth.
+Let's start by reviewing everything authentication pages should have. Then in the next section you'll learn how to implement in FusionAuth all the best practices given here.
 
-Registration and login pages should be:
+Registration and login pages should be all the following.
 
-- ⮆ Separate. Both pages could be combined into a single page, after all they both contain just username and password fields. If the user is not yet registered when trying to sign in, why not automatically register them? The main reason is that separate pages avoid users creating duplicate accounts. People frequently forget which email addresses they used to register for a service (especially in recent years with an increased focus on privacy and email aliases), or mistype the address. Telling someone that their username does not exist is clearer than silently creating a new account. You also might want to include extra fields on a registration page, such as checkboxes for consent, which do not belong on a login page. Finally, if you want to protect users' privacy, having separate pages prevents attackers from entering email addresses into a page to see which users are registered for the service already.
-- 🧹 Minimal. Registration pages give the user work to do, which discourages them from using your service. Make that work as easy as possible by having pages with no clutter and as few fields to complete as possible.
-- 🦯 Accessible. This includes large readable fonts for those with poor eyesight, color-blindness, or dyslexia. Screen readers for the blind. Proper tab order and keyboard support for those who can't use a mouse. Ensure your site works correctly on desktop and mobile. Accessibility also means that users can actually load the page, so be careful with images that are too large, don't exclude those using a VPN, and have a backup host if Cloudflare or AWS crashes due to network configuration. Show translated pages in the language of your users if appropriate.
-- 🌐 Standards compliant. This includes HTML5, OAuth 2, and cross-browser compatibility with functions like [autocomplete](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/autocomplete) and password managers.
-- 🔐 Secure. When using FusionAuth, this is the easiest part. The hosted login pages are the result of a company dedicated to a security product and are secure by default. The tricky part is deciding whether to support login with email addresses, usernames, or mobile phones. And whether to use passkeys, single sign-on (SSO) or social login, and two-factor authentication. Each of these choices has security and ease-of-use implications. You need to decide what is best for the majority of your users. Passwords should follow modern best practices, like [zxcvbn](https://github.com/zxcvbn-ts/zxcvbn), and not superstition about uppercase and special characters. Ensure only humans attempt to register and log in using CAPTCHA, and prevent brute-force password attacks by rate limiting login attempts.
-- ⚖️ Legal and ethical. You need to be compliant with GDPR and the Cookie law if your service is available to any European citizen. Put links to privacy and data use policies on your registration page. Include opt-in checkboxes for any personal data collection. Obtain consent for any non-essential cookies. For more information on this complex topic, see the blog articles on [EU laws](todo get link when FA publishes this) and [configuring FusionAuth to comply with GDPR](todo get link when FA publishes this).
-- 👁️ Able to collect metrics. Your registration page should track, in a way that doesn't collect personal data, how many people attempt, complete, and abandon registration. If possible, track where users abandon registration to learn what might be discouraging them and what you can improve.
-- 🌼 Good looking. A page that is visually well-designed persuades users that your business is successful, professional, and trustworthy. This isn't about only layout and styling. Typography matters, as does your text itself. The language on the page must be clear, grammatically correct, and the tone should match your business. Ensure translations to foreign languages are correct too.
+### ⮆ Separate
+
+Both pages could be combined into a single page, after all they both contain just username and password fields. If the user is not yet registered when trying to sign in, why not automatically register them on the same page? The main reason is that separate pages avoid users creating duplicate accounts. People frequently forget which email addresses they used to register for a service (especially in recent years with an increased focus on privacy and email aliases), or mistype their address. Telling someone that their username does not exist is clearer than silently creating a new account. You also might want to include extra fields on a registration page, such as checkboxes for consent, which do not belong on a login page. Finally, if you want to protect users' privacy, having separate pages prevents attackers from entering email addresses into a page to see which users are registered for the service already.
+
+### 🧹 Minimal
+
+Registration pages give the user work to do, which discourages them from using your service. Make that work as easy as possible by having pages with no clutter and as few fields to complete as possible. Autofocus the identifier textbox to save the user a click.
+
+Make labels clickable and make the label focus its related textbox on click. This looks like:
+```html
+<label for="email">Email address</label><input id="email" >
+```
+
+
+Provide a toggleable eye icon so that users can view their password in plaintext, rather than having to retype the password in a confirmation textbox. Show the password requirements next to the password box so that the users don't have to invent a new password after the first one is rejected. Show validation for all fields on blur (when field loses focus) and not on form submission, for immediate feedback. If the page is refreshed (such as when form submission fails), the page should remember all entered values in every textbox, so the user doesn't have to retype anything.
+
+Skip the login screen automatically and the user to their account if they're already signed in.
+
+Provide links between the registration and login pages so the user can quickly swap to the correct page if they started down the wrong path.
+
+The reset password page should automatically fill the user's email address from the login page or browser cookie, to save the user from typing.
+
+### 🦯 Accessible
+
+This includes large readable fonts for those with poor eyesight, color-blindness, or dyslexia. Screen readers for the blind. Proper tab order and keyboard support for those who can't use a mouse. Ensure your site works correctly on desktop and mobile. Accessibility also means that users can actually load the page, so be careful with images that are too large, don't exclude those using a VPN, and have a backup host if Cloudflare or AWS crashes due to network configuration. Show translated pages in the language of your users if appropriate.
+
+Give clear and complete instructions for inexperienced users: "I don't know what the password is! Oh, I'm supposed to *invent* my own password? Why didn't you say so".
+
+Show an indicator if the capslock key is on. Don't disable the paste ability on fields. Some users physically need it, and it's useful for those keep their passwords in a separate database.
+
+Show a spinner for feedback for any requests to the server, such as password validation and form submission. Users can quickly lose interest and assume a page is broken if there's no visual feedback.
+
+Make timeouts long. Even a short registration page could take a user a while to complete, especially if life interrupts them. It's annoying if when they finally click submit, the page rejects them due to an anti-forgery cookie timeout and they need to resubmit.
+
+### 🌐 Standards compliant
+
+This includes HTML5, OAuth 2, and cross-browser compatibility with functions like [autocomplete](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/autocomplete) and password managers.
+
+Allow all legal email addresses. For example, `+` and `/` are legal characters in addresses, as are two-letter domain names, but are frequently banned by persnickety registration pages.
+
+### 🔐 Secure
+
+When using FusionAuth, this is the easiest part. The hosted login pages are the result of a company dedicated to a security product and are secure by default. The tricky part is deciding whether to support login with email addresses, usernames, or mobile phones. And whether to use passkeys, single sign-on (SSO) or social login, and two-factor authentication. Each of these choices has security and ease-of-use implications. You need to decide what is best for the majority of your users. Passwords should follow modern best practices, like [zxcvbn](https://github.com/zxcvbn-ts/zxcvbn), and not superstition about uppercase and special characters.
+
+Use CAPTCHA to ensure only humans, and not spam bots, attempt to register and log in. Prevent brute-force password attacks by rate limiting login attempts. After too many incorrect passwords lock a user's account for a minute.
+
+Upgrade your FA instance frequently to get all security patches.
+
+Provide a "Stay logged-in on this device" checkbox to allow the user to explicitly say whether they want the convenience of avoiding future logins on their home computer, or the safety of staying logged out on a shared public computer. Provide a clear log out button once logged in.
+
+Ensure that your client-side and server-side validation are identical. If client is stricter, an attacker could bypass the HTML page to send a form directly to the server, where the server would accept unsafe fields. If the server is stricter, a user could enter a valid password on the registration page, only for it to be rejected on the server at submission.
+
+### ⚖️ Legal and ethical
+
+You need to be compliant with GDPR and the Cookie law if your service is available to any European citizen. Put links to privacy and data use policies on your registration page. Include opt-in checkboxes for any personal data collection. Obtain consent for any non-essential cookies. For more information on this complex topic, see the blog articles on [EU laws](todo get link when FA publishes this) and [configuring FusionAuth to comply with GDPR](todo get link when FA publishes this).
+
+### 👁️ Able to collect metrics
+
+Your registration page should track, in a way that doesn't collect personal data, how many people attempt, complete, and abandon registration. If possible, track where users abandon registration to learn what might be discouraging them and what you can improve.
+
+You also might want to use A/B testing with multiple versions of a registration page to see which is the most convenient.
+
+### 🌼 Good looking
+
+A page that is visually well-designed persuades users that your business is successful, professional, and trustworthy. This isn't about only layout and styling. Typography matters, as does your text itself. The language on the page must be clear, grammatically correct, and the tone should match your business. Ensure translations to foreign languages are correct too.
 
 ## Using Advanced Theming
 
@@ -62,7 +119,7 @@ If you read the [theming overview](http://localhost:3000/docs/customize/look-and
 - Remember me on this computer (cafe or campus computers)
 - Skip the login screen if logged in already. Show a log out button clearly.
 - autocomplete="current-password"   autocomplete="username
-- <label for="email">Email address</label><input id="email" ...>.
+- `<label for="email">Email address</label><input id="email">`.
 - Don't disable paste
 - Show a spinner for feedback, not dead air on a page when loading
 - ARIA live region (e.g., a <div role="alert">Incorrect password</div>
