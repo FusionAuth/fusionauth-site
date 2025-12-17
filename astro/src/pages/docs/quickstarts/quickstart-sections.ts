@@ -10,7 +10,7 @@ interface QuickStartSection {
   desc?: string;
   articles: {
     href?: string;
-    data?: any
+    data?: any;
     title: string;
     description?: string;
     icon: string;
