@@ -10,7 +10,7 @@ interface QuickStartSection {
   desc?: string;
   articles: {
     href?: string;
-    data?: any
+    data?: any;
     title: string;
     description?: string;
     icon: string;
@@ -22,24 +22,24 @@ interface QuickStartSection {
 
 const qsSections: QuickStartSection[] = [
   {
-    key: 'web',
-    icon: '/img/icons/web-application.svg',
-    faIcon: 'fa-code-simple',
-    color: 'indigo',
-    title: 'Web Application',
-    anchorTag: 'web-application',
-    desc: 'Traditional web applications that run on servers',
-    articles: [
-    ],
-  },
-  {
     key: 'spa',
     icon: '/img/icons/single-page-app.svg',
     faIcon: 'fa-laptop-code',
     color: 'orange',
     title: 'Single-Page App (SPA)',
     anchorTag: 'spa',
-    desc: 'JavaScript app that runs in the browser',
+    desc: 'Web applications with in-browser logic.',
+    articles: [
+    ],
+  },
+  {
+    key: 'web',
+    icon: '/img/icons/web-application.svg',
+    faIcon: 'fa-code-simple',
+    color: 'indigo',
+    title: 'Web Application',
+    anchorTag: 'web-application',
+    desc: 'Web applications with primarily server-side backend logic.',
     articles: [
     ],
   },
@@ -48,9 +48,9 @@ const qsSections: QuickStartSection[] = [
     icon: '/img/icons/native-mobile-app.svg',
     faIcon: 'fa-mobile-screen',
     color: 'blue',
-    title: 'Native/Mobile App',
+    title: 'Mobile',
     anchorTag: 'mobile-app',
-    desc: 'Mobile application that runs natively on a device',
+    desc: 'App running on a mobile device.',
     articles: [
     ],
   },
@@ -59,9 +59,9 @@ const qsSections: QuickStartSection[] = [
     icon: '/img/icons/backend-api.svg',
     faIcon: 'fa-binary',
     color: 'green',
-    title: 'Backend/API',
+    title: 'API',
     anchorTag: 'api',
-    desc: 'An API or service protected by FusionAuth and access tokens',
+    desc: 'An API or service protected by FusionAuth.',
     articles: [
     ],
   },

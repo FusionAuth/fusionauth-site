@@ -37,6 +37,7 @@ function get_json_repos() {
     "fusionauth-example-template"
     "fusionauth-example-vue-sdk"
     "fusionauth-quickstart-javascript-nuxt-web"
+    "fusionauth-quickstart-javascript-react-web"
   )
 
   jq -r '.[].url' "$JSONFILE" | awk -F'/' '{print $NF}' > json.list
