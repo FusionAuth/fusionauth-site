@@ -17,6 +17,7 @@ During logins, password changes, and [MFA Status API](/docs/apis/two-factor#retr
 
 The MFA Requirement Lambda has access to the following information:
 
+* the access token returned by FusionAuth as the result of a successful authentication
 * the action being taken
 * FusionAuth's out of the box MFA decision
 * the user record
@@ -69,6 +70,16 @@ class RequiredLambdaResult {
 
 ```javascript
 class Context {
+
+    /**
+     * The encoded JWT. This is an optional value and may be null. It will be
+     * populated if the /api/user/change-password was authenticated to via a JWT or if a `token`
+     * is POSTed to /api/two-factor/status
+    *
+    *  @type {string}
+    */
+    accessToken;
+
     /**
      * represents the action being taken. Logins and password changes via FusionAuth APIs or hosted pages will always use either `login` or `changePassword` respectively.
      * `stepUp` is a value that may be passed in to the [MFA Status API](/docs/apis/two-factor#retrieve-multi-factor-status) using the `action` field.
@@ -95,13 +106,6 @@ class Context {
      */
     eventInfo;
 
-    /**
-     * A list of the user's JWT claims. This is an optional value and may be null. It will be
-     * populated if the /api/user/change-password was authenticated to via a JWT or if a `token`
-     * is POSTed to /api/two-factor/status
-     * @type {Map<String, Object>}
-     */
-    jwt;
 
     /**
      * If existing two-factor trust was supplied (via a cookie/hosted pages or
