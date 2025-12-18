@@ -53,6 +53,25 @@ The following providers are available:
 
 If you're looking for a provider that is not listed here, review the open features in [GitHub](https://github.com/FusionAuth/fusionauth-issues/issues) and either vote or comment on an existing feature, or open a new feature request if you do not find an existing feature open.
 
+## Identity Provider Scope
+
+<Aside type="version">
+In version 1.62.0 and later FusionAuth supports creating tenant-scoped Identity Provider instances.
+</Aside>
+
+A tenant-scoped identity provider is only usable in authentication workflows for the specified tenant. This can be useful to scope a particular identity provider configuration to users within a specific tenant.
+
+An identity provider instance that is not scoped to a specific tenant is global and available to all tenants. All identity provider instances created prior to version 1.62.0 are global.
+
+### Global Identity Providers and Tenant-scoped API Keys
+A tenant-scoped API key can only alter objects scoped to its associated tenant. Because global identity providers span all tenants, you cannot use a tenant-scoped API key with a global identity provider via the [Identity Provider API](/docs/apis/identity-providers). You can, however, use a tenant-scoped API key to interact with things like identity provider links, as these are confined to a user within a tenant.
+
+### Configure an Identity Provider as Tenant-scoped
+Once created, you cannot modify the scope of an identity provider. Choose a scope during identity provider creation. When using the API, set `identityProvider.tenantId` to the desired tenant ID. In the admin app, select a specific tenant from the dropdown on the Add Identity Provider view.
+
+### Configure an Identity Provider as Global
+Omitting the `identityProvider.tenantId` parameter from the API request to create an identity provider or selecting `Global identity provider` from the dropdown on the Add Identity Provider view in the admin app will create a global identity provider.
+
 ## Identity Providers and Tenants
 
 Identity providers can be configured to set a limit on the number of links that may be established on a per tenant basis.
@@ -121,7 +140,11 @@ If users share a common email domain, such as `@example.com`, you can use manage
 - If the email domain matches a managed domain defined in the identity provider settings, the user is automatically redirected to the configured identity provider for authentication.
 - If the email domain does not match, the user proceeds to the standard email/password login flow.
 
-Multiple email address domains can be managed by the same identity provider. Multiple identity providers can be configured with managed domains. Each email domain can be managed by at most one identity provider in a FusionAuth instance.
+Multiple email address domains can be managed by the same identity provider. Multiple identity providers can be configured with managed domains.
+
+Each email domain can be managed by at most one identity provider in the context of a given tenant. A particular email domain can be managed in a FusionAuth instance by either:
+- A single global identity provider
+- Any number of tenant-scoped identity providers
 
 Configuring managed domains on an identity provider and then configuring the identity provider to be enabled for an application changes the login page experience for all users logging into this application. Every user viewing the application login page will be required to enter their email address first. 
 
