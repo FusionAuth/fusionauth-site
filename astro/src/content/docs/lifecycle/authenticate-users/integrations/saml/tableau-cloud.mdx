@@ -11,6 +11,7 @@ import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import InlineField from 'src/components/InlineField.astro';
 import Icon from 'src/components/icon/Icon.astro';
+import Aside from 'src/components/Aside.astro';
 
 ## Overview
 
@@ -22,19 +23,93 @@ This document assumes you have a running instance of FusionAuth and a working Ta
 
 Finally, you'll need a FusionAuth user that you will use to sign into Tableau. You can use an existing user or create a new user for this purpose.
 
-### Enabling SAML for Tableau
+## Configuring CORS in FusionAuth
 
-In your Tableau Cloud dashboard, navigate to <Breadcrumb>Settings -> Authentication</Breadcrumb>. Select <InlineUIElement>Enable an additional authentication method</InlineUIElement>, choose <InlineUIElement>SAML</InlineUIElement> and click <InlineUIElement>Edit connection</InlineUIElement> to open the settings.
+Before configuring SAML for Tableau, make sure the SSO Tableau origin is allowed for requests. Navigate to <Breadcrumb>Settings -> System -> CORS</Breadcrumb> and add the following origin: https://sso.online.tableau.com.
 
-<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/navigation.png" alt="Enable SAML in Tableau CLoud." width="1200" role="bottom-cropped" />
+<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/cors-config.png" alt="CORS configuration for Tableau Cloud." width="1200" />
 
-Copy both <InlineField>Tableau Cloud entity ID</InlineField> and <InlineField>Assertion Consumer Service URL (ACS)</InlineField> from <InlineUIElement>Export metadata from Tableau Cloud</InlineUIElement> and write them down. You'll use them shortly.
+Then enable the POST method and save the changes.
+
+## Creating a FusionAuth application with Placeholder Values
 
 Now, log in to your FusionAuth instance to create a new application. Navigate to <Breadcrumb>Applications</Breadcrumb> and click the <Icon name="plus" /> button and give it a meaningful name (e.g. `Tableau`).
 
 <img src="/img/docs/lifecycle/authenticate-users/integrations/saml/application-config.png" alt="Create an Application." width="1200" />
 
-Go to the <Breadcrumb>SAML</Breadcrumb> tab and toggle the <InlineField>Enabled</InlineField> switch. Paste the <InlineField>Tableau Cloud entity ID</InlineField> and <InlineField>Assertion Consumer Service URL (ACS)</InlineField> you copied from Tableau to <InlineField>Issuer</InlineField> and <InlineField>Authorized redirect URLs</InlineField> fields in your FusionAuth application, respectively.
+Go to the <Breadcrumb>SAML</Breadcrumb> tab and toggle the <InlineField>Enabled</InlineField> switch. Enter dummy values for the <InlineField>Issuer</InlineField> and the <InlineField>Authorized redirect URLs</InlineField>.
+
+- Issuer: `https://placeholder.example.com`
+- Authorized redirect URLs: `https://placeholder.example.com/acs`
+
+Save the changes.
+
+### Download the FusionAuth SAML Metadata
+
+In the application listing on the FusionAuth dashboard, click on the <InlineUIElement>View</InlineUIElement> button to display application details. Find the Metadata URL in the <InlineUIElement>SAML v2 Integration details</InlineUIElement>.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/metadata-url.png" alt="SAML metadata URL location." width="1200" />
+
+<Aside type="caution">
+**Important XML Formatting Issue**: The metadata downloaded from FusionAuth contains `ns2:` namespace prefixes that will cause a 500 error in Tableau. You must remove all `ns2:` prefixes from the XML before uploading to Tableau.
+</Aside>
+
+Open the URL in your browser, and you will see XML code configuration for the Metadata. Copy the code into a file called `metadata.xml` and edit the file to remove the `ns2:` prefixes to make it valid for Tableau.
+
+The downloaded XML will look like this:
+
+```xml
+<ns2:EntityDescriptor xmlns:ns2="urn:oasis:names:tc:SAML:2.0:metadata" ...>
+  <ns2:IDPSSODescriptor ...>
+    <ns2:SingleSignOnService ...>
+```
+
+You need to change it to:
+
+```xml
+<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata"
+                  xmlns:ds="http://www.w3.org/2000/09/xmldsig#" ...>
+  <IDPSSODescriptor ...>
+    <SingleSignOnService ...>
+``` 
+
+### Enabling SAML for Tableau
+
+In your Tableau Cloud dashboard, navigate to <Breadcrumb>Settings -> Authentication</Breadcrumb>. Click on the  <InlineUIElement>New configuration</InlineUIElement> button and select <InlineUIElement>SAML</InlineUIElement>.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/navigation.png" alt="Enable SAML in Tableau CLoud." width="1200" role="bottom-cropped" />
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/tableau-saml-config.png" alt="Tableau SAML configuration screen." width="1200" />
+
+Enter a name for the configuration (FusionAuth is fine) and upload the metadata file to Tableau. The <InlineField>Tableau Cloud entity ID</InlineField> and the IdP SSO service URL fields should automatically populate.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/tableau-entity-id.png" alt="Tableau entity ID auto-populated." width="1200" />
+
+### Map the fields
+
+In <InlineUIElement>Match attributes</InlineUIElement>, map email, first and last name fields like shown in the image below and click <InlineUIElement>Apply</InlineUIElement>.
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/mapping.png" alt="Map email  first and last name fields" width="1200" role="bottom-cropped top-cropped" />
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/tableau-attribute-mapping.png" alt="Tableau attribute mapping configuration." width="1200" />
+
+Save the changes and the configuration should be created now. Copy both <InlineField>Tableau Cloud entity ID</InlineField> and <InlineField>Assertion Consumer Service URL (ACS)</InlineField> from <InlineUIElement>Export metadata from Tableau Cloud</InlineUIElement> and write them down. You'll use them shortly.
+
+## Updating FusionAuth with Real Tableau URLs
+
+Go back to FusionAuth to edit the SAML configuration of the application you are using for authentication with Tableau. In the SAML tab, replace placeholder values with real ones from Tableau:
+
+- Issuer: with the Tableau Cloud entity ID you copied
+- Authorized redirect URLs: with the ACS URL you copied
+- Logout URL: your FusionAuth application logout URL
+
+<Aside type="note">
+**Critical**: You must add BOTH versions of the ACS URL (with and without trailing slash). Tableau may send requests with or without the trailing slash, and FusionAuth will reject the request if the exact URL doesn't match.
+
+Example:
+- `https://sso.online.tableau.com/public/sp/SSO/d3046906-4c8e-4bb0-a08d-420be0ff4897/f686d9ca-dead-4940-8f02-814ff68cd6f8`
+- `https://sso.online.tableau.com/public/sp/SSO/d3046906-4c8e-4bb0-a08d-420be0ff4897/f686d9ca-dead-4940-8f02-814ff68cd6f8/`
+</Aside>
 
 _Mapping fields_
 
@@ -43,23 +118,11 @@ _Mapping fields_
 | <InlineField>Tableau Cloud entity ID</InlineField>              | <InlineField>Issuer</InlineField>                   |
 | <InlineField>Assertion Consumer Service URL (ACS)</InlineField> | <InlineField>Authorized redirect URLs</InlineField> |
 
-Click <Icon name="save"/> to save your application.
+Click <Icon name="save"/> to save your application. Then, download the updated FusionAuth metadata again and re-upload to Tableau to ensure it has the latest configuration.
 
-In the <Breadcrumb>Applications</Breadcrumb> page, click on the <Icon name="fa-search"/> button next to your application to view its details. In the modal that opens, scroll down a bit until you reach the <InlineUIElement>SAML v2 Integration details</InlineUIElement> section.
-
-<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/metadata-view.png" alt="View the Application Metadata." width="1200" role="bottom-cropped" />
-
-Copy the address from <InlineUIElement>Metadata URL:</InlineUIElement> and open it in a new tab in your browser. If the file didn't automatically download, save it.
-
-Go back to your Tableau account and upload this in the <InlineUIElement>Import metadata file into Tableau Cloud</InlineUIElement> field by either dropping the file there or clicking <InlineUIElement>Choose a file</InlineUIElement> and selecting it. Click <InlineUIElement>Apply</InlineUIElement> to load the information from the metadata file into both <InlineField>IdP entity ID</InlineField> and <InlineField>SSO Service URL</InlineField> fields. You should see something like the image below.
-
-<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/config.png" alt="Uploading metadata file." width="1200" role="bottom-cropped top-cropped" />
+### Test the connection
 
 Click <InlineUIElement>Test Connection</InlineUIElement> to open a modal with the FusionAuth login screen. Fill in your credentials and submit the form. You should see a <InlineUIElement>Successfully connected to server</InlineUIElement> message below that button.
-
-In <InlineUIElement>Match attributes</InlineUIElement>, map email, first and last name fields like shown in the image below and click <InlineUIElement>Apply</InlineUIElement>.
-
-<img src="/img/docs/lifecycle/authenticate-users/integrations/saml/mapping.png" alt="Map email  first and last name fields" width="1200" role="bottom-cropped top-cropped" />
 
 ### Add a New User
 
@@ -76,6 +139,22 @@ They'll be redirected to the FusionAuth login screen when they click <InlineUIEl
 ### Troubleshooting
 
 Make sure you paste the right information from <InlineField>Tableau Cloud entity ID</InlineField> and <InlineField>Assertion Consumer Service URL (ACS)</InlineField> fields into your FusionAuth application.
+
+#### Common Errors
+
+**500 Error when uploading metadata to Tableau**
+
+The XML has namespace issues. Remove all `ns2:` prefixes from the metadata XML file and add proper `xmlns` declarations as shown in the XML example above.
+
+**"Remote IdP entity descriptor is not configured" error**
+
+The URLs in FusionAuth don't match what Tableau is sending. Double-check that the Entity ID (Issuer) and ACS URL in FusionAuth are exact matches to what Tableau provides.
+
+**"Invalid AssertionConsumerServiceURL" error**
+
+Add both versions of the ACS URL (with and without trailing slash) to the Authorized redirect URLs in FusionAuth, as Tableau may send requests either way.
+
+#### Additional Debugging
 
 You can also browse to <Breadcrumb>Settings -> Authentication</Breadcrumb> in your Tableau Cloud dashboard and click <InlineUIElement>Download log file</InlineUIElement> in <InlineUIElement>Troubleshooting single sign-on (SSO)</InlineUIElement> to further investigate.
 
