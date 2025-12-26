@@ -1,0 +1,498 @@
+---
+title: Manage Users With SCIM
+description: How to create and delete a user with SCIM in FusionAuth.
+navcategory: developer
+section: lifecycle
+subcategory: examples
+---
+
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
+import IconButton from 'src/components/IconButton.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+
+<EnterprisePlanBlurb />
+
+This guide will show you how to enable System for Cross-Domain Identity Management (SCIM) for your FusionAuth tenant, manage users (create, update, and delete), and map user details using a lambda. Since SCIM works at the tenant level, not the application level, you can use SCIM for any new or existing applications in the tenant.
+
+This concrete example integrates the following FusionAuth documentation:
+
+- [Overview of SCIM in FusionAuth](/docs/lifecycle/migrate-users/scim)
+- [FusionAuth SCIM API for Users](/docs/apis/scim/scim-user)
+- [SCIM user creation lambda](/docs/extend/code/lambdas/scim-user-request-converter)
+- [SCIM user response lambda](/docs/extend/code/lambdas/scim-user-response-converter)
+- [Calling APIs from lambdas](/docs/extend/code/lambdas/lambda-remote-api-calls)
+
+Read the [overview of SCIM in FusionAuth](/docs/lifecycle/migrate-users/scim) before continuing. You can refer to the other pages if you need to manage users in ways not covered in this guide.
+
+<Aside type="note" title="When to use SCIM?">
+FusionAuth has an alternative to SCIM, [the user API](/docs/apis/users), which allows you to provision users with simple HTTP calls. If you're looking for an easy way to automatically create users in FusionAuth, the API is a better choice. If you're looking for a way to automatically create a set of users when installing FusionAuth, then you can use [Kickstart](/docs/get-started/download-and-install/development/kickstart), which is easier than both the API and SCIM.
+
+Use SCIM in FusionAuth only when you have an existing user-management system in your organization that is primarily designed to work with SCIM. SCIM is a secure and full-featured standard, but does require more work to configure than the user API.
+</Aside>
+
+## Start FusionAuth And Configure SCIM
+
+Let's start the example by running a new instance of FusionAuth and configuring it to use SCIM. For compatibility and safety, you'll run all code inside [Docker](https://www.docker.com/get-started/).
+
+First, use `git clone` to clone the repository at https://github.com/FusionAuth/fusionauth-example-docker-compose, or download and unzip it.
+
+Open a terminal in the directory containing the repository files and run the command below to start FusionAuth.
+
+  ```sh
+  cd light
+  docker compose up
+  ```
+
+This command starts FusionAuth using Kickstart, which automatically creates an example application with an example user called `richard@example.com`. Using Kickstart saves you the time of having to configure everything yourself when following this tutorial.
+
+<Aside type="note">
+If you have completed any FusionAuth tutorials before, you might need to first delete any existing FusionAuth containers with the same name and the database volumes. Run the command below to do that.
+
+```sh
+docker rm fa fa_db; docker compose down -v
+```
+</Aside>
+
+Log in to your FusionAuth web interface at http://localhost:9011/admin with credentials `admin@example.com` and `password`. Browse to <Breadcrumb>Reactor</Breadcrumb> and enter your license key to activate Reactor. Refresh the page.
+
+<Aside type="note">
+If you have any trouble with this tutorial, try replacing the FusionAuth image in the Docker compose file with `fusionauth/fusionauth-app:1.54.0`, in case future versions of FusionAuth introduced a breaking change.
+</Aside>
+
+Browse to <Breadcrumb>Entity Management -> Entity Types</Breadcrumb> and do the following:
+
+- Click the dropdown arrow to the right of the <InlineUIElement>+ Add</InlineUIElement> button, choose <InlineUIElement>Add SCIM Server</InlineUIElement>, and save.
+- Click the dropdown arrow to the right of the <InlineUIElement>+ Add</InlineUIElement> button, choose <InlineUIElement>Add SCIM Client</InlineUIElement>, and save.
+
+Browse to <Breadcrumb>Entity Management -> Entities</Breadcrumb> and click the <IconButton icon="plus" color="green" /> button. Complete the fields as follows:
+
+- <InlineField>Entity type</InlineField>: Select <InlineUIElement>SCIM Server</InlineUIElement>
+- <InlineField>Name</InlineField>: `BankTenant`
+- <InlineField>Id</InlineField> and <InlineField>Client Id</InlineField>: `1a3fd007-aafb-45db-b3dc-3298bcf71c98`
+- <InlineField>Client secret</InlineField>: `FIjjqyyPgBRbUMKhZIE7aQ8OVQ_Mp6DipxDAHsVF2fg`
+
+Save the entity.
+
+Click the <IconButton icon="plus" color="green" /> button again and complete the fields as follows:
+
+- <InlineField>Entity type</InlineField>: Select <InlineUIElement>SCIM Client</InlineUIElement> 
+- <InlineField>Name</InlineField>: `BankClient`
+- <InlineField>Id</InlineField> and <InlineField>Client Id</InlineField>: `bd09d77f-73e5-4d6c-ae0c-5436bf3e26d6`
+- <InlineField>Client secret</InlineField>: `UirdqdyvC5_1SxiDHdwlLyz7JGNxwCFJM0AL3MjUp28`
+
+Save the entity.
+
+On the <InlineUIElement>Select</InlineUIElement> dropdown for the `BankClient` entity, select <InlineUIElement>Manage</InlineUIElement>, and then click <InlineUIElement>+ Add</InlineUIElement>. Search for and select `BankTenant`. Enable all permissions, and save. **Scroll down** when enabling permissions, because there is a scrollbar that is easy to overlook.
+
+You have now configured a SCIM server (representing your FusionAuth tenant) and a SCIM client (representing the app you want to allow to manage users in FusionAuth).
+
+![SCIM entities](/img/docs/lifecycle/examples/scim/entities.png)
+
+The next step is to enable SCIM operations in your tenant.
+
+Browse to <Breadcrumb>Tenants</Breadcrumb> and edit the Default tenant. In the <InlineUIElement>SCIM</InlineUIElement> tab, toggle on <InlineUIElement>Enabled</InlineUIElement>. Complete the fields as follows:
+
+- <InlineField>Client entity type</InlineField>: Select `SCIM Client`
+- <InlineField>Server entity type</InlineField>: Select `SCIM Server`
+- Select the FusionAuth default lambdas.
+
+Save the changes.
+
+![Tenant with SCIM](/img/docs/lifecycle/examples/scim/tenant.png)
+
+<Aside type="note">
+You link the Tenant to the **Entity Type**, not the Entity, which is surprising. In FusionAuth, entities handle [machine authentication](/content/articles/authentication/service-to-service) but [cannot connect to users or applications](/docs/get-started/core-concepts/types-and-relationships). FusionAuth allows connecting the tenant to the entity type as a workaround to provide security for SCIM. Permissions are controlled by the SCIM Client entity. Whichever permissions are enabled in the entity grant from the client to the server entity are the permissions the tenant will allow.
+</Aside>
+
+## Create A FusionAuth User With SCIM
+
+FusionAuth should now be ready to receive SCIM commands. To confirm that the SCIM client is correctly configured to create a user on the SCIM server and that your Docker networking works correctly, run the curl command below to check the client permissions. If FusionAuth returns an access token and not an error, your setup is functioning as expected.
+
+```sh
+curl -u bd09d77f-73e5-4d6c-ae0c-5436bf3e26d6:UirdqdyvC5_1SxiDHdwlLyz7JGNxwCFJM0AL3MjUp28 http://localhost:9011/oauth2/token --data-urlencode "grant_type=client_credentials" --data-urlencode "scope=target-entity:1a3fd007-aafb-45db-b3dc-3298bcf71c98:scim:user:create"
+```
+```sh
+# Expected output:
+{
+  "access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJjbGllbnRfY3JlZGVudGlhbHMiXSwia2lkIjoiMDllOGQyMTkxIiwidXNlIjoic2NpbV9zZXJ2ZXIifQ.eyJhdWQiOiIxYTNmZDAwNy1hYWZiLTQ1ZGItYjNkYy0zMjk4YmNmNzFjOTgiLCJleHAiOjE3MzYxNTg4NTksImlhdCI6MTczNjE1NTI1OSwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiJiZDA5ZDc3Zi03M2U1LTRkNmMtYWUwYy01NDM2YmYzZTI2ZDYiLCJqdGkiOiIxYzdhZDJiYS0xYTExLTQwMzktYmZiOC1kOGJiNjk1ZjllZWUiLCJzY29wZSI6InRhcmdldC1lbnRpdHk6MWEzZmQwMDctYWFmYi00NWRiLWIzZGMtMzI5OGJjZjcxYzk4OnNjaW06dXNlcjpjcmVhdGUiLCJ0aWQiOiJkN2QwOTUxMy1hM2Y1LTQwMWMtOTY4NS0zNGFiNmM1NTI0NTMiLCJwZXJtaXNzaW9ucyI6eyIxYTNmZDAwNy1hYWZiLTQ1ZGItYjNkYy0zMjk4YmNmNzFjOTgiOlsic2NpbTp1c2VyOmNyZWF0ZSJdfX0.6SusxG40kaRboSSKMhmNH9gEYynfnsqyr7czvFtw3Yg",
+  "expires_in":3599,
+  "scope":"target-entity:1a3fd007-aafb-45db-b3dc-3298bcf71c98:scim:user:create",
+  "token_type":"Bearer"
+}
+```
+
+To see what the token looks like when decoded, paste it into the [online JWT decoder](/dev-tools/jwt-decoder).
+
+At this point, if you have a SCIM app, you can point it to FusionAuth and see if you can create a user. The curl command above provides the URL to get an access token for the `scim:user:create` [permission](/docs/lifecycle/migrate-users/scim/#permissions). The user creation SCIM endpoint is http://localhost:9011/api/scim/resource/v2/Users for a FusionAuth instance running locally.
+
+To mimic a SCIM app, you can use a JavaScript script to create a user.
+
+Create the file `scim.js` in the `light` directory and insert the code below.
+
+```js
+import axios from "npm:axios@1.7.9";
+
+const user = {
+  "active": true,
+  "emails": [{"primary": true,"type": "work","value": "alice@example.com"}],
+  "externalId": "cc6714c6-286c-411c-a6bc-ee413cda1dbc",
+  "name": {"familyName": "Doe","formatted": "Alice Doe","givenName": "Alice",},
+  "password": "password",
+  "phoneNumbers": [{"primary": true, "type": "mobile", "value": "303-555-1234"}],
+  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Users"],
+  "userName": "alice"
+}
+
+const token = await getAccessToken();
+await makeUser(token, user);
+
+
+async function getAccessToken() {
+  try {
+    const permissions = 'target-entity:1a3fd007-aafb-45db-b3dc-3298bcf71c98:scim:user:create,scim:user:read,scim:user:update,scim:user:delete,scim:enterprise:user:create,scim:enterprise:user:read,scim:enterprise:user:update,scim:enterprise:user:delete,scim:group:create,scim:group:read,scim:group:update,scim:group:delete';
+    const formData = new URLSearchParams();
+    formData.append("grant_type", "client_credentials");
+    formData.append("client_id", "bd09d77f-73e5-4d6c-ae0c-5436bf3e26d6");
+    formData.append("client_secret", "UirdqdyvC5_1SxiDHdwlLyz7JGNxwCFJM0AL3MjUp28");
+    formData.append("scope", permissions);
+    const response = await axios({method: "post", url: "http://fa:9011/oauth2/token", headers: { "Content-Type": "application/x-www-form-urlencoded" }, data: formData});
+    return response.data.access_token;
+  }
+  catch (e) {console.dir(e, { depth: null });}
+}
+
+
+async function makeUser(token, user) {
+  try{
+    const api = axios.create({ baseURL: 'http://fa:9011/api', headers: { 'Authorization': 'Bearer ' + token } });
+    const result = await api.post('/scim/resource/v2/Users/', user);                    // CREATE
+    console.dir(result.data);
+    const userId = result.data.id;
+    await api.put('/scim/resource/v2/Users/' + userId, { ...user, "userName": "eve" }); // UPDATE
+    await api.delete('/scim/resource/v2/Users/' + userId);                              // DELETE
+  }
+  catch (e) {console.dir(e, { depth: null });}
+}
+```
+
+This code starts with JSON holding a sample user to create, then calls two functions: `getAccessToken`, which is similar to the curl call earlier, and `makeUser`, which passes the token and the user JSON to the FusionAuth SCIM endpoint. The `makeUser` function creates a user, stores the user UUID that FusionAuth returns, updates the user with the UUID, then deletes the user.
+
+In `getAccessToken`, all possible token `permissions` are requested. In reality, you can remove the permissions you don't need. The format is the target entity Id, followed by comma-separated permissions.
+
+Run the script in Docker with the command below. (The command shares the Docker FusionAuth network with the container, so the container can call FusionAuth on `http://fa`, because `http://localhost` won't work from inside a container.)
+
+```sh
+docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app"  --network faNetwork denoland/deno:alpine-2.1.3 sh -c  "deno run --allow-net --allow-env ./scim.js"
+```
+```sh
+# Expected output:
+{
+  active: true,
+  emails: [ { primary: true, type: "work", value: "alice@example.com" } ],
+  externalId: "cc6714c6-286c-411c-a6bc-ee413cda1dbc",
+  id: "672963d1-142c-4587-8956-2ecbc2e96c62",
+  meta: {
+    created: "2025-01-06T10:08:03.410Z",
+    lastModified: "2025-01-06T10:08:03.410Z",
+    location: "http://fa:9011/api/scim/resource/v2/Users/672963d1-142c-4587-8956-2ecbc2e96c62",
+    resourceType: "User"
+  },
+  name: { familyName: "Doe", formatted: "Alice Doe", givenName: "Alice" },
+  phoneNumbers: [ { primary: true, type: "mobile", value: "303-555-1234" } ],
+  schemas: [
+    "urn:ietf:params:scim:schemas:core:2.0:User",
+    "urn:ietf:params:scim:schemas:core:2.0:Users"
+  ],
+  userName: "alice",
+  "urn:ietf:params:scim:schemas:core:2.0:Users": {}
+}
+```
+
+<Aside type="tip">
+Note that FusionAuth generates a new UUID for the user Id. Even if you specify an Id value in JSON and update the FusionAuth lambda that receives SCIM requests to include `user.id = scimUser.id;`, FusionAuth won't use your Id when creating a SCIM user. This works differently to the [user API](/docs/apis/users#request), which allows you to specify the new user's Id in the POST URL.
+
+This limitation means that your code has to store the Id for the user returned from FusionAuth in order to issue further commands against the user.
+</Aside>
+
+To see the new user in the FusionAuth users page, comment out the `api.put` and `api.delete` lines in `scim.js` and run the command above again.
+
+You should now see the user Alice in the users page, as shown below.
+
+![User created with SCIM](/img/docs/lifecycle/examples/scim/user.png)
+
+## Create Registrations And Custom Lambdas
+
+At this point, you have seen how to create, update, and delete FusionAuth users with SCIM. You should be able to use this knowledge to correctly set up and test your own SCIM app.
+
+However, if you browse to the Registrations tab for the user, you'll see that Alice is not a member of any application. SCIM in FusionAuth can create users, but [cannot add users to applications](/docs/lifecycle/migrate-users/scim/#adding-registrations). Your SCIM app also might have some custom user data that you'd like to insert into FusionAuth.
+
+Both these problems can be handled by customizing the SCIM lambdas in FusionAuth.
+
+### Create Custom Data Mappings
+
+Browse to <Breadcrumb>Customizations -> Lambdas -> SCIM User Request Converter -> Edit</Breadcrumb>. Set a custom user data mapping by changing the top of the function to be like the code below.
+
+  ```js
+  function convert(user, options, scimUser) {
+    if (!user.data) user.data = {};
+    user.data.id = scimUser.externalId;
+
+    user.active = scimUser.active;
+  ```
+
+Delete the user from the list of users in FusionAuth and rerun `scim.js`.
+
+Now when you browse to the user data tab for the new user, you'll see that she has more data stored.
+
+![Custom user data](/img/docs/lifecycle/examples/scim/data.png)
+
+<Aside type="caution">
+FusionAuth lambdas are JavaScript run in Java using [GraalJS](https://www.graalvm.org/javascript). GraalJS supports modern JavaScript syntax, like ` `` ` strings, `...` object notation, `await`, and `=>` functions. However, at the time of writing, the FusionAuth lambda code editor does not recognize this syntax and will show errors. There is a [GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/1889) open to fix this. Until that issue is fixed, the only way to check if your code is correct is to run it and review the FusionAuth <Breadcrumb>System -> Event Log</Breadcrumb> page to see if any `org.graalvm.polyglot.PolyglotException` errors occurred.
+</Aside>
+
+<Aside type="caution">
+It may look like you can create a registration for the user by setting `options.applicationId`, but that won't work. The user creation parameters are documented [here](/docs/apis/users#request) and [here](/docs/extend/code/lambdas/scim-user-request-converter#lambda-structure). The code below **won't** make the user a member of the application, and also won't throw an error.
+```js
+function convert(user, options, scimUser) {
+ options.applicationId = 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e';
+ options.disableDomainBlock = true;
+ options.sendSetPasswordEmail = false;
+ options.skipVerification = true;
+```
+</Aside>
+
+### Create A Registration From A Lambda
+
+To register the new user with an application, you need to make a [user API call from within the SCIM user response lambda](/docs/extend/code/lambdas/lambda-remote-api-calls) after the FusionAuth user has been created (which means you can't make the call in the SCIM user **request** lambda).
+
+Delete the user Alice from the list of users.
+
+Browse to <Breadcrumb>Customizations -> Lambdas -> SCIM User Response Converter -> Edit</Breadcrumb>. Go to the very last line of the `convert` function, which should be the closing brace, `}`, and replace that line with the code below. Then save.
+
+```js
+
+  var applicationId = "e9fdb985-9173-4e01-9d73-ac2d60d1dc8e";
+  var apiKey        = "33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod";
+
+  if (isUserRegistered(user.id, applicationId, apiKey))
+    return;
+
+  try {
+    var response = fetch("http://fa:9011/api/user/registration/" + user.id, {
+      method: 'POST',
+      headers: {'Authorization': apiKey,'Content-Type': 'application/json'},
+      body: JSON.stringify({'registration': {'applicationId': applicationId}})
+    });
+    if(response.status !== 201 && response.status !== 200)
+      console.error("Failed to register user to application. Response status:", response.status);
+  }
+  catch(error) {
+    console.error("Error occurred registering user:", error);
+  }
+}
+
+function isUserRegistered(userId, applicationId, apiKey) {
+  try {
+    var response = fetch("http://fa:9011/api/user/registration/" + userId + "/" + applicationId, {
+      method: 'GET',
+      headers: {'Authorization': apiKey}
+    });
+    if (response.status === 200) return true;
+    if (response.status === 404) return false;
+    console.error("Error checking user registration:", response.status);
+    return false;
+  }
+  catch (error) {
+    console.error("Exception checking user registration:", error);
+    return false;
+  }
+}
+```
+
+Run `scim.js` in the terminal again.
+
+If you view user Alice in the Users page, you can see she is now a member of the sample Example application in the <Breadcrumb>Registrations</Breadcrumb> tab.
+
+  ![User has registration](/img/docs/lifecycle/examples/scim/registration.png)
+
+If you can't see a registration, or there was an error in the terminal, browse to the [system event log](http://localhost:9011/admin/system/event-log) to see what errors occurred.
+
+  ![Event log](/img/docs/lifecycle/examples/scim/event.png)
+
+Let's review what the code in the lambda does. The `convert` function includes the API key and application Id. To avoid hardcoding the Id into the lambda, the application Id could be moved into the user data when making the SCIM create request and retrieved from the user data in the `convert` function. But the API key must be stored in the lambda for safety. The disadvantage is that when you update your API keys for security, you need to edit every lambda and change each key manually.
+
+The user is registered by making an HTTP fetch call to the user API at `http://fa:9011/api/user/registration`. The `isUserRegistered` function works similarly, and is used to ensure that you don't add multiple registrations for the same user.
+
+Note that this lambda is called whenever you return a user through SCIM. So if you delete the user's registration to the application manually, then call SCIM read for the user, the registration will be re-added, even though you didn't call SCIM create. Review your user management protocols carefully to ensure this process doesn't mistakenly give old users access they shouldn't have.
+
+The `console.error` message writes to the system event log.
+
+<Aside type="tip">
+If you have trouble getting a lambda to work, you can quickly test that your API keys and Ids are correct by running curl. For example, the curl command below adds a registration for the user Richard to the Example app with the default API key created by Kickstart.
+
+```sh
+curl -v -X POST -H "Authorization: 33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod" -H "Content-Type: application/json" -d '{"registration":{"applicationId":"e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"}}' 'http://localhost:9011/api/user/registration/00000000-0000-0000-0000-111111111111/'
+```
+</Aside>
+
+### Create A Registration From A Webhook
+
+The alternative to creating registrations from inside the lambda is to listen for the FusionAuth [webhook](/docs/extend/events-and-webhooks) after the user is [created](/docs/extend/events-and-webhooks/events/user-create-complete), and call the FusionAuth user API from your own script. To do this, you need to create a webserver that listens for the webhook.
+
+In the FusionAuth web interface, browse to <Breadcrumb>Tenants -> Default -> Edit -> Webhooks</Breadcrumb>. Enable `user.create.complete` and save.
+
+  ![Set webhook in tenant](/img/docs/lifecycle/examples/scim/webhook.png)
+
+Browse to <Breadcrumb>Settings -> Webhooks</Breadcrumb> and add a new webhook. In the <InlineField>URL</InlineField> field, enter the value `http://register`. Disable all webhooks except `user.create.complete` and save.
+
+  ![Create webook](/img/docs/lifecycle/examples/scim/webhook2.png)
+
+FusionAuth is now configured to send webhooks to a web server listening at `http://register` after a user is created.
+
+Delete the user Alice in the FusionAuth web interface.
+
+Create a file called `register.ts` and insert the code below.
+
+  ```js
+  Deno.serve({'hostname': '0.0.0.0', 'port': 80 }, handler);
+
+  async function handler(request: Request): Response {
+    try {
+      const body = await request.json();
+      console.dir(body);
+    }
+    catch {
+      console.log('Request contained no JSON.');
+      console.dir(request);
+    }
+    return new Response(null, { status: 200 });
+  }
+  ```
+
+Run the script with the command below. Note that you are specifying the network and container name so that FusionAuth will be able to connect to the container at `http://register`.
+
+  ```sh
+  docker run --platform=linux/amd64 --rm -v ".:/app" -w "/app"  --network faNetwork --name register -p 7777:80 denoland/deno:alpine-2.1.3 sh -c  "deno run --allow-net --allow-env ./register.ts"
+    ```
+
+Confirm that the JavaScript web server is running by browsing to http://localhost:7777. You should see a blank page with no errors.
+
+Run `scim.js` again and the terminal output of the web server should be as below. This is what a FusionAuth webhook looks like. You can use these properties to customize your application registration as needed.
+
+  ```sh
+  {
+    event: {
+      createInstant: 1736320075774,
+      id: "0f30478d-d345-494d-a639-4b13b93a12a7",
+      info: { ipAddress: "172.18.0.5", userAgent: "axios/1.7.9" },
+      linkedObjectId: "e3f4b606-a54e-44a2-9e45-cce7a7f59ef9",
+      tenantId: "d7d09513-a3f5-401c-9685-34ab6c552453",
+      type: "user.create.complete",
+      user: {
+        active: true,
+        connectorId: "e3306678-a53a-4964-9040-1c96f36dda72",
+        data: {
+          extensions: { "urn:ietf:params:scim:schemas:core:2.0:Users": {} },
+          id: "cc6714c6-286c-411c-a6bc-ee413cda1dbc"
+        },
+        email: "alice@example.com",
+        firstName: "Alice",
+        fullName: "Alice Doe",
+        id: "e3f4b606-a54e-44a2-9e45-cce7a7f59ef9",
+        insertInstant: 1736320075751,
+        lastLoginInstant: 1736320075751,
+        lastName: "Doe",
+        lastUpdateInstant: 1736320075751,
+        memberships: [],
+        mobilePhone: "303-555-1234",
+        passwordChangeRequired: false,
+        passwordLastUpdateInstant: 1736320075768,
+        preferredLanguages: [],
+        registrations: [],
+        tenantId: "d7d09513-a3f5-401c-9685-34ab6c552453",
+        twoFactor: { methods: [], recoveryCodes: [] },
+        uniqueUsername: "alice",
+        username: "alice",
+        usernameStatus: "ACTIVE",
+        verified: true,
+        verifiedInstant: 1736320075751
+      }
+    }
+  }
+  ```
+
+Delete the user Alice in the FusionAuth web interface one last time.
+
+Replace the code in `register.ts` with the code below. 
+
+  ```js
+  Deno.serve({'hostname': '0.0.0.0', 'port': 80 }, handler);
+
+  async function handler(request: Request): Response {
+    let data = null;
+    try {
+      data = await request.json();
+    }
+    catch {
+      console.log('Request contained no JSON.');
+      console.dir(request);
+      return new Response(null, { status: 200 });
+    }
+    try {
+      const result = await fetch('http://fa:9011/api/user/registration/'+data.event.user.id,
+        {
+          method: 'POST',
+          headers: {'Authorization': '33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod', 'Content-Type': 'application/json'},
+          body: JSON.stringify({"registration": {"applicationId":"e9fdb985-9173-4e01-9d73-ac2d60d1dc8e"}}),
+        }
+      );
+      console.dir(result);
+      return new Response(null, { status: 200 });
+    }
+    catch (e: Error) {
+      console.log('Error creating registration:');
+      console.dir(e);
+    }
+    return new Response(null, { status: 500 });
+  }
+  ```
+
+Now the HTTP handler will take the user Id from the webhook JSON and use it to send a POST to the user registration API.
+
+Run `scim.js` one last time. The terminal output of the web server should be as below.
+
+  ```sh
+  Listening on http://0.0.0.0:80/
+  Response {
+    body: ReadableStream { locked: false },
+    bodyUsed: false,
+    headers: Headers {
+      "cache-control": "no-store",
+      connection: "keep-alive",
+      "content-type": "application/json; charset=UTF-8",
+      "transfer-encoding": "chunked"
+    },
+    ok: true,
+    redirected: false,
+    status: 200,
+    statusText: "OK",
+    url: "http://fa:9011/api/user/registration/835829d1-660b-4272-905e-e97ffced9661"
+  }
+  ```
+
+If you look at Alice's registrations in the user page, you'll see that she is registered for the Example application again.
+
+Should you use a lambda or a webhook to create your registrations? A lambda is simpler to manage, so it's the better choice unless you need to perform extra logic or integrate with other systems, which you can do only in your own custom script.
+
+## Clean Up
+
+To remove all the Docker volumes, containers, images, and networks used in this guide, run the commands below.
+
+```sh
+docker compose down -v
+docker rmi postgres:16.0-bookworm fusionauth/fusionauth-app:latest denoland/deno:alpine-2.1.3
+docker network prune;
+```
