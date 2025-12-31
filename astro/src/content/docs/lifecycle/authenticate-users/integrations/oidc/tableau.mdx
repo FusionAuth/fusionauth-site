@@ -23,17 +23,17 @@ Finally, you'll need a FusionAuth user that you will use to sign into Tableau. Y
 
 ## Configure CORS in FusionAuth
 
-Before configuring OIDC for Tableau, make sure the OIDC Tableau origin is allowed for requests. Navigate to <Breadcrumb>Settings -> System -> CORS</Breadcrumb> and add the origin, which is the URL in your browser's address bar when you are logged in. It will be something like: `https://prod-ch-a.online.tableau.com` or `https://prod-usw-a.online.tableau.com`. The format is typically: `https://prod-{region}.online.tableau.com`. Add also following origin: `https://sso.online.tableau.com`.
+Before configuring OIDC for Tableau, make sure the OIDC Tableau origin is allowed for requests. In your FusionAuth dashboard, navigate to <Breadcrumb>Settings -> System -> CORS</Breadcrumb> and toggle the <InlineField>Enabled</InlineField> switch to on. Then add the origin, which is the URL in your browser's address bar when you are logged in to Tableau. It will be something like: `https://prod-ch-a.online.tableau.com` or `https://prod-usw-a.online.tableau.com`. The format is typically: `https://prod-{region}.online.tableau.com`. Add also the following origin: `https://sso.online.tableau.com`.
 
 <img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/tableau/cors-configuration.png" alt="Configure CORS settings in FusionAuth." width="1200" />
 
-Then enable the POST method and save the changes.
+Under <InlineField>Allowed methods</InlineField>, enable both the <InlineUIElement>GET</InlineUIElement> and <InlineUIElement>POST</InlineUIElement> methods. Then save the changes.
 
 ## Create an RS256 Signing Key
 
 Tableau Cloud only supports the RS256 algorithm for signing tokens. Using ES256 or HS256 will cause authentication to fail. Tableau Cloud specifically requires RSA signatures with SHA-256. Other algorithms like ES256 (ECDSA) or HS256 (HMAC) are not supported.
 
-To create a new signing key, navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb> and click on the <InlineUIElement>Generate EC key pair</InlineUIElement> button and select the <InlineUIElement>Generate RSA key pair</InlineUIElement> option.
+To create a new signing key, navigate to <Breadcrumb>Settings -> Key Master</Breadcrumb>, click on the <InlineUIElement>Generate EC key pair</InlineUIElement> dropdown button, and select the <InlineUIElement>Generate RSA key pair</InlineUIElement> option.
 
 <img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/tableau/generate-rsa-key.png" alt="Generate RSA key pair." width="1200" />
 
@@ -43,33 +43,39 @@ Enter a name such as `Tableau RS256 Key` for the name of the signing key and sav
 
 ## Create an Application
 
-Navigate to the FusionAuth dashboard and click on the **➕** button to create a new application. Give it a memorable name such as `Tableau Cloud OIDC` and set the tenant you want to use.
+In your FusionAuth dashboard, navigate to <Breadcrumb>Applications</Breadcrumb> in the sidebar, then click the **➕** button in the top right to create a new application. Give it a memorable name such as `Tableau Cloud OIDC` and set the tenant you want to use.
 
 <img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/tableau/create-application.png" alt="Create a new application." width="1200" />
 
-Then, click the save button and navigate to the <Breadcrumb>OAuth</Breadcrumb> tab of the created application. Make sure the following conditions are met:
+Before saving, navigate to the <Breadcrumb>OAuth</Breadcrumb> tab to configure the OAuth settings. Make sure the following conditions are met:
 
 - <InlineField>Authorized redirect URLs</InlineField> is empty for now. We will retrieve the values for this from Tableau.
-- For the enabled grants:
-  - The <InlineUIElement>Authorization Code</InlineUIElement> grant should be enabled.
-  - <InlineUIElement>Refresh Token</InlineUIElement> grant should be enabled.
+- Under <InlineField>Enabled grants</InlineField>, enable the following:
+  - <InlineUIElement>Authorization Code</InlineUIElement>
+  - <InlineUIElement>Refresh Token</InlineUIElement>
 
 <img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/tableau/oauth-configuration.png" alt="Configure OAuth settings." width="1200" />
 
-Then, on the application details in the listing, retrieve the <InlineField>Client Id</InlineField> and <InlineField>Client secret</InlineField> value under the <InlineUIElement>OAuth configuration</InlineUIElement> section. You will also need the configuration URL, which is the <InlineField>OpenID Connect Discovery</InlineField> URL under the <InlineUIElement>OAuth2 & OpenID Connect Integration details</InlineUIElement> section.
-
-<img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/tableau/application-details.png" alt="Application details with Client ID and secret." width="1200" />
-
 ## Configure JWT Settings
 
-In the same application you created, navigate to the <Breadcrumb>JWT</Breadcrumb> tab, enable JWT and configure the following fields:
+Before saving the application, also navigate to the <Breadcrumb>JWT</Breadcrumb> tab, enable JWT and configure the following fields:
 
 - <InlineField>Id token signing key</InlineField>: Select the <InlineUIElement>RS256 key</InlineUIElement> you created earlier, in this case `Tableau RS256 Key`.
 - <InlineField>Access token signing key</InlineField>: Select the same <InlineUIElement>RS256 key</InlineUIElement>.
 
 <img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/tableau/jwt-configuration.png" alt="Configure JWT settings." width="1200" />
 
-Save the changes after the modifications.
+Save the application.
+
+## Retrieve Application Credentials
+
+After saving, you'll be taken back to the Applications listing page. To view the application details, click the dropdown in the <InlineField>Action</InlineField> column for your Tableau Cloud OIDC application and select <InlineUIElement>View</InlineUIElement>. From the application details page, retrieve the following values which you'll need for configuring Tableau:
+
+- <InlineField>Client Id</InlineField> under the <InlineUIElement>OAuth configuration</InlineUIElement> section
+- <InlineField>Client secret</InlineField> under the <InlineUIElement>OAuth configuration</InlineUIElement> section
+- <InlineField>OpenID Connect Discovery</InlineField> URL under the <InlineUIElement>OAuth2 & OpenID Connect Integration details</InlineUIElement> section
+
+<img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/tableau/application-details.png" alt="Application details with Client ID and secret." width="1200" />
 
 ## Configure Tableau Cloud
 
@@ -85,23 +91,33 @@ Then in the rest of the configuration form, enter the:
 
 <img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/tableau/tableau-oidc-settings.png" alt="Enter OIDC configuration details." width="1200" />
 
-After entering the above, Tableau will show you a <InlineField>Redirect URL</InlineField> looking like `https://sso.online.tableau.com/...`. Copy this URL as we will need it for FusionAuth for the redirection URLs in the OAuth configuration.
+After entering the Client ID, Client Secret, and Configuration URL, scroll down to the section labeled <InlineUIElement>2. Copy Tableau URL redirect</InlineUIElement>. You'll see a <InlineField>Redirect URL</InlineField> that looks like `https://sso.online.tableau.com/public/oidc/login`. Copy this URL - you'll need it to configure FusionAuth in the next step.
+
+### Update FusionAuth Application with Redirect URL
+
+Return to your FusionAuth dashboard and navigate to <Breadcrumb>Applications</Breadcrumb>. In the Applications listing, click the edit icon (pencil) in the action buttons for your Tableau Cloud OIDC application. Go to the <Breadcrumb>OAuth</Breadcrumb> tab and paste the redirect URL you copied from Tableau into the <InlineField>Authorized redirect URLs</InlineField> field. Save the application.
 
 ### Configure Claims Mapping
 
-Then, you need to enter claims to map user account attributes from the OIDC token with Tableau Cloud. You can set the username claim to `email`. Then, given name to `given_name` and family name to `family_name`.
+Return to Tableau Cloud and continue with your OIDC configuration. In the claims mapping section, configure the following:
+
+- <InlineField>Username</InlineField>: Enter `email`
+- <InlineField>Email address</InlineField>: Enter `email`
+- <InlineField>Name</InlineField>: Select the <InlineUIElement>Given and family name</InlineUIElement> radio button
+  - <InlineField>Given name or first name</InlineField>: Enter `given_name`
+  - <InlineField>Family name or last name</InlineField>: Enter `family_name`
 
 <img src="/img/docs/lifecycle/authenticate-users/integrations/oidc/tableau/claims-mapping.png" alt="Configure claims mapping." width="1200" />
 
 And then save the changes.
 
-### Test the Connection
+### Test the Configuration
 
-Click <InlineUIElement>Test Connection</InlineUIElement> to open a modal with the FusionAuth login screen. Fill in your credentials and submit the form. You should see a <InlineUIElement>Successfully connected to server</InlineUIElement> message below that button.
+Click <InlineUIElement>Test Configuration</InlineUIElement> to open a modal with the FusionAuth login screen. Fill in your credentials and submit the form. You should see a <InlineUIElement>Successfully connected to server</InlineUIElement> message below that button.
 
 ## Add a New User
 
-In your Tableau Cloud account, go to <Breadcrumb>Settings -> Authentication</Breadcrumb> (the same page you've configured the authentication above) and scroll down to <InlineUIElement>Manage Users</InlineUIElement>. Click <InlineUIElement>Manage Users</InlineUIElement> and then <InlineUIElement>Add Users by Email</InlineUIElement> to send invites to the desired users. Tableau supports SCIM for automated provisioning, as does FusionAuth, but that is beyond the scope of this document. You must provide the same addresses they use to log in to your FusionAuth instance.
+In your Tableau Cloud account, navigate to <Breadcrumb>Users</Breadcrumb> in the sidebar. Click the <InlineUIElement>Add Users</InlineUIElement> dropdown and select <InlineUIElement>Add Users by Username</InlineUIElement>. Tableau supports SCIM for automated provisioning, as does FusionAuth, but that is beyond the scope of this document. You must provide the same email addresses they use to log in to your FusionAuth instance.
 
 After doing so, they should receive an email with a link to the login page. When browsing to that page, they should enter their email address.
 
@@ -113,10 +129,6 @@ They'll be redirected to the FusionAuth login screen when they click <InlineUIEl
 
 ## Troubleshooting
 
-Make sure you paste the right information from the <InlineField>Redirect URL</InlineField> field into your FusionAuth application's <InlineField>Authorized redirect URLs</InlineField>.
-
-### Additional Debugging
-
 Finally, you can edit your FusionAuth application, go to the <Breadcrumb>JWT</Breadcrumb> and <Breadcrumb>OAuth</Breadcrumb> tabs and click <InlineUIElement>Debug enabled</InlineUIElement> to create an event log with more information. To see these logs, browse to <Breadcrumb>System -> Event Log</Breadcrumb>.
 
-You can also review the [Tableau Cloud SSO docs](https://help.tableau.com/current/server/en-us/openid_auth.htm).
+You can also review the [Tableau Cloud SSO docs](https://help.tableau.com/current/online/en-us/openid_auth.htm).
