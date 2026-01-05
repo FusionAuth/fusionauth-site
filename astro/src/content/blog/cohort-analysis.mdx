@@ -25,11 +25,11 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 
 ## Introduction
 
-Do you know how frequently your customers use your app? Do you know how many people sign up but quickly lose interest in your service? In this article, you'll learn how to use FA track customer statistics: retention rates, customer age analysis, and customer cohorts (groups). While you need to investigate your own application database for reasons *why* customers stay or leave, having a base of FA login stats to work from lets you know who to analyze.
+Do you know how frequently your customers use your app? Do you know how many people sign up but quickly lose interest in your service? In this article, you'll learn how to use FA to track customer statistics: retention rates, customer age analysis, and customer cohorts (groups). While you need to investigate your own application database for reasons *why* customers stay or leave, having a base of FA login stats to work from lets you know who to analyze.
 
 ## Some useful customer statistics
 
-FA has a few built-in charts with views of total logins and registrations. But if you want a deeper analysis, you need to extract your customer data and calculate your own statistics.
+FA has a few built-in charts with views of total logins and registrations in the <Breadcrumb>Reports</Breadcrumb> section. But if you want a deeper analysis, you need to extract your customer data and calculate your own statistics.
 
 ![Existing FA charts](../../../../astro/public/img/blogs/cohort-analysis/faCharts.webp)
 
@@ -61,7 +61,7 @@ List of charts:
 
 While application databases, like FA, store data in a denormalized structure to save space, data analysis needs data to be normalized for fast retrieval and computation.
 
-The first step to analyze your user data in FA is to extract it and store it in a usable format. As this process puts the database under load, you should run it on a copy of your database, or when few users are busy.
+The first step to analyze your user data in FA is to extract it and store it in a usable format. As this process puts the database under load, you should run it on a copy of your database using a separate FA instance.
 
 Create a file called `extract.mjs` and insert the code below. Change the variables at the top to match your FA instance.
 
@@ -143,7 +143,7 @@ The `users.json` file has structure below.
     email: string
     isVerified: bool
     registeredDate: string // timestamp since 1970
-    loginDates: string[] // where [0] is oldest date
+    loginDates: string[] // oldest dates first
   }]
 ```
 
@@ -152,7 +152,7 @@ The `users.json` file has structure below.
 Create a file called `app.mjs` in the same directory as the `users.json` file you extracted earlier and insert the code below.
 
 ```js
-// clear; docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" -p 7777:7777 node:25-alpine  sh -c  "node --watch 4app.mjs";
+// clear; docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" -p 7777:7777 node:24.12.0-slim  sh -c  "node --watch 4app.mjs";
 
 import express from 'express';
 import * as fs from 'fs/promises';
@@ -545,7 +545,7 @@ node fake.mjs
 If you don't have Node installed, or want to avoid running code directly on your computer, you can use Docker with the command below. (If you're running FA on your local machine, you need to put FA and the command on the same `--network`.)
 
 ```sh
-docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" --network faNetwork node:25-alpine sh -c  "node fake.mjs";
+docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" --network faNetwork node:24.12.0-slim sh -c  "node fake.mjs";
 ```
 
 Once the users are created, you need randomize their registration dates, set 5% of user email addresses to unverified, and create thousands of login dates. This can't be done with the FA API, so you need to run SQL directly on the PostgreSQL FA database.
