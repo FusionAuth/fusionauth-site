@@ -17,6 +17,18 @@ import InlineUIElement from 'src/components/InlineUIElement.astro';
 - [Introduction](#introduction)
 - [Some useful customer statistics](#some-useful-customer-statistics)
 - [Extract customer data](#extract-customer-data)
+- [From Gemini](#from-gemini)
+	- [Introduction to Cohort Analysis](#introduction-to-cohort-analysis)
+		- [The Three Core Components](#the-three-core-components)
+		- [Why It Matters](#why-it-matters)
+		- [Types of Cohorts](#types-of-cohorts)
+	- [Recommended Charts for Product Owners](#recommended-charts-for-product-owners)
+		- [1. Retention Heat Map (The "N-Day" Retention)](#1-retention-heat-map-the-n-day-retention)
+		- [2. Average Logins per Active User (LPAU)](#2-average-logins-per-active-user-lpau)
+		- [3. Time-to-First-Login (Friction Analysis)](#3-time-to-first-login-friction-analysis)
+		- [4. Churn Prediction (The "Slipped Away" Chart)](#4-churn-prediction-the-slipped-away-chart)
+		- [5. Login Frequency Distribution (Power User Curve)](#5-login-frequency-distribution-power-user-curve)
+		- [6. Dormant User Reactivation](#6-dormant-user-reactivation)
 - [Calculate user statistics and display in charts](#calculate-user-statistics-and-display-in-charts)
 - [Summary](#summary)
 - [Appendix — How to create fake customer data in FA](#appendix--how-to-create-fake-customer-data-in-fa)
@@ -50,7 +62,7 @@ List of charts:
 - User acquisition per year and month (sales performance. also cohort by age)
 - Number of users per age in years (mirror image of user acquisition per year, but shows customer analysis and retention)
 - Number of logins per year and month
-- Percent logins per year and month - TODO
+- Percent logins per year and month
 - Number of users that haven't logged in for 1, 2, 6, 12 months
 - Number users that haven't logged in for 6 months by year
 - Number of users that log in 0,<=4,>4 times per year in 2025 (cohort)
@@ -147,6 +159,64 @@ The `users.json` file has structure below.
     loginDates: string[] // oldest dates first
   }]
 ```
+
+## From Gemini
+
+### Introduction to Cohort Analysis
+
+Cohort analysis is a behavioral analytics technique that breaks down users into related groups based on shared characteristics or experiences within a defined time span. Instead of looking at users as one monolithic unit, you analyze them through a "lifecycle" lens to see how behavior changes over time.
+
+#### The Three Core Components
+
+* **The Cohort:** A group of users who performed a specific action (usually signing up) within a specific timeframe (a day, week, or month).
+* **The Metric:** The behavior you are measuring, such as logins, purchases, or feature usage.
+* **The Time Horizon:** The period over which you track that metric (Day 0, Day 1, Week 4, etc.).
+
+#### Why It Matters
+Cohort analysis is primarily used to distinguish between **growth** and **retention**. A product might have 10,000 active users, which looks healthy. However, cohort analysis might reveal that 9,000 of those users signed up this month, while only 5% of users from six months ago ever returned. This indicates a "leaky bucket" problem where you are successfully acquiring users but failing to keep them.
+
+#### Types of Cohorts
+1.  **Acquisition Cohorts:** Groups defined by *when* they joined. This is the most common type and helps identify if newer versions of your product are better at retaining users than older versions.
+2.  **Behavioral Cohorts:** Groups defined by *what they did*. For example, you might compare a cohort of users who uploaded a profile picture in their first hour versus a cohort that didn't. This helps identify the "Aha! moment" where users find value.
+
+
+
+---
+
+### Recommended Charts for Product Owners
+
+Since your dataset is restricted to **registration dates** and **login dates**, you are essentially looking at "Pulse" and "Retention" metrics. Here are several charts that would provide deeper insights for a Product Owner:
+
+#### 1. Retention Heat Map (The "N-Day" Retention)
+While your current charts show totals and percentages over time, a heat map shows the percentage of a specific registration cohort that returns in subsequent months.
+* **X-Axis:** Months since registration (Month 0, Month 1, Month 2...).
+* **Y-Axis:** The registration month (Jan 2025, Feb 2025...).
+* **Value:** % of that cohort that logged in during that specific month.
+* **PO Value:** Identifies exactly when users drop off. If Month 1 retention is dropping, the onboarding is the problem. If Month 6 retention is dropping, the long-term value proposition is the problem.
+
+#### 2. Average Logins per Active User (LPAU)
+Your `percentLoginsPerMonthChart` shows the ratio of total logins to total users, but it can be skewed by a few hyper-active "power users."
+* **Calculation:** Total logins in a month / Number of unique users who logged in at least once that month.
+* **PO Value:** Measures "stickiness" or depth of engagement. It tells the PO if the product is becoming a daily habit or remains an occasional tool.
+
+#### 3. Time-to-First-Login (Friction Analysis)
+* **Calculation:** `firstLoginDate` - `registrationDate`.
+* **Visual:** A histogram showing how many users log in immediately, within 24 hours, or after a week.
+* **PO Value:** High friction in registration often leads to a "ghost" user base where people register but never actually enter the app.
+
+#### 4. Churn Prediction (The "Slipped Away" Chart)
+This is an evolution of your abandonment chart but focused on the *velocity* of loss.
+* **Calculation:** Users who logged in during Month N-1 but did not log in during Month N.
+* **PO Value:** This is a leading indicator. If the number of "Slipped Away" users is growing faster than new registrations, the product is in a state of contraction.
+
+#### 5. Login Frequency Distribution (Power User Curve)
+* **X-Axis:** Number of days in a month a user logged in (1 to 31).
+* **Y-Axis:** Count of users.
+* **PO Value:** Also known as the "L30" chart. A "U-shaped" curve (high counts at 1 day and 30 days) indicates a healthy product with a dedicated core of power users. A "left-heavy" curve indicates a product used only for "one-off" tasks.
+
+#### 6. Dormant User Reactivation
+* **Calculation:** Users who had no logins for > 60 days but logged in this month.
+* **PO Value:** Measures the effectiveness of re-engagement efforts (like email campaigns) or seasonal relevance.
 
 ## Calculate user statistics and display in charts
 
