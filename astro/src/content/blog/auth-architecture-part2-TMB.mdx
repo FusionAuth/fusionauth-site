@@ -33,28 +33,28 @@ TMB is massively less secure than BFF because access tokens in the browser are v
 
 Both BFF and TMB are vulnerable to fraudulent requests if an attacker manages to inject malicious JavaScript into the browser (client hijacking). But BFF prevents the attacker from using the token from the attacker's computer (token exfiltration) while TMB does not.
 
-You can think of the security advantages as: BFF ≫ TMB > BBOC.
+You can think of the security architecture spectrum like so: BFF (most secure) > TMB (less secure) > BBOC (least secure).
 
 TMB has two of the security advantages of BFF:
 
 - Same-site HTTP-only session cookies (as well as PKCE checks and OIDC nonces) prevent CSRF attacks.
 - Refresh tokens stay on the server, hidden from attackers.
 
-In a TMB frontend, the access token in the browser can't be kept in an HTTP-only cookie, because JavaScript needs to access it to send it in calls to resource servers (which have different URL domains to the authorization server domain). Since the access token has to be stored in the browser's local storage or application memory, it's vulnerable to exfiltration by XSS attacks, like malicious npm packages or unsanitized HTML from forum posts on your site.
+In a TMB frontend, the access token in the browser can't be kept in an HTTP-only cookie, because JavaScript needs to access it to send it in calls to resource servers (which have different URL domains to the authorization server domain). Since the access token has to be stored in the browser's local storage or application memory, it's vulnerable to exfiltration by XSS attacks, like malicious npm packages or unsanitized HTML inputs.
 
 A TMB is slightly more secure than a BBOC because of the server-side refresh token — if you follow best practices.
 
-You can set a very short expiry period for your access tokens (ten minutes), so that if an attacker does gain access to the token, they can't use it for long. The frontend can silently ask the server for a new access token generated from the server-side refresh token every ten minutes, so the user does not need to log in again, or for security-critical apps like banking, you can require the user to log in again every time their access token expires. If you detect unauthorized use of an access token, you can revoke the refresh token and force a user to log in again.
+You can set a very short expiry period for your access tokens (ten minutes or less) to minimize the attack window. The frontend can silently ask the server for a new access token generated from the server-side refresh token every few minutes, so the user does not need to log in again. If you detect unauthorized use of an access token, you can revoke the refresh token and force a user to log in again.
 
 Of course, if an attacker has managed to insert malicious JavaScript into your frontend, they can steal the access tokens again and again, so access token timeouts won't protect you. However, once the user closes their browser, all fraudulent requests must pause. Mobile and desktop apps are generally safer than web apps because they are less likely to use JavaScript.
 
-For a list of best practices mitigating the danger of client-side token storage, read the IETF's [Best Current Practice for OAuth 2.0 Security](https://datatracker.ietf.org/doc/html/rfc9700/), or this [summary](https://maida.kim/oauth2-best-practices-for-developers) by a FusionAuth developer.
+For a list of best practices mitigating the danger of client-side token storage, read the [IETF's Best Current Practice for OAuth 2.0 Security](https://datatracker.ietf.org/doc/html/rfc9700/), or this [article summarizing OAuth 2.0 Best Practices for Developers](https://maida.kim/oauth2-best-practices-for-developers).
 
 ### TMB with DPoP
 
 There is one relatively new technology (2023) that makes client-side tokens a lot safer — the Demonstrating Proof of Possession (DPoP) mechanism, available as the IETF [RFC 9449](https://datatracker.ietf.org/doc/rfc9449).
 
-DPoP is complicated enough to warrant an entire article, and the [official DPoP site](https://dpop.info) has a great visual walkthrough of the protocol, but the concept is simple enough to understand.
+DPoP is complicated enough to warrant an entire article, and this [interactive DPoP site](https://dpop.info) has a great visual walkthrough of the protocol, but the concept is simple enough to understand.
 
 If an OAuth access token is like a door key that can be stolen, using DPoP is like using a door that you can unlock only if you have the key and you have signed your signature when trying to enter. An attacker with only the key can't open the door because they can't fake your signature.
 
@@ -66,7 +66,7 @@ An attacker that manages to insert malicious JavaScript into your browser could 
 
 The security ranking is: BFF = TMB with DPoP ≫ TMB > BBOC.
 
-DPoP is not yet supported by FusionAuth, but it has been [requested](https://github.com/FusionAuth/fusionauth-issues/issues/1679).
+DPoP is not yet supported by FusionAuth, but it has been [requested](https://github.com/FusionAuth/fusionauth-issues/issues/1679). You can learn more about exactly how DPoP works in the [Evolving Auth Standards: Security Best Practices for App Developers webinar](https://fusionauth.io/webinar/evolving-auth-standards-security-best-practices-for-app-developers).
 
 ## When to use TMB
 
@@ -187,7 +187,7 @@ Now you have an authentication provider, backend API, and frontend website runni
     The login page is served by FusionAuth, not by the app, but both pages have matching visual styles.
   </Aside>
 
-Once logged in, you can browse to private pages on the site. You can also see that all the FusionAuth authentication cookies are set as `HttpOnly`, so they can't be stolen. The access token is stored in application memory, where there is less chance of theft than if you kept it in browser storage, which malicious JavaScript might scan by default.
+Once logged in, you can browse to private pages on the site. You can also see that all the FusionAuth authentication cookies are set as `HttpOnly`, so they can't be stolen. The access token is stored in application memory, which is cleared each time the app reloads or the page is refreshed.
 
 ![TMB website showing user profile when logged in](/img/blogs/auth-architecture/loggedIn.png)
 
@@ -201,7 +201,7 @@ Let's take a quick look at how this app works under the hood.
 
 **The authentication flow** is hand-coded in this example to make it understandable and explicit, but in reality you should use a library like [Passport.js](https://www.passportjs.org/packages/passport-oauth2) to do most of the OAuth 2 work. Passport handles only the interaction between your backend and FusionAuth, not between your backend and your frontend. The important part of TMB that Passport leaves to you is getting session management correct (`utils/session.ts`) and separating the refresh token on the server from the access token returned to the browser.
 
-**The frontend project** is very simple. Its only dependency is the React.js ecosystem, and authentication is handled manually in `services/AuthContext.jsx`. Since the FusionAuth webpage redirect handles login, the only authentication work the frontend needs to do is check whether the user is logged in and get new access tokens.
+**The frontend project** is very simple. Its only dependency is the React.js ecosystem, and authentication is handled in `services/AuthContext.jsx`. Since the FusionAuth webpage redirect handles login, the only authentication work the frontend needs to do is check whether the user is logged in and get new access tokens.
 
 ## Summary
 
@@ -211,7 +211,7 @@ If your authentication provider doesn't support BFF, you can implement one using
 
 ## Next in this series
 
-The [final post](/blog/browser-based-oauth-client-security-architecture) in this series discusses the third and least secure OAuth architecture: Browser-Based OAuth Client (BBOC). Learn how it works and the rare cases when you might choose to use it.
+The final post in this series discusses the third and least secure OAuth architecture: [Browser-Based OAuth Client (BBOC)](/blog/browser-based-oauth-client-security-architecture). Learn how it works and the rare cases when you might choose to use it.
 
 ## Further reading
 
@@ -227,6 +227,7 @@ Explore these resources for a deeper understanding of OAuth security architectur
 - [RFC 6749: The OAuth 2.0 Authorization Framework](https://www.rfc-editor.org/rfc/rfc6749)
 - [RFC 9700: OAuth 2.0 Security Best Current Practice](https://datatracker.ietf.org/doc/html/rfc9700)
 - [RFC 9449: OAuth 2.0 Demonstrating Proof of Possession](https://datatracker.ietf.org/doc/rfc9449)
+- [Evolving Auth Standards: Security Best Practices for App Developers](https://fusionauth.io/webinar/evolving-auth-standards-security-best-practices-for-app-developers)
 - [OAuth 2.0 Demonstrating Proof of Possession (DPoP)](https://dpop.info)
 - [Passport.js OAuth strategy](https://www.passportjs.org/packages/passport-oauth2)
 - [The FusionAuth DPoP feature request](https://github.com/FusionAuth/fusionauth-issues/issues/1679)
