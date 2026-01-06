@@ -1,10 +1,12 @@
 ---
-title: Authorization With Permify
+title: Authorization With FusionAuth FGA by Permify
 description: An overview of FusionAuth/Permify integration.
 navcategory: developer
 section: extend
-subcategory: fine grained authorization
+subcategory: fine-grained authorization
 ---
+import {RemoteCode} from '@fusionauth/astro-components';
+import Aside from 'src/components/Aside.astro';
 
 To use FusionAuth with Permify, you need to do the following:
 
@@ -13,43 +15,125 @@ To use FusionAuth with Permify, you need to do the following:
 * configure your authorization data
 * add permify checks to your application
 
-Let's look at each of these in more detail.
+<Aside type="note">
+  Permify using the term entities to refer to anything that can have a relation in a Permify authorization schema. This is distinct and different from [FusionAuth entities](/docs/get-started/core-concepts/entity-management), which has no formal schema but is instead managed by code.
 
-context
+  For the remainder of this document, when the term entities is used, it refers to Permify entities. They may also be called fine-grained entities.
+</Aside>
 
-## Jargon
+Let's look at each of these in more detail through an example.
 
-Permify using the term entities to refer to anything that can have a relation in an authorization model. This is distinct and different from [FusionAuth entities](/docs/get-started/core-concepts/entity-management).
+## The Example Scenario
 
-For the remainder of this document, when the term entities is used, it refers to Permify entities.
+Suppose you have a banking application that you want to manage access for. Each bank has a number of roles such as member or teller, and people can have different roles at different banks. In addition, there are certain actions that can only be performed at certain times of day.
 
+Using fine-grained authorization allows you to control access to each part of the banking application.
 
-## Installing Permify
+If you want to see a fully functioning application, [clone the example GitHub repository](https://github.com/FusionAuth/fusionauth-example-fine-grained-authorization/).
+
+### Installing Permify
 
 To install Permify, please refer to the [Permify deployment guides](https://docs.permify.co/setting-up/installation/intro). These also offer guidane on system requirements and how to deploy the software into Kubernetes and other environments.
 
-For local development you can install Permify using Docker compose in the same file as FusionAuth.
+For local development you can install Permify using Docker compose in the same file as FusionAuth. Here's an excerpt for your Permify instance.
 
-TODO docker compose example here
+<RemoteCode lang="yaml"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-fine-grained-authorization/refs/heads/main/docker-compose.yml"
+            title="Permify docker compose section" 
+            tags="permifyDockerCompose"
+            />
 
-## Set Up The Permify Schema
+Review the Permify configuration reference for details on [supported configuration options](https://docs.permify.co/setting-up/configuration).
+
+### Set Up The Permify Schema
 
 The next step is to set up the schema. This defines the relationships between different entities in Permify.
 
+Here's the schema for the banking scenario.
 
+<RemoteCode url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-fine-grained-authorization/refs/heads/main/permify-setup/authmodel.txt"
+            title="FGA schema" 
+            />
+
+The `user` entity represents users and the `bank` entity represents a bank.
+
+The `bank` entity has `relation`s, `attribute`s and `action`s. A `relation` defines a relationship between two entities that are defined in Permify, such as the `vp` role for a user. An `attribute` is a value associated with an entity that is not another entity, such as the `open_hour` for a bank. An `action` is the name of a permission that can be checked using the Permify API or SDK, such as viewing the `account` page.
+
+You can also write a `rule` like `is_in_time_range` which uses attributes from an entity to codify more complicated permissions.
 
 You can test your custom schema using the [Permify playground](https://play.permify.co/) which lets you verify correctness as well as visualize your permission structures.
 
-## Configure Authorization Data
+For this tutorial, you need to run the node script to load the schema.
 
-Next, you need to add authorization data. This includes adding examples of the entities you are managing access
+<RemoteCode language="typescript"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-fine-grained-authorization/refs/heads/main/permify-setup/src/schema.ts"
+            title="FGA schema load script" 
+            />
 
-## Add Permify Checks 
+### Loading Authorization Data
 
+Next, you need to add authorization data. This includes both the relationships and attributes. Both are added using tuple notation.
+
+<Aside type="note">
+  This data must be kept in sync as you add new banks or users. 
+</Aside>
+
+Here's an example of loading relationships, with each user being assigned a role at a bank.
+
+<RemoteCode language="typescript"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-fine-grained-authorization/refs/heads/main/permify-setup/src/loaddata.ts"
+            title="Loading relationships" 
+            tags="loadRelationships"
+            />
+
+Here's an example of setting attributes, with each bank having an opening hour and a closing hour.
+
+<RemoteCode language="typescript"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-fine-grained-authorization/refs/heads/main/permify-setup/src/loaddata.ts"
+            title="Loading attributes" 
+            tags="loadAttributes"
+            />
+
+### Add Permify Checks 
+
+Finally, you can add checks to your application code. These checks include:
+
+* the requested action or permission, which corresponds to the action defined in the schema, such as `account` or `admin`.
+* the entity ids and types involved such as a user or a bank
+* any context needed, such as the time
+
+Here's an example of a check. `checkresult` is either `true` or `false`.
+<RemoteCode language="typescript"
+            url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-fine-grained-authorization/refs/heads/main/app/src/index.ts"
+            title="Checking permissions" 
+            tags="checkingPermission"
+            />
+
+This example maps permissions directly to page views, but you can model your authorization however you want.
+
+## Designing Your Schema
+
+Designing your authorization schema is a big topic. Permify has modeling documentation:
+
+* [A modeling authorization guide](https://docs.permify.co/getting-started/modeling)
+* [RBAC modeling guides](https://docs.permify.co/modeling-guides/rbac/custom-roles)
+* [ABAC modeling guides](https://docs.permify.co/modeling-guides/abac/public-private)
+* [ReBAC modeling guides](https://docs.permify.co/modeling-guides/rebac/hierarchies)
+
+If you'd like assistance beyond documentation, [contact us](/contact).
 
 ## Limitations
 
-managing both permify and fusoinauth
+When using FusionAuth FGA by Permify, both FusionAuth and Permify are required. Plan to manage and upgrade both of these software components.
 
-syncing data
-- webhooks or polling right now
+[Loading the authorization](#loading-authorization-data) is a continuous process, not a one-time thing. There are three categories of entities that need to be regularly loaded:
+
+* user data
+* application specific entities
+* relations between users and entities
+
+For user data, you can use the [User Create](/docs/extend/events-and-webhooks/events/user-create) and [User Update](/docs/extend/events-and-webhooks/events/user-update) webhooks to propagate user data. Make these webhooks transactional, but fast, so use something like a durable queue to receive the events. Or if you have Kafka in your system already, [publish them to Kafka](/docs/extend/events-and-webhooks/kafka). Then, use one of the [Permify SDKs](https://docs.permify.co/getting-started/enforcement#sdks) and whenever changes occur, update Permify.
+
+For application specific entities and relations, use one of the [Permify SDKs](https://docs.permify.co/getting-started/enforcement#sdks) and whenever changes occur, update Permify.
+
+You can store the relations in FusionAuth, in the `user.data` field. In this case, you'll need to sync the data from FusionAuth to Permify using the webhook consumer that updates user data.
