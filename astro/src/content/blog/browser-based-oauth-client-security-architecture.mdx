@@ -31,7 +31,7 @@ Several high-profile breaches over the last two years exploited vulnerabilities 
 
 While not all these breaches involved BBOC specifically, they highlight the risks of OAuth implementations that expose tokens to client-side vulnerabilities.
 
-This article examines why BBOC is fundamentally insecure, when it becomes unacceptable, how to implement defense-in-depth strategies when forced into BBOC, and how to migrate to architecturally secure patterns. It is part three of a series covering OAuth security architectures. [Part 1](/blog/backend-for-frontend-security-architecture) covered Backend-for-Frontend (BFF) architecture, the most secure pattern. [Part 2](/blog/auth-architecture-part2-TMB) examined Token-Mediating Backend (TMB), a moderately secure middle ground.
+This article examines why BBOC is fundamentally insecure, when it becomes unacceptable, how to implement defense-in-depth strategies when forced into BBOC, and how to migrate to architecturally secure patterns. It is part three of a series covering OAuth security architectures. [Part 1 covered Backend-for-Frontend (BFF) architecture](/blog/backend-for-frontend-security-architecture), the most secure pattern. [Part 2 examined Token-Mediating Backend (TMB)](/blog/auth-architecture-part2-TMB), a moderately secure middle ground.
 
 ## Understanding BBOC architecture
 
@@ -52,7 +52,7 @@ BBOC applications are **public clients** in OAuth terminology. A public client c
 This has profound implications. Public clients:
 
 - Cannot use client secrets in token exchange requests.
-- Must rely entirely on PKCE (Proof Key for Code Exchange) for request validation.
+- Rely on PKCE (Proof Key for Code Exchange) for request validation.
 - Cannot authenticate to the authorization server in the traditional sense.
 - Cannot prevent an attacker with access to the browser from obtaining new tokens.
 
@@ -91,7 +91,7 @@ The IETF states plainly:
 
 > localStorage does not protect against unauthorized access from malicious JavaScript, as the attacker would be running code within the same origin, and as such, would be able to read the contents of the localStorage.
 
-This understates the problem. Browser storage provides essentially zero protection against credential theft when JavaScript code is compromised. Understanding the attack vectors reveals why no amount of defense can make BBOC secure.
+This understates the problem. Browser storage provides essentially zero protection against credential theft when JavaScript code is compromised. Understanding the attack vectors reveals why browser-based OAuth 2.0 clients are extremely vulnerable.
 
 ### Vulnerability 1: Cross-Site Scripting token theft
 
@@ -118,7 +118,7 @@ XSS vulnerabilities arise from multiple sources:
 - Third-party script compromise.
 - Supply chain attacks on dependencies.
 
-Content Security Policy (CSP) provides defense against some XSS attacks but cannot eliminate the risk. A single CSP bypass, and researchers discover them regularly, exposes all tokens. The fundamental problem is that JavaScript-accessible storage is accessible to all JavaScript, malicious or legitimate.
+Content Security Policy (CSP) provides defense against some XSS attacks but cannot eliminate the risk. A single CSP bypass (which researchers discover regularly) exposes all tokens. The fundamental problem is that JavaScript-accessible storage is accessible to all JavaScript, malicious or legitimate.
 
 ### Vulnerability 2: Supply chain attacks on the npm ecosystem
 
@@ -143,11 +143,11 @@ The combination of long-lived refresh tokens and browser storage creates catastr
 
 BBOC implementations must choose where to store tokens. Every option has security implications:
 
-**In-memory storage** stores tokens in JavaScript variables rather than browser APIs. Tokens disappear on page reload, requiring users to re-authenticate. This provides slightly better security, as tokens only exist while JavaScript is running. However, the user experience degradation is severe. Every page reload, tab refresh, or navigation forces re-authentication. Users find this unacceptable for any non-trivial application. Security improvements are minimal since XSS attacks still access in-memory variables.
+**In-memory storage** stores tokens in JavaScript variables rather than browser APIs. Tokens disappear on page reload, requiring users to re-authenticate. This reduces the attack time window, as tokens only exist while JavaScript is running. However, the user experience degradation is severe. Every page reload or tab refresh forces re-authentication. Users find this unacceptable for any non-trivial application. Security improvements are minimal since XSS attacks still access in-memory variables.
 
 **`sessionStorage`** isolates tokens to a single browser tab. Tokens don't persist across tab closures. Different tabs require separate authentications. This provides tab-level isolation but remains fully vulnerable to XSS within that tab context. An attacker compromising any tab gains full token access for that session.
 
-**`localStorage`** is the most common choice. Tokens persist across page reloads and tab closures. `localStorage` shares tokens across all tabs in the same origin. This provides the best user experience - users authenticate once and remain authenticated across sessions. It also provides the worst security - tokens persist indefinitely until explicitly cleared, and all JavaScript in the origin can access them. XSS attacks on any page in your domain expose all tokens.
+**`localStorage`** is the most common choice. Tokens persist across page reloads and tab closures. `localStorage` shares tokens across all tabs in the same origin. This provides the least disruptive user experience: users authenticate once and remain authenticated across sessions. It also provides the worst security: tokens persist indefinitely until explicitly cleared, and all JavaScript in the origin can access them. XSS attacks on any page in your domain expose all tokens.
 
 **IndexedDB:** Offers similar capabilities to `localStorage` with more complex APIs and larger storage capacity. IndexedDB provides no security advantages over `localStorage` for token storage. The same XSS and JavaScript access concerns apply. The added complexity provides no security benefit.
 
@@ -163,9 +163,9 @@ However, service workers still have vulnerabilities:
 - **Proxy attacks:** Compromised service workers intercept all network traffic including token requests.
 - **Update exploitation:** Attackers who compromise the service worker update process and can inject malicious code.
 
-Service workers provide the best *browser-based* storage security. This is still fundamentally less secure than not storing tokens in the browser at all.
+Service workers provide the least insecure *browser-based* storage security. This is still fundamentally less secure than not storing tokens in the browser at all.
 
-The token storage choice presents a false dilemma. In-memory storage offers better security but terrible UX. `localStorage` offers better UX but worse security. Service workers offer a middle ground but still expose tokens to JavaScript contexts. The only secure solution is not storing tokens in the browser - which requires moving beyond BBOC to TMB or BFF architectures.
+The token storage choice presents a false dilemma. In-memory storage offers better security but terrible UX. `localStorage` offers better UX but terrible security. Service workers offer a middle ground but still expose tokens to JavaScript contexts. The only secure solution is not storing tokens in the browser, which requires moving beyond BBOC to TMB or BFF architectures.
 
 ### Vulnerability 5: Prototype pollution and API interception
 
@@ -203,7 +203,7 @@ Prototype pollution attacks succeed even when you store tokens in JavaScript clo
 
 ### Vulnerability 6: Silent authentication abuse
 
-OAuth providers support "silent authentication" to refresh user sessions without visible redirects. Applications implement this using hidden iframes that load the authorization endpoint. If the user has an active session, the authorization server immediately returns new tokens without user interaction.
+Some OAuth providers support "silent authentication" to refresh user sessions without visible redirects. Applications implement this using hidden iframes that load the authorization endpoint. If the user has an active session, the authorization server immediately returns new tokens without user interaction.
 
 Silent authentication improves user experience by preventing repeated login prompts. It also creates an attack vector. An attacker who achieves XSS can abuse this pattern by executing the following code:
 
@@ -254,7 +254,7 @@ The overall effectiveness of the architectures can be summarized as follows:
 The IETF provides authoritative OAuth guidance through multiple specifications. Two documents define current best practices:
 
 - **OAuth 2.0 Security Best Current Practice** (RFC 9700, published January 2025): Consolidates security recommendations across the OAuth ecosystem.
-- **OAuth 2.0 for Browser-Based Applications** (draft-25, RFC expected soon): Specific guidance for browser implementations.
+- **OAuth 2.0 for Browser-Based Applications** (in draft, future RFC expected): Specific guidance for browser implementations.
 
 ### RFC 9700 mandates
 
@@ -305,7 +305,7 @@ Backend endpoints handle OAuth flows using PKCE and store refresh tokens in serv
 
 ### Migration to BFF
 
-BFF requires roughly double the TMB effort, implementing a universal proxy endpoint that validates sessions, manages token refresh automatically, and forwards all API requests to resource servers. Frontend code is simplified to a basic API client that routes calls through the proxy with session cookies for authentication — no token management needed. Additional challenges include performance optimization through connection pooling and caching to address added proxy latency.
+BFF requires implementation of proxy endpoints that validate sessions, manage token refresh automatically, and forward all API requests to resource servers. Frontend code is simplified to a basic API client that routes calls through the proxy with session cookies for authentication — no token management needed. Additional challenges include performance optimization through connection pooling and caching to address added proxy latency.
 
 ## When forced into BBOC
 
@@ -317,7 +317,7 @@ If you're forced into a BBOC architecture due to legacy constraints, third-party
 - **Rate limiting:** Apply aggressive rate limiting on authentication endpoints to slow brute force and token theft attempts.
 - **Demonstrating Proof of Possession (DPoP):** Implement DPoP to bind tokens to specific clients, preventing token replay by attackers.
 
-We're hesitant to even list these strategies because they provide only marginal security improvements. If you're investing significant effort into these controls, you're better off investing in migrating to TMB or BFF architectures.
+Most strategies provide only marginal security improvements, with the exception of DPoP and mTLS. If you're investing significant effort into these controls, you're better off investing in migrating to TMB or BFF architectures.
 
 ## Decision framework
 
