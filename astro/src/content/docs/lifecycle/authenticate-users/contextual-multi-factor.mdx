@@ -12,29 +12,30 @@ import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb
 import MfaDecisionTree from 'src/diagrams/docs/lifecycle/authenticate-users/mfa-decision-tree.astro';
 import TenantMfaDecisionTree from 'src/diagrams/docs/lifecycle/authenticate-users/tenant-mfa-decision-tree.astro';
 import ApplicationMfaDecisionTree from 'src/diagrams/docs/lifecycle/authenticate-users/app-mfa-decision-tree.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
 
 ## Overview
 
-FusionAuth applies multi-factor authentication (MFA) based on a number of configuration parameters and situational behaviors. In this document you'll learn how and why FusionAuth challenges a user for another factor of authentication during the login process. Such a challenge might be entering a code sent to their email or entering a time based one-time password (TOTP) value.
+This page explains why and how FusionAuth asks for MFA during the login process.
 
-If you are looking for guidance on implementing MFA using FusionAuth, please [review the MFA guide](/docs/lifecycle/authenticate-users/multi-factor-authentication).
+For guidance on implementing MFA using FusionAuth, see the [MFA documentation](/docs/lifecycle/authenticate-users/multi-factor-authentication).
 
-## MFA Inside The Authentication Process
+## When is MFA Required?
 
-There are four major considerations for whether MFA is applied during the login process.
+FusionAuth displays an MFA challenge to the user when a login attempt meets one of the following criteria:
 
-* What is the MFA policy for the tenant or application?
-* Does the user have MFA enabled? If this is not the case, then an MFA challenge is never triggered, but the user may be prompted to set up MFA, based on the tenant or application MFA policy.
-* Did the user log in using an Identity Provider such as Google or OIDC? In this case, MFA is never required for the user.
-* Has the device passed appropriate contextual checks such as being on a known device?
+* Does the tenant or application enable or require MFA?
+* Has the user provided an MFA method?
+* Did the user log in using an Identity Provider such as Google or OIDC? In this case, MFA is never required.
+* Has the device passed appropriate contextual checks, such as using a known device?
 
-Here's a high level diagram of the logic:
+The following diagram shows the FusionAuth MFA logic:
 
 <MfaDecisionTree alt="High level diagram of MFA logic."/>
 
 ### Contextual Checks
 
-The contextual checks are based on attributes of the request evaluated every time an authentication happens and and include:
+Contextual checks are based on attributes of the request evaluated every time a user authenticates. These checks include:
 
 * Has this device been seen before?
 * Has this user been seen before on this device?
@@ -42,37 +43,37 @@ The contextual checks are based on attributes of the request evaluated every tim
 
 The duration of trust of the device can be configured with the <InlineField>tenant.externalIdentifierConfiguration.twoFactorTrustIdTimeToLiveInSeconds</InlineField> configuration value.
 
-The goal of this contextual check is to challenge the user for another factor of authentication whenever FusionAuth determines the risk of invalid access is higher than the user friction.
+The goal of this contextual check is to challenge the user for another factor of authentication whenever FusionAuth determines the risk of invalid access outweighs user friction.
 
-Depending on [your license](#license-limitations), you can configure MFA policies at both the tenant and application level. Let's take a look at each of these in more depth.
+Depending on [your license](#license-limitations), you can configure MFA policies at both the tenant and application level.
 
-### Tenant Level MFA Configuration
+### Tenant MFA Configuration
 
-Tenant level configuration applies to all applications within a tenant. The MFA policy has three values:
+Tenant configuration applies to all applications within a tenant. The MFA policy has three values:
 
-* `Disabled`, where no MFA challenge occurs
-* `Enabled`, where an MFA challenge occurs if the user has a valid MFA method, and if they don't, there is no MFA challenge
-* `Required`, where an MFA challenge occurs and if the user doesn't have a valid MFA method they are required to set one up
+* `Disabled`: no MFA challenge occurs
+* `Enabled`: an MFA challenge occurs only if the user has a valid MFA method
+* `Required`: an MFA challenge always occurs, requires users without MFA to configure an MFA method
 
 Here's a diagram of the MFA challenge logic when the tenant has a policy for MFA.
 
 <TenantMfaDecisionTree alt="Diagram of tenant MFA decision logic."/>
 
-### Application Level MFA Configuration
+### Application MFA Configuration
 
-Application level configuration applies to a single application within a tenant. Application policies always supersede the tenant policy.
+Application configuration applies to a single application within a tenant. Application policies always supersede the tenant policy.
 
 With an active application MFA configuration, there is an MFA policy with three possible values:
 
-* `Disabled`, where no MFA challenge occurs
-* `Enabled`, where an MFA challenge occurs if the user has a valid MFA method, and if they don't, there is no MFA challenge
-* `Required`, where an MFA challenge occurs and if the user doesn't have a valid MFA method they are required to set one up
+* `Disabled`: no MFA challenge occurs
+* `Enabled`: an MFA challenge occurs only if the user has a valid MFA method
+* `Required`: an MFA challenge always occurs, requires users without MFA to configure an MFA method
 
-But there is an additional trust policy, which determines if an application accepts the results of other MFA challenges. The options here are:
+An additional trust policy determines if an application accepts the results of other MFA challenges with the following options:
 
-* `Any`, where any application's challenge results are acceptable
-* `This`, where this application's challenge results are acceptable, and any other application's are not
-* `None`, where no application's challenge results are acceptable, and the MFA challenge will always be given
+* `Any`: any application's challenge results are acceptable
+* `This`: only this application's challenge results are acceptable
+* `None`: no application's challenge results are acceptable, always displays an MFA challenge
 
 Here's a table outline possible scenarios for different trust policies.
 
@@ -81,7 +82,6 @@ Here's a table outline possible scenarios for different trust policies.
 | `Any`           | Apps in a [suite of applications](/docs/get-started/use-cases/app-suite) such as Google Drive, Google Calendar and Gmail           | Any MFA challenge is good enough since they all have roughly the same risk profile. |
 | `This`          | A gambling application which uses real money in a suite which has other fantasy gaming apps. | The other fantasy gaming apps might not require MFA at all, but if they do, it's not a high enough level of security for the "real money" gambling application. |
 | `None`          | An internal admin dashboard | Access should be strictly controlled and user friction is not an issue. |
-
 
 Here's a diagram of MFA challenge logic when the application has a policy for MFA.
 
@@ -117,42 +117,56 @@ If a user logs in with an Identity Provider such as Google or OIDC, FusionAuth d
 
 There's an [open issue to add a policy to allow for more control](https://github.com/FusionAuth/fusionauth-issues/issues/2005) in this scenario.
 
-## Enforcing MFA Challenges On Certain Users 
+## Custom MFA Logic
 
-You may need more granularity on who is challenged for an additional factor during login.
+You may need more granularity on who is challenged for an additional factor during login. For example, you might want everyone who is a member of a certain group or has a certain `user.data` field to complete an MFA challenge.
 
-For example, you might want everyone who is a member of a certain group or who has a certain `user.data` field to go through MFA. While there's an [open GitHub issue](https://github.com/FusionAuth/fusionauth-issues/issues/2309) to enhance the flexibility of the MFA process by using a lambda, you can also accomplish this now.
+To customize MFA to meet your needs, use one of the following methods:
 
-Let's use the example of making sure everyone in the `mfa_required` group is challenged whenever they log in, and no one else is.
+### MFA Requirement Lambda
 
-These two options rely on different aspects of the challenge decision trees outlined above.
+Under <Breadcrumb> Customization -> Lambdas </Breadcrumb>, create a new Lambda of type "MFA requirement lambda".
+
+The following example forces an MFA check for any user whose email address includes the string 'gilfoyle':
+
+```javascript
+function checkRequired(result, user, registration, context) {
+  if (user.email.includes('gilfoyle')) {
+    result.required = true;
+  }
+}
+```
+
+For more information, see [the MFA requirement lambda documentation](/docs/extend/code/lambdas/mfa-requirement).
 
 ### Use a Webhook
 
-* Set a tenant or application policy to `Enabled` and then use the API to ensure that everyone in the `mfa_required` group has an MFA method.
-* Use a [transactional `user.update` webhook](/docs/extend/events-and-webhooks/events/user-update) to ensure that the MFA method can't be removed while the user is in that group.
-* Set the trust duration to be the same or less than your session length.
-* If you are using the application policy, set the trust policy to `This`.
+1. Set a tenant or application policy to `Enabled` and then use the API to ensure that everyone in the `mfa_required` group has an MFA method.
+1. Use a [transactional `user.update` webhook](/docs/extend/events-and-webhooks/events/user-update) to ensure that the MFA method can't be removed while the user is in that group.
+1. Set the trust duration to be the same or less than your session length.
+1. If you are using the application policy, set the trust policy to `This`.
 
 ### Redirect Users Through a Special Application
 
-* Create an "MFA check" application with an MFA policy of `Required` and a trust policy of `None`.
-* After a user logs in, examine their profile on an interstitial page.
-  * If they are in the `mfa_required` group, redirect them to this application. They will be prompted for MFA and then redirected to the initial application.
-  * Users that are not in the `mfa_required` group can be sent directly through to the application.
+The following example guarantees that all users in the `mfa_required` group are challenged with MFA whenever they log in:
+
+1. Create an "MFA check" application with an MFA policy of `Required` and a trust policy of `None`.
+1. After a user logs in, examine their profile on an interstitial page.
+   1. If they are in the `mfa_required` group, redirect them to this application. They will be prompted for MFA and then redirected to the initial application.
+   1. Users that are not in the `mfa_required` group can be sent directly through to the application.
 
 Make sure the MFA check application uses a lambda to set the `aud` and `applicationId` claims to values expected by any access token consumers.
 
-This is similar to doing a conditional step-up authentication on the interstitial page but avoids using the step up API.
+This is similar to doing a conditional step-up authentication on the interstitial page, without using the step-up API.
 
 ## MFA Challenges Outside Of The Login Process
 
-If you need to prompt for MFA outside of the login process, you want to use step up authentication. For example, if you want to challenge for MFA when a user performs a high-risk action like initiating a money transfer. Use the [APIs](/docs/apis/two-factor#start-multi-factor) to perform this process.
+If you need to prompt for MFA outside of the login process, use step-up authentication. For example, you could display an MFA challenge when a user performs a high-risk action like initiating a money transfer. Use the [2FA API](/docs/apis/two-factor#start-multi-factor) to perform this process.
 
-Learn more about [step up authentication](/docs/lifecycle/authenticate-users/multi-factor-authentication#step-up-auth).
+For more information, see the [step-up authentication](/docs/lifecycle/authenticate-users/multi-factor-authentication#step-up-auth) documentation.
 
 ## Limitations On MFA Challenges
 
 There's an [open issue](https://github.com/FusionAuth/fusionauth-issues/issues/2357) about unexpected MFA behavior and workarounds when a user logs in with an identity provider but SSOs to an application with a login policy of `Required`.
 
-If a user signs up with an MFA method that is allowed for a tenant, such as email, and the tenant configuration changes later to disable that MFA method, the user can still use that MFA method. Users cannot, however, add disabled MFA methods. If you are disabling an MFA method previously in use, it's recommended you search for users using that method and remove it using a script and updating each user.
+If a user signs up with an MFA method that is allowed for a tenant, such as email, and the tenant configuration changes later to disable that MFA method, the user can still use that MFA method. Users cannot, however, add disabled MFA methods. If you are disabling an MFA method previously in use, it's recommended you search for users using that method and remove it using a script, updating each user.

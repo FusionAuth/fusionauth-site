@@ -48,7 +48,8 @@ const config = defineConfig({
       // Tweak GFM task list syntax
       // @ts-ignore
       rehypeTasklistEnhancer(),
-    ]
+    ],
+    syntaxHighlight: 'shiki'
   },
   site: 'https://fusionauth.io/',
   // experimental: {
