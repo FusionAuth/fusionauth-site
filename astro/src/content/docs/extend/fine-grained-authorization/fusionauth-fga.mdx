@@ -13,7 +13,7 @@ To use FusionAuth with Permify, you need to do the following:
 * install Permify
 * set up your Permify schema
 * configure your authorization data
-* add Permify checks to your application
+* add permission checks to your application
 
 <Aside type="note">
   Permify uses the term entities to refer to anything that can have a relation in a Permify authorization schema. This is distinct and different from [FusionAuth entities](/docs/get-started/core-concepts/entity-management), which has no formal schema but is instead managed by code.
@@ -60,8 +60,9 @@ The `bank` entity has `relation`s, `attribute`s and `action`s:
 * `relation` defines a relationship between two entities, such as the `vp` role for a user
 * `attribute` is a value associated with an entity, such as the `open_hour` for a bank
 * `action` is the name of a permission that can be checked using the Permify API or SDK, such as viewing the `account` page
+* 
 
-You can also write a `rule` like `is_in_time_range` which uses attributes from an entity to codify more complicated permissions.
+You can also write a `rule` like `is_in_time_range` which uses attributes from an entity to codify more complicated permissions. Rules can be global or associated with a particular entity definition.
 
 You can test your custom schema using the [Permify playground](https://play.permify.co/) which lets you verify correctness as well as visualize your permission structures.
 
@@ -93,18 +94,24 @@ The following attributes example assigns each bank an opening hour and a closing
             tags="loadAttributes"
             />
 
-### Add Permify Checks 
+### Add Permission Checks 
 
-Finally, add checks to your application code, including:
+Finally, add permission checks to your application code. Each check will return either `true` or `false`, based on whether the action is allowed.
+
+Multiple pieces of information can be provided to Permify to determine if a given permission is granted or not. These include:
 
 * the requested action or permission, which corresponds to the action defined in the schema, such as `account` or `admin`
-* the entity ids and types involved such as a user or a bank
-* any context needed, such as the time
+* the entity ids and types involved
+* the subject id which indicates who is asking for this permission
+* any context needed, such as the time or the requester's IP address
 
-TODO The following example of a check [explain what the check does]:
-TODO suggestion: This example is pretty large. We should provide some minimal explanation of what it does! If checks return either true or false, maybe we should explain that in the introduction of this section instead of in the introduction of an example?
+Here's an example which has the following information:
 
-Here's an example of a check. `checkresult` is either `true` or `false`.
+* a permission stored in the `permission` variable
+* an entity of type `bank` with an identifier of `1`
+* a subject of type `user` with an identifier drawn from a token
+* the current hour provided for context
+
 <RemoteCode language="typescript"
             url="https://raw.githubusercontent.com/FusionAuth/fusionauth-example-fine-grained-authorization/refs/heads/main/app/src/index.ts"
             title="Checking permissions" 
