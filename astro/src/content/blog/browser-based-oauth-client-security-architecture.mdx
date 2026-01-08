@@ -51,9 +51,8 @@ BBOC applications are **public clients** in OAuth terminology. A public client c
 
 This has profound implications. Public clients:
 
-- Cannot use client secrets in token exchange requests.
+- Cannot authenticate to the authorization server using client secrets.
 - Rely on PKCE (Proof Key for Code Exchange) for request validation.
-- Cannot authenticate to the authorization server in the traditional sense.
 - Cannot prevent an attacker with access to the browser from obtaining new tokens.
 
 Contrast this with the **confidential clients** used in BFF and TMB architectures, which can:
@@ -205,7 +204,7 @@ Prototype pollution attacks succeed even when you store tokens in JavaScript clo
 
 Some OAuth providers support "silent authentication" to refresh user sessions without visible redirects. Applications implement this using hidden iframes that load the authorization endpoint. If the user has an active session, the authorization server immediately returns new tokens without user interaction.
 
-Silent authentication improves user experience by preventing repeated login prompts. It also creates an attack vector. An attacker who achieves XSS can abuse this pattern by executing the following code:
+Silent authentication improves user experience by preventing repeated login prompts. However, browser privacy features like Intelligent Tracking Prevention (ITP) increasingly block the cross-origin cookies it relies on, making it unreliable. It also creates an attack vector. An attacker who achieves XSS can abuse this pattern by executing the following code
 
 ```javascript
 // Create hidden iframe for silent authentication
@@ -316,6 +315,7 @@ If you're forced into a BBOC architecture due to legacy constraints, third-party
 - **Subresource Integrity (SRI):** Use SRI for all third-party scripts to prevent supply chain attacks from compromising your application.
 - **Rate limiting:** Apply aggressive rate limiting on authentication endpoints to slow brute force and token theft attempts.
 - **Demonstrating Proof of Possession (DPoP):** Implement DPoP to bind tokens to specific clients, preventing token replay by attackers.
+- **Mutual TLS ([mTLS](https://datatracker.ietf.org/doc/html/rfc8705)):** Similar to DPoP, use mTLS to bind tokens to client certificates. This is not ideal for browser implementation as it requires managed certificate distribution.
 
 Most strategies provide only marginal security improvements, with the exception of DPoP and mTLS. If you're investing significant effort into these controls, you're better off investing in migrating to TMB or BFF architectures.
 
