@@ -51,9 +51,8 @@ BBOC applications are **public clients** in OAuth terminology. A public client c
 
 This has profound implications. Public clients:
 
-- Cannot use client secrets in token exchange requests.
+- Cannot authenticate to the authorization server using client secrets.
 - Rely on PKCE (Proof Key for Code Exchange) for request validation.
-- Cannot authenticate to the authorization server in the traditional sense.
 - Cannot prevent an attacker with access to the browser from obtaining new tokens.
 
 Contrast this with the **confidential clients** used in BFF and TMB architectures, which can:
@@ -160,8 +159,8 @@ BBOC implementations must choose where to store tokens. Every option has securit
 However, service workers still have vulnerabilities:
 
 - **Registration manipulation:** Attackers can register malicious service workers if they achieve code execution in the page context.
-- **Proxy attacks:** Compromised service workers intercept all network traffic including token requests.
-- **Update exploitation:** Attackers who compromise the service worker update process and can inject malicious code.
+- **Proxy attacks:** Compromised service workers intercept all network traffic, including token requests.
+- **Update exploitation:** Attackers who compromise the update process of the service worker can inject malicious code.
 
 Service workers provide the least insecure *browser-based* storage security. This is still fundamentally less secure than not storing tokens in the browser at all.
 
@@ -205,7 +204,7 @@ Prototype pollution attacks succeed even when you store tokens in JavaScript clo
 
 Some OAuth providers support "silent authentication" to refresh user sessions without visible redirects. Applications implement this using hidden iframes that load the authorization endpoint. If the user has an active session, the authorization server immediately returns new tokens without user interaction.
 
-Silent authentication improves user experience by preventing repeated login prompts. It also creates an attack vector. An attacker who achieves XSS can abuse this pattern by executing the following code:
+Silent authentication improves user experience by preventing repeated login prompts. However, browser privacy features like Intelligent Tracking Prevention (ITP) increasingly block the cross-origin cookies it relies on, making it unreliable. It also creates an attack vector. An attacker who achieves XSS can abuse this pattern by executing the following code
 
 ```javascript
 // Create hidden iframe for silent authentication
@@ -264,7 +263,7 @@ RFC 9700 establishes mandatory security requirements for all OAuth implementatio
 
 > Although PKCE was designed as a mechanism to protect native apps, this advice applies to all kinds of OAuth clients, including web applications.
 
-Public clients like BBOC must use PKCE without exception. Even confidential clients should implement PKCE for defense-in-depth.
+Public clients like BBOC must use PKCE without exception. Even confidential clients should implement PKCE for defense-in-depth. OAuth 2.1 now requires both public and confidential clients to use PKCE.
 
 **The implicit grant is officially deprecated.** RFC 9700 explicitly states:
 
@@ -274,13 +273,13 @@ The implicit grant placed tokens directly in URL fragments, which are exposed th
 
 Implicit grants emerged when cross-origin resource sharing (CORS) adoption was limited and browsers couldn't make cross-origin token exchange requests. CORS is now universal. The Authorization Code Flow with PKCE provides better security with equivalent functionality. Implicit grant has no remaining justification.
 
-**Token storage guidance is explicit.** RFC 9700 recommends service workers as the most secure browser storage location when tokens must exist in the browser. Service workers provide a separate execution context from the DOM, offering some protection against DOM-based XSS. However, the specification acknowledges that this provides only partial protection. Service workers remain vulnerable to registration manipulation, update exploitation, and proxy attacks.
-
 You can spot implicit grant implementations by looking for `response_type=token` in authorization requests. Any application using the implicit grant must be re-architected to use the Authorization Code Flow with PKCE.
+
+**Token storage guidance is explicit.** RFC 9700 recommends service workers as the most secure browser storage location when tokens must exist in the browser. Service workers provide a separate execution context from the DOM, offering some protection against DOM-based XSS. However, the specification acknowledges that this provides only partial protection. Service workers remain vulnerable to registration manipulation, update exploitation, and proxy attacks.
 
 ### Guidance in the OAuth 2.0 for Browser-Based Applications draft
 
-The [OAuth 2.0 for Browser-Based Applications](https://www.ietf.org/archive/id/draft-ietf-oauth-browser-based-apps-17.html#name-summary-3) specification provides explicit guidance on BBOC:
+The [OAuth 2.0 for Browser-Based Applications](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps#section-6.3.4.3) specification provides explicit guidance on BBOC:
 
 > This architecture is not recommended for business applications, sensitive applications, and applications that handle personal data.
 
@@ -301,11 +300,11 @@ Moving from BBOC to TMB or BFF requires systematic changes to authentication flo
 
 ### Migration to TMB
 
-Backend endpoints handle OAuth flows using PKCE and store refresh tokens in server-side sessions while returning short-lived access tokens to the frontend. The frontend implements in-memory token storage with automatic refresh logic that calls the backend token endpoint when tokens near expiration. With TMB, much of the frontend OAuth logic remains similar to BBOC, and the migration focuses on moving token exchange and storage to the backend. The frontend remains complex due to direct API calls requiring access token management.
+Backend endpoints handle OAuth flows using PKCE and store refresh tokens in server-side sessions while returning short-lived access tokens to the frontend. The frontend implements in-memory token storage with automatic refresh logic that calls the backend token endpoint when tokens near expiration. With [TMB](/blog/auth-architecture-part2-TMB), much of the frontend OAuth logic remains similar to BBOC, and the migration focuses on moving token exchange and storage to the backend. The frontend remains complex due to direct API calls requiring access token management.
 
 ### Migration to BFF
 
-BFF requires implementation of proxy endpoints that validate sessions, manage token refresh automatically, and forward all API requests to resource servers. Frontend code is simplified to a basic API client that routes calls through the proxy with session cookies for authentication — no token management needed. Additional challenges include performance optimization through connection pooling and caching to address added proxy latency.
+[BFF](/blog/backend-for-frontend-security-architecture) requires implementation of proxy endpoints that validate sessions, manage token refresh automatically, and forward all API requests to resource servers. Frontend code is simplified to a basic API client that routes calls through the proxy with session cookies for authentication — no token management needed. Additional challenges include performance optimization through connection pooling and caching to address added proxy latency.
 
 ## When forced into BBOC
 
@@ -316,6 +315,7 @@ If you're forced into a BBOC architecture due to legacy constraints, third-party
 - **Subresource Integrity (SRI):** Use SRI for all third-party scripts to prevent supply chain attacks from compromising your application.
 - **Rate limiting:** Apply aggressive rate limiting on authentication endpoints to slow brute force and token theft attempts.
 - **Demonstrating Proof of Possession (DPoP):** Implement DPoP to bind tokens to specific clients, preventing token replay by attackers.
+- **Mutual TLS ([mTLS](https://datatracker.ietf.org/doc/html/rfc8705)):** Similar to DPoP, use mTLS to bind tokens to client certificates. This is not ideal for browser implementation as it requires managed certificate distribution.
 
 Most strategies provide only marginal security improvements, with the exception of DPoP and mTLS. If you're investing significant effort into these controls, you're better off investing in migrating to TMB or BFF architectures.
 
