@@ -8,6 +8,7 @@ import {rehypeTasklistEnhancer} from './src/plugins/rehype-tasklist-enhancer';
 import {codeTitleRemark} from './src/plugins/code-title-remark';
 import * as markdownExtract from './src/plugins/markdown-extract.js';
 import remarkMdx from 'remark-mdx';
+import rehypeMermaid from "rehype-mermaid";
 
 const optionalIntegrations = [];
 if (!process.env.DEV) {
@@ -46,8 +47,12 @@ const config = defineConfig({
       // Tweak GFM task list syntax
       // @ts-ignore
       rehypeTasklistEnhancer(),
+      rehypeMermaid
     ],
-    syntaxHighlight: 'shiki'
+    syntaxHighlight: {
+      type: "shiki",
+      excludeLangs: ["mermaid"]
+    }
   },
   site: 'https://fusionauth.io/',
   // experimental: {
