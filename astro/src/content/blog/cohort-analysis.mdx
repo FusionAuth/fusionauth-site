@@ -171,6 +171,9 @@ The y-axis is valuable because it shows you if your business is getting better o
 
 ## How To Run The Chart Code For Your FA Instance
 
+Let's look at how to create the charts above for your business. All you need is [Docker](https://www.docker.com/get-started). If you prefer not to use Docker, you need to have [Go](https://go.dev/doc/install) installed and a PostgreSql client (like the free IDE [DBeaver](https://dbeaver.io/download/)).
+
+You also need to have an instance of FusionAuth with data you want to analyze. If you don't have any data yet, you can use the code in the addendum to create test data.
 
 ### Extract Customer Data
 
@@ -178,20 +181,30 @@ While application databases, like FA, store data in a denormalized structure to 
 
 The first step to analyze your user data in FA is to extract it and store it in a usable format. As this process puts the database under load, you should run it on a copy of your database using a separate FA instance.
 
-Create a file called `extract.mjs` and insert the code below. Change the variables at the top to match your FA instance.
-
-```js
-import * as fs from 'fs/promises';
-
-```
-
-Run the file with the command below.
+Use git to clone the [accompanying repository](https://github.com/ritza-co/fusionauth-user-charts), or download and unzip it.
 
 ```sh
-node extract.mjs
+git clone https://github.com/ritza-co/fusionauth-user-charts.git
+cd fusionauth-user-charts
 ```
 
-This command creates two files, `faUsers.json` containing the raw data from FA, and `users.json` containing the processed set of users with all login dates but all other fields removed.
+Edit the file `3extract.go` and update the constants near the top to match your FusionAuth URL, API key, and application Id.
+
+To run the extraction with Docker, use the command below.
+
+```sh
+docker run --init  -it  --rm --platform linux/amd64 --name "app" --network faNetwork -v .:/app -v ./gocache:/go/pkg -v ./buildcache:/root/.cache/go-build -w /app golang:1.25-bookworm sh -c "go run 3extract.go"
+```
+
+The only parameter you need to change is `--network faNetwork`. Ensure that your FusionAuth instance is running on the same network as the extraction code (`localhost` won't work in Docker), or if you run FusionAuth remotely you can remove the network parameter entirely.
+
+If you installed Go directly on your computer, you can run the command below instead of using Docker.
+
+```sh
+go run 3extract.go
+```
+
+The extraction creates two files, `faUsers.json` containing the raw data from FA, and `users.json` containing the processed set of users with all login dates.
 
 The `users.json` file has structure below.
 
@@ -205,46 +218,16 @@ The `users.json` file has structure below.
   }]
 ```
 
+<Aside type="warning">
+If you have more than 999999 users, you will need to edit `numberOfResults=999999` in the script and extract your users in batches, then concatenate the JSON files.
+</Aside>
 
 ## Calculate And Display The Charts
 
-Create a file called `app.mjs` in the same directory as the `users.json` file you extracted earlier and insert the code below.
+The last step is to run the webserver that displays the charts.
 
-```js
-// clear; docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" -p 7777:7777 node:24.12.0-slim  sh -c  "node --watch 4app.mjs";
+TODO run code
 
-import express from 'express';
-import * as fs from 'fs/promises';
-
-```
-
-page.html
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>User statistics</title>
-		<style>
-			body{background-color:#eee}
-			.chart{max-width:820px;padding-right:20px;margin:20px auto;margin-bottom:40px; background-color:#fff; border-radius:12px;}
-		</style>
-	</head>
-	<body>
-		<div class="chart"><canvas id="totalUsersPerYearChart"></canvas></div>
-		<div class="chart"><canvas id="totalUsersPerMonthChart"></canvas></div>
-		<div class="chart"><canvas id="newUsersPerYearChart"></canvas></div>
-
-```
-
-Run the code with the command below.
-
-```sh
-npm install express
-node app.mjs
-```
 
 ## Summary
 
