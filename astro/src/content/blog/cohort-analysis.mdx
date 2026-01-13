@@ -175,6 +175,10 @@ Let's look at how to create the charts above for your business. All you need is 
 
 You also need to have an instance of FusionAuth with data you want to analyze. If you don't have any data yet, you can use the code in the addendum to create test data.
 
+<Aside type="note">
+The code in this guide uses Go because calculating user metrics is incredibly computationally expensive. Many charts require iterating through every login date for every user. Go can do this dozens of times faster than JavaScript, using multiple CPU cores in parallel.
+</Aside>
+
 ### Extract Customer Data
 
 While application databases, like FA, store data in a denormalized structure to save space, data analysis needs data to be normalized for fast retrieval and computation.
@@ -219,135 +223,69 @@ The `users.json` file has structure below.
 ```
 
 <Aside type="warning">
-If you have more than 999999 users, you will need to edit `numberOfResults=999999` in the script and extract your users in batches, then concatenate the JSON files.
+If you have more than 999999 users, you will need to edit `numberOfResults=999999` in the script, and possibly extract your users in batches and concatenate the JSON output files.
 </Aside>
 
 ## Calculate And Display The Charts
 
 The last step is to run the webserver that displays the charts.
 
-TODO run code
+If you're using Docker, run the command below.
 
+```sh
+docker run --init  -it  --rm --platform linux/amd64 --name "app" -p 7777:7777 -v .:/app -v ./gocache:/go/pkg -v ./buildcache:/root/.cache/go-build -w /app golang:1.25-bookworm sh -c "go mod tidy && go run 4app.go"
+```
+
+You don't need to edit any parameters or constants this time because the code makes the charts from the JSON files and doesn't talk to FA.
+
+When the calculations are done, the terminal will say `Charts created`.
+
+Browse to http://localhost:7777 to view your charts.
 
 ## Summary
 
+In this guide you learnt how to use basic FA login data to analyze user behavior. If you see any patterns you'd like to investigate further, edit the code to log user Ids in any group that interest you. Use those Ids to investigate which features in your app affect those users.
+
+You can also edit `4app.go` and `5page.html` to add any new charts that you need.
+
 ## Appendix — How To Create Fake Customer Data In FA
 
-To create an FA application with fake users and login data you need to run a JS and SQL script.
+To create fake users and login data for an FA application you need to run a Go file and SQL script. There is no way to create fake dates using the FA API, so having direct access to the database to run SQL is required.
 
-Create a file called `fake.mjs` containing the code below. It will register 10 000 new users when run.
-
-```js
-async function registerUsers(num) {
-  for (let i = 1; i <= num; i++) {
-    try {
-      const response = await fetch('http://fa:9011/api/user/registration', {
-        method: 'POST',
-        headers: {
-          Authorization: '33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          user: { email: `${i}@example.com`, password: 'password' },
-          registration: { applicationId: 'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e' }
-        })
-      });
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.log(`httpError ${response.status} for user ${i}@example.com: ${errorBody}`);
-        return;
-      }
-      const result = await response.json();
-      console.log(JSON.stringify(result));
-    } catch (error) {
-      console.log(`networkError for user ${i}@example.com: ${(error).message}`);
-    }
-    console.log('');
-  }
-}
-
-await registerUsers(10000);
-```
-
-Adjust the URL, authorization key, and application Id in the code above to match your FA instance. Then run the file with the command below.
+If you haven't done so already, use git to clone the [accompanying repository](https://github.com/ritza-co/fusionauth-user-charts), or download and unzip it.
 
 ```sh
-node fake.mjs
+git clone https://github.com/ritza-co/fusionauth-user-charts.git
+cd fusionauth-user-charts
 ```
 
-If you don't have Node installed, or want to avoid running code directly on your computer, you can use Docker with the command below. (If you're running FA on your local machine, you need to put FA and the command on the same `--network`.)
+Edit the `1createMockData.go` file. Adjust the URL, authorization key, and application Id in the code above to match your FA instance. Then run the file with the command below.
 
 ```sh
-docker run --init  -it --rm --name "app" -v ".:/app" -w "/app" --network faNetwork node:24.12.0-slim sh -c  "node fake.mjs";
+docker run --init  -it  --rm --platform linux/amd64 --name "app" --network faNetwork -v .:/app -v ./gocache:/go/pkg -v ./buildcache:/root/.cache/go-build -w /app golang:1.25-bookworm sh -c "go run 1createMockData.go"
 ```
 
-Once the users are created, you need randomize their registration dates, set 5% of user email addresses to unverified, and create thousands of login dates. This can't be done with the FA API, so you need to run SQL directly on the PostgreSQL FA database.
+The only parameter you need to change is `--network faNetwork`. Ensure that your FusionAuth instance is running on the same network as the extraction code (`localhost` won't work in Docker), or if you run FusionAuth remotely you can remove the network parameter entirely.
 
-Run the SQL below.
+If you installed Go directly on your computer, you can run the command below instead of using Docker.
 
-```sql
--- randomize registration dates. a day from 2015 to 2025
-UPDATE user_registrations SET insert_instant =
-    EXTRACT(EPOCH FROM (
-        '2015-01-01'::DATE + (FLOOR(('2025-12-31'::DATE - '2015-01-01'::DATE) * random()))::INT
-    )::TIMESTAMP WITHOUT TIME ZONE)::BIGINT;
-
--- check dates if you want
--- SELECT * FROM user_registrations
-
--- set 5% users to unverified
-UPDATE identities
-SET verified = CASE
-    WHEN random() < 0.05 THEN false
-    ELSE true
-END
-WHERE identities.is_primary = true;
-
-UPDATE identities
-SET verified_reason = 5
-WHERE identities.is_primary = true;
-
--- add login dates
-WITH user_min_instant AS (
-    SELECT
-        user_registrations.users_id,
-        MIN(user_registrations.insert_instant) AS minInstant
-    FROM
-        user_registrations
-    GROUP BY
-        user_registrations.users_id
-),
-users_with_series AS (
-    SELECT
-        users.id AS usersId,
-        user_min_instant.minInstant,
-        generate_series(1, (1 + floor(random() * 4991))::INTEGER) AS seriesNum -- 10 to 5000 logins
-    FROM
-        users
-    JOIN
-        user_min_instant ON users.id = user_min_instant.users_id
-)
-INSERT INTO raw_logins (applications_id, instant, ip_address, identities_value, identities_type, users_id)
-SELECT
-    'e9fdb985-9173-4e01-9d73-ac2d60d1dc8e',
-    (users_with_series.minInstant + FLOOR(
-        (EXTRACT(EPOCH FROM '2026-01-01 00:00:00Z'::timestamp) - users_with_series.minInstant) * random()
-    ))::BIGINT,
-    '127.0.0.1',
-    NULL,
-    NULL,
-    users_with_series.usersId
-FROM
-    users_with_series;
-
--- delete logins for unverified users
-delete from raw_logins
-where users_id in (select users_id from identities WHERE is_primary=true and verified=false)
+```sh
+go run 1createMockData.go
 ```
+
+Once the users are registered, you need to randomize their registration dates, set 5% of user email addresses to unverified, and create thousands of login dates. To do this, you can either connect to your FA database in a SQL browser and run the contents of `2createMockData.slq`, or use the command below with Docker.
+
+```sh
+docker run --init -it --rm --platform linux/amd64 --name "app" --network faNetwork -v .:/app -w /app postgres:16-bookworm sh -c "PGPASSWORD=postgres psql -h faDb -U postgres -d fusionauth -f 2createMockData.sql"
+```
+
+In the command above, you need to set your database location, username, and password to match your instance (these will probably be in your `.env` file or `docker-compose.yml` file).
+
+That's all. You are now ready to run scripts 3 and 4 to extract the data and create the charts.
+
 
 ## todo
 
-use go instead of js
 fa
 
 https://github.com/FusionAuth/fusionauth-site/issues/2990 - cohort analysis
