@@ -56,7 +56,31 @@ For the other applications in this example, the credential, which proves authent
 
 Here's the flow of an OIDC single sign-on. The home page of each application is unavailable to anonymous users. When a browser requests it, they are directed to the identity provider, FusionAuth, to authenticate. However, the authentication at FusionAuth only happens the first time.
 
-<SsoLoginDiagram alt="Single sign-on request flow during login." />
+```mermaid title="Single sign-on request flow during login."
+sequenceDiagram
+    participant Browser
+    participant pp as Pied Piper Video Chat
+    participant FusionAuth as Identity Provider (IdP)
+    participant h as Hooli Jobs
+    Browser ->> pp : View Home Page
+    pp ->> pp : Check Session Existence
+    pp ->> Browser : Redirect to IdP Because There is No Valid Session
+    Browser ->> FusionAuth : Request Login Page
+    FusionAuth ->> FusionAuth : Check IdP Session Existence
+    FusionAuth ->> Browser : Send Login Page
+    Browser ->> FusionAuth : Send Credentials
+    FusionAuth ->> Browser : Redirects to Pied Piper
+    Browser ->> pp : Requests Home Page
+    pp ->> Browser : Sends Home Page
+    Browser ->> h : Requests Home Page
+    h ->> h : Check Session Existence
+    h ->> Browser : Redirect to IdP Because There is No Valid Session
+    Browser ->> FusionAuth : Request Login Page
+    FusionAuth ->> FusionAuth : Check IdP Session Existence
+    FusionAuth ->> Browser : Redirects to Home Page
+    Browser ->> h : Requests Application Page
+    h ->> Browser : Sends Application Page
+```
 
 (If you are a stickler, you'll notice there is no request for a token from the apps to FusionAuth after the user authenticates. That is implied and required.)
 
@@ -88,7 +112,36 @@ You want to use SAML to integrate these applications with your identity provider
 
 Here's a diagram for a SAML flow. This is a service provider (SP) initiated flow, where the user is trying to access an application, such as Zendesk (the SP), when they are not logged in.
 
-<SamlSsoLoginDiagram alt="SAML single sign-on request flow during login." />
+```mermaid title="SAML single sign-on request flow during login."
+sequenceDiagram
+    participant Browser
+    participant z as Zendesk
+    participant FusionAuth as Identity Provider (IdP)
+    participant g as Gusto
+
+    Browser ->> z : Requests app
+    z ->> z : Check session existence, session missing
+    z ->> Browser : Redirect to IdP with a signed AuthNRequest (XML)
+    Browser ->> FusionAuth : Request login page
+    FusionAuth ->> FusionAuth : Validate AuthNRequest (XML)
+    FusionAuth ->> FusionAuth : Check IdP session existence (doesn't exist)
+    FusionAuth ->> Browser : Send login page
+    Browser ->> FusionAuth : Send credentials of user
+    FusionAuth ->> Browser : Redirects to Zendesk with a response (XML)
+    Browser ->> z : Requests App and provides response (XML)
+    z ->> z : Processes response (XML)
+    z ->> Browser : Sends app
+    Browser ->> g : Requests app
+    g ->> g : Check session existence, session missing
+    g ->> Browser : Redirect to IdP with a signed AuthNRequest (XML)
+    Browser ->> FusionAuth : Request login page
+    FusionAuth ->> FusionAuth : Validate AuthNRequest (XML)
+    FusionAuth ->> FusionAuth : Check IdP session existence (exists)
+    FusionAuth ->> Browser : Redirects to Gusto with a response (XML)
+    Browser ->> g : Requests app and provides response (XML)
+    g ->> g : Processes response (XML)
+    g ->> Browser : Sends app 
+```
 
 SAML is more complicated because of the breadth of the specification and because of the flexibility of XML. If you are looking to implement it, using a battle tested library is a good idea.
 
