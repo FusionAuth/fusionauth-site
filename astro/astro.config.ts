@@ -47,7 +47,17 @@ const config = defineConfig({
       // Tweak GFM task list syntax
       // @ts-ignore
       rehypeTasklistEnhancer(),
-      rehypeMermaid
+      [
+        rehypeMermaid,
+        {
+          strategy: "inline-svg",
+          dark: true,
+          mermaidConfig: {
+            // astro default
+            color: "#FFF !important"
+          }
+        }
+      ],
     ],
     syntaxHighlight: {
       type: "shiki",
