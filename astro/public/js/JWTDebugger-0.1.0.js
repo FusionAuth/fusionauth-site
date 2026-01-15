@@ -42,7 +42,6 @@ class JWTDecoder {
     });
     this.encoedEditor.setSize(null, 50);
     this.encoedEditor.on('keyup', event => this.#handleKeyUp(event));
-
     this.jwtHeaderEditor = CodeMirror.fromTextArea(this.jwtHeader, {
       autofocus: false,
       lineNumbers: true,
@@ -62,8 +61,10 @@ class JWTDecoder {
     });
     this.jwtBodyEditor.setSize(null, 120);
     this.jwtBodyEditor.on('keyup', event => this.#handleJSONKeyUp(event));
-  }
+    if (this.encoded.value) this.#handleKeyUp()
 
+  }
+  
   #handleJSONKeyUp() {
     var current = this.encoedEditor.getValue().split('.');
     // Do each part separately so that if we exception we can continue
@@ -108,6 +109,7 @@ class JWTDecoder {
           this.jwtHeaderEditor.setSize(null, this.jwtHeader.nextElementSibling.querySelector('.CodeMirror-sizer').offsetHeight + 5);
         } catch (error) {
           // Ignore
+          console.log(error)
         }
       }
 
@@ -117,13 +119,14 @@ class JWTDecoder {
         try {
           this.jwtBodyEditor.setSize(null, this.jwtBody.nextElementSibling.querySelector('.CodeMirror-sizer').offsetHeight + 5);
         } catch (error) {
-          // Ignore
+          console.log(error)
         }
       }
     } catch (error) {
-      // Ignore
+          console.log(error)
     }
   }
+
 }
 
 document.addEventListener('DOMContentLoaded', () => new JWTDecoder());
