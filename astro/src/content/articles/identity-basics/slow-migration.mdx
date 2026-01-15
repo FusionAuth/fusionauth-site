@@ -9,7 +9,7 @@ date: 2020-10-30
 dateModified: 2020-10-30
 ---
 import SlowMigrationHub from "../../../../public/img/articles/slow-migration-hub-svg.astro";
-import AuthBeforeBigBang from "../../../diagrams/articles/identity-basics/auth-before-big-bang.astro";
+
 import AuthDuringBigBang from "../../../diagrams/articles/identity-basics/auth-during-big-bang.astro";
 import AuthAfterBigBang from "../../../diagrams/articles/identity-basics/auth-after-big-bang.astro";
 import AuthBeforeMigration from "../../../diagrams/articles/identity-basics/auth-before-migration.astro";
@@ -54,17 +54,47 @@ If you choose a big bang, you are moving all your users at one point in time. To
 
 This migration has three phases, from the perspective of the user signing in: before, during and after the big bang migration. Before the migration, the user signs in with the old system.
 
-<AuthBeforeBigBang/>
+```mermaid
+sequenceDiagram
+
+actor user as User/Browser
+participant oldauth as Old Auth System
+participant oldauthds as Old Auth Datastore
+user ->> oldauth : Provide credentials
+oldauth ->> oldauthds : Verify credentials
+oldauthds ->> oldauth : User data
+oldauth ->> user : Authentication complete
+```
 
 During the migration, there is no authentication allowed. Data is moved from the old datastore to the new datastore. The migration process pulls the data from the old datastore, cleans and processes it if needed, and pushes it to the new one.
 
-<AuthDuringBigBang/>
+```mermaid
+sequenceDiagram
+
+  participant migrator as Migration process
+  participant newauthds as New Auth Datastore
+  participant oldauthds as Old Auth Datastore
+  migrator ->> oldauthds : User data, please
+  oldauthds ->> migrator : Here's all the user data
+  migrator ->> migrator : Transform, clean, verify user data
+  migrator ->> newauthds : Here's all the user data
+```
 
 You have downtime because you don't want anyone updating their user profile in the old system after they've been migrated to the new system but before the system of record has flipped. You could run a degraded system as well, letting users authenticate but not update any user data. Depending on your availability needs, you could also choose to do writes to both systems during that period, though this may lead to additional complexity and edge cases.
 
 After the migration is complete, authentication is again allowed. All users then authenticate against the new system:
 
-<AuthAfterBigBang/>
+```mermaid
+sequenceDiagram
+  
+  actor user as User/Browser
+  participant newauth as New Auth System
+  participant newauthds as New Auth Datastore
+  user ->> newauth : Provide credentials
+  newauth ->> newauthds : Here are user credentials
+  newauthds ->> newauth : User data
+  newauth ->> user : Authentication complete
+```
 
 With the big bang option, you should create a rollback plan in case testing misses something and things go sideways. Test this plan, because you don't want to test it for the first time when prod is down.
 
@@ -95,11 +125,36 @@ However, a segment by segment migration may be problematic in the following ways
 
 At a high level, a slow migration happens in four phases. Each user proceeds through the phases independently of other users.  Here's how the data flows before any changes to the auth system are made: 
 
-<AuthBeforeMigration/>
+```mermaid
+sequenceDiagram
+
+  actor user as User/Browser
+  participant oldauth as Old Auth System
+  participant oldauthds as Old Auth Datastore
+  user ->> oldauth : Provide credentials
+  oldauth ->> oldauthds : Verify credentials
+  oldauthds ->> oldauth : User data
+  oldauth ->> user : Authentication complete
+```
 
 In the second phase, you'd stand up the new system, connect it to the old system, and route all authentication requests from applications to the new system. When the new auth system proxies the old auth system, the latter is consulted the first time a user authenticates:
 
-<AuthDuringMigrationFirstAuth/>
+```mermaid
+sequenceDiagram
+
+  actor user as User/Browser
+  participant newauth as New Auth System
+  participant newauthds as New Auth Datastore
+  participant oldauth as Old Auth System
+  participant oldauthds as Old Auth Datastore
+  user ->> newauth : Provide credentials
+  newauth ->> oldauth : Here are user credentials
+  oldauth ->> oldauthds : Verify credentials
+  oldauthds ->> oldauth : User data
+  oldauth ->> newauth : User data
+  newauth ->> newauthds : Store user data
+  newauth ->> user : Authentication complete
+```
 
 When this initial login is successful, any user data to be migrated is returned. That data is stored in the new system. The old system is the system of record for the first login of this user, but not after.
 
@@ -111,11 +166,33 @@ For subsequent logins, as mentioned, the user's data has been migrated. For this
 
 Here's the auth process for a user who has been migrated to the new system:
 
-<AuthDuringMigrationSecondAuth/>
+```mermaid
+sequenceDiagram
+
+  actor user as User/Browser
+  participant newauth as New Auth System
+  participant newauthds as New Auth Datastore
+  participant oldauth as Old Auth System
+  participant oldauthds as Old Auth Datastore
+  user ->> newauth : Provide credentials
+  newauth ->> newauthds : Here are user credentials
+  newauthds ->> newauth : User data
+  newauth ->> user : Authentication complete
+```
 
 After a period of time, most user data has been migrated. There's no need to consult the old auth system and it can be safely shut down.
 
-<AuthAfterMigration/>
+```meraid
+sequenceDiagram
+
+  actor user as User/Browser
+  participant newauth as New Auth System
+  participant newauthds as New Auth Datastore
+  user ->> newauth : Provide credentials
+  newauth ->> newauthds : Here are user credentials
+  newauthds ->> newauth : User data
+  newauth ->> user : Authentication complete
+```
 
 Slow migration is similar to the [strangler pattern](https://martinfowler.com/bliki/StranglerFigApplication.html), first documented by Martin Fowler. Let's walk through the steps to successfully undertake a phased migration.
 
@@ -198,9 +275,7 @@ No data needs to be migrated, but new users should register with the new auth sy
 
 ## The authentication process
 
-When a user signs in, the new auth system passes on the credentials to the old auth system, and receives the user data in response. Here's the diagram from above:
-
-<AuthDuringMigrationFirstAuth/>
+When a user signs in, the new auth system passes on the credentials to the old auth system, and receives the user data in response.
 
 After initial authentication, the data should be migrated to the new auth datastore. Then, this user can be completely managed by it.
 

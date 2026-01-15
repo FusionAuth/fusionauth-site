@@ -8,7 +8,6 @@ import ListHostedLoginPagesUseCases from 'src/content/docs/_shared/_list-hosted-
 import ClientSideApiKeys from 'src/content/docs/_shared/_client-side-api-keys.mdx';
 import LoginAPIDiagram from 'src/diagrams/docs/get-started/core-concepts/integration-points/login-api-flow.astro';
 import LoginAPIIssues from 'src/content/docs/get-started/core-concepts/_login-api-issues.mdx';
-import LoginAPIWithFederationDiagram from 'src/diagrams/docs/get-started/core-concepts/integration-points/login-api-flow-federation.astro';
 import OAuthDiagram from 'src/diagrams/docs/get-started/core-concepts/integration-points/oauth-grant.astro';
 import OAuthAndFederationDiagram from 'src/diagrams/docs/get-started/core-concepts/integration-points/oauth-grant-with-federation.astro';
 import RecommendedTokenStorageOptions from 'src/content/docs/_shared/_recommended-token-storage-options.mdx';
@@ -53,7 +52,29 @@ When this is used, FusionAuth will defer to the configured systems of record for
 
 You can also use federation with the Login API. Create and configure an [Identity Provider](/docs/lifecycle/authenticate-users/identity-providers/).
 
-<LoginAPIWithFederationDiagram alt="The Login API Flow When User Logs In With An Identity Provider Such As Google"/>
+```mermaid title="The Login API flow when a user logs in with an identity provider such as Google"
+sequenceDiagram
+    participant User as User/Browser
+    participant App
+    participant FusionAuth
+    participant IdentityProvider as ${idpName}
+
+    User ->> App : View Initial Page<br/>Click Login
+    App ->> User : Displays Login Page<br/>Including Link To 'Login With ${idpName}'
+    User ->> App : Clicks On 'Login With ${idpName}'
+    App ->> User : Redirect To ${idpName} Authorization URL
+    User ->> IdentityProvider : Enters Credentials
+    IdentityProvider ->> IdentityProvider : Validate Credentials
+    IdentityProvider ->> User : Redirect to App With Authorization Code
+    User ->> App : Requests Page, Has Authorization Code
+    App ->> FusionAuth : Calls Complete Login<br/>With Code And Redirect URI
+    FusionAuth ->> IdentityProvider : Exchanges Code And<br/>Redirect URI For ${idpName} Token
+    IdentityProvider ->> FusionAuth : Returns ${idpName} Token
+    FusionAuth ->> FusionAuth : Stores ${idpName} Token, Calls Lambda, Creates User And Registrations (If Needed), Generates FusionAuth Tokens
+    FusionAuth ->> App : Return FusionAuth Tokens
+    App ->> App : Create Session Or<br/>Otherwise Log User In
+    Note over User, IdentityProvider: User Is Logged In And App Can Proceed<br/>Delivering Data And Functionality
+```
 
 Depending on the identity provider, you may be able to pass the token instead of the authorization code and redirect URI. In the case of a SAML provider, you'll need to provide the SAML response. Please consult the [provider specific API documentation](/docs/apis/identity-providers/) for details.
 
