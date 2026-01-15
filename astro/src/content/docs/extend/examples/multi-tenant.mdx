@@ -8,9 +8,7 @@ tags: b2b2c, b2b2e
 ---
 import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import ControlPlaneRegistrationDiagram from 'src/diagrams/docs/extend/examples/_control-plane-registration.astro';
 import CrossTenantUserAccess from 'src/content/docs/get-started/core-concepts/_cross-tenant-access.mdx';
-import DataPlaneLoginDiagram from 'src/diagrams/docs/extend/examples/_data-plane-login.astro';
 import InlineField from 'src/components/InlineField.astro';
 import MultiTenantLimitations from 'src/content/docs/get-started/core-concepts/_multi-tenant-limitations.mdx';
 
@@ -181,7 +179,20 @@ Some attributes you might need in this object when implementing multi-tenancy wi
 
 Let's get more concrete and continue to discuss the PPVC app. It is typical to allow users to self register for the control plane application and automatically set up a corresponding tenant. In this case, the below diagram outlines the registration flow:
 
-<ControlPlaneRegistrationDiagram alt="Registration process for the control plane application." />
+```mermaid title="Registration process for the control plane application."
+sequenceDiagram
+
+participant Browser
+participant pp as Pied Piper Video Chat
+participant f as FusionAuth
+
+Browser ->> pp : Registers
+Browser ->> pp : Submit tenant creation form
+pp ->> pp : Creates tenant object
+pp ->> f : Creates needed configuration
+pp ->> f : Create optional configuration
+pp -->> Browser : Tenant configuration details
+```
 
 After a user has registered in the control plane application, they can log in and view details of their tenant:
 
@@ -189,7 +200,24 @@ After a user has registered in the control plane application, they can log in an
 
 Here's the login flow for a data plane application. Such a login would happen after a user had registered in the control plane application and a tenant had been created and configured. Apart from the lookup of the tenant OAuth configuration by hostname (the Client Id and Client Secret), this is a typical Authorization Code grant.
 
-<DataPlaneLoginDiagram alt="Login process for the data plane application." />
+```mermaid title="Registration process for the data plane application."
+sequenceDiagram
+
+participant Browser
+participant pp as Pied Piper Video Chat
+participant f as FusionAuth
+
+Browser ->> pp : Request raviga.ppvc.com
+pp ->> pp : Looks up tenant from hostname
+pp -->> Browser : Sends user to tenant specific login url 
+Browser ->> f : Authenticates
+f -->> Browser : Sends the authorization code 
+Browser ->> pp : Authorization code to the redirect URL
+pp ->> f : Presents code for token
+f -->> pp : Sends token
+pp -->> Browser : Displays chat page
+Browser ->> pp : Begins chatting
+```
 
 The users of each data plane application can register or log in and see the chat window (or at least a note about the chat functionality that will later be built out). 
 
