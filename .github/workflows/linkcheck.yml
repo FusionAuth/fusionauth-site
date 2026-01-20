@@ -19,15 +19,55 @@ jobs:
           arguments: https://fatest.ngrok.dev/test2.html -e --connection-failures-as-warnings -d 2>&1 | tee linkcheckoutput.txt
         name: linkcheck
       # check for webflow links
-      - name: Check for FusionAuth webflow lines
+      - name: Validate linkcheck results
         run: |
-          count=$(grep -c "fusionauth.webflow.io" linkcheckoutput.txt || true)
-          echo "Found $count lines containing fusionauth.webflow.io"
-          if [ $count -gt 0 ]; then
-            echo "Error: Found fusionauth.webflow.io references in output.txt"
-            grep "fusionauth.webflow.io" linkcheckoutput.txt
+          set -e
+
+          echo "Validating linkcheck results..."
+
+          # ---- Extract stats ----
+          warnings=$(awk '/warnings/ {print $1}' linkcheckoutput.txt | tail -n 1)
+          errors=$(awk '/errors/ {print $1}' linkcheckoutput.txt | tail -n 1)
+
+          warnings=${warnings:-0}
+          errors=${errors:-0}
+
+          # ---- Check for forbidden domains ----
+          webflow_count=$(grep -c "fusionauth.webflow.io" linkcheckoutput.txt || true)
+
+          # ---- Summary ----
+          echo ""
+          echo "Linkcheck summary:"
+          echo "  warnings: $warnings"
+          echo "  errors:   $errors"
+          echo "  forbidden webflow links: $webflow_count"
+          echo ""
+
+          failed=false
+
+          if [ "$warnings" -gt 0 ]; then
+            echo "Warnings detected"
+            failed=true
+          fi
+
+          if [ "$errors" -gt 0 ]; then
+            echo "Errors detected"
+            failed=true
+          fi
+
+          if [ "$webflow_count" -gt 0 ]; then
+            echo "fusionauth.webflow.io references found:"
+            grep "fusionauth.webflow.io" linkcheckoutput.txt || true
+            failed=true
+          fi
+
+          if [ "$failed" = true ]; then
+            echo ""
+            echo "Linkcheck validation failed"
             exit 1
           fi
+
+          echo "Linkcheck validation passed"
   send_mail_on_failure:
     needs: check_links
     runs-on: ubuntu-latest
