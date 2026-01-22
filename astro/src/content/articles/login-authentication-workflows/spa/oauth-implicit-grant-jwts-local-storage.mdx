@@ -4,7 +4,6 @@ description: An explanation of single-page application login using FusionAuth OA
 section: Login & Auth Workflows
 author: Brian Pontarelli
 ---
-import Diagram from "../../../../diagrams/articles/login-authentication-workflows/spa/oauth-implicit-grant-jwts-local-storage.astro";
 import Legend from "../../../../components/articles/login-authentication-workflows/legend.md";
 import OrderedList from "../../../../components/OrderedList.astro";
 import Intro from "../../../../components/articles/login-authentication-workflows/spa/oauth-intro.md";
@@ -29,7 +28,75 @@ import Step14 from "../../../../components/articles/login-authentication-workflo
 
 <Legend/>
 
-<Diagram/>
+```mermaid errorBoxes={[18]} warningBoxes={[27]} infoBoxes={[22]}
+sequenceDiagram
+  autonumber
+  participant Browser
+  participant Store
+  participant Forums
+  participant FusionAuth
+  participant Hacker
+  Note over Browser,Hacker: Initialize
+  Browser->>Store: GET /
+  Store->>Browser: (SPA HTML, CSS & JavaScript)
+  Browser->>Browser: Check local storage for JWT
+
+  Note over Browser,Hacker: Login (browser navigates away from SPA)
+  Browser->>FusionAuth: GET /oauth2/authorize {response_type=token}
+  FusionAuth->>Browser: (Login form HTML)
+  Browser->>FusionAuth: POST /oauth2/authorize (response_type=token)
+  FusionAuth->>Browser: 302 Location: {redirect_uri w/ JWT in redirect URI and no refresh token}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  Browser->>Store: GET {redirect_uri w/o JWT in URI}
+  Store->>Browser: (SPA HTML, CSS & JavaScript)
+
+  Note over Browser,Hacker: Local storage drop
+  Browser->>Browser: Move JWT from URI to local storage
+
+  Note over Browser,Hacker: Shopping cart load
+  Browser->>Store: AJAX GET /api/load-shopping-cart<br/>(JWT from local storage)
+  Store->>Browser: (Shopping cart contents)
+
+  Note over Browser: JWT expires
+
+  Note over Browser,Hacker: Automatic re-login (since session exists)
+  Browser->>FusionAuth: GET /oauth2/authorize {response_type=token}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  FusionAuth->>Browser: 302 Location: {redirect_uri w/ JWT in redirect URI and no refresh token}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  Browser->>Store: GET {redirect_uri w/o JWT in URI}
+  Store->>Browser: (SPA HTML, CSS & JavaScript)
+
+  Note over Browser,Hacker: Local storage drop
+  Browser->>Browser: Move JWT from URI to local storage
+
+  Note over Browser,Hacker: Shopping cart load
+  Browser->>Store: AJAX GET /api/load-shopping-cart<br/>(JWT from local storage)
+  Store->>Browser: (Shopping cart contents)
+
+  Note over Browser,Hacker: SSO login to forums
+
+  Note over Browser,Hacker: Initialize
+  Browser->>Forums: GET /<br/>[No cookies]
+  Forums->>Browser: (SPA HTML, CSS & JavaScript)
+  Browser->>Browser: Check local storage for JWT
+
+  Note over Browser,Hacker: Login (browser navigates away from SPA but auto-logs-in since the session exists)
+  Browser->>FusionAuth: GET /oauth2/authorize {response_type=token}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  FusionAuth->>Browser: 302 Location: {redirect_uri w/ JWT in redirect URI and no refresh token}<br/>[SessionId HttpOnly w/ domain: example.fusionauth.io]
+  Browser->>Forums: GET {redirect_uri w/o JWT in URI}
+  Forums->>Browser: (SPA HTML, CSS & JavaScript)
+
+  Note over Browser,Hacker: Local storage drop
+  Browser->>Browser: Move JWT from URI to local storage
+
+  Note over Browser,Hacker: Forums load
+  Browser->>Forums: AJAX GET /api/load-load-posts<br/>(JWT from local storage)
+  Forums->>Browser: (Forum posts)
+
+  Note over Browser,Hacker: Attack vectors
+
+  Note over Browser,Hacker: Stolen JWT
+  Hacker->>Store: GET /api/load-shopping-cart<br/>(JWT)
+  Store->>Hacker: (Shopping cart contents)
+```
 
 ## Explanation
 

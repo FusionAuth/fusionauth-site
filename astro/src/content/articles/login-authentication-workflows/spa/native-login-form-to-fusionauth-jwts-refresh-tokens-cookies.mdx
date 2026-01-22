@@ -4,7 +4,6 @@ description: An explanation of single-page application login using a native logi
 section: Login & Auth Workflows
 author: Brian Pontarelli
 ---
-import Diagram from "../../../../diagrams/articles/login-authentication-workflows/spa/native-login-form-to-fusionauth-jwts-refresh-tokens-cookies.astro";
 import Legend from "../../../../components/articles/login-authentication-workflows/legend.md";
 import OrderedList from "../../../../components/OrderedList.astro";
 import Intro from "../../../../components/articles/login-authentication-workflows/spa/native-intro.md";
@@ -36,7 +35,91 @@ import Step21 from "../../../../components/articles/login-authentication-workflo
 
 <Legend/>
 
-<Diagram/>
+```mermaid errorBoxes={[18, 22]} warningBoxes={[24, 29]}
+sequenceDiagram
+  autonumber
+  participant Browser
+  participant Store
+  participant Forums
+  participant FusionAuth
+  participant Hacker
+  Note over Browser,Hacker: Initialize
+  autonumber
+  Browser->>Store: GET /
+  Store->>Browser: (SPA HTML, CSS & JavaScript)
+  Browser->>Store: AJAX GET /api/user<br/>[No cookies]
+  Store->>Browser: 404 Missing
+
+  Note over Browser,Hacker: Login (inside SPA)
+  Browser->>Browser: Render login form
+  Browser->>FusionAuth: AJAX POST /api/login
+  FusionAuth->>Browser: (JWT)<br/>[Refresh token HttpOnly w/ domain: example.fusionauth.io]
+
+  Note over Browser,Hacker: Cookie drop
+  Browser->>Store: AJAX POST /api/cookie-drop<br/>(JWT from IdP response)
+  Store->>Browser: [JWT HttpOnly w/ domain: store.example.com]
+
+  Note over Browser,Hacker: Shopping cart load
+  Browser->>Store: AJAX GET /api/load-shopping-cart<br/>[JWT HttpOnly w/ domain: store.example.com]
+  Store->>Browser: (Shopping cart contents)
+
+  Note over Browser: JWT expires
+  
+  Note over Browser,Hacker: Refresh JWT
+  Browser->>Store: AJAX GET /api/load-shopping-cart<br/>[JWT HttpOnly w/ domain: store.example.com]
+  Store->>Browser: 401 Unauthorized
+  Browser->>FusionAuth: AJAX POST /api/jwt/refresh<br/>[Refresh token w/ domain example.fusionauth.io]
+  FusionAuth->>Browser: (JWT)
+
+  Note over Browser,Hacker: Cookie drop
+  Browser->>Store: AJAX POST /api/cookie-drop<br/>(JWT from IdP response body)
+  Store->>Browser: [JWT HttpOnly w/ domain: store.example.com]
+
+  Note over Browser,Hacker: Shopping cart load
+  Browser->>Store: AJAX GET /api/load-shopping-cart<br/>[JWT HttpOnly w/ domain: store.example.com]
+  Store->>Browser: (Shopping cart contents)
+
+  Note over Browser: Refresh token expires
+
+  Note over Browser,Hacker: Re-login (inside SPA)
+  Browser->>Store: AJAX GET /api/load-shopping-cart<br/>[JWT HttpOnly w/ domain: store.example.com]
+  Store->>Browser: 401 Unauthorized
+  Browser->>FusionAuth: AJAX POST /api/jwt/refresh<br/>[Refresh token w/ domain example.fusionauth.io]
+  FusionAuth->>Browser: 404 Missing
+  Browser->>Browser: Login same as above
+
+  Note over Browser,Hacker: SSO login to forums - not provided by FusionAuth for this workflow
+
+  Note over Browser,Hacker: Initialize
+  Browser->>Forums: GET /<br/>[No cookies]
+  Forums->>Browser: (SPA HTML, CSS & JavaScript)
+  Browser->>Forums: GET /api/user<br/>[No cookies]
+  Forums->>Browser: 404 Missing
+
+  Note over Browser,Hacker: Login (inside SPA)
+  Browser->>Browser: Render login form
+  Browser->>FusionAuth: AJAX POST /api/login<br/>[Refresh token HttpOnly w/ domain: example.fusionauth.io - FOR WRONG APP]
+  FusionAuth->>Browser: (JWT)<br/>[New Refresh token HttpOnly w/ domain: example.fusionauth.io]
+  Browser->>Browser: Refresh token cookie from Store gets<br/>clobbered by Refresh token for Forums
+
+  Note over Browser,Hacker: Cookie drop
+  Browser->>Forums: AJAX POST /api/cookie-drop<br/>(JWT from IdP response)
+  Forums->>Browser: [JWT HttpOnly w/ domain: forums.example.com]
+
+  ${include.forumsJWTCookieLoad}
+
+  Note over Browser,Hacker: Attack vectors
+
+  Note over Browser,Hacker: Stolen Refresh token
+  Hacker->>FusionAuth: POST /api/jwt/refresh<br/>[Refresh token HttpOnly w/ domain example.fusionauth.io]
+  FusionAuth->>Hacker: (JWT)
+  Hacker->>Store: GET /api/load-shopping-cart<br/>[JWT HttpOnly w/ domain: store.example.com]
+  Store->>Hacker: (Shopping cart contents)
+
+  Note over Browser,Hacker: Stolen JWT
+  Hacker->>Store: GET /api/load-shopping-cart<br/>[JWT HttpOnly w/ domain: store.example.com]
+  Store->>Hacker: (Shopping cart contents)
+```
 
 ## Explanation
 
