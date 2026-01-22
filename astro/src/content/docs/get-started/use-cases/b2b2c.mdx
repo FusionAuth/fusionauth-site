@@ -8,7 +8,6 @@ navOrder: 30
 import B2B2CDescription from 'src/content/docs/get-started/use-cases/_b2b2c-description.mdx';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import Aside from 'src/components/Aside.astro';
-import CircusesRelationships from 'src/diagrams/docs/get-started/use-cases/b2b2c/b2b2c-circuses.astro';
 import AddNewCustomers from 'src/diagrams/docs/get-started/use-cases/b2b2c/add-new-customers.astro';
 import UserLoggingIn from 'src/diagrams/docs/get-started/use-cases/b2b2c/user-logging-in.astro';
 import AdminManagingUsers from 'src/diagrams/docs/get-started/use-cases/b2b2c/admin-managing-users.astro';
@@ -48,7 +47,16 @@ Your customers are the circuses, and their users are *their* customers. Each cir
 
 You are super excited because you've landed both Ringling Bros. and Barnum & Bailey Circus and Cirque du Soleil as customers. They have customers of their own, who may be either individuals or organizations buying tickets. Here's a diagram of the relationship between ClownPass, its customers and the end users.
 
-<CircusesRelationships alt="Circus relationships diagram."/>
+```mermaid title="Circus relationships diagram."
+graph TD
+    clownpass[ClownPass] --> |Sells ticketing system to| ringling[Ringling Brothers]
+    clownpass --> |Sells ticketing system to| cirque[Cirque De Soleil]
+    ringling --> |Sells tickets to| customerA[Alex Taylor]
+    ringling --> |Sells tickets to| customerB[Jamie Morgan]
+    cirque --> |Sells tickets to| customerB
+    cirque --> |Sells tickets to| customerC[Chris Jordan]
+    cirque --> |Sells tickets to| customerD[AcmeCorp]
+```
 
 The set of customers for each circus can overlap. Jamie Morgan is an example of a customer of both circuses.
 
@@ -71,15 +79,62 @@ The steps include:
 
 Here's a high level sequence diagram of the process of adding new customers. Each customer is represented as a tenant.
 
-<AddNewCustomers alt="Adding new customers." />
+```mermaid title="Adding new customers."
+sequenceDiagram
+    participant App
+    participant FusionAuth
+
+    App ->> App : Capture Needed Customer Data
+    App ->> FusionAuth : Create New Tenant
+    App ->> FusionAuth : Create New Application
+    App ->> FusionAuth : Configure Other Settings <br/> Such As Tenant Scoped API Key, Theme,<br/> Social Or Other Identity Providers, Etc
+    App ->> App : Configure Mapping Between Customer And FusionAuth Settings
+```
 
 Here's a high level sequence diagram of a user logging in to one of the customer's ticketing systems. The application is responsible for mapping the user to the correct customer.
 
-<UserLoggingIn alt="Users logging in." />
+```mermaid title="Users logging in."
+sequenceDiagram
+    participant User as Logged In User/Browser
+    participant App
+    participant FusionAuth
+
+    User ->> App : Visits App
+    App ->> App : Determines Appropriate Application
+    App ->> User : Redirects Appropriate Application Authorize URL
+    User ->> FusionAuth : Requests Login Page
+    FusionAuth ->> User : Returns Login Page
+    User ->> FusionAuth : Authenticates 
+    FusionAuth ->> FusionAuth : Validates Credentials
+    FusionAuth ->> User : Returns Redirect To Application
+    User ->> App : Requests Redirect URL
+    App ->> App : Looks Up Client Id And Secret
+    App ->> FusionAuth : Requests Tokens
+    FusionAuth ->> App : Sends Tokens
+    App ->> User : Creates Session <br/> And Returns Content For User
+```
 
 Here's a high level sequence diagram of a customer admin managing their users. The admin functions are integrated with the application admin screens using API calls.
 
-<AdminManagingUsers alt="Tenant admin management of their users." />
+```mermaid title="Tenant admin management of their users."
+sequenceDiagram
+    participant User as Logged In Admin User
+    participant App
+    participant FusionAuth
+
+    User ->> App : Visits App
+    App ->> App : Validates User Roles
+    App ->> User : Returns Admin Screen
+    User ->> App : Visits User Management Section
+    App ->> FusionAuth : Requests Users Via API
+    FusionAuth ->> App : Returns Users Data
+    App ->> User : Displays Users
+    User ->> App : Request User Password Reset
+    App ->> FusionAuth : Resets User Password Via API
+    FusionAuth ->> FusionAuth : Sends Password Reset
+    FusionAuth ->> App : Returns Response For Reset Request
+    App ->> User : Displays Message
+```
 
 Let's look at these steps in detail.
 

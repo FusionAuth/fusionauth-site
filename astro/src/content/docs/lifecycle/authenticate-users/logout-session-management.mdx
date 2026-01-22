@@ -15,14 +15,6 @@ import BootstrappingSSO from 'src/content/docs/lifecycle/authenticate-users/_boo
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import JSON from 'src/components/JSON.astro';
 import { RemoteCode } from '@fusionauth/astro-components';
-import ApplicationManagedSessionsStart from 'src/diagrams/docs/lifecycle/authenticate-users/application-managed-sessions-start.astro';
-import ApplicationManagedSessionInvalid from 'src/diagrams/docs/lifecycle/authenticate-users/application-managed-session-invalid.astro';
-import ApplicationManagedSessionsRequests from 'src/diagrams/docs/lifecycle/authenticate-users/application-managed-sessions-requests.astro';
-import ApplicationManagedSessionsLogout from 'src/diagrams/docs/lifecycle/authenticate-users/application-managed-sessions-logout.astro';
-import CentralizedSessionsStart from 'src/diagrams/docs/lifecycle/authenticate-users/centralized-sessions-start.astro';
-import CentralizedSessionsRequests from 'src/diagrams/docs/lifecycle/authenticate-users/centralized-sessions-requests.astro';
-import CentralizedSessionsLogout from 'src/diagrams/docs/lifecycle/authenticate-users/centralized-sessions-logout.astro';
-import CentralizedSessionsSessionInvalid from 'src/diagrams/docs/lifecycle/authenticate-users/centralized-sessions-session-invalid.astro';
 import SessionsExpiration from 'src/content/docs/lifecycle/authenticate-users/_sessions-expiration.mdx';
 
 
@@ -140,25 +132,98 @@ Let's look at some flow diagrams for these four use cases:
 
 This is the flow of a user who logs in to both the ChangeBank and ChangeBank Forum applications who checks the <InlineUIElement>Keep me signed in</InlineUIElement> checkbox on the hosted login pages. The refresh token Id is stored in an application session.
 
-<CentralizedSessionsStart alt="Centralized sessions login flow." />
+```mermaid title="Centralized sessions login flow."
+sequenceDiagram
+    participant Browser
+    participant cb as ChangeBank
+    participant cbf as ChangeBank Forum
+    participant FusionAuth
+    Browser ->> cb : Request Home Page
+    cb ->> cb : Check Session Existence
+    cb ->> Browser : Redirect to FusionAuth Because There is No Valid ChangeBank Session
+    Browser ->> FusionAuth : Request Login Page With offline_access Scope
+    FusionAuth ->> Browser : Send Login Page
+    Browser ->> FusionAuth : Send Credentials
+    FusionAuth ->> FusionAuth : Verify Credentials
+    FusionAuth ->> Browser : Redirects to ChangeBank Redirect URL
+    Browser ->> cb : Requests Redirect URL
+    cb ->> FusionAuth : Requests Token
+    FusionAuth ->> FusionAuth : Verifies Token Request
+    FusionAuth ->> cb : Sends Tokens
+    cb ->> cb : Stores Refresh Token Id In Session
+    cb ->> Browser : Redirects To Home Page
+    Browser ->> cb : Requests Home Page
+    cb ->> Browser : Sends Home Page
+    Browser ->> cbf : Requests Home Page
+    cbf ->> cbf : Check Session Existence
+    cbf ->> Browser : Redirect to FusionAuth, No Valid ChangeBank Forum Session
+    Browser ->> FusionAuth : Request Login Page With offline_access Scope
+    FusionAuth ->> FusionAuth : Recognizes Device, No Login Needed
+    FusionAuth ->> Browser : Redirects to ChangeBank Forum Redirect URL
+    Browser ->> cbf : Requests Redirect URL
+    cbf ->> FusionAuth : Requests Token
+    FusionAuth ->> FusionAuth : Verifies Token Request
+    FusionAuth ->> cbf : Sends Token
+    cbf ->> cbf : Stores Refresh Token Id In Session
+    cbf ->> Browser : Redirects To Application Page
+    Browser ->> cbf : Request Application Page
+    cbf ->> Browser : Send Application Page
+```
 
 #### Normal Request Flow
 
 This is the flow of a user who has a valid ChangeBank application session and is interacting with the application. FusionAuth is consulted every request.
 
-<CentralizedSessionsRequests alt="Centralized sessions normal request flow." />
+```mermaid title="Centralized sessions normal request flow."
+sequenceDiagram
+    participant Browser
+    participant cb as ChangeBank
+    participant FusionAuth
+    Browser ->> cb : Request Home Page
+    cb ->> cb : Check Application Session Existence
+    cb ->> FusionAuth : Check Validity Of Refresh Token
+    FusionAuth ->> cb : Refresh Token Valid
+    cb ->> Browser : Sends Home Page
+    Browser ->> cb : Request Calculate Change Page
+    cb ->> cb : Check Application Session Existence
+    cb ->> FusionAuth : Check Validity Of Refresh Token
+    FusionAuth ->> cb : Refresh Token Valid
+    cb ->> Browser : Sends Calculate Change Page
+```
 
 #### Logout Request Flow
 
 This is the flow of a user who is logging out of ChangeBank.
 
-<CentralizedSessionsLogout alt="Centralized sessions logout flow." />
+```mermaid title="Centralized sessions logout flow."
+sequenceDiagram
+    participant Browser
+    participant cb as ChangeBank
+    participant cbf as ChangeBank Forum
+    participant FusionAuth
+    Browser ->> cb : View Home Page
+    Browser ->> cb : Click Logout
+    cb ->> FusionAuth: Revoke All Refresh Tokens
+    cb ->> cb : Destroy Local Session
+    cb ->> cb : Redirect To Logged Out Page
+```
 
 #### Request Flow With Invalid Centralized Session
 
 Suppose a user has logged out of ChangeBank. They have had their refresh tokens revoked and thus their centralized sessions invalidated. But the ChangeBank Forum application still has a valid application session. This flow shows what happens when the user visits ChangeBank Forum.
 
-<CentralizedSessionsSessionInvalid alt="Centralized sessions with a request when sessions have been invalidated." />
+```mermaid title="Centralized sessions with a request when sessions have been invalidated."
+sequenceDiagram
+    participant Browser
+    participant cbf as ChangeBank Forum
+    participant FusionAuth
+    Browser ->> cbf : Request Home Page
+    cbf ->> cbf : Check Application Session Existence
+    cbf ->> FusionAuth : Check Validity Of Refresh Token
+    FusionAuth ->> cbf : Refresh Token Invalid
+    cbf ->> cbf : Kill Application Session
+    cbf ->> Browser : Redirect To Login Page
+```
 
 ### Checking Session Validity
 
@@ -333,7 +398,41 @@ In these diagrams, the ChangeBank application is configured to log users out of 
 
 This is the flow of a user who logs in to both the ChangeBank and ChangeBank Forum applications who checks the <InlineUIElement>Keep me signed in</InlineUIElement> checkbox on the hosted login pages.
 
-<ApplicationManagedSessionsStart alt="Application managed sessions login flow." />
+```mermaid title="Application-managed sessions login flow."
+sequenceDiagram
+    participant Browser
+    participant cb as ChangeBank
+    participant cbf as ChangeBank Forum
+    participant FusionAuth
+    Browser ->> cb : Request Home Page
+    cb ->> cb : Check Session Existence
+    cb ->> Browser : Redirect to FusionAuth Because There is No Valid ChangeBank Session
+    Browser ->> FusionAuth : Request Login Page
+    FusionAuth ->> Browser : Send Login Page
+    Browser ->> FusionAuth : Send Credentials
+    FusionAuth ->> FusionAuth : Verify Credentials
+    FusionAuth ->> Browser : Redirects to ChangeBank Redirect URL
+    Browser ->> cb : Requests Redirect URL
+    cb ->> FusionAuth : Requests Token
+    FusionAuth ->> FusionAuth : Verifies Token Request
+    FusionAuth ->> cb : Sends Token
+    cb ->> Browser : Redirects To Home Page
+    Browser ->> cb : Requests Home Page
+    cb ->> Browser : Sends Home Page
+    Browser ->> cbf : Requests Home Page
+    cbf ->> cbf : Check Session Existence
+    cbf ->> Browser : Redirect to FusionAuth, No Valid ChangeBank Forum Session
+    Browser ->> FusionAuth : Request Login Page
+    FusionAuth ->> FusionAuth : Recognizes Device, No Login Needed
+    FusionAuth ->> Browser : Redirects to ChangeBank Forum Redirect URL
+    Browser ->> cbf : Requests Redirect URL
+    cbf ->> FusionAuth : Requests Token
+    FusionAuth ->> FusionAuth : Verifies Token Request
+    FusionAuth ->> cbf : Sends Token
+    cbf ->> Browser : Redirects To Application Page
+    Browser ->> cbf : Request Application Page
+    cbf ->> Browser : Send Application Page
+```
 
 If you don't have the <InlineUIElement>Keep me signed in </InlineUIElement> checked, then the user will be prompted to authenticate every time they are sent to FusionAuth. There will be no [FusionAuth SSO session](#fusionauth-sso). 
 
@@ -341,19 +440,64 @@ If you don't have the <InlineUIElement>Keep me signed in </InlineUIElement> chec
 
 This is the flow of a user who has a valid ChangeBank application session and is interacting with the application. FusionAuth receives no requests.
 
-<ApplicationManagedSessionsRequests alt="Application managed sessions normal requests flow." />
+```mermaid title="Application-managed sessions normal requests flow."
+sequenceDiagram
+    participant Browser
+    participant cb as ChangeBank
+    participant FusionAuth
+    Browser ->> cb : Request Home Page
+    cb ->> cb : Check Application Session Valid
+    cb ->> Browser : Sends Home Page
+    Browser ->> cb : Request Calculate Change Page
+    cb ->> cb : Check Application Session Valid
+    cb ->> Browser : Sends Calculate Change Page
+```
 
 #### Request Flow With Invalid Application Session
 
 This is the flow when an application session expires. The user is then sent to FusionAuth. However, FusionAuth still has a valid SSO session, so the user is logged in without interaction.
 
-<ApplicationManagedSessionInvalid alt="Application managed sessions when the application session is invalid, but the SSO session is still valid." />
+```mermaid title="Application managed sessions when the application session is invalid, but the SSO session is still valid."
+sequenceDiagram
+    participant Browser
+    participant cb as ChangeBank
+    participant FusionAuth
+    Browser ->> cb : Request Home Page
+    cb ->> cb : Check Application Session Valid
+    cb ->> cb : Session Invalid
+    cb ->> Browser : Redirect to FusionAuth Because There is No Valid ChangeBank Session
+    Browser ->> FusionAuth : Request Login Page
+    FusionAuth ->> FusionAuth : Recognizes Device, No Login Needed
+    FusionAuth ->> Browser : Redirects to ChangeBank Redirect URL
+    Browser ->> cb : Requests Redirect URL
+    cb ->> FusionAuth : Requests Token
+    FusionAuth ->> FusionAuth : Verifies Token Request
+    FusionAuth ->> cb : Sends Token
+    cb ->> Browser : Redirects To Home Page
+    Browser ->> cb : Request Home Page
+    cb ->> Browser : Send Home Page
+```
 
 #### Logout Request Flow
 
 This is the flow of a user who is logging out of ChangeBank.
 
-<ApplicationManagedSessionsLogout alt="Application managed sessions logout flow." />
+```mermaid title="Application-managed sessions logout flow."
+sequenceDiagram
+    participant Browser
+    participant cb as ChangeBank
+    participant cbf as ChangeBank Forum
+    participant FusionAuth
+    Browser ->> cb : Request Home Page
+    Browser ->> cb : Click Logout
+    cb ->> cb : Destroy Local Session
+    cb ->> Browser : Redirect to FusionAuth Front-Channel Logout URL
+    Browser ->> FusionAuth : Request Logout
+    FusionAuth ->> FusionAuth : Destroy FusionAuth Session
+    FusionAuth ->> cbf : Request Configured Logout URL
+    cbf ->> cbf : Destroy Local Session
+    FusionAuth ->> Browser : Redirect to Configured Logout URL
+```
 
 ### Timeouts And Session Lifetimes
 
