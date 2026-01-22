@@ -6,14 +6,24 @@ section: operate
 subcategory: secure
 ---
 import Aside from 'src/components/Aside.astro';
+import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
+import FIPSLimits from 'src/content/docs/operate/secure/_fips-limitations.mdx';
 
 ## Overview
 
-FusionAuth is in the process of conforming with various standards including the [Federal Information Processing Standards (FIPS)](https://www.nist.gov/standardsgov/compliance-faqs-federal-information-processing-standards-fips) and [FedRAMP](https://www.fedramp.gov). While full certification is not yet available, FusionAuth will conform and self-certify compliance as it is developed. Since most compliance frameworks restrict encryption standards, this is currently the primary focus area. Below you will find the status of FusionAuth's compliance as well as details about the encryption in use.
+FusionAuth is in the process of conforming with various standards including the [Federal Information Processing Standards (FIPS)](https://www.nist.gov/standardsgov/compliance-faqs-federal-information-processing-standards-fips) and [FedRAMP](https://www.fedramp.gov).
 
-## Encryption
+While full certification is not yet available, FusionAuth conforms and self-certifies compliance as appropriate. Since most compliance frameworks restrict encryption standards, this is currently the primary focus area.
 
-Here is a non-exhaustive list of encryption FusionAuth uses:
+Below you will find the status of FusionAuth's compliance as well as details about the encryption in use.
+
+## Cryptographic and Encryption Functionality
+
+Here is a non-exhaustive list of cryptographic and encryption functionality FusionAuth uses:
+
+* signing
+* encryption
+* password hashing
 
 ### Signing
 
@@ -36,32 +46,38 @@ FusionAuth encrypts the items below using various cryptographic algorithms inclu
 
 ### Password Hashing
 
-FusionAuth encrypts the items below using various cryptographic algorithms including bcrypt, PBKDF2, MD5, SHA, and others:
+FusionAuth hashes the items below using various cryptographic algorithms including bcrypt, PBKDF2, MD5, SHA, and others:
 
-* Password hashing uses various one-way hashing algorithms including
-
-<Aside type="caution">
-  FusionAuth allows custom hashing algorithms to enabled via our Plugin system. These are not checked for compliance.
-</Aside>
+* Passwords
+* API keys
 
 <Aside type="caution">
-  FusionAuth allows the password hashing algorithm to be changed per tenant, Application, or User. FusionAuth cannot certify that the algorithms used are secure or conform to any particular compliance framework.
+  FusionAuth allows custom password hashing algorithms to be enabled via our plugin system. These custom algorithms are not checked for compliance.
+
+  FusionAuth also allows the password hashing algorithm to be changed per tenant, Application, or User. FusionAuth cannot certify that the algorithms used are secure or conform to any particular compliance framework.
 </Aside>
 
 ## FIPS Compliance
 
-Beginning with version `1.62.0`, FusionAuth supports a runtime mode that provides compliance with FIPS 140-3 cryptographic module restrictions. This support is provided by [Bouncy Castle's FIPS compliant library](https://www.bouncycastle.org/download/bouncy-castle-java-fips/), and is configurable via the `fusionauth-app.fips.enabled` configuration parameter (i.e. in `fusionauth.properties`, a command-line parameter, or an environment variable).
+<EnterprisePlanBlurb />
 
-#### Restrictions
-* This mode may only be enabled on new installations of FusionAuth. An existing FusionAuth installation cannot be converted to run in this mode.
-* All nodes in a cluster must be running in this mode
-* Customers must use a FIPS compliant database and search engine version. FusionAuth does not provide the database or the search engine, so this is the responsibility of the customer to use a FIPS compliant PostgreSQL, MySQL, and OpenSearch version.
+Beginning with version `1.62.0`, FusionAuth supports a runtime mode that provides compliance with FIPS 140-3 cryptographic module restrictions. 
 
-## Timeline
+This support is provided by [Bouncy Castle's FIPS compliant library](https://www.bouncycastle.org/download/bouncy-castle-java-fips/), and is configurable via the `fusionauth-app.fips.enabled` configuration parameter (i.e. in `fusionauth.properties`, a command-line parameter, or an environment variable).
 
-* November 2025 - [`fusionauth-jwt`](https://github.com/FusionAuth/fusionauth-jwt) is updated to support Bouncy Castle's FIPS compliant library; released in [version 6.0.0](https://github.com/FusionAuth/fusionauth-jwt/releases/tag/6.0.0)
-* December 2025 - FusionAuth version `1.62.0` is updated
-  * To leverage [Bouncy Castle's FIPS compliant cryptography modules](https://www.bouncycastle.org/download/bouncy-castle-java-fips/)
-  * To remove uses of the [`md5`](https://www.postgresql.org/docs/current/functions-binarystring.html) function in PostgreSQL database scripts
+### Details
 
-Check back here in the near future for updates.
+The FIPS support in FusionAuth covers the main components of the FIPS 140-3 Level 1 standard. Here's a list that outlines the main areas within FusionAuth that change when FIPS mode is enabled:
+
+* Passwords must be a minimum of 14 characters in length
+* The password used to connect to the database must be a minimum of 14 characters in length
+* RSA keys must be a minimum of 2048 bits in length
+* Deprecated algorithms, such as RSA 1024, are not allowed
+
+Some items might provide validation errors, such as creating a Tenant with a password length minimum less than 14 characters. However, there are other features that might result in `500` responses from the API, such as importing invalid keys. Regardless, FusionAuth prevents most non-FIPS compliant configurations (see the note under Limitations for exceptions).
+
+Additionally, FusionAuth is not FIPS certified. We've done our best to ensure FusionAuth is using FIPS compliant libraries and implementing the required FIPS validation, such as password lengths. However, we make no guarantees that FusionAuth is fully FIPS compliant or FIPS certified.
+
+### Limitations
+
+<FIPSLimits />
