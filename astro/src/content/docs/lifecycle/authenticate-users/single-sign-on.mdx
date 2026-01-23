@@ -14,8 +14,6 @@ import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 import LogoutBehaviorAllApplications from 'src/content/docs/get-started/core-concepts/_logout-behavior-all-applications.mdx';
 import SessionsExpiration from 'src/content/docs/lifecycle/authenticate-users/_sessions-expiration.mdx';
-import SSOLogin from 'src/diagrams/docs/lifecycle/authenticate-users/sso-login.astro';
-import SSOLogout from 'src/diagrams/docs/lifecycle/authenticate-users/sso-logout.astro';
 import { YouTube } from '@astro-community/astro-embed-youtube';
 import { RemoteCode } from '@fusionauth/astro-components';
 
@@ -50,11 +48,52 @@ If a session doesn't exist for a given application, or expected values aren't pr
 
 Here's the flow of a single sign-on login request.
 
-<SSOLogin alt="Single sign-on request flow during login." />
+```mermaid title="Single sign-on request flow during login."
+sequenceDiagram
+    participant Browser
+    participant pp as Pied Piper
+    participant FusionAuth
+    participant h as Hooli
+    Browser ->> pp : View Home Page
+    pp ->> pp : Check Session Existence
+    pp ->> Browser : Redirect to FusionAuth Because There is No Valid Session
+    Browser ->> FusionAuth : Request Login Page
+    FusionAuth ->> FusionAuth : Check FA Session Existence
+    FusionAuth ->> Browser : Send Login Page
+    Browser ->> FusionAuth : Send Credentials
+    FusionAuth ->> Browser : Redirects to Pied Piper
+    Browser ->> pp : Requests Home Page
+    pp ->> Browser : Sends Home Page
+    Browser ->> h : Requests Home Page
+    h ->> h : Check Session Existence
+    h ->> Browser : Redirect to FusionAuth Because There is No Valid Session
+    Browser ->> FusionAuth : Request Login Page
+    FusionAuth ->> FusionAuth : Check FA Session Existence
+    FusionAuth ->> Browser : Redirects to Home Page
+    Browser ->> h : Requests Application Page
+    h ->> Browser : Sends Application Page
+```
 
-Here's the flow of the corresponding logout request.
+Here's the flow of the corresponding logout request:
 
-<SSOLogout alt="Single sign-on request flow during logout." />
+```mermaid title="Single sign-on request flow during logout."
+sequenceDiagram
+    participant Browser
+    participant pp as Pied Piper
+    participant FusionAuth
+    participant h as Hooli
+    Browser ->> pp : View Home Page
+    Browser ->> pp : Click Logout
+    pp ->> pp : Destroy Local Session
+    pp ->> Browser : Redirect to FusionAuth
+    Browser ->> FusionAuth : Request Logout
+    FusionAuth ->> FusionAuth : Destroy FusionAuth Session
+    FusionAuth ->> h : GET Request to Logout URL
+    h ->> h : Destroy Local Session
+    FusionAuth ->> Browser : Redirect to Pied Piper Configured Logout URL
+    Browser ->> pp : Request Login URL
+    pp ->> Browser : Redirect to Login URL
+```
 
 Above, note that FusionAuth automatically logs the user out of the Hooli application after the user chooses to log out of the Pied Piper application. The user does not have to log out of multiple applications. The logout URLs will be called for each application in this tenant, allowing you to transparently sign the user out of three, five or ten web applications. However, you can disable this setting too.
 

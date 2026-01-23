@@ -4,7 +4,7 @@ htmlTitle: What Is Multi-Factor Authentication (MFA)? Methods, Types, and How It
 description: Learn what multi-factor authentication (MFA) is, how it works, and the different types and methods used. Strengthen security by understanding MFA’s role in verifying user identity.
 author: Dan Moore
 section: Authentication
-tags: mfa 2fa multi-factor-authentication two-factor-authentication user-experience customer-experience security policie sms totp factors ap-push tradeoffs open-standards biometric
+tags: mfa 2fa multi-factor-authentication two-factor-authentication user-experience customer-experience security policy policies sms totp factors ap-push tradeoffs open-standards biometric
 icon: /img/icons/multi-factor-authentication.svg
 darkIcon: /img/icons/multi-factor-authentication-dark.svg
 ---
@@ -283,7 +283,7 @@ Counsel your users to answer these questions wisely. Frankly, they should pick f
 
 If the user is saving these answers in a password manager, I would even suggest "h941TphXOL3h0ws7M0U2" or "relevance-middle-yellow-horoscope". The goal is to prevent someone from learning the name of a childhood pet from a Facebook post and using that information to gain illicit access. 
 
-#### Double Blind Passwords 
+#### Double Blind Passwords
 
 A double blind password augments the security of a normal password. This is not an independent factor and is entirely in control of the user. It can improve the security of the highest value accounts. As a developer, you cannot suggest nor enforce a double blind password. However, it is an interesting way to increase security, so deserves a brief mention.
 

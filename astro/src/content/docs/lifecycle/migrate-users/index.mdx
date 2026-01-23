@@ -6,7 +6,6 @@ subcategory: migrate users
 navOrder: 0
 ---
 
-import DecisionChart from 'src/diagrams/docs/lifecycle/migrate-users/generic-migration-flow-chart.astro';
 import JSON from 'src/components/JSON.astro';
 import Aside from 'src/components/Aside.astro';
 import RehashingUserPasswords from 'src/content/docs/_shared/_rehashing-user-passwords.mdx';
@@ -84,7 +83,25 @@ Each approach migrates user and other account data into FusionAuth from one or m
 
 Here's a high-level flow chart explaining your choices based on the data you have.
 
-<DecisionChart />
+```mermaid
+graph TD
+hashes(Do you have access to password hashes and salts?) -- Yes --> pluginchoice(Using custom hashing algorithm?)
+pluginchoice -- Yes --> writeplugin[Write custom password hashing algorithm]
+pluginchoice -- No --> segmentchoice(Users naturally split into segments?)
+segmentchoice -- No --> bulk[Bulk migration using User Import API]
+segmentchoice -- Yes --> segment[Segment by segment migration using User Import API]
+writeplugin --> segmentchoice
+hashes -- No --> passwordreset(Resetting all user passwords acceptable?)
+passwordreset -- No --> slowmigration[Slow migration]
+passwordreset -- Yes --> segmentchoice2(Users naturally split into segments?)
+segmentchoice2 -- No --> bulk2[Bulk migration using User Import API]
+segmentchoice2 -- Yes --> segment2[Segment by segment migration using User Import API]
+bulk2 --> reset[Reset users' passwords using API]
+segment2 --> reset
+
+linkStyle 2,3,6,7,9,11 stroke:red
+linkStyle default stroke:green
+```
 
 Let's examine each approach in more detail.
 

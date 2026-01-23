@@ -7,7 +7,6 @@ navOrder: 70
 ---
 import Aside from 'src/components/Aside.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import UserLoggingInDiagram from 'src/diagrams/docs/get-started/use-cases/identity-broker/user-logging-in.astro';
 import IdentityBrokerDescription from 'src/content/docs/get-started/use-cases/_identity-broker-description.mdx';
 
 ## Overview
@@ -18,7 +17,7 @@ import IdentityBrokerDescription from 'src/content/docs/get-started/use-cases/_i
   Deploying FusionAuth into an [air-gapped environment](/docs/get-started/download-and-install/air-gapping) is supported.
 </Aside>
 
-## Problem 
+## Problem
 
 You have an application that is embedded in your customer's environment, which could be a private cloud, an on-premises data center, or a remote location. Such deployment often happens for security, compliance or data gravity reasons.
 
@@ -203,7 +202,30 @@ https://yourinstance.local/oauth2/authorize?
 
 Here's a diagram of the user login process.
 
-<UserLoggingInDiagram alt="User logging in to the application." />
+```mermaid title="User logging in to the application."
+sequenceDiagram
+    participant User as Logged In User/Browser
+    participant App
+    participant FusionAuth
+    participant IDP as Customer Identity Store
+
+    User ->> App : Visits App
+    App ->> User : Redirects Appropriate Application Authorize URL With idp_hint
+    User ->> FusionAuth : Requests Login Page
+    FusionAuth ->> User : Returns Redirect To Identity Provider
+    User ->> IDP : Requests Login Page
+    IDP ->> User : Returns Login Page
+    User ->> IDP : Authenticates 
+    IDP ->> IDP : Validates Credentials
+    IDP ->> User : Returns Redirect To FusionAuth
+    User ->> FusionAuth : Requests Redirect URL
+    FusionAuth ->> FusionAuth : Updates User Based On Identity Provider Response
+    FusionAuth ->> User : Returns Redirect To Application
+    User ->> App : Requests Redirect URL
+    App ->> FusionAuth : Requests Tokens
+    FusionAuth ->> App : Sends Tokens
+    App ->> User : Creates Session <br/> And Returns Content For User
+```
 
 #### Blocking Users
 

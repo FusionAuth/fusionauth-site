@@ -9,7 +9,6 @@ tags: php, migration, crufty
 excerpt_separator: "{/* more */}"
 ---
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import Diagram from "../../diagrams/blog/update-php-application/authorization-code-grant.astro";
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 
@@ -143,7 +142,25 @@ That's all for FusionAuth configuration. Now let's look at the PHP application a
 
 To update the "The ATM" PHP application, you'll use composer to add a dependency on an OAuth library. Instead of using the `authenticate.php` logic, redirect to FusionAuth. Here's a diagram of the new flow:
 
-<Diagram alt="The Authorization Code grant data flow." />
+```mermaid title="The Authorization Code grant data flow."
+sequenceDiagram
+
+actor User as User/Browser
+participant php as The ATM
+User ->> php : View Initial Page
+User ->> php : Click Login 
+User ->> FusionAuth : Request Login Page
+FusionAuth -->> User : Return Login Page
+User ->> FusionAuth : Provides Credentials
+FusionAuth -->> User : Redirect With Authorization Code 
+User ->> php : Request Redirect URI
+php ->> FusionAuth : Request Access Token 
+FusionAuth -->> php : Return Access Token
+php ->> FusionAuth : Request User Info While Sending Token
+FusionAuth -->> php : Return User Info
+php ->> php : Store User Info in Session
+php -->> User : Display User Info
+```
 
 This section will walk through the changes, but they can be viewed by checking out the `auth-with-oauth` branch in the repo. You can also [view it online](https://github.com/FusionAuth/fusionauth-example-php-connector/tree/auth-with-oauth). These changes use the Authorization Code grant to ensure that the user is authorized, then use an OIDC endpoint to retrieve user data.
 
