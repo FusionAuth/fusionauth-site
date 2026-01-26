@@ -8,7 +8,7 @@ import {rehypeTasklistEnhancer} from './src/plugins/rehype-tasklist-enhancer';
 import {codeTitleRemark} from './src/plugins/code-title-remark';
 import * as markdownExtract from './src/plugins/markdown-extract.js';
 import remarkMdx from 'remark-mdx';
-import rehypeMermaid from "rehype-mermaid";
+import mermaid from 'astro-mermaid';
 
 const optionalIntegrations = [];
 if (!process.env.DEV) {
@@ -31,6 +31,10 @@ const config = defineConfig({
   },
   integrations: [
     ...optionalIntegrations,
+    mermaid({
+      theme: 'forest',
+      autoTheme: true
+    }),
     mdx(),
     sitemap({
       filter: siteMapFilter
@@ -47,17 +51,6 @@ const config = defineConfig({
       // Tweak GFM task list syntax
       // @ts-ignore
       rehypeTasklistEnhancer(),
-      [
-        rehypeMermaid,
-        {
-          strategy: "inline-svg",
-          dark: true,
-          mermaidConfig: {
-            // astro default
-            color: "#FFF !important"
-          }
-        }
-      ],
     ],
     syntaxHighlight: {
       type: "shiki",
