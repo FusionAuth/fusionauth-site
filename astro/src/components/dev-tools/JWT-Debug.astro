@@ -24,20 +24,15 @@ const token =
 <script>
   "use strict";
   import { json } from "@codemirror/lang-json";
-  import { javascript } from "@codemirror/lang-javascript";
+  import { MatchDecorator, ViewPlugin, Decoration } from "@codemirror/view";
 
   import { EditorView, basicSetup } from "codemirror";
 
   const token =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo";
   const { headers, payload } = decodeJwt(token);
-  // const headers = window.atob(tokenSplit[0]).toString().replace(/=/g, '')
-  // const payload = window.atob(tokenSplit[1]).replace(/=/g, '')
 
   function decodeJwt(stringToDecode) {
-
-//         var headStringified = JSON.stringify(JSON.parse(headValue));
-//         current[0] = window.btoa(headStringified).replace(/=/g, '');
     const s = stringToDecode.split(".");
 
     const headers = window.JSON.stringify(window.JSON.parse(window.atob(s[0])),null,2);
@@ -46,13 +41,8 @@ const token =
     return { payload, headers };
   }
 
-  function encodeJwt(objectToEcode) {}
-
+  // Function to check if this change is applied via one of our programmatic shifts
   function isProgrammatic(transactions) {
-    console.log(
-      transactions.length,
-      typeof transactions[0]?.annotations[0].value,
-    );
     if (transactions.length == 0) return false;
     if (
       transactions.length > 0 &&
@@ -62,28 +52,42 @@ const token =
     return true;
   }
 
-  console.log(headers, payload);
+  // Decorator for color coding the token
+  const tokenDec = Decoration.mark({ class: "headerDec" }); // This adds a className to the text that matches the regex.
 
+  const tokenDecorator = new MatchDecorator({
+    regexp: /([^.]+)/g,
+    decoration: (m) => tokenDec,
+  });
+const tokenColors = ViewPlugin.define(
+  (view) => ({
+    decorations: tokenDecorator.createDeco(view),
+    update(u) {
+      this.decorations = tokenDecorator.updateDeco(u, this.decorations);
+    },
+  }),
+  {
+    decorations: (v) => v.decorations,
+  }
+);
+
+// Inits CodeMirror for Tokens
   const tokenEditor = new EditorView({
     parent: document.getElementById("encoded-textarea"),
     doc: token,
 
     extensions: [
       basicSetup,
-      javascript(),
-      
+      tokenColors,
+
       EditorView.lineWrapping,
       EditorView.updateListener.of((update) => {
-        console.log(update, update.docChanged);
+
         if (update.docChanged) {
           const programUpdated = isProgrammatic(update.transactions);
           if (!programUpdated) {
             const { headers, payload } = decodeJwt(update.state.doc.text[0]);
-            console.log({headers, payload});
-            //   if (update.changes.inserted.length == 0) {
-            //         console.log(update,update.docChanged)
 
-            //   const {headers, payload} = decodeJwt(update.state.doc.text[0])
             headersEditor.dispatch({
               changes: {
                 from: 0,
@@ -105,6 +109,8 @@ const token =
     ],
   });
 
+  // Inits CodeMirror for Header
+
   const headersEditor = new EditorView({
     parent: document.getElementById("header-textarea"),
     doc: headers,
@@ -114,15 +120,13 @@ const token =
       EditorView.lineWrapping,
 
       EditorView.updateListener.of((update) => {
-        console.log(`headersEditor ${update.docChanged}`);
-
-        // console.log(update.state.doc.text[0])
         if (update.docChanged) {
           const programUpdated = isProgrammatic(update.transactions);
           if (!programUpdated) {
             const currentToken = tokenEditor.state.doc.text[0].split(".");
-            const updatedHeader = window.btoa(update.state.doc.text[0]);
-            console.log(updatedHeader)
+            const docText = update.state.doc.text.join("")
+            const updatedHeader = window.btoa(docText);
+
             tokenEditor.dispatch({
               changes: {
                 from: 0,
@@ -136,6 +140,8 @@ const token =
       json() /* ... */,
     ],
   });
+
+  // Inits CodeMirror for Payload
 
   const payloadEditor = new EditorView({
     parent: document.getElementById("payload-textarea"),
@@ -151,7 +157,6 @@ const token =
             const docText = update.state.doc.text.join("")
 
             const currentToken = tokenEditor.state.doc.text[0].split(".");
-            console.log(window.JSON.stringify(update.state.doc.text[0]))
             const updatedPayload = window.btoa(docText);
 
             tokenEditor.dispatch({
@@ -336,4 +341,14 @@ const token =
   .cm-editor .cm-gutters.cm-gutters-before {
     display: none;
   }
+  .headerDec:first-of-type {
+    color: green;
+  }
+  .headerDec:nth-of-type(2) {
+    color:blue
+  }
+    .headerDec:nth-of-type(3) {
+    color:red
+  }
+
 </style>
