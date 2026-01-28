@@ -6,8 +6,6 @@ section: operate
 subcategory: deploy
 ---
 import Aside from 'src/components/Aside.astro';
-import OneProxyDiagram from 'src/diagrams/docs/operate/deploy/_one-proxy.astro';
-import TwoProxyDiagram from 'src/diagrams/docs/operate/deploy/_two-proxies.astro';
 import ProxyTroubleshooting from 'src/content/docs/operate/deploy/_proxy-troubleshooting.mdx';
 
 
@@ -19,7 +17,18 @@ While FusionAuth doesn't require a proxy, using one offers additional flexibilit
 
 While the term is overloaded, for the purposes of this document, a proxy is any software which sits between your users and FusionAuth. Some or all requests to FusionAuth then pass through the proxy.
 
-<OneProxyDiagram alt="A typical proxy configuration." />
+```mermaid title="A typical proxy configuration."
+sequenceDiagram
+
+participant u as User Agent
+participant p as Proxy
+participant f as FusionAuth
+
+u ->> p : Request
+p ->> f : Request 
+f -->> p : Send page
+p -->> u : Send page
+```
 
 Proxies can be self-hosted or SaaS. Examples include:
 
@@ -101,7 +110,21 @@ We figured since it has been [supported since 1997](https://developer.mozilla.or
 
 If needed, you can have multiple proxies for each request. This may be useful if one proxy handles custom domain names for tenants and another handles error pages.
 
-<TwoProxyDiagram alt="A proxy configuration with multiple proxies." />
+```mermaid title="A proxy configuration with multiple proxies."
+sequenceDiagram
+
+participant u as User Agent
+participant p1 as Proxy 1
+participant p2 as Proxy 2
+participant f as FusionAuth
+
+u ->> p1  : Request
+p1 ->> p2 : Request 
+p2 ->> f  : Request 
+f -->> p2  : Send page
+p2 -->> p1 : Send page
+p1 -->> u  : Send page
+```
 
 With this pattern, every proxy in the chain must have the same value for `X-Forwarded-Host`, the hostname of the initial proxy. The initial proxy is `Proxy 1` in the diagram above.
 

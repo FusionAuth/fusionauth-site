@@ -4,7 +4,6 @@ description: An explanation of single-page application login using a native logi
 section: Login & Auth Workflows
 author: Brian Pontarelli
 ---
-import Diagram from "../../../../diagrams/articles/login-authentication-workflows/spa/native-login-form-to-fusionauth-jwts-local-storage-refresh-tokens-cookies.astro";
 import Legend from "../../../../components/articles/login-authentication-workflows/legend.md";
 import OrderedList from "../../../../components/OrderedList.astro";
 import Intro from "../../../../components/articles/login-authentication-workflows/spa/native-intro.md";
@@ -32,7 +31,83 @@ import Step17 from "../../../../components/articles/login-authentication-workflo
 
 <Legend/>
 
-<Diagram/>
+```mermaid errorBoxes={[18, 22]} warningBoxes={[24, 29]}
+sequenceDiagram
+  autonumber
+  participant Browser
+  participant Store
+  participant Forums
+  participant FusionAuth
+  participant Hacker
+  Note over Browser,Hacker: Initialize
+  Browser->>Store: GET /
+  Store->>Browser: (SPA HTML, CSS & JavaScript)
+  Browser->>Browser: Check local storage for JWT
+
+  Note over Browser,Hacker: Login (inside SPA)
+  Browser->>Browser: Render login form
+  Browser->>FusionAuth: AJAX POST /api/login
+  FusionAuth->>Browser: (JWT)<br/>[Refresh token HttpOnly w/ domain: example.fusionauth.io]
+
+  Note over Browser,Hacker: Local storage drop
+  Browser->>Browser: Move JWT from response body to local storage
+
+  Note over Browser,Hacker: Shopping cart load
+  Browser->>Store: AJAX GET /api/load-shopping-cart<br/>(JWT from local storage)
+  Store->>Browser: (Shopping cart contents)
+
+  Note over Browser: JWT expires
+
+  Note over Browser,Hacker: Token refresh
+  Browser->>FusionAuth: AJAX POST /api/jwt/refresh<br/>[Refresh token HttpOnly w/ domain example.fusionauth.io]
+  FusionAuth->>Browser: (JWT)
+
+  Note over Browser,Hacker: Local storage drop
+  Browser->>Browser: Move JWT from response body to local storage
+
+  Note over Browser,Hacker: Shopping cart load
+  Browser->>Store: AJAX GET /api/load-shopping-cart<br/>(JWT from local storage)
+  Store->>Browser: (Shopping cart contents)
+
+  Note over Browser: Refresh token expires
+
+  Note over Browser,Hacker: Re-login
+  Browser->>FusionAuth: AJAX POST /api/jwt/refresh<br/>[Refresh token w/ domain example.fusionauth.io]
+  FusionAuth->>Browser: 404 Missing
+  Browser->>Browser: Login same as above
+
+  Note over Browser,Hacker: SSO login to forums - not provided by FusionAuth for this workflow
+
+  Note over Browser,Hacker: Initialize
+  Browser->>Forums: GET /<br/>[No cookies]
+  Forums->>Browser: (SPA HTML, CSS & JavaScript)
+  Browser->>Browser: Check local storage for JWT
+
+  Note over Browser,Hacker: Login (inside SPA)
+  Browser->>Browser: Render login form
+  Browser->>FusionAuth: AJAX POST /api/login<br/>[Refresh token HttpOnly w/ domain: example.fusionauth.io - FOR WRONG APP]
+  FusionAuth->>Browser: (JWT)<br/>[New Refresh token HttpOnly w/ domain: example.fusionauth.io]
+  Browser->>Browser: Refresh token cookie from Store gets<br/>clobbered by refresh token for Forums
+
+  Note over Browser,Hacker: Local storage drop
+  Browser->>Browser: Move JWT from response body to local storage
+
+  Note over Browser,Hacker: Forums load
+  Browser->>Forums: AJAX GET /api/load-load-posts<br/>(JWT from local storage)
+  Forums->>Browser: (Forum posts)
+
+  Note over Browser,Hacker: Attack vectors
+
+  Note over Browser,Hacker: Stolen refresh token
+  Hacker->>FusionAuth: POST /api/jwt/refresh<br/>[Refresh token w/ domain example.fusionauth.io]
+  FusionAuth->>Hacker: (JWT)
+  Hacker->>Store: GET /api/load-shopping-cart<br/>(JWT from response body)
+  Store->>Hacker: (Shopping cart contents)
+
+  Note over Browser,Hacker: Stolen JWT
+  Hacker->>Store: GET /api/load-shopping-cart<br/>(JWT)
+  Store->>Hacker: (Shopping cart contents)
+```
 
 ## Explanation
 
@@ -43,12 +118,20 @@ import Step17 from "../../../../components/articles/login-authentication-workflo
   <Step4/>
   <Step5/>
   <Step6/>
+
+  
   <li>A while later, the user's JWT expires and the user clicks on their shopping cart again. The browser recognizes that the JWT has expired and makes a request directly to the JWT refresh API in FusionAuth. This request includes the refresh token cookie</li>
   <li>FusionAuth looks up the refresh token and returns a new JWT</li>
+
+
   <Step7/>
   <Step8/>
+
+
   <li>A while later, the user's refresh token expires and the user clicks on their shopping cart again. The browser recognizes that the JWT has expired and makes a request directly to the JWT refresh API in FusionAuth. This request includes the refresh token cookie</li>
   <li>Since the refresh token has expired, FusionAuth returns a 404 status code</li>
+
+
   <Step9/>
   <Step10/>
   <Step11/>

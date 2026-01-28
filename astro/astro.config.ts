@@ -2,12 +2,13 @@ import {defineConfig} from 'astro/config';
 import compress from "astro-compress";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
-import tailwind from "@astrojs/tailwind";
+import tailwindcss from '@tailwindcss/vite';
 import indexPages from "astro-index-pages/index.js";
 import {rehypeTasklistEnhancer} from './src/plugins/rehype-tasklist-enhancer';
 import {codeTitleRemark} from './src/plugins/code-title-remark';
 import * as markdownExtract from './src/plugins/markdown-extract.js';
 import remarkMdx from 'remark-mdx';
+import mermaid from 'astro-mermaid';
 
 const optionalIntegrations = [];
 if (!process.env.DEV) {
@@ -25,18 +26,20 @@ const config = defineConfig({
   build: {
     format: 'file'
   },
+  vite: {
+    plugins: [tailwindcss()],
+  },
   integrations: [
     ...optionalIntegrations,
+    mermaid({
+      theme: 'forest',
+      autoTheme: true
+    }),
     mdx(),
     sitemap({
       filter: siteMapFilter
     }),
     indexPages(),
-    tailwind({
-      applyBaseStyles: true,
-      nesting: true,
-    })
-    ,
     markdownExtract.default()
   ],
   markdown: {
@@ -49,7 +52,10 @@ const config = defineConfig({
       // @ts-ignore
       rehypeTasklistEnhancer(),
     ],
-    syntaxHighlight: 'shiki'
+    syntaxHighlight: {
+      type: "shiki",
+      excludeLangs: ["mermaid"]
+    }
   },
   site: 'https://fusionauth.io/',
   // experimental: {

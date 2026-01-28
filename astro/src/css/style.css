@@ -1,37 +1,167 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-.font-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+@plugin "@tailwindcss/typography";
+
+/* Restore Manual Dark Mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* --- Background Images --- */
+  /* v4 requires the 'image' prefix for custom background utilities */
+  --background-image-hero: url("/img/heroes/dots-code.svg");
+  --background-image-articles: radial-gradient(circle 768px at top right, rgb(199,210,254,0.95) 0%, rgba(255,255,255,0.95) 80%, rgba(255,255,255,1.0) 100%), url("/img/texture/grid.svg");
+  --background-image-articles-dark: radial-gradient(circle 768px at top right, rgba(55,48,163,0.75) 0%, rgba(15,23,42,0.75) 80%, rgba(15,23,42,1.0) 100%), url("/img/texture/grid.svg");
+  
+  --background-position-pos-hero: right 0 bottom 150px;
+
+  /* --- Colors --- */
+  --color-background: #F1F5F9;
+  --color-login: #E2E8F0;
+  --color-old: #eeeeee;
+  --color-fa-gray-light: #e6e7e8;
+  --color-fa-gray-dark: #3e4e50;
+
+  /* Remapping scales */
+  --color-gray: var(--color-slate);
+  --color-green: var(--color-teal);
+  --color-red: var(--color-rose);
+  --color-rose: var(--color-pink);
+
+  /* Custom Orange */
+  --color-orange-50: #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-200: #fed7aa;
+  --color-orange-300: #fdba74;
+  --color-orange-400: #fb923c;
+  --color-orange-500: #f58320;
+  --color-orange-600: #ea580c;
+  --color-orange-700: #c2410c;
+  --color-orange-800: #9a3412;
+  --color-orange-900: #7c2d12;
+
+  /* --- Others --- */
+  --font-sans: "Inter", "-apple-system", "system-ui", "BlinkMacSystemFont", "Arial", "sans-serif";
+  --font-awesome: "Font Awesome 6 Pro";
+  --border-width-10: 10px;
+  --shadow-aside: 0 2px 4px 0 rgba(0,0,13,0.14), 0 0 0 1px rgba(63,63,68,0.05), 0 1px 3px 0 rgba(63,63,68,0.15);
+  --shadow-dropdown: 0 9px 12px 1px rgba(0,0,0,0.14), 0 3px 16px 2px rgba(0,0,0,0.12), 0 5px 6px -3px rgba(0,0,0,0.20);
+  --shadow-panel: 0 1px 1px 0 rgba(0,0,0,0.14), 0 2px 1px -1px rgba(0,0,0,0.12), 0 1px 3px 0 rgba(0,0,0,0.20);
+  --max-width-8xl: 90rem;
 }
 
-lite-youtube {
-  @apply aspect-video;
-  max-width: none !important;
-}
-
-@layer components {
-  .deprecated {
-    color: theme('textColor.red.700');
+/* --- Fix Typography (Tildes/Backticks) & CSS Overrides --- */
+@layer base {
+  /* This kills the backticks/tildes added by the typography plugin */
+  .prose code::before, 
+  .prose code::after {
+    content: "" !important;
   }
 
-  .since {
-    color: theme('textColor.green.600');
+  .prose blockquote p:first-of-type::before,
+  .prose blockquote p:first-of-type::after {
+    content: none !important;
+  }
+
+  .prose pre code {
+    background-color: transparent !important;
+    border-width: 0 !important;
+    padding: 0 !important;
+  }
+
+  .prose h5 {
+    font-weight: 500;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    font-feature-settings: "case", "zero";
   }
 }
 
-/*
-Handle spacing between the title and the code block for markdown code blocks
-ex:
-```json title="stuff"
-{"things": "stuff"}
-```
-*/
+/* --- Handle Article Background Logic --- */
+.bg-articles {
+  background-image: var(--background-image-articles);
+}
+
+.dark .bg-articles {
+  background-image: var(--background-image-articles-dark);
+}
+
+/* titles for code snippets should quickly follow the snippet */
 p[data-title] {
+  margin-top: 0;
+}
+
+.astro-code {
   margin-bottom: 0;
 }
 
-p[data-title] + div pre {
-  margin-top: .25rem;
+/* --- Handle Mermaid.js styling with rehypeMermaid across both dark and light modes --- */
+/* MERMAID LIGHT MODE */
+/* --- uncomment if dark mode mermaid diagrams need a white background because styling too hard --- */
+/*
+[id^="mermaid-"] {
+  background: var(--color-background);
 }
+*/
+
+[id^="mermaid-"] .cluster rect {
+  fill: none !important;
+}
+
+[id^="mermaid-"] p {
+  color: #000 !important;
+}
+
+[id^="mermaid-"] > * {
+  stroke: #1e293b !important;
+}
+
+/* workaround for line text label colors */
+[id^="mermaid-"] > .messageText {
+  stroke: none !important;
+  fill: #1e293b !important;
+}
+
+/* workaround for arrowhead (arrow lines) colors */
+[id^="mermaid-"] #arrowhead path {
+  fill: #1e293b !important;
+}
+
+/* mermaid diagram titles */
+p[data-title] > em {
+  color: var(--color-blue-600);
+}
+
+/* MERMAID DARK MODE */
+/* --- uncomment if light mode mermaid diagrams need a background because styling too hard --- */
+/*
+.dark [id^="mermaid-"] {
+  background: var(--color-background);
+}
+*/
+
+.dark [id^="mermaid-"] .cluster rect {
+  fill: none !important;
+}
+
+.dark [id^="mermaid-"] > * {
+  stroke: #94a3b8 !important;
+}
+
+/* workaround for line text label colors */
+.dark [id^="mermaid-"] .messageText {
+  stroke: none !important;
+  fill: #e2e8f0 !important;
+}
+
+/* workaround for arrowhead (arrow lines) colors */
+.dark [id^="mermaid-"] #arrowhead path {
+  fill: #64748b !important;
+}
+
+/* mermaid diagram titles */
+.dark p[data-title] > em {
+  color: var(--color-orange-200);
+}
+

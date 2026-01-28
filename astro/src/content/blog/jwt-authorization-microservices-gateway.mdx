@@ -10,9 +10,7 @@ tags: javascript, nodejs, microservices, api gateway, gateway, jwt
 excerpt_separator: "{/* more */}"
 ---
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import CatalogFlowDiagram from "../../diagrams/blog/jwt-authorization-microservices/catalog-flow.astro";
 import InlineUIElement from 'src/components/InlineUIElement.astro';
-import InventoryFlowDiagram from "../../diagrams/blog/jwt-authorization-microservices/inventory-flow.astro";
 
 In a recent article, we set up an API gateway with microservices for an eCommerce enterprise. FusionAuth handled our centralized authentication and then we passed user details for authorization to the microservices. 
 
@@ -125,7 +123,20 @@ You can see that this code is nearly identical to the code for `/products` above
 
 We're now ready for the microservices to handle the `Bearer` token passed in the header. As each microservice will need to handle the tokens in the same way, it makes sense to create a package utility that can be shared by each microservice. For example, here's the flow of a request to the Product Catalog:
 
-<CatalogFlowDiagram alt="Retrieving the Product Catalog." />
+```mermaid title="Retrieving the Product Catalog."
+sequenceDiagram
+
+participant api as API client
+participant Gateway
+participant Products
+api ->> Gateway : Request products/1
+Gateway ->> Gateway : Generate JWT adding in roles
+Gateway ->> Products : Request products/1 + JWT
+Products ->> Products : Verify JWT via middleware
+Products ->> Products : Check roles
+Products -->> Gateway : products/1 data
+Gateway -->> api : products/1 data
+```
 
 ### Authorization Middleware
 
@@ -222,7 +233,19 @@ Make sure you restart your microservices after you've set this environment varia
 ## Product Inventory Integration
 The Product Inventory service endpoint, `/branches/:id/product` has role-based access. Previously we were pulling that from a FusionAuth generated JWT, but let's pull it from the JWT created in the gateway now. Here's the flow of a request to the Product Inventory.
 
-<InventoryFlowDiagram alt="Retrieving the Product Inventory." />
+```mermaid title="Retrieving the Product Inventory."
+sequenceDiagram
+
+participant api as API client
+participant Gateway
+participant Products
+api ->> Gateway : Request branches/1/products
+Gateway ->> Gateway : Generate JWT
+Gateway ->> Products : Request branches/1/products + JWT
+Products ->> Products : Verify JWT via middleware
+Products -->> Gateway : branches/1/products data
+Gateway -->> api : branches/1/products data
+```
 
 ### Authorization Middleware
 

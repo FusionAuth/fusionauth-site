@@ -14,7 +14,6 @@ import RecoveryCodesBlurb from 'src/content/docs/lifecycle/authenticate-users/_r
 import Aside from 'src/components/Aside.astro';
 import MfaMigration from 'src/content/docs/lifecycle/authenticate-users/_mfa-migration.mdx';
 import MfaTroubleshooting from 'src/content/docs/lifecycle/authenticate-users/_mfa-troubleshooting.mdx';
-import StepUpDiagram from 'src/diagrams/docs/lifecycle/authenticate-users/step-up-auth.astro';
 import { YouTube } from '@astro-community/astro-embed-youtube';
 import StaticPatchNote from 'src/content/docs/sdks/_static-patch-note.mdx';
 
@@ -335,7 +334,30 @@ To use this:
 
 Here's a diagram showing this flow for a banking application which requires step-up auth before completing a transfer, but not when users view a balance. 
 
-<StepUpDiagram alt="Diagram of step-up auth when user selects a message based MFA method like email." />
+```mermaid title="Diagram of step-up auth when user selects a message based MFA method like email."
+sequenceDiagram
+    participant User
+    participant app as Application
+    participant FusionAuth
+    User ->> app : View Bank Balance
+    app ->> User : Show Bank Balance
+    User ->> app : Transfer $1000
+    app ->> FusionAuth : Check If Step Up Auth<br/>Required Via Two-Factor Status<br/>(API call)
+    FusionAuth ->> app : Returns Step Up Auth Required
+    app ->> FusionAuth : Start Step Up Auth (API call)
+    FusionAuth ->> app : Returns List Of Methods
+    app ->> User : Shows List Of Methods
+    User ->> app : Selects Email MFA Method
+    app ->> FusionAuth : Send Step Up Auth (API call)
+    FusionAuth ->> User : Send Code Via Email
+    User ->> User : Finds Code In Email
+    User ->> app : Enters Code
+    app ->> FusionAuth : Completes Step Up Auth<br/>(API call)
+    FusionAuth ->> FusionAuth : Verifies Code
+    FusionAuth ->> app : Returns Success
+    app ->> app : Completes Transfer
+    app ->> User : Shows Confirmation
+```
 
 You can also send information at the start of the step-up process and receive it at the end.
 

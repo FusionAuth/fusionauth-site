@@ -8,7 +8,6 @@ tertcategory: api gateways
 navOrder: 0
 tags: api consents
 ---
-import ApiGatewayArchitectureDiagram from 'src/diagrams/docs/extend/examples/api-gateways/_example-api-gateway-architecture.astro';
 import InlineField from 'src/components/InlineField.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 
@@ -49,7 +48,35 @@ FusionAuth also supports SAML integrations. Learn more about [how FusionAuth can
 
 Here's a sequence diagram with an example API gateway protecting two services.
 
-<ApiGatewayArchitectureDiagram alt="API gateway sample architecture." />
+```mermaid title="API gateway sample architecture."
+sequenceDiagram
+
+participant u as User
+participant f as FusionAuth
+participant te as Token Exchanger
+participant ag as API Gateway
+participant sa as Service A
+participant sb as Service B
+
+u ->> ag : Requests Service A
+ag ->> ag : Token validation failure (it doesn't exist)
+ag -->> u  : Sends redirect to FusionAuth
+u ->> f  : Authenticates
+f ->> f  : Verifies credentials
+f -->> u : Redirects user to exchanger
+u ->> te : Requests token
+te -->> u : Issues token
+u ->> ag : Requests Service A and presents token
+ag ->> ag : Validates token 
+ag ->> sa : Forwards request for Service A
+sa -->> ag : Data from Service A
+ag -->> u : Data
+u ->> ag : Requests Service B and presents token
+ag ->> ag : Validates token 
+ag ->> sb : Forwards request for Service B
+sb -->> ag : Data
+ag -->> u : Data from Service B
+```
 
 ## Token Location
 

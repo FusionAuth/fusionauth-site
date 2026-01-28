@@ -4,17 +4,9 @@ description: An explanation of mobile application login using a native login for
 section: Login & Auth Workflows
 author: Brian Pontarelli
 ---
-import Diagram from "../../../../diagrams/articles/login-authentication-workflows/mobile/native-login-form-to-application-backend.astro";
 import Legend from "../../../../components/articles/login-authentication-workflows/legend.md";
 import OrderedList from "../../../../components/OrderedList.astro";
 import NativeIntro from "../../../../components/articles/login-authentication-workflows/mobile/native-intro.md";
-import Step1 from "../../../../components/articles/login-authentication-workflows/mobile/open-app.astro";
-import Step2 from "../../../../components/articles/login-authentication-workflows/mobile/call-backend-login-api.astro";
-import Step3 from "../../../../components/articles/login-authentication-workflows/mobile/shopping-cart-refresh-jwt-load.astro";
-import Step4 from "../../../../components/articles/login-authentication-workflows/mobile/shopping-cart-refresh-jwt-refresh.astro";
-import Step5 from "../../../../components/articles/login-authentication-workflows/mobile/shopping-cart-refresh-jwt-relogin.astro";
-import Step6 from "../../../../components/articles/login-authentication-workflows/mobile/stolen-refresh-token.astro";
-import Step7 from "../../../../components/articles/login-authentication-workflows/mobile/stolen-jwt.astro";
 
 <NativeIntro/>
 
@@ -22,19 +14,80 @@ import Step7 from "../../../../components/articles/login-authentication-workflow
 
 <Legend/>
 
-<Diagram/>
+```mermaid errorBoxes={[16, 18]} warningBoxes={[20]}
+sequenceDiagram
+  autonumber
+  participant Mobile
+  participant Store
+  participant FusionAuth
+  participant Hacker
+  Note over Mobile,Hacker: Initialize
+  Mobile->>Mobile: Open app and render login form
+
+  Note over Mobile,Hacker: Login (inside Mobile App)
+  Mobile->>Store : POST /api/login
+  Store->>FusionAuth : POST /api/login
+  FusionAuth->>Store : (User, Refresh Token and JWT)
+  Store->>Mobile : (User, Refresh Token and JWT)
+
+  Note over Mobile,Hacker: Shopping cart load
+  Mobile->>Store: GET /api/load-shopping-cart<br/>(Refresh token and JWT)
+  Store->>Mobile: (Shopping cart contents)
+  
+  Note over Mobile: JWT expires
+
+  Note over Mobile,Hacker: Shopping cart load
+  Mobile->>Store: GET /api/load-shopping-cart<br/>(Refresh token and JWT)
+  Store->>FusionAuth: POST /oauth2/token or POST /api/jwt/refresh<br/>(grant_type=refresh and refresh token)
+  FusionAuth->>Store: (JWT)
+  Store->>Mobile: (Shopping cart contents and new JWT)
+  
+  Note over Mobile: Refresh token expires
+
+  Note over Mobile,Hacker: Re-login
+  Mobile->>Store: GET /api/load-shopping-cart<br/>(Refresh token and JWT)
+  Store->>FusionAuth: POST /oauth2/token or POST /api/jwt/refresh<br/>(grant_type=refresh and refresh token)
+  FusionAuth->>Store: 404 Missing
+  Store->>Mobile: 401 Not Authorized
+  Mobile->>Mobile: Login same as above
+  
+  Note over Mobile,Hacker: Attack vectors
+  
+  Note over Mobile,Hacker: Stolen JWT
+  Hacker->>Store: GET /api/load-shopping-cart<br/>(JWT)
+  Store->>Hacker: (Shopping cart contents)
+  
+  Note over Mobile,Hacker: Stolen refresh token
+  Hacker->>Store: GET /api/load-shopping-cart<br/>(Refresh token and JWT)
+  Store->>FusionAuth: POST /oauth2/token or POST /api/jwt/refresh<br/>(grant_type=refresh and refresh token)
+  FusionAuth->>Store: (JWT)
+  Store->>Hacker: (Shopping cart contents and new JWT)
+```
 
 ## Explanation
 
-<OrderedList>
-  <Step1/>
-  <Step2/>
-  <Step3/>
-  <Step4/>
-  <Step5/>
-  <Step6/>
-  <Step7/>
-</OrderedList>
+1. The user opens the application. The application initializes itself and then renders its login form.
+1. The user inputs their credentials and clicks the submit button. The application `POST`s the form data to the application backend.
+1. The application backend calls the Login API in FusionAuth by passing in the credentials it received.
+1. FusionAuth returns a 200 status code stating that the credentials were okay. It also returns the User object, a JWT and a refresh token in JSON.
+1. The User object, JWT and refresh token are sent back to the application.
+1. The application requests the user's shopping cart from the application backend and includes the JWT and refresh token.
+1. The application backend verifies the JWT and then uses the JWT to identify the user. Once the user is identified, the backend looks up the user's shopping cart from the database (or similar location). Finally, the application backend returns the user's shopping cart contents.
+1. A while later, the user's JWT expires and the user clicks on their shopping cart again. The application requests the shopping cart from the application backend and sends the JWT and refresh token to the application backend.
+1. The application backend verifies the JWT and realizes it is expired. Since the browser also sent across the refresh token, the application backend calls the JWT refresh API in FusionAuth with the refresh token.
+1. FusionAuth looks up the refresh token and returns a new JWT.
+1. The application backend responds with the user's shopping cart contents. It also includes the new JWT that replaces the old JWT.
+1. A while later, the user's refresh token expires and the user clicks on their shopping cart again. The application requests the shopping cart from the application backend and sends the JWT and refresh token to the application backend.
+1. The application backend verifies the JWT and realizes it is expired. Since the application also sent across the refresh token, the application backend calls the JWT refresh API in FusionAuth with the refresh token.
+1. Since the refresh token has expired, FusionAuth returns a 404 status code.
+1. Since FusionAuth returned a 404 status code, the application backend returns a 401 that indicates the user is no longer logged in.
+1. At this point, the application can allow the user to log in the same way they did above.
+1. This is an attack vector where the attacker has stolen the user's refresh token. Here, the attacker requests the user's shopping cart with the stolen refresh token and an invalid JWT.
+1. The application backend verifies the JWT and realizes it is invalid. Since the attacker also sent across the refresh token, the application backend calls the JWT refresh API in FusionAuth with the refresh token.
+1. FusionAuth looks up the refresh token and returns a new JWT.
+1. The application backend uses the JWT to look up the user's shopping cart. It responds to the attacker with the user's shopping cart. It also includes the new JWT that attacker can now use.
+1. This is an attack vector where the attacker has stolen the user's JWT. Here, the attacker requests the user's shopping cart with the stolen JWT.
+1. The application backend verifies the JWT and then uses the JWT to identify the user. Once the user is identified, the backend looks up the user's shopping cart from the database (or similar location). Finally, the application backend returns the user's shopping cart to the attacker.
 
 ## Security considerations
 
