@@ -9,12 +9,15 @@ import {codeTitleRemark} from './src/plugins/code-title-remark';
 import * as markdownExtract from './src/plugins/markdown-extract.js';
 import remarkMdx from 'remark-mdx';
 import mermaid from 'astro-mermaid';
+import rehypeSlug from 'rehype-slug'
+import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 
 const optionalIntegrations = [];
 if (!process.env.DEV) {
   optionalIntegrations.push(compress({
     Image: false,
     SVG: false,
+    HTML: false,
   }))
 } else {
   console.log('skipping compression');
@@ -51,6 +54,20 @@ const config = defineConfig({
       // Tweak GFM task list syntax
       // @ts-ignore
       rehypeTasklistEnhancer(),
+      rehypeSlug,
+      [
+        rehypeAutolinkHeadings,
+        {
+          behavior: 'append',
+          content: {
+            type: 'text',
+            value: '',
+          },
+          properties: {
+            title: ['copy header link'],
+          },
+        },
+      ],
     ],
     syntaxHighlight: {
       type: "shiki",
