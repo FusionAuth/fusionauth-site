@@ -65,6 +65,7 @@ const config = defineConfig({
           },
           properties: {
             title: ['copy header link'],
+            class: 'anchor-link'
           },
         },
       ],
