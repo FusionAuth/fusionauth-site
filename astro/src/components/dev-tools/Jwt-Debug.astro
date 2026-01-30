@@ -1,0 +1,280 @@
+---
+
+---
+
+<div class="gap-y-6 grid md:grid-cols-2 md:grid-rows-[auto,auto] gap-5 my-8 md:min-h-[300px]">
+    <div
+      id="encoded-textarea"
+      class="row-span-2 flex-1 border-0 rounded text-sm w-full focus:outline-none focus:ring-0"
+    >
+      <span class="label block font-medium mb-1">JSON Web Token (JWT)</span>
+    </div>
+  <div
+    id="header-textarea"
+    class="flex-1 h-[min-content] border-0 rounded text-sm w-full focus:outline-none focus:ring-0"
+  >
+    <span class="label block font-medium mb-1">Header</span>
+  </div>
+
+  <div
+    id="payload-textarea"
+    class="flex-1 border-0 rounded text-sm focus:outline-none focus:ring-0"
+  >
+    <span class="label block font-medium mb-1">Payload</span>
+  </div>
+</div>
+
+<script>
+  "use strict";
+  import { json } from "@codemirror/lang-json";
+  import { MatchDecorator, ViewPlugin, Decoration, EditorView } from "@codemirror/view";
+  import {basicSetup} from "codemirror";
+
+  const defaultToken =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0ODUxNDA5ODQsImlhdCI6MTQ4NTEzNzM4NCwiaXNzIjoiYWNtZS5jb20iLCJzdWIiOiIyOWFjMGMxOC0wYjRhLTQyY2YtODJmYy0wM2Q1NzAzMThhMWQiLCJhcHBsaWNhdGlvbklkIjoiNzkxMDM3MzQtOTdhYi00ZDFhLWFmMzctZTAwNmQwNWQyOTUyIiwicm9sZXMiOltdfQ.Mp0Pcwsz5VECK11Kf2ZZNF_SMKu5CgBeLN9ZOP04kZo";
+  const { headers, payload } = decodeJwt(defaultToken);
+
+  function decodeJwt(stringToDecode) {
+    const s = stringToDecode.split(".");
+    let headers, payload;
+    try {
+      headers = window.JSON.stringify(
+        window.JSON.parse(window.atob(s[0])),
+        null,
+        2,
+    );
+    } catch(e) {
+      headers = window.JSON.stringify({
+        "error": "Token header is invalid"
+      }, null, 2)
+    }
+    
+    try {
+      payload = window.JSON.stringify(
+        window.JSON.parse(window.atob(s[1])),
+        null,
+        2,
+      );
+    } catch(e) {
+      payload = window.JSON.stringify({
+        "error": "Token payload is invalid"
+      }, null, 2)
+
+    }
+    return { payload, headers };
+  }
+
+  // Function to check if this change is applied via one of our programmatic shifts
+  function isProgrammatic(transactions) {
+    if (transactions.length == 0 ||
+        (transactions.length > 0 &&
+         typeof transactions[0].annotations[0].value !== "number")) {
+      return false;
+    }
+    return true;
+  }
+
+
+  // Decorator for color coding the token
+  const tokenDec = Decoration.mark({ class: "headerDec" }); // This adds a className to the text that matches the regex.
+
+  const tokenDecorator = new MatchDecorator({
+    regexp: /([^.]+)/g,
+    decoration: () => tokenDec
+  });
+  const tokenColors = ViewPlugin.define(
+    (view) => {
+      return ({
+      decorations: tokenDecorator.createDeco(view),
+      update(u) {
+        this.decorations = tokenDecorator.updateDeco(u, this.decorations);
+      },
+    })},
+    {
+      decorations: (v) => v.decorations,
+    },
+  );
+
+  // Inits CodeMirror for Tokens
+  const tokenEditor = new EditorView({
+    parent: document.getElementById("encoded-textarea"),
+    doc: defaultToken,
+
+    extensions: [
+      // basicSetup,
+      tokenColors,
+      EditorView.lineWrapping,
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+          const programUpdated = isProgrammatic(update.transactions);
+          if (!programUpdated) {
+            const { headers, payload } = decodeJwt(update.state.doc.text[0]);
+
+            headersEditor.dispatch({
+              changes: {
+                from: 0,
+                to: headersEditor.state.doc.length,
+                insert: headers,
+              },
+            });
+            payloadEditor.dispatch({
+              changes: {
+                from: 0,
+                to: payloadEditor.state.doc.length,
+                insert: payload,
+              },
+            });
+          }
+        }
+      }),
+    ],
+  });
+
+  // Inits CodeMirror for Header
+  const headersEditor = new EditorView({
+    parent: document.getElementById("header-textarea"),
+    doc: headers,
+
+    extensions: [
+      basicSetup,
+      EditorView.lineWrapping,
+      json(),
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+          const programUpdated = isProgrammatic(update.transactions);
+          if (!programUpdated) {
+            const currentToken = tokenEditor.state.doc.text[0].split(".");
+            const docText = update.state.doc.text.join("");
+            const updatedHeader = window.btoa(docText);
+
+            tokenEditor.dispatch({
+              changes: {
+                from: 0,
+                to: tokenEditor.state.doc.length,
+                insert: `${updatedHeader}.${currentToken[1]}`,
+              },
+            });
+          }
+        }
+      }),
+    ],
+  });
+
+  // Inits CodeMirror for Payload
+
+  const payloadEditor = new EditorView({
+    parent: document.getElementById("payload-textarea"),
+    doc: payload,
+    extensions: [
+      basicSetup,
+      EditorView.lineWrapping,
+      json(),
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged) {
+          const programUpdated = isProgrammatic(update.transactions);
+          if (!programUpdated) {
+            const docText = update.state.doc.text.join("");
+
+            const currentToken = tokenEditor.state.doc.text[0].split(".");
+            const updatedPayload = window.btoa(docText);
+
+            tokenEditor.dispatch({
+              changes: {
+                from: 0,
+                to: tokenEditor.state.doc.length,
+                insert: `${currentToken[0]}.${updatedPayload}`,
+              },
+            });
+          }
+        }
+      }),
+    ],
+  });
+</script>
+
+<style is:global>
+  @reference "tailwindcss";
+
+  #encoded-textarea {
+    @apply grid grid-rows-[min-content_minmax(0,1fr)] md:max-h-[30em] max-h-[200px];
+  }
+  #header-textarea .cm-editor {
+    @apply md:max-h-[8em];
+  }
+  #payload-textarea .cm-editor {
+    @apply md:max-h-[16em];
+  }
+  .cm-editor {
+    @apply flex-1 bg-white rounded-md border border-slate-400 p-2;
+  }
+  .cm-editor { max-height: 100%; }
+.cm-scroller { overflow: auto }
+
+  .dark .cm-editor {
+    @apply bg-slate-900;
+  }
+
+  .cm-editor .cm-activeLine {
+    background: transparent;
+  }
+  .cm-editor .cm-gutters.cm-gutters-before {
+    display: none;
+  }
+  .cm-gutters {
+    min-height: initial !important;
+  }
+  .headerDec:first-of-type {
+    @apply text-green-600;
+  }
+  .headerDec:first-of-type:hover {
+    @apply bg-green-100;
+  }
+  .dark .headerDec:first-of-type:hover {
+    @apply bg-green-900;
+  }
+  .headerDec:nth-of-type(2) {
+    @apply text-indigo-600;
+  }
+  .headerDec:nth-of-type(2):hover {
+    @apply bg-indigo-100;
+  }
+  .dark .headerDec:nth-of-type(2):hover {
+    @apply bg-indigo-700;
+  }
+  .dark .headerDec:first-of-type {
+    @apply text-green-300;
+  }
+  .dark .headerDec:nth-of-type(2) {
+    @apply text-indigo-300;
+  }
+  .headerDec:nth-of-type(3) {
+    @apply text-red-600;
+  }
+  .headerDec:nth-of-type(3):hover {
+    @apply bg-red-100;
+  }
+  .dark .headerDec:nth-of-type(3) {
+    @apply text-red-500;
+  }
+    .dark .headerDec:nth-of-type(3):hover {
+    @apply bg-red-900;
+  }
+  .cm-line {
+    @apply text-indigo-800;
+  }
+  .dark .cm-line {
+    @apply text-indigo-100;
+  }
+  .ͼe {
+    @apply text-red-700;
+  }
+  .ͼd {
+    @apply text-green-700
+  }
+  .dark .ͼe {
+    @apply text-orange-300;
+  }
+  .dark .ͼd {
+    @apply text-green-300;
+  }
+</style>
