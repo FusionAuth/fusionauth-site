@@ -1,4 +1,3 @@
 # Security Policy
 
-For Responsible Disclosure Program, Discovering Security Vulnerabilities
-and Reporting a Vulnerability please follow https://fusionauth.io/security
+To responsibly report security vulnerabilities, please submit them through our Vulnerability Disclosure Program at <https://fusionauth.io/security>.
