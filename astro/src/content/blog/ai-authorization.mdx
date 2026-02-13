@@ -1,0 +1,130 @@
+---
+publish_date: 2026-02-13
+title: The Real Problem with AI Agents Isn't Identity, It's Authorization
+description: "AI agents don't just need their own identities — they need fine-grained authorization, and most APIs aren't built to provide it."
+authors: Dan Moore
+image: /img/blogs/zero-trust-idps/zero-trust-and-how-idps-factor-into-it-header-image.png
+categories: Education
+tags: ai, authorization, llms, agents
+excerpt_separator: "{/* more */}"
+---
+
+There's a lot of conversation right now about the challenges of AI agents, and much of it centers on identity: how do you distinguish an agent from the human it's acting on behalf of?
+
+That's a valid concern, and it matters. Service accounts and delegated identity tokens can help mitigate it. But identity isn't the big problem.
+
+The big problem is scoping down access.
+
+{/* more */}
+
+## The Authorization Gap
+
+If you have an API with an authorization layer that's not granular enough, there's very little an external identity or authentication solution can do to help. The permissions you grant to an agent, even one with its own distinct identity, end up being too broad.
+
+When a human is directly involved, it can make sense to have override mechanisms or implicit trust to keep things locked down. But when it's an unattended agent on the other side of a scope grant? The ability to meaningfully restrict access at scale becomes really hard. And critically, **it all depends on the implementing services**.
+
+## Local vs Remote Agents
+
+Let's distinguish between local agents operating on your system and agents with access to remote APIs or MCP servers, wherever they run.
+
+For the former, the authorization model is dictated by the operating system and the file system protections of a file system. The damage a local agent can do, well significant, is limited to the computer it is running on.
+
+For the latter, they have access to bank account, cloud infrastructure, or messaging, the stakes are higher. This means getting authorization right is even more important.
+
+## The Google Drive Example
+
+Here's an example I come back to often, because many people are familiar with it: Google Drive.
+
+If you connect to an MCP server for Google Drive, the [scopes a user consents to are typically broad](https://developers.google.com/workspace/drive/api/guides/api-specific-auth). (There isn't an [official Google Drive MCP server](https://docs.cloud.google.com/mcp/supported-products), but there are [a few unofficial MCP servers](https://registry.modelcontextprotocol.io/?q=drive).)
+
+Google Drive does let you lock things down in some ways:
+
+* `https://www.googleapis.com/auth/drive.apps.readonly` offers read-only access
+* `https://www.googleapis.com/auth/drive.meet.readonly` offers read-only access to files created by Google Meet
+* `https://www.googleapis.com/auth/drive` offers access to all files with no downloading available
+
+If I want to programmatically limit access to just a single folder, I have to jump through a few hoops: 
+
+* create a service account
+* grant that service account permissions scoped to that specific folder
+
+It's not impossibly hard, but it's extra work I have to do. Google also offers the `https://www.googleapis.com/auth/drive.file` scope, which limits access to files a user chooses. This solves part of the problem but doesn't allow deleting files nor directory access. Google has headed down the path of building in fine-grained authorization (FGA), but it isn't complete.
+
+Now, imagine connecting say, [OpenClaw](https://openclaw.ai/), a third-party service without Google's granular control. In this case, the agent has far more access than you intended.
+
+## What You Should Actually Worry About
+
+When you're moving into the world of agents, you should absolutely be concerned about identity and identifying agents. 
+
+But you also need to be concerned about making sure that your agents access is limited.
+
+Broad roles or coarse scopes that users can consent to are an important first step, and they can serve as useful safeguard. But they definitely don't provide a full authorization story.
+
+## Why Now?
+
+APIs have coarse scopes because fine-grained authorization is expensive to build and maintain. It is often not worth it for the human-driven or deterministic use cases such APIs were designed for.
+
+AI agent use cases are nascent. But this problem is real, and solving it aren't future-proofing for a hypothetical agent ecosystem. Agents are connecting to APIs now, through MCP servers, directly, and with frameworks, with whatever permissions are currently available.
+
+Every month you wait, more integrations lock in broad access patterns that become harder to walk back. The cost of building fine-grained authorization doesn't go down with time, unfortunately. But the cost of not having it compounds.
+
+## So What Are the Solutions?
+
+If you plan to provide services to AI agents, make sure you implement fine-grained authorization. How you apply them is business-logic specific, but here are some approaches worth considering:
+
+**Role-Based Access Control (RBAC)** is a solid foundation. Create roles specifically for agents with just the access they should have. Think carefully about how to keep them scoped tightly enough to be effective.
+
+**RBAC + Attribute-Based Access Control (ABAC)** takes things further. ABAC lets you layer additional constraints on top of roles and resources. For example, you can limit access to certain periods of time, to a certain identity, or to requests from a particular IP address range. ABAC limits don't rely on access token expiry; they're application-level rules that give you much more precise control.
+
+**ReBAC (Relationship-Based Access Control)** is another option, where you model relationships between different resources and identities. With ReBAC, you can say only *this specific set of resources* is available, and I as a user am only granting access to *these things*, not everything else. An example is a code repository: you might want to give an agent access to a specific repository, a directory, or even only specific files within that repository.
+
+### ReBAC in Practice
+
+Let's make this concrete. Say you're building a platform that hosts code repositories, and you want to let users connect AI agents to help with code review, documentation, or refactoring.
+
+With ReBAC, you model authorization as relationships between entities. Your graph might look like:
+
+- User `dan` is an `owner` of Org `acme-corp`
+- Org `acme-corp` is the `parent` of Repo `billing-service`
+- Repo `billing-service` contains Directory `src/payments`
+- Agent `code-review-bot` is a `reviewer` of Repo `billing-service`
+
+So when `code-review-bot` tries to read a file in `src/payments`, the system walks the graph: the agent is a `reviewer` of the repo, and the file lives inside that repo. Access granted — but only for reading, and only within that repo.
+
+This is not complete, but is fine for illustration. Other possible entities include PRs, issues, commits, and files.
+
+So far so good. But here's where it gets interesting.
+
+#### The Non-Obvious Parts
+
+Delegation depth is one thing to consider. The user `dan` authorized the `code-review-bot` to access `billing-service`. But what if `code-review-bot` calls another agent, such as a specialized security-scanning tool, and passes along its access? Your relationship graph now needs to answer: can an agent delegate its own relationships?
+
+Most ReBAC implementations don't model this by default. You need to explicitly decide whether agent-to-agent delegation is a relationship you support, and if so, how deep it can go.
+
+The `dan` user grants the agent `reviewer` access for a PR that's open right now. The PR merges on Tuesday. Should the agent still have access on Wednesday, or even one minute after the PR merges? With humans, this limitation is implicit. The developer stops looking at the code.
+
+But an agent with a persistent relationship could keep accessing the repo indefinitely unless you build in a mechanism to expire or revoke the relationship. ReBAC gives you the structure to model this (e.g., the relationship is scoped to a PR entity, not the repo), but it doesn't give you the lifecycle management of authorization for free. You have to build that.
+
+Another thing to think about is consent granularity at authorization time. When `dan` connects the agent through an OAuth-style consent screen, what does he actually see? Probably something like "Code Review Bot wants access to your repositories." But ReBAC's whole value is that access is scoped to *specific* resources. That means your consent flow needs to let Dan pick which repos, or even which directories.
+
+Most OAuth consent screens aren't built for this. You might need to step outside of the OAuth standard, because you need a custom UI that lets users define the relationships they're granting. That or a set of rules which can be applied. This is real product work, not just a configuration change.
+
+Beware relationship sprawl. This approach works well with one agent and one repo. Now imagine the organziation has 50 repos and 12 agents, each with different access levels to different directories. Your relationship graph gets large and difficult to audit.
+
+"What can this agent access?" becomes a graph traversal problem rather than a simple role lookup. You need tooling to visualize and query the graph, or your team will never be able to answer that question during an incident.
+
+#### The Takeaway
+
+ReBAC is the best fit for agent authorization because it maps naturally to how people think about granting access: "this agent can touch these specific things."
+
+But adopting it means committing to building the infrastructure around it. This includes delegation policies, relationship lifecycle management, consent UIs that surface the right choices, and audit tooling.
+
+The access model itself is the easy part. The hard part is everything else.
+
+## The Hard Truth
+
+As shown above, none of this is trivial. It's not easy to introduce a proper authorization model. It's especially not trivial to retrofit a more complex, full featured authorization model into a working application or service. But unless you're comfortable with AI agents having broad access to your systems, this is the work you need to do.
+
+The identity problem has well understood solutions: service accounts and ephemeral tokens. These can be added with minimal impact to your application.
+
+The authorization problem remains. It requires you to actually think about your specific domain, your specific resources, and your specific risk tolerance. And then build accordingly.
