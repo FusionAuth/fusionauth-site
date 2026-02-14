@@ -1,0 +1,320 @@
+---
+title: Best Practices For Registration And Login Pages
+description: Learn all the best practices for designing authentication pages with FusionAuth themes.
+section: customize
+subcategory: look and feel
+tags: conversion, accessibility, themes, theming, usability, design, style, fusionauth theme helper
+---
+import PremiumPlanBlurbApi from 'src/content/docs/_shared/_premium-plan-blurb-api.astro';
+import {RemoteCode} from '@fusionauth/astro-components';
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+
+FusionAuth provides secure and functional authentication pages for your applications by default. But it takes more work to create registration and login pages that have excellent usability and delight new customers. This guide explains how to do that, covering:
+
+- The best practices for designing authentication pages
+- Tools for evaluating accessibility and standards compliance in your pages
+- A summary checklist for designing or evaluating your own pages, including everything that's possible in the free version of FusionAuth
+- An evaluation of the best practices in a demonstration site for a FusionAuth custom theme
+
+## List Of Best Practices For Registration And Login Pages
+
+Let's start by reviewing everything good authentication pages should have. This generally comprises security, usability, accessibility, and attractiveness.
+
+Registration and login pages should follow all the practices in the following subsections.
+
+### ↔️ Separate
+
+Both pages could be combined into a single page. After all, they both contain just username and password fields. If the user has not yet registered when trying to sign in, why not automatically register them on the same page? The main reason is that having separate pages prevents users from creating duplicate accounts. People frequently forget which email addresses they used to register for a service (especially with the increased focus on privacy and email aliases in recent years) or mistype their address. Telling someone that their username does not exist is clearer than silently creating a new account. You may also want to include extra fields on a registration page, such as checkboxes for consent, which do not belong on a login page. Finally, if you want to protect users' privacy, having separate pages prevents attackers from entering email addresses in the login field to check which users are registered for the service.
+
+### 🧹 Minimal
+
+Registration pages give the user work to do, which discourages them from using your service. Make that work as easy as possible by designing pages with no clutter and as few fields to complete as possible:
+
+- Autofocus the identifier textbox to save the user a click.
+- Make labels clickable, and on a click, make the label focus its related textbox. This looks like `<label for="email">Email address</label><input id="email" >`.
+- Provide a toggleable eye icon so that users can view their password in plaintext, rather than having to retype the password in a confirmation textbox. 
+- Show the password requirements next to the password box, so they don't have to invent a new password after the first one is rejected.
+- Show validation for all fields on blur (when a field loses focus) and not on form submission, for immediate feedback. 
+- If the page is refreshed (such as when form submission fails), the page should remember the values entered in every textbox, so the user doesn't have to retype anything.
+- Skip the login screen automatically and redirect the user to their account if they're already signed in.
+- Provide links between the registration and login pages so the user can quickly swap to the correct page if they start down the wrong path.
+- The reset password page should automatically enter the user's email address from the login page or browser cookie to save the user from typing.
+
+### 🦯 Accessible
+
+For accessibility, use large, readable fonts for those with poor eyesight, color-blindness, or dyslexia. Add screen readers for the blind, and proper tab order and keyboard support for those who can't use a mouse. Ensure your site works correctly on desktop and mobile.
+
+Accessibility also means that users can actually load the page, so be careful with images that are too large, don't exclude anyone using a VPN, and have a backup host if your Cloudflare or AWS web host crashes. Show translated pages in the language of your users if appropriate.
+
+Give clear and complete instructions for inexperienced users: "I don't know what the password is! Oh, I'm supposed to *invent* my own password? Why didn't you say so?"
+
+Show an indicator if the Caps Lock key is on. Don't disable the paste ability on fields. Some users physically need it, and it's useful for those who keep their passwords in a separate database.
+
+Show a spinner to provide feedback for any requests to the server, such as password validation and form submission. Users quickly lose interest and assume a page is broken if there's no visual feedback.
+
+Make timeouts long. Even a short registration page could take a user a while to complete, especially if life interrupts them. It's annoying if, when a user finally clicks submit, the page rejects them due to an anti-forgery cookie timeout, and they need to resubmit.
+
+Label your email textbox with `type=email` in HTML to get the appropriate mobile keyboard layout for fast entry. It's faster to enter an email address if you don't have to hunt for the `@` sign on your keyboard. Do the same for telephone numbers (`type=tel`), URLs (`type=url`), and numbers (`type=number`).
+
+Use the `autocomplete="username"` and `autocomplete="current-password"` attributes on fields so the browser can save the user from typing.
+
+If your pages use icons (like a little envelope picture in the email field), ensure the icons have `aria-hidden="true"` if they are purely decorative. If instead the icons are meaningful, provide an `alt` text description for screen readers.
+
+Use an ARIA live region, like `<div role="alert">Incorrect password</div>`, so that screen readers are aware of when the div content changes dynamically through JavaScript (as opposed to reading the page only the first time on load).
+
+### 🌐 Standards Compliant
+
+Ensuring compliance with standards includes checking HTML5, OAuth 2, email, and cross-browser compatibility with functions like autocomplete and password managers.
+
+Allow all legal email addresses. For example, `+` and `/` are legal characters in addresses, as are two-letter domain names, but they are frequently banned by persnickety registration pages.
+
+### 🔐 Secure
+
+When using FusionAuth, this is the easiest part. The hosted login pages are the result of a company dedicated to authentication and are secure by default.
+
+The tricky part is deciding whether to support login with email addresses, usernames, or mobile phones, and whether to use passkeys, single sign-on (SSO), or social login, and two-factor authentication. Each of these choices has security and ease-of-use implications. You need to decide what is best for the majority of your users. Passwords should follow modern best practices, like [zxcvbn](https://github.com/zxcvbn-ts/zxcvbn), not superstitions about uppercase and special characters.
+
+Use CAPTCHA to ensure that only humans, and not spam bots, attempt to register and log in. Prevent brute-force password attacks by rate-limiting login attempts. After the user enters too many incorrect passwords, lock their account for a minute.
+
+Upgrade your FusionAuth instance frequently to get all security patches. Use HTTPS, not HTTP, for connections.
+
+Provide a **Stay logged in on this device** checkbox to allow the user to explicitly say whether they want the convenience of avoiding future logins on their home computer, or the safety of staying logged out on a shared public computer. Provide a clear **Log out** button once they have logged in.
+
+Ensure that your client-side validation and server-side validation are identical. If the client is stricter, an attacker could bypass the HTML page to send a form directly to the server, where the server would accept unsafe fields. If the server is stricter, a user could enter a valid password on the registration page, only for it to be rejected on the server at submission.
+
+### ⚖️ Legal And Ethical
+
+You need to be compliant with GDPR and the cookie law if your service is available to any European citizen. Put links to privacy and data-use policies on your registration page. Include opt-in checkboxes for any personal data collection. Obtain consent for any non-essential cookies. For more information on this complex topic, see the blog articles on [EU laws](todo get link when FusionAuth publishes this) and [configuring FusionAuth to comply with GDPR](todo get link when FusionAuth publishes this).
+
+### 👁️ Able To Collect Metrics
+
+Your registration page should track, in a way that doesn't collect personal data, how many people attempt, complete, and abandon registration. If possible, track where users abandon registration to learn what might be discouraging them and what you can improve.
+
+You may also want to use A/B testing with multiple versions of a registration page to see which is the most convenient.
+
+### 🌼 Good Looking
+
+A page that is visually well-designed persuades users that your business is successful, professional, and trustworthy. Elegant animations often delight users. But this isn't about only layout and styling. Typography matters, as does your text itself. The language on the page must be clear and grammatically correct, and the tone should match your business. Ensure translations to foreign languages are correct too.
+
+Follow the user's choice for dark mode or light mode in their browser or operating system settings. Showing a dazzling white registration page to users who prefer dark mode will make them immediately dislike your app.
+
+## Checklist Of Best Practices
+
+Below is a condensed checklist of all the tips in the previous section.
+
+Features that are only available in paid plans are marked with 💸. For more details, see the [pricing page](/pricing). The two most important features that are available only on paid plans are CAPTCHA and rate limiting incorrect login attempts. These are essential to most businesses.
+
+Name | Description | Involves Paid Licence
+---|---|---
+<span id='p1'>Separate Pages</span> | Separate registration and sign in pages |
+<span id='p2'>Hide Registered Accounts</span> | Don't say whether users have accounts already.
+⛔ Impossible in FusionAuth |
+<span id='p3'>Minimal</span> | No visual clutter or excess fields |
+<span id='p4'>Autofocus First Textbox</span> | |
+<span id='p5'>Clickable Labels</span> | |
+<span id='p6'>Viewable Password</span> | |
+<span id='p7'>Show Password Requirements</span> | |
+<span id='p8'>Validate On Blur</span> | |
+<span id='p9'>Remember Entries</span> | |
+<span id='p10'>Skip Login</span> | If signed-in already |
+<span id='p11'>Links Between Pages</span> | |
+<span id='p12'>Autofilled Reset Password Username</span> | |
+<span id='p13'>Large Fonts</span> | |
+<span id='p14'>Clear Contrast</span> | |
+<span id='p15'>Dyslexic Font</span> | |
+<span id='p16'>Colorblind Safe</span> | |
+<span id='p17'>Blind Safe</span> | Screenreader compatible |
+<span id='p18'>Tab Order</span> | |
+<span id='p19'>Keyboard Only</span> | |
+<span id='p20'>Mobile & Desktop</span> | |
+<span id='p21'>Few KB</span> | |
+<span id='p22'>VPN Safe</span> | No country or IP restrictions |
+<span id='p221'>Country Restrictions</span> | IP ranges can be restricted (For example, the EU) | 💸
+<span id='p23'>Backup Host</span> | If the primary goes offline |
+<span id='p24'>Language Translations</span> | |
+<span id='p25'>Clear Instructions</span> | |
+<span id='p26'>Caps Lock Indicator</span> | |
+<span id='p27'>Paste Allowed</span> | |
+<span id='p28'>Feedback Spinner</span> | |
+<span id='p29'>Long Timeouts</span> | |
+<span id='p30'>`type=email`</span> | And `tel`, `url`, `number` |
+<span id='p31'>`autocomplete`</span> | `username` and `current-password` |
+<span id='p32'>`aria-hidden`</span> | For decorations |
+<span id='p33'>`alt`</span> | Descriptions for informative images |
+<span id='p34'>`aria-live`</span> | For updating text |
+<span id='p35'>HTML5 Compliant</span> | |
+<span id='p36'>OAuth 2 Compliant</span> | |
+<span id='p37'>Email Compliant</span> | |
+<span id='p38'>Cross-Browser Compliant</span> | |
+<span id='p39'>Username Registration</span> | |
+<span id='p40'>Email Registration</span> | |
+<span id='p41'>Phone Number Registration</span> | |
+<span id='p42'>Social Media Registration</span> | | 💸 Gaming providers
+<span id='p43'>Passkeys</span> | | 💸 WebAuthn Cross-platform Authenticators
+<span id='p44'>Two-Factor Authentication</span> | | 💸 Advanced MFA
+<span id='p45'>Custom Password Rules</span> | ✖️ FusionAuth doesn't allow completely custom rules, but tenant settings allow basic changes. |
+<span id='p46'>CAPTCHA</span> | | 💸
+<span id='p47'>Rate-Limit Incorrect Passwords</span> | | 💸
+<span id='p48'>HTTPS</span> | |
+<span id='p49'>Upgrade FusionAuth</span> | |
+<span id='p50'>Stay Logged In</span> | |
+<span id='p51'>Log Out</span> | Clearly shown once logged in |
+<span id='p52'>Matching Server/Client Validation</span> | |
+<span id='p111'>Consent Checkboxes</span> | ⛔ You can request personal data like birthdate and name on the registration form in FusionAuth, but not consent | 💸 Advanced registration forms
+<span id='p53'>Cookie Consent Banner</span> | ⛔ FusionAuth does not ask for permission to store cookies in the user's browser and does not inform the user |
+<span id='p54'>Disable Cookies If No Consent</span> | ⛔ FusionAuth provides no way to remove cookies if the user could decline them |
+<span id='p55'>Registration Metrics</span> | |
+<span id='p56'>A/B Testing</span> | ⛔ Impossible in FusionAuth |
+<span id='p57'>Typography</span> | |
+<span id='p58'>Imagery</span> | |
+<span id='p59'>Layout</span> | |
+<span id='p60'>Animations</span> | |
+<span id='p62'>Dark Or Light Mode</span> | FusionAuth allows only one theme. You need to adjust dark or light mode manually in your CSS. |
+
+## FusionAuth Theming Options
+
+The FusionAuth [theming overview](/docs/customize/look-and-feel) covers three ways you can customize your authentication pages:
+
+- Use the [Simple Theme Editor](/docs/customize/look-and-feel/simple-theme-editor) to make small changes to one of the default FusionAuth themes.
+- Use the [Advanced Theme Editor](/docs/customize/look-and-feel/advanced-theme-editor) to overhaul everything with custom CSS, JavaScript, and the [Java FreeMarker template language](https://freemarker.apache.org/).
+- Write custom pages in your own app that call the [FusionAuth API for authentication](/docs/apis/authentication), instead of using the hosted login pages. (This is dangerous, as it's easy to make security mistakes.)
+
+The FusionAuth default theme is minimal and secure, but doesn't follow all the best practices in the previous table. As the following screenshots show, it's designed as a placeholder that you can replace with your own branding.
+
+![Default registration](/img/docs/customize/look-and-feel/best-practices/defaultRegistration.webp)
+
+![Default login](/img/docs/customize/look-and-feel/best-practices/defaultLogin.webp)
+
+![Default forgot password](/img/docs/customize/look-and-feel/best-practices/defaultForgot.webp)
+
+If the default theme has adequate usability for your app, and you want to make only a few visual adjustments, use the Simple Theme Editor. 
+
+If you want to follow as many best practices as possible, use the Advanced Theme Editor. The advanced editor allows for custom JavaScript, so you can add a viewable password, validate fields on blur, and provide clear instructions and password requirements.
+
+<Aside type="caution">
+If you start creating your own custom simple theme and later decide to switch to a custom advanced theme, there is no simple path for switching. If you try to download a simple theme for customization instead of an advanced theme, the files will be empty. You have to duplicate an advanced theme and manually customize it to match the changes you made to the simple theme.
+</Aside>
+
+## Evaluating A Custom Advanced Theme
+
+While the default FusionAuth theme is simplistic, there are four impressive themes available at [FusionAuth Themes](https://www.fusionauththemes.com) for you to use as a template when creating your own. This section uses the best practices checklist evaluate the first theme, Iron Pixel, showing you exactly what to be aware of when designing your page.
+
+You can view the theme with registration and login pages at the mock [Iron Pixel website](https://iron-pixel.fusionauththemes.com). Browse around the site to see if you can spot any flaws yourself before continuing.
+
+![Iron Pixel theme](/img/docs/customize/look-and-feel/best-practices/ironpixelTheme.webp)
+
+<Aside type="note">
+The addendum at the bottom of this article provides step-by-step instructions for installing the Iron Pixel theme on your own instance of FusionAuth. This provides a convenient base for building your own theme, but it isn't necessary for understanding the evaluation below.
+</Aside>
+
+The list evaluates the sample site's authentication pages against each item in the best practices checklist. Practices that the pages follow are marked with ✅, and areas for improvement are marked with ✖️.
+
+- ✅ **Separate Pages:** Links here look like tabs. Clear and fast.
+- ✖️ **Hide Registered Accounts:** For privacy, an attacker should never be told if an email for a service is in use. This is not possible in FusionAuth and has been a [complaint since 2023](/community/forum/topic/2484/registering-with-an-existing-email).
+  ![Email exists](/img/docs/customize/look-and-feel/best-practices/emailExists.webp)
+- ✖️ **Minimal:** At first, the page looks minimal, but interactions show it lacks attention to detail and hasn't been tested. For example, if your password at login is incorrect, the error is shown in two places, and the toast moves the entire page instead of floating above it. This clutter should be removed.
+  ![Invalid password clutter](/img/docs/customize/look-and-feel/best-practices/invalidClutter.webp)
+  Additionally, on the Forgot Password page, there is an unnecessary person logo and unstyled spacing. Such small flaws reveal a business's lack of attention to detail.
+  ![Unstyled forgot password page](/img/docs/customize/look-and-feel/best-practices/forgotPasswordUgly.webp)
+  Finally, the page displays **Sign up** twice, once on the tab at the top and once at the bottom.
+- ✅ **Autofocus First Textbox**
+- ✖️ **Clickable Labels:** The username and password fields in this theme are not labelled. Instead, they use the hint text when the fields are blank. This is good for minimalism, but not good for clarity, because the hint disappears when the user starts typing. If your users are technically experienced, this is fine, but if you're aiming for maximum clarity, you need to add field labels.
+- ✖️ **Viewable Password:** This theme has neither a password confirmation box nor a way to view the password you entered. You need at least one, especially on mobile, where it's easy to mistype.
+- ✖️ **Show Password Requirements:** You need to add this instruction manually to a registration page. Be careful doing this, because an administrator might change the requirements in the FusionAuth backend but forget to update the text in the theme frontend.
+- ✖️ **Validate On Blur:** Currently, validation happens only at form submission.
+- ✅ **Remember Entries:** The only field here is for an email address, which is autofilled if form submission fails and the page refreshes. The password field should not autofill on failure, and does not in this theme.
+- ✅ **Skip Login:** This functionality is easy to implement with FusionAuth and is handled by your app, not FusionAuth directly. For more details, see one of the [quickstarts](/docs/quickstarts/).
+- ✅ **Links Between Pages:** The page appears to use tabs, but these are actually links that reload a similar-looking page.
+- ✖️ **Autofilled Reset Password Username**
+- ✅ **Large Fonts, Clear Contrast:** This theme has both, and responds correctly to page zoom.
+- ✅ **Dyslexic Font:** The theme uses standard and readable fonts, which are appropriate for most web pages. If you were creating a service for those with special reading needs, you could consider switching to a typeface like [OpenDyslexic](https://opendyslexic.org).
+- ✖️ **Colorblind Safe:** You can use a website like [Pilestone](https://pilestone.com/pages/color-blindness-simulator) to see how an image appears with various forms of colorblindness.
+  ![Colorblind](/img/docs/customize/look-and-feel/best-practices/colorblind.webp)
+  However, the simplest test is to remove color altogether and preview your site in black and white. If any information is conveyed exclusively by color, it should be improved. For example, on the login page, the invalid password message is red, but with no exclamation symbol, and so it doesn't appear as a problem to a colorblind user. To preview an entire site in black and white, use your browser developer tools. In Chromium-based browsers, you can find the **Rendering** setting from the **More tools** option.
+  ![Rendering tools](/img/docs/customize/look-and-feel/best-practices/renderingTools.webp)
+  As well as previewing color problems, you can also preview your site blurred or at reduced contrast. The following image shows that a user with contrast issues would struggle to read the field hint texts, which should be improved (as noted in the Clickable Labels practice).
+  ![Reduced contrast](/img/docs/customize/look-and-feel/best-practices/reducedContrast.webp)
+  The Firefox accessibility tab is faster to access than Chromium's, and also shows you tab order and missing field descriptions.
+  ![Firefox preview](/img/docs/customize/look-and-feel/best-practices/firefoxCheck.webp)
+- ✖️ **Blind Safe:** Testing full blindness and using a screen reader is more complicated than testing color blindness. Screen readers are configured at the operating system level and differ between Linux, macOS, and Windows. For a partial test, use the [Silktide Accessibility Checker](https://chromewebstore.google.com/detail/silktide-accessibility-ch/mpobacholfblmnpnfbiomjkecoojakah). The free Silktide plugin offers accessibility checking even more powerful than Firefox, allowing you to find a variety of accessibility problems.
+  ![Silktide](/img/docs/customize/look-and-feel/best-practices/silktide.webp)
+  Stepping through the login page with the virtual screen reader immediately highlights problems. The email textbox has no label or description for blind users.
+  ![Screen reader](/img/docs/customize/look-and-feel/best-practices/screenReader.webp)
+- ✅ **Tab Order**
+- ✅ **Keyboard Only:** Nothing on this page needs the mouse. However, you need to do additional checks for keyboard use if you use third-party plugins, like CAPTCHA.
+- ✖️ **Mobile & Desktop:** You can preview a mobile layout of your page using most browsers and extensions like Silktide. You can see in the screenshots below that the theme developers sacrificed the screenshots and videos of their game instead of moving them below the form or adding them as a third tab. No one can say whether this design choice is good or bad without user testing. However, there is an indisputable design error on mobile — the margins of the page are different for each tab. This is caused by the top and bottom div margins automatically adjusting to tab content. While vertical space wasn't a problem on desktop, the layout bug is quickly exposed on mobile.
+  ![Mobile login](/img/docs/customize/look-and-feel/best-practices/loginMobile.webp)
+  ![Mobile register](/img/docs/customize/look-and-feel/best-practices/registerMobile.webp)
+- ✅ **Few KB:** To test page load speed, you can choose data throttling (shown at the top of the screenshot above). This theme loads quickly, which is a point in favor of removing the large game screenshots shown in the desktop version of the site. The images on the page use `loading="lazy"`, which tells the browser not to load the image from the server until the user can see it. This saves bandwidth on the mobile version because the image will never be visible.
+- ✅ **VPN Safe · Country Restrictions:** To set allowed IP ranges in FusionAuth, browse to <Breadcrumb>Settings -> IP Access Control</Breadcrumb>. The default is no restrictions, which is fine.
+- ✅ **Backup Host:** FusionAuth is stateless. You can host multiple instances that point to the same database without a problem.
+- ✅ **Language Translations:** This theme has a language selector at the bottom of the page but is currently available only in English. FusionAuth themes support multiple languages. Move the language selector to the top of the page so users don't miss it, and consider adding a flag icon for those who don't understand the word "English".
+- ✖️ **Clear Instructions:** The purpose of the page is clear, but some controls are not labelled, especially the most important: **email** and **password**. Add instruction labels like **Enter your email address** and **Create a password**.
+- ✖️ **Caps Lock Indicator:** The page doesn't have one. This is especially dangerous, since there is neither a way to view the password nor a textbox to confirm it.
+- ✅ **Paste Allowed**
+- ✖️ **Feedback Spinner:** No feedback is given when the <InlineUIElement>Sign Up</InlineUIElement> button is clicked. If you enable bandwidth throttling in browser tools, you can see how confusing this is. After attempting to sign up, the user can see no evidence that the button was clicked or that the service is processing anything. The page looks dead, and remains so for about five seconds — easily enough time for a user to abandon registration and close the page.
+- ✅ **Long Timeouts:** By default, FusionAuth gives you 30 minutes to log in before the page times out. To adjust this, browse in the FusionAuth admin UI to <Breadcrumb>Tenants -> Edit your tenant -> Advanced tab</Breadcrumb> and change the value of <InlineField>Login timeout</InlineField>, then save the tenant.
+- ✖️ **`type='email'`:** While the password textbox correctly has the type `password`, the email textbox incorrectly uses the `text` type. Other attributes, like `autofocus` and `autocomplete`, are correctly set: `<input id="loginId" type="text" autocapitalize="none" autocomplete="on" autocorrect="off" spellcheck="false" autofocus="autofocus" placeholder="Email">`.
+- ✅ **`autocomplete`**
+- ✖️ **`aria-hidden` · `alt`:** No images on the page are purely decorative, so `aria-hidden` is not needed. But the screenshots do not have descriptions in `alt` attributes for screen readers (and for SEO and LLM understanding of your site).
+- ✅ **`aria-live`:** Since password validation is done only on form submission and not dynamically through JavaScript, no dynamic screen reader update is needed here.
+- ✖️ **Standards Compliance:** To continuously test your page for HTML and CSS compliance, you can use a tool like the [Nu HTML Checker](https://github.com/validator/validator) locally. For a single test, use the [online version](https://validator.nu). As you can see below, the Iron Pixel theme contains numerous instances of invalid HTML and CSS that should be fixed.
+  ![Nu HTML Checker](/img/docs/customize/look-and-feel/best-practices/nu.webp)
+  FusionAuth handles unusual email addresses without a problem, including names with quotes, spaces, special characters, and Unicode text.
+- ✅ **Cross-Browser Compliance:** The site appears correct in Firefox and Chromium-based browsers, but thorough testing is very difficult. Safari runs only on expensive Apple hardware, and your local computer cannot install multiple versions of the same browser. If supporting as many browsers as possible is vital, you need to use a paid multi-browser testing service.
+- ✅ **Multiple Authentication:** Of the possible authentication methods (username, email, phone, social media, and passkey), FusionAuth supports logging in with a username, phone, or email (including email supplied by external authentication providers like Google). This example used email, and also provided social login through game services. Users appreciate this flexibility.
+- ✅ **Two-Factor Authentication:** The lack of two-factor authentication on this site is neither good nor bad. Presumably, a gaming site does not hold sensitive data and so chose ease of use over extra security.
+- ✖️ **Custom Password Rules:** While not being overly strict with passwords makes life simpler for users, this site currently allows a password of `password`, which is not secure enough. If you want to avoid forcing the user to use special characters, consider increasing the password length requirement to 24 characters to encourage the user to enter a phrase.
+  ![Password rules](/img/docs/customize/look-and-feel/best-practices/passwordRules.webp)
+- ✖️ **CAPTCHA:** Since this site is just an example, it does not use CAPTCHA, which needs a paid provider and a paid FusionAuth license. However, in reality using CAPTCHA is unavoidable. If you don't have it, your site will quickly be overwhelmed with spam accounts or denial of service attacks from competitors. Be careful which provider you choose. Users frequently express frustration with Google's "Click all the bicycles" test when they fail for no apparent reason. Some users prefer hCAPTCHA's puzzles as straightforward, but some users find them even more onerous than Google's tests. While invisible CAPTCHA (which invisibly observes users' behavior on the page instead of showing a puzzle) seems like ideal usability, there is no remedy if it rejects a human user incorrectly.
+  ![CAPTCHA](/img/docs/customize/look-and-feel/best-practices/captcha.webp)
+- ✖️ **Rate-Limit Incorrect Passwords:** By default, FusionAuth doesn't rate limit anything. This can be configured easily in the <Breadcrumb>Security</Breadcrumb> tab of the tenant.
+  ![Rate limit](/img/docs/customize/look-and-feel/best-practices/rateLimit.webp)
+- ✅ **HTTPS**
+- ✅ **Stay Logged In**
+- ✅ **Log Out**
+- ✖️ **Matching Server/Client Validation:** As mentioned earlier, validation is not performed client-side at all in this design.
+- ✖️ **Consent Checkboxes · Cookie Consent Banner · Disable Cookies If No Consent:** No consent is requested anywhere on sign-up page. There is also no link to any privacy or data-use policies.
+- ✖️ **Registration Metrics:** No client-side monitoring is done on this page. You can add it with JavaScript.
+- ✖️ **A/B Testing:** This is not possible in FusionAuth. Only one version of a theme and each type of authentication page is supported per application and per tenant. To perform a form of A/B testing, you could use JavaScript to dynamically change the page layout and style in the browser and send telemetry back to a custom web server.
+- ✅ **Typography · Imagery · Layout:** The site has a neat layout and professional visual style, excluding the flaws mentioned earlier.
+- ✖️ **Animations:** There is no need for animations on this page besides a submission wait spinner. However, luxurious animations, such as for entering a valid email address, can make a page even more impressive.
+- ✅ **Dark Or Light Mode:** While the Iron Pixel theme doesn't dynamically support dark and light mode, the single theme is relatively dark with clearly contrasting text, making it readable while not offending dark-mode users.
+
+Hopefully this site evaluation has helped you understand everything that goes into making excellent authentication pages. If you feel ready to make your own, follow the addendum below to make a copy of the Iron Pixel theme, or read the documentation on [advanced theming](/docs/customize/look-and-feel/advanced-theme-editor).
+
+## Addendum: How To Create A Custom Advanced Theme From The FusionAuth Themes Templates
+
+To create a custom theme (simple or advanced), first use the FusionAuth admin UI to duplicate the FusionAuth theme template in <Breadcrumb>Customizations -> Themes</Breadcrumb> and give it a UUID, for example `dc243231-0808-497a-9938-2d2a35860e01`.
+
+Choose that theme in the dropdown of the <InlineUIElement>General</InlineUIElement> tab when editing the <Breadcrumb>Tenant</Breadcrumb> to apply it to all your applications.
+
+Now you have your own theme to work with. To customize it, you need to download all the files to a local directory, edit them in a text editor, and re-upload them. This process is simplified by the FusionAuth Theme Helper tool. Run the commands below in a terminal to use it (you need Git and Node.js).
+
+```sh
+git clone https://github.com/FusionAuth/fusionauth-theme-helper
+cd fusionauth-theme-helper
+cp .env.sample .env
+vi .env # set your FusionAuth key from Settings -> API Keys
+
+# Example:
+#API_KEY=33052c8a-c283-4e96-9d2a-eb1215c69f8f-not-for-prod
+#THEME_ID=dc243231-0808-497a-9938-2d2a35860e01
+#FUSIONAUTH_URL=http://localhost:9011
+#TMP_DIR=tmp
+
+# save and exit vi
+
+npm install
+./download.sh
+```
+
+You should now have a copy of the custom theme files in the `fusionauth-theme-helper/tmp` directory.
+
+Once you've made your changes, run `./upload.sh` to save your changes back to FusionAuth so you can see what they look like.
+
+If you want to use Iron Pixel as a template, download the files from https://github.com/FusionAuth/fusionauth-themes/tree/main/packages/fusionauth/iron-pixel. You should have a directory containing `input.css` and a `tpl` directory ("TemPLate"). Copy the contents of `tpl` up to the same level as `input.css`. Then copy all the files into the `tmp` folder that the FusionAuth Theme Helper download script created. You now have a copy of Iron Pixel, ready for editing and uploading.
