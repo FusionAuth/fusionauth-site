@@ -7,6 +7,7 @@ subcategory: examples
 ---
 
 import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+import EnterprisePlanBlurb from 'src/content/docs/_shared/_enterprise-plan-blurb.astro';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
@@ -364,7 +365,109 @@ docker network prune;
 
 The code above demonstrates modeling hierarchies using entities, but there are other ways to model the example company structure in FusionAuth. Documents must be entities, or stored outside FusionAuth, and employees must be users. No other types in FusionAuth will work for this.
 
-With these constraints in mind, below are the two alternatives to using entities and grants.
+With these constraints in mind, below are alternatives to using entities and grants.
+
+### Fine-Grained Authorization
+
+<EnterprisePlanBlurb />
+
+Fine-grained authorization (FGA) allows for more granular permissions than Entities. This includes:
+
+* attribute based access control (ABAC) where you can limit access based on attributes of the request or objects being accessed, like limiting access to a system based on time of day
+* relationship based access control (ReBAC) where you can assign relationships and have authorization decisions be based on those, like granting access to a folder and all subfolders and files contained therein
+
+To use FGA, you use [FusionAuth FGA by Permify](/docs/extend/fine-grained-authorization/fusionauth-fga), a standalone authorization server.
+
+With FGA, you can model the corporate, department, and document relationships using this schema:
+
+```
+entity user {}
+
+entity corporation {
+    // Direct permission grants
+    relation reader @user
+    relation writer @user
+
+    // Permissions
+    permission read  = reader or writer
+    permission write = writer
+}
+
+entity company {
+    // Hierarchy: a company belongs to a corporation
+    relation parent @corporation
+
+    // Direct permission grants
+    relation reader @user
+    relation writer @user
+
+    // Permissions inherit from parent corporation
+    permission read  = reader or writer or parent.read
+    permission write = writer or parent.write
+}
+
+entity department {
+    // Hierarchy: a department belongs to a company
+    relation parent @company
+
+    // Direct permission grants
+    relation reader @user
+    relation writer @user
+    relation member @user
+
+    // Permissions inherit from parent company
+    permission read  = reader or writer or member or parent.read
+    permission write = writer or member or parent.write
+}
+
+entity document {
+    // Hierarchy: a document belongs to a department
+    relation parent @department
+
+    // Direct permission grants
+    relation reader @user
+    relation writer @user
+
+    // Permissions inherit from parent department
+    permission read  = reader or writer or parent.read
+    permission write = writer or parent.write
+}
+```
+
+FusionAuth FGA by Permify has the following benefits:
+
+* permissions are propagated without any manual coordination or calculation
+* ABAC support without code
+* can answer "which resources can this user access?" and "which users can access this resource?" queries efficiently
+* permissions can be checked in bulk
+
+Use one of the [supported authorization SDKs](https://docs.permify.co/api-reference/introduction) to check permissions within your application:
+
+```javascript
+const response = await client.permission.check({
+  tenantId: "t1",
+  metadata: {
+    depth: 20
+  },
+  entity: {
+    type: "department",
+    id: "cb_operations",
+  },
+  permission: "write",
+  subject: {
+    type: "user",
+    id: "richard",
+  },
+});
+
+return response.can === permify.CheckResult.Allowed;
+```
+
+When a new company or other object is added, update the relationships to ensure access to the documents for that company. You can use the authorization SDKs to create and update the relationships between the corporations, companies, departments, documents and users.
+
+To use this solution, you need to run a separate authorization server, either in your environment or in FusionAuth Cloud.
+
+For more information, see the [fine-grained authorization documentation](/docs/extend/fine-grained-authorization/fusionauth-fga).
 
 ### Applications And Roles
 
