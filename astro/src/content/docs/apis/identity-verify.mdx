@@ -18,14 +18,14 @@ import XFusionauthTenantIdHeaderScopedOperation from 'src/content/docs/apis/_x-f
   This API has been available since 1.59.0
 </Aside>
 
-The identity verification APIs allow you to manage a workflow for verifying a user's identity.  This API is similar to the [Verify Email](/docs/apis/users#verify-a-users-email) API.
+The identity verification APIs allow you to manage a workflow for verifying a user's identity, including both email address and phone number. Unlike the [Verify Email](/docs/apis/users#verify-a-users-email) API, which verifies an existing user's email, Identity Verify can be used to verify an identity (email address and phone number) before creating the user.
 
 An identity verification workflow involves three steps:
 1. Starting the verification process, which generates a verification code
-2. Delivering the code to a user in a way that is specific to the identity (e.g. sending and email to an email address, or an SMS message to a phone number)
+2. Delivering the code to a user in a way that is specific to the identity (e.g. sending an email to an email address, or an SMS message to a phone number)
 3. Having the user complete the verification workflow by presenting the code
 
-In general you will not need to call these APIs directly, as most of identity verification is handled automatically by FusionAuth. The main verification use cases and the applicability of the API are shown below.
+In general, you will not need to call these APIs directly, as most identity verification is handled automatically by FusionAuth. The main verification use cases and the applicability of the API are shown below.
 
 | Use Case                                                      | Start API | Send API  | Complete API    |
 |-------------------------------------------------------        |:---------:| :--------:|:---------------:|
@@ -37,7 +37,14 @@ In general you will not need to call these APIs directly, as most of identity ve
 | **Login API - resending verification emails or SMS messages** | Yes       | Yes       | N/A             |
 | **Verifying identities before user creation**                 | Yes       | Yes       | Yes             |
 
-_<sup>*</sup> You will need to use the Complete API if you want to use `FormField` verification or if you don't want to use FusionAuth's `ClickableLink` page._
+_<sup>*</sup> You will need to use the Complete API if you want to use `FormField` verification or if you don't want to use FusionAuth's `ClickableLink` page.
+
+<Aside type="note">
+  For tutorials on verifying identities before user creation using hosted pages with Advanced Registration Forms, see:
+
+  * [Identity Pre-Verification Using Email](/docs/lifecycle/manage-users/verification/identity-pre-verification-using-email)
+  * [Identity Pre-Verification Using Phone](/docs/lifecycle/manage-users/verification/identity-pre-verification-using-phone)
+</Aside>
 
 ## Start Identity Verification
 
@@ -54,7 +61,10 @@ This API allows you to generate a verification code for a User's identity. This 
 
 <APIBlock>
   <APIField name="loginId" type="String" required>
-    The login identifier of the User identity to begin verification for. The login identifier can be one of the following:
+    The login identifier of the User identity to begin verification for.
+
+    The possible values are:
+
     * Email address
     * Phone number
 
@@ -65,7 +75,9 @@ This API allows you to generate a verification code for a User's identity. This 
     </Aside>
   </APIField>
   <APIField name="loginIdType" type="String" required>
-    The identity type that FusionAuth will use when comparing the <InlineField>loginId</InlineField>. Can be one of the following:
+    The identity type that FusionAuth will use when comparing the <InlineField>loginId</InlineField>.
+
+    The possible values are:
 
     * `email`
     * `phoneNumber`
@@ -79,18 +91,23 @@ This API allows you to generate a verification code for a User's identity. This 
     If not provided, only the tenant configuration will be used when resolving templates, and `application` will not be available as a template variable.
   </APIField>
   <APIField name="existingUserStrategy" type="String" optional since="1.62.0" defaults="mustExist">
-      Whether an existing user that matches <InlineField>loginId</InlineField> is required. Can be one of the following:
-      * `mustExist` - There must be a user that matches. This is used to verify an existing user's identity.
-      * `mustNotExist` - There must NOT be a user that matches. This is used to verify an identity of a yet to be created user.
+      Whether an existing user that matches <InlineField>loginId</InlineField> is required.
+
+      The possible values are:
+
+      * `mustExist` - There must be a user that matches. Use this to verify an existing user's identity.
+      * `mustNotExist` - There must NOT be a user that matches. Use this to verify the identity for a user who does not yet exist.
   </APIField>
   <APIField name="state" type="Object" optional>
-    An optional object that will be returned un-modified when you complete verification. This may be useful to return the User to particular state once verification is completed.
+    An optional object that will be returned unmodified when you complete verification. This may be useful to return the User to a particular state once verification is completed.
   </APIField>
   <APIField name="verificationStrategy" type="String" optional defaults="tenant value">
-    The strategy to use when verifying the User. Can be one of the following:
+    The strategy to use when verifying the User.
 
-    * `ClickableLink` - send the User a code with a clickable link.
-    * `FormField` - send the User a short code intended to be manually entered into a form field
+    The possible values are:
+
+    * `ClickableLink` - Sends a link the User can click to verify their identity.
+    * `FormField` - Sends a short code intended to be manually entered into a form field.
 
     The default, when `loginIdType` is `email`, is <InlineField>tenant.emailConfiguration.verificationStrategy</InlineField>. When `loginIdType` is `phoneNumber`, the default is <InlineField>tenant.phoneConfiguration.verificationStrategy</InlineField>.
   </APIField>
@@ -107,7 +124,7 @@ This API allows you to generate a verification code for a User's identity. This 
     The verification Id that was generated by this API request. This identifier should be used by the [Complete Identity Verification](#complete-identity-verification) API and may be used by the [Send Identity Verification](#send-identity-verification) API.
   </APIField>
   <APIField name="oneTimeCode" type="String" optional>
-    The verification One Time Code is used with the gated Email or Phone Verification workflow. The User enters this code to verify their email or phone number when the `ClickableLink` strategy is not in use.
+    The verification One Time Code is used with the gated Email or Phone Verification workflow. The User enters this code to verify their email address or phone number when the `ClickableLink` strategy is not in use.
 
     <Aside>
       This is only returned if the effective verification strategy is `FormField`, which is determined by the tenant configuration or the <InlineField>verificationStrategy</InlineField> field, if it was used in the request.
