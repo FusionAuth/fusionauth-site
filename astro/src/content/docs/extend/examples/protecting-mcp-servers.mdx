@@ -11,7 +11,7 @@ import Breadcrumb from 'src/components/Breadcrumb.astro';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 
-Building a production Model Context Protocol (MCP) server requires you to consider not just the AI-powered tools and services you expose, but how to control and track which clients can access them. With FusionAuth, you can add OAuth protection to your MCP server, letting you authenticate clients and enforce per-tool scopes, while maintaining full control with a self-hosted identity provider.
+Building a production Model Context Protocol (MCP) server requires you to consider not just the AI-powered tools and services you expose, but also how to control and track which clients can access them. With FusionAuth, you can add OAuth protection to your MCP server, letting you authenticate clients and enforce per-tool scopes, while maintaining full control with a self-hosted Identity Provider.
 
 Starting with a simple, unprotected MCP server and adding OAuth protection step by step, this guide demonstrates how to:
 
@@ -25,10 +25,10 @@ The following tutorial builds a working example of an OAuth-protected MCP server
 
 To follow this guide, you need the following installed:
 
-* **Docker Desktop** (and running)
-* **Claude Desktop**
-* **Python 3.12 or later** (and `pip`)
-* **Node.js version 20.18.1 or later** (and available in your PATH)
+* Docker Desktop (ensure it's running)
+* Claude Desktop
+* Python 3.12 or later (and `pip`)
+* Node.js version 20.18.1 or later (ensure it's available in your PATH)
 
 <Aside type="tip" nodark="true">
 Verify your Node.js installation:
@@ -138,7 +138,7 @@ This is a minimal MCP server with:
 * HTTP transport on port 8000
 * No authentication
 
-### Testing The Unprotected Derver
+### Testing The Unprotected Server
 
 Start the Docker stack:
 
@@ -227,7 +227,7 @@ This guide uses the FusionAuth UserInfo endpoint for token validation. It is a s
 
 ### Step 1: Add Configuration And Imports
 
-To configure the MCP server to connect to FusionAuth and import the OAuth components from FastMCP, replace the existing imports at the top of of `server.py` with the following:
+To configure the MCP server to connect to FusionAuth and import the OAuth components from FastMCP, replace the existing imports at the top of `server.py` with the following:
 
 ```python
 import os
@@ -255,18 +255,18 @@ FUSIONAUTH_API_KEY = os.environ.get("FUSIONAUTH_API_KEY", "bf69486b-4733-4470-a5
 In this code:
 
 * `FUSIONAUTH_URL` adds the internal Docker network address (`http://fusionauth:9011`), which the MCP server container uses to reach FusionAuth.
-* `FUSIONAUTH_EXTERNAL_URL` adds the public localhost URL (`http://localhost:9011`), which browsers use during OAuth flow.
-* `MCP_APP_ID` adds the application Id for the MCP server application.
-* `FUSIONAUTH_API_KEY` adds the API key rquired for looking up user information from FusionAuth.
+* `FUSIONAUTH_EXTERNAL_URL` adds the public localhost URL (`http://localhost:9011`), which browsers use during the OAuth flow.
+* `MCP_APP_ID` adds the application ID for the MCP server application.
+* `FUSIONAUTH_API_KEY` adds the API key required for looking up user information from FusionAuth.
 
 The values of the configuration variables match the Kickstart configuration in `kickstart/kickstart.json`. When you ran `docker compose up`, FusionAuth detected a fresh installation and automatically ran the Kickstart configuration, which created:
 
-* An OAuth application called `MCP Server`
+* An OAuth application called "MCP Server"
 * A test user (`test@example.com`/`password`)
 * An API key
 * A custom `get_name` scope
 
-The Ids and keys are hardcoded in the Kickstart file. In production, you'd use environment variables or secrets management instead of hardcoded values.
+The IDs and keys are hardcoded in the Kickstart file. In production, you'd use environment variables or secrets management instead of hardcoded values.
 
 ### Step 2: Implement Token Validation
 
@@ -326,12 +326,12 @@ This token verifier validates access tokens by:
 
 1. Calling FusionAuth's UserInfo endpoint with the token
 2. Interpreting a `200 OK` response from the endpoint as a confirmation that the token is valid
-3. Decoding the token to extract claims, like scopes and the user Id
+3. Decoding the token to extract claims, like scopes and the user ID
 4. Returning an `AccessToken` object that FastMCP can use
 
 ### Step 3: Enable OAuth On The MCP Server
 
-Wire up authentication to the FastMCP server by replacing the basic `mcp = FastMCP(...)` initialization with the follwing OAuth-enabled version:
+Wire up authentication to the FastMCP server by replacing the basic `mcp = FastMCP(...)` initialization with the following OAuth-enabled version:
 
 ```python
 # Create token verifier with required scopes
@@ -366,15 +366,15 @@ This updated initialization does the following:
 
 Now all tool calls require a valid access token with the `get_name` scope.
 
-### Step 4: Access authenticated user information
+### Step 4: Access Authenticated User Information
 
-With authentication enabled, you can now access information about the authenticated user. FastMCP provides a `get_access_token()` dependency that gives us the validated token in our tools.
+With authentication enabled, you can now access information about the authenticated user. FastMCP provides a `get_access_token()` dependency that gives you the validated token in your tools.
 
 Replace the `get_name` tool with this implementation:
 
 ```python
 def _lookup_user_name(user_id: str) -> str:
-    """Look up a user's name from FusionAuth by user Id."""
+    """Look up a user's name from FusionAuth by user ID."""
     try:
         resp = requests.get(
             f"{FUSIONAUTH_URL}/api/user/{user_id}",
@@ -412,7 +412,7 @@ def get_name() -> str:
 This code updates the `get_name` tool so that it:
 
 1. Uses the FastMCP `get_access_token()` to get the validated access token from the request context
-2. Extracts the user Id from the toke, where it's stored in `client_id`
+2. Extracts the user ID from the token, where it's stored in `client_id`
 3. Uses the FusionAuth User API to look up the user's full name
 4. Returns a personalized greeting
 
@@ -554,7 +554,7 @@ This includes the following key configuration values:
 * `scopeHandlingPolicy: "Compatibility"` allows custom scopes like `get_name`
 * `unknownScopePolicy: "Allow"` permits scopes that aren't pre-defined in FusionAuth
 
-The script returns the generated client Id, which you need for configuring Claude Desktop.
+The script returns the generated client ID, which you need for configuring Claude Desktop.
 
 ### Run The Client Registration Script
 
@@ -593,10 +593,10 @@ Setup complete!
   Client ID: 9436b02d-9305-4772-a237-5fabcf6e7f6a
 ```
 
-Copy the client Id, which you need in the next step.
+Copy the client ID you need for the next step.
 
 <Aside type="note" nodark="true">
-You can register multiple clients by selecting option 3 (All) or by providing comma-separated numbers (for example, `1,2`). Each client gets its own application and client Id in FusionAuth.
+You can register multiple clients by selecting option 3 (All) or by providing comma-separated numbers (for example, `1,2`). Each client gets its own application and client ID in FusionAuth.
 </Aside>
 
 ## Configuring Your MCP Client
@@ -624,14 +624,14 @@ All MCP clients use the same configuration structure:
 }
 ```
 
-Replace `YOUR_CLIENT_ID_HERE` with the client Id from the registration script (the one that corresponds to your MCP client).
+Replace `YOUR_CLIENT_ID_HERE` with the client ID from the registration script (the one that corresponds to your MCP client).
 
 Each parameter does the following:
 
 * `command` uses `npx` to run the `mcp-remote` bridge tool.
 * `mcp-remote` bridges MCP clients (which expect stdio) to our HTTP-based MCP server.
 * `--allow-http` allows non-HTTPS connections for local development.
-* `--static-oauth-client-info` provides the preregistered client Id from the setup script.
+* `--static-oauth-client-info` provides the preregistered client ID from the setup script.
 
 The `mcp-remote` tool is part of the official MCP ecosystem and handles the OAuth flow automatically.
 
@@ -723,7 +723,7 @@ The MCP server validates tokens using the FusionAuth UserInfo endpoint. This is 
 
 * Accepts Bearer tokens in the Authorization header
 * Returns user information if the token is valid
-* Does not requires client authentication (because the token authenticates the request)
+* Does not require client authentication (because the token authenticates the request)
 
 If the UserInfo endpoint returns `200 OK`, the token is valid and active.
 
@@ -739,7 +739,7 @@ The `required_scopes=["get_name"]` parameter ensures that:
 
 FusionAuth requires an Enterprise license to use custom scopes. The Kickstart configuration:
 
-1. Activates the license activation
+1. Activates the license
 2. Creates the `get_name` scope
 3. Configures the application with the scope
 4. Sets the consent mode to always prompt users
@@ -785,15 +785,15 @@ Check the MCP server logs:
 docker compose logs mcp-server
 ```
 
-Then, verify that the user is registered to the MCP client application and ensure the token includes the required scopes.
+Then verify that the user is registered to the MCP client application and that the token includes the required scopes.
 
 ### Your MCP Client Doesn't Show The Server
 
-Verify that your configuration JSON syntax is valid, restart the client after configuration changes, and confirm the client Id matches what the setup script created.
+Verify that your configuration JSON syntax is valid, restart the client after configuration changes, and confirm the client ID matches what the setup script created.
 
 ### The OAuth Flow Completes, But Tools Aren't Available
 
-Completely quit and restart your MCP client (such as Claude Desktop or Cursor) after the OAuth flow completes. The client needs to restart to use the newly obtained access token.
+Completely quit and restart your MCP client (such as Claude Desktop or Cursor) after the OAuth flow completes. The client needs to restart to pick up the newly obtained access token.
 
 ### The "Invalid redirect_uri" Error Occurs During OAuth
 
@@ -821,7 +821,7 @@ You can fix this in two ways:
     }'
     ```
 
-    Replace `{CLIENT_ID}` with your client's application Id and include all existing redirect URLs plus the new one.
+    Replace `{CLIENT_ID}` with your client's application ID and include all existing redirect URLs plus the new one.
 
 ## Next Steps
 
