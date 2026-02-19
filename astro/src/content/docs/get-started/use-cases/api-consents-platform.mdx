@@ -8,8 +8,6 @@ tags: authorization hub
 ---
 import Aside from 'src/components/Aside.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
-import UserAuthorizeDiagram from 'src/diagrams/docs/get-started/use-cases/api-consents/user-authorize.astro';
-import ApplicationAPIRequestDiagram from 'src/diagrams/docs/get-started/use-cases/api-consents/application-api-request.astro';
 import APIConsentsPlatformDescription from 'src/content/docs/get-started/use-cases/_api-consents-platform-description.mdx';
 import {RemoteCode} from '@fusionauth/astro-components';
 
@@ -17,7 +15,7 @@ import {RemoteCode} from '@fusionauth/astro-components';
 
 <APIConsentsPlatformDescription />
 
-## Problem 
+## Problem
 
 You have valuable data, robust APIs and a substantial user base. You want to build and foster an ecosystem of applications or services on top of your data and APIs to make your data more valuable and to enhance the experience of your users. Such applications are called third-party applications, since you don't create, update, maintain or manage them.
 
@@ -265,7 +263,27 @@ They have to log in to the Changebank app and give needed consents.
 
 Here's a diagram of the user authorization flow:
 
-<UserAuthorizeDiagram alt="A diagram of the user authorization flow."/>
+```mermaid title="A diagram of the user authorization flow."
+sequenceDiagram
+    participant User as Logged In User/Browser
+    participant App as MoneyScope
+    participant FusionAuth
+
+    User ->> App : Requests Login Page
+    App ->> User : Redirects To FusionAuth Authorize URL
+    User ->> FusionAuth : Requests Login Page
+    FusionAuth ->> User : Returns Login Page
+    User ->> FusionAuth : Authenticates 
+    FusionAuth ->> FusionAuth : Validates Credentials
+    FusionAuth ->> User : Displays Consent Page
+    User ->> FusionAuth : Accepts Consents
+    FusionAuth ->> User : Returns Redirect To Application
+    User ->> App : Requests Redirect URL
+    App ->> FusionAuth : Requests Tokens, Including Refresh Token
+    FusionAuth ->> App : Sends Tokens
+    App ->> App : Stores Tokens
+    App ->> User : Display Page
+```
 
 Here's an example of the consent screen the MoneyScope user will see.
 
@@ -275,7 +293,28 @@ MoneyScope stores the Changebank access and refresh tokens. Then, when it needs 
 
 Here's a diagram of the flow that MoneyScope follows to get the data it needs, when it needs a refresh token:
 
-<ApplicationAPIRequestDiagram alt="A diagram of the flow that MoneyScope follows to get the data it needs." />
+```mermaid title="A diagram of the flow that MoneyScope follows to get the data it needs."
+sequenceDiagram
+    participant App as MoneyScope
+    participant APIs as Changebank APIs
+    participant FusionAuth
+  
+
+    App ->> App : Query All Users To Update Data
+    loop for each user
+       App ->> APIs : Requests Data Using User's (Expired) Access Token
+       APIs ->> APIs : Validates Access Token
+       APIs ->> App : Returns Unauthorized
+       App ->> App : Retrieve User's Refresh Token
+       App ->> FusionAuth : Request New Access Token Using Refresh Token
+       FusionAuth ->> FusionAuth : Validates Refresh Token
+       FusionAuth ->> App : Sends New Access Token
+       App ->> APIs : Requests Data Using New Access Token
+       APIs ->> APIs : Validates Access Token
+       APIs ->> App : Returns Data
+       App ->> App : Stores Data
+    end
+```
 
 ### Third-Party Application List
 

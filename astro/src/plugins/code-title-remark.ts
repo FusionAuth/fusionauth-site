@@ -1,7 +1,7 @@
 import { visit } from 'unist-util-visit';
 
 // TODO borrowed from https://github.com/kevinzunigacuellar/remark-code-title/blob/main/packages/remark-code-title/src/remarkPlugin.ts
-// This puts the tile before the code block but it needs to get inside the astro-code wrapper so it gets spaced right. Options:
+// This puts the title before the code block but it needs to get inside the astro-code wrapper so it gets spaced right. Options:
 // 1. Client-side javascript (yuck)
 // 2. Stop using the default <Code> stuff from astro and write our own. (ugh)
 export const codeTitleRemark = () => {
@@ -37,7 +37,7 @@ export const codeTitleRemark = () => {
        };
 
 
-       parent.children.splice(index, 0, titleNode);
+       parent.children.splice(index+1, 0, titleNode);
        /* Skips this node (title) and the next node (code) */
        return index + 2
     });

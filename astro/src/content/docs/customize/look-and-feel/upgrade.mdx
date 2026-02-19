@@ -14,365 +14,28 @@ This page contains notes on changes in recent versions of FusionAuth that requir
 
 ## Version 1.62.0
 
-To utilize the new pre-verification feature in Advanced Registration Forms, you will need to make the following modifications.
+<Aside type="caution">
+    If you are upgrading from a version prior to FusionAuth 1.61.2 and you have customized your theme, upgrade to 1.61.2 first, add missing templates to your theme, and then upgrade to 1.62.0.
+
+    See [Theme Upgrade Notes](/docs/customize/look-and-feel/advanced-theme-editor#troubleshooting) for details on updating an existing advanced theme specific to this release. See [Theme Upgrades](/docs/customize/look-and-feel/advanced-theme-editor#upgrading) for additional information about the upgrade process.
+</Aside>
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
+To utilize the new pre-verification feature in Advanced Registration Forms, you will need to make the following modifications. No custom theme modifications are required unless you want to use pre-verification.
 
 ### OAuth register template
 
-```html title="Before"
-[@helpers.html]
-  [@helpers.head title=theme.message("register")]
-    <script src="${request.contextPath}/js/identityProvider/InProgress.js?version=${version}"></script>
-    [@helpers.alternativeLoginsScript clientId=client_id identityProviders=identityProviders/]
-    [#if step == totalSteps]
-      [@helpers.captchaScripts showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
-    [/#if]
-    <script type="text/javascript">
-      document.addEventListener('DOMContentLoaded', () => {
-        const uvpaAvailableField = document.querySelector('input[name="userVerifyingPlatformAuthenticatorAvailable"]');
-        if (uvpaAvailableField !== null && typeof(PublicKeyCredential) !== 'undefined' && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-          PublicKeyCredential
-            .isUserVerifyingPlatformAuthenticatorAvailable()
-            .then(result => uvpaAvailableField.value = result);
-        }
-      });
-    </script>
-    [#-- Custom <head> code goes here --]
-  [/@helpers.head]
-  [@helpers.body]
-    [@helpers.header]
-      [#-- Custom header code goes here --]
-    [/@helpers.header]
-
-    [@helpers.main title=theme.message("register")]
-      [#-- During a linking work flow, optionally indicate to the user which IdP is being linked. --]
-      [#if devicePendingIdPLink?? || pendingIdPLink??]
-        <p class="mt-0">
-        [#if devicePendingIdPLink?? && pendingIdPLink??]
-          ${theme.message('pending-links-register-to-complete', devicePendingIdPLink.identityProviderName, pendingIdPLink.identityProviderName)}
-        [#elseif devicePendingIdPLink??]
-          ${theme.message('pending-link-register-to-complete', devicePendingIdPLink.identityProviderName)}
-        [#else]
-          ${theme.message('pending-link-register-to-complete', pendingIdPLink.identityProviderName)}
-        [/#if]
-        [#-- A pending link can be cancled. If we also have a device link in progress, this cannot be canceled. --]
-        [#if pendingIdPLink??]
-          [@helpers.link url="" extraParameters="&cancelPendingIdpLink=true"]${theme.message("register-cancel-link")}[/@helpers.link]
-        [/#if]
-        </p>
-      [/#if]
-      <form action="${request.contextPath}/oauth2/register" method="POST" class="full">
-        [@helpers.oauthHiddenFields/]
-        [@helpers.hidden name="step"/]
-        [@helpers.hidden name="registrationState"/]
-        [@helpers.hidden name="parentEmailRequired"/]
-        [@helpers.hidden name="userVerifyingPlatformAuthenticatorAvailable"/]
-
-        [#-- Show the Password Validation Rules if there is a field error for 'user.password' --]
-        [#if (fieldMessages?keys?seq_contains("user.password")!false) && passwordValidationRules??]
-          [@helpers.passwordRules passwordValidationRules/]
-        [/#if]
-
-        [#-- Begin Self Service Custom Registration Form Steps --]
-        [#if fields?has_content]
-          <fieldset>
-            [@helpers.hidden name="collectBirthDate"/]
-            [#list fields as field]
-              [#assign key = field.key]
-              [@helpers.customField field key field?is_first field.key /]
-              [#if field.confirm]
-                [@helpers.customField field "confirm.${key}" false "[confirm]${field.key}" /]
-              [/#if]
-            [/#list]
-            [#-- If this is the last step of the form, optionally show a captcha. --]
-            [#if step == totalSteps]
-              [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
-            [/#if]
-          </fieldset>
-
-          [#if step == totalSteps]
-            [@helpers.input id="rememberDevice" type="checkbox" name="rememberDevice" label=theme.message("remember-device") value="true" uncheckedValue="false"]
-              <i class="fa fa-info-circle" data-tooltip="${theme.message('{tooltip}remember-device')}"></i>[#t/]
-            [/@helpers.input]
-            <div class="form-row">
-              [@helpers.button icon="key" text=theme.message('register')/]
-            </div>
-          [#else]
-            <div class="form-row">
-              [@helpers.button icon="arrow-right" text=theme.message('next')/]
-            </div>
-          [/#if]
-        [#-- End Custom Self Service Registration Form Steps --]
-        [#else]
-        [#-- Begin Basic Self Service Registration Form --]
-        <fieldset>
-          [@helpers.hidden name="collectBirthDate"/]
-          [#if !collectBirthDate && (!application.registrationConfiguration.birthDate.enabled || hideBirthDate)]
-            [@helpers.hidden name="user.birthDate" dateTimeFormat="yyyy-MM-dd"/]
-          [/#if]
-          [#if collectBirthDate]
-            [@helpers.input type="date" name="user.birthDate" id="birthDate" placeholder=theme.message('birthDate') leftAddon="calendar" class="date-picker" required=true/]
-          [#else]
-            [#if application.registrationConfiguration.loginIdType == 'email']
-              [@helpers.input type="text" name="user.email" id="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('email') leftAddon="user" required=true/]
-            [#elseif application.registrationConfiguration.loginIdType == 'phoneNumber']
-              [@helpers.input type="text" name="user.phoneNumber" id="phoneNumber" autocomplete="mobile" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('phoneNumber') leftAddon="mobile" required=true/]
-            [#else]
-              [@helpers.input type="text" name="user.username" id="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('username') leftAddon="user" required=true/]
-            [/#if]
-            [@helpers.input type="password" name="user.password" id="password" autocomplete="new-password" placeholder=theme.message('password') leftAddon="lock" required=true/]
-            [#if application.registrationConfiguration.confirmPassword]
-              [@helpers.input type="password" name="passwordConfirm" id="passwordConfirm" autocomplete="new-password" placeholder=theme.message('passwordConfirm') leftAddon="lock" required=true/]
-            [/#if]
-            [#if parentEmailRequired]
-              [@helpers.input type="text" name="user.parentEmail" id="parentEmail" placeholder=theme.message('parentEmail') leftAddon="user" required=true/]
-            [/#if]
-            [#if application.registrationConfiguration.birthDate.enabled ||
-            application.registrationConfiguration.firstName.enabled    ||
-            application.registrationConfiguration.fullName.enabled     ||
-            application.registrationConfiguration.middleName.enabled   ||
-            application.registrationConfiguration.lastName.enabled     ||
-            application.registrationConfiguration.mobilePhone.enabled  ||
-            application.registrationConfiguration.preferredLanguages.enabled ]
-              <div class="mt-5 mb-5"></div>
-              [#if application.registrationConfiguration.firstName.enabled]
-                [@helpers.input type="text" name="user.firstName" id="firstName" placeholder=theme.message('firstName') leftAddon="user" required=application.registrationConfiguration.firstName.required/]
-              [/#if]
-              [#if application.registrationConfiguration.fullName.enabled]
-                [@helpers.input type="text" name="user.fullName" id="fullName" placeholder=theme.message('fullName') leftAddon="user" required=application.registrationConfiguration.fullName.required/]
-              [/#if]
-              [#if application.registrationConfiguration.middleName.enabled]
-                [@helpers.input type="text" name="user.middleName" id="middleName" placeholder=theme.message('middleName') leftAddon="user" required=application.registrationConfiguration.middleName.required/]
-              [/#if]
-              [#if application.registrationConfiguration.lastName.enabled]
-                [@helpers.input type="text" name="user.lastName" id="lastName" placeholder=theme.message('lastName') leftAddon="user" required=application.registrationConfiguration.lastName.required/]
-              [/#if]
-              [#if application.registrationConfiguration.birthDate.enabled && !hideBirthDate]
-                [@helpers.input type="date" name="user.birthDate" id="birthDate" placeholder=theme.message('birthDate') leftAddon="calendar" class="date-picker" required=application.registrationConfiguration.birthDate.required/]
-              [/#if]
-              [#if application.registrationConfiguration.mobilePhone.enabled]
-                [@helpers.input type="text" name="user.mobilePhone" id="mobilePhone" placeholder=theme.message('mobilePhone') leftAddon="phone" required=application.registrationConfiguration.mobilePhone.required/]
-              [/#if]
-              [#if application.registrationConfiguration.preferredLanguages.enabled]
-                [@helpers.locale_select field="" name="user.preferredLanguages" id="preferredLanguages" label=theme.message("preferredLanguage") required=application.registrationConfiguration.preferredLanguages.required /]
-              [/#if]
-            [/#if]
-          [/#if]
-          [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
-        </fieldset>
-
-        [@helpers.input id="rememberDevice" type="checkbox" name="rememberDevice" label=theme.message('remember-device') value="true" uncheckedValue="false"]
-          <i class="fa fa-info-circle" data-tooltip="${theme.message('{tooltip}remember-device')}"></i>[#t/]
-        [/@helpers.input]
-
-        <div class="form-row">
-          [@helpers.button icon="key" text=theme.message('register')/]
-          <p class="mt-2">[@helpers.link url="/oauth2/authorize"]${theme.message('return-to-login')}[/@helpers.link]</p>
-        </div>
-        [/#if]
-        [#-- End Basic Self Service Registration Form --]
-
-        [#-- Begin Self Service Custom Registration Form Step Counter --]
-        [#if step > 0]
-          <div class="w-100 mt-3" style="display: inline-flex; flex-direction: row; justify-content: space-evenly;">
-            <div class="text-right" style="flex-grow: 1;"> ${theme.message('register-step', step, totalSteps)} </div>
-          </div>
-        [/#if]
-        [#-- End Self Service Custom Registration Form Step Counter --]
-
-        [#-- Identity Provider Buttons (if you want to include these, remove the if-statement) --]
-        [#if true]
-          [@helpers.alternativeLogins clientId=client_id identityProviders=identityProviders![] passwordlessEnabled=false bootstrapWebauthnEnabled=false idpRedirectState=idpRedirectState federatedCSRFToken=federatedCSRFToken/]
-        [/#if]
-        [#-- End Identity Provider Buttons --]
-
-      </form>
-    [/@helpers.main]
-
-    [@helpers.footer]
-      [#-- Custom footer code goes here --]
-    [/@helpers.footer]
-  [/@helpers.body]
-[/@helpers.html]
-```
-
-```html title="After"
-[@helpers.html]
-  [@helpers.head title=theme.message("register")]
-    <script src="${request.contextPath}/js/identityProvider/InProgress.js?version=${version}"></script>
-    [@helpers.alternativeLoginsScript clientId=client_id identityProviders=identityProviders/]
-    [#if readyToRegister]
-      [@helpers.captchaScripts showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
-    [/#if]
-    <script type="text/javascript">
-      document.addEventListener('DOMContentLoaded', () => {
-        const uvpaAvailableField = document.querySelector('input[name="userVerifyingPlatformAuthenticatorAvailable"]');
-        if (uvpaAvailableField !== null && typeof(PublicKeyCredential) !== 'undefined' && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-          PublicKeyCredential
-            .isUserVerifyingPlatformAuthenticatorAvailable()
-            .then(result => uvpaAvailableField.value = result);
-        }
-      });
-    </script>
-    [#-- Custom <head> code goes here --]
-  [/@helpers.head]
-  [@helpers.body]
-    [@helpers.header]
-      [#-- Custom header code goes here --]
-    [/@helpers.header]
-
-    [@helpers.main title=theme.message("register")]
-      [#-- During a linking work flow, optionally indicate to the user which IdP is being linked. --]
-      [#if devicePendingIdPLink?? || pendingIdPLink??]
-        <p class="mt-0">
-        [#if devicePendingIdPLink?? && pendingIdPLink??]
-          ${theme.message('pending-links-register-to-complete', devicePendingIdPLink.identityProviderName, pendingIdPLink.identityProviderName)}
-        [#elseif devicePendingIdPLink??]
-          ${theme.message('pending-link-register-to-complete', devicePendingIdPLink.identityProviderName)}
-        [#else]
-          ${theme.message('pending-link-register-to-complete', pendingIdPLink.identityProviderName)}
-        [/#if]
-
-        [#-- A pending link can be canceled. If we also have a device link in progress, this cannot be canceled. --]
-        [#if pendingIdPLink??]
-          [@helpers.link url="" extraParameters="&cancelPendingIdpLink=true"]${theme.message("register-cancel-link")}[/@helpers.link]
-        [/#if]
-        </p>
-      [/#if]
-
-      [@helpers.structuredForm action="${request.contextPath}/oauth2/register" method="POST"; section]
-        [#if section == "formFields"]
-          [@helpers.oauthHiddenFields/]
-          [@helpers.hidden name="registrationState"/]
-          [@helpers.hidden name="userVerifyingPlatformAuthenticatorAvailable"/]
-
-          [#-- Show the Password Validation Rules if there is a field error for 'user.password' --]
-          [#if (fieldMessages?keys?seq_contains("user.password")!false) && passwordValidationRules??]
-            [@helpers.passwordRules passwordValidationRules/]
-          [/#if]
-
-          [#if formStep??]
-            <p>${formStep.description}</p>
-          [/#if]
-
-          [#-- Begin Self Service Advanced Registration Form Steps --]
-          [#if advancedRegistration]
-            [#list fields as field]
-              [#assign key = field.key]
-              [@helpers.customField field key field?is_first field.key /]
-              [#if field.confirm]
-                [@helpers.customField field "confirm.${key}" false "[confirm]${field.key}" /]
-              [/#if]
-            [/#list]
-
-          [#-- End Custom Self Service Registration Form Steps --]
-          [#else]
-          [#-- Begin Basic Self Service Registration Form --]
-            [#if !collectBirthDate && (!application.registrationConfiguration.birthDate.enabled || hideBirthDate)]
-              [@helpers.hidden name="user.birthDate" dateTimeFormat="yyyy-MM-dd"/]
-            [/#if]
-            [#if collectBirthDate]
-              [@helpers.input type="date" name="user.birthDate" id="birthDate" placeholder=theme.message('birthDate') leftAddon="calendar" class="date-picker" required=true/]
-            [#else]
-
-              [#if application.registrationConfiguration.loginIdType == 'email']
-                [@helpers.input type="text" name="user.email" id="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('email') leftAddon="user" required=true/]
-              [#elseif application.registrationConfiguration.loginIdType == 'phoneNumber']
-                [@helpers.input type="text" name="user.phoneNumber" id="phoneNumber" autocomplete="mobile" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('phoneNumber') leftAddon="mobile" required=true/]
-              [#else]
-                [@helpers.input type="text" name="user.username" id="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('username') leftAddon="user" required=true/]
-              [/#if]
-
-              [@helpers.input type="password" name="user.password" id="password" autocomplete="new-password" placeholder=theme.message('password') leftAddon="lock" required=true/]
-              [#if application.registrationConfiguration.confirmPassword]
-                [@helpers.input type="password" name="passwordConfirm" id="passwordConfirm" autocomplete="new-password" placeholder=theme.message('passwordConfirm') leftAddon="lock" required=true/]
-              [/#if]
-              [#if parentEmailRequired]
-                [@helpers.input type="text" name="user.parentEmail" id="parentEmail" placeholder=theme.message('parentEmail') leftAddon="user" required=true/]
-              [/#if]
-              [#if application.registrationConfiguration.birthDate.enabled ||
-                   application.registrationConfiguration.firstName.enabled    ||
-                   application.registrationConfiguration.fullName.enabled     ||
-                   application.registrationConfiguration.middleName.enabled   ||
-                   application.registrationConfiguration.lastName.enabled     ||
-                   application.registrationConfiguration.mobilePhone.enabled  ||
-                   application.registrationConfiguration.preferredLanguages.enabled ]
-                <div class="mt-5 mb-5"></div>
-                [#if application.registrationConfiguration.firstName.enabled]
-                  [@helpers.input type="text" name="user.firstName" id="firstName" placeholder=theme.message('firstName') leftAddon="user" required=application.registrationConfiguration.firstName.required/]
-                [/#if]
-                [#if application.registrationConfiguration.fullName.enabled]
-                  [@helpers.input type="text" name="user.fullName" id="fullName" placeholder=theme.message('fullName') leftAddon="user" required=application.registrationConfiguration.fullName.required/]
-                [/#if]
-                [#if application.registrationConfiguration.middleName.enabled]
-                  [@helpers.input type="text" name="user.middleName" id="middleName" placeholder=theme.message('middleName') leftAddon="user" required=application.registrationConfiguration.middleName.required/]
-                [/#if]
-                [#if application.registrationConfiguration.lastName.enabled]
-                  [@helpers.input type="text" name="user.lastName" id="lastName" placeholder=theme.message('lastName') leftAddon="user" required=application.registrationConfiguration.lastName.required/]
-                [/#if]
-                [#if application.registrationConfiguration.birthDate.enabled && !hideBirthDate]
-                  [@helpers.input type="date" name="user.birthDate" id="birthDate" placeholder=theme.message('birthDate') leftAddon="calendar" class="date-picker" required=application.registrationConfiguration.birthDate.required/]
-                [/#if]
-                [#if application.registrationConfiguration.mobilePhone.enabled]
-                  [@helpers.input type="text" name="user.mobilePhone" id="mobilePhone" placeholder=theme.message('mobilePhone') leftAddon="phone" required=application.registrationConfiguration.mobilePhone.required/]
-                [/#if]
-                [#if application.registrationConfiguration.preferredLanguages.enabled]
-                  [@helpers.locale_select field="" name="user.preferredLanguages" id="preferredLanguages" label=theme.message("preferredLanguage") required=application.registrationConfiguration.preferredLanguages.required /]
-                [/#if]
-              [/#if]
-            [/#if]
-          [/#if]
-          [#-- End Basic Self Service Registration Form --]
-
-        [#elseif section == "buttons"]
-
-          [#-- Add "last step" items --]
-          [#if !advancedRegistration || readyToRegister]
-            [#-- If this is either a basic form or the last step of the form, optionally show a captcha. --]
-            [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
-
-            [@helpers.input id="rememberDevice" type="checkbox" name="rememberDevice" label=theme.message('remember-device') value="true" uncheckedValue="false" tooltip=theme.message("{tooltip}remember-device")/]
-            <div class="form-row">
-              [@helpers.button icon="key" text=theme.message('register') id="register-button"/]
-            </div>
-
-            [#if !fields?has_content]
-              <p class="mt-2">[@helpers.link url="/oauth2/authorize"]${theme.message('return-to-login')}[/@helpers.link]</p>
-            [/#if]
-
-          [#-- Some items for intermediate advanced registration steps --]
-          [#elseif advancedRegistration && !deadEnd]
-            <div class="form-row">
-              [@helpers.button icon="arrow-right" text=theme.message('next') id="next-button"/]
-            </div>
-          [/#if]
-
-          [#if formStep?? && formStep.resendMessage??]
-            [@helpers.linkButton text=formStep.resendMessage formaction="${request.contextPath}/oauth2/register?resend=true" id="resend-button" /]
-          [/#if]
-
-          [#if step > 0]
-            [#-- Self Service Custom Registration Form Step Counter --]
-            <div class="text-right text-sm" style="flex: 1;"> ${theme.message('register-step', step, totalSteps)} </div>
-          [/#if]
-
-          [#-- Identity Provider Buttons (if you want to include these, remove the if-statement) --]
-          [#if true]
-            [@helpers.alternativeLogins clientId=client_id identityProviders=identityProviders![] passwordlessEnabled=false bootstrapWebauthnEnabled=false idpRedirectState=idpRedirectState federatedCSRFToken=federatedCSRFToken/]
-          [/#if]
-          [#-- End Identity Provider Buttons --]
-        [/#if]
-
-      [/@helpers.structuredForm]
-    [/@helpers.main]
-
-    [@helpers.footer]
-      [#-- Custom footer code goes here --]
-    [/@helpers.footer]
-  [/@helpers.body]
-[/@helpers.html]
-```
+Summary of changes:
+* `[#if step == totalSteps]` => `[#if readyToRegister]`
+* `[#if fields?has_content]` => `[#if advancedRegistration]`
+* Remove `step`, `parentEmailRequired`, and `collectBirthDate` hidden fields
+* Add a `<p>` if `formStep` is set below `passwordValidationRules` to explain pre-verification steps
+* Add a `linkButton` for resending verification messages if `formStep?? && formStep.resendMessage??`
 
 ## Version 1.61.0 - `prompt` parameter
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
 
 To ensure that FusionAuth is able to forward the `prompt` parameter to third party identity providers, you will need to make the following modifications.
 
@@ -384,13 +47,13 @@ Update the `oauthHiddenFields`, `link` and `logoutLink` macros to add the `max_a
 
 Add `max_age` to the `oauthHiddenFields` macro.
 
-```title="Add prompt"
+```plaintext title="Add prompt"
 [@hidden name="max_age"/]
 ```
 
 For example, this is a macro that includes `max_age`:
 
-``` title="After"
+```plaintext title="After"
 [#macro oauthHiddenFields]
   [@hidden name="captcha_token"/]
   [@hidden name="client_id"/]
@@ -417,11 +80,11 @@ For example, this is a macro that includes `max_age`:
 #### Macro link
 Add `max_age` to the `link` macro.
 
-```title="Add max_age to the query string"
+```plaintext title="Add max_age to the query string"
 &max_age=${(max_age?url)!''}
 ```
 
-``` title="After"
+```plaintext title="After"
 [#macro link url extraParameters=""]
   <a href="${url}?tenantId=${(tenantId)!''}&client_id=${(client_id)!''}&nonce=${(nonce?url)!''}&pendingIdPLinkId=${(pendingIdPLinkId)!''}&redirect_uri=${(redirect_uri?url)!''}&response_mode=${(response_mode?url)!''}&response_type=${(response_type?url)!''}&scope=${(scope?url)!''}&state=${(state?url)!''}&timezone=${(timezone?url)!''}&metaData.device.name=${(metaData.device.name?url)!''}&metaData.device.type=${(metaData.device.type?url)!''}${(extraParameters!'')?no_esc}&code_challenge=${(code_challenge?url)!''}&code_challenge_method=${(code_challenge_method?url)!''}&user_code=${(user_code?url)!''}&prompt=${(prompt?url)!''}&max_age=${(max_age?url)!''}">
       [#nested/]
@@ -433,11 +96,11 @@ Add `max_age` to the `link` macro.
 
 Add `max_age` to the `logoutLink` macro.
 
-```title="Add max_age to the query string"
+```plaintext title="Add max_age to the query string"
 &max_age=${(max_age?url)!''}
 ```
 
-``` title="After"
+```plaintext title="After"
 [#macro logoutLink redirectURI extraParameters=""]
 [#-- Note that in order for the post_logout_redirect_uri to be correctly URL escaped, you must use this syntax for assignment --]
     [#local post_logout_redirect_uri]${redirectURI}?tenantId=${(tenantId)!''}&client_id=${(client_id)!''}&nonce=${(nonce?url)!''}&pendingIdPLinkId=${(pendingIdPLinkId)!''}&redirect_uri=${(redirect_uri?url)!''}&response_mode=${(response_mode?url)!''}&response_type=${(response_type?url)!''}&scope=${(scope?url)!''}&state=${(state?url)!''}&timezone=${(timezone?url)!''}&metaData.device.name=${(metaData.device.name?url)!''}&metaData.device.type=${(metaData.device.type?url)!''}${(extraParameters?no_esc)!''}&code_challenge=${(code_challenge?url)!''}&code_challenge_method=${(code_challenge_method?url)!''}&user_code=${(user_code?url)!''}&prompt=${(prompt?url)!''}&max_age=${(max_age?url)!''}[/#local]
@@ -449,6 +112,8 @@ Add `max_age` to the `logoutLink` macro.
 ```
 
 ## Version 1.61.0 - Multiple identity provider configurations
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
 
 Previously the following [identity provider types](/docs/apis/identity-providers) were limited to a single configuration per FusionAuth instance: Apple, Epic Games, Facebook, Google, HYPR, LinkedIn, Nintendo, Sony PlayStation Network, Steam, Twitch, Twitter, and Xbox.
 
@@ -462,31 +127,31 @@ Update the `alternativeLoginsScript`, `alternativeLogins`, and various external 
 
 Remove the `data-app-id` attribute from the `<script>` tag including `Facebook.js`. The attribute must be set by each `facebookButton` macro invocation to support multiple Facebook IdP configurations.
 
-```title="Remove data-app-id"
+```plaintext title="Remove data-app-id"
 data-app-id="${identityProviders["Facebook"][0].lookupAppId(clientId)}"
 ```
 
 Here is an example `<script>` tag without the attribute
 
-```title="After"
+```plaintext title="After"
 <script src="${request.contextPath}/js/identityProvider/Facebook.js?version=${version}"></script>
 ```
 
 Remove the `data-client-id` attribute from the `<script>` tag including `Twitter.js`. The attribute must be set by each `twitterButton` macro invocation to support multiple Twitter IdP configurations.
 
-```title="Remove data-client-id"
+```plaintext title="Remove data-client-id"
 data-client-id="${clientId}"
 ```
 
 Here is an example `<script>` tag without the attribute
 
-```title="After"
+```plaintext title="After"
 <script src="${request.contextPath}/js/identityProvider/Twitter.js?version=${version}"></script>
 ```
 
 Replace the `[#if]` block including Google's GSI client JavaScript and `Google.js`. Only one Google identity provider using the GSI client can be included on the page. See [Google IdP limitations](/docs/lifecycle/authenticate-users/identity-providers/social/google#limitations) for more detail.
 
-```title="The old [#if] block"
+```plaintext title="The old [#if] block"
 [#if identityProviders["Google"]?has_content && identityProviders["Google"][0].lookupLoginMethod(clientId) != "UseRedirect"]
   <script src="https://accounts.google.com/gsi/client" async></script>
   <script src="${request.contextPath}/js/identityProvider/Google.js?version=${version}"
@@ -496,7 +161,7 @@ Replace the `[#if]` block including Google's GSI client JavaScript and `Google.j
 
 Here is the updated `[#if]` block. The updated logic selects the first Google IdP configured to use the GSI client and stores it in a `gsiIdentityProvider` variable to be used later in the `alternativeLogins` macro.
 
-```title="The updated [#if] block"
+```plaintext title="The updated [#if] block"
 [#if identityProviders["Google"]?has_content]
   [#list identityProviders["Google"] as idp]
     [#if idp.lookupLoginMethod(clientId) != "UseRedirect"]
@@ -518,7 +183,7 @@ The `alternativeLogins` macro checks for various IdP types in the `identityProvi
 
 Here is an example rendering the "Sign in with Apple" button hard-coded to expect a single Apple IdP configuration.
 
-```title="Single configuration"
+```plaintext title="Single configuration"
 [#if identityProviders["Apple"]?has_content]
   <div class="form-row push-less-top">
       [@appleButton identityProvider=identityProviders["Apple"][0] clientId=clientId/]
@@ -528,7 +193,7 @@ Here is an example rendering the "Sign in with Apple" button hard-coded to expec
 
 Here is an example that supports rendering zero or more buttons based on available Apple IdP configurations by looping over all Apple IdP configurations and rendering the button with the `identityProvider` for that loop.
 
-```title="Multiple configurations"
+```plaintext title="Multiple configurations"
 [#if identityProviders["Apple"]?has_content]
   [#list identityProviders["Apple"] as identityProvider]
     <div class="form-row push-less-top">
@@ -542,7 +207,7 @@ The above is just one example of several identity provider types requiring updat
 
 The Google identity provider type requires a bit more modification in the `alternativeLogins` macro in order to render the single button using the GSI client in addition to other Google IdP configurations with the `UseRedirect` login method. Remove the existing `[#if]` block and replace with the updated code below.
 
-```title="Remove the [#if] block"
+```plaintext title="Remove the [#if] block"
 [#if identityProviders["Google"]?has_content]
   <div class="form-row push-less-top">
       [@googleButton identityProvider=identityProviders["Google"][0] clientId=clientId idpRedirectState=idpRedirectState/]
@@ -552,7 +217,7 @@ The Google identity provider type requires a bit more modification in the `alter
 
 In its place add two `[#if]` blocks. The first block checks whether it should render a GSI client button using the `gsiIdentityProvider` variable assigned in the `alternativeLoginsScript` macro. The second block calls the `googleButton` macro to render a login button for Google IdPs configured with the `UseRedirect` login method.
 
-```title="Render GSI and UseRedirect Google buttons"
+```plaintext title="Render GSI and UseRedirect Google buttons"
 [#-- Check whether a Google IdP was assigned to use GSI APIs and render the button --]
 [#if gsiIdentityProvider?has_content]
   <div class="form-row push-less-top">
@@ -574,7 +239,7 @@ In its place add two `[#if]` blocks. The first block checks whether it should re
 
 Replace the opening tag of the `<button>` element inside the macro with the following
 
-```title="Apple <button>"
+```plaintext title="Apple <button>"
 <button class="apple login-button" data-scope="${identityProvider.lookupScope(clientId)!''}"
           data-services-id="${identityProvider.lookupServicesId(clientId)}"
           data-identity-provider-id="${identityProvider.id}">
@@ -584,7 +249,7 @@ Replace the opening tag of the `<button>` element inside the macro with the foll
 
 Replace the opening tag of the `<button>` element inside the macro with the following
 
-```title="Epic Games <button>"
+```plaintext title="Epic Games <button>"
 <button class="epicgames login-button" data-login-method="UseRedirect"
           data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
 ```
@@ -593,7 +258,7 @@ Replace the opening tag of the `<button>` element inside the macro with the foll
 
 Replace the opening tag of the `<button>` element inside the macro with the following
 
-```title="Facebook <button>"
+```plaintext title="Facebook <button>"
 <button class="facebook login-button" data-login-method="${identityProvider.lookupLoginMethod(clientId)!''}"
           data-permissions="${identityProvider.lookupPermissions(clientId)!''}" data-identity-provider-id="${identityProvider.id}"
           data-app-id="${identityProvider.lookupAppId(clientId)}">
@@ -603,14 +268,14 @@ Replace the opening tag of the `<button>` element inside the macro with the foll
 
 This macro should now only render buttons for Google IdP configurations with the `UseRedirect` login method. Replace the opening tag of the `<button>` element inside the macro with the following
 
-```title="Google <button>"
+```plaintext title="Google <button>"
 <button class="google login-button" data-login-method="UseRedirect"
               data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
 ```
 
 Remove the `[#else]` block that renders `<div>`s with Ids `g_id_onload` and `g_id_signin`. The updated macro structure looks like this with the `<button>` children removed for brevity
 
-```title="googleButton macro structure"
+```plaintext title="googleButton macro structure"
 [#macro googleButton identityProvider clientId idpRedirectState=""]
     [#-- When using this loginMethod - the Google JavaScript API is not used at all. --]
     [#if identityProvider.lookupLoginMethod(clientId) == "UseRedirect"]
@@ -626,7 +291,7 @@ Remove the `[#else]` block that renders `<div>`s with Ids `g_id_onload` and `g_i
 
 The `[#else]` block removed from `googleButton` macro gets its own macro. Add the following macro to your theme
 
-```title="New googleGsiButton macro"
+```plaintext title="New googleGsiButton macro"
 [#macro googleGsiButton identityProvider clientId idpRedirectState=""]
   [#-- UsePopup or UseVendorJavaScript --]
   [#--
@@ -649,7 +314,7 @@ The `[#else]` block removed from `googleButton` macro gets its own macro. Add th
 
 You read that correctly. If you'd like, update the name of the macro to `linkedInButton` along with the invocation from the `alternativeLogins` macro. Replace the opening tag of the `<button>` element inside the macro with the following
 
-```title="LinkedIn <button>"
+```plaintext title="LinkedIn <button>"
 <button class="linkedin login-button" data-login-method="UseRedirect" data-identity-provider-id="${identityProvider.id}">
 ```
 
@@ -657,7 +322,7 @@ You read that correctly. If you'd like, update the name of the macro to `linkedI
 
 Replace the opening tag of the `<button>` element inside the macro with the following
 
-```title="Sony PlayStation Network <button>"
+```plaintext title="Sony PlayStation Network <button>"
 <button class="sonypsn login-button" data-login-method="UseRedirect"
           data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
 ```
@@ -666,7 +331,7 @@ Replace the opening tag of the `<button>` element inside the macro with the foll
 
 Replace the opening tag of the `<button>` element inside the macro with the following
 
-```title="Steam <button>"
+```plaintext title="Steam <button>"
 <button class="steam login-button" data-login-method="UseRedirect" data-scope="${identityProvider.lookupScope(clientId)!''}"
           data-identity-provider-id="${identityProvider.id}">
 ```
@@ -675,7 +340,7 @@ Replace the opening tag of the `<button>` element inside the macro with the foll
 
 Replace the opening tag of the `<button>` element inside the macro with the following
 
-```title="Twitch <button>"
+```plaintext title="Twitch <button>"
 <button class="twitch login-button" data-login-method="UseRedirect"
           data-scope="${identityProvider.lookupScope(clientId)!''}" data-identity-provider-id="${identityProvider.id}">
 ```
@@ -684,7 +349,7 @@ Replace the opening tag of the `<button>` element inside the macro with the foll
 
 Replace the opening tag of the `<button>` element inside the macro with the following
 
-```title="Twitter <button>"
+```plaintext title="Twitter <button>"
 <button class="twitter login-button" data-client-id="${clientId}" data-identity-provider-id="${identityProvider.id}">
 ```
 
@@ -692,13 +357,15 @@ Replace the opening tag of the `<button>` element inside the macro with the foll
 
 Replace the opening tag of the `<button>` element inside the macro with the following
 
-```title="Xbox <button>"
+```plaintext title="Xbox <button>"
 <button class="xbox login-button" data-login-method="UseRedirect" data-scope="${identityProvider.lookupScope(clientId)!''}"
           data-identity-provider-id="${identityProvider.id}">
 ```
 
 
 ## Version 1.60.0
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
 
 To enable support of the `prompt` parameter, you will need to make the following modifications.
 
@@ -710,13 +377,13 @@ Update the `oauthHiddenFields`, `link` and `logoutLink` macros to add the `promp
 
 Add `prompt` to the `oauthHiddenFields` macro.
 
-```title="Add prompt"
+```plaintext title="Add prompt"
 [@hidden name="prompt"/]
 ```
 
 For example, this is a macro that includes `prompt`:
 
-``` title="After"
+```plaintext  title="After"
 [#macro oauthHiddenFields]
   [@hidden name="captcha_token"/]
   [@hidden name="client_id"/]
@@ -742,11 +409,11 @@ For example, this is a macro that includes `prompt`:
 #### Macro link
 Add `prompt` to the `link` macro.
 
-```title="Add prompt to the query string"
+```plaintext title="Add prompt to the query string"
 &prompt=${(prompt?url)!''}
 ```
 
-``` title="After"
+```plaintext title="After"
 [#macro link url extraParameters=""]
   <a href="${url}?tenantId=${(tenantId)!''}&client_id=${(client_id)!''}&nonce=${(nonce?url)!''}&pendingIdPLinkId=${(pendingIdPLinkId)!''}&redirect_uri=${(redirect_uri?url)!''}&response_mode=${(response_mode?url)!''}&response_type=${(response_type?url)!''}&scope=${(scope?url)!''}&state=${(state?url)!''}&timezone=${(timezone?url)!''}&metaData.device.name=${(metaData.device.name?url)!''}&metaData.device.type=${(metaData.device.type?url)!''}${(extraParameters!'')?no_esc}&code_challenge=${(code_challenge?url)!''}&code_challenge_method=${(code_challenge_method?url)!''}&user_code=${(user_code?url)!''}&prompt=${(prompt?url)!''}">
       [#nested/]
@@ -758,11 +425,11 @@ Add `prompt` to the `link` macro.
 
 Add `prompt` to the `logoutLink` macro.
 
-```title="Add prompt to the query string"
+```plaintext title="Add prompt to the query string"
 &prompt=${(prompt?url)!''}
 ```
 
-``` title="After"
+```plaintext title="After"
 [#macro logoutLink redirectURI extraParameters=""]
 [#-- Note that in order for the post_logout_redirect_uri to be correctly URL escaped, you must use this syntax for assignment --]
     [#local post_logout_redirect_uri]${redirectURI}?tenantId=${(tenantId)!''}&client_id=${(client_id)!''}&nonce=${(nonce?url)!''}&pendingIdPLinkId=${(pendingIdPLinkId)!''}&redirect_uri=${(redirect_uri?url)!''}&response_mode=${(response_mode?url)!''}&response_type=${(response_type?url)!''}&scope=${(scope?url)!''}&state=${(state?url)!''}&timezone=${(timezone?url)!''}&metaData.device.name=${(metaData.device.name?url)!''}&metaData.device.type=${(metaData.device.type?url)!''}${(extraParameters?no_esc)!''}&code_challenge=${(code_challenge?url)!''}&code_challenge_method=${(code_challenge_method?url)!''}&user_code=${(user_code?url)!''}&prompt=${(prompt?url)!''}[/#local]
@@ -775,6 +442,8 @@ Add `prompt` to the `logoutLink` macro.
 
 
 ## Version 1.59.0
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
 
 Starting in version `1.59.0`, user passwords are optional and phone identities are now supported. While theme updates are not required, there are some areas that you may want to consider making changes.
 
@@ -791,9 +460,11 @@ Starting in version `1.59.0`, user passwords are optional and phone identities a
 
 ### Messages
 
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
 To properly support phone identities, several themed `Messages` have changed. If `forgot-password-email-sent` or `forgot-password-email-sent-title` was previously customized in a theme, the same customizations need to be applied to the new `forgot-password-message-sent` and `forgot-password-message-sent-title` messages.
 
-``` title="Messages Before"
+```plaintext title="Messages Before"
 forgot-password-email-sent=We have sent an email to %s containing a link that will allow you to reset your password. Once you receive the email follow the instructions to change your password.
 forgot-password-email-sent-title=Email sent
 loginId=Email
@@ -801,7 +472,7 @@ loginId=Email
 [PasswordlessRequestSent]=An email is on the way.
 ```
 
-``` title="Messages After"
+```plaintext title="Messages After"
 forgot-password-message-sent=We have sent a message to %s containing a link that will allow you to reset your password. Once you receive the message follow the instructions to change your password.
 forgot-password-message-sent-title=Message sent
 loginId=Login
@@ -813,7 +484,7 @@ loginId=Login
 
 To accommodate the use case of an existing user, without a password, setting a password for the first time, there is a new template variable, `passwordSet`, that can be used on the `Helpers` page to hide the "current password" field for users that do not have a password.
 
-```html title="Before"
+```plaintext title="Before"
 <form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
   ...
   [#list fieldValues as field]
@@ -829,7 +500,7 @@ To accommodate the use case of an existing user, without a password, setting a p
 </form>
 ```
 
-```html title="After"
+```plaintext title="After"
 <form action="${request.contextPath}/account/edit" method="POST" class="full" id="user-form">
   ...
   [#list fieldValues as field]
@@ -850,14 +521,14 @@ To accommodate the use case of an existing user, without a password, setting a p
 
 New installations of FusionAuth show the new `user.phoneNumber` field on the account index page, rather than `user.mobilePhone`.
 
-```html title="Before"
+```plaintext title="Before"
 <dl class="horizontal">
   <dt>${theme.message("user.mobilePhone")}</dt>
   <dd>${helpers.display(user, "mobilePhone")}</dd>
 </dl>
 ```
 
-```html title="After"
+```plaintext title="After"
 <dl class="horizontal">
   <dt>${theme.message("user.phoneNumber")}</dt>
   <dd>${fusionAuth.phone_format(user.phoneNumber!"\x2013")}</dd>
@@ -868,14 +539,14 @@ New installations of FusionAuth show the new `user.phoneNumber` field on the acc
 
 To improve the user experience for phone number identities, the `email` field should be replaced with a `loginId` field which will use the label `Login` instead of `Email` (see Messages above). Everything will continue to function even if this change is not made, but the user experience will be improved with the new field because of the more accurate label.
 
-```html title="Before"
+```plaintext title="Before"
 <fieldset class="push-less-top">
   [@helpers.input type="text" name="email" id="email" autocapitalize="none" autofocus=true autocomplete="on" autocorrect="off" placeholder=theme.message('email') leftAddon="user" required=true/]
   [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
 </fieldset>
 ```
 
-```html title="After"
+```plaintext title="After"
 <fieldset class="push-less-top">
   [@helpers.input type="text" name="loginId" id="loginId" autocapitalize="none" autofocus=true autocomplete="on" autocorrect="off" placeholder=theme.message('loginId') leftAddon="user" required=true/]
   [@helpers.captchaBadge showCaptcha=showCaptcha captchaMethod=tenant.captchaConfiguration.captchaMethod siteKey=tenant.captchaConfiguration.siteKey/]
@@ -886,7 +557,7 @@ To improve the user experience for phone number identities, the `email` field sh
 
 Similar to the `Forgot password` template, the `Forgot password sent` template should also be updated to use the `loginId` field instead of the `email` field. This will improve the user experience for phone number identities.
 
-```html title="Before"
+```plaintext title="Before"
 [@helpers.main title=theme.message('forgot-password-email-sent-title')]
   <p>
     ${theme.message('forgot-password-email-sent', email)}
@@ -895,7 +566,7 @@ Similar to the `Forgot password` template, the `Forgot password sent` template s
 [/@helpers.main]
 ```
 
-```html title="After"
+```plaintext title="After"
 [@helpers.main title=theme.message('forgot-password-message-sent-title')]
   <p>
     ${theme.message('forgot-password-message-sent', loginId)}
@@ -919,7 +590,7 @@ Note that for a new or logged-out user that registers for this application, the 
 
 For example, before:
 
-```html title="Before"
+```plaintext title="Before"
 [#if application.registrationConfiguration.mobilePhone.enabled]
   [@helpers.input type="text" name="user.mobilePhone" id="mobilePhone" placeholder=theme.message("mobilePhone") leftAddon="phone" required=application.registrationConfiguration.mobilePhone.required/]
 [/#if]
@@ -928,7 +599,7 @@ For example, before:
 [/#if]
 ```
 
-```html title="After"
+```plaintext title="After"
 [#if application.registrationConfiguration.mobilePhone.enabled]
   [@helpers.input type="text" name="user.mobilePhone" id="mobilePhone" placeholder=theme.message("mobilePhone") leftAddon="phone" required=application.registrationConfiguration.mobilePhone.required/]
 [/#if]
@@ -947,7 +618,7 @@ For example, before:
 
 To support passwordless logins with phone numbers, several changes must be made to allow submission of one-time or short codes on the passwordless page. The changes include: new hidden form fields, an `if` surrounding the `loginId` field with a new `oneTimeCode` field, and a change to the button text based on whether the form is being submitted or a code is being sent.
 
-```html title="Before"
+```plaintext title="Before"
 <form action="${request.contextPath}/oauth2/passwordless" method="POST" class="full">
   [@helpers.oauthHiddenFields/]
   <fieldset>
@@ -966,7 +637,7 @@ To support passwordless logins with phone numbers, several changes must be made 
 </form>
 ```
 
-```html title="After"
+```plaintext title="After"
 <form action="${request.contextPath}/oauth2/passwordless" method="POST" class="full">
   [@helpers.oauthHiddenFields/]
   [@helpers.hidden name="code"/]
@@ -999,7 +670,7 @@ To support passwordless logins with phone numbers, several changes must be made 
 
 To support phone numbers in basic registration, a `user.phoneNumber` field must be added.
 
-```html title="Before"
+```plaintext title="Before"
 [#if application.registrationConfiguration.loginIdType == 'email']
   [@helpers.input type="text" name="user.email" id="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('email') leftAddon="user" required=true/]
 [#else]
@@ -1007,7 +678,7 @@ To support phone numbers in basic registration, a `user.phoneNumber` field must 
 [/#if]
 ```
 
-```html title="After"
+```plaintext title="After"
 [#if application.registrationConfiguration.loginIdType == 'email']
   [@helpers.input type="text" name="user.email" id="email" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus=true placeholder=theme.message('email') leftAddon="user" required=true/]
 [#elseif application.registrationConfiguration.loginIdType == 'phoneNumber']
@@ -1018,6 +689,8 @@ To support phone numbers in basic registration, a `user.phoneNumber` field must 
 ```
 
 ## Version 1.53.3
+
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
 
 Version `1.53.3` includes a change to persist the value of the `Keep me signed in` checkbox from the hosted login pages through an external identity provider workflow. This checkbox value indicates whether the user wishes to create an SSO session after login. If the Google IdP's `loginMethod` is configured as `UsePopup` or `UseVendorJavaScript`, existing custom advanced themes require an update to incorporate the fix for the Google IdP. You can update the template via the API using `theme.templates.helpers` or by modifying the *Helpers* template in the admin UI. Google IdPs configured with a `loginMethod` value of `UseRedirect` do not require this update, but you may consider making the change preemptively in case the `loginMethod` is changed later.
 
@@ -1043,6 +716,8 @@ with
 
 ## Version 1.52.0
 
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
 Version `1.52.0` includes a change to use the browser-default date picker to enhance the experience on mobile. Existing custom advanced themes require an update to incorporate the change. You can update the template via the API using `theme.templates.helpers` or by modifying the *Helpers* template in the admin UI.
 
 To include the new date picker in an existing custom advanced theme, replace the `Prime.Document.query('.date-picker')` line in the `head` macro with the following:
@@ -1060,13 +735,15 @@ document.querySelectorAll('.date-picker').forEach(datePicker => {
 
 ## Version 1.50.0
 
+**OPTIONAL - ONLY NEEDED TO USE NEW FEATURE**
+
 Version `1.50.0` added the ability to prompt users for consent to custom OAuth scopes in third-party applications. This change requires a new themed template `oauth2Consent` as well as a new macro and function in the `helpers` template.
 
 The `oauth2Consent` template from the default theme will be used until it is added to an existing custom theme. You can copy the new template from the default theme as a starting point and add it to a custom theme via the API using `theme.templates.oauth2Consent` or the _Consent prompt_ template in the admin UI.
 
 The new `scopeConsentField` macro and `resolveScopeMessaging` function *must* be added to an existing custom theme's `helpers` template in order for the theme to continue functioning. Add these new items to the template via the API using `theme.templates.helpers` or the *Helpers* template in the admin UI. You can copy them from the default template or use the following:
 
-```html
+```plaintext
 [#macro scopeConsentField application scope type]
   [#-- Resolve the consent message and detail for the provided scope --]
   [#if type != "unknown"]

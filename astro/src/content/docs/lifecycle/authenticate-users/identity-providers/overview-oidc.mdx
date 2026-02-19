@@ -15,7 +15,6 @@ import ManagedDomainsDescription from 'src/content/docs/lifecycle/authenticate-u
 import IdpManagedDomainsTroubleshooting from 'src/content/docs/lifecycle/authenticate-users/identity-providers/_idp-managed-domains-troubleshooting.mdx';
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
-import Diagram from 'src/diagrams/docs/identity-providers/oidc-redirect-urls.astro';
 
 ## Overview
 
@@ -178,7 +177,32 @@ When configuring an OpenID Connect identity provider, you'll need to provide a r
 
 Here is the request flow through an OpenID Connect login where the application is Pied Piper, the authorization server is FusionAuth, and the remote IdP is Azure Active Directory/Microsoft Entra ID.
 
-<Diagram />
+```mermaid
+sequenceDiagram
+  participant b as Browser
+  participant pp as Pied Piper
+  participant f as FusionAuth
+  participant aad as Azure AD/Microsoft Entra ID
+  b ->> pp : Click Login Link
+  pp ->> b : Redirect to FusionAuth
+  b ->> f : Request Login Page
+  f ->> b : Send Login Page
+  b ->> f : Clicks on 'Login With Azure AD'
+  f ->> b : Redirects to Azure AD
+  b ->> aad : Requests Login Page
+  aad ->> b : Sends Login Page
+  b ->> aad : Sends Credentials
+  aad ->> b : Redirects to FusionAuth Redirect URL
+  b ->> f : Requests FusionAuth Redirect URL
+  f ->> f : Processes request, runs lambda, logs user into FusionAuth
+  f ->> b : Redirects to Pied Piper Redirect URL 
+  b ->> pp : Requests Pied Piper Redirect URL
+  pp ->> f : Requests Token
+  f ->> pp : Returns Token
+  pp ->> pp : Stores token (could send it to Browser as cookie as well)
+  pp ->> b : Redirects to Application pages
+  b ->> pp : Makes authenticated request(s)
+```
 
 ## Proof Key for Code Exchange
 

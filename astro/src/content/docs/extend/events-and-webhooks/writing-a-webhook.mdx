@@ -8,9 +8,6 @@ subcategory: events and webhooks
 import ApplicationWebhooksWarning from 'src/content/docs/extend/events-and-webhooks/_application-webhooks-warning.mdx';
 import InlineField from 'src/components/InlineField.astro';
 import {RemoteCode} from '@fusionauth/astro-components';
-import DiagramTxNone from 'src/diagrams/docs/extend/events-and-webhooks/_transaction-none.astro';
-import DiagramTxAny from 'src/diagrams/docs/extend/events-and-webhooks/_transaction-any-succeed.astro';
-import DiagramTxThree from 'src/diagrams/docs/extend/events-and-webhooks/_transaction-any-succeed-three-failures.astro';
 import { YouTube } from '@astro-community/astro-embed-youtube';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 
@@ -91,15 +88,73 @@ If a webhook endpoint times out, this is considered a failure, the same as if a 
 Below are flow diagrams of example requests. The order of the requests is not guaranteed, but is merely illustrative. In each of these, an API call such as a user update is made, and FusionAuth has been configured to fire off to three different webhooks at that time. The webhook transaction level and the webhook success statuses vary.
 
 Here's a situation with three webhooks and a webhook transaction level of "No webhooks are required to succeed". In this scenario, FusionAuth "fires and forgets":
-<DiagramTxNone alt="A flow with three webhooks and a 'no webhooks are required to succeed' transaction level." />
+```mermaid title="A flow with three webhooks and a 'no webhooks are required to succeed' transaction level."
+sequenceDiagram
+
+participant c as Original Caller
+participant f as FusionAuth
+participant w1 as Webhook Recipient 1
+participant w2 as Webhook Recipient 2
+participant w3 as Webhook Recipient 3
+
+c ->> f  : Updates user
+f ->> w1  : Sends payload
+f ->> w2  : Sends payload
+f ->> w3  : Sends payload
+f -->> c  : Success, operation completes
+```
 
 Next, consider the scenario with three webhooks and a webhook transaction configuration of "Any single webhook must succeed" where "Webhook 1" succeeds. In this case, the other two webhooks are retried up to three additional times. "Webhook 2" succeeds eventually, but "Webhook 3" fails:
 
-<DiagramTxAny alt="A flow with three webhooks, a 'any single webhook must succeed' transaction level, and one success." />
+```mermaid title="A flow with three webhooks, a 'any single webhook must succeed' transaction level, and one success."
+sequenceDiagram
+
+participant c as Original Caller
+participant f as FusionAuth
+participant w1 as Webhook Recipient 1
+participant w2 as Webhook Recipient 2
+participant w3 as Webhook Recipient 3
+
+c ->> f  : Updates user
+f ->> w1  : Sends payload
+f ->> w2  : Sends payload
+f ->> w3  : Sends payload
+w1 -->> f  : Sends success response
+w2 -->> f  : Sends failure response
+w3 -->> f  : Sends failure response
+f ->> w2  : Sends payload
+f ->> w3  : Sends payload
+w2 -->> f  : Times out
+w3 -->> f  : Times out
+f ->> w2  : Sends payload
+f ->> w3  : Sends payload
+w2 -->> f  : Succeeds
+w3 -->> f  : Times out
+f ->> w3  : Sends payload
+w3 -->> f  : Times out
+f ->> c  : Success, operation completes
+```
 
 Here's a configuration with three webhooks and a webhook transaction configuration of "Any single webhook must succeed" where all webhooks fail or time out. In this case, there are no retries, since the webhook transaction level was not met.
 
-<DiagramTxThree alt="A flow with three webhooks, a 'any single webhook must succeed' transaction level, and three failures." />
+```mermaid title="A flow with three webhooks, a 'any single webhook must succeed' transaction level, and three failures."
+sequenceDiagram
+
+participant c as Original Caller
+participant f as FusionAuth
+participant w1 as Webhook Recipient 1
+participant w2 as Webhook Recipient 2
+participant w3 as Webhook Recipient 3
+
+c ->> f  : Updates user
+f ->> w1  : Sends payload
+f ->> w2  : Sends payload
+f ->> w3  : Sends payload
+w1 -->> f  : Times out
+w2 -->> f  : Sends failure response
+w3 -->> f  : Sends failure response
+f -->> c   : Failure, operation rolls back, error returned
+```
 
 ## Calling FusionAuth APIs In Webhooks
 

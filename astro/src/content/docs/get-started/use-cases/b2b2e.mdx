@@ -8,10 +8,6 @@ navOrder: 40
 import B2B2EDescription from 'src/content/docs/get-started/use-cases/_b2b2e-description.mdx';
 import Breadcrumb from 'src/components/Breadcrumb.astro';
 import Aside from 'src/components/Aside.astro';
-import CircusesRelationships from 'src/diagrams/docs/get-started/use-cases/b2b2e/b2b2e-circuses.astro';
-import AddNewCustomers from 'src/diagrams/docs/get-started/use-cases/b2b2e/add-new-customers.astro';
-import UserLoggingIn from 'src/diagrams/docs/get-started/use-cases/b2b2e/user-logging-in.astro';
-import AdminManaging from 'src/diagrams/docs/get-started/use-cases/b2b2e/admin-managing.astro';
 import UserSegmentTable from 'src/content/docs/get-started/core-concepts/_user-segment-table.mdx';
 import CrossTenantUserAccess from 'src/content/docs/get-started/core-concepts/_cross-tenant-access.mdx';
 import APIKeyCrossTenantNote from 'src/content/docs/apis/_api-key-cross-tenant-note.mdx';
@@ -27,7 +23,7 @@ There are multiple users in a business to business to employee (b2b2e) system an
 In this document, the term `customer` refers to people who are paying you to use the application you have built. The term `user` refers to the customers' users, typically employees or contractors. Users are the end users of your software application.
 </Aside>
 
-## Problem 
+## Problem
 
 You have an application that you sell to customers; they then have their own users. You want these users to safely log in to your application with a customized experience unique to each customer.
 
@@ -55,7 +51,16 @@ Your customers are the circuses, and their users are *their* employees or contra
 
 You are super excited because you've landed both Ringling Bros. and Barnum & Bailey Circus and Cirque du Soleil as customers; they have large staffs to manage. Here's a diagram of the relationship between ClownTime, its customers and the end users.
 
-<CircusesRelationships alt="Circus relationships diagram."/>
+```mermaid title="Circus relationships diagram."
+graph LR
+    clowntime[ClownTime] --> |Sells time tracking system to| ringling[Ringling Brothers]
+    clowntime --> |Sells time tracking system to| cirque[Cirque De Soleil]
+    ringling --> |Collects timesheet from| employeeA[Alex Taylor]
+    ringling --> |Collects timesheet from| employeeB[Jamie Morgan]
+    cirque --> |Collects timesheet from| employeeB
+    cirque --> |Collects timesheet from| employeeC[Chris Jordan]
+    cirque --> |Collects timesheet from| employeeD[ContractMarketingCorp]
+```
 
 The entities who fill out time sheets can be either people or companies. For example, `ContractMarketingCorp` is a marketing corporation that promotes Cirque du Soleil on a monthly basis. The set of employees for each circus can also overlap. Jamie Morgan is an example of an employee of both circuses.
 
@@ -80,15 +85,67 @@ The steps include:
 
 Here's a high level sequence diagram of the process of adding new customers. Each of your customers is a tenant in FusionAuth. With b2b2e, you usually want to capture information needed to configure an identity provider, such as SAML public keys or OIDC client Ids and secrets. Store this in your application and then provide it to FusionAuth via API or SDK. This allows users to log in via the correct identity provider.
 
-<AddNewCustomers alt="Adding new customers." />
+```mermaid title="Adding new customers."
+sequenceDiagram
+    participant App
+    participant FusionAuth
+
+    App ->> App : Capture Needed Customer Data, Including Identity Store Information
+    App ->> FusionAuth : Create New Tenant
+    App ->> FusionAuth : Create New Application
+    App ->> FusionAuth : Configure Other Settings <br/> Such As Tenant Locked API Key, Theme,<br/> Required Identity Provider, Etc
+    App ->> App : Configure Mapping Between Customer And FusionAuth Settings
+```
 
 Here's a high level sequence diagram of a user logging in to a customer's time tracking system. Your application is responsible for mapping the user to the correct customer.
 
-<UserLoggingIn alt="Users logging in using idp_hints." />
+```mermaid title="Users logging in using idp_hints."
+sequenceDiagram
+    participant User as Logged In User/Browser
+    participant App
+    participant FusionAuth
+    participant IDP as Identity Provider
+
+    User ->> App : Visits App
+    App ->> App : Determines Appropriate Application
+    App ->> User : Redirects Appropriate Application Authorize URL With idp_hint
+    User ->> FusionAuth : Requests Login Page
+    FusionAuth ->> User : Returns Redirect To Identity Provider
+    User ->> IDP : Requests Login Page
+    IDP ->> User : Returns Login Page
+    User ->> IDP : Authenticates 
+    IDP ->> IDP : Validates Credentials
+    IDP ->> User : Returns Redirect To FusionAuth
+    User ->> FusionAuth : Requests Redirect URL
+    FusionAuth ->> FusionAuth : Updates User Based On Identity Provider Response
+    FusionAuth ->> User : Returns Redirect To Application
+    User ->> App : Requests Redirect URL
+    App ->> App : Looks Up Client Id And Secret
+    App ->> FusionAuth : Requests Tokens
+    FusionAuth ->> App : Sends Tokens
+    App ->> User : Creates Session <br/> And Returns Content For User
+```
 
 Here's a high level sequence diagram of a customer admin managing their configuration and running reports. The admin functions are integrated with the application admin screens using API calls.
 
-<AdminManaging alt="Tenant admin management." />
+```mermaid title="Tenant admin management."
+sequenceDiagram
+    participant User as Logged In Admin User
+    participant App
+    participant FusionAuth
+
+    User ->> App : Visits App
+    App ->> App : Validates User Roles
+    App ->> User : Returns Admin Screen
+    User ->> App : Visits User Management Section
+    App ->> FusionAuth : Requests IDP Configuration Via API
+    FusionAuth ->> App : Returns IDP Configuration Data
+    App ->> User : Displays IDP Configuration
+    User ->> App : Request Login Report
+    App ->> FusionAuth : Requests Login Report 
+    FusionAuth ->> App : Returns Login Report Data
+    App ->> User : Displays Login Report
+```
 
 Let's look at these steps in detail.
 

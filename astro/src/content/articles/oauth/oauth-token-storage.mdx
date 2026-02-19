@@ -9,16 +9,8 @@ dateModified: 2023-02-07
 icon: /img/icons/storing-oauth-tokens.svg
 darkIcon: /img/icons/storing-oauth-tokens-dark.svg
 ---
-import ClientSideStorage from 'src/diagrams/articles/oauth/oauth-token-storage/client-side-storage.astro';
-import ClientSideStorageIntrospection from 'src/diagrams/articles/oauth/oauth-token-storage/client-side-storage-introspection.astro';
-import ClientSideStorageRefreshToken from 'src/diagrams/articles/oauth/oauth-token-storage/client-side-storage-refresh-token.astro';
-import ClientSideStorageWithProxy from 'src/diagrams/articles/oauth/oauth-token-storage/client-side-storage-with-proxy.astro';
-import OauthUpToToken from 'src/diagrams/articles/oauth/oauth-token-storage/oauth-up-to-token.astro';
 import RecommendedTokenStorageOptions from 'src/content/docs/_shared/_recommended-token-storage-options.mdx';
-import SessionStorage from 'src/diagrams/articles/oauth/oauth-token-storage/session-storage.astro';
-import SessionStorageApiCalls from 'src/diagrams/articles/oauth/oauth-token-storage/session-storage-api-calls.astro';
 import TokenStorageOptionsTable from 'src/content/docs/_shared/_token-storage-options.mdx';
-import ValidatingTokens from 'src/diagrams/articles/oauth/oauth-token-storage/validating-tokens.astro';
 
 OAuth grants specify particular flows of formatted data between the various parties, including the authorization server, the client and the resource server. At the end of a grant, one or more tokens are delivered. These tokens are time bound credentials that give access to protected data and functionality.
 
@@ -82,7 +74,24 @@ What should you do with all of these tokens? How can they be used by your applic
 
 Here's a diagram of a common grant, the Authorization Code grant, from the start until tokens are obtained.
 
-<OauthUpToToken alt={"The Authorization Code grant up to the point where tokens are requested from the token endpoint."}/>
+```mermaid title="The Authorization Code grant up to the point where tokens are requested from the token endpoint."
+sequenceDiagram
+    participant User as User/Browser
+    participant App
+    participant FusionAuth as Authorization Server
+
+    User ->> App : View Initial Page<br/>Click Login
+    App ->> User : Redirect User To <br/>Authorization Server With Scopes
+    User ->> FusionAuth : Request Login Page
+    FusionAuth ->> User : Return Login Page
+    User ->> FusionAuth : Provides Credentials
+    FusionAuth ->> FusionAuth : Validate Credentials
+    FusionAuth ->> User : Redirect With Authorization Code
+    User ->> App : Request Redirect URI
+    App ->> FusionAuth : Request Tokens
+    FusionAuth ->> App : Return Tokens
+    Note over User, FusionAuth: What Happens Now?
+```
 
 This article will look at the options for storing these tokens.
 
@@ -129,7 +138,27 @@ If you choose this option, the browser, whether a simple HTML page with some Jav
 
 This works great as long as APIs and the server setting the token cookies live on a domain with shared cookies. For example, the code which gets the tokens can live at `auth.example.com` and if you set the cookie domain to `.example.com`, APIs living at `api.example.com`, `todo.example.com`, or any other host under `.example.com`, will receive the token.
 
-<ClientSideStorage alt={"Storing the tokens as secure, HttpOnly cookies."} />
+```mermaid title="Storing the tokens as secure, HttpOnly cookies."
+sequenceDiagram
+    participant User as User/Browser
+    participant App
+    participant FusionAuth as Authorization Server
+    participant API1 as api.example.com
+    participant API2 as help.example.com
+
+    Note over User,API2: ... Proceed Through Authorization Code Grant ...
+    FusionAuth ->> App : Return Tokens
+    App ->> User : Send Tokens As HTTPOnly, Secure Cookies<br/>With a Domain of example.com
+    User ->> API1 : Send Access Token With Request
+    API1 ->> API1 : Validate Access Token
+    API1 ->> User : Send Data or Complete Requested Operation
+    User ->> API2 : Send Access Token With Request
+    API2 ->> API2 : Validate Access Token
+    API2 ->> User : Send Data or Complete Requested Operation
+    User ->> API1 : Send Access Token With Different Request
+    API1 ->> API1 : Validate Access Token
+    API1 ->> User : Send Data or Complete Requested Operation
+```
 
 When using a native app, store these tokens in a secure location, such as the [iOS Keychain](https://developer.apple.com/documentation/security/keychain_services) or [Android internal data](https://developer.android.com/topic/security/best-practices#safe-data). This protects these credentials from any other applications running on your device. Retrieve them and append them to the proper header before making API requests.
 
@@ -141,7 +170,23 @@ One validation approach that is an option if the token is signed and has interna
 
 With a signed token, an API server validates the access token without communicating with any other system, by checking the signature and the claims.
 
-<ValidatingTokens alt={"Zooming in on token validation."}/>
+```mermaid title="Zooming in on token validation."
+sequenceDiagram
+    participant User as User/Browser
+    participant API1 as api.example.com
+    participant API2 as help.example.com
+
+    Note over User, API2: ... Tokens Have Been Stored In Cookies ...
+    User ->> API1 : Send Access Token As Cookies With Request
+    API1 ->> API1 : Validate Access Token
+    API1 ->> User : Send Data or Complete Requested Operation
+    User ->> API2 : Send Access Token As Cookies With Request
+    API2 ->> API2 : Validate Access Token
+    API2 ->> User : Send Data or Complete Requested Operation
+    User ->> API1 : Send Access Token As Cookies<br/>With Different Request
+    API1 ->> API1 : Validate Access Token
+    API1 ->> User : Send Data or Complete Requested Operation
+```
 
 The APIs must validate the following:
 
@@ -162,7 +207,21 @@ Checking other claims is business logic and can be handled by the API developer.
 
 If the access token doesn't meet the criteria above, you can introspect the token by presenting it to the authorization server. With this process, the validity of the token is confirmed by the token issuing software.
 
-<ClientSideStorageIntrospection alt={"Storing the tokens as secure, HttpOnly cookies and using introspection to validate them."}/>
+```mermaid title="Storing the tokens as secure, HttpOnly cookies and using introspection to validate them."
+sequenceDiagram
+  participant User as User/Browser
+  participant App
+  participant FusionAuth as Authorization Server
+  participant API1 as api.example.com
+  
+  Note over User, API1: ... Proceed Through Authorization Code Grant ...
+  FusionAuth ->> App : Return Tokens
+  App ->> User : Send Tokens As HTTPOnly, Secure Cookies
+  User ->> API1 : Send Access Token With Any API Requests
+  API1 ->> FusionAuth : Validate Access Token Via Introspection
+  FusionAuth ->> API1 : User Data Provided After Access Token Validated
+  API1 ->> User : Send Data or Complete Requested Operation
+```
 
 A successful introspection request returns JSON. Claims in this response still need to be checked:
 
@@ -180,7 +239,29 @@ At some point every access token expires, and the client will, when presenting i
 
 When you initially request the `offline_access` scope, you will receive a refresh token as well as an access token after a user authenticates.
 
-<ClientSideStorageRefreshToken alt={"Using a refresh token."} />
+```mermaid title="Using a refresh token."
+sequenceDiagram
+  participant User as User/Browser
+  participant App
+  participant FusionAuth as Authorization Server
+  participant API1 as api.example.com
+  
+  Note over User,API1: ... Proceed Through Authorization Code Grant ...
+  FusionAuth ->> App: Return Tokens
+  App ->> User : Send Tokens As HTTPOnly, Secure Cookies<br/>With a Domain of example.com
+  User ->> API1: Send Access Token With Request
+  API1 ->> API1: Validate Access Token
+  API1 ->> User: Send Data or Complete Requested Operation
+  User ->> API1: Send Access Token With Request
+  API1 ->> API1: Access Token Determined To Be Invalid
+  API1 ->> User: Sends Access Denied Message
+  User ->> FusionAuth: Present Refresh Token
+  FusionAuth ->> FusionAuth: Validate Refresh Token
+  FusionAuth ->> User : Present New Access Token
+  User ->> API1: Send Access Token With Request
+  API1 ->> API1: Validate Access Token
+  API1 ->> User: Send Data or Complete Requested Operation
+```
 
 When the access token expires, the client can present the refresh token to the authorization server. That server validates the user's account is still active, that there is still an active session, and any other required logic. The authorization server can then issue a new access token. This can be sent to the client and transparently extends the user's access to the APIs.
 
@@ -197,7 +278,28 @@ If your APIs are on multiple domains, or on domains different than what can set 
 
 Below is a diagram of the proxy approach, where an API from `todos.com` is called via a proxy at `proxy.example.com`. Cookies set from the `.example.com` domain will never be sent to the `todos.com` domain due to browser rules.
 
-<ClientSideStorageWithProxy alt={"Using a proxy to access APIs on different domains."} />
+```mermaid title="Using a proxy to access APIs on different domains."
+sequenceDiagram
+  participant User as User/Browser
+  participant App
+  participant FusionAuth as Authorization Server
+  participant Proxy as proxy.example.com
+  participant API1 as api.example.com
+  participant API2 as todos.com
+  
+  Note over User, API2: ... Proceed Through Authorization Code Grant ...
+  FusionAuth ->> App: Return Tokens
+  App ->> User : Send Tokens As HTTPOnly, Secure Cookies<br/>With a Domain of example.com
+  User ->> API1: Send Access Token With Request
+  API1 ->> API1: Validate Access Token
+  API1 ->> User: Send Data
+  User ->> Proxy : Send Access Token With Request
+  Proxy ->> Proxy : Validate Access Token
+  Proxy ->> API2: Send Access Token With Request
+  API2 ->> API2: Validate Access Token
+  API2 ->> Proxy: Send Data
+  Proxy ->> User: Send Data
+```
 
 ### Alternatives To Browser Client-side Tokens
 
@@ -217,13 +319,44 @@ If client storage options don't meet your needs, another option is web sessions.
 
 You can store the access token and refresh token in the server-side session. The application can use web sessions to communicate with the server. The token is then available for any requests originating from server-side code. This is also known as the backend for frontend (BFF) proxy.
 
-<SessionStorage alt={"Storing the tokens server-side in a session."} />
+```mermaid title="Storing the tokens server-side in a session."
+sequenceDiagram
+    participant User as User/Browser
+    participant App
+    participant FusionAuth as Authorization Server
+
+    Note over User, FusionAuth: ... Proceed Through Authorization Code Grant ...
+    FusionAuth ->> App : Return Tokens
+    App ->> App : Store Tokens in Session
+    App ->> User : Return Session Cookie
+    User ->> App : Session Based Interactions
+    App ->> User : Data/HTML/JSON
+```
 
 If you need to retrieve data from other APIs with no domain limits, over secure, server-side channels, this is a good option. If you don't really care about what the token gets you access to, you can examine the claims and validity, then discard it, assured the user has authenticated at the authorization server.
 
 Below is an example of proxying API requests through server-side components. The APIs receiving the tokens still need to validate them.
 
-<SessionStorageApiCalls alt={"Proxying API calls using tokens stored in a server-side session."} />
+```mermaid title="Proxying API calls using tokens stored in a server-side session."
+sequenceDiagram
+    participant User as User/Browser
+    participant App
+    participant API1 as todos.com
+    participant API2 as reminders.com
+
+    Note over User, API2: ... Token Previously Stored In Session ...
+    
+    User -> App: Request Todo Endpoint
+    App -> API1: Request Todo Endpoint<br/>Passing Token From Session<br/>Along In Header
+    API1 -> API1: Validate Token
+    API1 -> App: Send Todo Data
+    App -> User : Send Todo Data
+    User -> App: Request Reminder Endpoint
+    App -> API2: Request Reminder Endpoint<br/>Passing Token From Session<br/>Along In Header
+    API2 -> API2: Validate Token
+    API2 -> App: Send Reminder Data
+    App -> User: Send Reminder Data
+```
 
 Even if you don't use token to gain access to APIs from server-side code, you still get benefits from using the OAuth Authorization Code grant:
 

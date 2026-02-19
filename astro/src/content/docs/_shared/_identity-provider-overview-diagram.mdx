@@ -1,0 +1,34 @@
+
+Here's a diagram of the login flow between:
+
+* the user
+* your application
+* FusionAuth and
+* a remote identity provider
+
+
+```mermaid
+sequenceDiagram
+    participant User as User/Browser
+    participant App
+    participant FusionAuth
+    participant IdentityProvider as Provider
+
+    User ->> App : View Initial Page<br/>Click Login
+    App ->> User : Displays Login Page<br/>Including Link To 'Login With Provider'
+    User ->> App : Clicks On 'Login With Provider'
+    App ->> User : Redirect To Provider Authorization URL
+    User ->> IdentityProvider : Enters Credentials
+    IdentityProvider ->> IdentityProvider : Validate Credentials
+    IdentityProvider ->> User : Redirect to App With Authorization Code
+    User ->> App : Requests Page, Has Authorization Code
+    App ->> FusionAuth : Calls Complete Login<br/>With Code And Redirect URI
+    FusionAuth ->> IdentityProvider : Exchanges Code And<br/>Redirect URI For Provider Token
+    IdentityProvider ->> FusionAuth : Returns Provider Token
+    FusionAuth ->> FusionAuth : Stores Provivider Token, Calls Lambda, Creates User And Registrations (If Needed), Generates FusionAuth Tokens
+    FusionAuth ->> App : Return FusionAuth Tokens
+    App ->> App : Create Session Or<br/>Otherwise Log User In
+    Note over User, IdentityProvider: User Is Logged In And App Can Proceed<br/>Delivering Data And Functionality
+```
+
+Although this looks complex, the user only sees a few screens, such as the FusionAuth login screen, the provider login screen, and your application.

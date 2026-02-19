@@ -10,7 +10,6 @@ tags: javascript, gatsby, oauth, pkce
 excerpt_separator: "{/* more */}"
 ---
 import Breadcrumb from 'src/components/Breadcrumb.astro';
-import Diagram from "../../diagrams/blog/oauth-gatsby/oauth-gatsby.astro";
 import InlineField from 'src/components/InlineField.astro';
 import InlineUIElement from 'src/components/InlineUIElement.astro';
 
@@ -22,7 +21,33 @@ In this blog post, you'll learn how to create a Gatsby site that uses FusionAuth
 
 At a high level, the authorization process looks like this:
 
-<Diagram alt="Diagram of the OAuth Authorization Code flow with PKCE extension using FusionAuth and Gatsby." />
+```mermaid title="Diagram of the OAuth Authorization Code flow with PKCE extension using FusionAuth and Gatsby."
+sequenceDiagram
+
+actor User as User/Browser
+participant Gatsby
+participant NodeApp
+participant FusionAuth
+
+User ->> Gatsby : View Initial Page
+User ->> NodeApp : Click Login 
+NodeApp -->> User : Generate PCKE Challenge, Redirect User
+User ->> FusionAuth : Request Login Page
+FusionAuth -->> User : Return Login Page
+User ->> FusionAuth : Provides Credentials
+FusionAuth -->> User : Redirect With Authorization Code 
+User ->> NodeApp : Request Redirect URI
+NodeApp ->> FusionAuth : Request Access Token 
+FusionAuth ->> FusionAuth : Validate Challenge and Verifier
+FusionAuth -->> NodeApp : Return Access Token
+NodeApp ->> NodeApp : Store Access Token in Session
+NodeApp -->> Gatsby : Return Session Cookie And Redirect To Profile Page
+Gatsby ->> NodeApp : Request User Info
+NodeApp ->> FusionAuth : Request User Info While Sending Token
+FusionAuth -->> NodeApp : Return User Info
+NodeApp -->> Gatsby : Return User Info
+Gatsby -->> User : Display User Info
+```
 
 In this tutorial, you'll walk through the process step-by-step, but if you want to download the code, it is [available on GitHub](https://github.com/fusionauth/fusionauth-example-gatsby).
 
