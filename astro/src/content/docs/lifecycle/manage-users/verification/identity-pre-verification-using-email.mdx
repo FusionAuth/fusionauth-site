@@ -1,0 +1,204 @@
+---
+title: Identity Pre-Verification Using Email Verification Form
+description: Learn how to verify email identities before user creation with hosted pages.
+navcategory: developer
+section: lifecycle
+subcategory: manage users
+tertcategory: verification
+---
+import Aside from 'src/components/Aside.astro';
+import Breadcrumb from 'src/components/Breadcrumb.astro';
+import InlineField from 'src/components/InlineField.astro';
+import InlineUIElement from 'src/components/InlineUIElement.astro';
+import PremiumPlanBlurb from 'src/content/docs/_shared/_premium-plan-blurb.astro';
+
+## Overview
+
+As of version 1.62.0, FusionAuth can be configured to pre-verify users' identities, in the registration process, before user creation.
+
+To enable pre-verification, do the following:
+
+* Configure the Tenant Email Server
+* Enable verification for the identity type(s) on the tenant
+* Create an advanced registration form with the verification step
+* Enable self-service registration in your app
+
+## Prerequisites
+
+<PremiumPlanBlurb />
+
+* FusionAuth version 1.62.0 or greater. If you already have a FusionAuth instance, see the [upgrade guide](/docs/operate/deploy/upgrade). To set up your own instance, see the [installation guide](/docs/get-started/download-and-install).
+
+* A licensed paid plan. To buy a plan, visit the [pricing page](/pricing). To activate your instance, visit the [Reactor page](/docs/get-started/core-concepts/licensing).
+
+### Difference Between Verification, Gating, And Identity Pre-Verification
+
+Verification: user created, attributes updated on user or identity
+
+* Available to both hosted pages (Self-service registration Advanced forms) and API
+* No automatic gating you must handle in your application code
+* User already exists
+
+Gating: hosted page concept, only enforced on hosted pages
+
+* If you change your email, you won’t run into the gating until you log in again
+* Available on hosted pages (Self-service registration Advanced forms) and Self-service registration Basic
+* User already exists
+
+Identity Pre-verification: user not created until email has been verified
+
+* Available to both hosted pages and API
+* Can add gating manually yourself via API (prevent interactions after login if not verified)
+* User doesn’t exist (only Identity does)
+
+<Aside type="note">
+    Email Verification and identity pre-verification are not premium features. Both Gating and enforcing pre-verification with Advanced Registration Forms are premium features.
+</Aside>
+
+FusionAuth's built-in registration and identity verification flows update the `verified` and `verifiedReason` attributes on a user's registration or on a user identity. You can gate the user (or prevent them from continuing with authentication) based on these attributes when writing your application and integration code.
+
+With paid FusionAuth plans, you can elect to have FusionAuth "gate" your users based on these verification attributes. Gating stops the user from receiving a JWT or essentially completing the authentication workflow. In this flow, FusionAuth enforces a "gate" for a user until they verify their email or phone. Gating happens *after* user creation.
+
+Identity Pre-verification applies the same concept, but user identities must be verified *before* user creation.
+
+## Configure The Tenant Email Server
+
+Log in to the FusionAuth administrative user interface. You could do all of this configuration with the API or kickstart, but for this tutorial you'll use the UI.
+
+Navigate to <Breadcrumb>Tenants -> Your Tenant</Breadcrumb> and then select the <Breadcrumb>Email</Breadcrumb> tab. Scroll to the <InlineUIElement>SMTP settings</InlineUIElement> section. Configure this with your SMTP server information. If you are testing locally, you can use a mock email server like [mailcatcher](https://mailcatcher.me/).
+
+<img src="/img/docs/lifecycle/manage-users/verification/tenant-smtp-settings.png" alt="Tenant SMTP settings" width="1200" role="bottom-cropped" />
+
+Ensure a test email is delivered. If you have any issues, follow the steps in the [email troubleshooting documentation](/docs/operate/troubleshooting/troubleshooting#troubleshooting-email).
+
+When tested successful, save the configuration.
+
+Follow this guide to learn more on how to [Configure The SMTP Server](/docs/customize/email-and-messages/configure-email)
+
+## Enable Verification For The Email Identity
+
+Enable identity verification in your tenant by navigating to <Breadcrumb>Tenants -> Edit Tenant -> Identities</Breadcrumb> tab with the following steps:
+
+In the <InlineUIElement>Identity verification settings</InlineUIElement> <InlineUIElement>Email</InlineUIElement> section:
+
+* Enable the <InlineField>Verify identity</InlineField> toggle.
+* Select the `Email Verification` template in the <InlineField>Verification template</InlineField> dropdown.
+* All other fields can be left as default or changed based on your needs.
+
+<img src="/img/docs/lifecycle/manage-users/verification/identity-pre-verification-default-tenant-identity-email.png" alt="Identity verification settings for Email in the Tenant configuration" width="1200" />
+
+<Aside type="note">
+    If you kickstarted your FusionAuth instance, without creating the email templates, they will be missing. Create the default email templates (including the Email Verification template) using [Retrieving Default Templates](/docs/customize/email-and-messages/email-templates-replacement-variables#retrieving-default-templates), then add them in <Breadcrumb>Customizations -> Email Templates</Breadcrumb>.
+</Aside>
+
+Since there are other scenarios where gating can be applied for existing users, and you need FusionAuth instead of your Application to handle [Gate Accounts Until User Email Verified](/docs/lifecycle/manage-users/verification/gate-accounts-until-user-email-verified) ensure that the <InlineField>Unverified behavior</InlineField> value is `Gated`.
+
+## Create An Advanced Registration Form With The Verification Step
+
+Before you can use the email identity pre-verification during registration, you need to create an [Advanced Registration Form](/docs/lifecycle/register-users/advanced-registration-forms) that includes a verification step for the email address field.
+
+<Aside type="note">
+    Email address form fields are created by default, but they are not set <InlineUIElement>Required</InlineUIElement> to `true`, which is a prerequisite for the verification step in the Advanced Registration Form if it's the only identity.
+</Aside>
+
+First, ensure that a mandatory email address [Form Field](/docs/lifecycle/register-users/advanced-registration-forms#form-fields-and-validation) exists. By navigating to <Breadcrumb>Customizations -> Form Fields</Breadcrumb> and create a new Form Field with the <InlineField>Field key</InlineField> `user.email` and <InlineUIElement>Required</InlineUIElement> set to `true`, if one does not already exist.
+
+<img src="/img/docs/lifecycle/manage-users/verification/identity-pre-verification-form-field-user-email-address.png" alt="The Form Field configuration for user.email, set to Required" width="1200" />
+
+<Aside type="caution">
+    Email verification only works with the <InlineField>user.email</InlineField> form field. Do not use a custom field (for example, <InlineField>user.primaryEmail</InlineField>) since it is not an identity type.
+</Aside>
+
+With the <InlineField>Email address</InlineField> form field available, let's [Create a Form](/docs/lifecycle/register-users/advanced-registration-forms#create-a-form) for email identity verification during registration.
+
+Navigate to <Breadcrumb>Customizations -> Forms</Breadcrumb> and click <InlineUIElement>Add Form</InlineUIElement> in the upper right. Give the form a <InlineField>Name</InlineField> of `Email Verification`, then add the following components to the form:
+
+* Add the first step by clicking <Breadcrumb>Add Step -> Form Fields</Breadcrumb>.
+* Add the field by clicking <Breadcrumb>Add field</Breadcrumb>, selecting the <InlineField>Field</InlineField> `Email address` (the email address field you created earlier), and clicking <InlineUIElement>Submit</InlineUIElement>.
+* Add the second step: <Breadcrumb>Add Step -> Verification</Breadcrumb>, selecting <InlineField>Email Verification</InlineField>.
+* Always add the password field as the final step: <Breadcrumb>Add Step -> Form Fields</Breadcrumb>, selecting the <InlineField>Field</InlineField> `Password` and clicking <InlineUIElement>Submit</InlineUIElement>.
+
+<img src="/img/docs/lifecycle/manage-users/verification/identity-pre-verification-form-email-verification.png" alt="The Email Verification form with a verification step" width="1200" />
+
+## Enable Self-Service Registration In Your App
+
+With all the previous steps done, you can now enable Advanced Self-service registration by associating the created Advanced Registration Form with an Application, as described in [Associate a Form With an Application](/docs/lifecycle/register-users/advanced-registration-forms#associate-a-form-with-an-application).
+
+Navigate to <Breadcrumb>Applications -> Your Application -> Registration</Breadcrumb> tab for the Tenant you have enabled Identity verification for.
+
+In the <InlineUIElement>Self-service Registration configuration</InlineUIElement> section:
+
+* Enable the Self-service Registration <InlineField>Enabled</InlineField> toggle.
+* Ensure the <InlineField>Registration type</InlineField> is set to `Advanced`.
+* Select the earlier created `Email Verification` form in the <InlineField>Advanced Registration Form</InlineField> dropdown.
+* Save the application.
+
+<img src="/img/docs/lifecycle/manage-users/verification/identity-pre-verification-application-registration-self-service-advanced-form-email-verification.png" alt="The Application registration configuration enabling self-service registration with an Advanced Registration Form" width="1200" />
+
+<Aside type="note">
+    Application registration verification is deprecated. When using identity pre-verification, do not enable Registration verification. Use Advanced Registration Forms with the Email Verification step instead.
+</Aside>
+
+## Test It Out
+
+To test the email identity pre-verification during registration, navigate to the Self-service registration page for your application.
+
+<img src="/img/docs/lifecycle/manage-users/verification/identity-pre-verification-application-details.png" alt="The Application details page with the Self-service registration URL" width="1200" />
+
+Follow these steps to validate the email identity pre-verification flow:
+
+1. Open your application's Self-service Registration page. You can find a direct link in the <InlineUIElement>OAuth2 & OpenID Connect Integration details</InlineUIElement> on the <Breadcrumb>Applications -> Your Application -> View</Breadcrumb> in the <InlineUIElement>Details</InlineUIElement> page.
+2. Enter a valid email address and click <InlineUIElement>Next</InlineUIElement> to initiate pre-verification.
+3. If testing locally, visit MailCatcher at http://localhost:1080/ (or your chosen mock SMTP tool) and open the FusionAuth verification email.
+4. Follow the instructions in the email to verify your address. After the successful verification, you will be directed to the last step of setting your password.
+5. Once you complete the password step, you will be directed to your application already logged in with a verified email.
+6. Confirm the verification status by viewing the user in the admin UI by navigating to <Breadcrumb>Users -> [select user] -> Manage</Breadcrumb>. A verified email displays a green checkmark icon next to the address.
+
+## Common Questions
+
+**Question**: Why is my verification step not showing up in registration?
+
+**Answer**: There are several reasons why this can happen:
+1. The tenant the user is created with does not have verification enabled (forms can be shared with multiple tenants, so there is no guarantee, when the form is created, which tenant the form will be used with).
+2. If the <InlineField>user.email</InlineField> field is optional and the user chooses not to enter a value, then verification steps for those fields will be skipped.
+3. When registration is being completed for an existing user, to an application, verification steps are skipped, because they only apply to new users. For existing users, see [Gate Users Until They Verify Their Email
+](/docs/lifecycle/manage-users/verification/gate-accounts-until-user-email-verified) for more details.
+
+## Troubleshooting
+
+* No email received
+  * Verify the tenant SMTP configuration and send a test message from <Breadcrumb>Tenants -> Email</Breadcrumb>.
+  * Check your spam/junk folder and any email filtering or allow-listing rules.
+* Verification step is missing on the form
+  * In <Breadcrumb>Tenants -> Identities</Breadcrumb>, confirm <InlineField>Verify identity</InlineField> is enabled for <InlineUIElement>Email</InlineUIElement>.
+  * In <Breadcrumb>Customizations -> Form Fields</Breadcrumb>, confirm the field key is exactly <InlineField>user.email</InlineField> and it is marked <InlineUIElement>Required</InlineUIElement>.
+  * In <Breadcrumb>Customizations -> Forms</Breadcrumb>, ensure the form includes the <InlineUIElement>Email Verification</InlineUIElement> step between the email field step and the password step.
+  * In <Breadcrumb>Applications -> Registration</Breadcrumb>, confirm <InlineField>Registration type</InlineField> is `Advanced` and the correct form is selected.
+  * The verification step only runs for new users. If you are registering an existing user to an additional application, the step will be skipped.
+* Verification link expired or invalid
+  * Verification links expire after a period of time. Trigger a resend from the UI or re-start the flow to generate a new link, then complete verification promptly.
+* Users are not Gated with an unverified email.
+  * Identity pre-verification happens before user creation. Email registration gating (post-creation) is a separate feature. See [Gate Accounts Until User Email Verified](/docs/lifecycle/manage-users/verification/gate-accounts-until-user-email-verified).
+* Local testing tips
+  * When testing locally, use a mock SMTP server such as MailCatcher or MailHog and ensure links in the captured messages point to a routable host for your browser.
+
+## How To Use Pre-Verification APIs
+
+You can perform identity pre-verification entirely via API when you are not using hosted pages with Advanced Registration Forms.
+* [Start Identity Verification](/docs/apis/identity-verify#start-identity-verification)
+* [Send Identity Verification](/docs/apis/identity-verify#send-identity-verification)
+* [Complete Identity Verification](/docs/apis/identity-verify#complete-identity-verification)
+
+After you have completed identity verification, create the user by calling one of the following APIs and include the corresponding <InlineField>verificationIds</InlineField> from the [Start Identity Verification](/docs/apis/identity-verify#start-identity-verification) for the verified identity:
+* [Create a User](/docs/apis/users#create-a-user)
+* [Create a User and Registration Combined](/docs/apis/registrations#create-a-user-and-registration-combined)
+
+Follow the [Identity Pre-Verification Via API](/docs/lifecycle/manage-users/verification/identity-pre-verification-via-api) tutorial for more details.
+
+## Next Steps
+
+Now that you've successfully set up email identity pre-verification, take the next steps to fully integrate this functionality into your application:
+
+* Discover how to [modify your theme](/docs/customize/look-and-feel) to make the email verification pages look like your application.
+* Learn more about [email/message templates](/docs/customize/email-and-messages) and how to customize them.
+
