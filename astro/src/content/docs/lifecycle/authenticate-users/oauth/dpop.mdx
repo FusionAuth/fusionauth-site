@@ -67,48 +67,72 @@ The following diagram illustrates the DPoP flow using the Authorization Code gra
 
 ```mermaid
 sequenceDiagram
-  autonumber
-  participant Browser as Browser (Client)
-  participant FusionAuth as FusionAuth (AS)
+  participant User as User/Browser
+  participant App
+  participant FusionAuth as Authorization Server
   participant API as API Server (RS)
 
-  Note over Browser: Generate cryptographic Key Pair
-  Note over Browser: Construct & Sign DPoP Proof 1 (JWT)
-  Browser->>FusionAuth: Access Token Request<br/>DPoP Header (Proof 1)
-  
-  rect rgb(230, 245, 255)
+  Note over User: Generate cryptographic Key Pair
+
+  User ->> App : View Initial Page<br/>Click Login
+  App ->> User : Redirect User To <br/>Authorization Server With Scopes
+  User ->> FusionAuth : Request Login Page
+  FusionAuth ->> User : Return Login Page
+  User ->> FusionAuth : Provides Credentials
+  FusionAuth ->> FusionAuth : Validate Credentials
+  FusionAuth ->> User : Redirect With Authorization Code
+  Note over User: Construct & Sign DPoP Proof 1
+  User ->> App : Request Redirect URI
+  App ->> FusionAuth : Request Tokens<br/>DPoP Header (Proof 1)
+  rect rgb(230, 245, 255, .1)
     Note over FusionAuth: Extract Proof 1, Public Key & Signature
     FusionAuth->>FusionAuth: Verify Proof 1 Signature & Claims<br/>
     FusionAuth->>FusionAuth: Bind Token to Public Key Thumbprint (jkt)<br/>
   end
-  FusionAuth-->>Browser: Sender-Constrained Tokens (cnf.jkt)<br/>(token_type: DPoP)
+  FusionAuth ->> App : Return sender-constrained<br/>Access & Refresh Tokens
+  App ->> User : Store Tokens<br/>(e.g., in memory or secure storage)
 
-  Note over Browser: Construct & Sign DPoP Proof 2
-  Browser->>API: API Request (Access Token)<br/>DPoP Header (Proof 2)
-  rect rgb(230, 245, 255)
+  Note over User: Construct & Sign DPoP Proof 2
+
+  User->>API: API Request (Access Token)<br/>DPoP Header (Proof 2)
+  rect rgb(230, 245, 255, .1)
     Note over API: Extract Proof 2, Public Key & Signature
     API->>API: Verify Access Token & Binding<br/>Verify Proof 2 Signature & Claims<br/>
   end
-  API-->>Browser: API Response
+  API->>User: API Response
 
-  Note over Browser: Construct & Sign DPoP Proof 3
-  Browser->>API: API Request (Access Token)<br/>DPoP Header (Proof 3)
-  rect rgb(230, 245, 255)
+  Note over User: Construct & Sign DPoP Proof 3
+
+  User->>API: API Request (Access Token)<br/>DPoP Header (Proof 3)
+  rect rgb(230, 245, 255, .1)
     Note over API: Extract Proof 3, Public Key & Signature
     API->>API: Verify Access Token & Binding<br/>Verify Proof 3 Signature & Claims<br/>
   end
-  API-->>Browser: API Response
+  API->>User: API Response
+
+  rect rgb(230, 245, 255, .1)
+    Note right of User: Access token expires
+
+    Note over User: Construct & Sign DPoP Proof 4
+    User->>FusionAuth: Refresh Token Request<br/>DPoP Header (Proof 4)
+    rect rgb(230, 245, 255, .1)
+      Note over FusionAuth: Extract Proof 4, Public Key & Signature
+      FusionAuth->>FusionAuth: Verify Refresh Token & Binding<br/>Verify Proof 4 Signature & Claims<br/>
+      FusionAuth->>FusionAuth: Bind Token to Public Key Thumbprint (jkt)<br/>
+    end
+    FusionAuth->>User: New Access Token Response
+  end
 ```
 
-1. **Key Generation & Request (Client)**: The client generates a DPoP proof with a generated key pair and submits it to the `/token` endpoint.
-  * **Key Generation**: The client generates a cryptographic public and private key pair (e.g., ES256) on the browser.
-  * **Access Token Request**: After creating the key pair, the client constructs a DPoP proof JWT, signs it with the private key, and submits it to the `/token` endpoint in the `DPoP` HTTP header.
-2. **Verification (AS)**: FusionAuth extracts the DPoP proof and public key, verifies the signature
-3. **Binding (AS)** FusionAuth then generates an access token bound to the SHA-256 thumbprint (`jkt`) of the public key.
-4. **Sender-Constrained Issuance (AS)**: FusionAuth issues the tokens with a `token_type` of `DPoP`, ensuring they are constrained to the client's key.
-5. **API Request (Client)**: For every API call, the client generates a *new* DPoP proof specific to the request (matching HTTP method and URI) and includes the access token hash (`ath`).
-6. **Verification (RS)**: Your API (Resource Server) verifies the access token, validates the DPoP proof signature, and ensures the proof's key matches the `cnf.jkt` binding in the token.
-7. **Response (RS)**: Your API responds with the requested resource.
+1. **Key Generation**: The client generates a cryptographic public and private key pair (e.g., ES256) on the browser.
+2. **Authorization Request**: The client initiates the OAuth flow by redirecting the user to FusionAuth's authorization endpoint.
+3. **Token Request**: After the user authenticates and authorizes the client, the client requests tokens from the `/token` endpoint, including a DPoP proof signed with the private key in the `DPoP` header.
+4. **Verification (AS)**: FusionAuth extracts the DPoP proof and public key, verifies the signature
+5. **Binding (AS)** FusionAuth then generates an access token bound to the SHA-256 thumbprint (`jkt`) of the public key.
+6. **Sender-Constrained Issuance (AS)**: FusionAuth issues the tokens with a `token_type` of `DPoP`, ensuring they are constrained to the client's key.
+7. **API Request (Client)**: For every API call, the client generates a *new* DPoP proof specific to the request (matching HTTP method `htm` and URI `htu`) and includes the access token hash (`ath`).
+8. **Verification (RS)**: Your API (Resource Server) verifies the access token, validates the DPoP proof signature, and ensures the proof's key matches the `cnf.jkt` binding in the token.
+9. **Response (RS)**: Your API responds with the requested resource.
 
 ## Client Responsibilities
 
@@ -174,12 +198,6 @@ There is no configuration required to enable DPoP in FusionAuth. Just make sure 
 <Aside type="note">
 FusionAuth responds to token requests with a `DPoP` header containing a DPoP proof as long the requesting client uses DPoP.
 </Aside>
-
-## Security Considerations
-
-* **Replay Mitigation**: Resource Servers SHOULD track `jti` values for the lifetime of the DPoP proof to prevent reuse. Using server-provided nonces is the most effective way to limit proof lifetime.
-* **Key Storage**: Use non-extractable keys in browsers. While DPoP does not prevent an attacker with XSS from *signing* new proofs using the client's key, it prevents them from *stealing* the key and using the tokens from a different environment.
-* **TLS Requirement**: DPoP MUST be used with TLS. It protects against token misuse, not against man-in-the-middle attacks on the request itself.
 
 ## Troubleshooting
 
