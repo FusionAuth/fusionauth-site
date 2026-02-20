@@ -62,58 +62,70 @@ This thumbprint is the immutable anchor that your **Resource Server (RS)** will 
 FusionAuth handles the binding of tokens during issuance. However, the validation of DPoP proofs when accessing your protected resources occurs in your own APIs (the Resource Server).
 </Aside>
 
-## High-Level Flow
+## The DPoP Flow
 
 The following diagram illustrates the DPoP flow using the Authorization Code grant with PKCE.
 
 ```mermaid
 sequenceDiagram
-  participant User as User/Browser
+  participant User as Client/Browser
   participant App
-  participant FusionAuth as Authorization Server
-  participant API as API Server (RS)
+  participant FusionAuth as FusionAuth (AS)
+  participant API as API (RS)
 
-  Note over User: Generate cryptographic Key Pair
-
-  User ->> App : View Initial Page<br/>Click Login
-  App ->> User : Redirect User To <br/>Authorization Server With Scopes
-  User ->> FusionAuth : Request Login Page
-  FusionAuth ->> User : Return Login Page
-  User ->> FusionAuth : Provides Credentials
-  FusionAuth ->> FusionAuth : Validate Credentials
-  FusionAuth ->> User : Redirect With Authorization Code
-  Note over User: Construct & Sign DPoP Proof 1
-  User ->> App : Request Redirect URI
-  App ->> FusionAuth : Request Tokens<br/>DPoP Header (Proof 1)
+  Note left of User: User Logs In
   rect rgb(230, 245, 255, .1)
-    Note over FusionAuth: Extract Proof 1, Public Key & Signature
-    FusionAuth->>FusionAuth: Verify Proof 1 Signature & Claims<br/>
-    FusionAuth->>FusionAuth: Bind Token to Public Key Thumbprint (jkt)<br/>
+    Note over User: Generate cryptographic Key Pair
+    User ->> App : View Initial Page<br/>Click Login
+    App ->> User : Redirect User To <br/>Authorization Server With Scopes
+    User ->> FusionAuth : Request Login Page
+    FusionAuth ->> User : Return Login Page
+    User ->> FusionAuth : Provides Credentials
+    FusionAuth ->> FusionAuth : Validate Credentials
+    FusionAuth ->> User : Redirect With Authorization Code
   end
-  FusionAuth ->> App : Return sender-constrained<br/>Access & Refresh Tokens
-  App ->> User : Store Tokens<br/>(e.g., in memory or secure storage)
 
-  Note over User: Construct & Sign DPoP Proof 2
+  Note left of User: Start DPoP Token Issuance
 
-  User->>API: API Request (Access Token)<br/>DPoP Header (Proof 2)
   rect rgb(230, 245, 255, .1)
-    Note over API: Extract Proof 2, Public Key & Signature
-    API->>API: Verify Access Token & Binding<br/>Verify Proof 2 Signature & Claims<br/>
+    Note over User: Construct & Sign DPoP Proof 1
+    User ->> App : Request Redirect URI
+    App ->> FusionAuth : Request Tokens<br/>DPoP Header (Proof 1)
+    rect rgb(230, 245, 255, .1)
+      Note over FusionAuth: Extract Proof 1, Public Key & Signature
+      FusionAuth->>FusionAuth: Verify Proof 1 Signature & Claims<br/>
+      FusionAuth->>FusionAuth: Bind Token to Public Key Thumbprint (jkt)<br/>
+    end
+    FusionAuth ->> App : Return sender-constrained<br/>Access & Refresh Tokens
+    App ->> User : Store Tokens<br/>(e.g., in memory or secure storage)
   end
-  API->>User: API Response
 
-  Note over User: Construct & Sign DPoP Proof 3
+  Note left of User: Access Protected Resource
 
-  User->>API: API Request (Access Token)<br/>DPoP Header (Proof 3)
   rect rgb(230, 245, 255, .1)
-    Note over API: Extract Proof 3, Public Key & Signature
-    API->>API: Verify Access Token & Binding<br/>Verify Proof 3 Signature & Claims<br/>
+    Note over User: Construct & Sign DPoP Proof 2
+
+    User->>API: API Request (Access Token)<br/>DPoP Header (Proof 2)
+    rect rgb(230, 245, 255, .1)
+      Note over API: Extract Proof 2, Public Key & Signature
+      API->>API: Verify Access Token & Binding<br/>Verify Proof 2 Signature & Claims<br/>
+    end
+    API->>User: API Response
+
+    Note over User: Construct & Sign DPoP Proof 3
+
+    User->>API: API Request (Access Token)<br/>DPoP Header (Proof 3)
+    rect rgb(230, 245, 255, .1)
+      Note over API: Extract Proof 3, Public Key & Signature
+      API->>API: Verify Access Token & Binding<br/>Verify Proof 3 Signature & Claims<br/>
+    end
+    API->>User: API Response
   end
-  API->>User: API Response
+
+  Note left of User: Access Token Expires
+  Note left of User: Start DPoP Token Refresh
 
   rect rgb(230, 245, 255, .1)
-    Note right of User: Access token expires
-
     Note over User: Construct & Sign DPoP Proof 4
     User->>FusionAuth: Refresh Token Request<br/>DPoP Header (Proof 4)
     rect rgb(230, 245, 255, .1)
@@ -125,15 +137,28 @@ sequenceDiagram
   end
 ```
 
-1. **Key Generation**: The client generates a cryptographic public and private key pair (e.g., ES256) on the browser.
+### Key Generation and Authorization
+
+1. **Key Generation**: The client generates a cryptographic public and private key pair (e.g., ES256) on the browser. Generating the key pair at the start of the flow ensures the client is ready to sign proofs later.
 2. **Authorization Request**: The client initiates the OAuth flow by redirecting the user to FusionAuth's authorization endpoint.
-3. **Token Request**: After the user authenticates and authorizes the client, the client requests tokens from the `/token` endpoint, including a DPoP proof signed with the private key in the `DPoP` header.
-4. **Verification (AS)**: FusionAuth extracts the DPoP proof and public key, verifies the signature
-5. **Binding (AS)** FusionAuth then generates an access token bound to the SHA-256 thumbprint (`jkt`) of the public key.
+
+### DPoP Token Issuance (Authorization Server)
+
+3. **Token Request**: After the user authenticates and authorizes the client, the client requests tokens from the `/oauth2/token` endpoint, including a DPoP proof (Proof 1) signed with the private key in the `DPoP` header.
+4. **Verification (AS)**: FusionAuth extracts the DPoP proof and public key, verifies the signature, and ensures the claims (like `htm` and `htu`) are valid.
+5. **Binding (AS)**: FusionAuth then generates an access token bound to the SHA-256 thumbprint (`jkt`) of the public key.
 6. **Sender-Constrained Issuance (AS)**: FusionAuth issues the tokens with a `token_type` of `DPoP`, ensuring they are constrained to the client's key.
-7. **API Request (Client)**: For every API call, the client generates a *new* DPoP proof specific to the request (matching HTTP method `htm` and URI `htu`) and includes the access token hash (`ath`).
+
+### Access Protected Resource (Resource Server)
+
+7. **API Request (Client)**: For every API call, the client generates a *new* DPoP proof (Proof 2) specific to the request (matching HTTP method `htm` and URI `htu`) and includes the access token hash (`ath`).
 8. **Verification (RS)**: Your API (Resource Server) verifies the access token, validates the DPoP proof signature, and ensures the proof's key matches the `cnf.jkt` binding in the token.
-9. **Response (RS)**: Your API responds with the requested resource.
+9. **Response (RS)**: Your API responds with the requested resource. Subsequent requests (e.g., Proof 3) follow the same pattern.
+
+### DPoP Token Refresh (Authorization Server)
+
+10. **Refresh Request (Client)**: When the access token expires, the client sends a refresh token request to the `/oauth2/token` endpoint, including a new DPoP proof (Proof 4).
+11. **Verification & Re-binding (AS)**: FusionAuth verifies the refresh token and its binding to the original key, validates the new DPoP proof, and issues a new access token bound to the same public key thumbprint.
 
 ## Client Responsibilities
 
@@ -141,7 +166,7 @@ Implementing DPoP on the client side requires careful management of the cryptogr
 
 ### Key Pair Lifecycle
 
-* **Generation**: The client MUST generate an asymmetric key pair. [RFC 9449 § 4.2](https://datatracker.ietf.org/doc/html/rfc9449#section-4.2) recommends using algorithms like `ES256`.
+* **Generation**: The client MUST generate an asymmetric key pair. [RFC 9449 § 4.2](https://datatracker.ietf.org/doc/html/rfc9449#section-4.2) recommends using algorithms like `ES256`. Generating the key early ensures the client is ready for the token request and can fail fast if the browser does not support the required cryptographic algorithms.
 * **Storage**: In browser environments, store the private key in a way that it is non-extractable (e.g., using the Web Crypto API with `extractable: false`). This prevents exfiltration even if the application context is compromised by XSS. [RFC 9449 § 11.4](https://datatracker.ietf.org/doc/html/rfc9449#section-11.4).
 * **Rotation**: Periodically rotate the key pair to minimize the impact of a potential key compromise.
 
