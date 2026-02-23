@@ -474,16 +474,14 @@ CLIENT_CONFIGS = {
     "claude_desktop": {
         "name": "Claude Desktop",
         "redirect_urls": [
-            "http://localhost:3334/oauth/callback",
-            "http://127.0.0.1:3334/oauth/callback",
-            "http://localhost:3000/callback",
-            "http://127.0.0.1:3000/callback",
-            "http://localhost:16442/oauth/callback",
-            "http://127.0.0.1:16442/oauth/callback",
+            "http://localhost:*/oauth/callback",
+            "http://127.0.0.1:*/oauth/callback",
         ],
     },
 }
 ```
+
+MCP clients handle the OAuth callback by starting a temporary local HTTP server. The port that server listens on varies by client and can change between runs if the default port is already in use. Using wildcard redirect URLs (`localhost:*`) means FusionAuth will accept the callback on any port, so the flow works regardless of which port the client picks.
 
 Then it creates an OAuth application in FusionAuth with the right configuration:
 
@@ -496,6 +494,7 @@ def create_client_application(base_url: str, api_key: str, client_key: str, conf
             "name": config["name"],
             "oauthConfiguration": {
                 "authorizedRedirectURLs": config["redirect_urls"],
+                "authorizedURLValidationPolicy": "AllowWildcards",
                 "clientAuthenticationPolicy": "NotRequiredWhenUsingPKCE",
                 "enabledGrants": ["authorization_code", "refresh_token"],
                 "generateRefreshTokens": True,
@@ -516,6 +515,7 @@ def create_client_application(base_url: str, api_key: str, client_key: str, conf
 
 This includes the following key configuration values:
 
+* `authorizedURLValidationPolicy: "AllowWildcards"` enables wildcard matching for redirect URLs, so the OAuth callback works regardless of which port the MCP client picks
 * `proofKeyForCodeExchangePolicy: "Required"` enforces PKCE for security
 * `clientAuthenticationPolicy: "NotRequiredWhenUsingPKCE"` means that no client secret is needed when PKCE is used
 * `scopeHandlingPolicy: "Compatibility"` allows custom scopes like `get_name`
@@ -620,7 +620,7 @@ The `mcp-remote` tool is part of the official MCP ecosystem and handles the OAut
 
 ## Testing The Protected Server
 
-Restart your MCP client (Claude Desktop or Cursor) to load the new configuration.
+Restart your MCP client to load the new configuration.
 
 When your MCP client starts, it does the following:
 
@@ -640,7 +640,7 @@ When the browser opens, log in with the test credentials:
 * **Password:** `password`
 
 <Aside type="note" nodark="true">
-If you see an "Invalid redirect_uri" error, see the [Troubleshooting section](#troubleshooting) below for how to add the missing redirect URL.
+If you see an "Invalid redirect_uri" error, your MCP client is using a callback path not covered by the wildcard. See the [Troubleshooting section](#troubleshooting) below.
 </Aside>
 
 ### Grant Consent
@@ -762,13 +762,13 @@ Verify that your configuration JSON syntax is valid, restart the client after co
 
 ### The OAuth Flow Completes, But Tools Aren't Available
 
-Completely quit and restart your MCP client (such as Claude Desktop or Cursor) after the OAuth flow completes. The client needs to restart to pick up the newly obtained access token.
+Completely quit and restart your MCP client after the OAuth flow completes. The client needs to restart to pick up the newly obtained access token.
 
 ### The "Invalid redirect_uri" Error Occurs During OAuth
 
-OAuth clients redirect users back to a specific URL after authentication. If FusionAuth doesn't recognize the redirect URL, it rejects the request. When you see this error, look at the error message to find which URL was attempted (for example, `http://localhost:16442/oauth/callback`). Then add that URL to your client application's authorized redirect URLs in FusionAuth.
+OAuth clients redirect users back to a specific URL after authentication. If FusionAuth doesn't recognize the redirect URL, it rejects the request. The setup script registers wildcard redirect URLs (`http://localhost:*/oauth/callback`) to handle any port, but if your MCP client uses a different callback path, you may still see this error.
 
-To fix this, navigate to <Breadcrumb>Applications -> [Your Client] -> OAuth -> Authorized redirect URLs</Breadcrumb> in the FusionAuth admin UI and add the missing URL.
+When you see this error, look at the error message to find which URL was attempted. Then navigate to <Breadcrumb>Applications -> [Your Client] -> OAuth -> Authorized redirect URLs</Breadcrumb> in the FusionAuth admin UI and add the missing URL.
 
 ## Next Steps
 
