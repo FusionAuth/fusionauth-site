@@ -704,6 +704,85 @@ This example demonstrates the core patterns for OAuth-protected MCP servers. For
 * **Stale client cleanup:** Use FusionAuth's [login records API](/docs/apis/login#search-login-records) to identify client applications that haven't authenticated recently, then deregister them to keep your application list clean.
 * **Preregistering clients at scale:** If you need to onboard many MCP clients, automate registration using the FusionAuth Application API rather than running the setup script manually for each one.
 
+## Deploying A Remote MCP Server
+
+This tutorial uses STDIO transport because the MCP server runs locally in Docker on the same machine as the MCP client. The `mcp-remote` bridge connects the client to the local HTTP server. For a production deployment, you would host the MCP server on a remote machine and connect to it over HTTPS.
+
+### Transport Types
+
+The MCP specification defines two transport types:
+
+* **STDIO.** The MCP client spawns the server as a local process and communicates via stdin/stdout. Only works when the server runs on the same machine as the client.
+* **Streamable HTTP.** The MCP client connects to the server over HTTP or HTTPS. This is what `mcp-remote` bridges to, and it works whether the server is local or remote.
+
+The server code in this tutorial uses Streamable HTTP transport via `mcp.http_app()`. STDIO is only involved because `mcp-remote` acts as a local bridge process. When the MCP server is remote, the bridge connects to the public URL instead of localhost.
+
+### What Changes For Remote Deployment
+
+The server code requires no changes for remote deployment. The only differences are configuration:
+
+* `MCP_SERVER_URL`. Set this to your server's public HTTPS URL (e.g. `https://mcp.example.com`). FastMCP uses this to construct the OAuth metadata that MCP clients discover.
+* `FUSIONAUTH_EXTERNAL_URL`. Set this to your FusionAuth instance's public URL. MCP clients need to reach FusionAuth in their browser to complete the OAuth flow.
+* `FUSIONAUTH_URL`. If the MCP server container cannot reach FusionAuth via an internal network address, set this to the public URL as well.
+
+Pass these as environment variables when starting the server:
+
+```bash
+MCP_SERVER_URL=https://mcp.example.com \
+FUSIONAUTH_EXTERNAL_URL=https://auth.example.com \
+docker compose up -d
+```
+
+### MCP Client Configuration
+
+For a remote server, the MCP client config points at the public URL instead of localhost. Remove the `--allow-http` flag since the remote server uses HTTPS. The updated configuration looks like this:
+
+```json
+{
+  "mcpServers": {
+    "fusionauth-mcp": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.example.com/mcp",
+        "--static-oauth-client-info",
+        "{\"client_id\":\"YOUR_CLIENT_ID_HERE\"}"
+      ]
+    }
+  }
+}
+```
+
+Run the setup script with `--mcp-server-url` pointing at your public URL to generate the correct client config. For example:
+
+```bash
+python3 setup_clients.py --mcp-server-url https://mcp.example.com
+```
+
+The setup script also accepts two optional flags for non-standard deployments:
+
+* `--tenant-id`. If your FusionAuth instance has multiple tenants, pass the tenant Id to target the correct one.
+* `--mcp-app-id`. If your MCP Server application was created with a different Id than the default, pass it here so the script creates the `get_name` scope on the correct application.
+
+For example:
+
+```bash
+python3 setup_clients.py \
+  --mcp-server-url https://mcp.example.com \
+  --tenant-id YOUR_TENANT_ID \
+  --mcp-app-id YOUR_MCP_APP_ID
+```
+
+### Infrastructure Requirements
+
+For a remote deployment you need:
+
+* A server running the Docker Compose stack, accessible over the internet.
+* HTTPS on the MCP server endpoint. Use a reverse proxy such as [Caddy](https://caddyserver.com/) (which handles TLS certificates automatically) or configure TLS directly on your load balancer.
+* A publicly accessible FusionAuth instance. The OAuth browser redirect requires the user's browser to reach FusionAuth, so it must be on a public URL.
+
+The FusionAuth configuration, application setup, and OAuth flow are identical to the local setup. Only the URLs differ.
+
 ## Troubleshooting
 
 If you run into an issue while setting up or testing your OAuth-protected MCP server, check the following common problems and solutions.
